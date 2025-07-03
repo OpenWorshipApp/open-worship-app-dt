@@ -3,7 +3,7 @@
     "description": "Fully Open-Source and completely free forever for worship service.",
     "author": "Open Worship Dev Team (https://github.com/OpenWorshipApp/open-worship-app-dt/graphs/contributors)",
     "homepage": "https://github.com/OpenWorshipApp/open-worship-app-dt",
-    "version": "2025.06.10",
+    "version": "2025.06.28",
     "type": "commonjs",
     "main": "./electron-build/electron/index.js",
     "scripts": {
