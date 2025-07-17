@@ -2,11 +2,10 @@ import './SettingComp.scss';
 
 import { lazy } from 'react';
 
-import { setSetting, useStateSettingString } from '../helper/settingHelpers';
+import { useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
-import { QuickOrBackButtonComp } from '../others/commonButtons';
-import { goToPath } from '../router/routeHelpers';
-import appProvider from '../server/appProvider';
+import { QuitCurrentPageComp } from '../others/commonButtons';
+import { SETTING_SETTING_NAME } from './settingHelpers';
 
 const LazySettingGeneralComp = lazy(() => {
     return import('./SettingGeneralComp');
@@ -17,18 +16,6 @@ const LazySettingBibleComp = lazy(() => {
 const LazySettingAboutComp = lazy(() => {
     return import('./SettingAboutComp');
 });
-
-const SETTING_SETTING_NAME = 'setting-tabs';
-
-export function goToGeneralSetting() {
-    setSetting(SETTING_SETTING_NAME, 'g');
-    goToPath(appProvider.settingHomePage);
-}
-
-export function goToBibleSetting() {
-    setSetting(SETTING_SETTING_NAME, 'b');
-    goToPath(appProvider.settingHomePage);
-}
 
 const tabTypeList = [
     ['g', 'General', LazySettingGeneralComp],
@@ -61,7 +48,7 @@ export default function SettingComp() {
                         right: 0,
                     }}
                 >
-                    <QuickOrBackButtonComp title="Quit Setting" />
+                    <QuitCurrentPageComp title="Quit Setting" />
                 </div>
             </div>
             <div className="card-body overflow-hidden">

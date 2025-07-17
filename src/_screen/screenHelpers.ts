@@ -1,20 +1,13 @@
 import * as loggerHelpers from '../helper/loggerHelpers';
 import BibleItem from '../bible-list/BibleItem';
-import { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { screenManagerSettingNames } from '../helper/constants';
 import { handleError } from '../helper/errorHelpers';
 import { isValidJson } from '../helper/helpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import { checkIsValidLocale } from '../lang';
+import { checkIsValidLocale } from '../lang/langHelpers';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
-import { BibleItemRenderingType } from './bibleScreenComps';
-import {
-    ScreenTransitionEffectType,
-    TargetType,
-} from './transitionEffectHelpers';
 import { electronSendAsync } from '../server/appHelpers';
 import { getValidOnScreen } from './managers/screenManagerBaseHelpers';
-import { VaryAppDocumentItemDataType } from '../app-document-list/appDocumentHelpers';
 import appProvider from '../server/appProvider';
 import {
     PLAY_TO_BOTTOM_CLASSNAME,
@@ -24,113 +17,18 @@ import {
     applyToTheTop,
 } from '../scrolling/scrollingHandlerHelpers';
 import { unlocking } from '../server/unlockingHelpers';
-
-export const bibleDataTypeList = ['bible-item', 'lyric'] as const;
-export type BibleDataType = (typeof bibleDataTypeList)[number];
-export type BibleItemDataType = {
-    locale: string;
-    type: BibleDataType;
-    bibleItemData?: {
-        renderedList: BibleItemRenderingType[];
-        bibleItem: BibleItemType;
-    };
-    scroll: number;
-    selectedKJVVerseKey: string | null;
-};
-export type BibleListType = {
-    [key: string]: BibleItemDataType;
-};
-
-export const scaleTypeList = [
-    'fill',
-    'fit',
-    'stretch',
-    'tile',
-    'center',
-    'span',
-] as const;
-export type ImageScaleType = (typeof scaleTypeList)[number];
-
-const _backgroundTypeList = ['color', 'image', 'video', 'sound'] as const;
-export type BackgroundType = (typeof _backgroundTypeList)[number];
-export type BackgroundDataType = {
-    src: string | null;
-    scaleType?: ImageScaleType;
-    extraStyle?: React.CSSProperties;
-};
-export type BackgroundSrcType = {
-    type: BackgroundType;
-    src: string;
-    width?: number;
-    height?: number;
-    scaleType?: ImageScaleType;
-    extraStyle?: React.CSSProperties;
-};
-export type BackgroundSrcListType = {
-    [key: string]: BackgroundSrcType;
-};
-
-export type AlertDataType = {
-    marqueeData: {
-        text: string;
-    } | null;
-    countdownData: {
-        dateTime: Date;
-        extraStyle: React.CSSProperties;
-    } | null;
-    cameraData: {
-        id: string;
-        extraStyle: React.CSSProperties;
-    } | null;
-};
-export type AlertSrcListType = {
-    [key: string]: AlertDataType;
-};
-
-export type VaryAppDocumentItemScreenDataType = {
-    filePath: string;
-    itemJson: VaryAppDocumentItemDataType;
-};
-export type AppDocumentListType = {
-    [key: string]: VaryAppDocumentItemScreenDataType;
-};
-
-export type BoundsType = {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-};
-export type DisplayType = {
-    id: number;
-    bounds: BoundsType;
-};
-export type AllDisplayType = {
-    primaryDisplay: DisplayType;
-    displays: DisplayType[];
-};
-
-export const screenTypeList = [
-    'background',
-    'vary-app-document',
-    'bible-screen-view',
-    'bible-screen-view-scroll',
-    'bible-screen-view-text-style',
-    'alert',
-    'bible-screen-view-selected-index',
-    'display-change',
-    'visible',
-    'init',
-    'effect',
-] as const;
-export type ScreenType = (typeof screenTypeList)[number];
-export type BasicScreenMessageType = {
-    type: ScreenType;
-    data: any;
-};
-export type ScreenMessageType = BasicScreenMessageType & {
-    screenId: number;
-};
+import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useScreenUpdateEvents } from './managers/screenManagerHooks';
+import {
+    ImageScaleType,
+    AllDisplayType,
+    ForegroundSrcListType,
+    BackgroundSrcListType,
+    BibleListType,
+    bibleDataTypeList,
+    SetDisplayType,
+    ShowScreenDataType,
+} from './screenTypeHelpers';
 
 const messageUtils = appProvider.messageUtils;
 
@@ -184,10 +82,6 @@ export function calMediaSizes(
     };
 }
 
-type SetDisplayType = {
-    screenId: number;
-    displayId: number;
-};
 export function setDisplay({ screenId, displayId }: SetDisplayType) {
     messageUtils.sendData('main:app:set-screen-display', {
         screenId,
@@ -202,10 +96,6 @@ export function getAllDisplays(): AllDisplayType {
     return messageUtils.sendDataSync('main:app:get-displays');
 }
 
-type ShowScreenDataType = {
-    screenId: number;
-    displayId: number;
-};
 export function showScreen({ screenId, displayId }: SetDisplayType) {
     return electronSendAsync<void>('main:app:show-screen', {
         screenId,
@@ -221,11 +111,6 @@ export function hideAllScreens() {
     messageUtils.sendData('app:hide-all-screens');
 }
 
-export type PTEffectDataType = {
-    target: TargetType;
-    effect: ScreenTransitionEffectType;
-};
-
 export function genScreenMouseEvent(event?: any): MouseEvent {
     if (event) {
         return event;
@@ -238,31 +123,13 @@ export function genScreenMouseEvent(event?: any): MouseEvent {
     return createMouseEvent(0, 0);
 }
 
-export function getAlertDataListOnScreenSetting(): AlertSrcListType {
-    const string = getSetting(screenManagerSettingNames.ALERT, '');
+export function getForegroundDataListOnScreenSetting(): ForegroundSrcListType {
+    const string = getSetting(screenManagerSettingNames.FOREGROUND) ?? '';
     try {
         if (!isValidJson(string, true)) {
             return {};
         }
         const json = JSON.parse(string);
-        Object.values(json).forEach((item: any) => {
-            const { countdownData } = item;
-            if (
-                !(
-                    item.marqueeData === null ||
-                    typeof item.marqueeData.text === 'string'
-                ) ||
-                !(
-                    countdownData === null ||
-                    typeof countdownData.dateTime === 'string'
-                )
-            ) {
-                throw new Error('Invalid alert data');
-            }
-            if (countdownData?.dateTime) {
-                countdownData.dateTime = new Date(countdownData.dateTime);
-            }
-        });
         return getValidOnScreen(json);
     } catch (error) {
         handleError(error);
@@ -271,7 +138,7 @@ export function getAlertDataListOnScreenSetting(): AlertSrcListType {
 }
 
 export function getBackgroundSrcListOnScreenSetting(): BackgroundSrcListType {
-    const str = getSetting(screenManagerSettingNames.BACKGROUND, '');
+    const str = getSetting(screenManagerSettingNames.BACKGROUND) ?? '';
     if (isValidJson(str, true)) {
         const json = JSON.parse(str);
         const items = Object.values(json);
@@ -305,7 +172,7 @@ const validateBible = ({ renderedList, bibleItem }: any) => {
 };
 
 export function getBibleListOnScreenSetting(): BibleListType {
-    const str = getSetting(screenManagerSettingNames.FULL_TEXT, '');
+    const str = getSetting(screenManagerSettingNames.FULL_TEXT) ?? '';
     try {
         if (!isValidJson(str, true)) {
             return {};
@@ -369,4 +236,22 @@ export function addPlayToBottom(div: HTMLDivElement) {
     target.style.bottom = '0px';
     div.appendChild(target);
     applyPlayToBottom(target);
+}
+
+export function useFileSourceIsOnScreen(
+    filePaths: string[],
+    checkIsOnScreen: (filePaths: string[]) => Promise<boolean>,
+    onUpdate?: (isOnScreen: boolean) => void,
+) {
+    const [isOnScreen, setIsOnScreen] = useAppStateAsync(async () => {
+        const isOnScreen = await checkIsOnScreen(filePaths);
+        onUpdate?.(isOnScreen);
+        return isOnScreen;
+    }, [filePaths]);
+    useScreenUpdateEvents(undefined, async () => {
+        const isOnScreen = await checkIsOnScreen(filePaths);
+        onUpdate?.(isOnScreen);
+        setIsOnScreen(isOnScreen);
+    });
+    return isOnScreen ?? false;
 }

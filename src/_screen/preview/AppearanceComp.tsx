@@ -13,30 +13,9 @@ export default function AppearanceComp() {
     return (
         <div>
             <span className="p-">
-                Font Size{' '}
+                Font Size:{' '}
                 <span className="badge bg-success">({fontSize}px)</span>
             </span>
-            -
-            <div className="btn-group control">
-                <button
-                    className="btn btn-sm btn-info"
-                    type="button"
-                    onClick={() => {
-                        setFontSize(fontSize - 1);
-                    }}
-                >
-                    {'<'}
-                </button>
-                <button
-                    className="btn btn-sm btn-info"
-                    type="button"
-                    onClick={() => {
-                        setFontSize(fontSize + 1);
-                    }}
-                >
-                    {'>'}
-                </button>
-            </div>
             <input
                 className="float-end app-caught-hover-pointer"
                 type="color"
@@ -78,7 +57,7 @@ function PdfAppearanceSettingComp() {
     };
     return (
         <div className="d-flex">
-            <small>PDF Setting:</small>
+            <small>`PDF Setting:</small>
             <div>
                 <div className="btn-group" role="group">
                     <input
@@ -95,7 +74,7 @@ function PdfAppearanceSettingComp() {
                         className="btn btn-outline-info"
                         htmlFor="setting-not-full-width"
                     >
-                        Not Full Width
+                        `Not Full Width
                     </label>
                     <input
                         type="radio"
@@ -111,7 +90,7 @@ function PdfAppearanceSettingComp() {
                         className="btn btn-outline-info"
                         htmlFor="setting-full-width"
                     >
-                        Full Width
+                        `Full Width
                     </label>
                 </div>
             </div>

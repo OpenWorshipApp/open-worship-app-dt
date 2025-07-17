@@ -1,8 +1,5 @@
-import { OptionalPromise } from '../others/otherHelpers';
-import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
+import { OptionalPromise } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
-import { getSelectedVaryAppDocument } from '../app-document-list/appDocumentHelpers';
-import AppDocument from '../app-document-list/AppDocument';
 
 export type TabOptionType = {
     title: React.ReactNode;
@@ -16,7 +13,7 @@ export enum WindowModEnum {
     reader = 2,
 }
 
-function toTitleExternal(title: string, style?: React.CSSProperties) {
+export function toTitleExternal(title: string, style?: React.CSSProperties) {
     return (
         <span style={style}>
             {title + ' '}
@@ -25,21 +22,6 @@ function toTitleExternal(title: string, style?: React.CSSProperties) {
     );
 }
 
-export const editorTab: TabOptionType = {
-    title: toTitleExternal('Editor'),
-    routePath: appProvider.editorHomePage,
-    preCheck: async () => {
-        const varyAppDocument = await getSelectedVaryAppDocument();
-        if (!AppDocument.checkIsThisType(varyAppDocument)) {
-            showAppAlert(
-                'No slide selected',
-                'Please select an Open Worship slide first',
-            );
-            return false;
-        }
-        return true;
-    },
-};
 export const presenterTab: TabOptionType = {
     title: toTitleExternal('Presenter', {
         color: 'var(--app-color-presenter)',
@@ -47,9 +29,16 @@ export const presenterTab: TabOptionType = {
     routePath: appProvider.presenterHomePage,
 };
 export const readerTab: TabOptionType = {
-    title: toTitleExternal('Reader', {
-        color: 'var(--app-color-reader)',
-    }),
+    title: (
+        <span
+            style={{
+                color: 'var(--app-color-reader)',
+            }}
+        >
+            <i className="bi bi-book px-1" />
+            {toTitleExternal('Bible Reader')}
+        </span>
+    ),
     routePath: appProvider.readerHomePage,
 };
 export const experimentTab: TabOptionType = {
@@ -57,8 +46,21 @@ export const experimentTab: TabOptionType = {
     routePath: appProvider.experimentHomePage,
 };
 
-export function goToPath(pathname: string) {
+const PATH_NAME_SETTING_NAME = 'last-page-location';
+export function goToPath(pathname?: string) {
+    if (!pathname) {
+        pathname =
+            window.localStorage.getItem(PATH_NAME_SETTING_NAME) ||
+            appProvider.presenterHomePage;
+    }
+    if (pathname.startsWith(appProvider.currentHomePage)) {
+        pathname = appProvider.presenterHomePage;
+    }
     const url = new URL(window.location.href);
     url.pathname = pathname;
+    window.localStorage.setItem(
+        PATH_NAME_SETTING_NAME,
+        appProvider.currentHomePage,
+    );
     window.location.href = url.href;
 }

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { startTransition, useOptimistic, useRef } from 'react';
 
 import { createMouseEvent } from '../../context-menu/appContextMenuHelpers';
 import { AppColorType } from './colorHelpers';
@@ -11,7 +11,7 @@ export default function SelectCustomColor({
     onColorSelected: (color: AppColorType, event: MouseEvent) => void;
 }>) {
     const inputRef = useRef<HTMLInputElement>(null);
-    const [localColor, setLocalColor] = useState(
+    const [localColor, setLocalColor] = useOptimistic(
         (color || '#ffffff').substring(0, 7) as AppColorType,
     );
     const applyColor = (newColor: AppColorType) => {
@@ -27,7 +27,7 @@ export default function SelectCustomColor({
     };
     return (
         <>
-            <span>Mix Color: </span>
+            <span>`Mix Color: </span>
             <input
                 ref={inputRef}
                 title="Select custom color"
@@ -43,7 +43,9 @@ export default function SelectCustomColor({
                     applyColor(localColor);
                 }}
                 onChange={(event) => {
-                    setLocalColor(event.target.value as any);
+                    startTransition(() => {
+                        setLocalColor(event.target.value as any);
+                    });
                 }}
             />
         </>

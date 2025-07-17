@@ -1,4 +1,4 @@
-import { LanguageDataType, LocaleType } from '../lang';
+import { LanguageDataType, LocaleType } from '../lang/langHelpers';
 import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
 
 export type BibleRenderVerseType = {

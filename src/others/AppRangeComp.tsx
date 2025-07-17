@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export type AppRangeDefaultType = {
     size: number;
@@ -48,8 +48,13 @@ export function handleCtrlWheel({
     setValue(newValue);
 }
 
-function roundSize(value: number, defaultSize: AppRangeDefaultType) {
-    return Math.min(defaultSize.max, Math.max(defaultSize.min, value));
+function roundSize(
+    value: number,
+    defaultSize: AppRangeDefaultType,
+    fixedSize: number,
+): number {
+    value = Math.min(defaultSize.max, Math.max(defaultSize.min, value));
+    return parseFloat(value.toFixed(fixedSize));
 }
 
 export default function AppRangeComp({
@@ -67,9 +72,14 @@ export default function AppRangeComp({
     defaultSize: AppRangeDefaultType;
     isShowValue?: boolean;
 }>) {
-    const [localValue, setLocalValue] = useState(roundSize(value, defaultSize));
+    const fixedSize = useMemo(() => {
+        return (defaultSize.step.toString().split('.')[1] || '').length;
+    }, [defaultSize]);
+    const [localValue, setLocalValue] = useState(
+        roundSize(value, defaultSize, fixedSize),
+    );
     const setLocalValue1 = (newValue: number) => {
-        newValue = roundSize(newValue, defaultSize);
+        newValue = roundSize(newValue, defaultSize, fixedSize);
         setLocalValue(newValue);
         setValue(newValue);
     };

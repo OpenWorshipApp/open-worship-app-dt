@@ -105,7 +105,7 @@ export function getFlexSizeSetting(
     defaultSize: FlexSizeType,
 ): FlexSizeType {
     const settingString = toSettingString(flexSizeName);
-    const str = getSetting(settingString, '');
+    const str = getSetting(settingString) ?? '';
     try {
         if (isValidJson(str, true)) {
             const size = JSON.parse(str);

@@ -10,6 +10,8 @@ type RenderMarkdownOptions = {
     isDisablePointerEvents?: boolean;
     theme?: string;
     fontFamily?: string;
+    fontWeight?: string;
+    scale?: number;
 };
 function wrapHTML({
     html,
@@ -59,17 +61,19 @@ function wrapHTML({
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                transform: scale(3);
                 user-select: none !important;
                 `
                     : ''
             }
+            ${options.scale ? `transform: scale(${options.scale});` : ''}
             width: 100vw;
             height: 100vh;
             overflow: auto;
         }
         * {
             font-family: ${options.fontFamily}, "Arial", sans-serif;
+            font-weight: ${options.fontWeight};
+            margin: 0.05em !important;
         }
         ${
             options.isDisablePointerEvents
@@ -98,8 +102,9 @@ export type HTMLDataType = {
     html: string;
 };
 
-const cacher = new CacheManager<HTMLDataType>(10); // 10 second
-export async function renderMarkdown(
+export const markdownCacheManager = new CacheManager<HTMLDataType>(10); // 10 second
+
+export async function renderMarkdownMusic(
     text: string,
     options?: RenderMarkdownOptions,
 ) {
@@ -110,12 +115,13 @@ export async function renderMarkdown(
         };
     }
     const hashKey = appProvider.systemUtils.generateMD5(text);
-    return unlocking(`markdown-${hashKey}`, async () => {
-        const cached = await cacher.get(hashKey);
+    return unlocking(`markdown-music-${hashKey}`, async () => {
+        const cached = await markdownCacheManager.get(hashKey);
         if (cached) {
             return cached;
         }
         const MarkdownIt = (await import('markdown-it')).default;
+        // @ts-expect-error: ts(7016)
         const MarkdownItMusic = (await import('markdown-it-music')).default;
         const markdown = new MarkdownIt({ html: true }).use(MarkdownItMusic);
         if (options?.theme) {
@@ -136,12 +142,46 @@ export async function renderMarkdown(
             });
         }
         const data = { id: hashKey, html };
-        await cacher.set(hashKey, data);
+        await markdownCacheManager.set(hashKey, data);
         return data;
     });
 }
 
-export async function renderLyricSlideMarkdownTextList(lyric: Lyric) {
+export async function renderMarkdown(
+    text: string,
+    options?: RenderMarkdownOptions,
+) {
+    if (!text) {
+        return {
+            id: '',
+            html: '',
+        };
+    }
+    const hashKey = appProvider.systemUtils.generateMD5(text);
+    return unlocking(`markdown-${hashKey}`, async () => {
+        const cached = await markdownCacheManager.get(hashKey);
+        if (cached) {
+            return cached;
+        }
+        const MarkdownIt = (await import('markdown-it')).default;
+        const markdown = new MarkdownIt({ html: true });
+        if (options?.theme) {
+            (markdown as any).setTheme(options.theme);
+        }
+        let html = '';
+        try {
+            html = markdown.render(text);
+        } catch (error) {
+            handleError(error);
+            html = `<pre>${text}</pre>`;
+        }
+        const data = { id: hashKey, html };
+        await markdownCacheManager.set(hashKey, data);
+        return data;
+    });
+}
+
+export async function renderLyricSlideMarkdownMusicTextList(lyric: Lyric) {
     const content = await lyric.getContent();
     const contentList = content.split('---\n').map((item) => {
         return item.trim();
@@ -149,11 +189,12 @@ export async function renderLyricSlideMarkdownTextList(lyric: Lyric) {
     return contentList;
 }
 
-export async function renderLyricSlide(lyric: Lyric) {
+export async function renderLyricSlide(
+    lyric: Lyric,
+    options?: RenderMarkdownOptions,
+) {
     return unlocking(`lyric-slides-${lyric.filePath}`, async () => {
         const content = await lyric.getContent();
-        return await renderMarkdown(content, {
-            theme: 'dark',
-        });
+        return await renderMarkdownMusic(content, options);
     });
 }

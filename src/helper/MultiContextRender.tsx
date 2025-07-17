@@ -1,4 +1,4 @@
-import React, { Context } from 'react';
+import { Context } from 'react';
 
 export type ContextPairType<T> = {
     context: Context<T>;

@@ -1,0 +1,9 @@
+Mac
+> system_profiler -xml SPFontsDataType > fonts.xml
+Linux
+> fc-list or fc-list2
+Windows
+> cscript.exe .\extra-work\font\fonts.vbs
+> cscript.exe .\extra-work\font\fonts1.vbs
+> powershell.exe .\extra-work\font\list-fonts.ps1
+> powershell.exe .\extra-work\font\list-fonts1.ps1

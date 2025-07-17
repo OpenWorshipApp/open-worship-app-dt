@@ -50,7 +50,7 @@ export default function CustomStyleComp({
                     setActiveTab={setTabKey}
                 />
                 <div
-                    className="app-caught-hover-pointer"
+                    className="app-caught-hover-pointer m-1"
                     style={{ position: 'absolute', top: '0', right: '0' }}
                     onClick={onClose}
                 >

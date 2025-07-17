@@ -8,21 +8,23 @@ import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { editorTab, goToPath } from '../router/routeHelpers';
+import { goToPath } from '../router/routeHelpers';
 import { previewPdf } from '../server/appHelpers';
 import { removePdfImagesPreview } from '../helper/pdfHelpers';
-import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
 import {
-    VaryAppDocumentDynamicType,
     varyAppDocumentFromFilePath,
     useSelectedAppDocumentSetterContext,
     SelectedVaryAppDocumentContext,
-    VaryAppDocumentType,
     checkIsVaryAppDocumentOnScreen,
 } from './appDocumentHelpers';
 import PdfAppDocument from './PdfAppDocument';
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
+import { editorTab } from '../router/routeCompHelpers';
+import {
+    VaryAppDocumentDynamicType,
+    VaryAppDocumentType,
+} from './appDocumentTypeHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
@@ -149,10 +151,6 @@ export default function AppDocumentFileComp({
         return null;
     };
     const handleRenaming = async (newFileSource: FileSource) => {
-        await EditingHistoryManager.moveFilePath(
-            filePath,
-            newFileSource.filePath,
-        );
         if (isSelected) {
             const newVaryAppDocument = varyAppDocumentFromFilePath(
                 newFileSource.filePath,

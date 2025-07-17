@@ -28,3 +28,6 @@ Default.owb
 test.db
 experiment/bm25.exe
 experiment/bm25.pdb
+
+.env
+

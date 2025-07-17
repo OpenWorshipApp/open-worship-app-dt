@@ -26,7 +26,7 @@ import {
 import { openSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerComp';
 import { showSimpleToast } from '../toast/toastHelpers';
 import AppDocument, { WrongDimensionType } from './AppDocument';
-import Slide, { SlideType } from './Slide';
+import Slide from './Slide';
 import { DroppedFileType } from '../others/droppingFileHelpers';
 import {
     hideProgressBard,
@@ -38,23 +38,21 @@ import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import PdfAppDocument from './PdfAppDocument';
 import { createContext, use, useState } from 'react';
-import { DisplayType } from '../_screen/screenHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import PdfSlide, { PdfSlideType } from './PdfSlide';
+import PdfSlide from './PdfSlide';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
-
-export const MIN_THUMBNAIL_SCALE = 1;
-export const THUMBNAIL_SCALE_STEP = 1;
-export const MAX_THUMBNAIL_SCALE = 10;
-export const DEFAULT_THUMBNAIL_SIZE_FACTOR = 1000 / MAX_THUMBNAIL_SCALE;
-export const THUMBNAIL_WIDTH_SETTING_NAME = 'presenter-item-thumbnail-size';
-
-export type VaryAppDocumentType = AppDocument | PdfAppDocument;
-export type VaryAppDocumentItemType = Slide | PdfSlide;
-export type VaryAppDocumentItemDataType = SlideType | PdfSlideType;
-export type VaryAppDocumentDynamicType = VaryAppDocumentType | null | undefined;
+import {
+    checkSelectedFilePathExist,
+    getSelectedFilePath,
+    setSelectedFilePath,
+} from '../others/selectedHelpers';
+import { DisplayType } from '../_screen/screenTypeHelpers';
+import {
+    VaryAppDocumentType,
+    VaryAppDocumentItemType,
+} from './appDocumentTypeHelpers';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -288,7 +286,7 @@ export async function convertOfficeFile(
 
 export async function selectSlide(event: any, currentFilePath: string) {
     const dirSource = await DirSource.getInstance(
-        dirSourceSettingNames.DOCUMENT,
+        dirSourceSettingNames.APP_DOCUMENT,
     );
     const newFilePaths = await dirSource.getFilePaths('appDocument');
     if (!newFilePaths?.length) {
@@ -435,25 +433,19 @@ const SELECTED_APP_DOCUMENT_SETTING_NAME = 'selected-vary-app-document';
 const SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME =
     SELECTED_APP_DOCUMENT_SETTING_NAME + '-item';
 
-async function checkSelectedFilePathExist(filePath: string) {
-    if (!filePath || !(await fsCheckFileExist(filePath))) {
-        setSelectedVaryAppDocumentFilePath(null);
-        return false;
-    }
-    return true;
-}
-
 export async function getSelectedVaryAppDocumentFilePath() {
-    const selectedFilePath = getSetting(SELECTED_APP_DOCUMENT_SETTING_NAME, '');
-    const isValid = await checkSelectedFilePathExist(selectedFilePath);
-    if (!isValid) {
-        return null;
-    }
-    return selectedFilePath;
+    return await getSelectedFilePath(
+        SELECTED_APP_DOCUMENT_SETTING_NAME,
+        dirSourceSettingNames.APP_DOCUMENT,
+    );
 }
 
 export function setSelectedVaryAppDocumentFilePath(filePath: string | null) {
-    setSetting(SELECTED_APP_DOCUMENT_SETTING_NAME, filePath ?? '');
+    setSelectedFilePath(
+        SELECTED_APP_DOCUMENT_SETTING_NAME,
+        dirSourceSettingNames.APP_DOCUMENT,
+        filePath,
+    );
 }
 
 export async function getSelectedVaryAppDocument() {
@@ -472,12 +464,17 @@ export async function setSelectedVaryAppDocument(
 }
 
 export async function getSelectedEditingSlideFilePath() {
-    const selectedKey = getSetting(SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME, '');
+    const selectedKey =
+        getSetting(SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME) ?? '';
     const [filePath, idString] = selectedKey.split(KEY_SEPARATOR);
     const selectedAppDocument = await getSelectedVaryAppDocument();
     const isValid =
         AppDocument.checkIsThisType(selectedAppDocument) &&
-        (await checkSelectedFilePathExist(filePath)) &&
+        (await checkSelectedFilePathExist(
+            SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME,
+            dirSourceSettingNames.APP_DOCUMENT,
+            filePath,
+        )) &&
         selectedAppDocument.filePath === filePath;
     if (!isValid) {
         return null;

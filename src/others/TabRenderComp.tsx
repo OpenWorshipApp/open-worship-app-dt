@@ -1,10 +1,10 @@
 import { LazyExoticComponent, useMemo } from 'react';
 
-import { tran } from '../lang';
+import { tran } from '../lang/langHelpers';
 import AppSuspenseComp from './AppSuspenseComp';
-import { OptionalPromise } from './otherHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
+import { OptionalPromise } from '../helper/typeHelpers';
 
 export type TabHeaderPropsType<T> = {
     key: T;

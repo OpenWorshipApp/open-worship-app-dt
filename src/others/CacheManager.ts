@@ -67,6 +67,17 @@ export default class CacheManager<T> {
             this.setSync(key, value);
         });
     }
+
+    deleteSync(key: string): void {
+        this.cache.delete(key);
+    }
+
+    async delete(key: string): Promise<void> {
+        await this.unlocking(key, async () => {
+            this.deleteSync(key);
+        });
+    }
+
     clear(): void {
         this.cache.clear();
     }

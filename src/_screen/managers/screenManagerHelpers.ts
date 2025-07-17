@@ -7,6 +7,7 @@ import {
     saveScreenManagersSetting,
     cache,
     setScreenManagerBaseCache,
+    getScreenManagerBase,
 } from './screenManagerBaseHelpers';
 
 export function screenManagerFromBase(
@@ -19,6 +20,18 @@ export function screenManagerFromBase(
         return null;
     }
     return screenManagerBase;
+}
+
+export function getScreenManagerByScreenId(screenId: number) {
+    return screenManagerFromBase(getScreenManagerBase(screenId));
+}
+
+export function getScreenManagerByKey(screenKey: string) {
+    const screenId = ScreenManagerBase.idFromKey(screenKey);
+    if (screenId === null) {
+        return null;
+    }
+    return getScreenManagerByScreenId(screenId);
 }
 
 function screenManagersFromBases(screenManagerBases: ScreenManagerBase[]) {
@@ -34,9 +47,10 @@ export function initNewScreenManager(screenId: number) {
         return item.screenId === screenId;
     });
     if (instanceSetting) {
-        screenManager._isSelected = instanceSetting.isSelected;
-        screenManager._isLocked = instanceSetting.isLocked;
-        screenManager.colorNote = instanceSetting.colorNote;
+        screenManager._isSelected = !!instanceSetting.isSelected;
+        screenManager._isLocked = !!instanceSetting.isLocked;
+        screenManager._stageNumber = instanceSetting.stageNumber ?? 0;
+        screenManager.colorNote = instanceSetting.colorNote ?? null;
     }
     return screenManager;
 }

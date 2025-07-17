@@ -2,33 +2,14 @@ import { useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import ScreenEffectManager from './managers/ScreenEffectManager';
+import { StyleAnimType, PTFEventType } from './screenTypeHelpers';
 
 const ZOOM_CONTAINER_CLASS = 'zoom-container';
+export const ANIM_END_DELAY_MILLISECOND = 500;
 
 function checkIsZoomContainer(targetElement: HTMLElement): boolean {
     return targetElement.classList.contains(ZOOM_CONTAINER_CLASS);
 }
-
-export type StyleAnimType = {
-    style: string;
-    animIn: (
-        targetElement: HTMLElement,
-        parentElement: HTMLElement,
-    ) => Promise<void>;
-    animOut: (targetElement: HTMLElement) => Promise<void>;
-    duration: number;
-};
-
-export const transitionEffect = {
-    none: ['bi bi-asterisk'],
-    fade: ['bi bi-fullscreen-exit'],
-    move: ['bi bi-align-end'],
-    zoom: ['bi bi-arrows-fullscreen'],
-} as const;
-export type ScreenTransitionEffectType = keyof typeof transitionEffect;
-export type PTFEventType = 'update';
-export const targetList = ['background', 'vary-app-document'] as const;
-export type TargetType = (typeof targetList)[number];
 
 const easingFunctions = {
     linear: (k: number) => {
@@ -54,20 +35,6 @@ export type GenAnimPropsType = {
     height?: number;
 };
 
-function none(): StyleAnimType {
-    return {
-        style: '',
-        animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
-            parentElement.appendChild(targetElement);
-            return Promise.resolve();
-        },
-        animOut: () => {
-            return Promise.resolve();
-        },
-        duration: 0,
-    };
-}
-
 function genCssProps(duration: number) {
     const cssProps: React.CSSProperties = {
         animationDuration: `${Math.ceil(duration / 1000)}s`,
@@ -76,12 +43,11 @@ function genCssProps(duration: number) {
     return cssProps;
 }
 
-function fade(target: TargetType) {
-    const animationNameIn = `${target}-animation-fade-in`;
-    const animationNameOut = `${target}animation-fade-out`;
-    const anim: StyleAnimType = {
-        duration: 1000,
-        style: `
+function fade(prefix: string) {
+    const uniqueId = crypto.randomUUID();
+    const animationNameIn = `${prefix}-animation-fade-${uniqueId}-in`;
+    const animationNameOut = `${prefix}-animation-fade-${uniqueId}-out`;
+    const styleText = `
             @keyframes ${animationNameIn} {
                 from {
                     opacity: 0;
@@ -98,16 +64,23 @@ function fade(target: TargetType) {
                     opacity: 0;
                 }
             }
-        `,
+        `;
+    const anim: StyleAnimType = {
+        duration: 1000,
+        styleText,
         animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
             return new Promise((resolve) => {
+                parentElement.appendChild(targetElement);
                 Object.assign(targetElement.style, {
                     ...genCssProps(anim.duration),
                     animationName: animationNameIn,
                     opacity: 0,
                 });
                 parentElement.appendChild(targetElement);
-                setTimeout(resolve, anim.duration + 100);
+                setTimeout(() => {
+                    targetElement.style.opacity = '1';
+                    resolve();
+                }, anim.duration + ANIM_END_DELAY_MILLISECOND);
             });
         },
         animOut: (targetElement: HTMLElement) => {
@@ -118,8 +91,12 @@ function fade(target: TargetType) {
                 Object.assign(targetElement.style, {
                     ...genCssProps(anim.duration),
                     animationName: animationNameOut,
+                    opacity: 1,
                 });
-                setTimeout(resolve, anim.duration + 100);
+                setTimeout(() => {
+                    targetElement.style.opacity = '0';
+                    resolve();
+                }, anim.duration + ANIM_END_DELAY_MILLISECOND);
             });
         },
     };
@@ -159,7 +136,7 @@ function move() {
     };
     const anim: StyleAnimType = {
         duration: 500,
-        style: '',
+        styleText: '',
         animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
             return new Promise<void>((resolve) => {
                 parentElement.appendChild(targetElement);
@@ -210,18 +187,17 @@ function move() {
     return anim;
 }
 
-function zoom(target: TargetType): StyleAnimType {
-    const animationNameIn = `${target}-animation-zoom-in`;
-    const animationNameOut = `${target}animation-zoom-out`;
+function zoom(prefix: string): StyleAnimType {
+    const uniqueId = crypto.randomUUID();
+    const animationNameIn = `${prefix}-animation-zoom-${uniqueId}-in`;
+    const animationNameOut = `${prefix}-animation-zoom-${uniqueId}-out`;
     const createDiv = (targetElement: HTMLElement) => {
         const div = document.createElement('div');
         div.classList.add('zoom-container');
         div.appendChild(targetElement);
         return div;
     };
-    const anim: StyleAnimType = {
-        duration: 500,
-        style: `
+    const styleText = `
             .zoom-container {
                 position: absolute;
                 left: 0;
@@ -249,7 +225,10 @@ function zoom(target: TargetType): StyleAnimType {
                     transform: scale(0.1);
                 }
             }
-        `,
+        `;
+    const anim: StyleAnimType = {
+        duration: 500,
+        styleText,
         animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
             return new Promise((resolve) => {
                 const div = createDiv(targetElement);
@@ -260,7 +239,13 @@ function zoom(target: TargetType): StyleAnimType {
                     transform: 'scale(0.1)',
                 });
                 parentElement.appendChild(div);
-                setTimeout(resolve, anim.duration + 100);
+                setTimeout(() => {
+                    Object.assign(div.style, {
+                        opacity: 1,
+                        transform: 'scale(1)',
+                    });
+                    resolve();
+                }, anim.duration + ANIM_END_DELAY_MILLISECOND);
             });
         },
         animOut: (targetElement: HTMLElement) => {
@@ -271,18 +256,23 @@ function zoom(target: TargetType): StyleAnimType {
                 Object.assign(targetElement.style, {
                     ...genCssProps(anim.duration),
                     animationName: animationNameOut,
+                    opacity: 1,
+                    transform: 'scale(1)',
                 });
-                setTimeout(resolve, anim.duration + 100);
+                setTimeout(() => {
+                    Object.assign(targetElement.style, {
+                        opacity: 0,
+                        transform: 'scale(0.1)',
+                    });
+                    resolve();
+                }, anim.duration + ANIM_END_DELAY_MILLISECOND);
             });
         },
     };
     return anim;
 }
 
-export const styleAnimList: {
-    [key: string]: (_: TargetType) => StyleAnimType;
-} = {
-    none,
+export const styleAnimList = {
     fade,
     move,
     zoom,

@@ -28,7 +28,9 @@ export default function BibleCrossReferentPreviewerComp() {
             });
             setBileItem(newBibleItem);
         };
-        viewController.setBibleVerseKey(viewController.bibleVerseKey);
+        viewController.setBibleVerseKey(
+            viewController.bibleCrossReferenceVerseKey,
+        );
         return () => {
             viewController.setBibleVerseKey = (_: string) => {};
         };
@@ -41,5 +43,7 @@ export default function BibleCrossReferentPreviewerComp() {
             </div>
         );
     }
-    return <BibleRefRendererComp bibleItem={bileItem} />;
+    return (
+        <BibleRefRendererComp bibleItem={bileItem} setBibleItem={setBileItem} />
+    );
 }

@@ -10,7 +10,8 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { BackgroundSrcType } from '../_screen/screenHelpers';
+import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import VideoHeaderSettingComp from './VideoHeaderSettingComp';
 
 function rendChild(
     filePath: string,
@@ -59,6 +60,7 @@ function RendBody({
 export default function BackgroundVideosComp() {
     return (
         <BackgroundMediaComp
+            extraHeaderChild={<VideoHeaderSettingComp />}
             defaultFolderName={defaultDataDirNames.BACKGROUND_VIDEO}
             dragType={DragTypeEnum.BACKGROUND_VIDEO}
             rendChild={rendChild}

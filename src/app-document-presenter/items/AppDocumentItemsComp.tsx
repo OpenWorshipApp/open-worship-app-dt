@@ -19,12 +19,14 @@ import {
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import {
-    DEFAULT_THUMBNAIL_SIZE_FACTOR,
     useAnyItemSelected,
     useVaryAppDocumentContext,
-    VaryAppDocumentItemType,
 } from '../../app-document-list/appDocumentHelpers';
 import SlideAutoPlayComp from '../../slide-auto-play/SlideAutoPlayComp';
+import {
+    VaryAppDocumentItemType,
+    DEFAULT_THUMBNAIL_SIZE_FACTOR,
+} from '../../app-document-list/appDocumentTypeHelpers';
 
 const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};
@@ -48,16 +50,12 @@ function useAppDocumentItems() {
         [varyAppDocumentItems],
         { setVaryAppDocumentItems },
     );
-    const startLoading = () => {
-        setVaryAppDocumentItems(undefined);
+    const refresh = async () => {
+        const newVaryAppDocumentItems = await selectedAppDocument.getSlides();
+        setVaryAppDocumentItems(newVaryAppDocumentItems);
     };
 
-    useFileSourceEvents(
-        ['update'],
-        startLoading,
-        [],
-        selectedAppDocument.filePath,
-    );
+    useFileSourceEvents(['update'], refresh, [], selectedAppDocument.filePath);
 
     const arrows: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
     useKeyboardRegistering(
@@ -83,7 +81,12 @@ function useAppDocumentItems() {
         });
     }, [varyAppDocumentItems]);
 
-    return { varyAppDocumentItems, startLoading };
+    return {
+        varyAppDocumentItems,
+        startLoading: () => {
+            setVaryAppDocumentItems(undefined);
+        },
+    };
 }
 
 export default function AppDocumentItemsComp() {

@@ -4,7 +4,6 @@ import { EventMapper, toShortcutKey } from '../event/KeyboardEventListener';
 import {
     ContextMenuItemType,
     setPositionMenu,
-    contextControl,
     useAppContextMenuData,
     APP_CONTEXT_MENU_ITEM_CLASS,
     APP_CONTEXT_MENU_ID,
@@ -16,8 +15,10 @@ export const elementDivider = (
 
 function ContextMenuItemComp({
     item,
+    onClose,
 }: Readonly<{
     item: ContextMenuItemType;
+    onClose: () => void;
 }>) {
     if (item.menuElement === elementDivider) {
         return item.menuElement;
@@ -34,11 +35,15 @@ function ContextMenuItemComp({
                 (typeof item.menuElement === 'string' ? item.menuElement : '')
             }
             onClick={(event) => {
-                if (item.disabled) {
+                event.preventDefault();
+                event.stopPropagation();
+                const { onSelect } = item;
+                if (item.disabled || onSelect === undefined) {
                     return;
                 }
                 setTimeout(() => {
-                    item.onSelect?.(event as any);
+                    onClose();
+                    onSelect(event as any);
                 }, 0);
             }}
         >
@@ -57,9 +62,11 @@ export default function AppContextMenuComp() {
     return (
         <div
             id={APP_CONTEXT_MENU_ID}
-            onClick={(event) => {
-                event.stopPropagation();
-                contextControl.setDataDelegator?.(null);
+            onClick={() => {
+                data.onClose();
+            }}
+            onContextMenu={() => {
+                data.onClose();
             }}
         >
             <div
@@ -73,7 +80,13 @@ export default function AppContextMenuComp() {
                 className="app-context-menu app-focusable"
             >
                 {data.items.map((item, i) => {
-                    return <ContextMenuItemComp key={i} item={item} />;
+                    return (
+                        <ContextMenuItemComp
+                            key={i}
+                            item={item}
+                            onClose={data.onClose}
+                        />
+                    );
                 })}
             </div>
         </div>

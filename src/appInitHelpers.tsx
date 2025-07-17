@@ -9,19 +9,15 @@ import {
     PlatformEnum,
     useKeyboardRegistering,
 } from './event/KeyboardEventListener';
-import { getAllLocalBibleInfoList } from './helper/bible-helpers/bibleDownloadHelpers';
 import { handleError } from './helper/errorHelpers';
 import FileSourceMetaManager from './helper/FileSourceMetaManager';
 import {
     getCurrentLangAsync,
-    getLangAsync,
-    defaultLocale,
     getCurrentLocale,
     getFontFamily,
-} from './lang';
+} from './lang/langHelpers';
 import appProvider from './server/appProvider';
 import initCrypto from './_owa-crypto';
-import { useCheckSelectedDir } from './setting/directory-setting/directoryHelpers';
 import { createRoot } from 'react-dom/client';
 import { StrictMode } from 'react';
 import { getSetting, setSetting } from './helper/settingHelpers';
@@ -33,13 +29,41 @@ import {
 import {
     handleClassNameAction,
     handleFullWidgetView,
-    onDomChange,
+    addDomChangeEventListener,
+    HoverMotionHandler,
+    InputContextMenuHandler,
 } from './helper/domHelpers';
 import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
 import { unlocking } from './server/unlockingHelpers';
+import {
+    checkDecidedBibleReaderHomePage,
+    checkForUpdateSilently,
+} from './server/appHelpers';
+import { useAppEffectAsync } from './helper/debuggerHelpers';
+import { goToGeneralSetting } from './setting/settingHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
+
+function useCheckSetting() {
+    useAppEffectAsync(async () => {
+        if (
+            !appProvider.isPageSetting &&
+            !(await appLocalStorage.getSelectedParentDirectory())
+        ) {
+            const isOk = await showAppConfirm(
+                '`No Parent Directory Selected',
+                '`You will be redirected to the General Settings page to ' +
+                    'select a parent directory.',
+            );
+            if (isOk) {
+                goToGeneralSetting();
+            }
+            return;
+        }
+        checkDecidedBibleReaderHomePage();
+    }, []);
+}
 
 async function confirmLocalStorageErasing() {
     const isOk = await showAppConfirm(
@@ -48,7 +72,7 @@ async function confirmLocalStorageErasing() {
             ' storage and reload the app',
     );
     if (isOk) {
-        appLocalStorage.clear();
+        await appLocalStorage.clear();
     }
     appProvider.reload();
 }
@@ -100,15 +124,10 @@ export async function initApp() {
     };
 
     await initCrypto();
-    const localBibleInfoList = await getAllLocalBibleInfoList();
     const promises = [
         FileSourceMetaManager.checkAllColorNotes(),
         getCurrentLangAsync(),
-        getLangAsync(defaultLocale),
     ];
-    for (const bibleInfo of localBibleInfoList) {
-        promises.push(getLangAsync(bibleInfo.locale));
-    }
     await Promise.all(promises);
 }
 
@@ -152,7 +171,7 @@ export function RenderApp({
     children: React.ReactNode;
 }>) {
     useQuickExitBlock();
-    useCheckSelectedDir();
+    useCheckSetting();
     return (
         <div id="app" className="dark" data-bs-theme="dark">
             <StrictMode>{children}</StrictMode>
@@ -162,9 +181,19 @@ export function RenderApp({
 
 export async function main(children: React.ReactNode) {
     await initApp();
-    onDomChange(applyFontFamily);
-    onDomChange(handleFullWidgetView);
-    onDomChange(
+    const hoverMotionHandler = new HoverMotionHandler();
+    addDomChangeEventListener(
+        hoverMotionHandler.listenForHoverMotion.bind(hoverMotionHandler),
+    );
+    const inputContextMenuHandler = new InputContextMenuHandler();
+    addDomChangeEventListener(
+        inputContextMenuHandler.listenForInputContextMenu.bind(
+            inputContextMenuHandler,
+        ),
+    );
+    addDomChangeEventListener(applyFontFamily);
+    addDomChangeEventListener(handleFullWidgetView);
+    addDomChangeEventListener(
         handleClassNameAction.bind(
             null,
             HIGHLIGHT_SELECTED_CLASSNAME,
@@ -182,4 +211,6 @@ export async function main(children: React.ReactNode) {
     const root = createRoot(container);
 
     root.render(<RenderApp>{children}</RenderApp>);
+
+    setTimeout(checkForUpdateSilently, 60000);
 }

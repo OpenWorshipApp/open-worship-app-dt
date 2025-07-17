@@ -5,10 +5,11 @@ import { ReactElement, useState } from 'react';
 import KeyboardEventListener, {
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
-import { getWindowDim, genSelectedTextContextMenus } from '../helper/helpers';
+import { getWindowDim } from '../helper/helpers';
 import WindowEventListener from '../event/WindowEventListener';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import { OptionalPromise } from '../others/otherHelpers';
+import { OptionalPromise } from '../helper/typeHelpers';
+import { genSelectedTextContextMenus } from '../helper/textSelectionHelpers';
 
 export type ContextMenuEventType = MouseEvent;
 export type ContextMenuItemType = {
@@ -31,11 +32,13 @@ export type OptionsType = {
     noKeystroke?: boolean;
     applyOnTab?: boolean;
     shouldHandleSelectedText?: boolean;
+    extraSelectedTextContextMenuItems?: ContextMenuItemType[];
 };
 
 export type PropsType = {
     event: MouseEvent;
     items: ContextMenuItemType[];
+    onClose: () => void;
     options?: OptionsType;
 };
 
@@ -114,7 +117,9 @@ export function showAppContextMenu(
 ): AppContextMenuControlType {
     event.stopPropagation();
     if (options?.shouldHandleSelectedText) {
-        items = genSelectedTextContextMenus().concat(items);
+        items = genSelectedTextContextMenus(
+            options.extraSelectedTextContextMenuItems,
+        ).concat(items);
     }
     if (!items.length) {
         return {
@@ -126,17 +131,23 @@ export function showAppContextMenu(
         contextControl.setDataDelegator?.(null);
     };
     const promise = new Promise<void>((resolve) => {
-        contextControl.setDataDelegator?.({ event, items, options });
+        const onClose = () => {
+            closeMenu();
+            KeyboardEventListener.unregisterEventListener(escEvent);
+            resolve();
+        };
+        contextControl.setDataDelegator?.({
+            event,
+            items,
+            onClose,
+            options,
+        });
         const eventName = KeyboardEventListener.toEventMapperKey({
             key: 'Escape',
         });
         const escEvent = KeyboardEventListener.registerEventListener(
             [eventName],
-            () => {
-                closeMenu();
-                KeyboardEventListener.unregisterEventListener(escEvent);
-                resolve();
-            },
+            onClose,
         );
     });
     return { promiseDone: promise, closeMenu };

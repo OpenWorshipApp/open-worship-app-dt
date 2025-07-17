@@ -12,7 +12,7 @@ import {
     getBibleLocale,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
-import { getLangAsync } from '../lang';
+import { getLangAsync } from '../lang/langHelpers';
 import CacheManager from '../others/CacheManager';
 import { unlocking } from '../server/unlockingHelpers';
 

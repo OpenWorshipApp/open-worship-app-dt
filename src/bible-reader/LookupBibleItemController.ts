@@ -1,6 +1,7 @@
+import { createContext } from 'react';
+
 import { showSimpleToast } from '../toast/toastHelpers';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { genFoundBibleItemContextMenu } from '../bible-lookup/RenderEditingActionButtonsComp';
 import { closeCurrentEditingBibleItem } from './readBibleHelpers';
 import { EventMapper } from '../event/KeyboardEventListener';
 import {
@@ -26,11 +27,11 @@ import {
     bibleRenderHelper,
     BibleTargetType,
 } from '../bible-list/bibleRenderHelpers';
-import { createContext } from 'react';
 import CacheManager from '../others/CacheManager';
-import { AnyObjectType } from '../helper/helpers';
-import { OptionalPromise } from '../others/otherHelpers';
+import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { unlocking } from '../server/unlockingHelpers';
+import { genFoundBibleItemContextMenu } from '../bible-lookup/bibleActionHelpers';
+import { setBibleSearchingTabType } from '../bible-search/BibleSearchPreviewerComp';
 
 export const closeEventMapper: EventMapper = {
     wControlKey: ['Ctrl'],
@@ -84,7 +85,9 @@ class LookupBibleItemController extends BibleItemsViewController {
     ) => {};
     setBibleKey = (_bibleKey: string) => {};
     reloadEditingResult = (_inputText: string) => {};
-    onLookupAddBibleItem = () => {};
+    onLookupSaveBibleItem = () => {};
+    setIsBibleSearching = (_isLookupOnline: boolean) => {};
+    openBibleSearch = setBibleSearchingTabType;
 
     constructor() {
         super('lookup');
@@ -174,7 +177,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         }
     }
     get inputText() {
-        return getSetting(this.toSettingName('-input-text'), '');
+        return getSetting(this.toSettingName('-input-text')) ?? '';
     }
     _setInputText(inputText: string) {
         setSetting(this.toSettingName('-input-text'), inputText);
@@ -322,16 +325,18 @@ class LookupBibleItemController extends BibleItemsViewController {
     }
 
     async genContextMenu(
+        event: any,
         bibleItem: ReadIdOnlyBibleItem,
         uuid: string,
     ): Promise<ContextMenuItemType[]> {
         const isBibleItemSelected = this.checkIsBibleItemSelected(bibleItem);
         const menu1 = genFoundBibleItemContextMenu(
+            event,
+            this,
             bibleItem,
-            this.onLookupAddBibleItem,
             isBibleItemSelected,
         );
-        const menus2 = await super.genContextMenu(bibleItem, uuid);
+        const menus2 = await super.genContextMenu(event, bibleItem, uuid);
         if (!isBibleItemSelected) {
             menus2.push({
                 menuElement: 'Edit',

@@ -1,4 +1,4 @@
-import { AnyObjectType, cloneJson, isValidJson } from '../helper/helpers';
+import { cloneJson, isValidJson } from '../helper/helpers';
 import { ItemBase } from '../helper/ItemBase';
 import { setSetting, getSetting } from '../helper/settingHelpers';
 import DragInf, { DragTypeEnum } from '../helper/DragInf';
@@ -9,6 +9,7 @@ import { BibleItemType } from './bibleItemHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import DocumentInf from '../others/DocumentInf';
+import { AnyObjectType } from '../helper/typeHelpers';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
 
@@ -19,11 +20,19 @@ export default class BibleItem
     private originalJson: BibleItemType;
     _id: number;
     filePath?: string;
-    constructor(id: number, json: BibleItemType, filePath?: string) {
+    bible: (ItemSourceInfBasic<BibleItem> & DocumentInf) | null = null;
+
+    constructor(
+        id: number,
+        json: BibleItemType,
+        filePath?: string,
+        bible?: (ItemSourceInfBasic<BibleItem> & DocumentInf) | null,
+    ) {
         super();
         this._id = id;
         this.filePath = filePath;
         this.originalJson = cloneJson(json);
+        this.bible = bible ?? null;
     }
     get id() {
         return this._id;
@@ -142,8 +151,8 @@ export default class BibleItem
         }
         return Class.fromJson(this.toJson(), this.filePath);
     }
-    async save(bible: ItemSourceInfBasic<BibleItem> & DocumentInf) {
-        if (this.filePath === null) {
+    async save(bible = this.bible): Promise<boolean> {
+        if (bible === null) {
             return false;
         }
         const bibleItem = bible.getItemById(this.id) as BibleItem | null;
@@ -183,7 +192,7 @@ export default class BibleItem
     }
     static getBiblePresenterSetting() {
         try {
-            const str = getSetting(BIBLE_PRESENT_SETTING_NAME, '');
+            const str = getSetting(BIBLE_PRESENT_SETTING_NAME) ?? '';
             if (isValidJson(str, true)) {
                 return JSON.parse(str).map((item: any) => {
                     return this.fromJson(item);

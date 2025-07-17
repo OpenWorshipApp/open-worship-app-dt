@@ -1,19 +1,19 @@
 import Slide, { SlideType } from './Slide';
-import AppDocumentSourceAbs, {
+import AppEditableDocumentSourceAbs, {
     AppDocumentMetadataType,
 } from '../helper/AppEditableDocumentSourceAbs';
 import { gemSlideContextMenuItems } from './appDocumentHelpers';
-import { AnyObjectType, checkIsSameValues, toMaxId } from '../helper/helpers';
+import { checkIsSameValues, toMaxId } from '../helper/helpers';
 import { MimetypeNameType } from '../server/fileHelpers';
-import { DisplayType } from '../_screen/screenHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
 import ItemSourceInf from '../others/ItemSourceInf';
-import { OptionalPromise } from '../others/otherHelpers';
+import { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
 import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
+import { DisplayType } from '../_screen/screenTypeHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -32,7 +32,7 @@ export type WrongDimensionType = {
 };
 
 export default class AppDocument
-    extends AppDocumentSourceAbs<AppDocumentType>
+    extends AppEditableDocumentSourceAbs<AppDocumentType>
     implements ItemSourceInf<Slide>
 {
     static readonly mimetypeName: MimetypeNameType = 'appDocument';

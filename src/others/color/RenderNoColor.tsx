@@ -7,7 +7,7 @@ export default function RenderNoColor({
 }>) {
     return (
         <div
-            title="no color"
+            title="No Color"
             className="m-1 color-item app-caught-hover-pointer"
             style={{
                 width: '20px',

@@ -1,7 +1,8 @@
 import { ItemBase } from '../helper/ItemBase';
-import { AnyObjectType, cloneJson } from '../helper/helpers';
+import { cloneJson } from '../helper/helpers';
 import DragInf, { DragTypeEnum } from '../helper/DragInf';
 import { ClipboardInf } from '../server/appHelpers';
+import { AnyObjectType } from '../helper/typeHelpers';
 
 export type PdfSlideType = {
     id: number;

@@ -1,37 +1,23 @@
+import { useMemo } from 'react';
+
 import {
-    EventMapper as KeyboardEventMapper,
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
-import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import BibleItem from '../bible-list/BibleItem';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
-import { getIsKeepingPopup } from './RenderExtraButtonsRightComp';
 import appProvider from '../server/appProvider';
-import { useShowBibleLookupContext } from '../others/commonButtons';
-import {
-    elementDivider,
-    genContextMenuItemIcon,
-    genContextMenuItemShortcutKey,
-} from '../context-menu/AppContextMenuComp';
 import {
     ctrlShiftMetaKeys,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
-import { useMemo } from 'react';
-import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
-
-const presenterEventMapper: KeyboardEventMapper = {
-    allControlKey: ['Ctrl', 'Shift'],
-    key: 'Enter',
-};
-
-const addListEventMapper: KeyboardEventMapper = {
-    allControlKey: ['Ctrl'],
-    key: 'Enter',
-};
+import {
+    addBibleItemAndPresent,
+    addListEventMapper,
+    presenterEventMapper,
+    useFoundActionKeyboard,
+} from './bibleActionHelpers';
+import { RenderCopyBibleItemActionButtonsComp } from './RenderActionButtonsComp';
 
 export default function RenderEditingActionButtonsComp({
     bibleItem,
@@ -41,7 +27,7 @@ export default function RenderEditingActionButtonsComp({
             return { ...ctrlShiftMetaKeys, key };
         });
     }, []);
-    const viewController = useBibleItemsViewControllerContext();
+    const viewController = useLookupBibleItemControllerContext();
     useFoundActionKeyboard(bibleItem);
     useKeyboardRegistering(
         eventMaps,
@@ -56,6 +42,7 @@ export default function RenderEditingActionButtonsComp({
     );
     return (
         <div className="btn-group mx-1">
+            <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />
             <button
                 type="button"
                 className="btn btn-sm btn-info"
@@ -81,110 +68,32 @@ export default function RenderEditingActionButtonsComp({
                 className="btn btn-sm btn-info"
                 title={`Save bible item [${toShortcutKey(addListEventMapper)}]`}
                 onClick={() => {
-                    saveBibleItem(bibleItem);
+                    saveBibleItem(
+                        bibleItem,
+                        viewController.onLookupSaveBibleItem,
+                    );
                 }}
             >
                 <i className="bi bi-floppy" />
             </button>
+            {appProvider.isPagePresenter ? (
+                <button
+                    type="button"
+                    className="btn btn-sm btn-info"
+                    title={`\`Save bible item and show on screen [${toShortcutKey(
+                        presenterEventMapper,
+                    )}]`}
+                    onClick={(event) => {
+                        addBibleItemAndPresent(
+                            event,
+                            bibleItem,
+                            viewController.onLookupSaveBibleItem,
+                        );
+                    }}
+                >
+                    <i className="bi bi-cast" />
+                </button>
+            ) : null}
         </div>
     );
-}
-
-function showAddingBibleItemFail() {
-    showSimpleToast('Adding Bible Item', 'Fail to add bible item');
-}
-
-async function addBibleItemAndPresent(
-    event: any,
-    bibleItem: BibleItem,
-    onDone: () => void,
-) {
-    const addedBibleItem = await saveBibleItem(bibleItem, onDone);
-    if (addedBibleItem !== null) {
-        ScreenBibleManager.handleBibleItemSelecting(event, addedBibleItem);
-    } else {
-        showAddingBibleItemFail();
-    }
-}
-
-export function useFoundActionKeyboard(bibleItem: BibleItem) {
-    const viewController = useLookupBibleItemControllerContext();
-    const hideBibleLookupPopup = useShowBibleLookupContext(false);
-    const isKeepingPopup = getIsKeepingPopup();
-    const onDone =
-        !isKeepingPopup && hideBibleLookupPopup !== null
-            ? hideBibleLookupPopup
-            : () => false;
-    viewController.onLookupAddBibleItem = onDone;
-    useKeyboardRegistering(
-        [addListEventMapper],
-        async () => {
-            const addedBibleItem = await saveBibleItem(bibleItem, onDone);
-            if (addedBibleItem === null) {
-                showAddingBibleItemFail();
-            }
-        },
-        [bibleItem, onDone],
-    );
-    useKeyboardRegistering(
-        [presenterEventMapper],
-        (event) => {
-            if (!appProvider.isPagePresenter) {
-                return;
-            }
-            addBibleItemAndPresent(event, bibleItem, onDone);
-        },
-        [bibleItem, onDone],
-    );
-}
-
-export function genFoundBibleItemContextMenu(
-    bibleItem: BibleItem,
-    onDone: () => void,
-    isKeyboardShortcut?: boolean,
-): ContextMenuItemType[] {
-    // TODO: fix slide select editing
-    if (appProvider.isPageEditor) {
-        return [];
-    }
-    return [
-        {
-            menuElement: elementDivider,
-        },
-        {
-            childBefore: genContextMenuItemIcon('floppy'),
-            menuElement: '`Save bible item',
-            childAfter: isKeyboardShortcut
-                ? genContextMenuItemShortcutKey(addListEventMapper)
-                : undefined,
-            onSelect: async () => {
-                const addedBibleItem = await saveBibleItem(bibleItem, onDone);
-                if (addedBibleItem === null) {
-                    showAddingBibleItemFail();
-                }
-            },
-        },
-        ...(appProvider.isPagePresenter
-            ? [
-                  {
-                      menuElement: 'Show bible item',
-                      onSelect: (event: any) => {
-                          ScreenBibleManager.handleBibleItemSelecting(
-                              event,
-                              bibleItem,
-                          );
-                      },
-                  },
-                  {
-                      childAfter: isKeyboardShortcut
-                          ? genContextMenuItemShortcutKey(presenterEventMapper)
-                          : undefined,
-                      menuElement: 'Save bible item and show on screen',
-                      onSelect: async (event: any) => {
-                          addBibleItemAndPresent(event, bibleItem, onDone);
-                      },
-                  },
-              ]
-            : []),
-    ];
 }

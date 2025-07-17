@@ -1,8 +1,8 @@
 import { MimetypeNameType } from '../server/fileHelpers';
-import { AnyObjectType } from '../helper/helpers';
-import AppDocumentSourceAbs, {
+import AppEditableDocumentSourceAbs, {
     AppDocumentMetadataType,
 } from '../helper/AppEditableDocumentSourceAbs';
+import { AnyObjectType } from '../helper/typeHelpers';
 
 const DEFAULT_CONTENT = `
 ---
@@ -20,7 +20,7 @@ type LyricType = {
     content: string;
 };
 
-export default class Lyric extends AppDocumentSourceAbs<LyricType> {
+export default class Lyric extends AppEditableDocumentSourceAbs<LyricType> {
     static readonly mimetypeName: MimetypeNameType = 'lyric';
 
     static validate(json: AnyObjectType): void {

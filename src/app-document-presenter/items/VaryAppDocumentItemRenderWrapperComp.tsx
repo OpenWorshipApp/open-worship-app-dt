@@ -4,12 +4,12 @@ import { handleAppDocumentItemSelecting } from './varyAppDocumentHelpers';
 import {
     useSelectedEditingSlideSetterContext,
     useVaryAppDocumentContext,
-    VaryAppDocumentItemType,
 } from '../../app-document-list/appDocumentHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import Slide from '../../app-document-list/Slide';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 
 export default function VaryAppDocumentItemRenderWrapperComp({
     thumbSize,

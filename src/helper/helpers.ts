@@ -12,18 +12,8 @@ import {
     fsDeleteFile,
     fsCopyFilePathToPath,
 } from '../server/fileHelpers';
-import { copyToClipboard } from '../server/appHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { elementDivider } from '../context-menu/AppContextMenuComp';
-import { getBibleLocale } from './bible-helpers/serverBibleHelpers2';
-import { getLangCode } from '../lang';
-import { showSimpleToast } from '../toast/toastHelpers';
 
-export type MutationType = 'added' | 'attr-modified';
-
-export type AnyObjectType = {
-    [key: string]: any;
-};
+export type MutationType = 'added' | 'attr-modified' | 'removed';
 
 export const APP_FULL_VIEW_CLASSNAME = 'app-full-view';
 export const APP_AUTO_HIDE_CLASSNAME = 'app-auto-hide';
@@ -147,10 +137,6 @@ export function useReadFileToData<T extends AppDocumentSourceAbs>(
         }
     }, [filePath]);
     return data;
-}
-
-export function getLastItem<T>(arr: T[]) {
-    return arr[arr.length - 1] ?? null;
 }
 
 export function getImageDim(src: string) {
@@ -428,105 +414,4 @@ export function checkIsVerticalPartialInvisible(
     const targetTop = targetRect.top + threshold;
     const targetBottom = targetRect.bottom - threshold;
     return targetTop < containerBottom && targetBottom > containerTop;
-}
-
-export function getSelectedTextElement() {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-        return null;
-    }
-    const range = selection.getRangeAt(0);
-    const selectedElement = range.commonAncestorContainer;
-    if (selectedElement.nodeType === Node.TEXT_NODE) {
-        return selectedElement.parentElement;
-    }
-    return selectedElement as HTMLElement;
-}
-
-async function getSelectedTextLanguageCode() {
-    const selectedElement = getSelectedTextElement();
-    const bibleKeys = Array.from(
-        new Set(
-            selectedElement
-                ? (Array.from(
-                      selectedElement.querySelectorAll('[data-bible-key]'),
-                  )
-                      .concat([selectedElement])
-                      .map((element) => {
-                          const bibleKey =
-                              element.getAttribute('data-bible-key');
-                          return bibleKey ? bibleKey.trim() : null;
-                      })
-                      .filter((bibleKey) => {
-                          return bibleKey !== null && bibleKey !== '';
-                      }) as string[])
-                : [],
-        ),
-    );
-    const locales = await Promise.all(
-        bibleKeys.map((bibleKey) => {
-            return getBibleLocale(bibleKey);
-        }),
-    );
-    const langCodes = locales
-        .map((locale) => {
-            return getLangCode(locale);
-        })
-        .filter((langCode) => {
-            return langCode !== null && langCode !== '';
-        }) as string[];
-    return langCodes;
-}
-
-export function getSelectedText() {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
-        return null;
-    }
-    return selection.toString();
-}
-
-export function genSelectedTextContextMenus(): ContextMenuItemType[] {
-    const selectedText = getSelectedText();
-    if (!selectedText) {
-        return [];
-    }
-    return [
-        {
-            menuElement: '`Copy Selected Text',
-            onSelect: () => {
-                copyToClipboard(selectedText);
-            },
-        },
-        {
-            menuElement: '`Search Selected Text',
-            onSelect: () => {
-                const url = new URL('https://www.google.com/search');
-                url.searchParams.set('q', selectedText);
-                appProvider.browserUtils.openExternalURL(url.toString());
-            },
-        },
-        {
-            menuElement: '`Dictionary for Selected Text',
-            onSelect: async () => {
-                const langCodes = await getSelectedTextLanguageCode();
-                if (langCodes.length === 0) {
-                    showSimpleToast(
-                        'Cannot Open Dictionary',
-                        'No language code found for the selected text.',
-                    );
-                    return;
-                }
-                for (const langCode of langCodes) {
-                    const url = new URL(
-                        `https://${langCode}.wiktionary.org/wiki/${selectedText}`,
-                    );
-                    appProvider.browserUtils.openExternalURL(url.toString());
-                }
-            },
-        },
-        {
-            menuElement: elementDivider,
-        },
-    ];
 }

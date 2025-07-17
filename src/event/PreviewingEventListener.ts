@@ -2,9 +2,9 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import Lyric from '../lyric-list/Lyric';
 import AppDocument from '../app-document-list/AppDocument';
 import EventHandler, { ListenerType } from './EventHandler';
-import { VaryAppDocumentType } from '../app-document-list/appDocumentHelpers';
 import { DependencyList } from 'react';
 import BibleItem from '../bible-list/BibleItem';
+import { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
 
 export type PreviewingType =
     | 'select-lyric'

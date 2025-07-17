@@ -1,0 +1,21 @@
+{
+  "version": "2025.6.26",
+  "isWindows": true,
+  "is64System": false,
+  "portable": [
+    {
+      "fileFullName": "Open Worship app-2025.6.26-win-ia32.zip",
+      "checksum": "3037c2db70c7f37eb2fc14903da1affae3a4ec28b709556469d4f8883132d93fbd9c3782e7084a9f50df94a6299bbfcc88bfc0b8b61e02160642fb814da487fa",
+      "publicPath": "download/win-ia32/Open Worship app-2025.6.26-win-ia32.zip",
+      "releaseDate": "2025-06-28T02:01:38.527Z"
+    }
+  ],
+  "installer": [
+    {
+      "fileFullName": "Open Worship app-2025.6.26-win-ia32.exe",
+      "checksum": "f39667c7da3d9c5266feb833987e16225a6e800c3c2b0ab06721f28bc00bcc8561213b0520daacb037b03bd92284704f50181696bd391df57c8563ec5f5bf569",
+      "publicPath": "download/win-ia32/Open Worship app-2025.6.26-win-ia32.exe",
+      "releaseDate": "2025-06-28T02:01:38.527Z"
+    }
+  ]
+}

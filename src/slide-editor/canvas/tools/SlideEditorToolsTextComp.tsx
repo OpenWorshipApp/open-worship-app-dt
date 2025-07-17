@@ -30,12 +30,17 @@ export default function SlideEditorToolsTextComp() {
         canvasController.applyEditItem(canvasItem);
     };
     return (
-        <div className="d-flex">
+        <div className="d-flex flex-wrap app-inner-shadow">
             <SlideEditorToolsColorComp
                 color={canvasItem.props.color}
                 handleColorChanging={handleColorChanging}
             />
-            <div className="ps-2">
+            <div
+                className="ps-1"
+                style={{
+                    minWidth: '300px',
+                }}
+            >
                 <SlideEditorToolTitleComp title="Text Alignment">
                     <SlideEditorToolAlignComp isText onData={handleDataEvent} />
                 </SlideEditorToolTitleComp>

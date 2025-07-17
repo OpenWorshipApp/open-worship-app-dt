@@ -1,10 +1,10 @@
+import {
+    VaryAppDocumentItemType,
+    THUMBNAIL_WIDTH_SETTING_NAME,
+    DEFAULT_THUMBNAIL_SIZE_FACTOR,
+} from '../app-document-list/appDocumentTypeHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, useStateSettingNumber } from '../helper/settingHelpers';
-import {
-    DEFAULT_THUMBNAIL_SIZE_FACTOR,
-    THUMBNAIL_WIDTH_SETTING_NAME,
-    VaryAppDocumentItemType,
-} from '../app-document-list/appDocumentHelpers';
 import EventHandler, { ListenerType } from './EventHandler';
 
 export type AppDocumentListEventType =
@@ -39,10 +39,10 @@ export function useAppDocumentItemSelecting(
 
 export function useAppDocumentItemThumbnailSizeScale(
     settingName = THUMBNAIL_WIDTH_SETTING_NAME,
-    defaultSize = DEFAULT_THUMBNAIL_SIZE_FACTOR,
+    defaultSize = Math.fround(DEFAULT_THUMBNAIL_SIZE_FACTOR / 30),
 ): [number, (newScale: number) => void] {
     const getDefaultSize = () => {
-        return parseInt(getSetting(settingName, defaultSize.toString()));
+        return parseInt(getSetting(settingName) ?? defaultSize.toString());
     };
     const [thumbnailSizeScale, setThumbnailSizeScale] = useStateSettingNumber(
         settingName,

@@ -1,9 +1,12 @@
 import { DependencyList } from 'react';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import { getLastItem } from '../helper/helpers';
 import appProvider from '../server/appProvider';
 import EventHandler from './EventHandler';
 import { AppWidgetType } from './WindowEventListener';
+
+function getLastItem<T>(arr: T[]) {
+    return arr[arr.length - 1] ?? null;
+}
 
 export type KeyboardType =
     | 'ArrowUp'

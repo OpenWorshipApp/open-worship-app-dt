@@ -1,4 +1,4 @@
-import { LanguageDataType } from '..';
+import { LanguageDataType } from '../langHelpers';
 
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 

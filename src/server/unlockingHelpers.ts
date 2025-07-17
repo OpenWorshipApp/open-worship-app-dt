@@ -1,4 +1,4 @@
-import { OptionalPromise } from '../others/otherHelpers';
+import { OptionalPromise } from '../helper/typeHelpers';
 
 const lockSet = new Set<string>();
 export async function unlocking<T>(

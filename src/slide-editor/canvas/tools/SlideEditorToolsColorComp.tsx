@@ -14,7 +14,7 @@ export default function SlideEditorToolsColorComp({
         <div
             className="app-border-white-round"
             style={{
-                maxWidth: '200px',
+                maxWidth: '300px',
             }}
         >
             <ColorPicker

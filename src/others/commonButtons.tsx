@@ -5,32 +5,25 @@ import {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
-import { tran } from '../lang';
+import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
 import appProvider from '../server/appProvider';
 import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 
-export function QuickOrBackButtonComp({
+export function QuitCurrentPageComp({
     title,
-    defaultPage = appProvider.presenterHomePage,
+    pathname,
 }: Readonly<{
     title: string;
-    defaultPage?: string;
+    pathname?: string;
 }>) {
     return (
         <button
             className="btn btn-sm btn-outline-warning"
             title={title}
             onClick={() => {
-                if (
-                    document.referrer &&
-                    !document.referrer.includes(appProvider.currentHomePage)
-                ) {
-                    window.history.back();
-                } else {
-                    goToPath(defaultPage);
-                }
+                goToPath(pathname);
             }}
         >
             <i className="bi bi-escape" />
@@ -42,7 +35,7 @@ export function SettingButtonComp() {
     return (
         <button
             className="btn btn-outline-success rotating-hover"
-            title="Setting"
+            title="`Setting"
             onClick={() => {
                 goToPath(appProvider.settingHomePage);
             }}
@@ -52,7 +45,21 @@ export function SettingButtonComp() {
     );
 }
 
-export const BibleLookupShowingContext = createContext<{
+export function HelpButtonComp() {
+    return (
+        <button
+            className="btn btn-outline-info"
+            title="`Help"
+            onClick={() => {
+                console.log('Help button clicked');
+            }}
+        >
+            <i className="bi bi-question-circle" />
+        </button>
+    );
+}
+
+export const BibleLookupTogglePopupContext = createContext<{
     isShowing: boolean;
     setIsShowing: (isShowing: boolean) => void;
 } | null>(null);
@@ -61,8 +68,8 @@ const openBibleEventMap: EventMapper = {
     key: 'b',
 };
 
-export function useBibleLookupShowingContext() {
-    const context = use(BibleLookupShowingContext);
+export function useIsBibleLookupShowingContext() {
+    const context = use(BibleLookupTogglePopupContext);
     if (context === null) {
         throw new Error(
             'useBibleLookupShowingContext must be used within a ' +
@@ -72,8 +79,8 @@ export function useBibleLookupShowingContext() {
     return context;
 }
 
-export function useShowBibleLookupContext(isShowing = true) {
-    const context = use(BibleLookupShowingContext);
+export function useToggleBibleLookupPopupContext(isShowing = true) {
+    const context = use(BibleLookupTogglePopupContext);
     if (context === null) {
         return null;
     }
@@ -82,7 +89,7 @@ export function useShowBibleLookupContext(isShowing = true) {
 
 export function BibleLookupButtonComp() {
     const { setIsShowing: setIsBibleLookupShowing } =
-        useBibleLookupShowingContext();
+        useIsBibleLookupShowingContext();
     useKeyboardRegistering(
         [openBibleEventMap],
         () => {
@@ -112,9 +119,9 @@ export function BibleLookupButtonComp() {
             }}
         >
             <span className="btn-label">
-                <i className="bi bi-book" />
+                <i className="bi bi-book px-1" />
+                {tran('bible-lookup')}
             </span>
-            {tran('bible-lookup')}
         </button>
     );
 }

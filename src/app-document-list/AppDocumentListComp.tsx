@@ -74,7 +74,7 @@ async function checkIsOnScreen(filePaths: string[]) {
 }
 
 export default function AppDocumentListComp() {
-    const dirSource = useGenDirSource(dirSourceSettingNames.DOCUMENT);
+    const dirSource = useGenDirSource(dirSourceSettingNames.APP_DOCUMENT);
     if (dirSource === null) {
         return null;
     }
@@ -92,7 +92,7 @@ export default function AppDocumentListComp() {
         <FileListHandlerComp
             className="app-document-list"
             mimetypeName="appDocument"
-            defaultFolderName={defaultDataDirNames.DOCUMENT}
+            defaultFolderName={defaultDataDirNames.APP_DOCUMENT}
             dirSource={dirSource}
             checkExtraFile={handleExtraFileChecking}
             takeDroppedFile={handleFileTaking.bind(null, dirSource)}

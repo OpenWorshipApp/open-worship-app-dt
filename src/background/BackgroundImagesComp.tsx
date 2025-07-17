@@ -8,7 +8,7 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { BackgroundSrcType } from '../_screen/screenHelpers';
+import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 
 function rendChild(
     filePath: string,

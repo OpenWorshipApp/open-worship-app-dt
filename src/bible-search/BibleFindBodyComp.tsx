@@ -61,7 +61,12 @@ export default function BibleFindBodyComp({
     };
     return (
         <div className="card overflow-hidden w-100 h-100">
-            <div className="card-header input-group overflow-hidden">
+            <div
+                className="card-header input-group overflow-hidden"
+                style={{
+                    minHeight: '54px',
+                }}
+            >
                 <BibleSelectionComp
                     onBibleKeyChange={setBibleKey}
                     bibleKey={bibleFindController.bibleKey}

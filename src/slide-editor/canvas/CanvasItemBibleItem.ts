@@ -1,6 +1,6 @@
 import BibleItem from '../../bible-list/BibleItem';
 import CanvasItemText, { CanvasItemTextPropsType } from './CanvasItemText';
-import { AnyObjectType, cloneJson } from '../../helper/helpers';
+import { cloneJson } from '../../helper/helpers';
 import { CanvasItemError } from './CanvasItem';
 import { HAlignmentType, VAlignmentType } from './canvasHelpers';
 import { handleError } from '../../helper/errorHelpers';
@@ -8,6 +8,7 @@ import {
     BibleTargetType,
     bibleRenderHelper,
 } from '../../bible-list/bibleRenderHelpers';
+import { AnyObjectType } from '../../helper/typeHelpers';
 
 export type CanvasItemBiblePropsType = CanvasItemTextPropsType & {
     bibleKeys: string[];

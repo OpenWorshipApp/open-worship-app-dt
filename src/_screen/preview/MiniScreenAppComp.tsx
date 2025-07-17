@@ -1,34 +1,43 @@
-import ScreenOtherComp from '../ScreenOtherComp';
+import ScreenForegroundComp from '../ScreenForegroundComp';
 import ScreenBackgroundComp from '../ScreenBackgroundComp';
 import ScreenSlideComp from '../ScreenVaryAppDocumentComp';
 import ScreenBibleComp from '../ScreenBibleComp';
-import { RendStyle } from '../RenderTransitionEffectComp';
-import { getScreenManagerBase } from '../managers/screenManagerBaseHelpers';
-import { screenManagerFromBase } from '../managers/screenManagerHelpers';
+import { getScreenManagerByScreenId } from '../managers/screenManagerHelpers';
 import { ScreenManagerBaseContext } from '../managers/screenManagerHooks';
+import ScreenEffectManager from '../managers/ScreenEffectManager';
 
 const IMAGE_BACKGROUND = `linear-gradient(45deg, var(--bs-gray-700) 25%, var(--bs-gray-800) 25%),
 linear-gradient(-45deg, var(--bs-gray-700) 25%, var(--bs-gray-800) 25%),
 linear-gradient(45deg, var(--bs-gray-800) 75%, var(--bs-gray-700) 75%),
 linear-gradient(-45deg, var(--bs-gray-800) 75%, var(--bs-gray-700) 75%)`;
 
+export function genStyleRendering(effectManager: ScreenEffectManager) {
+    return Object.entries(effectManager.styleAnimList).map(
+        ([effectType, styleAnim]) => {
+            return <style key={effectType}>{styleAnim.styleText}</style>;
+        },
+    );
+}
+
 export default function MiniScreenAppComp({
     screenId,
 }: Readonly<{
     screenId: number;
 }>) {
-    const screenManager = screenManagerFromBase(getScreenManagerBase(screenId));
+    const screenManager = getScreenManagerByScreenId(screenId);
     if (screenManager === null) {
         return null;
     }
     const {
-        varyAppDocumentEffectManager: slideEffectManager,
+        varyAppDocumentEffectManager,
         backgroundEffectManager,
+        foregroundEffectManager,
     } = screenManager;
     return (
         <ScreenManagerBaseContext value={screenManager}>
-            <RendStyle screenEffectManager={slideEffectManager} />
-            <RendStyle screenEffectManager={backgroundEffectManager} />
+            {genStyleRendering(backgroundEffectManager)}
+            {genStyleRendering(varyAppDocumentEffectManager)}
+            {genStyleRendering(foregroundEffectManager)}
             <div
                 style={{
                     pointerEvents: 'none',
@@ -43,7 +52,7 @@ export default function MiniScreenAppComp({
             <ScreenBackgroundComp />
             <ScreenSlideComp />
             <ScreenBibleComp />
-            <ScreenOtherComp />
+            <ScreenForegroundComp />
         </ScreenManagerBaseContext>
     );
 }

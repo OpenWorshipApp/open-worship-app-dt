@@ -136,7 +136,10 @@ export class FileLineHandler {
         }
         const patcher = parsePatch(patchedText);
         const reversePatcher = reversePatch(patcher);
-        const originalContent = applyPatch(currentContent, reversePatcher);
+        const originalContent = applyPatch(
+            currentContent,
+            Array.isArray(reversePatcher) ? reversePatcher[0] : reversePatcher,
+        );
         if (originalContent === false) {
             return false;
         }

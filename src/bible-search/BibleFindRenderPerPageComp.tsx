@@ -3,7 +3,11 @@ import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBible
 import { handleDragStart } from '../helper/dragHelpers';
 import { useAppPromise } from '../helper/helpers';
 import { useBibleFindController } from './BibleFindController';
-import { breakItem, handleClicking } from './bibleFindHelpers';
+import {
+    breakItem,
+    openContextMenu,
+    openInBibleLookup,
+} from './bibleFindHelpers';
 
 export const APP_FOUND_PAGE_CLASS = 'app-found-page';
 
@@ -35,9 +39,14 @@ function RenderFoundItemComp({
             onDragStart={(event) => {
                 handleDragStart(event, bibleItem);
             }}
-            title="shift + click to append"
+            onContextMenu={(event) => {
+                openContextMenu(event, {
+                    viewController,
+                    bibleItem,
+                });
+            }}
             onClick={(event) => {
-                handleClicking(event, viewController, bibleItem);
+                openInBibleLookup(event, viewController, bibleItem);
             }}
         >
             <BibleDirectViewTitleComp bibleItem={bibleItem} />

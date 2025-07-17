@@ -2,13 +2,13 @@ import './AlertPopupComp.scss';
 
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
-import { AlertDataType, closeAlert } from './popupWidgetHelpers';
+import { PopupAlertDataType, closeAlert } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 
 export default function AlertPopupComp({
     data,
 }: Readonly<{
-    data: AlertDataType;
+    data: PopupAlertDataType;
 }>) {
     const handClose = () => {
         data.onClose();

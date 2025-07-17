@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import LoadingComp from '../others/LoadingComp';
 import BibleFindBodyComp from './BibleFindBodyComp';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
@@ -10,14 +10,16 @@ import BibleFindController, {
 
 export default function BibleFindPreviewerComp() {
     const selectedBibleKey = useBibleKeyContext();
-    const [bibleKey, setBibleKey] = useState(selectedBibleKey);
+    const { bibleKey: bibleKeyContext } = BibleFindController.findingContext;
+    if (bibleKeyContext !== null) {
+        BibleFindController.findingContext.bibleKey = null;
+    }
+    const [bibleKey, setBibleKey] = useState(
+        bibleKeyContext ?? selectedBibleKey,
+    );
     const [bibleFindController, setBibleFindController] = useState<
         BibleFindController | null | undefined
     >(undefined);
-    useAppEffect(() => {
-        setBibleKey(selectedBibleKey);
-    }, [selectedBibleKey]);
-
     const setBibleKey1 = (_: string, newBibleKey: string) => {
         setBibleFindController(undefined);
         setBibleKey(newBibleKey);
@@ -25,8 +27,14 @@ export default function BibleFindPreviewerComp() {
     useAppEffectAsync(
         async (methodContext) => {
             if (bibleKey !== 'Unknown' && bibleFindController === undefined) {
-                const apiData1 = await BibleFindController.getInstant(bibleKey);
-                methodContext.setBibleFindController(apiData1);
+                const newBibleFindController =
+                    await BibleFindController.getInstant(bibleKey);
+                const { findingText } = BibleFindController.findingContext;
+                if (findingText !== null) {
+                    BibleFindController.findingContext.findingText = null;
+                    newBibleFindController.findText = findingText;
+                }
+                methodContext.setBibleFindController(newBibleFindController);
             }
         },
         [bibleFindController, bibleKey],
@@ -53,8 +61,8 @@ export default function BibleFindPreviewerComp() {
     }
 
     return (
-        <BibleFindControllerContext.Provider value={bibleFindController}>
+        <BibleFindControllerContext value={bibleFindController}>
             <BibleFindBodyComp setBibleKey={setBibleKey1} />
-        </BibleFindControllerContext.Provider>
+        </BibleFindControllerContext>
     );
 }

@@ -4,13 +4,16 @@ import {
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
 import appProvider from '../../server/appProvider';
-import { BasicScreenMessageType, ScreenMessageType } from '../screenHelpers';
 import ScreenManagerBase from './ScreenManagerBase';
 import {
     getSelectedScreenManagerBases,
     getAllScreenManagerBases,
     getScreenManagerBase,
 } from './screenManagerBaseHelpers';
+import {
+    BasicScreenMessageType,
+    ScreenMessageType,
+} from '../screenTypeHelpers';
 
 const cache = new Map<string, ScreenEventHandler<any>>();
 export default abstract class ScreenEventHandler<

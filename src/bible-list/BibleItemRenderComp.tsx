@@ -11,8 +11,7 @@ import {
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
-import { openBibleItemContextMenu } from './bibleItemHelpers';
-import { useShowBibleLookupContext } from '../others/commonButtons';
+import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
 import { DragTypeEnum } from '../helper/DragInf';
 import { changeDragEventStyle, stopDraggingState } from '../helper/helpers';
@@ -24,6 +23,7 @@ import BibleItemsViewController, {
 } from '../bible-reader/BibleItemsViewController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
+import { openBibleItemContextMenu } from './bibleHelpers';
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -77,7 +77,7 @@ export default function BibleItemRenderComp({
     filePath: string;
 }>) {
     const viewController = useBibleItemsViewControllerContext();
-    const showBibleLookupPopup = useShowBibleLookupContext();
+    const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     useFileSourceRefreshEvents(['select'], filePath);
     const changeBible = async (newBibleKey: string) => {
         const bible = await getBible(bibleItem);
@@ -120,7 +120,8 @@ export default function BibleItemRenderComp({
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
     }
     const handleDataDropping = async (event: any) => {
-        const droppedData = await extractDropData(event);
+        changeDragEventStyle(event, 'opacity', '1');
+        const droppedData = extractDropData(event);
         if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
             const bible = await Bible.fromFilePath(filePath);
             if (bible === null) {
@@ -131,8 +132,8 @@ export default function BibleItemRenderComp({
                 if (droppedBibleItem.filePath === bibleItem.filePath) {
                     const toIndex = bible.getItemIndex(bibleItem);
                     bible.moveItemToIndex(droppedBibleItem, toIndex);
-                    await bible.save();
                     stopDraggingState(event);
+                    bible.save();
                 }
             }
         } else {
@@ -144,7 +145,7 @@ export default function BibleItemRenderComp({
     };
     return (
         <li
-            className="list-group-item item app-caught-hover-pointer px-1"
+            className="list-group-item item app-caught-hover-pointer px-3"
             title="Double click to view"
             data-index={index + 1}
             draggable
@@ -165,7 +166,7 @@ export default function BibleItemRenderComp({
             }}
             onContextMenu={handleContextMenuOpening}
         >
-            <div className="d-flex">
+            <div className="d-flex ps-1">
                 <ItemColorNoteComp item={bibleItem} />
                 <div className="d-flex flex-fill">
                     <div className="px-1">

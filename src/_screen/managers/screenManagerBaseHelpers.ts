@@ -8,6 +8,7 @@ export type TypeScreenManagerSettingType = {
     screenId: number;
     isSelected: boolean;
     isLocked: boolean;
+    stageNumber: number;
     colorNote: string | null;
 };
 
@@ -20,9 +21,9 @@ export function setScreenManagerBaseCache(
 }
 
 export function getScreenManagersInstanceSetting(): TypeScreenManagerSettingType[] {
-    const str = getSetting(screenManagerSettingNames.MANAGERS, '');
-    if (isValidJson(str, true)) {
-        const json = JSON.parse(str);
+    const settingString = getSetting(screenManagerSettingNames.MANAGERS) ?? '';
+    if (isValidJson(settingString, true)) {
+        const json = JSON.parse(settingString);
         let instanceSettingList = json.filter(({ screenId }: any) => {
             return typeof screenId === 'number';
         });
@@ -64,6 +65,7 @@ export function saveScreenManagersSetting(deletedScreenId?: number) {
                 screenId: screenManagerBase.screenId,
                 isSelected: screenManagerBase.isSelected,
                 isLocked: screenManagerBase.isLocked,
+                stageNumber: screenManagerBase.stageNumber,
                 colorNote,
             });
         }

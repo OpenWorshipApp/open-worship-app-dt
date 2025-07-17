@@ -54,17 +54,22 @@ export function checkAreArraysEqual(arr1: any, arr2: any) {
     return true;
 }
 
-export function checkAreObjectsEqual(obj1: any, obj2: any) {
-    if (
-        typeof obj1 !== 'object' ||
-        typeof obj2 !== 'object' ||
-        obj1 === null ||
-        obj2 === null
-    ) {
+export function checkAreDatesEqual(date1: any, date2: any) {
+    if (!(date1 instanceof Date) || !(date2 instanceof Date)) {
         return false;
     }
-    if (obj1 === obj2) {
-        return true;
+    return (
+        date1.getTime() === date2.getTime() &&
+        date1.getTimezoneOffset() === date2.getTimezoneOffset()
+    );
+}
+
+export function checkAreObjectsEqual(obj1: any, obj2: any) {
+    if (typeof obj1 !== 'object' || typeof obj2 !== 'object') {
+        return false;
+    }
+    if (obj1 === null || obj2 === null) {
+        return obj1 === obj2;
     }
     if (Object.keys(obj1).length !== Object.keys(obj2).length) {
         return false;
@@ -73,17 +78,21 @@ export function checkAreObjectsEqual(obj1: any, obj2: any) {
     for (const key in obj1) {
         const value1 = obj1[key];
         const value2 = obj2[key];
-        if (typeof value1 === 'object' && typeof value2 === 'object') {
-            if (!checkAreObjectsEqual(value1, value2)) {
+        if (Array.isArray(value1) || Array.isArray(value2)) {
+            if (!checkAreArraysEqual(value1, value2)) {
                 return false;
             }
-        } else if (Array.isArray(value1) && Array.isArray(value2)) {
-            if (!checkAreArraysEqual(value1, value2)) {
+        } else if (value1 instanceof Date || value2 instanceof Date) {
+            if (!checkAreDatesEqual(value1, value2)) {
+                return false;
+            }
+        } else if (typeof value1 === 'object' || typeof value2 === 'object') {
+            if (!checkAreObjectsEqual(value1, value2)) {
                 return false;
             }
         } else if (value1 !== value2) {
             return false;
         }
     }
-    return true;
+    return Object.keys(obj2).length === Object.keys(obj1).length;
 }

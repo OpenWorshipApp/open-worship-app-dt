@@ -32,6 +32,7 @@ export function BoxEditorNormalTextRender() {
     const text = props.text.replace(/\n/g, '<br />');
     return (
         <div
+            title={props.id.toString()}
             style={{
                 width: '100%',
                 height: '100%',
@@ -54,6 +55,7 @@ export function BoxEditorNormalHtmlRender() {
     }
     return (
         <div
+            title={props.id.toString()}
             style={{
                 width: '100%',
                 height: '100%',

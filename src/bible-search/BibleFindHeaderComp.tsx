@@ -9,8 +9,10 @@ export default function BibleFindHeaderComp({
     handleFind: (isFresh?: boolean) => void;
     isFinding: boolean;
 }>) {
-    const [canFind, setCanFind] = useState(false);
     const bibleFindController = useBibleFindController();
+    const [canFind, setCanFind] = useState(
+        bibleFindController.findText?.trim() !== '',
+    );
     useAppEffect(() => {
         bibleFindController.onTextChange = () => {
             setCanFind(!!bibleFindController.findText);
@@ -45,6 +47,15 @@ export default function BibleFindHeaderComp({
                 type="text"
                 className="form-control"
                 onKeyUp={keyUpHandling}
+                onChange={(event) => {
+                    const value = event.currentTarget.value.trim();
+                    if (!value) {
+                        setCanFind(false);
+                        bibleFindController.findText = '';
+                    } else if (!canFind) {
+                        setCanFind(true);
+                    }
+                }}
             />
             <button
                 className="btn btn-sm"

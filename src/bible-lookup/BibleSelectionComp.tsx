@@ -10,7 +10,7 @@ import {
     getAllLocalBibleInfoList,
 } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
-import { getFontFamily, LocaleType } from '../lang';
+import { getFontFamily, LocaleType } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 
 export async function genContextMenuBibleKeys(

@@ -1,4 +1,4 @@
-import { AnyObjectType, getVideoDim } from '../../helper/helpers';
+import { getVideoDim } from '../../helper/helpers';
 import FileSource from '../../helper/FileSource';
 import {
     CanvasItemMediaPropsType,
@@ -7,6 +7,7 @@ import {
 } from './canvasHelpers';
 import CanvasItem, { CanvasItemError, CanvasItemPropsType } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
+import { AnyObjectType } from '../../helper/typeHelpers';
 
 export type CanvasItemVideoPropsType = CanvasItemPropsType &
     CanvasItemMediaPropsType;

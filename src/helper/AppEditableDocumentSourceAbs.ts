@@ -7,7 +7,7 @@ import {
 } from '../server/fileHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
-import { AnyObjectType } from './helpers';
+import { AnyObjectType } from './typeHelpers';
 
 export type AppDocumentMetadataType = {
     app: string;

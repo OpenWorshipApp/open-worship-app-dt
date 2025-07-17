@@ -35,6 +35,7 @@ export function BoxEditorNormalImageRender() {
     const width = mR * props.mediaWidth;
     return (
         <div
+            title={props.id.toString()}
             style={{
                 width: '100%',
                 height: '100%',

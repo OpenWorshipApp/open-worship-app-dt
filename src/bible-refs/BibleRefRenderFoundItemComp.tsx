@@ -1,6 +1,9 @@
 import { BibleDirectViewTitleComp } from '../bible-reader/BibleViewExtra';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
-import { handleClicking } from '../bible-search/bibleFindHelpers';
+import {
+    openContextMenu,
+    openInBibleLookup,
+} from '../bible-search/bibleFindHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
 import { useAppPromise } from '../helper/helpers';
 import { BibleRefType, breakItem } from './bibleRefsHelpers';
@@ -33,12 +36,19 @@ export default function BibleRefRenderFoundItemComp({
     return (
         <div
             className="w-100 app-border-white-round my-2 p-2 app-caught-hover-pointer"
+            title="`shift + click to append"
             draggable
             onDragStart={(event) => {
                 handleDragStart(event, bibleItem);
             }}
+            onContextMenu={(event) => {
+                openContextMenu(event, {
+                    viewController,
+                    bibleItem,
+                });
+            }}
             onClick={(event) => {
-                handleClicking(event, viewController, bibleItem, true);
+                openInBibleLookup(event, viewController, bibleItem, true);
             }}
         >
             <BibleDirectViewTitleComp bibleItem={bibleItem} />

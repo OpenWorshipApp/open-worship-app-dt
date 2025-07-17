@@ -1,6 +1,6 @@
 const SELECT_DIR = 'select-dir';
 export const dirSourceSettingNames = {
-    DOCUMENT: `${SELECT_DIR}-document`,
+    APP_DOCUMENT: `${SELECT_DIR}-app-document`,
     LYRIC: `${SELECT_DIR}-lyric`,
     PLAYLIST: `${SELECT_DIR}-playlist`,
     BACKGROUND_IMAGE: `${SELECT_DIR}-image-bg`,
@@ -10,7 +10,7 @@ export const dirSourceSettingNames = {
     BIBLE_READ: `${SELECT_DIR}-bible-read`,
 };
 export const defaultDataDirNames = {
-    DOCUMENT: 'documents',
+    APP_DOCUMENT: 'documents',
     PLAYLIST: 'playlists',
     LYRIC: 'lyrics',
     BACKGROUND_IMAGE: 'images',
@@ -27,7 +27,7 @@ export const fontSizeSettingNames = {
 
 export const screenManagerSettingNames = {
     VARY_APP_DOCUMENT: 'screen-vary-app-document-manager',
-    ALERT: 'screen-alert-manager',
+    FOREGROUND: 'screen-foreground-manager',
     BACKGROUND: 'screen-bg-manager',
     FULL_TEXT: 'screen-ft-manager',
     MANAGERS: 'screen-managers',

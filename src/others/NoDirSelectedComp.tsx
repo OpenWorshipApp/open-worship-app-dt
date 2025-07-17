@@ -1,6 +1,6 @@
 import DirSource from '../helper/DirSource';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
-import { goToGeneralSetting } from '../setting/SettingComp';
+import { goToGeneralSetting } from '../setting/settingHelpers';
 
 export function SelectDefaultDirButton({
     dirSource,
@@ -21,6 +21,22 @@ export function SelectDefaultDirButton({
     );
 }
 
+export function GotoSettingDirectoryPathComp() {
+    return (
+        <div className="m-2">
+            <button
+                className="btn btn-sm btn-warning"
+                onClick={() => {
+                    goToGeneralSetting();
+                }}
+            >
+                <span>`Go to Settings </span>
+                <i className="bi bi-gear-wide-connected" />
+            </button>
+        </div>
+    );
+}
+
 export default function NoDirSelectedComp({
     dirSource,
     defaultFolderName,
@@ -29,7 +45,7 @@ export default function NoDirSelectedComp({
     defaultFolderName: string;
 }>) {
     return (
-        <div className="card p-1">
+        <div className="card p-1 w-100 overflow-hidden">
             <div className="card-body">
                 <div
                     className="ms-2"
@@ -40,20 +56,16 @@ export default function NoDirSelectedComp({
                     <i className="bi bi-info-circle" />
                     <span>No directory selected</span>
                 </div>
-                <div className="btn-group control">
-                    <SelectDefaultDirButton
-                        dirSource={dirSource}
-                        defaultFolderName={defaultFolderName}
-                    />
-                    <button
-                        className="btn btn-sm btn-warning"
-                        onClick={() => {
-                            goToGeneralSetting();
-                        }}
-                    >
-                        <span>`Go to Settings </span>
-                        <i className="bi bi-gear-wide-connected" />
-                    </button>
+                <div className="d-flex flex-column">
+                    <div className="m-2">
+                        <SelectDefaultDirButton
+                            dirSource={dirSource}
+                            defaultFolderName={defaultFolderName}
+                        />
+                    </div>
+                    <div className="m-2">
+                        <GotoSettingDirectoryPathComp />
+                    </div>
                 </div>
             </div>
         </div>

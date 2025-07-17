@@ -67,8 +67,13 @@ export default function ColorPicker({
         applyNewColor(newColor, event);
     };
     return (
-        <div className="flex-item color-picker">
-            <div className="p-3 overflow-hidden">
+        <div
+            className="flex-item color-picker"
+            style={{
+                backgroundColor: 'var(--bs-gray-700)',
+            }}
+        >
+            <div className="p-1 overflow-hidden">
                 <RenderColors
                     colors={colorList.main}
                     selectedColor={localColor}

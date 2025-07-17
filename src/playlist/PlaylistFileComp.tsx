@@ -95,7 +95,7 @@ function PlaylistPreview({
                     {playlist.items.map((playlistItem, i) => {
                         return (
                             <RenderPlaylistItem
-                                key={fileSource.fileFullName}
+                                key={fileSource.fullName}
                                 index={i}
                                 playlistItem={playlistItem}
                             />

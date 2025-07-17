@@ -3,19 +3,20 @@ import appProvider from '../../server/appProvider';
 import {
     fsCheckDirExist,
     fsCreateDir,
+    fsExistSync,
     getDesktopPath,
+    pathJoin,
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../../helper/constants';
-import { useAppEffectAsync } from '../../helper/debuggerHelpers';
 import DirSource from '../../helper/DirSource';
 import { handleError } from '../../helper/errorHelpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
-import { goToGeneralSetting } from '../SettingComp';
 import { appLocalStorage } from './appLocalStorage';
+import FileSource from '../../helper/FileSource';
 
 export function getDefaultDataDir() {
     const desktopPath = getDesktopPath();
@@ -26,10 +27,10 @@ export function getDefaultDataDir() {
     return dirPath;
 }
 
-export async function selectPathForChildDir(newPath: string) {
+export async function selectPathForChildDir(parentDirPath: string) {
     const isOk = await showAppConfirm(
         'Set according paths',
-        `All child directories will be set under "${newPath}"?`,
+        `All child directories will be set under "${parentDirPath}"?`,
     );
     if (!isOk) {
         return;
@@ -37,7 +38,7 @@ export async function selectPathForChildDir(newPath: string) {
     try {
         for (const [k, v] of Object.entries(defaultDataDirNames)) {
             const settingName = (dirSourceSettingNames as any)[k];
-            const dirPath = appProvider.pathUtils.join(newPath, v);
+            const dirPath = appProvider.pathUtils.join(parentDirPath, v);
             await fsCreateDir(dirPath);
             const isSuccess = await fsCheckDirExist(dirPath);
             if (isSuccess) {
@@ -56,48 +57,40 @@ export async function selectPathForChildDir(newPath: string) {
         }
         showSimpleToast(
             'Creating Default Folder',
-            `Fail to create folder "${newPath}"`,
+            `Fail to create folder "${parentDirPath}"`,
         );
         return;
     }
 }
 
-export function checkShouldSelectChildDir() {
-    const isSomeSelected = Object.values(dirSourceSettingNames).some(
-        (settingName) => {
-            return !!getSetting(settingName);
-        },
+export async function checkShouldSelectChildDir() {
+    const validList = await Promise.all(
+        Object.values(dirSourceSettingNames).map((settingName) => {
+            return fsCheckDirExist(getSetting(settingName) ?? 'none');
+        }),
     );
-    return !isSomeSelected;
-}
-
-export function useCheckSelectedDir() {
-    useAppEffectAsync(async () => {
-        if (
-            !appProvider.isPageSetting &&
-            !(await appLocalStorage.getSelectedParentDirectory())
-        ) {
-            const isOk = await showAppConfirm(
-                '`No Parent Directory Selected',
-                '`You will be redirected to the General Settings page to ' +
-                    'select a parent directory.',
-            );
-            if (!isOk) {
-                return;
-            }
-            goToGeneralSetting();
-        }
-    }, []);
+    const isSomeValid = validList.some((isValid) => {
+        return isValid;
+    });
+    return !isSomeValid;
 }
 
 export async function selectDefaultDataDirName(
     dirSource: DirSource,
     dirName: string,
 ) {
-    const defaultDataDir = getDefaultDataDir();
-    const dirPath = appProvider.pathUtils.join(defaultDataDir, dirName);
+    const selectedParentDir =
+        await appLocalStorage.getSelectedParentDirectory();
+    if (selectedParentDir === null) {
+        showSimpleToast(
+            '`No Parent Directory Selected`',
+            '`There is no parent directory selected`',
+        );
+        return;
+    }
+    const dirPath = appProvider.pathUtils.join(selectedParentDir, dirName);
     const isOk = await showAppConfirm(
-        'Select Default Folder',
+        '`Select Default Folder',
         `This will select "${dirPath}" (will create if not exist)`,
     );
     if (!isOk) {
@@ -110,10 +103,57 @@ export async function selectDefaultDataDirName(
             handleError(error);
         }
         showSimpleToast(
-            'Creating Default Folder',
+            '`Creating Default Folder',
             `Fail to create folder "${dirPath}"`,
         );
         return;
     }
     dirSource.dirPath = dirPath;
+}
+
+export class BaseDirFileSource {
+    initBaseDir: string | null;
+    initFileFullName: string | null = null;
+    intFileSource: FileSource | null = null;
+
+    constructor(baseDirSettingName: string, fileFullNameOrFilePath: string) {
+        try {
+            if (fsExistSync(fileFullNameOrFilePath)) {
+                this.intFileSource = FileSource.getInstance(
+                    fileFullNameOrFilePath,
+                );
+            } else {
+                this.initFileFullName = fileFullNameOrFilePath;
+            }
+        } catch (_error) {}
+        this.initBaseDir = DirSource.dirPathBySettingName(baseDirSettingName);
+    }
+
+    get fileFullNameOrFilePath() {
+        if (this.intFileSource !== null) {
+            if (
+                this.initBaseDir !== null &&
+                DirSource.checkIsSameDirPath(
+                    this.initBaseDir,
+                    this.intFileSource.basePath,
+                )
+            ) {
+                return this.intFileSource.fullName;
+            }
+            return this.intFileSource.filePath;
+        }
+        return this.initFileFullName;
+    }
+
+    get fileSource() {
+        if (this.initFileFullName !== null && this.initBaseDir !== null) {
+            return FileSource.getInstance(
+                pathJoin(this.initBaseDir, this.initFileFullName),
+            );
+        }
+        if (this.intFileSource !== null) {
+            return this.intFileSource;
+        }
+        return null;
+    }
 }

@@ -7,7 +7,7 @@ import {
 } from 'react';
 
 import { warn } from './loggerHelpers';
-import { OptionalPromise } from '../others/otherHelpers';
+import { OptionalPromise } from './typeHelpers';
 
 const THRESHOLD = 10;
 const MILLIE_SECOND = 1000;
@@ -96,7 +96,7 @@ export function useAppEffect(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function TestInfinite() {
+export function TestInfinite() {
     const [count, setCount] = useState(0);
     const [isStopped, setIsStopped] = useState(false);
     useAppEffect(

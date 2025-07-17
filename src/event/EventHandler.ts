@@ -1,4 +1,4 @@
-import { OptionalPromise } from '../others/otherHelpers';
+import { OptionalPromise } from '../helper/typeHelpers';
 
 export type ListenerType<T> = (data: T) => OptionalPromise<void>;
 

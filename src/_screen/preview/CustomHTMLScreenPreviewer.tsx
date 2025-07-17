@@ -1,22 +1,12 @@
-import { DOMAttributes } from 'react';
-
 import { createRoot } from 'react-dom/client';
 import MiniScreenAppComp from './MiniScreenAppComp';
 import { getScreenManagerBase } from '../managers/screenManagerBaseHelpers';
 import { genTimeoutAttempt } from '../../helper/helpers';
 import ScreenManagerBase from '../managers/ScreenManagerBase';
+import { CustomElement } from '../screenTypeHelpers';
 
 const HTML_TAG_NAME = 'mini-screen-previewer-custom-html';
 
-type CustomEvents<K extends string> = {
-    [key in K]: (event: CustomEvent) => void;
-};
-type CustomElement<T, K extends string> = Partial<
-    T &
-        DOMAttributes<T> & {
-            children: any;
-        } & CustomEvents<`on${K}`>
->;
 declare module 'react' {
     interface IntrinsicElements {
         [HTML_TAG_NAME]: CustomElement<

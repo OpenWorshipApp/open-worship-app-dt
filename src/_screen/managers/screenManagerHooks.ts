@@ -7,7 +7,7 @@ import {
     useScreenBackgroundManagerEvents,
     useScreenVaryAppDocumentManagerEvents,
     useScreenBibleManagerEvents,
-    useScreenOtherManagerEvents,
+    useScreenForegroundManagerEvents,
 } from './screenEventHelpers';
 
 export const ScreenManagerBaseContext = createContext<ScreenManagerBase | null>(
@@ -59,5 +59,5 @@ export function useScreenUpdateEvents(
     useScreenBackgroundManagerEvents(['update'], undefined, callback);
     useScreenVaryAppDocumentManagerEvents(['update'], undefined, callback);
     useScreenBibleManagerEvents(['update'], undefined, callback);
-    useScreenOtherManagerEvents(['update'], undefined, callback);
+    useScreenForegroundManagerEvents(['update'], undefined, callback);
 }

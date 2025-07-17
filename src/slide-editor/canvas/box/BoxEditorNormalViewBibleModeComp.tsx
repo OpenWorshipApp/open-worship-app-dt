@@ -33,6 +33,7 @@ export function BoxEditorNormalBibleRender() {
         .bibleRenderingList;
     return (
         <div
+            title={props.id.toString()}
             style={{
                 width: '100%',
                 height: '100%',

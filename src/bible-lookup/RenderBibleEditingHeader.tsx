@@ -12,6 +12,7 @@ import {
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import { use } from 'react';
+import { HoverMotionHandler } from '../helper/domHelpers';
 
 export default function RenderBibleEditingHeader() {
     const fontSize = useBibleViewFontSizeContext();
@@ -37,17 +38,26 @@ export default function RenderBibleEditingHeader() {
                     }}
                 />
                 {foundBibleItem === null ? null : (
-                    <div className="app-low-hover-display-1">
+                    <div
+                        className={`${HoverMotionHandler.lowClassname}-1`}
+                        data-min-parent-width="550"
+                    >
                         <RenderEditingActionButtonsComp
                             bibleItem={foundBibleItem}
                         />
                     </div>
                 )}
-                <div className="app-low-hover-display-0">
+                <div
+                    className={`${HoverMotionHandler.lowClassname}-0`}
+                    data-min-parent-width="550"
+                >
                     {viewController.isAlone ? null : (
-                        <button
-                            className="btn-close"
+                        <i
+                            className="bi bi-x-lg app-caught-hover-pointer"
                             title={`Close [${toShortcutKey(closeEventMapper)}]`}
+                            style={{
+                                color: 'var(--bs-danger-text-emphasis)',
+                            }}
                             onClick={() => {
                                 closeCurrentEditingBibleItem(viewController);
                             }}

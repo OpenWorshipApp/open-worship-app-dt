@@ -11,11 +11,8 @@ import {
 } from '../../helper/dragHelpers';
 import ShowingScreenIcon from '../../_screen/preview/ShowingScreenIcon';
 import appProvider from '../../server/appProvider';
-import {
-    checkIsAppDocumentItemOnScreen,
-    VaryAppDocumentItemType,
-} from '../../app-document-list/appDocumentHelpers';
-import { changeDragEventStyle } from '../../helper/helpers';
+import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
+import { changeDragEventStyle, genTimeoutAttempt } from '../../helper/helpers';
 import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { useMemo, useState } from 'react';
@@ -23,6 +20,7 @@ import { useAppEffect } from '../../helper/debuggerHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import AppDocument from '../../app-document-list/AppDocument';
 import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComponent';
+import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -111,7 +109,9 @@ export function toClassNameHighlight(
             : '';
     const isOnScreen = checkIsAppDocumentItemOnScreen(varyAppDocumentItem);
     const presenterClassname =
-        appProvider.isPageEditor || !isOnScreen ? '' : 'app-highlight-selected';
+        appProvider.isPageEditor || !isOnScreen
+            ? ''
+            : 'app-highlight-selected animation';
     return {
         selectedList: ScreenVaryAppDocumentManager.getDataList(
             varyAppDocumentItem.filePath,
@@ -173,16 +173,36 @@ export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
     const scale = useMemo(() => {
         return parentWidth / item.width;
     }, [parentWidth, item]);
+    const resizeAttemptTimeout = useMemo(() => {
+        return genTimeoutAttempt(500);
+    }, []);
+    const listenParentSizing = (parentDiv: HTMLElement | null) => {
+        if (parentDiv !== null) {
+            const resizeObserver = new ResizeObserver(() => {
+                resizeAttemptTimeout(() => {
+                    setParentWidth(targetDiv?.clientWidth ?? 0);
+                });
+            });
+            resizeObserver.observe(parentDiv);
+            return () => {
+                resizeObserver.disconnect();
+            };
+        }
+    };
     return {
         parentWidth,
         scale,
-        setTargetDiv,
-        setParentDiv: (div: HTMLDivElement | null) => {
-            if (div === null) {
+        setTargetDiv: (div: HTMLDivElement | null) => {
+            setTargetDiv(div);
+            return listenParentSizing(div?.parentElement ?? null);
+        },
+        setParentDiv: (parentDiv: HTMLDivElement | null) => {
+            if (parentDiv === null) {
                 setTargetDiv(null);
             } else {
-                setTargetDiv(div.parentElement as HTMLDivElement);
+                setTargetDiv(parentDiv.parentElement as HTMLDivElement);
             }
+            return listenParentSizing(parentDiv);
         },
     };
 }
@@ -216,14 +236,16 @@ export default function SlideItemRenderComp({
     const attachedBackgroundElement = useMemo(() => {
         return genAttachBackgroundComponent(attachedBackgroundData);
     }, [attachedBackgroundData]);
-    const style: React.CSSProperties = {
-        padding: 0,
-        margin: 0,
-        height: `${slide.height * scale}px`,
-    };
+    const style = useMemo(() => {
+        return {
+            padding: 0,
+            margin: 0,
+            height: `${Math.floor(slide.height * scale)}px`,
+        } as React.CSSProperties;
+    }, [slide.height, scale]);
     const handleDataDropping = async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
-        const droppedData = await extractDropData(event);
+        const droppedData = extractDropData(event);
         if (droppedData?.type === DragTypeEnum.SLIDE) {
             if (droppedData.item.filePath !== slide.filePath) {
                 return;

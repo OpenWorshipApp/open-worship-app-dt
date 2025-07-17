@@ -6,11 +6,10 @@ import {
     removePdfImagesPreview,
 } from '../helper/pdfHelpers';
 import PdfSlide from './PdfSlide';
-import { AnyObjectType } from '../helper/helpers';
-import { OptionalPromise } from '../others/otherHelpers';
 import { showPdfDocumentContextMenu } from './appDocumentHelpers';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
+import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 
 export default class PdfAppDocument
     extends AppDocumentSourceAbs

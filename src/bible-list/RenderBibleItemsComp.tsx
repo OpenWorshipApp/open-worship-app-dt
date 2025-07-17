@@ -1,14 +1,14 @@
 import Bible from './Bible';
 import BibleItemRenderComp from './BibleItemRenderComp';
 import { genDuplicatedMessage } from './bibleItemHelpers';
-import { useShowBibleLookupContext } from '../others/commonButtons';
+import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 
 export default function RenderBibleItemsComp({
     bible,
 }: Readonly<{
     bible: Bible;
 }>) {
-    const showBibleLookupPopup = useShowBibleLookupContext();
+    const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const items = bible.items;
     return (
         <ul

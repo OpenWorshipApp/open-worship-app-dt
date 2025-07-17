@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -67,12 +67,15 @@ async function getNumItem(bibleKey: string, n: number) {
     const localeNum = await toLocaleNumBible(bibleKey, n);
     return [n, localeNum, n.toString()] as [number, string, string];
 }
+// TODO: improve this component
 export default function BibleViewTitleEditorComp({
     bibleItem,
+    isOneVerse = false,
     onTargetChange,
     withCtrl = false,
 }: Readonly<{
     bibleItem: ReadIdOnlyBibleItem;
+    isOneVerse?: boolean;
     onTargetChange?: (target: BibleTargetType) => void;
     withCtrl?: boolean;
 }>) {
@@ -251,6 +254,9 @@ export default function BibleViewTitleEditorComp({
                     newVerseStart,
                     verseCount ?? newVerseStart,
                 );
+                if (isOneVerse) {
+                    return;
+                }
                 const newVerseEnd = await choseVerseEnd(
                     event,
                     true,
@@ -293,6 +299,9 @@ export default function BibleViewTitleEditorComp({
                     newVerseStart,
                     verseCount ?? newVerseStart,
                 );
+                if (isOneVerse) {
+                    return;
+                }
                 const newVerseEnd = await choseVerseEnd(
                     event,
                     true,
@@ -331,6 +340,9 @@ export default function BibleViewTitleEditorComp({
                     newVerseStart,
                     verseCount ?? newVerseStart,
                 );
+                if (isOneVerse) {
+                    return;
+                }
                 const newVerseEnd = await choseVerseEnd(
                     event,
                     true,
@@ -348,8 +360,8 @@ export default function BibleViewTitleEditorComp({
                     newVerseEnd,
                 );
             })}
-            {localeVerseEnd ? '-' : ''}
-            {localeVerseEnd
+            {!isOneVerse && localeVerseEnd ? '-' : ''}
+            {!isOneVerse && localeVerseEnd
                 ? genEditor(localeVerseEnd, async (event) => {
                       const newVerseEnd = await choseVerseEnd(
                           event,

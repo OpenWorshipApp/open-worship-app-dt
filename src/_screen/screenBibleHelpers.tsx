@@ -7,16 +7,13 @@ import { BibleItemRenderingType } from './bibleScreenComps';
 import bibleScreenHelper from './bibleScreenHelpers';
 import ScreenBibleManager from './managers/ScreenBibleManager';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
-import {
-    addPlayToBottom,
-    addToTheTop,
-    BibleItemDataType,
-} from './screenHelpers';
+import { addPlayToBottom, addToTheTop } from './screenHelpers';
 import { getDisplayByScreenId } from './managers/screenHelpers';
 import { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { cloneJson } from '../helper/helpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { genContextMenuBibleKeys } from '../bible-lookup/BibleSelectionComp';
+import { BibleItemDataType } from './screenTypeHelpers';
 
 export type ScreenBibleManagerEventType = 'update' | 'text-style';
 
@@ -86,9 +83,14 @@ async function onBibleSelect(
                       childBefore: (
                           <i className="bi bi-x-lg" style={{ color: 'red' }} />
                       ),
-                      title: 'Remove',
+                      title: '`Remove',
                       menuElement: (
-                          <span style={{ color: 'red' }}>
+                          <span
+                              style={{ color: 'red' }}
+                              data-bible-key={
+                                  bibleRenderingList[index].bibleKey
+                              }
+                          >
                               {bibleRenderingList[index].bibleKey}
                           </span>
                       ),

@@ -150,21 +150,21 @@ export default function SlideEditorComp() {
             >
                 <ResizeActorComp
                     flexSizeName={resizeSettingNames.slideEditor}
-                    isHorizontal={false}
+                    isHorizontal
                     flexSizeDefault={{
-                        v1: ['3'],
-                        v2: ['1'],
+                        h1: ['5'],
+                        h2: ['1'],
                     }}
                     dataInput={[
                         {
                             children: LazySlideEditorCanvasComp,
-                            key: 'v1',
+                            key: 'h1',
                             widgetName: 'Slide Editor Canvas',
                             className: 'flex-item',
                         },
                         {
                             children: LazySlideEditorToolsComp,
-                            key: 'v2',
+                            key: 'h2',
                             widgetName: 'Tools',
                             className: 'flex-item',
                         },

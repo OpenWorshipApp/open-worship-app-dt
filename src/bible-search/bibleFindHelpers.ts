@@ -2,9 +2,18 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
 import BibleItem from '../bible-list/BibleItem';
-import { BibleItemType } from '../bible-list/bibleItemHelpers';
-import { LocaleType, sanitizeFindingText } from '../lang';
+import {
+    BibleItemType,
+    genBibleItemCopyingContextMenu,
+} from '../bible-list/bibleItemHelpers';
+import { LocaleType, sanitizeFindingText } from '../lang/langHelpers';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
+import { saveBibleItem } from '../bible-list/bibleHelpers';
+import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 
 export type SelectedBookKeyType = {
     bookKey: string;
@@ -174,7 +183,7 @@ export async function findOnline(
     return null;
 }
 
-export function handleClicking(
+export function openInBibleLookup(
     event: any,
     viewController: LookupBibleItemController,
     bibleItem: BibleItem,
@@ -185,4 +194,32 @@ export function handleClicking(
     } else {
         viewController.setLookupContentFromBibleItem(bibleItem);
     }
+}
+
+export function openContextMenu(
+    event: any,
+    {
+        viewController,
+        bibleItem,
+    }: {
+        viewController: LookupBibleItemController;
+        bibleItem: BibleItem;
+    },
+) {
+    const contextMenuItems: ContextMenuItemType[] = [];
+    contextMenuItems.push({
+        menuElement: '`Open',
+        onSelect: () => {
+            openInBibleLookup(event, viewController, bibleItem, true);
+        },
+    });
+    contextMenuItems.push(...genBibleItemCopyingContextMenu(bibleItem));
+    contextMenuItems.push({
+        childBefore: genContextMenuItemIcon('floppy'),
+        menuElement: '`Save bible item',
+        onSelect: () => {
+            saveBibleItem(bibleItem);
+        },
+    });
+    showAppContextMenu(event, contextMenuItems);
 }

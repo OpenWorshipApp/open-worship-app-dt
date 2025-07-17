@@ -1,6 +1,6 @@
 import { CSSProperties, createContext, use, useOptimistic } from 'react';
 
-import { AnyObjectType, cloneJson } from '../../helper/helpers';
+import { cloneJson } from '../../helper/helpers';
 import { AppColorType } from '../../others/color/colorHelpers';
 import {
     ToolingBoxType,
@@ -17,6 +17,7 @@ import EventHandler from '../../event/EventHandler';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { useProgressBarComp } from '../../progress-bar/ProgressBarComp';
 import { ClipboardInf } from '../../server/appHelpers';
+import { AnyObjectType } from '../../helper/typeHelpers';
 
 export type CanvasItemPropsType = {
     id: number;

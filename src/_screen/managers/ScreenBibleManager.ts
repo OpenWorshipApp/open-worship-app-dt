@@ -3,7 +3,6 @@ import { CSSProperties } from 'react';
 import BibleItem from '../../bible-list/BibleItem';
 import { DroppedDataType, DragTypeEnum } from '../../helper/DragInf';
 import {
-    AnyObjectType,
     bringDomToNearestView,
     bringDomToTopView,
     cloneJson,
@@ -19,11 +18,8 @@ import {
     onSelectKey,
 } from '../screenBibleHelpers';
 import {
-    BasicScreenMessageType,
-    BibleItemDataType,
     genScreenMouseEvent,
     getBibleListOnScreenSetting,
-    ScreenMessageType,
 } from '../screenHelpers';
 import * as loggerHelpers from '../../helper/loggerHelpers';
 import { handleError } from '../../helper/errorHelpers';
@@ -35,8 +31,14 @@ import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
 import { BibleItemType } from '../../bible-list/bibleItemHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
+import Bible from '../../bible-list/Bible';
+import { AnyObjectType } from '../../helper/typeHelpers';
+import {
+    BasicScreenMessageType,
+    BibleItemDataType,
+    ScreenMessageType,
+} from '../screenTypeHelpers';
 
-let textStyle: AnyObjectType = {};
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
     private _screenViewData: BibleItemDataType | null = null;
@@ -55,23 +57,6 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         if (appProvider.isPagePresenter) {
             const allBibleDataList = getBibleListOnScreenSetting();
             this._screenViewData = allBibleDataList[this.key] ?? null;
-
-            const str = getSetting(
-                `${SCREEN_BIBLE_SETTING_PREFIX}-style-text`,
-                '',
-            );
-            try {
-                if (isValidJson(str, true)) {
-                    const style = JSON.parse(str);
-                    if (typeof style !== 'object') {
-                        loggerHelpers.error(style);
-                        throw new Error('Invalid style data');
-                    }
-                    textStyle = style;
-                }
-            } catch (error) {
-                handleError(error);
-            }
         }
     }
 
@@ -302,7 +287,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     static readonly maxTextStyleTextFontSize = 200;
     static get textStyleTextFontSize() {
         const textStyle = this.textStyle;
-        return typeof textStyle.fontSize !== 'number' ? 25 : textStyle.fontSize;
+        return typeof textStyle.fontSize !== 'number' ? 65 : textStyle.fontSize;
     }
 
     static changeTextStyleTextFontSize(isUp: boolean) {
@@ -339,13 +324,28 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     static get textStyle(): AnyObjectType {
-        return textStyle;
+        const str =
+            getSetting(`${SCREEN_BIBLE_SETTING_PREFIX}-style-text`) ?? '';
+        try {
+            if (isValidJson(str, true)) {
+                const style = JSON.parse(str);
+                if (typeof style !== 'object') {
+                    loggerHelpers.error(style);
+                    throw new Error('Invalid style data');
+                }
+                return style;
+            }
+        } catch (error) {
+            handleError(error);
+        }
+        return {};
     }
 
     static set textStyle(style: AnyObjectType) {
-        textStyle = style;
-        const str = JSON.stringify(style);
-        setSetting(`${SCREEN_BIBLE_SETTING_PREFIX}-style-text`, str);
+        setSetting(
+            `${SCREEN_BIBLE_SETTING_PREFIX}-style-text`,
+            JSON.stringify(style),
+        );
         this.sendSynTextStyle();
         this.addPropEvent('text-style');
     }
@@ -370,6 +370,8 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     static receiveSyncTextStyle(message: ScreenMessageType) {
         const { data } = message;
+        console.log(data.textStyle);
+
         this.textStyle = data.textStyle;
     }
 
@@ -377,7 +379,14 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         bibleItemJson: BibleItemType,
         filePath: string | undefined,
     ) {
-        const bibleKeys = this.getRenderedBibleKeys();
+        let bibleKeys = this.getRenderedBibleKeys();
+        if (bibleKeys.length === 1) {
+            bibleKeys = [bibleItemJson.bibleKey];
+        } else if (bibleKeys.length > 1) {
+            bibleKeys = Array.from(
+                new Set([bibleItemJson.bibleKey].concat(bibleKeys)),
+            );
+        }
         const newBibleItemData = await bibleItemJsonToScreenViewData(
             bibleItemJson,
             bibleKeys,
@@ -398,7 +407,11 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             genScreenMouseEvent(event) as any,
             isForceChoosing,
         );
-        const filePath = bibleItem.filePath;
+        let filePath = bibleItem.filePath;
+        if (filePath === undefined) {
+            const defaultBible = await Bible.getDefault();
+            filePath = defaultBible?.filePath ?? undefined;
+        }
         screenIds.forEach(async (screenId) => {
             const screenBibleManager = this.getInstance(screenId);
             screenBibleManager.applyNewBibleItemJson(bibleItemJson, filePath);

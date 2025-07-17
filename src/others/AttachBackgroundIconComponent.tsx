@@ -1,5 +1,21 @@
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useAttachedBackgroundData } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
+import { menuTitleRealFile } from '../helper/helpers';
+import { showExplorer } from '../server/appHelpers';
+
+function showMediaContextMenu(event: any, filePath: string) {
+    event.stopPropagation();
+    event.preventDefault();
+    showAppContextMenu(event, [
+        {
+            menuElement: menuTitleRealFile,
+            onSelect: () => {
+                showExplorer(filePath);
+            },
+        },
+    ]);
+}
 
 export default function AttachBackgroundIconComponent({
     filePath,
@@ -34,6 +50,9 @@ export default function AttachBackgroundIconComponent({
             <button
                 className="btn btn-secondary btn-sm"
                 title={attachedBackgroundData.item.src}
+                onContextMenu={(event) =>
+                    showMediaContextMenu(event, attachedBackgroundData.item.src)
+                }
             >
                 <i className="bi bi-image" />
             </button>
@@ -43,6 +62,9 @@ export default function AttachBackgroundIconComponent({
             <button
                 className="btn btn-secondary btn-sm"
                 title={attachedBackgroundData.item.src}
+                onContextMenu={(event) =>
+                    showMediaContextMenu(event, attachedBackgroundData.item.src)
+                }
             >
                 <i className="bi bi-file-earmark-play-fill" />
             </button>

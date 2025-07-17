@@ -1,21 +1,7 @@
 import { fork } from 'child_process';
 import { app } from 'electron';
 import { resolve as fsResolve } from 'node:path';
-import { isDev } from './electronHelpers';
-
-const lockSet = new Set<string>();
-async function unlocking<T>(key: string, callback: () => Promise<T> | T) {
-    if (lockSet.has(key)) {
-        await new Promise((resolve) => {
-            setTimeout(resolve, 100);
-        });
-        return unlocking(key, callback);
-    }
-    lockSet.add(key);
-    const data = await callback();
-    lockSet.delete(key);
-    return data;
-}
+import { isDev, unlocking } from './electronHelpers';
 
 type PdfImagePreviewDataType = {
     isSuccessful: boolean;

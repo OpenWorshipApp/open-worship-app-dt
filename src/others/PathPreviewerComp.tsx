@@ -1,4 +1,5 @@
-import { pathBasename } from '../server/fileHelpers';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { fsCheckDirExist, pathBasename } from '../server/fileHelpers';
 
 // TODO: check direction rtl error with /*
 function cleanPath(path: string) {
@@ -12,18 +13,26 @@ export function PathPreviewerComp({
     dirPath,
     isShowingNameOnly = false,
     onClick,
+    shouldNotValidate = false,
 }: Readonly<{
     dirPath: string;
     isShowingNameOnly?: boolean;
     onClick?: (event: any) => void;
+    shouldNotValidate?: boolean;
 }>) {
-    const cleanedPath = cleanPath(dirPath);
-    let path = cleanedPath;
+    const [isValidPath] = useAppStateAsync(() => {
+        if (shouldNotValidate) {
+            return Promise.resolve(true);
+        }
+        return fsCheckDirExist(dirPath);
+    }, [shouldNotValidate, dirPath]);
+    const cleanedDirectoryPath = cleanPath(dirPath);
+    let directoryPath = cleanedDirectoryPath;
     if (isShowingNameOnly) {
-        path = pathBasename(cleanedPath);
-        const index = path.indexOf('.');
+        directoryPath = pathBasename(cleanedDirectoryPath);
+        const index = directoryPath.indexOf('.');
         if (index > 0) {
-            path = path.substring(0, index);
+            directoryPath = directoryPath.substring(0, index);
         }
     }
     return (
@@ -33,9 +42,12 @@ export function PathPreviewerComp({
                 ` ${onClick ? 'pointer' : ''}`
             }
             onClick={onClick}
-            title={cleanedPath}
+            title={isValidPath ? cleanedDirectoryPath : '`Invalid Path'}
+            style={{
+                color: isValidPath ? '' : 'red',
+            }}
         >
-            {path}
+            {directoryPath}
         </div>
     );
 }

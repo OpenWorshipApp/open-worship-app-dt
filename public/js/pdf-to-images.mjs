@@ -1,8 +1,11 @@
+'use strict';
+/* eslint-disable */
+
 import {
     readFileSync, writeFileSync, existsSync, lstatSync, unlinkSync,
 } from 'node:fs';
 import { resolve } from 'node:path';
-import { ColorSpace, Matrix, PDFDocument } from 'mupdf/mupdfjs';
+import { ColorSpace, Matrix, PDFDocument } from 'mupdf';
 
 function forceRemoveFile(filePath) {
     try {

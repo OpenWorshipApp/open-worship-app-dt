@@ -7,7 +7,7 @@ import {
     getLang,
     LanguageDataType,
     setCurrentLocale,
-} from '../lang';
+} from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 
 function RenderLanguageButtonComp({

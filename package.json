@@ -1,9 +1,9 @@
 {
     "name": "open-worship-app",
     "description": "Fully Open-Source and completely free forever for worship service.",
-    "author": "Open Worship Dev Team (https://github.com/OpenWorshipApp/open-worship-app-dt/graphs/contributors)",
-    "homepage": "https://github.com/OpenWorshipApp/open-worship-app-dt",
-    "version": "2025.7.4",
+    "author": "Raksa Eng <eng.raksa@gmail.com> (https://github.com/orgs/OpenWorshipApp/people)",
+    "homepage": "https://www.openworship.app",
+    "version": "2025.07.15",
     "type": "commonjs",
     "main": "./electron-build/electron/index.js",
     "scripts": {
@@ -14,19 +14,22 @@
         "electron:watch": "nodemon --exec \"npm run electron\" --watch electron-build",
         "electron:dev": "npm run electron:build && concurrently -k \"npm run electron:build:watch\" \"npm run electron:watch\"",
         "build": "npm run vite:build && npm run electron:build",
-        "pack": "npm run build && electron-builder build --publish never",
-        "pack:all": "npm run build && electron-builder build -mwl",
         "pack:mac": "npm run build && electron-builder build --mac",
-        "pack:mac:uni": "npm run build && electron-builder build --mac --x64 --universal",
+        "pack:mac:uni": "cross-env FORCE_UNIVERSAL=true npm run build && electron-builder build --mac --x64 --universal",
         "pack:linux": "npm run build && electron-builder build --linux",
+        "pack:linux:32": "cross-env FORCE_ARCH_32=true npm run build && electron-builder build --linux --ia32",
         "pack:win": "npm run build && electron-builder build --win --x64",
-        "pack:win32": "electron-builder build --win --ia32",
+        "pack:win:arm": "npm run build && electron-builder build --win --arm64",
+        "pack:win:32": "cross-env FORCE_ARCH_32=true npm run build && electron-builder build --win --ia32",
         "vite:dev": "vite",
         "vite:build": "vite build",
-        "react-devtools": "react-devtools",
         "lint:pre": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\" \"electron/**/*.ts\"",
         "lint:es": "eslint src/**/*.ts* electron/**/*.ts",
-        "lint": "npm run lint:pre && npm run lint:es && npm run build"
+        "lint": "npm run lint:pre && npm run lint:es && npm run build",
+        "dc:err": "depcruise src --include-only \"^src\" --output-type err-html > dc-dependency-graph/errors.html",
+        "ts:err:check": "tsc --noEmit --skipLibCheck",
+        "release": "bash extra-work/release.sh",
+        "install": "bash extra-work/bin-helper/build.sh"
     },
     "browserslist": {
         "production": [
@@ -46,9 +49,11 @@
         "nodeGypRebuild": "false",
         "files": [
             "electron-build/**/*",
-            "build/**/*",
             "dist/**/*",
             "package.json"
+        ],
+        "asarUnpack": [
+            "electron-build/**/*"
         ],
         "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
         "dmg": {
@@ -74,8 +79,7 @@
         "linux": {
             "target": [
                 "deb",
-                "AppImage",
-                "tar.gz"
+                "AppImage"
             ],
             "category": "Productivity",
             "artifactName": "${name}_${version}_${arch}.${ext}"
@@ -101,38 +105,44 @@
         "node": ">=18.16.0"
     },
     "devDependencies": {
-        "@types/diff": "^7.0.1",
+        "@aws-sdk/client-cloudfront": "^3.839.0",
+        "@aws-sdk/client-s3": "^3.839.0",
+        "@types/diff": "^8.0.0",
         "@types/markdown-it": "^14.1.2",
         "@types/node": "^22.13.10",
-        "@types/react": "^19.0.10",
-        "@types/react-dom": "^19.0.4",
+        "@types/react": "^19.1.8",
+        "@types/react-dom": "^19.1.6",
         "@types/tar": "^6.1.13",
         "@vitejs/plugin-basic-ssl": "^2.0.0",
-        "@vitejs/plugin-react-swc": "^3.8.0",
+        "@vitejs/plugin-react-swc": "^3.10.2",
         "bootstrap": "^5.3.3",
         "bootstrap-icons": "^1.11.3",
         "concurrently": "^9.1.2",
         "cross-env": "^7.0.3",
-        "diff": "^7.0.0",
-        "electron": "^36.4.0",
-        "electron-builder": "^25.1.8",
+        "dependency-cruiser": "^16.10.3",
+        "diff": "^8.0.2",
+        "electron": "^37.1.0",
+        "electron-builder": "^26.0.12",
         "eslint": "^9.22.0",
         "markdown-it": "^14.1.0",
         "markdown-it-music": "^2.0.5",
+        "moment-timezone": "^0.6.0",
         "monaco-editor": "^0.52.2",
+        "node-api-dotnet": "^0.9.12",
         "nodemon": "^3.1.9",
         "prettier": "^3.5.3",
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
-        "sass": "^1.85.1",
+        "react": "^19.1.0",
+        "react-dom": "^19.1.0",
+        "sass": "^1.89.2",
         "typescript": "^5.8.2",
         "typescript-eslint": "^8.26.1",
-        "vite": "^6.2.1"
+        "vite": "^6.3.5"
     },
     "dependencies": {
         "font-list": "^1.5.1",
         "libreoffice-convert": "^1.6.1",
-        "mupdf": "^1.3.3",
-        "tar": "^7.4.3"
+        "mupdf": "^1.26.2",
+        "tar": "^7.4.3",
+        "yt-dlp-wrap": "^2.3.12"
     }
 }

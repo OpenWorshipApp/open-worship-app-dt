@@ -14,10 +14,10 @@ import {
 import BibleItemsViewController, {
     useBibleItemsViewControllerContext,
 } from '../../bible-reader/BibleItemsViewController';
-import { BibleItemDataType } from '../screenHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import { previewingEventListener } from '../../event/PreviewingEventListener';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { BibleItemDataType } from '../screenTypeHelpers';
 
 function openContextMenu(event: any) {
     showAppContextMenu(event, [

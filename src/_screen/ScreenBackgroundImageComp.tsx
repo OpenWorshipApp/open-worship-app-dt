@@ -1,6 +1,7 @@
-import { BackgroundSrcType, calMediaSizes } from './screenHelpers';
 import { useScreenBackgroundManagerEvents } from './managers/screenEventHelpers';
 import { useScreenManagerContext } from './managers/screenManagerHooks';
+import { calMediaSizes } from './screenHelpers';
+import { BackgroundSrcType } from './screenTypeHelpers';
 
 export default function ScreenBackgroundImageComp({
     backgroundSrc,

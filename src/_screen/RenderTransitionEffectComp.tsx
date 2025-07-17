@@ -3,8 +3,8 @@ import ScreenEffectManager from './managers/ScreenEffectManager';
 import {
     ScreenTransitionEffectType,
     transitionEffect,
-    useScreenEffectEvents,
-} from './transitionEffectHelpers';
+} from './screenTypeHelpers';
+import { useScreenEffectEvents } from './transitionEffectHelpers';
 
 function openContextMenu(event: any, screenEffectManager: ScreenEffectManager) {
     const transitionEffectList = Object.entries(transitionEffect);
@@ -52,13 +52,4 @@ export default function RenderTransitionEffectComp({
             <i className={`${selected[0]} ps-1 'app-highlight-selected`} />
         </button>
     );
-}
-
-export function RendStyle({
-    screenEffectManager,
-}: Readonly<{
-    screenEffectManager: ScreenEffectManager;
-}>) {
-    useScreenEffectEvents(['update'], screenEffectManager);
-    return <style>{screenEffectManager.style}</style>;
 }

@@ -1,6 +1,7 @@
 import ColorNoteInf from './ColorNoteInf';
 import FileSource from './FileSource';
-import { AnyObjectType, cloneJson } from './helpers';
+import { cloneJson } from './helpers';
+import { AnyObjectType } from './typeHelpers';
 
 export abstract class ItemBase implements ColorNoteInf {
     abstract id: number;

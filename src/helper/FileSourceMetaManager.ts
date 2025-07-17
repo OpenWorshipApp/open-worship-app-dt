@@ -62,7 +62,7 @@ export default class FileSourceMetaManager {
             return null;
         }
         const fileSource = FileSource.getInstance(filePath);
-        const isAppFile = checkIsAppFile(fileSource.fileFullName);
+        const isAppFile = checkIsAppFile(fileSource.fullName);
         if (!isAppFile) {
             return getColorNoteSetting(filePath);
         }
@@ -81,7 +81,7 @@ export default class FileSourceMetaManager {
             return null;
         }
         const fileSource = FileSource.getInstance(filePath);
-        const isAppFile = checkIsAppFile(fileSource.fileFullName);
+        const isAppFile = checkIsAppFile(fileSource.fullName);
         if (!isAppFile) {
             setColorNoteSetting(filePath, color);
             return;

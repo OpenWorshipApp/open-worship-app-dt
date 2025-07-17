@@ -29,9 +29,9 @@ async function selectBookKey(
         showSimpleToast('Getting bible list', 'Fail to get bible list');
         return;
     }
-    showAppContextMenu(event, [
+    const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: 'all books',
+            menuElement: 'All Books',
             onSelect: () => {
                 setSelectedBook(null);
             },
@@ -39,14 +39,19 @@ async function selectBookKey(
         ...bookList.map(({ bookKey, book, bookKJV, isAvailable }) => {
             const extraName = book !== bookKJV ? ` (${bookKJV})` : '';
             return {
-                menuElement: `${book}${extraName}`,
+                menuElement: (
+                    <span
+                        data-bible-key={bibleKey}
+                    >{`${book}${extraName}`}</span>
+                ),
                 disabled: !isAvailable || selectedBook?.bookKey === bookKey,
                 onSelect: () => {
                     setSelectedBook({ bookKey, book });
                 },
             } as ContextMenuItemType;
         }),
-    ]);
+    ];
+    showAppContextMenu(event, contextMenuItems);
 }
 
 function RenderPageNumberComp({
@@ -188,9 +193,11 @@ export default function BibleFindRenderDataComp({
                                 );
                             }}
                         >
-                            {selectedBook === null
-                                ? 'All books'
-                                : selectedBook.book}
+                            <span data-bible-key={bibleFindController.bibleKey}>
+                                {selectedBook === null
+                                    ? 'All Books'
+                                    : selectedBook.book}
+                            </span>
                         </button>
                     </div>
                 </div>

@@ -2,7 +2,7 @@ import DownloadedBibleItemComp from './DownloadedBibleItemComp';
 import { BibleListType } from './bibleSettingHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
 import LoadingComp from '../../others/LoadingComp';
-import { LocaleType } from '../../lang';
+import { LocaleType } from '../../lang/langHelpers';
 
 type DownloadingBibleInfoType = {
     isUpdatable: boolean;

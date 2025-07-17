@@ -36,6 +36,7 @@ export function BoxEditorNormalVideoRender() {
     const minSize = Math.min(width, pWidth) / 4;
     return (
         <div
+            title={props.id.toString()}
             style={{
                 width: '100%',
                 height: '100%',

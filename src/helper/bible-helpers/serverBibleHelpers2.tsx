@@ -8,7 +8,7 @@ import {
     LocaleType,
     toLocaleNum,
     toStringNum,
-} from '../../lang';
+} from '../../lang/langHelpers';
 import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import { getKJVChapterCount } from './serverBibleHelpers';

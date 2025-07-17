@@ -36,7 +36,10 @@ export default function SettingAboutComp() {
                     {text}
                 </div>
             </div>
-            <div className="alert alert-info">
+            <div
+                className="alert alert-info"
+                style={{ maxWidth: '700px', margin: 'auto' }}
+            >
                 {'`'}This is an open-source presentation app for worship
                 service. Official Github repo here:{' '}
                 <button className="btn btn-success" onClick={onClick}>

@@ -8,7 +8,7 @@ import {
     extractDownloadedBible,
 } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
-import { getLangAsync } from '../../lang';
+import { getLangAsync } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 

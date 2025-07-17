@@ -1,0 +1,34 @@
+{
+    "win": {
+        "isWindows": true,
+        "is64System": true
+    },
+    "win-ia32": {
+        "isWindows": true,
+        "is64System": false
+    },
+    "mac": {
+        "isMac": true,
+        "isArm64": true
+    },
+    "mac-uni": {
+        "isMac": true,
+        "isArm64": true,
+        "isUniversal": true
+    },
+    "mac-intel": {
+        "isMac": true,
+        "isArm64": false,
+        "isUniversal": false
+    },
+    "linux-ubuntu": {
+        "isLinux": true,
+        "isUbuntu": true,
+        "is64System": true
+    },
+    "linux-fedora": {
+        "isLinux": true,
+        "isFedora": true,
+        "is64System": true
+    }
+}

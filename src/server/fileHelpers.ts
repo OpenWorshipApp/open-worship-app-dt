@@ -90,6 +90,14 @@ export function pathJoin(filePath: string, fileFullName: string) {
     return appProvider.pathUtils.join(filePath, fileFullName);
 }
 
+export function pathResolve(...paths: string[]): string {
+    const path = appProvider.pathUtils.resolve(...paths);
+    if (path.endsWith(pathSeparator)) {
+        return path.slice(0, -1);
+    }
+    return path;
+}
+
 export function pathBasename(filePath: string) {
     return appProvider.pathUtils.basename(filePath);
 }
@@ -296,8 +304,8 @@ function _fsUnlink(filePath: string) {
     return fsFilePromise<void>(appProvider.fileUtils.unlink, filePath);
 }
 
-export function fsCloneFile(src: File | string, dest: string) {
-    if (src instanceof File) {
+export function fsCloneFile(file: File | string, dest: string) {
+    if (file instanceof File) {
         return new Promise<void>((resolve, reject) => {
             const writeStream = fsCreateWriteStream(dest);
             const writableStream = new WritableStream({
@@ -312,10 +320,10 @@ export function fsCloneFile(src: File | string, dest: string) {
                 },
             });
             writeStream.once('close', resolve);
-            src.stream().pipeTo(writableStream).catch(reject);
+            file.stream().pipeTo(writableStream).catch(reject);
         });
     }
-    return fsFilePromise<void>(appProvider.fileUtils.copyFile, src, dest);
+    return fsFilePromise<void>(appProvider.fileUtils.copyFile, file, dest);
 }
 
 async function _fsCheckExist(

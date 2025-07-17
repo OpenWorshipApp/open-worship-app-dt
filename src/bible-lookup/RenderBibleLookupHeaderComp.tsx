@@ -1,9 +1,9 @@
 import InputHandlerComp from './InputHandlerComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
-import InputHistoryComp from './InputHistoryComp';
+import BibleLookupInputHistoryComp from './BibleLookupInputHistoryComp';
 import appProvider from '../server/appProvider';
 import { ModalCloseButton } from '../app-modal/ModalComp';
-import { useShowBibleLookupContext } from '../others/commonButtons';
+import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 
 export default function RenderBibleLookupHeaderComp({
@@ -14,7 +14,7 @@ export default function RenderBibleLookupHeaderComp({
     setIsLookupOnline: (isLookupOnline: boolean) => void;
 }>) {
     const viewController = useLookupBibleItemControllerContext();
-    const hideBibleLookupPopup = useShowBibleLookupContext(false);
+    const hideBibleLookupPopup = useToggleBibleLookupPopupContext(false);
 
     const handleBibleKeyChanging = async (
         _oldBibleKey: string,
@@ -32,7 +32,7 @@ export default function RenderBibleLookupHeaderComp({
                     width: 'calc(50% - 175px)',
                 }}
             >
-                <InputHistoryComp />
+                <BibleLookupInputHistoryComp />
             </div>
             <div
                 className="flex-item input-group app-input-group-header"

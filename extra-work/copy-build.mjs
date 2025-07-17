@@ -1,41 +1,69 @@
-import { copyFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
+'use strict';
+/* eslint-disable */
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  unlinkSync,
+  readdirSync,
+  statSync,
+} from 'node:fs';
 import { join, resolve } from 'node:path';
 import process from 'node:process';
 
+const { platform, arch } = process;
 const systemUtils = {
-  isWindows: process.platform === 'win32',
-  isMac: process.platform === 'darwin',
-  isLinux: process.platform === 'linux',
-  is64System: process.arch === 'x64',
-  isArm64: process.arch === 'arm64',
+  isWindows: platform === 'win32',
+  isMac: platform === 'darwin',
+  isLinux: platform === 'linux',
+  is64System: process.env.FORCE_ARCH_32 == 'true' ? false : arch === 'x64',
+  isArm64: arch === 'arm64',
+  isMacUniversal: process.env.FORCE_UNIVERSAL == 'true',
 };
 
-function genFileName(baseName) {
-  const ext = systemUtils.isWindows
-    ? 'dll'
-    : systemUtils.isMac
-      ? 'dylib'
-      : 'so';
+function getFileSuffix() {
   let suffix = '';
   if (systemUtils.isMac) {
-    if (!systemUtils.isArm64) {
+    if (systemUtils.isMacUniversal || !systemUtils.isArm64) {
       suffix = '-int';
     }
-  } else if (!systemUtils.is64System) {
-    suffix = '-i386';
+  } else {
+    if (systemUtils.isArm64) {
+      suffix = '-arm64';
+    } else if (!systemUtils.is64System) {
+      suffix = '-i386';
+    }
   }
+  return suffix;
+}
+function genLibFileName(baseName) {
+  let ext;
+  if (systemUtils.isWindows) {
+    ext = 'dll';
+  } else if (systemUtils.isMac) {
+    ext = 'dylib';
+  } else {
+    ext = 'so';
+  }
+  const suffix = getFileSuffix();
   return {
-    fts5FileName: `${baseName}${suffix}.${ext}`,
-    destFileName: baseName,
+    sourceFileName: `${baseName}${suffix}.${ext}`,
+    destFileName: `${baseName}.${ext}`,
+  };
+}
+function genBinFileName(baseName) {
+  let ext = '';
+  if (systemUtils.isWindows) {
+    ext = '.exe';
+  }
+  const suffix = getFileSuffix();
+  return {
+    sourceFileName: `${baseName}${suffix}${ext}`,
+    destFileName: `${baseName}${ext}`,
   };
 }
 
-const basePath = {
-  source: resolve('./extra-work/db-exts'),
-  destination: resolve('./electron-build/db-exts'),
-};
-
-function copy(fileFullName, destFileFullName) {
+function copyFile(basePath, fileFullName, destFileFullName) {
   if (!existsSync(basePath.destination)) {
     mkdirSync(basePath.destination, { recursive: true });
   }
@@ -44,8 +72,64 @@ function copy(fileFullName, destFileFullName) {
   copyFileSync(join(basePath.source, fileFullName), destFilePath);
 }
 
+const basePath = {
+  source: resolve('./extra-work/db-exts'),
+  destination: resolve('./electron-build/db-exts'),
+};
 ['fts5', 'spellfix1'].forEach((baseName) => {
-  const { fts5FileName, destFileName } = genFileName(baseName);
-  console.log('Copy:', fts5FileName, destFileName);
-  copy(fts5FileName, destFileName);
+  const { sourceFileName, destFileName } = genLibFileName(baseName);
+  console.log('Copy:', sourceFileName, destFileName);
+  copyFile(basePath, sourceFileName, destFileName);
 });
+
+function checkIsFile(filePath) {
+  const stats = existsSync(filePath) ? statSync(filePath) : null;
+  return stats && stats.isFile();
+}
+function copyAllChildren(source, dest) {
+  if (!existsSync(dest)) {
+    mkdirSync(dest, { recursive: true });
+  }
+  const children = readdirSync(source);
+  for (const child of children) {
+    const sourceChild = join(source, child);
+    const destChild = join(dest, child);
+    if (checkIsFile(sourceChild)) {
+      copyFileSync(sourceChild, destChild);
+    } else {
+      copyAllChildren(sourceChild, destChild);
+    }
+  }
+}
+
+const binHelperSourceRootDir = resolve('./extra-work/bin-helper/dist');
+const binHelperDestRootDir = resolve('./electron-build/bin-helper');
+
+copyAllChildren(
+  resolve(binHelperSourceRootDir, 'net8.0'),
+  resolve(binHelperDestRootDir, 'net8.0'),
+);
+console.log('PowerPoint lib files are copied');
+copyAllChildren(
+  resolve(binHelperSourceRootDir, `bin${getFileSuffix()}`),
+  resolve(binHelperDestRootDir, 'bin'),
+);
+console.log('PowerPoint bin files are copied');
+
+const { sourceFileName, destFileName } = genBinFileName('yt-dlp');
+copyFile(
+  {
+    source: resolve(binHelperSourceRootDir, 'yt'),
+    destination: resolve(binHelperDestRootDir, 'yt'),
+  },
+  sourceFileName,
+  destFileName,
+);
+console.log('yt-dlp file is copied');
+
+// TODO: copy only needed files
+copyAllChildren(
+  resolve('./node_modules/node-api-dotnet'),
+  resolve('./electron-build/bin-helper/node-api-dotnet'),
+);
+console.log('node-api-dotnet files are copied');

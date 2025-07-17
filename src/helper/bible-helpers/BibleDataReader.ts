@@ -1,7 +1,7 @@
 import appProvider from '../../server/appProvider';
 import { fsCreateDir, pathJoin } from '../../server/fileHelpers';
-import { LocaleType } from '../../lang';
-import { is_dev, decrypt } from '../../_owa-crypto';
+import { LocaleType } from '../../lang/langHelpers';
+import { decrypt } from '../../_owa-crypto';
 import { handleError } from '../errorHelpers';
 import {
     hideProgressBard,
@@ -100,10 +100,7 @@ export default class BibleDataReader {
     async getWritableBiblePath() {
         if (this._writableBiblePath === null) {
             const userWritablePath = appLocalStorage.defaultStorage;
-            const dirPath = pathJoin(
-                userWritablePath,
-                `bibles-data${is_dev() ? '-dev' : ''}`,
-            );
+            const dirPath = pathJoin(userWritablePath, 'bibles-data');
             try {
                 await fsCreateDir(dirPath);
             } catch (error: any) {

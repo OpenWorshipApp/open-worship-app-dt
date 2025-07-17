@@ -1,5 +1,7 @@
 import AskingNewNameComp from './AskingNewNameComp';
 import FileSource from '../helper/FileSource';
+import { renameAllMaterialFiles } from '../server/appHelpers';
+import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
 
 export default function RenderRenamingComp({
     setIsRenaming,
@@ -17,8 +19,13 @@ export default function RenderRenamingComp({
         }
         const fileSource = FileSource.getInstance(filePath);
         const newFileSource = await fileSource.renameTo(newName);
-        if (newFileSource !== null && renamedCallback !== undefined) {
-            renamedCallback(newFileSource);
+        if (newFileSource !== null) {
+            await renameAllMaterialFiles(fileSource, newName);
+            await EditingHistoryManager.moveFilePath(
+                filePath,
+                newFileSource.filePath,
+            );
+            renamedCallback?.(newFileSource);
         }
         setIsRenaming(!newFileSource);
     };

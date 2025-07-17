@@ -2,12 +2,8 @@ import { useState } from 'react';
 
 import { PathPreviewerComp } from '../../others/PathPreviewerComp';
 import {
-    MIN_THUMBNAIL_SCALE,
-    MAX_THUMBNAIL_SCALE,
-    THUMBNAIL_SCALE_STEP,
     selectSlide,
     useSelectedAppDocumentSetterContext,
-    VaryAppDocumentItemType,
     toKeyByFilePath,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
@@ -16,6 +12,12 @@ import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumen
 import appProvider from '../../server/appProvider';
 import { showAppAlert } from '../../popup-widget/popupWidgetHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
+import {
+    VaryAppDocumentItemType,
+    MIN_THUMBNAIL_SCALE,
+    MAX_THUMBNAIL_SCALE,
+    THUMBNAIL_SCALE_STEP,
+} from '../../app-document-list/appDocumentTypeHelpers';
 
 export const slidePreviewerMethods = {
     handleSlideItemSelected: (
@@ -118,6 +120,7 @@ export default function AppDocumentPreviewerFooterComp({
                         onClick={
                             isDisableChanging ? undefined : handleSlideChoosing
                         }
+                        shouldNotValidate
                     />
                 </div>
                 {appProvider.isPagePresenter ? (

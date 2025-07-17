@@ -41,7 +41,7 @@ export default function NoBibleViewAvailableComp() {
                 }
             }}
         >
-            '`' + 'No Bible Available'
+            '`No Bible Available'
         </div>
     );
 }

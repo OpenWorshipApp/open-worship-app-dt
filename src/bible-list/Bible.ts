@@ -4,7 +4,7 @@ import {
     MimetypeNameType,
 } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
-import { AnyObjectType, cloneJson, toMaxId } from '../helper/helpers';
+import { cloneJson, toMaxId } from '../helper/helpers';
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { getSetting } from '../helper/settingHelpers';
 import BibleItem from './BibleItem';
@@ -15,6 +15,7 @@ import appProvider from '../server/appProvider';
 import DocumentInf from '../others/DocumentInf';
 import { handleError } from '../helper/errorHelpers';
 import { ItemSourceInfBasic } from '../others/ItemSourceInf';
+import { AnyObjectType } from '../helper/typeHelpers';
 
 export type BibleType = {
     items: BibleItemType[];
@@ -56,7 +57,9 @@ export default class Bible
     get items() {
         return this.originalJson.items.map((json) => {
             try {
-                return BibleItem.fromJson(json, this.filePath);
+                const bibleItem = BibleItem.fromJson(json, this.filePath);
+                bibleItem.bible = this;
+                return bibleItem;
             } catch (error: any) {
                 showSimpleToast('Instantiating Bible Item', error.message);
             }
@@ -115,10 +118,10 @@ export default class Bible
     }
 
     static async addBibleItemToDefault(bibleItem: BibleItem) {
-        const bible = await this.getDefault();
-        if (bible !== null) {
-            bible.addBibleItem(bibleItem);
-            if (await bible.save()) {
+        const defaultBible = await this.getDefault();
+        if (defaultBible !== null) {
+            defaultBible.addBibleItem(bibleItem);
+            if (await defaultBible.save()) {
                 return bibleItem;
             }
         }
@@ -246,7 +249,7 @@ export default class Bible
     }
 
     static async getDefault() {
-        const dir = getSetting(Bible.getDirSourceSettingName(), '');
+        const dir = getSetting(Bible.getDirSourceSettingName()) ?? '';
         if (!dir) {
             return null;
         }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { getLangCode, LocaleType } from '../../lang';
+import { getLangCode, LocaleType } from '../../lang/langHelpers';
 
 function BibleKeyXMLInputComp({
     defaultVale,

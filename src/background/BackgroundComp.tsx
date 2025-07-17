@@ -9,15 +9,15 @@ import {
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
+import { getBackgroundSrcListOnScreenSetting } from '../_screen/screenHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import { tran } from '../lang/langHelpers';
+import { useAppEffect } from '../helper/debuggerHelpers';
+import { audioEvent } from './audioBackgroundHelpers';
 import {
     BackgroundSrcListType,
     BackgroundType,
-    getBackgroundSrcListOnScreenSetting,
-} from '../_screen/screenHelpers';
-import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { tran } from '../lang';
-import { useAppEffect } from '../helper/debuggerHelpers';
-import { audioEvent } from './audioBackgroundHelpers';
+} from '../_screen/screenTypeHelpers';
 
 const LazyBackgroundColorsComp = lazy(() => {
     return import('./BackgroundColorsComp');
@@ -32,12 +32,12 @@ const LazyBackgroundSoundsComp = lazy(() => {
     return import('./BackgroundSoundsComp');
 });
 
-function RenderSoundTabComp({
-    isSoundActive,
-    setIsSoundActive,
+function RenderSoundsTabComp({
+    isActive,
+    setIsActive,
 }: Readonly<{
-    isSoundActive: boolean;
-    setIsSoundActive: (isSoundActive: boolean) => void;
+    isActive: boolean;
+    setIsActive: (isActive: boolean) => void;
 }>) {
     const [isPlaying, setIsPlaying] = useState(false);
     useAppEffect(() => {
@@ -52,14 +52,14 @@ function RenderSoundTabComp({
                 <button
                     className={
                         'btn btn-link nav-link' +
-                        ` ${isSoundActive ? 'active' : ''}` +
+                        ` ${isActive ? 'active' : ''}` +
                         ` ${isPlaying ? ' app-on-screen' : ''}`
                     }
                     onClick={() => {
-                        setIsSoundActive(!isSoundActive);
+                        setIsActive(!isActive);
                     }}
                 >
-                    ♫{tran('Sound')}♫
+                    ♫{tran('Sounds')}♫
                 </button>
             </li>
         </ul>
@@ -84,7 +84,7 @@ const tabTypeList = [
 type TabKeyType = (typeof tabTypeList)[number][0] | 'sound';
 export default function BackgroundComp() {
     const [isSoundActive, setIsSoundActive] = useStateSettingBoolean(
-        'background-sound',
+        'background-sound-active',
         false,
     );
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
@@ -116,9 +116,9 @@ export default function BackgroundComp() {
                     activeTab={tabKey}
                     setActiveTab={setTabKey}
                 />
-                <RenderSoundTabComp
-                    isSoundActive={isSoundActive}
-                    setIsSoundActive={setIsSoundActive}
+                <RenderSoundsTabComp
+                    isActive={isSoundActive}
+                    setIsActive={setIsSoundActive}
                 />
             </div>
             <div className="body flex-fill d-flex">
@@ -139,7 +139,7 @@ export default function BackgroundComp() {
                                     },
                                 },
                                 key: 'h1',
-                                widgetName: 'Background Sound',
+                                widgetName: 'Background',
                             },
                             {
                                 children: LazyBackgroundSoundsComp,

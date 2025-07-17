@@ -13,8 +13,8 @@ import {
     getValidOnScreen,
 } from '../managers/screenManagerBaseHelpers';
 import { getAllScreenManagers } from '../managers/screenManagerHelpers';
-import { AppDocumentListType } from '../screenHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
+import { AppDocumentListType } from '../screenAppDocumentTypeHelpers';
 
 export function openContextMenu(event: any, screenManager: ScreenManager) {
     const screenManagers = getAllScreenManagers();
@@ -90,7 +90,7 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
 }
 
 export function getAppDocumentListOnScreenSetting(): AppDocumentListType {
-    const str = getSetting(screenManagerSettingNames.VARY_APP_DOCUMENT, '');
+    const str = getSetting(screenManagerSettingNames.VARY_APP_DOCUMENT) ?? '';
     try {
         if (!isValidJson(str, true)) {
             return {};

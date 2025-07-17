@@ -11,9 +11,9 @@ import { DragTypeEnum } from '../helper/DragInf';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { handleDragStart } from '../helper/dragHelpers';
 import { useGenDirSource } from '../helper/dirSourceHelpers';
-import { BackgroundSrcType } from '../_screen/screenHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 
 export type RenderChildType = (
     filePath: string,
@@ -25,64 +25,6 @@ const backgroundTypeMapper: any = {
     [DragTypeEnum.BACKGROUND_VIDEO]: 'video',
     [DragTypeEnum.BACKGROUND_SOUND]: 'sound',
 };
-
-export default function BackgroundMediaComp({
-    rendChild,
-    dragType,
-    onClick,
-    defaultFolderName,
-    dirSourceSettingName,
-    noDraggable = false,
-    isNameOnTop = false,
-}: Readonly<{
-    rendChild: RenderChildType;
-    dragType: DragTypeEnum;
-    onClick?: (event: any, fileSource: FileSource) => void;
-    defaultFolderName?: string;
-    dirSourceSettingName: string;
-    noDraggable?: boolean;
-    isNameOnTop?: boolean;
-}>) {
-    const backgroundType = backgroundTypeMapper[dragType];
-    const dirSource = useGenDirSource(dirSourceSettingName);
-    const handleBodyRendering = (filePaths: string[]) => {
-        const genBodyWithChild = genBody.bind(
-            null,
-            rendChild,
-            dragType,
-            onClick,
-            noDraggable,
-            isNameOnTop,
-        );
-        return (
-            <div className="d-flex justify-content-start flex-wrap">
-                {filePaths.map(genBodyWithChild)}
-            </div>
-        );
-    };
-    useScreenBackgroundManagerEvents(['update']);
-    if (dirSource === null) {
-        return null;
-    }
-    return (
-        <FileListHandlerComp
-            className={`app-background-${backgroundType}`}
-            mimetypeName={backgroundType}
-            defaultFolderName={defaultFolderName}
-            dirSource={dirSource}
-            bodyHandler={handleBodyRendering}
-            fileSelectionOption={
-                backgroundType === 'color'
-                    ? undefined
-                    : {
-                          windowTitle: `Select ${backgroundType} files`,
-                          dirPath: dirSource.dirPath,
-                          extensions: getMimetypeExtensions(backgroundType),
-                      }
-            }
-        />
-    );
-}
 
 function FileFullNameRenderer({
     fileFullName,
@@ -119,7 +61,7 @@ function genBody(
             backgroundType,
         );
     const isInScreen = selectedBackgroundSrcList.length > 0;
-    const selectedCN = isInScreen ? 'app-highlight-selected' : '';
+    const selectedCN = isInScreen ? 'app-highlight-selected animation' : '';
     const screenKeys = selectedBackgroundSrcList.map(([key]) => key);
     const title =
         `${filePath}` +
@@ -134,7 +76,7 @@ function genBody(
     };
     return (
         <div
-            key={fileSource.fileFullName}
+            key={fileSource.fullName}
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
             title={title}
             draggable={!noDraggable}
@@ -162,7 +104,7 @@ function genBody(
         >
             {!isNameOnTop ? null : (
                 <div className="app-ellipsis-left pe-4">
-                    {fileSource.fileFullName}
+                    {fileSource.fullName}
                 </div>
             )}
             {rendChild(filePath, selectedBackgroundSrcList)}
@@ -175,8 +117,73 @@ function genBody(
                 <ItemColorNoteComp item={fileSource} />
             </div>
             {isNameOnTop ? null : (
-                <FileFullNameRenderer fileFullName={fileSource.fileFullName} />
+                <FileFullNameRenderer fileFullName={fileSource.fullName} />
             )}
         </div>
+    );
+}
+
+export default function BackgroundMediaComp({
+    extraHeaderChild,
+    rendChild,
+    dragType,
+    onClick,
+    defaultFolderName,
+    dirSourceSettingName,
+    noDraggable = false,
+    isNameOnTop = false,
+}: Readonly<{
+    extraHeaderChild?: React.ReactNode;
+    rendChild: RenderChildType;
+    dragType: DragTypeEnum;
+    onClick?: (event: any, fileSource: FileSource) => void;
+    defaultFolderName?: string;
+    dirSourceSettingName: string;
+    noDraggable?: boolean;
+    isNameOnTop?: boolean;
+}>) {
+    const backgroundType = backgroundTypeMapper[dragType];
+    const dirSource = useGenDirSource(dirSourceSettingName);
+    const handleBodyRendering = (filePaths: string[]) => {
+        const genBodyWithChild = genBody.bind(
+            null,
+            rendChild,
+            dragType,
+            onClick,
+            noDraggable,
+            isNameOnTop,
+        );
+        return (
+            <div className="">
+                {extraHeaderChild !== undefined ? (
+                    <>{extraHeaderChild}</>
+                ) : null}
+                <div className="d-flex justify-content-start flex-wrap">
+                    {filePaths.map(genBodyWithChild)}
+                </div>
+            </div>
+        );
+    };
+    useScreenBackgroundManagerEvents(['update']);
+    if (dirSource === null) {
+        return null;
+    }
+    return (
+        <FileListHandlerComp
+            className={`app-background-${backgroundType}`}
+            mimetypeName={backgroundType}
+            defaultFolderName={defaultFolderName}
+            dirSource={dirSource}
+            bodyHandler={handleBodyRendering}
+            fileSelectionOption={
+                backgroundType === 'color'
+                    ? undefined
+                    : {
+                          windowTitle: `Select ${backgroundType} files`,
+                          dirPath: dirSource.dirPath,
+                          extensions: getMimetypeExtensions(backgroundType),
+                      }
+            }
+        />
     );
 }

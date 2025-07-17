@@ -1,0 +1,6 @@
+bin/
+obj/
+dist/
+dotnet-runtime*.zip
+dotnet-runtime*.tar.gz
+yt-dlp*

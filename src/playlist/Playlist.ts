@@ -1,14 +1,16 @@
-import { AnyObjectType, cloneJson, isValidJson } from '../helper/helpers';
-import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import { cloneJson, isValidJson } from '../helper/helpers';
+import AppEditableDocumentSourceAbs, {
+    AppDocumentMetadataType,
+} from '../helper/AppEditableDocumentSourceAbs';
 import PlaylistItem, { PlaylistItemType } from './PlaylistItem';
 import { showSimpleToast } from '../toast/toastHelpers';
 
 export type PlaylistType = {
     items: PlaylistItemType[];
-    metadata: AnyObjectType;
+    metadata: AppDocumentMetadataType;
 };
 
-export default class Playlist extends AppDocumentSourceAbs {
+export default class Playlist extends AppEditableDocumentSourceAbs<PlaylistType> {
     private readonly _originalJson: PlaylistType;
     constructor(filePath: string, json: PlaylistType) {
         super(filePath);

@@ -7,16 +7,9 @@ export function setSetting(key: string, value: string) {
     // TODO: Change to use SettingManager
     appLocalStorage.setItem(key, value);
 }
-export function getSetting(key: string, defaultValue?: string): string {
+export function getSetting(key: string) {
     // TODO: Change to use SettingManager
-    const value = appLocalStorage.getItem(key);
-    if (value === null) {
-        if (defaultValue !== undefined) {
-            return defaultValue;
-        }
-        return '';
-    }
-    return value;
+    return appLocalStorage.getItem(key);
 }
 
 export function useStateSettingBoolean(
@@ -51,7 +44,7 @@ export function useStateSettingNumber(
     settingName: string,
     defaultNumber: number,
 ): [number, (n: number) => void] {
-    const defaultData = parseInt(getSetting(settingName));
+    const defaultData = parseInt(getSetting(settingName) ?? '', 10);
     const [data, setData] = useState(
         isNaN(defaultData) ? defaultNumber : defaultData,
     );

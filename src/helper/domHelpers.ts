@@ -1,4 +1,10 @@
+import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
+import { pasteTextToInput } from '../server/appHelpers';
 import {
     MutationType,
     APP_FULL_VIEW_CLASSNAME,
@@ -16,6 +22,11 @@ const observer = new MutationObserver((mutations) => {
                     callback(node, 'added');
                 }
             });
+            mutation.removedNodes.forEach((node) => {
+                for (const callback of callBackListeners) {
+                    callback(node, 'removed');
+                }
+            });
         } else if (mutation.type === 'attributes') {
             for (const callback of callBackListeners) {
                 callback(mutation.target, 'attr-modified');
@@ -28,10 +39,15 @@ observer.observe(document.body, {
     subtree: true,
     attributes: true,
 });
-export function onDomChange(
+export function addDomChangeEventListener(
     callback: (element: Node, type: MutationType) => void,
 ) {
     callBackListeners.add(callback);
+}
+export function removeDomChangeEventListener(
+    callback: (element: Node, type: MutationType) => void,
+) {
+    callBackListeners.delete(callback);
 }
 
 export function handleFullWidgetView(element: Node, type: MutationType) {
@@ -118,4 +134,120 @@ export function handleAutoHide(
         targetDom.addEventListener('mouseenter', mouseEnterListener);
     };
     parentElement.appendChild(clearButton);
+}
+
+export class HoverMotionHandler {
+    map: WeakMap<HTMLElement, ResizeObserver>;
+    static readonly topClassname = 'app-top-hover-motion';
+    static readonly lowClassname = 'app-low-hover-display';
+    forceShowClassname = 'force-show';
+    constructor() {
+        this.map = new WeakMap<HTMLElement, ResizeObserver>();
+    }
+    findParent(element: HTMLElement) {
+        let parent = element.parentElement;
+        while (parent !== null) {
+            if (parent.className.includes(HoverMotionHandler.topClassname)) {
+                return parent;
+            }
+            parent = parent.parentElement;
+        }
+        return null;
+    }
+
+    checkParentWidth(
+        parentElement: HTMLElement,
+        element: HTMLElement,
+        minWidth: number,
+    ) {
+        if (parentElement.offsetWidth <= minWidth) {
+            element.classList.remove(this.forceShowClassname);
+        } else {
+            element.classList.add(this.forceShowClassname);
+        }
+    }
+
+    init(element: HTMLElement) {
+        if (this.map.has(element)) {
+            return;
+        }
+        const parentElement = this.findParent(element);
+        const minWidthString = element.dataset.minParentWidth;
+        if (parentElement === null || minWidthString === undefined) {
+            return;
+        }
+        const minWidth = parseInt(minWidthString);
+        const checkIt = this.checkParentWidth.bind(
+            this,
+            parentElement,
+            element,
+            minWidth,
+        );
+        const resizeObserver = new ResizeObserver(checkIt);
+        resizeObserver.observe(parentElement);
+        checkIt();
+        this.map.set(element, resizeObserver);
+    }
+    listenForHoverMotion(element: Node) {
+        if (element instanceof HTMLElement === false) {
+            return;
+        }
+        element
+            .querySelectorAll('[data-min-parent-width]')
+            .forEach((childElement) => {
+                if (
+                    childElement instanceof HTMLElement &&
+                    childElement.className.includes(
+                        HoverMotionHandler.lowClassname,
+                    )
+                ) {
+                    this.init(childElement);
+                }
+            });
+    }
+}
+
+export class InputContextMenuHandler {
+    init(inputElement: HTMLInputElement): void {
+        inputElement.oncontextmenu = async (event: MouseEvent) => {
+            const copiedText = (await navigator.clipboard.readText()).trim();
+            const contextMenuItems: ContextMenuItemType[] = [];
+            if (copiedText) {
+                contextMenuItems.push({
+                    childBefore: genContextMenuItemIcon('clipboard'),
+                    menuElement: '`Paste',
+                    onSelect: () => {
+                        pasteTextToInput(inputElement, copiedText);
+                    },
+                });
+            }
+            if (inputElement.value.length > 0) {
+                contextMenuItems.push({
+                    childBefore: genContextMenuItemIcon('x'),
+                    menuElement: '`Clear',
+                    onSelect: () => {
+                        pasteTextToInput(inputElement, '');
+                    },
+                });
+            }
+            if (contextMenuItems.length === 0) {
+                return;
+            }
+            showAppContextMenu(event, contextMenuItems);
+        };
+    }
+    listenForInputContextMenu(element: Node): void {
+        if (element instanceof HTMLElement === false) {
+            return;
+        }
+        element
+            .querySelectorAll(
+                'input[type="text"], input[type="search"], ' +
+                    'input[type="email"], input[type="password"],' +
+                    ' input[type="number"], input[type="tel"]',
+            )
+            .forEach((childElement) => {
+                this.init(childElement as HTMLInputElement);
+            });
+    }
 }

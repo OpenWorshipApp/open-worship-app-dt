@@ -6,7 +6,6 @@ import DragInf, {
     DroppedDataType,
 } from './DragInf';
 import FileSource from './FileSource';
-import { appDocumentItemFromKey } from '../app-document-list/appDocumentHelpers';
 import PdfSlide from '../app-document-list/PdfSlide';
 import { useState } from 'react';
 import AttachBackgroundManager, {
@@ -16,6 +15,11 @@ import { useAppEffectAsync } from './debuggerHelpers';
 import { useFileSourceEvents } from './dirSourceHelpers';
 import { stopDraggingState } from './helpers';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import Slide from '../app-document-list/Slide';
+
+export const dragStore: {
+    onDropped?: ((event: any) => void) | null;
+} = {};
 
 export function handleDragStart(
     event: any,
@@ -35,14 +39,10 @@ export function extractDropData(event: any) {
     return deserializeDragData(dragData);
 }
 
-async function deserializeDragData({
-    type,
-    data,
-}: DragDataType<any>): Promise<DroppedDataType | null> {
+function deserializeDragData({ type, data }: DragDataType<any>) {
     let item: any = null;
     if (type === DragTypeEnum.SLIDE) {
-        const droppedData = JSON.parse(data);
-        item = await appDocumentItemFromKey(droppedData.key);
+        item = Slide.dragDeserialize(data);
     } else if (type === DragTypeEnum.PDF_SLIDE) {
         const droppedData = JSON.parse(data);
         if (PdfSlide.tryValidate(droppedData.data)) {
@@ -62,15 +62,15 @@ async function deserializeDragData({
     if (item === null) {
         return null;
     }
-    return { type, item };
+    return { type, item } as DroppedDataType;
 }
 
-export async function handleAttachBackgroundDrop(
+export function handleAttachBackgroundDrop(
     event: React.DragEvent<HTMLElement>,
     item: { filePath: string; id?: number },
 ) {
     stopDraggingState(event);
-    const droppedData = await extractDropData(event);
+    const droppedData = extractDropData(event);
     if (
         droppedData !== null &&
         [
@@ -79,7 +79,7 @@ export async function handleAttachBackgroundDrop(
             DragTypeEnum.BACKGROUND_VIDEO,
         ].includes(droppedData.type)
     ) {
-        await attachBackgroundManager.attachDroppedBackground(
+        attachBackgroundManager.attachDroppedBackground(
             droppedData,
             item.filePath,
             item.id,

@@ -1,4 +1,4 @@
-import React, { lazy, useState } from 'react';
+import { lazy, useState } from 'react';
 
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
@@ -39,7 +39,7 @@ function genContextMenu(
     }
     return [
         {
-            menuElement: '`' + 'Empty',
+            menuElement: '`Empty',
             onSelect: () => {
                 showAppConfirm(
                     'Empty Bible List',
@@ -54,7 +54,7 @@ function genContextMenu(
             },
         },
         {
-            menuElement: '`' + 'Copy All Items',
+            menuElement: '`Copy All Items',
             onSelect: async () => {
                 const promises = bible.items.map((item) => {
                     return item.toTitleText();
@@ -67,7 +67,7 @@ function genContextMenu(
             },
         },
         {
-            menuElement: '`' + 'Move All Items To',
+            menuElement: '`Move All Items To',
             onSelect: (event: any) => {
                 moveBibleItemTo(event, bible);
             },
@@ -81,7 +81,7 @@ function genContextMenu(
 function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
     return (
-        <div className="accordion accordion-flush py-1">
+        <div className="accordion accordion-flush py-1 ms-2">
             <div
                 className="accordion-header app- d-flex"
                 onClick={() => {
@@ -153,8 +153,8 @@ export default function BibleFileComp({
         setData(null);
     };
     useFileSourceEvents(['update'], handleReloading, [data], filePath);
-    const handleDataDropping = async (event: any) => {
-        const droppedData = await extractDropData(event);
+    const handleDataDropping = (event: any) => {
+        const droppedData = extractDropData(event);
         if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
             stopDraggingState(event);
             const bibleItem = droppedData.item as BibleItem;

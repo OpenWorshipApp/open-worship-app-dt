@@ -2,7 +2,9 @@ import { handleError } from '../../helper/errorHelpers';
 import CacheManager from '../../others/CacheManager';
 import {
     fsCheckDirExist,
+    fsDeleteFile,
     fsExistSync,
+    fsListFiles,
     fsMkDirSync,
     fsReadSync,
     fsUnlinkSync,
@@ -103,10 +105,18 @@ class AppLocalStorage {
         }
     }
 
-    clear(): void {
-        const localStorageDir = this.localStorageDir;
-        if (fsExistSync(localStorageDir)) {
-            fsUnlinkSync(localStorageDir);
+    async clear() {
+        const files = await fsListFiles(this.localStorageDir);
+        try {
+            await Promise.all(
+                files.map(async (f) => {
+                    const fullPath = pathJoin(this.localStorageDir, f);
+                    return fsDeleteFile(fullPath);
+                }),
+            );
+            window.localStorage.clear();
+        } catch (error) {
+            handleError(error);
         }
     }
 }

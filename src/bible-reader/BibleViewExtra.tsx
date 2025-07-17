@@ -1,4 +1,4 @@
-import React, { createContext, use, useMemo } from 'react';
+import { createContext, ReactNode, use, useMemo } from 'react';
 
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 import {
@@ -13,7 +13,7 @@ import {
     ReadIdOnlyBibleItem,
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
-import { BIBLE_VERSE_TEXT_TITLE, getSelectedText } from '../helper/helpers';
+import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
 import {
     BibleTargetType,
     CompiledVerseType,
@@ -25,9 +25,11 @@ import {
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
 import RenderActionButtonsComp from '../bible-lookup/RenderActionButtonsComp';
+import { HoverMotionHandler } from '../helper/domHelpers';
+import { getSelectedText } from '../helper/textSelectionHelpers';
 
 export const BibleViewTitleMaterialContext = createContext<{
-    titleElement: React.ReactNode;
+    titleElement: ReactNode;
 } | null>(null);
 
 export function useBibleViewTitleMaterialContext() {
@@ -35,7 +37,7 @@ export function useBibleViewTitleMaterialContext() {
     if (context === null) {
         throw new Error(
             'useBibleViewTitleMaterialContext must be used within a ' +
-                'BibleViewTitleMaterialContext.Provider',
+                'BibleViewTitleMaterialContext',
         );
     }
     return context;
@@ -102,12 +104,21 @@ export function RenderHeaderComp({
                     });
                 }}
             />
-            <div className="app-low-hover-display-1">
+            <div
+                className={`${HoverMotionHandler.lowClassname}-1`}
+                data-min-parent-width="550"
+            >
                 <RenderActionButtonsComp bibleItem={bibleItem} />
             </div>
-            <div className="app-low-hover-display-0">
-                <button
-                    className="btn-close"
+            <div
+                className={`${HoverMotionHandler.lowClassname}-0`}
+                data-min-parent-width="550"
+            >
+                <i
+                    className="bi bi-x-lg app-caught-hover-pointer"
+                    style={{
+                        color: 'var(--bs-danger-text-emphasis)',
+                    }}
                     onClick={() => {
                         viewController.deleteBibleItem(bibleItem);
                     }}

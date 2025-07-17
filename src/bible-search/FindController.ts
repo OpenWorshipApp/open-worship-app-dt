@@ -2,7 +2,7 @@ import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
 import { handleError } from '../helper/errorHelpers';
 import FileSource from '../helper/FileSource';
 import { appApiFetch } from '../helper/networkHelpers';
-import { sanitizeFindingText } from '../lang';
+import { sanitizeFindingText } from '../lang/langHelpers';
 import appProvider, { SQLiteDatabaseType } from '../server/appProvider';
 import { fsCheckFileExist, pathJoin } from '../server/fileHelpers';
 import { getBibleXMLDataFromKey } from '../setting/bible-setting/bibleXMLHelpers';

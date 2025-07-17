@@ -17,7 +17,13 @@ export default function ToolCanvasItemsComp() {
     const { canvasItems: selectedCanvasItems } =
         useSelectedCanvasItemsAndSetterContext();
     return (
-        <div className="w-100 h-100 d-flex justify-content-center">
+        <div
+            className="w-100 h-100"
+            style={{
+                overflowX: 'hidden',
+                overflowY: 'auto',
+            }}
+        >
             {canvasItems.map((canvasItem) => {
                 const isSelected = checkCanvasItemsIncludes(
                     selectedCanvasItems,
@@ -27,10 +33,12 @@ export default function ToolCanvasItemsComp() {
                 return (
                     <div
                         key={canvasItem.id}
-                        className="card app-caught-hover-pointer align-self-start m-2"
+                        className={'card app-caught-hover-pointer m-2'}
                         style={{
-                            maxWidth: '200px',
+                            width: '300px',
+                            height: '200px',
                             border: isSelected ? '2px dashed green' : undefined,
+                            margin: 'auto',
                         }}
                         onClick={(event) => {
                             event.stopPropagation();
@@ -44,7 +52,12 @@ export default function ToolCanvasItemsComp() {
                         <div className="card-header">
                             {canvasItem.id}:{props.width}x{props.height}
                         </div>
-                        <div className="card-body">
+                        <div
+                            className="card-body"
+                            style={{
+                                overflow: 'auto',
+                            }}
+                        >
                             <CanvasItemContext value={canvasItem}>
                                 <CanvasItemRendererComp />
                             </CanvasItemContext>

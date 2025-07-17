@@ -1,13 +1,13 @@
 import CloseButton from './ScreenCloseButtonComp';
 import ScreenBackgroundComp from './ScreenBackgroundComp';
 import ScreenSlideComp from './ScreenVaryAppDocumentComp';
-import ScreenOtherComp from './ScreenOtherComp';
+import ScreenForegroundComp from './ScreenForegroundComp';
 import ScreenBibleComp from './ScreenBibleComp';
-import { RendStyle } from './RenderTransitionEffectComp';
 import { createScreenManager } from './managers/screenManagerHelpers';
 import ScreenManager from './managers/ScreenManager';
 import { ScreenManagerBaseContext } from './managers/screenManagerHooks';
 import appProvider from '../server/appProvider';
+import { genStyleRendering } from './preview/MiniScreenAppComp';
 
 ScreenManager.initReceiveScreenMessage();
 export default function ScreenAppComp() {
@@ -30,18 +30,20 @@ export default function ScreenAppComp() {
             true,
         );
     }
+    const {
+        varyAppDocumentEffectManager,
+        backgroundEffectManager,
+        foregroundEffectManager,
+    } = screenManager;
     return (
         <ScreenManagerBaseContext value={screenManager}>
-            <RendStyle
-                screenEffectManager={screenManager.varyAppDocumentEffectManager}
-            />
-            <RendStyle
-                screenEffectManager={screenManager.backgroundEffectManager}
-            />
+            {genStyleRendering(varyAppDocumentEffectManager)}
+            {genStyleRendering(backgroundEffectManager)}
+            {genStyleRendering(foregroundEffectManager)}
             <ScreenBackgroundComp />
             <ScreenSlideComp />
             <ScreenBibleComp />
-            <ScreenOtherComp />
+            <ScreenForegroundComp />
             <CloseButton />
         </ScreenManagerBaseContext>
     );

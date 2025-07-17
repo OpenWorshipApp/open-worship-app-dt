@@ -1,30 +1,67 @@
-import { DroppedDataType } from '../helper/DragInf';
+import { dirSourceSettingNames } from '../helper/constants';
+import { DragTypeEnum, DroppedDataType } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import {
     fsCheckFileExist,
     fsDeleteFile,
     fsWriteFile,
 } from '../server/fileHelpers';
+import { unlocking } from '../server/unlockingHelpers';
+import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
+import CacheManager from './CacheManager';
 
 export type AttachBackgroundType = { [key: string]: DroppedDataType };
 
+const cached = new CacheManager<AttachBackgroundType | null>(5);
 export default class AttachBackgroundManager {
     static genMetaDataFilePath(filePath: string) {
         return `${filePath}.bg.json`;
     }
 
-    static async saveData(filePath: string, data: AttachBackgroundType) {
+    getBaseDirSettingName(droppedData: DroppedDataType) {
+        if (droppedData.type === DragTypeEnum.BACKGROUND_IMAGE) {
+            return dirSourceSettingNames.BACKGROUND_IMAGE;
+        } else if (droppedData.type === DragTypeEnum.BACKGROUND_VIDEO) {
+            return dirSourceSettingNames.BACKGROUND_VIDEO;
+        }
+        throw new Error(`Unsupported dropped data type: ${droppedData.type}`);
+    }
+
+    async saveData(filePath: string, data: AttachBackgroundType) {
         const metaDataFilePath =
             AttachBackgroundManager.genMetaDataFilePath(filePath);
+        const newData = Object.fromEntries(
+            Object.entries(data)
+                .map(([key, value]) => {
+                    if (value.type !== DragTypeEnum.BACKGROUND_COLOR) {
+                        const fileSource = value.item as FileSource;
+                        const baseDirFileSource = new BaseDirFileSource(
+                            this.getBaseDirSettingName(value),
+                            fileSource.filePath,
+                        );
+                        const fileFullNameOrFilePath =
+                            baseDirFileSource.fileFullNameOrFilePath;
+                        if (fileFullNameOrFilePath === null) {
+                            return [key, null];
+                        }
+                        value = {
+                            ...value,
+                            item: fileFullNameOrFilePath,
+                        };
+                    }
+                    return [key, value];
+                })
+                .filter(([_, value]) => {
+                    return value !== null;
+                }),
+        );
         await FileSource.getInstance(metaDataFilePath).writeFileData(
-            JSON.stringify(data),
+            JSON.stringify(newData),
         );
         FileSource.getInstance(metaDataFilePath).fireUpdateEvent();
     }
 
-    public async getAttachedBackgrounds(
-        filePath: string,
-    ): Promise<AttachBackgroundType> {
+    public async readData(filePath: string): Promise<AttachBackgroundType> {
         const metaDataFilePath =
             AttachBackgroundManager.genMetaDataFilePath(filePath);
         const fileSource = FileSource.getInstance(metaDataFilePath);
@@ -35,7 +72,33 @@ export default class AttachBackgroundManager {
         if (data === null) {
             return {};
         }
-        return data;
+        const newData = Object.fromEntries(
+            Object.entries(data)
+                .filter(([_, value]) => {
+                    return typeof value.item === 'string';
+                })
+                .map(([key, value]) => {
+                    if (value.type !== DragTypeEnum.BACKGROUND_COLOR) {
+                        const baseDirFileSource = new BaseDirFileSource(
+                            this.getBaseDirSettingName(value),
+                            value.item,
+                        );
+                        const fileSource = baseDirFileSource.fileSource;
+                        if (fileSource === null) {
+                            return [key, null];
+                        }
+                        value = {
+                            ...value,
+                            item: fileSource,
+                        };
+                    }
+                    return [key, value];
+                })
+                .filter(([_, value]) => {
+                    return value !== null;
+                }),
+        );
+        return newData;
     }
 
     toKey(id?: string | number): string {
@@ -45,12 +108,20 @@ export default class AttachBackgroundManager {
         return id ?? 'self';
     }
 
+    toLockingKey(filePath: string): string {
+        return `attached-background-${filePath}`;
+    }
+
     public async getAttachedBackground(
         filePath: string,
         id?: string | number,
     ): Promise<DroppedDataType | null> {
-        const data = await this.getAttachedBackgrounds(filePath);
-        return data[this.toKey(id)] ?? null;
+        return await unlocking(this.toLockingKey(filePath), async () => {
+            const cachedData = await cached.get(filePath);
+            const data = cachedData ?? (await this.readData(filePath));
+            const attachedData = data[this.toKey(id)] ?? null;
+            return attachedData;
+        });
     }
 
     public async attachDroppedBackground(
@@ -58,21 +129,31 @@ export default class AttachBackgroundManager {
         filePath: string,
         id?: string | number,
     ) {
-        const data = await this.getAttachedBackgrounds(filePath);
-        data[this.toKey(id)] = droppedData;
-        await AttachBackgroundManager.saveData(filePath, data);
+        await unlocking(this.toLockingKey(filePath), async () => {
+            const data = await this.readData(filePath);
+            data[this.toKey(id)] = droppedData;
+            await cached.set(filePath, data);
+            await this.saveData(filePath, data);
+        });
     }
 
     public async detachBackground(filePath: string, id?: string | number) {
-        const data = await this.getAttachedBackgrounds(filePath);
-        delete data[this.toKey(id)];
-        await AttachBackgroundManager.saveData(filePath, data);
+        await unlocking(this.toLockingKey(filePath), async () => {
+            const data = await this.readData(filePath);
+            delete data[this.toKey(id)];
+            await cached.set(filePath, data);
+            await this.saveData(filePath, data);
+        });
     }
 
     public async deleteMetaDataFile(filePath: string) {
-        const metaDataFilePath =
-            AttachBackgroundManager.genMetaDataFilePath(filePath);
-        await fsDeleteFile(metaDataFilePath);
+        await unlocking(this.toLockingKey(filePath), async () => {
+            const metaDataFilePath =
+                AttachBackgroundManager.genMetaDataFilePath(filePath);
+            await cached.set(filePath, null);
+            await fsDeleteFile(metaDataFilePath);
+            FileSource.getInstance(metaDataFilePath).fireUpdateEvent();
+        });
     }
 }
 

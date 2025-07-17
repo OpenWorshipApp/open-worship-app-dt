@@ -1,13 +1,12 @@
 export default class CountdownController {
-    countdownInterval: any = null;
     readonly divContainer: HTMLDivElement;
     readonly targetDateTime: Date;
+    isRunning = true;
 
     constructor(divContainer: HTMLDivElement, targetDateTime: Date) {
         this.divContainer = divContainer;
         this.targetDateTime = targetDateTime;
         this.setHtml(false);
-        this.count();
     }
 
     get timeDiff() {
@@ -60,17 +59,19 @@ export default class CountdownController {
         return this.toTimeString(this.seconds);
     }
 
-    count() {
-        this.countdownInterval = setInterval(() => {
-            if (this.countdownInterval === null) {
+    start() {
+        const update = () => {
+            if (!this.isRunning) {
                 return;
             }
             if (this.timeDiff > 0) {
                 this.setHtml(false);
+                requestAnimationFrame(update);
             } else {
                 this.stop();
             }
-        }, 1e3);
+        };
+        requestAnimationFrame(update);
     }
 
     setHtml(isReset: boolean) {
@@ -79,14 +80,16 @@ export default class CountdownController {
         this.divSecond.innerHTML = isReset ? '00' : this.secondStr;
     }
 
+    pause() {
+        this.isRunning = false;
+    }
+
     stop() {
-        const countdownInterval = this.countdownInterval;
-        this.countdownInterval = null;
-        clearInterval(countdownInterval);
+        this.pause();
         this.setHtml(true);
     }
 
     static init(divContainer: HTMLDivElement, targetDate: Date) {
-        return new CountdownController(divContainer, targetDate);
+        return new this(divContainer, targetDate);
     }
 }

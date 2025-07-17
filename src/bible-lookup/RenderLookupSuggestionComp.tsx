@@ -9,7 +9,7 @@ import {
 } from '../bible-reader/LookupBibleItemController';
 import RenderVerseOptionsComp from './RenderVerseOptionsComp';
 import { use } from 'react';
-import { goToBibleSetting } from '../setting/SettingComp';
+import { goToBibleSetting } from '../setting/settingHelpers';
 
 export default function RenderLookupSuggestionComp({
     applyChapterSelection,

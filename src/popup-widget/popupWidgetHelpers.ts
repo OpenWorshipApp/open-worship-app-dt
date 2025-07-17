@@ -18,7 +18,7 @@ export type InputDataType = {
     onConfirm: (isOk: boolean) => void;
 };
 
-export type AlertDataType = {
+export type PopupAlertDataType = {
     title: string;
     message: string;
     onClose: () => void;
@@ -27,7 +27,7 @@ export type AlertDataType = {
 export const popupWidgetManager: {
     openConfirm: ((_: ConfirmDataType | null) => void) | null;
     openInput: ((_: InputDataType | null) => void) | null;
-    openAlert: ((_: AlertDataType | null) => void) | null;
+    openAlert: ((_: PopupAlertDataType | null) => void) | null;
 } = {
     openConfirm: null,
     openInput: null,

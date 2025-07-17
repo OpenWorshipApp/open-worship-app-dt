@@ -15,7 +15,7 @@ import { tarExtract } from '../../server/appHelpers';
 import { DownloadOptionsType, writeStreamToFile } from './downloadHelpers';
 import { getBibleXMLCacheInfoList } from '../../setting/bible-setting/bibleXMLHelpers';
 import { bibleDataReader } from './BibleDataReader';
-import { LocaleType } from '../../lang';
+import { LocaleType } from '../../lang/langHelpers';
 
 export const BIBLE_DOWNLOAD_TOAST_TITLE = 'Bible Download';
 

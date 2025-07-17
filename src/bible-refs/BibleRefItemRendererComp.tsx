@@ -1,5 +1,6 @@
 import { useGetBibleRef } from './bibleRefsHelpers';
 import BibleRefRenderFoundItemComp from './BibleRefRenderFoundItemComp';
+import LoadingComp from '../others/LoadingComp';
 
 export default function BibleRefItemRendererComp({
     bibleKey,
@@ -15,10 +16,13 @@ export default function BibleRefItemRendererComp({
     index: number;
 }>) {
     const bibleRef = useGetBibleRef(bookKey, chapter, verse);
+    if (bibleRef === undefined) {
+        return <LoadingComp />;
+    }
     if (bibleRef === null) {
         return (
             <div>
-                Failed to load bible ref for {bookKey} {chapter}:{verse}
+                `Data not available for "{bookKey} {chapter}:{verse}"
             </div>
         );
     }

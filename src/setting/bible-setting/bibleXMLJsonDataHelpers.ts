@@ -1,5 +1,9 @@
 import kjvBibleInfo from '../../helper/bible-helpers/bible.json';
-import { DEFAULT_LOCALE, getLangCode, LocaleType } from '../../lang';
+import {
+    DEFAULT_LOCALE,
+    getLangCode,
+    LocaleType,
+} from '../../lang/langHelpers';
 import {
     showAppConfirm,
     showAppInput,

@@ -42,7 +42,7 @@ export default function ItemColorNoteComp({
             },
             {} as Record<string, string>,
         );
-        return reverseColorMap[colorNote] ?? 'no color';
+        return reverseColorMap[colorNote] ?? 'No Color';
     }, [colorNote]);
     const handleColorSelecting = (event: any) => {
         event.stopPropagation();
@@ -53,7 +53,11 @@ export default function ItemColorNoteComp({
         // unique colors by key
         const items: ContextMenuItemType[] = [
             {
-                menuElement: 'no color',
+                childBefore: (
+                    <i className="bi bi-x-lg" style={{ color: 'red' }} />
+                ),
+                menuElement: '`No Color',
+                title: '`Clear Color Note',
                 disabled: colorNote === null,
                 onSelect: () => {
                     setColorNote1(null);

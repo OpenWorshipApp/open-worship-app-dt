@@ -12,13 +12,25 @@ import LyricSlide from './LyricSlide';
 import FileSource from '../helper/FileSource';
 import Lyric from './Lyric';
 import {
-    renderLyricSlideMarkdownTextList,
-    renderMarkdown,
+    renderLyricSlideMarkdownMusicTextList,
+    renderMarkdownMusic,
 } from './markdownHelpers';
 import { CanvasItemTextPropsType } from '../slide-editor/canvas/CanvasItemText';
 
+export type LyricEditingPropsType = {
+    fontFamily: string;
+    fontWeight: string;
+    scale: number;
+};
+export const defaultLyricEditingProps: LyricEditingPropsType = {
+    fontFamily: '',
+    fontWeight: '',
+    scale: 30,
+};
+
 export default class LyricAppDocument extends AppDocument {
     static readonly mimetypeName: MimetypeNameType = 'appDocument';
+    lyricEditingProps: LyricEditingPropsType = defaultLyricEditingProps;
     isEditable = false;
     isPreRender = false;
 
@@ -32,26 +44,24 @@ export default class LyricAppDocument extends AppDocument {
         const lyric = Lyric.getInstance(
             LyricAppDocument.toLyricFilePath(this.filePath),
         );
-        let textList = (await renderLyricSlideMarkdownTextList(lyric)).map(
+        let textList = (await renderLyricSlideMarkdownMusicTextList(lyric)).map(
             (text) => {
                 return [text, text, undefined];
             },
         );
-        const metadata = await lyric.getMetadata();
         if (this.isPreRender) {
             textList = await Promise.all(
                 textList.map(async ([text, htmlText]) => {
                     if (!text) {
                         return [text, htmlText];
                     }
-                    const htmlData = await renderMarkdown(text, {
+                    const htmlData = await renderMarkdownMusic(text, {
                         isJustifyCenter: true,
                         isDisablePointerEvents: true,
                         theme: 'dark',
-                        // TODO: set font family on UI
-                        fontFamily:
-                            metadata.renderProps?.['fontFamily'] ??
-                            'Kh Battambang',
+                        fontFamily: this.lyricEditingProps.fontFamily,
+                        fontWeight: this.lyricEditingProps.fontWeight,
+                        scale: this.lyricEditingProps.scale / 10,
                     });
                     return [text, htmlData.html, htmlData.id];
                 }),
@@ -67,7 +77,7 @@ export default class LyricAppDocument extends AppDocument {
                               htmlText,
                               color: '#FFFFFFFF',
                               fontSize: 90,
-                              fontFamily: 'Battambang',
+                              fontFamily: this.lyricEditingProps.fontFamily,
                               fontWeight: null,
                               textHorizontalAlignment: 'center',
                               textVerticalAlignment: 'center',
@@ -122,11 +132,7 @@ export default class LyricAppDocument extends AppDocument {
     }
 
     static toAppDocumentFilePath(lyricFilePath: string) {
-        const extensions = getMimetypeExtensions(this.mimetypeName);
-        if (extensions.length === 0) {
-            throw new Error('No extensions found for appDocument mimetype');
-        }
-        const filePath = `${lyricFilePath}.preview.${extensions[0]}`;
+        const filePath = `${lyricFilePath}.preview`;
         return filePath;
     }
 
@@ -135,10 +141,7 @@ export default class LyricAppDocument extends AppDocument {
         if (extensions.length === 0) {
             throw new Error('No extensions found for appDocument mimetype');
         }
-        const filePath = appDocumentFilePath.replace(
-            new RegExp(`\\.preview\\.${extensions[0]}$`),
-            '',
-        );
+        const filePath = appDocumentFilePath.replace(/\.preview$/, '');
         return filePath;
     }
 

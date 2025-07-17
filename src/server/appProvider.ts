@@ -122,6 +122,21 @@ export type SQLiteDatabaseType = {
     close: () => void;
 };
 
+type PowerPointHelperType = {
+    countSlides: (filePath: string) => number | null;
+};
+type YTHelper = {
+    on: (event: string, listener: (...args: any[]) => void) => YTHelper;
+    off: (event: string, listener: (...args: any[]) => void) => YTHelper;
+    exec: (
+        args: string[],
+        options?: { cwd?: string; env?: NodeJS.ProcessEnv },
+    ) => YTHelper;
+    ytDlpProcess: {
+        pid: number;
+    };
+};
+
 export type AppProviderType = Readonly<
     PagePropsType & {
         appType: AppTypeEnum;
@@ -155,6 +170,14 @@ export type AppProviderType = Readonly<
         presenterHomePage: string;
         readerHomePage: string;
         currentHomePage: string;
+        powerPointUtils: {
+            getPowerPointHelper: (
+                dotNetRoot?: string,
+            ) => Promise<PowerPointHelperType | null>;
+        };
+        ytUtils: {
+            getYTHelper: () => Promise<YTHelper>;
+        };
     }
 >;
 

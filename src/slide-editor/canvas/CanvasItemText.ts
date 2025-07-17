@@ -1,7 +1,6 @@
 import { CSSProperties } from 'react';
 
 import { handleError } from '../../helper/errorHelpers';
-import { AnyObjectType } from '../../helper/helpers';
 import { AppColorType } from '../../others/color/colorHelpers';
 import appProvider from '../../server/appProvider';
 import {
@@ -12,6 +11,7 @@ import {
     VAlignmentType,
 } from './canvasHelpers';
 import CanvasItem, { CanvasItemError, CanvasItemPropsType } from './CanvasItem';
+import { AnyObjectType } from '../../helper/typeHelpers';
 
 export function genTextDefaultProps(): TextPropsType {
     return {

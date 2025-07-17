@@ -2,7 +2,12 @@
 import { dirname, join, resolve } from 'node:path';
 import { copyFileSync, existsSync } from 'node:fs';
 import { promises } from 'node:fs';
-import { isWindows, isMac, attemptClosing } from '../electronHelpers';
+import {
+    isWindows,
+    isMac,
+    attemptClosing,
+    toUnpackedPath,
+} from '../electronHelpers';
 
 // https://nodejs.org/docs/latest-v22.x/api/sqlite.html
 
@@ -46,7 +51,7 @@ async function checkIsSameFiles(fname1, fname2) {
     }
 }
 
-function getFileExt(libName: string) {
+function getFileExt() {
     if (isWindows) {
         return 'dll';
     }
@@ -56,21 +61,12 @@ function getFileExt(libName: string) {
     return 'so';
 }
 
-async function getLibFilePath(databasePath: string, libName: string) {
-    const extBasePath = resolve(__dirname, '../../db-exts');
-    const sourceFilePath = join(extBasePath, libName);
-    const databaseBasePath = dirname(databasePath);
-    const libFileExt = getFileExt(libName);
-    const destFilePath = join(databaseBasePath, `${libName}.${libFileExt}`);
-    if (
-        !(
-            existsSync(destFilePath) &&
-            (await checkIsSameFiles(sourceFilePath, destFilePath))
-        )
-    ) {
-        copyFileSync(sourceFilePath, destFilePath);
-    }
-    return join(databaseBasePath, libName);
+async function getLibFilePath(libName: string) {
+    const libFileExt = getFileExt();
+    const destFilePath = toUnpackedPath(
+        join(__dirname, '../../db-exts', `${libName}.${libFileExt}`),
+    );
+    return destFilePath;
 }
 
 class SQLiteDatabase {
@@ -84,7 +80,7 @@ class SQLiteDatabase {
         const database = new DatabaseSync(this.databasePath, {
             allowExtension: true,
         });
-        const destLibFile = await getLibFilePath(this.databasePath, 'fts5');
+        const destLibFile = await getLibFilePath('fts5');
         database.loadExtension(destLibFile);
         // const destLibFile = getLibFilePath(databasePath, 'spellfix1');
         // database.loadExtension(destLibFile);

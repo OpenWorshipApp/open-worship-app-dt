@@ -75,7 +75,9 @@ export function useGetBibleRef(
     chapter: number,
     verseNum: number,
 ) {
-    const [bibleRef, setBibleRef] = useState<BibleRefType[][] | null>(null);
+    const [bibleRef, setBibleRef] = useState<
+        BibleRefType[][] | null | undefined
+    >(undefined);
     useAppEffectAsync(
         async (methodContext) => {
             const key = `${toBibleFileName(bookKey, chapter)}.${verseNum}`;

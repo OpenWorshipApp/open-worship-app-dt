@@ -1,5 +1,4 @@
-import { AnyObjectType } from '../helper/helpers';
-import { OptionalPromise } from './otherHelpers';
+import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 
 export interface ItemSourceInfBasic<T> {
     getItemById(id: number): OptionalPromise<T | null>;

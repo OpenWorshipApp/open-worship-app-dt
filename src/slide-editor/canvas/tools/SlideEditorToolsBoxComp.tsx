@@ -113,13 +113,18 @@ export default function SlideEditorToolsBoxComp() {
         canvasController.applyEditItem(canvasItem);
     };
     return (
-        <div className="d-flex">
+        <div className="d-flex flex-wrap app-inner-shadow">
             <SlideEditorToolsColorComp
                 color={canvasItem.props.backgroundColor}
                 handleNoColoring={handleNoColoring}
                 handleColorChanging={handleColorChanging}
             />
-            <div className="ps-2">
+            <div
+                className="ps-1"
+                style={{
+                    minWidth: '300px',
+                }}
+            >
                 <SlideEditorToolTitleComp title="Box Alignment">
                     <SlideEditorToolAlignComp onData={handleDataEvent} />
                 </SlideEditorToolTitleComp>

@@ -5,11 +5,9 @@ import { handleCtrlWheel } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
 import { DIV_CLASS_NAME } from './varyAppDocumentHelpers';
-import {
-    useVaryAppDocumentContext,
-    VaryAppDocumentType,
-} from '../../app-document-list/appDocumentHelpers';
+import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
+import { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
 
 const handlePasting = async (varyAppDocument: VaryAppDocumentType) => {
     if (!AppDocument.checkIsThisType(varyAppDocument)) {

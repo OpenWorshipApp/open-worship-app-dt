@@ -8,9 +8,11 @@ import LyricAppDocument from './LyricAppDocument';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import FileSource from '../helper/FileSource';
 import { useMemo } from 'react';
+import { useLyricEditingManagerContext } from './LyricEditingManager';
 
 export default function LyricSlidesPreviewerComp() {
     const selectedLyric = useSelectedLyricContext();
+    const lyricEditingManager = useLyricEditingManagerContext();
     const lyricAppDocument = useMemo(() => {
         const instance = LyricAppDocument.getInstanceFromLyricFilePath(
             selectedLyric.filePath,
@@ -18,6 +20,7 @@ export default function LyricSlidesPreviewerComp() {
         );
         if (instance !== null) {
             instance.isPreRender = true;
+            instance.lyricEditingProps = lyricEditingManager.lyricEditingProps;
         }
         return instance;
     }, [selectedLyric]);

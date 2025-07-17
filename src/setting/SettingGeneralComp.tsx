@@ -1,7 +1,8 @@
 import { clearWidgetSizeSetting } from '../resize-actor/flexSizeHelpers';
 import SettingGeneralLanguageComp from './SettingGeneralLanguageComp';
 import appProvider from '../server/appProvider';
-import SettingGeneralPath from './directory-setting/SettingGeneralPathComp';
+import SettingGeneralPath from './directory-setting/SettingGeneralDirectoryPathComp';
+import { appLocalStorage } from './directory-setting/appLocalStorage';
 
 export default function SettingGeneralComp() {
     return (
@@ -21,15 +22,28 @@ export default function SettingGeneralComp() {
                         <hr />
                     </>
                 ) : null}
-                <button
-                    className="btn btn-info"
-                    onClick={() => {
-                        clearWidgetSizeSetting();
-                        appProvider.reload();
-                    }}
-                >
-                    Reset Widgets Size
-                </button>
+                <div className="m-2">
+                    <button
+                        className="btn btn-warning"
+                        onClick={() => {
+                            clearWidgetSizeSetting();
+                            appProvider.reload();
+                        }}
+                    >
+                        `Reset Widgets Size
+                    </button>
+                </div>
+                <div className="m-2">
+                    <button
+                        className="btn btn-danger"
+                        onClick={async () => {
+                            await appLocalStorage.clear();
+                            appProvider.reload();
+                        }}
+                    >
+                        `Clear All Settings
+                    </button>
+                </div>
             </div>
         </div>
     );

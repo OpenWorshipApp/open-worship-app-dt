@@ -18,7 +18,15 @@ import FileSource from '../helper/FileSource';
 import { addExtension } from '../server/fileHelpers';
 import appProvider from '../server/appProvider';
 import { VerseList } from '../helper/bible-helpers/BibleDataReader';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
+import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import { attachBackgroundManager } from '../others/AttachBackgroundManager';
+import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
+import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
 
 export const SelectedBibleKeyContext = createContext<string>('KJV');
 export function useBibleKeyContext() {
@@ -148,4 +156,91 @@ export async function moveBibleItemTo(
             };
         }),
     );
+}
+
+export async function openBibleItemContextMenu(
+    event: any,
+    bibleItem: BibleItem,
+    index: number,
+    openBibleLookup: (() => void) | null,
+    extraMenuItems: ContextMenuItemType[],
+) {
+    const bible = bibleItem.filePath
+        ? await Bible.fromFilePath(bibleItem.filePath)
+        : null;
+    if (bible === null) {
+        showSimpleToast('Open Bible Item Context Menu', 'Unable to get bible');
+        return;
+    }
+    const menuItem: ContextMenuItemType[] = [
+        ...genBibleItemCopyingContextMenu(bibleItem),
+        ...(openBibleLookup !== null
+            ? [
+                  {
+                      menuElement: '`Lookup',
+                      onSelect: async () => {
+                          const viewController =
+                              new LookupBibleItemController();
+                          viewController.applyTargetOrBibleKey(
+                              viewController.selectedBibleItem,
+                              {
+                                  bibleKey: bibleItem.bibleKey,
+                              },
+                          );
+                          await viewController.setLookupContentFromBibleItem(
+                              bibleItem,
+                          );
+                          openBibleLookup();
+                      },
+                  },
+              ]
+            : []),
+        {
+            menuElement: '`Duplicate',
+            onSelect: () => {
+                bible.duplicate(index);
+                bible.save();
+            },
+        },
+        ...genShowOnScreensContextMenu((event) => {
+            ScreenBibleManager.handleBibleItemSelecting(event, bibleItem, true);
+        }),
+        {
+            menuElement: '`Move To',
+            onSelect: (event1: any) => {
+                moveBibleItemTo(event1, bible, bibleItem);
+            },
+        },
+        {
+            menuElement: '`Delete',
+            onSelect: async () => {
+                await bible.deleteBibleItem(bibleItem);
+                if (bibleItem.filePath !== undefined) {
+                    attachBackgroundManager.detachBackground(
+                        bibleItem.filePath,
+                        bibleItem.id,
+                    );
+                }
+            },
+        },
+    ];
+    if (index !== 0) {
+        menuItem.push({
+            menuElement: '`Move up',
+            onSelect: () => {
+                bible.swapItems(index, index - 1);
+                bible.save();
+            },
+        });
+    }
+    if (index !== bible.itemsLength - 1) {
+        menuItem.push({
+            menuElement: '`Move down',
+            onSelect: () => {
+                bible.swapItems(index, index + 1);
+                bible.save();
+            },
+        });
+    }
+    showAppContextMenu(event, [...extraMenuItems, ...menuItem]);
 }

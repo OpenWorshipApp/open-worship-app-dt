@@ -1,7 +1,11 @@
-import { lazy, useState } from 'react';
+import { useState } from 'react';
 
 import FileReadErrorComp from './FileReadErrorComp';
-import { copyToClipboard, showExplorer } from '../server/appHelpers';
+import {
+    copyToClipboard,
+    showExplorer,
+    trashAllMaterialFiles,
+} from '../server/appHelpers';
 import FileSource from '../helper/FileSource';
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import appProvider from '../server/appProvider';
@@ -13,10 +17,8 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
-import { useFileSourceIsOnScreen } from './otherHelpers';
-const LazyRenderRenamingComp = lazy(() => {
-    return import('./RenderRenamingComp');
-});
+import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';
+import RenderRenamingComp from './RenderRenamingComp';
 
 export const genCommonMenu = (filePath: string): ContextMenuItemType[] => {
     return [
@@ -64,22 +66,23 @@ function genContextMenu(
 
 export function genTrashContextMenu(
     filePath: string,
-    onTrashed: () => void,
+    onTrashed?: () => void,
 ): ContextMenuItemType[] {
     return [
         {
-            menuElement: 'Move to Trash',
+            menuElement: '`Move to Trash',
             onSelect: async () => {
                 const fileSource = FileSource.getInstance(filePath);
                 const isOk = await showAppConfirm(
                     'Moving File to Trash',
                     'Are you sure you want to move ' +
-                        `"${fileSource.fileFullName}" to trash?`,
+                        `"${fileSource.fullName}" to trash?`,
                 );
                 if (isOk) {
                     const fileSource = FileSource.getInstance(filePath);
-                    await fileSource.trashFile();
-                    onTrashed();
+                    await fileSource.trash();
+                    await trashAllMaterialFiles(fileSource);
+                    onTrashed?.();
                 }
             },
         },
@@ -172,7 +175,7 @@ export default function FileItemHandlerComp({
     return (
         <li
             className={
-                `list-group-item m-1 ${moreClassName}` +
+                `list-group-item m-1 ${moreClassName} overflow-hidden` +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             style={{
@@ -212,7 +215,7 @@ export default function FileItemHandlerComp({
             }}
         >
             {isRenaming ? (
-                <LazyRenderRenamingComp
+                <RenderRenamingComp
                     setIsRenaming={setIsRenaming}
                     filePath={filePath}
                     renamedCallback={renamedCallback}

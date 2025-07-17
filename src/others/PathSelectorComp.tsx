@@ -11,8 +11,8 @@ import {
 } from '../context-menu/appContextMenuHelpers';
 import { menuTitleRealFile } from '../helper/helpers';
 import { copyToClipboard, showExplorer } from '../server/appHelpers';
-import { goToGeneralSetting } from '../setting/SettingComp';
 import appProvider from '../server/appProvider';
+import { goToGeneralSetting } from '../setting/settingHelpers';
 
 const LazyPathEditorComp = lazy(() => {
     return import('./PathEditorComp');
@@ -52,14 +52,17 @@ function openContextMenu(dirPath: string, event: any) {
 export default function PathSelectorComp({
     dirSource,
     addItems,
+    isForceShowEditor = false,
 }: Readonly<{
     dirSource: DirSource;
     prefix: string;
     addItems?: () => void;
+    isForceShowEditor?: boolean;
 }>) {
-    const [showing, setShowing] = useState(false);
+    const [isShowingEditor, setIsShowingEditor] = useState(false);
     const dirPath = dirSource.dirPath;
-    const isShowingEditor = !dirPath || showing;
+    const shouldShowingEditor =
+        isForceShowEditor || !dirPath || isShowingEditor;
     return (
         <div
             className="path-selector w-100"
@@ -67,24 +70,26 @@ export default function PathSelectorComp({
         >
             <div
                 className="d-flex path-previewer app-caught-hover-pointer"
-                title={(isShowingEditor ? 'Hide' : 'Show') + ' path editor'}
+                title={(shouldShowingEditor ? 'Hide' : 'Show') + ' path editor'}
                 onClick={() => {
-                    setShowing(!showing);
+                    setIsShowingEditor(!isShowingEditor);
                 }}
             >
                 <i
                     className={`bi ${
-                        isShowingEditor ? 'bi-chevron-down' : 'bi-chevron-right'
+                        shouldShowingEditor
+                            ? 'bi-chevron-down'
+                            : 'bi-chevron-right'
                     }`}
                 />
-                {!isShowingEditor && (
+                {!shouldShowingEditor && (
                     <RenderPathTitleComp
                         dirSource={dirSource}
                         addItems={addItems}
                     />
                 )}
             </div>
-            {isShowingEditor && (
+            {shouldShowingEditor && (
                 <AppSuspenseComp>
                     <LazyPathEditorComp dirSource={dirSource} />
                 </AppSuspenseComp>

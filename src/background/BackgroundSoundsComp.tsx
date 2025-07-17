@@ -7,14 +7,63 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { BackgroundSrcType } from '../_screen/screenHelpers';
 import {
     handleAudioPlaying,
     handleAudioPausing,
     handleAudioEnding,
+    getSoundRepeatSettingName,
 } from './audioBackgroundHelpers';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
+import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import { useStateSettingBoolean } from '../helper/settingHelpers';
+
+function RendBodyComp({
+    filePath,
+}: Readonly<{
+    filePath: string;
+    selectedBackgroundSrcList: [string, BackgroundSrcType][];
+}>) {
+    const fileSource = FileSource.getInstance(filePath);
+    const settingName = useMemo(() => {
+        return getSoundRepeatSettingName(fileSource.src);
+    }, [fileSource.src]);
+    const [isRepeating, setIsRepeating] = useStateSettingBoolean(
+        settingName,
+        false,
+    );
+    return (
+        <div className="card-body" data-file-path={filePath}>
+            <div className="d-flex justify-content-center align-items-center h-100">
+                <audio
+                    data-repeat-setting-name={settingName}
+                    controls
+                    onPlay={handleAudioPlaying}
+                    onPause={handleAudioPausing}
+                    onEnded={handleAudioEnding}
+                >
+                    <source src={fileSource.src} />
+                    <track kind="captions" />
+                    Your browser does not support the audio element.
+                </audio>
+                <div className="">
+                    <i
+                        className="bi bi-repeat-1 p-1"
+                        title="`Repeat this audio"
+                        style={{
+                            fontSize: '1.5rem',
+                            opacity: isRepeating ? 1 : 0.5,
+                            color: isRepeating ? 'green' : 'inherit',
+                        }}
+                        onClick={() => {
+                            setIsRepeating(!isRepeating);
+                        }}
+                    />
+                </div>
+            </div>
+        </div>
+    );
+}
 
 function rendChild(
     activeMap: { [key: string]: boolean },
@@ -27,33 +76,10 @@ function rendChild(
         );
     }
     return (
-        <RendBody
+        <RendBodyComp
             filePath={filePath}
             selectedBackgroundSrcList={selectedBackgroundSrcList}
         />
-    );
-}
-
-function RendBody({
-    filePath,
-}: Readonly<{
-    filePath: string;
-    selectedBackgroundSrcList: [string, BackgroundSrcType][];
-}>) {
-    const fileSource = FileSource.getInstance(filePath);
-    return (
-        <div className="card-body" data-file-path={filePath}>
-            <audio
-                controls
-                onPlay={handleAudioPlaying}
-                onPause={handleAudioPausing}
-                onEnded={handleAudioEnding}
-            >
-                <source src={fileSource.src} />
-                <track kind="captions" />
-                Your browser does not support the audio element.
-            </audio>
-        </div>
     );
 }
 
@@ -85,10 +111,10 @@ export default function BackgroundSoundsComp() {
     };
     return (
         <BackgroundMediaComp
+            rendChild={rendChild.bind(null, activeMap)}
             defaultFolderName={defaultDataDirNames.BACKGROUND_SOUND}
             dragType={DragTypeEnum.BACKGROUND_SOUND}
             onClick={handleItemClicking}
-            rendChild={rendChild.bind(null, activeMap)}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_SOUND}
             noDraggable={true}
             isNameOnTop={true}

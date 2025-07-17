@@ -1,5 +1,8 @@
+'use strict';
+/* eslint-disable */
+
 import { readFileSync } from 'node:fs';
-import { PDFDocument } from 'mupdf/mupdfjs';
+import { PDFDocument } from 'mupdf';
 
 process.on('message', ({ filePath }) => {
   try {

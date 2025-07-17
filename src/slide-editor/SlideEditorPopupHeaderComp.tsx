@@ -1,5 +1,5 @@
 import { ModalCloseButton } from '../app-modal/ModalComp';
-import { tran } from '../lang';
+import { tran } from '../lang/langHelpers';
 import { closeSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerComp';
 
 export default function SlideEditorPopupHeaderComp() {

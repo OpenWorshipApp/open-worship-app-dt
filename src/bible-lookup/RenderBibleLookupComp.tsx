@@ -46,11 +46,17 @@ export function useSelectedBibleKey() {
 }
 
 export default function RenderBibleLookupComp() {
-    const [isLookupOnline, setIsLookupOnline] = useStateSettingBoolean(
+    const viewController = useLookupBibleItemControllerContext();
+    const [isBibleSearching, setIsBibleSearching] = useStateSettingBoolean(
         LOOKUP_ONLINE_SETTING_NAME,
         false,
     );
-    const viewController = useLookupBibleItemControllerContext();
+    useAppEffect(() => {
+        viewController.setIsBibleSearching = setIsBibleSearching;
+        return () => {
+            viewController.setIsBibleSearching = (_: boolean) => {};
+        };
+    }, []);
     const [inputText, setInputText] = useState<string>(
         viewController.inputText,
     );
@@ -58,7 +64,7 @@ export default function RenderBibleLookupComp() {
         useAppStateAsync<EditingResultType>(() => {
             return viewController.getEditingResult();
         }, []);
-    const { isValid, bibleKey } = useSelectedBibleKey();
+    const { isValid: isValidBibleKey, bibleKey } = useSelectedBibleKey();
     useAppEffect(() => {
         viewController.reloadEditingResult = (inputText) => {
             viewController
@@ -76,14 +82,14 @@ export default function RenderBibleLookupComp() {
             viewController.reloadEditingResult = (_: string) => {};
         };
     }, []);
-    if (!isValid) {
+    if (!isValidBibleKey) {
         return (
             <div className="w-100 h-100">
                 <div className="d-flex">
                     <div className="flex-fill"></div>
                     <RenderExtraButtonsRightComp
-                        setIsLookupOnline={setIsLookupOnline}
-                        isLookupOnline={isLookupOnline}
+                        setIsLookupOnline={setIsBibleSearching}
+                        isLookupOnline={isBibleSearching}
                     />
                 </div>
                 <div className="flex-fill">
@@ -130,11 +136,11 @@ export default function RenderBibleLookupComp() {
         >
             <div id="bible-lookup-popup" className="shadow card w-100 h-100">
                 <RenderBibleLookupHeaderComp
-                    isLookupOnline={isLookupOnline}
-                    setIsLookupOnline={setIsLookupOnline}
+                    isLookupOnline={isBibleSearching}
+                    setIsLookupOnline={setIsBibleSearching}
                 />
                 <div className={'card-body d-flex w-100 h-100 overflow-hidden'}>
-                    {isLookupOnline ? (
+                    {isBibleSearching ? (
                         <ResizeActorComp
                             flexSizeName="bible-lookup-popup-body"
                             isHorizontal

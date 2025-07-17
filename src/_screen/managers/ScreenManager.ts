@@ -1,6 +1,6 @@
 import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
 import { log } from '../../helper/loggerHelpers';
-import ScreenOtherManager from './ScreenOtherManager';
+import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
 import ScreenBibleManager from './ScreenBibleManager';
 import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
@@ -13,27 +13,32 @@ import {
 } from './screenManagerBaseHelpers';
 import ScreenManagerBase from './ScreenManagerBase';
 import { RegisteredEventType } from '../../event/EventHandler';
-import { ScreenMessageType } from '../screenHelpers';
 import appProvider from '../../server/appProvider';
+import { ScreenMessageType } from '../screenTypeHelpers';
 
 export default class ScreenManager extends ScreenManagerBase {
     readonly screenBackgroundManager: ScreenBackgroundManager;
     readonly screenVaryAppDocumentManager: ScreenVaryAppDocumentManager;
     readonly screenBibleManager: ScreenBibleManager;
-    readonly screenOtherManager: ScreenOtherManager;
-    readonly varyAppDocumentEffectManager: ScreenEffectManager;
+    readonly screenForegroundManager: ScreenForegroundManager;
     readonly backgroundEffectManager: ScreenEffectManager;
+    readonly varyAppDocumentEffectManager: ScreenEffectManager;
+    readonly foregroundEffectManager: ScreenEffectManager;
     private readonly registeredEventListeners: RegisteredEventType<any, any>[];
 
     constructor(screenId: number) {
         super(screenId);
+        this.backgroundEffectManager = new ScreenEffectManager(
+            this,
+            'background',
+        );
         this.varyAppDocumentEffectManager = new ScreenEffectManager(
             this,
             'vary-app-document',
         );
-        this.backgroundEffectManager = new ScreenEffectManager(
+        this.foregroundEffectManager = new ScreenEffectManager(
             this,
-            'background',
+            'foreground',
         );
         this.screenBackgroundManager = new ScreenBackgroundManager(
             this,
@@ -44,7 +49,10 @@ export default class ScreenManager extends ScreenManagerBase {
             this.varyAppDocumentEffectManager,
         );
         this.screenBibleManager = new ScreenBibleManager(this);
-        this.screenOtherManager = new ScreenOtherManager(this);
+        this.screenForegroundManager = new ScreenForegroundManager(
+            this,
+            this.foregroundEffectManager,
+        );
         this.registeredEventListeners = [];
         this.registeredEventListeners.push(
             ...this.screenVaryAppDocumentManager.registerEventListener(
@@ -66,9 +74,18 @@ export default class ScreenManager extends ScreenManagerBase {
     get isLocked() {
         return super.isLocked;
     }
-
     set isLocked(isLocked: boolean) {
         super.isLocked = isLocked;
+        saveScreenManagersSetting().then(() => {
+            this.fireInstanceEvent();
+        });
+    }
+
+    get stageNumber() {
+        return super.stageNumber;
+    }
+    set stageNumber(stageNumber: number) {
+        super.stageNumber = stageNumber;
         saveScreenManagersSetting().then(() => {
             this.fireInstanceEvent();
         });
@@ -77,7 +94,6 @@ export default class ScreenManager extends ScreenManagerBase {
     get isSelected() {
         return super.isSelected;
     }
-
     set isSelected(isSelected: boolean) {
         super.isSelected = isSelected;
         saveScreenManagersSetting().then(() => {
@@ -95,7 +111,7 @@ export default class ScreenManager extends ScreenManagerBase {
         ScreenBibleManager.sendSynTextStyle();
         this.backgroundEffectManager.sendSyncScreen();
         this.screenBackgroundManager.sendSyncScreen();
-        this.screenOtherManager.sendSyncScreen();
+        this.screenForegroundManager.sendSyncScreen();
         this.screenVaryAppDocumentManager.sendSyncScreen();
         this.varyAppDocumentEffectManager.sendSyncScreen();
         this.screenBibleManager.sendSyncScreen();
@@ -104,7 +120,7 @@ export default class ScreenManager extends ScreenManagerBase {
     clear() {
         this.screenBibleManager.clear();
         this.screenVaryAppDocumentManager.clear();
-        this.screenOtherManager.clear();
+        this.screenForegroundManager.clear();
         this.screenBackgroundManager.clear();
         this.fireUpdateEvent();
     }
@@ -121,7 +137,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenBackgroundManager.delete();
         this.screenVaryAppDocumentManager.delete();
         this.screenBibleManager.delete();
-        this.screenOtherManager.delete();
+        this.screenForegroundManager.delete();
         deleteScreenManagerBaseCache(this.key);
         await saveScreenManagersSetting(this.screenId);
         this.fireInstanceEvent();
@@ -161,8 +177,8 @@ export default class ScreenManager extends ScreenManagerBase {
             return ScreenVaryAppDocumentManager;
         } else if (type === 'bible-screen-view') {
             return ScreenBibleManager;
-        } else if (type === 'alert') {
-            return ScreenOtherManager;
+        } else if (type === 'foreground') {
+            return ScreenForegroundManager;
         }
         return null;
     }

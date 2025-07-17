@@ -8,6 +8,7 @@ import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
+import appProvider from '../server/appProvider';
 
 async function getCopiedText() {
     try {
@@ -52,12 +53,22 @@ function createEditor() {
     // add context menu
     monacoEditor.addAction({
         id: 'toggle-wrap-text',
-        label: 'Toggle Wrap Text',
+        label: '`Toggle Wrap Text',
         contextMenuGroupId: 'navigation',
         keybindings: [KeyMod.Alt | KeyCode.KeyZ],
         contextMenuOrder: 1.5,
         run: () => {
             editorStore.toggleIsWrapText();
+        },
+    });
+    monacoEditor.addAction({
+        id: 'help',
+        label: '`Markdown Music Help',
+        contextMenuGroupId: 'navigation',
+        run: async () => {
+            appProvider.browserUtils.openExternalURL(
+                'https://github.com/music-markdown/music-markdown?tab=readme-ov-file#verses',
+            );
         },
     });
     // TODO: fix Monaco native paste fail

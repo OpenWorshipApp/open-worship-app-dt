@@ -10,6 +10,8 @@ import appUtils from './appUtils';
 import databaseUtils from './databaseUtils';
 
 import appInfo from '../../package.json';
+import { powerPointUtils } from './powerPointUtils';
+import { ytUtils } from './ytUtils';
 
 function toVersionNumber(version: string) {
     const [major, minor, patch] = version
@@ -42,4 +44,6 @@ export const provider = {
     },
     appUtils,
     databaseUtils,
+    powerPointUtils,
+    ytUtils,
 };

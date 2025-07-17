@@ -20,7 +20,7 @@ import {
     BIBLE_VIEW_TEXT_CLASS,
     VERSE_TEXT_CLASS,
 } from '../helper/bibleViewHelpers';
-import { getLangAsync } from '../lang';
+import { getLangAsync } from '../lang/langHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
 import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import {
@@ -284,14 +284,21 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         );
         this.fireUpdateEvent();
     }
-    get bibleVerseKey() {
-        const verseKey = getSetting(this.toSettingName('-bible-verse-key'), '');
+
+    get bibleCrossReferenceVerseKey() {
+        const verseKey =
+            getSetting(this.toSettingName('-bible-verse-key')) ?? '';
         // (KJV) GEN 1:2-3
-        if (verseKey.startsWith('(')) {
+        if (verseKey?.startsWith('(')) {
             return verseKey;
         }
         return '';
     }
+    set bibleCrossReferenceVerseKey(bibleVerseKey: string) {
+        setSetting(this.toSettingName('-bible-verse-key'), bibleVerseKey);
+        this.setBibleVerseKey(bibleVerseKey);
+    }
+
     bibleItemFromJson(json: any): ReadIdOnlyBibleItem {
         return ReadIdOnlyBibleItem.fromJson(json);
     }
@@ -319,10 +326,6 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             return nestedBibleItems;
         }
         return this.bibleItemFromJson(json);
-    }
-    set bibleVerseKey(bibleVerseKey: string) {
-        setSetting(this.toSettingName('-bible-verse-key'), bibleVerseKey);
-        this.setBibleVerseKey(bibleVerseKey);
     }
     get nestedBibleItems() {
         try {
@@ -606,6 +609,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         this.addBibleItem(bibleItem, newBibleItem, false, false, isNoColorNote);
     }
     async genContextMenu(
+        _event: any,
         bibleItem: ReadIdOnlyBibleItem,
         uuid: string,
     ): Promise<ContextMenuItemType[]> {
@@ -624,7 +628,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                 id: splitHorizontalId,
             },
             {
-                menuElement: 'Split Horizontal To',
+                menuElement: 'Split Horizontal to',
                 onSelect: (event1: any) => {
                     showBibleOption(event1, (newBibleKey: string) => {
                         const newBibleItem = ReadIdOnlyBibleItem.fromJson(
@@ -644,7 +648,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                 id: splitVerticalId,
             },
             {
-                menuElement: 'Split Vertical To',
+                menuElement: 'Split Vertical to',
                 onSelect: (event2: any) => {
                     showBibleOption(event2, (newBibleKey: string) => {
                         const newBibleItem = ReadIdOnlyBibleItem.fromJson(
@@ -663,9 +667,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                 menuElement: 'Toggle Widget Full View',
                 onSelect: () => {
                     document
-                        .querySelector(
-                            `#uuid-${uuid} .${BIBLE_VIEW_TEXT_CLASS}`,
-                        )
+                        .querySelector(`#uuid-${uuid}`)
                         ?.classList.toggle(APP_FULL_VIEW_CLASSNAME);
                 },
             },
@@ -745,7 +747,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         if (bibleItem === undefined) {
             return;
         }
-        this.bibleVerseKey = targetDom.dataset.verseKey ?? '';
+        this.bibleCrossReferenceVerseKey = targetDom.dataset.verseKey ?? '';
         const kjvBibleVerseKey = targetDom.dataset.kjvVerseKey;
         if (kjvBibleVerseKey === undefined) {
             return;
@@ -798,13 +800,14 @@ export function useBibleItemsViewControllerContext() {
     return viewController;
 }
 
-export function useBibleItemViewControllerUpdateEvent() {
+export function useBibleItemViewControllerUpdateEvent(callback?: () => void) {
     const viewController = useBibleItemsViewControllerContext();
     const [nestedBibleItems, setNestedBibleItems] = useState(
         viewController.nestedBibleItems,
     );
     useAppEffect(() => {
         const update = () => {
+            callback?.();
             setNestedBibleItems(viewController.nestedBibleItems);
         };
         const instanceEvents = viewController.registerEventListener(

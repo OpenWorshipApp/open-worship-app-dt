@@ -1,75 +1,17 @@
 import { useState } from 'react';
 
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
-import CanvasItemText, { CanvasItemTextPropsType } from '../CanvasItemText';
-import { useFontList } from '../../../server/fontHelpers';
-import { FontListType } from '../../../server/appProvider';
+import CanvasItemText from '../CanvasItemText';
 import { useAppEffect } from '../../../helper/debuggerHelpers';
 import { useCanvasControllerContext } from '../CanvasController';
-import { useCanvasItemContext, useCanvasItemPropsContext } from '../CanvasItem';
+import { useCanvasItemContext } from '../CanvasItem';
+import FontFamilyControlComp from '../../../others/FontFamilyControlComp';
+import FontSizeControlComp from '../../../others/FontSizeControlComp';
 
 export default function ToolsTextFontControlComp() {
-    return (
-        <SlideEditorToolTitleComp title="Font Size">
-            <div className="d-flex">
-                <FontSize />
-            </div>
-            <hr />
-            <div className="d-flex">
-                <FontFamily />
-            </div>
-        </SlideEditorToolTitleComp>
-    );
-}
-function FontSize() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext() as CanvasItemText;
-    const props = useCanvasItemPropsContext<CanvasItemTextPropsType>();
-    const [localFontSize, setLocalFontSize] = useState(props.fontSize);
-    useAppEffect(() => {
-        setLocalFontSize(props.fontSize);
-    }, [canvasItem]);
-    const applyFontSize = (fontSize: number) => {
-        setLocalFontSize(fontSize);
-        canvasItem.applyTextData({ fontSize });
-        canvasController.applyEditItem(canvasItem);
-    };
-    return (
-        <div className="d-flex">
-            <input
-                className="form-control"
-                type="number"
-                style={{ maxWidth: '100px' }}
-                value={localFontSize}
-                onChange={(event) => {
-                    applyFontSize(parseInt(event.target.value));
-                }}
-            />
-            <select
-                className="form-select form-select-sm"
-                value={localFontSize}
-                onChange={(event) => {
-                    applyFontSize(parseInt(event.target.value));
-                }}
-            >
-                <option>--</option>
-                {Array.from({ length: 20 }, (_, i) => (i + 1) * 15)
-                    .reverse()
-                    .map((n) => {
-                        return (
-                            <option key={n} value={n}>
-                                {n}px
-                            </option>
-                        );
-                    })}
-            </select>
-        </div>
-    );
-}
-function FontFamily() {
-    const canvasController = useCanvasControllerContext();
-    const canvasItem = useCanvasItemContext() as CanvasItemText;
-    const fontList = useFontList();
+
     const [localFontFamily, setLocalFontFamily] = useState(
         canvasItem.props.fontFamily ?? '',
     );
@@ -80,60 +22,10 @@ function FontFamily() {
         });
         canvasController.applyEditItem(canvasItem);
     };
-    if (fontList === null) {
-        return <div>Loading Font ...</div>;
-    }
-    return (
-        <div className="pb-2">
-            <div>
-                <label htmlFor="text-font-family">Font Family</label>
-                <select
-                    id="text-font-family"
-                    className="form-select form-select-sm"
-                    value={localFontFamily}
-                    onChange={(event) => {
-                        if (event.target.value === '--') {
-                            return;
-                        }
-                        applyFontFamily(event.target.value);
-                    }}
-                >
-                    <option>--</option>
-                    {Object.keys(fontList).map((ff) => {
-                        return (
-                            <option key={ff} value={ff}>
-                                {ff}
-                            </option>
-                        );
-                    })}
-                </select>
-            </div>
-            {!!fontList[localFontFamily]?.length && (
-                <FontWeight
-                    fontWeight={''}
-                    fontFamily={localFontFamily}
-                    fontList={fontList}
-                />
-            )}
-        </div>
-    );
-}
 
-function FontWeight({
-    fontFamily,
-    fontWeight,
-    fontList,
-}: Readonly<{
-    fontWeight: string;
-    fontFamily: string;
-    fontList: FontListType;
-}>) {
-    const canvasController = useCanvasControllerContext();
-    const canvasItem = useCanvasItemContext() as CanvasItemText;
-    const [localFontWeight, setLocalFontWeight] = useState(fontWeight);
-    useAppEffect(() => {
-        setLocalFontWeight(fontWeight);
-    }, [fontWeight]);
+    const [localFontWeight, setLocalFontWeight] = useState(
+        canvasItem.props.fontWeight ?? '',
+    );
     const applyFontWeight = (newFontWeight: string) => {
         setLocalFontWeight(newFontWeight);
         canvasItem.applyTextData({
@@ -141,26 +33,39 @@ function FontWeight({
         });
         canvasController.applyEditItem(canvasItem);
     };
+
+    const [localFontSize, setLocalFontSize] = useState(
+        canvasItem.props.fontSize,
+    );
+    const applyFontSize = (fontSize: number) => {
+        setLocalFontSize(fontSize);
+        canvasItem.applyTextData({ fontSize });
+        canvasController.applyEditItem(canvasItem);
+    };
+
+    useAppEffect(() => {
+        setLocalFontFamily(canvasItem.props.fontFamily ?? '');
+        setLocalFontWeight(canvasItem.props.fontWeight ?? '');
+        setLocalFontSize(canvasItem.props.fontSize);
+    }, [canvasItem]);
+
     return (
-        <div>
-            <label htmlFor="text-font-style">Font Style</label>
-            <select
-                id="text-font-style"
-                className="form-select form-select-sm"
-                value={localFontWeight}
-                onChange={(event) => {
-                    applyFontWeight(event.target.value);
-                }}
-            >
-                <option>--</option>
-                {fontList[fontFamily].map((fs) => {
-                    return (
-                        <option key={fs} value={fs}>
-                            {fs}
-                        </option>
-                    );
-                })}
-            </select>
-        </div>
+        <SlideEditorToolTitleComp title="Font Size">
+            <div className="d-flex">
+                <FontSizeControlComp
+                    fontSize={localFontSize}
+                    setFontSize={applyFontSize}
+                />
+            </div>
+            <hr />
+            <div className="d-flex">
+                <FontFamilyControlComp
+                    fontFamily={localFontFamily}
+                    setFontFamily={applyFontFamily}
+                    fontWeight={localFontWeight}
+                    setFontWeight={applyFontWeight}
+                />
+            </div>
+        </SlideEditorToolTitleComp>
     );
 }

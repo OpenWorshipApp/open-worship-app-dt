@@ -1,11 +1,12 @@
 import { ItemBase } from '../helper/ItemBase';
-import { AnyObjectType, cloneJson } from '../helper/helpers';
+import { cloneJson } from '../helper/helpers';
 import { CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
-import { DisplayType } from '../_screen/screenHelpers';
 import DragInf, { DragTypeEnum } from '../helper/DragInf';
-import { toKeyByFilePath } from './appDocumentHelpers';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import { ClipboardInf } from '../server/appHelpers';
+import { handleError } from '../helper/errorHelpers';
+import { AnyObjectType } from '../helper/typeHelpers';
+import { DisplayType } from '../_screen/screenTypeHelpers';
 
 export type SlideType = {
     id: number;
@@ -138,15 +139,6 @@ export default class Slide
         return slide;
     }
 
-    dragSerialize() {
-        return {
-            type: DragTypeEnum.SLIDE,
-            data: JSON.stringify({
-                key: toKeyByFilePath(this.filePath, this.id),
-            }),
-        };
-    }
-
     clipboardSerialize() {
         const json = this.toJson();
         return JSON.stringify({
@@ -155,15 +147,33 @@ export default class Slide
         });
     }
 
-    static clipboardDeserialize(json: string) {
-        if (!json) {
+    static clipboardDeserialize(jsonString: string) {
+        if (!jsonString) {
             return null;
         }
         try {
-            const { filePath, data } = JSON.parse(json);
+            const { filePath, data } = JSON.parse(jsonString);
             this.validate(data);
             return this.fromJson(data, filePath);
-        } catch (_error) {}
+        } catch (error) {
+            handleError(error);
+        }
+        return null;
+    }
+
+    dragSerialize() {
+        return {
+            type: DragTypeEnum.SLIDE,
+            data: this.clipboardSerialize(),
+        };
+    }
+
+    static dragDeserialize(data: string) {
+        try {
+            return this.clipboardDeserialize(data);
+        } catch (error) {
+            handleError(error);
+        }
         return null;
     }
 

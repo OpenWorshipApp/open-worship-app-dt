@@ -111,7 +111,7 @@ export default function FileListHandlerComp({
     return (
         <DirSourceContext value={dirSource}>
             <div
-                className={`${className} card w-100 h-100 ${userClassName ?? ''}`}
+                className={`${className} card w-100 h-100 app-inner-shadow ${userClassName ?? ''}`}
                 onDragOver={genOnDragOver(dirSource)}
                 onDragLeave={genOnDragLeave()}
                 onDrop={genOnDrop({
@@ -128,9 +128,9 @@ export default function FileListHandlerComp({
                             maxHeight: '35px',
                         }}
                     >
-                        <span className={isOnScreen ? 'app-on-screen' : ''}>
+                        <strong className={isOnScreen ? 'app-on-screen' : ''}>
                             {header}
-                        </span>
+                        </strong>
                         {onNewFile && dirSource.dirPath ? (
                             <div
                                 className="float-end app-caught-hover-pointer"
@@ -147,7 +147,7 @@ export default function FileListHandlerComp({
                     </div>
                 ) : null}
                 <div
-                    className="card-body d-flex flex-column pb-5"
+                    className="card-body d-flex flex-column pb-5 app-inner-shadow"
                     onContextMenu={genOnContextMenu(dirSource, {
                         contextMenu,
                         addItems: handleItemsAdding,
@@ -170,7 +170,7 @@ export default function FileListHandlerComp({
                             defaultFolderName={defaultFolderName}
                         />
                     ) : (
-                        <ul className="list-group flex-fill d-flex">
+                        <ul className="list-group flex-fill d-flex app-inner-shadow">
                             {onNewFile !== undefined && isCreatingNew ? (
                                 <LazyAskingNewNameComp
                                     applyName={handleNameApplying}

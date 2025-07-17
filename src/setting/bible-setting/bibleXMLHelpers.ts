@@ -4,7 +4,7 @@ import appProvider from '../../server/appProvider';
 import { writeStreamToFile } from '../../helper/bible-helpers/downloadHelpers';
 import { showExplorer } from '../../server/appHelpers';
 import { fsDeleteFile, pathJoin } from '../../server/fileHelpers';
-import { allLocalesMap, LocaleType } from '../../lang';
+import { allLocalesMap, LocaleType } from '../../lang/langHelpers';
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import {
     genBibleBooksMapXMLInput,
@@ -239,7 +239,7 @@ export function handBibleInfoContextMenuOpening(
 ) {
     const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: 'Chose Locale',
+            menuElement: 'Choose Locale',
             onSelect: () => {
                 showAppContextMenu(
                     event,
@@ -386,7 +386,7 @@ export async function deleteBibleXML(bibleKey: string) {
     await bibleDataReader.clearBibleDatabaseData(bibleKey);
     const filePath = await bibleKeyToFilePath(bibleKey);
     const fileSource = FileSource.getInstance(filePath);
-    await fileSource.trashFile();
+    await fileSource.trash();
 }
 
 export async function getBibleXMLDataFromKey(bibleKey: string) {

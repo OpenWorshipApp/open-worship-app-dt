@@ -80,6 +80,12 @@ export default function LyricFileComp({
     const handleChildRendering = (lyric: AppDocumentSourceAbs) => {
         return <LyricFilePreview lyric={lyric as Lyric} />;
     };
+    const handleRenaming = async (newFileSource: FileSource) => {
+        if (isSelected) {
+            const newLyric = Lyric.getInstance(newFileSource.filePath);
+            setSelectedLyric(newLyric);
+        }
+    };
     return (
         <FileItemHandlerComp
             index={index}
@@ -91,6 +97,7 @@ export default function LyricFileComp({
             renderChild={handleChildRendering}
             isSelected={isSelected}
             checkIsOnScreen={checkIsOnScreen}
+            renamedCallback={handleRenaming}
         />
     );
 }

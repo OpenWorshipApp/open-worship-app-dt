@@ -41,19 +41,22 @@ function genBtnMaps(screenManager: ScreenManager) {
         screenBackgroundManager,
         screenVaryAppDocumentManager,
         screenBibleManager,
-        screenOtherManager,
+        screenForegroundManager,
     } = screenManager;
 
     const isShowingBackground = screenBackgroundManager.isShowing;
-    const isShowingFG = screenVaryAppDocumentManager.isShowing;
+    const isShowingSlide = screenVaryAppDocumentManager.isShowing;
     const isShowingBible = screenBibleManager.isShowing;
-    const isShowingAlert = screenOtherManager.isShowing;
+    const isShowingForeground = screenForegroundManager.isShowing;
     const isShowing =
-        isShowingBackground || isShowingFG || isShowingBible || isShowingAlert;
+        isShowingBackground ||
+        isShowingSlide ||
+        isShowingBible ||
+        isShowingForeground;
     return [
         {
             text: <i className="bi bi-eraser" />,
-            title: '`Clear all',
+            title: '`Clear All',
             btnType: 'danger',
             isEnabled: isShowing,
             eventMap: { key: 'F6' },
@@ -63,7 +66,7 @@ function genBtnMaps(screenManager: ScreenManager) {
         },
         {
             text: 'BG',
-            title: '`Clear background',
+            title: '`Clear Background',
             btnType: 'secondary',
             isEnabled: isShowingBackground,
             eventMap: { key: 'F7' },
@@ -72,10 +75,10 @@ function genBtnMaps(screenManager: ScreenManager) {
             },
         },
         {
-            text: 'FG',
-            title: '`Clear foreground',
+            text: 'SL',
+            title: '`Clear Slide',
             btnType: 'info',
-            isEnabled: isShowingFG,
+            isEnabled: isShowingSlide,
             eventMap: { key: 'F8' },
             onClick: () => {
                 screenVaryAppDocumentManager.clear();
@@ -89,6 +92,16 @@ function genBtnMaps(screenManager: ScreenManager) {
             eventMap: { key: 'F9' },
             onClick: () => {
                 screenBibleManager.clear();
+            },
+        },
+        {
+            text: 'FG',
+            title: '`Clear Foreground',
+            btnType: 'secondary',
+            isEnabled: isShowingForeground,
+            eventMap: { key: 'F10' },
+            onClick: () => {
+                screenForegroundManager.clear();
             },
         },
     ];

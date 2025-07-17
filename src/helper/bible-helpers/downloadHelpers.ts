@@ -8,7 +8,7 @@ import {
 } from '../../server/fileHelpers';
 import { WriteStream } from 'node:fs';
 import appProvider from '../../server/appProvider';
-import { OptionalPromise } from '../../others/otherHelpers';
+import { OptionalPromise } from '../typeHelpers';
 
 export const BIBLE_DOWNLOAD_TOAST_TITLE = 'Bible Download';
 
