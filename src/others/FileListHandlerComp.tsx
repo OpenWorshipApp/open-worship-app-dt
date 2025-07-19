@@ -20,6 +20,7 @@ import { handleError } from '../helper/errorHelpers';
 import NoDirSelectedComp from './NoDirSelectedComp';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
+import { OptionalPromise } from '../helper/typeHelpers';
 
 const LazyAskingNewNameComp = lazy(() => {
     return import('./AskingNewNameComp');
@@ -60,7 +61,8 @@ export default function FileListHandlerComp({
     dirSource,
     header,
     bodyHandler,
-    contextMenu,
+    contextMenuItems,
+    genContextMenuItems,
     onNewFile,
     checkExtraFile,
     takeDroppedFile,
@@ -76,7 +78,11 @@ export default function FileListHandlerComp({
     bodyHandler: (filePaths: string[]) => any;
     onNewFile?: (dirPath: string, newName: string) => Promise<boolean>;
     onFileDeleted?: (filePath: string) => void;
-    contextMenu?: ContextMenuItemType[];
+    contextMenuItems?: ContextMenuItemType[];
+    genContextMenuItems?: (
+        dirSource: DirSource,
+        event: React.MouseEvent<HTMLElement>,
+    ) => OptionalPromise<ContextMenuItemType[]>;
     checkExtraFile?: (filePath: string) => boolean;
     takeDroppedFile?: (file: DroppedFileType) => boolean;
     userClassName?: string;
@@ -114,6 +120,7 @@ export default function FileListHandlerComp({
                 className={`${className} card w-100 h-100 app-inner-shadow ${userClassName ?? ''}`}
                 onDragOver={genOnDragOver(dirSource)}
                 onDragLeave={genOnDragLeave()}
+                tabIndex={0}
                 onDrop={genOnDrop({
                     dirSource,
                     mimetypeName: mimetypeName,
@@ -149,7 +156,8 @@ export default function FileListHandlerComp({
                 <div
                     className="card-body d-flex flex-column pb-5 app-inner-shadow"
                     onContextMenu={genOnContextMenu(dirSource, {
-                        contextMenu,
+                        contextMenuItems,
+                        genContextMenuItems,
                         addItems: handleItemsAdding,
                         onStartNewFile:
                             onNewFile === undefined

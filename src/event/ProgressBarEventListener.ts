@@ -4,10 +4,10 @@ import EventHandler, { ListenerType } from './EventHandler';
 export default class ProgressBarEventListener extends EventHandler<string> {
     static readonly eventNamePrefix: string = 'progress-bar';
 
-    static showProgressBard(progressKey: string) {
+    static showProgressBar(progressKey: string) {
         this.addPropEvent('show', progressKey);
     }
-    static hideProgressBard(progressKey: string) {
+    static hideProgressBar(progressKey: string) {
         this.addPropEvent('hide', progressKey);
     }
 }

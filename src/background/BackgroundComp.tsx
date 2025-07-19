@@ -92,7 +92,6 @@ export default function BackgroundComp() {
         'image',
     );
     useScreenBackgroundManagerEvents(['update']);
-    const backgroundSrcList = getBackgroundSrcListOnScreenSetting();
 
     const normalBackgroundChild = tabTypeList.map(([type, _, target]) => {
         return genTabBody<TabKeyType>(tabKey, [type, target]);
@@ -106,6 +105,8 @@ export default function BackgroundComp() {
                             key,
                             title: name,
                             checkIsOnScreen: (targeKey) => {
+                                const backgroundSrcList =
+                                    getBackgroundSrcListOnScreenSetting();
                                 return genIsSelected(
                                     backgroundSrcList,
                                     targeKey,

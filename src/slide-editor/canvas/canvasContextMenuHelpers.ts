@@ -1,28 +1,19 @@
-import {
-    getMimetypeExtensions,
-    isSupportedMimetype,
-    selectFiles,
-} from '../../server/fileHelpers';
+import { getMimetypeExtensions, selectFiles } from '../../server/fileHelpers';
 import CanvasItem from './CanvasItem';
 import CanvasController from './CanvasController';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import Canvas from './Canvas';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
-
-function checkClipboardIsImage(clipboardItem: ClipboardItem) {
-    return clipboardItem.types.every((type) => {
-        return isSupportedMimetype(type, 'image');
-    });
-}
+import {
+    checkIsImagesInClipboard,
+    readImagesFromClipboard,
+} from '../../server/appHelpers';
 
 export async function showCanvasContextMenu(
     event: any,
     canvasController: CanvasController,
 ) {
-    const clipboardItems = await navigator.clipboard.read();
-    const isPastingImage = clipboardItems.some((clipboardItem) => {
-        return checkClipboardIsImage(clipboardItem);
-    });
+    const isClipboardHasImage = await checkIsImagesInClipboard();
     const copiedCanvasItems = await Canvas.getCopiedCanvasItems();
     showAppContextMenu(event, [
         {
@@ -65,31 +56,21 @@ export async function showCanvasContextMenu(
                 });
             },
         },
-        ...(isPastingImage
+        ...(isClipboardHasImage
             ? [
                   {
-                      menuElement: 'Paste Image',
+                      menuElement: '`Paste Image',
                       onSelect: async () => {
-                          const clipboardItems =
-                              await navigator.clipboard.read();
-                          for (const clipboardItem of clipboardItems) {
-                              clipboardItem.types.forEach(async (type) => {
-                                  if (!isSupportedMimetype(type, 'image')) {
-                                      return;
-                                  }
-                                  const blob =
-                                      await clipboardItem.getType(type);
-                                  canvasController
-                                      .genNewImageItemFromBlob(blob, event)
-                                      .then((newCanvasItem) => {
-                                          if (!newCanvasItem) {
-                                              return;
-                                          }
-                                          canvasController.addNewItem(
-                                              newCanvasItem,
-                                          );
-                                      });
-                              });
+                          for await (const blob of readImagesFromClipboard()) {
+                              const newCanvasItem =
+                                  await canvasController.genNewImageItemFromBlob(
+                                      blob,
+                                      event,
+                                  );
+                              if (!newCanvasItem) {
+                                  return;
+                              }
+                              canvasController.addNewItem(newCanvasItem);
                           }
                       },
                   },

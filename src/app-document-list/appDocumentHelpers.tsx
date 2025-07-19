@@ -29,8 +29,8 @@ import AppDocument, { WrongDimensionType } from './AppDocument';
 import Slide from './Slide';
 import { DroppedFileType } from '../others/droppingFileHelpers';
 import {
-    hideProgressBard,
-    showProgressBard,
+    hideProgressBar,
+    showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { convertToPdf } from '../server/appHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
@@ -240,7 +240,7 @@ async function startConvertingOfficeFile(
         getFileName(fileFullName),
     );
     try {
-        showProgressBard(WIDGET_TITLE);
+        showProgressBar(WIDGET_TITLE);
         if (!(await fsCopyFilePathToPath(file, tempFilePath, ''))) {
             throw new Error('Fail to copy file');
         }
@@ -270,7 +270,7 @@ async function startConvertingOfficeFile(
             });
         }
     }
-    hideProgressBard(WIDGET_TITLE);
+    hideProgressBar(WIDGET_TITLE);
 }
 
 export async function convertOfficeFile(

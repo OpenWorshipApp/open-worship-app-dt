@@ -12,6 +12,17 @@ import {
 } from '../helper/constants';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import VideoHeaderSettingComp from './VideoHeaderSettingComp';
+import { genContextMenuItems } from './downloadHelper';
+import { handleError } from '../helper/errorHelpers';
+import {
+    showProgressBar,
+    hideProgressBar,
+} from '../progress-bar/progressBarHelpers';
+import { downloadVideoOrAudio } from '../server/appHelpers';
+import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
+import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
+import DirSource from '../helper/DirSource';
 
 function rendChild(
     filePath: string,
@@ -57,6 +68,50 @@ function RendBody({
     );
 }
 
+async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
+    return genContextMenuItems(
+        {
+            title: '`Download From URL',
+            subTitle: 'Video URL:',
+        },
+        dirSource,
+        async (videoUrl) => {
+            try {
+                showSimpleToast(
+                    '`Download From URL',
+                    `Downloading video from "${videoUrl}", please wait...`,
+                );
+                showProgressBar(videoUrl);
+                const defaultPath = getDefaultDataDir();
+                const { filePath, fileFullName } = await downloadVideoOrAudio(
+                    videoUrl,
+                    defaultPath,
+                );
+                const destFileSource = FileSource.getInstance(
+                    dirSource.dirPath,
+                    fileFullName,
+                );
+                if (await fsCheckFileExist(destFileSource.filePath)) {
+                    await fsDeleteFile(destFileSource.filePath);
+                }
+                await fsMove(filePath, destFileSource.filePath);
+                showSimpleToast(
+                    '`Download From URL',
+                    `Video downloaded successfully, file path: "${destFileSource.filePath}"`,
+                );
+            } catch (error) {
+                handleError(error);
+                showSimpleToast(
+                    '`Download From URL',
+                    'Error occurred during downloading video',
+                );
+            } finally {
+                hideProgressBar(videoUrl);
+            }
+        },
+    );
+}
+
 export default function BackgroundVideosComp() {
     return (
         <BackgroundMediaComp
@@ -65,6 +120,7 @@ export default function BackgroundVideosComp() {
             dragType={DragTypeEnum.BACKGROUND_VIDEO}
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_VIDEO}
+            genContextMenuItems={genVideoDownloadContextMenuItems}
         />
     );
 }

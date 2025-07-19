@@ -130,6 +130,22 @@ console.log('yt-dlp file is copied');
 // TODO: copy only needed files
 copyAllChildren(
   resolve('./node_modules/node-api-dotnet'),
-  resolve('./electron-build/bin-helper/node-api-dotnet'),
+  resolve(binHelperDestRootDir, 'node-api-dotnet'),
 );
 console.log('node-api-dotnet files are copied');
+
+if (systemUtils.isMac) {
+  copyAllChildren(
+    resolve(
+      './extra-work/ffmpeg/mac' +
+        (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
+    ),
+    resolve(binHelperDestRootDir, 'ffmpeg', 'bin'),
+  );
+} else {
+  copyAllChildren(
+    resolve(binHelperSourceRootDir, 'ffmpeg'),
+    resolve(binHelperDestRootDir, 'ffmpeg'),
+  );
+}
+console.log('ffmpeg file is copied');

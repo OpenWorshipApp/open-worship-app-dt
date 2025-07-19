@@ -15,8 +15,8 @@ import mimeVideoList from './mime/video-types.json';
 import mimeSoundList from './mime/sound-types.json';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
-    hideProgressBard,
-    showProgressBard,
+    hideProgressBar,
+    showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { cloneJson, freezeObject } from '../helper/helpers';
 
@@ -296,8 +296,12 @@ function _fsWriteFile(filePath: string, data: string, options?: any) {
     );
 }
 
-export function fsMove(oldPath: string, newPath: string) {
-    return fsFilePromise<void>(appProvider.fileUtils.rename, oldPath, newPath);
+export function fsMove(oldFullPath: string, newFullPath: string) {
+    return fsFilePromise<void>(
+        appProvider.fileUtils.rename,
+        oldFullPath,
+        newFullPath,
+    );
 }
 
 function _fsUnlink(filePath: string) {
@@ -536,7 +540,7 @@ export async function fsCopyFilePathToPath(
     fileFullName?: string,
 ) {
     const progressKey = 'Copying File';
-    showProgressBard(progressKey);
+    showProgressBar(progressKey);
     fileFullName = fileFullName ?? getFileFullName(file);
     const targetPath = pathJoin(destinationPath, fileFullName);
     try {
@@ -551,7 +555,7 @@ export async function fsCopyFilePathToPath(
             }
         }
         await fsCloneFile(file, targetPath);
-        hideProgressBard(progressKey);
+        hideProgressBar(progressKey);
         return targetPath;
     } catch (error: any) {
         if (error.message !== 'Canceled by user') {
@@ -564,7 +568,7 @@ export async function fsCopyFilePathToPath(
             }
         }
     }
-    hideProgressBard(progressKey);
+    hideProgressBar(progressKey);
     return null;
 }
 
@@ -603,4 +607,24 @@ export function getDesktopPath(): string {
 
 export function getTempPath(): string {
     return appProvider.messageUtils.sendDataSync('main:app:get-temp-path');
+}
+
+export function writeFileFromBase64(filePath: string, base64: string) {
+    return appProvider.fileUtils.writeFileFromBase64(filePath, base64);
+}
+
+export function getDotExtensionFromBase64Data(base64Data: string) {
+    const mimeRegex = /^data:([a-zA-Z0-9+]+\/[a-zA-Z0-9+]+);base64,/;
+    const mimeMatch = mimeRegex.exec(base64Data);
+    if (mimeMatch) {
+        const mimeType = mimeMatch[1].toLowerCase();
+        const allMimeTypes = Object.values(mimeTypesMapper).flat();
+        const foundMime = allMimeTypes.find((mt) => {
+            return mt.mimetypeSignature === mimeType;
+        });
+        if (foundMime) {
+            return foundMime.extensions[0];
+        }
+    }
+    return null;
 }

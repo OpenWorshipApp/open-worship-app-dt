@@ -18,6 +18,13 @@ const fileUtils = {
     mkdirSync: fs.mkdirSync,
     copyFile: fs.copyFile,
     watch: fs.watch,
+    writeFileFromBase64: (filePath: string, base64: string) => {
+        if (base64.indexOf(',') >= 0) {
+            base64 = base64.split(',')[1];
+        }
+        const decoded = Buffer.from(base64, 'base64');
+        return fs.writeFileSync(filePath, decoded);
+    },
 };
 
 export default fileUtils;

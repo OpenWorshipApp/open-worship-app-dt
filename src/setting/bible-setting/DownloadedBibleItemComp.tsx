@@ -2,8 +2,8 @@ import { fsCheckDirExist, fsDeleteDir } from '../../server/fileHelpers';
 import { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
-    hideProgressBard,
-    showProgressBard,
+    hideProgressBar,
+    showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
@@ -28,7 +28,7 @@ export default function DownloadedBibleItemComp({
         }
         try {
             const progressKey = `Deleting bible "${title}"`;
-            showProgressBard(progressKey);
+            showProgressBar(progressKey);
             const bibleDestination = await bibleDataReader.toBiblePath(key);
             if (
                 bibleDestination !== null &&
@@ -37,7 +37,7 @@ export default function DownloadedBibleItemComp({
                 await fsDeleteDir(bibleDestination);
                 await bibleDataReader.clearBibleDatabaseData(key);
             }
-            hideProgressBard(progressKey);
+            hideProgressBar(progressKey);
             onDeleted();
         } catch (error: any) {
             showSimpleToast('Deleting', error.message);

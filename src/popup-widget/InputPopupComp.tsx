@@ -55,22 +55,22 @@ export default function ConfirmPopupComp({
                     >
                         {data.body}
                     </div>
-                    <div className="btn-group float-end">
-                        <button
-                            type="button"
-                            className="btn btn-sm"
-                            onClick={handleClosing}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-info"
-                            onClick={handleOkClicking}
-                        >
-                            Ok
-                        </button>
-                    </div>
+                </div>
+                <div className="card-footer btn-group float-end">
+                    <button
+                        type="button"
+                        className="btn btn-sm"
+                        onClick={handleClosing}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-info"
+                        onClick={handleOkClicking}
+                    >
+                        Ok
+                    </button>
                 </div>
             </div>
         </PrimitiveModalComp>

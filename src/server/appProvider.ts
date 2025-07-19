@@ -43,6 +43,7 @@ export type FileUtilsType = {
         callback: fs.NoParamCallback,
     ) => void;
     watch: typeof fs.watch;
+    writeFileFromBase64: (filePath: string, base64: string) => void;
 };
 
 export type PathUtilsType = {
@@ -177,6 +178,7 @@ export type AppProviderType = Readonly<
         };
         ytUtils: {
             getYTHelper: () => Promise<YTHelper>;
+            ffmpegBinPath: string;
         };
     }
 >;

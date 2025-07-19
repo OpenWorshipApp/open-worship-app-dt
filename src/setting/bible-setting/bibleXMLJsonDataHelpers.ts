@@ -220,7 +220,7 @@ async function guessingBibleKey(bible: Element) {
         }
         let newKey = '';
         const isConfirmInput = await showAppInput(
-            'Key is missing',
+            '`Key is missing',
             genBibleKeyXMLInput(
                 newKey,
                 (newKey1) => {

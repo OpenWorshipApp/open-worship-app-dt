@@ -24,10 +24,10 @@
         "vite:dev": "vite",
         "vite:build": "vite build",
         "lint:pre": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\" \"electron/**/*.ts\"",
+        "lint:all:error": "tsc --noEmit --skipLibCheck",
         "lint:es": "eslint src/**/*.ts* electron/**/*.ts",
-        "lint": "npm run lint:pre && npm run lint:es && npm run build",
+        "lint": "npm run lint:all:error && npm run lint:pre && npm run lint:es && npm run build",
         "dc:err": "depcruise src --include-only \"^src\" --output-type err-html > dc-dependency-graph/errors.html",
-        "ts:err:check": "tsc --noEmit --skipLibCheck",
         "release": "bash extra-work/release.sh",
         "install": "bash extra-work/bin-helper/build.sh"
     },
@@ -113,7 +113,7 @@
         "@types/react": "^19.1.8",
         "@types/react-dom": "^19.1.6",
         "@types/tar": "^6.1.13",
-        "@vitejs/plugin-basic-ssl": "^2.0.0",
+        "@vitejs/plugin-basic-ssl": "^2.1.0",
         "@vitejs/plugin-react-swc": "^3.10.2",
         "bootstrap": "^5.3.3",
         "bootstrap-icons": "^1.11.3",
@@ -136,7 +136,7 @@
         "sass": "^1.89.2",
         "typescript": "^5.8.2",
         "typescript-eslint": "^8.26.1",
-        "vite": "^6.3.5"
+        "vite": "^7.0.5"
     },
     "dependencies": {
         "font-list": "^1.5.1",

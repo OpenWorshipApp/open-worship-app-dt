@@ -7,6 +7,7 @@ import {
     fsListFiles,
     fsCheckDirExist,
     pathResolve,
+    fsCheckFileExist,
 } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from './errorHelpers';
@@ -89,6 +90,19 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         }
         const fileSource = this.getFileSourceInstance(fileFullName);
         fileSource.fireUpdateEvent();
+    }
+
+    async genRandomFilePath(dotExtension: string) {
+        if (!this.dirPath) {
+            return null;
+        }
+        let randomFileName = `file-${Date.now()}${dotExtension}`;
+        while (
+            await fsCheckFileExist(pathResolve(this.dirPath, randomFileName))
+        ) {
+            randomFileName = `file-${Date.now()}${dotExtension}`;
+        }
+        return pathResolve(pathResolve(this.dirPath), randomFileName);
     }
 
     static checkIsSameDirPath(dirPath1: string, dirPath: string) {

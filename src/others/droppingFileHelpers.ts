@@ -11,6 +11,7 @@ import {
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import { changeDragEventStyle } from '../helper/helpers';
+import { OptionalPromise } from '../helper/typeHelpers';
 
 export function genOnDragOver(dirSource: DirSource) {
     return (event: React.DragEvent<HTMLDivElement>) => {
@@ -168,11 +169,16 @@ export async function handleFilesSelectionMenuItem(
 export function genOnContextMenu(
     dirSource: DirSource,
     {
-        contextMenu,
+        contextMenuItems,
+        genContextMenuItems,
         addItems,
         onStartNewFile,
     }: {
-        contextMenu?: ContextMenuItemType[];
+        contextMenuItems?: ContextMenuItemType[];
+        genContextMenuItems?: (
+            dirSource: DirSource,
+            event: React.MouseEvent<HTMLElement>,
+        ) => OptionalPromise<ContextMenuItemType[]>;
         addItems?: () => void;
         onStartNewFile?: () => void;
     },
@@ -180,19 +186,26 @@ export function genOnContextMenu(
     if (!dirSource.dirPath) {
         return;
     }
-    return (event: React.MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [...(contextMenu ?? [])];
+    return async (event: React.MouseEvent<any>) => {
+        const menuItems: ContextMenuItemType[] = [...(contextMenuItems ?? [])];
         if (addItems !== undefined) {
             menuItems.push({
-                menuElement: 'Add Items',
+                menuElement: '`Add Items',
                 onSelect: addItems,
             });
         }
         if (onStartNewFile !== undefined) {
             menuItems.push({
-                menuElement: 'Create New File',
+                menuElement: '`Create New File',
                 onSelect: onStartNewFile,
             });
+        }
+        if (genContextMenuItems !== undefined) {
+            const subContextMenuItems = await genContextMenuItems(
+                dirSource,
+                event,
+            );
+            menuItems.push(...subContextMenuItems);
         }
         if (menuItems.length === 0) {
             return;

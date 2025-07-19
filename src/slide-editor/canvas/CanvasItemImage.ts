@@ -45,14 +45,12 @@ class CanvasItemImage extends CanvasItem<CanvasItemImagePropsType> {
         return this.genCanvasItem(srcData, mediaWidth, mediaHeight, x, y);
     }
     static async genFromBlob(x: number, y: number, blob: Blob) {
-        const srcData = await new Promise<SrcData>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                resolve(reader.result as SrcData);
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
+        const srcData = await FileSource.getSrcDataFromBlob(blob);
+        if (srcData === null) {
+            throw new Error(
+                'Error occurred during reading image data from blob',
+            );
+        }
         const [mediaWidth, mediaHeight] = await getImageDim(srcData);
         return this.genCanvasItem(srcData, mediaWidth, mediaHeight, x, y);
     }

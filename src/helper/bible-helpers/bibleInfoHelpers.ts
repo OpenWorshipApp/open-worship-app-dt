@@ -7,6 +7,10 @@ import {
     cacheBibleXMLData,
     getBibleXMLDataFromKey,
 } from '../../setting/bible-setting/bibleXMLHelpers';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../../progress-bar/progressBarHelpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
     const info = await getBibleInfo(bibleKey);
@@ -89,15 +93,16 @@ async function getBibleInfoXML(bibleKey: string) {
     if (!(await fsCheckFileExist(xmlFilePath))) {
         return false;
     }
-    showSimpleToast('Reload Bible XML Cache', 'This will take a while');
+    const title = `Reload Bible XML Cache ${bibleKey}`;
+    showSimpleToast(title, 'This will take a while');
     const jsonData = await getBibleXMLDataFromKey(bibleKey);
     if (jsonData === null) {
-        showSimpleToast('Loading', 'Failed to load Bible XML');
+        showSimpleToast(title, 'Failed to load Bible XML');
         return false;
     }
     const isSuccess = await cacheBibleXMLData(jsonData);
     if (isSuccess) {
-        showSimpleToast('Loading', 'Bible XML reloaded');
+        showSimpleToast(title, 'Bible XML reloaded');
     } else {
         return false;
     }
@@ -129,7 +134,10 @@ export async function getBibleInfo(bibleKey: string, isForce = false) {
     const info = await bibleDataReader.readBibleData(bibleKey, '_info');
     if (info === null || checkIsBooksAvailableMissing(info)) {
         bibleInfoMap.delete(bibleKey);
-        if (await getBibleInfoXML(bibleKey)) {
+        showProgressBar(bibleKey);
+        const bibleInfo = await getBibleInfoXML(bibleKey);
+        hideProgressBar(bibleKey);
+        if (bibleInfo) {
             return await getBibleInfo(bibleKey, true);
         }
     } else {

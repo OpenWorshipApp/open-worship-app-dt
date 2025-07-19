@@ -17,6 +17,16 @@ import { useMemo, useState } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
+import DirSource from '../helper/DirSource';
+import { handleError } from '../helper/errorHelpers';
+import {
+    showProgressBar,
+    hideProgressBar,
+} from '../progress-bar/progressBarHelpers';
+import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
+import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
+import { genContextMenuItems } from './downloadHelper';
+import { downloadVideoOrAudio } from '../server/appHelpers';
 
 function RendBodyComp({
     filePath,
@@ -83,6 +93,51 @@ function rendChild(
     );
 }
 
+async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
+    return genContextMenuItems(
+        {
+            title: '`Download From URL',
+            subTitle: 'Audio URL:',
+        },
+        dirSource,
+        async (audioUrl) => {
+            try {
+                showSimpleToast(
+                    '`Download From URL',
+                    `Downloading audio from "${audioUrl}", please wait...`,
+                );
+                showProgressBar(audioUrl);
+                const defaultPath = getDefaultDataDir();
+                const { filePath, fileFullName } = await downloadVideoOrAudio(
+                    audioUrl,
+                    defaultPath,
+                    false,
+                );
+                const destFileSource = FileSource.getInstance(
+                    dirSource.dirPath,
+                    fileFullName,
+                );
+                if (await fsCheckFileExist(destFileSource.filePath)) {
+                    await fsDeleteFile(destFileSource.filePath);
+                }
+                await fsMove(filePath, destFileSource.filePath);
+                showSimpleToast(
+                    '`Download From URL',
+                    `Audio downloaded successfully, file path: "${destFileSource.filePath}"`,
+                );
+            } catch (error) {
+                handleError(error);
+                showSimpleToast(
+                    '`Download From URL',
+                    'Error occurred during downloading video',
+                );
+            } finally {
+                hideProgressBar(audioUrl);
+            }
+        },
+    );
+}
+
 export default function BackgroundSoundsComp() {
     const [activeMap, setActiveMap] = useState<{ [key: string]: boolean }>({});
     const handleItemClicking = (event: any) => {
@@ -118,6 +173,7 @@ export default function BackgroundSoundsComp() {
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_SOUND}
             noDraggable={true}
             isNameOnTop={true}
+            genContextMenuItems={genAudioDownloadContextMenuItems}
         />
     );
 }

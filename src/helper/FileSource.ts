@@ -12,6 +12,7 @@ import {
     pathJoin,
     pathSeparator,
     getFileName,
+    writeFileFromBase64,
 } from '../server/fileHelpers';
 import { isValidJson } from './helpers';
 import { pathToFileURL } from '../server/helpers';
@@ -38,21 +39,20 @@ export default class FileSource
     static readonly eventNamePrefix: string = 'file-source';
     basePath: string;
     fullName: string;
-    filePath: string;
-    src: string;
     colorNote: string | null = null;
 
-    constructor(
-        basePath: string,
-        fileFullName: string,
-        filePath: string,
-        src: string,
-    ) {
+    constructor(baseFullPath: string, fileFullName: string) {
         super();
-        this.basePath = basePath;
+        this.basePath = baseFullPath;
         this.fullName = fileFullName;
-        this.filePath = filePath;
-        this.src = src;
+    }
+
+    get filePath() {
+        return pathJoin(this.basePath, this.fullName);
+    }
+
+    get src() {
+        return pathToFileURL(this.filePath);
     }
 
     get isAppFile() {
@@ -162,9 +162,24 @@ export default class FileSource
         );
     }
 
-    static async writeFileData(filePath: string, data: string) {
+    async writeFileBase64Data(srcData: SrcData) {
+        try {
+            writeFileFromBase64(this.filePath, srcData);
+            return true;
+        } catch (error) {
+            handleError(error);
+        }
+        return false;
+    }
+
+    static async writeFilePlainText(filePath: string, plainText: string) {
         const fileSource = this.getInstance(filePath);
-        return await fileSource.writeFileData(data);
+        return await fileSource.writeFileData(plainText);
+    }
+
+    static async writeFileBase64Data(filePath: string, base64Data: SrcData) {
+        const fileSource = this.getInstance(filePath);
+        return await fileSource.writeFileBase64Data(base64Data);
     }
 
     async readFileJsonData() {
@@ -178,21 +193,15 @@ export default class FileSource
     }
 
     static getInstanceNoCache(filePath: string, fileFullName?: string) {
-        let basePath;
+        let baseFullPath;
         if (fileFullName) {
-            basePath = filePath;
-            filePath = pathJoin(filePath, fileFullName);
+            baseFullPath = filePath;
         } else {
             const index = filePath.lastIndexOf(pathSeparator);
-            basePath = filePath.substring(0, index);
+            baseFullPath = filePath.substring(0, index);
             fileFullName = pathBasename(filePath);
         }
-        return new FileSource(
-            basePath,
-            fileFullName,
-            filePath,
-            pathToFileURL(filePath),
-        );
+        return new FileSource(baseFullPath, fileFullName);
     }
 
     static getInstance(
@@ -317,5 +326,18 @@ export default class FileSource
             path: this.filePath,
         });
         FileSource.getInstance(this.filePath).fireDeleteEvent();
+    }
+
+    static getSrcDataFromBlob(blob: Blob) {
+        return new Promise<SrcData | null>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                resolve(reader.result as SrcData);
+            };
+            reader.onerror = () => {
+                resolve(null);
+            };
+            reader.readAsDataURL(blob);
+        });
     }
 }

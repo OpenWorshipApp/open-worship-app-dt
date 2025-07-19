@@ -12,8 +12,13 @@ import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { handleDragStart } from '../helper/dragHelpers';
 import { useGenDirSource } from '../helper/dirSourceHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import { OptionalPromise } from '../helper/typeHelpers';
+import DirSource from '../helper/DirSource';
 
 export type RenderChildType = (
     filePath: string,
@@ -132,6 +137,8 @@ export default function BackgroundMediaComp({
     dirSourceSettingName,
     noDraggable = false,
     isNameOnTop = false,
+    contextMenuItems,
+    genContextMenuItems,
 }: Readonly<{
     extraHeaderChild?: React.ReactNode;
     rendChild: RenderChildType;
@@ -141,6 +148,11 @@ export default function BackgroundMediaComp({
     dirSourceSettingName: string;
     noDraggable?: boolean;
     isNameOnTop?: boolean;
+    contextMenuItems?: ContextMenuItemType[];
+    genContextMenuItems?: (
+        dirSource: DirSource,
+        event: React.MouseEvent<HTMLElement>,
+    ) => OptionalPromise<ContextMenuItemType[]>;
 }>) {
     const backgroundType = backgroundTypeMapper[dragType];
     const dirSource = useGenDirSource(dirSourceSettingName);
@@ -175,6 +187,8 @@ export default function BackgroundMediaComp({
             defaultFolderName={defaultFolderName}
             dirSource={dirSource}
             bodyHandler={handleBodyRendering}
+            contextMenuItems={contextMenuItems}
+            genContextMenuItems={genContextMenuItems}
             fileSelectionOption={
                 backgroundType === 'color'
                     ? undefined

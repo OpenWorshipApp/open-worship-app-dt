@@ -4,8 +4,8 @@ import { LocaleType } from '../../lang/langHelpers';
 import { decrypt } from '../../_owa-crypto';
 import { handleError } from '../errorHelpers';
 import {
-    hideProgressBard,
-    showProgressBard,
+    hideProgressBar,
+    showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
 import BibleDatabaseController from './BibleDatabaseController';
 import FileSource from '../FileSource';
@@ -52,7 +52,7 @@ export default class BibleDataReader {
             }
             const filePath = pathJoin(biblePath, key);
             const progressKey = `Reading bible data from "${filePath}"`;
-            showProgressBard(progressKey);
+            showProgressBar(progressKey);
             try {
                 const databaseController = await this.getDatabaseController();
                 const record =
@@ -85,7 +85,7 @@ export default class BibleDataReader {
                     handleError(error);
                 }
             } finally {
-                hideProgressBard(progressKey);
+                hideProgressBar(progressKey);
             }
             return null;
         });

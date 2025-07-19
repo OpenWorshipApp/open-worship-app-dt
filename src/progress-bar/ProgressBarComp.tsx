@@ -23,7 +23,9 @@ export default function ProgressBarComp({
                 style={{
                     width: '100%',
                 }}
-            />
+            >
+                <span className="progress-bar-content-text" />
+            </div>
         </div>
     );
 }

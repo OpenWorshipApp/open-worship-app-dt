@@ -4,8 +4,14 @@ import { handleError } from '../helper/errorHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { goToPath } from '../router/routeHelpers';
-import { fsCheckFileExist, pathJoin, pathResolve } from './fileHelpers';
+import {
+    fsCheckFileExist,
+    isSupportedMimetype,
+    pathJoin,
+    pathResolve,
+} from './fileHelpers';
 import FileSource from '../helper/FileSource';
+import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 
 export function getFontListByNodeFont() {
     appProvider.messageUtils.sendData('main:app:get-font-list');
@@ -279,54 +285,158 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     return powerPointHelper.countSlides(powerPointFilePath);
 };
 
-(window as any).ytDownload = async (
+async function getPageTitle(url: string) {
+    const rawHtml = await fetch(url)
+        .then((response) => response.text())
+        .catch((error) => {
+            console.error('Error fetching page:', error);
+            return null;
+        });
+    if (rawHtml === null) {
+        return null;
+    }
+    const titleMatch = rawHtml.match(/<title>(.*?)<\/title>/);
+    if (titleMatch && titleMatch[1]) {
+        let title = titleMatch[1].trim();
+        title = decodeURIComponent(encodeURIComponent(title));
+        return title.length > 0 ? title : null;
+    }
+    return null;
+}
+export function downloadVideoOrAudio(
     videoUrl: string,
     outputDir: string,
+    isVideo: boolean = true,
     ffmpegPath?: string,
-) => {
-    return new Promise<string | null>((resolve, reject) => {
-        appProvider.ytUtils.getYTHelper().then((ytDlpWrap) => {
-            let filePath: string | null = null;
-            const args = [
-                videoUrl,
-                '-o',
-                pathResolve(`${outputDir}/%(title)s.%(ext)s`),
-            ];
-            if (ffmpegPath !== undefined) {
-                args.push('--ffmpeg-location', ffmpegPath);
-            }
-            const ytDlpEventEmitter = ytDlpWrap
-                .exec(args)
-                .on('progress', (progress) =>
-                    console.log(
-                        progress.percent,
-                        progress.totalSize,
-                        progress.currentSpeed,
-                        progress.eta,
-                    ),
-                )
-                .on('ytDlpEvent', (eventType, eventData) => {
-                    console.log(eventType, eventData);
-                    if (eventType === 'download') {
-                        eventData = eventData.trim();
-                        const startString = 'Destination: ';
-                        const endString = ' has already been downloaded';
-                        if (eventData.startsWith(startString)) {
-                            filePath = eventData.split(startString)[1];
-                        } else if (eventData.endsWith(endString)) {
-                            filePath = eventData.split(endString)[0];
+) {
+    return new Promise<{ filePath: string; fileFullName: string }>(
+        (resolve, reject) => {
+            (async () => {
+                const resolvedSuccess = (resolvedFilePath: string) => {
+                    const fileSource = FileSource.getInstance(resolvedFilePath);
+                    resolve({
+                        filePath: resolvedFilePath,
+                        fileFullName: `${title || temptName}${fileSource.dotExtension}`,
+                    });
+                };
+                const title = await getPageTitle(videoUrl);
+                const temptName = `temp-${Date.now()}`;
+                const outputFormat = pathResolve(
+                    `${outputDir}/${temptName}.%(ext)s`,
+                );
+                const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
+                let filePath: string | null = null;
+                const args = [videoUrl, '-o', outputFormat];
+                args.push(
+                    '--ffmpeg-location',
+                    ffmpegPath ?? appProvider.ytUtils.ffmpegBinPath,
+                );
+                if (!isVideo) {
+                    args.push(
+                        '-x',
+                        '--audio-format',
+                        'mp3',
+                        '--audio-quality',
+                        '0',
+                    );
+                }
+                const ytDlpEventEmitter = ytDlpWrap
+                    .exec(args)
+                    .on('progress', (progress) =>
+                        showProgressBarMessage(
+                            progress.percent,
+                            progress.totalSize,
+                            progress.currentSpeed,
+                            progress.eta,
+                        ),
+                    )
+                    .on('ytDlpEvent', (eventType, eventData) => {
+                        showProgressBarMessage(eventType, eventData);
+                        if (eventType === 'ExtractAudio') {
+                            const regex = /Destination: (.+)$/;
+                            const match = eventData.match(regex);
+                            if (match && match[1]) {
+                                filePath = match[1];
+                            }
+                        } else if (eventType === 'Merger') {
+                            const regex = /Merging formats into "(.+?)"/;
+                            const match = eventData.match(regex);
+                            if (match[1]) {
+                                filePath = match[1];
+                            }
+                        } else if (eventType === 'download') {
+                            eventData = eventData.trim();
+                            const startString = 'Destination: ';
+                            const endString = ' has already been downloaded';
+                            if (eventData.startsWith(startString)) {
+                                filePath = eventData.split(startString)[1];
+                            } else if (eventData.endsWith(endString)) {
+                                filePath = eventData.split(endString)[0];
+                            }
                         }
-                    }
-                })
-                .on('error', (error) => {
-                    console.error(error);
-                    reject(new Error('Download failed: ' + error.message));
-                })
-                .on('close', () => {
-                    console.log('all done');
-                    resolve(filePath);
-                });
-            console.log('Process id:', ytDlpEventEmitter.ytDlpProcess.pid);
-        });
+                    })
+                    .on('error', async (error) => {
+                        handleError(error);
+                        if (
+                            filePath !== null &&
+                            (await fsCheckFileExist(filePath))
+                        ) {
+                            resolvedSuccess(filePath);
+                        } else {
+                            reject(
+                                new Error('Download failed: ' + error.message),
+                            );
+                        }
+                    })
+                    .on('close', () => {
+                        showProgressBarMessage('all done');
+                        if (filePath === null) {
+                            reject(new Error('Unable to determine file path'));
+                        } else {
+                            resolvedSuccess(filePath);
+                        }
+                    });
+                showProgressBarMessage(
+                    'Process id:',
+                    ytDlpEventEmitter.ytDlpProcess.pid,
+                );
+            })();
+        },
+    );
+}
+
+function checkClipboardHasImage(clipboardItem: ClipboardItem) {
+    return clipboardItem.types.some((type) => {
+        return isSupportedMimetype(type, 'image');
     });
-};
+}
+
+export async function checkIsImagesInClipboard() {
+    const clipboardItems = await navigator.clipboard.read();
+    const isPastingImage = clipboardItems.some((clipboardItem) => {
+        return checkClipboardHasImage(clipboardItem);
+    });
+    return isPastingImage;
+}
+
+export async function* readImagesFromClipboard() {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const clipboardItem of clipboardItems) {
+        for (const type of clipboardItem.types) {
+            if (isSupportedMimetype(type, 'image')) {
+                const blob = await clipboardItem.getType(type);
+                yield blob;
+            }
+        }
+    }
+}
+
+export async function readTextFromClipboard() {
+    try {
+        const text = await navigator.clipboard.readText();
+        return text;
+    } catch (error) {
+        handleError(error);
+        return null;
+    }
+}

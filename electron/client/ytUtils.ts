@@ -32,7 +32,11 @@ async function getYTHelper() {
         return ytDlpWrap;
     });
 }
+const ffmpegBinPath = toUnpackedPath(
+    resolve(__dirname, '../../bin-helper/ffmpeg/bin'),
+);
 
 export const ytUtils = {
     getYTHelper,
+    ffmpegBinPath,
 };
