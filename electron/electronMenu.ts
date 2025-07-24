@@ -112,7 +112,7 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: 'Reset Position and Size',
                     click: () => {
-                        appController.settingController.resetMainBounds(
+                        appController.settingController.restoreMainBounds(
                             appController.mainWin,
                         );
                     },
