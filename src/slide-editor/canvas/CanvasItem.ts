@@ -8,10 +8,7 @@ import {
     canvasItemList,
     genTextDefaultBoxStyle,
     CanvasItemKindType,
-    hAlignmentList,
-    HAlignmentType,
-    vAlignmentList,
-    VAlignmentType,
+    cleanupProps,
 } from './canvasHelpers';
 import EventHandler from '../../event/EventHandler';
 import { useAppEffect } from '../../helper/debuggerHelpers';
@@ -26,9 +23,10 @@ export type CanvasItemPropsType = {
     rotate: number;
     width: number;
     height: number;
-    horizontalAlignment: HAlignmentType;
-    verticalAlignment: VAlignmentType;
-    backgroundColor: AppColorType | null;
+    backgroundColor: AppColorType;
+    backdropFilter: number;
+    roundSizePercentage: number;
+    roundSizePixel: number;
     type: CanvasItemKindType;
 };
 
@@ -41,7 +39,19 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
     props: T;
     constructor(props: T) {
         super();
-        this.props = cloneJson(props);
+        this.props = {
+            ...props,
+            top: props.top ?? 0,
+            left: props.left ?? 0,
+            rotate: props.rotate ?? 0,
+            width: props.width ?? 0,
+            height: props.height ?? 0,
+            backgroundColor: props.backgroundColor ?? '#00000000',
+            backdropFilter: props.backdropFilter ?? 0,
+            roundSizePercentage: props.roundSizePercentage ?? 0,
+            roundSizePixel: props.roundSizePixel ?? 0,
+        };
+        cleanupProps(this.props);
     }
 
     get id() {
@@ -58,16 +68,35 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
 
     abstract getStyle(): CSSProperties;
 
+    static genShapeBoxStyle(props: CanvasItemPropsType): CSSProperties {
+        let borderRadius: string | number | undefined = undefined;
+        if (props.roundSizePixel) {
+            borderRadius = props.roundSizePixel;
+        } else if (props.roundSizePercentage) {
+            borderRadius = `${props.roundSizePercentage / 2}%`;
+        }
+        const shapeStyle: CSSProperties = {
+            width: `${props.width}px`,
+            height: `${props.height}px`,
+            backgroundColor: props.backgroundColor ?? 'transparent',
+            backdropFilter: props.backdropFilter
+                ? `blur(${props.backdropFilter}px)`
+                : undefined,
+            ...(borderRadius !== undefined
+                ? { borderRadius: borderRadius, boxSizing: 'border-box' }
+                : {}),
+        };
+        return shapeStyle;
+    }
+
     static genBoxStyle(props: CanvasItemPropsType): CSSProperties {
         const style: CSSProperties = {
             display: 'flex',
             top: `${props.top}px`,
             left: `${props.left}px`,
             transform: `rotate(${props.rotate}deg)`,
-            width: `${props.width}px`,
-            height: `${props.height}px`,
             position: 'absolute',
-            backgroundColor: props.backgroundColor ?? 'transparent',
+            ...this.genShapeBoxStyle(props),
         };
         return style;
     }
@@ -87,12 +116,15 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
         },
         boxData: ToolingBoxType,
     ) {
-        const boxProps = tooling2BoxProps(boxData, {
-            width: this.props.width,
-            height: this.props.height,
-            parentWidth: parentDim.parentWidth,
-            parentHeight: parentDim.parentHeight,
-        });
+        const boxProps = tooling2BoxProps(
+            { ...this.props, ...boxData },
+            {
+                width: this.props.width,
+                height: this.props.height,
+                parentWidth: parentDim.parentWidth,
+                parentHeight: parentDim.parentHeight,
+            },
+        );
         const newProps = {
             ...boxData,
             ...boxProps,
@@ -111,6 +143,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
         Object.entries(props).forEach(([key, value]) => {
             propsAny[key] = value;
         });
+        cleanupProps(props);
     }
 
     clone() {
@@ -133,8 +166,6 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             typeof json.rotate !== 'number' ||
             typeof json.width !== 'number' ||
             typeof json.height !== 'number' ||
-            !hAlignmentList.includes(json.horizontalAlignment) ||
-            !vAlignmentList.includes(json.verticalAlignment) ||
             (json.backgroundColor !== null &&
                 typeof json.backgroundColor !== 'string') ||
             !canvasItemList.includes(json.type)
@@ -256,23 +287,53 @@ export const CanvasItemContext = createContext<CanvasItem<any> | null>(null);
 export function useCanvasItemContext() {
     const context = use(CanvasItemContext);
     if (context === null) {
-        throw new Error('CanvasItemContext not found');
+        throw new Error('CanvasItem not provided in context');
     }
     return context;
+}
+
+export function useCanvasItemEditEvent(
+    canvasItem: CanvasItem<any>,
+    callback: () => void,
+) {
+    useAppEffect(() => {
+        const registeredEvent = canvasItem.registerEventListener(
+            ['edit'],
+            callback,
+        );
+        return () => {
+            canvasItem.unregisterEventListener(registeredEvent);
+        };
+    }, [canvasItem]);
 }
 
 export function useCanvasItemPropsContext<T extends CanvasItemPropsType>() {
     const canvasItem = useCanvasItemContext();
     const [props, setProps] = useOptimistic(cloneJson(canvasItem.props));
     const { startTransaction } = useProgressBarComp();
-    useAppEffect(() => {
-        canvasItem.registerEventListener(['edit'], () => {
-            startTransaction(() => {
-                setProps(cloneJson(canvasItem.props));
-            });
+    useCanvasItemEditEvent(canvasItem, () => {
+        startTransaction(() => {
+            setProps(cloneJson(canvasItem.props));
         });
-    }, [canvasItem]);
+    });
     return props as T;
+}
+
+export const CanvasItemPropsSetterContext = createContext<{
+    props: CanvasItemPropsType;
+    setProps: (anyProps: any) => void;
+} | null>(null);
+export function useCanvasItemPropsSetterContext<
+    T extends CanvasItemPropsType,
+>() {
+    const context = use(CanvasItemPropsSetterContext);
+    if (context === null) {
+        throw new Error('CanvasItem not provided in context');
+    }
+    return [
+        context.props as T,
+        (props: AnyObjectType) => context.setProps(props),
+    ] as const;
 }
 
 export function useIsCanvasItemSelected() {

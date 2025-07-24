@@ -4,9 +4,7 @@ import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import CanvasController, {
     CanvasControllerContext,
-    defaultRangeSize,
 } from './canvas/CanvasController';
-import { handleCtrlWheel } from '../others/AppRangeComp';
 import { MultiContextRender } from '../helper/MultiContextRender';
 import CanvasItem, {
     CanvasItemsContext,
@@ -134,20 +132,7 @@ export default function SlideEditorComp() {
                 },
             ]}
         >
-            <div
-                className="slide-editor w-100 h-100 overflow-hidden"
-                onWheel={(event) => {
-                    event.stopPropagation();
-                    handleCtrlWheel({
-                        event,
-                        value: canvasController.scale * 10,
-                        setValue: (scale) => {
-                            canvasController.scale = scale / 10;
-                        },
-                        defaultSize: defaultRangeSize,
-                    });
-                }}
-            >
+            <div className="slide-editor w-100 h-100 overflow-hidden">
                 <ResizeActorComp
                     flexSizeName={resizeSettingNames.slideEditor}
                     isHorizontal

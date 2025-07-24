@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAppEffect } from '../helper/debuggerHelpers';
 
 export type AppRangeDefaultType = {
     size: number;
@@ -78,6 +79,9 @@ export default function AppRangeComp({
     const [localValue, setLocalValue] = useState(
         roundSize(value, defaultSize, fixedSize),
     );
+    useAppEffect(() => {
+        setLocalValue(roundSize(value, defaultSize, fixedSize));
+    }, [value, defaultSize, fixedSize]);
     const setLocalValue1 = (newValue: number) => {
         newValue = roundSize(newValue, defaultSize, fixedSize);
         setLocalValue(newValue);

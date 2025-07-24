@@ -22,6 +22,7 @@ export default function SlideEditorToolsColorComp({
                 defaultColor="#ffffff"
                 onNoColor={handleNoColoring}
                 onColorChange={handleColorChanging}
+                isCollapsable
             />
         </div>
     );

@@ -16,6 +16,7 @@ import {
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import { EditingResultType } from '../helper/bible-helpers/serverBibleHelpers2';
+import LoadingComp from '../others/LoadingComp';
 
 const LazyBibleSearchBodyPreviewerComp = lazy(() => {
     return import('../bible-search/BibleSearchPreviewerComp');
@@ -39,6 +40,9 @@ export function useSelectedBibleKey() {
             viewController.setBibleKey = (_: string) => {};
         };
     }, []);
+    if (localBibleInfoList === undefined) {
+        return { isValid: undefined, bibleKey: '' };
+    }
     const isValid = (localBibleInfoList ?? []).some((bibleInfo) => {
         return bibleInfo.key === bibleKey;
     });
@@ -82,6 +86,9 @@ export default function RenderBibleLookupComp() {
             viewController.reloadEditingResult = (_: string) => {};
         };
     }, []);
+    if (isValidBibleKey === undefined) {
+        return <LoadingComp />;
+    }
     if (!isValidBibleKey) {
         return (
             <div className="w-100 h-100">

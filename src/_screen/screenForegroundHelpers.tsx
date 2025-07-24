@@ -44,6 +44,7 @@ export function genHtmlForegroundMarquee(
                     will-change: transform;
                     transform: translateY(100%);
                     animation: from-bottom 500ms ease-in forwards;
+                    white-space: nowrap;
                 }
                 .${uniqueClassname}.out {
                     animation: to-bottom 500ms ease-out forwards;
@@ -331,7 +332,7 @@ export async function getCameraAndShowMedia(
         parentContainer: HTMLElement;
         width?: number;
     },
-    animData: StyleAnimType,
+    animData?: StyleAnimType,
 ) {
     const constraints = {
         audio: false,
@@ -351,6 +352,10 @@ export async function getCameraAndShowMedia(
         }
         Object.assign(video.style, extraStyle ?? {});
         parentContainer.innerHTML = '';
+        if (animData === undefined) {
+            parentContainer.appendChild(video);
+            return;
+        }
         animData.animIn(video, parentContainer);
         return async () => {
             await animData.animOut(video);

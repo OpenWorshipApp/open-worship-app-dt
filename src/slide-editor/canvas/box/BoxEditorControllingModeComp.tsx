@@ -1,6 +1,6 @@
 import './BoxEditorControllingModeComp.scss';
 
-import {
+import CanvasItem, {
     useCanvasItemContext,
     useCanvasItemPropsContext,
     useSetEditingCanvasItem,
@@ -92,9 +92,7 @@ export default function BoxEditorControllingModeComp() {
                 style={{
                     border: '2px dashed green',
                     transform: 'translate(-50%, -50%)',
-                    width: `${props.width}px`,
-                    height: `${props.height}px`,
-                    backgroundColor: props.backgroundColor ?? 'transparent',
+                    ...CanvasItem.genShapeBoxStyle(props),
                 }}
             >
                 <BoxEditorCanvasItemRender />

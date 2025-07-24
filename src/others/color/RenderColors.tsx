@@ -8,10 +8,12 @@ export default function RenderColors({
     colors,
     selectedColor,
     onColorChange,
+    isNoImmediate = false,
 }: Readonly<{
     colors: AnyObjectType;
     selectedColor: AppColorType | null;
     onColorChange: (color: AppColorType | null, event: MouseEvent) => void;
+    isNoImmediate?: boolean;
 }>) {
     const handleNoColoring = (event: any) => {
         onColorChange(null, event);
@@ -50,6 +52,7 @@ export default function RenderColors({
                 <SelectCustomColor
                     color={selectedColor}
                     onColorSelected={handleColorSelecting}
+                    isNoImmediate={isNoImmediate}
                 />
             </div>
         </div>

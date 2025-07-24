@@ -100,6 +100,9 @@ async function confirmReloading() {
 
 export async function initApp() {
     function isDomException(error: any) {
+        if (typeof error === 'string' && error.startsWith('ResizeObserver')) {
+            return true;
+        }
         return error instanceof DOMException;
     }
 

@@ -90,10 +90,10 @@ export async function getVerses(
 
 async function getBibleInfoXML(bibleKey: string) {
     const xmlFilePath = await bibleKeyToFilePath(bibleKey);
-    if (!(await fsCheckFileExist(xmlFilePath))) {
+    if (xmlFilePath === null || !(await fsCheckFileExist(xmlFilePath))) {
         return false;
     }
-    const title = `Reload Bible XML Cache ${bibleKey}`;
+    const title = `Reloading Bible XML Cache for "${bibleKey}"`;
     showSimpleToast(title, 'This will take a while');
     const jsonData = await getBibleXMLDataFromKey(bibleKey);
     if (jsonData === null) {

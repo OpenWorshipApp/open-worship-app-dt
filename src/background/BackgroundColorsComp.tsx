@@ -30,6 +30,7 @@ function RenderColorPickerPerScreenComp({
                     handleColorChanging(null);
                 }}
                 onColorChange={handleColorChanging}
+                isNoImmediate={true}
             />
         </div>
     );
@@ -59,7 +60,7 @@ export default function BackgroundColorsComp() {
     }
     return (
         <div
-            className={'d-flex align-content-start flex-wrap w-100'}
+            className={'d-flex align-content-start flex-wrap w-100 h-100'}
             style={{
                 overflowY: 'auto',
             }}
@@ -75,6 +76,7 @@ export default function BackgroundColorsComp() {
                             { src: newColor },
                         );
                     }}
+                    isNoImmediate={true}
                 />
             ) : (
                 selectedBackgroundSrcList.map(([key, backgroundSrc], i) => {

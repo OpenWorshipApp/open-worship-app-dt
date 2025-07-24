@@ -15,7 +15,6 @@ import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
-import { useScreenManagerContext } from '../_screen/managers/screenManagerHooks';
 
 type CameraInfoType = {
     deviceId: string;
@@ -32,21 +31,17 @@ function RenderCameraInfoComp({
     width: number;
     genStyle: () => React.CSSProperties;
 }>) {
-    const screenManager = useScreenManagerContext();
     const containerRef = useRef<HTMLDivElement>(null);
     useAppEffectAsync(async () => {
         if (containerRef.current === null) {
             return;
         }
-        await getCameraAndShowMedia(
-            {
-                id: cameraInfo.deviceId,
-                parentContainer: containerRef.current,
-                width,
-            },
-            screenManager.foregroundEffectManager.styleAnim,
-        );
-    }, [containerRef.current, screenManager]);
+        await getCameraAndShowMedia({
+            id: cameraInfo.deviceId,
+            parentContainer: containerRef.current,
+            width,
+        });
+    }, [containerRef.current]);
     const handleShowing = (event: any, isForceChoosing = false) => {
         ScreenForegroundManager.addCameraData(
             event,

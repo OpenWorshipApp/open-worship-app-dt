@@ -62,7 +62,7 @@ export default function RenderActionButtonsComp({
                 <>
                     <button
                         type="button"
-                        className="btn btn-sm btn-info"
+                        className="btn btn-sm btn-primary"
                         title="`Save bible item"
                         onClick={() => {
                             const lookupViewController =
@@ -78,7 +78,7 @@ export default function RenderActionButtonsComp({
                     {appProvider.isPagePresenter ? (
                         <button
                             type="button"
-                            className="btn btn-sm btn-info"
+                            className="btn btn-sm btn-primary"
                             title="`Save bible item and show on screen"
                             onClick={(event) => {
                                 const lookupViewController =

@@ -422,7 +422,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         renderScreenBibleManager(this);
     }
 
-    renderScroll(isImmediate?: boolean) {
+    renderScroll(isImmediate = false) {
         if (this.div === null) {
             return;
         }

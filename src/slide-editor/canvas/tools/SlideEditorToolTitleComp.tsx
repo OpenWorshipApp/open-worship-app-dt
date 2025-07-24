@@ -6,11 +6,16 @@ export default function SlideEditorToolTitleComp({
     children: any;
 }>) {
     return (
-        <div className="app-tool m-1">
+        <div
+            className="app-tool m-1"
+            style={{
+                borderTop: '1px solid #cccccc2f',
+            }}
+        >
             {title && (
                 <div
                     style={{
-                        borderBottom: '1px solid #cccccc2f',
+                        borderBottom: '1px dashed #cccccc17',
                     }}
                 >
                     {title}

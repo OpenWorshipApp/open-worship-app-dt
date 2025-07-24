@@ -276,7 +276,12 @@ export const menuTitleRealFile = `Reveal in ${
 
 export function genTimeoutAttempt(timeMilliseconds: number = 1e3) {
     let timeoutId: any = null;
+    let lastSchedule = Date.now() - timeMilliseconds - 1;
     return function (func: () => void, isImmediate: boolean = false) {
+        if (Date.now() - lastSchedule > timeMilliseconds) {
+            isImmediate = true;
+        }
+        lastSchedule = Date.now();
         if (timeoutId !== null) {
             clearTimeout(timeoutId);
             timeoutId = null;

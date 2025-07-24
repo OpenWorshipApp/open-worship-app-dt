@@ -65,7 +65,7 @@ export default function RenderEditingActionButtonsComp({
             </button>
             <button
                 type="button"
-                className="btn btn-sm btn-info"
+                className="btn btn-sm btn-primary"
                 title={`Save bible item [${toShortcutKey(addListEventMapper)}]`}
                 onClick={() => {
                     saveBibleItem(
@@ -79,7 +79,7 @@ export default function RenderEditingActionButtonsComp({
             {appProvider.isPagePresenter ? (
                 <button
                     type="button"
-                    className="btn btn-sm btn-info"
+                    className="btn btn-sm btn-primary"
                     title={`\`Save bible item and show on screen [${toShortcutKey(
                         presenterEventMapper,
                     )}]`}

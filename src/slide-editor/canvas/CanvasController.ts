@@ -178,7 +178,9 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     applyOrderingData(canvasItem: CanvasItem<any>, isBack: boolean) {
         // move canvasItem to next if isBack is false else move to previous
         const newCanvasItems = this.canvas.canvasItems;
-        const index = newCanvasItems.indexOf(canvasItem);
+        const index = newCanvasItems.findIndex((item) => {
+            return item.checkIsSame(canvasItem);
+        });
         if (index === -1) {
             return;
         }

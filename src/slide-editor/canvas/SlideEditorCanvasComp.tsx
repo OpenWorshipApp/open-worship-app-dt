@@ -2,7 +2,10 @@ import { BoxEditorComp } from './box/BoxEditorComp';
 import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 import { showCanvasContextMenu } from './canvasContextMenuHelpers';
 import { isSupportedMimetype } from '../../server/fileHelpers';
-import { useCanvasControllerContext } from './CanvasController';
+import {
+    defaultRangeSize,
+    useCanvasControllerContext,
+} from './CanvasController';
 import { useSlideCanvasScale } from './canvasEventHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
@@ -11,6 +14,7 @@ import {
     useStopAllModes,
 } from './CanvasItem';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
+import { handleCtrlWheel } from '../../others/AppRangeComp';
 
 function BodyRendererComp() {
     const canvasController = useCanvasControllerContext();
@@ -127,7 +131,20 @@ export default function SlideEditorCanvasComp() {
     useKeyboardRegistering([{ key: 'Escape' }], stopAllModes, []);
     return (
         <div className="card w-100 h-100">
-            <div className="card-body editor-container">
+            <div
+                className="card-body editor-container"
+                onWheel={(event) => {
+                    event.stopPropagation();
+                    handleCtrlWheel({
+                        event,
+                        value: canvasController.scale * 10,
+                        setValue: (scale) => {
+                            canvasController.scale = scale / 10;
+                        },
+                        defaultSize: defaultRangeSize,
+                    });
+                }}
+            >
                 <div
                     className="overflow-hidden"
                     style={{

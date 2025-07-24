@@ -440,3 +440,10 @@ export async function readTextFromClipboard() {
         return null;
     }
 }
+
+export function removeOpacityFromHexColor(hexColor: string) {
+    if (hexColor.startsWith('#')) {
+        return hexColor.substring(0, 7);
+    }
+    return hexColor;
+}

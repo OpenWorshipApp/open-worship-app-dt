@@ -154,7 +154,7 @@ export async function readFromUrl(
         const response = await initHttpRequest(url);
         const userWritablePath = appLocalStorage.defaultStorage;
         let fileFullName = appProvider.pathUtils.basename(url.pathname);
-        if (fileFullName.endsWith('.xml') === false) {
+        if (fileFullName.toLocaleLowerCase().endsWith('.xml') === false) {
             fileFullName += '.xml';
         }
         const filePath = appProvider.pathUtils.resolve(
@@ -190,15 +190,18 @@ export function checkIsValidUrl(urlText: string) {
 
 export async function getBibleXMLInfo(bibleKey: string) {
     const filePath = await bibleKeyToFilePath(bibleKey);
+    if (filePath === null) {
+        return null;
+    }
     const xmlText = await FileSource.readFileData(filePath);
     if (xmlText === null) {
         return null;
     }
-    const bible = xmlTextToBibleElement(xmlText);
-    if (!bible) {
+    const bibleXMLElement = xmlTextToBibleElement(xmlText);
+    if (!bibleXMLElement) {
         return null;
     }
-    return await getBibleInfoJson(bible);
+    return await getBibleInfoJson(bibleXMLElement);
 }
 
 export async function getBibleXMLCacheInfoList() {
@@ -214,7 +217,10 @@ export async function getBibleXMLCacheInfoList() {
 }
 
 export async function saveXMLText(bibleKey: string, xmlText: string) {
-    const filePath = await bibleKeyToFilePath(bibleKey);
+    const filePath = await bibleKeyToFilePath(bibleKey, true);
+    if (filePath === null) {
+        return false;
+    }
     const fileSource = FileSource.getInstance(filePath);
     return await fileSource.writeFileData(xmlText);
 }
@@ -225,6 +231,9 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
             menuElement: menuTitleRealFile,
             onSelect: async () => {
                 const filePath = await bibleKeyToFilePath(bibleKey);
+                if (filePath === null) {
+                    return;
+                }
                 showExplorer(filePath);
             },
         },
@@ -385,12 +394,18 @@ export async function saveJsonDataToXMLfile(jsonData: BibleJsonType) {
 export async function deleteBibleXML(bibleKey: string) {
     await bibleDataReader.clearBibleDatabaseData(bibleKey);
     const filePath = await bibleKeyToFilePath(bibleKey);
+    if (filePath === null) {
+        return;
+    }
     const fileSource = FileSource.getInstance(filePath);
     await fileSource.trash();
 }
 
 export async function getBibleXMLDataFromKey(bibleKey: string) {
     const filePath = await bibleKeyToFilePath(bibleKey);
+    if (filePath === null) {
+        return null;
+    }
     const xmlText = await FileSource.readFileData(filePath);
     if (xmlText === null) {
         return null;

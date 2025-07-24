@@ -93,9 +93,7 @@ class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
             typeof json.color !== 'string' ||
             typeof json.fontSize !== 'number' ||
             (json.fontFamily !== null && typeof json.fontFamily !== 'string') ||
-            (json.fontWeight !== null && typeof json.fontWeight !== 'string') ||
-            !hAlignmentList.includes(json.horizontalAlignment) ||
-            !vAlignmentList.includes(json.verticalAlignment)
+            (json.fontWeight !== null && typeof json.fontWeight !== 'string')
         ) {
             throw new Error('Invalid canvas item text data');
         }

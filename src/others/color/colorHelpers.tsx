@@ -1,5 +1,6 @@
 import { DragTypeEnum } from '../../helper/DragInf';
 import { handleDragStart } from '../../helper/dragHelpers';
+import { removeOpacityFromHexColor } from '../../server/appHelpers';
 
 export const BLACK_COLOR = '#000000';
 export type AppColorType = `#${string}`;
@@ -32,8 +33,8 @@ export function compareColor(
     color2: AppColorType,
 ): boolean {
     return (
-        color1.substring(0, 7).toLowerCase() ===
-        color2.substring(0, 7).toLocaleLowerCase()
+        removeOpacityFromHexColor(color1).toLowerCase() ===
+        removeOpacityFromHexColor(color2).toLowerCase()
     );
 }
 

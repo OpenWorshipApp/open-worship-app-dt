@@ -18,7 +18,7 @@ export function useStateSettingBoolean(
 ) {
     const originalSettingName = getSetting(settingName);
     const defaultData =
-        originalSettingName === ''
+        originalSettingName === null
             ? !!defaultValue
             : originalSettingName === 'true';
     const [data, setData] = useState(defaultData);

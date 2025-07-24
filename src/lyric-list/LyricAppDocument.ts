@@ -73,18 +73,21 @@ export default class LyricAppDocument extends AppDocument {
                 canvasItems: text
                     ? [
                           {
+                              id: 0,
+                              type: 'html',
                               text,
                               htmlText,
+
                               color: '#FFFFFFFF',
                               fontSize: 90,
                               fontFamily: this.lyricEditingProps.fontFamily,
                               fontWeight: null,
                               textHorizontalAlignment: 'center',
                               textVerticalAlignment: 'center',
-                              id: 0,
                               top,
                               left,
                               backgroundColor: '#0000008B',
+                              backdropFilter: 5,
                               width: Math.floor(
                                   display.bounds.width - left * 2,
                               ),
@@ -94,7 +97,8 @@ export default class LyricAppDocument extends AppDocument {
                               rotate: 0,
                               horizontalAlignment: 'center',
                               verticalAlignment: 'center',
-                              type: 'html',
+                              roundSizePixel: 0,
+                              roundSizePercentage: 0,
                           } as CanvasItemTextPropsType,
                       ]
                     : [],

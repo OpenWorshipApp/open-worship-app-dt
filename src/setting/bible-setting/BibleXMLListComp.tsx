@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import LoadingComp from '../../others/LoadingComp';
 import {
@@ -115,7 +115,9 @@ function BibleXMLInfoComp({
             onContextMenu={handBibleKeyContextMenuOpening.bind(null, bibleKey)}
         >
             <div className="d-flex w-100">
-                <div className="flex-fill">{bibleKey}</div>
+                <div className="flex-fill" data-bible-key={bibleKey}>
+                    {bibleKey}
+                </div>
                 <div>
                     <div className="btn-group">
                         <button
@@ -186,23 +188,27 @@ export default function BibleXMLListComp({
     if (bibleKeysMap === null || Object.keys(bibleKeysMap).length === 0) {
         return <div>No Bible XML files {buttons}</div>;
     }
+    const bibleKeys = useMemo(() => {
+        const localBibleKeys = Object.keys(bibleKeysMap).sort((a, b) =>
+            a.localeCompare(b),
+        );
+        return localBibleKeys;
+    }, [bibleKeysMap]);
     return (
         <>
             <h3>Bibles XML {buttons}</h3>
             <div className="w-100">
                 <ul className="list-group d-flex flex-fill">
-                    {Object.entries(bibleKeysMap).map(
-                        ([bibleKey, filePath]) => {
-                            return (
-                                <BibleXMLInfoComp
-                                    key={bibleKey}
-                                    bibleKey={bibleKey}
-                                    loadBibleKeys={loadBibleKeys}
-                                    filePath={filePath}
-                                />
-                            );
-                        },
-                    )}
+                    {bibleKeys.map((bibleKey) => {
+                        return (
+                            <BibleXMLInfoComp
+                                key={bibleKey}
+                                bibleKey={bibleKey}
+                                loadBibleKeys={loadBibleKeys}
+                                filePath={bibleKeysMap[bibleKey]}
+                            />
+                        );
+                    })}
                 </ul>
             </div>
         </>

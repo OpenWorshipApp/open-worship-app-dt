@@ -1,4 +1,3 @@
-import { bringDomToNearestView } from '../helper/helpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 
 export default function ForegroundLayoutComp({
@@ -54,11 +53,6 @@ export default function ForegroundLayoutComp({
                         'card-body app-inner-shadow p-2 ' +
                         (extraBodyClassName ?? '')
                     }
-                    ref={(div) => {
-                        if (div !== null) {
-                            bringDomToNearestView(div);
-                        }
-                    }}
                     style={extraBodyStyle}
                 >
                     {children}

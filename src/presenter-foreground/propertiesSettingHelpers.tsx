@@ -80,7 +80,7 @@ function genTransformRotate() {
     return 'rotate(0deg)';
 }
 
-function genAlignmentExtraStyle(
+function genTransformingExtraStyle(
     alignSettingName: string,
     offsetXSettingName: string,
     offsetYSettingName: string,
@@ -95,31 +95,37 @@ function genAlignmentExtraStyle(
     const alignmentData = JSON.parse(getSetting(alignSettingName) ?? '{}');
     const { horizontalAlignment = 'center', verticalAlignment = 'center' } =
         alignmentData;
+    const transformScale = genTransformScale(widgetScaleSettingName);
+    const transformRotate = genTransformRotate();
+    const transformScaleRotate = `${transformScale} ${transformRotate}`;
     if (horizontalAlignment === 'center' && verticalAlignment === 'center') {
         const translate =
             `translate(${genMinusCalc(widgetOffsetX)},` +
             ` ${genMinusCalc(widgetOffsetY)})`;
-        const transform =
-            `${translate} ${genTransformScale(widgetScaleSettingName)}` +
-            ` ${genTransformRotate()}`;
         const style = {
             left: '50%',
             top: '50%',
-            transform,
+            transform: `${translate} ${transformScaleRotate}`,
         };
         return style;
     }
-    let style: any = {};
+    let style: any = {
+        transform: transformScaleRotate,
+    };
     if (horizontalAlignment === 'center') {
         style = {
             left: '50%',
-            transform: `translateX(${genMinusCalc(widgetOffsetX)})`,
+            transform:
+                `translateX(${genMinusCalc(widgetOffsetX)})` +
+                ` ${transformScaleRotate}`,
         };
     }
     if (verticalAlignment === 'center') {
         style = {
             top: '50%',
-            transform: `translateY(${genMinusCalc(widgetOffsetY)})`,
+            transform:
+                `translateY(${genMinusCalc(widgetOffsetY)})` +
+                ` ${transformScaleRotate}`,
         };
     }
     if (horizontalAlignment === 'left') {
@@ -328,11 +334,12 @@ function PropertiesSettingComp({
                     className="d-flex input-group m-1"
                     style={{ width: '260px', height: '35px' }}
                 >
-                    <div className="input-group-text">`Round size pixel:</div>
+                    <div className="input-group-text">`Round Size Pixel:</div>
                     <input
                         type="number"
                         className="form-control"
                         value={roundSizePixel}
+                        min={0}
                         onChange={(event) => {
                             setRoundSizePixel(
                                 parseInt(event.target.value) || 0,
@@ -396,7 +403,7 @@ export function useForegroundPropsSetting({
             ),
             ...genWidgetWidthExtraStyle(widgetWidthPercentageSettingName),
             ...genWidgetOpacityExtraStyle(opacityPercentageSettingName),
-            ...genAlignmentExtraStyle(
+            ...genTransformingExtraStyle(
                 alignmentSettingName,
                 offsetXSettingName,
                 offsetYSettingName,

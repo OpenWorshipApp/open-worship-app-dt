@@ -90,9 +90,9 @@ export function BibleNotAvailableComp({
                 <h2>Bible key "{bibleKey}" is not available!</h2>
                 Please change bible key here:{' '}
                 <BibleSelectionMiniComp
-                    bibleKey={bibleKey + '??'}
+                    bibleKey={bibleKey}
                     onBibleKeyChange={handleBibleKeyChanging}
-                />
+                />??
                 <hr />
                 <button
                     className="btn btn-primary"
