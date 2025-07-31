@@ -22,18 +22,23 @@ freezeObject(kjvBibleInfo);
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
-    return unlockingCacher(filePath, async () => {
-        const xmlText = await FileSource.readFileData(filePath);
-        if (xmlText === null) {
-            return null;
-        }
-        const bibleXMLElement = xmlTextToBibleElement(xmlText);
-        if (!bibleXMLElement) {
-            return null;
-        }
-        const bibleKey = await guessingBibleKey(bibleXMLElement);
-        return bibleKey;
-    }, bibleKeyFilePathCache, true);
+    return unlockingCacher(
+        filePath,
+        async () => {
+            const xmlText = await FileSource.readFileData(filePath);
+            if (xmlText === null) {
+                return null;
+            }
+            const bibleXMLElement = xmlTextToBibleElement(xmlText);
+            if (!bibleXMLElement) {
+                return null;
+            }
+            const bibleKey = await guessingBibleKey(bibleXMLElement);
+            return bibleKey;
+        },
+        bibleKeyFilePathCache,
+        true,
+    );
 }
 
 export async function getAllXMLFileKeys() {
@@ -131,7 +136,7 @@ export type BibleJsonInfoType = {
     filePath: string;
 };
 
-export type BibleJsonType = {
+export type BibleXMLJsonType = {
     info: BibleJsonInfoType;
     books: { [booKey: string]: BibleBookJsonType };
 };
@@ -386,7 +391,7 @@ function getBibleBooksJson(bibleXMLElement: Element) {
     return booksJson;
 }
 
-export function jsonToXMLText(jsonData: BibleJsonType) {
+export function jsonToXMLText(jsonData: BibleXMLJsonType) {
     const { numbersMap, booksMap, ...info } = jsonData.info;
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(
@@ -462,7 +467,7 @@ export async function xmlToJson(xmlText: string) {
     if (bibleBooks === null) {
         return null;
     }
-    return { info: bibleInfo, books: bibleBooks } as BibleJsonType;
+    return { info: bibleInfo, books: bibleBooks } as BibleXMLJsonType;
 }
 
 export async function bibleKeyToXMLFilePath(

@@ -53,16 +53,12 @@ export default class BibleDataReader {
         showProgressBar(progressKey);
         try {
             const databaseController = await this.getDatabaseController();
-            const record =
-                await databaseController.getItem<string>(filePath);
+            const record = await databaseController.getItem<string>(filePath);
             let b64Data: string | null = null;
             if (record !== null) {
                 b64Data = record.data;
             } else {
-                const fileData = await FileSource.readFileData(
-                    filePath,
-                    true,
-                );
+                const fileData = await FileSource.readFileData(filePath, true);
                 if (fileData === null) {
                     return null;
                 }
@@ -75,7 +71,9 @@ export default class BibleDataReader {
                 });
             }
             const rawData = base64Decode(b64Data);
-            const parsedData = JSON.parse(rawData) as BibleInfoType | BibleChapterType;
+            const parsedData = JSON.parse(rawData) as
+                | BibleInfoType
+                | BibleChapterType;
             return parsedData;
         } catch (error: any) {
             if (error.code !== 'ENOENT') {

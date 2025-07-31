@@ -260,6 +260,7 @@ function toIndex(bookKey: string, chapterNum: number) {
 }
 
 export function toBibleFileName(bookKey: string, chapterNum: number) {
+    // GEN, 1 => 0001-GEN.1
     const index = toIndex(bookKey, chapterNum);
     if (index < 0) {
         throw new Error('Invalid chapter number');
@@ -267,4 +268,19 @@ export function toBibleFileName(bookKey: string, chapterNum: number) {
     let indexStr = `000${index}`;
     indexStr = indexStr.substring(indexStr.length - 4);
     return `${indexStr}-${bookKey}.${chapterNum}`;
+}
+
+export function fromBibleFileName(fileName: string) {
+    // 0001-GEN.1 => { bookKey: 'GEN', chapterNum: 1 }
+    const regex = /^(\d+)-([1-3A-Z]+)\.(\d+)$/;
+    const match = fileName.match(regex);
+    if (!match) {
+        return null;
+    }
+    const bookKey = match[2];
+    const chapterNum = parseInt(match[3], 10);
+    if (isNaN(chapterNum)) {
+        return null;
+    }
+    return { bookKey, chapterNum };
 }

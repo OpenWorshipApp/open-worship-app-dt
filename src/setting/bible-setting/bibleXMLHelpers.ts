@@ -3,7 +3,7 @@ import { handleError } from '../../helper/errorHelpers';
 import appProvider from '../../server/appProvider';
 import { writeStreamToFile } from '../../helper/bible-helpers/downloadHelpers';
 import { showExplorer } from '../../server/appHelpers';
-import { fsDeleteFile, pathJoin } from '../../server/fileHelpers';
+import { fsDeleteFile } from '../../server/fileHelpers';
 import { allLocalesMap, LocaleType } from '../../lang/langHelpers';
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import {
@@ -17,12 +17,11 @@ import {
 } from '../../context-menu/appContextMenuHelpers';
 import { useState, useTransition } from 'react';
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import BibleDatabaseController from '../../helper/bible-helpers/BibleDatabaseController';
-import { toBibleFileName } from '../../helper/bible-helpers/serverBibleHelpers';
+import { fromBibleFileName } from '../../helper/bible-helpers/serverBibleHelpers';
 import {
     bibleKeyToXMLFilePath,
     BibleJsonInfoType,
-    BibleJsonType,
+    BibleXMLJsonType,
     jsonToXMLText,
     xmlToJson,
     xmlTextToBibleElement,
@@ -31,12 +30,13 @@ import {
 } from './bibleXMLJsonDataHelpers';
 import {
     BibleChapterType,
-    bibleDataReader,
     BibleInfoType,
 } from '../../helper/bible-helpers/BibleDataReader';
 import FileSource from '../../helper/FileSource';
 import { menuTitleRealFile } from '../../helper/helpers';
 import { appLocalStorage } from '../directory-setting/appLocalStorage';
+import { unlocking } from '../../server/unlockingHelpers';
+import CacheManager from '../../others/CacheManager';
 
 type MessageCallbackType = (message: string | null) => void;
 
@@ -333,8 +333,23 @@ export function handBibleInfoContextMenuOpening(
     showAppContextMenu(event, contextMenuItems);
 }
 
+const bibleJSONCacheManager = new CacheManager<BibleXMLJsonType>(10);
+export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
+    return unlocking(bibleKey, async () => {
+        let jsonData = await bibleJSONCacheManager.get(bibleKey);
+        if (jsonData !== null) {
+            return jsonData;
+        }
+        jsonData = await getBibleXMLDataFromKey(bibleKey);
+        if (jsonData !== null) {
+            await bibleJSONCacheManager.set(bibleKey, jsonData);
+        }
+        return jsonData;
+    });
+}
+
 export async function readBibleXMLData(bibleKey: string, fileName: string) {
-    const jsonData = await getBibleXMLDataFromKey(bibleKey);
+    const jsonData = await getBibleXMLDataFromKeyCaching(bibleKey);
     if (jsonData === null) {
         return null;
     }
@@ -351,23 +366,26 @@ export async function readBibleXMLData(bibleKey: string, fileName: string) {
             ),
         } as BibleInfoType;
     }
-    for (const [bookKey, book] of Object.entries(jsonData.books)) {
-        const bookName = bibleInfo.booksMap[bookKey];
-        for (const [chapterKey, verses] of Object.entries(book)) {
-            const chapterNumber = parseInt(chapterKey);
-            const localFileName = toBibleFileName(bookKey, chapterNumber);
-            if (localFileName === fileName) {
-                return {
-                    title: `${bookName} ${chapterKey}`,
-                    verses,
-                } as BibleChapterType;
-            }
-        }
+    const fileNameData = fromBibleFileName(fileName);
+    if (fileNameData === null) {
+        return null;
     }
-    return null;
+    const { bookKey, chapterNum } = fileNameData;
+    const book = jsonData.books[bookKey];
+    if (!book) {
+        return null;
+    }
+    const chapter = book[chapterNum];
+    if (!chapter) {
+        return null;
+    }
+    return {
+        title: `${bibleInfo.booksMap[bookKey]} ${chapterNum}`,
+        verses: chapter,
+    } as BibleChapterType;
 }
 
-export async function saveJsonDataToXMLfile(jsonData: BibleJsonType) {
+export async function saveJsonDataToXMLfile(jsonData: BibleXMLJsonType) {
     const xmlText = jsonToXMLText(jsonData);
     if (xmlText === null) {
         showSimpleToast('Error', 'Error occurred during saving to XML');

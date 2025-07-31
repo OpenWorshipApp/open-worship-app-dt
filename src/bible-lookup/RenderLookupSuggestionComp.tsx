@@ -92,7 +92,8 @@ export function BibleNotAvailableComp({
                 <BibleSelectionMiniComp
                     bibleKey={bibleKey}
                     onBibleKeyChange={handleBibleKeyChanging}
-                />??
+                />
+                ??
                 <hr />
                 <button
                     className="btn btn-primary"

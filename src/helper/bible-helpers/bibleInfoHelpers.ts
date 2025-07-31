@@ -1,6 +1,10 @@
 import { getKJVChapterCount, toBibleFileName } from './serverBibleHelpers';
 import { bibleKeyToXMLFilePath } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
-import { bibleDataReader, BibleInfoType, BibleChapterType } from './BibleDataReader';
+import {
+    bibleDataReader,
+    BibleInfoType,
+    BibleChapterType,
+} from './BibleDataReader';
 import { fsCheckFileExist } from '../../server/fileHelpers';
 import {
     hideProgressBar,
@@ -102,7 +106,10 @@ const bibleInfoMap = new Map<
     string,
     { info: BibleInfoType; timestamp: number }
 >();
-export async function getBibleInfo(bibleKey: string, isForce = false): Promise<BibleInfoType | null> {
+export async function getBibleInfo(
+    bibleKey: string,
+    isForce = false,
+): Promise<BibleInfoType | null> {
     if (isForce) {
         bibleInfoMap.delete(bibleKey);
     }
