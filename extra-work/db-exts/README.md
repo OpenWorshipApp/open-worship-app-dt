@@ -9,7 +9,8 @@ https://github.com/sqlite/sqlite/releases/tag/version-3.49.1
 
 ### Windows
 
-```bash
+```powershell
+# with "Native Tools Command Prompt"
 > nmake /f makefile.msc sqlite3.c
 > cl fts5.c /link -dll /out:fts5.dll
 > cl /I . ext\misc\spellfix.c /link -dll /out:spellfix1.dll

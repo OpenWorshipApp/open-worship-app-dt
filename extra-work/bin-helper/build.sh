@@ -130,8 +130,8 @@ download_dotnet(){
 }
 
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
-    if [[ "$PROCESSOR_ARCHITECTURE" == "ARM64" ]]; then
-        # TODO: update to arm64 version when available
+    process=$(node -p "process.arch")
+    if [[ "$process" == "arm64" ]]; then
         download_yt_dlp yt-dlp.exe "-arm64.exe"
         download_dotnet win-arm64.zip "-arm64"
         download_ffmpeg ffmpeg-n7.1-latest-winarm64-gpl-7.1.zip
