@@ -21,7 +21,7 @@ const systemUtils = {
   isMacUniversal: process.env.FORCE_UNIVERSAL == 'true',
 };
 
-function getFileSuffix(isIntOnly = false) {
+function getFileSuffix() {
   let suffix = '';
   if (systemUtils.isMac) {
     if (systemUtils.isMacUniversal || !systemUtils.isArm64) {
@@ -29,16 +29,14 @@ function getFileSuffix(isIntOnly = false) {
     }
   } else {
     if (systemUtils.isArm64) {
-      if (!isIntOnly) {
-        suffix = '-arm64';
-      }
+      suffix = '-arm64';
     } else if (!systemUtils.is64System) {
       suffix = '-i386';
     }
   }
   return suffix;
 }
-function genLibFileName(baseName, isIntOnly = false) {
+function genLibFileName(baseName) {
   let ext;
   if (systemUtils.isWindows) {
     ext = 'dll';
@@ -47,18 +45,18 @@ function genLibFileName(baseName, isIntOnly = false) {
   } else {
     ext = 'so';
   }
-  const suffix = getFileSuffix(isIntOnly);
+  const suffix = getFileSuffix();
   return {
     sourceFileName: `${baseName}${suffix}.${ext}`,
     destFileName: `${baseName}.${ext}`,
   };
 }
-function genBinFileName(baseName, isIntOnly = false) {
+function genBinFileName(baseName) {
   let ext = '';
   if (systemUtils.isWindows) {
     ext = '.exe';
   }
-  const suffix = getFileSuffix(isIntOnly);
+  const suffix = getFileSuffix();
   return {
     sourceFileName: `${baseName}${suffix}${ext}`,
     destFileName: `${baseName}${ext}`,
@@ -79,7 +77,7 @@ const basePath = {
   destination: resolve('./electron-build/db-exts'),
 };
 ['fts5', 'spellfix1'].forEach((baseName) => {
-  const { sourceFileName, destFileName } = genLibFileName(baseName, true);
+  const { sourceFileName, destFileName } = genLibFileName(baseName);
   console.log('Copy:', sourceFileName, destFileName);
   copyFile(basePath, sourceFileName, destFileName);
 });
@@ -140,7 +138,7 @@ if (systemUtils.isMac) {
   copyAllChildren(
     resolve(
       './extra-work/ffmpeg/mac' +
-      (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
+        (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
     ),
     resolve(binHelperDestRootDir, 'ffmpeg', 'bin'),
   );

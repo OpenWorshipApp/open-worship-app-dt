@@ -73,10 +73,16 @@ linux_prep() {
 
 build_release() {
     if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
-        npm run pack:win:32
-        win_prep "$tmp_dir/win-ia32"
-        npm run pack:win
-        win_prep "$tmp_dir/win"
+        process=$(node -p "process.arch")
+        if [[ "$process" == "arm64" ]]; then
+            npm run pack:win
+            win_prep "$tmp_dir/win-arm64"
+        else
+            npm run pack:win
+            win_prep "$tmp_dir/win"
+            npm run pack:win:32
+            win_prep "$tmp_dir/win-ia32"
+        fi
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         if [[ "$(uname -m)" == "arm64" ]]; then
             npm run pack:mac

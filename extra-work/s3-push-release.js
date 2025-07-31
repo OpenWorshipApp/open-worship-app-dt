@@ -79,6 +79,7 @@ function getWindowsBinFilePath(prefix, systemInfo) {
         commitID: data[0].commitID,
         isWindows: true,
         is64System: !!systemInfo.is64System,
+        isArm64: !!systemInfo.isArm64,
         portable: filterBinFileInfo(prefix, data, '.zip'),
         installer: filterBinFileInfo(prefix, data, '.exe'),
     };
@@ -171,7 +172,9 @@ function getUploadList() {
     const uploadList = [];
     for (const [key, value] of Object.entries(downloadInfo)) {
         if (isWindows && value.isWindows) {
-            uploadList.push(...getWindowsBinFilePath(key, value));
+            if ((isArm64 && value.isArm64) || (!isArm64 && !value.isArm64)) {
+                uploadList.push(...getWindowsBinFilePath(key, value));
+            }
         } else if (isMac && value.isMac) {
             if ((isArm64 && value.isArm64) || (!isArm64 && !value.isArm64)) {
                 uploadList.push(...getMacBinFilePath(key, value));
