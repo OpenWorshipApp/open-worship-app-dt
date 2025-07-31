@@ -16,17 +16,13 @@ import { fsListFiles, pathJoin } from '../../server/fileHelpers';
 import FileSource from '../../helper/FileSource';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import CacheManager from '../../others/CacheManager';
-import { unlocking } from '../../server/unlockingHelpers';
+import { unlockingCacher } from '../../server/unlockingHelpers';
 
 freezeObject(kjvBibleInfo);
 
-const bibleKeyFilePathCache = new CacheManager(3);
+const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
-    return unlocking(filePath, async () => {
-        const cachedBibleKey = await bibleKeyFilePathCache.get(filePath);
-        if (cachedBibleKey) {
-            return cachedBibleKey;
-        }
+    return unlockingCacher(filePath, async () => {
         const xmlText = await FileSource.readFileData(filePath);
         if (xmlText === null) {
             return null;
@@ -36,12 +32,8 @@ export async function getBibleKeyFromFile(filePath: string) {
             return null;
         }
         const bibleKey = await guessingBibleKey(bibleXMLElement);
-        if (bibleKey === null) {
-            return null;
-        }
-        await bibleKeyFilePathCache.set(filePath, bibleKey);
         return bibleKey;
-    });
+    }, bibleKeyFilePathCache, true);
 }
 
 export async function getAllXMLFileKeys() {
@@ -316,7 +308,7 @@ export async function getBibleInfoJson(bibleXMLElement: Element) {
     if (getLangCode(locale as any) === null) {
         return null;
     }
-    const filePath = await bibleKeyToFilePath(bibleKey);
+    const filePath = await bibleKeyToXMLFilePath(bibleKey);
     const books = Array.from(
         guessElement(bibleXMLElement, tagNamesMap.book) ?? [],
     );
@@ -473,7 +465,7 @@ export async function xmlToJson(xmlText: string) {
     return { info: bibleInfo, books: bibleBooks } as BibleJsonType;
 }
 
-export async function bibleKeyToFilePath(
+export async function bibleKeyToXMLFilePath(
     bibleKey: string,
     isFromFileName = false,
 ) {

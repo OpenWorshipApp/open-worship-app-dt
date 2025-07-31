@@ -215,5 +215,5 @@ export async function main(children: React.ReactNode) {
 
     root.render(<RenderApp>{children}</RenderApp>);
 
-    setTimeout(checkForUpdateSilently, 60000);
+    setTimeout(checkForUpdateSilently, 6e4);
 }

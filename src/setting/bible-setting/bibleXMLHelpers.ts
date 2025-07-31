@@ -20,7 +20,7 @@ import { useAppEffect } from '../../helper/debuggerHelpers';
 import BibleDatabaseController from '../../helper/bible-helpers/BibleDatabaseController';
 import { toBibleFileName } from '../../helper/bible-helpers/serverBibleHelpers';
 import {
-    bibleKeyToFilePath,
+    bibleKeyToXMLFilePath,
     BibleJsonInfoType,
     BibleJsonType,
     jsonToXMLText,
@@ -30,6 +30,7 @@ import {
     getAllXMLFileKeys,
 } from './bibleXMLJsonDataHelpers';
 import {
+    BibleChapterType,
     bibleDataReader,
     BibleInfoType,
 } from '../../helper/bible-helpers/BibleDataReader';
@@ -189,7 +190,7 @@ export function checkIsValidUrl(urlText: string) {
 }
 
 export async function getBibleXMLInfo(bibleKey: string) {
-    const filePath = await bibleKeyToFilePath(bibleKey);
+    const filePath = await bibleKeyToXMLFilePath(bibleKey);
     if (filePath === null) {
         return null;
     }
@@ -217,7 +218,7 @@ export async function getBibleXMLCacheInfoList() {
 }
 
 export async function saveXMLText(bibleKey: string, xmlText: string) {
-    const filePath = await bibleKeyToFilePath(bibleKey, true);
+    const filePath = await bibleKeyToXMLFilePath(bibleKey, true);
     if (filePath === null) {
         return false;
     }
@@ -230,7 +231,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
         {
             menuElement: menuTitleRealFile,
             onSelect: async () => {
-                const filePath = await bibleKeyToFilePath(bibleKey);
+                const filePath = await bibleKeyToXMLFilePath(bibleKey);
                 if (filePath === null) {
                     return;
                 }
@@ -332,27 +333,14 @@ export function handBibleInfoContextMenuOpening(
     showAppContextMenu(event, contextMenuItems);
 }
 
-export async function cacheBibleXMLData(jsonData: BibleJsonType) {
-    const databaseController = await BibleDatabaseController.getInstance();
-    const bibleInfo = jsonData.info;
-    const bibleKey = bibleInfo.key;
-    const biblePath = await bibleDataReader.toBiblePath(bibleKey);
-    if (biblePath === null) {
-        return false;
+export async function readBibleXMLData(bibleKey: string, fileName: string) {
+    const jsonData = await getBibleXMLDataFromKey(bibleKey);
+    if (jsonData === null) {
+        return null;
     }
-    const addItem = async (fileName: string, data: string) => {
-        const filePath = pathJoin(biblePath, fileName);
-        const b64Data = appProvider.appUtils.base64Encode(data);
-        await databaseController.addItem({
-            id: filePath,
-            data: b64Data,
-            isForceOverride: true,
-            secondaryId: bibleKey,
-        });
-    };
-    await addItem(
-        '_info',
-        JSON.stringify({
+    const bibleInfo = jsonData.info;
+    if (fileName === '_info') {
+        return {
             ...bibleInfo,
             books: bibleInfo.booksMap,
             numList: Array.from(
@@ -361,23 +349,22 @@ export async function cacheBibleXMLData(jsonData: BibleJsonType) {
                 },
                 (_, i) => bibleInfo.numbersMap?.[i],
             ),
-        } as BibleInfoType),
-    );
+        } as BibleInfoType;
+    }
     for (const [bookKey, book] of Object.entries(jsonData.books)) {
         const bookName = bibleInfo.booksMap[bookKey];
         for (const [chapterKey, verses] of Object.entries(book)) {
             const chapterNumber = parseInt(chapterKey);
-            const fileName = toBibleFileName(bookKey, chapterNumber);
-            await addItem(
-                fileName,
-                JSON.stringify({
+            const localFileName = toBibleFileName(bookKey, chapterNumber);
+            if (localFileName === fileName) {
+                return {
                     title: `${bookName} ${chapterKey}`,
                     verses,
-                }),
-            );
+                } as BibleChapterType;
+            }
         }
     }
-    return true;
+    return null;
 }
 
 export async function saveJsonDataToXMLfile(jsonData: BibleJsonType) {
@@ -386,14 +373,12 @@ export async function saveJsonDataToXMLfile(jsonData: BibleJsonType) {
         showSimpleToast('Error', 'Error occurred during saving to XML');
         return false;
     }
-    await cacheBibleXMLData(jsonData);
     await saveXMLText(jsonData.info.key, xmlText);
     return true;
 }
 
 export async function deleteBibleXML(bibleKey: string) {
-    await bibleDataReader.clearBibleDatabaseData(bibleKey);
-    const filePath = await bibleKeyToFilePath(bibleKey);
+    const filePath = await bibleKeyToXMLFilePath(bibleKey);
     if (filePath === null) {
         return;
     }
@@ -402,7 +387,7 @@ export async function deleteBibleXML(bibleKey: string) {
 }
 
 export async function getBibleXMLDataFromKey(bibleKey: string) {
-    const filePath = await bibleKeyToFilePath(bibleKey);
+    const filePath = await bibleKeyToXMLFilePath(bibleKey);
     if (filePath === null) {
         return null;
     }
