@@ -178,6 +178,17 @@ export function BibleViewTitleEditingComp({
     );
 }
 
+function cleanupVerseNumberClicked(event: React.MouseEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    setTimeout(() => {
+        const selection = window.getSelection();
+        if (selection !== null && selection.rangeCount > 0) {
+            selection.removeAllRanges();
+        }
+    }, 2e3);
+}
+
 function RenderVerseTextComp({
     bibleItem,
     verseInfo,
@@ -197,8 +208,9 @@ function RenderVerseTextComp({
             ) : null}
             <div
                 className="verse-number app-caught-hover-pointer"
-                title={verseInfo.verse.toString()}
-                onClick={() => {
+                title={`Double click to select verse ${verseInfo.localeVerse}`}
+                onDoubleClick={(event) => {
+                    cleanupVerseNumberClicked(event);
                     viewController.applyTargetOrBibleKey(bibleItem, {
                         target: {
                             ...bibleItem.target,
@@ -258,14 +270,14 @@ function RenderRestVerseNumListComp({
     from,
     bibleItem,
     verseCount,
-    onClick,
+    onSelect,
     toTitle,
 }: Readonly<{
     to?: number;
     from?: number;
     bibleItem: ReadIdOnlyBibleItem;
     verseCount: number;
-    onClick: (verse: number) => void;
+    onSelect: (verse: number) => void;
     toTitle: (verse: number) => string;
 }>) {
     const fontSize = useBibleViewFontSizeContext();
@@ -296,9 +308,10 @@ function RenderRestVerseNumListComp({
                     <div
                         key={verse}
                         className="verse-number app-caught-hover-pointer"
-                        title={toTitle(verse)}
-                        onClick={() => {
-                            onClick(verse);
+                        title={`Double click to select verses ${toTitle(verse)}`}
+                        onDoubleClick={(event) => {
+                            cleanupVerseNumberClicked(event);
+                            onSelect(verse);
                         }}
                     >
                         <div
@@ -346,7 +359,7 @@ export function BibleViewTextComp({
                 to={target.verseStart - 1}
                 bibleItem={bibleItem}
                 verseCount={verseCount}
-                onClick={(verse) => {
+                onSelect={(verse) => {
                     viewController.applyTargetOrBibleKey(bibleItem, {
                         target: { ...bibleItem.target, verseStart: verse },
                     });
@@ -369,7 +382,7 @@ export function BibleViewTextComp({
                 from={target.verseEnd + 1}
                 bibleItem={bibleItem}
                 verseCount={verseCount}
-                onClick={(verse) => {
+                onSelect={(verse) => {
                     viewController.applyTargetOrBibleKey(bibleItem, {
                         target: { ...bibleItem.target, verseEnd: verse },
                     });
