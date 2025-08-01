@@ -37,6 +37,10 @@ import { menuTitleRealFile } from '../../helper/helpers';
 import { appLocalStorage } from '../directory-setting/appLocalStorage';
 import { unlocking } from '../../server/unlockingHelpers';
 import CacheManager from '../../others/CacheManager';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../../progress-bar/progressBarHelpers';
 
 type MessageCallbackType = (message: string | null) => void;
 
@@ -340,7 +344,11 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
         if (jsonData !== null) {
             return jsonData;
         }
+        const title = `Reading XML data for "${bibleKey}"`;
+        showProgressBar(title);
+        showSimpleToast(title, 'Please wait...');
         jsonData = await getBibleXMLDataFromKey(bibleKey);
+        hideProgressBar(title);
         if (jsonData !== null) {
             await bibleJSONCacheManager.set(bibleKey, jsonData);
         }
