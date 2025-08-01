@@ -27,6 +27,7 @@ import {
 import RenderActionButtonsComp from '../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
+import LoadingComp from '../others/LoadingComp';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -343,8 +344,17 @@ export function BibleViewTextComp({
     const [verseCount] = useAppStateAsync(() => {
         return getVersesCount(bibleKey, target.bookKey, target.chapter);
     }, [bibleKey, target.bookKey, target.chapter]);
-    if (!verseList || !verseCount) {
-        return null;
+    if (verseList === undefined || verseCount === undefined) {
+        return <LoadingComp />;
+    }
+    if (verseList === null || verseCount === null) {
+        return (
+            <div className={`${BIBLE_VIEW_TEXT_CLASS} p-1`}>
+                <span className="text-danger">
+                    `No verses found for this Bible item.
+                </span>
+            </div>
+        );
     }
     return (
         <div
