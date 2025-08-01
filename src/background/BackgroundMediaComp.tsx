@@ -117,9 +117,7 @@ function genBody(
             >
                 <ItemColorNoteComp item={fileSource} />
             </div>
-            {isNameOnTop
-                ? null
-                : genFileNameElement(fileSource.name)}
+            {isNameOnTop ? null : genFileNameElement(fileSource.name)}
         </div>
     );
 }

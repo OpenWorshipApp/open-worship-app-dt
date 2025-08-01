@@ -10,13 +10,13 @@ import RenderBibleLookupHeaderComp from './RenderBibleLookupHeaderComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
-import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
 import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import { EditingResultType } from '../helper/bible-helpers/serverBibleHelpers2';
 import LoadingComp from '../others/LoadingComp';
+import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const LazyBibleSearchBodyPreviewerComp = lazy(() => {
     return import('../bible-search/BibleSearchPreviewerComp');
@@ -29,9 +29,9 @@ export function useSelectedBibleKey() {
     const [bibleKey, setBibleKey] = useState<string>(
         viewController.selectedBibleItem.bibleKey,
     );
-    const [localBibleInfoList] = useAppStateAsync(() => {
-        return getAllLocalBibleInfoList();
-    }, []);
+    const [bibleInfo] = useAppStateAsync(() => {
+        return getBibleInfo(bibleKey);
+    }, [bibleKey]);
     useAppEffect(() => {
         viewController.setBibleKey = (newBibleKey: string) => {
             setBibleKey(newBibleKey);
@@ -40,13 +40,10 @@ export function useSelectedBibleKey() {
             viewController.setBibleKey = (_: string) => {};
         };
     }, []);
-    if (localBibleInfoList === undefined) {
-        return { isValid: undefined, bibleKey: '' };
+    if (bibleInfo === undefined) {
+        return { bibleKey };
     }
-    const isValid = (localBibleInfoList ?? []).some((bibleInfo) => {
-        return bibleInfo.key === bibleKey;
-    });
-    return { isValid, bibleKey };
+    return { isValid: bibleInfo !== null, bibleKey };
 }
 
 export default function RenderBibleLookupComp() {
@@ -86,21 +83,23 @@ export default function RenderBibleLookupComp() {
             viewController.reloadEditingResult = (_: string) => {};
         };
     }, []);
-    if (isValidBibleKey === undefined) {
-        return <LoadingComp />;
-    }
     if (!isValidBibleKey) {
         return (
-            <div className="w-100 h-100">
-                <div className="d-flex">
-                    <div className="flex-fill"></div>
-                    <RenderExtraButtonsRightComp
-                        setIsLookupOnline={setIsBibleSearching}
-                        isLookupOnline={isBibleSearching}
-                    />
+            <div className="card w-100 h-100">
+                <div className="card-header">
+                    <div className="float-end">
+                        <RenderExtraButtonsRightComp
+                            setIsLookupOnline={setIsBibleSearching}
+                            isLookupOnline={isBibleSearching}
+                        />
+                    </div>
                 </div>
-                <div className="flex-fill">
-                    <BibleNotAvailableComp bibleKey={bibleKey} />
+                <div className="card-body">
+                    {isValidBibleKey === undefined ? (
+                        <LoadingComp />
+                    ) : (
+                        <BibleNotAvailableComp bibleKey={bibleKey} />
+                    )}
                 </div>
             </div>
         );

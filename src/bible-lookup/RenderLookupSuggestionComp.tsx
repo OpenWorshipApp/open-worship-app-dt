@@ -87,7 +87,11 @@ export function BibleNotAvailableComp({
     return (
         <div id="bible-lookup-popup" className="card">
             <div className="body card-body w-100 p-3">
-                <h2>Bible key "{bibleKey}" is not available!</h2>
+                <h2>
+                    `Bible key "
+                    <span data-bible-key={bibleKey}>{bibleKey}</span>" is not
+                    available!
+                </h2>
                 Please change bible key here:{' '}
                 <BibleSelectionMiniComp
                     bibleKey={bibleKey}

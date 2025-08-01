@@ -26,7 +26,7 @@ function BibleKeyXMLInputComp({
     };
     return (
         <div className="w-100 h-100">
-            <div>Define a Bible key</div>
+            <div>`Define a Bible key</div>
             <div className="input-group" title={invalidMessage}>
                 <div className="input-group-text">Key:</div>
                 <input
