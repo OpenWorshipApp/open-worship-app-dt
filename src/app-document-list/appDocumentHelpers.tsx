@@ -53,6 +53,7 @@ import {
     VaryAppDocumentType,
     VaryAppDocumentItemType,
 } from './appDocumentTypeHelpers';
+import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -554,10 +555,17 @@ export function checkIsAppDocumentItemOnScreen(
 export async function checkIsVaryAppDocumentOnScreen(
     varyAppDocument: VaryAppDocumentType,
 ) {
-    const slides = await varyAppDocument.getSlides();
-    for (const slide of slides) {
-        const isOnScreen = checkIsAppDocumentItemOnScreen(slide);
-        if (isOnScreen) {
+    const dataList = getAppDocumentListOnScreenSetting();
+    if (Object.keys(dataList).length === 0) {
+        return false;
+    }
+    const varyAppDocumentItems = await varyAppDocument.getSlides();
+    for (const varyAppDocumentItem of varyAppDocumentItems) {
+        const data = ScreenVaryAppDocumentManager.getDataList(
+            varyAppDocumentItem.filePath,
+            varyAppDocumentItem.id,
+        );
+        if (data !== null && data.length > 0) {
             return true;
         }
     }
