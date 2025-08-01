@@ -337,7 +337,7 @@ export function handBibleInfoContextMenuOpening(
     showAppContextMenu(event, contextMenuItems);
 }
 
-const bibleJSONCacheManager = new CacheManager<BibleXMLJsonType>(10);
+const bibleJSONCacheManager = new CacheManager<BibleXMLJsonType>(60);
 export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
     return unlocking(bibleKey, async () => {
         let jsonData = await bibleJSONCacheManager.get(bibleKey);
