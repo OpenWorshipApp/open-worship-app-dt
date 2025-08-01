@@ -31,11 +31,13 @@
     "linux-ubuntu": {
         "isLinux": true,
         "isUbuntu": true,
-        "is64System": true
+        "is64System": true,
+        "isArm64": false
     },
     "linux-fedora": {
         "isLinux": true,
         "isFedora": true,
-        "is64System": true
+        "is64System": true,
+        "isArm64": false
     }
 }
