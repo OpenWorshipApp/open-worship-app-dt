@@ -87,8 +87,6 @@ build_release() {
         if [[ "$(uname -m)" == "arm64" ]]; then
             npm run pack:mac
             mac_prep "$tmp_dir/mac"
-            npm run pack:mac:uni
-            mac_prep "$tmp_dir/mac-uni" universal
         else
             npm run pack:mac
             mac_prep "$tmp_dir/mac-intel"
