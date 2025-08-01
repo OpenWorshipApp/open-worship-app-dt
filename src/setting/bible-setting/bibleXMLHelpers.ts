@@ -344,9 +344,9 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
         if (jsonData !== null) {
             return jsonData;
         }
-        const title = `Reading XML data for "${bibleKey}"`;
+        const title = `Loading Bible Data`;
         showProgressBar(title);
-        showSimpleToast(title, 'Please wait...');
+        showSimpleToast(title, `Reading Bible from file of "${bibleKey}"`);
         jsonData = await getBibleXMLDataFromKey(bibleKey);
         hideProgressBar(title);
         if (jsonData !== null) {
