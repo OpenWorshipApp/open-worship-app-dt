@@ -31,6 +31,7 @@ function rendChild(
                 })}
             />
             <img
+                loading="lazy"
                 src={fileSource.src}
                 className="card-img-top"
                 alt={fileSource.name}
