@@ -107,6 +107,9 @@ export default function BackgroundImagesComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
             genContextMenuItems={genContextMenuItems}
+            sortFilePaths={(filePaths) => {
+                return filePaths.sort();
+            }}
         />
     );
 }

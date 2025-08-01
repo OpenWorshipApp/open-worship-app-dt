@@ -31,11 +31,7 @@ const backgroundTypeMapper: any = {
     [DragTypeEnum.BACKGROUND_SOUND]: 'sound',
 };
 
-function FileFullNameRenderer({
-    fileFullName,
-}: Readonly<{
-    fileFullName: string;
-}>) {
+function genFileNameElement(fileName: string) {
     return (
         <div className="card-footer">
             <p
@@ -44,7 +40,7 @@ function FileFullNameRenderer({
                     fontSize: '14px',
                 }}
             >
-                {fileFullName}
+                {fileName}
             </p>
         </div>
     );
@@ -121,9 +117,9 @@ function genBody(
             >
                 <ItemColorNoteComp item={fileSource} />
             </div>
-            {isNameOnTop ? null : (
-                <FileFullNameRenderer fileFullName={fileSource.fullName} />
-            )}
+            {isNameOnTop
+                ? null
+                : genFileNameElement(fileSource.name)}
         </div>
     );
 }
@@ -139,6 +135,7 @@ export default function BackgroundMediaComp({
     isNameOnTop = false,
     contextMenuItems,
     genContextMenuItems,
+    sortFilePaths,
 }: Readonly<{
     extraHeaderChild?: React.ReactNode;
     rendChild: RenderChildType;
@@ -153,10 +150,22 @@ export default function BackgroundMediaComp({
         dirSource: DirSource,
         event: React.MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
+    sortFilePaths?: (filePaths: string[]) => string[];
 }>) {
     const backgroundType = backgroundTypeMapper[dragType];
     const dirSource = useGenDirSource(dirSourceSettingName);
     const handleBodyRendering = (filePaths: string[]) => {
+        const newFilePaths = sortFilePaths
+            ? sortFilePaths(filePaths)
+            : filePaths;
+        if (newFilePaths.length === 0) {
+            return (
+                <div className="alert alert-info">
+                    No {backgroundType} files found in this folder.
+                    <br />
+                </div>
+            );
+        }
         const genBodyWithChild = genBody.bind(
             null,
             rendChild,
