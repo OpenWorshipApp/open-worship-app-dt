@@ -173,14 +173,14 @@ export async function checkForUpdateSilently() {
         const version = updateData.version as string;
         console.log(
             `Current version: ${appProvider.appInfo.version}, ` +
-                `Latest version: ${version}`,
+            `Latest version: ${version}`,
         );
 
         if (checkIsVersionOutdated(appProvider.appInfo.version, version)) {
             const isOk = await showAppConfirm(
                 'Update Available',
                 `A new version of the app is available: "${version}". ` +
-                    'Would you like to check for update?',
+                'Would you like to check for update?',
             );
             if (isOk) {
                 appProvider.messageUtils.sendData('main:app:go-download');
@@ -272,10 +272,10 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     );
 }
 
-(window as any).getSlidesCount = async (
+export async function getSlidesCount(
     powerPointFilePath: string,
     dotNetRootDir?: string,
-) => {
+) {
     const powerPointHelper =
         await appProvider.powerPointUtils.getPowerPointHelper(dotNetRootDir);
     if (powerPointHelper === null) {

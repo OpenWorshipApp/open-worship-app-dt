@@ -101,10 +101,6 @@ export async function genPdfImagesPreview(
             return sortPdfImagePreviewInfo(imageFileInfoList);
         }
     }
-    showSimpleToast(
-        'Generating PDF preview images',
-        'Please do not close the application during this process.',
-    );
     await fsDeleteDir(outDir);
     await fsCreateDir(outDir);
     const previewData: {
