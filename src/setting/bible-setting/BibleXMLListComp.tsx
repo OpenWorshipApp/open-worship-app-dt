@@ -7,11 +7,8 @@ import {
     updateBibleXMLInfo,
     useBibleXMLInfo,
     deleteBibleXML,
-    cacheBibleXMLData,
-    getBibleXMLDataFromKey,
 } from './bibleXMLHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
-import { showSimpleToast } from '../../toast/toastHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
 
 function PreviewBibleXMLInfoComp({
@@ -98,16 +95,6 @@ function BibleXMLInfoComp({
         await deleteBibleXML(bibleKey);
         loadBibleKeys();
     };
-    const handleReloading = async (event: any) => {
-        event.stopPropagation();
-        const jsonData = await getBibleXMLDataFromKey(bibleKey);
-        if (jsonData === null) {
-            showSimpleToast('Loading', 'Failed to load Bible XML');
-            return;
-        }
-        await cacheBibleXMLData(jsonData);
-        showSimpleToast('Loading', 'Bible XML reloaded');
-    };
     return (
         <li
             className="list-group-item"
@@ -127,12 +114,6 @@ function BibleXMLInfoComp({
                             }}
                         >
                             Edit
-                        </button>
-                        <button
-                            className="btn btn-info"
-                            onClick={handleReloading}
-                        >
-                            Reload Cache
                         </button>
                         <button
                             className="btn btn-danger"

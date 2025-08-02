@@ -1,12 +1,11 @@
 import { getKJVChapterCount, toBibleFileName } from './serverBibleHelpers';
-import { bibleKeyToFilePath } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
-import { bibleDataReader, BibleInfoType, ChapterType } from './BibleDataReader';
-import { fsCheckFileExist } from '../../server/fileHelpers';
-import { showSimpleToast } from '../../toast/toastHelpers';
+import { bibleKeyToXMLFilePath } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
 import {
-    cacheBibleXMLData,
-    getBibleXMLDataFromKey,
-} from '../../setting/bible-setting/bibleXMLHelpers';
+    bibleDataReader,
+    BibleInfoType,
+    BibleChapterType,
+} from './BibleDataReader';
+import { fsCheckFileExist } from '../../server/fileHelpers';
 import {
     hideProgressBar,
     showProgressBar,
@@ -73,7 +72,7 @@ export async function getBookChapterData(
     const verseInfo = (await bibleDataReader.readBibleData(
         bibleKey,
         fileName,
-    )) as ChapterType | null;
+    )) as BibleChapterType | null;
     if (verseInfo === null) {
         return null;
     }
@@ -88,22 +87,9 @@ export async function getVerses(
     return chapterData ? chapterData.verses : null;
 }
 
-async function getBibleInfoXML(bibleKey: string) {
-    const xmlFilePath = await bibleKeyToFilePath(bibleKey);
+export async function checkIsBibleXML(bibleKey: string) {
+    const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey);
     if (xmlFilePath === null || !(await fsCheckFileExist(xmlFilePath))) {
-        return false;
-    }
-    const title = `Reloading Bible XML Cache for "${bibleKey}"`;
-    showSimpleToast(title, 'This will take a while');
-    const jsonData = await getBibleXMLDataFromKey(bibleKey);
-    if (jsonData === null) {
-        showSimpleToast(title, 'Failed to load Bible XML');
-        return false;
-    }
-    const isSuccess = await cacheBibleXMLData(jsonData);
-    if (isSuccess) {
-        showSimpleToast(title, 'Bible XML reloaded');
-    } else {
         return false;
     }
     return true;
@@ -120,7 +106,10 @@ const bibleInfoMap = new Map<
     string,
     { info: BibleInfoType; timestamp: number }
 >();
-export async function getBibleInfo(bibleKey: string, isForce = false) {
+export async function getBibleInfo(
+    bibleKey: string,
+    isForce = false,
+): Promise<BibleInfoType | null> {
     if (isForce) {
         bibleInfoMap.delete(bibleKey);
     }
@@ -135,9 +124,9 @@ export async function getBibleInfo(bibleKey: string, isForce = false) {
     if (info === null || checkIsBooksAvailableMissing(info)) {
         bibleInfoMap.delete(bibleKey);
         showProgressBar(bibleKey);
-        const bibleInfo = await getBibleInfoXML(bibleKey);
+        const isBibleXML = await checkIsBibleXML(bibleKey);
         hideProgressBar(bibleKey);
-        if (bibleInfo) {
+        if (isBibleXML) {
             return await getBibleInfo(bibleKey, true);
         }
     } else {

@@ -4,7 +4,6 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
-import { useLocalBibleInfoList } from '../setting/bible-setting/bibleSettingHelpers';
 import {
     BibleMinimalInfoType,
     getAllLocalBibleInfoList,
@@ -12,6 +11,8 @@ import {
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { getFontFamily, LocaleType } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,
@@ -123,13 +124,6 @@ export default function BibleSelectionComp({
     bibleKey: string;
     onBibleKeyChange: (oldBibleKey: string, newBibleKey: string) => void;
 }>) {
-    const [bibleInfoList] = useLocalBibleInfoList();
-    if (bibleInfoList === null) {
-        return <div>Loading ...</div>;
-    }
-    if (bibleInfoList === undefined) {
-        return <div className="alert alert-danger">Error</div>;
-    }
     return (
         <button
             className="input-group-text"
@@ -152,13 +146,6 @@ export function BibleSelectionMiniComp({
     onBibleKeyChange?: (oldBibleKey: string, newBibleKey: string) => void;
     isMinimal?: boolean;
 }>) {
-    const [bibleInfoList] = useLocalBibleInfoList();
-    if (bibleInfoList === null) {
-        return <div>...</div>;
-    }
-    if (bibleInfoList === undefined) {
-        return <div className="badge rounded-pill text-bg-danger">Error</div>;
-    }
     const isHandleClickEvent = onBibleKeyChange !== undefined;
     return (
         <span
@@ -180,12 +167,11 @@ export function BibleSelectionMiniComp({
 }
 
 function BibleKeyWithTileComp({ bibleKey }: Readonly<{ bibleKey: string }>) {
-    const [bibleInfoList] = useLocalBibleInfoList();
-    const currentBibleInfo = bibleInfoList?.find(
-        (bibleInfo) => bibleInfo.key === bibleKey,
-    );
+    const [bibleInfo] = useAppStateAsync(() => {
+        return getBibleInfo(bibleKey);
+    }, [bibleKey]);
     return (
-        <span title={currentBibleInfo?.title} data-bible-key={bibleKey}>
+        <span title={bibleInfo?.title} data-bible-key={bibleKey}>
             {bibleKey}
         </span>
     );

@@ -121,6 +121,9 @@ export default function BackgroundVideosComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_VIDEO}
             genContextMenuItems={genVideoDownloadContextMenuItems}
+            sortFilePaths={(filePaths) => {
+                return filePaths.sort();
+            }}
         />
     );
 }

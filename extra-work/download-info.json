@@ -1,20 +1,22 @@
 {
     "win": {
         "isWindows": true,
-        "is64System": true
+        "is64System": true,
+        "isArm64": false
     },
     "win-ia32": {
         "isWindows": true,
-        "is64System": false
+        "is64System": false,
+        "isArm64": false
+    },
+    "win-arm64": {
+        "isWindows": true,
+        "is64System": true,
+        "isArm64": true
     },
     "mac": {
         "isMac": true,
         "isArm64": true
-    },
-    "mac-uni": {
-        "isMac": true,
-        "isArm64": true,
-        "isUniversal": true
     },
     "mac-intel": {
         "isMac": true,
@@ -24,11 +26,13 @@
     "linux-ubuntu": {
         "isLinux": true,
         "isUbuntu": true,
-        "is64System": true
+        "is64System": true,
+        "isArm64": false
     },
     "linux-fedora": {
         "isLinux": true,
         "isFedora": true,
-        "is64System": true
+        "is64System": true,
+        "isArm64": false
     }
 }

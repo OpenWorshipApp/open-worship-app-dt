@@ -16,32 +16,29 @@ import { fsListFiles, pathJoin } from '../../server/fileHelpers';
 import FileSource from '../../helper/FileSource';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import CacheManager from '../../others/CacheManager';
-import { unlocking } from '../../server/unlockingHelpers';
+import { unlockingCacher } from '../../server/unlockingHelpers';
 
 freezeObject(kjvBibleInfo);
 
-const bibleKeyFilePathCache = new CacheManager(3);
+const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
-    return unlocking(filePath, async () => {
-        const cachedBibleKey = await bibleKeyFilePathCache.get(filePath);
-        if (cachedBibleKey) {
-            return cachedBibleKey;
-        }
-        const xmlText = await FileSource.readFileData(filePath);
-        if (xmlText === null) {
-            return null;
-        }
-        const bibleXMLElement = xmlTextToBibleElement(xmlText);
-        if (!bibleXMLElement) {
-            return null;
-        }
-        const bibleKey = await guessingBibleKey(bibleXMLElement);
-        if (bibleKey === null) {
-            return null;
-        }
-        await bibleKeyFilePathCache.set(filePath, bibleKey);
-        return bibleKey;
-    });
+    return unlockingCacher(
+        filePath,
+        async () => {
+            const xmlText = await FileSource.readFileData(filePath);
+            if (xmlText === null) {
+                return null;
+            }
+            const bibleXMLElement = xmlTextToBibleElement(xmlText);
+            if (!bibleXMLElement) {
+                return null;
+            }
+            const bibleKey = await guessingBibleKey(bibleXMLElement);
+            return bibleKey;
+        },
+        bibleKeyFilePathCache,
+        true,
+    );
 }
 
 export async function getAllXMLFileKeys() {
@@ -139,7 +136,7 @@ export type BibleJsonInfoType = {
     filePath: string;
 };
 
-export type BibleJsonType = {
+export type BibleXMLJsonType = {
     info: BibleJsonInfoType;
     books: { [booKey: string]: BibleBookJsonType };
 };
@@ -316,7 +313,7 @@ export async function getBibleInfoJson(bibleXMLElement: Element) {
     if (getLangCode(locale as any) === null) {
         return null;
     }
-    const filePath = await bibleKeyToFilePath(bibleKey);
+    const filePath = await bibleKeyToXMLFilePath(bibleKey);
     const books = Array.from(
         guessElement(bibleXMLElement, tagNamesMap.book) ?? [],
     );
@@ -394,7 +391,7 @@ function getBibleBooksJson(bibleXMLElement: Element) {
     return booksJson;
 }
 
-export function jsonToXMLText(jsonData: BibleJsonType) {
+export function jsonToXMLText(jsonData: BibleXMLJsonType) {
     const { numbersMap, booksMap, ...info } = jsonData.info;
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(
@@ -470,10 +467,10 @@ export async function xmlToJson(xmlText: string) {
     if (bibleBooks === null) {
         return null;
     }
-    return { info: bibleInfo, books: bibleBooks } as BibleJsonType;
+    return { info: bibleInfo, books: bibleBooks } as BibleXMLJsonType;
 }
 
-export async function bibleKeyToFilePath(
+export async function bibleKeyToXMLFilePath(
     bibleKey: string,
     isFromFileName = false,
 ) {

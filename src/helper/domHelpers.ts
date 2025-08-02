@@ -251,3 +251,17 @@ export class InputContextMenuHandler {
             });
     }
 }
+
+export async function removeDomTitle(element: Node, eventType: MutationType) {
+    if (!(element instanceof HTMLElement)) {
+        return;
+    }
+    if (element.title) {
+        element.title = '';
+    }
+    if (eventType === 'added') {
+        Array.from(element.children).forEach((child) => {
+            removeDomTitle(child, eventType);
+        });
+    }
+}

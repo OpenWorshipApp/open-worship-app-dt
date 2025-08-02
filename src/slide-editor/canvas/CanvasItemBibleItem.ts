@@ -2,7 +2,6 @@ import BibleItem from '../../bible-list/BibleItem';
 import CanvasItemText, { CanvasItemTextPropsType } from './CanvasItemText';
 import { cloneJson } from '../../helper/helpers';
 import { CanvasItemError } from './CanvasItem';
-import { HAlignmentType, VAlignmentType } from './canvasHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import {
     BibleTargetType,
@@ -55,10 +54,6 @@ export default class CanvasItemBibleItem extends CanvasItemText {
                     text,
                 },
             ],
-            horizontalAlignment: 'left' as HAlignmentType,
-            verticalAlignment: 'top' as VAlignmentType,
-            textHorizontalAlignment: 'left' as HAlignmentType,
-            textVerticalAlignment: 'top' as VAlignmentType,
             type: 'bible',
         };
         return CanvasItemBibleItem.fromJson(json);

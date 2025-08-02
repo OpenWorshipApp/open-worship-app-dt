@@ -31,6 +31,7 @@ function rendChild(
                 })}
             />
             <img
+                loading="lazy"
                 src={fileSource.src}
                 className="card-img-top"
                 alt={fileSource.name}
@@ -106,6 +107,9 @@ export default function BackgroundImagesComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
             genContextMenuItems={genContextMenuItems}
+            sortFilePaths={(filePaths) => {
+                return filePaths.sort();
+            }}
         />
     );
 }

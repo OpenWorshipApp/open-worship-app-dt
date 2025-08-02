@@ -5,9 +5,7 @@ import { AppColorType } from '../../others/color/colorHelpers';
 import appProvider from '../../server/appProvider';
 import {
     genTextDefaultBoxStyle,
-    hAlignmentList,
     HAlignmentType,
-    vAlignmentList,
     VAlignmentType,
 } from './canvasHelpers';
 import CanvasItem, { CanvasItemError, CanvasItemPropsType } from './CanvasItem';

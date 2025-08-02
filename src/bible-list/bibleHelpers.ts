@@ -17,7 +17,7 @@ import DirSource from '../helper/DirSource';
 import FileSource from '../helper/FileSource';
 import { addExtension } from '../server/fileHelpers';
 import appProvider from '../server/appProvider';
-import { VerseList } from '../helper/bible-helpers/BibleDataReader';
+import { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
 import {
     ContextMenuItemType,
     showAppContextMenu,
@@ -78,7 +78,7 @@ export async function saveBibleItem(bibleItem: BibleItem, onDone?: () => void) {
 export type ConsumeVerseType = {
     sVerse: number;
     eVerse: number;
-    verses: VerseList;
+    verses: BibleVerseList;
 };
 export async function genVerseList({
     bibleKey,
