@@ -41,6 +41,7 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
+import { log } from '../../helper/loggerHelpers';
 
 type MessageCallbackType = (message: string | null) => void;
 
@@ -346,7 +347,7 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
         }
         const title = `Loading Bible Data`;
         showProgressBar(title);
-        showSimpleToast(title, `Reading Bible from file of "${bibleKey}"`);
+        log(title, `Reading Bible from file of "${bibleKey}"`);
         jsonData = await getBibleXMLDataFromKey(bibleKey);
         hideProgressBar(title);
         if (jsonData !== null) {

@@ -8,8 +8,6 @@ import {
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
 import appProvider from '../server/appProvider';
-import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 
 export function QuitCurrentPageComp({
     title,
@@ -104,17 +102,6 @@ export function BibleLookupButtonComp() {
             title={`Bible lookup [${toShortcutKey(openBibleEventMap)}]`}
             type="button"
             onClick={async () => {
-                const localBibleInfoList = await getAllLocalBibleInfoList();
-                if (!localBibleInfoList?.length) {
-                    const isConfirmed = await showAppConfirm(
-                        'No Bible',
-                        'You need to download a Bible to use this feature',
-                    );
-                    if (isConfirmed) {
-                        goToPath(appProvider.settingHomePage);
-                    }
-                    return;
-                }
                 setIsBibleLookupShowing(true);
             }}
         >
