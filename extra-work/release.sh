@@ -65,6 +65,8 @@ mac_prep() {
 
 linux_prep() {
     start_prep "$1"
+    chmod +x "$1"/*.AppImage
+    chmod +x "$1"/*.deb
     ls "$1" | grep -E '\.deb$|\.AppImage$' | while read -r file; do
         checksum=$(sha512sum "$1/$file" | awk '{print $1}')
         append_file_info "$1" "$file" "$checksum" "$1/latest-linux.yml"
