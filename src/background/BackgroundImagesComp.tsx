@@ -9,14 +9,30 @@ import {
     dirSourceSettingNames,
 } from '../helper/constants';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 import {
     checkIsImagesInClipboard,
+    downloadImage,
     readImagesFromClipboard,
 } from '../server/appHelpers';
 import DirSource from '../helper/DirSource';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { getDotExtensionFromBase64Data } from '../server/fileHelpers';
+import {
+    fsCheckFileExist,
+    fsDeleteFile,
+    fsMove,
+    getDotExtensionFromBase64Data,
+} from '../server/fileHelpers';
+import { askForURL } from './downloadHelper';
+import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../progress-bar/progressBarHelpers';
+import { handleError } from '../helper/errorHelpers';
 
 function rendChild(
     filePath: string,
@@ -96,10 +112,65 @@ async function genContextMenuItems(dirSource: DirSource) {
             },
         });
     }
+    contextMenuItems.push({
+        menuElement: '`Download from URL',
+        onSelect: async () => {
+            const imageUrl = await askForURL(
+                '`Download From URL',
+                'Image URL:',
+            );
+            if (imageUrl === null) {
+                return;
+            }
+            try {
+                showSimpleToast(
+                    '`Download From URL',
+                    `Downloading image from "${imageUrl}", please wait...`,
+                );
+                showProgressBar(imageUrl);
+                const defaultPath = getDefaultDataDir();
+                const { filePath, fileFullName } = await downloadImage(
+                    imageUrl,
+                    defaultPath,
+                );
+                const destFileSource = FileSource.getInstance(
+                    dirSource.dirPath,
+                    fileFullName,
+                );
+                if (await fsCheckFileExist(destFileSource.filePath)) {
+                    await fsDeleteFile(destFileSource.filePath);
+                }
+                await fsMove(filePath, destFileSource.filePath);
+                showSimpleToast(
+                    '`Download From URL',
+                    `Image downloaded successfully, file path: "${destFileSource.filePath}"`,
+                );
+            } catch (error) {
+                handleError(error);
+                showSimpleToast(
+                    '`Download From URL',
+                    'Error occurred during downloading image',
+                );
+            } finally {
+                hideProgressBar(imageUrl);
+            }
+        },
+    });
     return contextMenuItems;
 }
 
 export default function BackgroundImagesComp() {
+    const handleItemsAdding = async (
+        dirSource: DirSource,
+        defaultContextMenuItems: ContextMenuItemType[],
+        event: any,
+    ) => {
+        const contextMenuItems = await genContextMenuItems(dirSource);
+        showAppContextMenu(event, [
+            ...defaultContextMenuItems,
+            ...contextMenuItems,
+        ]);
+    };
     return (
         <BackgroundMediaComp
             defaultFolderName={defaultDataDirNames.BACKGROUND_IMAGE}
@@ -107,9 +178,7 @@ export default function BackgroundImagesComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
             genContextMenuItems={genContextMenuItems}
-            sortFilePaths={(filePaths) => {
-                return filePaths.sort();
-            }}
+            onItemsAdding={handleItemsAdding}
         />
     );
 }

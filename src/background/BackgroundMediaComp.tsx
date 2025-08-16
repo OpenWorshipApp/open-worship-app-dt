@@ -133,7 +133,10 @@ export default function BackgroundMediaComp({
     isNameOnTop = false,
     contextMenuItems,
     genContextMenuItems,
-    sortFilePaths,
+    sortFilePaths = (filePaths) => {
+        return filePaths.sort((a, b) => a.localeCompare(b));
+    },
+    onItemsAdding,
 }: Readonly<{
     extraHeaderChild?: React.ReactNode;
     rendChild: RenderChildType;
@@ -149,21 +152,16 @@ export default function BackgroundMediaComp({
         event: React.MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
     sortFilePaths?: (filePaths: string[]) => string[];
+    onItemsAdding?: (
+        dirSource: DirSource,
+        contextMenuItems: ContextMenuItemType[],
+        event: any,
+    ) => void;
 }>) {
     const backgroundType = backgroundTypeMapper[dragType];
     const dirSource = useGenDirSource(dirSourceSettingName);
     const handleBodyRendering = (filePaths: string[]) => {
-        const newFilePaths = sortFilePaths
-            ? sortFilePaths(filePaths)
-            : filePaths;
-        if (newFilePaths.length === 0) {
-            return (
-                <div className="alert alert-info">
-                    No {backgroundType} files found in this folder.
-                    <br />
-                </div>
-            );
-        }
+        const newFilePaths = sortFilePaths(filePaths);
         const genBodyWithChild = genBody.bind(
             null,
             rendChild,
@@ -178,7 +176,7 @@ export default function BackgroundMediaComp({
                     <>{extraHeaderChild}</>
                 ) : null}
                 <div className="d-flex justify-content-start flex-wrap">
-                    {filePaths.map(genBodyWithChild)}
+                    {newFilePaths.map(genBodyWithChild)}
                 </div>
             </div>
         );
@@ -204,6 +202,11 @@ export default function BackgroundMediaComp({
                           dirPath: dirSource.dirPath,
                           extensions: getMimetypeExtensions(backgroundType),
                       }
+            }
+            onItemsAdding={
+                onItemsAdding !== undefined
+                    ? onItemsAdding.bind(null, dirSource)
+                    : undefined
             }
         />
     );

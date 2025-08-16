@@ -12,7 +12,7 @@ import {
 } from '../helper/constants';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import VideoHeaderSettingComp from './VideoHeaderSettingComp';
-import { genContextMenuItems } from './downloadHelper';
+import { genDownloadContextMenuItems } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
 import {
     showProgressBar,
@@ -23,6 +23,10 @@ import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import DirSource from '../helper/DirSource';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 
 function rendChild(
     filePath: string,
@@ -69,7 +73,7 @@ function RendBody({
 }
 
 async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
-    return genContextMenuItems(
+    return genDownloadContextMenuItems(
         {
             title: '`Download From URL',
             subTitle: 'Video URL:',
@@ -113,6 +117,18 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
 }
 
 export default function BackgroundVideosComp() {
+    const handleItemsAdding = async (
+        dirSource: DirSource,
+        defaultContextMenuItems: ContextMenuItemType[],
+        event: any,
+    ) => {
+        const contextMenuItems =
+            await genVideoDownloadContextMenuItems(dirSource);
+        showAppContextMenu(event, [
+            ...defaultContextMenuItems,
+            ...contextMenuItems,
+        ]);
+    };
     return (
         <BackgroundMediaComp
             extraHeaderChild={<VideoHeaderSettingComp />}
@@ -121,9 +137,7 @@ export default function BackgroundVideosComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_VIDEO}
             genContextMenuItems={genVideoDownloadContextMenuItems}
-            sortFilePaths={(filePaths) => {
-                return filePaths.sort();
-            }}
+            onItemsAdding={handleItemsAdding}
         />
     );
 }

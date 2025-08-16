@@ -56,7 +56,7 @@ export default function PathSelectorComp({
 }: Readonly<{
     dirSource: DirSource;
     prefix: string;
-    addItems?: () => void;
+    addItems?: (event: any) => void;
     isForceShowEditor?: boolean;
 }>) {
     const [isShowingEditor, setIsShowingEditor] = useState(false);
@@ -103,7 +103,7 @@ function RenderPathTitleComp({
     addItems,
 }: Readonly<{
     dirSource: DirSource;
-    addItems?: () => void;
+    addItems?: (event:any) => void;
 }>) {
     if (!dirSource.dirPath) {
         return null;
@@ -127,7 +127,7 @@ function RenderPathTitleComp({
                     title="Add items"
                     onClick={(event) => {
                         event.stopPropagation();
-                        addItems();
+                        addItems(event);
                     }}
                 >
                     <i className="bi bi-plus-lg" />

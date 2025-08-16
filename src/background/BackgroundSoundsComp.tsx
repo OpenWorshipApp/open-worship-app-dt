@@ -25,8 +25,12 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
-import { genContextMenuItems } from './downloadHelper';
+import { genDownloadContextMenuItems } from './downloadHelper';
 import { downloadVideoOrAudio } from '../server/appHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 
 function RendBodyComp({
     filePath,
@@ -94,7 +98,7 @@ function rendChild(
 }
 
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
-    return genContextMenuItems(
+    return genDownloadContextMenuItems(
         {
             title: '`Download From URL',
             subTitle: 'Audio URL:',
@@ -164,6 +168,18 @@ export default function BackgroundSoundsComp() {
             };
         });
     };
+    const handleItemsAdding = async (
+        dirSource: DirSource,
+        defaultContextMenuItems: ContextMenuItemType[],
+        event: any,
+    ) => {
+        const contextMenuItems =
+            await genAudioDownloadContextMenuItems(dirSource);
+        showAppContextMenu(event, [
+            ...defaultContextMenuItems,
+            ...contextMenuItems,
+        ]);
+    };
     return (
         <BackgroundMediaComp
             rendChild={rendChild.bind(null, activeMap)}
@@ -174,6 +190,7 @@ export default function BackgroundSoundsComp() {
             noDraggable={true}
             isNameOnTop={true}
             genContextMenuItems={genAudioDownloadContextMenuItems}
+            onItemsAdding={handleItemsAdding}
         />
     );
 }

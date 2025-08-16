@@ -166,7 +166,19 @@ export async function handleFilesSelectionMenuItem(
     await Promise.all(promises);
 }
 
-export function genOnContextMenu(
+export function genItemsAddingContextMenuItems(addItems?: () => void) {
+    if (addItems === undefined) {
+        return [];
+    }
+    return [
+        {
+            menuElement: '`Add Items',
+            onSelect: addItems,
+        },
+    ];
+}
+
+export function genDroppingFileOnContextMenu(
     dirSource: DirSource,
     {
         contextMenuItems,
@@ -189,10 +201,7 @@ export function genOnContextMenu(
     return async (event: React.MouseEvent<any>) => {
         const menuItems: ContextMenuItemType[] = [...(contextMenuItems ?? [])];
         if (addItems !== undefined) {
-            menuItems.push({
-                menuElement: '`Add Items',
-                onSelect: addItems,
-            });
+            menuItems.push(...genItemsAddingContextMenuItems(addItems));
         }
         if (onStartNewFile !== undefined) {
             menuItems.push({

@@ -36,7 +36,33 @@ function InputUrlComp({
     );
 }
 
-export async function genContextMenuItems(
+export async function askForURL(title: string, subTitle: string) {
+    let url = '';
+    const clipboardText = await readTextFromClipboard();
+    if (clipboardText !== null && clipboardText.trim().startsWith('http')) {
+        url = clipboardText.trim();
+    }
+    const isConfirmInput = await showAppInput(
+        title,
+        <InputUrlComp
+            defaultUrl={url}
+            onChange={(newUrl) => {
+                url = newUrl;
+            }}
+            title={subTitle}
+        />,
+    );
+    if (!isConfirmInput) {
+        return null;
+    }
+    if (!url.trim().startsWith('http')) {
+        showSimpleToast('`Download From URL', 'Invalid URL');
+        return null;
+    }
+    return url;
+}
+
+export async function genDownloadContextMenuItems(
     { title, subTitle }: { title: string; subTitle: string },
     dirSource: DirSource,
     download: (url: string) => Promise<void>,
@@ -48,29 +74,8 @@ export async function genContextMenuItems(
         {
             menuElement: '`Download From URL',
             onSelect: async () => {
-                let url = '';
-                const clipboardText = await readTextFromClipboard();
-                if (
-                    clipboardText !== null &&
-                    clipboardText.trim().startsWith('http')
-                ) {
-                    url = clipboardText.trim();
-                }
-                const isConfirmInput = await showAppInput(
-                    title,
-                    <InputUrlComp
-                        defaultUrl={url}
-                        onChange={(newUrl) => {
-                            url = newUrl;
-                        }}
-                        title={subTitle}
-                    />,
-                );
-                if (!isConfirmInput) {
-                    return;
-                }
-                if (!url.trim().startsWith('http')) {
-                    showSimpleToast('`Download From URL', 'Invalid URL');
+                const url = await askForURL(title, subTitle);
+                if (url === null) {
                     return;
                 }
                 await download(url);
