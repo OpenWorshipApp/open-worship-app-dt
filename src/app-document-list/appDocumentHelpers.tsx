@@ -15,7 +15,6 @@ import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
     fsCopyFilePathToPath,
-    fsDeleteFile,
     getFileDotExtension,
     getFileFullName,
     getFileName,

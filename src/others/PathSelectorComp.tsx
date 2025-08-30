@@ -103,7 +103,7 @@ function RenderPathTitleComp({
     addItems,
 }: Readonly<{
     dirSource: DirSource;
-    addItems?: (event:any) => void;
+    addItems?: (event: any) => void;
 }>) {
     if (!dirSource.dirPath) {
         return null;

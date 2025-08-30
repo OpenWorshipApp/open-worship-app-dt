@@ -7,7 +7,6 @@ import {
     fsDeleteDir,
     fsListFiles,
 } from '../server/fileHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
 import FileSource from './FileSource';
 
 function toPdfImagesPreviewDirPath(filePath: string) {

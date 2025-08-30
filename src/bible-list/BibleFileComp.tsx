@@ -7,7 +7,7 @@ import AppSuspenseComp from '../others/AppSuspenseComp';
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
-import { moveBibleItemTo } from './bibleHelpers';
+import { moveBibleItemTo, useIsOnScreen } from './bibleHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -80,10 +80,11 @@ function genContextMenu(
 
 function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
+    const isOnScreen = useIsOnScreen(bible.items);
     return (
         <div className="w-100 accordion accordion-flush py-1 ms-2 pointer">
             <div
-                className="accordion-header app- d-flex"
+                className={`accordion-header d-flex ${isOnScreen ? 'app-on-screen' : ''}`}
                 onClick={() => {
                     bible.setIsOpened(!bible.isOpened);
                 }}
