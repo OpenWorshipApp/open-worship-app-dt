@@ -38,6 +38,7 @@ $dragging-color: greenyellow;
 
   .list-group-item {
     border: 1px solid var(--bs-gray-700);
+    border-radius: 5px;
 
     &:before {
       display: block;

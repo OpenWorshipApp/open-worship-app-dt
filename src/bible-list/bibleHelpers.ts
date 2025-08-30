@@ -27,6 +27,8 @@ import LookupBibleItemController from '../bible-reader/LookupBibleItemController
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
+import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
+import { bibleRenderHelper } from './bibleRenderHelpers';
 
 export const SelectedBibleKeyContext = createContext<string>('KJV');
 export function useBibleKeyContext() {
@@ -243,4 +245,29 @@ export async function openBibleItemContextMenu(
         });
     }
     showAppContextMenu(event, [...extraMenuItems, ...menuItem]);
+}
+
+export async function getOnScreenBibleItems() {
+    const allScreenManager = getAllScreenManagers();
+    const titleList: string[] = [];
+    for (const screenManager of allScreenManager) {
+        for (const bibleItemDataList of Object.values(
+            screenManager.screenBibleManager.screenViewData?.bibleItemData ??
+                {},
+        )) {
+            if (Array.isArray(bibleItemDataList)) {
+                for (const bibleItemData of bibleItemDataList) {
+                    titleList.push(bibleItemData.title);
+                }
+            } else {
+                titleList.push(
+                    await bibleRenderHelper.toTitle(
+                        bibleItemDataList.bibleKey,
+                        bibleItemDataList.target,
+                    ),
+                );
+            }
+        }
+    }
+    return Array.from(new Set(titleList));
 }

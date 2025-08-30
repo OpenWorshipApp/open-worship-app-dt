@@ -81,7 +81,7 @@ function genContextMenu(
 function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
     return (
-        <div className="accordion accordion-flush py-1 ms-2">
+        <div className="w-100 accordion accordion-flush py-1 ms-2 pointer">
             <div
                 className="accordion-header app- d-flex"
                 onClick={() => {
@@ -105,7 +105,9 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
                         {fileSource.name}
                     </span>
                 </div>
-                <AttachBackgroundIconComponent filePath={bible.filePath} />
+                <div className="float-end">
+                    <AttachBackgroundIconComponent filePath={bible.filePath} />
+                </div>
             </div>
             <div
                 className={`accordion-collapse collapse ${

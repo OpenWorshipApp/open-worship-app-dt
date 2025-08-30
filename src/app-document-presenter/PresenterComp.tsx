@@ -28,6 +28,7 @@ import BibleItemsViewController, {
     useBibleItemViewControllerUpdateEvent,
 } from '../bible-reader/BibleItemsViewController';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import { getOnScreenBibleItems } from '../bible-list/bibleHelpers';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
@@ -86,30 +87,13 @@ async function checkIsOnScreen<T>(
             return screenManager.screenForegroundManager.isShowing;
         });
     } else if (targeKey === 'b') {
-        const allScreenManager = getAllScreenManagers();
+        const titleList = await getOnScreenBibleItems();
         const bibleItems = viewController.straightBibleItems;
-        const titleList = await Promise.all(
-            bibleItems.map((bibleItem) => {
-                return bibleItem.toTitle();
-            }),
-        );
-        return allScreenManager.some(({ screenBibleManager }) => {
-            for (const bibleItemDataList of Object.values(
-                screenBibleManager.screenViewData?.bibleItemData ?? {},
-            )) {
-                if (
-                    Array.isArray(bibleItemDataList) &&
-                    bibleItemDataList.length > 0
-                ) {
-                    for (const bibleItemData of bibleItemDataList) {
-                        if (titleList.includes(bibleItemData.title)) {
-                            return true;
-                        }
-                    }
-                }
+        for (const bibleItem of bibleItems) {
+            if (titleList.includes(await bibleItem.toTitle())) {
+                return true;
             }
-            return false;
-        });
+        }
     }
     return false;
 }

@@ -113,7 +113,6 @@ export default function FileItemHandlerComp({
     onDrop,
     onClick,
     renderChild,
-    isPointer,
     preDelete,
     isDisabledColorNote,
     userClassName,
@@ -130,7 +129,6 @@ export default function FileItemHandlerComp({
     onDrop?: (event: any) => void;
     onClick?: () => void;
     renderChild: (data: AppDocumentSourceAbs) => any;
-    isPointer?: boolean;
     preDelete?: () => void;
     isDisabledColorNote?: boolean;
     userClassName?: string;
@@ -172,15 +170,13 @@ export default function FileItemHandlerComp({
     const moreClassName =
         `${isSelected ? 'active' : ''} ` + `${className ?? ''}`;
     const fileSource = FileSource.getInstance(filePath);
+    const isPointer = !!onClick;
     return (
         <li
             className={
                 `list-group-item m-1 ${moreClassName} overflow-hidden` +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
-            style={{
-                borderRadius: '0.25rem',
-            }}
             onClick={applyClick}
             data-index={index + 1}
             title={filePath}
