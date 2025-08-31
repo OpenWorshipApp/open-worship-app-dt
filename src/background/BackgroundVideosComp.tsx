@@ -1,6 +1,6 @@
 import './BackgroundVideosComp.scss';
 
-import { createRef } from 'react';
+import { createRef, ReactElement } from 'react';
 
 import { RenderScreenIds } from './BackgroundComp';
 import FileSource from '../helper/FileSource';
@@ -31,11 +31,15 @@ import {
 function rendChild(
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    height: number,
+    extraChild?: ReactElement,
 ) {
     return (
         <RendBody
             filePath={filePath}
             selectedBackgroundSrcList={selectedBackgroundSrcList}
+            height={height}
+            extraChild={extraChild}
         />
     );
 }
@@ -43,15 +47,20 @@ function rendChild(
 function RendBody({
     filePath,
     selectedBackgroundSrcList,
+    height,
+    extraChild,
 }: Readonly<{
     filePath: string;
     selectedBackgroundSrcList: [string, BackgroundSrcType][];
+    height: number;
+    extraChild?: ReactElement;
 }>) {
     const vRef = createRef<HTMLVideoElement>();
     const fileSource = FileSource.getInstance(filePath);
     return (
         <div
-            className="card-body"
+            className="card-body overflow-hidden blank-bg"
+            style={{ height: `${height}px` }}
             onMouseEnter={() => {
                 vRef.current?.play();
             }}
@@ -62,6 +71,7 @@ function RendBody({
                 }
             }}
         >
+            {extraChild}
             <RenderScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return parseInt(key);

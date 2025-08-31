@@ -303,7 +303,10 @@ export default function SlideItemRenderComp({
                 varyAppDocumentItem={slide}
                 viewIndex={index + 1}
             />
-            <div className="card-body overflow-hidden w-100" style={style}>
+            <div
+                className="card-body overflow-hidden w-100 blank-bg"
+                style={style}
+            >
                 {attachedBackgroundElement && (
                     <div
                         className="w-100"

@@ -19,10 +19,15 @@ import {
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { OptionalPromise } from '../helper/typeHelpers';
 import DirSource from '../helper/DirSource';
+import { useStateSettingNumber } from '../helper/settingHelpers';
+import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
+import { ReactElement } from 'react';
 
 export type RenderChildType = (
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    height: number,
+    extraChild?: ReactElement,
 ) => React.ReactNode;
 
 const backgroundTypeMapper: any = {
@@ -52,6 +57,8 @@ function genBody(
     onClick: ((event: any, fileSource: FileSource) => void) | undefined,
     noDraggable: boolean,
     isNameOnTop: boolean,
+    thumbnailWidth: number,
+    thumbnailHeight: number,
     filePath: string,
 ) {
     const fileSource = FileSource.getInstance(filePath);
@@ -80,6 +87,9 @@ function genBody(
             key={fileSource.fullName}
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
             title={title}
+            style={{
+                width: `${thumbnailWidth}px`,
+            }}
             draggable={!noDraggable}
             onDragStart={(event) => {
                 handleDragStart(event, fileSource, dragType);
@@ -108,19 +118,30 @@ function genBody(
                     {fileSource.fullName}
                 </div>
             )}
-            {rendChild(filePath, selectedBackgroundSrcList)}
-            <div
-                style={{
-                    position: 'absolute',
-                    right: 0,
-                }}
-            >
-                <ItemColorNoteComp item={fileSource} />
-            </div>
+            {rendChild(
+                filePath,
+                selectedBackgroundSrcList,
+                thumbnailHeight,
+                <div
+                    style={{
+                        position: 'absolute',
+                        right: 0,
+                    }}
+                >
+                    <ItemColorNoteComp item={fileSource} />
+                </div>,
+            )}
             {isNameOnTop ? null : genFileNameElement(fileSource.name)}
         </div>
     );
 }
+
+export const defaultRangeSize = {
+    size: 100,
+    min: 100,
+    max: 500,
+    step: 10,
+};
 
 export default function BackgroundMediaComp({
     extraHeaderChild,
@@ -158,9 +179,14 @@ export default function BackgroundMediaComp({
         event: any,
     ) => void;
 }>) {
+    const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
+        'bg-thumbnail-width',
+        100,
+    );
     const backgroundType = backgroundTypeMapper[dragType];
     const dirSource = useGenDirSource(dirSourceSettingName);
     const handleBodyRendering = (filePaths: string[]) => {
+        const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
         const newFilePaths = sortFilePaths(filePaths);
         const genBodyWithChild = genBody.bind(
             null,
@@ -169,9 +195,11 @@ export default function BackgroundMediaComp({
             onClick,
             noDraggable,
             isNameOnTop,
+            thumbnailWidth,
+            thumbnailHeight,
         );
         return (
-            <div className="">
+            <div>
                 {extraHeaderChild !== undefined ? (
                     <>{extraHeaderChild}</>
                 ) : null}
@@ -186,28 +214,54 @@ export default function BackgroundMediaComp({
         return null;
     }
     return (
-        <FileListHandlerComp
-            className={`app-background-${backgroundType}`}
-            mimetypeName={backgroundType}
-            defaultFolderName={defaultFolderName}
-            dirSource={dirSource}
-            bodyHandler={handleBodyRendering}
-            contextMenuItems={contextMenuItems}
-            genContextMenuItems={genContextMenuItems}
-            fileSelectionOption={
-                backgroundType === 'color'
-                    ? undefined
-                    : {
-                          windowTitle: `Select ${backgroundType} files`,
-                          dirPath: dirSource.dirPath,
-                          extensions: getMimetypeExtensions(backgroundType),
-                      }
-            }
-            onItemsAdding={
-                onItemsAdding !== undefined
-                    ? onItemsAdding.bind(null, dirSource)
-                    : undefined
-            }
-        />
+        <div
+            className="w-100 h-100 card"
+            onWheel={(event) => {
+                handleCtrlWheel({
+                    event,
+                    value: thumbnailWidth,
+                    setValue: setThumbnailWidth,
+                    defaultSize: defaultRangeSize,
+                });
+            }}
+        >
+            <div className="card-body">
+                <FileListHandlerComp
+                    className={`app-background-${backgroundType}`}
+                    mimetypeName={backgroundType}
+                    defaultFolderName={defaultFolderName}
+                    dirSource={dirSource}
+                    bodyHandler={handleBodyRendering}
+                    contextMenuItems={contextMenuItems}
+                    genContextMenuItems={genContextMenuItems}
+                    fileSelectionOption={
+                        backgroundType === 'color'
+                            ? undefined
+                            : {
+                                  windowTitle: `Select ${backgroundType} files`,
+                                  dirPath: dirSource.dirPath,
+                                  extensions:
+                                      getMimetypeExtensions(backgroundType),
+                              }
+                    }
+                    onItemsAdding={
+                        onItemsAdding !== undefined
+                            ? onItemsAdding.bind(null, dirSource)
+                            : undefined
+                    }
+                />
+            </div>
+            <div className="card-footer d-flex">
+                <div className="flex-fill"></div>
+                <div>
+                    <AppRangeComp
+                        value={thumbnailWidth}
+                        title="Thumbnail Size"
+                        setValue={setThumbnailWidth}
+                        defaultSize={defaultRangeSize}
+                    />
+                </div>
+            </div>
+        </div>
     );
 }

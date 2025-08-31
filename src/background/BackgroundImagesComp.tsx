@@ -33,14 +33,21 @@ import {
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { handleError } from '../helper/errorHelpers';
+import { ReactElement } from 'react';
 
 function rendChild(
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    height: number,
+    extraChild?: ReactElement,
 ) {
     const fileSource = FileSource.getInstance(filePath);
     return (
-        <div className="card-body overflow-hidden">
+        <div
+            className="card-body overflow-hidden blank-bg"
+            style={{ height: `${height}px` }}
+        >
+            {extraChild}
             <RenderScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return parseInt(key);
@@ -52,8 +59,6 @@ function rendChild(
                 className="card-img-top"
                 alt={fileSource.name}
                 style={{
-                    width: '100%',
-                    height: '100%',
                     objectFit: 'cover',
                     objectPosition: 'center center',
                     pointerEvents: 'none',
