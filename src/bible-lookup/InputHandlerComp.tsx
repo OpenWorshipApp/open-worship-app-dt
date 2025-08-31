@@ -7,7 +7,7 @@ import {
     focusRenderFound,
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import { toInputText } from '../helper/bible-helpers/serverBibleHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
@@ -36,6 +36,14 @@ export default function InputHandlerComp({
 }>) {
     const inputRef = createRef<HTMLInputElement>();
     const { inputText } = useInputTextContext();
+    useAppEffect(() => {
+        const input = inputRef.current;
+        const text = inputText ?? '';
+        if (input && input.value !== text) {
+            document.execCommand('selectAll', false);
+            document.execCommand('insertText', false, text);
+        }
+    }, [inputText]);
     const viewController = useLookupBibleItemControllerContext();
     const bibleKey = useBibleKeyContext();
     const [books] = useAppStateAsync(() => {
@@ -57,7 +65,6 @@ export default function InputHandlerComp({
                 data-bible-key={bibleKey}
                 type="text"
                 className={`form-control ${INPUT_TEXT_CLASS}`}
-                value={inputText}
                 autoFocus
                 placeholder={placeholder ?? ''}
                 onKeyUp={(event) => {
