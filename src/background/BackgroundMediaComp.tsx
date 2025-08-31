@@ -141,7 +141,7 @@ function genBody(
 
 export const defaultRangeSize = {
     size: 100,
-    min: 100,
+    min: 50,
     max: 500,
     step: 10,
 };
