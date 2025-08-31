@@ -153,7 +153,6 @@ function genAttachBackgroundComponent(
                 }}
                 onMouseLeave={(event) => {
                     event.currentTarget.pause();
-                    event.currentTarget.currentTime = 0;
                 }}
                 loop
                 muted

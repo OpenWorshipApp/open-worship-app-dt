@@ -65,10 +65,7 @@ function RendBody({
                 vRef.current?.play();
             }}
             onMouseLeave={() => {
-                if (vRef.current) {
-                    vRef.current.pause();
-                    vRef.current.currentTime = 0;
-                }
+                vRef.current?.pause();
             }}
         >
             {extraChild}
