@@ -82,6 +82,12 @@ function RendBody({
                 vRef.current?.pause();
             }}
         >
+            <RenderScreenIds
+                screenIds={selectedBackgroundSrcList.map(([key]) => {
+                    return parseInt(key);
+                })}
+            />
+            <video ref={vRef} loop muted src={fileSource.src} />
             <div
                 className="position-absolute mx-1 text-white"
                 style={{
@@ -96,12 +102,6 @@ function RendBody({
                     />
                 ) : null}
             </div>
-            <RenderScreenIds
-                screenIds={selectedBackgroundSrcList.map(([key]) => {
-                    return parseInt(key);
-                })}
-            />
-            <video ref={vRef} loop muted src={fileSource.src} />
             {extraChild}
         </div>
     );
