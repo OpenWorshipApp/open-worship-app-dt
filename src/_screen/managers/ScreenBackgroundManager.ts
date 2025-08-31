@@ -25,6 +25,7 @@ import {
     StyleAnimType,
 } from '../screenTypeHelpers';
 import { ANIM_END_DELAY_MILLISECOND } from '../transitionEffectHelpers';
+import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
 
 export type ScreenBackgroundManagerEventType = 'update';
 
@@ -221,7 +222,10 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
                     !(isNaN(duration) || duration === Infinity) &&
                     duration - video.currentTime <= FADING_DURATION_SECOND
                 ) {
-                    if (!getIsFadingAtEndSetting()) {
+                    const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
+                        video.src,
+                    );
+                    if (!isFadingAtTheEnd) {
                         return;
                     }
                     video.removeEventListener('timeupdate', fadeOutListener);

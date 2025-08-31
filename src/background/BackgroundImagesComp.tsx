@@ -47,7 +47,6 @@ function rendChild(
             className="card-body overflow-hidden blank-bg"
             style={{ height: `${height}px` }}
         >
-            {extraChild}
             <RenderScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return parseInt(key);
@@ -64,6 +63,7 @@ function rendChild(
                     pointerEvents: 'none',
                 }}
             />
+            {extraChild}
         </div>
     );
 }

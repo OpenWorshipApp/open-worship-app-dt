@@ -1,6 +1,6 @@
 import './BackgroundVideosComp.scss';
 
-import { createRef, ReactElement } from 'react';
+import { createRef, ReactElement, useState } from 'react';
 
 import { RenderScreenIds } from './BackgroundComp';
 import FileSource from '../helper/FileSource';
@@ -11,7 +11,6 @@ import {
     dirSourceSettingNames,
 } from '../helper/constants';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import VideoHeaderSettingComp from './VideoHeaderSettingComp';
 import { genDownloadContextMenuItems } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
 import {
@@ -27,6 +26,12 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
+import { useAppEffect } from '../helper/debuggerHelpers';
+import {
+    getIsFadingAtTheEndSetting,
+    methodMapIsFadingAtTheEnd,
+    setIsFadingAtTheEndSetting,
+} from './videoBackgroundHelpers';
 
 function rendChild(
     filePath: string,
@@ -55,8 +60,17 @@ function RendBody({
     height: number;
     extraChild?: ReactElement;
 }>) {
-    const vRef = createRef<HTMLVideoElement>();
     const fileSource = FileSource.getInstance(filePath);
+    const [isFadingAtTheEnd, setIsFadingAtTheEnd] = useState(
+        getIsFadingAtTheEndSetting(fileSource.src),
+    );
+    useAppEffect(() => {
+        methodMapIsFadingAtTheEnd[filePath] = setIsFadingAtTheEnd;
+        return () => {
+            delete methodMapIsFadingAtTheEnd[filePath];
+        };
+    }, [filePath]);
+    const vRef = createRef<HTMLVideoElement>();
     return (
         <div
             className="card-body overflow-hidden blank-bg"
@@ -68,13 +82,27 @@ function RendBody({
                 vRef.current?.pause();
             }}
         >
-            {extraChild}
+            <div
+                className="position-absolute mx-1 text-white"
+                style={{
+                    top: 0,
+                    right: 20,
+                }}
+            >
+                {isFadingAtTheEnd ? (
+                    <i
+                        className="bi bi-shadows"
+                        title="`Video will fade at the end while screen rendering"
+                    />
+                ) : null}
+            </div>
             <RenderScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return parseInt(key);
                 })}
             />
             <video ref={vRef} loop muted src={fileSource.src} />
+            {extraChild}
         </div>
     );
 }
@@ -123,6 +151,22 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
     );
 }
 
+function genExtraItemContextMenuItems(filePath: string) {
+    return [
+        {
+            menuElement: '`Toggle Fading at End`',
+            title: '`Toggle is video should fade at the end',
+            onSelect: () => {
+                const fileSource = FileSource.getInstance(filePath);
+                const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
+                    fileSource.src,
+                );
+                setIsFadingAtTheEndSetting(fileSource.src, !isFadingAtTheEnd);
+            },
+        },
+    ];
+}
+
 export default function BackgroundVideosComp() {
     const handleItemsAdding = async (
         dirSource: DirSource,
@@ -138,13 +182,13 @@ export default function BackgroundVideosComp() {
     };
     return (
         <BackgroundMediaComp
-            extraHeaderChild={<VideoHeaderSettingComp />}
             defaultFolderName={defaultDataDirNames.BACKGROUND_VIDEO}
             dragType={DragTypeEnum.BACKGROUND_VIDEO}
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_VIDEO}
             genContextMenuItems={genVideoDownloadContextMenuItems}
             onItemsAdding={handleItemsAdding}
+            genExtraItemContextMenuItems={genExtraItemContextMenuItems}
         />
     );
 }

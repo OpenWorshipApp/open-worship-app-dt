@@ -53,6 +53,7 @@ function genFileNameElement(fileName: string) {
 
 function genBody(
     rendChild: RenderChildType,
+    genExtraItemContextMenuItems: (filePath: string) => ContextMenuItemType[],
     dragType: DragTypeEnum,
     onClick: ((event: any, fileSource: FileSource) => void) | undefined,
     noDraggable: boolean,
@@ -100,6 +101,7 @@ function genBody(
                     ...genShowOnScreensContextMenu((event) => {
                         handleSelecting(event, true);
                     }),
+                    ...genExtraItemContextMenuItems(filePath),
                     ...(isInScreen
                         ? []
                         : genTrashContextMenu(fileSource.filePath)),
@@ -125,6 +127,7 @@ function genBody(
                 <div
                     style={{
                         position: 'absolute',
+                        top: 0,
                         right: 0,
                     }}
                 >
@@ -158,6 +161,7 @@ export default function BackgroundMediaComp({
         return filePaths.sort((a, b) => a.localeCompare(b));
     },
     onItemsAdding,
+    genExtraItemContextMenuItems = (_filePath: string) => [],
 }: Readonly<{
     extraHeaderChild?: React.ReactNode;
     rendChild: RenderChildType;
@@ -178,6 +182,7 @@ export default function BackgroundMediaComp({
         contextMenuItems: ContextMenuItemType[],
         event: any,
     ) => void;
+    genExtraItemContextMenuItems?: (filePath: string) => ContextMenuItemType[];
 }>) {
     const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
         'bg-thumbnail-width',
@@ -191,6 +196,7 @@ export default function BackgroundMediaComp({
         const genBodyWithChild = genBody.bind(
             null,
             rendChild,
+            genExtraItemContextMenuItems,
             dragType,
             onClick,
             noDraggable,
