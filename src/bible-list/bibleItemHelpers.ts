@@ -7,6 +7,7 @@ import { AnyObjectType } from '../helper/typeHelpers';
 export type BibleItemType = {
     id: number;
     bibleKey: string;
+    extraBibleKeys?: string[];
     target: BibleTargetType;
     metadata: AnyObjectType;
 };

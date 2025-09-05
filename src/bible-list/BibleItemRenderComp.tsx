@@ -176,6 +176,7 @@ export default function BibleItemRenderComp({
                             onBibleKeyChange={(_, newValue) => {
                                 changeBible(newValue);
                             }}
+                            contextMenuTitle="`Add Extra Bible"
                             isMinimal
                         />
                     </div>

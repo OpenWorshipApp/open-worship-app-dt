@@ -30,10 +30,22 @@ export default function RenderBibleEditingHeader() {
             <div className="d-flex w-100 h-100">
                 <RenderTitleMaterialComp
                     bibleItem={viewController.selectedBibleItem}
-                    onBibleKeyChange={(_oldBibleKey, newBibleKey) => {
+                    onBibleKeyChange={(
+                        isContextMenu,
+                        _oldBibleKey,
+                        newBibleKey,
+                    ) => {
+                        const bibleItem = viewController.selectedBibleItem;
                         viewController.applyTargetOrBibleKey(
-                            viewController.selectedBibleItem,
-                            { bibleKey: newBibleKey },
+                            bibleItem,
+                            isContextMenu
+                                ? {
+                                      extraBibleKeys: [
+                                          ...bibleItem.extraBibleKeys,
+                                          newBibleKey,
+                                      ],
+                                  }
+                                : { bibleKey: newBibleKey },
                         );
                     }}
                 />

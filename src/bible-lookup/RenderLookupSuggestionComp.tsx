@@ -76,6 +76,7 @@ export function BibleNotAvailableComp({
 }>) {
     const viewController = useLookupBibleItemControllerContext();
     const handleBibleKeyChanging = (
+        _isContextMenu: boolean,
         _oldBibleKey: string,
         newBibleKey: string,
     ) => {

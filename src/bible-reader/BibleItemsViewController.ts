@@ -489,7 +489,15 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
     applyTargetOrBibleKey(
         bibleItem: ReadIdOnlyBibleItem,
-        { target, bibleKey }: { target?: BibleTargetType; bibleKey?: string },
+        {
+            target,
+            bibleKey,
+            extraBibleKeys,
+        }: {
+            target?: BibleTargetType;
+            bibleKey?: string;
+            extraBibleKeys?: string[];
+        },
         isSkipColorSync = false,
     ) {
         try {
@@ -502,6 +510,9 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             const actualBibleItem = parentNestedBibleItems[
                 index
             ] as ReadIdOnlyBibleItem;
+            if (extraBibleKeys !== undefined) {
+                actualBibleItem.extraBibleKeys = extraBibleKeys;
+            }
             if (bibleKey !== undefined) {
                 bibleItem.bibleKey = bibleKey;
                 actualBibleItem.bibleKey = bibleKey;
