@@ -18,18 +18,41 @@ export type SpeakableTextDataType = {
     key?: string;
 };
 
+export type AudioAISettingType = {
+    openAIAPIKey: string;
+    isAutoPlay: boolean;
+};
+const AUDIO_AI_SETTING_NAME = 'audio-ai-setting';
+export function getAudioAISetting(): AudioAISettingType {
+    const settingStr = localStorage.getItem(AUDIO_AI_SETTING_NAME) || '{}';
+    try {
+        const data = JSON.parse(settingStr);
+        data.openAIAPIKey = (data.openAIAPIKey ?? '').trim();
+        return data;
+    } catch (_error) {
+        return {
+            openAIAPIKey: '',
+            isAutoPlay: false,
+        };
+    }
+}
+export function setAudioAISetting(value: AudioAISettingType) {
+    localStorage.setItem(AUDIO_AI_SETTING_NAME, JSON.stringify(value));
+}
+
 let openai: OpenAI | null = null;
 function getOpenAIInstance() {
-    const apiKey = (window as any).openAIAPIKey?.trim();
-    if (!apiKey) {
-        throw new Error(
-            'OpenAI API key is not set. Please set it to `window.openAIAPIKey`',
-        );
+    const { openAIAPIKey } = getAudioAISetting();
+    if (!openAIAPIKey) {
+        return null;
     }
     if (openai !== null) {
         return openai;
     }
-    openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true });
+    openai = new OpenAI({
+        apiKey: openAIAPIKey,
+        dangerouslyAllowBrowser: true,
+    });
     return openai;
 }
 
@@ -56,14 +79,19 @@ export async function textToSpeech({
             // voice:
             // 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'coral', 'verse',
             // 'ballad', 'ash', 'sage', 'marin', and 'cedar'
-            const mp3 = await getOpenAIInstance().audio.speech.create({
+            const openAIInstance = getOpenAIInstance();
+            if (openAIInstance === null) {
+                return null;
+            }
+            const apiData = {
                 model: 'gpt-4o-mini-tts',
                 voice: 'ash',
                 input: text,
                 instructions:
                     `Speak in a calm and peace of scripture reading tone.` +
                     ` Use ${locale} accent.`,
-            });
+            };
+            const mp3 = await openAIInstance.audio.speech.create(apiData);
             const buffer = Buffer.from(await mp3.arrayBuffer());
             await fsWriteFile(speechFile, buffer);
             return speechFile;
@@ -83,6 +111,9 @@ export async function bibleTextToSpeech({
     bibleKey: string;
     key?: string;
 }) {
+    if (getOpenAIInstance() === null) {
+        return null;
+    }
     const info = await getBibleInfo(bibleKey);
     if (info === null) {
         showSimpleToast(

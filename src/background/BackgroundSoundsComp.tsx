@@ -47,9 +47,10 @@ function RendBodyComp({
         false,
     );
     return (
-        <div className="card-body" data-file-path={filePath}>
-            <div className="d-flex justify-content-center align-items-center h-100">
+        <div className="w-100" data-file-path={filePath}>
+            <div className="d-flex align-items-center w-100 my-2">
                 <audio
+                    className="flex-fill"
                     data-repeat-setting-name={settingName}
                     controls
                     onPlay={handleAudioPlaying}
@@ -60,7 +61,7 @@ function RendBodyComp({
                     <track kind="captions" />
                     Browser does not support audio.
                 </audio>
-                <div className="">
+                <div>
                     <i
                         className="bi bi-repeat-1 p-1"
                         title="`Repeat this audio"

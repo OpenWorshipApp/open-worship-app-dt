@@ -39,7 +39,7 @@ import RenderActionButtonsComp from '../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import LoadingComp from '../others/LoadingComp';
-import { bibleTextToSpeech } from '../helper/aiHelpers';
+import { bibleTextToSpeech, getAudioAISetting } from '../helper/aiHelpers';
 import FileSource from '../helper/FileSource';
 
 export const BibleViewTitleMaterialContext = createContext<{
@@ -302,6 +302,10 @@ function AudioPlayerComp({
 }
 
 function handleNext(audio: HTMLAudioElement) {
+    const audioAISetting = getAudioAISetting();
+    if (!audioAISetting.isAutoPlay) {
+        return;
+    }
     const nextTarget =
         audio.parentElement?.nextElementSibling?.nextElementSibling;
     if (
@@ -356,7 +360,7 @@ function RenderVerseTextComp({
         if (!isExtraVerses) {
             return;
         }
-        const { text, bibleKey, key } = verseInfoList[0];
+        const { text, bibleKey, key } = verseInfo;
         setAudioSrcMap1(key, undefined);
         bibleTextToSpeech({
             text,
@@ -364,13 +368,10 @@ function RenderVerseTextComp({
             key,
         }).then((speechFile) => {
             if (speechFile === null) {
+                setAudioSrcMap1(key, null);
                 return;
             }
-            const src =
-                speechFile !== null
-                    ? FileSource.getInstance(speechFile).src
-                    : null;
-            setAudioSrcMap1(key, src);
+            setAudioSrcMap1(key, FileSource.getInstance(speechFile).src);
         });
     };
     const handleVerseClicking = (event: any) => {
@@ -428,14 +429,12 @@ function RenderVerseTextComp({
                     {verseInfo.isNewLine ? (
                         <span className="verse-number-text">&nbsp;&nbsp;</span>
                     ) : null}
-                    {verseInfo.localeVerse}
-                    {isExtraVerses
-                        ? extraVerseInfoList.map((extraVerseInfo) => (
-                              <Fragment key={extraVerseInfo.bibleKey}>
-                                  ,{extraVerseInfo.localeVerse}
-                              </Fragment>
-                          ))
-                        : null}
+                    {verseInfoList.map((extraVerseInfo, i) => (
+                        <Fragment key={extraVerseInfo.bibleKey}>
+                            {i > 0 ? ', ' : null}
+                            {extraVerseInfo.localeVerse}
+                        </Fragment>
+                    ))}
                 </div>
             </div>
             <div
@@ -589,9 +588,11 @@ export function BibleViewTextComp({
             />
             {verseList.map((verseInfo, i) => {
                 const extraVerseInfoList = extraVerseInfoListList
-                    ? extraVerseInfoListList.map((verseInfoList) => {
-                          return verseInfoList[i];
-                      })
+                    ? extraVerseInfoListList
+                          .map((verseInfoList) => {
+                              return verseInfoList[i];
+                          })
+                          .filter((v) => !!v)
                     : [];
                 return (
                     <RenderVerseTextComp

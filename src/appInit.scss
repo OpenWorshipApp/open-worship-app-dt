@@ -22,6 +22,10 @@ body {
   background-color: var(--bs-gray-800);
   color: var(--bs-white);
 
+  audio {
+    max-height: 25px;
+  }
+
   & * {
     user-select: none;
   }
