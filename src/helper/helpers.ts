@@ -418,5 +418,5 @@ export function checkIsVerticalPartialInvisible(
     const containerBottom = containerRect.bottom - threshold;
     const targetTop = targetRect.top + threshold;
     const targetBottom = targetRect.bottom - threshold;
-    return targetTop < containerBottom && targetBottom > containerTop;
+    return targetTop < containerTop || targetBottom > containerBottom;
 }

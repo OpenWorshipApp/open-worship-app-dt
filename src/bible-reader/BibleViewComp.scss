@@ -45,6 +45,9 @@
   }
 
   .verse-number {
+    &.extra-verses {
+      display: block;
+    }
     div {
       display: inline-block;
       color: rgba(172, 255, 47, 0.645);
@@ -61,11 +64,33 @@
   }
 
   .verse-text {
+    &.extra-verses {
+      span::before {
+        content: '.:';
+        opacity: 0.1;
+      }
+    }
+    .verse-audio {
+      display: none;
+    }
+    audio {
+      &::-webkit-media-controls-current-time-display,
+      &::-webkit-media-controls-time-remaining-display {
+        display: none;
+      }
+      vertical-align: middle;
+      margin: 0;
+      max-width: 200px;
+      max-height: 20px;
+    }
     &:hover {
       border-bottom: 0.01em dashed rgba(134, 134, 134, 0.431);
     }
 
     &.selected {
+      .verse-audio {
+        display: inline-block;
+      }
       background: linear-gradient(
         transparent,
         transparent,

@@ -59,6 +59,7 @@ class AppLocalStorage {
         }
         return selectedParentDir;
     }
+
     async setSelectedParentDirectory(dirPath: string) {
         if (!(await fsCheckDirExist(dirPath))) {
             throw new Error(`Directory does not exist: ${dirPath}`);

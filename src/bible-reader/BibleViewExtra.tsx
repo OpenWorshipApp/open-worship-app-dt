@@ -1,4 +1,11 @@
-import { createContext, Fragment, ReactNode, use, useMemo } from 'react';
+import {
+    createContext,
+    Fragment,
+    ReactNode,
+    use,
+    useMemo,
+    useState,
+} from 'react';
 
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 import {
@@ -13,7 +20,10 @@ import {
     ReadIdOnlyBibleItem,
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
-import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
+import {
+    BIBLE_VERSE_TEXT_TITLE,
+    checkIsVerticalPartialInvisible,
+} from '../helper/helpers';
 import {
     bibleRenderHelper,
     BibleTargetType,
@@ -29,6 +39,8 @@ import RenderActionButtonsComp from '../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import LoadingComp from '../others/LoadingComp';
+import { bibleTextToSpeech } from '../helper/aiHelpers';
+import FileSource from '../helper/FileSource';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -235,6 +247,86 @@ function cleanupVerseNumberClicked(event: React.MouseEvent) {
     }, 2e3);
 }
 
+function AudioPlayerComp({
+    src,
+    onEnd,
+}: Readonly<{
+    src: string | undefined | null;
+    onEnd: (audio: HTMLAudioElement) => void;
+}>) {
+    if (src === undefined) {
+        return (
+            <div
+                className="verse-audio"
+                style={{
+                    width: '40px',
+                    height: '40px',
+                }}
+            >
+                <LoadingComp />
+            </div>
+        );
+    }
+    if (src === null) {
+        return null;
+    }
+    return (
+        <audio
+            className="verse-audio"
+            ref={(el) => {
+                if (el !== null && el.checkVisibility()) {
+                    el.play();
+                }
+            }}
+            controls
+            onPlay={(event) => {
+                const el = event.currentTarget;
+                document.querySelectorAll('audio').forEach((el1) => {
+                    if (el1 !== el) {
+                        el1.pause();
+                    }
+                });
+            }}
+            onEnded={(event) => {
+                const el = event.currentTarget;
+                if (el && el.checkVisibility()) {
+                    onEnd(el);
+                }
+            }}
+        >
+            <source src={src} />
+            <track kind="captions" />
+            Browser does not support audio.
+        </audio>
+    );
+}
+
+function handleNext(audio: HTMLAudioElement) {
+    const nextTarget =
+        audio.parentElement?.nextElementSibling?.nextElementSibling;
+    if (
+        !(nextTarget instanceof HTMLDivElement) ||
+        !nextTarget.classList.contains(VERSE_TEXT_CLASS)
+    ) {
+        return;
+    }
+    if (
+        nextTarget.parentElement?.parentElement &&
+        checkIsVerticalPartialInvisible(
+            nextTarget.parentElement.parentElement,
+            nextTarget,
+        )
+    ) {
+        const dblclickEvent = new MouseEvent('dblclick', {
+            bubbles: true,
+            cancelable: true,
+        });
+        nextTarget.dispatchEvent(dblclickEvent);
+    } else {
+        nextTarget.click();
+    }
+}
+
 function RenderVerseTextComp({
     bibleItem,
     verseInfo,
@@ -246,8 +338,68 @@ function RenderVerseTextComp({
     extraVerseInfoList?: CompiledVerseType[];
     index: number;
 }>) {
+    const [audioSrcMap, setAudioSrcMap] = useState<{
+        [key: string]: string | undefined | null;
+    }>({});
+    const setAudioSrcMap1 = (key: string, value: string | undefined | null) => {
+        setAudioSrcMap((oldAudioSrcMap) => {
+            return {
+                ...oldAudioSrcMap,
+                [key]: value,
+            };
+        });
+    };
     const viewController = useBibleItemsViewControllerContext();
     const isExtraVerses = extraVerseInfoList.length > 0;
+    const verseInfoList = [verseInfo, ...extraVerseInfoList];
+    const loadAudio = async () => {
+        if (!isExtraVerses) {
+            return;
+        }
+        const { text, bibleKey, key } = verseInfoList[0];
+        setAudioSrcMap1(key, undefined);
+        bibleTextToSpeech({
+            text,
+            bibleKey,
+            key,
+        }).then((speechFile) => {
+            if (speechFile === null) {
+                return;
+            }
+            const src =
+                speechFile !== null
+                    ? FileSource.getInstance(speechFile).src
+                    : null;
+            setAudioSrcMap1(key, src);
+        });
+    };
+    const handleVerseClicking = (event: any) => {
+        if (getSelectedText()) {
+            return;
+        }
+        viewController.handleVersesSelecting(
+            event.currentTarget,
+            event.altKey,
+            false,
+            bibleItem,
+        );
+        loadAudio();
+    };
+    const handleVerseDBClicking = (event: any) => {
+        event.stopPropagation();
+        event.preventDefault();
+        const selection = window.getSelection();
+        if (selection !== null && selection.rangeCount > 0) {
+            selection.removeAllRanges();
+        }
+        viewController.handleVersesSelecting(
+            event.currentTarget,
+            true,
+            false,
+            bibleItem,
+        );
+        loadAudio();
+    };
     return (
         <>
             {viewController.shouldNewLine &&
@@ -256,13 +408,9 @@ function RenderVerseTextComp({
                 <br />
             ) : null}
             <div
-                className="verse-number app-caught-hover-pointer"
-                style={
-                    isExtraVerses
-                        ? {
-                              display: 'block',
-                          }
-                        : {}
+                className={
+                    'verse-number app-caught-hover-pointer' +
+                    (isExtraVerses ? ' extra-verses' : '')
                 }
                 title={`Double click to select verse ${verseInfo.localeVerse}`}
                 onDoubleClick={(event) => {
@@ -291,46 +439,27 @@ function RenderVerseTextComp({
                 </div>
             </div>
             <div
-                className={VERSE_TEXT_CLASS}
-                data-bible-key={verseInfo.bibleKey}
+                className={
+                    VERSE_TEXT_CLASS + (isExtraVerses ? ' extra-verses' : '')
+                }
                 data-kjv-verse-key={verseInfo.kjvBibleVersesKey}
                 data-verse-key={verseInfo.bibleVersesKey}
                 title={BIBLE_VERSE_TEXT_TITLE}
-                onClick={(event) => {
-                    if (getSelectedText()) {
-                        return;
-                    }
-                    viewController.handleVersesSelecting(
-                        event.currentTarget,
-                        event.altKey,
-                        false,
-                        bibleItem,
-                    );
-                }}
-                onDoubleClick={(event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    const selection = window.getSelection();
-                    if (selection !== null && selection.rangeCount > 0) {
-                        selection.removeAllRanges();
-                    }
-                    viewController.handleVersesSelecting(
-                        event.currentTarget,
-                        true,
-                        false,
-                        bibleItem,
-                    );
-                }}
+                onClick={handleVerseClicking}
+                onDoubleClick={handleVerseDBClicking}
             >
-                {verseInfo.text}
-                {isExtraVerses
-                    ? extraVerseInfoList.map((extraVerseInfo) => (
-                          <Fragment key={extraVerseInfo.bibleKey}>
-                              <br />
-                              {extraVerseInfo.text}
-                          </Fragment>
-                      ))
-                    : null}
+                {verseInfoList.map(({ bibleKey, text, key }, i) => (
+                    <Fragment key={bibleKey}>
+                        {i > 0 ? <br /> : null}
+                        {Object.keys(audioSrcMap).includes(key) ? (
+                            <AudioPlayerComp
+                                src={audioSrcMap[key]}
+                                onEnd={handleNext}
+                            />
+                        ) : null}
+                        <span data-bible-key={bibleKey}>{text}</span>
+                    </Fragment>
+                ))}
             </div>
         </>
     );

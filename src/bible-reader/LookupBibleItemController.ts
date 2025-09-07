@@ -119,12 +119,16 @@ class LookupBibleItemController extends BibleItemsViewController {
         const bibleItemId = settingId ? parseInt(settingId) : -1;
         return bibleItemId;
     }
+    forceReloadEditingResult() {
+        editingResultCacher.clear();
+        this.reloadEditingResult(this.inputText);
+    }
     setSelectedBibleItem(bibleItemId: number) {
         setSetting(
             this.toSettingName('-selected-bible-item'),
             bibleItemId.toString(),
         );
-        this.reloadEditingResult(this.inputText);
+        this.forceReloadEditingResult();
     }
     get selectedBibleItem() {
         const bibleItemId = this.getSavedBibleId();
@@ -317,7 +321,7 @@ class LookupBibleItemController extends BibleItemsViewController {
             isSkipColorSync,
         );
         if (extraBibleKeys !== undefined) {
-            this.reloadEditingResult(this.inputText);
+            this.forceReloadEditingResult();
         }
     }
 

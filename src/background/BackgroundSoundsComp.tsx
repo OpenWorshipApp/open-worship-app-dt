@@ -58,7 +58,7 @@ function RendBodyComp({
                 >
                     <source src={fileSource.src} />
                     <track kind="captions" />
-                    Your browser does not support the audio element.
+                    Browser does not support audio.
                 </audio>
                 <div className="">
                     <i

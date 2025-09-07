@@ -2,8 +2,10 @@ import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import appProvider from '../../server/appProvider';
 import {
     fsCheckDirExist,
+    fsCheckFileExist,
     fsCreateDir,
     fsExistSync,
+    fsMkDirSync,
     getDesktopPath,
     pathJoin,
 } from '../../server/fileHelpers';
@@ -156,4 +158,19 @@ export class BaseDirFileSource {
         }
         return null;
     }
+}
+
+export async function ensureDataDirectory(dataDirName: string) {
+    const parentDir = await appLocalStorage.getSelectedParentDirectory();
+    if (parentDir === null) {
+        return null;
+    }
+    const dataDir = pathJoin(parentDir, dataDirName);
+    if (await fsCheckFileExist(dataDir)) {
+        return null;
+    }
+    if (!(await fsCheckDirExist(dataDir))) {
+        fsMkDirSync(dataDir, true);
+    }
+    return dataDir;
 }

@@ -31,6 +31,7 @@ export type CompiledVerseType = {
     bibleKey: string;
     kjvBibleVersesKey: string;
     bibleVersesKey: string;
+    key: string;
 };
 
 const titleCache = new CacheManager<string>(60); // 1 minute
@@ -127,18 +128,21 @@ class BibleRenderHelper {
                     );
                 }
                 const iString = i.toString();
+                const kjvBibleVersesKey = this.toKJVBibleVersesKey({
+                    bookKey: bookKey,
+                    chapter,
+                    verseStart: i,
+                    verseEnd: i,
+                });
+                const key = `${bibleVersesKey}_${kjvBibleVersesKey.replace(/:/g, '_')}`;
                 compiledVersesList.push({
                     verse: i,
                     localeVerse: localNum ?? iString,
                     text: verses[iString] ?? '??',
                     isNewLine,
                     bibleKey,
-                    kjvBibleVersesKey: this.toKJVBibleVersesKey({
-                        bookKey: bookKey,
-                        chapter,
-                        verseStart: i,
-                        verseEnd: i,
-                    }),
+                    kjvBibleVersesKey,
+                    key,
                     bibleVersesKey: this.toBibleVersesKey(bibleKey, {
                         bookKey: bookKey,
                         chapter,

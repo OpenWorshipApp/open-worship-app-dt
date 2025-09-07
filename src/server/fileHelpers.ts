@@ -287,7 +287,7 @@ function _fsReadFile(filePath: string, options?: any) {
     );
 }
 
-function _fsWriteFile(filePath: string, data: string, options?: any) {
+function _fsWriteFile(filePath: string, data: string | Buffer, options?: any) {
     return fsFilePromise<void>(
         appProvider.fileUtils.writeFile,
         filePath,
@@ -452,10 +452,10 @@ export function fsMkDirSync(dirPath: string, isRecursive = true) {
 
 export async function fsWriteFile(
     filePath: string,
-    txt: string,
+    data: string | Buffer,
     encoding?: string,
 ) {
-    await _fsWriteFile(filePath, txt, {
+    await _fsWriteFile(filePath, data, {
         encoding: encoding ?? 'utf8',
         flag: 'w',
     });
