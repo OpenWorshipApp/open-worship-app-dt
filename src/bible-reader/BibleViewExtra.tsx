@@ -274,7 +274,12 @@ function AudioPlayerComp({
         <audio
             className="verse-audio"
             ref={(el) => {
-                if (el !== null && el.checkVisibility()) {
+                const audioAISetting = getAudioAISetting();
+                if (
+                    audioAISetting.isAutoPlay &&
+                    el !== null &&
+                    el.checkVisibility()
+                ) {
                     el.play();
                 }
             }}
