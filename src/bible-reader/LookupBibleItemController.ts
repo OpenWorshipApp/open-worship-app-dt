@@ -48,18 +48,18 @@ export const ctrlShiftMetaKeys: any = {
 
 class EditingBibleItem extends ReadIdOnlyBibleItem {
     get metadata() {
-        throw new Error('metadata is not available');
+        throw new Error('metadata is not available on EditingBibleItem');
     }
     set metadata(_metadata: AnyObjectType) {
-        throw new Error('metadata is not available');
+        throw new Error('metadata is not available on EditingBibleItem');
     }
     get target() {
         // target can be null while input text is invalid
         // should not be used
-        throw new Error('target is not available');
+        throw new Error('target is not available on EditingBibleItem');
     }
     set target(_target: BibleTargetType) {
-        throw new Error('target is not available');
+        throw new Error('target is not available on EditingBibleItem');
     }
 }
 
@@ -301,10 +301,15 @@ class LookupBibleItemController extends BibleItemsViewController {
         },
         isSkipColorSync = false,
     ) {
-        if (
-            extraBibleKeys === undefined &&
-            this.checkIsBibleItemSelected(bibleItem)
-        ) {
+        if (extraBibleKeys !== undefined) {
+            super.applyTargetOrBibleKey(
+                bibleItem,
+                { extraBibleKeys },
+                isSkipColorSync,
+            );
+            this.forceReloadEditingResult();
+        }
+        if (this.checkIsBibleItemSelected(bibleItem)) {
             this.setEditingData(
                 bibleKey ?? null,
                 target ?? null,
@@ -321,9 +326,6 @@ class LookupBibleItemController extends BibleItemsViewController {
             },
             isSkipColorSync,
         );
-        if (extraBibleKeys !== undefined) {
-            this.forceReloadEditingResult();
-        }
     }
 
     async editBibleItem(bibleItem: ReadIdOnlyBibleItem) {
