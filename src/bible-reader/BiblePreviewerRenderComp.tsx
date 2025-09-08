@@ -16,6 +16,8 @@ import { fontSizeSettingNames } from '../helper/constants';
 import { handleCtrlWheel } from '../others/AppRangeComp';
 import appProvider from '../server/appProvider';
 import { handleAutoHide } from '../helper/domHelpers';
+import { useAppEffect } from '../helper/debuggerHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
 
 function NewLineSettingComp() {
     const viewController = useBibleItemsViewControllerContext();
@@ -45,7 +47,21 @@ function NewLineSettingComp() {
 }
 
 export default function BiblePreviewerRenderComp() {
-    const [isFulledScreen, setIsFulledScreen] = useState(false);
+    const [isFulledScreen, setIsFulledScreen] = useState(
+        document.fullscreenElement !== null,
+    );
+    useAppEffect(() => {
+        const onFullScreenChange = () => {
+            setIsFulledScreen(document.fullscreenElement !== null);
+        };
+        document.addEventListener('fullscreenchange', onFullScreenChange);
+        return () => {
+            document.removeEventListener(
+                'fullscreenchange',
+                onFullScreenChange,
+            );
+        };
+    }, []);
     const fontSizeSettingName = appProvider.isPageReader
         ? fontSizeSettingNames.BIBLE_READING
         : fontSizeSettingNames.BIBLE_PRESENTER;
@@ -53,6 +69,17 @@ export default function BiblePreviewerRenderComp() {
         fontSizeSettingName,
         DEFAULT_BIBLE_TEXT_FONT_SIZE,
     );
+    const handleFullScreenToggling = async (isToFullScreen: boolean) => {
+        try {
+            if (isToFullScreen) {
+                await document.documentElement.requestFullscreen();
+            } else {
+                await document.exitFullscreen();
+            }
+        } catch (error) {
+            showSimpleToast('Toggle full screen failed', `Error: ${error}`);
+        }
+    };
     return (
         <div
             className={
@@ -91,7 +118,7 @@ export default function BiblePreviewerRenderComp() {
                     </div>
                     <FullScreenButtonComp
                         isFulledScreen={isFulledScreen}
-                        setIsFullScreen={setIsFulledScreen}
+                        toggleFullScreen={handleFullScreenToggling}
                     />
                 </div>
             </div>
