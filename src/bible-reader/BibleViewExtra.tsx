@@ -287,6 +287,7 @@ function AudioPlayerComp({
                     el.checkVisibility()
                 ) {
                     el.play();
+                    el.focus();
                     onStart(el);
                 }
             }}
@@ -485,14 +486,16 @@ function RenderVerseTextComp({
                     });
                 }}
             >
-                <div data-bible-key={verseInfo.bibleKey}>
+                <div>
                     {verseInfo.isNewLine ? (
                         <span className="verse-number-text">&nbsp;&nbsp;</span>
                     ) : null}
                     {verseInfoList.map((extraVerseInfo, i) => (
                         <Fragment key={extraVerseInfo.bibleKey}>
                             {i > 0 ? ', ' : null}
-                            {extraVerseInfo.localeVerse}
+                            <span data-bible-key={extraVerseInfo.bibleKey}>
+                                {extraVerseInfo.localeVerse}
+                            </span>
                         </Fragment>
                     ))}
                 </div>

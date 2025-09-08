@@ -9,6 +9,7 @@ import enLangData from './data/en';
 export const DEFAULT_LOCALE = 'en-US';
 
 export const allLocalesMap = {
+    arc: 'arc',
     'af-ZA': 'af',
     'am-ET': 'am',
     'ar-AE': 'ar',
