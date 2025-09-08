@@ -257,7 +257,7 @@ export default function BackgroundMediaComp({
                     }
                 />
             </div>
-            <div className="card-footer d-flex">
+            <div className="card-footer d-flex p-0">
                 <div className="flex-fill"></div>
                 <div>
                     <AppRangeComp
