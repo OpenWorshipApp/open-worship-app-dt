@@ -47,6 +47,8 @@
   .verse-number {
     &.extra-verses {
       display: block;
+      margin-top: 5px;
+      border-top: 3px solid rgba(0, 0, 0, 0.121);
     }
     div {
       display: inline-block;

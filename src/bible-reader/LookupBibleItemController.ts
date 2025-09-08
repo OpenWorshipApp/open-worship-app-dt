@@ -80,6 +80,7 @@ class FoundBibleItem extends ReadIdOnlyBibleItem {
 
 const editingResultCacher = new CacheManager<EditingResultType>(3);
 class LookupBibleItemController extends BibleItemsViewController {
+    shouldSelectFirstItem = false;
     setInputText: (inputText: string) => OptionalPromise<void> = (
         _: string,
     ) => {};
@@ -434,6 +435,11 @@ class LookupBibleItemController extends BibleItemsViewController {
             );
             return;
         }
+        document
+            .querySelectorAll(`[data-scroll-on-next-chapter="1"]`)
+            .forEach((element) => {
+                element.scrollTop = 0;
+            });
         const newFoundBibleItem = ReadIdOnlyBibleItem.fromJson(
             foundBibleItem.toJson(),
         );

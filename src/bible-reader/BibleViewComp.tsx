@@ -159,6 +159,7 @@ export default function BibleViewComp({
             )}
             <div
                 className="card-body app-top-hover-motion-1"
+                data-scroll-on-next-chapter={isEditing ? '1' : '0'}
                 style={{
                     paddingBottom: '60px',
                 }}

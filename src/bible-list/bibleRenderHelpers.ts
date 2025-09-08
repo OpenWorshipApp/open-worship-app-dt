@@ -29,9 +29,12 @@ export type CompiledVerseType = {
     text: string;
     isNewLine: boolean;
     bibleKey: string;
+    bookKey: string;
+    chapter: number;
     kjvBibleVersesKey: string;
     bibleVersesKey: string;
-    key: string;
+    isFirst: boolean;
+    isLast: boolean;
 };
 
 const titleCache = new CacheManager<string>(60); // 1 minute
@@ -128,27 +131,35 @@ class BibleRenderHelper {
                     );
                 }
                 const iString = i.toString();
-                const kjvBibleVersesKey = this.toKJVBibleVersesKey({
-                    bookKey: bookKey,
-                    chapter,
-                    verseStart: i,
-                    verseEnd: i,
-                });
-                const key = `${bibleVersesKey}_${kjvBibleVersesKey.replace(/:/g, '_')}`;
+                const genTarget = (verse: number) => {
+                    return {
+                        bookKey,
+                        chapter,
+                        verseStart: verse,
+                        verseEnd: verse,
+                    };
+                };
+                const kjvBibleVersesKey = this.toKJVBibleVersesKey(
+                    genTarget(i),
+                );
+                const bibleVersesKey = this.toBibleVersesKey(
+                    bibleKey,
+                    genTarget(i),
+                );
+                const isFirst = i === verseStart;
+                const isLast = i === verseEnd;
                 compiledVersesList.push({
                     verse: i,
                     localeVerse: localNum ?? iString,
                     text: verses[iString] ?? '??',
                     isNewLine,
                     bibleKey,
+                    bookKey,
+                    chapter,
                     kjvBibleVersesKey,
-                    key,
-                    bibleVersesKey: this.toBibleVersesKey(bibleKey, {
-                        bookKey: bookKey,
-                        chapter,
-                        verseStart: i,
-                        verseEnd: i,
-                    }),
+                    bibleVersesKey,
+                    isFirst,
+                    isLast,
                 });
             }
             await compiledVerseListCache.set(

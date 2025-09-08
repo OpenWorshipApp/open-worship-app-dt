@@ -1,7 +1,13 @@
 import OpenAI from 'openai';
 import { handleError } from './errorHelpers';
 import { LocaleType } from '../lang/langHelpers';
-import { fsCheckFileExist, fsWriteFile, pathJoin } from '../server/fileHelpers';
+import {
+    fsCheckDirExist,
+    fsCheckFileExist,
+    fsMkDirSync,
+    fsWriteFile,
+    pathJoin,
+} from '../server/fileHelpers';
 import { ensureDataDirectory } from '../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { getBibleInfo } from './bible-helpers/bibleInfoHelpers';
@@ -15,12 +21,13 @@ export type BibleTextDataType = {
 export type SpeakableTextDataType = {
     text: string;
     locale: LocaleType;
-    key?: string;
+    filePath: string;
 };
 
 export type AudioAISettingType = {
     openAIAPIKey: string;
     isAutoPlay: boolean;
+    isAudioEnabled: boolean;
 };
 const AUDIO_AI_SETTING_NAME = 'audio-ai-setting';
 export function getAudioAISetting(): AudioAISettingType {
@@ -33,6 +40,7 @@ export function getAudioAISetting(): AudioAISettingType {
         return {
             openAIAPIKey: '',
             isAutoPlay: false,
+            isAudioEnabled: false,
         };
     }
 }
@@ -44,6 +52,10 @@ let openai: OpenAI | null = null;
 function getOpenAIInstance() {
     const { openAIAPIKey } = getAudioAISetting();
     if (!openAIAPIKey) {
+        showSimpleToast(
+            'OpenAI API Key',
+            'Please set OpenAI API Key in Audio AI Setting first.',
+        );
         return null;
     }
     if (openai !== null) {
@@ -59,26 +71,16 @@ function getOpenAIInstance() {
 export async function textToSpeech({
     text,
     locale,
-    key,
+    filePath,
 }: SpeakableTextDataType) {
-    const uuid = key ?? crypto.randomUUID();
-    return unlocking(uuid, async () => {
+    return unlocking(filePath, async () => {
         try {
-            const baseDir = await ensureDataDirectory('ai-data');
-            if (baseDir === null) {
-                showSimpleToast(
-                    'Text to Speech',
-                    'Fail to ensure data directory for AI data.',
-                );
-                return null;
-            }
-            const speechFile = pathJoin(baseDir, `${uuid}.mp3`);
-            if (await fsCheckFileExist(speechFile)) {
-                return speechFile;
-            }
             // voice:
             // 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'coral', 'verse',
             // 'ballad', 'ash', 'sage', 'marin', and 'cedar'
+            if (await fsCheckFileExist(filePath)) {
+                return filePath;
+            }
             const openAIInstance = getOpenAIInstance();
             if (openAIInstance === null) {
                 return null;
@@ -93,9 +95,14 @@ export async function textToSpeech({
             };
             const mp3 = await openAIInstance.audio.speech.create(apiData);
             const buffer = Buffer.from(await mp3.arrayBuffer());
-            await fsWriteFile(speechFile, buffer);
-            return speechFile;
+            await fsWriteFile(filePath, buffer);
+            return filePath;
         } catch (error) {
+            showSimpleToast(
+                'Text to Speech',
+                'Fail to convert text to speech. Please check your OpenAI ' +
+                    'API Key and network connection.',
+            );
             handleError(error);
         }
         return null;
@@ -105,11 +112,15 @@ export async function textToSpeech({
 export async function bibleTextToSpeech({
     text,
     bibleKey,
-    key,
+    bookKey,
+    chapter,
+    verse,
 }: {
     text: string;
     bibleKey: string;
-    key?: string;
+    bookKey: string;
+    chapter: number;
+    verse: number;
 }) {
     if (getOpenAIInstance() === null) {
         return null;
@@ -122,9 +133,28 @@ export async function bibleTextToSpeech({
         );
         return null;
     }
+    const baseDir = await ensureDataDirectory('ai-data');
+    if (baseDir === null) {
+        showSimpleToast(
+            'Text to Speech',
+            'Fail to ensure data directory for AI data.',
+        );
+        return null;
+    }
+    const containingDir = pathJoin(
+        baseDir,
+        bibleKey,
+        bookKey,
+        chapter.toString(),
+    );
+    const fileFullName = `${verse}.mp3`;
+    if ((await fsCheckDirExist(containingDir)) === false) {
+        fsMkDirSync(containingDir);
+    }
+    const filePath = pathJoin(containingDir, fileFullName);
     return textToSpeech({
         text,
         locale: info.locale,
-        key,
+        filePath,
     });
 }

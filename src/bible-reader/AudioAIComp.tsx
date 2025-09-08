@@ -16,6 +16,7 @@ export function AudioAIComp() {
                 const audioAISetting = getAudioAISetting();
                 let openAIAPIKey = audioAISetting.openAIAPIKey;
                 let isAutoPlay = audioAISetting.isAutoPlay;
+                let isAudioEnabled = audioAISetting.isAudioEnabled;
                 const isConfirmInput = await showAppInput(
                     'Audio AI Setting',
                     <div className="w-100 h-100">
@@ -53,12 +54,27 @@ export function AudioAIComp() {
                                 }}
                             />
                         </div>
+                        <div className="d-flex mb-2">
+                            <span>Audio Enabled :</span>
+                            <input
+                                ref={(input) => {
+                                    if (input) {
+                                        input.checked = !!isAudioEnabled;
+                                    }
+                                }}
+                                className="m-2"
+                                type="checkbox"
+                                onChange={(e) => {
+                                    isAudioEnabled = e.target.checked;
+                                }}
+                            />
+                        </div>
                     </div>,
                 );
                 if (!isConfirmInput) {
                     return;
                 }
-                setAudioAISetting({ openAIAPIKey, isAutoPlay });
+                setAudioAISetting({ openAIAPIKey, isAutoPlay, isAudioEnabled });
                 setIsEnabled(!!openAIAPIKey);
             }}
         />

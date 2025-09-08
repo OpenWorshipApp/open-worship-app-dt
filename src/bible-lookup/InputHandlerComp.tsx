@@ -85,6 +85,7 @@ export default function InputHandlerComp({
             <div className="d-flex justify-content-between h-100">
                 <button
                     className="btn btn-sm btn-outline-secondary"
+                    data-previous-chapter-button="1"
                     title="Previous"
                     onClick={() => {
                         viewController.tryJumpingChapter(false);
@@ -95,6 +96,7 @@ export default function InputHandlerComp({
                 <button
                     className="btn btn-sm btn-outline-secondary"
                     title="Next"
+                    data-next-chapter-button="1"
                     onClick={() => {
                         viewController.tryJumpingChapter(true);
                     }}

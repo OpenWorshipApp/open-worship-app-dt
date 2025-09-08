@@ -86,8 +86,8 @@ export function checkIsAppFile(fileFullName: string) {
 }
 
 export const pathSeparator = appProvider.pathUtils.sep;
-export function pathJoin(filePath: string, fileFullName: string) {
-    return appProvider.pathUtils.join(filePath, fileFullName);
+export function pathJoin(...paths: string[]): string {
+    return appProvider.pathUtils.join(...paths);
 }
 
 export function pathResolve(...paths: string[]): string {

@@ -4,6 +4,7 @@ import {
     ReactNode,
     use,
     useMemo,
+    useRef,
     useState,
 } from 'react';
 
@@ -29,7 +30,7 @@ import {
     BibleTargetType,
     CompiledVerseType,
 } from '../bible-list/bibleRenderHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import BibleViewTitleEditorComp from './BibleViewTitleEditorComp';
 import {
     getVersesCount,
@@ -41,6 +42,9 @@ import { getSelectedText } from '../helper/textSelectionHelpers';
 import LoadingComp from '../others/LoadingComp';
 import { bibleTextToSpeech, getAudioAISetting } from '../helper/aiHelpers';
 import FileSource from '../helper/FileSource';
+import LookupBibleItemController, {
+    useLookupBibleItemControllerContext,
+} from './LookupBibleItemController';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -249,9 +253,11 @@ function cleanupVerseNumberClicked(event: React.MouseEvent) {
 
 function AudioPlayerComp({
     src,
+    onStart,
     onEnd,
 }: Readonly<{
     src: string | undefined | null;
+    onStart: (audio: HTMLAudioElement) => void;
     onEnd: (audio: HTMLAudioElement) => void;
 }>) {
     if (src === undefined) {
@@ -281,6 +287,7 @@ function AudioPlayerComp({
                     el.checkVisibility()
                 ) {
                     el.play();
+                    onStart(el);
                 }
             }}
             controls
@@ -306,17 +313,31 @@ function AudioPlayerComp({
     );
 }
 
-function handleNext(audio: HTMLAudioElement) {
+function handleNextChapterSelection(
+    lookupBibleItemController: LookupBibleItemController,
+    targetElement: HTMLDivElement,
+) {
+    targetElement.click();
+    lookupBibleItemController.shouldSelectFirstItem = true;
+    lookupBibleItemController.tryJumpingChapter(true);
+}
+
+function handleNextVersionSelection(
+    currentTarget: HTMLDivElement,
+    nextKjvVerseKey: string,
+) {
     const audioAISetting = getAudioAISetting();
     if (!audioAISetting.isAutoPlay) {
         return;
     }
-    const nextTarget =
-        audio.parentElement?.nextElementSibling?.nextElementSibling;
-    if (
-        !(nextTarget instanceof HTMLDivElement) ||
-        !nextTarget.classList.contains(VERSE_TEXT_CLASS)
-    ) {
+    const parentElement = currentTarget.parentElement;
+    if (parentElement === null) {
+        return;
+    }
+    const nextTarget = parentElement.querySelector(
+        `[data-kjv-verse-key="${nextKjvVerseKey}"]`,
+    );
+    if (!(nextTarget instanceof HTMLDivElement)) {
         return;
     }
     if (
@@ -339,14 +360,28 @@ function handleNext(audio: HTMLAudioElement) {
 function RenderVerseTextComp({
     bibleItem,
     verseInfo,
+    nextVerseInfo,
     index,
     extraVerseInfoList = [],
 }: Readonly<{
     bibleItem: ReadIdOnlyBibleItem;
     verseInfo: CompiledVerseType;
+    nextVerseInfo: CompiledVerseType | null;
     extraVerseInfoList?: CompiledVerseType[];
     index: number;
 }>) {
+    const lookupBibleItemController = useLookupBibleItemControllerContext();
+    const verseTextRef = useRef<HTMLDivElement>(null);
+    useAppEffect(() => {
+        if (
+            verseInfo.isFirst &&
+            verseTextRef.current !== null &&
+            lookupBibleItemController.shouldSelectFirstItem
+        ) {
+            lookupBibleItemController.shouldSelectFirstItem = false;
+            verseTextRef.current.click();
+        }
+    }, [verseTextRef.current, verseInfo]);
     const [audioSrcMap, setAudioSrcMap] = useState<{
         [key: string]: string | undefined | null;
     }>({});
@@ -362,22 +397,18 @@ function RenderVerseTextComp({
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
     const loadAudio = async () => {
-        if (!isExtraVerses) {
+        const audioAISetting = getAudioAISetting();
+        if (!audioAISetting.isAudioEnabled) {
             return;
         }
-        const { text, bibleKey, key } = verseInfo;
-        setAudioSrcMap1(key, undefined);
-        bibleTextToSpeech({
-            text,
-            bibleKey,
-            key,
-        }).then((speechFile) => {
-            if (speechFile === null) {
-                setAudioSrcMap1(key, null);
-                return;
-            }
-            setAudioSrcMap1(key, FileSource.getInstance(speechFile).src);
-        });
+        const { bibleVersesKey } = verseInfo;
+        setAudioSrcMap1(bibleVersesKey, undefined);
+        const speechFile = await bibleTextToSpeech(verseInfo);
+        if (speechFile === null) {
+            setAudioSrcMap1(bibleVersesKey, null);
+            return;
+        }
+        setAudioSrcMap1(bibleVersesKey, FileSource.getInstance(speechFile).src);
     };
     const handleVerseClicking = (event: any) => {
         if (getSelectedText()) {
@@ -405,6 +436,30 @@ function RenderVerseTextComp({
             bibleItem,
         );
         loadAudio();
+    };
+    const handleAudioStarting = () => {
+        if (nextVerseInfo === null) {
+            return;
+        }
+        bibleTextToSpeech(nextVerseInfo);
+    };
+    const handleAudioEnding = () => {
+        if (verseTextRef.current === null) {
+            return;
+        }
+        if (verseInfo.isLast) {
+            handleNextChapterSelection(
+                lookupBibleItemController,
+                verseTextRef.current,
+            );
+        }
+        if (nextVerseInfo === null) {
+            return;
+        }
+        handleNextVersionSelection(
+            verseTextRef.current,
+            nextVerseInfo.kjvBibleVersesKey,
+        );
     };
     return (
         <>
@@ -443,22 +498,26 @@ function RenderVerseTextComp({
                 </div>
             </div>
             <div
+                ref={verseTextRef}
                 className={
                     VERSE_TEXT_CLASS + (isExtraVerses ? ' extra-verses' : '')
                 }
                 data-kjv-verse-key={verseInfo.kjvBibleVersesKey}
                 data-verse-key={verseInfo.bibleVersesKey}
+                data-is-first={verseInfo.isFirst ? '1' : '0'}
+                data-is-last={verseInfo.isLast ? '1' : '0'}
                 title={BIBLE_VERSE_TEXT_TITLE}
                 onClick={handleVerseClicking}
                 onDoubleClick={handleVerseDBClicking}
             >
-                {verseInfoList.map(({ bibleKey, text, key }, i) => (
+                {verseInfoList.map(({ bibleKey, text, bibleVersesKey }, i) => (
                     <Fragment key={bibleKey}>
                         {i > 0 ? <br /> : null}
-                        {Object.keys(audioSrcMap).includes(key) ? (
+                        {Object.keys(audioSrcMap).includes(bibleVersesKey) ? (
                             <AudioPlayerComp
-                                src={audioSrcMap[key]}
-                                onEnd={handleNext}
+                                src={audioSrcMap[bibleVersesKey]}
+                                onStart={handleAudioStarting}
+                                onEnd={handleAudioEnding}
                             />
                         ) : null}
                         <span data-bible-key={bibleKey}>{text}</span>
@@ -605,6 +664,7 @@ export function BibleViewTextComp({
                         bibleItem={bibleItem}
                         verseInfo={verseInfo}
                         extraVerseInfoList={extraVerseInfoList}
+                        nextVerseInfo={verseList[i + 1] ?? null}
                         index={i}
                     />
                 );
