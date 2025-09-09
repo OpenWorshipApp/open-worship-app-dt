@@ -45,6 +45,7 @@ import FileSource from '../helper/FileSource';
 import LookupBibleItemController, {
     useLookupBibleItemControllerContext,
 } from './LookupBibleItemController';
+import { AudioAIEnablingComp } from './AudioAIEnablingComp';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -89,7 +90,14 @@ export function RenderTitleMaterialComp({
                 overflowX: 'auto',
             }}
         >
-            <ItemColorNoteComp item={colorNoteHandler} />
+            <div>
+                <div>
+                    <ItemColorNoteComp item={colorNoteHandler} />
+                </div>
+                <div>
+                    <AudioAIEnablingComp bibleItem={bibleItem} />
+                </div>
+            </div>
             <div className="d-flex flex-fill">
                 <div className="d-flex ps-1">
                     <div style={{ margin: 'auto' }}>
@@ -149,8 +157,6 @@ export function RenderHeaderComp({
                     _oldBibleKey: string,
                     newBibleKey: string,
                 ) => {
-                    console.log(isContextMenu, newBibleKey);
-
                     viewController.applyTargetOrBibleKey(
                         bibleItem,
                         isContextMenu
@@ -398,8 +404,7 @@ function RenderVerseTextComp({
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
     const loadAudio = async () => {
-        const audioAISetting = getAudioAISetting();
-        if (!audioAISetting.isAudioEnabled) {
+        if (!bibleItem.isAudioEnabled) {
             return;
         }
         const { bibleVersesKey } = verseInfo;

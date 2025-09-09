@@ -244,6 +244,7 @@ class LookupBibleItemController extends BibleItemsViewController {
                     FoundBibleItem.fromJson({
                         ...editingResult.result.bibleItem.toJson(),
                         extraBibleKeys: this.selectedBibleItem.extraBibleKeys,
+                        isAudioEnabled: this.selectedBibleItem.isAudioEnabled,
                     }));
                 newFoundBibleItem.toTitle().then((title) => {
                     attemptAddingHistory(newFoundBibleItem.bibleKey, title);
@@ -294,17 +295,19 @@ class LookupBibleItemController extends BibleItemsViewController {
             target,
             bibleKey,
             extraBibleKeys,
+            isAudioEnabled,
         }: {
             target?: BibleTargetType;
             bibleKey?: string;
             extraBibleKeys?: string[];
+            isAudioEnabled?: boolean;
         },
         isSkipColorSync = false,
     ) {
-        if (extraBibleKeys !== undefined) {
+        if (extraBibleKeys !== undefined || isAudioEnabled !== undefined) {
             super.applyTargetOrBibleKey(
                 bibleItem,
-                { extraBibleKeys },
+                { extraBibleKeys, isAudioEnabled },
                 isSkipColorSync,
             );
             this.forceReloadEditingResult();

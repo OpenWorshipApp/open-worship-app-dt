@@ -65,6 +65,12 @@ export default class BibleItem
     set extraBibleKeys(extraBibleKeys: string[]) {
         this.originalJson.extraBibleKeys = extraBibleKeys;
     }
+    get isAudioEnabled() {
+        return this.originalJson.isAudioEnabled ?? false;
+    }
+    set isAudioEnabled(isAudioEnabled: boolean) {
+        this.originalJson.isAudioEnabled = isAudioEnabled;
+    }
     checkIsSameId(bibleItem: BibleItem | number) {
         if (typeof bibleItem === 'number') {
             return this.id === bibleItem;
@@ -131,6 +137,7 @@ export default class BibleItem
             id: this.id,
             bibleKey: this.bibleKey,
             extraBibleKeys: this.extraBibleKeys,
+            isAudioEnabled: this.isAudioEnabled,
             target: this.originalJson.target,
             metadata: this.originalJson.metadata,
         };

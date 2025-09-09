@@ -8,6 +8,7 @@ export type BibleItemType = {
     id: number;
     bibleKey: string;
     extraBibleKeys?: string[];
+    isAudioEnabled?: boolean;
     target: BibleTargetType;
     metadata: AnyObjectType;
 };

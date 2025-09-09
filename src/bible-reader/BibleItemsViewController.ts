@@ -493,10 +493,12 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             target,
             bibleKey,
             extraBibleKeys,
+            isAudioEnabled,
         }: {
             target?: BibleTargetType;
             bibleKey?: string;
             extraBibleKeys?: string[];
+            isAudioEnabled?: boolean;
         },
         isSkipColorSync = false,
     ) {
@@ -512,6 +514,9 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             ] as ReadIdOnlyBibleItem;
             if (extraBibleKeys !== undefined) {
                 actualBibleItem.extraBibleKeys = extraBibleKeys;
+            }
+            if (isAudioEnabled !== undefined) {
+                actualBibleItem.isAudioEnabled = isAudioEnabled;
             }
             if (bibleKey !== undefined) {
                 bibleItem.bibleKey = bibleKey;

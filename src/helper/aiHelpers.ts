@@ -27,7 +27,6 @@ export type SpeakableTextDataType = {
 export type AudioAISettingType = {
     openAIAPIKey: string;
     isAutoPlay: boolean;
-    isAudioEnabled: boolean;
 };
 const AUDIO_AI_SETTING_NAME = 'audio-ai-setting';
 export function getAudioAISetting(): AudioAISettingType {
@@ -40,7 +39,6 @@ export function getAudioAISetting(): AudioAISettingType {
         return {
             openAIAPIKey: '',
             isAutoPlay: false,
-            isAudioEnabled: false,
         };
     }
 }

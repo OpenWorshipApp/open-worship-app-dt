@@ -12,7 +12,6 @@ import { toInputText } from '../helper/bible-helpers/serverBibleHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
 import InputExtraButtonsComp from './InputExtraButtonsComp';
-import { AudioAIComp } from '../bible-reader/AudioAIComp';
 
 export const InputTextContext = createContext<{
     inputText: string;
@@ -103,9 +102,6 @@ export default function InputHandlerComp({
                 >
                     <i className="bi bi-caret-right" />
                 </button>
-            </div>
-            <div className="m-2">
-                <AudioAIComp />
             </div>
         </Fragment>
     );
