@@ -1,10 +1,12 @@
 import OpenAI from 'openai';
+import { ResponseFormatJSONSchema } from 'openai/resources/shared';
 import { handleError } from './errorHelpers';
 import { LocaleType } from '../lang/langHelpers';
 import {
     fsCheckDirExist,
     fsCheckFileExist,
     fsMkDirSync,
+    fsReadFile,
     fsWriteFile,
     pathJoin,
 } from '../server/fileHelpers';
@@ -12,6 +14,10 @@ import { ensureDataDirectory } from '../setting/directory-setting/directoryHelpe
 import { showSimpleToast } from '../toast/toastHelpers';
 import { getBibleInfo } from './bible-helpers/bibleInfoHelpers';
 import { unlocking } from '../server/unlockingHelpers';
+
+import bibleJson from './bible-helpers/bible.json';
+import { useState } from 'react';
+import { useAppEffectAsync } from './debuggerHelpers';
 
 export type BibleTextDataType = {
     text: string;
@@ -24,13 +30,13 @@ export type SpeakableTextDataType = {
     filePath: string;
 };
 
-export type AudioAISettingType = {
+export type OpenAISettingType = {
     openAIAPIKey: string;
     isAutoPlay: boolean;
 };
-const AUDIO_AI_SETTING_NAME = 'audio-ai-setting';
-export function getAudioAISetting(): AudioAISettingType {
-    const settingStr = localStorage.getItem(AUDIO_AI_SETTING_NAME) || '{}';
+const OPEN_AI_SETTING_NAME = 'open-ai-setting';
+export function getOpenAISetting(): OpenAISettingType {
+    const settingStr = localStorage.getItem(OPEN_AI_SETTING_NAME) || '{}';
     try {
         const data = JSON.parse(settingStr);
         data.openAIAPIKey = (data.openAIAPIKey ?? '').trim();
@@ -42,17 +48,17 @@ export function getAudioAISetting(): AudioAISettingType {
         };
     }
 }
-export function setAudioAISetting(value: AudioAISettingType) {
-    localStorage.setItem(AUDIO_AI_SETTING_NAME, JSON.stringify(value));
+export function setOpenAISetting(value: OpenAISettingType) {
+    localStorage.setItem(OPEN_AI_SETTING_NAME, JSON.stringify(value));
 }
 
 let openai: OpenAI | null = null;
 function getOpenAIInstance() {
-    const { openAIAPIKey } = getAudioAISetting();
+    const { openAIAPIKey } = getOpenAISetting();
     if (!openAIAPIKey) {
         showSimpleToast(
-            'OpenAI API Key',
-            'Please set OpenAI API Key in Audio AI Setting first.',
+            'Fail to get OpenAI instance',
+            'Missing OpenAI API Key.',
         );
         return null;
     }
@@ -79,8 +85,8 @@ export async function textToSpeech({
             if (await fsCheckFileExist(filePath)) {
                 return filePath;
             }
-            const openAIInstance = getOpenAIInstance();
-            if (openAIInstance === null) {
+            const client = getOpenAIInstance();
+            if (client === null) {
                 return null;
             }
             const apiData = {
@@ -91,7 +97,7 @@ export async function textToSpeech({
                     `Speak in a calm and peace of scripture reading tone.` +
                     ` Use ${locale} accent.`,
             };
-            const mp3 = await openAIInstance.audio.speech.create(apiData);
+            const mp3 = await client.audio.speech.create(apiData);
             const buffer = Buffer.from(await mp3.arrayBuffer());
             await fsWriteFile(filePath, buffer);
             return filePath;
@@ -141,6 +147,7 @@ export async function bibleTextToSpeech({
     }
     const containingDir = pathJoin(
         baseDir,
+        'bible-audio',
         bibleKey,
         bookKey,
         chapter.toString(),
@@ -156,3 +163,178 @@ export async function bibleTextToSpeech({
         filePath,
     });
 }
+
+function toTitleCase(str: string) {
+    return str.toLocaleLowerCase().replace(/\b\w/g, (char) => {
+        return char.toUpperCase();
+    });
+}
+const map = Object.entries(bibleJson.kjvKeyValue)
+    .map(([key, value]) => `${toTitleCase(value)}:${key}`)
+    .join(', ');
+
+function genPrompt(verseKey: string) {
+    return `
+    You are a Bible cross-reference lookup tool.
+
+    Task:
+    Given a Bible verse key (example: GEN 1:1 for Genesis chapter 1 verse 1), return a JSON array of related cross-reference verses in the Bible.
+
+    Rules:
+    - Use only the following abbreviation map for book names:
+    ${map}
+
+    Output format:
+    - JSON only, no explanations.
+    - Each reference must follow this format: "BOOK ABBR CHAPTER:VERSE[-VERSE]".
+    - Example output: ["JHN 1:1-3","HEB 11:3","PSA 33:6"]
+
+    Now, return cross-references for: ${verseKey}
+    `;
+}
+
+const response_format: ResponseFormatJSONSchema = {
+    type: 'json_schema',
+    json_schema: {
+        name: 'BibleCrossReference',
+        description:
+            'A schema for the response format of Bible cross-reference lookups.',
+        schema: {
+            type: 'object',
+            properties: {
+                result: {
+                    type: 'array',
+                    items: { type: 'string' },
+                },
+            },
+            required: ['result'],
+            additionalProperties: false,
+        },
+        strict: true,
+    },
+};
+
+type CrossRefResultType = { result: string[] };
+
+/*
+gpt-4.1-mini
+ Fast, cheaper, and very reliable for JSON compliance.
+ Great if you want low latency and cost while keeping accuracy.
+ Best balance for production use.
+gpt-4.1
+ More powerful reasoning, handles complex prompts better.
+ Slightly slower and more expensive.
+ Best if you need very accurate, nuanced references.
+gpt-5 (if available on your plan)
+ Strongest overall, especially for structured and knowledge-heavy tasks.
+ But may cost more, so best if precision is critical.
+ */
+export async function getCrossRefs(
+    verseKey: string,
+): Promise<CrossRefResultType | null> {
+    try {
+        const client = getOpenAIInstance();
+        if (client === null) {
+            return null;
+        }
+        const content = genPrompt(verseKey);
+        const response = await client.chat.completions.create({
+            model: 'gpt-5',
+            messages: [{ role: 'user', content }],
+            response_format,
+        });
+
+        const raw = response.choices?.[0]?.message?.content;
+        if (!raw) {
+            return null;
+        }
+        // Guard: ensure we have valid JSON (strip code fences if any)
+        const cleaned = raw
+            .trim()
+            .replace(/^```json/i, '')
+            .replace(/^```/, '')
+            .replace(/```$/, '')
+            .trim();
+        const data = JSON.parse(cleaned) as CrossRefResultType;
+        if (!Array.isArray(data.result)) {
+            return { result: [] };
+        }
+        return data;
+    } catch (error) {
+        console.error('Error in getCrossRefs:', error);
+        showSimpleToast(
+            'Cross References',
+            'Failed to get cross references. ' +
+                'Please check your OpenAI API Key and network connection.',
+        );
+        handleError(error);
+        return null;
+    }
+}
+
+async function getBibleRefAI(
+    bookKey: string,
+    chapter: number,
+    verseNum: number,
+): Promise<string[] | null> {
+    if (getOpenAIInstance() === null) {
+        return null;
+    }
+    const key = `${bookKey} ${chapter}:${verseNum}`;
+    return unlocking(key, async () => {
+        const baseDir = await ensureDataDirectory('ai-data');
+        if (baseDir === null) {
+            showSimpleToast(
+                'Text to Speech',
+                'Fail to ensure data directory for AI data.',
+            );
+            return null;
+        }
+        const containingDir = pathJoin(baseDir, 'bible-cross-refs');
+        if ((await fsCheckDirExist(containingDir)) === false) {
+            fsMkDirSync(containingDir);
+        }
+        const fileFullName = `${key}.json`;
+        const filePath = pathJoin(containingDir, fileFullName);
+        if (await fsCheckFileExist(filePath)) {
+            try {
+                const text = await fsReadFile(filePath);
+                const data = JSON.parse(text) as CrossRefResultType;
+                if (!Array.isArray(data.result)) {
+                    return [];
+                }
+                return data.result;
+            } catch (error) {
+                console.error('Error reading cross reference file:', error);
+                return null;
+            }
+        }
+        const data = await getCrossRefs(key);
+        if (data === null) {
+            return null;
+        }
+        await fsWriteFile(filePath, JSON.stringify(data, null, 2));
+        return data.result;
+    });
+}
+
+export function useGetBibleRefAI(
+    bookKey: string,
+    chapter: number,
+    verseNum: number,
+) {
+    const [bibleRef, setBibleRef] = useState<string[] | null | undefined>(
+        undefined,
+    );
+    useAppEffectAsync(
+        async (methodContext) => {
+            const data = await getBibleRefAI(bookKey, chapter, verseNum);
+            methodContext.setBibleRef(data);
+        },
+        [bookKey, chapter],
+        { setBibleRef },
+    );
+    return bibleRef;
+}
+
+(window as any).getCrossRefs = getCrossRefs;

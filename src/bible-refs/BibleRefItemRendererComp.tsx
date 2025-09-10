@@ -1,6 +1,6 @@
-import { useGetBibleRef } from './bibleRefsHelpers';
-import BibleRefRenderFoundItemComp from './BibleRefRenderFoundItemComp';
 import LoadingComp from '../others/LoadingComp';
+import { useGetBibleRefAI } from '../helper/aiHelpers';
+import BibleRefRenderFoundItemComp from './BibleRefRenderFoundItemComp';
 
 export default function BibleRefItemRendererComp({
     bibleKey,
@@ -15,7 +15,7 @@ export default function BibleRefItemRendererComp({
     verse: number;
     index: number;
 }>) {
-    const bibleRef = useGetBibleRef(bookKey, chapter, verse);
+    const bibleRef = useGetBibleRefAI(bookKey, chapter, verse);
     if (bibleRef === undefined) {
         return <LoadingComp />;
     }
@@ -29,17 +29,14 @@ export default function BibleRefItemRendererComp({
     return (
         <div className="w-100">
             {index !== 0 ? <hr /> : null}
-            {bibleRef.map((items, i) => {
-                return items.map((item, j) => {
-                    return (
-                        <BibleRefRenderFoundItemComp
-                            key={item.text + i + j}
-                            bibleKey={bibleKey}
-                            bibleVersesKey={item.text}
-                            itemInfo={item}
-                        />
-                    );
-                });
+            {bibleRef.map((item, i) => {
+                return (
+                    <BibleRefRenderFoundItemComp
+                        key={item + i}
+                        bibleKey={bibleKey}
+                        bibleVersesKey={item}
+                    />
+                );
             })}
         </div>
     );

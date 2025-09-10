@@ -1,4 +1,3 @@
-import kjvBibleInfo from '../../helper/bible-helpers/bible.json';
 import {
     DEFAULT_LOCALE,
     getLangCode,
@@ -17,6 +16,8 @@ import FileSource from '../../helper/FileSource';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
+
+import kjvBibleInfo from '../../helper/bible-helpers/bible.json';
 
 freezeObject(kjvBibleInfo);
 

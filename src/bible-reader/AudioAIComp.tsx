@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { getAudioAISetting, setAudioAISetting } from '../helper/aiHelpers';
+import { getOpenAISetting, setOpenAISetting } from '../helper/aiHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 
 export function AudioAIComp() {
     const [isAvailable, setIsAvailable] = useState(
-        !!getAudioAISetting().openAIAPIKey,
+        !!getOpenAISetting().openAIAPIKey,
     );
     const [isAutoPlay, setIsAutoPlay] = useState(
-        !!getAudioAISetting().isAutoPlay,
+        !!getOpenAISetting().isAutoPlay,
     );
     return (
         <div className="d-flex">
@@ -20,8 +20,8 @@ export function AudioAIComp() {
                         fontSize: '25px',
                     }}
                     onClick={async () => {
-                        const audioAISetting = getAudioAISetting();
-                        let openAIAPIKey = audioAISetting.openAIAPIKey;
+                        const openAISetting = getOpenAISetting();
+                        let openAIAPIKey = openAISetting.openAIAPIKey;
                         const isConfirmInput = await showAppInput(
                             'Audio AI Setting',
                             <div className="d-flex flex-column w-100 h-100">
@@ -49,7 +49,7 @@ export function AudioAIComp() {
                         if (!isConfirmInput) {
                             return;
                         }
-                        setAudioAISetting({ ...audioAISetting, openAIAPIKey });
+                        setOpenAISetting({ ...openAISetting, openAIAPIKey });
                         setIsAvailable(!!openAIAPIKey);
                     }}
                 />
@@ -60,9 +60,9 @@ export function AudioAIComp() {
                     title="`Auto Play Audio AI when available"
                     style={{ color: isAutoPlay ? 'green' : '' }}
                     onClick={() => {
-                        const audioAISetting = getAudioAISetting();
+                        const audioAISetting = getOpenAISetting();
                         audioAISetting.isAutoPlay = !audioAISetting.isAutoPlay;
-                        setAudioAISetting(audioAISetting);
+                        setOpenAISetting(audioAISetting);
                         setIsAutoPlay(audioAISetting.isAutoPlay);
                     }}
                 />

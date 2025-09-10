@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
 import { checkIsBookAvailable, getBibleInfo } from './bibleInfoHelpers';
-import bibleJson from './bible.json';
 import { getOnlineBibleInfoList } from './bibleDownloadHelpers';
 import { useAppEffectAsync } from '../debuggerHelpers';
 import { toLocaleNumBible } from './serverBibleHelpers2';
 import { freezeObject } from '../helpers';
+
+import bibleJson from './bible.json';
 
 freezeObject(bibleJson);
 
