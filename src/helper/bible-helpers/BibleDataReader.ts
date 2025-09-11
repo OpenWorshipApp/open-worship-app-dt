@@ -17,7 +17,7 @@ import { readBibleXMLData } from '../../setting/bible-setting/bibleXMLHelpers';
 
 const { base64Decode } = appProvider.appUtils;
 
-export type BibleInfoType = {
+export type BibleInfoType = Readonly<{
     title: string;
     key: string;
     locale: LocaleType;
@@ -28,7 +28,7 @@ export type BibleInfoType = {
     booksAvailable: string[];
     numList?: string[];
     version: number;
-};
+}>;
 export type BookList = { [key: string]: string };
 export type BibleVerseList = { [key: string]: string };
 export type BibleChapterType = { title: string; verses: BibleVerseList };

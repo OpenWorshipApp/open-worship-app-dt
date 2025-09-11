@@ -10,6 +10,8 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
+import CacheManager from '../../others/CacheManager';
+import { freezeObject } from '../helpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
     const info = await getBibleInfo(bibleKey);
@@ -38,18 +40,21 @@ export async function getBookVKList(bibleKey: string) {
     if (bibleVKList === null) {
         return null;
     }
-    return Object.fromEntries(
-        Object.entries(bibleVKList).map(([k, v]) => {
+    return Object.fromEntries([
+        ...Object.entries(bibleVKList).map(([k, v]) => {
             return [v, k];
         }),
-    );
+        ...Object.entries(bibleVKList).map(([k, v]) => {
+            return [v.toLocaleLowerCase(), k];
+        }),
+    ]);
 }
 export async function bookToKey(bibleKey: string, book: string) {
     const bookVKList = await getBookVKList(bibleKey);
     if (bookVKList === null) {
         return null;
     }
-    return bookVKList[book] ?? null;
+    return bookVKList[book.toLocaleLowerCase()] ?? null;
 }
 export async function getChapterCount(bibleKey: string, book: string) {
     const bookKey = await bookToKey(bibleKey, book);
@@ -102,27 +107,21 @@ function checkIsBooksAvailableMissing(info: BibleInfoType) {
     );
 }
 
-const bibleInfoMap = new Map<
-    string,
-    { info: BibleInfoType; timestamp: number }
->();
+const cache = new CacheManager<BibleInfoType>(60); // cache for 1 minutes
 export async function getBibleInfo(
     bibleKey: string,
     isForce = false,
 ): Promise<BibleInfoType | null> {
     if (isForce) {
-        bibleInfoMap.delete(bibleKey);
+        await cache.delete(bibleKey);
     }
-    if (bibleInfoMap.has(bibleKey)) {
-        const item = bibleInfoMap.get(bibleKey);
-        const duration = 1000 * 10; // 10 seconds
-        if (item && Date.now() - item.timestamp < duration) {
-            return item.info;
-        }
+    const cached = await cache.get(bibleKey);
+    if (cached !== null) {
+        return cached;
     }
     const info = await bibleDataReader.readBibleData(bibleKey, '_info');
     if (info === null || checkIsBooksAvailableMissing(info)) {
-        bibleInfoMap.delete(bibleKey);
+        await cache.delete(bibleKey);
         showProgressBar(bibleKey);
         const isBibleXML = await checkIsBibleXML(bibleKey);
         hideProgressBar(bibleKey);
@@ -130,7 +129,8 @@ export async function getBibleInfo(
             return await getBibleInfo(bibleKey, true);
         }
     } else {
-        bibleInfoMap.set(bibleKey, { info, timestamp: Date.now() });
+        freezeObject(info);
+        await cache.set(bibleKey, info);
     }
     return info;
 }

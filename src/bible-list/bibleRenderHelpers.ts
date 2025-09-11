@@ -4,7 +4,7 @@ import {
     getBibleInfo,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
-    bibleObj,
+    kjvBibleInfo,
     getKJVChapterCount,
     getKJVKeyValue,
 } from '../helper/bible-helpers/serverBibleHelpers';
@@ -179,7 +179,7 @@ class BibleRenderHelper {
         if (bibleInfo === null) {
             return null;
         }
-        const booksOrder = bibleObj.booksOrder;
+        const booksOrder = kjvBibleInfo.booksOrder;
         const bookIndex = booksOrder.findIndex(
             (bookKey1) => bookKey1 === bookKey,
         );

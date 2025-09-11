@@ -15,9 +15,12 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { getBibleInfo } from './bible-helpers/bibleInfoHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 
-import bibleJson from './bible-helpers/bible.json';
 import { useState } from 'react';
 import { useAppEffectAsync } from './debuggerHelpers';
+import { demonstrateAPI } from './anthropicBibleCrossHelpers';
+import { kjvBibleInfo } from './bible-helpers/serverBibleHelpers';
+
+(window as any).demonstrateAPI = demonstrateAPI;
 
 export type BibleTextDataType = {
     text: string;
@@ -169,7 +172,7 @@ function toTitleCase(str: string) {
         return char.toUpperCase();
     });
 }
-const map = Object.entries(bibleJson.kjvKeyValue)
+const map = Object.entries(kjvBibleInfo.kjvKeyValue)
     .map(([key, value]) => `${toTitleCase(value)}:${key}`)
     .join(', ');
 
@@ -238,6 +241,7 @@ export async function getCrossRefs(
             return null;
         }
         const content = genPrompt(verseKey);
+        console.log('Prompt:', content);
         const response = await client.chat.completions.create({
             model: 'gpt-5',
             messages: [{ role: 'user', content }],

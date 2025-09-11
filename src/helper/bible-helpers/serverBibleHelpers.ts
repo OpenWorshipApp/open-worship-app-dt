@@ -8,13 +8,12 @@ import { freezeObject } from '../helpers';
 
 import bibleJson from './bible.json';
 
-freezeObject(bibleJson);
-
-export const bibleObj = bibleJson as {
+export const kjvBibleInfo = bibleJson as {
     booksOrder: string[];
     books: { [key: string]: BookType };
     kjvKeyValue: { [key: string]: string };
 };
+freezeObject(kjvBibleInfo);
 
 export type BibleStatusType = [string, boolean, string];
 
@@ -187,7 +186,7 @@ export async function genBookMatches(
 }
 
 export function getKJVKeyValue() {
-    return bibleObj.kjvKeyValue;
+    return kjvBibleInfo.kjvKeyValue;
 }
 
 async function getBibleInfoWithStatus(
@@ -230,7 +229,7 @@ async function toChapter(
 
 export function getKJVChapterCount(bookKey: string) {
     // KJV, GEN
-    return bibleObj.books[bookKey].chapterCount;
+    return kjvBibleInfo.books[bookKey].chapterCount;
 }
 
 export function toChapterList(bibleKey: string, bookKey: string) {
@@ -244,9 +243,9 @@ export function toChapterList(bibleKey: string, bookKey: string) {
 function toIndex(bookKey: string, chapterNum: number) {
     let index = -1;
     let bIndex = 0;
-    while (bibleObj.booksOrder[bIndex]) {
-        const bookKey1 = bibleObj.booksOrder[bIndex];
-        const chapterCount = bibleObj.books[bookKey1].chapterCount;
+    while (kjvBibleInfo.booksOrder[bIndex]) {
+        const bookKey1 = kjvBibleInfo.booksOrder[bIndex];
+        const chapterCount = kjvBibleInfo.books[bookKey1].chapterCount;
         if (bookKey1 === bookKey) {
             if (chapterNum > chapterCount) {
                 return -1;

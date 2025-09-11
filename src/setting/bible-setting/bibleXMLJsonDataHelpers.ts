@@ -9,17 +9,14 @@ import {
 } from '../../popup-widget/popupWidgetHelpers';
 import { genBibleKeyXMLInput } from './bibleXMLAttributesGuessing';
 import { getDownloadedBibleInfoList } from '../../helper/bible-helpers/bibleDownloadHelpers';
-import { cloneJson, freezeObject } from '../../helper/helpers';
+import { cloneJson } from '../../helper/helpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 import { fsListFiles, pathJoin } from '../../server/fileHelpers';
 import FileSource from '../../helper/FileSource';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
-
-import kjvBibleInfo from '../../helper/bible-helpers/bible.json';
-
-freezeObject(kjvBibleInfo);
+import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
@@ -134,7 +131,6 @@ export type BibleJsonInfoType = {
     booksMap: { [booKey: string]: string };
     booksAvailable: string[];
     numbersMap: { [key: string]: string };
-    filePath: string;
 };
 
 export type BibleXMLJsonType = {
@@ -314,7 +310,6 @@ export async function getBibleInfoJson(bibleXMLElement: Element) {
     if (getLangCode(locale as any) === null) {
         return null;
     }
-    const filePath = await bibleKeyToXMLFilePath(bibleKey);
     const books = Array.from(
         guessElement(bibleXMLElement, tagNamesMap.book) ?? [],
     );
@@ -340,7 +335,6 @@ export async function getBibleInfoJson(bibleXMLElement: Element) {
         numbersMap: numberKeyMap,
         booksMap: bookKeyMap,
         booksAvailable,
-        filePath,
     } as BibleJsonInfoType;
 }
 

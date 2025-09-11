@@ -17,7 +17,10 @@ import {
 } from '../../context-menu/appContextMenuHelpers';
 import { useState, useTransition } from 'react';
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import { fromBibleFileName } from '../../helper/bible-helpers/serverBibleHelpers';
+import {
+    fromBibleFileName,
+    kjvBibleInfo,
+} from '../../helper/bible-helpers/serverBibleHelpers';
 import {
     bibleKeyToXMLFilePath,
     BibleJsonInfoType,
@@ -431,6 +434,7 @@ export async function updateBibleXMLInfo(bibleInfo: BibleJsonInfoType) {
         showSimpleToast('Error', 'Error occurred during reading file');
         return;
     }
+    bibleInfo.booksMap = bibleInfo.booksMap ?? kjvBibleInfo.kjvKeyValue;
     const jsonData = { ...dataJson, info: bibleInfo };
     await saveJsonDataToXMLfile(jsonData);
 }

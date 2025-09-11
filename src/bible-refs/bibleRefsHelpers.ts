@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { decrypt, bible_ref } from '../_owa-crypto';
 import { handleError } from '../helper/errorHelpers';
 import {
-    bibleObj,
+    kjvBibleInfo,
     toBibleFileName,
 } from '../helper/bible-helpers/serverBibleHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
@@ -148,7 +148,7 @@ export function fromBibleRefText(text: string): BibleRefType {
 
 export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     const extracted = bibleRenderHelper.fromKJVBibleVersesKey(bibleVerseKey);
-    const booksOrder = bibleObj.booksOrder;
+    const booksOrder = kjvBibleInfo.booksOrder;
     if (!booksOrder.includes(extracted.bookKey)) {
         return null;
     }
