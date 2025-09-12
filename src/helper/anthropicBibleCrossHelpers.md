@@ -96,11 +96,7 @@
 {
   "success": true,
   "verse": "Genesis 1:1",
-  "focusThemes": [
-    "God's love",
-    "salvation",
-    "eternal life"
-  ],
+  "focusThemes": ["God's love", "salvation", "eternal life"],
   "crossReferences": [
     {
       "title": "God's Love as the Foundation of Creation",

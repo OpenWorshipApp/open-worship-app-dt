@@ -1,96 +1,13 @@
 import { useMemo } from 'react';
-import { editor, KeyMod, KeyCode } from 'monaco-editor';
 
 import { useSelectedLyricContext } from './lyricHelpers';
 import Lyric from './Lyric';
 import LyricMenuComp from './LyricMenuComp';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
-import { useStateSettingBoolean } from '../helper/settingHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
-
-async function getCopiedText() {
-    try {
-        if (navigator.clipboard?.readText) {
-            const text = await navigator.clipboard.readText();
-            if (text.length > 0) {
-                return text;
-            }
-        } else {
-            console.error('Clipboard API not supported in this browser.');
-        }
-    } catch (err) {
-        console.error('Failed to read clipboard contents:', err);
-    }
-    return null;
-}
-
-function createEditor() {
-    const div = document.createElement('div');
-    Object.assign(div.style, {
-        width: '100%',
-        height: '100%',
-        position: 'relative',
-        overflow: 'hidden',
-    });
-    let monacoEditor: editor.IStandaloneCodeEditor | null = null;
-    monacoEditor = editor.create(div, {
-        value: '',
-        language: 'markdown',
-        theme: 'vs-dark',
-        fontSize: 17,
-        minimap: {
-            enabled: false,
-        },
-        scrollbar: {},
-    });
-    const editorStore = {
-        monacoEditor,
-        div,
-        toggleIsWrapText: () => {},
-    };
-    // add context menu
-    monacoEditor.addAction({
-        id: 'toggle-wrap-text',
-        label: '`Toggle Wrap Text',
-        contextMenuGroupId: 'navigation',
-        keybindings: [KeyMod.Alt | KeyCode.KeyZ],
-        contextMenuOrder: 1.5,
-        run: () => {
-            editorStore.toggleIsWrapText();
-        },
-    });
-    monacoEditor.addAction({
-        id: 'help',
-        label: '`Markdown Music Help',
-        contextMenuGroupId: 'navigation',
-        run: async () => {
-            appProvider.browserUtils.openExternalURL(
-                'https://github.com/music-markdown/music-markdown?tab=readme-ov-file#verses',
-            );
-        },
-    });
-    // TODO: fix Monaco native paste fail
-    monacoEditor.addAction({
-        id: 'paste',
-        label: 'Paste',
-        keybindings: [KeyMod.CtrlCmd | KeyCode.KeyV],
-        run: async (editor) => {
-            const clipboardText = await getCopiedText();
-            if (!clipboardText) {
-                return;
-            }
-            monacoEditor.executeEdits('paste', [
-                {
-                    range: editor.getSelection(),
-                    text: clipboardText,
-                } as any,
-            ]);
-        },
-    });
-    return editorStore;
-}
+import { useInitMonacoEditor } from '../helper/monacoEditorHelpers';
 
 async function loadLyricContent(lyric: Lyric, monacoEditor: any) {
     const lyricContent = await lyric.getContent();
@@ -104,35 +21,30 @@ async function loadLyricContent(lyric: Lyric, monacoEditor: any) {
     monacoEditor.setValue(lyricContent);
 }
 
-function useInit(lyric: Lyric) {
-    const [isWrapText, setIsWrapText] = useStateSettingBoolean(
-        'lytic-editor-wrap-text',
-        false,
-    );
-    const editorStore = useMemo(() => {
-        const newEditorStore = createEditor();
-        loadLyricContent(lyric, newEditorStore.monacoEditor);
-        newEditorStore.monacoEditor.onDidChangeModelContent(async () => {
-            const editorContent = newEditorStore.monacoEditor.getValue();
-            const lyricContent = await lyric.getContent();
-            if (editorContent === lyricContent) {
-                return;
-            }
-            lyric.setContent(editorContent);
-        });
-        return newEditorStore;
-    }, [lyric]);
-    useAppEffect(() => {
-        editorStore.toggleIsWrapText = () => {
-            setIsWrapText(!isWrapText);
-        };
-        editorStore.monacoEditor.updateOptions({
-            wordWrap: isWrapText ? 'on' : 'off',
-        });
-        editorStore.monacoEditor.layout();
-        editorStore.monacoEditor.focus();
-    }, [isWrapText, editorStore]);
-
+export default function LyricEditorComp() {
+    const selectedLyric = useSelectedLyricContext();
+    const { editorStore, isWrapText, setIsWrapText } = useInitMonacoEditor({
+        settingName: 'lytic-editor-wrap-text',
+        language: 'markdown',
+        onInit: (editor) => {
+            editor.addAction({
+                id: 'help',
+                label: '`Markdown Music Help',
+                contextMenuGroupId: 'navigation',
+                run: async () => {
+                    appProvider.browserUtils.openExternalURL(
+                        'https://github.com/music-markdown/music-markdown?tab=readme-ov-file#verses',
+                    );
+                },
+            });
+        },
+        onContentChange: (content) => {
+            selectedLyric.setContent(content);
+        },
+    });
+    useAppEffectAsync(async () => {
+        await loadLyricContent(selectedLyric, editorStore.monacoEditor);
+    }, [selectedLyric, editorStore.monacoEditor]);
     const attemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
     }, []);
@@ -140,22 +52,13 @@ function useInit(lyric: Lyric) {
         ['update'],
         () => {
             attemptTimeout(() => {
-                loadLyricContent(lyric, editorStore.monacoEditor);
+                loadLyricContent(selectedLyric, editorStore.monacoEditor);
             });
         },
-        [lyric],
-        lyric.filePath,
+        [selectedLyric],
+        selectedLyric.filePath,
     );
-    return {
-        isWrapText,
-        setIsWrapText,
-        editorStore,
-    };
-}
 
-export default function LyricEditorComp() {
-    const selectedLyric = useSelectedLyricContext();
-    const { editorStore, isWrapText, setIsWrapText } = useInit(selectedLyric);
     const resizeAttemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
     }, []);
