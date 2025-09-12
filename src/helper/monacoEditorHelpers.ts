@@ -1,8 +1,41 @@
 import { useMemo } from 'react';
 import { editor, KeyMod, KeyCode } from 'monaco-editor';
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
+import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 
 import { useStateSettingBoolean } from './settingHelpers';
 import { useAppEffect } from './debuggerHelpers';
+import { genTimeoutAttempt } from './helpers';
+
+self.MonacoEnvironment = {
+    getWorker(_, label) {
+        if (label === 'json') {
+            return new jsonWorker();
+        }
+        if (label === 'css' || label === 'scss' || label === 'less') {
+            return new cssWorker();
+        }
+        if (label === 'html' || label === 'handlebars' || label === 'razor') {
+            return new htmlWorker();
+        }
+        if (label === 'typescript' || label === 'javascript') {
+            return new tsWorker();
+        }
+        return new editorWorker();
+    },
+};
+
+self.MonacoEnvironment = {
+    getWorker(_, label) {
+        if (label === 'json') {
+            return new jsonWorker();
+        }
+        return new editorWorker();
+    },
+};
 
 async function getCopiedText() {
     try {
@@ -19,10 +52,21 @@ async function getCopiedText() {
     }
     return null;
 }
+export type EditorStoreType = {
+    editorInstance: editor.IStandaloneCodeEditor;
+    div: HTMLDivElement;
+    toggleIsWrapText: () => void;
+    replaceValue: (value: string) => void;
+    lastMouseClickPos: {
+        x: number;
+        y: number;
+    } | null;
+};
 
 function createEditor(
-    language: string,
-    onInit: (editor: editor.IStandaloneCodeEditor) => void,
+    options: editor.IStandaloneEditorConstructionOptions,
+    onInit?: (editor: editor.IStandaloneCodeEditor) => void,
+    onStore?: (editorStore: EditorStoreType) => void,
 ) {
     const div = document.createElement('div');
     Object.assign(div.style, {
@@ -31,25 +75,45 @@ function createEditor(
         position: 'relative',
         overflow: 'hidden',
     });
-    let monacoEditor: editor.IStandaloneCodeEditor | null = null;
-    monacoEditor = editor.create(div, {
+    let editorInstance: editor.IStandaloneCodeEditor | null = null;
+    editorInstance = editor.create(div, {
         value: '',
-        language,
+        language: 'plaintext',
         theme: 'vs-dark',
         fontSize: 17,
         minimap: {
             enabled: false,
         },
         scrollbar: {},
+        ...options,
     });
-    onInit(monacoEditor);
-    const editorStore = {
-        monacoEditor,
+    onInit?.(editorInstance);
+    const editorStore: EditorStoreType = {
+        editorInstance,
         div,
         toggleIsWrapText: () => {},
+        lastMouseClickPos: null,
+        replaceValue: (value: string) => {
+            const range = editorInstance.getModel()?.getFullModelRange();
+            if (range === undefined) {
+                return;
+            }
+            editorInstance.executeEdits('paste', [
+                {
+                    range,
+                    text: value,
+                } as any,
+            ]);
+        },
     };
-    // add context menu
-    monacoEditor.addAction({
+    onStore?.(editorStore);
+    editorInstance.onMouseDown((mouseEvent) => {
+        editorStore.lastMouseClickPos = {
+            x: mouseEvent.event.posx,
+            y: mouseEvent.event.posy,
+        };
+    });
+    editorInstance.addAction({
         id: 'toggle-wrap-text',
         label: '`Toggle Wrap Text',
         contextMenuGroupId: 'navigation',
@@ -60,7 +124,7 @@ function createEditor(
         },
     });
     // TODO: fix Monaco native paste fail
-    monacoEditor.addAction({
+    editorInstance.addAction({
         id: 'paste',
         label: 'Paste',
         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyV],
@@ -69,7 +133,7 @@ function createEditor(
             if (!clipboardText) {
                 return;
             }
-            monacoEditor.executeEdits('paste', [
+            editorInstance.executeEdits('paste', [
                 {
                     range: editor.getSelection(),
                     text: clipboardText,
@@ -82,40 +146,83 @@ function createEditor(
 
 export function useInitMonacoEditor({
     settingName,
-    language,
+    options,
     onInit,
+    onStore,
     onContentChange,
+    onMarkersChange,
 }: {
     settingName: string;
-    language: string;
-    onInit: (editor: editor.IStandaloneCodeEditor) => void;
-    onContentChange: (content: string) => void;
+    options: editor.IStandaloneEditorConstructionOptions;
+    onInit?: (editorInstance: editor.IStandaloneCodeEditor) => void;
+    onStore?: (editorStore: EditorStoreType) => void;
+    onContentChange?: (content: string) => void;
+    onMarkersChange?: (markers: editor.IMarker[]) => void;
 }) {
     const [isWrapText, setIsWrapText] = useStateSettingBoolean(
         settingName,
         false,
     );
     const editorStore = useMemo(() => {
-        const newEditorStore = createEditor(language, onInit);
-        newEditorStore.monacoEditor.onDidChangeModelContent(async () => {
-            const editorContent = newEditorStore.monacoEditor.getValue();
-            onContentChange(editorContent);
+        const newEditorStore = createEditor(options, onInit, onStore);
+        const { editorInstance } = newEditorStore;
+        editor.onDidChangeMarkers((uriList) => {
+            const currentUri = editorInstance.getModel()?.uri;
+            if (currentUri === undefined) {
+                return;
+            }
+            if (
+                uriList.some(
+                    (uri) => uri.toString() === currentUri?.toString(),
+                ) === false
+            ) {
+                return;
+            }
+            const markers = editor.getModelMarkers({ resource: currentUri });
+            onMarkersChange?.(markers);
         });
+        if (onContentChange !== undefined) {
+            editorInstance.onDidChangeModelContent(async () => {
+                const editorContent = editorInstance.getValue();
+                onContentChange(editorContent);
+            });
+        }
         return newEditorStore;
     }, []);
     useAppEffect(() => {
         editorStore.toggleIsWrapText = () => {
             setIsWrapText(!isWrapText);
         };
-        editorStore.monacoEditor.updateOptions({
+        editorStore.editorInstance.updateOptions({
             wordWrap: isWrapText ? 'on' : 'off',
         });
-        editorStore.monacoEditor.layout();
-        editorStore.monacoEditor.focus();
+        editorStore.editorInstance.layout();
+        editorStore.editorInstance.focus();
     }, [isWrapText, editorStore]);
+
+    const resizeAttemptTimeout = useMemo(() => {
+        return genTimeoutAttempt(500);
+    }, []);
+
     return {
         isWrapText,
         setIsWrapText,
         editorStore,
+        onContainerInit: (container: HTMLElement | null) => {
+            if (container === null) {
+                return;
+            }
+            const resizeObserver = new ResizeObserver(() => {
+                resizeAttemptTimeout(() => {
+                    editorStore.editorInstance.layout();
+                });
+            });
+            resizeObserver.observe(container);
+            container.appendChild(editorStore.div);
+            return () => {
+                resizeObserver.disconnect();
+                container.removeChild(editorStore.div);
+            };
+        },
     };
 }

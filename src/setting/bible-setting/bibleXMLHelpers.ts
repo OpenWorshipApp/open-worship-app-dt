@@ -13,6 +13,7 @@ import {
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
 import {
     ContextMenuItemType,
+    createMouseEvent,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
 import { useState, useTransition } from 'react';
@@ -45,6 +46,8 @@ import {
     showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
 import { log } from '../../helper/loggerHelpers';
+import { EditorStoreType } from '../../helper/monacoEditorHelpers';
+import { AnyObjectType } from '../../helper/typeHelpers';
 
 type MessageCallbackType = (message: string | null) => void;
 
@@ -248,6 +251,37 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
         },
     ];
     showAppContextMenu(event, contextMenuItems);
+}
+
+export function addMonacoBibleInfoActions(
+    editorStore: EditorStoreType,
+    setPartialBibleInfo: (partialBibleInfo: AnyObjectType) => void,
+) {
+    const { editorInstance } = editorStore;
+    editorInstance.addAction({
+        id: 'choose-locale',
+        label: '`Choose Locale',
+        contextMenuGroupId: 'navigation',
+        run: async () => {
+            const mousePosition = {
+                x: editorStore.lastMouseClickPos?.x || 0,
+                y: editorStore.lastMouseClickPos?.y || 0,
+            };
+            showAppContextMenu(
+                createMouseEvent(mousePosition.x, mousePosition.y),
+                Object.entries(allLocalesMap).map(([locale]) => {
+                    return {
+                        menuElement: locale,
+                        onSelect: () => {
+                            setPartialBibleInfo({
+                                locale,
+                            });
+                        },
+                    };
+                }),
+            );
+        },
+    });
 }
 
 export function handBibleInfoContextMenuOpening(

@@ -9,42 +9,43 @@ import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
 import { useInitMonacoEditor } from '../helper/monacoEditorHelpers';
 
-async function loadLyricContent(lyric: Lyric, monacoEditor: any) {
+async function loadLyricContent(lyric: Lyric, editorInstance: any) {
     const lyricContent = await lyric.getContent();
     if (lyricContent === null) {
         return;
     }
-    const editorContent = monacoEditor.getValue();
+    const editorContent = editorInstance.getValue();
     if (editorContent === lyricContent) {
         return;
     }
-    monacoEditor.setValue(lyricContent);
+    editorInstance.setValue(lyricContent);
 }
 
 export default function LyricEditorComp() {
     const selectedLyric = useSelectedLyricContext();
-    const { editorStore, isWrapText, setIsWrapText } = useInitMonacoEditor({
-        settingName: 'lytic-editor-wrap-text',
-        language: 'markdown',
-        onInit: (editor) => {
-            editor.addAction({
-                id: 'help',
-                label: '`Markdown Music Help',
-                contextMenuGroupId: 'navigation',
-                run: async () => {
-                    appProvider.browserUtils.openExternalURL(
-                        'https://github.com/music-markdown/music-markdown?tab=readme-ov-file#verses',
-                    );
-                },
-            });
-        },
-        onContentChange: (content) => {
-            selectedLyric.setContent(content);
-        },
-    });
+    const { editorStore, isWrapText, setIsWrapText, onContainerInit } =
+        useInitMonacoEditor({
+            settingName: 'lytic-editor-wrap-text',
+            options: { language: 'markdown' },
+            onInit: (editorInstance) => {
+                editorInstance.addAction({
+                    id: 'help',
+                    label: '`Markdown Music Help',
+                    contextMenuGroupId: 'navigation',
+                    run: async () => {
+                        appProvider.browserUtils.openExternalURL(
+                            'https://github.com/music-markdown/music-markdown?tab=readme-ov-file#verses',
+                        );
+                    },
+                });
+            },
+            onContentChange: (content) => {
+                selectedLyric.setContent(content);
+            },
+        });
     useAppEffectAsync(async () => {
-        await loadLyricContent(selectedLyric, editorStore.monacoEditor);
-    }, [selectedLyric, editorStore.monacoEditor]);
+        await loadLyricContent(selectedLyric, editorStore.editorInstance);
+    }, [selectedLyric, editorStore.editorInstance]);
     const attemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
     }, []);
@@ -52,16 +53,13 @@ export default function LyricEditorComp() {
         ['update'],
         () => {
             attemptTimeout(() => {
-                loadLyricContent(selectedLyric, editorStore.monacoEditor);
+                loadLyricContent(selectedLyric, editorStore.editorInstance);
             });
         },
         [selectedLyric],
         selectedLyric.filePath,
     );
 
-    const resizeAttemptTimeout = useMemo(() => {
-        return genTimeoutAttempt(500);
-    }, []);
     return (
         <div className="w-100 h-100 d-flex flex-column">
             <div className="d-flex">
@@ -88,22 +86,7 @@ export default function LyricEditorComp() {
             </div>
             <div
                 className="w-100 h-100 overflow-hidden"
-                ref={(container) => {
-                    if (container === null) {
-                        return;
-                    }
-                    const resizeObserver = new ResizeObserver(() => {
-                        resizeAttemptTimeout(() => {
-                            editorStore.monacoEditor.layout();
-                        });
-                    });
-                    resizeObserver.observe(container);
-                    container.appendChild(editorStore.div);
-                    return () => {
-                        resizeObserver.disconnect();
-                        container.removeChild(editorStore.div);
-                    };
-                }}
+                ref={onContainerInit}
             />
         </div>
     );

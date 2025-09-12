@@ -1,0 +1,667 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The display title of the Bible translation"
+        },
+        "key": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Unique identifier key for the Bible translation"
+        },
+        "version": {
+            "type": "integer",
+            "description": "Version number of the Bible translation"
+        },
+        "locale": {
+            "type": "string",
+            "enum": [
+                "arc",
+                "af-ZA",
+                "am-ET",
+                "ar-AE",
+                "ar-BH",
+                "ar-DZ",
+                "ar-EG",
+                "ar-IQ",
+                "ar-JO",
+                "ar-KW",
+                "ar-LB",
+                "ar-LY",
+                "ar-MA",
+                "arn-CL",
+                "ar-OM",
+                "ar-QA",
+                "ar-SA",
+                "ar-SD",
+                "ar-SY",
+                "ar-TN",
+                "ar-YE",
+                "as-IN",
+                "az-az",
+                "az-Cyrl-AZ",
+                "az-Latn-AZ",
+                "ba-RU",
+                "be-BY",
+                "bg-BG",
+                "bn-BD",
+                "bn-IN",
+                "bo-CN",
+                "br-FR",
+                "bs-Cyrl-BA",
+                "bs-Latn-BA",
+                "ca-ES",
+                "co-FR",
+                "cs-CZ",
+                "cy-GB",
+                "da-DK",
+                "de-AT",
+                "de-CH",
+                "de-DE",
+                "de-LI",
+                "de-LU",
+                "dsb-DE",
+                "dv-MV",
+                "el-CY",
+                "el-GR",
+                "en-029",
+                "en-AU",
+                "en-BZ",
+                "en-CA",
+                "en-cb",
+                "en-GB",
+                "en-IE",
+                "en-IN",
+                "en-JM",
+                "en-MT",
+                "en-MY",
+                "en-NZ",
+                "en-PH",
+                "en-SG",
+                "en-TT",
+                "en-US",
+                "en-ZA",
+                "en-ZW",
+                "es-AR",
+                "es-BO",
+                "es-CL",
+                "es-CO",
+                "es-CR",
+                "es-DO",
+                "es-EC",
+                "es-ES",
+                "es-GT",
+                "es-HN",
+                "es-MX",
+                "es-NI",
+                "es-PA",
+                "es-PE",
+                "es-PR",
+                "es-PY",
+                "es-SV",
+                "es-US",
+                "es-UY",
+                "es-VE",
+                "et-EE",
+                "eu-ES",
+                "fa-IR",
+                "fi-FI",
+                "fil-PH",
+                "fo-FO",
+                "fr-BE",
+                "fr-CA",
+                "fr-CH",
+                "fr-FR",
+                "fr-LU",
+                "fr-MC",
+                "fy-NL",
+                "ga-IE",
+                "gd-GB",
+                "gd-ie",
+                "gl-ES",
+                "gsw-FR",
+                "gu-IN",
+                "ha-Latn-NG",
+                "he-IL",
+                "hi-IN",
+                "hr-BA",
+                "hr-HR",
+                "hsb-DE",
+                "hu-HU",
+                "hy-AM",
+                "id-ID",
+                "ig-NG",
+                "ii-CN",
+                "in-ID",
+                "is-IS",
+                "it-CH",
+                "it-IT",
+                "iu-Cans-CA",
+                "iu-Latn-CA",
+                "iw-IL",
+                "ja-JP",
+                "ka-GE",
+                "kk-KZ",
+                "kl-GL",
+                "km-KH",
+                "kn-IN",
+                "kok-IN",
+                "ko-KR",
+                "ky-KG",
+                "lb-LU",
+                "lo-LA",
+                "lt-LT",
+                "lv-LV",
+                "mi-NZ",
+                "mk-MK",
+                "ml-IN",
+                "mn-MN",
+                "mn-Mong-CN",
+                "moh-CA",
+                "mr-IN",
+                "ms-BN",
+                "ms-MY",
+                "mt-MT",
+                "nb-NO",
+                "ne-NP",
+                "nl-BE",
+                "nl-NL",
+                "nn-NO",
+                "no-no",
+                "nso-ZA",
+                "oc-FR",
+                "or-IN",
+                "pa-IN",
+                "pl-PL",
+                "prs-AF",
+                "ps-AF",
+                "pt-BR",
+                "pt-PT",
+                "qut-GT",
+                "quz-BO",
+                "quz-EC",
+                "quz-PE",
+                "rm-CH",
+                "ro-mo",
+                "ro-RO",
+                "ru-mo",
+                "ru-RU",
+                "rw-RW",
+                "sah-RU",
+                "sa-IN",
+                "se-FI",
+                "se-NO",
+                "se-SE",
+                "si-LK",
+                "sk-SK",
+                "sl-SI",
+                "sma-NO",
+                "sma-SE",
+                "smj-NO",
+                "smj-SE",
+                "smn-FI",
+                "sms-FI",
+                "sq-AL",
+                "sr-BA",
+                "sr-CS",
+                "sr-Cyrl-BA",
+                "sr-Cyrl-CS",
+                "sr-Cyrl-ME",
+                "sr-Cyrl-RS",
+                "sr-Latn-BA",
+                "sr-Latn-CS",
+                "sr-Latn-ME",
+                "sr-Latn-RS",
+                "sr-ME",
+                "sr-RS",
+                "sr-sp",
+                "sv-FI",
+                "sv-SE",
+                "sw-KE",
+                "syr-SY",
+                "ta-IN",
+                "te-IN",
+                "tg-Cyrl-TJ",
+                "th-TH",
+                "tk-TM",
+                "tlh-QS",
+                "tn-ZA",
+                "tr-TR",
+                "tt-RU",
+                "tzm-Latn-DZ",
+                "ug-CN",
+                "uk-UA",
+                "ur-PK",
+                "uz-Cyrl-UZ",
+                "uz-Latn-UZ",
+                "uz-uz",
+                "vi-VN",
+                "wo-SN",
+                "xh-ZA",
+                "yo-NG",
+                "zh-CN",
+                "zh-HK",
+                "zh-MO",
+                "zh-SG",
+                "zh-TW",
+                "zu-ZA"
+            ],
+            "description": "Locale identifier from the supported locale list"
+        },
+        "legalNote": {
+            "type": "string",
+            "description": "Legal notice or disclaimer for the Bible translation"
+        },
+        "publisher": {
+            "type": "string",
+            "description": "Publisher of the Bible translation"
+        },
+        "copyRights": {
+            "type": "string",
+            "description": "Copyright information for the Bible translation"
+        },
+        "numbersMap": {
+            "type": "object",
+            "description": "Mapping of digits to their localized representations",
+            "properties": {
+                "0": {
+                    "type": "string"
+                },
+                "1": {
+                    "type": "string"
+                },
+                "2": {
+                    "type": "string"
+                },
+                "3": {
+                    "type": "string"
+                },
+                "4": {
+                    "type": "string"
+                },
+                "5": {
+                    "type": "string"
+                },
+                "6": {
+                    "type": "string"
+                },
+                "7": {
+                    "type": "string"
+                },
+                "8": {
+                    "type": "string"
+                },
+                "9": {
+                    "type": "string"
+                }
+            },
+            "required": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
+            "additionalProperties": false
+        },
+        "booksMap": {
+            "type": "object",
+            "description": "Mapping of book abbreviations to their full names",
+            "properties": {
+                "GEN": {
+                    "type": "string"
+                },
+                "EXO": {
+                    "type": "string"
+                },
+                "LEV": {
+                    "type": "string"
+                },
+                "NUM": {
+                    "type": "string"
+                },
+                "DEU": {
+                    "type": "string"
+                },
+                "JOS": {
+                    "type": "string"
+                },
+                "JDG": {
+                    "type": "string"
+                },
+                "RUT": {
+                    "type": "string"
+                },
+                "1SA": {
+                    "type": "string"
+                },
+                "2SA": {
+                    "type": "string"
+                },
+                "1KI": {
+                    "type": "string"
+                },
+                "2KI": {
+                    "type": "string"
+                },
+                "1CH": {
+                    "type": "string"
+                },
+                "2CH": {
+                    "type": "string"
+                },
+                "EZR": {
+                    "type": "string"
+                },
+                "NEH": {
+                    "type": "string"
+                },
+                "EST": {
+                    "type": "string"
+                },
+                "JOB": {
+                    "type": "string"
+                },
+                "PSA": {
+                    "type": "string"
+                },
+                "PRO": {
+                    "type": "string"
+                },
+                "ECC": {
+                    "type": "string"
+                },
+                "SNG": {
+                    "type": "string"
+                },
+                "ISA": {
+                    "type": "string"
+                },
+                "JER": {
+                    "type": "string"
+                },
+                "LAM": {
+                    "type": "string"
+                },
+                "EZK": {
+                    "type": "string"
+                },
+                "DAN": {
+                    "type": "string"
+                },
+                "HOS": {
+                    "type": "string"
+                },
+                "JOL": {
+                    "type": "string"
+                },
+                "AMO": {
+                    "type": "string"
+                },
+                "OBA": {
+                    "type": "string"
+                },
+                "JON": {
+                    "type": "string"
+                },
+                "MIC": {
+                    "type": "string"
+                },
+                "NAM": {
+                    "type": "string"
+                },
+                "HAB": {
+                    "type": "string"
+                },
+                "ZEP": {
+                    "type": "string"
+                },
+                "HAG": {
+                    "type": "string"
+                },
+                "ZEC": {
+                    "type": "string"
+                },
+                "MAL": {
+                    "type": "string"
+                },
+                "MAT": {
+                    "type": "string"
+                },
+                "MRK": {
+                    "type": "string"
+                },
+                "LUK": {
+                    "type": "string"
+                },
+                "JHN": {
+                    "type": "string"
+                },
+                "ACT": {
+                    "type": "string"
+                },
+                "ROM": {
+                    "type": "string"
+                },
+                "1CO": {
+                    "type": "string"
+                },
+                "2CO": {
+                    "type": "string"
+                },
+                "GAL": {
+                    "type": "string"
+                },
+                "EPH": {
+                    "type": "string"
+                },
+                "PHP": {
+                    "type": "string"
+                },
+                "COL": {
+                    "type": "string"
+                },
+                "1TH": {
+                    "type": "string"
+                },
+                "2TH": {
+                    "type": "string"
+                },
+                "1TI": {
+                    "type": "string"
+                },
+                "2TI": {
+                    "type": "string"
+                },
+                "TIT": {
+                    "type": "string"
+                },
+                "PHM": {
+                    "type": "string"
+                },
+                "HEB": {
+                    "type": "string"
+                },
+                "JAS": {
+                    "type": "string"
+                },
+                "1PE": {
+                    "type": "string"
+                },
+                "2PE": {
+                    "type": "string"
+                },
+                "1JN": {
+                    "type": "string"
+                },
+                "2JN": {
+                    "type": "string"
+                },
+                "3JN": {
+                    "type": "string"
+                },
+                "JUD": {
+                    "type": "string"
+                },
+                "REV": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "GEN",
+                "EXO",
+                "LEV",
+                "NUM",
+                "DEU",
+                "JOS",
+                "JDG",
+                "RUT",
+                "1SA",
+                "2SA",
+                "1KI",
+                "2KI",
+                "1CH",
+                "2CH",
+                "EZR",
+                "NEH",
+                "EST",
+                "JOB",
+                "PSA",
+                "PRO",
+                "ECC",
+                "SNG",
+                "ISA",
+                "JER",
+                "LAM",
+                "EZK",
+                "DAN",
+                "HOS",
+                "JOL",
+                "AMO",
+                "OBA",
+                "JON",
+                "MIC",
+                "NAM",
+                "HAB",
+                "ZEP",
+                "HAG",
+                "ZEC",
+                "MAL",
+                "MAT",
+                "MRK",
+                "LUK",
+                "JHN",
+                "ACT",
+                "ROM",
+                "1CO",
+                "2CO",
+                "GAL",
+                "EPH",
+                "PHP",
+                "COL",
+                "1TH",
+                "2TH",
+                "1TI",
+                "2TI",
+                "TIT",
+                "PHM",
+                "HEB",
+                "JAS",
+                "1PE",
+                "2PE",
+                "1JN",
+                "2JN",
+                "3JN",
+                "JUD",
+                "REV"
+            ],
+            "additionalProperties": false
+        },
+        "booksAvailable": {
+            "type": "array",
+            "description": "List of available book abbreviations",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "GEN",
+                    "EXO",
+                    "LEV",
+                    "NUM",
+                    "DEU",
+                    "JOS",
+                    "JDG",
+                    "RUT",
+                    "1SA",
+                    "2SA",
+                    "1KI",
+                    "2KI",
+                    "1CH",
+                    "2CH",
+                    "EZR",
+                    "NEH",
+                    "EST",
+                    "JOB",
+                    "PSA",
+                    "PRO",
+                    "ECC",
+                    "SNG",
+                    "ISA",
+                    "JER",
+                    "LAM",
+                    "EZK",
+                    "DAN",
+                    "HOS",
+                    "JOL",
+                    "AMO",
+                    "OBA",
+                    "JON",
+                    "MIC",
+                    "NAM",
+                    "HAB",
+                    "ZEP",
+                    "HAG",
+                    "ZEC",
+                    "MAL",
+                    "MAT",
+                    "MRK",
+                    "LUK",
+                    "JHN",
+                    "ACT",
+                    "ROM",
+                    "1CO",
+                    "2CO",
+                    "GAL",
+                    "EPH",
+                    "PHP",
+                    "COL",
+                    "1TH",
+                    "2TH",
+                    "1TI",
+                    "2TI",
+                    "TIT",
+                    "PHM",
+                    "HEB",
+                    "JAS",
+                    "1PE",
+                    "2PE",
+                    "1JN",
+                    "2JN",
+                    "3JN",
+                    "JUD",
+                    "REV"
+                ]
+            },
+            "uniqueItems": true
+        }
+    },
+    "required": [
+        "title",
+        "key",
+        "version",
+        "locale",
+        "legalNote",
+        "publisher",
+        "copyRights",
+        "numbersMap",
+        "booksMap",
+        "booksAvailable"
+    ],
+    "additionalProperties": false
+}

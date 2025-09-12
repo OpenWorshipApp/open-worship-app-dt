@@ -171,9 +171,7 @@ function BibleBooksMapXMLInputComp({
     const setValue1 = (value: string) => {
         setValue(value);
         onChange(value);
-        if (
-            value.split('\n').filter((line) => line.trim() !== '').length !== 66
-        ) {
+        if (value.split('\n').length !== 66) {
             setInvalidMessage('Must have 66 books');
         } else {
             setInvalidMessage('');

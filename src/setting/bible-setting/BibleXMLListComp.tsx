@@ -1,138 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import LoadingComp from '../../others/LoadingComp';
-import {
-    handBibleInfoContextMenuOpening,
-    handBibleKeyContextMenuOpening,
-    updateBibleXMLInfo,
-    useBibleXMLInfo,
-    deleteBibleXML,
-} from './bibleXMLHelpers';
-import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
-import { useStateSettingBoolean } from '../../helper/settingHelpers';
-
-function PreviewBibleXMLInfoComp({
-    bibleKey,
-    loadBibleKeys,
-}: Readonly<{
-    bibleKey: string;
-    loadBibleKeys: () => void;
-}>) {
-    const { bibleInfo, setBibleInfo, isPending } = useBibleXMLInfo(bibleKey);
-    const [isChanged, setIsChanged] = useState(false);
-    if (isPending) {
-        return <LoadingComp />;
-    }
-    if (bibleInfo === null) {
-        return null;
-    }
-    return (
-        <div
-            className="app-border-white-round p-2"
-            onContextMenu={(event) => {
-                handBibleInfoContextMenuOpening(
-                    event,
-                    bibleInfo,
-                    (newOutputJson) => {
-                        setBibleInfo(newOutputJson);
-                        setIsChanged(true);
-                    },
-                );
-            }}
-        >
-            <button
-                className="btn btn-success"
-                style={{
-                    position: 'absolute',
-                }}
-                disabled={!isChanged}
-                onClick={() => {
-                    updateBibleXMLInfo(bibleInfo);
-                    loadBibleKeys();
-                }}
-            >
-                Save
-            </button>
-            <textarea
-                className="w-100 mt-5"
-                style={{
-                    height: '500px',
-                }}
-                value={JSON.stringify(bibleInfo, null, 2)}
-                onChange={(event) => {
-                    try {
-                        setBibleInfo(JSON.parse(event.target.value));
-                        setIsChanged(true);
-                    } catch (_error) {}
-                }}
-            />
-        </div>
-    );
-}
-
-function BibleXMLInfoComp({
-    bibleKey,
-    loadBibleKeys,
-    filePath,
-}: Readonly<{
-    bibleKey: string;
-    loadBibleKeys: () => void;
-    filePath: string;
-}>) {
-    const [isShowing, setIsShowing] = useStateSettingBoolean(
-        `bible-xml-${bibleKey}`,
-        false,
-    );
-    const handleFileTrashing = async (event: any) => {
-        event.stopPropagation();
-        const isConfirmed = await showAppConfirm(
-            'Delete Bible XML',
-            `Are you sure to delete bible XML "${bibleKey}"?`,
-        );
-        if (!isConfirmed) {
-            return;
-        }
-        await deleteBibleXML(bibleKey);
-        loadBibleKeys();
-    };
-    return (
-        <li
-            className="list-group-item"
-            title={filePath}
-            onContextMenu={handBibleKeyContextMenuOpening.bind(null, bibleKey)}
-        >
-            <div className="d-flex w-100">
-                <div className="flex-fill" data-bible-key={bibleKey}>
-                    {bibleKey}
-                </div>
-                <div>
-                    <div className="btn-group">
-                        <button
-                            className={`btn btn-${isShowing ? '' : 'outline-'}primary`}
-                            onClick={() => {
-                                setIsShowing(!isShowing);
-                            }}
-                        >
-                            Edit
-                        </button>
-                        <button
-                            className="btn btn-danger"
-                            onClick={handleFileTrashing}
-                        >
-                            Move to Trash
-                        </button>
-                    </div>
-                </div>
-            </div>
-            {isShowing ? (
-                <PreviewBibleXMLInfoComp
-                    bibleKey={bibleKey}
-                    loadBibleKeys={loadBibleKeys}
-                />
-            ) : null}
-        </li>
-    );
-}
+import BibleXMLInfoComp from './BibleXMLInfoComp';
 
 export default function BibleXMLListComp({
     isPending,
@@ -143,6 +12,15 @@ export default function BibleXMLListComp({
     bibleKeysMap: { [key: string]: string } | null;
     loadBibleKeys: () => void;
 }>) {
+    const bibleKeys = useMemo(() => {
+        if (bibleKeysMap === null) {
+            return [];
+        }
+        const localBibleKeys = Object.keys(bibleKeysMap).sort((a, b) =>
+            a.localeCompare(b),
+        );
+        return localBibleKeys;
+    }, [bibleKeysMap]);
     if (isPending) {
         return <LoadingComp />;
     }
@@ -166,15 +44,9 @@ export default function BibleXMLListComp({
             </a>
         </>
     );
-    if (bibleKeysMap === null || Object.keys(bibleKeysMap).length === 0) {
+    if (bibleKeysMap === null || Object.keys(bibleKeysMap ?? []).length === 0) {
         return <div>No Bible XML files {buttons}</div>;
     }
-    const bibleKeys = useMemo(() => {
-        const localBibleKeys = Object.keys(bibleKeysMap).sort((a, b) =>
-            a.localeCompare(b),
-        );
-        return localBibleKeys;
-    }, [bibleKeysMap]);
     return (
         <>
             <h3>Bibles XML {buttons}</h3>
