@@ -1,6 +1,8 @@
 import { useState } from 'react';
 
 import { getLangCode, LocaleType } from '../../lang/langHelpers';
+import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
+import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -157,26 +159,31 @@ export function genBibleNumbersMapXMLInput(
     );
 }
 
+const genMonacoBibleLineNumber = (num: number) => {
+    const map = kjvBibleInfo.booksOrder;
+    return map[num - 1] ?? num.toString();
+};
+
 function BibleBooksMapXMLInputComp({
     defaultVale,
     onChange,
     locale,
 }: Readonly<{
     defaultVale: string;
-    onChange: (key: string) => void;
+    onChange: (newValue: string) => void;
     locale: LocaleType;
 }>) {
-    const [value, setValue] = useState(defaultVale);
-    const [invalidMessage, setInvalidMessage] = useState<string>('');
-    const setValue1 = (value: string) => {
-        setValue(value);
-        onChange(value);
-        if (value.split('\n').length !== 66) {
-            setInvalidMessage('Must have 66 books');
-        } else {
-            setInvalidMessage('');
-        }
-    };
+    const { editorStore, onContainerInit } = useInitMonacoEditor({
+        settingName: 'bible-xml-wrap-text',
+        options: {
+            value: defaultVale,
+            language: 'plaintext',
+            lineNumbers: genMonacoBibleLineNumber,
+        },
+        onContentChange: (content) => {
+            onChange(content);
+        },
+    });
     const handleMarkupStringParsing = (markupString: string) => {
         const parser = new DOMParser();
         markupString = markupString.replace(/<\//g, '@newline</');
@@ -187,31 +194,23 @@ function BibleBooksMapXMLInputComp({
         innerText = innerText.replace(/\n\s/g, '\n');
         innerText = innerText.replace(/\n+/g, '\n');
         innerText = innerText.trim();
-        setValue1(innerText);
+        onChange(innerText);
+        editorStore.replaceValue(innerText);
     };
     const langCode = getLangCode(locale) ?? 'en';
-    const isHTML = value.includes('<');
     return (
         <div className="w-100 h-100">
-            <div>Define books map</div>
-            <div className="input-group" title={invalidMessage}>
-                <textarea
-                    style={{
-                        width: '100%',
-                        height: '400px',
-                    }}
-                    className={
-                        'form-control' + (invalidMessage ? ' is-invalid' : '')
-                    }
-                    value={value}
-                    onChange={(e) => {
-                        setValue1(e.target.value);
-                    }}
-                />
-            </div>
+            <h3 className="p-2">Define books map</h3>
+            <div
+                className="input-group"
+                ref={onContainerInit}
+                style={{
+                    height: '400px',
+                }}
+            ></div>
             <div className="w-100">
                 <a
-                    className="btn btn-secondary ms-2"
+                    className="btn btn-sm btn-secondary ms-2"
                     href={
                         `https://translate.google.com/?sl=en&tl=${langCode}&` +
                         'text=GENESIS%0AEXODUS%0ALEVITICUS%0ANUMBERS%0ADEUTERONO' +
@@ -234,10 +233,14 @@ function BibleBooksMapXMLInputComp({
                     Translate ({langCode})
                 </a>
                 <button
-                    className="btn btn-info"
-                    disabled={!isHTML}
+                    className="btn btn-sm btn-secondary ms-2"
                     onClick={(event) => {
                         event.stopPropagation();
+                        const value = editorStore.editorInstance.getValue();
+                        const isHTML = value.includes('<');
+                        if (!isHTML) {
+                            return;
+                        }
                         handleMarkupStringParsing(value);
                     }}
                 >

@@ -21,15 +21,19 @@ export default function ConfirmPopupComp({
     useKeyboardRegistering(
         [{ key: 'Escape' }],
         (event) => {
-            event.preventDefault();
-            handleClosing();
+            if (data.escToCancel ?? true) {
+                event.preventDefault();
+                handleClosing();
+            }
         },
         [data],
     );
     useKeyboardRegistering(
         [{ key: 'Enter' }],
         () => {
-            handleOkClicking();
+            if (data.enterToOk ?? true) {
+                handleOkClicking();
+            }
         },
         [data],
     );

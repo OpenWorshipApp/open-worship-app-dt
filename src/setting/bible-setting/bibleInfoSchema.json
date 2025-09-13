@@ -268,34 +268,54 @@
             "description": "Mapping of digits to their localized representations",
             "properties": {
                 "0": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["0"]
                 },
                 "1": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["1"]
                 },
                 "2": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["2"]
                 },
                 "3": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["3"]
                 },
                 "4": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["4"]
                 },
                 "5": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["5"]
                 },
                 "6": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["6"]
                 },
                 "7": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["7"]
                 },
                 "8": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["8"]
                 },
                 "9": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": ["9"]
                 }
             },
             "required": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
@@ -306,202 +326,400 @@
             "description": "Mapping of book abbreviations to their full names",
             "properties": {
                 "GEN": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Genesis",
+                    "minLength": 1,
+                    "examples": ["Genesis"]
                 },
                 "EXO": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Exodus",
+                    "minLength": 1,
+                    "examples": ["Exodus"]
                 },
                 "LEV": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Leviticus",
+                    "minLength": 1,
+                    "examples": ["Leviticus"]
                 },
                 "NUM": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Numbers",
+                    "minLength": 1,
+                    "examples": ["Numbers"]
                 },
                 "DEU": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Deuteronomy",
+                    "minLength": 1,
+                    "examples": ["Deuteronomy"]
                 },
                 "JOS": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Joshua",
+                    "minLength": 1,
+                    "examples": ["Joshua"]
                 },
                 "JDG": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Judges",
+                    "minLength": 1,
+                    "examples": ["Judges"]
                 },
                 "RUT": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Ruth",
+                    "minLength": 1,
+                    "examples": ["Ruth"]
                 },
                 "1SA": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 1 Samuel",
+                    "minLength": 1,
+                    "examples": ["1 Samuel"]
                 },
                 "2SA": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 2 Samuel",
+                    "minLength": 1,
+                    "examples": ["2 Samuel"]
                 },
                 "1KI": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 1 Kings",
+                    "minLength": 1,
+                    "examples": ["1 Kings"]
                 },
                 "2KI": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 2 Kings",
+                    "minLength": 1,
+                    "examples": ["2 Kings"]
                 },
                 "1CH": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 1 Chronicles",
+                    "minLength": 1,
+                    "examples": ["1 Chronicles"]
                 },
                 "2CH": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 2 Chronicles",
+                    "minLength": 1,
+                    "examples": ["2 Chronicles"]
                 },
                 "EZR": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Ezra",
+                    "minLength": 1,
+                    "examples": ["Ezra"]
                 },
                 "NEH": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Nehemiah",
+                    "minLength": 1,
+                    "examples": ["Nehemiah"]
                 },
                 "EST": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Esther",
+                    "minLength": 1,
+                    "examples": ["Esther"]
                 },
                 "JOB": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Job",
+                    "minLength": 1,
+                    "examples": ["Job"]
                 },
                 "PSA": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Psalms",
+                    "minLength": 1,
+                    "examples": ["Psalms"]
                 },
                 "PRO": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Proverbs",
+                    "minLength": 1,
+                    "examples": ["Proverbs"]
                 },
                 "ECC": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Ecclesiastes",
+                    "minLength": 1,
+                    "examples": ["Ecclesiastes"]
                 },
                 "SNG": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Song of Solomon",
+                    "minLength": 1,
+                    "examples": ["Song of Solomon"]
                 },
                 "ISA": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Isaiah",
+                    "minLength": 1,
+                    "examples": ["Isaiah"]
                 },
                 "JER": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Jeremiah",
+                    "minLength": 1,
+                    "examples": ["Jeremiah"]
                 },
                 "LAM": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Lamentations",
+                    "minLength": 1,
+                    "examples": ["Lamentations"]
                 },
                 "EZK": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Ezekiel",
+                    "minLength": 1,
+                    "examples": ["Ezekiel"]
                 },
                 "DAN": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Daniel",
+                    "minLength": 1,
+                    "examples": ["Daniel"]
                 },
                 "HOS": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Hosea",
+                    "minLength": 1,
+                    "examples": ["Hosea"]
                 },
                 "JOL": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Joel",
+                    "minLength": 1,
+                    "examples": ["Joel"]
                 },
                 "AMO": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Amos",
+                    "minLength": 1,
+                    "examples": ["Amos"]
                 },
                 "OBA": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Obadiah",
+                    "minLength": 1,
+                    "examples": ["Obadiah"]
                 },
                 "JON": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Jonah",
+                    "minLength": 1,
+                    "examples": ["Jonah"]
                 },
                 "MIC": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Micah",
+                    "minLength": 1,
+                    "examples": ["Micah"]
                 },
                 "NAM": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Nahum",
+                    "minLength": 1,
+                    "examples": ["Nahum"]
                 },
                 "HAB": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Habakkuk",
+                    "minLength": 1,
+                    "examples": ["Habakkuk"]
                 },
                 "ZEP": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Zephaniah",
+                    "minLength": 1,
+                    "examples": ["Zephaniah"]
                 },
                 "HAG": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Haggai",
+                    "minLength": 1,
+                    "examples": ["Haggai"]
                 },
                 "ZEC": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Zechariah",
+                    "minLength": 1,
+                    "examples": ["Zechariah"]
                 },
                 "MAL": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Malachi",
+                    "minLength": 1,
+                    "examples": ["Malachi"]
                 },
                 "MAT": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Matthew",
+                    "minLength": 1,
+                    "examples": ["Matthew"]
                 },
                 "MRK": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Mark",
+                    "minLength": 1,
+                    "examples": ["Mark"]
                 },
                 "LUK": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Luke",
+                    "minLength": 1,
+                    "examples": ["Luke"]
                 },
                 "JHN": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of John",
+                    "minLength": 1,
+                    "examples": ["John"]
                 },
                 "ACT": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Acts",
+                    "minLength": 1,
+                    "examples": ["Acts"]
                 },
                 "ROM": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Romans",
+                    "minLength": 1,
+                    "examples": ["Romans"]
                 },
                 "1CO": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 1 Corinthians",
+                    "minLength": 1,
+                    "examples": ["1 Corinthians"]
                 },
                 "2CO": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 2 Corinthians",
+                    "minLength": 1,
+                    "examples": ["2 Corinthians"]
                 },
                 "GAL": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Galatians",
+                    "minLength": 1,
+                    "examples": ["Galatians"]
                 },
                 "EPH": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Ephesians",
+                    "minLength": 1,
+                    "examples": ["Ephesians"]
                 },
                 "PHP": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Philippians",
+                    "minLength": 1,
+                    "examples": ["Philippians"]
                 },
                 "COL": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Colossians",
+                    "minLength": 1,
+                    "examples": ["Colossians"]
                 },
                 "1TH": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 1 Thessalonians",
+                    "minLength": 1,
+                    "examples": ["1 Thessalonians"]
                 },
                 "2TH": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 2 Thessalonians",
+                    "minLength": 1,
+                    "examples": ["2 Thessalonians"]
                 },
                 "1TI": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 1 Timothy",
+                    "minLength": 1,
+                    "examples": ["1 Timothy"]
                 },
                 "2TI": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 2 Timothy",
+                    "minLength": 1,
+                    "examples": ["2 Timothy"]
                 },
                 "TIT": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Titus",
+                    "minLength": 1,
+                    "examples": ["Titus"]
                 },
                 "PHM": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Philemon",
+                    "minLength": 1,
+                    "examples": ["Philemon"]
                 },
                 "HEB": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Hebrews",
+                    "minLength": 1,
+                    "examples": ["Hebrews"]
                 },
                 "JAS": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of James",
+                    "minLength": 1,
+                    "examples": ["James"]
                 },
                 "1PE": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 1 Peter",
+                    "minLength": 1,
+                    "examples": ["1 Peter"]
                 },
                 "2PE": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 2 Peter",
+                    "minLength": 1,
+                    "examples": ["2 Peter"]
                 },
                 "1JN": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 1 John",
+                    "minLength": 1,
+                    "examples": ["1 John"]
                 },
                 "2JN": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 2 John",
+                    "minLength": 1,
+                    "examples": ["2 John"]
                 },
                 "3JN": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of 3 John",
+                    "minLength": 1,
+                    "examples": ["3 John"]
                 },
                 "JUD": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Jude",
+                    "minLength": 1,
+                    "examples": ["Jude"]
                 },
                 "REV": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Book of Revelation",
+                    "minLength": 1,
+                    "examples": ["Revelation"]
                 }
             },
             "required": [

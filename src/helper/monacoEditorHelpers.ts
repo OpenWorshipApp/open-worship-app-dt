@@ -60,7 +60,7 @@ export type EditorStoreType = {
     lastMouseClickPos: {
         x: number;
         y: number;
-    } | null;
+    };
 };
 
 function createEditor(
@@ -92,7 +92,10 @@ function createEditor(
         editorInstance,
         div,
         toggleIsWrapText: () => {},
-        lastMouseClickPos: null,
+        lastMouseClickPos: {
+            x: 0,
+            y: 0,
+        },
         replaceValue: (value: string) => {
             const range = editorInstance.getModel()?.getFullModelRange();
             if (range === undefined) {
@@ -150,14 +153,12 @@ export function useInitMonacoEditor({
     onInit,
     onStore,
     onContentChange,
-    onMarkersChange,
 }: {
     settingName: string;
     options: editor.IStandaloneEditorConstructionOptions;
     onInit?: (editorInstance: editor.IStandaloneCodeEditor) => void;
     onStore?: (editorStore: EditorStoreType) => void;
     onContentChange?: (content: string) => void;
-    onMarkersChange?: (markers: editor.IMarker[]) => void;
 }) {
     const [isWrapText, setIsWrapText] = useStateSettingBoolean(
         settingName,
@@ -178,8 +179,6 @@ export function useInitMonacoEditor({
             ) {
                 return;
             }
-            const markers = editor.getModelMarkers({ resource: currentUri });
-            onMarkersChange?.(markers);
         });
         if (onContentChange !== undefined) {
             editorInstance.onDidChangeModelContent(async () => {

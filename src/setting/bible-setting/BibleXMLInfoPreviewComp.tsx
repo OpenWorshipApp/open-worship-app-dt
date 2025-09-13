@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { editor, languages } from 'monaco-editor';
+import { compileSchema, SchemaNode } from 'json-schema-library';
 
 import LoadingComp from '../../others/LoadingComp';
 import {
     addMonacoBibleInfoActions,
-    handBibleInfoContextMenuOpening,
     updateBibleXMLInfo,
     useBibleXMLInfo,
 } from './bibleXMLHelpers';
@@ -17,6 +17,7 @@ import appProvider from '../../server/appProvider';
 import bibleInfoSchema from './bibleInfoSchema.json';
 import { AnyObjectType } from '../../helper/typeHelpers';
 
+const schema: SchemaNode = compileSchema(bibleInfoSchema);
 languages.json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
     allowComments: false,
@@ -54,6 +55,11 @@ export default function BibleXMLInfoPreviewComp({
 }>) {
     const [canSave, setCanSave] = useState(false);
     const { bibleInfo, setBibleInfo, isPending } = useBibleXMLInfo(bibleKey);
+    const setBibleInfo1 = (newBibleInfo: BibleJsonInfoType) => {
+        setBibleInfo(newBibleInfo);
+        const { valid, errors } = schema.validate(newBibleInfo);
+        setCanSave(valid && errors.length === 0);
+    };
     const { editorStore, onContainerInit } = useInitMonacoEditor({
         settingName: 'bible-xml-wrap-text',
         options: {
@@ -67,6 +73,9 @@ export default function BibleXMLInfoPreviewComp({
         onStore: (editorStore) => {
             addMonacoBibleInfoActions(
                 editorStore,
+                () => {
+                    return getEditorBibleInfo(editorStore.editorInstance);
+                },
                 (partialBibleInfo: AnyObjectType) => {
                     const oldBibleInfo = getEditorBibleInfo(
                         editorStore.editorInstance,
@@ -78,8 +87,7 @@ export default function BibleXMLInfoPreviewComp({
                         ...oldBibleInfo,
                         ...partialBibleInfo,
                     } as BibleJsonInfoType;
-                    setBibleInfo1(newBibleInfo);
-                    setCanSave(true);
+                    applyBibleInfo(newBibleInfo);
                 },
             );
         },
@@ -89,18 +97,12 @@ export default function BibleXMLInfoPreviewComp({
                 if (checkAreObjectsEqual(newBibleInfo, bibleInfo)) {
                     return;
                 }
-                setBibleInfo(newBibleInfo);
-                setCanSave(true);
+                setBibleInfo1(newBibleInfo);
             } catch (_error) {}
         },
-        onMarkersChange: (markers) => {
-            // Only allow saving if there are no validation errors or warnings
-            const hasErrors = markers.some((marker) => marker.severity >= 4); // 4 = Error, 8 = Warning
-            setCanSave(!hasErrors && markers.length === 0);
-        },
     });
-    const setBibleInfo1 = (newBibleInfo: BibleJsonInfoType) => {
-        setBibleInfo(newBibleInfo);
+    const applyBibleInfo = (newBibleInfo: BibleJsonInfoType) => {
+        setBibleInfo1(newBibleInfo);
         const content = JSON.stringify(newBibleInfo, null, 2);
         editorStore.replaceValue(content);
         setCanSave(true);
@@ -121,19 +123,7 @@ export default function BibleXMLInfoPreviewComp({
         return null;
     }
     return (
-        <div
-            className="app-border-white-round p-2"
-            onContextMenu={(event) => {
-                handBibleInfoContextMenuOpening(
-                    event,
-                    bibleInfo,
-                    (newOutputJson) => {
-                        setBibleInfo1(newOutputJson);
-                        setCanSave(true);
-                    },
-                );
-            }}
-        >
+        <div className="app-border-white-round p-2">
             <button
                 className="btn btn-success"
                 style={{

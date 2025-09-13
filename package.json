@@ -126,6 +126,7 @@
         "electron": "^37.1.0",
         "electron-builder": "^26.0.12",
         "eslint": "^9.22.0",
+        "json-schema-library": "^10.2.1",
         "lexical": "^0.33.1",
         "markdown-it": "^14.1.0",
         "markdown-it-music": "^2.0.5",
