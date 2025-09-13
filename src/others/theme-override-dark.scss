@@ -24,8 +24,8 @@ $resizer-color: rgb(73, 103, 123);
     }
 
     &.active {
-      background-color: #0d6dfd2f;
-      border-color: #0d6dfd3f;
+      background-color: var(--bs-gray-800);
+      border-color: var(--bs-gray-700);
     }
   }
 
