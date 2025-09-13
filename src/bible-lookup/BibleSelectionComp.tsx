@@ -173,6 +173,10 @@ export function BibleSelectionMiniComp({
                 `bible-selector ${isHandleClickEvent ? 'pointer' : ''} ` +
                 (isMinimal ? ' bg-info' : 'badge rounded-pill text-bg-info')
             }
+            style={{
+                paddingLeft: isMinimal ? '2px' : '6px',
+                paddingRight: isMinimal ? '2px' : '6px',
+            }}
             onClick={
                 isHandleClickEvent
                     ? (event) => {

@@ -53,13 +53,7 @@ function RenderHeaderInfoComp({
         Slide.checkIsThisType(varyAppDocumentItem) &&
         (varyAppDocumentItem as Slide).isChanged;
     return (
-        <div
-            className="card-header d-flex"
-            style={{
-                height: '35px',
-                backgroundColor: 'var(--bs-gray-800)',
-            }}
-        >
+        <div className="card-header vary-app-document-item-header d-flex">
             <div className="d-flex w-100">
                 <div className="flex-fill d-flex">
                     <div>

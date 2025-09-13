@@ -4,7 +4,10 @@ $dragging-color-full: rgb(0, 174, 162);
 $dragging-color: greenyellow;
 
 #app {
-  // Start: Boootstrap
+  .btn {
+    white-space: nowrap;
+  }
+
   .card-header {
     height: $card-header-height;
     padding: 5px;
@@ -16,28 +19,10 @@ $dragging-color: greenyellow;
   }
 
   .receiving-data-drop {
-    border: 1px solid $dragging-color-full !important;
     box-sizing: content-box;
   }
 
-  .receiving-data-drop-left {
-    border-left: 1px dashed $dragging-color !important;
-  }
-
-  .receiving-data-drop-right {
-    border-right: 1px dashed $dragging-color !important;
-  }
-
-  .receiving-data-drop-top {
-    border-top: 1px dashed $dragging-color !important;
-  }
-
-  .receiving-data-drop-bottom {
-    border-bottom: 1px dotted $dragging-color !important;
-  }
-
   .list-group-item {
-    border: 1px solid var(--bs-gray-700);
     border-radius: 5px;
 
     &:before {
@@ -50,10 +35,6 @@ $dragging-color: greenyellow;
       text-align: right;
       width: 12px;
       font-size: 12px;
-    }
-
-    &:not(.active):hover {
-      border: 1px solid #0d6dfd83;
     }
 
     &:hover {
@@ -76,33 +57,11 @@ $dragging-color: greenyellow;
         }
       }
     }
-
-    &.active {
-      background-color: #0d6dfd2f;
-      border-color: #0d6dfd3f;
-    }
   }
 
   .form-select.bible {
     border: none;
     background-size: 16px;
     cursor: pointer;
-  }
-
-  // End: Boootstrap
-}
-
-[data-bs-theme='dark'] {
-  .toast-body {
-    word-wrap: break-word;
-  }
-
-  .active .text-muted,
-  .btn:hover .text-muted {
-    color: rgb(211, 211, 211) !important;
-  }
-
-  .btn {
-    white-space: nowrap;
   }
 }

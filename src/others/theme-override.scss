@@ -1,0 +1,187 @@
+@use './variables.scss' as *;
+
+$dragging-color-full: rgb(0, 174, 162);
+$dragging-color: greenyellow;
+
+#app {
+  background-color: var(--bs-gray-200);
+  color: black;
+
+  // Start: Bootstrap
+
+  .btn {
+    border: 1px solid var(--bs-gray-400);
+  }
+
+  .receiving-data-drop {
+    border: 1px solid $dragging-color-full !important;
+    box-sizing: content-box;
+  }
+
+  .receiving-data-drop-left {
+    border-left: 1px dashed $dragging-color !important;
+  }
+
+  .receiving-data-drop-right {
+    border-right: 1px dashed $dragging-color !important;
+  }
+
+  .receiving-data-drop-top {
+    border-top: 1px dashed $dragging-color !important;
+  }
+
+  .receiving-data-drop-bottom {
+    border-bottom: 1px dotted $dragging-color !important;
+  }
+
+  .list-group-item {
+    border: 1px solid var(--bs-gray-300);
+
+    &:not(.active):hover {
+      border: 1px solid #04204b83;
+    }
+
+    &.active {
+      background-color: #0520492f;
+      border-color: #041e463f;
+      color: var(--bs-list-group-color);
+    }
+  }
+
+  // End: Bootstrap
+
+  .toast-body {
+    word-wrap: break-word;
+  }
+
+  .active .text-muted,
+  .btn:hover .text-muted {
+    color: rgb(211, 211, 211) !important;
+  }
+
+  & #app-header {
+    .app-highlight-border-bottom {
+      border-bottom: 1px solid var(--bs-gray-400);
+    }
+  }
+
+  & #app-body {
+    background-color: var(--bs-gray-300);
+  }
+
+  #app-context-menu-container {
+    .app-context-menu {
+      background-color: var(--bs-gray-400);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.9);
+
+      .app-context-menu-item {
+        &:hover:not(.disabled) {
+          background-color: var(--bs-gray-300);
+        }
+
+        &:hover {
+          background: var(--bs-gray-300);
+        }
+      }
+    }
+  }
+
+  .app-auto-hide {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .data-vary-app-document-item {
+    background-color: var(--bs-gray-200);
+    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
+    border: 1px solid gray;
+
+    .vary-app-document-item-header {
+      background-color: var(--bs-gray-200);
+    }
+
+    &.active {
+      border: 1px solid rgba(0, 68, 68, 0.418);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.048);
+
+      .card-header {
+        background-color: rgba(0, 50, 50, 0.205);
+      }
+
+      .index {
+        background-color: rgba(0, 53, 53, 0.418);
+      }
+    }
+
+    &:not(.active):hover {
+      border: 1px solid rgb(0, 0, 0);
+    }
+
+    .index {
+      background-color: rgba(164, 164, 164, 0.418);
+    }
+  }
+
+  .hidden-widget {
+    $bg-color: var(--bs-gray-400);
+    $bg-color-hover: var(--bs-gray-500);
+    $color: var(--bs-gray-200);
+
+    background-color: $bg-color;
+    background: repeating-linear-gradient(
+      45deg,
+      $color,
+      $color 4px,
+      $bg-color 2px,
+      $bg-color 8px
+    );
+
+    &:hover {
+      background: repeating-linear-gradient(
+        45deg,
+        $color,
+        $color 4px,
+        $bg-color-hover 2px,
+        $bg-color-hover 8px
+      );
+
+      * {
+        color: var(--bs-gray-900);
+      }
+    }
+
+    * {
+      color: var(--bs-gray-600);
+    }
+  }
+
+  .presenter-manager {
+    & > .body {
+      background-color: var(--bs-gray-100);
+    }
+  }
+
+  .app-border-white-round {
+    border: 1px solid var(--bs-gray-400);
+  }
+  .app-border-whiter-round {
+    border: 1px dashed var(--bs-gray-600);
+  }
+
+  .app-full-view {
+    background-color: var(--bs-gray-100) !important;
+  }
+
+  .app-round-icon {
+    background-color: var(--bs-gray-400);
+  }
+
+  $bg-color1: var(--bs-gray-400);
+  $bg-color2: var(--bs-gray-300);
+  .blank-bg {
+    background-image:
+      linear-gradient(45deg, $bg-color1 25%, $bg-color2 25%),
+      linear-gradient(-45deg, $bg-color1 25%, $bg-color2 25%),
+      linear-gradient(45deg, $bg-color2 75%, $bg-color1 75%),
+      linear-gradient(-45deg, $bg-color2 75%, $bg-color1 75%);
+  }
+}

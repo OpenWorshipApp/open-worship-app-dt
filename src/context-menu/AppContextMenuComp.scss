@@ -13,11 +13,8 @@
     max-width: 210px;
     min-width: 50px;
     border-radius: 4px;
-    background-color: var(--bs-gray-600);
     padding: 10px 0;
     z-index: $z-index-context-menu + 1;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.9);
-    color: white;
     overflow-x: hidden;
     overflow-y: auto;
 
@@ -25,14 +22,6 @@
       &.disabled {
         opacity: 0.4;
         cursor: not-allowed !important;
-      }
-
-      &:hover:not(.disabled) {
-        background-color: var(--bs-gray-700);
-      }
-
-      &:hover {
-        background: var(--bs-gray-700);
       }
 
       font-size: 14px;
