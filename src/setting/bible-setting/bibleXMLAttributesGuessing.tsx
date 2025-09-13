@@ -161,7 +161,13 @@ export function genBibleNumbersMapXMLInput(
 
 const genMonacoBibleLineNumber = (num: number) => {
     const map = kjvBibleInfo.booksOrder;
-    return map[num - 1] ?? num.toString();
+    const index = num - 1;
+    const numString = `0${num}`.slice(-2);
+    if (map[index] === undefined) {
+        return numString;
+    }
+    const bookKey = map[num - 1];
+    return `${kjvBibleInfo.kjvKeyValue[bookKey]} (${bookKey}) ${numString}`;
 };
 
 function BibleBooksMapXMLInputComp({
@@ -178,6 +184,7 @@ function BibleBooksMapXMLInputComp({
         options: {
             value: defaultVale,
             language: 'plaintext',
+            lineNumbersMinChars: 25,
             lineNumbers: genMonacoBibleLineNumber,
         },
         onContentChange: (content) => {
@@ -207,8 +214,19 @@ function BibleBooksMapXMLInputComp({
                 style={{
                     height: '400px',
                 }}
-            ></div>
-            <div className="w-100">
+            />
+            <div className="w-100 p-1">
+                <button
+                    className="btn btn-sm btn-warning ms-2"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        editorStore.replaceValue(
+                            Object.values(kjvBibleInfo.kjvKeyValue).join('\n'),
+                        );
+                    }}
+                >
+                    `Reset
+                </button>
                 <a
                     className="btn btn-sm btn-secondary ms-2"
                     href={

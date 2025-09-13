@@ -107,6 +107,7 @@ function createEditor(
                     text: value,
                 } as any,
             ]);
+            editorInstance.focus();
         },
     };
     onStore?.(editorStore);

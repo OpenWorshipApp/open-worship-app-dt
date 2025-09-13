@@ -45,7 +45,6 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
-import { log } from '../../helper/loggerHelpers';
 import { EditorStoreType } from '../../helper/monacoEditorHelpers';
 import { AnyObjectType } from '../../helper/typeHelpers';
 
@@ -363,7 +362,6 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
         }
         const title = `Loading Bible Data`;
         showProgressBar(title);
-        log(title, `Reading Bible from file of "${bibleKey}"`);
         jsonData = await getBibleXMLDataFromKey(bibleKey);
         hideProgressBar(title);
         if (jsonData !== null) {
@@ -472,8 +470,8 @@ export function useBibleXMLKeys() {
     const [isPending, startTransition] = useTransition();
     const loadBibleKeys = () => {
         startTransition(async () => {
-            const keys = await getAllXMLFileKeys();
-            setBibleKeysMap(keys);
+            const keyMap = await getAllXMLFileKeys();
+            setBibleKeysMap(keyMap);
         });
     };
     useAppEffect(loadBibleKeys, []);

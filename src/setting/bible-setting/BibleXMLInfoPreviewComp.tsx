@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { editor, languages } from 'monaco-editor';
 import { compileSchema, SchemaNode } from 'json-schema-library';
 
@@ -10,12 +10,13 @@ import {
 } from './bibleXMLHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
 import { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
 import appProvider from '../../server/appProvider';
 
 import bibleInfoSchema from './bibleInfoSchema.json';
 import { AnyObjectType } from '../../helper/typeHelpers';
+import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
+import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 
 const schema: SchemaNode = compileSchema(bibleInfoSchema);
 languages.json.jsonDefaults.setDiagnosticsOptions({
@@ -34,15 +35,14 @@ languages.json.jsonDefaults.setDiagnosticsOptions({
     schemaValidation: 'error',
 });
 
-function getEditorBibleInfo(editorInstance: editor.IStandaloneCodeEditor) {
+function getEditorBibleInfo(
+    editorInstance: editor.IStandaloneCodeEditor,
+): BibleJsonInfoType {
     const oldBibleInfo = editorInstance.getValue();
-    if (oldBibleInfo === '') {
-        return null;
-    }
     try {
-        return JSON.parse(oldBibleInfo);
+        return JSON.parse(oldBibleInfo) as BibleJsonInfoType;
     } catch (_error) {
-        return null;
+        return {} as any;
     }
 }
 
@@ -53,12 +53,19 @@ export default function BibleXMLInfoPreviewComp({
     bibleKey: string;
     loadBibleKeys: () => void;
 }>) {
-    const [canSave, setCanSave] = useState(false);
-    const { bibleInfo, setBibleInfo, isPending } = useBibleXMLInfo(bibleKey);
-    const setBibleInfo1 = (newBibleInfo: BibleJsonInfoType) => {
-        setBibleInfo(newBibleInfo);
+    const { bibleInfo, isPending } = useBibleXMLInfo(bibleKey);
+    const saveButtonRef = useRef<HTMLButtonElement>(null);
+    const setCanSave = (canSave: boolean) => {
+        if (saveButtonRef.current) {
+            saveButtonRef.current.disabled = !canSave;
+        }
+    };
+    const validateCanSave = () => {
+        const newBibleInfo = getEditorBibleInfo(editorStore.editorInstance);
         const { valid, errors } = schema.validate(newBibleInfo);
-        setCanSave(valid && errors.length === 0);
+        const canSave = valid && errors.length === 0;
+        setCanSave(canSave);
+        return { canSave, newBibleInfo };
     };
     const { editorStore, onContainerInit } = useInitMonacoEditor({
         settingName: 'bible-xml-wrap-text',
@@ -91,31 +98,18 @@ export default function BibleXMLInfoPreviewComp({
                 },
             );
         },
-        onContentChange: (content) => {
-            try {
-                const newBibleInfo = JSON.parse(content);
-                if (checkAreObjectsEqual(newBibleInfo, bibleInfo)) {
-                    return;
-                }
-                setBibleInfo1(newBibleInfo);
-            } catch (_error) {}
-        },
+        onContentChange: validateCanSave,
     });
     const applyBibleInfo = (newBibleInfo: BibleJsonInfoType) => {
-        setBibleInfo1(newBibleInfo);
         const content = JSON.stringify(newBibleInfo, null, 2);
         editorStore.replaceValue(content);
-        setCanSave(true);
+        validateCanSave();
     };
     useAppEffect(() => {
-        const { editorInstance } = editorStore;
-        editorInstance.focus();
-        if (bibleInfo === null || editorInstance.getValue() !== '') {
-            return;
-        }
-        const content = JSON.stringify(bibleInfo, null, 2);
-        editorStore.editorInstance.setValue(content);
-    }, [bibleInfo, onContainerInit]);
+        const content =
+            bibleInfo === null ? '' : JSON.stringify(bibleInfo, null, 2);
+        editorStore.replaceValue(content);
+    }, [bibleInfo]);
     if (isPending) {
         return <LoadingComp />;
     }
@@ -125,14 +119,33 @@ export default function BibleXMLInfoPreviewComp({
     return (
         <div className="app-border-white-round p-2">
             <button
+                ref={saveButtonRef}
                 className="btn btn-success"
                 style={{
                     position: 'absolute',
                 }}
-                disabled={!canSave}
-                onClick={() => {
-                    updateBibleXMLInfo(bibleInfo);
-                    loadBibleKeys();
+                onClick={async () => {
+                    const { canSave, newBibleInfo } = validateCanSave();
+                    const booksAvailableLength =
+                        newBibleInfo.booksAvailable.length;
+                    const kjvBooksAvailableLength =
+                        kjvBibleInfo.booksOrder.length;
+
+                    if (booksAvailableLength !== kjvBooksAvailableLength) {
+                        const isConfirmed = await showAppConfirm(
+                            'Confirm Book Count Mismatch',
+                            `Books available is ${booksAvailableLength}, ` +
+                                `which is different from KJV (${kjvBooksAvailableLength}). ` +
+                                'Are you sure to continue?',
+                        );
+                        if (!isConfirmed) {
+                            return;
+                        }
+                    }
+                    if (canSave) {
+                        updateBibleXMLInfo(newBibleInfo);
+                        loadBibleKeys();
+                    }
                 }}
             >
                 `Save

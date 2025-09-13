@@ -40,7 +40,8 @@ export default function BibleXMLListComp({
                 href={'https://www.google.com/search?q=holy+bible+xml+format'}
                 target="_blank"
             >
-                Search XML
+                <i className="bi bi-google" />{' '}
+                <i className="bi bi-filetype-xml" /> Search XML
             </a>
         </>
     );

@@ -1,10 +1,17 @@
+import { lazy } from 'react';
+
 import {
     handBibleKeyContextMenuOpening,
     deleteBibleXML,
+    useBibleXMLInfo,
 } from './bibleXMLHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
-import BibleXMLInfoPreviewComp from './BibleXMLInfoPreviewComp';
+import AppSuspenseComp from '../../others/AppSuspenseComp';
+
+const BibleXMLInfoPreviewCompLazy = lazy(
+    () => import('./BibleXMLInfoPreviewComp'),
+);
 
 export default function BibleXMLInfoComp({
     bibleKey,
@@ -19,6 +26,7 @@ export default function BibleXMLInfoComp({
         `bible-xml-${bibleKey}`,
         false,
     );
+    const { bibleInfo } = useBibleXMLInfo(bibleKey);
     const handleFileTrashing = async (event: any) => {
         event.stopPropagation();
         const isConfirmed = await showAppConfirm(
@@ -31,15 +39,29 @@ export default function BibleXMLInfoComp({
         await deleteBibleXML(bibleKey);
         loadBibleKeys();
     };
+    const title = bibleInfo ? bibleInfo.title : null;
     return (
         <li
             className="list-group-item"
-            title={filePath}
+            title={`${title} ${filePath}`}
             onContextMenu={handBibleKeyContextMenuOpening.bind(null, bibleKey)}
         >
             <div className="d-flex w-100">
-                <div className="flex-fill" data-bible-key={bibleKey}>
-                    {bibleKey}
+                <div className="flex-fill d-flex" data-bible-key={bibleKey}>
+                    <div
+                        className="badge bg-secondary mx-1"
+                        style={{
+                            margin: 'auto',
+                        }}
+                    >
+                        {bibleKey}
+                    </div>{' '}
+                    <div
+                        className="overflow-hidden app-ellipsis"
+                        style={{ maxWidth: '300px', margin: 'auto 0' }}
+                    >
+                        {title ? `(${title})` : null}
+                    </div>
                 </div>
                 <div>
                     <div className="btn-group">
@@ -49,22 +71,24 @@ export default function BibleXMLInfoComp({
                                 setIsShowing(!isShowing);
                             }}
                         >
-                            Edit
+                            `Edit
                         </button>
                         <button
-                            className="btn btn-danger"
+                            className="btn btn-sm btn-danger"
                             onClick={handleFileTrashing}
                         >
-                            Move to Trash
+                            `Move to Trash
                         </button>
                     </div>
                 </div>
             </div>
             {isShowing ? (
-                <BibleXMLInfoPreviewComp
-                    bibleKey={bibleKey}
-                    loadBibleKeys={loadBibleKeys}
-                />
+                <AppSuspenseComp>
+                    <BibleXMLInfoPreviewCompLazy
+                        bibleKey={bibleKey}
+                        loadBibleKeys={loadBibleKeys}
+                    />
+                </AppSuspenseComp>
             ) : null}
         </li>
     );
