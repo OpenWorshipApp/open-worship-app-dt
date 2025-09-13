@@ -28,7 +28,7 @@ export default function SettingBibleJsonComp() {
                 <h4>Online Bible List</h4>
                 <div
                     style={{
-                        color: 'yellow',
+                        color: 'purple',
                         fontStyle: 'italic',
                     }}
                 >

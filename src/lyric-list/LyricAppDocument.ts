@@ -16,6 +16,7 @@ import {
     renderMarkdownMusic,
 } from './markdownHelpers';
 import { CanvasItemTextPropsType } from '../slide-editor/canvas/CanvasItemText';
+import { checkIsDarkMode } from '../initHelpers';
 
 export type LyricEditingPropsType = {
     fontFamily: string;
@@ -55,10 +56,11 @@ export default class LyricAppDocument extends AppDocument {
                     if (!text) {
                         return [text, htmlText];
                     }
+                    const isDarkMode = checkIsDarkMode();
                     const htmlData = await renderMarkdownMusic(text, {
                         isJustifyCenter: true,
                         isDisablePointerEvents: true,
-                        theme: 'dark',
+                        theme: isDarkMode ? 'dark' : 'light',
                         fontFamily: this.lyricEditingProps.fontFamily,
                         fontWeight: this.lyricEditingProps.fontWeight,
                         scale: this.lyricEditingProps.scale / 10,

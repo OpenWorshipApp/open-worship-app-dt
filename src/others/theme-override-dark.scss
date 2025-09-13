@@ -319,4 +319,11 @@ $resizer-dot-border: 1px dashed greenyellow;
   .presenter-foreground {
     background-color: var(--bs-gray-800);
   }
+
+  .app-caught-hover-pointer {
+    cursor: pointer;
+    &:hover {
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.198);
+    }
+  }
 }

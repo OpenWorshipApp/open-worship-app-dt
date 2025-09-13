@@ -50,7 +50,7 @@ export default function NoDirSelectedComp({
                 <div
                     className="ms-2"
                     style={{
-                        color: 'yellow',
+                        color: 'purple',
                     }}
                 >
                     <i className="bi bi-info-circle" />

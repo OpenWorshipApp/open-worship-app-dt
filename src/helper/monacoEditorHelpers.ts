@@ -9,6 +9,7 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import { useStateSettingBoolean } from './settingHelpers';
 import { useAppEffect } from './debuggerHelpers';
 import { genTimeoutAttempt } from './helpers';
+import { checkIsDarkMode } from '../initHelpers';
 
 self.MonacoEnvironment = {
     getWorker(_, label) {
@@ -76,10 +77,11 @@ function createEditor(
         overflow: 'hidden',
     });
     let editorInstance: editor.IStandaloneCodeEditor | null = null;
+    const isDarkMode = checkIsDarkMode();
     editorInstance = editor.create(div, {
         value: '',
         language: 'plaintext',
-        theme: 'vs-dark',
+        theme: isDarkMode ? 'vs-dark' : 'vs-light',
         fontSize: 17,
         minimap: {
             enabled: false,

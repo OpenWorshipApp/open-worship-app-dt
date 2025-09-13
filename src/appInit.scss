@@ -348,13 +348,6 @@ body {
     }
   }
 
-  .app-caught-hover-pointer {
-    cursor: pointer;
-    &:hover {
-      text-shadow: 0 0 3px var(--bs-primary);
-    }
-  }
-
   .app-on-screen::before {
     content: '*';
     color: greenyellow;
