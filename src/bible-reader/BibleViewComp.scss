@@ -3,10 +3,6 @@
 .bible-view {
   min-width: 200px;
 
-  &:hover {
-    border: 1px dotted rgba(82, 127, 150, 0.572);
-  }
-
   .card-header {
     .btn-close {
       margin: 5px;
@@ -20,7 +16,6 @@
         padding: 0;
         padding-left: 5px;
         padding-right: 25px;
-        background-color: var(--bs-gray-800);
       }
     }
   }
@@ -36,69 +31,58 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-}
 
-.bible-view-text {
-  .verse-number,
-  .verse-text {
-    display: inline;
-  }
-
-  .verse-number {
-    &.extra-verses {
-      display: block;
-      margin-top: 5px;
-      border-top: 3px solid rgba(0, 0, 0, 0.121);
+  .bible-view-text {
+    .verse-number,
+    .verse-text {
+      display: inline;
     }
-    div {
-      display: inline-block;
-      color: rgba(172, 255, 47, 0.645);
-      transform: scale(0.7) translateY(-0.3em);
-      opacity: 0.7;
-      &.verse-number-rest {
-        opacity: 0.2;
-        pointer-events: none;
-        padding: 0;
-        margin: 0 2px;
-        line-height: 0;
+
+    .verse-number {
+      &.extra-verses {
+        display: block;
+        margin-top: 5px;
+      }
+      div {
+        display: inline-block;
+        transform: scale(0.7) translateY(-0.3em);
+        opacity: 0.7;
+        &.verse-number-rest {
+          opacity: 0.2;
+          pointer-events: none;
+          padding: 0;
+          margin: 0 2px;
+          line-height: 0;
+        }
       }
     }
-  }
 
-  .verse-text {
-    &.extra-verses {
-      span::before {
-        content: '.:';
-        opacity: 0.1;
+    .verse-text {
+      &.extra-verses {
+        span::before {
+          content: '.:';
+          opacity: 0.1;
+        }
       }
-    }
-    .verse-audio {
-      display: none;
-    }
-    audio {
-      &::-webkit-media-controls-current-time-display,
-      &::-webkit-media-controls-time-remaining-display {
+      .verse-audio {
         display: none;
       }
-      vertical-align: middle;
-      margin: 0;
-      max-width: 200px;
-      max-height: 20px;
-    }
-    &:hover {
-      border-bottom: 0.01em dashed rgba(134, 134, 134, 0.431);
-    }
-
-    &.selected {
-      .verse-audio {
-        display: inline-block;
+      audio {
+        &::-webkit-media-controls-current-time-display,
+        &::-webkit-media-controls-time-remaining-display {
+          display: none;
+        }
+        vertical-align: middle;
+        margin: 0;
+        max-width: 200px;
+        max-height: 20px;
       }
-      background: linear-gradient(
-        transparent,
-        transparent,
-        rgba(220, 0, 198, 0.304),
-        transparent
-      );
+
+      &.selected {
+        .verse-audio {
+          display: inline-block;
+        }
+      }
     }
   }
 }

@@ -97,21 +97,16 @@ export default function ColorPicker({
             <div
                 className="flex-item color-picker app-caught-hover-pointer "
                 onContextMenu={handleContextMenuOpening}
-                style={{
-                    border: '1px solid var(--bs-gray-700)',
-                }}
                 onClick={() => {
                     setIsOpened(true);
                 }}
             >
                 <i className="bi bi-chevron-right" />
                 <div
-                    className="h-100 px-1 app-ellipsis"
+                    className="h-100 px-1 app-ellipsis text-color-preview"
                     style={{
                         backgroundColor: color ?? 'transparent',
                         width: 'calc(100% - 10px)',
-                        textShadow:
-                            '0 0 2px var(--bs-gray-900), 0 0 2px var(--bs-gray-900)',
                     }}
                 >
                     {color}
@@ -123,9 +118,6 @@ export default function ColorPicker({
         <div
             className="flex-item color-picker"
             onContextMenu={handleContextMenuOpening}
-            style={{
-                backgroundColor: 'var(--bs-gray-700)',
-            }}
         >
             {isCollapsable ? (
                 <i

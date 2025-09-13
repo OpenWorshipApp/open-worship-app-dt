@@ -1,7 +1,7 @@
 import './appInit.scss';
 import './others/bootstrap-override.scss';
-import './others/theme-override.scss';
 import './others/theme-override-dark.scss';
+import './others/theme-override-light.scss';
 import './others/scrollbar.scss';
 
 import { showAppConfirm } from './popup-widget/popupWidgetHelpers';

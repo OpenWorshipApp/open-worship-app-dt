@@ -3,7 +3,13 @@
 $dragging-color-full: rgb(0, 174, 162);
 $dragging-color: greenyellow;
 
-#app {
+$resizer-color: rgb(123, 173, 205);
+$resizer-dot-border: 1px dashed greenyellow;
+
+#app[data-bs-theme='light'] {
+  --app-color-presenter: #877000;
+  --app-color-reader: #81006c;
+
   background-color: var(--bs-gray-200);
   color: black;
 
@@ -183,5 +189,168 @@ $dragging-color: greenyellow;
       linear-gradient(-45deg, $bg-color1 25%, $bg-color2 25%),
       linear-gradient(45deg, $bg-color2 75%, $bg-color1 75%),
       linear-gradient(-45deg, $bg-color2 75%, $bg-color1 75%);
+  }
+
+  .flex-resize-actor {
+    background: var(--bs-gray-100);
+    background-repeat: no-repeat;
+    background-position: center;
+
+    &.active {
+      background-color: $resizer-color;
+    }
+
+    &.v {
+      border-top: 1px solid var(--bs-gray-100);
+      border-bottom: 1px solid var(--bs-gray-100);
+      background-image: url(/assets/move-v-icon.svg);
+
+      &.active {
+        border-left: $resizer-dot-border;
+        padding-right: $resizer-dot-border;
+      }
+    }
+
+    &.h {
+      border-left: 1px solid var(--bs-gray-100);
+      border-right: 1px solid var(--bs-gray-100);
+      background-image: url(/assets/move-h-icon.svg);
+
+      &.active {
+        border-top: $resizer-dot-border;
+        padding-bottom: $resizer-dot-border;
+      }
+    }
+  }
+
+  .slide-editor {
+    .editor-container {
+      box-shadow: inset 0 0 6px rgb(255, 255, 255);
+      background-color: var(--bs-gray-100);
+    }
+
+    .card-footer {
+      background-color: var(--bs-gray-200);
+      .body {
+        background-color: var(--bs-gray-300);
+      }
+    }
+  }
+
+  .app-tools {
+    .tools-header {
+      background-color: var(--bs-gray-200);
+    }
+
+    .tools-body {
+      background-color: var(--bs-gray-100);
+
+      .tool {
+        border: 1px solid rgba(159, 159, 159, 0.109);
+        background-color: var(--bs-gray-200);
+      }
+    }
+
+    .canvas-board-size-container {
+      background-color: var(--bs-gray-100);
+    }
+  }
+
+  .color-picker {
+    background-color: var(--bs-gray-300);
+    border: 1px solid var(--bs-gray-200);
+    .text-color-preview {
+      text-shadow:
+        0 0 2px var(--bs-gray-100),
+        0 0 2px var(--bs-gray-100);
+    }
+  }
+
+  .playlist-list {
+    .card-body {
+      .playlist-file {
+        &:hover {
+          border: 1px solid var(--bs-gray-200);
+        }
+      }
+    }
+  }
+
+  #app-setting {
+    .lang {
+      .options {
+        background-color: var(--bs-gray-200);
+      }
+    }
+  }
+
+  .bible-view {
+    .card-header {
+      .input-group-text {
+        .form-select {
+          background-color: var(--bs-gray-200);
+        }
+      }
+    }
+
+    .bible-view-text {
+      .verse-number {
+        &.extra-verses {
+          border-top: 3px solid rgba(0, 0, 0, 0.121);
+        }
+        div {
+          color: rgba(62, 104, 0, 0.878);
+        }
+      }
+
+      .verse-text {
+        &:hover {
+          border-bottom: 0.01em dashed rgba(134, 134, 134, 0.431);
+        }
+
+        &.selected {
+          background: linear-gradient(
+            transparent,
+            transparent,
+            rgba(209, 52, 194, 0.304),
+            transparent
+          );
+        }
+      }
+    }
+  }
+
+  .custom-style {
+    background-color: var(--bs-gray-200) !important;
+
+    .custom-style-body {
+      background-color: var(--bs-gray-300) !important;
+    }
+  }
+
+  #modal-container {
+    & > div:first-child {
+      background-color: var(--bs-gray-200);
+    }
+  }
+
+  .background {
+    & > .body {
+      background-color: var(--bs-gray-100);
+    }
+  }
+
+  #bible-list {
+    .item {
+      .bible {
+        &:hover {
+          border-color: var(--bs-gray-400);
+        }
+      }
+    }
+  }
+
+  .presenter-foreground {
+    background-color: var(--bs-gray-200);
   }
 }

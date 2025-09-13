@@ -32,7 +32,7 @@ export default function ShowHideScreen() {
             style={{
                 opacity: isShowing ? 1 : 0.4,
                 borderRadius: '5px',
-                border: isShowing ? '1px solid var(--bs-gray-600)' : '',
+                border: isShowing ? '1px solid var(--bs-gray-500)' : '',
             }}
             onClick={() => {
                 screenManagerBase.isShowing = !isShowing;

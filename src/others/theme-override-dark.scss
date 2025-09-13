@@ -1,6 +1,12 @@
 @use './variables.scss' as *;
 
+$resizer-color: rgb(73, 103, 123);
+$resizer-dot-border: 1px dashed greenyellow;
+
 #app[data-bs-theme='dark'] {
+  --app-color-presenter: #ffd500;
+  --app-color-reader: #ff00d4;
+
   background-color: var(--bs-gray-800);
   color: white;
 
@@ -149,5 +155,168 @@
       linear-gradient(-45deg, $bg-color1 25%, $bg-color2 25%),
       linear-gradient(45deg, $bg-color2 75%, $bg-color1 75%),
       linear-gradient(-45deg, $bg-color2 75%, $bg-color1 75%);
+  }
+
+  .flex-resizer-actor {
+    background: var(--bs-gray-900);
+    background-repeat: no-repeat;
+    background-position: center;
+
+    &.active {
+      background-color: $resizer-color;
+    }
+
+    &.v {
+      border-top: 1px solid var(--bs-gray-900);
+      border-bottom: 1px solid var(--bs-gray-900);
+      background-image: url(/assets/move-v-icon.svg);
+
+      &.active {
+        border-left: $resizer-dot-border;
+        padding-right: $resizer-dot-border;
+      }
+    }
+
+    &.h {
+      border-left: 1px solid var(--bs-gray-900);
+      border-right: 1px solid var(--bs-gray-900);
+      background-image: url(/assets/move-h-icon.svg);
+
+      &.active {
+        border-top: $resizer-dot-border;
+        padding-bottom: $resizer-dot-border;
+      }
+    }
+  }
+
+  .slide-editor {
+    .editor-container {
+      box-shadow: inset 0 0 6px black;
+      background-color: var(--bs-gray-900);
+    }
+
+    .card-footer {
+      background-color: var(--bs-gray-800);
+      .body {
+        background-color: var(--bs-gray-700);
+      }
+    }
+  }
+
+  .app-tools {
+    .tools-header {
+      background-color: var(--bs-gray-800);
+    }
+
+    .tools-body {
+      background-color: var(--bs-gray-900);
+
+      .tool {
+        border: 1px solid rgba(128, 128, 128, 0.109);
+        background-color: var(--bs-gray-800);
+      }
+    }
+
+    .canvas-board-size-container {
+      background-color: var(--bs-gray-900);
+    }
+  }
+
+  .color-picker {
+    background-color: var(--bs-gray-700);
+    border: 1px solid var(--bs-gray-800);
+    .text-color-preview {
+      text-shadow:
+        0 0 2px var(--bs-gray-900),
+        0 0 2px var(--bs-gray-900);
+    }
+  }
+
+  .playlist-list {
+    .card-body {
+      .playlist-file {
+        &:hover {
+          border: 1px solid var(--bs-gray-800);
+        }
+      }
+    }
+  }
+
+  #app-setting {
+    .lang {
+      .options {
+        background-color: var(--bs-gray-800);
+      }
+    }
+  }
+
+  .bible-view {
+    .card-header {
+      .input-group-text {
+        .form-select {
+          background-color: var(--bs-gray-800);
+        }
+      }
+    }
+
+    .bible-view-text {
+      .verse-number {
+        &.extra-verses {
+          border-top: 3px solid rgba(0, 0, 0, 0.121);
+        }
+        div {
+          color: rgba(172, 255, 47, 0.645);
+        }
+      }
+
+      .verse-text {
+        &:hover {
+          border-bottom: 0.01em dashed rgba(134, 134, 134, 0.431);
+        }
+
+        &.selected {
+          background: linear-gradient(
+            transparent,
+            transparent,
+            rgba(220, 0, 198, 0.304),
+            transparent
+          );
+        }
+      }
+    }
+  }
+
+  .custom-style {
+    background-color: var(--bs-gray-800) !important;
+
+    .custom-style-body {
+      background-color: var(--bs-gray-700) !important;
+    }
+  }
+
+  #modal-container {
+    & > div:first-child {
+      background-color: var(--bs-gray-800);
+    }
+  }
+
+  .background {
+    & > .body {
+      background-color: var(--bs-gray-900);
+    }
+  }
+
+  #bible-list {
+    .item {
+      .bible {
+        &:hover {
+          border-color: var(--bs-gray-500);
+        }
+      }
+    }
+  }
+
+  .presenter-foreground {
+    background-color: var(--bs-gray-800);
   }
 }

@@ -105,7 +105,12 @@ export default function AppDocumentPreviewerFooterComp({
         }
     };
     return (
-        <div className="card-footer w-100">
+        <div
+            className="card-footer w-100 p-0"
+            style={{
+                height: '28px',
+            }}
+        >
             <div className="d-flex w-100 h-100">
                 <div className="flex-item">
                     <AppRangeComp
