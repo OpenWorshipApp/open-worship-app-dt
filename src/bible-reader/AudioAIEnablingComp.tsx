@@ -1,10 +1,10 @@
 import BibleItem from '../bible-list/BibleItem';
-import { useLookupBibleItemControllerContext } from './LookupBibleItemController';
+import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 
 export function AudioAIEnablingComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
-    const lookupBibleItemController = useLookupBibleItemControllerContext();
+    const bibleItemViewController = useBibleItemsViewControllerContext();
     return (
         <i
             className="bi bi-soundwave app-caught-hover-pointer"
@@ -12,7 +12,7 @@ export function AudioAIEnablingComp({
                 color: bibleItem.isAudioEnabled ? 'green' : '',
             }}
             onClick={async () => {
-                lookupBibleItemController.applyTargetOrBibleKey(bibleItem, {
+                bibleItemViewController.applyTargetOrBibleKey(bibleItem, {
                     isAudioEnabled: !bibleItem.isAudioEnabled,
                 });
             }}

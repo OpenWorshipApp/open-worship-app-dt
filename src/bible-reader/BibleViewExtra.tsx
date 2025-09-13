@@ -42,9 +42,7 @@ import { getSelectedText } from '../helper/textSelectionHelpers';
 import LoadingComp from '../others/LoadingComp';
 import { bibleTextToSpeech, getOpenAISetting } from '../helper/aiHelpers';
 import FileSource from '../helper/FileSource';
-import LookupBibleItemController, {
-    useLookupBibleItemControllerContext,
-} from './LookupBibleItemController';
+import LookupBibleItemController from './LookupBibleItemController';
 import { AudioAIEnablingComp } from './AudioAIEnablingComp';
 
 export const BibleViewTitleMaterialContext = createContext<{
@@ -377,15 +375,15 @@ function RenderVerseTextComp({
     extraVerseInfoList?: CompiledVerseType[];
     index: number;
 }>) {
-    const lookupBibleItemController = useLookupBibleItemControllerContext();
+    const bibleItemViewController = useBibleItemsViewControllerContext();
     const verseTextRef = useRef<HTMLDivElement>(null);
     useAppEffect(() => {
         if (
             verseInfo.isFirst &&
             verseTextRef.current !== null &&
-            lookupBibleItemController.shouldSelectFirstItem
+            bibleItemViewController.shouldSelectFirstItem
         ) {
-            lookupBibleItemController.shouldSelectFirstItem = false;
+            bibleItemViewController.shouldSelectFirstItem = false;
             verseTextRef.current.click();
         }
     }, [verseTextRef.current, verseInfo]);
@@ -453,9 +451,12 @@ function RenderVerseTextComp({
         if (verseTextRef.current === null) {
             return;
         }
-        if (verseInfo.isLast) {
+        if (
+            verseInfo.isLast &&
+            bibleItemViewController instanceof LookupBibleItemController
+        ) {
             handleNextChapterSelection(
-                lookupBibleItemController,
+                bibleItemViewController,
                 verseTextRef.current,
             );
         }

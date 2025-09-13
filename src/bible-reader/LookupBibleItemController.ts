@@ -80,7 +80,6 @@ class FoundBibleItem extends ReadIdOnlyBibleItem {
 
 const editingResultCacher = new CacheManager<EditingResultType>(3);
 class LookupBibleItemController extends BibleItemsViewController {
-    shouldSelectFirstItem = false;
     setInputText: (inputText: string) => OptionalPromise<void> = (
         _: string,
     ) => {};

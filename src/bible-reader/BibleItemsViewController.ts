@@ -249,6 +249,7 @@ export type MovingPositionType = keyof typeof movingPosition;
 
 const BIBLE_ITEMS_PREVIEW_SETTING = 'bible-items-preview';
 class BibleItemsViewController extends EventHandler<UpdateEventType> {
+    shouldSelectFirstItem = false;
     private readonly _settingNameSuffix: string;
     setBibleVerseKey = (_verseKey: string) => {};
     handleScreenBibleVersesHighlighting = (
