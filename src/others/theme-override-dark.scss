@@ -1,11 +1,11 @@
 @use './variables.scss' as *;
 
 $resizer-color: rgb(73, 103, 123);
-$resizer-dot-border: 1px dashed greenyellow;
 
 #app[data-bs-theme='dark'] {
   --app-color-presenter: #ffd500;
   --app-color-reader: #ff00d4;
+  --app-yellow-green: yellowgreen;
 
   background-color: var(--bs-gray-800);
   color: white;
@@ -172,8 +172,8 @@ $resizer-dot-border: 1px dashed greenyellow;
       background-image: url(/assets/move-v-icon.svg);
 
       &.active {
-        border-left: $resizer-dot-border;
-        padding-right: $resizer-dot-border;
+        border-left: 1px dashed var(--app-yellow-green);
+        padding-right: 1px dashed var(--app-yellow-green);
       }
     }
 
@@ -183,8 +183,8 @@ $resizer-dot-border: 1px dashed greenyellow;
       background-image: url(/assets/move-h-icon.svg);
 
       &.active {
-        border-top: $resizer-dot-border;
-        padding-bottom: $resizer-dot-border;
+        border-top: 1px dashed var(--app-yellow-green);
+        padding-bottom: 1px dashed var(--app-yellow-green);
       }
     }
   }

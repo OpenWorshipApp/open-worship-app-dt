@@ -350,7 +350,7 @@ body {
 
   .app-on-screen::before {
     content: '*';
-    color: greenyellow;
+    color: var(--app-yellow-green);
   }
 
   .app-inner-shadow {

@@ -1,14 +1,12 @@
 @use './variables.scss' as *;
 
 $dragging-color-full: rgb(0, 174, 162);
-$dragging-color: greenyellow;
-
 $resizer-color: rgb(123, 173, 205);
-$resizer-dot-border: 1px dashed greenyellow;
 
 #app[data-bs-theme='light'] {
   --app-color-presenter: #877000;
   --app-color-reader: #81006c;
+  --app-yellow-green: rgb(118, 178, 0);
 
   background-color: var(--bs-gray-200);
   color: black;
@@ -25,19 +23,19 @@ $resizer-dot-border: 1px dashed greenyellow;
   }
 
   .receiving-data-drop-left {
-    border-left: 1px dashed $dragging-color !important;
+    border-left: 1px dashed var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-right {
-    border-right: 1px dashed $dragging-color !important;
+    border-right: 1px dashed var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-top {
-    border-top: 1px dashed $dragging-color !important;
+    border-top: 1px dashed var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-bottom {
-    border-bottom: 1px dotted $dragging-color !important;
+    border-bottom: 1px dotted var(--app-yellow-green) !important;
   }
 
   .list-group-item {
@@ -206,8 +204,8 @@ $resizer-dot-border: 1px dashed greenyellow;
       background-image: url(/assets/move-v-icon.svg);
 
       &.active {
-        border-left: $resizer-dot-border;
-        padding-right: $resizer-dot-border;
+        border-left: 1px dashed var(--app-yellow-green);
+        padding-right: 1px dashed var(--app-yellow-green);
       }
     }
 
@@ -217,8 +215,8 @@ $resizer-dot-border: 1px dashed greenyellow;
       background-image: url(/assets/move-h-icon.svg);
 
       &.active {
-        border-top: $resizer-dot-border;
-        padding-bottom: $resizer-dot-border;
+        border-top: 1px dashed var(--app-yellow-green);
+        padding-bottom: 1px dashed var(--app-yellow-green);
       }
     }
   }
