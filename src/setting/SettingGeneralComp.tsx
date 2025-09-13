@@ -7,7 +7,7 @@ import { appLocalStorage } from './directory-setting/appLocalStorage';
 export default function SettingGeneralComp() {
     return (
         <div
-            className="w-100 h-100 d-flex justify-content-center p-1"
+            className="w-100 h-100 d-flex flex-wrap justify-content-center p-1"
             style={{
                 overflowY: 'auto',
             }}

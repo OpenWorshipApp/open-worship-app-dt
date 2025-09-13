@@ -37,7 +37,7 @@ export default function BibleSearchPreviewerComp() {
         };
     }, []);
     return (
-        <div className="card w-100 h-100 overflow-hidden d-flex flex-column">
+        <div className="card w-100 h-100 app-overflow-hidden d-flex flex-column">
             <div className="card-header">
                 <TabRenderComp<TabKeyType>
                     tabs={tabTypeList.map(([key, name]) => {

@@ -69,7 +69,7 @@ export default function BibleXMLImportComp({
         });
     };
     return (
-        <>
+        <div className="app-border-white-round p-1" style={{ margin: 'auto' }}>
             <h3>
                 Import XML File{' '}
                 <button
@@ -173,16 +173,16 @@ export default function BibleXMLImportComp({
                     <input
                         className="form-control btn btn-primary"
                         type="submit"
-                        value="Import"
+                        value="`Import"
                         disabled={isPending || !(isFileSelected || isValidUrl)}
                     />
                 </div>
-                <div className="app-border-white-round">
-                    {isPending ? (
+                {isPending ? (
+                    <div className="app-border-white-round">
                         <LoadingComp message={loadingMessage} />
-                    ) : null}
-                </div>
+                    </div>
+                ) : null}
             </form>
-        </>
+        </div>
     );
 }

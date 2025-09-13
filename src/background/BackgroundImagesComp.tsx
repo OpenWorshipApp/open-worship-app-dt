@@ -44,7 +44,7 @@ function rendChild(
     const fileSource = FileSource.getInstance(filePath);
     return (
         <div
-            className="card-body overflow-hidden blank-bg"
+            className="card-body app-overflow-hidden blank-bg"
             style={{ height: `${height}px` }}
         >
             <RenderScreenIds

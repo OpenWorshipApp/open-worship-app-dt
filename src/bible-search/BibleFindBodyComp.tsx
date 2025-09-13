@@ -60,9 +60,9 @@ export default function BibleFindBodyComp({
         doFinding(findData, isFresh);
     };
     return (
-        <div className="card overflow-hidden w-100 h-100">
+        <div className="card app-overflow-hidden w-100 h-100">
             <div
-                className="card-header input-group overflow-hidden"
+                className="card-header input-group app-overflow-hidden"
                 style={{
                     minHeight: '54px',
                 }}

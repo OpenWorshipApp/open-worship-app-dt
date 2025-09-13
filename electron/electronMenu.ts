@@ -3,7 +3,8 @@ import { app, Menu, shell } from 'electron';
 import ElectronAppController from './ElectronAppController';
 import { goDownload, toShortcutKey } from './electronHelpers';
 
-import appInfo from '../package.json';
+import packageInfo from '../package.json';
+import appInfo from './client/appInfo';
 
 const findingShortcut = toShortcutKey({
     wControlKey: ['Ctrl'],
@@ -22,7 +23,15 @@ export function initMenu(appController: ElectronAppController) {
                   {
                       label: app.name,
                       submenu: [
-                          { role: 'about' },
+                          //   { role: 'about' },
+                          {
+                              label: `About ${appInfo.title}`,
+                              click: () => {
+                                  appController.aboutController.open(
+                                      appController.mainWin,
+                                  );
+                              },
+                          },
                           { type: 'separator' },
                           { role: 'services' },
                           { type: 'separator' },
@@ -125,7 +134,7 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: 'Learn More',
                     click: () => {
-                        shell.openExternal(appInfo.homepage);
+                        shell.openExternal(packageInfo.homepage);
                     },
                 },
                 {

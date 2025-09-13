@@ -18,7 +18,7 @@ export default function SlideRendererHtmlComp({
             ref={setParentDiv}
             style={{
                 width: `${parentWidth}px`,
-                height: `${slide.height * scale}px`,
+                height: `${Math.round(slide.height * scale)}px`,
                 transform: `scale(${scale},${scale}) translate(50%, 50%)`,
             }}
         >

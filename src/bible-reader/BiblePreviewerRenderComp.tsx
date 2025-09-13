@@ -95,7 +95,7 @@ export default function BiblePreviewerRenderComp() {
                 });
             }}
         >
-            <div className={'card-body d-flex overflow-hidden w-100 h-100'}>
+            <div className={'card-body d-flex app-overflow-hidden w-100 h-100'}>
                 <BibleViewFontSizeContext value={fontSize}>
                     <Render />
                 </BibleViewFontSizeContext>

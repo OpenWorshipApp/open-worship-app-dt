@@ -116,47 +116,51 @@ export default function BibleXMLInfoPreviewComp({
     if (bibleInfo === null) {
         return null;
     }
-    return (
-        <div className="app-border-white-round p-2">
-            <button
-                ref={saveButtonRef}
-                className="btn btn-success"
-                style={{
-                    position: 'absolute',
-                }}
-                onClick={async () => {
-                    const { canSave, newBibleInfo } = validateCanSave();
-                    const booksAvailableLength =
-                        newBibleInfo.booksAvailable.length;
-                    const kjvBooksAvailableLength =
-                        kjvBibleInfo.booksOrder.length;
+    const handleSaving = async () => {
+        const { canSave, newBibleInfo } = validateCanSave();
+        const booksAvailableLength = newBibleInfo.booksAvailable.length;
+        const kjvBooksAvailableLength = kjvBibleInfo.booksOrder.length;
 
-                    if (booksAvailableLength !== kjvBooksAvailableLength) {
-                        const isConfirmed = await showAppConfirm(
-                            'Confirm Book Count Mismatch',
-                            `Books available is ${booksAvailableLength}, ` +
-                                `which is different from KJV (${kjvBooksAvailableLength}). ` +
-                                'Are you sure to continue?',
-                        );
-                        if (!isConfirmed) {
-                            return;
-                        }
-                    }
-                    if (canSave) {
-                        updateBibleXMLInfo(newBibleInfo);
-                        loadBibleKeys();
-                    }
+        if (booksAvailableLength !== kjvBooksAvailableLength) {
+            const isConfirmed = await showAppConfirm(
+                'Confirm Book Count Mismatch',
+                `Books available is ${booksAvailableLength}, ` +
+                    `which is different from KJV (${kjvBooksAvailableLength}). ` +
+                    'Are you sure to continue?',
+            );
+            if (!isConfirmed) {
+                return;
+            }
+        }
+        if (canSave) {
+            updateBibleXMLInfo(newBibleInfo);
+            loadBibleKeys();
+        }
+    };
+    return (
+        <div className="w-100 card app-border-white-round app-overflow-hidden">
+            <div
+                className="w-100 card-body p-0 m-0 app-overflow-hidden"
+                ref={onContainerInit}
+                style={{ height: '450px' }}
+            />
+            <div
+                className="card-footer d-flex justify-content-end p-0"
+                style={{
+                    height: '35px',
                 }}
             >
-                `Save
-            </button>
-            <div
-                className="w-100 mt-5"
-                ref={onContainerInit}
-                style={{
-                    height: '500px',
-                }}
-            />
+                <button
+                    ref={saveButtonRef}
+                    className="btn btn-sm btn-success m-1"
+                    style={{
+                        position: 'absolute',
+                    }}
+                    onClick={handleSaving}
+                >
+                    `Save
+                </button>
+            </div>
         </div>
     );
 }

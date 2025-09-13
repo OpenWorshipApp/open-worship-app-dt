@@ -73,7 +73,7 @@ function RendBody({
     const vRef = createRef<HTMLVideoElement>();
     return (
         <div
-            className="card-body overflow-hidden blank-bg"
+            className="card-body app-overflow-hidden blank-bg"
             style={{ height: `${height}px` }}
             onMouseEnter={() => {
                 vRef.current?.play();

@@ -1,5 +1,3 @@
-import 'bootstrap-icons/font/bootstrap-icons.css';
-import 'bootstrap/dist/css/bootstrap.css';
 import './appInit.scss';
 import './others/bootstrap-override.scss';
 import './others/scrollbar.scss';
@@ -18,7 +16,6 @@ import {
 } from './lang/langHelpers';
 import appProvider from './server/appProvider';
 import initCrypto from './_owa-crypto';
-import { createRoot } from 'react-dom/client';
 import { StrictMode } from 'react';
 import { getSetting, setSetting } from './helper/settingHelpers';
 import { applyFontFamily } from './others/LanguageWrapper';
@@ -41,6 +38,7 @@ import {
 } from './server/appHelpers';
 import { useAppEffectAsync } from './helper/debuggerHelpers';
 import { goToGeneralSetting } from './setting/settingHelpers';
+import { applyDarkModeToApp, getReactRoot } from './initHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
@@ -158,16 +156,6 @@ export function useQuickExitBlock() {
     );
 }
 
-export function getRootElement<T>(): T {
-    const container = document.getElementById('root');
-    if (container === null) {
-        const message = 'Root element not found';
-        window.alert(message);
-        throw new Error(message);
-    }
-    return container as T;
-}
-
 export function RenderApp({
     children,
 }: Readonly<{
@@ -176,7 +164,7 @@ export function RenderApp({
     useQuickExitBlock();
     useCheckSetting();
     return (
-        <div id="app" className="dark" data-bs-theme="dark">
+        <div id="app" ref={applyDarkModeToApp}>
             <StrictMode>{children}</StrictMode>
         </div>
     );
@@ -210,8 +198,7 @@ export async function main(children: React.ReactNode) {
     if (fontFamily) {
         document.body.style.fontFamily = fontFamily;
     }
-    const container = getRootElement<HTMLDivElement>();
-    const root = createRoot(container);
+    const root = getReactRoot();
 
     root.render(<RenderApp>{children}</RenderApp>);
 

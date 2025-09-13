@@ -1,5 +1,3 @@
-import { createRoot } from 'react-dom/client';
-import { getRootElement } from '../appInitHelpers';
 import {
     fsCheckFileExist,
     fsReadFile,
@@ -12,9 +10,9 @@ import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import { getReactRoot } from '../initHelpers';
 
-const container = getRootElement<HTMLDivElement>();
-const root = createRoot(container);
+const root = getReactRoot();
 
 const filePath = pathJoin(appLocalStorage.defaultStorage, 'history1.txt');
 

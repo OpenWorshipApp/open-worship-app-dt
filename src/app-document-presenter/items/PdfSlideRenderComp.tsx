@@ -71,7 +71,7 @@ export default function PdfSlideRenderComp({
                 ref={setParentDiv}
                 style={{
                     width: `${parentWidth}px`,
-                    height: `${pdfSlide.height * scale}px`,
+                    height: `${Math.round(pdfSlide.height * scale)}px`,
                 }}
             >
                 {pdfPreviewSrc === null ? (

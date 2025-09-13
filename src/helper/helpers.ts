@@ -34,7 +34,7 @@ export function getRandomColor() {
     const letters = '0123456789ABCDEF';
     let color = '#';
     for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
+        color += letters[Math.round(Math.random() * 16)];
     }
     return color;
 }
@@ -105,7 +105,7 @@ export function genRandomString(length: number = 5) {
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
         result += characters.charAt(
-            Math.floor(Math.random() * charactersLength),
+            Math.round(Math.random() * charactersLength),
         );
     }
     return result;

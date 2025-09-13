@@ -397,7 +397,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
 
     genBibleItemUniqueId() {
-        return new Date().getTime() + Math.floor(Math.random() * 1e6);
+        return new Date().getTime() + Math.round(Math.random() * 1e6);
     }
 
     fireUpdateEvent() {

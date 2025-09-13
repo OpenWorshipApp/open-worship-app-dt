@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { LookupOptions, findString } from './finderHelpers';
+import { applyDarkModeToApp } from '../initHelpers';
 
 export default function FinderAppComp({
     onClose,
@@ -45,7 +46,12 @@ export default function FinderAppComp({
     );
 
     return (
-        <div className="finder-container card w-100 h-100" data-bs-theme="dark">
+        <div
+            id="app"
+            ref={applyDarkModeToApp}
+            className="finder-container card w-100 h-100"
+            data-bs-theme="dark"
+        >
             <div className="card-body">
                 <div className="finder input-group">
                     <button

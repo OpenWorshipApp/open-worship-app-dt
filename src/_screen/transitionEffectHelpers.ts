@@ -37,7 +37,7 @@ export type GenAnimPropsType = {
 
 function genCssProps(duration: number) {
     const cssProps: React.CSSProperties = {
-        animationDuration: `${Math.ceil(duration / 1000)}s`,
+        animationDuration: `${Math.round(duration / 1000)}s`,
         animationFillMode: 'forwards',
     };
     return cssProps;

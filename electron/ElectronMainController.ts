@@ -10,7 +10,7 @@ export default class ElectronMainController {
     win: BrowserWindow;
 
     constructor(settingController: ElectronSettingController) {
-        this.win = this.createMainWindow(settingController);
+        this.win = this.createWindow(settingController);
     }
 
     previewPdf(pdfFilePath: string) {
@@ -21,7 +21,7 @@ export default class ElectronMainController {
         pdfWin.loadURL(pdfFilePath);
     }
 
-    createMainWindow(settingController: ElectronSettingController) {
+    createWindow(settingController: ElectronSettingController) {
         const routeProps = genRoutProps(settingController.mainHtmlPath);
         const win = new BrowserWindow({
             backgroundColor: '#000000',

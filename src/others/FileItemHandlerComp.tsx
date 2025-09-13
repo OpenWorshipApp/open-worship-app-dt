@@ -174,7 +174,7 @@ export default function FileItemHandlerComp({
     return (
         <li
             className={
-                `list-group-item m-1 ${moreClassName} overflow-hidden` +
+                `list-group-item m-1 ${moreClassName} app-overflow-hidden` +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             onClick={applyClick}

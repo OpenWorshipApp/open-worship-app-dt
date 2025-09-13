@@ -26,7 +26,7 @@ export default function SlideEditorToolsComp() {
     return (
         <div
             className={
-                'app-tools d-flex flex-column w-100 h-100 overflow-hidden'
+                'app-tools d-flex flex-column w-100 h-100 app-overflow-hidden'
             }
         >
             <div className="tools-header d-flex">

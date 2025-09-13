@@ -130,8 +130,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     getMousePosition(event: any) {
         const rect = (event.target as HTMLDivElement).getBoundingClientRect();
-        const x = Math.floor((event.clientX - rect.left) / this.scale);
-        const y = Math.floor((event.clientY - rect.top) / this.scale);
+        const x = Math.round((event.clientX - rect.left) / this.scale);
+        const y = Math.round((event.clientY - rect.top) / this.scale);
         return { x, y };
     }
 
@@ -209,8 +209,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     ) {
         const scale = Math.min(targetWidth / width, targetHeight / height);
         const props = canvasItem.props as CanvasItemPropsType;
-        props.width = width * scale;
-        props.height = height * scale;
+        props.width = Math.round(width * scale);
+        props.height = Math.round(height * scale);
         const targetDimension = {
             parentWidth: this.canvas.width,
             parentHeight: this.canvas.height,

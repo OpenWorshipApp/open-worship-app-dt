@@ -3,8 +3,12 @@ import { useState } from 'react';
 import appProvider from '../server/appProvider';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 
-export function setSetting(key: string, value: string) {
+export function setSetting(key: string, value: string | null) {
     // TODO: Change to use SettingManager
+    if (value === null) {
+        appLocalStorage.removeItem(key);
+        return;
+    }
     appLocalStorage.setItem(key, value);
 }
 export function getSetting(key: string) {

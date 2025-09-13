@@ -4,10 +4,12 @@ import ElectronFinderController from './ElectronFinderController';
 import ElectronMainController from './ElectronMainController';
 import ElectronSettingController from './ElectronSettingController';
 import { getCurrent } from './fsServe';
+import ElectronAboutController from './ElectronAboutController';
 
 let instance: ElectronAppController | null = null;
 let settingController: ElectronSettingController | null = null;
 let finderController: ElectronFinderController | null = null;
+let aboutController: ElectronAboutController | null = null;
 export default class ElectronAppController {
     constructor() {
         this.settingController.syncMainWindow(this.mainWin);
@@ -42,6 +44,13 @@ export default class ElectronAppController {
             finderController = new ElectronFinderController();
         }
         return finderController;
+    }
+
+    get aboutController() {
+        if (aboutController === null) {
+            aboutController = new ElectronAboutController();
+        }
+        return aboutController;
     }
 
     static getInstance() {

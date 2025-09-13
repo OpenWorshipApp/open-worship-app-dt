@@ -88,7 +88,7 @@ export function calcPaging(data: BibleFindResultType | null): PagingDataTye {
         return { pages: [], currentPage: '0', pageSize: 0, perPage: 0 };
     }
     const perPage = calcPerPage(data);
-    const pageSize = Math.ceil(data.maxLineNumber / perPage);
+    const pageSize = Math.round(data.maxLineNumber / perPage);
     const pages = Array.from(Array(pageSize)).map((_, i) => {
         return i + 1 + '';
     });

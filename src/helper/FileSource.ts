@@ -15,7 +15,7 @@ import {
     writeFileFromBase64,
 } from '../server/fileHelpers';
 import { isValidJson } from './helpers';
-import { pathToFileURL } from '../server/helpers';
+import { pathToFileURL } from '../server/calcHelpers';
 import EventHandler from '../event/EventHandler';
 import appProvider from '../server/appProvider';
 import DragInf, { DragTypeEnum } from './DragInf';

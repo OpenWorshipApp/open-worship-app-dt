@@ -135,7 +135,7 @@ export default function ColorPicker({
                     }}
                 />
             ) : null}
-            <div className="p-1 overflow-hidden">
+            <div className="p-1 app-overflow-hidden">
                 <RenderColors
                     colors={colorList.main}
                     selectedColor={localColor}

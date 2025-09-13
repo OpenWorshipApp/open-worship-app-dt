@@ -4,17 +4,22 @@ import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import { attemptClosing, isSecured } from './electronHelpers';
 
-const routeProps = genRoutProps(htmlFiles.finder);
-export default class ElectronFinderController {
+const routeProps = genRoutProps(htmlFiles.about);
+export default class ElectronAboutController {
     win: BrowserWindow | null = null;
     mainWin: BrowserWindow | null = null;
     createWindow(mainWin: BrowserWindow) {
+        const mainBounds = mainWin.getBounds();
+        const width = 700;
+        const height = 435;
+        const x = mainBounds.x + (mainBounds.width - width) / 2;
+        const y = mainBounds.y + (mainBounds.height - height) / 2;
         const win = new BrowserWindow({
             backgroundColor: '#000000',
-            x: 0,
-            y: 0,
-            width: 350,
-            height: 100,
+            x,
+            y,
+            width,
+            height,
             webPreferences: {
                 webSecurity: isSecured,
                 nodeIntegration: true,
@@ -39,7 +44,6 @@ export default class ElectronFinderController {
         }
     }
     close() {
-        this.mainWin?.webContents.stopFindInPage('clearSelection');
         attemptClosing(this.win);
         this.mainWin = null;
         this.win = null;

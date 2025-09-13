@@ -145,7 +145,11 @@ export default function RenderBibleLookupComp() {
                     isLookupOnline={isBibleSearching}
                     setIsLookupOnline={setIsBibleSearching}
                 />
-                <div className={'card-body d-flex w-100 h-100 overflow-hidden'}>
+                <div
+                    className={
+                        'card-body d-flex w-100 h-100 app-overflow-hidden'
+                    }
+                >
                     {isBibleSearching ? (
                         <ResizeActorComp
                             flexSizeName="bible-lookup-popup-body"

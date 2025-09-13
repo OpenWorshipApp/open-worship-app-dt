@@ -42,7 +42,7 @@ export default function BibleXMLInfoComp({
     const title = bibleInfo ? bibleInfo.title : null;
     return (
         <li
-            className="list-group-item"
+            className="list-group-item p-1"
             title={`${title} ${filePath}`}
             onContextMenu={handBibleKeyContextMenuOpening.bind(null, bibleKey)}
         >
@@ -57,27 +57,29 @@ export default function BibleXMLInfoComp({
                         {bibleKey}
                     </div>{' '}
                     <div
-                        className="overflow-hidden app-ellipsis"
-                        style={{ maxWidth: '300px', margin: 'auto 0' }}
+                        className="app-overflow-hidden app-ellipsis"
+                        style={{ maxWidth: '450px', margin: 'auto 0' }}
                     >
-                        {title ? `(${title})` : null}
+                        {title}
                     </div>
                 </div>
                 <div>
                     <div className="btn-group">
                         <button
                             className={`btn btn-${isShowing ? '' : 'outline-'}primary`}
+                            title={isShowing ? '`Hide Editor' : '`Show Editor'}
                             onClick={() => {
                                 setIsShowing(!isShowing);
                             }}
                         >
-                            `Edit
+                            <i className="bi bi-pencil" />
                         </button>
                         <button
                             className="btn btn-sm btn-danger"
+                            title="`Move to Trash"
                             onClick={handleFileTrashing}
                         >
-                            `Move to Trash
+                            <i className="bi bi-trash" />
                         </button>
                     </div>
                 </div>

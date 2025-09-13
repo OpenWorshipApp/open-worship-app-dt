@@ -92,7 +92,7 @@ $dragging-color: greenyellow;
   // End: Boootstrap
 }
 
-.dark {
+[data-bs-theme='dark'] {
   .toast-body {
     word-wrap: break-word;
   }

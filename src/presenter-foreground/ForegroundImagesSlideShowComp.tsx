@@ -95,7 +95,7 @@ function rendChild(
 ) {
     const fileSource = FileSource.getInstance(filePath);
     return (
-        <div className="card-body overflow-hidden">
+        <div className="card-body app-overflow-hidden">
             <RenderScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return parseInt(key);

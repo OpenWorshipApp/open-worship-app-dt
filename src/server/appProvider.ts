@@ -67,9 +67,12 @@ export type SystemUtilsType = {
 
 export type AppInfoType = {
     name: string;
+    title: string;
+    titleFull: string;
     description: string;
     author: string;
     homepage: string;
+    gitRepository: string;
     version: string;
     versionNumber: number;
 };

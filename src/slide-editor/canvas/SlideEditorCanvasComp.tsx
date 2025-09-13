@@ -146,10 +146,10 @@ export default function SlideEditorCanvasComp() {
                 }}
             >
                 <div
-                    className="overflow-hidden"
+                    className="app-overflow-hidden"
                     style={{
-                        width: `${canvas.width * scale + 20}px`,
-                        height: `${canvas.height * scale + 20}px`,
+                        width: `${Math.round(canvas.width * scale + 20)}px`,
+                        height: `${Math.round(canvas.height * scale + 20)}px`,
                     }}
                 >
                     <div

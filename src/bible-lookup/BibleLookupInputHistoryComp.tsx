@@ -169,7 +169,7 @@ export default function BibleLookupInputHistoryComp({
     };
     return (
         <div
-            className="d-flex shadow-sm rounded px-1 me-1"
+            className="d-flex rounded px-1 me-1 app-inner-shadow"
             style={{
                 overflowX: 'auto',
                 overflowY: 'hidden',
@@ -180,14 +180,16 @@ export default function BibleLookupInputHistoryComp({
                 const extracted = extractHistoryText(historyText);
                 return (
                     <button
+                        className={
+                            'btn btn-sm d-flex app-border-white-round mx-1 p-0'
+                        }
                         key={historyText}
                         data-bible-key={extracted?.bibleKey ?? ''}
                         title={
                             'Double click to put back, shift double click to ' +
                             'put back split'
                         }
-                        className="btn btn-sm d-flex app-border-white-round"
-                        style={{ height: '25px' }}
+                        style={{ height: '20px' }}
                         draggable
                         onDragStart={async (event: any) => {
                             const bibleItem =
@@ -207,7 +209,7 @@ export default function BibleLookupInputHistoryComp({
                         )}
                     >
                         <small
-                            title="Remove"
+                            title="`Remove"
                             style={{ color: 'red' }}
                             onClick={() => {
                                 removeHistory(
@@ -219,7 +221,9 @@ export default function BibleLookupInputHistoryComp({
                         >
                             <i className="bi bi-x" />
                         </small>
-                        <small className="flex-fill">{historyText}</small>
+                        <small className="flex-fill app-ellipsis">
+                            {historyText}
+                        </small>
                     </button>
                 );
             })}

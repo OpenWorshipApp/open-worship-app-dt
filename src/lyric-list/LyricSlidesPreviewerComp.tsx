@@ -40,7 +40,7 @@ export default function LyricSlidesPreviewerComp() {
     return (
         <div className="slide-previewer card w-100 h-100">
             <VaryAppDocumentContext value={lyricAppDocument}>
-                <div className="card-body w-100 h-100 overflow-hidden">
+                <div className="card-body w-100 h-100 app-overflow-hidden">
                     <VaryAppDocumentItemsPreviewerComp />
                 </div>
                 <AppDocumentPreviewerFooterComp isDisableChanging />

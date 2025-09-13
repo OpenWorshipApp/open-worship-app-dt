@@ -85,7 +85,7 @@ export default function LyricEditorComp() {
                 </div>
             </div>
             <div
-                className="w-100 h-100 overflow-hidden"
+                className="w-100 h-100 app-overflow-hidden"
                 ref={onContainerInit}
             />
         </div>

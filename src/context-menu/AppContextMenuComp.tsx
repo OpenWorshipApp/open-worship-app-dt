@@ -26,7 +26,7 @@ function ContextMenuItemComp({
     return (
         <div
             className={
-                `${APP_CONTEXT_MENU_ITEM_CLASS} d-flex w-100 overflow-hidden` +
+                `${APP_CONTEXT_MENU_ITEM_CLASS} d-flex w-100 app-overflow-hidden` +
                 `${item.disabled ? ' disabled' : ''}`
             }
             style={item.style ?? {}}

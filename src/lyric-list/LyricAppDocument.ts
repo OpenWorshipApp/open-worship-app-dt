@@ -37,7 +37,7 @@ export default class LyricAppDocument extends AppDocument {
     async getSlides() {
         const display = getDefaultScreenDisplay();
         const offsetPercentage = 1;
-        const left = Math.floor(
+        const left = Math.round(
             display.bounds.width * (offsetPercentage / 100),
         );
         const top = left;
@@ -88,10 +88,10 @@ export default class LyricAppDocument extends AppDocument {
                               left,
                               backgroundColor: '#0000008B',
                               backdropFilter: 5,
-                              width: Math.floor(
+                              width: Math.round(
                                   display.bounds.width - left * 2,
                               ),
-                              height: Math.floor(
+                              height: Math.round(
                                   display.bounds.height - top * 2,
                               ),
                               rotate: 0,

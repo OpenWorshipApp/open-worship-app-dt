@@ -13,10 +13,10 @@ export default class ElectronScreenController {
 
     constructor(screenId: number) {
         this.screenId = screenId;
-        this.win = this.createScreenWindow();
+        this.win = this.createWindow();
     }
 
-    createScreenWindow() {
+    createWindow() {
         const isWin32 = process.platform === 'win32';
         const isScreenCanFullScreen = isWin32;
         const screenWin = new BrowserWindow({

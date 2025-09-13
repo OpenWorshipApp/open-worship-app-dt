@@ -197,7 +197,7 @@ export default function PresenterComp() {
     return (
         <div
             className={
-                'presenter-manager w-100 h-100 d-flex flex-column overflow-hidden' +
+                'presenter-manager w-100 h-100 d-flex flex-column app-overflow-hidden' +
                 ` ${isFullWidget ? ' app-full-view' : ''}`
             }
         >
@@ -233,7 +233,7 @@ export default function PresenterComp() {
                     setIsFullWidget={setIsFullWidget}
                 />
             </div>
-            <div className="body flex-fill overflow-hidden">
+            <div className="body flex-fill app-overflow-hidden">
                 {isForegroundActive ? (
                     <ResizeActorComp
                         flexSizeName={'flex-size-background'}

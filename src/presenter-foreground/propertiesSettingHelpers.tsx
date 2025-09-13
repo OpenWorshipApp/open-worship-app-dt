@@ -33,7 +33,7 @@ function getWidgetRoundExtraStyle(
         getSetting(settingNamePercentage) ??
             DEFAULT_ROUND_PERCENTAGE.toString(),
     );
-    const roundPercentage = Math.ceil(
+    const roundPercentage = Math.round(
         Math.max(0, Math.min(100, percentage)) / 2,
     );
     return {

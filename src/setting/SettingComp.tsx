@@ -13,14 +13,10 @@ const LazySettingGeneralComp = lazy(() => {
 const LazySettingBibleComp = lazy(() => {
     return import('./bible-setting/SettingBibleComp');
 });
-const LazySettingAboutComp = lazy(() => {
-    return import('./SettingAboutComp');
-});
 
 const tabTypeList = [
     ['g', 'General', LazySettingGeneralComp],
     ['b', 'Bible', LazySettingBibleComp],
-    ['a', 'About', LazySettingAboutComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function SettingComp() {
@@ -29,7 +25,7 @@ export default function SettingComp() {
         'g',
     );
     return (
-        <div id="app-setting" className="card w-100 h-100 overflow-hidden">
+        <div id="app-setting" className="card w-100 h-100 app-overflow-hidden">
             <div className="card-header">
                 <TabRenderComp<TabKeyType>
                     tabs={tabTypeList.map(([key, name]) => {
@@ -51,7 +47,7 @@ export default function SettingComp() {
                     <QuitCurrentPageComp title="Quit Setting" />
                 </div>
             </div>
-            <div className="card-body overflow-hidden">
+            <div className="card-body app-overflow-hidden">
                 {tabTypeList.map(([type, _, target]) => {
                     return genTabBody<TabKeyType>(tabKey, [type, target]);
                 })}

@@ -239,7 +239,7 @@ export default function SlideItemRenderComp({
         return {
             padding: 0,
             margin: 0,
-            height: `${Math.floor(slide.height * scale)}px`,
+            height: `${Math.round(slide.height * scale)}px`,
         } as React.CSSProperties;
     }, [slide.height, scale]);
     const handleDataDropping = async (event: any) => {
@@ -261,7 +261,7 @@ export default function SlideItemRenderComp({
             className={
                 'data-vary-app-document-item card' +
                 ` app-caught-hover-pointer ${activeCN} ${presenterCN}` +
-                ' overflow-hidden'
+                ' app-overflow-hidden'
             }
             ref={setTargetDiv}
             style={{ width: `${width}px` }}
@@ -303,7 +303,7 @@ export default function SlideItemRenderComp({
                 viewIndex={index + 1}
             />
             <div
-                className="card-body overflow-hidden w-100 blank-bg"
+                className="card-body app-overflow-hidden w-100 blank-bg"
                 style={style}
             >
                 {attachedBackgroundElement && (

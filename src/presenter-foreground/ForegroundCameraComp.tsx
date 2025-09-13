@@ -73,7 +73,7 @@ function RenderCameraInfoComp({
             </div>
             <div
                 className={
-                    'card-body w-100 p-0 overflow-hidden' +
+                    'card-body w-100 p-0 app-overflow-hidden' +
                     ' app-caught-hover-pointer'
                 }
                 // TODO: implement drag and drop

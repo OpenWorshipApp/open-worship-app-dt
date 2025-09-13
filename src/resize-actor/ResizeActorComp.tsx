@@ -68,7 +68,7 @@ export default function ResizeActorComp({
         <div
             className={
                 `w-100 h-100 flex ${isHorizontal ? 'h' : 'v'} ` +
-                'overflow-hidden'
+                'app-overflow-hidden'
             }
         >
             {dataInput.map((data, i) => {

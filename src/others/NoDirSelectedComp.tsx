@@ -45,7 +45,7 @@ export default function NoDirSelectedComp({
     defaultFolderName: string;
 }>) {
     return (
-        <div className="card p-1 w-100 overflow-hidden">
+        <div className="card p-1 w-100 app-overflow-hidden">
             <div className="card-body">
                 <div
                     className="ms-2"

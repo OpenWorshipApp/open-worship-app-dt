@@ -70,8 +70,8 @@ export function calMediaSizes(
     }
     console.log(scaleType);
     const scale = Math.max(parentWidth / width, parentHeight / height);
-    const newWidth = width * scale;
-    const newHeight = height * scale;
+    const newWidth = Math.round(width * scale);
+    const newHeight = Math.round(height * scale);
     const offsetH = (parentWidth - newWidth) / 2;
     const offsetV = (parentHeight - newHeight) / 2;
     return {
