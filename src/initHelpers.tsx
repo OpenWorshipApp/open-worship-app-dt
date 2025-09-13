@@ -4,6 +4,9 @@ import 'bootstrap/dist/css/bootstrap.css';
 import { createRoot } from 'react-dom/client';
 import { getSetting, setSetting } from './helper/settingHelpers';
 
+export const darkModeHook = {
+    check: () => {},
+};
 export function applyDarkModeToApp() {
     const isDarkMode = checkIsDarkMode();
     document.querySelectorAll('#app').forEach((element) => {
@@ -15,6 +18,7 @@ export function applyDarkModeToApp() {
             }
         }
     });
+    darkModeHook.check();
 }
 
 const DARK_MODE_SETTING_NAME = 'dark-mode-setting';
