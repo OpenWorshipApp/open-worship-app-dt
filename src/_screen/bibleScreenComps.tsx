@@ -62,7 +62,7 @@ export function BibleBibleTable({
     const fontFaceList = bibleRenderingList.map(({ langData }) => {
         return langData.genCss();
     });
-    const rendThHeader = (
+    const rendTableHeader = (
         { langData, bibleKey, title }: BibleItemRenderingLangType,
         i: number,
     ) => {
@@ -81,7 +81,9 @@ export function BibleBibleTable({
                     >
                         {bibleKey}
                     </div>
-                    <div className="title">{title}</div>
+                    <div className="title">
+                        <div>{title}</div>
+                    </div>
                 </div>
             </th>
         );
@@ -131,7 +133,7 @@ export function BibleBibleTable({
             />
             <table>
                 <thead>
-                    <tr>{bibleRenderingList.map(rendThHeader)}</tr>
+                    <tr>{bibleRenderingList.map(rendTableHeader)}</tr>
                 </thead>
                 <tbody>
                     {isLineSync ? (

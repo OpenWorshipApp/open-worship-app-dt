@@ -64,11 +64,23 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         return this.screenViewData !== null;
     }
 
+    applyHeaderEffectOnScroll(div: HTMLDivElement) {
+        div.querySelectorAll('th.header').forEach((th) => {
+            if (th instanceof HTMLElement) {
+                th.style.fontSize = this.scroll > 0 ? '0.5em' : '1em';
+                th.style.backgroundColor =
+                    this.scroll > 0 ? '#000000da' : '#00000053';
+            }
+        });
+    }
+
     private _divScrollListener() {
         if (this.div === null) {
             return;
         }
         this.scroll = this.div.scrollTop / this.div.scrollHeight;
+        this.applyHeaderEffectOnScroll(this.div);
+
         this.sendSyncScroll();
     }
 
@@ -370,8 +382,6 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     static receiveSyncTextStyle(message: ScreenMessageType) {
         const { data } = message;
-        console.log(data.textStyle);
-
         this.textStyle = data.textStyle;
     }
 
@@ -435,6 +445,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             top: scrollTop,
             left: 0,
         });
+        this.applyHeaderEffectOnScroll(this.div);
     }
 
     handleScreenVersesHighlighting(kjvVerseKey: string, isToTop: boolean) {

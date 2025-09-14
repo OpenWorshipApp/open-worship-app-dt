@@ -21,6 +21,7 @@ body {
 
   & * {
     user-select: none;
+    box-sizing: border-box;
   }
 
   .app-not-selectable-text {
@@ -80,10 +81,6 @@ body {
     min-width: 120px;
   }
 
-  * {
-    box-sizing: border-box;
-  }
-
   .right {
     padding: 0;
 
@@ -100,32 +97,12 @@ body {
   .rotating {
     i:before {
       animation: rotating-hover 1s linear infinite;
-
-      @keyframes rotating-hover {
-        from {
-          transform: rotate(0deg);
-        }
-
-        to {
-          transform: rotate(360deg);
-        }
-      }
     }
   }
 
   .rotating-hover:hover {
     i:before {
       animation: rotating-hover 1s linear infinite;
-
-      @keyframes rotating-hover {
-        from {
-          transform: rotate(0deg);
-        }
-
-        to {
-          transform: rotate(360deg);
-        }
-      }
     }
   }
 
@@ -181,31 +158,7 @@ body {
     color: $hight-light-color;
   }
 
-  @keyframes app-highlight-selected-in {
-    0% {
-      border-width: 2px;
-    }
-    50% {
-      border-width: 3px;
-    }
-    100% {
-      border: 2px;
-    }
-  }
-  @keyframes app-highlight-selected {
-    0% {
-      border-color: $hight-light-color;
-    }
-    80% {
-      border-color: $hight-light-color;
-    }
-    100% {
-      border-color: transparent;
-    }
-  }
-
   .app-highlight-selected {
-    box-sizing: border-box;
     border: 2px dotted $hight-light-color;
     animation: app-highlight-selected-in 0.5s ease-in-out alternate;
 
@@ -355,6 +308,47 @@ body {
 
   .app-inner-shadow {
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+}
+
+@keyframes app-highlight-selected-in {
+  0% {
+    border-width: 2px;
+  }
+  50% {
+    border-width: 3px;
+  }
+  100% {
+    border: 2px;
+  }
+}
+@keyframes app-highlight-selected {
+  0% {
+    border-color: $hight-light-color;
+  }
+  80% {
+    border-color: $hight-light-color;
+  }
+  100% {
+    border-color: transparent;
+  }
+}
+@keyframes rotating-hover {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rotating-hover {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
 

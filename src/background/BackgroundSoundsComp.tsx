@@ -192,6 +192,7 @@ export default function BackgroundSoundsComp() {
             isNameOnTop={true}
             genContextMenuItems={genAudioDownloadContextMenuItems}
             onItemsAdding={handleItemsAdding}
+            shouldHideFooter
         />
     );
 }

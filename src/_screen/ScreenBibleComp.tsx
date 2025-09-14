@@ -23,7 +23,7 @@ const styleText = `
 }
 
 #bible-screen-view::-webkit-scrollbar-track {
-    background-color: #2752ff2a;
+    background-color: #00000042;
     border-radius: 5px;
 }
 
@@ -35,7 +35,6 @@ const styleText = `
 #bible-screen-view table {
     table-layout: fixed;
     width: 100%;
-    background-color: #2752ff2a;
     border-radius: 0.1em;
     margin: 0.1em;
     margin-bottom: 1em;
@@ -44,7 +43,6 @@ const styleText = `
 }
 
 #bible-screen-view thead {
-    background-color: #2752ff2a;
     padding-left: 0.5em;
     padding-right: 0.5em;
     -webkit-text-stroke-width: 0.01em;
@@ -52,6 +50,10 @@ const styleText = `
 
 #bible-screen-view th {
     border-radius: 0.1em;
+    position: sticky;
+    top: 0;
+    background-color: #00000053;
+    transition: font-size 1s ease, background-color 1s ease;
 }
 
 #bible-screen-view th,
@@ -63,6 +65,9 @@ const styleText = `
     line-height: 1.5em;
     padding: 0.3em;
     box-sizing: border-box;
+}
+#bible-screen-view th {
+    padding: 0;
 }
 
 #bible-screen-view td>span {
@@ -84,10 +89,20 @@ const styleText = `
 }
 
 #bible-screen-view .header .title {
-    text-overflow: ellipsis;
-    overflow: hidden;
+    display: inline-block;
+    overflow-x: auto;
+    overflow-y: hidden;
     white-space: nowrap;
     text-align: left;
+}
+
+#bible-screen-view .header .title::-webkit-scrollbar {
+  background-color: #00000042;
+}
+
+#bible-screen-view .header .title div {
+    display: inline-block;
+    white-space: nowrap;
 }
 
 #bible-screen-view .highlight {
@@ -125,7 +140,7 @@ export default function ScreenBibleComp() {
         <>
             <style>{styleText}</style>
             <style>
-                {`#bible-screen-view th, #bible-screen-view td {
+                {`#bible-screen-view tr {
                     ${ScreenBibleManager.textStyleText}
                 }`}
             </style>

@@ -147,6 +147,7 @@ export const defaultRangeSize = {
 };
 
 export default function BackgroundMediaComp({
+    shouldHideFooter,
     extraHeaderChild,
     rendChild,
     dragType,
@@ -163,6 +164,7 @@ export default function BackgroundMediaComp({
     onItemsAdding,
     genExtraItemContextMenuItems = (_filePath: string) => [],
 }: Readonly<{
+    shouldHideFooter?: boolean;
     extraHeaderChild?: React.ReactNode;
     rendChild: RenderChildType;
     dragType: DragTypeEnum;
@@ -257,17 +259,19 @@ export default function BackgroundMediaComp({
                     }
                 />
             </div>
-            <div className="card-footer d-flex p-0">
-                <div className="flex-fill"></div>
-                <div>
-                    <AppRangeComp
-                        value={thumbnailWidth}
-                        title="Thumbnail Size"
-                        setValue={setThumbnailWidth}
-                        defaultSize={defaultRangeSize}
-                    />
+            {shouldHideFooter ? null : (
+                <div className="card-footer d-flex p-0">
+                    <div className="flex-fill" />
+                    <div>
+                        <AppRangeComp
+                            value={thumbnailWidth}
+                            title="Thumbnail Size"
+                            setValue={setThumbnailWidth}
+                            defaultSize={defaultRangeSize}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }

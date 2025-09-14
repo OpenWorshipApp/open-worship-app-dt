@@ -97,26 +97,24 @@ $resizer-color: rgb(123, 173, 205);
   .data-vary-app-document-item {
     background-color: var(--bs-gray-200);
     box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
-    border: 1px solid gray;
 
     .vary-app-document-item-header {
       background-color: var(--bs-gray-200);
     }
 
-    &.active {
-      border: 1px solid rgba(0, 68, 68, 0.418);
+    &.app-highlight-selected {
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.048);
 
       .card-header {
-        background-color: rgba(0, 50, 50, 0.205);
+        background-color: rgba(0, 50, 50, 0.378);
       }
 
       .index {
-        background-color: rgba(0, 53, 53, 0.418);
+        background-color: rgba(0, 53, 53, 0.513);
       }
     }
 
-    &:not(.active):hover {
+    &:not(.app-highlight-selected):hover {
       border: 1px solid rgb(0, 0, 0);
     }
 
@@ -130,8 +128,7 @@ $resizer-color: rgb(123, 173, 205);
     $bg-color-hover: var(--bs-gray-500);
     $color: var(--bs-gray-200);
 
-    background-color: $bg-color;
-    background: repeating-linear-gradient(
+    background-color: repeating-linear-gradient(
       45deg,
       $color,
       $color 4px,
