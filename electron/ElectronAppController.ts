@@ -5,6 +5,7 @@ import ElectronMainController from './ElectronMainController';
 import ElectronSettingController from './ElectronSettingController';
 import { getCurrent } from './fsServe';
 import ElectronAboutController from './ElectronAboutController';
+import { getAppThemeBackgroundColor } from './electronHelpers';
 
 let instance: ElectronAppController | null = null;
 let settingController: ElectronSettingController | null = null;
@@ -58,5 +59,12 @@ export default class ElectronAppController {
             instance = new ElectronAppController();
         }
         return instance;
+    }
+
+    resetThemeBackgroundColor() {
+        const backgroundColor = getAppThemeBackgroundColor();
+        this.mainWin.setBackgroundColor(backgroundColor);
+        this.finderController.win?.setBackgroundColor(backgroundColor);
+        this.aboutController.win?.setBackgroundColor(backgroundColor);
     }
 }

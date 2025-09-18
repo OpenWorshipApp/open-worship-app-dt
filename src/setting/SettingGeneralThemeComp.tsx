@@ -4,33 +4,24 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import {
     applyDarkModeToApp,
     darkModeHook,
-    getIsDarkModeSetting,
-    setIsDarkModeSetting,
+    getThemeSourceSetting,
+    setThemeSourceSetting,
+    ThemeOptionType,
 } from '../initHelpers';
 
 export default function SettingGeneralThemeComp() {
-    const [mode, setMode] = useState<'light' | 'dark' | 'system'>('system');
-    const setMode1 = (newMode: 'light' | 'dark' | 'system') => {
-        setMode(newMode);
-        console.log(newMode);
-
-        if (newMode === 'system') {
-            setIsDarkModeSetting(null);
-        } else {
-            setIsDarkModeSetting(newMode === 'dark');
-        }
+    const [themeSource, setThemeSource] = useState<ThemeOptionType>(
+        getThemeSourceSetting(),
+    );
+    const setMode1 = (newThemeSource: ThemeOptionType) => {
+        setThemeSource(newThemeSource);
+        setThemeSourceSetting(newThemeSource);
         applyDarkModeToApp();
     };
     useAppEffect(() => {
         darkModeHook.check = () => {
-            const settingMode = getIsDarkModeSetting();
-            let newMode = 'system';
-            if (settingMode === true) {
-                newMode = 'dark';
-            } else if (settingMode === false) {
-                newMode = 'light';
-            }
-            setMode(newMode as any);
+            const themeSourceSetting = getThemeSourceSetting();
+            setThemeSource(themeSourceSetting);
         };
         darkModeHook.check();
         return () => {
@@ -44,7 +35,7 @@ export default function SettingGeneralThemeComp() {
                 <select
                     className="form-select"
                     aria-label="Default select example"
-                    value={mode}
+                    value={themeSource}
                     onChange={(e) => {
                         const value = e.target.value;
                         setMode1(value as any);

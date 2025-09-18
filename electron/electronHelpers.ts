@@ -1,4 +1,4 @@
-import { app, shell } from 'electron';
+import { app, nativeTheme, shell } from 'electron';
 import { x as tarX } from 'tar';
 
 import appInfo from '../package.json';
@@ -118,4 +118,8 @@ export async function unlocking<T>(
     const data = await callback();
     lockSet.delete(key);
     return data;
+}
+
+export function getAppThemeBackgroundColor() {
+    return nativeTheme.shouldUseDarkColors ? '#000000' : '#ffffff';
 }

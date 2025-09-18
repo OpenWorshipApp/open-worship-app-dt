@@ -3,7 +3,11 @@ import { BrowserWindow, Menu, MenuItem, shell } from 'electron';
 import { channels, ScreenMessageType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import ElectronSettingController from './ElectronSettingController';
-import { attemptClosing, isSecured } from './electronHelpers';
+import {
+    attemptClosing,
+    getAppThemeBackgroundColor,
+    isSecured,
+} from './electronHelpers';
 
 let instance: ElectronMainController | null = null;
 export default class ElectronMainController {
@@ -24,7 +28,7 @@ export default class ElectronMainController {
     createWindow(settingController: ElectronSettingController) {
         const routeProps = genRoutProps(settingController.mainHtmlPath);
         const win = new BrowserWindow({
-            backgroundColor: '#000000',
+            backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
             webPreferences: {

@@ -101,7 +101,7 @@ $resizer-color: rgb(73, 103, 123);
     $bg-color-hover: var(--bs-gray-600);
     $color: var(--bs-gray-800);
 
-    background-color: repeating-linear-gradient(
+    background: repeating-linear-gradient(
       45deg,
       $color,
       $color 4px,

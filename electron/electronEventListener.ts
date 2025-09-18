@@ -1,4 +1,4 @@
-import electron, { FileFilter, shell } from 'electron';
+import electron, { FileFilter, nativeTheme, shell } from 'electron';
 import fontList from 'font-list';
 
 import ElectronAppController from './ElectronAppController';
@@ -336,4 +336,12 @@ export function initEventOther(appController: ElectronAppController) {
     ipcMain.on('main:app:go-download', () => {
         goDownload();
     });
+
+    ipcMain.on(
+        'main:app:set-theme',
+        (_event, theme: 'dark' | 'light' | 'system') => {
+            nativeTheme.themeSource = theme;
+            appController.resetThemeBackgroundColor();
+        },
+    );
 }

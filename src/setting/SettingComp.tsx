@@ -26,7 +26,12 @@ export default function SettingComp() {
     );
     return (
         <div id="app-setting" className="card w-100 h-100 app-overflow-hidden">
-            <div className="card-header">
+            <div
+                className="card-header overflow-hidden"
+                style={{
+                    height: '37px',
+                }}
+            >
                 <TabRenderComp<TabKeyType>
                     tabs={tabTypeList.map(([key, name]) => {
                         return {

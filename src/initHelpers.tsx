@@ -3,43 +3,35 @@ import 'bootstrap/dist/css/bootstrap.css';
 
 import { createRoot } from 'react-dom/client';
 import { getSetting, setSetting } from './helper/settingHelpers';
+import appProvider from './server/appProvider';
 
 export const darkModeHook = {
     check: () => {},
 };
 export function applyDarkModeToApp() {
     const isDarkMode = checkIsDarkMode();
+    const theme = isDarkMode ? 'dark' : 'light';
     document.querySelectorAll('#app').forEach((element) => {
         if (element instanceof HTMLElement) {
-            if (isDarkMode) {
-                element.dataset.bsTheme = 'dark';
-            } else {
-                element.dataset.bsTheme = 'light';
-            }
+            element.dataset.bsTheme = theme;
         }
     });
     darkModeHook.check();
 }
 
+export const themeOptions = ['light', 'dark', 'system'] as const;
+export type ThemeOptionType = (typeof themeOptions)[number];
 const DARK_MODE_SETTING_NAME = 'dark-mode-setting';
-export function getIsDarkModeSetting() {
-    const setting = getSetting(DARK_MODE_SETTING_NAME);
-    if (setting === 'true') {
-        return true;
+export function getThemeSourceSetting(): ThemeOptionType {
+    let themeSource: any = getSetting(DARK_MODE_SETTING_NAME);
+    if (!themeOptions.includes(themeSource)) {
+        themeSource = 'system';
     }
-    if (setting === 'false') {
-        return false;
-    }
-    return null;
+    appProvider.messageUtils.sendData('main:app:set-theme', themeSource);
+    return themeSource;
 }
-export function setIsDarkModeSetting(isDarkMode: boolean | null) {
-    let setting: string | null = null;
-    if (isDarkMode === true) {
-        setting = 'true';
-    } else if (isDarkMode === false) {
-        setting = 'false';
-    }
-    setSetting(DARK_MODE_SETTING_NAME, setting);
+export function setThemeSourceSetting(themeSource: ThemeOptionType) {
+    setSetting(DARK_MODE_SETTING_NAME, themeSource);
     applyDarkModeToApp();
 }
 
@@ -50,14 +42,11 @@ function getSystemDarkMatcher() {
     return window.matchMedia('(prefers-color-scheme: dark)');
 }
 export function checkIsDarkMode() {
-    const isDarkModeSetting = getIsDarkModeSetting();
-    if (isDarkModeSetting !== null) {
-        return isDarkModeSetting;
-    }
-    if (getSystemDarkMatcher()?.matches) {
+    const themeSource = getThemeSourceSetting();
+    if (themeSource === 'system' && getSystemDarkMatcher()?.matches) {
         return true;
     }
-    return false;
+    return themeSource === 'dark';
 }
 
 getSystemDarkMatcher()?.addEventListener('change', applyDarkModeToApp);

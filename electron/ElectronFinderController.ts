@@ -2,7 +2,11 @@ import { BrowserWindow } from 'electron';
 
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
-import { attemptClosing, isSecured } from './electronHelpers';
+import {
+    attemptClosing,
+    getAppThemeBackgroundColor,
+    isSecured,
+} from './electronHelpers';
 
 const routeProps = genRoutProps(htmlFiles.finder);
 export default class ElectronFinderController {
@@ -10,7 +14,7 @@ export default class ElectronFinderController {
     mainWin: BrowserWindow | null = null;
     createWindow(mainWin: BrowserWindow) {
         const win = new BrowserWindow({
-            backgroundColor: '#000000',
+            backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
             width: 350,

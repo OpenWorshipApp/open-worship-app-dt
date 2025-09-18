@@ -2,7 +2,11 @@ import { BrowserWindow } from 'electron';
 
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
-import { attemptClosing, isSecured } from './electronHelpers';
+import {
+    attemptClosing,
+    getAppThemeBackgroundColor,
+    isSecured,
+} from './electronHelpers';
 
 const routeProps = genRoutProps(htmlFiles.about);
 export default class ElectronAboutController {
@@ -15,7 +19,7 @@ export default class ElectronAboutController {
         const x = mainBounds.x + (mainBounds.width - width) / 2;
         const y = mainBounds.y + (mainBounds.height - height) / 2;
         const win = new BrowserWindow({
-            backgroundColor: '#000000',
+            backgroundColor: getAppThemeBackgroundColor(),
             x,
             y,
             width,
