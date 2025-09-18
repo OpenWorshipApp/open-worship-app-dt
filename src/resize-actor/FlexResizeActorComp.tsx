@@ -45,14 +45,14 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     nextGrow: number = 0;
     sumGrow: number = 0;
     sumSize: number = 0;
-    mouseMoveListener: (mm: MouseEvent) => void;
-    mouseUpListener: (mm: MouseEvent) => void;
+    mouseMoveListener: (event: MouseEvent) => void;
+    mouseUpListener: (event: MouseEvent) => void;
     attemptTimeout: (func: () => void, isImmediate?: boolean) => void;
     constructor(props: Props) {
         super(props);
         this.myRef = createRef();
-        this.mouseMoveListener = (mm: MouseEvent) => {
-            this.onMouseMove(mm);
+        this.mouseMoveListener = (event: MouseEvent) => {
+            this.onMouseMove(event);
         };
         this.mouseUpListener = (event) => {
             this.onMouseUp(event);
