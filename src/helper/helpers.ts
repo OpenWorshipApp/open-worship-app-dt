@@ -270,7 +270,7 @@ export function checkIsSameValues(value1: any, value2: any) {
     return value1 === value2;
 }
 
-export const menuTitleRealFile = `Reveal in ${
+export const menuTitleRevealFile = `Reveal in ${
     appProvider.systemUtils.isMac ? 'Finder' : 'File Explorer'
 }`;
 

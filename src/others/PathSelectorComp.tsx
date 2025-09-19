@@ -9,7 +9,7 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
-import { menuTitleRealFile } from '../helper/helpers';
+import { menuTitleRevealFile } from '../helper/helpers';
 import { copyToClipboard, showExplorer } from '../server/appHelpers';
 import appProvider from '../server/appProvider';
 import { goToGeneralSetting } from '../setting/settingHelpers';
@@ -32,7 +32,7 @@ function openContextMenu(dirPath: string, event: any) {
             },
         },
         {
-            menuElement: menuTitleRealFile,
+            menuElement: menuTitleRevealFile,
             onSelect: () => {
                 showExplorer(dirPath);
             },
