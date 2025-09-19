@@ -45,7 +45,8 @@ export default function RenderVerseOptionsComp({
         <div className="render-found" data-bible-key={bibleKey}>
             <div
                 className={
-                    'verse-select w-100 d-flex p-1 align-content-start flex-wrap'
+                    'verse-select w-100 d-flex p-1 align-content-start ' +
+                    'flex-wrap app-inner-shadow'
                 }
             >
                 {verseList.map(([verseNum, verseNumStr], i) => {
