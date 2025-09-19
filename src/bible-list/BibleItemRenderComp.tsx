@@ -173,7 +173,11 @@ export default function BibleItemRenderComp({
                     <div className="px-1">
                         <BibleSelectionMiniComp
                             bibleKey={bibleItem.bibleKey}
-                            onBibleKeyChange={(_, newValue) => {
+                            onBibleKeyChange={(
+                                _isContextMenu,
+                                _oldValue,
+                                newValue,
+                            ) => {
                                 changeBible(newValue);
                             }}
                             contextMenuTitle="`Add Extra Bible"
