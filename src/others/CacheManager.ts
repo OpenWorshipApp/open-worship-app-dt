@@ -1,3 +1,4 @@
+import appProvider from '../server/appProvider';
 import { unlocking } from '../server/unlockingHelpers';
 
 type StoreType<T> = { value: T; timestamp: number };
@@ -59,6 +60,9 @@ export default class CacheManager<T> {
     }
 
     setSync(key: string, value: T): void {
+        if (appProvider.isPageScreen) {
+            return;
+        }
         this.cache.set(key, { value, timestamp: Date.now() });
     }
 
