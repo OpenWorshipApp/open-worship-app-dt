@@ -130,7 +130,7 @@
         "json-schema-library": "^10.2.1",
         "lexical": "^0.33.1",
         "markdown-it": "^14.1.0",
-        "markdown-it-music": "^2.0.5",
+        "markdown-it-music": "^2.0.6",
         "moment-timezone": "^0.6.0",
         "monaco-editor": "^0.52.2",
         "node-api-dotnet": "^0.9.12",
