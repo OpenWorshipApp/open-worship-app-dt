@@ -1,11 +1,10 @@
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import appProvider from '../../server/appProvider';
 import {
+    ensureDirectory,
     fsCheckDirExist,
-    fsCheckFileExist,
     fsCreateDir,
     fsExistSync,
-    fsMkDirSync,
     getDesktopPath,
     pathJoin,
 } from '../../server/fileHelpers';
@@ -166,11 +165,6 @@ export async function ensureDataDirectory(dataDirName: string) {
         return null;
     }
     const dataDir = pathJoin(parentDir, dataDirName);
-    if (await fsCheckFileExist(dataDir)) {
-        return null;
-    }
-    if (!(await fsCheckDirExist(dataDir))) {
-        fsMkDirSync(dataDir, true);
-    }
+    await ensureDirectory(dataDir);
     return dataDir;
 }

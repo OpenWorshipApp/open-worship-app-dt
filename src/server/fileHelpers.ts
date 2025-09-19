@@ -628,3 +628,29 @@ export function getDotExtensionFromBase64Data(base64Data: string) {
     }
     return null;
 }
+
+export async function ensureDirectory(dirPath: string) {
+    if (await fsCheckFileExist(dirPath)) {
+        return;
+    }
+    if (!(await fsCheckDirExist(dirPath))) {
+        fsMkDirSync(dirPath, true);
+    }
+}
+
+export function getFileMD5(filePath: string) {
+    return new Promise<string | null>((resolve) => {
+        const hash = appProvider.cryptoUtils.createHash('md5');
+        const stream = appProvider.fileUtils.createReadStream(filePath);
+        stream.on('error', (err) => {
+            handleError(err);
+            resolve(null);
+        });
+        stream.on('data', (chunk) => {
+            hash.update(chunk);
+        });
+        stream.on('end', () => {
+            resolve(hash.digest('hex'));
+        });
+    });
+}

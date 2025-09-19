@@ -3,7 +3,14 @@ import { handleError } from '../../helper/errorHelpers';
 import appProvider from '../../server/appProvider';
 import { writeStreamToFile } from '../../helper/bible-helpers/downloadHelpers';
 import { showExplorer } from '../../server/appHelpers';
-import { fsDeleteFile } from '../../server/fileHelpers';
+import {
+    ensureDirectory,
+    fsCheckFileExist,
+    fsDeleteDir,
+    fsDeleteFile,
+    getFileMD5,
+    pathJoin,
+} from '../../server/fileHelpers';
 import { allLocalesMap } from '../../lang/langHelpers';
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import {
@@ -371,14 +378,89 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
     });
 }
 
-export async function readBibleXMLData(bibleKey: string, fileName: string) {
+async function ensureBibleXMLBasePath(bibleKey: string) {
+    const filePath = await bibleKeyToXMLFilePath(bibleKey, true);
+    if (filePath === null) {
+        return null;
+    }
+    const dirPath = `${filePath}.cache`;
+    await ensureDirectory(dirPath);
+    return dirPath;
+}
+
+async function invalidateBibleXMLFolder(bibleKey: string) {
+    const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey);
+    if (xmlFilePath === null) {
+        return null;
+    }
+    const md5Hash = await getFileMD5(xmlFilePath);
+    if (md5Hash === null) {
+        return null;
+    }
+    const basePath = await ensureBibleXMLBasePath(bibleKey);
+    if (basePath === null) {
+        return null;
+    }
+    const md5FilePath = pathJoin(basePath, md5Hash);
+    if (await fsCheckFileExist(md5FilePath)) {
+        return;
+    }
+    await fsDeleteDir(basePath);
+    await ensureDirectory(basePath);
+    const fileSource = FileSource.getInstance(md5FilePath);
+    await fileSource.writeFileData('');
+}
+
+async function backupBibleXMLData<T>(
+    bibleKey: string,
+    fileName: string,
+    data: T,
+) {
+    const basePath = await ensureBibleXMLBasePath(bibleKey);
+    if (basePath !== null) {
+        const filePath = pathJoin(basePath, fileName);
+        const fileSource = FileSource.getInstance(filePath);
+        await fileSource.writeFileData(JSON.stringify(data));
+    }
+    return data;
+}
+
+async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
+    const basePath = await ensureBibleXMLBasePath(bibleKey);
+    if (basePath === null) {
+        return null;
+    }
+    const filePath = pathJoin(basePath, fileName);
+    if (!(await fsCheckFileExist(filePath))) {
+        return null;
+    }
+    const fileSource = FileSource.getInstance(filePath);
+    const jsonText = await fileSource.readFileData();
+    if (jsonText !== null) {
+        try {
+            const data = JSON.parse(jsonText);
+            return data;
+        } catch (_error) {}
+    }
+    return null;
+}
+
+export async function readBibleXMLData(
+    bibleKey: string,
+    fileName: string,
+): Promise<BibleInfoType | BibleChapterType | null> {
+    await invalidateBibleXMLFolder(bibleKey);
+    const backupData = await getBackupBibleXMLData(bibleKey, fileName);
+    if (backupData !== null) {
+        return backupData;
+    }
     const jsonData = await getBibleXMLDataFromKeyCaching(bibleKey);
     if (jsonData === null) {
         return null;
     }
     const bibleInfo = jsonData.info;
     if (fileName === '_info') {
-        return {
+        return backupBibleXMLData(bibleKey, fileName, {
             ...bibleInfo,
             books: bibleInfo.booksMap,
             numList: Array.from(
@@ -387,7 +469,7 @@ export async function readBibleXMLData(bibleKey: string, fileName: string) {
                 },
                 (_, i) => bibleInfo.numbersMap?.[i],
             ),
-        } as BibleInfoType;
+        });
     }
     const fileNameData = fromBibleFileName(fileName);
     if (fileNameData === null) {
@@ -398,14 +480,14 @@ export async function readBibleXMLData(bibleKey: string, fileName: string) {
     if (!book) {
         return null;
     }
-    const chapter = book[chapterNum];
-    if (!chapter) {
+    const chapterInfo = book[chapterNum];
+    if (!chapterInfo) {
         return null;
     }
-    return {
+    return backupBibleXMLData(bibleKey, fileName, {
         title: `${bibleInfo.booksMap[bookKey]} ${chapterNum}`,
-        verses: chapter,
-    } as BibleChapterType;
+        verses: chapterInfo,
+    });
 }
 
 export async function saveJsonDataToXMLfile(jsonData: BibleXMLJsonType) {
