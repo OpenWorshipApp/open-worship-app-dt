@@ -1,6 +1,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import * as nodeCrypto from 'node:crypto';
 
 export type MessageEventType = {
     returnValue: any;
@@ -151,6 +152,7 @@ export type AppProviderType = Readonly<
         cryptoUtils: {
             encrypt: (text: string, key: string) => string;
             decrypt: (text: string, key: string) => string;
+            createHash: (algorithm: string) => nodeCrypto.Hash;
         };
         browserUtils: {
             pathToFileURL: (filePath: string) => string;
