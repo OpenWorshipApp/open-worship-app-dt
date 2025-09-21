@@ -41,7 +41,7 @@ export default function ColorPicker({
     isNoImmediate = false,
 }: Readonly<{
     defaultColor: AppColorType;
-    color: AppColorType | null;
+    color: AppColorType | null | undefined;
     onColorChange?: (color: AppColorType, event: MouseEvent) => void;
     onNoColor?: (color: AppColorType, event: MouseEvent) => void;
     isCollapsable?: boolean;
@@ -49,7 +49,7 @@ export default function ColorPicker({
 }>) {
     const [isOpened, setIsOpened] = useState(false);
     const [localColor, setLocalColor] = useState(color);
-    const opacity = localColor !== null ? colorToTransparent(localColor) : 255;
+    const opacity = localColor ? colorToTransparent(localColor) : 255;
     useAppEffect(() => {
         setLocalColor(color);
     }, [color]);
@@ -70,7 +70,7 @@ export default function ColorPicker({
         applyNewColor(newColorStr, event);
     };
     const handleOpacityChanging = (value: number, event: any) => {
-        if (localColor === null) {
+        if (!localColor) {
             return;
         }
         const newColor = setOpacity(localColor, value);

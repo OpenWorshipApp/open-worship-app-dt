@@ -11,7 +11,7 @@ export default function RenderColors({
     isNoImmediate = false,
 }: Readonly<{
     colors: AnyObjectType;
-    selectedColor: AppColorType | null;
+    selectedColor: AppColorType | null | undefined;
     onColorChange: (color: AppColorType | null, event: MouseEvent) => void;
     isNoImmediate?: boolean;
 }>) {
@@ -39,7 +39,7 @@ export default function RenderColors({
                                 name={name}
                                 color={color}
                                 isSelected={
-                                    selectedColor !== null &&
+                                    !!selectedColor &&
                                     compareColor(selectedColor, color)
                                 }
                                 onClick={handleColorChanging}

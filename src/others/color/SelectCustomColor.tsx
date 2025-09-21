@@ -11,7 +11,7 @@ export default function SelectCustomColor({
     onColorSelected,
     isNoImmediate = false,
 }: Readonly<{
-    color: AppColorType | null;
+    color: AppColorType | null | undefined;
     onColorSelected: (color: AppColorType, event: MouseEvent) => void;
     isNoImmediate?: boolean;
 }>) {
