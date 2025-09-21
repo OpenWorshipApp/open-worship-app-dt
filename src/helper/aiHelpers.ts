@@ -35,29 +35,32 @@ export type SpeakableTextDataType = {
 
 export type OpenAISettingType = {
     openAIAPIKey: string;
+    anthropicAPIKey: string;
     isAutoPlay: boolean;
 };
-const OPEN_AI_SETTING_NAME = 'open-ai-setting';
-export function getOpenAISetting(): OpenAISettingType {
-    const settingStr = localStorage.getItem(OPEN_AI_SETTING_NAME) || '{}';
+const AI_SETTING_NAME = 'open-ai-setting';
+export function getAISetting(): OpenAISettingType {
+    const settingStr = localStorage.getItem(AI_SETTING_NAME) || '{}';
     try {
         const data = JSON.parse(settingStr);
         data.openAIAPIKey = (data.openAIAPIKey ?? '').trim();
+        data.anthropicAPIKey = (data.anthropicAPIKey ?? '').trim();
         return data;
     } catch (_error) {
         return {
             openAIAPIKey: '',
+            anthropicAPIKey: '',
             isAutoPlay: false,
         };
     }
 }
-export function setOpenAISetting(value: OpenAISettingType) {
-    localStorage.setItem(OPEN_AI_SETTING_NAME, JSON.stringify(value));
+export function setAISetting(value: OpenAISettingType) {
+    localStorage.setItem(AI_SETTING_NAME, JSON.stringify(value));
 }
 
 let openai: OpenAI | null = null;
 function getOpenAIInstance() {
-    const { openAIAPIKey } = getOpenAISetting();
+    const { openAIAPIKey } = getAISetting();
     if (!openAIAPIKey) {
         showSimpleToast(
             'Fail to get OpenAI instance',
@@ -241,7 +244,6 @@ export async function getCrossRefs(
             return null;
         }
         const content = genPrompt(verseKey);
-        console.log('Prompt:', content);
         const response = await client.chat.completions.create({
             model: 'gpt-5',
             messages: [{ role: 'user', content }],

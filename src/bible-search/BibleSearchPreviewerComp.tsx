@@ -38,7 +38,12 @@ export default function BibleSearchPreviewerComp() {
     }, []);
     return (
         <div className="card w-100 h-100 app-overflow-hidden d-flex flex-column">
-            <div className="card-header">
+            <div
+                className="card-header overflow-hidden p-0"
+                style={{
+                    height: '135px',
+                }}
+            >
                 <TabRenderComp<TabKeyType>
                     tabs={tabTypeList.map(([key, name]) => {
                         return {

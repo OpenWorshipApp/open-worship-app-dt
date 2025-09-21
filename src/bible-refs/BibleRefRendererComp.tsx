@@ -1,6 +1,8 @@
 import BibleItem from '../bible-list/BibleItem';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
-import BibleRefItemRendererComp from './BibleRefItemRendererComp';
+import BibleRefItemRendererComp, {
+    BibleRefAIItemRendererComp,
+} from './BibleRefItemRendererComp';
 
 export default function BibleRefRendererComp({
     bibleItem,
@@ -32,14 +34,26 @@ export default function BibleRefRendererComp({
             </div>
             {arr.map((verse, i) => {
                 return (
-                    <BibleRefItemRendererComp
-                        key={verse}
-                        bibleKey={bibleItem.bibleKey}
-                        bookKey={book}
-                        chapter={chapter}
-                        verse={verse}
-                        index={i}
-                    />
+                    <>
+                        <BibleRefItemRendererComp
+                            key={`verse-${verse}`}
+                            bibleKey={bibleItem.bibleKey}
+                            bookKey={book}
+                            chapter={chapter}
+                            verse={verse}
+                            index={i}
+                        />
+                        <hr key={`hr-${verse}`} />
+                        <center key={`ai-title-${verse}`}>AI</center>
+                        <BibleRefAIItemRendererComp
+                            key={`ai-verse-${verse}`}
+                            bibleKey={bibleItem.bibleKey}
+                            bookKey={book}
+                            chapter={chapter}
+                            verse={verse}
+                            index={i}
+                        />
+                    </>
                 );
             })}
         </div>

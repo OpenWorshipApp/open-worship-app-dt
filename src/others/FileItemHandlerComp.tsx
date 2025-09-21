@@ -12,7 +12,10 @@ import appProvider from '../server/appProvider';
 import { useFileSourceRefreshEvents } from '../helper/dirSourceHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import ItemColorNoteComp from './ItemColorNoteComp';
-import { menuTitleRevealFile, RECEIVING_DROP_CLASSNAME } from '../helper/helpers';
+import {
+    menuTitleRevealFile,
+    RECEIVING_DROP_CLASSNAME,
+} from '../helper/helpers';
 import {
     ContextMenuItemType,
     showAppContextMenu,

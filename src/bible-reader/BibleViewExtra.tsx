@@ -40,7 +40,7 @@ import RenderActionButtonsComp from '../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import LoadingComp from '../others/LoadingComp';
-import { bibleTextToSpeech, getOpenAISetting } from '../helper/aiHelpers';
+import { bibleTextToSpeech, getAISetting } from '../helper/aiHelpers';
 import FileSource from '../helper/FileSource';
 import LookupBibleItemController from './LookupBibleItemController';
 import { AudioAIEnablingComp } from './AudioAIEnablingComp';
@@ -284,7 +284,7 @@ function AudioPlayerComp({
         <audio
             className="verse-audio"
             ref={(el) => {
-                const openAISetting = getOpenAISetting();
+                const openAISetting = getAISetting();
                 if (
                     openAISetting.isAutoPlay &&
                     el !== null &&
@@ -331,7 +331,7 @@ function handleNextVersionSelection(
     currentTarget: HTMLDivElement,
     nextKjvVerseKey: string,
 ) {
-    const audioAISetting = getOpenAISetting();
+    const audioAISetting = getAISetting();
     if (!audioAISetting.isAutoPlay) {
         return;
     }

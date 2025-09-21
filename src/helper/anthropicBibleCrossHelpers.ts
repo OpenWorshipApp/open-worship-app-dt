@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { getAISetting } from './aiHelpers';
 
 const MODEL = 'claude-sonnet-4-20250514';
 
@@ -261,7 +262,8 @@ export class BibleCrossReferenceAPI {
 }
 
 export async function demonstrateAPI(verseReference: string) {
-    const API_KEY = (window as any).anthropicAPIKey || '';
+    const setting = getAISetting();
+    const API_KEY = setting.anthropicAPIKey;
     if (!API_KEY) {
         console.error(
             'No API key provided for Anthropic API, please set to window.anthropicAPIKey',
