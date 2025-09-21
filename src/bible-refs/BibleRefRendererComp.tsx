@@ -34,26 +34,22 @@ export default function BibleRefRendererComp({
             </div>
             {arr.map((verse, i) => {
                 return (
-                    <>
+                    <div key={verse}>
                         <BibleRefItemRendererComp
-                            key={`verse-${verse}`}
                             bibleKey={bibleItem.bibleKey}
                             bookKey={book}
                             chapter={chapter}
                             verse={verse}
                             index={i}
                         />
-                        <hr key={`hr-${verse}`} />
-                        <center key={`ai-title-${verse}`}>AI</center>
                         <BibleRefAIItemRendererComp
-                            key={`ai-verse-${verse}`}
                             bibleKey={bibleItem.bibleKey}
                             bookKey={book}
                             chapter={chapter}
                             verse={verse}
                             index={i}
                         />
-                    </>
+                    </div>
                 );
             })}
         </div>

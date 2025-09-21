@@ -5,7 +5,7 @@ import BibleRefRenderFoundItemComp, {
 } from './BibleRefRenderFoundItemComp';
 import { useGetBibleRef } from './bibleRefsHelpers';
 
-export function BibleRefAIItemRendererComp({
+function BibleRefAIItemRendererBodyComp({
     bibleKey,
     bookKey,
     chapter,
@@ -45,7 +45,38 @@ export function BibleRefAIItemRendererComp({
     );
 }
 
-export default function BibleRefItemRendererComp({
+export function BibleRefAIItemRendererComp({
+    bibleKey,
+    bookKey,
+    chapter,
+    verse,
+    index,
+}: Readonly<{
+    bibleKey: string;
+    bookKey: string;
+    chapter: number;
+    verse: number;
+    index: number;
+}>) {
+    return (
+        <div className="card w-100 my-1">
+            <div className="card-header alert alert-secondary">
+                <h5 className="mb-0">AI Bible Reference</h5>
+            </div>
+            <div className="card-body">
+                <BibleRefAIItemRendererBodyComp
+                    bibleKey={bibleKey}
+                    bookKey={bookKey}
+                    chapter={chapter}
+                    verse={verse}
+                    index={index}
+                />
+            </div>
+        </div>
+    );
+}
+
+function BibleRefItemRendererBodyComp({
     bibleKey,
     bookKey,
     chapter,
@@ -84,6 +115,37 @@ export default function BibleRefItemRendererComp({
                     );
                 });
             })}
+        </div>
+    );
+}
+
+export default function BibleRefItemRendererComp({
+    bibleKey,
+    bookKey,
+    chapter,
+    verse,
+    index,
+}: Readonly<{
+    bibleKey: string;
+    bookKey: string;
+    chapter: number;
+    verse: number;
+    index: number;
+}>) {
+    return (
+        <div className="card w-100 my-1">
+            <div className="card-header alert alert-secondary">
+                <h5 className="mb-0">Bible Reference</h5>
+            </div>
+            <div className="card-body">
+                <BibleRefItemRendererBodyComp
+                    bibleKey={bibleKey}
+                    bookKey={bookKey}
+                    chapter={chapter}
+                    verse={verse}
+                    index={index}
+                />
+            </div>
         </div>
     );
 }

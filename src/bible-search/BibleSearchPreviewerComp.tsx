@@ -41,7 +41,7 @@ export default function BibleSearchPreviewerComp() {
             <div
                 className="card-header overflow-hidden p-0"
                 style={{
-                    height: '135px',
+                    height: '42px',
                 }}
             >
                 <TabRenderComp<TabKeyType>
