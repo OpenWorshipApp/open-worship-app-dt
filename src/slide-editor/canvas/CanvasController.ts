@@ -242,6 +242,18 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         );
     }
 
+    applyCanvasItemOriginal(canvasItem: CanvasItem<any>) {
+        const props = canvasItem.props as CanvasItemPropsType;
+        let width = props.width;
+        let height = props.height;
+        if (['image', 'video'].includes(canvasItem.type)) {
+            const mediaProps = props as any as CanvasItemMediaPropsType;
+            width = mediaProps.mediaWidth;
+            height = mediaProps.mediaHeight;
+        }
+        this.scaleCanvasItemToSize(canvasItem, width, width, width, height);
+    }
+
     applyCanvasItemMediaStrip(canvasItem: CanvasItem<any>) {
         if (!['image', 'video'].includes(canvasItem.type)) {
             return;

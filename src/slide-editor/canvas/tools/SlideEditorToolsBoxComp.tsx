@@ -15,15 +15,25 @@ function SizingComp() {
         <SlideEditorToolTitleComp title="Size">
             <button
                 className="btn btn-secondary"
+                title='Fit to canvas'
                 onClick={() => {
                     canvasController.applyCanvasItemFully(canvasItem);
                 }}
             >
                 Full
             </button>
+            <button
+                className="btn btn-secondary m-1"
+                title='Set to original size'
+                onClick={() => {
+                    canvasController.applyCanvasItemOriginal(canvasItem);
+                }}
+            >
+                Original Size
+            </button>
             {['image', 'video'].includes(canvasItem.type) ? (
                 <button
-                    className="btn btn-secondary ms-1"
+                    className="btn btn-secondary"
                     onClick={() => {
                         canvasController.applyCanvasItemMediaStrip(canvasItem);
                     }}
