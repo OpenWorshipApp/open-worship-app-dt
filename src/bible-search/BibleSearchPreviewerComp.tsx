@@ -56,7 +56,13 @@ export default function BibleSearchPreviewerComp() {
                     className="card-header"
                 />
             </div>
-            <div className="card-body">
+            <div
+                className="card-body px-1 app-inner-shadow"
+                style={{
+                    overflowY: 'auto',
+                    height: 'calc(100% - 42px)',
+                }}
+            >
                 {tabTypeList.map(([type, _, target]) => {
                     return genTabBody<TabKeyType>(tabKey, [type, target]);
                 })}

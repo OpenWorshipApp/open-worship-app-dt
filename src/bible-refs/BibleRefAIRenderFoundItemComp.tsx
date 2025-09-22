@@ -6,16 +6,14 @@ import {
 } from '../bible-search/bibleFindHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
 import { useAppPromise } from '../helper/helpers';
-import { BibleRefType, breakItem } from './bibleRefsHelpers';
+import { breakItem } from './bibleRefsHelpers';
 
-export default function BibleRefRenderFoundItemComp({
+export default function BibleRefAIRenderFoundItemComp({
     bibleKey,
     bibleVersesKey,
-    itemInfo,
 }: Readonly<{
     bibleKey: string;
     bibleVersesKey: string;
-    itemInfo: BibleRefType;
 }>) {
     const viewController = useLookupBibleItemControllerContext();
     const data = useAppPromise(breakItem(bibleKey, bibleVersesKey));
@@ -52,22 +50,6 @@ export default function BibleRefRenderFoundItemComp({
             }}
         >
             <BibleDirectViewTitleComp bibleItem={bibleItem} />
-            {/* TODO: update title */}
-            <span className="badge badge-success" title="isS">
-                {itemInfo.isS ? 'S ' : ''}
-            </span>
-            <span className="badge badge-success" title="isFN">
-                {itemInfo.isFN ? 'FN ' : ''}
-            </span>
-            <span className="badge badge-success" title="isStar">
-                {itemInfo.isStar ? '★ ' : ''}
-            </span>
-            <span className="badge badge-success" title="isTitle">
-                {itemInfo.isTitle ? 'T ' : ''}
-            </span>
-            <span className="badge badge-success" title="isLXXDSS">
-                {itemInfo.isLXXDSS ? 'LXXDSS ' : ''}
-            </span>
             <span
                 title={bibleText}
                 data-bible-key={bibleItem.bibleKey}

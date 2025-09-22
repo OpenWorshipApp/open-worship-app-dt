@@ -1,8 +1,9 @@
+import { Fragment } from 'react/jsx-runtime';
 import BibleItem from '../bible-list/BibleItem';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
-import BibleRefItemRendererComp, {
-    BibleRefAIItemRendererComp,
-} from './BibleRefItemRendererComp';
+import BibleRefAIItemRendererBodyComp from './BibleRefAIItemRendererBodyComp';
+import BibleRefItemRendererBodyComp from './BibleRefItemRendererBodyComp';
+import BibleRefWrapperComp from './BibleRefWrapperComp';
 
 export default function BibleRefRendererComp({
     bibleItem,
@@ -13,45 +14,58 @@ export default function BibleRefRendererComp({
 }>) {
     const { bookKey: book, chapter, verseStart } = bibleItem.target;
     // TODO: support multiple verses
-    const arr = [verseStart];
+    const verses = [verseStart];
     return (
-        <div className="w-100">
-            <div
-                className="alert alert-info p-1"
-                data-bible-key={bibleItem.bibleKey}
-            >
-                ({bibleItem.bibleKey}){' '}
-                <BibleViewTitleEditorComp
-                    bibleItem={bibleItem}
-                    // TODO: support multiple verses
-                    isOneVerse
-                    onTargetChange={(newBibleTarget) => {
-                        const newBibleItem = bibleItem.clone();
-                        newBibleItem.target = newBibleTarget;
-                        setBibleItem(newBibleItem);
-                    }}
-                />
-            </div>
-            {arr.map((verse, i) => {
+        <>
+            {verses.map((verse, i) => {
+                const cloneBibleItem = bibleItem.clone();
+                cloneBibleItem.target.verseStart = verse;
+                cloneBibleItem.target.verseEnd = verse;
                 return (
-                    <div key={verse}>
-                        <BibleRefItemRendererComp
-                            bibleKey={bibleItem.bibleKey}
-                            bookKey={book}
-                            chapter={chapter}
-                            verse={verse}
-                            index={i}
-                        />
-                        <BibleRefAIItemRendererComp
-                            bibleKey={bibleItem.bibleKey}
-                            bookKey={book}
-                            chapter={chapter}
-                            verse={verse}
-                            index={i}
-                        />
-                    </div>
+                    <Fragment key={verse}>
+                        <hr />
+                        <div
+                            className="alert alert-info m-1 p-1"
+                            data-bible-key={cloneBibleItem.bibleKey}
+                        >
+                            ({cloneBibleItem.bibleKey}){' '}
+                            <BibleViewTitleEditorComp
+                                bibleItem={cloneBibleItem}
+                                isOneVerse
+                                onTargetChange={(newBibleTarget) => {
+                                    cloneBibleItem.target = newBibleTarget;
+                                    setBibleItem(cloneBibleItem);
+                                }}
+                            />
+                        </div>
+                        <hr />
+                        <BibleRefWrapperComp
+                            title="Bible Reference"
+                            settingName="show-standard-bible-ref"
+                        >
+                            <BibleRefItemRendererBodyComp
+                                bibleKey={bibleItem.bibleKey}
+                                bookKey={book}
+                                chapter={chapter}
+                                verse={verse}
+                                index={i}
+                            />
+                        </BibleRefWrapperComp>
+                        <BibleRefWrapperComp
+                            title="AI Bible Reference"
+                            settingName="show-ai-bible-ref"
+                        >
+                            <BibleRefAIItemRendererBodyComp
+                                bibleKey={bibleItem.bibleKey}
+                                bookKey={book}
+                                chapter={chapter}
+                                verse={verse}
+                                index={i}
+                            />
+                        </BibleRefWrapperComp>
+                    </Fragment>
                 );
             })}
-        </div>
+        </>
     );
 }
