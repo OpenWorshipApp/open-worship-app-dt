@@ -407,10 +407,10 @@ export function bringDomToBottomView(dom: Element) {
     bringDomToView(dom, 'end');
 }
 
-export function checkIsVerticalPartialInvisible(
+function getVisibleDim(
     container: HTMLElement,
     target: HTMLElement,
-    threshold: number = 0,
+    threshold: number,
 ) {
     const containerRect = container.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
@@ -418,5 +418,37 @@ export function checkIsVerticalPartialInvisible(
     const containerBottom = containerRect.bottom - threshold;
     const targetTop = targetRect.top + threshold;
     const targetBottom = targetRect.bottom - threshold;
+    return {
+        targetTop,
+        containerTop,
+        targetBottom,
+        containerBottom,
+    };
+}
+
+export function checkIsVerticalPartialInvisible(
+    container: HTMLElement,
+    target: HTMLElement,
+    threshold: number = 0,
+) {
+    const { targetTop, containerTop, targetBottom, containerBottom } =
+        getVisibleDim(container, target, threshold);
+    // targetTop < containerTop
+    // or targetBottom > containerBottom
     return targetTop < containerTop || targetBottom > containerBottom;
+}
+
+export function checkIsVerticalPartialVisible(
+    container: HTMLElement,
+    target: HTMLElement,
+    threshold: number = 0,
+) {
+    const { targetTop, containerTop, targetBottom, containerBottom } =
+        getVisibleDim(container, target, threshold);
+    // containerTop <= targetTop < containerBottom
+    // or containerTop < targetBottom <= containerBottom
+    return (
+        (targetTop >= containerTop && targetTop < containerBottom) ||
+        (targetBottom > containerTop && targetBottom <= containerBottom)
+    );
 }

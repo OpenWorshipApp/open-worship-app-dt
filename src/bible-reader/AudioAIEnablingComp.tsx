@@ -1,10 +1,15 @@
 import BibleItem from '../bible-list/BibleItem';
+import { useAudioAISetting } from '../helper/aiHelpers';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 
 export function AudioAIEnablingComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
     const bibleItemViewController = useBibleItemsViewControllerContext();
+    const aiSetting = useAudioAISetting();
+    if (!aiSetting.openAIAPIKey) {
+        return null;
+    }
     return (
         <i
             className="bi bi-soundwave app-caught-hover-pointer"

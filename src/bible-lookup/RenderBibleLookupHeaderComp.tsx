@@ -5,7 +5,7 @@ import appProvider from '../server/appProvider';
 import { ModalCloseButton } from '../app-modal/ModalComp';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
-import { AudioAIComp } from '../bible-reader/AudioAIComp';
+import { AIConfigComp } from '../bible-reader/AIConfigComp';
 
 export default function RenderBibleLookupHeaderComp({
     isLookupOnline,
@@ -42,7 +42,7 @@ export default function RenderBibleLookupHeaderComp({
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
             </div>
             <div className="m-2">
-                <AudioAIComp />
+                <AIConfigComp />
             </div>
             <div
                 className={

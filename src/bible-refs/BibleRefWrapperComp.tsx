@@ -27,7 +27,7 @@ export default function BibleRefWrapperComp({
                 }}
             >
                 <i
-                    className={`bi bi-chevron-${isShowing ? 'right' : 'down'}`}
+                    className={`bi bi-chevron-${isShowing ? 'down' : 'right'}`}
                 />
                 {title}
             </div>

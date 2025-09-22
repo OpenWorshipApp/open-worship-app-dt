@@ -21,7 +21,7 @@ import LookupBibleItemController, {
 import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
-    checkIsVerticalPartialInvisible,
+    checkIsVerticalPartialVisible,
 } from '../helper/helpers';
 import {
     ContextMenuItemType,
@@ -38,16 +38,12 @@ function handMovedChecking(
     threshold: number,
 ) {
     let kjvVerseKey = null;
-    const currentElements = viewController.getVerseElements<HTMLElement>(
-        bibleItem.id,
-    );
-    for (const currentElement of Array.from(currentElements).reverse()) {
+    const currentElements = Array.from(
+        viewController.getVerseElements<HTMLElement>(bibleItem.id),
+    ).reverse();
+    for (const currentElement of currentElements) {
         if (
-            checkIsVerticalPartialInvisible(
-                container,
-                currentElement,
-                threshold,
-            )
+            checkIsVerticalPartialVisible(container, currentElement, threshold)
         ) {
             kjvVerseKey = currentElement.dataset.kjvVerseKey;
             break;

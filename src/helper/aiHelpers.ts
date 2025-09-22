@@ -16,7 +16,7 @@ import { getBibleInfo } from './bible-helpers/bibleInfoHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 
 import { useState } from 'react';
-import { useAppEffectAsync } from './debuggerHelpers';
+import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
 import { demonstrateAPI } from './anthropicBibleCrossHelpers';
 import { kjvBibleInfo } from './bible-helpers/serverBibleHelpers';
 
@@ -45,6 +45,9 @@ export function getAISetting(): OpenAISettingType {
         const data = JSON.parse(settingStr);
         data.openAIAPIKey = (data.openAIAPIKey ?? '').trim();
         data.anthropicAPIKey = (data.anthropicAPIKey ?? '').trim();
+        if (!data.openAIAPIKey) {
+            data.isAutoPlay = false;
+        }
         return data;
     } catch (_error) {
         return {
@@ -54,8 +57,25 @@ export function getAISetting(): OpenAISettingType {
         };
     }
 }
+const changingListener = new Set<() => void>();
 export function setAISetting(value: OpenAISettingType) {
     localStorage.setItem(AI_SETTING_NAME, JSON.stringify(value));
+    changingListener.forEach((listener) => {
+        listener();
+    });
+}
+export function useAudioAISetting() {
+    const [setting, setSetting] = useState<OpenAISettingType>(getAISetting());
+    useAppEffect(() => {
+        const listener = () => {
+            setSetting(getAISetting());
+        };
+        changingListener.add(listener);
+        return () => {
+            changingListener.delete(listener);
+        };
+    }, []);
+    return setting;
 }
 
 let openai: OpenAI | null = null;

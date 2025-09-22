@@ -283,16 +283,16 @@ function AudioPlayerComp({
     return (
         <audio
             className="verse-audio"
-            ref={(el) => {
+            ref={(element) => {
                 const openAISetting = getAISetting();
                 if (
                     openAISetting.isAutoPlay &&
-                    el !== null &&
-                    el.checkVisibility()
+                    element !== null &&
+                    element.checkVisibility()
                 ) {
-                    el.play();
-                    el.focus();
-                    onStart(el);
+                    element.play();
+                    element.focus();
+                    onStart(element);
                 }
             }}
             controls
@@ -402,7 +402,8 @@ function RenderVerseTextComp({
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
     const loadAudio = async () => {
-        if (!bibleItem.isAudioEnabled) {
+        const aiSetting = getAISetting();
+        if (!bibleItem.isAudioEnabled || !aiSetting.openAIAPIKey) {
             return;
         }
         const { bibleVersesKey } = verseInfo;
