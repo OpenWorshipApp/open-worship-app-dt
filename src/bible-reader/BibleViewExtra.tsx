@@ -44,6 +44,7 @@ import { bibleTextToSpeech, getAISetting } from '../helper/openAIHelpers';
 import FileSource from '../helper/FileSource';
 import LookupBibleItemController from './LookupBibleItemController';
 import { AudioAIEnablingComp } from './AudioAIEnablingComp';
+import appProvider from '../server/appProvider';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -286,6 +287,7 @@ function AudioPlayerComp({
             ref={(element) => {
                 const openAISetting = getAISetting();
                 if (
+                    appProvider.isPageReader &&
                     openAISetting.isAutoPlay &&
                     element !== null &&
                     element.checkVisibility()
@@ -332,7 +334,7 @@ function handleNextVersionSelection(
     nextKjvVerseKey: string,
 ) {
     const audioAISetting = getAISetting();
-    if (!audioAISetting.isAutoPlay) {
+    if (!audioAISetting.isAutoPlay || !appProvider.isPageReader) {
         return;
     }
     const parentElement = currentTarget.parentElement;
