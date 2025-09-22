@@ -35,6 +35,7 @@ export type OpenAISettingType = {
     anthropicAPIKey: string;
     isAutoPlay: boolean;
 };
+const DATA_DIR_NAME = 'openai-data';
 const AI_SETTING_NAME = 'open-ai-setting';
 export function getAISetting(): OpenAISettingType {
     const settingStr = localStorage.getItem(AI_SETTING_NAME) || '{}';
@@ -160,7 +161,7 @@ export async function bibleTextToSpeech({
         );
         return null;
     }
-    const baseDir = await ensureDataDirectory('openai-data');
+    const baseDir = await ensureDataDirectory(DATA_DIR_NAME);
     if (baseDir === null) {
         showSimpleToast(
             'Text to Speech',
@@ -305,7 +306,7 @@ async function getBibleRef(
     }
     const key = `${bookKey} ${chapter}:${verseNum}`;
     return unlocking(key, async () => {
-        const baseDir = await ensureDataDirectory('ai-data');
+        const baseDir = await ensureDataDirectory(DATA_DIR_NAME);
         if (baseDir === null) {
             showSimpleToast(
                 'Text to Speech',
