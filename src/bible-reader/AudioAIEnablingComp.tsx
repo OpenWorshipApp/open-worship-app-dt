@@ -1,12 +1,12 @@
 import BibleItem from '../bible-list/BibleItem';
-import { useAudioAISetting } from '../helper/openAIHelpers';
+import { useAISetting } from '../helper/openAIHelpers';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 
 export function AudioAIEnablingComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
     const bibleItemViewController = useBibleItemsViewControllerContext();
-    const aiSetting = useAudioAISetting();
+    const aiSetting = useAISetting();
     if (!aiSetting.openAIAPIKey) {
         return null;
     }

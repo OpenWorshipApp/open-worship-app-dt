@@ -5,6 +5,7 @@ import BibleRefOpenAIItemRendererBodyComp from './BibleRefOpenAIItemRendererBody
 import BibleRefItemRendererBodyComp from './BibleRefItemRendererBodyComp';
 import BibleRefWrapperComp from './BibleRefWrapperComp';
 import BibleRefAnthropicItemRendererBodyComp from './BibleRefAnthropicItemRendererBodyComp';
+import { useAISetting } from '../helper/openAIHelpers';
 
 export default function BibleRefRendererComp({
     bibleItem,
@@ -13,6 +14,7 @@ export default function BibleRefRendererComp({
     bibleItem: BibleItem;
     setBibleItem: (bibleItem: BibleItem) => void;
 }>) {
+    const aiSetting = useAISetting();
     const { bookKey: book, chapter, verseStart } = bibleItem.target;
     // TODO: support multiple verses
     const verses = [verseStart];
@@ -52,30 +54,34 @@ export default function BibleRefRendererComp({
                                 index={i}
                             />
                         </BibleRefWrapperComp>
-                        <BibleRefWrapperComp
-                            title="Anthropic Bible Reference"
-                            settingName="show-ai-bible-ref"
-                        >
-                            <BibleRefAnthropicItemRendererBodyComp
-                                bibleKey={bibleItem.bibleKey}
-                                bookKey={book}
-                                chapter={chapter}
-                                verse={verse}
-                                index={i}
-                            />
-                        </BibleRefWrapperComp>
-                        <BibleRefWrapperComp
-                            title="OpenAI Bible Reference"
-                            settingName="show-ai-bible-ref"
-                        >
-                            <BibleRefOpenAIItemRendererBodyComp
-                                bibleKey={bibleItem.bibleKey}
-                                bookKey={book}
-                                chapter={chapter}
-                                verse={verse}
-                                index={i}
-                            />
-                        </BibleRefWrapperComp>
+                        {aiSetting.anthropicAPIKey ? (
+                            <BibleRefWrapperComp
+                                title="Anthropic Bible Reference"
+                                settingName="show-ai-bible-ref"
+                            >
+                                <BibleRefAnthropicItemRendererBodyComp
+                                    bibleKey={bibleItem.bibleKey}
+                                    bookKey={book}
+                                    chapter={chapter}
+                                    verse={verse}
+                                    index={i}
+                                />
+                            </BibleRefWrapperComp>
+                        ) : null}
+                        {aiSetting.openAIAPIKey ? (
+                            <BibleRefWrapperComp
+                                title="OpenAI Bible Reference"
+                                settingName="show-ai-bible-ref"
+                            >
+                                <BibleRefOpenAIItemRendererBodyComp
+                                    bibleKey={bibleItem.bibleKey}
+                                    bookKey={book}
+                                    chapter={chapter}
+                                    verse={verse}
+                                    index={i}
+                                />
+                            </BibleRefWrapperComp>
+                        ) : null}
                     </Fragment>
                 );
             })}

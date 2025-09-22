@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { getAISetting, useAudioAISetting } from './openAIHelpers';
+import { getAISetting, useAISetting } from './openAIHelpers';
 import { useState } from 'react';
 import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -397,7 +397,7 @@ export function useGetBibleRefAnthropic(
     chapter: number,
     verseNum: number,
 ) {
-    const aiSetting = useAudioAISetting();
+    const aiSetting = useAISetting();
     useAppEffect(() => {
         instance = null;
     }, [aiSetting.anthropicAPIKey]);

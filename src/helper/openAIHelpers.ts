@@ -62,7 +62,7 @@ export function setAISetting(value: OpenAISettingType) {
         listener();
     });
 }
-export function useAudioAISetting() {
+export function useAISetting() {
     const [setting, setSetting] = useState<OpenAISettingType>(getAISetting());
     useAppEffect(() => {
         const listener = () => {
@@ -347,7 +347,7 @@ export function useGetBibleRefOpenAI(
     chapter: number,
     verseNum: number,
 ) {
-    const aiSetting = useAudioAISetting();
+    const aiSetting = useAISetting();
     useAppEffect(() => {
         openai = null;
     }, [aiSetting.openAIAPIKey]);

@@ -1,12 +1,12 @@
 import {
     getAISetting,
     setAISetting,
-    useAudioAISetting,
+    useAISetting,
 } from '../helper/openAIHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 
 function AISettingComp() {
-    const aiSetting = useAudioAISetting();
+    const aiSetting = useAISetting();
     return (
         <div className="ms-2">
             <i
@@ -83,7 +83,7 @@ function AISettingComp() {
 }
 
 function AudioAutoPlayComp() {
-    const aiSetting = useAudioAISetting();
+    const aiSetting = useAISetting();
     if (!aiSetting.openAIAPIKey) {
         return null;
     }
