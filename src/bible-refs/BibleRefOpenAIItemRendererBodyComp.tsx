@@ -1,8 +1,8 @@
 import LoadingComp from '../others/LoadingComp';
-import { useGetBibleRefAI } from '../helper/aiHelpers';
+import { useGetBibleRefOpenAI } from '../helper/openAIHelpers';
 import BibleRefAIRenderFoundItemComp from './BibleRefAIRenderFoundItemComp';
 
-export default function BibleRefAIItemRendererBodyComp({
+export default function BibleRefOpenAIItemRendererBodyComp({
     bibleKey,
     bookKey,
     chapter,
@@ -15,7 +15,7 @@ export default function BibleRefAIItemRendererBodyComp({
     verse: number;
     index: number;
 }>) {
-    const bibleRef = useGetBibleRefAI(bookKey, chapter, verse);
+    const bibleRef = useGetBibleRefOpenAI(bookKey, chapter, verse);
     if (bibleRef === undefined) {
         return <LoadingComp />;
     }

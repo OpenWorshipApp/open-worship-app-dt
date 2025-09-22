@@ -1,5 +1,20 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { getAISetting } from './aiHelpers';
+import { getAISetting, useAudioAISetting } from './openAIHelpers';
+import { useState } from 'react';
+import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
+import { unlocking } from '../server/unlockingHelpers';
+import { ensureDataDirectory } from '../setting/directory-setting/directoryHelpers';
+import {
+    fsCheckDirExist,
+    fsCheckFileExist,
+    fsMkDirSync,
+    fsReadFile,
+    fsWriteFile,
+    pathJoin,
+} from '../server/fileHelpers';
+import { getKJVKeyValue } from './bible-helpers/serverBibleHelpers';
+import { extractBibleTitle } from './bible-helpers/serverBibleHelpers2';
 
 const MODEL = 'claude-sonnet-4-20250514';
 
@@ -15,7 +30,8 @@ export class AnthropicBibleCrossReference {
     }
 
     generateSystemPrompt() {
-        return `You are a Biblical cross-reference assistant with deep knowledge of Protestant Christian theology and Biblical interpretation of King James Version (KJV). Your task is to provide comprehensive cross-references for any given Bible verse in JSON format.
+        return `
+You are a Biblical cross-reference assistant with deep knowledge of Protestant Christian theology and Biblical interpretation of King James Version (KJV). Your task is to provide comprehensive cross-references for any given Bible verse in JSON format.
 
 ## Instructions:
 1. Use the King James Version (KJV) of the Bible for all references.
@@ -61,7 +77,8 @@ Example format:
   }
 ]
 
-Respond ONLY with the JSON array, no additional text or explanation.`;
+Respond ONLY with the JSON array, no additional text or explanation.
+`.trim();
     }
 
     async generateCrossReferences(
@@ -219,11 +236,16 @@ Organize the cross-references around these themes and related concepts.`;
     }
 }
 
+export type CrossReferenceType = {
+    title: string;
+    verses: string[];
+};
+
 type ResultType =
     | {
           success: boolean;
           verse: string;
-          crossReferences: any;
+          crossReferences: CrossReferenceType[];
           rawResponse: any;
           error?: any;
           parseError?: any;
@@ -235,7 +257,7 @@ type ResultType =
           rawResponse: any;
           parseError: any;
           verse?: any;
-          crossReferences?: any;
+          crossReferences?: CrossReferenceType[];
           type?: any;
       }
     | {
@@ -243,7 +265,7 @@ type ResultType =
           error: any;
           type: any;
           verse?: any;
-          crossReferences?: any;
+          crossReferences?: CrossReferenceType[];
           rawResponse?: any;
           parseError?: any;
       };
@@ -261,7 +283,7 @@ export class BibleCrossReferenceAPI {
     }
 }
 
-export async function demonstrateAPI(verseReference: string) {
+async function _demonstrateAPI(verseReference: string) {
     const setting = getAISetting();
     const API_KEY = setting.anthropicAPIKey;
     if (!API_KEY) {
@@ -293,4 +315,127 @@ export async function demonstrateAPI(verseReference: string) {
     } catch (error) {
         console.error('Error:', error);
     }
+}
+
+let instance: BibleCrossReferenceAPI | null = null;
+function getAnthropicInstance() {
+    const { anthropicAPIKey } = getAISetting();
+    if (!anthropicAPIKey) {
+        showSimpleToast(
+            'Fail to get Anthropic instance',
+            'Missing Anthropic API Key.',
+        );
+        return null;
+    }
+    if (instance !== null) {
+        return instance;
+    }
+    instance = new BibleCrossReferenceAPI(anthropicAPIKey);
+    return instance;
+}
+
+function toBibleRefString(bookKey: string, chapter: number, verseNum: number) {
+    const kjvKeyValue = getKJVKeyValue();
+    const book = kjvKeyValue[bookKey];
+    if (book === undefined) {
+        return null;
+    }
+    return `${book} ${chapter}:${verseNum}`;
+}
+
+async function getBibleRef(
+    bookKey: string,
+    chapter: number,
+    verseNum: number,
+): Promise<CrossReferenceType[] | null> {
+    if (getAnthropicInstance() === null) {
+        return null;
+    }
+    const key = toBibleRefString(bookKey, chapter, verseNum);
+    if (key === null) {
+        return null;
+    }
+    return unlocking(key, async () => {
+        const baseDir = await ensureDataDirectory('anthropic-data');
+        if (baseDir === null) {
+            showSimpleToast(
+                'Text to Speech',
+                'Fail to ensure data directory for AI data.',
+            );
+            return null;
+        }
+        const containingDir = pathJoin(baseDir, 'bible-cross-refs');
+        if ((await fsCheckDirExist(containingDir)) === false) {
+            fsMkDirSync(containingDir);
+        }
+        const fileFullName = `${key}.json`;
+        const filePath = pathJoin(containingDir, fileFullName);
+        if (await fsCheckFileExist(filePath)) {
+            try {
+                const text = await fsReadFile(filePath);
+                const data = JSON.parse(text) as CrossReferenceType[];
+                return data;
+            } catch (error) {
+                console.error('Error reading cross reference file:', error);
+                return null;
+            }
+        }
+        const data = await getAnthropicInstance()!.getCrossReferences(key);
+        if (data === null || data.crossReferences === undefined) {
+            return null;
+        }
+        await fsWriteFile(
+            filePath,
+            JSON.stringify(data.crossReferences, null, 2),
+        );
+        return data.crossReferences;
+    });
+}
+
+export function useGetBibleRefAnthropic(
+    bookKey: string,
+    chapter: number,
+    verseNum: number,
+) {
+    const aiSetting = useAudioAISetting();
+    useAppEffect(() => {
+        instance = null;
+    }, [aiSetting.anthropicAPIKey]);
+    const [bibleRef, setBibleRef] = useState<
+        CrossReferenceType[] | null | undefined
+    >(undefined);
+    useAppEffectAsync(
+        async (methodContext) => {
+            const data = await getBibleRef(bookKey, chapter, verseNum);
+            if (data !== null) {
+                for (const crossRef of data) {
+                    const verses = await Promise.all(
+                        crossRef.verses.map(async (title) => {
+                            const extractedData = await extractBibleTitle(
+                                'KJV',
+                                title,
+                            );
+                            const { bibleItem } = extractedData.result;
+                            if (bibleItem === null) {
+                                return null;
+                            }
+                            const { target } = bibleItem;
+                            return `${target.bookKey} ${target.chapter}:${target.verseStart}${
+                                target.verseEnd !== target.verseStart
+                                    ? `-${target.verseEnd}`
+                                    : ''
+                            }`;
+                        }),
+                    );
+                    crossRef.verses = verses.filter((item) => {
+                        return item !== null;
+                    });
+                }
+            }
+            methodContext.setBibleRef(data);
+        },
+        [bookKey, chapter],
+        { setBibleRef },
+    );
+    return bibleRef;
 }

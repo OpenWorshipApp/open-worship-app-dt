@@ -1,5 +1,5 @@
 import BibleItem from '../bible-list/BibleItem';
-import { useAudioAISetting } from '../helper/aiHelpers';
+import { useAudioAISetting } from '../helper/openAIHelpers';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 
 export function AudioAIEnablingComp({

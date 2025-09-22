@@ -1,9 +1,10 @@
 import { Fragment } from 'react/jsx-runtime';
 import BibleItem from '../bible-list/BibleItem';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
-import BibleRefAIItemRendererBodyComp from './BibleRefAIItemRendererBodyComp';
+import BibleRefOpenAIItemRendererBodyComp from './BibleRefOpenAIItemRendererBodyComp';
 import BibleRefItemRendererBodyComp from './BibleRefItemRendererBodyComp';
 import BibleRefWrapperComp from './BibleRefWrapperComp';
+import BibleRefAnthropicItemRendererBodyComp from './BibleRefAnthropicItemRendererBodyComp';
 
 export default function BibleRefRendererComp({
     bibleItem,
@@ -52,10 +53,22 @@ export default function BibleRefRendererComp({
                             />
                         </BibleRefWrapperComp>
                         <BibleRefWrapperComp
-                            title="AI Bible Reference"
+                            title="Anthropic Bible Reference"
                             settingName="show-ai-bible-ref"
                         >
-                            <BibleRefAIItemRendererBodyComp
+                            <BibleRefAnthropicItemRendererBodyComp
+                                bibleKey={bibleItem.bibleKey}
+                                bookKey={book}
+                                chapter={chapter}
+                                verse={verse}
+                                index={i}
+                            />
+                        </BibleRefWrapperComp>
+                        <BibleRefWrapperComp
+                            title="OpenAI Bible Reference"
+                            settingName="show-ai-bible-ref"
+                        >
+                            <BibleRefOpenAIItemRendererBodyComp
                                 bibleKey={bibleItem.bibleKey}
                                 bookKey={book}
                                 chapter={chapter}

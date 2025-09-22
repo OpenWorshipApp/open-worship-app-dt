@@ -2,7 +2,7 @@ import {
     getAISetting,
     setAISetting,
     useAudioAISetting,
-} from '../helper/aiHelpers';
+} from '../helper/openAIHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 
 function AISettingComp() {

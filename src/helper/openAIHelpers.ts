@@ -17,10 +17,7 @@ import { unlocking } from '../server/unlockingHelpers';
 
 import { useState } from 'react';
 import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
-import { demonstrateAPI } from './anthropicBibleCrossHelpers';
 import { kjvBibleInfo } from './bible-helpers/serverBibleHelpers';
-
-(window as any).demonstrateAPI = demonstrateAPI;
 
 export type BibleTextDataType = {
     text: string;
@@ -163,7 +160,7 @@ export async function bibleTextToSpeech({
         );
         return null;
     }
-    const baseDir = await ensureDataDirectory('ai-data');
+    const baseDir = await ensureDataDirectory('openai-data');
     if (baseDir === null) {
         showSimpleToast(
             'Text to Speech',
@@ -298,7 +295,7 @@ export async function getCrossRefs(
     }
 }
 
-async function getBibleRefAI(
+async function getBibleRef(
     bookKey: string,
     chapter: number,
     verseNum: number,
@@ -344,17 +341,21 @@ async function getBibleRefAI(
     });
 }
 
-export function useGetBibleRefAI(
+export function useGetBibleRefOpenAI(
     bookKey: string,
     chapter: number,
     verseNum: number,
 ) {
+    const aiSetting = useAudioAISetting();
+    useAppEffect(() => {
+        openai = null;
+    }, [aiSetting.openAIAPIKey]);
     const [bibleRef, setBibleRef] = useState<string[] | null | undefined>(
         undefined,
     );
     useAppEffectAsync(
         async (methodContext) => {
-            const data = await getBibleRefAI(bookKey, chapter, verseNum);
+            const data = await getBibleRef(bookKey, chapter, verseNum);
             methodContext.setBibleRef(data);
         },
         [bookKey, chapter],
@@ -362,5 +363,3 @@ export function useGetBibleRefAI(
     );
     return bibleRef;
 }
-
-(window as any).getCrossRefs = getCrossRefs;
