@@ -18,7 +18,7 @@ export default function BibleRefWrapperComp({
             }}
         >
             <div
-                className="card-header p-1 app-caught-hover-pointer"
+                className="card-header app-ellipsis p-1 app-caught-hover-pointer"
                 style={{
                     height: '2rem',
                 }}
