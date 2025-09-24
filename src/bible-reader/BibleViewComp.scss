@@ -4,6 +4,11 @@
   min-width: 200px;
 
   .card-header {
+    .bible-extra-key:hover {
+      text-decoration: underline;
+      color: red;
+    }
+
     .btn-close {
       margin: 5px;
     }

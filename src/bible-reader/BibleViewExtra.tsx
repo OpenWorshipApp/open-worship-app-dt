@@ -115,7 +115,8 @@ export function RenderTitleMaterialComp({
                     </div>
                     {bibleItem.extraBibleKeys.map((extraBibleKey) => (
                         <span
-                            className="bg-primary small app-caught-hover-pointer"
+                            className="bible-extra-key bg-primary small app-caught-hover-pointer"
+                            title={`Click to remove extra Bible ${extraBibleKey}`}
                             data-bible-key={extraBibleKey}
                             key={extraBibleKey}
                             style={{
