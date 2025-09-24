@@ -426,8 +426,6 @@ export default class BibleFindController {
     async handleKeyUp(event: any) {
         const inputKey = event.key;
         const newValue = this.input?.value ?? '';
-        console.log(newValue);
-
         if (this._oldInputText && this._oldInputText === newValue) {
             return;
         }

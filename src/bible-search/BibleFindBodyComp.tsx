@@ -62,9 +62,10 @@ export default function BibleFindBodyComp({
     return (
         <div className="card app-overflow-hidden w-100 h-100">
             <div
-                className="card-header input-group app-overflow-hidden"
+                className="card-header input-group app-overflow-hidden p-0"
                 style={{
-                    minHeight: '54px',
+                    height: '35px',
+                    minWidth: '200px',
                 }}
             >
                 <BibleSelectionComp

@@ -175,8 +175,11 @@ export default function BibleFindRenderDataComp({
         findFor(findForData.fromLineNumber, findForData.toLineNumber);
     };
     return (
-        <>
-            <div className="card-body w-100" style={{ height: 'inherit' }}>
+        <div
+            className="card card-body w-100 overflow-hidden"
+            style={{ height: 'calc(100% - 35px)' }}
+        >
+            <div className="card-body px-1">
                 <div className="d-flex w-100">
                     <div className="flex-fill">
                         {text ? <span>{`Result for :"${text}"`}</span> : null}
@@ -223,6 +226,6 @@ export default function BibleFindRenderDataComp({
                 allPageNumberFound={allPageNumberFound}
                 findFor={findFor1}
             />
-        </>
+        </div>
     );
 }
