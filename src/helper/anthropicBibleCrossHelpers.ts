@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { getAISetting, useAISetting } from './openAIHelpers';
+import { getAISetting, useAISetting } from './aiHelpers';
 import { useState } from 'react';
 import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';

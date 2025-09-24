@@ -46,7 +46,7 @@ import {
     checkIsAIAudioAvailableForBible,
     getAISetting,
     useIsAudioAIEnabled,
-} from '../helper/openAIHelpers';
+} from '../helper/aiHelpers';
 import FileSource from '../helper/FileSource';
 import LookupBibleItemController from './LookupBibleItemController';
 import { AudioAIEnablingComp } from './AudioAIEnablingComp';

@@ -5,7 +5,7 @@ import BibleRefOpenAIItemRendererBodyComp from './BibleRefOpenAIItemRendererBody
 import BibleRefItemRendererBodyComp from './BibleRefItemRendererBodyComp';
 import BibleRefWrapperComp from './BibleRefWrapperComp';
 import BibleRefAnthropicItemRendererBodyComp from './BibleRefAnthropicItemRendererBodyComp';
-import { useAISetting } from '../helper/openAIHelpers';
+import { useAISetting } from '../helper/aiHelpers';
 
 export default function BibleRefRendererComp({
     bibleItem,

@@ -2,7 +2,7 @@ import {
     getAISetting,
     setAISetting,
     useAISetting,
-} from '../helper/openAIHelpers';
+} from '../helper/aiHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 
 function AISettingComp() {

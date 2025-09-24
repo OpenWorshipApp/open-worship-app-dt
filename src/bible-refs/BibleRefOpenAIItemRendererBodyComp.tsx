@@ -1,5 +1,5 @@
 import LoadingComp from '../others/LoadingComp';
-import { useGetBibleRefOpenAI } from '../helper/openAIHelpers';
+import { useGetBibleRefOpenAI } from '../helper/aiHelpers';
 import BibleRefAIRenderFoundItemComp from './BibleRefAIRenderFoundItemComp';
 
 export default function BibleRefOpenAIItemRendererBodyComp({
