@@ -283,7 +283,7 @@ export class BibleCrossReferenceAPI {
     }
 }
 
-async function _demonstrateAPI(verseReference: string) {
+export async function demonstrateAPI(verseReference: string) {
     const setting = getAISetting();
     const API_KEY = setting.anthropicAPIKey;
     if (!API_KEY) {

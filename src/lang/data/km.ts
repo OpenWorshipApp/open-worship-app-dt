@@ -241,6 +241,7 @@ const lang: LanguageDataType = {
             },
         ];
     },
+    bibleAudioAvailable: false,
 };
 
 export default lang;

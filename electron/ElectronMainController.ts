@@ -103,4 +103,8 @@ export default class ElectronMainController {
         }
         return instance;
     }
+
+    gotoSettingHomePage() {
+        this.win.webContents.executeJavaScript('gotoSettingPage();');
+    }
 }

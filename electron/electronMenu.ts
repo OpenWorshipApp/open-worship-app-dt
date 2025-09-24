@@ -23,13 +23,19 @@ export function initMenu(appController: ElectronAppController) {
                   {
                       label: app.name,
                       submenu: [
-                          //   { role: 'about' },
                           {
                               label: `About ${appInfo.title}`,
                               click: () => {
                                   appController.aboutController.open(
                                       appController.mainWin,
                                   );
+                              },
+                          },
+                          { type: 'separator' },
+                          {
+                              label: 'Preferences...',
+                              click: () => {
+                                  appController.mainController.gotoSettingHomePage();
                               },
                           },
                           { type: 'separator' },
@@ -86,6 +92,14 @@ export function initMenu(appController: ElectronAppController) {
                           { role: 'delete' },
                           { type: 'separator' },
                           { role: 'selectAll' },
+                          { type: 'separator' },
+                          {
+                              label: 'Settings...',
+                              click: () => {
+                                  appController.mainController.gotoSettingHomePage();
+                              },
+                          },
+                          { type: 'separator' },
                       ]),
             ],
         },

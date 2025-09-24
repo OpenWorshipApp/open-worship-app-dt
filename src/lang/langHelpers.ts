@@ -272,6 +272,7 @@ export type LanguageDataType = {
         bibleItem: AnyObjectType,
         appProvider: AppProviderType,
     ) => any[];
+    bibleAudioAvailable: boolean;
 };
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';

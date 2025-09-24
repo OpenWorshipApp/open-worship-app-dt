@@ -16,8 +16,14 @@ import { getBibleInfo } from './bible-helpers/bibleInfoHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 
 import { useState } from 'react';
-import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
+import {
+    useAppEffect,
+    useAppEffectAsync,
+    useAppStateAsync,
+} from './debuggerHelpers';
 import { kjvBibleInfo } from './bible-helpers/serverBibleHelpers';
+import BibleItem from '../bible-list/BibleItem';
+import { getLangFromBibleKey } from './bible-helpers/serverBibleHelpers2';
 
 export type BibleTextDataType = {
     text: string;
@@ -363,4 +369,41 @@ export function useGetBibleRefOpenAI(
         { setBibleRef },
     );
     return bibleRef;
+}
+
+export async function checkIsAIAudioAvailableForBible(bibleItem: BibleItem) {
+    const aiSetting = getAISetting();
+    if (!aiSetting.openAIAPIKey) {
+        return false;
+    }
+    const langData = await getLangFromBibleKey(bibleItem.bibleKey);
+    if (langData === null || !langData.bibleAudioAvailable) {
+        return false;
+    }
+    return bibleItem.isAudioEnabled;
+}
+
+export function useIsAudioAIEnabled(bibleItem: BibleItem) {
+    const [isAvailable] = useAppStateAsync(async () => {
+        const langData = await getLangFromBibleKey(bibleItem.bibleKey);
+        if (langData === null || !langData.bibleAudioAvailable) {
+            return false;
+        }
+        return true;
+    }, [bibleItem.bibleKey]);
+    const aiSetting = useAISetting();
+    const [isAudioEnabled, setIsAudioEnabled] = useState<boolean>(false);
+    useAppEffectAsync(
+        async (methodContext) => {
+            const isAudioEnabled =
+                await checkIsAIAudioAvailableForBible(bibleItem);
+            methodContext.setIsAudioEnabled(isAudioEnabled);
+        },
+        [bibleItem.isAudioEnabled, bibleItem.bibleKey],
+        { setIsAudioEnabled },
+    );
+    return {
+        isAvailable: aiSetting.openAIAPIKey && isAvailable,
+        isAudioEnabled,
+    };
 }

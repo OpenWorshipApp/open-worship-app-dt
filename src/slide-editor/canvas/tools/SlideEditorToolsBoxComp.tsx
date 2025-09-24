@@ -15,7 +15,7 @@ function SizingComp() {
         <SlideEditorToolTitleComp title="Size">
             <button
                 className="btn btn-secondary"
-                title='Fit to canvas'
+                title="Fit to canvas"
                 onClick={() => {
                     canvasController.applyCanvasItemFully(canvasItem);
                 }}
@@ -24,7 +24,7 @@ function SizingComp() {
             </button>
             <button
                 className="btn btn-secondary m-1"
-                title='Set to original size'
+                title="Set to original size"
                 onClick={() => {
                     canvasController.applyCanvasItemOriginal(canvasItem);
                 }}

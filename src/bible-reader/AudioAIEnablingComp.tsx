@@ -1,24 +1,29 @@
 import BibleItem from '../bible-list/BibleItem';
-import { useAISetting } from '../helper/openAIHelpers';
+import {
+    checkIsAIAudioAvailableForBible,
+    useIsAudioAIEnabled,
+} from '../helper/openAIHelpers';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 
 export function AudioAIEnablingComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
+    const { isAudioEnabled, isAvailable } = useIsAudioAIEnabled(bibleItem);
     const bibleItemViewController = useBibleItemsViewControllerContext();
-    const aiSetting = useAISetting();
-    if (!aiSetting.openAIAPIKey) {
+    if (!isAvailable) {
         return null;
     }
     return (
         <i
             className="bi bi-soundwave app-caught-hover-pointer"
             style={{
-                color: bibleItem.isAudioEnabled ? 'green' : '',
+                color: isAudioEnabled ? 'green' : '',
             }}
             onClick={async () => {
+                const isAudioEnabled =
+                    await checkIsAIAudioAvailableForBible(bibleItem);
                 bibleItemViewController.applyTargetOrBibleKey(bibleItem, {
-                    isAudioEnabled: !bibleItem.isAudioEnabled,
+                    isAudioEnabled: !isAudioEnabled,
                 });
             }}
         />

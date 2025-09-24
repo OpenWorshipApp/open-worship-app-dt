@@ -9,10 +9,9 @@ import {
     getKJVKeyValue,
 } from '../helper/bible-helpers/serverBibleHelpers';
 import {
-    getBibleLocale,
+    getLangFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
-import { getLangAsync } from '../lang/langHelpers';
 import CacheManager from '../others/CacheManager';
 import { unlocking } from '../server/unlockingHelpers';
 
@@ -119,8 +118,7 @@ class BibleRenderHelper {
             if (!verses) {
                 return null;
             }
-            const locale = await getBibleLocale(bibleKey);
-            const langData = await getLangAsync(locale);
+            const langData = await getLangFromBibleKey(bibleKey);
             const compiledVersesList: CompiledVerseType[] = [];
             for (let i = verseStart; i <= verseEnd; i++) {
                 const localNum = await toLocaleNumBible(bibleKey, i);

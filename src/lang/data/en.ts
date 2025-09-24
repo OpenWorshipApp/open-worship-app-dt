@@ -46,6 +46,7 @@ const lang: LanguageDataType = {
     extraBibleContextMenuItems: (_bibleItem, _appProvider) => {
         return [];
     },
+    bibleAudioAvailable: true,
 };
 
 export default lang;

@@ -20,8 +20,7 @@ import {
     BIBLE_VIEW_TEXT_CLASS,
     VERSE_TEXT_CLASS,
 } from '../helper/bibleViewHelpers';
-import { getLangAsync } from '../lang/langHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
+import { getLangFromBibleKey } from '../helper/bible-helpers/serverBibleHelpers2';
 import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import {
     elementDivider,
@@ -630,8 +629,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         bibleItem: ReadIdOnlyBibleItem,
         uuid: string,
     ): Promise<ContextMenuItemType[]> {
-        const locale = await getBibleLocale(bibleItem.bibleKey);
-        const langData = await getLangAsync(locale);
+        const langData = await getLangFromBibleKey(bibleItem.bibleKey);
         return [
             {
                 menuElement: elementDivider,
