@@ -17,6 +17,7 @@ import BibleFindRenderPerPageComp, {
 } from './BibleFindRenderPerPageComp';
 import { useBibleFindController } from './BibleFindController';
 import { bringDomToBottomView, bringDomToTopView } from '../helper/helpers';
+import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 
 async function selectBookKey(
     event: any,
@@ -89,7 +90,7 @@ function RenderPageNumberComp({
     );
 }
 
-function ShowFindComp() {
+function ShowFindingComp() {
     return (
         <div
             className="d-flex justify-content-center"
@@ -120,11 +121,12 @@ function RenderFooterComp({
     }
     return (
         <div
-            className="card-footer p-0"
+            className="p-0"
             style={{
                 minHeight: 60,
                 maxHeight: 200,
                 overflowY: 'auto',
+                borderTop: '2px solid var(--bs-border-color)',
             }}
         >
             <nav>
@@ -143,6 +145,51 @@ function RenderFooterComp({
                     })}
                 </ul>
             </nav>
+            <ScrollingHandlerComp />
+        </div>
+    );
+}
+
+function RenderFindingInfoHeaderComp({
+    text,
+    bibleKey,
+    selectedBook,
+    setSelectedBook,
+}: Readonly<{
+    text: string;
+    bibleKey: string;
+    selectedBook: SelectedBookKeyType;
+    setSelectedBook: (_: SelectedBookKeyType) => void;
+}>) {
+    return (
+        <div className="d-flex w-100">
+            <div className="flex-fill">
+                {text ? (
+                    <>
+                        `Result for:"
+                        <span data-bible-key={bibleKey}>{text}</span>"
+                    </>
+                ) : null}
+            </div>
+            <div>
+                <button
+                    className="btn btn-sm btn-info"
+                    onClick={(event) => {
+                        selectBookKey(
+                            event,
+                            bibleKey,
+                            selectedBook,
+                            setSelectedBook,
+                        );
+                    }}
+                >
+                    <span data-bible-key={bibleKey}>
+                        {selectedBook === null
+                            ? 'All Books'
+                            : selectedBook.book}
+                    </span>
+                </button>
+            </div>
         </div>
     );
 }
@@ -174,52 +221,43 @@ export default function BibleFindRenderDataComp({
         const findForData = pageNumberToReqData(pagingData, pageNumber);
         findFor(findForData.fromLineNumber, findForData.toLineNumber);
     };
+    const { bibleKey } = bibleFindController;
     return (
         <div
-            className="card card-body w-100 overflow-hidden"
+            className="card card-body w-100 overflow-hidden d-flex flex-column"
             style={{ height: 'calc(100% - 35px)' }}
         >
-            <div className="card-body px-1">
-                <div className="d-flex w-100">
-                    <div className="flex-fill">
-                        {text ? <span>{`Result for :"${text}"`}</span> : null}
-                    </div>
-                    <div>
-                        <button
-                            className="btn btn-sm btn-info"
-                            onClick={(event) => {
-                                selectBookKey(
-                                    event,
-                                    bibleFindController.bibleKey,
-                                    selectedBook,
-                                    setSelectedBook,
-                                );
-                            }}
-                        >
-                            <span data-bible-key={bibleFindController.bibleKey}>
-                                {selectedBook === null
-                                    ? 'All Books'
-                                    : selectedBook.book}
-                            </span>
-                        </button>
-                    </div>
+            <div
+                className="w-100 flex-fill overflow-hidden"
+                style={{
+                    position: 'relative',
+                }}
+            >
+                <div className="w-100 h-100 px-1" style={{ overflowY: 'auto' }}>
+                    <RenderFindingInfoHeaderComp
+                        text={text}
+                        bibleKey={bibleKey}
+                        selectedBook={selectedBook}
+                        setSelectedBook={setSelectedBook}
+                    />
+                    {isFinding ? <ShowFindingComp /> : null}
+                    {allPageNumberFound.map((pageNumber) => {
+                        if (!pagingData.pages.includes(pageNumber)) {
+                            return null;
+                        }
+                        const data = allData[pageNumber];
+                        return (
+                            <BibleFindRenderPerPageComp
+                                key={pageNumber}
+                                findText={text}
+                                items={data.content}
+                                pageNumber={pageNumber}
+                                bibleKey={bibleFindController.bibleKey}
+                            />
+                        );
+                    })}
+                    <ScrollingHandlerComp />
                 </div>
-                {allPageNumberFound.map((pageNumber) => {
-                    if (!pagingData.pages.includes(pageNumber)) {
-                        return null;
-                    }
-                    const data = allData[pageNumber];
-                    return (
-                        <BibleFindRenderPerPageComp
-                            key={pageNumber}
-                            findText={text}
-                            items={data.content}
-                            pageNumber={pageNumber}
-                            bibleKey={bibleFindController.bibleKey}
-                        />
-                    );
-                })}
-                {isFinding ? <ShowFindComp /> : null}
             </div>
             <RenderFooterComp
                 pages={pagingData.pages}

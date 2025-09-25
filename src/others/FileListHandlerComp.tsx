@@ -208,7 +208,7 @@ export default function FileListHandlerComp({
                             />
                         </ul>
                     )}
-                    <ScrollingHandlerComp shouldSnowPlayToBottom={false} />
+                    <ScrollingHandlerComp shouldShowPlayToBottom={false} />
                 </div>
             </div>
         </DirSourceContext>

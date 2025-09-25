@@ -167,7 +167,7 @@ export default function BibleViewComp({
                 )}
                 <ScrollingHandlerComp
                     style={{ bottom: '60px' }}
-                    shouldSnowPlayToBottom
+                    shouldShowPlayToBottom
                     movedCheck={{
                         check: (container: HTMLElement) => {
                             handMovedChecking(

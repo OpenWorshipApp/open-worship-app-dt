@@ -174,6 +174,7 @@ export default function BibleLookupInputHistoryComp({
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 minWidth: '150px',
+                paddingTop: '2px',
             }}
         >
             {historyTextList.map((historyText) => {
