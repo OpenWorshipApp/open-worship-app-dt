@@ -4,7 +4,6 @@ import { lazy, useState } from 'react';
 
 import DirSource from '../helper/DirSource';
 import AppSuspenseComp from './AppSuspenseComp';
-import { PathPreviewerComp } from './PathPreviewerComp';
 import {
     ContextMenuItemType,
     showAppContextMenu,
@@ -13,6 +12,7 @@ import { menuTitleRevealFile } from '../helper/helpers';
 import { copyToClipboard, showExplorer } from '../server/appHelpers';
 import appProvider from '../server/appProvider';
 import { goToGeneralSetting } from '../setting/settingHelpers';
+import RenderPathTitleComp from './RenderPathTitleComp';
 
 const LazyPathEditorComp = lazy(() => {
     return import('./PathEditorComp');
@@ -95,44 +95,5 @@ export default function PathSelectorComp({
                 </AppSuspenseComp>
             )}
         </div>
-    );
-}
-
-function RenderPathTitleComp({
-    dirSource,
-    addItems,
-}: Readonly<{
-    dirSource: DirSource;
-    addItems?: (event: any) => void;
-}>) {
-    if (!dirSource.dirPath) {
-        return null;
-    }
-    return (
-        <>
-            <PathPreviewerComp dirPath={dirSource.dirPath} />
-            <div
-                className="ps-2"
-                title="Reload"
-                onClick={(event) => {
-                    event.stopPropagation();
-                    dirSource.fireReloadEvent();
-                }}
-            >
-                <i className="bi bi-arrow-clockwise" />
-            </div>
-            {addItems !== undefined ? (
-                <div
-                    className="app-add-items-button px-1"
-                    title="Add items"
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        addItems(event);
-                    }}
-                >
-                    <i className="bi bi-plus-lg" />
-                </div>
-            ) : null}
-        </>
     );
 }

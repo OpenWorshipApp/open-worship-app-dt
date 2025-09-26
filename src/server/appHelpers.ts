@@ -305,15 +305,6 @@ async function getPageTitle(url: string) {
     return null;
 }
 
-function cleanupURL(url: string) {
-    const newURL = new URL(url);
-    const queryParams = newURL.searchParams;
-    if (queryParams.has('list')) {
-        queryParams.delete('list');
-    }
-    return newURL.toString();
-}
-
 export function downloadImage(targetUrl: string, outputDir: string) {
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
@@ -362,7 +353,7 @@ export function downloadVideoOrAudio(
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
             (async () => {
-                const videoOrAudioUrl = cleanupURL(targetUrl);
+                const videoOrAudioUrl = targetUrl.trim();
                 const resolvedSuccess = (resolvedFilePath: string) => {
                     const fileSource = FileSource.getInstance(resolvedFilePath);
                     resolve({
@@ -381,6 +372,7 @@ export function downloadVideoOrAudio(
                 args.push(
                     '--ffmpeg-location',
                     ffmpegPath ?? appProvider.ytUtils.ffmpegBinPath,
+                    '--no-playlist',
                 );
                 if (!isVideo) {
                     args.push(

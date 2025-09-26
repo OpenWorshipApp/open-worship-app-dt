@@ -1,7 +1,11 @@
 import { app, Menu, shell } from 'electron';
 
 import ElectronAppController from './ElectronAppController';
-import { goDownload, toShortcutKey } from './electronHelpers';
+import {
+    copyDebugInfoToClipboard,
+    goDownload,
+    toShortcutKey,
+} from './electronHelpers';
 
 import packageInfo from '../package.json';
 import appInfo from './client/appInfo';
@@ -118,6 +122,37 @@ export function initMenu(appController: ElectronAppController) {
                 { role: 'togglefullscreen' },
             ],
         },
+        {
+            label: 'Tools',
+            submenu: [
+                {
+                    label: 'Open DevTools',
+                    click: () => {
+                        appController.mainWin.webContents.openDevTools();
+                    },
+                },
+                {
+                    label: 'Copy Debug Info',
+                    click: () => {
+                        copyDebugInfoToClipboard();
+                    },
+                },
+                {
+                    label: 'Copy Full Debug Info',
+                    click: () => {
+                        copyDebugInfoToClipboard(true);
+                    },
+                },
+                {
+                    label: 'Local Web Share',
+                    click: () => {
+                        appController.lwShareController.open(
+                            appController.mainWin,
+                        );
+                    },
+                },
+            ],
+        },
         // { role: 'windowMenu' }
         {
             label: 'Window',
@@ -157,7 +192,18 @@ export function initMenu(appController: ElectronAppController) {
                         goDownload();
                     },
                 },
-                ...(isMac ? [] : [{ role: 'about' }]),
+                ...(isMac
+                    ? []
+                    : [
+                          {
+                              role: 'about',
+                              click: () => {
+                                  appController.aboutController.open(
+                                      appController.mainWin,
+                                  );
+                              },
+                          },
+                      ]),
             ],
         },
     ];

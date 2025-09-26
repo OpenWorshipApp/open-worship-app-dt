@@ -16,11 +16,11 @@ function RenderVerseComp() {
         </div>
     );
 }
+const handleForkingOnGithub = () => {
+    appProvider.browserUtils.openExternalURL(GITHUB_URL);
+};
 // need width: '700px', height: '410px'
 export default function AboutComp() {
-    const handleForkingOnGithub = () => {
-        appProvider.browserUtils.openExternalURL(GITHUB_URL);
-    };
     return (
         <div
             id="app"

@@ -9,7 +9,7 @@
     "main": "./electron-build/electron/index.js",
     "scripts": {
         "dev": "concurrently -k \"npm run vite:dev\" \"npm run electron:build && npm run electron\"",
-        "electron:build": "node extra-work/rmdir.mjs electron-build && tsc -p electron.tsconfig.json && node extra-work/copy-build.mjs",
+        "electron:build": "node extra-work/rmdir.mjs electron-build && tsc -p electron.tsconfig.json && node extra-work/copy-build.mjs && node extra-work/build-info.mjs",
         "electron:build:watch": "tsc -p electron.tsconfig.json -w",
         "electron": "cross-env NODE_ENV=development electron .",
         "electron:watch": "nodemon --exec \"npm run electron\" --watch electron-build",
@@ -147,6 +147,7 @@
     "dependencies": {
         "font-list": "^1.5.1",
         "libreoffice-convert": "^1.6.1",
+        "lw-share": "^0.0.7",
         "mupdf": "^1.26.2",
         "tar": "^7.4.3",
         "yt-dlp-wrap": "^2.3.12"

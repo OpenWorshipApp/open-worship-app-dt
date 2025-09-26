@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 
-import FinderAppComp from './_find/FinderAppComp';
+import FinderAppComp from './find/FinderAppComp';
 import appProvider from './server/appProvider';
 import { getReactRoot } from './initHelpers';
 

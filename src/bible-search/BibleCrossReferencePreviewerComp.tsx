@@ -5,7 +5,7 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 
-export default function BibleCrossReferentPreviewerComp() {
+export default function BibleCrossReferencePreviewerComp() {
     const viewController = useLookupBibleItemControllerContext();
     const [bileItem, setBileItem] = useState<BibleItem | null>(null);
     useAppEffect(() => {

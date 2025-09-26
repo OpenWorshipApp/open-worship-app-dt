@@ -9,6 +9,7 @@ export const htmlFiles = {
     reader: 'reader.html',
     setting: 'setting.html',
     finder: 'finder.html',
+    lwShare: 'lwShare.html',
     about: 'about.html',
     experiment: 'experiment.html',
 };

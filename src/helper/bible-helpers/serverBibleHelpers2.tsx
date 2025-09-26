@@ -55,7 +55,8 @@ export async function getBibleLocale(bibleKey: string) {
 
 export async function getLangFromBibleKey(bibleKey: string) {
     const locale = await getBibleLocale(bibleKey);
-    const langData = await getLangAsync(locale) || (await getLangAsync('en-US'));
+    const langData =
+        (await getLangAsync(locale)) || (await getLangAsync('en-US'));
     return langData;
 }
 

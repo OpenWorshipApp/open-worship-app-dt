@@ -8,15 +8,16 @@ import {
     getCenterScreenPosition,
     isSecured,
 } from './electronHelpers';
+import { join } from 'node:path';
 
-const routeProps = genRoutProps(htmlFiles.about);
-export default class ElectronAboutController {
+const routeProps = genRoutProps(htmlFiles.lwShare);
+export default class ElectronLWShareController {
     win: BrowserWindow | null = null;
     mainWin: BrowserWindow | null = null;
     createWindow(mainWin: BrowserWindow) {
         const { x, y, width, height } = getCenterScreenPosition(mainWin, {
-            width: 700,
-            height: 435,
+            width: 550,
+            height: 600,
         });
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
@@ -28,7 +29,7 @@ export default class ElectronAboutController {
                 webSecurity: isSecured,
                 nodeIntegration: true,
                 contextIsolation: false,
-                preload: routeProps.preloadFilePath,
+                preload: join(__dirname, 'client', 'lwShare.preload.js'),
             },
             parent: mainWin,
             autoHideMenuBar: true,
