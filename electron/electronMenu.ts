@@ -126,12 +126,6 @@ export function initMenu(appController: ElectronAppController) {
             label: 'Tools',
             submenu: [
                 {
-                    label: 'Open DevTools',
-                    click: () => {
-                        appController.mainWin.webContents.openDevTools();
-                    },
-                },
-                {
                     label: 'Copy Debug Info',
                     click: () => {
                         copyDebugInfoToClipboard();
@@ -195,8 +189,9 @@ export function initMenu(appController: ElectronAppController) {
                 ...(isMac
                     ? []
                     : [
+                          { type: 'separator' },
                           {
-                              role: 'about',
+                              label: `About ${appInfo.title}`,
                               click: () => {
                                   appController.aboutController.open(
                                       appController.mainWin,

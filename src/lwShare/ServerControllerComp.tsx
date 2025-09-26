@@ -191,11 +191,12 @@ export default function ServerControllerComp() {
                 </button>
             </div>
             <div
-                className="flex-fill d-flex justify-content-center p-2"
+                className="w-100 d-flex flex-wrap p-2"
                 style={{
                     border: '1px solid #ccc',
                     borderBlockColor: '#ccc',
                     borderRadius: '4px',
+                    overflowX: 'hidden',
                     overflowY: 'auto',
                 }}
             >
