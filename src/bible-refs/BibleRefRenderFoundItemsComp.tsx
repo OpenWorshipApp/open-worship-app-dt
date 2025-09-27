@@ -3,7 +3,7 @@ import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBible
 import {
     openContextMenu,
     openInBibleLookup,
-} from '../bible-search/bibleFindHelpers';
+} from '../bible-find/bibleFindHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
 import { useAppPromise } from '../helper/helpers';
 import { BibleRefType, breakItem } from './bibleRefsHelpers';

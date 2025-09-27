@@ -135,7 +135,7 @@ class DatabaseFindHandler {
     }
 }
 
-export default class FindController {
+export default class BibleFindControllerBase {
     onlineFindHandler: OnlineFindHandler | null = null;
     databaseFindHandler: DatabaseFindHandler | null = null;
     private readonly _bibleKey: string;
@@ -171,7 +171,7 @@ export default class FindController {
         return null;
     }
 
-    static async getOnlineInstant(instance: FindController) {
+    static async getOnlineInstant(instance: BibleFindControllerBase) {
         const apiData = await loadApiData();
         if (apiData === null) {
             return null;
@@ -184,7 +184,7 @@ export default class FindController {
         return instance;
     }
 
-    static async getXMLInstant(instance: FindController, xmlFilePath: string) {
+    static async getXMLInstant(instance: BibleFindControllerBase, xmlFilePath: string) {
         const fileSource = FileSource.getInstance(xmlFilePath);
         const databasePath = pathJoin(
             fileSource.basePath,
@@ -206,11 +206,11 @@ export default class FindController {
     }
 
     static async getInstant(bibleKey: string) {
-        const instance = new FindController(bibleKey);
+        const instance = new BibleFindControllerBase(bibleKey);
         const keysMap = await getAllXMLFileKeys();
         if (keysMap[bibleKey] === undefined) {
-            return await FindController.getOnlineInstant(instance);
+            return await BibleFindControllerBase.getOnlineInstant(instance);
         }
-        return await FindController.getXMLInstant(instance, keysMap[bibleKey]);
+        return await BibleFindControllerBase.getXMLInstant(instance, keysMap[bibleKey]);
     }
 }

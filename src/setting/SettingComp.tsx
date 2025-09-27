@@ -52,7 +52,12 @@ export default function SettingComp() {
                     <QuitCurrentPageComp title="Quit Setting" />
                 </div>
             </div>
-            <div className="card-body app-overflow-hidden">
+            <div
+                className="card-body app-overflow-hidden"
+                style={{
+                    height: 'calc(100% - 37px)',
+                }}
+            >
                 {tabTypeList.map(([type, _, target]) => {
                     return genTabBody<TabKeyType>(tabKey, [type, target]);
                 })}

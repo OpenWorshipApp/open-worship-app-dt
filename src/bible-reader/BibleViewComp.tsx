@@ -29,7 +29,7 @@ import {
 } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import { getSelectedText } from '../helper/textSelectionHelpers';
-import BibleFindController from '../bible-search/BibleFindController';
+import BibleFindControllerBase from '../bible-find/BibleFindController';
 
 function handMovedChecking(
     viewController: BibleItemsViewController,
@@ -100,7 +100,7 @@ export default function BibleViewComp({
                               if (!selectedText) {
                                   return;
                               }
-                              BibleFindController.setFindingContext(
+                              BibleFindControllerBase.setFindingContext(
                                   foundBibleItem.bibleKey,
                                   selectedText,
                               );

@@ -7,7 +7,7 @@ import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBible
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 
 const LazyBibleFindPreviewerComp = lazy(() => {
-    return import('./BibleFindPreviewerComp');
+    return import('./BibleFindBodyPreviewerComp');
 });
 const LazyBibleCrossReferencePreviewerComp = lazy(() => {
     return import('./BibleCrossReferencePreviewerComp');
@@ -19,11 +19,11 @@ export function setBibleSearchingTabType(tabType: 's' | 'c') {
 }
 
 const tabTypeList = [
-    ['s', 'Search', LazyBibleFindPreviewerComp],
+    ['s', 'Find', LazyBibleFindPreviewerComp],
     ['c', 'Cross Reference', LazyBibleCrossReferencePreviewerComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
-export default function BibleSearchPreviewerComp() {
+export default function BibleFindPreviewerComp() {
     const viewController = useLookupBibleItemControllerContext();
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
         BIBLE_SEARCH_SETTING_NAME,

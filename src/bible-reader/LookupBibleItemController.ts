@@ -31,7 +31,7 @@ import CacheManager from '../others/CacheManager';
 import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { genFoundBibleItemContextMenu } from '../bible-lookup/bibleActionHelpers';
-import { setBibleSearchingTabType } from '../bible-search/BibleSearchPreviewerComp';
+import { setBibleSearchingTabType } from '../bible-find/BibleFindPreviewerComp';
 
 export const closeEventMapper: EventMapper = {
     wControlKey: ['Ctrl'],

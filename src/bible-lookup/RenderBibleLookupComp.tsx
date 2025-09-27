@@ -19,7 +19,7 @@ import LoadingComp from '../others/LoadingComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const LazyBibleSearchBodyPreviewerComp = lazy(() => {
-    return import('../bible-search/BibleSearchPreviewerComp');
+    return import('../bible-find/BibleFindPreviewerComp');
 });
 
 const LOOKUP_ONLINE_SETTING_NAME = 'bible-lookup-online';

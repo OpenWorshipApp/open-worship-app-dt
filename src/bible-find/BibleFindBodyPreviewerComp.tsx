@@ -8,7 +8,7 @@ import BibleFindController, {
     BibleFindControllerContext,
 } from './BibleFindController';
 
-export default function BibleFindPreviewerComp() {
+export default function BibleFindBodyPreviewerComp() {
     const selectedBibleKey = useBibleKeyContext();
     const { bibleKey: bibleKeyContext } = BibleFindController.findingContext;
     if (bibleKeyContext !== null) {
