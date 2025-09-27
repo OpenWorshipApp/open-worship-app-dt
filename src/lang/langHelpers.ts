@@ -265,6 +265,7 @@ export type LanguageDataType = {
     name: string;
     flagSVG: string;
     sanitizeFindingText: (text: string) => string;
+    stopWords: string[];
     trimText: (text: string) => string;
     endWord: (text: string) => string;
     checkShouldNewLine: (text: string) => boolean;
@@ -421,6 +422,14 @@ export function quickTrimText(locale: LocaleType, text: string) {
         return text;
     }
     return langData.trimText(text);
+}
+
+export function checkIsStopWord(locale: LocaleType, text: string) {
+    const langData = getLang(locale);
+    if (langData === null) {
+        return false;
+    }
+    return langData.stopWords.includes(text);
 }
 
 export function quickEndWord(locale: LocaleType, text: string) {

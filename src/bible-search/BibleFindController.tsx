@@ -4,6 +4,7 @@ import { handleError } from '../helper/errorHelpers';
 import FileSource from '../helper/FileSource';
 import { appApiFetch } from '../helper/networkHelpers';
 import {
+    checkIsStopWord,
     LocaleType,
     quickEndWord,
     quickTrimText,
@@ -11,13 +12,20 @@ import {
 } from '../lang/langHelpers';
 import appProvider, { SQLiteDatabaseType } from '../server/appProvider';
 import { fsCheckFileExist, pathJoin } from '../server/fileHelpers';
-import { getBibleXMLDataFromKey } from '../setting/bible-setting/bibleXMLHelpers';
-import { getAllXMLFileKeys } from '../setting/bible-setting/bibleXMLJsonDataHelpers';
+import {
+    ensureBibleXMLBasePath,
+    getBibleXMLDataFromKey,
+} from '../setting/bible-setting/bibleXMLHelpers';
+import {
+    getAllXMLFileKeys,
+    xmlToJson,
+} from '../setting/bible-setting/bibleXMLJsonDataHelpers';
 import {
     APIDataMapType,
     APIDataType,
     BibleFindForType,
     BibleFindResultType,
+    calcPerPage,
     findOnline,
 } from './bibleFindHelpers';
 import {
@@ -75,7 +83,10 @@ async function initDatabase(bibleKey: string, databaseFilePath: string) {
                             locale,
                             word,
                         ).toLowerCase();
-                        if (sanitizedWord) {
+                        if (
+                            sanitizedWord.length > 1 &&
+                            !checkIsStopWord(locale, sanitizedWord)
+                        ) {
                             words.add(sanitizedWord);
                         }
                     }
@@ -142,10 +153,10 @@ class DatabaseFindingHandler {
         const sqlFrom = `FROM verses WHERE sText LIKE '%${sText}%'${sqlBookKey}`;
         let sql = `SELECT text ${sqlFrom}`;
         if (fromLineNumber == undefined || toLineNumber == undefined) {
-            fromLineNumber = 1;
-            toLineNumber = DEFAULT_ROW_LIMIT;
+            fromLineNumber = 0;
+            toLineNumber = DEFAULT_ROW_LIMIT - 1;
         }
-        const count = toLineNumber - fromLineNumber + 1;
+        const count = calcPerPage(toLineNumber, fromLineNumber);
         if (count < 1) {
             throw new Error(`Invalid line number ${JSON.stringify(findData)}`);
         }
@@ -293,22 +304,39 @@ export default class BibleFindController {
         return instance;
     }
 
+    static async getDatabaseFilePath(xmlFilePath: string) {
+        const xmlText = await FileSource.readFileData(xmlFilePath);
+        if (xmlText === null) {
+            return null;
+        }
+        const bibleInfo = await xmlToJson(xmlText);
+        if (bibleInfo === null) {
+            return null;
+        }
+        const basePath = await ensureBibleXMLBasePath(bibleInfo.info.key);
+        if (basePath === null) {
+            return null;
+        }
+        const fileSource = FileSource.getInstance(xmlFilePath);
+        const databaseFilePath = pathJoin(basePath, `${fileSource.name}.db`);
+        return databaseFilePath;
+    }
+
     static async getXMLInstant(
         instance: BibleFindController,
         xmlFilePath: string,
     ) {
-        const fileSource = FileSource.getInstance(xmlFilePath);
-        const databasePath = pathJoin(
-            fileSource.basePath,
-            `${fileSource.name}.db`,
-        );
+        const databaseFilePath = await this.getDatabaseFilePath(xmlFilePath);
+        if (databaseFilePath === null) {
+            return null;
+        }
         let database: SQLiteDatabaseType | null = null;
-        if (!(await fsCheckFileExist(databasePath))) {
-            database = await initDatabase(instance.bibleKey, databasePath);
+        if (!(await fsCheckFileExist(databaseFilePath))) {
+            database = await initDatabase(instance.bibleKey, databaseFilePath);
         } else {
             const databaseUtils = appProvider.databaseUtils;
             database =
-                await databaseUtils.getSQLiteDatabaseInstance(databasePath);
+                await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
         }
         if (database === null) {
             return null;

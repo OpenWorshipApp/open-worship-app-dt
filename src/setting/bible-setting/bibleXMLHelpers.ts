@@ -384,7 +384,7 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
     });
 }
 
-async function ensureBibleXMLBasePath(bibleKey: string) {
+export async function ensureBibleXMLBasePath(bibleKey: string) {
     const filePath = await bibleKeyToXMLFilePath(bibleKey, true);
     if (filePath === null) {
         return null;

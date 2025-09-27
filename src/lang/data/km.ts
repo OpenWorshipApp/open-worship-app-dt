@@ -216,6 +216,21 @@ const lang: LanguageDataType = {
         newText = lang.trimText(newText);
         return newText;
     },
+    stopWords: [
+        'និង',
+        'ដែល',
+        'ដែរ',
+        'ជា',
+        'ក្នុង',
+        'ទៅ',
+        'ពី',
+        'ក៏',
+        'មិន',
+        'បាន',
+        'នេះ',
+        'មាន',
+        'ជា',
+    ],
     trimText: (text: string) => {
         return text.trim().replace(/^[\u200B]+|[\u200B]+$/g, '');
     },

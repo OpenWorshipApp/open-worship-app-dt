@@ -60,8 +60,8 @@ export function checkIsCurrentPage(
     pageNumber: number,
     perPage: number,
 ) {
-    const size = pageNumber * perPage;
-    if (data.fromLineNumber <= size && size <= data.toLineNumber) {
+    const maxSize = pageNumber * perPage - 1;
+    if (data.fromLineNumber <= maxSize && maxSize <= data.toLineNumber) {
         return true;
     }
 }
@@ -78,8 +78,8 @@ export function findPageNumber(
     return '0';
 }
 
-export function calcPerPage(data: BibleFindResultType) {
-    const perPage = data.toLineNumber - data.fromLineNumber + 1;
+export function calcPerPage(toLineNumber: number, fromLineNumber: number) {
+    const perPage = toLineNumber - fromLineNumber + 1;
     return perPage;
 }
 
@@ -87,8 +87,8 @@ export function calcPaging(data: BibleFindResultType | null): PagingDataTye {
     if (data === null) {
         return { pages: [], currentPage: '0', pageSize: 0, perPage: 0 };
     }
-    const perPage = calcPerPage(data);
-    const pageSize = Math.round(data.maxLineNumber / perPage);
+    const perPage = calcPerPage(data.toLineNumber, data.fromLineNumber);
+    const pageSize = Math.ceil(data.maxLineNumber / perPage);
     const pages = Array.from(Array(pageSize)).map((_, i) => {
         return i + 1 + '';
     });
