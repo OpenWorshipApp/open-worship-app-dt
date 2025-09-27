@@ -1,70 +1,75 @@
-import { useState } from 'react';
 import { useBibleFindController } from './BibleFindController';
 import { useAppEffect } from '../helper/debuggerHelpers';
+import { setSetting, useStateSettingString } from '../helper/settingHelpers';
+import { genTimeoutAttempt } from '../helper/helpers';
 
+const BIBLE_FIND_RECENT_SEARCH_SETTING_NAME = 'bible-find-recent-search';
+export function setBibleFindRecentSearch(text: string) {
+    if (text.trim() === '') {
+        text = '';
+    }
+    setSetting(BIBLE_FIND_RECENT_SEARCH_SETTING_NAME, text);
+}
+
+const attemptTimeout = genTimeoutAttempt(2000);
 export default function BibleFindHeaderComp({
-    handleFind,
-    isFinding,
+    handleFinding,
 }: Readonly<{
-    handleFind: (isFresh?: boolean) => void;
-    isFinding: boolean;
+    handleFinding: (text: string, isFresh?: boolean) => void;
 }>) {
-    const bibleFindController = useBibleFindController();
-    const [canFind, setCanFind] = useState(
-        bibleFindController.findText?.trim() !== '',
+    const [text, setText] = useStateSettingString(
+        BIBLE_FIND_RECENT_SEARCH_SETTING_NAME,
+        '' as string,
     );
-    useAppEffect(() => {
-        bibleFindController.onTextChange = () => {
-            setCanFind(!!bibleFindController.findText);
-        };
-        return () => {
-            bibleFindController.onTextChange = () => {};
-        };
-    }, [bibleFindController]);
+    const bibleFindController = useBibleFindController();
     const keyUpHandling = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter') {
-            if (bibleFindController.isAddedByEnter) {
-                bibleFindController.isAddedByEnter = false;
-                return;
+        if (bibleFindController.menuControllerSession !== null) {
+            if (event.key === 'Enter') {
+                bibleFindController.closeSuggestionMenu();
             }
-            event.preventDefault();
-            event.stopPropagation();
-            handleFind(true);
             return;
         }
-        bibleFindController.handleKeyUp(event);
+        if (['Enter', 'Escape'].includes(event.key)) {
+            event.preventDefault();
+            event.stopPropagation();
+            const newText = event.key === 'Enter' ? text : '';
+            setText(newText);
+            attemptTimeout(() => {
+                handleFinding(newText);
+            }, true);
+        }
     };
+    useAppEffect(() => {
+        handleFinding(text);
+    }, []);
     return (
         <>
             <input
-                ref={(input) => {
-                    bibleFindController.input = input;
-                    return () => {
-                        bibleFindController.input = null;
-                    };
-                }}
                 data-bible-key={bibleFindController.bibleKey}
                 type="text"
+                value={text}
                 className="form-control"
                 onKeyUp={keyUpHandling}
                 onChange={(event) => {
-                    const value = event.currentTarget.value.trim();
-                    if (!value) {
-                        setCanFind(false);
-                        bibleFindController.findText = '';
-                    } else if (!canFind) {
-                        setCanFind(true);
-                    }
+                    bibleFindController.handleNewValue(event);
+                    setText((preText) => {
+                        const newText = event.target.value;
+                        attemptTimeout(() => {
+                            handleFinding(!preText ? '' : newText);
+                        });
+                        return newText;
+                    });
                 }}
             />
             <button
                 className="btn btn-sm"
-                disabled={isFinding || !canFind}
                 onClick={() => {
-                    handleFind(true);
+                    attemptTimeout(() => {
+                        handleFinding(text, true);
+                    }, true);
                 }}
             >
-                <i className="bi bi-search" />
+                <i className="bi bi-arrow-clockwise app-caught-hover-pointer" />
             </button>
         </>
     );

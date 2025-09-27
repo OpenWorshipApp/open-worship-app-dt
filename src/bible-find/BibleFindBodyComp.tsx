@@ -11,6 +11,7 @@ import BibleFindRenderDataComp from './BibleFindRenderDataComp';
 import BibleSelectionComp from '../bible-lookup/BibleSelectionComp';
 import BibleFindHeaderComp from './BibleFindHeaderComp';
 import { useBibleFindController } from './BibleFindController';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
 
 export default function BibleFindBodyComp({
     setBibleKey,
@@ -18,7 +19,9 @@ export default function BibleFindBodyComp({
     setBibleKey: (_: string, newBibleKey: string) => void;
 }>) {
     const bibleFindController = useBibleFindController();
-    const [selectedBook, setSelectedBook] = useState<SelectedBookKeyType>(null);
+    const [selectedBook, setSelectedBook] = useAppStateAsync(() => {
+        return bibleFindController.getSelectedBook();
+    });
     const [findText, setFindText] = useState('');
     const [allData, setAllData] = useState<AllDataType>({});
     const [isFinding, startTransition] = useTransition();
@@ -37,27 +40,22 @@ export default function BibleFindBodyComp({
             }
         });
     };
-    const setSelectedBook1 = (newSelectedBook: SelectedBookKeyType) => {
-        bibleFindController.bookKey = newSelectedBook?.bookKey ?? null;
-        setAllData({});
+    const setSelectedBook1 = (newSelectedBook: SelectedBookKeyType | null) => {
         setSelectedBook(newSelectedBook);
-        if (bibleFindController.findText) {
-            doFinding({ text: bibleFindController.findText }, true);
-        }
+        bibleFindController.selectedBookKey = newSelectedBook?.bookKey ?? null;
+        doFinding({ text: findText }, true);
     };
-    const handleFinding = (isFresh = false) => {
-        const findText = bibleFindController.findText;
-        if (!findText) {
+    const handleFinding = (text: string, isFresh?: boolean) => {
+        if (!isFresh && findText === text) {
             return;
         }
-        setFindText(findText);
-        if (isFresh) {
+        if (text === '') {
             setAllData({});
+            setFindText('');
+            return;
         }
-        const findData: BibleFindForType = {
-            text: findText,
-        };
-        doFinding(findData, isFresh);
+        setFindText(text);
+        doFinding({ text });
     };
     return (
         <div className="card app-overflow-hidden w-100 h-100">
@@ -72,10 +70,7 @@ export default function BibleFindBodyComp({
                     onBibleKeyChange={setBibleKey}
                     bibleKey={bibleFindController.bibleKey}
                 />
-                <BibleFindHeaderComp
-                    handleFind={handleFinding}
-                    isFinding={isFinding}
-                />
+                <BibleFindHeaderComp handleFinding={handleFinding} />
             </div>
             <BibleFindRenderDataComp
                 text={findText}
@@ -87,7 +82,7 @@ export default function BibleFindBodyComp({
                         text: findText,
                     });
                 }}
-                selectedBook={selectedBook}
+                selectedBook={selectedBook ?? null}
                 setSelectedBook={setSelectedBook1}
                 isFinding={isFinding}
             />

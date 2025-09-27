@@ -32,7 +32,6 @@ export default function BibleFindBodyPreviewerComp() {
                 const { findingText } = BibleFindController.findingContext;
                 if (findingText !== null) {
                     BibleFindController.findingContext.findingText = null;
-                    newBibleFindController.findText = findingText;
                 }
                 methodContext.setBibleFindController(newBibleFindController);
             }

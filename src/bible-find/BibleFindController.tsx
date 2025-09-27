@@ -27,6 +27,7 @@ import {
     BibleFindResultType,
     calcPerPage,
     findOnline,
+    SelectedBookKeyType,
 } from './bibleFindHelpers';
 import {
     AppContextMenuControlType,
@@ -36,6 +37,8 @@ import {
 import { cumulativeOffset } from '../helper/helpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
+import { getSetting, setSetting } from '../helper/settingHelpers';
+import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const DEFAULT_ROW_LIMIT = 20;
 
@@ -147,7 +150,7 @@ class DatabaseFindingHandler {
         const locale = await getBibleLocale(bibleKey);
         const sText = (await sanitizeFindingText(locale, text)) ?? text;
         let sqlBookKey = '';
-        if (bookKey !== undefined) {
+        if (bookKey) {
             sqlBookKey = ` AND text LIKE '${bookKey}.%'`;
         }
         const sqlFrom = `FROM verses WHERE sText LIKE '%${sText}%'${sqlBookKey}`;
@@ -207,18 +210,14 @@ class DatabaseFindingHandler {
     }
 }
 
+const BIBLE_FIND_SELECTED_BOOK_SETTING_NAME = 'bible-find-selected-book-key';
+
 const instanceCache: Record<string, BibleFindController | null> = {};
 export default class BibleFindController {
     onlineFindHandler: OnlineFindHandler | null = null;
     databaseFindHandler: DatabaseFindingHandler | null = null;
     private readonly _bibleKey: string;
-    private _bookKey: string | null = null;
-    _input: HTMLInputElement | null = null;
-    private _findText: string = '';
     locale: LocaleType;
-    isAddedByEnter: boolean = false;
-    onTextChange: () => void = () => {};
-    private _oldInputText: string = '';
     menuControllerSession: AppContextMenuControlType | null = null;
     static readonly findingContext: {
         bibleKey: string | null;
@@ -233,34 +232,29 @@ export default class BibleFindController {
         this.locale = locale;
     }
 
-    get input() {
-        return this._input;
+    get selectedBookKey() {
+        const bookKey = getSetting(BIBLE_FIND_SELECTED_BOOK_SETTING_NAME) ?? '';
+        return bookKey;
     }
-    set input(input: HTMLInputElement | null) {
-        this._input = input;
-        if (input !== null) {
-            input.value = this._findText || '';
-        }
+    set selectedBookKey(bookKey: string | null) {
+        setSetting(BIBLE_FIND_SELECTED_BOOK_SETTING_NAME, bookKey ?? '');
     }
 
-    get bookKey() {
-        return this._bookKey;
-    }
-    set bookKey(value: string | null) {
-        this._bookKey = value;
-    }
-
-    get findText() {
-        return this._findText || (this.input?.value ?? '');
-    }
-    set findText(value: string | null) {
-        this._findText = value ?? '';
-        if (this.input !== null) {
-            this._oldInputText = this.input.value;
-            this.input.value = value ?? '';
-            this.input.focus();
-            this.onTextChange();
+    async getSelectedBook() {
+        const bookKey = this.selectedBookKey;
+        console.log(bookKey);
+        if (!bookKey) {
+            return null;
         }
+
+        const bibleInfo = await getBibleInfo(this.bibleKey);
+        if (bibleInfo === null) {
+            return null;
+        }
+        return {
+            bookKey,
+            book: bibleInfo.books[bookKey] ?? bookKey,
+        } as SelectedBookKeyType;
     }
 
     get bibleKey() {
@@ -275,9 +269,8 @@ export default class BibleFindController {
     }
 
     async doFinding(findData: BibleFindForType) {
-        this.closeSuggestionMenu();
-        if (this.bookKey !== null) {
-            findData['bookKey'] = this.bookKey;
+        if (this.selectedBookKey !== null) {
+            findData['bookKey'] = this.selectedBookKey;
         }
         if (this.onlineFindHandler !== null) {
             return await this.onlineFindHandler.doFinding(findData);
@@ -388,47 +381,32 @@ export default class BibleFindController {
         return [];
     }
 
-    private async handleDeletionFindText(text: string) {
-        const sanitizedText = await sanitizeFindingText(this.locale, text);
-        if (sanitizedText === null) {
-            return;
-        }
-        const splitted = sanitizedText.split(' ');
-        if (splitted.length < 2) {
-            this._findText = '';
-            return;
-        }
-        this._findText = splitted.slice(0, -1).join(' ');
-    }
-
-    private async checkLookupWord(event: any, lookupWord: string) {
+    private async checkLookupWord(
+        event: any,
+        input: HTMLInputElement,
+        oldValue: string,
+        lookupWord: string,
+    ) {
         const suggestWords = await this.loadSuggestionWords(lookupWord, 100);
         if (!suggestWords.length) {
             return;
         }
-        const { top, left } = cumulativeOffset(this.input);
+        const { top, left } = cumulativeOffset(input);
         this.menuControllerSession = showAppContextMenu(
             event,
             suggestWords.map((text) => {
                 return {
                     menuElement: <span data-locale={this.locale}>{text}</span>,
-                    onSelect: (event: any) => {
-                        if (event.key === 'Enter') {
-                            this.isAddedByEnter = true;
-                        }
-                        this.findText = quickEndWord(
-                            this.locale,
-                            quickTrimText(
-                                this.locale,
-                                `${this._findText.trim()} ${text} `,
-                            ),
-                        );
-                        this.input?.focus();
+                    onSelect: () => {
+                        let newText = quickEndWord(this.locale, oldValue);
+                        const trimText = quickTrimText(this.locale, text);
+                        newText = quickEndWord(this.locale, newText + trimText);
+                        pasteTextToInput(input, newText);
                     },
                 } as ContextMenuItemType;
             }),
             {
-                coord: { x: left, y: top + this.input!.offsetHeight },
+                coord: { x: left, y: top + input.offsetHeight },
                 maxHeigh: 200,
                 style: {
                     backgroundColor: 'rgba(128, 128, 128, 0.4)',
@@ -440,58 +418,28 @@ export default class BibleFindController {
             },
         );
         this.menuControllerSession.promiseDone.then(() => {
-            if (this.input !== null) {
-                this.input.focus();
-                const value = quickTrimText(this.locale, this.input.value);
-                if (value) {
-                    this.findText = quickEndWord(this.locale, value);
-                }
-            }
-            this.menuControllerSession = null;
+            console.log('Closed suggestion menu');
         });
     }
 
-    async handleKeyUp(event: any) {
-        const inputKey = event.key;
-        const newValue = this.input?.value ?? '';
-        if (this._oldInputText && this._oldInputText === newValue) {
+    async handleNewValue(event: any) {
+        const input = event.target;
+        if (input instanceof HTMLInputElement === false) {
             return;
         }
-        this._oldInputText = newValue;
+        const value = input.value ?? '';
         this.closeSuggestionMenu();
-        if (this.input === null) {
+        const newTrimValue = quickTrimText(this.locale, input.value);
+        if (!newTrimValue || newTrimValue !== value) {
             return;
         }
-        if (['Delete', 'Backspace'].includes(inputKey)) {
-            await this.handleDeletionFindText(newValue);
-        }
-        const newTrimValue = quickTrimText(this.locale, this.input.value);
-        if (newTrimValue !== newValue) {
-            return;
-        }
-        const text = this._findText
-            ? newTrimValue.split(this._findText)[1]
-            : newTrimValue;
-        if (!text) {
-            return;
-        }
-        const sanitizedText = await sanitizeFindingText(this.locale, text);
+        const sanitizedText = await sanitizeFindingText(this.locale, value);
         const lookupWord = (sanitizedText ?? '').split(' ').at(-1) ?? '';
-        this.checkLookupWord(event, lookupWord);
-    }
-
-    static setFindingContext(bibleKey: string, findingText: string) {
-        for (const bibleFindController of Object.values(instanceCache)) {
-            if (
-                bibleFindController !== null &&
-                bibleFindController.input !== null
-            ) {
-                pasteTextToInput(bibleFindController.input, findingText);
-                return;
-            }
+        if (!lookupWord) {
+            return;
         }
-        this.findingContext.bibleKey = bibleKey;
-        this.findingContext.findingText = findingText;
+        const oldValue = value.substring(0, value.length - lookupWord.length);
+        this.checkLookupWord(event, input, oldValue, lookupWord);
     }
 }
 

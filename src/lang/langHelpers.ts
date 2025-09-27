@@ -437,7 +437,11 @@ export function quickEndWord(locale: LocaleType, text: string) {
     if (langData === null) {
         return text;
     }
-    return langData.endWord(text);
+    const trimText = langData.trimText(text);
+    if (trimText === '') {
+        return '';
+    }
+    return langData.endWord(trimText);
 }
 
 export async function getFontFamily(locale: LocaleType) {

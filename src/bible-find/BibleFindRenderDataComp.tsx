@@ -1,5 +1,4 @@
 import { genBookMatches } from '../helper/bible-helpers/serverBibleHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
 import {
     ContextMenuItemType,
     showAppContextMenu,
@@ -22,8 +21,8 @@ import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 async function selectBookKey(
     event: any,
     bibleKey: string,
-    selectedBook: SelectedBookKeyType,
-    setSelectedBook: (_: SelectedBookKeyType) => void,
+    selectedBook: SelectedBookKeyType | null,
+    setSelectedBook: (selectedBook: SelectedBookKeyType | null) => void,
 ) {
     const bookList = await genBookMatches(bibleKey, '');
     if (bookList === null) {
@@ -151,26 +150,18 @@ function RenderFooterComp({
 }
 
 function RenderFindingInfoHeaderComp({
-    text,
     bibleKey,
     selectedBook,
     setSelectedBook,
 }: Readonly<{
     text: string;
     bibleKey: string;
-    selectedBook: SelectedBookKeyType;
-    setSelectedBook: (_: SelectedBookKeyType) => void;
+    selectedBook: SelectedBookKeyType | null;
+    setSelectedBook: (selectedBook: SelectedBookKeyType | null) => void;
 }>) {
     return (
-        <div className="d-flex w-100">
-            <div className="flex-fill">
-                {text ? (
-                    <>
-                        `Result for:"
-                        <span data-bible-key={bibleKey}>{text}</span>"
-                    </>
-                ) : null}
-            </div>
+        <div className="w-100 d-flex overflow-hidden">
+            <div className="flex-fill overflow-hidden"></div>
             <div>
                 <button
                     className="btn btn-sm btn-info"
@@ -205,14 +196,11 @@ export default function BibleFindRenderDataComp({
     text: string;
     allData: { [key: string]: BibleFindResultType };
     findFor: (from: number, to: number) => void;
-    selectedBook: SelectedBookKeyType;
-    setSelectedBook: (_: SelectedBookKeyType) => void;
+    selectedBook: SelectedBookKeyType | null;
+    setSelectedBook: (selectedBook: SelectedBookKeyType | null) => void;
     isFinding: boolean;
 }>) {
     const bibleFindController = useBibleFindController();
-    useAppEffect(() => {
-        setSelectedBook(null);
-    }, [bibleFindController]);
     const allPageNumberFound = Object.keys(allData);
     const pagingData = calcPaging(
         allPageNumberFound.length ? allData[allPageNumberFound[0]] : null,
@@ -241,6 +229,14 @@ export default function BibleFindRenderDataComp({
                         setSelectedBook={setSelectedBook}
                     />
                     {isFinding ? <ShowFindingComp /> : null}
+                    {allPageNumberFound.length === 0 && !isFinding ? (
+                        <div
+                            className="my-2"
+                            style={{ margin: 'auto', textAlign: 'center' }}
+                        >
+                            `No data available
+                        </div>
+                    ) : null}
                     {allPageNumberFound.map((pageNumber) => {
                         if (!pagingData.pages.includes(pageNumber)) {
                             return null;

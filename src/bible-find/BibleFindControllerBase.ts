@@ -184,7 +184,10 @@ export default class BibleFindControllerBase {
         return instance;
     }
 
-    static async getXMLInstant(instance: BibleFindControllerBase, xmlFilePath: string) {
+    static async getXMLInstant(
+        instance: BibleFindControllerBase,
+        xmlFilePath: string,
+    ) {
         const fileSource = FileSource.getInstance(xmlFilePath);
         const databasePath = pathJoin(
             fileSource.basePath,
@@ -211,6 +214,9 @@ export default class BibleFindControllerBase {
         if (keysMap[bibleKey] === undefined) {
             return await BibleFindControllerBase.getOnlineInstant(instance);
         }
-        return await BibleFindControllerBase.getXMLInstant(instance, keysMap[bibleKey]);
+        return await BibleFindControllerBase.getXMLInstant(
+            instance,
+            keysMap[bibleKey],
+        );
     }
 }

@@ -18,7 +18,7 @@ import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 export type SelectedBookKeyType = {
     bookKey: string;
     book: string;
-} | null;
+};
 
 export type APIDataMapType = {
     apiKey: string;
@@ -106,6 +106,7 @@ export async function breakItem(
     bibleItem: BibleItem;
     kjvTitle: string;
 }> {
+    // TODO: use fuse.js to highlight
     const sanitizedFindText = (await sanitizeFindingText(locale, text)) ?? text;
     const [bookKeyChapter, verse, ...newItems] = item.split(':');
     let newItem = newItems.join(':');
