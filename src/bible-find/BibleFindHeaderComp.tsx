@@ -2,6 +2,8 @@ import { useBibleFindController } from './BibleFindController';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
+import { useRef } from 'react';
+import { pasteTextToInput } from '../server/appHelpers';
 
 const BIBLE_FIND_RECENT_SEARCH_SETTING_NAME = 'bible-find-recent-search';
 let setFindText: (text: string) => void = () => {};
@@ -19,6 +21,7 @@ export default function BibleFindHeaderComp({
 }: Readonly<{
     handleFinding: (text: string, isFresh?: boolean) => void;
 }>) {
+    const inputRef = useRef<HTMLInputElement>(null);
     const [text, setText] = useStateSettingString(
         BIBLE_FIND_RECENT_SEARCH_SETTING_NAME,
         '' as string,
@@ -33,7 +36,12 @@ export default function BibleFindHeaderComp({
     };
     const bibleFindController = useBibleFindController();
     useAppEffect(() => {
-        setFindText = setText1;
+        setFindText = (newText: string) => {
+            if (inputRef.current === null) {
+                return;
+            }
+            pasteTextToInput(inputRef.current, newText);
+        };
         return () => {
             setFindText = () => {};
         };
@@ -61,6 +69,7 @@ export default function BibleFindHeaderComp({
     return (
         <>
             <input
+                ref={inputRef}
                 data-bible-key={bibleFindController.bibleKey}
                 type="text"
                 value={text}
