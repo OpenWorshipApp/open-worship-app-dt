@@ -81,28 +81,26 @@ export default function InputHandlerComp({
                 }}
             />
             <InputExtraButtonsComp />
-            <div className="d-flex justify-content-between h-100">
-                <button
-                    className="btn btn-sm btn-outline-secondary"
-                    data-previous-chapter-button="1"
-                    title="Previous"
-                    onClick={() => {
-                        viewController.tryJumpingChapter(false);
-                    }}
-                >
-                    <i className="bi bi-caret-left" />
-                </button>
-                <button
-                    className="btn btn-sm btn-outline-secondary"
-                    title="Next"
-                    data-next-chapter-button="1"
-                    onClick={() => {
-                        viewController.tryJumpingChapter(true);
-                    }}
-                >
-                    <i className="bi bi-caret-right" />
-                </button>
-            </div>
+            <button
+                className="btn btn-sm btn-outline-secondary"
+                data-previous-chapter-button="1"
+                title="Previous"
+                onClick={() => {
+                    viewController.tryJumpingChapter(false);
+                }}
+            >
+                <i className="bi bi-caret-left" />
+            </button>
+            <button
+                className="btn btn-sm btn-outline-secondary"
+                title="Next"
+                data-next-chapter-button="1"
+                onClick={() => {
+                    viewController.tryJumpingChapter(true);
+                }}
+            >
+                <i className="bi bi-caret-right" />
+            </button>
         </Fragment>
     );
 }

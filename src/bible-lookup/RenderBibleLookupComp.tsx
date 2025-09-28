@@ -140,15 +140,19 @@ export default function RenderBibleLookupComp() {
                 },
             ]}
         >
-            <div id="bible-lookup-popup" className="shadow card w-100 h-100">
+            <div
+                id="bible-lookup-popup"
+                className="shadow card w-100 h-100 overflow-hidden"
+            >
                 <RenderBibleLookupHeaderComp
                     isLookupOnline={isBibleSearching}
                     setIsLookupOnline={setIsBibleSearching}
                 />
                 <div
-                    className={
-                        'card-body d-flex w-100 h-100 app-overflow-hidden'
-                    }
+                    className={'card-body d-flex w-100 app-overflow-hidden'}
+                    style={{
+                        height: 'calc(100% - 38px)',
+                    }}
                 >
                     {isBibleSearching ? (
                         <ResizeActorComp

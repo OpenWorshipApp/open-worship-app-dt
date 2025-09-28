@@ -26,9 +26,14 @@ export default function RenderBibleLookupHeaderComp({
         });
     };
     return (
-        <div className="card-header d-flex text-center w-100">
+        <div
+            className="card-header d-flex w-100 p-0 overflow-hidden align-items-center"
+            style={{
+                height: '38px',
+            }}
+        >
             <div
-                className="flex-item"
+                className="flex-item h-100 overflow-hidden d-flex align-items-center"
                 style={{
                     width: 'calc(50% - 175px)',
                 }}
@@ -41,7 +46,7 @@ export default function RenderBibleLookupHeaderComp({
             >
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
             </div>
-            <div className="m-2">
+            <div className="mx-2">
                 <AIConfigComp />
             </div>
             <div

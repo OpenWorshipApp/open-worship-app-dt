@@ -169,7 +169,7 @@ export default function BibleLookupInputHistoryComp({
     };
     return (
         <div
-            className="d-flex rounded px-1 me-1 app-inner-shadow"
+            className="h-100 d-flex rounded px-1 me-1 app-inner-shadow"
             style={{
                 overflowX: 'auto',
                 overflowY: 'hidden',
