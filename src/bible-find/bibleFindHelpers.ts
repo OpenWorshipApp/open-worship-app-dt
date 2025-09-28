@@ -6,7 +6,11 @@ import {
     BibleItemType,
     genBibleItemCopyingContextMenu,
 } from '../bible-list/bibleItemHelpers';
-import { LocaleType, sanitizeFindingText } from '../lang/langHelpers';
+import {
+    LocaleType,
+    sanitizeFindingText,
+    sanitizePreviewText,
+} from '../lang/langHelpers';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import {
     ContextMenuItemType,
@@ -109,9 +113,11 @@ export async function breakItem(
     // TODO: use fuse.js to highlight
     const sanitizedFindText = (await sanitizeFindingText(locale, text)) ?? text;
     const [bookKeyChapter, verse, ...newItems] = item.split(':');
-    let newItem = newItems.join(':');
+    let fullVerseText = newItems.join(':');
+    fullVerseText = await sanitizeFindingText(locale, fullVerseText);
+    fullVerseText = await sanitizePreviewText(locale, fullVerseText);
     for (const subText of sanitizedFindText.split(' ')) {
-        newItem = newItem.replace(
+        fullVerseText = fullVerseText.replace(
             new RegExp(`(${subText})`, 'ig'),
             '<span style="color:red">$1</span>',
         );
@@ -132,7 +138,7 @@ export async function breakItem(
     };
     const bibleItem = BibleItem.fromJson(bibleItemJson);
     const kjvTitle = `${bookKey} ${chapter}:${verse}`;
-    return { newItem, bibleItem, kjvTitle };
+    return { newItem: fullVerseText, bibleItem, kjvTitle };
 }
 
 export function pageNumberToReqData(

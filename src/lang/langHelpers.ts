@@ -264,6 +264,7 @@ export type LanguageDataType = {
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
+    sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
     stopWords: string[];
     trimText: (text: string) => string;
@@ -405,6 +406,15 @@ export async function fromLocaleNum(locale: LocaleType, localeNum: string) {
     }
     const numList = langData.numList;
     return fromStringNum(numList, localeNum);
+}
+
+export async function sanitizePreviewText(locale: LocaleType, text: string) {
+    let langData = await getLangAsync(locale);
+    langData ??= await getLangAsync(defaultLocale);
+    if (langData === null) {
+        return text;
+    }
+    return langData.sanitizePreviewText(text);
 }
 
 export async function sanitizeFindingText(locale: LocaleType, text: string) {

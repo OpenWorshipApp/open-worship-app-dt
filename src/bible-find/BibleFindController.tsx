@@ -76,7 +76,7 @@ async function initDatabase(bibleKey: string, databaseFilePath: string) {
         console.log(`DB: Processing ${bookKey}`);
         for (const [chapterKey, verses] of Object.entries(book)) {
             for (const verse in verses) {
-                const sanitizedText = await sanitizeFindingText(
+                let sanitizedText = await sanitizeFindingText(
                     locale,
                     verses[verse],
                 );
@@ -93,6 +93,7 @@ async function initDatabase(bibleKey: string, databaseFilePath: string) {
                             words.add(sanitizedWord);
                         }
                     }
+                    sanitizedText = sanitizedText.split(' ').join('');
                 }
                 let text = `${bookKey}.${chapterKey}:${verse}=>${verses[verse]}`;
                 text = text.replace(/'/g, "''");
@@ -153,7 +154,13 @@ class DatabaseFindingHandler {
         if (bookKey) {
             sqlBookKey = ` AND text LIKE '${bookKey}.%'`;
         }
-        const sqlFrom = `FROM verses WHERE sText LIKE '%${sText}%'${sqlBookKey}`;
+        const wildCardText = sText
+            .split(' ')
+            .filter((part) => quickTrimText(locale, part))
+            .filter((part) => part.length > 0)
+            .map((part) => `%${part}%`)
+            .join('');
+        const sqlFrom = `FROM verses WHERE sText LIKE '%${wildCardText}%'${sqlBookKey}`;
         let sql = `SELECT text ${sqlFrom}`;
         if (fromLineNumber == undefined || toLineNumber == undefined) {
             fromLineNumber = 0;
@@ -213,6 +220,7 @@ class DatabaseFindingHandler {
 const BIBLE_FIND_SELECTED_BOOK_SETTING_NAME = 'bible-find-selected-book-key';
 
 const instanceCache: Record<string, BibleFindController | null> = {};
+const VERSIONS = ['', '1'];
 export default class BibleFindController {
     onlineFindHandler: OnlineFindHandler | null = null;
     databaseFindHandler: DatabaseFindingHandler | null = null;
@@ -298,6 +306,7 @@ export default class BibleFindController {
     }
 
     static async getDatabaseFilePath(xmlFilePath: string) {
+        const versions = [...VERSIONS];
         const xmlText = await FileSource.readFileData(xmlFilePath);
         if (xmlText === null) {
             return null;
@@ -311,7 +320,10 @@ export default class BibleFindController {
             return null;
         }
         const fileSource = FileSource.getInstance(xmlFilePath);
-        const databaseFilePath = pathJoin(basePath, `${fileSource.name}.db`);
+        const databaseFilePath = pathJoin(
+            basePath,
+            `${fileSource.name}${versions.at(-1)}.db`,
+        );
         return databaseFilePath;
     }
 
