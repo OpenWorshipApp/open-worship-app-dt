@@ -143,7 +143,7 @@ class DatabaseFindingHandler {
     async doFinding(bibleKey: string, findData: BibleFindForType) {
         // TODO: use dictionary to break text text to words.
         // e.g: Khmer language has no space between words so we need to break it to words
-        const { bookKey, isFresh, text } = findData;
+        const { bookKeys, isFresh, text } = findData;
         if (!text) {
             return null;
         }
@@ -151,8 +151,11 @@ class DatabaseFindingHandler {
         const locale = await getBibleLocale(bibleKey);
         const sText = (await sanitizeFindingText(locale, text)) ?? text;
         let sqlBookKey = '';
-        if (bookKey) {
-            sqlBookKey = ` AND text LIKE '${bookKey}.%'`;
+        if (bookKeys?.length) {
+            const bookConditions = bookKeys
+                .map((bookKey) => `text LIKE '${bookKey}%'`)
+                .join(' OR ');
+            sqlBookKey = ` AND (${bookConditions})`;
         }
         const wildCardText = sText
             .split(' ')
@@ -171,7 +174,7 @@ class DatabaseFindingHandler {
             throw new Error(`Invalid line number ${JSON.stringify(findData)}`);
         }
         sql += ` LIMIT ${fromLineNumber}, ${count}`;
-        const result = this.database.getAll(`${sql};`);
+        const result = this.database.getAll(sql);
         const foundResult = result.map((item) => {
             const splitted = item.text.split('=>');
             return {
@@ -240,29 +243,37 @@ export default class BibleFindController {
         this.locale = locale;
     }
 
-    get selectedBookKey() {
-        const bookKey = getSetting(BIBLE_FIND_SELECTED_BOOK_SETTING_NAME) ?? '';
-        return bookKey;
+    get selectedBookKeys() {
+        const settingStr =
+            getSetting(BIBLE_FIND_SELECTED_BOOK_SETTING_NAME) ?? '[]';
+        try {
+            return JSON.parse(settingStr) as string[];
+        } catch (_error) {}
+        return [];
     }
-    set selectedBookKey(bookKey: string | null) {
-        setSetting(BIBLE_FIND_SELECTED_BOOK_SETTING_NAME, bookKey ?? '');
+    set selectedBookKeys(bookKeys: string[]) {
+        setSetting(
+            BIBLE_FIND_SELECTED_BOOK_SETTING_NAME,
+            JSON.stringify(bookKeys),
+        );
     }
 
-    async getSelectedBook() {
-        const bookKey = this.selectedBookKey;
-        console.log(bookKey);
-        if (!bookKey) {
-            return null;
-        }
-
-        const bibleInfo = await getBibleInfo(this.bibleKey);
-        if (bibleInfo === null) {
-            return null;
-        }
-        return {
-            bookKey,
-            book: bibleInfo.books[bookKey] ?? bookKey,
-        } as SelectedBookKeyType;
+    async getSelectedBooks() {
+        const bookKeys = this.selectedBookKeys;
+        return (
+            await Promise.all(
+                bookKeys.map(async (bookKey) => {
+                    const bibleInfo = await getBibleInfo(this.bibleKey);
+                    if (bibleInfo === null) {
+                        return null;
+                    }
+                    return {
+                        bookKey,
+                        book: bibleInfo.books[bookKey] ?? bookKey,
+                    } as SelectedBookKeyType;
+                }),
+            )
+        ).filter((item) => item !== null);
     }
 
     get bibleKey() {
@@ -277,9 +288,7 @@ export default class BibleFindController {
     }
 
     async doFinding(findData: BibleFindForType) {
-        if (this.selectedBookKey !== null) {
-            findData['bookKey'] = this.selectedBookKey;
-        }
+        findData['bookKeys'] = this.selectedBookKeys;
         if (this.onlineFindHandler !== null) {
             return await this.onlineFindHandler.doFinding(findData);
         }

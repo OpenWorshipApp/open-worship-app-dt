@@ -9,7 +9,8 @@ import { freezeObject } from '../helpers';
 import bibleJson from './bible.json';
 
 export const kjvBibleInfo = bibleJson as {
-    booksOrder: string[];
+    bookKeysOrder: string[];
+    bookKeysOld: string[];
     books: { [key: string]: BookType };
     kjvKeyValue: { [key: string]: string };
 };
@@ -104,7 +105,7 @@ export function useChapterMatch(
     return matches;
 }
 
-type BookMatchDataType = {
+export type BookMatchDataType = {
     bibleKey: string;
     bookKey: string;
     book: string;
@@ -243,8 +244,8 @@ export function toChapterList(bibleKey: string, bookKey: string) {
 function toIndex(bookKey: string, chapterNum: number) {
     let index = -1;
     let bIndex = 0;
-    while (kjvBibleInfo.booksOrder[bIndex]) {
-        const bookKey1 = kjvBibleInfo.booksOrder[bIndex];
+    while (kjvBibleInfo.bookKeysOrder[bIndex]) {
+        const bookKey1 = kjvBibleInfo.bookKeysOrder[bIndex];
         const chapterCount = kjvBibleInfo.books[bookKey1].chapterCount;
         if (bookKey1 === bookKey) {
             if (chapterNum > chapterCount) {

@@ -119,7 +119,7 @@ export default function BibleXMLInfoPreviewComp({
     const handleSaving = async () => {
         const { canSave, newBibleInfo } = validateCanSave();
         const booksAvailableLength = newBibleInfo.booksAvailable.length;
-        const kjvBooksAvailableLength = kjvBibleInfo.booksOrder.length;
+        const kjvBooksAvailableLength = kjvBibleInfo.bookKeysOrder.length;
 
         if (booksAvailableLength !== kjvBooksAvailableLength) {
             const isConfirmed = await showAppConfirm(

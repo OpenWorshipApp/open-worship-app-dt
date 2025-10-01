@@ -21,7 +21,7 @@ import {
     useAppEffectAsync,
     useAppStateAsync,
 } from './debuggerHelpers';
-import { kjvBibleInfo } from './bible-helpers/serverBibleHelpers';
+import { getKJVKeyValue } from './bible-helpers/serverBibleHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { getLangFromBibleKey } from './bible-helpers/serverBibleHelpers2';
 
@@ -199,7 +199,7 @@ function toTitleCase(str: string) {
         return char.toUpperCase();
     });
 }
-const map = Object.entries(kjvBibleInfo.kjvKeyValue)
+const map = Object.entries(getKJVKeyValue())
     .map(([key, value]) => `${toTitleCase(value)}:${key}`)
     .join(', ');
 

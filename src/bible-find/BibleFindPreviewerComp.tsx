@@ -58,7 +58,7 @@ export default function BibleFindPreviewerComp() {
                 />
             </div>
             <div
-                className="card-body px-1 app-inner-shadow"
+                className="card-body p-0 app-inner-shadow"
                 style={{
                     overflowY: 'auto',
                     height: 'calc(100% - 42px)',

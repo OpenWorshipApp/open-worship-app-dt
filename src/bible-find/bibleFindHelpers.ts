@@ -18,6 +18,13 @@ import {
 } from '../context-menu/appContextMenuHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import BibleFindController from './BibleFindController';
+import { SetStateAction } from 'react';
+
+export type FindDataType = {
+    pagingData: PagingDataTye;
+    foundData: { [key: string]: BibleFindResultType | null | undefined };
+};
 
 export type SelectedBookKeyType = {
     bookKey: string;
@@ -44,7 +51,7 @@ export type BibleFindResultType = {
     }[];
 };
 export type BibleFindForType = {
-    bookKey?: string;
+    bookKeys?: string[];
     fromLineNumber?: number;
     toLineNumber?: number;
     text: string;
@@ -54,7 +61,6 @@ export type BibleFindForType = {
 export type PagingDataTye = {
     pages: string[];
     currentPage: string;
-    pageSize: number;
     perPage: number;
 };
 export type AllDataType = { [key: string]: BibleFindResultType };
@@ -89,7 +95,7 @@ export function calcPerPage(toLineNumber: number, fromLineNumber: number) {
 
 export function calcPaging(data: BibleFindResultType | null): PagingDataTye {
     if (data === null) {
-        return { pages: [], currentPage: '0', pageSize: 0, perPage: 0 };
+        return { pages: [], currentPage: '0', perPage: 0 };
     }
     const perPage = calcPerPage(data.toLineNumber, data.fromLineNumber);
     const pageSize = Math.ceil(data.maxLineNumber / perPage);
@@ -97,7 +103,7 @@ export function calcPaging(data: BibleFindResultType | null): PagingDataTye {
         return i + 1 + '';
     });
     const currentPage = findPageNumber(data, perPage, pages);
-    return { pages, currentPage, pageSize, perPage };
+    return { pages, currentPage, perPage };
 }
 
 export async function breakItem(
@@ -119,7 +125,7 @@ export async function breakItem(
     for (const subText of sanitizedFindText.split(' ')) {
         fullVerseText = fullVerseText.replace(
             new RegExp(`(${subText})`, 'ig'),
-            '<span style="color:red">$1</span>',
+            '<span style="color:#88ff00">$1</span>',
         );
     }
     const [bookKey, chapter] = bookKeyChapter.split('.');
@@ -141,12 +147,9 @@ export async function breakItem(
     return { newItem: fullVerseText, bibleItem, kjvTitle };
 }
 
-export function pageNumberToReqData(
-    pagingData: PagingDataTye,
-    pageNumber: string,
-) {
+export function pageNumberToReqData(pagingData: PagingDataTye, page: string) {
     const { perPage } = pagingData;
-    let newPageNumber = parseInt(pageNumber);
+    let newPageNumber = parseInt(page);
     newPageNumber -= 1;
     const fromLineNumber = perPage * newPageNumber + 1;
     return {
@@ -229,4 +232,86 @@ export function openContextMenu(
         },
     });
     showAppContextMenu(event, contextMenuItems);
+}
+
+async function finding(
+    bibleFindController: BibleFindController,
+    findData: BibleFindForType,
+) {
+    const foundDataPerPage = await bibleFindController.doFinding(findData);
+    if (foundDataPerPage === null) {
+        return null;
+    }
+    const pagingData = calcPaging(foundDataPerPage);
+    const page = findPageNumber(
+        foundDataPerPage,
+        pagingData.perPage,
+        pagingData.pages,
+    );
+    return {
+        page,
+        pagingData,
+        foundDataPerPage,
+    };
+}
+
+export async function doFinding(
+    bibleFindController: BibleFindController,
+    findText: string,
+    data: FindDataType | null | undefined,
+    setData: React.Dispatch<SetStateAction<FindDataType | null | undefined>>,
+) {
+    if (data === null) {
+        return;
+    }
+    if (data === undefined) {
+        const result = await finding(bibleFindController, {
+            text: findText,
+        });
+        if (result === null) {
+            setData(null);
+            return;
+        }
+        const { page, foundDataPerPage, pagingData } = result;
+        setData({
+            pagingData,
+            foundData: Object.fromEntries([
+                ...pagingData.pages.map((page) => {
+                    return [page, null];
+                }),
+                [page, foundDataPerPage],
+            ]),
+        });
+    } else {
+        const { pagingData, foundData } = data;
+        for (const page of pagingData.pages) {
+            if (foundData[page] !== undefined) {
+                continue;
+            }
+            const findForData = pageNumberToReqData(data.pagingData, page);
+            const result = await finding(bibleFindController, {
+                fromLineNumber: findForData.fromLineNumber,
+                toLineNumber: findForData.toLineNumber,
+                text: findText,
+            });
+            if (result === null) {
+                setData(null);
+                return;
+            }
+            setData((oldData) => {
+                if (!oldData) {
+                    return oldData;
+                }
+                const { foundDataPerPage } = result;
+                return {
+                    pagingData: oldData.pagingData,
+                    foundData: {
+                        ...oldData.foundData,
+                        [page]: foundDataPerPage,
+                    },
+                };
+            });
+            break;
+        }
+    }
 }

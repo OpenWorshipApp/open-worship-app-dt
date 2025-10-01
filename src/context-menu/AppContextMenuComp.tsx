@@ -23,11 +23,12 @@ function ContextMenuItemComp({
     if (item.menuElement === elementDivider) {
         return item.menuElement;
     }
+    const isDisabled = (item.disabled ?? false) || item.onSelect === undefined;
     return (
         <div
             className={
                 `${APP_CONTEXT_MENU_ITEM_CLASS} d-flex w-100 app-overflow-hidden` +
-                `${item.disabled ? ' disabled' : ''}`
+                `${isDisabled ? ' disabled' : ''}`
             }
             style={item.style ?? {}}
             title={
@@ -38,12 +39,12 @@ function ContextMenuItemComp({
                 event.preventDefault();
                 event.stopPropagation();
                 const { onSelect } = item;
-                if (item.disabled || onSelect === undefined) {
+                if (isDisabled) {
                     return;
                 }
                 setTimeout(() => {
                     onClose();
-                    onSelect(event as any);
+                    onSelect?.(event as any);
                 }, 0);
             }}
         >

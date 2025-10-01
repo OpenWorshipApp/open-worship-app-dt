@@ -16,7 +16,10 @@ import FileSource from '../../helper/FileSource';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
-import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
+import {
+    getKJVKeyValue,
+    kjvBibleInfo,
+} from '../../helper/bible-helpers/serverBibleHelpers';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
@@ -206,7 +209,7 @@ function getGuessingBibleKeys(bibleXMLElement: Element) {
 }
 
 function getBookKey(bookXMLElement: Element) {
-    const bookKeysOrder = kjvBibleInfo.booksOrder;
+    const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
     let bookKey = guessValue(bookXMLElement, attributesMap.bookKey, null);
     if (bookKey !== null && bookKeysOrder.includes(bookKey)) {
         return bookKey;
@@ -299,7 +302,7 @@ export async function getBibleInfoJson(bibleXMLElement: Element) {
     const bookKeyMap = getBibleMap(
         mapElement ?? null,
         tagNamesMap.bookMap,
-        cloneJson(kjvBibleInfo.kjvKeyValue),
+        cloneJson(getKJVKeyValue()),
     );
     const bibleKey = await guessingBibleKey(bibleXMLElement);
     if (bibleKey === null) {

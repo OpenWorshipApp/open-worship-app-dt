@@ -2,7 +2,10 @@ import { useState } from 'react';
 
 import { getLangCode, LocaleType } from '../../lang/langHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
-import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
+import {
+    getKJVKeyValue,
+    kjvBibleInfo,
+} from '../../helper/bible-helpers/serverBibleHelpers';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -160,14 +163,15 @@ export function genBibleNumbersMapXMLInput(
 }
 
 const genMonacoBibleLineNumber = (num: number) => {
-    const map = kjvBibleInfo.booksOrder;
+    const map = kjvBibleInfo.bookKeysOrder;
     const index = num - 1;
     const numString = `0${num}`.slice(-2);
     if (map[index] === undefined) {
         return numString;
     }
     const bookKey = map[num - 1];
-    return `${kjvBibleInfo.kjvKeyValue[bookKey]} (${bookKey}) ${numString}`;
+    const kjvKeyValue = getKJVKeyValue();
+    return `${kjvKeyValue[bookKey]} (${bookKey}) ${numString}`;
 };
 
 function BibleBooksMapXMLInputComp({
@@ -221,7 +225,7 @@ function BibleBooksMapXMLInputComp({
                     onClick={(event) => {
                         event.stopPropagation();
                         editorStore.replaceValue(
-                            Object.values(kjvBibleInfo.kjvKeyValue).join('\n'),
+                            Object.values(getKJVKeyValue()).join('\n'),
                         );
                     }}
                 >

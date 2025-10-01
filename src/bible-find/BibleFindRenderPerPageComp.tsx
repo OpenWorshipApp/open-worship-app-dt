@@ -1,84 +1,48 @@
-import { BibleDirectViewTitleComp } from '../bible-reader/BibleViewExtra';
-import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
-import { handleDragStart } from '../helper/dragHelpers';
-import { useAppPromise } from '../helper/helpers';
-import { useBibleFindController } from './BibleFindController';
-import {
-    breakItem,
-    openContextMenu,
-    openInBibleLookup,
-} from './bibleFindHelpers';
+import { bringDomToTopView } from '../helper/helpers';
+import RenderFoundItemComp from './RenderFoundItemComp';
+import { ShowFindingComp } from './ShowFindingComp';
 
 export const APP_FOUND_PAGE_CLASS = 'app-found-page';
 
-function RenderFoundItemComp({
-    findText,
-    text,
-    bibleKey,
-}: Readonly<{
-    findText: string;
-    text: string;
-    bibleKey: string;
-}>) {
-    const viewController = useLookupBibleItemControllerContext();
-    const bibleFindController = useBibleFindController();
-    const data = useAppPromise(
-        breakItem(bibleFindController.locale, findText, text, bibleKey),
-    );
-    if (data === undefined) {
-        return <div>Loading...</div>;
-    }
-    if (data === null) {
-        return <div>Fail to get data</div>;
-    }
-    const { newItem, bibleItem } = data;
-    return (
-        <div
-            className="w-100 app-border-white-round my-2 p-2 app-caught-hover-pointer"
-            draggable
-            onDragStart={(event) => {
-                handleDragStart(event, bibleItem);
-            }}
-            onContextMenu={(event) => {
-                openContextMenu(event, {
-                    viewController,
-                    bibleItem,
-                });
-            }}
-            onClick={(event) => {
-                openInBibleLookup(event, viewController, bibleItem);
-            }}
-        >
-            <BibleDirectViewTitleComp bibleItem={bibleItem} />
-            <span
-                data-bible-key={bibleItem.bibleKey}
-                dangerouslySetInnerHTML={{
-                    __html: newItem,
-                }}
-            />
-        </div>
-    );
-}
-
 export default function BibleFindRenderPerPageComp({
-    pageNumber,
+    page,
     items,
     findText,
     bibleKey,
 }: Readonly<{
-    pageNumber: string;
-    items: {
-        text: string;
-        uniqueKey: string;
-    }[];
+    page: string;
+    items:
+        | {
+              text: string;
+              uniqueKey: string;
+          }[]
+        | undefined;
     findText: string;
     bibleKey: string;
 }>) {
+    if (items === undefined) {
+        return <ShowFindingComp />;
+    }
     return (
         <>
-            <div className={`d-flex ${APP_FOUND_PAGE_CLASS}-${pageNumber}`}>
-                <span>{pageNumber}</span>
-                <hr className="w-100" />
+            <div
+                className={`d-flex ${APP_FOUND_PAGE_CLASS}-${page}`}
+                ref={(element) => {
+                    if (element === null) {
+                        return;
+                    }
+                    setTimeout(() => {
+                        bringDomToTopView(element);
+                    }, 1000);
+                }}
+            >
+                <span style={{ color: '#88ff00' }}>{page}</span>
+                <hr
+                    className="w-100"
+                    style={{
+                        border: '1px dotted var(--bs-info-text-emphasis)',
+                    }}
+                />
             </div>
             <div className="w-100">
                 {items.map(({ text, uniqueKey }) => {

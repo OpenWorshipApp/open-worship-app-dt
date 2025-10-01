@@ -56,10 +56,11 @@ export default function BibleFindHeaderComp({
         if (['Enter', 'Escape'].includes(event.key)) {
             event.preventDefault();
             event.stopPropagation();
-            const newText = event.key === 'Enter' ? text : '';
+            const isEnterKey = event.key === 'Enter';
+            const newText = isEnterKey ? text : '';
             setText(newText);
             attemptTimeout(() => {
-                handleFinding(newText);
+                handleFinding(newText, isEnterKey);
             }, true);
         }
     };

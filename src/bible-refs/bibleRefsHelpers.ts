@@ -148,8 +148,8 @@ export function fromBibleRefText(text: string): BibleRefType {
 
 export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     const extracted = bibleRenderHelper.fromKJVBibleVersesKey(bibleVerseKey);
-    const booksOrder = kjvBibleInfo.booksOrder;
-    if (!booksOrder.includes(extracted.bookKey)) {
+    const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
+    if (!bookKeysOrder.includes(extracted.bookKey)) {
         return null;
     }
     const bibleItem = BibleItem.fromJson({

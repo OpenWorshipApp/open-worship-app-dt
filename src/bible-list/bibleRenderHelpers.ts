@@ -177,23 +177,23 @@ class BibleRenderHelper {
         if (bibleInfo === null) {
             return null;
         }
-        const booksOrder = kjvBibleInfo.booksOrder;
-        const bookIndex = booksOrder.findIndex(
+        const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
+        const bookIndex = bookKeysOrder.findIndex(
             (bookKey1) => bookKey1 === bookKey,
         );
         let nextBookIndex = bookIndex;
         let nextChapter = chapter + (isNext ? 1 : -1);
         if (nextChapter < 1 || nextChapter > getKJVChapterCount(bookKey)) {
-            const bookLength = booksOrder.length;
+            const bookLength = bookKeysOrder.length;
             nextBookIndex =
                 (bookLength + nextBookIndex + (isNext ? 1 : -1)) % bookLength;
             nextChapter = isNext
                 ? 1
-                : getKJVChapterCount(booksOrder[nextBookIndex]);
+                : getKJVChapterCount(bookKeysOrder[nextBookIndex]);
         }
         const verses = await getVerses(bibleKey, bookKey, nextChapter);
         return {
-            bookKey: booksOrder[nextBookIndex],
+            bookKey: bookKeysOrder[nextBookIndex],
             chapter: nextChapter,
             verseStart: 1,
             verseEnd: verses ? Object.keys(verses).length : 1,
