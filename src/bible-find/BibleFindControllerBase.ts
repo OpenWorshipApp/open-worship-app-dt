@@ -93,12 +93,14 @@ class DatabaseFindHandler {
         this.database = database;
     }
     async doFinding(bibleKey: string, findData: BibleFindForType) {
-        const { bookKey, isFresh, text } = findData;
+        const { bookKeys, isFresh, text } = findData;
         let { fromLineNumber, toLineNumber } = findData;
         const locale = await getBibleLocale(bibleKey);
         const sText = (await sanitizeFindingText(locale, text)) ?? text;
         const sqlBookKey =
-            bookKey !== undefined ? ` AND bookKey = '${bookKey}'` : '';
+            bookKeys !== undefined
+                ? ` AND bookKey IN (${bookKeys.join(',')})`
+                : '';
         const sqlFrom = `FROM verses WHERE sText LIKE '%${sText}%'${sqlBookKey}`;
         let sql = `SELECT text ${sqlFrom}`;
         if (fromLineNumber == undefined || toLineNumber == undefined) {
@@ -139,16 +141,16 @@ export default class BibleFindControllerBase {
     onlineFindHandler: OnlineFindHandler | null = null;
     databaseFindHandler: DatabaseFindHandler | null = null;
     private readonly _bibleKey: string;
-    private _bookKey: string | null = null;
+    private _bookKeys: string[] = [];
     constructor(bibleKey: string) {
         this._bibleKey = bibleKey;
     }
 
-    get bookKey() {
-        return this._bookKey;
+    get bookKeys() {
+        return this._bookKeys;
     }
-    set bookKey(value: string | null) {
-        this._bookKey = value;
+    set bookKeys(value: string[]) {
+        this._bookKeys = value;
     }
 
     get bibleKey() {
@@ -156,8 +158,8 @@ export default class BibleFindControllerBase {
     }
 
     async doFinding(findData: BibleFindForType) {
-        if (this.bookKey !== null) {
-            findData['bookKey'] = this.bookKey;
+        if (this.bookKeys !== null) {
+            findData['bookKeys'] = this.bookKeys;
         }
         if (this.onlineFindHandler !== null) {
             return await this.onlineFindHandler.doFinding(findData);

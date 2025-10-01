@@ -15,7 +15,9 @@ function RenderCrossReferenceComp({
     return (
         <div>
             <hr />
-            <strong>{crossReference.title}</strong>
+            <strong style={{ color: '#88ff00b8' }}>
+                {crossReference.title}
+            </strong>
             {crossReference.verses.map((item, i) => {
                 return (
                     <BibleRefAIRenderFoundItemComp
