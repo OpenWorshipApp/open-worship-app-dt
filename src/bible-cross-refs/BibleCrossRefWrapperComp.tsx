@@ -7,7 +7,7 @@ export default function BibleCrossRefWrapperComp({
     settingName,
     onRefresh,
 }: Readonly<{
-    title: string;
+    title: React.ReactNode;
     children: React.ReactNode;
     settingName: string;
     onRefresh: () => void;

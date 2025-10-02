@@ -52,6 +52,7 @@ import {
     checkIsAIAudioAvailableForBible,
     useIsAudioAIEnabled,
 } from '../helper/ai/openAIAudioHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -269,10 +270,12 @@ function AudioPlayerComp({
     src,
     onStart,
     onEnd,
+    refreshAudio,
 }: Readonly<{
     src: string | undefined | null;
     onStart: (audio: HTMLAudioElement) => void;
     onEnd: (audio: HTMLAudioElement) => void;
+    refreshAudio: () => void;
 }>) {
     if (src === undefined) {
         return (
@@ -290,6 +293,14 @@ function AudioPlayerComp({
     if (src === null) {
         return null;
     }
+    const handleContextMenuOpening = (event: any) => {
+        showAppContextMenu(event, [
+            {
+                menuElement: '`Refresh',
+                onSelect: refreshAudio,
+            },
+        ]);
+    };
     return (
         <audio
             className="verse-audio"
@@ -321,6 +332,7 @@ function AudioPlayerComp({
                     onEnd(el);
                 }
             }}
+            onContextMenu={handleContextMenuOpening}
         >
             <source src={src} />
             <track kind="captions" />
@@ -380,6 +392,7 @@ function RenderVerseTextDetailListComp({
     extraVerseInfoList = [],
     verseTextRef,
     audioSrcMap,
+    refreshAudio,
 }: Readonly<{
     bibleItem: BibleItem;
     verseInfo: CompiledVerseType;
@@ -387,6 +400,7 @@ function RenderVerseTextDetailListComp({
     extraVerseInfoList?: CompiledVerseType[];
     verseTextRef: RefObject<HTMLDivElement | null>;
     audioSrcMap: { [key: string]: string | undefined | null };
+    refreshAudio: () => void;
 }>) {
     const { isAudioEnabled } = useIsAudioAIEnabled(bibleItem);
     const bibleItemViewController = useBibleItemsViewControllerContext();
@@ -427,6 +441,7 @@ function RenderVerseTextDetailListComp({
                     src={audioSrcMap[bibleVersesKey]}
                     onStart={handleAudioStarting}
                     onEnd={handleAudioEnding}
+                    refreshAudio={refreshAudio}
                 />
             ) : null}
             <span data-bible-key={bibleKey}>{text}</span>
@@ -471,14 +486,14 @@ function RenderVerseTextDetailComp({
     };
     const viewController = useBibleItemsViewControllerContext();
     const isExtraVerses = extraVerseInfoList.length > 0;
-    const loadAudio = async () => {
+    const loadAudio = async (isForce?: boolean) => {
         const isAudioEnabled = await checkIsAIAudioAvailableForBible(bibleItem);
         if (!isAudioEnabled) {
             return;
         }
         const { bibleVersesKey } = verseInfo;
         setAudioSrcMap1(bibleVersesKey, undefined);
-        const speechFile = await bibleTextToSpeech(verseInfo);
+        const speechFile = await bibleTextToSpeech(verseInfo, isForce);
         if (speechFile === null) {
             setAudioSrcMap1(bibleVersesKey, null);
             return;
@@ -512,6 +527,9 @@ function RenderVerseTextDetailComp({
         );
         loadAudio();
     };
+    const handleAudioRefreshing = () => {
+        loadAudio(true);
+    };
     return (
         <div
             ref={verseTextRef}
@@ -533,6 +551,7 @@ function RenderVerseTextDetailComp({
                 extraVerseInfoList={extraVerseInfoList}
                 verseTextRef={verseTextRef}
                 audioSrcMap={audioSrcMap}
+                refreshAudio={handleAudioRefreshing}
             />
         </div>
     );

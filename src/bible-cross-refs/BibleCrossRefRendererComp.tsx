@@ -39,7 +39,6 @@ export default function BibleCrossRefRendererComp({
                 cloneBibleItem.target.verseEnd = verse;
                 return (
                     <Fragment key={verse}>
-                        <hr />
                         <div
                             className="alert alert-info m-1 p-1"
                             data-bible-key={cloneBibleItem.bibleKey}
@@ -71,7 +70,12 @@ export default function BibleCrossRefRendererComp({
                         </BibleCrossRefWrapperComp>
                         {aiSetting.anthropicAPIKey ? (
                             <BibleCrossRefWrapperComp
-                                title="Anthropic Bible Reference"
+                                title={
+                                    <>
+                                        <i className="bi bi-robot" /> Anthropic
+                                        Bible Reference
+                                    </>
+                                }
                                 settingName="show-ai-bible-ref"
                                 onRefresh={handleRefreshing.bind(
                                     null,
@@ -90,7 +94,12 @@ export default function BibleCrossRefRendererComp({
                         ) : null}
                         {aiSetting.openAIAPIKey ? (
                             <BibleCrossRefWrapperComp
-                                title="OpenAI Bible Reference"
+                                title={
+                                    <>
+                                        <i className="bi bi-robot" /> OpenAI
+                                        Bible Reference
+                                    </>
+                                }
                                 settingName="show-ai-bible-ref"
                                 onRefresh={handleRefreshing.bind(
                                     null,

@@ -2,6 +2,7 @@ import { handleError } from '../errorHelpers';
 import {
     fsCheckDirExist,
     fsCheckFileExist,
+    fsDeleteFile,
     fsMkDirSync,
     fsWriteFile,
     pathJoin,
@@ -25,18 +26,20 @@ export type SpeakableTextDataType = {
     filePath: string;
 };
 
-export async function textToSpeech({
-    text,
-    locale,
-    filePath,
-}: SpeakableTextDataType) {
+export async function textToSpeech(
+    { text, locale, filePath }: SpeakableTextDataType,
+    isForce = false,
+) {
     return unlocking(filePath, async () => {
         try {
             // voice:
             // 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'coral', 'verse',
             // 'ballad', 'ash', 'sage', 'marin', and 'cedar'
             if (await fsCheckFileExist(filePath)) {
-                return filePath;
+                if (!isForce) {
+                    return filePath;
+                }
+                await fsDeleteFile(filePath);
             }
             const client = getOpenAIInstance();
             if (client === null) {
@@ -66,19 +69,22 @@ export async function textToSpeech({
     });
 }
 
-export async function bibleTextToSpeech({
-    text,
-    bibleKey,
-    bookKey,
-    chapter,
-    verse,
-}: {
-    text: string;
-    bibleKey: string;
-    bookKey: string;
-    chapter: number;
-    verse: number;
-}) {
+export async function bibleTextToSpeech(
+    {
+        text,
+        bibleKey,
+        bookKey,
+        chapter,
+        verse,
+    }: {
+        text: string;
+        bibleKey: string;
+        bookKey: string;
+        chapter: number;
+        verse: number;
+    },
+    isForce?: boolean,
+) {
     if (getOpenAIInstance() === null) {
         return null;
     }
@@ -110,11 +116,14 @@ export async function bibleTextToSpeech({
         fsMkDirSync(containingDir);
     }
     const filePath = pathJoin(containingDir, fileFullName);
-    return textToSpeech({
-        text,
-        locale: info.locale,
-        filePath,
-    });
+    return textToSpeech(
+        {
+            text,
+            locale: info.locale,
+            filePath,
+        },
+        isForce,
+    );
 }
 
 export async function checkIsAIAudioAvailableForBible(bibleItem: BibleItem) {
