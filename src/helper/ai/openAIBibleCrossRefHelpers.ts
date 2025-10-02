@@ -84,7 +84,7 @@ export async function getCrossRefs(
         }
         const content = genPrompt(bibleTitle);
         const response = await client.chat.completions.create({
-            model: 'gpt-4.1-mini',
+            model: 'gpt-5',
             messages: [{ role: 'user', content }],
             response_format,
         });

@@ -14,6 +14,9 @@ export default function BibleCrossRefWrapperComp({
 }>) {
     const [isShowing, setIsShowing] = useStateSettingBoolean(settingName, true);
     const handleContextMenuOpening = (event: any) => {
+        if (!isShowing) {
+            return;
+        }
         showAppContextMenu(event, [
             {
                 menuElement: '`Refresh',
