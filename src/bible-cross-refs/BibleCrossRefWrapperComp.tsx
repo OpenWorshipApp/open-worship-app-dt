@@ -1,15 +1,26 @@
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 
 export default function BibleCrossRefWrapperComp({
     title,
     children,
     settingName,
+    onRefresh,
 }: Readonly<{
     title: string;
     children: React.ReactNode;
     settingName: string;
+    onRefresh: () => void;
 }>) {
     const [isShowing, setIsShowing] = useStateSettingBoolean(settingName, true);
+    const handleContextMenuOpening = (event: any) => {
+        showAppContextMenu(event, [
+            {
+                menuElement: '`Refresh',
+                onSelect: onRefresh,
+            },
+        ]);
+    };
     return (
         <div
             className="card w-100 my-1"
@@ -25,6 +36,7 @@ export default function BibleCrossRefWrapperComp({
                 onClick={() => {
                     setIsShowing(!isShowing);
                 }}
+                onContextMenu={handleContextMenuOpening}
             >
                 <i
                     className={`bi bi-chevron-${isShowing ? 'down' : 'right'}`}

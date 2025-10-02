@@ -6,6 +6,7 @@ import { ensureDataDirectory } from '../../setting/directory-setting/directoryHe
 import {
     fsCheckDirExist,
     fsCheckFileExist,
+    fsDeleteFile,
     fsMkDirSync,
     fsReadFile,
     fsWriteFile,
@@ -191,6 +192,7 @@ async function getBibleCrossRef(
     bookKey: string,
     chapter: number,
     verseNum: number,
+    forceRefresh = false,
 ): Promise<CrossReferenceType[] | null> {
     const key = toBibleCrossRefString(bookKey, chapter, verseNum);
     if (key === null) {
@@ -212,14 +214,17 @@ async function getBibleCrossRef(
         const fileFullName = `${key}.json`;
         const filePath = pathJoin(containingDir, fileFullName);
         if (await fsCheckFileExist(filePath)) {
-            try {
-                const text = await fsReadFile(filePath);
-                const data = JSON.parse(text) as CrossReferenceType[];
-                return data;
-            } catch (error) {
-                console.error('Error reading cross reference file:', error);
-                return null;
+            if (!forceRefresh) {
+                try {
+                    const text = await fsReadFile(filePath);
+                    const data = JSON.parse(text) as CrossReferenceType[];
+                    return data;
+                } catch (error) {
+                    console.error('Error reading cross reference file:', error);
+                    return null;
+                }
             }
+            await fsDeleteFile(filePath);
         }
         const data = await instance.generateCrossReferences(key);
         if (data === null || data.crossReferences === undefined) {
@@ -233,6 +238,33 @@ async function getBibleCrossRef(
     });
 }
 
+async function getBibleCrossRefFromParams(
+    bookKey: string,
+    chapter: number,
+    verseNum: number,
+    forceRefresh = false,
+) {
+    const data = await getBibleCrossRef(
+        bookKey,
+        chapter,
+        verseNum,
+        forceRefresh,
+    );
+    if (data !== null) {
+        for (const crossRef of data) {
+            const verses = await Promise.all(
+                crossRef.verses.map(async (title) => {
+                    return BibleItem.bibleTitleToKJVVerseKey('KJV', title);
+                }),
+            );
+            crossRef.verses = verses.filter((item) => {
+                return item !== null;
+            });
+        }
+    }
+    return data;
+}
+
 export function useGetBibleCrossRefAnthropic(
     bookKey: string,
     chapter: number,
@@ -243,26 +275,25 @@ export function useGetBibleCrossRefAnthropic(
     >(undefined);
     useAppEffectAsync(
         async (methodContext) => {
-            const data = await getBibleCrossRef(bookKey, chapter, verseNum);
-            if (data !== null) {
-                for (const crossRef of data) {
-                    const verses = await Promise.all(
-                        crossRef.verses.map(async (title) => {
-                            return BibleItem.bibleTitleToKJVVerseKey(
-                                'KJV',
-                                title,
-                            );
-                        }),
-                    );
-                    crossRef.verses = verses.filter((item) => {
-                        return item !== null;
-                    });
-                }
-            }
+            const data = await getBibleCrossRefFromParams(
+                bookKey,
+                chapter,
+                verseNum,
+            );
             methodContext.setBibleCrossRef(data);
         },
         [bookKey, chapter],
         { setBibleCrossRef },
     );
-    return bibleCrossRef;
+    return {
+        bibleCrossRef,
+        refresh: () => {
+            setBibleCrossRef(undefined);
+            getBibleCrossRefFromParams(bookKey, chapter, verseNum, true).then(
+                (data) => {
+                    setBibleCrossRef(data);
+                },
+            );
+        },
+    };
 }

@@ -44,11 +44,13 @@ function transform(bibleRef: RawBibleCrossRefListType): BibleCrossRefType[][] {
 }
 
 const cache = new CacheManager<BibleCrossRefType[][]>(60); // 1 minute
-export async function getBibleCrossRef(key: string) {
+export async function getBibleCrossRef(key: string, forceRefresh = false) {
     return unlocking(`bible-refs/${key}`, async () => {
-        const cachedData = await cache.get(key);
-        if (cachedData !== null) {
-            return cachedData;
+        if (!forceRefresh) {
+            const cachedData = await cache.get(key);
+            if (cachedData !== null) {
+                return cachedData;
+            }
         }
         const encryptedText = await downloadBibleCrossRef(key);
         if (encryptedText === null) {
@@ -75,19 +77,27 @@ export function useGetBibleCrossRef(
     chapter: number,
     verseNum: number,
 ) {
+    const key = `${toBibleFileName(bookKey, chapter)}.${verseNum}`;
     const [bibleCrossRef, setBibleCrossRef] = useState<
         BibleCrossRefType[][] | null | undefined
     >(undefined);
     useAppEffectAsync(
         async (methodContext) => {
-            const key = `${toBibleFileName(bookKey, chapter)}.${verseNum}`;
             const data = await getBibleCrossRef(key);
             methodContext.setBibleCrossRef(data);
         },
         [bookKey, chapter],
         { setBibleCrossRef },
     );
-    return bibleCrossRef;
+    return {
+        bibleCrossRef,
+        refresh: () => {
+            setBibleCrossRef(undefined);
+            getBibleCrossRef(key, true).then((data) => {
+                setBibleCrossRef(data);
+            });
+        },
+    };
 }
 
 function takeIsS(text: string) {

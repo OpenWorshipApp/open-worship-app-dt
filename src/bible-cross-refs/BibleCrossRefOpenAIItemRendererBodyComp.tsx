@@ -1,21 +1,30 @@
+import { RefObject } from 'react';
 import { useGetBibleCrossRefOpenAI } from '../helper/ai/openAIBibleCrossRefHelpers';
 import LoadingComp from '../others/LoadingComp';
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
+import { RefreshingRefType, useGenRefreshRef } from '../helper/ai/aiHelpers';
 
 export default function BibleCrossRefOpenAIItemRendererBodyComp({
+    ref,
     bibleKey,
     bookKey,
     chapter,
     verse,
     index,
 }: Readonly<{
+    ref: RefObject<RefreshingRefType>;
     bibleKey: string;
     bookKey: string;
     chapter: number;
     verse: number;
     index: number;
 }>) {
-    const bibleCrossRef = useGetBibleCrossRefOpenAI(bookKey, chapter, verse);
+    const { bibleCrossRef, refresh } = useGetBibleCrossRefOpenAI(
+        bookKey,
+        chapter,
+        verse,
+    );
+    useGenRefreshRef(ref, refresh);
     if (bibleCrossRef === undefined) {
         return <LoadingComp />;
     }

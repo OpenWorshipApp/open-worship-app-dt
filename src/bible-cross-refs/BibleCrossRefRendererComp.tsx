@@ -5,7 +5,12 @@ import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRe
 import BibleCrossRefItemRendererBodyComp from './BibleCrossRefItemRendererBodyComp';
 import BibleCrossRefWrapperComp from './BibleCrossRefWrapperComp';
 import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropicItemRendererBodyComp';
-import { useAISetting } from '../helper/ai/aiHelpers';
+import {
+    defaultRefreshingRef,
+    RefreshingRefType,
+    useAISetting,
+} from '../helper/ai/aiHelpers';
+import { RefObject, useRef } from 'react';
 
 export default function BibleCrossRefRendererComp({
     bibleItem,
@@ -14,10 +19,18 @@ export default function BibleCrossRefRendererComp({
     bibleItem: BibleItem;
     setBibleItem: (bibleItem: BibleItem) => void;
 }>) {
+    const normalRef = useRef<RefreshingRefType>(defaultRefreshingRef);
+    const anthropicRef = useRef<RefreshingRefType>(defaultRefreshingRef);
+    const openAIRef = useRef<RefreshingRefType>(defaultRefreshingRef);
     const aiSetting = useAISetting();
     const { bookKey: book, chapter, verseStart } = bibleItem.target;
     // TODO: support multiple verses
     const verses = [verseStart];
+    const handleRefreshing = (ref: RefObject<RefreshingRefType | null>) => {
+        if (ref.current !== null) {
+            ref.current.refresh();
+        }
+    };
     return (
         <>
             {verses.map((verse, i) => {
@@ -45,8 +58,10 @@ export default function BibleCrossRefRendererComp({
                         <BibleCrossRefWrapperComp
                             title="Bible Reference"
                             settingName="show-standard-bible-ref"
+                            onRefresh={handleRefreshing.bind(null, normalRef)}
                         >
                             <BibleCrossRefItemRendererBodyComp
+                                ref={normalRef}
                                 bibleKey={bibleItem.bibleKey}
                                 bookKey={book}
                                 chapter={chapter}
@@ -58,8 +73,13 @@ export default function BibleCrossRefRendererComp({
                             <BibleCrossRefWrapperComp
                                 title="Anthropic Bible Reference"
                                 settingName="show-ai-bible-ref"
+                                onRefresh={handleRefreshing.bind(
+                                    null,
+                                    anthropicRef,
+                                )}
                             >
                                 <BibleCrossRefAnthropicItemRendererBodyComp
+                                    ref={anthropicRef}
                                     bibleKey={bibleItem.bibleKey}
                                     bookKey={book}
                                     chapter={chapter}
@@ -72,8 +92,13 @@ export default function BibleCrossRefRendererComp({
                             <BibleCrossRefWrapperComp
                                 title="OpenAI Bible Reference"
                                 settingName="show-ai-bible-ref"
+                                onRefresh={handleRefreshing.bind(
+                                    null,
+                                    openAIRef,
+                                )}
                             >
                                 <BibleCrossRefOpenAIItemRendererBodyComp
+                                    ref={openAIRef}
                                     bibleKey={bibleItem.bibleKey}
                                     bookKey={book}
                                     chapter={chapter}

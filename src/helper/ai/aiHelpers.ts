@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { RefObject, useState } from 'react';
 import { useAppEffect } from '../debuggerHelpers';
+
+export type RefreshingRefType = {
+    refresh: () => void;
+};
 
 export type AISettingType = {
     openAIAPIKey: string;
@@ -46,4 +50,20 @@ export function useAISetting() {
         };
     }, []);
     return setting;
+}
+
+export const defaultRefreshingRef: RefreshingRefType = {
+    refresh: () => {},
+};
+
+export function useGenRefreshRef(
+    ref: RefObject<RefreshingRefType>,
+    refresh: () => void,
+) {
+    useAppEffect(() => {
+        ref.current = { refresh };
+        return () => {
+            ref.current = defaultRefreshingRef;
+        };
+    }, [refresh]);
 }
