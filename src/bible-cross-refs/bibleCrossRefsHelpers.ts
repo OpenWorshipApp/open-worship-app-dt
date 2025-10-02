@@ -13,8 +13,8 @@ import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
 
-export type RawBibleRefListType = string[][];
-export type BibleRefType = {
+export type RawBibleCrossRefListType = string[][];
+export type BibleCrossRefType = {
     text: string;
     isS: boolean;
     isFN: boolean;
@@ -23,7 +23,7 @@ export type BibleRefType = {
     isLXXDSS: boolean;
 };
 
-async function downloadBibleRef(key: string) {
+async function downloadBibleCrossRef(key: string) {
     try {
         const content = await appApiFetch(`bible-refs/${key}`);
         return await content.text();
@@ -33,24 +33,24 @@ async function downloadBibleRef(key: string) {
     return null;
 }
 
-function transform(bibleRef: RawBibleRefListType): BibleRefType[][] {
+function transform(bibleRef: RawBibleCrossRefListType): BibleCrossRefType[][] {
     return bibleRef.map((row) => {
         return row.map((item) => {
             const encoded = bible_ref(item);
             const { text } = JSON.parse(encoded);
-            return fromBibleRefText(text);
+            return fromBibleCrossRefText(text);
         });
     });
 }
 
-const cache = new CacheManager<BibleRefType[][]>(60); // 1 minute
-export async function getBibleRef(key: string) {
+const cache = new CacheManager<BibleCrossRefType[][]>(60); // 1 minute
+export async function getBibleCrossRef(key: string) {
     return unlocking(`bible-refs/${key}`, async () => {
         const cachedData = await cache.get(key);
         if (cachedData !== null) {
             return cachedData;
         }
-        const encryptedText = await downloadBibleRef(key);
+        const encryptedText = await downloadBibleCrossRef(key);
         if (encryptedText === null) {
             return null;
         }
@@ -70,24 +70,24 @@ export async function getBibleRef(key: string) {
     });
 }
 
-export function useGetBibleRef(
+export function useGetBibleCrossRef(
     bookKey: string,
     chapter: number,
     verseNum: number,
 ) {
-    const [bibleRef, setBibleRef] = useState<
-        BibleRefType[][] | null | undefined
+    const [bibleCrossRef, setBibleCrossRef] = useState<
+        BibleCrossRefType[][] | null | undefined
     >(undefined);
     useAppEffectAsync(
         async (methodContext) => {
             const key = `${toBibleFileName(bookKey, chapter)}.${verseNum}`;
-            const data = await getBibleRef(key);
-            methodContext.setBibleRef(data);
+            const data = await getBibleCrossRef(key);
+            methodContext.setBibleCrossRef(data);
         },
         [bookKey, chapter],
-        { setBibleRef },
+        { setBibleCrossRef },
     );
-    return bibleRef;
+    return bibleCrossRef;
 }
 
 function takeIsS(text: string) {
@@ -125,7 +125,7 @@ function takeIsLXXDSS(text: string) {
     return { isLXXDSS, text, extraText: isLXXDSS ? ' (LXX and DSS)' : '' };
 }
 
-export function fromBibleRefText(text: string): BibleRefType {
+export function fromBibleCrossRefText(text: string): BibleCrossRefType {
     const tokeIsS = takeIsS(text);
     text = tokeIsS.text;
     const tokeIsFN = takeIsFN(text);

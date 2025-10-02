@@ -2,7 +2,7 @@ import BibleItem from '../bible-list/BibleItem';
 import {
     checkIsAIAudioAvailableForBible,
     useIsAudioAIEnabled,
-} from '../helper/aiHelpers';
+} from '../helper/ai/openAIAudioHelpers';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 
 export function AudioAIEnablingComp({

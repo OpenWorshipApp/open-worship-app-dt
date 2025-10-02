@@ -1,8 +1,8 @@
+import { useGetBibleCrossRefOpenAI } from '../helper/ai/openAIBibleCrossRefHelpers';
 import LoadingComp from '../others/LoadingComp';
-import { useGetBibleRefOpenAI } from '../helper/aiHelpers';
-import BibleRefAIRenderFoundItemComp from './BibleRefAIRenderFoundItemComp';
+import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
 
-export default function BibleRefOpenAIItemRendererBodyComp({
+export default function BibleCrossRefOpenAIItemRendererBodyComp({
     bibleKey,
     bookKey,
     chapter,
@@ -15,11 +15,11 @@ export default function BibleRefOpenAIItemRendererBodyComp({
     verse: number;
     index: number;
 }>) {
-    const bibleRef = useGetBibleRefOpenAI(bookKey, chapter, verse);
-    if (bibleRef === undefined) {
+    const bibleCrossRef = useGetBibleCrossRefOpenAI(bookKey, chapter, verse);
+    if (bibleCrossRef === undefined) {
         return <LoadingComp />;
     }
-    if (bibleRef === null) {
+    if (bibleCrossRef === null) {
         return (
             <div>
                 `Data not available for "{bookKey} {chapter}:{verse}"
@@ -29,9 +29,9 @@ export default function BibleRefOpenAIItemRendererBodyComp({
     return (
         <>
             {index !== 0 ? <hr /> : null}
-            {bibleRef.map((item, i) => {
+            {bibleCrossRef.map((item, i) => {
                 return (
-                    <BibleRefAIRenderFoundItemComp
+                    <BibleCrossRefAIRenderFoundItemComp
                         key={item + i}
                         bibleKey={bibleKey}
                         bibleVersesKey={item}

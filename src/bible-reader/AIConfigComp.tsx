@@ -1,4 +1,8 @@
-import { getAISetting, setAISetting, useAISetting } from '../helper/aiHelpers';
+import {
+    getAISetting,
+    setAISetting,
+    useAISetting,
+} from '../helper/ai/aiHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 
 function AISettingComp() {
@@ -41,7 +45,7 @@ function AISettingComp() {
                                 </div>
                             </div>
                             <hr />
-                            <div className="d-flex flex-column w-100 h-100">
+                            <div className="d-flex flex-column w-100 h-100 mb-2">
                                 <div>Anthropic API Key :</div>
                                 <div className="flex-grow-1 d-flex align-items-center">
                                     <input

@@ -1,8 +1,8 @@
 import LoadingComp from '../others/LoadingComp';
-import BibleRefRenderFoundItemComp from './BibleRefRenderFoundItemComp';
-import { useGetBibleRef } from './bibleRefsHelpers';
+import BibleCrossRefRenderFoundItemComp from './BibleCrossRefRenderFoundItemComp';
+import { useGetBibleCrossRef } from './bibleCrossRefsHelpers';
 
-export default function BibleRefItemRendererBodyComp({
+export default function BibleCrossRefItemRendererBodyComp({
     bibleKey,
     bookKey,
     chapter,
@@ -15,11 +15,11 @@ export default function BibleRefItemRendererBodyComp({
     verse: number;
     index: number;
 }>) {
-    const bibleRef = useGetBibleRef(bookKey, chapter, verse);
-    if (bibleRef === undefined) {
+    const bibleCrossRef = useGetBibleCrossRef(bookKey, chapter, verse);
+    if (bibleCrossRef === undefined) {
         return <LoadingComp />;
     }
-    if (bibleRef === null) {
+    if (bibleCrossRef === null) {
         return (
             <div>
                 `Data not available for "{bookKey} {chapter}:{verse}"
@@ -29,10 +29,10 @@ export default function BibleRefItemRendererBodyComp({
     return (
         <>
             {index !== 0 ? <hr /> : null}
-            {bibleRef.map((items, i) => {
+            {bibleCrossRef.map((items, i) => {
                 return items.map((item, j) => {
                     return (
-                        <BibleRefRenderFoundItemComp
+                        <BibleCrossRefRenderFoundItemComp
                             key={item.text + i + j}
                             bibleKey={bibleKey}
                             bibleVersesKey={item.text}

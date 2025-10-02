@@ -47,9 +47,7 @@ export default function RenderFoundItemComp({
                 openInBibleLookup(event, viewController, bibleItem);
             }}
         >
-            <span style={{ color: '#88ff009e' }}>
-                <BibleDirectViewTitleComp bibleItem={bibleItem} />
-            </span>
+            <BibleDirectViewTitleComp bibleItem={bibleItem} />
             <span
                 data-bible-key={bibleItem.bibleKey}
                 dangerouslySetInnerHTML={{

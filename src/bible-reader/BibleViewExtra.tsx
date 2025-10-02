@@ -41,17 +41,17 @@ import RenderActionButtonsComp from '../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import LoadingComp from '../others/LoadingComp';
-import {
-    bibleTextToSpeech,
-    checkIsAIAudioAvailableForBible,
-    getAISetting,
-    useIsAudioAIEnabled,
-} from '../helper/aiHelpers';
+import { getAISetting } from '../helper/ai/aiHelpers';
 import FileSource from '../helper/FileSource';
 import LookupBibleItemController from './LookupBibleItemController';
 import { AudioAIEnablingComp } from './AudioAIEnablingComp';
 import appProvider from '../server/appProvider';
 import BibleItem from '../bible-list/BibleItem';
+import {
+    bibleTextToSpeech,
+    checkIsAIAudioAvailableForBible,
+    useIsAudioAIEnabled,
+} from '../helper/ai/openAIAudioHelpers';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -213,6 +213,7 @@ export function BibleDirectViewTitleComp({
         <span
             data-bible-key={bibleItem.bibleKey}
             className="title app-border-white-round m-1 px-1"
+            style={{ color: '#88ff009e' }}
         >
             {title}
         </span>

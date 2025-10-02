@@ -1,13 +1,13 @@
 import { Fragment } from 'react/jsx-runtime';
 import BibleItem from '../bible-list/BibleItem';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
-import BibleRefOpenAIItemRendererBodyComp from './BibleRefOpenAIItemRendererBodyComp';
-import BibleRefItemRendererBodyComp from './BibleRefItemRendererBodyComp';
-import BibleRefWrapperComp from './BibleRefWrapperComp';
-import BibleRefAnthropicItemRendererBodyComp from './BibleRefAnthropicItemRendererBodyComp';
-import { useAISetting } from '../helper/aiHelpers';
+import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRendererBodyComp';
+import BibleCrossRefItemRendererBodyComp from './BibleCrossRefItemRendererBodyComp';
+import BibleCrossRefWrapperComp from './BibleCrossRefWrapperComp';
+import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropicItemRendererBodyComp';
+import { useAISetting } from '../helper/ai/aiHelpers';
 
-export default function BibleRefRendererComp({
+export default function BibleCrossRefRendererComp({
     bibleItem,
     setBibleItem,
 }: Readonly<{
@@ -42,45 +42,45 @@ export default function BibleRefRendererComp({
                             />
                         </div>
                         <hr />
-                        <BibleRefWrapperComp
+                        <BibleCrossRefWrapperComp
                             title="Bible Reference"
                             settingName="show-standard-bible-ref"
                         >
-                            <BibleRefItemRendererBodyComp
+                            <BibleCrossRefItemRendererBodyComp
                                 bibleKey={bibleItem.bibleKey}
                                 bookKey={book}
                                 chapter={chapter}
                                 verse={verse}
                                 index={i}
                             />
-                        </BibleRefWrapperComp>
+                        </BibleCrossRefWrapperComp>
                         {aiSetting.anthropicAPIKey ? (
-                            <BibleRefWrapperComp
+                            <BibleCrossRefWrapperComp
                                 title="Anthropic Bible Reference"
                                 settingName="show-ai-bible-ref"
                             >
-                                <BibleRefAnthropicItemRendererBodyComp
+                                <BibleCrossRefAnthropicItemRendererBodyComp
                                     bibleKey={bibleItem.bibleKey}
                                     bookKey={book}
                                     chapter={chapter}
                                     verse={verse}
                                     index={i}
                                 />
-                            </BibleRefWrapperComp>
+                            </BibleCrossRefWrapperComp>
                         ) : null}
                         {aiSetting.openAIAPIKey ? (
-                            <BibleRefWrapperComp
+                            <BibleCrossRefWrapperComp
                                 title="OpenAI Bible Reference"
                                 settingName="show-ai-bible-ref"
                             >
-                                <BibleRefOpenAIItemRendererBodyComp
+                                <BibleCrossRefOpenAIItemRendererBodyComp
                                     bibleKey={bibleItem.bibleKey}
                                     bookKey={book}
                                     chapter={chapter}
                                     verse={verse}
                                     index={i}
                                 />
-                            </BibleRefWrapperComp>
+                            </BibleCrossRefWrapperComp>
                         ) : null}
                     </Fragment>
                 );

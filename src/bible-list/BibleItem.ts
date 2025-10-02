@@ -10,6 +10,7 @@ import { copyToClipboard } from '../server/appHelpers';
 import { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import DocumentInf from '../others/DocumentInf';
 import { AnyObjectType } from '../helper/typeHelpers';
+import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
 
@@ -299,5 +300,17 @@ export default class BibleItem
         oldBibleItem.bibleKey = newBibleItem.bibleKey;
         oldBibleItem.target = newBibleItem.target;
         return oldBibleItem.save(bible);
+    }
+
+    static async bibleTitleToKJVVerseKey(bibleKey: string, title: string) {
+        const extractedData = await extractBibleTitle(bibleKey, title);
+        const { bibleItem } = extractedData.result;
+        if (bibleItem === null) {
+            return null;
+        }
+        const { target } = bibleItem;
+        return `${target.bookKey} ${target.chapter}:${target.verseStart}${
+            target.verseEnd !== target.verseStart ? `-${target.verseEnd}` : ''
+        }`;
     }
 }

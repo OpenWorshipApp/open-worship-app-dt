@@ -1,6 +1,6 @@
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 
-export default function BibleRefWrapperComp({
+export default function BibleCrossRefWrapperComp({
     title,
     children,
     settingName,

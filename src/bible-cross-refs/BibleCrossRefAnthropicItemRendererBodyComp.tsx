@@ -1,9 +1,9 @@
-import LoadingComp from '../others/LoadingComp';
-import BibleRefAIRenderFoundItemComp from './BibleRefAIRenderFoundItemComp';
 import {
     CrossReferenceType,
-    useGetBibleRefAnthropic,
-} from '../helper/anthropicBibleCrossHelpers';
+    useGetBibleCrossRefAnthropic,
+} from '../helper/ai/anthropicBibleCrossRefHelpers';
+import LoadingComp from '../others/LoadingComp';
+import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
 
 function RenderCrossReferenceComp({
     crossReference,
@@ -20,7 +20,7 @@ function RenderCrossReferenceComp({
             </strong>
             {crossReference.verses.map((item, i) => {
                 return (
-                    <BibleRefAIRenderFoundItemComp
+                    <BibleCrossRefAIRenderFoundItemComp
                         key={item + i}
                         bibleKey={bibleKey}
                         bibleVersesKey={item}
@@ -31,7 +31,7 @@ function RenderCrossReferenceComp({
     );
 }
 
-export default function BibleRefAnthropicItemRendererBodyComp({
+export default function BibleCrossRefAnthropicItemRendererBodyComp({
     bibleKey,
     bookKey,
     chapter,
@@ -44,11 +44,11 @@ export default function BibleRefAnthropicItemRendererBodyComp({
     verse: number;
     index: number;
 }>) {
-    const bibleRef = useGetBibleRefAnthropic(bookKey, chapter, verse);
-    if (bibleRef === undefined) {
+    const bibleCrossRef = useGetBibleCrossRefAnthropic(bookKey, chapter, verse);
+    if (bibleCrossRef === undefined) {
         return <LoadingComp />;
     }
-    if (bibleRef === null) {
+    if (bibleCrossRef === null) {
         return (
             <div>
                 `Data not available for "{bookKey} {chapter}:{verse}"
@@ -58,7 +58,7 @@ export default function BibleRefAnthropicItemRendererBodyComp({
     return (
         <>
             {index !== 0 ? <hr /> : null}
-            {bibleRef.map((item) => {
+            {bibleCrossRef.map((item) => {
                 return (
                     <RenderCrossReferenceComp
                         key={item.title}
