@@ -55,7 +55,7 @@ export default function BibleCrossRefRendererComp({
                         </div>
                         <hr />
                         <BibleCrossRefWrapperComp
-                            title="Bible Reference"
+                            title="Cross Reference"
                             settingName="show-standard-bible-ref"
                             onRefresh={handleRefreshing.bind(null, normalRef)}
                         >
@@ -73,7 +73,6 @@ export default function BibleCrossRefRendererComp({
                                 title={
                                     <>
                                         <i className="bi bi-robot" /> Anthropic
-                                        Bible Reference
                                     </>
                                 }
                                 settingName="show-ai-bible-ref"
@@ -97,7 +96,6 @@ export default function BibleCrossRefRendererComp({
                                 title={
                                     <>
                                         <i className="bi bi-robot" /> OpenAI
-                                        Bible Reference
                                     </>
                                 }
                                 settingName="show-ai-bible-ref"
