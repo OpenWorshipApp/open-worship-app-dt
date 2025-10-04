@@ -1,25 +1,28 @@
-import { useState } from 'react';
-
 import { ResponseFormatJSONSchema } from 'openai/resources/shared';
 import { handleError } from '../errorHelpers';
-import {
-    fsCheckDirExist,
-    fsCheckFileExist,
-    fsDeleteFile,
-    fsMkDirSync,
-    fsReadFile,
-    fsWriteFile,
-    pathJoin,
-} from '../../server/fileHelpers';
-import { ensureDataDirectory } from '../../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
-import { unlocking } from '../../server/unlockingHelpers';
 
-import { useAppEffectAsync } from '../debuggerHelpers';
 import { DATA_DIR_NAME, getOpenAIInstance } from './openAIHelpers';
-import BibleItem from '../../bible-list/BibleItem';
+import { bibleCrossRefSchema } from './aiHelpers';
+import {
+    CrossReferenceType,
+    getBibleCrossRef,
+    useGetBibleCrossRef,
+} from './bibleCrossRefHelpers';
+import { getCrossRefs as anthropicGetCrossRefs } from './anthropicBibleCrossRefHelpers';
+import { DATA_DIR_NAME as ANTHROPIC_DATA_DIR_NAME } from './anthropicHelpers';
+import { cloneJson } from '../helpers';
 
-function genPrompt(bibleTitle: string) {
+function genPrompt(
+    bibleTitle: string,
+    anthropicData: CrossReferenceType[] | null,
+) {
+    const extraContext =
+        anthropicData === null
+            ? ''
+            : `
+    - Consider these existing cross-references for additional context: ${JSON.stringify(anthropicData, null, 2)}
+    `;
     return `
     You are a Bible cross-reference lookup tool.
 
@@ -28,17 +31,31 @@ function genPrompt(bibleTitle: string) {
 
     Rules:
     - Book names should be fully spelled out in King James Version (e.g., "Genesis" not "Gen") and use standard chapter:verse notation (e.g., "John 3:16")
+    - Include both Old and New Testament references where applicable
+    - Group references by thematic relevance
+    ${extraContext}
+
+    Thematic Categories to Consider:
+    - Direct theological concepts (God's attributes, salvation, etc.)
+    - Parallel passages or similar language
+    - Prophetic/typological connections
+    - Doctrinal themes
+    - Historical parallels
+    - Complementary teachings
+    - Contrasting perspectives (if relevant)
 
     Output format:
     - JSON only, no explanations.
     - Each reference must follow this format: "BOOK CHAPTER:VERSE[-VERSE]".
-    - Example output: ["John 1:1-3","Hebrews 11:3","Psalm 33:6"]
+    - Example output: [{"title":"God as creator", "verses": ["John 1:1-3","Hebrews 11:3","Psalm 33:6"]}]
 
     Now, return cross-references for: ${bibleTitle}
     `.trim();
 }
 
-const response_format: ResponseFormatJSONSchema = {
+const clonedBibleCrossRefSchema = cloneJson(bibleCrossRefSchema);
+delete (clonedBibleCrossRefSchema as any).$schema;
+const responseFormat: ResponseFormatJSONSchema = {
     type: 'json_schema',
     json_schema: {
         name: 'BibleCrossReference',
@@ -47,10 +64,7 @@ const response_format: ResponseFormatJSONSchema = {
         schema: {
             type: 'object',
             properties: {
-                result: {
-                    type: 'array',
-                    items: { type: 'string' },
-                },
+                result: clonedBibleCrossRefSchema,
             },
             required: ['result'],
             additionalProperties: false,
@@ -59,7 +73,7 @@ const response_format: ResponseFormatJSONSchema = {
     },
 };
 
-type CrossRefResultType = { result: string[] };
+type CrossRefResultType = { result: CrossReferenceType[] };
 
 /*
 gpt-4.1-mini
@@ -76,17 +90,22 @@ gpt-5 (if available on your plan)
  */
 export async function getCrossRefs(
     bibleTitle: string,
-): Promise<CrossRefResultType | null> {
+): Promise<CrossReferenceType[] | null> {
     try {
         const client = getOpenAIInstance();
         if (client === null) {
             return null;
         }
-        const content = genPrompt(bibleTitle);
+        const anthropicData = await getBibleCrossRef(
+            { bibleTitle, dataDir: ANTHROPIC_DATA_DIR_NAME },
+            anthropicGetCrossRefs,
+        );
+        const content = genPrompt(bibleTitle, anthropicData);
+
         const response = await client.chat.completions.create({
             model: 'gpt-5',
             messages: [{ role: 'user', content }],
-            response_format,
+            response_format: responseFormat,
         });
 
         const raw = response.choices?.[0]?.message?.content;
@@ -101,10 +120,7 @@ export async function getCrossRefs(
             .replace(/```$/, '')
             .trim();
         const data = JSON.parse(cleaned) as CrossRefResultType;
-        if (!Array.isArray(data.result)) {
-            return { result: [] };
-        }
-        return data;
+        return data.result;
     } catch (error) {
         console.error('Error in getCrossRefs:', error);
         showSimpleToast(
@@ -117,109 +133,18 @@ export async function getCrossRefs(
     }
 }
 
-async function getBibleCrossRef(
-    bookKey: string,
-    chapter: number,
-    verseNum: number,
-    forceRefresh = false,
-): Promise<string[] | null> {
-    if (getOpenAIInstance() === null) {
-        return null;
-    }
-    const key = `${bookKey} ${chapter}:${verseNum}`;
-    return unlocking(key, async () => {
-        const baseDir = await ensureDataDirectory(DATA_DIR_NAME);
-        if (baseDir === null) {
-            showSimpleToast(
-                'Text to Speech',
-                'Fail to ensure data directory for AI data.',
-            );
-            return null;
-        }
-        const containingDir = pathJoin(baseDir, 'bible-cross-refs');
-        if ((await fsCheckDirExist(containingDir)) === false) {
-            fsMkDirSync(containingDir);
-        }
-        const fileFullName = `${key}.json`;
-        const filePath = pathJoin(containingDir, fileFullName);
-        if (await fsCheckFileExist(filePath)) {
-            if (!forceRefresh) {
-                try {
-                    const text = await fsReadFile(filePath);
-                    const data = JSON.parse(text) as CrossRefResultType;
-                    if (!Array.isArray(data.result)) {
-                        return [];
-                    }
-                    return data.result;
-                } catch (error) {
-                    console.error('Error reading cross reference file:', error);
-                    return null;
-                }
-            }
-            await fsDeleteFile(filePath);
-        }
-        const data = await getCrossRefs(key);
-        if (data === null) {
-            return null;
-        }
-        await fsWriteFile(filePath, JSON.stringify(data, null, 2));
-        return data.result;
-    });
-}
-
-async function getBibleCrossRefFromParams(
-    bookKey: string,
-    chapter: number,
-    verseNum: number,
-    forceRefresh = false,
-) {
-    let data = await getBibleCrossRef(bookKey, chapter, verseNum, forceRefresh);
-    if (data !== null) {
-        data = (
-            await Promise.all(
-                data.map(async (title) => {
-                    return await BibleItem.bibleTitleToKJVVerseKey(
-                        'KJV',
-                        title,
-                    );
-                }),
-            )
-        ).filter((item) => {
-            return item !== null;
-        });
-    }
-    return data;
-}
-
 export function useGetBibleCrossRefOpenAI(
     bookKey: string,
     chapter: number,
     verseNum: number,
 ) {
-    const [bibleCrossRef, setBibleCrossRef] = useState<
-        string[] | null | undefined
-    >(undefined);
-    useAppEffectAsync(
-        async (methodContext) => {
-            const data = await getBibleCrossRefFromParams(
-                bookKey,
-                chapter,
-                verseNum,
-            );
-            methodContext.setBibleCrossRef(data);
+    return useGetBibleCrossRef(
+        {
+            bookKey,
+            chapter,
+            verseNum,
+            dataDir: DATA_DIR_NAME,
         },
-        [bookKey, chapter],
-        { setBibleCrossRef },
+        getCrossRefs,
     );
-    return {
-        bibleCrossRef,
-        refresh: () => {
-            setBibleCrossRef(undefined);
-            getBibleCrossRefFromParams(bookKey, chapter, verseNum, true).then(
-                (data) => {
-                    setBibleCrossRef(data);
-                },
-            );
-        },
-    };
 }

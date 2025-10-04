@@ -1,9 +1,9 @@
 import OpenAI from 'openai';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
-import { getAISetting } from './aiHelpers';
+import { getAISetting, useAISetting } from './aiHelpers';
 
-export type OpenAISettingType = {
+export type AISettingType = {
     openAIAPIKey: string;
     anthropicAPIKey: string;
     isAutoPlay: boolean;
@@ -31,4 +31,14 @@ export function getOpenAIInstance() {
         dangerouslyAllowBrowser: true,
     });
     return instance;
+}
+
+export function checkIsAvailable(aiSetting?: AISettingType) {
+    const setting = aiSetting ?? getAISetting();
+    return setting.openAIAPIKey.trim().length > 0;
+}
+
+export function useAvailable() {
+    const aiSetting = useAISetting();
+    return checkIsAvailable(aiSetting);
 }

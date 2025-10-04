@@ -114,7 +114,7 @@ export async function breakItem(
 ): Promise<{
     newItem: string;
     bibleItem: BibleItem;
-    kjvTitle: string;
+    kjvVerseKey: string;
 }> {
     // TODO: use fuse.js to highlight
     const sanitizedFindText = (await sanitizeFindingText(locale, text)) ?? text;
@@ -143,8 +143,8 @@ export async function breakItem(
         target,
     };
     const bibleItem = BibleItem.fromJson(bibleItemJson);
-    const kjvTitle = `${bookKey} ${chapter}:${verse}`;
-    return { newItem: fullVerseText, bibleItem, kjvTitle };
+    const kjvVerseKey = `${bookKey} ${chapter}:${verse}`;
+    return { newItem: fullVerseText, bibleItem, kjvVerseKey };
 }
 
 export function pageNumberToReqData(pagingData: PagingDataTye, page: string) {

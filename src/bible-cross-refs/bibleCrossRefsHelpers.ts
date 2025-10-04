@@ -44,15 +44,18 @@ function transform(bibleRef: RawBibleCrossRefListType): BibleCrossRefType[][] {
 }
 
 const cache = new CacheManager<BibleCrossRefType[][]>(60); // 1 minute
-export async function getBibleCrossRef(key: string, forceRefresh = false) {
-    return unlocking(`bible-refs/${key}`, async () => {
+export async function getBibleCrossRef(
+    bibleTitle: string,
+    forceRefresh = false,
+) {
+    return unlocking(`bible-refs/${bibleTitle}`, async () => {
         if (!forceRefresh) {
-            const cachedData = await cache.get(key);
+            const cachedData = await cache.get(bibleTitle);
             if (cachedData !== null) {
                 return cachedData;
             }
         }
-        const encryptedText = await downloadBibleCrossRef(key);
+        const encryptedText = await downloadBibleCrossRef(bibleTitle);
         if (encryptedText === null) {
             return null;
         }
@@ -61,11 +64,11 @@ export async function getBibleCrossRef(key: string, forceRefresh = false) {
             const json = JSON.parse(text);
             if (Array.isArray(json)) {
                 const data = transform(json);
-                await cache.set(key, data);
+                await cache.set(bibleTitle, data);
                 return data;
             }
         } catch (error) {
-            console.error('Error parsing JSON: for key', key);
+            console.error('Error parsing JSON: for key', bibleTitle);
             handleError(error);
         }
         return null;

@@ -1,5 +1,8 @@
-import { RefObject, useState } from 'react';
+import { useState } from 'react';
 import { useAppEffect } from '../debuggerHelpers';
+
+import bibleCrossRefSchema from './bibleCrossRefSchema.json';
+export { bibleCrossRefSchema };
 
 export type RefreshingRefType = {
     refresh: () => void;
@@ -19,7 +22,7 @@ export function getAISetting(): AISettingType {
         const data = JSON.parse(settingStr);
         data.openAIAPIKey = (data.openAIAPIKey ?? '').trim();
         data.anthropicAPIKey = (data.anthropicAPIKey ?? '').trim();
-        if (!data.openAIAPIKey) {
+        if (data.openAIAPIKey.trim().length === 0) {
             data.isAutoPlay = false;
         }
         return data;
@@ -50,20 +53,4 @@ export function useAISetting() {
         };
     }, []);
     return setting;
-}
-
-export const defaultRefreshingRef: RefreshingRefType = {
-    refresh: () => {},
-};
-
-export function useGenRefreshRef(
-    ref: RefObject<RefreshingRefType>,
-    refresh: () => void,
-) {
-    useAppEffect(() => {
-        ref.current = { refresh };
-        return () => {
-            ref.current = defaultRefreshingRef;
-        };
-    }, [refresh]);
 }

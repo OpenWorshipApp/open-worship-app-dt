@@ -8,7 +8,7 @@ import {
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     getKJVChapterCount,
-    getKJVKeyValue,
+    getKJVBookKeyValue,
 } from '../helper/bible-helpers/serverBibleHelpers';
 import {
     getBibleFontFamily,
@@ -52,7 +52,7 @@ async function getBookList(bibleKey: string) {
     }
     const bookKVList = info.books;
     const booksAvailable = info.booksAvailable;
-    const kjvKeyValue = getKJVKeyValue();
+    const kjvKeyValue = getKJVBookKeyValue();
     const bookList = Object.entries(bookKVList)
         .filter(([bookKey]) => {
             return booksAvailable.includes(bookKey);

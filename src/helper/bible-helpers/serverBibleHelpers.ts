@@ -139,7 +139,7 @@ export async function genBookMatches(
         }
     };
     const keys = Object.entries(bookKVList);
-    const kjvKeyValue = getKJVKeyValue();
+    const kjvKeyValue = getKJVBookKeyValue();
     const bestMatchIndices = keys.map(([bookKey, book]) => {
         const kjvValue = kjvKeyValue[bookKey];
         if (
@@ -186,7 +186,7 @@ export async function genBookMatches(
     return mappedKeys;
 }
 
-export function getKJVKeyValue() {
+export function getKJVBookKeyValue() {
     return kjvBibleInfo.kjvKeyValue;
 }
 

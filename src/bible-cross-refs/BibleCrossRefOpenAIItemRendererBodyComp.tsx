@@ -1,8 +1,9 @@
 import { RefObject } from 'react';
 import { useGetBibleCrossRefOpenAI } from '../helper/ai/openAIBibleCrossRefHelpers';
 import LoadingComp from '../others/LoadingComp';
-import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
-import { RefreshingRefType, useGenRefreshRef } from '../helper/ai/aiHelpers';
+import { RefreshingRefType } from '../helper/ai/aiHelpers';
+import RenderAIBibleCrossReferenceComp from './RenderAIBibleCrossReferenceComp';
+import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
 
 export default function BibleCrossRefOpenAIItemRendererBodyComp({
     ref,
@@ -38,12 +39,12 @@ export default function BibleCrossRefOpenAIItemRendererBodyComp({
     return (
         <>
             {index !== 0 ? <hr /> : null}
-            {bibleCrossRef.map((item, i) => {
+            {bibleCrossRef.map((item) => {
                 return (
-                    <BibleCrossRefAIRenderFoundItemComp
-                        key={item + i}
+                    <RenderAIBibleCrossReferenceComp
+                        key={item.title}
+                        crossReference={item}
                         bibleKey={bibleKey}
-                        bibleVersesKey={item}
                     />
                 );
             })}

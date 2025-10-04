@@ -1,37 +1,9 @@
 import { RefObject } from 'react';
-import {
-    CrossReferenceType,
-    useGetBibleCrossRefAnthropic,
-} from '../helper/ai/anthropicBibleCrossRefHelpers';
+import { useGetBibleCrossRefAnthropic } from '../helper/ai/anthropicBibleCrossRefHelpers';
 import LoadingComp from '../others/LoadingComp';
-import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
-import { RefreshingRefType, useGenRefreshRef } from '../helper/ai/aiHelpers';
-
-function RenderCrossReferenceComp({
-    crossReference,
-    bibleKey,
-}: Readonly<{
-    crossReference: CrossReferenceType;
-    bibleKey: string;
-}>) {
-    return (
-        <div>
-            <hr />
-            <strong style={{ color: '#88ff00b8' }}>
-                {crossReference.title}
-            </strong>
-            {crossReference.verses.map((item, i) => {
-                return (
-                    <BibleCrossRefAIRenderFoundItemComp
-                        key={item + i}
-                        bibleKey={bibleKey}
-                        bibleVersesKey={item}
-                    />
-                );
-            })}
-        </div>
-    );
-}
+import { RefreshingRefType } from '../helper/ai/aiHelpers';
+import RenderAIBibleCrossReferenceComp from './RenderAIBibleCrossReferenceComp';
+import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
 
 export default function BibleCrossRefAnthropicItemRendererBodyComp({
     ref,
@@ -69,7 +41,7 @@ export default function BibleCrossRefAnthropicItemRendererBodyComp({
             {index !== 0 ? <hr /> : null}
             {bibleCrossRef.map((item) => {
                 return (
-                    <RenderCrossReferenceComp
+                    <RenderAIBibleCrossReferenceComp
                         key={item.title}
                         crossReference={item}
                         bibleKey={bibleKey}

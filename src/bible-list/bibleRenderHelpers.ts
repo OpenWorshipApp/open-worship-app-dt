@@ -6,7 +6,7 @@ import {
 import {
     kjvBibleInfo,
     getKJVChapterCount,
-    getKJVKeyValue,
+    getKJVBookKeyValue,
 } from '../helper/bible-helpers/serverBibleHelpers';
 import {
     getLangFromBibleKey,
@@ -77,7 +77,7 @@ class BibleRenderHelper {
     }
     async toLocaleBook(bibleKey: string, bookKey: string) {
         return (
-            (await keyToBook(bibleKey, bookKey)) || getKJVKeyValue()[bookKey]
+            (await keyToBook(bibleKey, bookKey)) || getKJVBookKeyValue()[bookKey]
         );
     }
     async toTitle(bibleKey: string, target: BibleTargetType) {

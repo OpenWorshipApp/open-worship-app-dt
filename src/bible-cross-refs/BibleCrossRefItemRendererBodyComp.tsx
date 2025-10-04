@@ -2,7 +2,8 @@ import { RefObject } from 'react';
 import LoadingComp from '../others/LoadingComp';
 import BibleCrossRefRenderFoundItemComp from './BibleCrossRefRenderFoundItemComp';
 import { useGetBibleCrossRef } from './bibleCrossRefsHelpers';
-import { RefreshingRefType, useGenRefreshRef } from '../helper/ai/aiHelpers';
+import { RefreshingRefType } from '../helper/ai/aiHelpers';
+import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
 
 export default function BibleCrossRefItemRendererBodyComp({
     ref,

@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { getAISetting } from './aiHelpers';
+import { getAISetting, useAISetting } from './aiHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+
+export const DATA_DIR_NAME = 'ai-anthropic-data';
 
 let instance: Anthropic | null = null;
 let key: string | null = null;
@@ -22,4 +24,9 @@ export function getAnthropicInstance() {
         dangerouslyAllowBrowser: true,
     });
     return instance;
+}
+
+export function useAvailable() {
+    const aiSetting = useAISetting();
+    return aiSetting.anthropicAPIKey.trim().length > 0;
 }

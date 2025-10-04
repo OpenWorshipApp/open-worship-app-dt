@@ -17,7 +17,7 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
 import {
-    getKJVKeyValue,
+    getKJVBookKeyValue,
     kjvBibleInfo,
 } from '../../helper/bible-helpers/serverBibleHelpers';
 
@@ -302,7 +302,7 @@ export async function getBibleInfoJson(bibleXMLElement: Element) {
     const bookKeyMap = getBibleMap(
         mapElement ?? null,
         tagNamesMap.bookMap,
-        cloneJson(getKJVKeyValue()),
+        cloneJson(getKJVBookKeyValue()),
     );
     const bibleKey = await guessingBibleKey(bibleXMLElement);
     if (bibleKey === null) {

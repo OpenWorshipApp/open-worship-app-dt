@@ -5,12 +5,11 @@ import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRe
 import BibleCrossRefItemRendererBodyComp from './BibleCrossRefItemRendererBodyComp';
 import BibleCrossRefWrapperComp from './BibleCrossRefWrapperComp';
 import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropicItemRendererBodyComp';
-import {
-    defaultRefreshingRef,
-    RefreshingRefType,
-    useAISetting,
-} from '../helper/ai/aiHelpers';
+import { RefreshingRefType } from '../helper/ai/aiHelpers';
+import { useAvailable as useOpenAIAvailable } from '../helper/ai/openAIHelpers';
 import { RefObject, useRef } from 'react';
+import { defaultRefreshingRef } from '../helper/ai/bibleCrossRefHelpers';
+import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
 
 export default function BibleCrossRefRendererComp({
     bibleItem,
@@ -22,7 +21,8 @@ export default function BibleCrossRefRendererComp({
     const normalRef = useRef<RefreshingRefType>(defaultRefreshingRef);
     const anthropicRef = useRef<RefreshingRefType>(defaultRefreshingRef);
     const openAIRef = useRef<RefreshingRefType>(defaultRefreshingRef);
-    const aiSetting = useAISetting();
+    const isOpenAIAvailable = useOpenAIAvailable();
+    const isAnthropicAvailable = useAnthropicAvailable();
     const { bookKey: book, chapter, verseStart } = bibleItem.target;
     // TODO: support multiple verses
     const verses = [verseStart];
@@ -55,7 +55,7 @@ export default function BibleCrossRefRendererComp({
                         </div>
                         <hr />
                         <BibleCrossRefWrapperComp
-                            title="Cross Reference"
+                            title="Open Worship"
                             settingName="show-standard-bible-ref"
                             onRefresh={handleRefreshing.bind(null, normalRef)}
                         >
@@ -68,30 +68,7 @@ export default function BibleCrossRefRendererComp({
                                 index={i}
                             />
                         </BibleCrossRefWrapperComp>
-                        {aiSetting.anthropicAPIKey ? (
-                            <BibleCrossRefWrapperComp
-                                title={
-                                    <>
-                                        <i className="bi bi-robot" /> Anthropic
-                                    </>
-                                }
-                                settingName="show-ai-bible-ref"
-                                onRefresh={handleRefreshing.bind(
-                                    null,
-                                    anthropicRef,
-                                )}
-                            >
-                                <BibleCrossRefAnthropicItemRendererBodyComp
-                                    ref={anthropicRef}
-                                    bibleKey={bibleItem.bibleKey}
-                                    bookKey={book}
-                                    chapter={chapter}
-                                    verse={verse}
-                                    index={i}
-                                />
-                            </BibleCrossRefWrapperComp>
-                        ) : null}
-                        {aiSetting.openAIAPIKey ? (
+                        {isOpenAIAvailable ? (
                             <BibleCrossRefWrapperComp
                                 title={
                                     <>
@@ -106,6 +83,29 @@ export default function BibleCrossRefRendererComp({
                             >
                                 <BibleCrossRefOpenAIItemRendererBodyComp
                                     ref={openAIRef}
+                                    bibleKey={bibleItem.bibleKey}
+                                    bookKey={book}
+                                    chapter={chapter}
+                                    verse={verse}
+                                    index={i}
+                                />
+                            </BibleCrossRefWrapperComp>
+                        ) : null}
+                        {isAnthropicAvailable ? (
+                            <BibleCrossRefWrapperComp
+                                title={
+                                    <>
+                                        <i className="bi bi-robot" /> Anthropic
+                                    </>
+                                }
+                                settingName="show-ai-bible-ref"
+                                onRefresh={handleRefreshing.bind(
+                                    null,
+                                    anthropicRef,
+                                )}
+                            >
+                                <BibleCrossRefAnthropicItemRendererBodyComp
+                                    ref={anthropicRef}
                                     bibleKey={bibleItem.bibleKey}
                                     bookKey={book}
                                     chapter={chapter}
