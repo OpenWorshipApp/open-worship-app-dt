@@ -22,6 +22,8 @@ function genPrompt(
             ? ''
             : `
     - Consider these existing cross-references for additional context: ${JSON.stringify(anthropicData, null, 2)}
+    - Use them to enhance the relevance and depth of your references.
+    - Do not repeat references already included above.
     `;
     return `
     You are a Bible cross-reference lookup tool.
