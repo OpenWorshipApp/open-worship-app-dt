@@ -77,7 +77,8 @@ class BibleRenderHelper {
     }
     async toLocaleBook(bibleKey: string, bookKey: string) {
         return (
-            (await keyToBook(bibleKey, bookKey)) || getKJVBookKeyValue()[bookKey]
+            (await keyToBook(bibleKey, bookKey)) ||
+            getKJVBookKeyValue()[bookKey]
         );
     }
     async toTitle(bibleKey: string, target: BibleTargetType) {
