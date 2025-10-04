@@ -11,7 +11,12 @@ import {
     sanitizeFindingText,
 } from '../lang/langHelpers';
 import appProvider, { SQLiteDatabaseType } from '../server/appProvider';
-import { fsCheckFileExist, pathJoin } from '../server/fileHelpers';
+import {
+    fsCheckFileExist,
+    fsDeleteFile,
+    fsWriteFile,
+    pathJoin,
+} from '../server/fileHelpers';
 import {
     ensureBibleXMLBasePath,
     getBibleXMLDataFromKey,
@@ -41,6 +46,7 @@ import { getSetting, setSetting } from '../helper/settingHelpers';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const DEFAULT_ROW_LIMIT = 20;
+const SUCCESS_FILE_SUFFIX = '-success';
 
 async function loadApiData() {
     try {
@@ -56,7 +62,11 @@ async function loadApiData() {
     return null;
 }
 
-async function initDatabase(bibleKey: string, databaseFilePath: string) {
+async function initDatabase(
+    bibleKey: string,
+    databaseFilePath: string,
+    successFileSuffix: string,
+) {
     const databaseUtils = appProvider.databaseUtils;
     const databaseAdmin =
         await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
@@ -114,6 +124,7 @@ async function initDatabase(bibleKey: string, databaseFilePath: string) {
                 .join(',')};`,
         );
     }
+    await fsWriteFile(databaseFilePath + successFileSuffix, 'success');
     return databaseAdmin;
 }
 
@@ -336,6 +347,20 @@ export default class BibleFindController {
         return databaseFilePath;
     }
 
+    static async checkDatabaseValid(filePath: string) {
+        if (
+            !(await fsCheckFileExist(filePath)) ||
+            !(await fsCheckFileExist(filePath + SUCCESS_FILE_SUFFIX))
+        ) {
+            try {
+                await fsDeleteFile(filePath);
+                await fsDeleteFile(filePath + SUCCESS_FILE_SUFFIX);
+            } catch (_error) {}
+            return false;
+        }
+        return true;
+    }
+
     static async getXMLInstant(
         instance: BibleFindController,
         xmlFilePath: string,
@@ -345,8 +370,12 @@ export default class BibleFindController {
             return null;
         }
         let database: SQLiteDatabaseType | null = null;
-        if (!(await fsCheckFileExist(databaseFilePath))) {
-            database = await initDatabase(instance.bibleKey, databaseFilePath);
+        if (!(await this.checkDatabaseValid(databaseFilePath))) {
+            database = await initDatabase(
+                instance.bibleKey,
+                databaseFilePath,
+                SUCCESS_FILE_SUFFIX,
+            );
         } else {
             const databaseUtils = appProvider.databaseUtils;
             database =
