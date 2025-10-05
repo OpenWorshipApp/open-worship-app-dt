@@ -4,7 +4,8 @@ import {
     useGetBibleCrossRef,
 } from './bibleCrossRefHelpers';
 
-const MODEL = 'claude-sonnet-4-20250514';
+// 'claude-sonnet-4-20250514';
+const MODEL = 'claude-sonnet-4-5-20250929';
 
 export class AnthropicBibleCrossReference {
     get anthropic() {
@@ -59,7 +60,7 @@ Return ONLY a valid JSON array where each object contains:
 "John 3:16"
 
 
-Example format:
+## Example format:
 [
   {
     "title": "God as Creator",
@@ -87,7 +88,7 @@ Respond ONLY with the JSON array, no additional text or explanation.
             const systemPrompt = this.generateSystemPrompt(additionalData);
             const message = await anthropic.messages.create({
                 model: MODEL,
-                max_tokens: 2000,
+                max_tokens: 8000,
                 temperature: 0.3,
                 system: systemPrompt,
                 messages: [
@@ -97,7 +98,6 @@ Respond ONLY with the JSON array, no additional text or explanation.
                     },
                 ],
             });
-
             const content: any = message.content[0];
             if (content.type !== 'text') {
                 return {
@@ -108,9 +108,12 @@ Respond ONLY with the JSON array, no additional text or explanation.
                     type: content.type,
                 };
             }
-            const responseContent = content.text;
+            let responseContent = content.text;
 
             try {
+                responseContent = responseContent.replace('```json', '');
+                responseContent = responseContent.replace('```', '');
+                responseContent = responseContent.trim();
                 const crossReferences = JSON.parse(responseContent);
                 return {
                     success: true,
