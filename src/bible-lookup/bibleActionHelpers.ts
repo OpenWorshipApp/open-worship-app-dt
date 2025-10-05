@@ -87,7 +87,10 @@ export function genFoundBibleItemContextMenu(
     }
     let verseKey: string | null = null;
     if (event.target instanceof HTMLElement) {
-        verseKey = event.target.dataset.verseKey ?? null;
+        verseKey =
+            event.target.dataset.verseKey ??
+            event.target.parentElement?.dataset.verseKey ??
+            null;
     }
     const onDone = () => {
         viewController.onLookupSaveBibleItem();
