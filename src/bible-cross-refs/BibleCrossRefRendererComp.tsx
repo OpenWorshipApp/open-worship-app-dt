@@ -13,6 +13,26 @@ import {
     defaultRefreshingRef,
 } from '../helper/ai/bibleCrossRefHelpers';
 import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
+
+function RenderVerseTextComp({
+    bibleItem,
+}: Readonly<{ bibleItem: BibleItem }>) {
+    const [text] = useAppStateAsync(() => {
+        return bibleItem.toText();
+    }, [bibleItem]);
+    return (
+        <div
+            data-bible-key={bibleItem.bibleKey}
+            style={{
+                maxHeight: '75px',
+                overflow: 'auto',
+            }}
+        >
+            {text}
+        </div>
+    );
+}
 
 export default function BibleCrossRefRendererComp({
     bibleItem,
@@ -44,18 +64,21 @@ export default function BibleCrossRefRendererComp({
                 return (
                     <Fragment key={verse}>
                         <div
-                            className="alert alert-info m-1 p-1"
+                            className="m-1 p-1"
                             data-bible-key={cloneBibleItem.bibleKey}
                         >
-                            ({cloneBibleItem.bibleKey}){' '}
-                            <BibleViewTitleEditorComp
-                                bibleItem={cloneBibleItem}
-                                isOneVerse
-                                onTargetChange={(newBibleTarget) => {
-                                    cloneBibleItem.target = newBibleTarget;
-                                    setBibleItem(cloneBibleItem);
-                                }}
-                            />
+                            <div className="alert alert-info p-0 px-1 m-0">
+                                ({cloneBibleItem.bibleKey}){' '}
+                                <BibleViewTitleEditorComp
+                                    bibleItem={cloneBibleItem}
+                                    isOneVerse
+                                    onTargetChange={(newBibleTarget) => {
+                                        cloneBibleItem.target = newBibleTarget;
+                                        setBibleItem(cloneBibleItem);
+                                    }}
+                                />
+                            </div>
+                            <RenderVerseTextComp bibleItem={cloneBibleItem} />
                         </div>
                         <hr />
                         <BibleCrossRefWrapperComp
