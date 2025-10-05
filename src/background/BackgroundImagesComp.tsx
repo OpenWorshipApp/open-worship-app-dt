@@ -44,8 +44,8 @@ function rendChild(
     const fileSource = FileSource.getInstance(filePath);
     return (
         <div
-            className="card-body app-overflow-hidden blank-bg"
-            style={{ height: `${height}px` }}
+            className="card-body blank-bg"
+            style={{ height: `${height}px`, overflow: 'hidden' }}
         >
             <RenderScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
@@ -55,7 +55,7 @@ function rendChild(
             <img
                 loading="lazy"
                 src={fileSource.src}
-                className="card-img-top"
+                className="w-100 h-100 card-img-top"
                 alt={fileSource.name}
                 style={{
                     objectFit: 'cover',

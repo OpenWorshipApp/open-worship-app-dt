@@ -74,7 +74,7 @@ function RendBody({
     return (
         <div
             className="card-body app-overflow-hidden blank-bg"
-            style={{ height: `${height}px` }}
+            style={{ height: `${height}px`, overflow: 'hidden' }}
             onMouseEnter={() => {
                 vRef.current?.play();
             }}
@@ -87,7 +87,18 @@ function RendBody({
                     return parseInt(key);
                 })}
             />
-            <video ref={vRef} loop muted src={fileSource.src} />
+            <video
+                className="w-100 h-100"
+                ref={vRef}
+                loop
+                muted
+                src={fileSource.src}
+                style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                    pointerEvents: 'none',
+                }}
+            />
             <div
                 className="position-absolute mx-1 text-white"
                 style={{
