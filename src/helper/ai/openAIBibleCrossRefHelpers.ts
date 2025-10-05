@@ -6,22 +6,16 @@ import { DATA_DIR_NAME, getOpenAIInstance } from './openAIHelpers';
 import { bibleCrossRefSchema } from './aiHelpers';
 import {
     CrossReferenceType,
-    getBibleCrossRef,
     useGetBibleCrossRef,
 } from './bibleCrossRefHelpers';
-import { getCrossRefs as anthropicGetCrossRefs } from './anthropicBibleCrossRefHelpers';
-import { DATA_DIR_NAME as ANTHROPIC_DATA_DIR_NAME } from './anthropicHelpers';
 import { cloneJson } from '../helpers';
 
-function genPrompt(
-    bibleTitle: string,
-    anthropicData: CrossReferenceType[] | null,
-) {
+function genPrompt(bibleTitle: string, additionalData?: CrossReferenceType[]) {
     const extraContext =
-        anthropicData === null
+        additionalData === null
             ? ''
             : `
-    - Consider these existing cross-references for additional context: ${JSON.stringify(anthropicData, null, 2)}
+    - Consider these existing cross-references for additional context: ${JSON.stringify(additionalData, null, 2)}
     - Use them to enhance the relevance and depth of your references.
     `;
     return `
@@ -91,17 +85,14 @@ gpt-5 (if available on your plan)
  */
 export async function getCrossRefs(
     bibleTitle: string,
+    additionalData?: CrossReferenceType[],
 ): Promise<CrossReferenceType[] | null> {
     try {
         const client = getOpenAIInstance();
         if (client === null) {
             return null;
         }
-        const anthropicData = await getBibleCrossRef(
-            { bibleTitle, dataDir: ANTHROPIC_DATA_DIR_NAME },
-            anthropicGetCrossRefs,
-        );
-        const content = genPrompt(bibleTitle, anthropicData);
+        const content = genPrompt(bibleTitle, additionalData);
 
         const response = await client.chat.completions.create({
             model: 'gpt-5',

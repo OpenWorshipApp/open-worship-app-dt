@@ -1,7 +1,7 @@
 import { BibleDirectViewTitleComp } from '../bible-reader/BibleViewExtra';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
-import { useAppPromise } from '../helper/helpers';
 import { useBibleFindController } from './BibleFindController';
 import {
     breakItem,
@@ -20,9 +20,9 @@ export default function RenderFoundItemComp({
 }>) {
     const viewController = useLookupBibleItemControllerContext();
     const bibleFindController = useBibleFindController();
-    const data = useAppPromise(
-        breakItem(bibleFindController.locale, findText, text, bibleKey),
-    );
+    const [data] = useAppStateAsync(() => {
+        return breakItem(bibleFindController.locale, findText, text, bibleKey);
+    }, [bibleFindController.locale, findText, text, bibleKey]);
     if (data === undefined) {
         return <div>Loading...</div>;
     }

@@ -3,10 +3,8 @@ import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItem
 
 export default function RenderAIBibleCrossReferenceComp({
     crossReference,
-    bibleKey,
 }: Readonly<{
     crossReference: CrossReferenceType;
-    bibleKey: string;
 }>) {
     return (
         <div>
@@ -18,7 +16,6 @@ export default function RenderAIBibleCrossReferenceComp({
                 return (
                     <BibleCrossRefAIRenderFoundItemComp
                         key={item + i}
-                        bibleKey={bibleKey}
                         bibleVersesKey={item}
                     />
                 );

@@ -1,4 +1,5 @@
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 
 export default function BibleCrossRefWrapperComp({
@@ -12,6 +13,7 @@ export default function BibleCrossRefWrapperComp({
     settingName: string;
     onRefresh: () => void;
 }>) {
+    const bibleKey = useBibleKeyContext();
     const [isShowing, setIsShowing] = useStateSettingBoolean(settingName, true);
     const handleContextMenuOpening = (event: any) => {
         if (!isShowing) {
@@ -44,7 +46,7 @@ export default function BibleCrossRefWrapperComp({
                 <i
                     className={`bi bi-chevron-${isShowing ? 'down' : 'right'}`}
                 />
-                {title}
+                {title} (<span data-bible-key={bibleKey}>{bibleKey}</span>)
             </div>
             {isShowing ? (
                 <div className="card-body app-inner-shadow px-1">

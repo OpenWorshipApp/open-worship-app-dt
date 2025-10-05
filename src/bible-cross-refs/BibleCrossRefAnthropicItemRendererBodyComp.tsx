@@ -7,14 +7,12 @@ import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
 
 export default function BibleCrossRefAnthropicItemRendererBodyComp({
     ref,
-    bibleKey,
     bookKey,
     chapter,
     verse,
     index,
 }: Readonly<{
     ref: RefObject<RefreshingRefType>;
-    bibleKey: string;
     bookKey: string;
     chapter: number;
     verse: number;
@@ -44,7 +42,6 @@ export default function BibleCrossRefAnthropicItemRendererBodyComp({
                     <RenderAIBibleCrossReferenceComp
                         key={item.title}
                         crossReference={item}
-                        bibleKey={bibleKey}
                     />
                 );
             })}

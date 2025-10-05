@@ -7,16 +7,18 @@ import {
 const MODEL = 'claude-sonnet-4-20250514';
 
 export class AnthropicBibleCrossReference {
-    systemPrompt: string;
-    constructor() {
-        this.systemPrompt = this.generateSystemPrompt();
-    }
-
     get anthropic() {
         return getAnthropicInstance();
     }
 
-    generateSystemPrompt() {
+    generateSystemPrompt(additionalData?: CrossReferenceType[]) {
+        const extraContext =
+            additionalData === null
+                ? ''
+                : `
+    8. Consider these existing cross-references for additional context: ${JSON.stringify(additionalData, null, 2)}
+    9. Use them to enhance the relevance and depth of your references.
+    `;
         return `
 You are a Biblical cross-reference assistant with deep knowledge of Protestant Christian theology and Biblical interpretation of King James Version (KJV). Your task is to provide comprehensive cross-references for any given Bible verse in JSON format.
 
@@ -28,6 +30,7 @@ You are a Biblical cross-reference assistant with deep knowledge of Protestant C
 5. Use full book names (not abbreviations) for clarity
 6. Include both Old and New Testament references where applicable
 7. Prioritize verses with strong theological, textual, or typological connections
+${extraContext}
 
 ## Output Format:
 Return ONLY a valid JSON array where each object contains:
@@ -68,7 +71,10 @@ Respond ONLY with the JSON array, no additional text or explanation.
 `.trim();
     }
 
-    async getBibleCrossResponse(bibleTitle: string) {
+    async getBibleCrossResponse(
+        bibleTitle: string,
+        additionalData?: CrossReferenceType[],
+    ) {
         try {
             const userPrompt = `Generate cross-references for: ${bibleTitle}`;
             const anthropic = this.anthropic;
@@ -78,12 +84,12 @@ Respond ONLY with the JSON array, no additional text or explanation.
                     error: 'Anthropic instance is not available',
                 };
             }
-
+            const systemPrompt = this.generateSystemPrompt(additionalData);
             const message = await anthropic.messages.create({
                 model: MODEL,
                 max_tokens: 2000,
                 temperature: 0.3,
-                system: this.systemPrompt,
+                system: systemPrompt,
                 messages: [
                     {
                         role: 'user',

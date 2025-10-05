@@ -337,39 +337,6 @@ export function cumulativeOffset(element: HTMLElement | null) {
     return { top, left };
 }
 
-// TODO: this function does not work for async function
-export function useAppPromise<T>(
-    promise: Promise<T>,
-    onError?: (error: any) => void,
-) {
-    const [state, setState] = useState<T | null | undefined>(undefined);
-    useAppEffect(() => {
-        if (state !== undefined) {
-            return;
-        }
-        const timeOut = setTimeout(() => {
-            if (state === undefined) {
-                onError?.(
-                    new Error('Promise timeout, please check your network'),
-                );
-                setState(null);
-            }
-        }, 5000); // 5 seconds
-        promise
-            .then((data) => {
-                setState(data);
-                clearTimeout(timeOut);
-            })
-            .catch((error) => {
-                onError?.(error);
-                setState(null);
-                clearTimeout(timeOut);
-            });
-    }, [state, promise]);
-
-    return state;
-}
-
 export function changeDragEventStyle(
     event: React.DragEvent<HTMLElement>,
     key: string,

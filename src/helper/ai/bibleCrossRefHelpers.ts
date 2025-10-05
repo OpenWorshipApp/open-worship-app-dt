@@ -1,4 +1,4 @@
-import { RefObject, useState } from 'react';
+import { createContext, RefObject, use, useState } from 'react';
 
 import {
     fsCheckDirExist,
@@ -177,3 +177,8 @@ export type CrossReferenceType = {
     title: string;
     verses: string[];
 };
+
+export const BibleKeyContext = createContext<string>('KJV');
+export function useBibleKeyContext() {
+    return use(BibleKeyContext);
+}

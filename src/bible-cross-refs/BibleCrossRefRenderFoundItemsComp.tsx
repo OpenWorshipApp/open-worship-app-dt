@@ -5,20 +5,22 @@ import {
     openInBibleLookup,
 } from '../bible-find/bibleFindHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
-import { useAppPromise } from '../helper/helpers';
 import { BibleCrossRefType, breakItem } from './bibleCrossRefsHelpers';
+import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
 
 export default function BibleCrossRefRenderFoundItemsComp({
-    bibleKey,
     bibleVersesKey,
     itemInfo,
 }: Readonly<{
-    bibleKey: string;
     bibleVersesKey: string;
     itemInfo: BibleCrossRefType;
 }>) {
     const viewController = useLookupBibleItemControllerContext();
-    const data = useAppPromise(breakItem(bibleKey, bibleVersesKey));
+    const bibleKey = useBibleKeyContext();
+    const [data] = useAppStateAsync(() => {
+        return breakItem(bibleKey, bibleVersesKey);
+    }, [bibleKey, bibleVersesKey]);
     if (data === undefined) {
         return <div>Loading...</div>;
     }

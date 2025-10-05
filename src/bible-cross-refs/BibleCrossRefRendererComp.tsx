@@ -8,7 +8,10 @@ import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropic
 import { RefreshingRefType } from '../helper/ai/aiHelpers';
 import { useAvailable as useOpenAIAvailable } from '../helper/ai/openAIHelpers';
 import { RefObject, useRef } from 'react';
-import { defaultRefreshingRef } from '../helper/ai/bibleCrossRefHelpers';
+import {
+    BibleKeyContext,
+    defaultRefreshingRef,
+} from '../helper/ai/bibleCrossRefHelpers';
 import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
 
 export default function BibleCrossRefRendererComp({
@@ -31,8 +34,9 @@ export default function BibleCrossRefRendererComp({
             ref.current.refresh();
         }
     };
+    const bibleKey = bibleItem.bibleKey;
     return (
-        <>
+        <BibleKeyContext.Provider value={bibleKey}>
             {verses.map((verse, i) => {
                 const cloneBibleItem = bibleItem.clone();
                 cloneBibleItem.target.verseStart = verse;
@@ -61,7 +65,6 @@ export default function BibleCrossRefRendererComp({
                         >
                             <BibleCrossRefItemRendererBodyComp
                                 ref={normalRef}
-                                bibleKey={bibleItem.bibleKey}
                                 bookKey={book}
                                 chapter={chapter}
                                 verse={verse}
@@ -83,7 +86,6 @@ export default function BibleCrossRefRendererComp({
                             >
                                 <BibleCrossRefOpenAIItemRendererBodyComp
                                     ref={openAIRef}
-                                    bibleKey={bibleItem.bibleKey}
                                     bookKey={book}
                                     chapter={chapter}
                                     verse={verse}
@@ -106,7 +108,6 @@ export default function BibleCrossRefRendererComp({
                             >
                                 <BibleCrossRefAnthropicItemRendererBodyComp
                                     ref={anthropicRef}
-                                    bibleKey={bibleItem.bibleKey}
                                     bookKey={book}
                                     chapter={chapter}
                                     verse={verse}
@@ -117,6 +118,6 @@ export default function BibleCrossRefRendererComp({
                     </Fragment>
                 );
             })}
-        </>
+        </BibleKeyContext.Provider>
     );
 }
