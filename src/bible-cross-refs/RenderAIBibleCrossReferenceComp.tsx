@@ -9,7 +9,10 @@ export default function RenderAIBibleCrossReferenceComp({
     return (
         <div>
             <hr />
-            <strong style={{ color: '#88ff00b8' }}>
+            <strong
+                className="app-selectable-text"
+                style={{ color: '#88ff00b8' }}
+            >
                 {crossReference.title}
             </strong>
             {crossReference.verses.map((item, i) => {
