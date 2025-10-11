@@ -215,11 +215,13 @@ export default function SlidePropertyEditorComp() {
     return (
         <div className="m-1 app-border-white-round">
             <div className="d-flex flex-wrap">
-                <div className="m-1 p-1">
+                <div className="d-flex flex-row m-1 p-1">
                     Index:
                     <RenderSlideIndexComp viewIndex={index ?? -1} />
                 </div>
-                <div className="m-1 p-1">Id: {slide.id}</div>
+                <div className="m-1 p-1 app-border-white-round">
+                    Id: {slide.id}
+                </div>
                 <RenderNameEditorComp />
             </div>
             <RenderDimEditComp />
