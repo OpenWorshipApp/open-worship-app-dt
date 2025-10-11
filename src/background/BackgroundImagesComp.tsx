@@ -75,14 +75,15 @@ async function genContextMenuItems(dirSource: DirSource) {
     const isClipboardHasImage = await checkIsImagesInClipboard();
     const contextMenuItems: ContextMenuItemType[] = [];
     if (isClipboardHasImage) {
+        const pastImageTitle = '`Paste Image';
         contextMenuItems.push({
-            menuElement: '`Paste Image',
+            menuElement: pastImageTitle,
             onSelect: async () => {
                 for await (const blob of readImagesFromClipboard()) {
                     const srcData = await FileSource.getSrcDataFromFrom(blob);
                     if (srcData === null) {
                         showSimpleToast(
-                            '`Paste Image',
+                            pastImageTitle,
                             'Error occurred during reading image data from clipboard',
                         );
                         continue;
@@ -90,7 +91,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     const dotExt = getDotExtensionFromBase64Data(srcData);
                     if (dotExt === null) {
                         showSimpleToast(
-                            '`Paste Image',
+                            pastImageTitle,
                             'Error occurred during getting image file extension',
                         );
                         continue;
@@ -98,7 +99,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     const filePath = await dirSource.genRandomFilePath(dotExt);
                     if (filePath === null) {
                         showSimpleToast(
-                            '`Paste Image',
+                            pastImageTitle,
                             'Error occurred during generating file name',
                         );
                         continue;
@@ -109,7 +110,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     );
                     if (!isSuccess) {
                         showSimpleToast(
-                            '`Paste Image',
+                            pastImageTitle,
                             'Error occurred during pasting image',
                         );
                     }

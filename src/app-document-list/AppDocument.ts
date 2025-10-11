@@ -14,6 +14,11 @@ import {
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import { DisplayType } from '../_screen/screenTypeHelpers';
+import {
+    checkIsImagesInClipboard,
+    readImagesFromClipboard,
+} from '../server/appHelpers';
+import { createNewSlidesFromDroppedData } from '../app-document-presenter/items/appDocumentHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -322,6 +327,7 @@ export default class AppDocument
     }
 
     async showContextMenu(event: any) {
+        const isClipboardHasImage = await checkIsImagesInClipboard();
         const copiedSlides = await AppDocument.getCopiedSlides();
         showAppContextMenu(event, [
             {
@@ -338,6 +344,20 @@ export default class AppDocument
                               for (const copiedSlide of copiedSlides) {
                                   this.addSlides([copiedSlide]);
                               }
+                          },
+                      },
+                  ]
+                : []),
+            ...(isClipboardHasImage
+                ? [
+                      {
+                          menuElement: '`Paste Image',
+                          onSelect: async () => {
+                              const blobs: Blob[] = [];
+                              for await (const blob of readImagesFromClipboard()) {
+                                  blobs.push(blob);
+                              }
+                              await createNewSlidesFromDroppedData(this, blobs);
                           },
                       },
                   ]

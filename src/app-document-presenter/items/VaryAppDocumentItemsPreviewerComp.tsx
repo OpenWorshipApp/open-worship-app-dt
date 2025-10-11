@@ -10,13 +10,11 @@ import { DIV_CLASS_NAME } from './varyAppDocumentHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
 import { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
-import Slide from '../../app-document-list/Slide';
 import { changeDragEventStyle } from '../../helper/helpers';
 import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from '../../slide-editor/canvas/canvasHelpers';
-import CanvasItemImage from '../../slide-editor/canvas/CanvasItemImage';
 import { showSimpleToast } from '../../toast/toastHelpers';
-import CanvasController from '../../slide-editor/canvas/CanvasController';
+import { createNewSlidesFromDroppedData } from './appDocumentHelpers';
 
 const handlePasting = async (varyAppDocument: VaryAppDocumentType) => {
     if (!AppDocument.checkIsThisType(varyAppDocument)) {
@@ -28,12 +26,9 @@ const handlePasting = async (varyAppDocument: VaryAppDocumentType) => {
     }
 };
 
-const handleDataDropping = async (
-    appDocument: AppDocument,
-    event: DragEvent,
-) => {
+async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     changeDragEventStyle(event, 'opacity', '1');
-    const newSlides = [];
+    const files: File[] = [];
     for await (const file of readDroppedFiles(event)) {
         if (!checkIsSupportMediaType(file.type)) {
             showSimpleToast(
@@ -41,45 +36,11 @@ const handleDataDropping = async (
                 '`Unsupported file type!',
             );
         } else {
-            newSlides.push(async () => {
-                const slide = await appDocument.genNewSlide();
-                const canvasItem = await CanvasItemImage.genFromFile(
-                    0,
-                    0,
-                    file,
-                );
-                if (canvasItem instanceof CanvasItemImage === false) {
-                    return null;
-                }
-                CanvasController.scaleCanvasItemToSize(
-                    canvasItem,
-                    slide.width,
-                    slide.height,
-                    canvasItem.props.mediaWidth,
-                    canvasItem.props.mediaHeight,
-                );
-                const canvasItemsJson = slide.canvasItemsJson;
-                canvasItemsJson.push(canvasItem.toJson());
-                slide.canvasItemsJson = canvasItemsJson;
-                return slide;
-            });
+            files.push(file);
         }
     }
-    const resolvedNewSlides = await Promise.all(
-        newSlides.map((callee) => {
-            return callee();
-        }),
-    );
-    const filteredNewSlides = resolvedNewSlides.filter(
-        (slide): slide is Slide => {
-            return slide instanceof Slide;
-        },
-    );
-    if (filteredNewSlides.length === 0) {
-        return;
-    }
-    await appDocument.addSlides(filteredNewSlides);
-};
+    await createNewSlidesFromDroppedData(appDocument, files);
+}
 
 export default function VaryAppDocumentItemsPreviewerComp() {
     const varyAppDocument = useVaryAppDocumentContext();
