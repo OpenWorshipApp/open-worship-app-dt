@@ -1,5 +1,7 @@
 import './VaryAppDocumentItem.scss';
 
+import { CSSProperties, ReactNode, MouseEvent, useState, useMemo } from 'react';
+
 import Slide from '../../app-document-list/Slide';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import {
@@ -15,7 +17,6 @@ import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocum
 import { changeDragEventStyle, genTimeoutAttempt } from '../../helper/helpers';
 import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import { useMemo, useState } from 'react';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import AppDocument from '../../app-document-list/AppDocument';
@@ -214,11 +215,11 @@ export default function SlideItemRenderComp({
     slide: VaryAppDocumentItemType;
     width: number;
     index: number;
-    onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
     onCopy?: () => void;
     selectedItem?: VaryAppDocumentItemType | null;
-    children: React.ReactNode;
+    children: ReactNode;
 }>) {
     const { scale, setTargetDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);
@@ -235,7 +236,7 @@ export default function SlideItemRenderComp({
             padding: 0,
             margin: 0,
             height: `${Math.round(slide.height * scale)}px`,
-        } as React.CSSProperties;
+        } as CSSProperties;
     }, [slide.height, scale]);
     const handleDataDropping = async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');

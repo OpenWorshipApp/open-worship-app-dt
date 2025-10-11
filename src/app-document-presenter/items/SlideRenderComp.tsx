@@ -1,7 +1,8 @@
+import { MouseEvent, use } from 'react';
+
 import Slide from '../../app-document-list/Slide';
 import SlideRendererHtmlComp from './SlideRendererHtmlComp';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
-import { use } from 'react';
 import { SelectedEditingSlideContext } from '../../app-document-list/appDocumentHelpers';
 import SlideItemRenderComp from './SlideItemRenderComp';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
@@ -17,7 +18,7 @@ export default function SlideRenderComp({
     slide: Slide;
     width: number;
     index: number;
-    onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
     onCopy: () => void;
 }>) {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
 
@@ -8,7 +8,7 @@ export default function AskingNewNameComp({
     customIcon,
 }: Readonly<{
     defaultName?: string;
-    customIcon?: React.ReactNode;
+    customIcon?: ReactNode;
     applyName: (newName: string | null) => void;
 }>) {
     const [creatingNewName, setCreatingNewName] = useState(defaultName ?? '');

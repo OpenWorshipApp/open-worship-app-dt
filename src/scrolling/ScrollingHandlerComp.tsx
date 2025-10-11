@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import {
     TO_THE_TOP_STYLE_STRING,
     TO_THE_TOP_CLASSNAME,
@@ -12,7 +14,7 @@ export default function ScrollingHandlerComp({
     shouldShowPlayToBottom = false,
     movedCheck,
 }: Readonly<{
-    style?: React.CSSProperties;
+    style?: CSSProperties;
     shouldShowPlayToBottom?: boolean;
     movedCheck?: MoveCheckType;
 }>) {

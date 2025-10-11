@@ -1,3 +1,5 @@
+import { MouseEvent } from 'react';
+
 import Bible from './Bible';
 import BibleItem from './BibleItem';
 import ItemReadErrorComp from '../others/ItemReadErrorComp';
@@ -89,7 +91,7 @@ export default function BibleItemRenderComp({
     };
     const isOnScreen = useIsOnScreen([bibleItem]);
 
-    const handleContextMenuOpening = async (event: React.MouseEvent<any>) => {
+    const handleContextMenuOpening = async (event: MouseEvent<any>) => {
         const menuItems: ContextMenuItemType[] = [
             {
                 menuElement: '`Open',

@@ -408,7 +408,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     static async handleBibleItemSelecting(
-        event: React.MouseEvent | null,
+        event: MouseEvent | null,
         bibleItem: BibleItem,
         isForceChoosing = false,
     ) {

@@ -1,4 +1,4 @@
-import { createRef, useMemo, useState } from 'react';
+import { CSSProperties, createRef, useMemo, useState } from 'react';
 
 import {
     checkIsBibleLookupInputFocused,
@@ -71,7 +71,7 @@ const ctrlEscapeEventMap: KeyboardEventMapper = {
 };
 const tabEventMap: KeyboardEventMapper = { key: 'Tab' };
 
-function genAvailableStyle(isDisabled: boolean): React.CSSProperties {
+function genAvailableStyle(isDisabled: boolean): CSSProperties {
     if (!isDisabled) {
         return {};
     }

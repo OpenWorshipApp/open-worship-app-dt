@@ -1,8 +1,10 @@
+import { ReactNode } from 'react';
+
 export default function HeaderAlertPopupComp({
     header,
     onClose,
 }: Readonly<{
-    header: React.ReactNode;
+    header: ReactNode;
     onClose: () => void;
 }>) {
     return (

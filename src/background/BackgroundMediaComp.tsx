@@ -1,3 +1,5 @@
+import { ReactNode, MouseEvent, ReactElement } from 'react';
+
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import {
     genCommonMenu,
@@ -21,14 +23,13 @@ import { OptionalPromise } from '../helper/typeHelpers';
 import DirSource from '../helper/DirSource';
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
-import { ReactElement } from 'react';
 
 export type RenderChildType = (
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
     height: number,
     extraChild?: ReactElement,
-) => React.ReactNode;
+) => ReactNode;
 
 const backgroundTypeMapper: any = {
     [DragTypeEnum.BACKGROUND_IMAGE]: 'image',
@@ -165,7 +166,7 @@ export default function BackgroundMediaComp({
     genExtraItemContextMenuItems = (_filePath: string) => [],
 }: Readonly<{
     shouldHideFooter?: boolean;
-    extraHeaderChild?: React.ReactNode;
+    extraHeaderChild?: ReactNode;
     rendChild: RenderChildType;
     dragType: DragTypeEnum;
     onClick?: (event: any, fileSource: FileSource) => void;
@@ -176,7 +177,7 @@ export default function BackgroundMediaComp({
     contextMenuItems?: ContextMenuItemType[];
     genContextMenuItems?: (
         dirSource: DirSource,
-        event: React.MouseEvent<HTMLElement>,
+        event: MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
     sortFilePaths?: (filePaths: string[]) => string[];
     onItemsAdding?: (

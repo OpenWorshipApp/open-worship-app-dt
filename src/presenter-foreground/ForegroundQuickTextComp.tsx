@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import {
     useStateSettingNumber,
     useStateSettingString,
@@ -20,7 +22,7 @@ import { dragStore } from '../helper/dragHelpers';
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllQuickText(
     showingScreenIds: [number, ForegroundQuickTextDataType][],
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
         showingScreenIds.forEach(([screenId, data]) => {

@@ -1,4 +1,4 @@
-import { useState, useTransition } from 'react';
+import { useState, useTransition, FormEvent } from 'react';
 
 import { showSimpleToast } from '../../toast/toastHelpers';
 import LoadingComp from '../../others/LoadingComp';
@@ -32,9 +32,7 @@ export default function BibleXMLImportComp({
         }
         setIsFileSelected(false);
     };
-    const handleFormSubmitting = async (
-        event: React.FormEvent<HTMLFormElement>,
-    ) => {
+    const handleFormSubmitting = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         startTransition(async () => {
             try {

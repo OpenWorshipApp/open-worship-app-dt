@@ -1,4 +1,4 @@
-import { CSSProperties, LazyExoticComponent } from 'react';
+import { ReactNode, CSSProperties, LazyExoticComponent } from 'react';
 
 import { handleError } from '../helper/errorHelpers';
 import { isValidJson } from '../helper/helpers';
@@ -9,9 +9,9 @@ export type FlexSizeType = {
 };
 export type DataInputType = {
     children:
-        | LazyExoticComponent<(props?: any) => React.ReactNode | null>
+        | LazyExoticComponent<(props?: any) => ReactNode | null>
         | {
-              render: () => React.ReactNode | null;
+              render: () => ReactNode | null;
           };
     key: string;
     widgetName: string;

@@ -1,4 +1,4 @@
-import { createContext, lazy, useState } from 'react';
+import { createContext, lazy, useState, MouseEvent } from 'react';
 
 import PathSelectorComp from './PathSelectorComp';
 import { MimetypeNameType, fsCheckDirExist } from '../server/fileHelpers';
@@ -83,7 +83,7 @@ export default function FileListHandlerComp({
     contextMenuItems?: ContextMenuItemType[];
     genContextMenuItems?: (
         dirSource: DirSource,
-        event: React.MouseEvent<HTMLElement>,
+        event: MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
     checkExtraFile?: (filePath: string) => boolean;
     takeDroppedFile?: (file: DroppedFileType) => boolean;

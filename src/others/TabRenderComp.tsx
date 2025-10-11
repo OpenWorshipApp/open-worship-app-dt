@@ -1,4 +1,4 @@
-import { LazyExoticComponent, useMemo } from 'react';
+import { ReactNode, LazyExoticComponent, useMemo } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import AppSuspenseComp from './AppSuspenseComp';
@@ -95,7 +95,7 @@ export default function TabRenderComp<T extends string>({
 
 export function genTabBody<T>(
     selectedTabTab: T,
-    [tabTab, Element]: [T, LazyExoticComponent<() => React.ReactNode | null>],
+    [tabTab, Element]: [T, LazyExoticComponent<() => ReactNode | null>],
 ) {
     return (
         <AppSuspenseComp key={`tab-${tabTab}`}>

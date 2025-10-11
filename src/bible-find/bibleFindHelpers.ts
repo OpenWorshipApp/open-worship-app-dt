@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from 'react';
+
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
@@ -19,7 +21,6 @@ import {
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import BibleFindController from './BibleFindController';
-import { SetStateAction } from 'react';
 
 export type FindDataType = {
     pagingData: PagingDataTye;
@@ -259,7 +260,7 @@ export async function doFinding(
     bibleFindController: BibleFindController,
     findText: string,
     data: FindDataType | null | undefined,
-    setData: React.Dispatch<SetStateAction<FindDataType | null | undefined>>,
+    setData: Dispatch<SetStateAction<FindDataType | null | undefined>>,
 ) {
     if (data === null) {
         return;

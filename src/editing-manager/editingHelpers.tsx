@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
@@ -97,7 +97,7 @@ export function FileEditingMenuComp({
     extraChildren,
     editableDocument,
 }: Readonly<{
-    extraChildren?: React.ReactNode | null;
+    extraChildren?: ReactNode | null;
     editableDocument: AppEditableDocumentSourceAbs<any>;
 }>) {
     const { canUndo, canRedo, canSave } = useEditingHistoryStatus(

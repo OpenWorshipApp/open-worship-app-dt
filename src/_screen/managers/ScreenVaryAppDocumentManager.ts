@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { MouseEvent, CSSProperties } from 'react';
 
 import { DroppedDataType } from '../../helper/DragInf';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
@@ -180,7 +180,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
     }
 
     static async handleSlideSelecting(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         filePath: string,
         itemJson: VaryAppDocumentItemDataType,
         isForceChoosing = false,

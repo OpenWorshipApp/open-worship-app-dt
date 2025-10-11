@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, MouseEvent } from 'react';
 
 import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
 import { getImageDim, getVideoDim } from '../../helper/helpers';
@@ -174,7 +174,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
     }
 
     static async handleBackgroundSelecting(
-        event: React.MouseEvent,
+        event: MouseEvent,
         backgroundType: BackgroundType,
         data: BackgroundDataType,
         isForceChoosing = false,

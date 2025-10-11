@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, DragEvent } from 'react';
 
 import { useAppEffect } from './debuggerHelpers';
 import { handleError } from './errorHelpers';
@@ -341,11 +341,15 @@ export function cumulativeOffset(element: HTMLElement | null) {
 }
 
 export function changeDragEventStyle(
-    event: React.DragEvent<HTMLElement>,
+    event: DragEvent,
     key: string,
     value: string,
 ) {
-    ((event.currentTarget?.style ?? {}) as any)[key] = value;
+    const eventTarget = event.target;
+    if (!eventTarget || eventTarget instanceof HTMLElement === false) {
+        return;
+    }
+    (eventTarget.style as any)[key] = value;
 }
 
 export function stopDraggingState(event: any) {

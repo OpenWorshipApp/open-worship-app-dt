@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { CSSProperties, useMemo } from 'react';
 
 import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -23,7 +23,7 @@ function chose<T>(
     isAllowAll: boolean,
     currentKey: T,
     keys: [T, string, string | undefined][],
-    itemStyle: React.CSSProperties = {},
+    itemStyle: CSSProperties = {},
 ) {
     return new Promise<T | null>((resolve) => {
         const { promiseDone } = showAppContextMenu(

@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import {
     getSetting,
     useStateSettingBoolean,
@@ -20,7 +22,7 @@ const DEFAULT_WIDGET_OFFSET_Y = 0;
 function getWidgetRoundExtraStyle(
     settingNamePixel: string,
     settingNamePercentage: string,
-): React.CSSProperties {
+): CSSProperties {
     const roundSizePixel = parseInt(
         getSetting(settingNamePixel) ?? DEFAULT_ROUND_SIZE_PIXEL.toString(),
     );
@@ -41,7 +43,7 @@ function getWidgetRoundExtraStyle(
     };
 }
 
-function genWidgetWidthExtraStyle(settingName: string): React.CSSProperties {
+function genWidgetWidthExtraStyle(settingName: string): CSSProperties {
     const widthScale = parseInt(
         getSetting(settingName) ?? DEFAULT_WIDGET_WIDTH_PERCENTAGE.toString(),
     );
@@ -51,7 +53,7 @@ function genWidgetWidthExtraStyle(settingName: string): React.CSSProperties {
     };
 }
 
-function genWidgetOpacityExtraStyle(settingName: string): React.CSSProperties {
+function genWidgetOpacityExtraStyle(settingName: string): CSSProperties {
     const opacityScale = parseInt(
         getSetting(settingName) ?? DEFAULT_WIDGET_OPACITY_PERCENTAGE.toString(),
     );
@@ -85,7 +87,7 @@ function genTransformingExtraStyle(
     offsetXSettingName: string,
     offsetYSettingName: string,
     widgetScaleSettingName: string,
-): React.CSSProperties {
+): CSSProperties {
     const widgetOffsetX = parseInt(
         getSetting(offsetXSettingName) ?? DEFAULT_WIDGET_OFFSET_X.toString(),
     );
@@ -141,7 +143,7 @@ function genTransformingExtraStyle(
     return style;
 }
 
-function getFontSizeStyle(fontSizeSettingName: string): React.CSSProperties {
+function getFontSizeStyle(fontSizeSettingName: string): CSSProperties {
     const fontSize = parseInt(
         getSetting(fontSizeSettingName) ?? DEFAULT_FONT_SIZE.toString(),
     );
@@ -379,7 +381,7 @@ export function useForegroundPropsSetting({
     isFontSize = false,
 }: Readonly<{
     prefix: string;
-    onChange: (style: React.CSSProperties) => void;
+    onChange: (style: CSSProperties) => void;
     isFontSize?: boolean;
 }>) {
     const widgetRoundPercentageSettingName = `${prefix}-setting-show-widget-round-percentage`;
@@ -410,7 +412,7 @@ export function useForegroundPropsSetting({
                 widgetScaleSettingName,
             ),
             ...getFontSizeStyle(fontSizeSettingName),
-        } as React.CSSProperties;
+        } as CSSProperties;
     };
 
     const onChange1 = () => {

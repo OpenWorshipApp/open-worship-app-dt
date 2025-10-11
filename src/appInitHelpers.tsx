@@ -4,6 +4,8 @@ import './others/theme-override-dark.scss';
 import './others/theme-override-light.scss';
 import './others/scrollbar.scss';
 
+import { ReactNode, StrictMode } from 'react';
+
 import { showAppConfirm } from './popup-widget/popupWidgetHelpers';
 import {
     PlatformEnum,
@@ -18,7 +20,6 @@ import {
 } from './lang/langHelpers';
 import appProvider from './server/appProvider';
 import initCrypto from './_owa-crypto';
-import { StrictMode } from 'react';
 import { getSetting, setSetting } from './helper/settingHelpers';
 import { applyFontFamily } from './others/LanguageWrapper';
 import {
@@ -161,7 +162,7 @@ export function useQuickExitBlock() {
 export function RenderApp({
     children,
 }: Readonly<{
-    children: React.ReactNode;
+    children: ReactNode;
 }>) {
     useQuickExitBlock();
     useCheckSetting();
@@ -172,7 +173,7 @@ export function RenderApp({
     );
 }
 
-export async function main(children: React.ReactNode) {
+export async function main(children: ReactNode) {
     await initApp();
     const hoverMotionHandler = new HoverMotionHandler();
     addDomChangeEventListener(

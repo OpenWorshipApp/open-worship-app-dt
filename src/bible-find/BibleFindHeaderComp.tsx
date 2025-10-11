@@ -1,8 +1,9 @@
+import { useMemo, useRef, KeyboardEvent } from 'react';
+
 import { useBibleFindController } from './BibleFindController';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
-import { useMemo, useRef } from 'react';
 import { pasteTextToInput } from '../server/appHelpers';
 
 const BIBLE_FIND_RECENT_SEARCH_SETTING_NAME = 'bible-find-recent-search';
@@ -48,7 +49,7 @@ export default function BibleFindHeaderComp({
             setFindText = () => {};
         };
     }, []);
-    const keyUpHandling = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    const keyUpHandling = (event: KeyboardEvent<HTMLInputElement>) => {
         if (bibleFindController.menuControllerSession !== null) {
             if (event.key === 'Enter') {
                 bibleFindController.closeSuggestionMenu();

@@ -7,6 +7,7 @@ import {
     useMemo,
     useRef,
     useState,
+    MouseEvent as ReactMouseEvent,
 } from 'react';
 
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
@@ -225,7 +226,7 @@ export function BibleViewTitleWrapperComp({
     children,
     bibleKey,
 }: Readonly<{
-    children: React.ReactNode;
+    children: ReactNode;
     bibleKey: string;
 }>) {
     const fontSize = useBibleViewFontSizeContext();
@@ -242,7 +243,7 @@ export function BibleViewTitleEditingComp({
 }: Readonly<{
     bibleItem: ReadIdOnlyBibleItem;
     onTargetChange: (bibleTarget: BibleTargetType) => void;
-    children?: React.ReactNode;
+    children?: ReactNode;
 }>) {
     return (
         <BibleViewTitleWrapperComp bibleKey={bibleItem.bibleKey}>
@@ -255,7 +256,7 @@ export function BibleViewTitleEditingComp({
     );
 }
 
-function cleanupVerseNumberClicked(event: React.MouseEvent) {
+function cleanupVerseNumberClicked(event: ReactMouseEvent) {
     event.stopPropagation();
     event.preventDefault();
     setTimeout(() => {

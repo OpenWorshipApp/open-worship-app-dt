@@ -1,3 +1,5 @@
+import { MouseEvent } from 'react';
+
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import ReactDOMServer from 'react-dom/server';
 import { getHTMLChild } from '../../helper/helpers';
@@ -54,7 +56,7 @@ export default function PdfSlideRenderComp({
     slide: PdfSlide;
     width: number;
     index: number;
-    onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
 }>) {
     const { scale, parentWidth, setParentDiv } = useScale(slide, width);

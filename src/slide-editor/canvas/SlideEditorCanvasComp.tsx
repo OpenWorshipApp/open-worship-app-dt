@@ -1,3 +1,5 @@
+import { DragEvent } from 'react';
+
 import { BoxEditorComp } from './box/BoxEditorComp';
 import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 import { showCanvasContextMenu } from './canvasContextMenuHelpers';
@@ -15,6 +17,8 @@ import {
 } from './CanvasItem';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
+import { changeDragEventStyle } from '../../helper/helpers';
+import { readDroppedFiles } from '../../others/droppingFileHelpers';
 
 function BodyRendererComp() {
     const canvasController = useCanvasControllerContext();
@@ -38,13 +42,10 @@ function BodyRendererComp() {
             event.currentTarget.style.opacity = '0.5';
         }
     };
-    const handleDropping = async (event: any) => {
-        const dragEvent = event as DragEvent;
-        dragEvent.preventDefault();
-        const style = (dragEvent.currentTarget as any)?.style ?? {};
-        style.opacity = '1';
-        const files = dragEvent.dataTransfer?.files ?? [];
-        Array.from(files).forEach((file) => {
+    const handleDropping = async (event: DragEvent) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+        for await (const file of readDroppedFiles(event)) {
             if (!isSupportType(file.type)) {
                 showSimpleToast(
                     'Insert Image or Video',
@@ -60,7 +61,7 @@ function BodyRendererComp() {
                         canvasController.addNewItem(newCanvasItem);
                     });
             }
-        });
+        }
     };
     const handleContextMenuOpening = async (event: any) => {
         event.preventDefault();

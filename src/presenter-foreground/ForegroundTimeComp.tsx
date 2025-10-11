@@ -1,3 +1,4 @@
+import { CSSProperties } from 'react';
 import { tz } from 'moment-timezone';
 
 import {
@@ -65,7 +66,7 @@ function TimeInSetComp({
     genStyle,
 }: Readonly<{
     id: string;
-    genStyle: () => React.CSSProperties;
+    genStyle: () => CSSProperties;
 }>) {
     const [cityName, setCityName] = useStateSettingString<string>(
         `foreground-city-name-setting-${id}`,
@@ -181,7 +182,7 @@ function TimeInSetComp({
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllTimes(
     showingScreenIdDataList: [number, ForegroundTimeDataType][],
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
         showingScreenIdDataList.forEach(([screenId, timeData]) => {

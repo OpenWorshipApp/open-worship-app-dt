@@ -1,6 +1,6 @@
 import '../background/BackgroundImagesComp.scss';
 
-import { useState } from 'react';
+import { CSSProperties, useState } from 'react';
 
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import BackgroundMediaComp from '../background/BackgroundMediaComp';
@@ -23,7 +23,7 @@ import ForegroundLayoutComp from './ForegroundLayoutComp';
 import RenderBackgroundScreenIds from '../background/RenderBackgroundScreenIds';
 
 const DIR_SOURCE_SETTING_NAME = 'images-slide-show';
-const extraStyle: React.CSSProperties = {
+const extraStyle: CSSProperties = {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     backdropFilter: 'blur(5px)',
 };

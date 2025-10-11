@@ -1,4 +1,4 @@
-import { Context } from 'react';
+import { ReactNode, Context } from 'react';
 
 export type ContextPairType<T> = {
     context: Context<T>;
@@ -10,7 +10,7 @@ export function MultiContextRender({
     children,
 }: Readonly<{
     contexts: ContextPairType<any>[];
-    children: React.ReactNode;
+    children: ReactNode;
 }>) {
     let result = children;
     for (const { context: Context, value } of contexts) {

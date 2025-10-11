@@ -1,5 +1,7 @@
 import './AppContextMenuComp.scss';
 
+import { CSSProperties } from 'react';
+
 import { EventMapper, toShortcutKey } from '../event/KeyboardEventListener';
 import {
     ContextMenuItemType,
@@ -104,10 +106,7 @@ export function genContextMenuItemShortcutKey(eventMapper: EventMapper) {
     );
 }
 
-export function genContextMenuItemIcon(
-    name: string,
-    style?: React.CSSProperties,
-) {
+export function genContextMenuItemIcon(name: string, style?: CSSProperties) {
     return (
         <i
             className={`bi bi-${name}`}

@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import { useStateSettingString } from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
@@ -41,7 +43,7 @@ function useTiming() {
 
 const handleByDropped = (
     dateTime: Date,
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
     event: any,
 ) => {
     const screenForegroundManager = getScreenForegroundManagerByDropped(event);
@@ -57,7 +59,7 @@ const handleByDropped = (
 function CountDownOnDatetimeComp({
     genStyle,
 }: Readonly<{
-    genStyle: () => React.CSSProperties;
+    genStyle: () => CSSProperties;
 }>) {
     const { date, setDate, time, setTime, nowString, todayString } =
         useTiming();
@@ -136,7 +138,7 @@ function CountDownOnDatetimeComp({
 function CountDownInSetComp({
     genStyle,
 }: Readonly<{
-    genStyle: () => React.CSSProperties;
+    genStyle: () => CSSProperties;
 }>) {
     const [hours, setHours] = useStateSettingString<string>(
         'foreground-hours-setting',
@@ -226,7 +228,7 @@ function CountDownInSetComp({
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllCountdowns(
     showingScreenIds: [number, ForegroundCountdownDataType][],
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
         showingScreenIds.forEach(([screenId, data]) => {

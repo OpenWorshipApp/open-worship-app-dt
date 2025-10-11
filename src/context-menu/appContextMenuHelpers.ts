@@ -1,6 +1,6 @@
 import './AppContextMenuComp.scss';
 
-import { ReactElement, useState } from 'react';
+import { ReactElement, useState, ReactNode, CSSProperties } from 'react';
 
 import KeyboardEventListener, {
     useKeyboardRegistering,
@@ -14,7 +14,7 @@ import { genSelectedTextContextMenus } from '../helper/textSelectionHelpers';
 export type ContextMenuEventType = MouseEvent;
 export type ContextMenuItemType = {
     id?: string;
-    menuElement: React.ReactNode | string;
+    menuElement: ReactNode | string;
     title?: string;
     onSelect?: (
         event: MouseEvent | KeyboardEvent,
@@ -23,12 +23,12 @@ export type ContextMenuItemType = {
     disabled?: boolean;
     childBefore?: ReactElement;
     childAfter?: ReactElement;
-    style?: React.CSSProperties;
+    style?: CSSProperties;
 };
 export type OptionsType = {
     maxHeigh?: number;
     coord?: { x: number; y: number };
-    style?: React.CSSProperties;
+    style?: CSSProperties;
     noKeystroke?: boolean;
     applyOnTab?: boolean;
     shouldHandleSelectedText?: boolean;

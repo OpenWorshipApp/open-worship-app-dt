@@ -1,5 +1,7 @@
 import './SlideAutoPlayComp.scss';
 
+import { CSSProperties } from 'react';
+
 import {
     useStateSettingBoolean,
     useStateSettingNumber,
@@ -89,7 +91,7 @@ export default function SlideAutoPlayComp({
 }: Readonly<{
     onNext: (data: NextDataType) => void;
     prefix: string;
-    style?: React.CSSProperties;
+    style?: CSSProperties;
 }>) {
     const [isShowing, setIsShowing] = useStateSettingBoolean(
         `${prefix}-slide-auto-play-show`,

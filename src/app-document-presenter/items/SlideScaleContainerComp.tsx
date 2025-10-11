@@ -1,3 +1,5 @@
+import { CSSProperties, ReactNode } from 'react';
+
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { useScale } from './SlideItemRenderComp';
 import { useAttachedBackgroundData } from '../../helper/dragHelpers';
@@ -11,8 +13,8 @@ export default function SlideScaleContainerComp({
 }: Readonly<{
     slide: VaryAppDocumentItemType;
     width: number;
-    children?: React.ReactNode;
-    extraStyle?: React.CSSProperties;
+    children?: ReactNode;
+    extraStyle?: CSSProperties;
 }>) {
     const { scale, parentWidth, setParentDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);

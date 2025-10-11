@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 import {
     toShortcutKey,
     useKeyboardRegistering,
@@ -13,7 +15,7 @@ function RenderButtonComp({
 }: Readonly<{
     btnMaps: {
         title: string;
-        text: string | React.ReactNode;
+        text: string | ReactNode;
         btnType: string;
         onClick: () => void;
         eventMap: { key: string };

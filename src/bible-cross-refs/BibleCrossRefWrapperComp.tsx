@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
@@ -8,8 +10,8 @@ export default function BibleCrossRefWrapperComp({
     settingName,
     onRefresh,
 }: Readonly<{
-    title: React.ReactNode;
-    children: React.ReactNode;
+    title: ReactNode;
+    children: ReactNode;
     settingName: string;
     onRefresh: () => void;
 }>) {

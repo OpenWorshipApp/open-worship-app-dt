@@ -1,8 +1,10 @@
+import { CSSProperties, ReactNode } from 'react';
+
 import { OptionalPromise } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
 
 export type TabOptionType = {
-    title: React.ReactNode;
+    title: ReactNode;
     routePath: string;
     preCheck?: () => OptionalPromise<boolean>;
 };
@@ -13,7 +15,7 @@ export enum WindowModEnum {
     reader = 2,
 }
 
-export function toTitleExternal(title: string, style?: React.CSSProperties) {
+export function toTitleExternal(title: string, style?: CSSProperties) {
     return (
         <span style={style}>
             {title + ' '}
