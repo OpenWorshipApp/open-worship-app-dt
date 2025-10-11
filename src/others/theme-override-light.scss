@@ -127,7 +127,7 @@ $resizer-color: rgb(123, 173, 205);
     }
   }
 
-  .hidden-widget {
+  .app-hidden-widget {
     $bg-color: var(--bs-gray-400);
     $bg-color-hover: var(--bs-gray-500);
     $color: var(--bs-gray-200);
@@ -182,7 +182,7 @@ $resizer-color: rgb(123, 173, 205);
 
   $bg-color1: var(--bs-gray-400);
   $bg-color2: var(--bs-gray-300);
-  .blank-bg {
+  .app-blank-bg {
     background-image:
       linear-gradient(45deg, $bg-color1 25%, $bg-color2 25%),
       linear-gradient(-45deg, $bg-color1 25%, $bg-color2 25%),

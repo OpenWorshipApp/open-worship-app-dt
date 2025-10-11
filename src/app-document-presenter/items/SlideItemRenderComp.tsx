@@ -142,6 +142,10 @@ function genAttachBackgroundComponent(
         element = (
             <video
                 className="w-100 h-100"
+                style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                }}
                 onMouseEnter={(event) => {
                     event.currentTarget.play();
                 }}
@@ -297,7 +301,7 @@ export default function SlideItemRenderComp({
                 viewIndex={index + 1}
             />
             <div
-                className="card-body app-overflow-hidden w-100 blank-bg"
+                className="card-body app-overflow-hidden w-100 app-blank-bg"
                 style={style}
             >
                 {attachedBackgroundElement && (

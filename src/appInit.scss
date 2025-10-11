@@ -127,7 +127,7 @@ body {
 
   $bg-width: 20px;
 
-  .blank-bg {
+  .app-blank-bg {
     background-size: $bg-width $bg-width;
     background-position:
       0 0,
@@ -171,7 +171,7 @@ body {
     }
   }
 
-  .hidden-widget {
+  .app-hidden-widget {
     width: 100%;
     height: 100%;
     transition:

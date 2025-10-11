@@ -5,7 +5,7 @@ import { Component, RefObject, createRef } from 'react';
 import { DisabledType } from './flexSizeHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
 
-export const HIDDEN_WIDGET_CLASS = 'hidden-widget';
+export const HIDDEN_WIDGET_CLASS = 'app-hidden-widget';
 export const ACTIVE_HIDDEN_WIDGET_CLASS = `active-${HIDDEN_WIDGET_CLASS}`;
 function checkIsActiveHiddenWidgetNode(node: HTMLDivElement) {
     return node.classList.contains(ACTIVE_HIDDEN_WIDGET_CLASS);

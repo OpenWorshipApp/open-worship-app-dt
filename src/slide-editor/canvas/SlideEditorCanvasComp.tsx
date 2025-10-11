@@ -70,7 +70,7 @@ function BodyRendererComp() {
     };
     return (
         <div
-            className="editor blank-bg app-border-white-round"
+            className="editor app-blank-bg app-border-white-round"
             style={{
                 width: `${canvas.width}px`,
                 height: `${canvas.height}px`,
