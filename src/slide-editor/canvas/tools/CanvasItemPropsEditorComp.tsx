@@ -19,7 +19,7 @@ export default function CanvasItemPropsEditorComp({
     const [props, setProps] = useState(canvasItem.props);
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const setProps1 = (anyProps: Partial<typeof props>) => {
-        const newProps = { ...props, ...anyProps };
+        const newProps = cloneJson({ ...props, ...anyProps });
         setProps(newProps);
         attemptTimeout(() => {
             canvasItem.applyProps(newProps);
@@ -35,7 +35,8 @@ export default function CanvasItemPropsEditorComp({
         });
     };
     useCanvasItemEditEvent(canvasItem, () => {
-        setProps(cloneJson(canvasItem.props));
+        const newProps = cloneJson(canvasItem.props);
+        setProps(newProps);
     });
     return (
         <CanvasItemPropsSetterContext

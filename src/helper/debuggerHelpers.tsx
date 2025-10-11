@@ -50,22 +50,6 @@ function checkStore(toKey: string) {
     }
 }
 
-function sanitizeDeps(deps: DependencyList | any[] | undefined) {
-    if (deps === undefined) {
-        return deps;
-    }
-    return [
-        ...deps.map((item) => {
-            if (typeof item === 'object') {
-                try {
-                    return JSON.stringify(item);
-                } catch (_error) {}
-            }
-            return item;
-        }),
-    ];
-}
-
 type MethodContextType = { [key: string]: any };
 export function useAppEffectAsync<T extends MethodContextType>(
     effectMethod: (methodContext: T) => Promise<(() => void) | void>,
@@ -94,7 +78,7 @@ export function useAppEffectAsync<T extends MethodContextType>(
                 }
             });
         };
-    }, sanitizeDeps(totalDeps));
+    }, totalDeps);
 }
 
 export function useAppEffect(
@@ -108,7 +92,7 @@ export function useAppEffect(
     useEffect(() => {
         checkStore(toKey);
         return effect();
-    }, sanitizeDeps(deps));
+    }, deps);
 }
 
 export function TestInfinite() {

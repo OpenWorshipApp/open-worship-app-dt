@@ -140,7 +140,7 @@ export function useGetBibleCrossRef(
             const data = await getBibleCrossRefFromParams(params, getCrossRefs);
             methodContext.setBibleCrossRef(data);
         },
-        [params],
+        [JSON.stringify(params)],
         { setBibleCrossRef },
     );
     return {
