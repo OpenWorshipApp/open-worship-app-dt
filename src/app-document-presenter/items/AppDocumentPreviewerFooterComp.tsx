@@ -60,7 +60,7 @@ function HistoryPreviewerFooterComp() {
         };
     }, []);
     return (
-        <div className="history me-1">
+        <div className="d-flex history me-1">
             {selectedSlideItemHistories.map(([index, itemKey], i) => {
                 return (
                     <RenderSlideIndexComp

@@ -4,8 +4,13 @@ import DragInf, { DragTypeEnum } from '../helper/DragInf';
 import { ClipboardInf } from '../server/appHelpers';
 import { AnyObjectType } from '../helper/typeHelpers';
 
+import slideSchemaJson from './PDFSlideSchema.json';
+import { compileSchema, SchemaNode } from 'json-schema-library';
+const pdfSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
+
 export type PdfSlideType = {
     id: number;
+    name?: string;
     imagePreviewSrc: string;
     pdfPageNumber: number;
     metadata: { width: number; height: number };
@@ -27,11 +32,14 @@ export default class PdfSlide
     get id() {
         return this.originalJson.id;
     }
-
     set id(id: number) {
         const json = cloneJson(this.originalJson);
         json.id = id;
         this.originalJson = json;
+    }
+
+    get name() {
+        return this.originalJson.name ?? '';
     }
 
     clone(): ItemBase {
@@ -45,7 +53,6 @@ export default class PdfSlide
     get originalJson() {
         return this._originalJson;
     }
-
     set originalJson(json: PdfSlideType) {
         this._originalJson = json;
     }
@@ -86,14 +93,7 @@ export default class PdfSlide
     }
 
     static validate(json: AnyObjectType) {
-        if (
-            typeof json.id !== 'number' ||
-            typeof json.imagePreviewSrc !== 'string' ||
-            typeof json.pdfPageNumber !== 'number' ||
-            typeof json.metadata !== 'object' ||
-            typeof json.metadata.width !== 'number' ||
-            typeof json.metadata.height !== 'number'
-        ) {
+        if (pdfSlideSchema.validate(json).valid === false) {
             throw new Error('Invalid slide data');
         }
     }

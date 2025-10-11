@@ -1,0 +1,29 @@
+{
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "number"
+        },
+        "name": {
+            "type": "string"
+        },
+        "imagePreviewSrc": {
+            "type": "string"
+        },
+        "pdfPageNumber": {
+            "type": "number"
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "width": {
+                    "type": "number"
+                },
+                "height": {
+                    "type": "number"
+                }
+            }
+        }
+    },
+    "required": ["id", "imagePreviewSrc", "pdfPageNumber", "metadata"]
+}

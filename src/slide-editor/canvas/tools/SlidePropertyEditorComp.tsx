@@ -167,6 +167,45 @@ function RenderDimEditComp() {
     );
 }
 
+function RenderNameEditorComp() {
+    const slide = useSelectedEditingSlideContext();
+    const [name, setName] = useState(slide.name);
+    const hasChanged = useMemo(() => {
+        return name !== slide.name;
+    }, [name, slide]);
+    const handleNameChanging = () => {
+        const appDocument = AppDocument.getInstance(slide.filePath);
+        slide.name = name;
+        appDocument.updateSlide(slide);
+    };
+    return (
+        <div className="m-1 p-1 d-flex align-items-center">
+            Name:
+            <input
+                className="form-control form-control-sm"
+                type="text"
+                placeholder="name"
+                style={{
+                    maxWidth: '200px',
+                }}
+                value={name}
+                onChange={(e) => {
+                    setName(e.target.value);
+                }}
+            />
+            {hasChanged ? (
+                <button
+                    className="btn btn-primary btn-sm m-1"
+                    title="`Apply changed name to this slide"
+                    onClick={handleNameChanging}
+                >
+                    `Apply
+                </button>
+            ) : null}
+        </div>
+    );
+}
+
 export default function SlidePropertyEditorComp() {
     const slide = useSelectedEditingSlideContext();
     const [index] = useAppStateAsync(() => {
@@ -181,9 +220,7 @@ export default function SlidePropertyEditorComp() {
                     <RenderSlideIndexComp viewIndex={index ?? -1} />
                 </div>
                 <div className="m-1 p-1">Id: {slide.id}</div>
-                {slide.name ? (
-                    <div className="m-1 p-1">Name: {slide.name}</div>
-                ) : null}
+                <RenderNameEditorComp />
             </div>
             <RenderDimEditComp />
         </div>

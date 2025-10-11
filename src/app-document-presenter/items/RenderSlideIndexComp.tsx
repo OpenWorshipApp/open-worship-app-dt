@@ -6,11 +6,11 @@ export default function RenderSlideIndexComp({
     title?: string;
 }>) {
     return (
-        <span
-            className="badge rounded-pill text-bg-info"
+        <div
+            className="d-flex badge rounded-pill text-bg-info align-items-center"
             title={title ?? `Index: ${viewIndex}`}
         >
             {viewIndex}
-        </span>
+        </div>
     );
 }

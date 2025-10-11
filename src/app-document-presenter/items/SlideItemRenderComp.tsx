@@ -46,22 +46,23 @@ function RenderScreenInfoComp({
 function RenderHeaderInfoComp({
     varyAppDocumentItem,
     viewIndex,
+    name,
 }: Readonly<{
     varyAppDocumentItem: VaryAppDocumentItemType;
     viewIndex: number;
+    name?: string;
 }>) {
     const isChanged =
         Slide.checkIsThisType(varyAppDocumentItem) &&
         (varyAppDocumentItem as Slide).isChanged;
     return (
         <div className="card-header vary-app-document-item-header d-flex">
-            <div className="d-flex w-100">
-                <div className="flex-fill d-flex">
-                    <div>
-                        <RenderSlideIndexComp viewIndex={viewIndex} />
-                    </div>
+            <div className="d-flex w-100 overflow-hidden">
+                <div className="d-flex overflow-hidden flex-grow-1">
+                    <RenderSlideIndexComp viewIndex={viewIndex} />
+                    <span className="mx-1 app-ellipsis">{name}</span>
                 </div>
-                <div className="flex-fill d-flex justify-content-end">
+                <div className="d-flex justify-content-end">
                     <RenderScreenInfoComp
                         varyAppDocumentItem={varyAppDocumentItem}
                     />
@@ -295,6 +296,7 @@ export default function SlideItemRenderComp({
             <RenderHeaderInfoComp
                 varyAppDocumentItem={slide}
                 viewIndex={index + 1}
+                name={slide.name}
             />
             <div className="card-body app-overflow-hidden w-100" style={style}>
                 {attachedBackgroundElement && (
