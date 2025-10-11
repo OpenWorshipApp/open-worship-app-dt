@@ -301,7 +301,7 @@ export default function SlideItemRenderComp({
                 viewIndex={index + 1}
             />
             <div
-                className="card-body app-overflow-hidden w-100 app-blank-bg"
+                className="card-body app-overflow-hidden w-100"
                 style={style}
             >
                 {attachedBackgroundElement && (
