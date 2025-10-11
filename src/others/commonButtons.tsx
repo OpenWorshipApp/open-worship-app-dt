@@ -1,4 +1,4 @@
-import { createContext, use } from 'react';
+import { createContext, use, useMemo } from 'react';
 
 import {
     EventMapper,
@@ -8,6 +8,7 @@ import {
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
 import { gotoSettingPage } from '../setting/settingHelpers';
+import appProvider from '../server/appProvider';
 
 export function QuitCurrentPageComp({
     title,
@@ -44,12 +45,19 @@ export function SettingButtonComp() {
 }
 
 export function HelpButtonComp() {
+    const url = useMemo(() => {
+        const helpKey = appProvider.currentHomePage
+            .replace(/^\//, '')
+            .replace(/\.html$/, '');
+        return `${appProvider.appInfo.homepage}/help/#${helpKey}`;
+    }, []);
     return (
         <button
             className="btn btn-outline-info"
-            title="`Help"
+            title={url}
             onClick={() => {
                 console.log('Help button clicked');
+                appProvider.browserUtils.openExternalURL(url);
             }}
         >
             <i className="bi bi-question-circle" />

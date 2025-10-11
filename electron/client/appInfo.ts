@@ -13,7 +13,7 @@ const appInfo = {
     titleFull: `${packageInfo.build.productName} (Desktop version)`,
     description: packageInfo.description,
     author: packageInfo.author,
-    homepage: packageInfo.homepage,
+    homepage: packageInfo.homepage.replace(/\/+$/, ''),
     gitRepository: packageInfo.gitRepository,
     version: packageInfo.version,
     versionNumber: toVersionNumber(packageInfo.version),
