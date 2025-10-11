@@ -6,10 +6,14 @@ import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import { ClipboardInf } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { AnyObjectType } from '../helper/typeHelpers';
-import { DisplayType } from '../_screen/screenTypeHelpers';
+import { compileSchema, SchemaNode } from 'json-schema-library';
+
+import slideSchemaJson from './SlideSchema.json';
+const slideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
 export type SlideType = {
     id: number;
+    name?: string;
     canvasItems: CanvasItemPropsType[];
     metadata: {
         width: number;
@@ -31,12 +35,26 @@ export default class Slide
         this.filePath = filePath;
     }
 
+    get cloneOriginalJson() {
+        const json = cloneJson(this.originalJson);
+        return json;
+    }
+
+    get name() {
+        return this.originalJson.name ?? '';
+    }
+    set name(name: string) {
+        const json = this.cloneOriginalJson;
+        json.name = name;
+        this.originalJson = json;
+    }
+
     get id() {
         return this.originalJson.id;
     }
 
     set id(id: number) {
-        const json = cloneJson(this.originalJson);
+        const json = this.cloneOriginalJson;
         json.id = id;
         this.originalJson = json;
     }
@@ -55,7 +73,7 @@ export default class Slide
     }
 
     set metadata(metadata: { width: number; height: number }) {
-        const json = cloneJson(this.originalJson);
+        const json = this.cloneOriginalJson;
         json.metadata = metadata;
         this.originalJson = json;
     }
@@ -65,7 +83,7 @@ export default class Slide
     }
 
     set canvasItemsJson(canvasItemsJson: CanvasItemPropsType[]) {
-        const json = cloneJson(this.originalJson);
+        const json = this.cloneOriginalJson;
         json.canvasItems = canvasItemsJson;
         this.originalJson = json;
     }
@@ -115,18 +133,12 @@ export default class Slide
         return this.originalJson;
     }
 
-    checkIsWrongDimension({ bounds }: DisplayType) {
-        return bounds.width !== this.width || bounds.height !== this.height;
+    checkIsWrongDimension(dim: { width: number; height: number }) {
+        return dim.width !== this.width || dim.height !== this.height;
     }
 
     static validate(json: AnyObjectType) {
-        if (
-            typeof json.id !== 'number' ||
-            typeof json.metadata !== 'object' ||
-            typeof json.metadata.width !== 'number' ||
-            typeof json.metadata.height !== 'number' ||
-            !(json.canvasItems instanceof Array)
-        ) {
+        if (slideSchema.validate(json).valid === false) {
             throw new Error(`Invalid slide data json:${JSON.stringify(json)}`);
         }
     }

@@ -28,7 +28,9 @@ function CheckingDimensionComp({
                 AppDocument.toWrongDimensionString(wrongDimension)
             }
             onClick={() => {
-                selectedVaryAppDocument.fixSlideDimension(screenDisplay);
+                selectedVaryAppDocument.fixSlidesDimensionForDisplay(
+                    screenDisplay,
+                );
             }}
         >
             <i className="bi bi-aspect-ratio" style={{ color: 'red' }} />

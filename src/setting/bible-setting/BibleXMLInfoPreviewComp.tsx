@@ -13,12 +13,12 @@ import { useAppEffect } from '../../helper/debuggerHelpers';
 import { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
 import appProvider from '../../server/appProvider';
 
-import bibleInfoSchema from './bibleInfoSchema.json';
+import bibleInfoSchemaJson from './bibleInfoSchema.json';
 import { AnyObjectType } from '../../helper/typeHelpers';
 import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 
-const schema: SchemaNode = compileSchema(bibleInfoSchema);
+const bibleInfoSchema: SchemaNode = compileSchema(bibleInfoSchemaJson);
 languages.json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
     allowComments: false,
@@ -28,7 +28,7 @@ languages.json.jsonDefaults.setDiagnosticsOptions({
         {
             uri: `${appProvider.appInfo.homepage}/bible-info-schema.json`,
             fileMatch: ['*'],
-            schema: bibleInfoSchema,
+            schema: bibleInfoSchemaJson,
         },
     ],
     enableSchemaRequest: false,
@@ -62,7 +62,7 @@ export default function BibleXMLInfoPreviewComp({
     };
     const validateCanSave = () => {
         const newBibleInfo = getEditorBibleInfo(editorStore.editorInstance);
-        const { valid, errors } = schema.validate(newBibleInfo);
+        const { valid, errors } = bibleInfoSchema.validate(newBibleInfo);
         const canSave = valid && errors.length === 0;
         setCanSave(canSave);
         return { canSave, newBibleInfo };

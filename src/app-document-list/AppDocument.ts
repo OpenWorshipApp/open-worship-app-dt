@@ -233,7 +233,7 @@ export default class AppDocument
     async getIsWrongDimension(display: DisplayType) {
         const slides = await this.getSlides();
         const foundSlide = slides.find((slide) => {
-            return slide.checkIsWrongDimension(display);
+            return slide.checkIsWrongDimension(display.bounds);
         });
         if (foundSlide) {
             return {
@@ -259,13 +259,37 @@ export default class AppDocument
         }
     }
 
-    async fixSlideDimension(display: DisplayType) {
+    async changeSlidesDimension(
+        dim: { width: number; height: number },
+        targetSlide?: Slide,
+    ) {
         const slides = await this.getSlides();
         const newSlides = await Promise.all(
             slides.map((slide) => {
                 return (async () => {
                     const json = slide.toJson();
-                    if (slide.checkIsWrongDimension(display)) {
+                    if (
+                        targetSlide === undefined ||
+                        (slide.checkIsSame(targetSlide) &&
+                            slide.checkIsWrongDimension(dim))
+                    ) {
+                        json.metadata.width = dim.width;
+                        json.metadata.height = dim.height;
+                    }
+                    return Slide.fromJson(json, this.filePath);
+                })();
+            }),
+        );
+        await this.setSlides(newSlides);
+    }
+
+    async fixSlidesDimensionForDisplay(display: DisplayType) {
+        const slides = await this.getSlides();
+        const newSlides = await Promise.all(
+            slides.map((slide) => {
+                return (async () => {
+                    const json = slide.toJson();
+                    if (slide.checkIsWrongDimension(display.bounds)) {
                         json.metadata.width = display.bounds.width;
                         json.metadata.height = display.bounds.height;
                     }

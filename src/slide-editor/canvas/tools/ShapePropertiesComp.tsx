@@ -61,7 +61,7 @@ export default function ShapePropertiesComp() {
                 <div className="input-group-text">`Round Size Pixel:</div>
                 <input
                     type="number"
-                    className="form-control"
+                    className="form-control form-control-sm"
                     value={roundSizePixel}
                     min={0}
                     onChange={(event) => {

@@ -3,7 +3,7 @@ import { handleError } from '../errorHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
 import { DATA_DIR_NAME, getOpenAIInstance } from './openAIHelpers';
-import { bibleCrossRefSchema } from './aiHelpers';
+import { bibleCrossRefSchemaJson } from './aiHelpers';
 import {
     CrossReferenceType,
     useGetBibleCrossRef,
@@ -48,7 +48,7 @@ function genPrompt(bibleTitle: string, additionalData?: CrossReferenceType[]) {
     `.trim();
 }
 
-const clonedBibleCrossRefSchema = cloneJson(bibleCrossRefSchema);
+const clonedBibleCrossRefSchema = cloneJson(bibleCrossRefSchemaJson);
 delete (clonedBibleCrossRefSchema as any).$schema;
 const responseFormat: ResponseFormatJSONSchema = {
     type: 'json_schema',

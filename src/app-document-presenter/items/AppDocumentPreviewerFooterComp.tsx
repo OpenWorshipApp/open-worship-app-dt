@@ -18,6 +18,7 @@ import {
     MAX_THUMBNAIL_SCALE,
     THUMBNAIL_SCALE_STEP,
 } from '../../app-document-list/appDocumentTypeHelpers';
+import RenderSlideIndexComp from './RenderSlideIndexComp';
 
 export const slidePreviewerMethods = {
     handleSlideItemSelected: (
@@ -60,15 +61,13 @@ function HistoryPreviewerFooterComp() {
     }, []);
     return (
         <div className="history me-1">
-            {selectedSlideItemHistories.map(([index, key], i) => {
+            {selectedSlideItemHistories.map(([index, itemKey], i) => {
                 return (
-                    <span
-                        title={key}
-                        key={key + i}
-                        className="badge rounded-pill text-bg-info"
-                    >
-                        {index}
-                    </span>
+                    <RenderSlideIndexComp
+                        key={itemKey + i}
+                        viewIndex={index}
+                        title={itemKey}
+                    />
                 );
             })}
         </div>

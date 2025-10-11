@@ -14,7 +14,7 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
 import { useAppEffect, useAppEffectAsync } from '../debuggerHelpers';
-import { bibleCrossRefSchema, RefreshingRefType } from './aiHelpers';
+import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
 import { compileSchema, SchemaNode } from 'json-schema-library';
 import BibleItem from '../../bible-list/BibleItem';
 import { handleError } from '../errorHelpers';
@@ -31,9 +31,9 @@ type GetBibleCrossRefsFuncType = (
     bibleTitle: string,
 ) => Promise<CrossReferenceType[] | null>;
 
-const schema: SchemaNode = compileSchema(bibleCrossRefSchema);
+const bibleCrossRefSchema: SchemaNode = compileSchema(bibleCrossRefSchemaJson);
 export function validateCrossReference(data: any) {
-    return schema.validate(data);
+    return bibleCrossRefSchema.validate(data);
 }
 
 export async function getBibleCrossRef(

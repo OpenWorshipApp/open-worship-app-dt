@@ -45,7 +45,12 @@ export default function CanvasItemPropsEditorComp({
             }}
         >
             <div className="card">
-                <div className="card-header">
+                <div
+                    className="card-header"
+                    style={{
+                        height: '30px',
+                    }}
+                >
                     <strong>Item ID: {canvasItem.id}</strong>
                 </div>
                 <div

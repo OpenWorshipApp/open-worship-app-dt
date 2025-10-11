@@ -21,6 +21,7 @@ import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDo
 import AppDocument from '../../app-document-list/AppDocument';
 import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComponent';
 import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import RenderSlideIndexComp from './RenderSlideIndexComp';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -57,12 +58,7 @@ function RenderHeaderInfoComp({
             <div className="d-flex w-100">
                 <div className="flex-fill d-flex">
                     <div>
-                        <span
-                            className="badge rounded-pill text-bg-info"
-                            title={`Index: ${viewIndex}`}
-                        >
-                            {viewIndex}
-                        </span>
+                        <RenderSlideIndexComp viewIndex={viewIndex} />
                     </div>
                 </div>
                 <div className="flex-fill d-flex justify-content-end">
@@ -300,10 +296,7 @@ export default function SlideItemRenderComp({
                 varyAppDocumentItem={slide}
                 viewIndex={index + 1}
             />
-            <div
-                className="card-body app-overflow-hidden w-100"
-                style={style}
-            >
+            <div className="card-body app-overflow-hidden w-100" style={style}>
                 {attachedBackgroundElement && (
                     <div
                         className="w-100"

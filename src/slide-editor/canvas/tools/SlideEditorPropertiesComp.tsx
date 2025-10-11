@@ -1,5 +1,6 @@
 import CanvasItem from '../CanvasItem';
 import CanvasItemPropsEditorComp from './CanvasItemPropsEditorComp';
+import SlidePropertyEditorComp from './SlidePropertyEditorComp';
 
 export default function SlideEditorPropertiesComp({
     canvasItems,
@@ -13,6 +14,7 @@ export default function SlideEditorPropertiesComp({
                 overflowX: 'hidden',
             }}
         >
+            <SlidePropertyEditorComp />
             {canvasItems.length === 0 ? (
                 <div className="d-flex justify-content-center align-items-center h-100">
                     <div>

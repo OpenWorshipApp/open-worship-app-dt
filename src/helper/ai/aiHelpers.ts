@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAppEffect } from '../debuggerHelpers';
 
-import bibleCrossRefSchema from './bibleCrossRefSchema.json';
-export { bibleCrossRefSchema };
+import bibleCrossRefSchemaJson from './bibleCrossRefSchema.json';
+export { bibleCrossRefSchemaJson };
 
 export type RefreshingRefType = {
     refresh: () => void;
