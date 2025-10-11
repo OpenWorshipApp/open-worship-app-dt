@@ -1,3 +1,5 @@
+import { compileSchema, SchemaNode } from 'json-schema-library';
+
 import { ItemBase } from '../helper/ItemBase';
 import { cloneJson } from '../helper/helpers';
 import { CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
@@ -6,7 +8,6 @@ import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import { ClipboardInf } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { AnyObjectType } from '../helper/typeHelpers';
-import { compileSchema, SchemaNode } from 'json-schema-library';
 
 import slideSchemaJson from './SlideSchema.json';
 const slideSchema: SchemaNode = compileSchema(slideSchemaJson);

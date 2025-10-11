@@ -1,4 +1,5 @@
 import { createContext, RefObject, use, useState } from 'react';
+import { compileSchema, SchemaNode } from 'json-schema-library';
 
 import {
     fsCheckDirExist,
@@ -15,7 +16,6 @@ import { unlocking } from '../../server/unlockingHelpers';
 
 import { useAppEffect, useAppEffectAsync } from '../debuggerHelpers';
 import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
-import { compileSchema, SchemaNode } from 'json-schema-library';
 import BibleItem from '../../bible-list/BibleItem';
 import { handleError } from '../errorHelpers';
 import { getKJVBookKeyValue } from '../bible-helpers/serverBibleHelpers';

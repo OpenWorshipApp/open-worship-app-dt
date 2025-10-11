@@ -1,3 +1,5 @@
+import { compileSchema, SchemaNode } from 'json-schema-library';
+
 import { ItemBase } from '../helper/ItemBase';
 import { cloneJson } from '../helper/helpers';
 import DragInf, { DragTypeEnum } from '../helper/DragInf';
@@ -5,7 +7,6 @@ import { ClipboardInf } from '../server/appHelpers';
 import { AnyObjectType } from '../helper/typeHelpers';
 
 import slideSchemaJson from './PDFSlideSchema.json';
-import { compileSchema, SchemaNode } from 'json-schema-library';
 const pdfSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
 export type PdfSlideType = {

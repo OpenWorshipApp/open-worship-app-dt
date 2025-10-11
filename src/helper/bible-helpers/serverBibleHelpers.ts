@@ -8,6 +8,13 @@ import { freezeObject } from '../helpers';
 
 import bibleJson from './bible.json';
 
+export type BibleStatusType = [string, boolean, string];
+
+export type BookType = {
+    key: string;
+    chapterCount: number;
+};
+
 export const kjvBibleInfo = bibleJson as {
     bookKeysOrder: string[];
     bookKeysOld: string[];
@@ -15,13 +22,6 @@ export const kjvBibleInfo = bibleJson as {
     kjvKeyValue: { [key: string]: string };
 };
 freezeObject(kjvBibleInfo);
-
-export type BibleStatusType = [string, boolean, string];
-
-export type BookType = {
-    key: string;
-    chapterCount: number;
-};
 
 export const toLocaleNumQuick = (n: number, numList: string[]) => {
     if (!numList) {
