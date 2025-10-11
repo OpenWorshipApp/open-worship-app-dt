@@ -76,7 +76,7 @@ function CustomPortInputComp({
             <label htmlFor="port-input">Custom Port:</label>
             <input
                 id="port-input"
-                className="mx-1"
+                className="mx-1 form-control form-control-sm"
                 style={{
                     width: '80px',
                 }}

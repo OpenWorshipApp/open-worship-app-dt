@@ -137,8 +137,8 @@ function TimeInSetComp({
                 <div className="input-group" style={{ width: '250px' }}>
                     <div className="input-group-text">City:</div>
                     <input
+                        className="form-control form-control-sm"
                         type="text"
-                        className="form-control"
                         value={cityName}
                         onChange={(event) => {
                             setCityName(event.target.value);
@@ -150,8 +150,8 @@ function TimeInSetComp({
                         Timezone Minute Offset:
                     </div>
                     <input
+                        className="form-control form-control-sm"
                         type="number"
-                        className="form-control"
                         value={timezoneMinuteOffset}
                         onChange={(event) => {
                             setTimezoneMinuteOffset(

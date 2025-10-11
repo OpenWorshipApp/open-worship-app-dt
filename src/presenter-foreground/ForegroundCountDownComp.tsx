@@ -176,8 +176,8 @@ function CountDownInSetComp({
             >
                 <div className="input-group-text">H:</div>
                 <input
+                    className="form-control form-control-sm"
                     type="number"
-                    className="form-control"
                     value={hours}
                     onChange={(event) => {
                         setHours(event.target.value);
@@ -192,8 +192,8 @@ function CountDownInSetComp({
             >
                 <div className="input-group-text">M:</div>
                 <input
+                    className="form-control form-control-sm"
                     type="number"
-                    className="form-control"
                     value={minutes}
                     onChange={(event) => {
                         setMinutes(event.target.value);

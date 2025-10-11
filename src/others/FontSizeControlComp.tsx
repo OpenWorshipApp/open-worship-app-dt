@@ -8,7 +8,7 @@ export default function FontSizeControlComp({
     return (
         <div className="d-flex">
             <input
-                className="form-control"
+                className="form-control form-control-sm"
                 type="number"
                 style={{ maxWidth: '100px' }}
                 value={fontSize}

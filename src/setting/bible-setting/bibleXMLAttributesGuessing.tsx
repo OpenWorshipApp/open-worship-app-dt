@@ -36,7 +36,8 @@ function BibleKeyXMLInputComp({
                 <div className="input-group-text">Key:</div>
                 <input
                     className={
-                        'form-control' + (invalidMessage ? ' is-invalid' : '')
+                        'form-control form-control-sm' +
+                        (invalidMessage ? ' is-invalid' : '')
                     }
                     type="text"
                     value={value}
@@ -121,7 +122,8 @@ function BibleNumbersMapXMLInputComp({
                 <div className="input-group-text">Key:</div>
                 <input
                     className={
-                        'form-control' + (invalidMessage ? ' is-invalid' : '')
+                        'form-control form-control-sm' +
+                        (invalidMessage ? ' is-invalid' : '')
                     }
                     type="text"
                     value={value}

@@ -133,7 +133,7 @@ export default function ForegroundQuickTextComp() {
                     >
                         <small>`Time Second Delay:</small>
                         <input
-                            className="form-control"
+                            className="form-control form-control-sm"
                             type="number"
                             min="0"
                             value={timeSecondDelay}
@@ -153,7 +153,7 @@ export default function ForegroundQuickTextComp() {
                     >
                         <small>`Time Second to Live:</small>
                         <input
-                            className="form-control"
+                            className="form-control form-control-sm"
                             type="number"
                             min="1"
                             value={timeSecondToLive}

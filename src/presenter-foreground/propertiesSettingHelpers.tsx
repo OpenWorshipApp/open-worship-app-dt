@@ -244,8 +244,8 @@ function PropertiesSettingComp({
                 >
                     <div className="input-group-text">Offset X:</div>
                     <input
+                        className="form-control form-control-sm"
                         type="number"
-                        className="form-control"
                         value={widgetOffsetX}
                         onChange={(event) => {
                             setWidgetOffsetX(parseInt(event.target.value) || 0);
@@ -253,8 +253,8 @@ function PropertiesSettingComp({
                     />
                     <div className="input-group-text">Offset Y:</div>
                     <input
+                        className="form-control form-control-sm"
                         type="number"
-                        className="form-control"
                         value={widgetOffsetY}
                         onChange={(event) => {
                             setWidgetOffsetY(parseInt(event.target.value) || 0);
@@ -336,8 +336,8 @@ function PropertiesSettingComp({
                 >
                     <div className="input-group-text">`Round Size Pixel:</div>
                     <input
+                        className="form-control form-control-sm"
                         type="number"
-                        className="form-control"
                         value={roundSizePixel}
                         min={0}
                         onChange={(event) => {
@@ -355,8 +355,8 @@ function PropertiesSettingComp({
                     >
                         <div className="input-group-text">Font Size:</div>
                         <input
+                            className="form-control form-control-sm"
                             type="number"
-                            className="form-control"
                             value={fontSize}
                             onChange={(event) => {
                                 setFontSize(

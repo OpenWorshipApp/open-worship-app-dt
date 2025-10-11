@@ -37,7 +37,7 @@ export default function ScreenPreviewerFooterComp() {
                     >
                         <small>`Stage:</small>
                         <input
-                            className="form-control"
+                            className="form-control form-control-sm"
                             type="number"
                             style={{
                                 width: '30px',

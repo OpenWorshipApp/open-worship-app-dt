@@ -36,7 +36,7 @@ function AISettingComp() {
                                                 }, 100);
                                             }
                                         }}
-                                        className="flex-fill mx-2"
+                                        className="form-control form-control-sm flex-fill mx-2"
                                         type="text"
                                         onChange={(e) => {
                                             openAIAPIKey = e.target.value;
@@ -58,7 +58,7 @@ function AISettingComp() {
                                                 }, 100);
                                             }
                                         }}
-                                        className="flex-fill mx-2"
+                                        className="form-control form-control-sm flex-fill mx-2"
                                         type="text"
                                         onChange={(e) => {
                                             anthropicAPIKey = e.target.value;

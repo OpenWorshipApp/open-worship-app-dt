@@ -106,7 +106,7 @@ export default function ForegroundCommonPropertiesSettingComp() {
                     >
                         <small>`Backdrop Filter (PX):</small>
                         <input
-                            className="form-control"
+                            className="form-control form-control-sm"
                             type="number"
                             min="0"
                             value={backdropFilter}

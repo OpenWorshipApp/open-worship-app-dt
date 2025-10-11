@@ -34,7 +34,7 @@ export default function PathEditorComp({
             ) : null}
             <input
                 type="text"
-                className={`form-control ${dirValidClassname}`}
+                className={`form-control form-control-sm ${dirValidClassname}`}
                 value={path}
                 onChange={(event) => {
                     setPath1(event.target.value);

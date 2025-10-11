@@ -137,8 +137,8 @@ export default function SlideAutoPlayComp({
             <div className="input-group" style={{ width: '120px' }}>
                 <div className="input-group-text">M:</div>
                 <input
+                    className="form-control form-control-sm"
                     type="number"
-                    className="form-control"
                     value={timerSeconds}
                     onChange={(event) => {
                         setTimerSeconds(

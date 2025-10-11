@@ -140,7 +140,7 @@ export default function BibleXMLImportComp({
                             <div className="input-group-text">URL:</div>
                             <input
                                 className={
-                                    'form-control' +
+                                    'form-control form-control-sm' +
                                     (!urlText || isValidUrl
                                         ? ''
                                         : ' is-invalid')

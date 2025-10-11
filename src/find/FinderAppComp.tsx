@@ -77,8 +77,8 @@ export default function FinderAppComp({
                         <i className="bi bi-arrow-right" />
                     </button>
                     <input
+                        className="form-control form-control-sm"
                         type="text"
-                        className="form-control"
                         autoFocus
                         value={lookupText}
                         onChange={(event) => {

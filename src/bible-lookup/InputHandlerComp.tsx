@@ -61,10 +61,10 @@ export default function InputHandlerComp({
             />
             <input
                 id={BIBLE_LOOKUP_INPUT_ID}
+                className={`form-control form-control-sm ${INPUT_TEXT_CLASS}`}
                 ref={inputRef}
                 data-bible-key={bibleKey}
                 type="text"
-                className={`form-control ${INPUT_TEXT_CLASS}`}
                 autoFocus
                 placeholder={placeholder ?? ''}
                 onKeyUp={(event) => {

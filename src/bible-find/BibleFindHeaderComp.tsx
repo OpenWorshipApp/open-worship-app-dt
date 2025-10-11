@@ -72,11 +72,11 @@ export default function BibleFindHeaderComp({
     return (
         <>
             <input
+                className="form-control form-control-sm"
                 ref={inputRef}
                 data-bible-key={bibleFindController.bibleKey}
                 type="text"
                 value={text}
-                className="form-control"
                 onKeyUp={keyUpHandling}
                 onChange={(event) => {
                     bibleFindController.handleNewValue(event);

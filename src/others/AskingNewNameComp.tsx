@@ -22,7 +22,7 @@ export default function AskingNewNameComp({
         >
             <input
                 type="text"
-                className="form-control"
+                className="form-control form-control-sm"
                 placeholder="title"
                 value={creatingNewName}
                 aria-label="file name"

@@ -22,7 +22,8 @@ function InputUrlComp({
                 <div className="input-group-text">{title}</div>
                 <input
                     className={
-                        'form-control' + (invalidMessage ? ' is-invalid' : '')
+                        'form-control form-control-sm' +
+                        (invalidMessage ? ' is-invalid' : '')
                     }
                     type="text"
                     value={url}
