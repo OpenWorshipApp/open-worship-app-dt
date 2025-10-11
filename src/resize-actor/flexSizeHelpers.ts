@@ -26,6 +26,7 @@ export type DisabledType = [DisablingTargetType, number];
 export const resizeSettingNames = {
     appEditor: 'app-editor-main',
     appEditorLeft: 'app-editor-left',
+    appEditorRight: 'app-editor-right',
     appPresenter: 'app-presenter-main',
     appPresenterLeft: 'app-presenter-left',
     appPresenterMiddle: 'app-presenter-middle',

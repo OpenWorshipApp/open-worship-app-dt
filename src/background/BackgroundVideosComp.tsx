@@ -2,7 +2,6 @@ import './BackgroundVideosComp.scss';
 
 import { createRef, ReactElement, useState } from 'react';
 
-import { RenderScreenIds } from './BackgroundComp';
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -32,6 +31,7 @@ import {
     methodMapIsFadingAtTheEnd,
     setIsFadingAtTheEndSetting,
 } from './videoBackgroundHelpers';
+import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 
 function rendChild(
     filePath: string,
@@ -82,7 +82,7 @@ function RendBody({
                 vRef.current?.pause();
             }}
         >
-            <RenderScreenIds
+            <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return parseInt(key);
                 })}

@@ -8,7 +8,6 @@ import {
 } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
 import { getBackgroundSrcListOnScreenSetting } from '../_screen/screenHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { tran } from '../lang/langHelpers';
@@ -18,6 +17,7 @@ import {
     BackgroundSrcListType,
     BackgroundType,
 } from '../_screen/screenTypeHelpers';
+import appProvider from '../server/appProvider';
 
 const LazyBackgroundColorsComp = lazy(() => {
     return import('./BackgroundColorsComp');
@@ -117,13 +117,15 @@ export default function BackgroundComp() {
                     activeTab={tabKey}
                     setActiveTab={setTabKey}
                 />
-                <RenderSoundsTabComp
-                    isActive={isSoundActive}
-                    setIsActive={setIsSoundActive}
-                />
+                {appProvider.isPagePresenter ? (
+                    <RenderSoundsTabComp
+                        isActive={isSoundActive}
+                        setIsActive={setIsSoundActive}
+                    />
+                ) : null}
             </div>
             <div className="body flex-fill d-flex">
-                {isSoundActive ? (
+                {appProvider.isPagePresenter && isSoundActive ? (
                     <ResizeActorComp
                         flexSizeName={'flex-size-background'}
                         isHorizontal
@@ -153,25 +155,6 @@ export default function BackgroundComp() {
                     normalBackgroundChild
                 )}
             </div>
-        </div>
-    );
-}
-
-export function RenderScreenIds({
-    screenIds,
-}: Readonly<{
-    screenIds: number[];
-}>) {
-    return (
-        <div
-            style={{
-                position: 'absolute',
-                textShadow: '1px 1px 5px #000',
-            }}
-        >
-            {screenIds.map((screenId) => {
-                return <ShowingScreenIcon key={screenId} screenId={screenId} />;
-            })}
         </div>
     );
 }

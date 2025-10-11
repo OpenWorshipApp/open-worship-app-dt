@@ -1,6 +1,5 @@
 import './BackgroundImagesComp.scss';
 
-import { RenderScreenIds } from './BackgroundComp';
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -34,6 +33,7 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { ReactElement } from 'react';
+import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 
 function rendChild(
     filePath: string,
@@ -47,7 +47,7 @@ function rendChild(
             className="card-body app-blank-bg"
             style={{ height: `${height}px`, overflow: 'hidden' }}
         >
-            <RenderScreenIds
+            <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return parseInt(key);
                 })}

@@ -6,8 +6,8 @@ import ResizeActorComp from './resize-actor/ResizeActorComp';
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./app-document-presenter/items/AppDocumentPreviewerComp');
 });
-const LazySlideEditorGroundComp = lazy(() => {
-    return import('./slide-editor/SlideEditorGroundComp');
+const LazyAppEditorRightComp = lazy(() => {
+    return import('./AppEditorRightComp');
 });
 
 export default function AppEditorComp() {
@@ -26,9 +26,9 @@ export default function AppEditorComp() {
                     widgetName: 'App Editor Left',
                 },
                 {
-                    children: LazySlideEditorGroundComp,
+                    children: LazyAppEditorRightComp,
                     key: 'h2',
-                    widgetName: 'Slide Editor Ground',
+                    widgetName: 'App Editor Right',
                 },
             ]}
         />
