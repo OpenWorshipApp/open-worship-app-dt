@@ -2,7 +2,7 @@ import { useBibleFindController } from './BibleFindController';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { pasteTextToInput } from '../server/appHelpers';
 
 const BIBLE_FIND_RECENT_SEARCH_SETTING_NAME = 'bible-find-recent-search';
@@ -15,12 +15,14 @@ export function setBibleFindRecentSearch(text: string) {
     setFindText(text);
 }
 
-const attemptTimeout = genTimeoutAttempt(2000);
 export default function BibleFindHeaderComp({
     handleFinding,
 }: Readonly<{
     handleFinding: (text: string, isFresh?: boolean) => void;
 }>) {
+    const attemptTimeout = useMemo(() => {
+        return genTimeoutAttempt(2000);
+    }, []);
     const inputRef = useRef<HTMLInputElement>(null);
     const [text, setText] = useStateSettingString(
         BIBLE_FIND_RECENT_SEARCH_SETTING_NAME,

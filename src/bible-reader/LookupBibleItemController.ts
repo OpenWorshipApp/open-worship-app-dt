@@ -10,7 +10,7 @@ import {
     genContextMenuItemShortcutKey,
 } from '../context-menu/AppContextMenuComp';
 import BibleItemsViewController, {
-    applyHistoryPendingText,
+    applyBibleItemHistoryPendingText,
     attemptAddingHistory,
     ReadIdOnlyBibleItem,
     splitHorizontalId,
@@ -209,7 +209,7 @@ class LookupBibleItemController extends BibleItemsViewController {
     }
 
     async setLookupContentFromBibleItem(bibleItem: ReadIdOnlyBibleItem) {
-        applyHistoryPendingText();
+        applyBibleItemHistoryPendingText();
         this.applyTargetOrBibleKey(this.selectedBibleItem, bibleItem);
         this.inputText = await bibleItem.toTitle();
     }

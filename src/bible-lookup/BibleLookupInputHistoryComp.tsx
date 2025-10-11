@@ -6,7 +6,7 @@ import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
 import LookupBibleItemController, {
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
-import { historyStore } from '../bible-reader/BibleItemsViewController';
+import { bibleHistoryStore } from '../bible-reader/BibleItemsViewController';
 import {
     ContextMenuItemType,
     showAppContextMenu,
@@ -33,7 +33,7 @@ function useHistoryTextList(maxHistoryCount: number) {
         );
     };
     useAppEffect(() => {
-        historyStore.addHistory = (text: string) => {
+        bibleHistoryStore.addBibleItemHistory = (text: string) => {
             if (historyTextList.includes(text)) {
                 return historyTextList;
             }
@@ -42,7 +42,7 @@ function useHistoryTextList(maxHistoryCount: number) {
             setHistoryTextList1(newHistory);
         };
         return () => {
-            historyStore.addHistory = () => {};
+            bibleHistoryStore.addBibleItemHistory = () => {};
         };
     }, [historyTextList]);
     return [historyTextList, setHistoryTextList1] as const;

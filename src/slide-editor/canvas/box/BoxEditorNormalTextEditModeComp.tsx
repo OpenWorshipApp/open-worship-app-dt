@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, useMemo } from 'react';
 
 import { useCanvasControllerContext } from '../CanvasController';
 import BoxEditorTextAreaComp from './BoxEditorTextAreaComp';
@@ -10,12 +10,14 @@ import {
 import { CanvasItemTextPropsType } from '../CanvasItemText';
 import { genTimeoutAttempt } from '../../../helper/helpers';
 
-const attemptTimeout = genTimeoutAttempt(1e3);
 export default function BoxEditorNormalTextEditModeComp({
     style,
 }: Readonly<{
     style: CSSProperties;
 }>) {
+    const attemptTimeout = useMemo(() => {
+        return genTimeoutAttempt(2000);
+    }, []);
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
     const handleTextSetting = (text: string) => {

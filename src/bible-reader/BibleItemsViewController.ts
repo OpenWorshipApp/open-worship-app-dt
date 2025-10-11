@@ -36,20 +36,20 @@ export type NestedObjectsType = BibleItemType | NestedObjectsType[];
 export const splitHorizontalId = 'split-horizontal';
 export const splitVerticalId = 'split-vertical';
 
-export const historyStore: {
-    addHistory: (text: string) => void;
+export const bibleHistoryStore: {
+    addBibleItemHistory: (text: string) => void;
 } = {
-    addHistory: (_text: string) => {},
+    addBibleItemHistory: (_text: string) => {},
 };
-export function applyHistoryPendingText() {
+const attemptTimeout = genTimeoutAttempt(4e3, true);
+let pendingText = '';
+export function applyBibleItemHistoryPendingText() {
     if (!pendingText) {
         return;
     }
-    historyStore.addHistory(pendingText);
+    bibleHistoryStore.addBibleItemHistory(pendingText);
     pendingText = '';
 }
-const attemptTimeout = genTimeoutAttempt(4e3);
-let pendingText = '';
 export function attemptAddingHistory(
     bibleKey: string,
     text: string,
@@ -57,11 +57,11 @@ export function attemptAddingHistory(
 ) {
     pendingText = `(${bibleKey}) ${text}`;
     if (isImmediate) {
-        applyHistoryPendingText();
+        applyBibleItemHistoryPendingText();
         return;
     }
     attemptTimeout(() => {
-        applyHistoryPendingText();
+        applyBibleItemHistoryPendingText();
     });
 }
 

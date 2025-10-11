@@ -274,11 +274,14 @@ export const menuTitleRevealFile = `Reveal in ${
     appProvider.systemUtils.isMac ? 'Finder' : 'File Explorer'
 }`;
 
-export function genTimeoutAttempt(timeMilliseconds: number = 1e3) {
+export function genTimeoutAttempt(
+    timeMilliseconds: number = 1e3,
+    shouldWait = true,
+) {
     let timeoutId: any = null;
     let lastSchedule = Date.now() - timeMilliseconds - 1;
     return function (func: () => void, isImmediate: boolean = false) {
-        if (Date.now() - lastSchedule > timeMilliseconds) {
+        if (!shouldWait && Date.now() - lastSchedule > timeMilliseconds) {
             isImmediate = true;
         }
         lastSchedule = Date.now();
