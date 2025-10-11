@@ -109,8 +109,8 @@ export default function AppRangeComp({
             </div>
             <input
                 id={id}
-                type="range"
                 className="form-range px-1"
+                type="range"
                 min={defaultSize.min}
                 max={defaultSize.max}
                 step={defaultSize.step}

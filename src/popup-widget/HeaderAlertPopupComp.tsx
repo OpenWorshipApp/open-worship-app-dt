@@ -9,11 +9,11 @@ export default function HeaderAlertPopupComp({
         <div className="card-header text-center w-100">
             <div>{header}</div>
             <button
+                className="btn-close float-end"
                 type="button"
                 onClick={() => {
                     onClose();
                 }}
-                className="btn-close float-end"
                 style={{
                     transform: 'translate(0, -90%)',
                 }}

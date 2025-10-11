@@ -117,9 +117,9 @@ export default function BibleXMLImportComp({
                         />
                         {isFileSelected ? (
                             <button
+                                className="btn btn-sm btn-danger"
                                 type="button"
                                 title="Cancel selection"
-                                className="btn btn-sm btn-danger"
                                 onClick={(event) => {
                                     const form = event.currentTarget.form;
                                     handleFileCanceling(form);
@@ -156,9 +156,9 @@ export default function BibleXMLImportComp({
                             />
                             {isValidUrl ? (
                                 <button
+                                    className="btn btn-sm btn-danger"
                                     type="button"
                                     title="Clear url"
-                                    className="btn btn-sm btn-danger"
                                     onClick={() => {
                                         setUrlText('');
                                     }}

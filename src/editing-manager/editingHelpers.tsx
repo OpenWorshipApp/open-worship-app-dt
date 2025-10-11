@@ -59,8 +59,8 @@ function MenuIsModifying({
     return (
         <>
             <button
-                type="button"
                 className="btn btn-sm btn-danger"
+                type="button"
                 disabled={!caDiscard}
                 title="`Discard changed"
                 style={genDisabledStyle(!caDiscard)}
@@ -78,8 +78,8 @@ function MenuIsModifying({
                 <i className="bi bi-x-octagon" />
             </button>
             <button
-                type="button"
                 className="btn btn-sm btn-success"
+                type="button"
                 disabled={!canSave}
                 title={`\`Save [${toShortcutKey(savingEventMapper)}]`}
                 style={genDisabledStyle(!canSave)}
@@ -124,8 +124,8 @@ export function FileEditingMenuComp({
         >
             <div className="btn-group control d-flex justify-content-center">
                 <button
-                    type="button"
                     className="btn btn-sm btn-info"
+                    type="button"
                     title="Undo"
                     disabled={!canUndo}
                     style={genDisabledStyle(!canUndo)}
@@ -136,8 +136,8 @@ export function FileEditingMenuComp({
                     <i className="bi bi-arrow-90deg-left" />
                 </button>
                 <button
-                    type="button"
                     className="btn btn-sm btn-info"
+                    type="button"
                     title="Redo"
                     disabled={!canRedo}
                     style={genDisabledStyle(!canRedo)}

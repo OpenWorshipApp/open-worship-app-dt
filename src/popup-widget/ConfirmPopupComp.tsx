@@ -58,15 +58,15 @@ export default function ConfirmPopupComp({
                     />
                     <div className="btn-group float-end">
                         <button
-                            type="button"
                             className="btn btn-sm"
+                            type="button"
                             onClick={handleClosing}
                         >
                             Cancel
                         </button>
                         <button
-                            type="button"
                             className="btn btn-sm btn-info"
+                            type="button"
                             onClick={handleOkClicking}
                         >
                             Ok

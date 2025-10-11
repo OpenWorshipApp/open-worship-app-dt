@@ -21,8 +21,8 @@ function CheckingDimensionComp({
     }
     return (
         <button
-            type="button"
             className="btn btn-sm btn-warning"
+            type="button"
             title={
                 'Fix slide dimension: ' +
                 AppDocument.toWrongDimensionString(wrongDimension)

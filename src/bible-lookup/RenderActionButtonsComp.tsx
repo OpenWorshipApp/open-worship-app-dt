@@ -13,8 +13,8 @@ export function RenderCopyBibleItemActionButtonsComp({
 }: Readonly<{ bibleItem: BibleItem }>) {
     return (
         <button
-            type="button"
             className="btn btn-sm btn-success"
+            type="button"
             title="`Copy"
             onClick={(event: any) => {
                 showAppContextMenu(
@@ -49,8 +49,8 @@ export default function RenderActionButtonsComp({
                 <i className="bi bi-vr" />
             </button>
             <button
-                type="button"
                 className="btn btn-sm btn-info"
+                type="button"
                 title="`Split vertical"
                 onClick={() => {
                     viewController.addBibleItemBottom(bibleItem, bibleItem);
@@ -61,8 +61,8 @@ export default function RenderActionButtonsComp({
             {isBibleLookup ? (
                 <>
                     <button
-                        type="button"
                         className="btn btn-sm btn-primary"
+                        type="button"
                         title="`Save bible item"
                         onClick={() => {
                             const lookupViewController =
@@ -77,8 +77,8 @@ export default function RenderActionButtonsComp({
                     </button>
                     {appProvider.isPagePresenter ? (
                         <button
-                            type="button"
                             className="btn btn-sm btn-primary"
+                            type="button"
                             title="`Save bible item and show on screen"
                             onClick={(event) => {
                                 const lookupViewController =

@@ -23,10 +23,10 @@ export function ModalCloseButton({ close }: Readonly<{ close: () => void }>) {
             }}
         >
             <button
+                className="btn btn-sm btn-danger"
                 type="button"
                 onClick={close}
                 title={`Close [${toShortcutKey(quittingEventMap)}]`}
-                className="btn btn-sm btn-danger"
             >
                 <i className="bi bi-x-lg" />
             </button>

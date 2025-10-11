@@ -40,9 +40,9 @@ export default function AskingNewNameComp({
                 }}
             />
             <button
-                type="button"
                 id="button-addon2"
                 className={`btn btn-outline-${isValid ? 'success' : 'danger'}`}
+                type="button"
                 onClick={() => {
                     if (!isValid) {
                         showSimpleToast(
