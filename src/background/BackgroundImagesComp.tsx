@@ -79,7 +79,7 @@ async function genContextMenuItems(dirSource: DirSource) {
             menuElement: '`Paste Image',
             onSelect: async () => {
                 for await (const blob of readImagesFromClipboard()) {
-                    const srcData = await FileSource.getSrcDataFromBlob(blob);
+                    const srcData = await FileSource.getSrcDataFromFrom(blob);
                     if (srcData === null) {
                         showSimpleToast(
                             '`Paste Image',

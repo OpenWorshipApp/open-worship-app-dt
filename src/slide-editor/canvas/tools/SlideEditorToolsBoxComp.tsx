@@ -20,7 +20,7 @@ function SizingComp() {
                     canvasController.applyCanvasItemFully(canvasItem);
                 }}
             >
-                Full
+                `Full
             </button>
             <button
                 className="btn btn-sm btn-secondary m-1"
@@ -29,7 +29,7 @@ function SizingComp() {
                     canvasController.applyCanvasItemOriginal(canvasItem);
                 }}
             >
-                Original Size
+                `Original Size
             </button>
             {['image', 'video'].includes(canvasItem.type) ? (
                 <button
@@ -38,7 +38,7 @@ function SizingComp() {
                         canvasController.applyCanvasItemMediaStrip(canvasItem);
                     }}
                 >
-                    Strip
+                    `Strip
                 </button>
             ) : null}
         </SlideEditorToolTitleComp>

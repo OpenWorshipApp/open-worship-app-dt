@@ -1,5 +1,3 @@
-import { DragEvent } from 'react';
-
 import {
     allArrows,
     KeyboardType,
@@ -29,8 +27,6 @@ import {
     VaryAppDocumentItemType,
     DEFAULT_THUMBNAIL_SIZE_FACTOR,
 } from '../../app-document-list/appDocumentTypeHelpers';
-import { changeDragEventStyle } from '../../helper/helpers';
-import { readDroppedFiles } from '../../others/droppingFileHelpers';
 
 const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};
@@ -112,28 +108,8 @@ export default function AppDocumentItemsComp() {
             </div>
         );
     }
-    const handleDataDropping = async (event: DragEvent) => {
-        for await (const file of readDroppedFiles(event)) {
-            console.log(file.size);
-            debugger;
-        }
-    };
     return (
-        <div
-            className="d-flex flex-wrap p-1"
-            onDragOver={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '0.5');
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '1');
-            }}
-            onDrop={(event) => {
-                event.preventDefault();
-                handleDataDropping(event);
-            }}
-        >
+        <div className="d-flex flex-wrap p-1">
             {varyAppDocumentItems.map((varyAppDocumentItem, i) => {
                 return (
                     <VaryAppDocumentItemRenderWrapperComp

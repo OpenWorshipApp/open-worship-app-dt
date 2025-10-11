@@ -78,6 +78,7 @@ export default function PdfSlideRenderComp({
                 }}
             />
             <div
+                className="overflow-hidden"
                 ref={setParentDiv}
                 style={{
                     position: 'absolute',

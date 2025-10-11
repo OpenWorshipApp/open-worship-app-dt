@@ -160,12 +160,15 @@ export default class AppDocument
         await this.setSlides(slides);
     }
 
-    async addSlide(slide: Slide) {
+    async addSlides(newSlides: Slide[]) {
         const slides = await this.getSlides();
-        const maxSlideId = await this.getMaxSlideId();
-        slide.id = maxSlideId + 1;
-        slide.filePath = this.filePath;
-        slides.push(slide);
+        for (let i = 0; i < newSlides.length; i++) {
+            const newSlide = newSlides[i];
+            const maxSlideId = (await this.getMaxSlideId()) + i;
+            newSlide.id = maxSlideId + 1;
+            newSlide.filePath = this.filePath;
+            slides.push(newSlide);
+        }
         await this.setSlides(slides);
     }
 
@@ -199,12 +202,12 @@ export default class AppDocument
         return this.moveSlideToIndex(slide, toIndex);
     }
 
-    async addNewSlide() {
+    async genNewSlide() {
         const maxSlideId = await this.getMaxSlideId();
-        const slide = Slide.defaultSlideData(maxSlideId + 1);
+        const defaultSlideData = Slide.defaultSlideData(maxSlideId + 1);
         const { width, height } = Slide.getDefaultDim();
         const json = {
-            id: slide.id,
+            id: defaultSlideData.id,
             metadata: {
                 width,
                 height,
@@ -212,7 +215,12 @@ export default class AppDocument
             canvasItems: [], // TODO: add default canvas item
         };
         const newSlide = new Slide(this.filePath, json);
-        await this.addSlide(newSlide);
+        return newSlide;
+    }
+
+    async addNewSlide() {
+        const newSlide = await this.genNewSlide();
+        await this.addSlides([newSlide]);
     }
 
     async deleteSlide(slide: Slide) {
@@ -328,7 +336,7 @@ export default class AppDocument
                           menuElement: 'Paste',
                           onSelect: () => {
                               for (const copiedSlide of copiedSlides) {
-                                  this.addSlide(copiedSlide);
+                                  this.addSlides([copiedSlide]);
                               }
                           },
                       },

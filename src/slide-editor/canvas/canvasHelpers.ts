@@ -1,6 +1,7 @@
 import { SrcData } from '../../helper/FileSource';
 import { AppColorType } from '../../others/color/colorHelpers';
 import { AnyObjectType } from '../../helper/typeHelpers';
+import { isSupportedMimetype } from '../../server/fileHelpers';
 
 export type CanvasControllerEventType = 'update' | 'scale';
 
@@ -96,4 +97,9 @@ export function genTextDefaultBoxStyle(
         horizontalAlignment: 'center' as HAlignmentType,
         verticalAlignment: 'center' as VAlignmentType,
     };
+}
+
+export function checkIsSupportMediaType(fileType: string) {
+    // TODO: add support for video
+    return isSupportedMimetype(fileType, 'image');
 }

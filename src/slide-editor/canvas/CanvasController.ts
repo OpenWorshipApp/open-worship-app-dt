@@ -158,10 +158,10 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         showSimpleToast('Insert Image or Video', 'Fail to insert medias');
     }
 
-    async genNewImageItemFromBlob(blob: Blob, event: any) {
+    async genNewImageItemFromFile(file: File | Blob, event: any) {
         try {
             const { x, y } = this.getMousePosition(event);
-            const newItem = CanvasItemImage.genFromBlob(x, y, blob);
+            const newItem = CanvasItemImage.genFromFile(x, y, file);
             return newItem;
         } catch (error) {
             handleError(error);
@@ -200,7 +200,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         this.setCanvasItems(newCanvasItems);
     }
 
-    scaleCanvasItemToSize(
+    static scaleCanvasItemToSize(
         canvasItem: CanvasItem<any>,
         targetWidth: number,
         targetHeight: number,
@@ -212,13 +212,29 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         props.width = Math.round(width * scale);
         props.height = Math.round(height * scale);
         const targetDimension = {
-            parentWidth: this.canvas.width,
-            parentHeight: this.canvas.height,
+            parentWidth: targetWidth,
+            parentHeight: targetHeight,
         };
         canvasItem.applyBoxData(targetDimension, {
             horizontalAlignment: 'center',
             verticalAlignment: 'center',
         });
+    }
+
+    scaleCanvasItemToSize(
+        canvasItem: CanvasItem<any>,
+        targetWidth: number,
+        targetHeight: number,
+        width: number,
+        height: number,
+    ) {
+        CanvasController.scaleCanvasItemToSize(
+            canvasItem,
+            targetWidth,
+            targetHeight,
+            width,
+            height,
+        );
         this.applyEditItem(canvasItem);
     }
 

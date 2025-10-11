@@ -315,7 +315,7 @@ export function downloadImage(targetUrl: string, outputDir: string) {
                         throw new Error('Failed to fetch image');
                     }
                     const blob = await response.blob();
-                    const srcData = await FileSource.getSrcDataFromBlob(blob);
+                    const srcData = await FileSource.getSrcDataFromFrom(blob);
                     if (srcData === null) {
                         throw new Error('Failed to extract image data');
                     }

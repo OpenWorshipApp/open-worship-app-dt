@@ -312,7 +312,7 @@ export default function SlideItemRenderComp({
                     </div>
                 )}
                 <div
-                    className="w-100"
+                    className="w-100 overflow-hidden"
                     style={{
                         ...style,
                         position: 'absolute',
