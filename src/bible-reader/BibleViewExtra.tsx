@@ -214,8 +214,7 @@ export function BibleDirectViewTitleComp({
     return (
         <span
             data-bible-key={bibleItem.bibleKey}
-            className="title app-border-white-round m-1 px-1"
-            style={{ color: '#88ff009e' }}
+            className="title app-border-white-round m-1 px-1 app-found-highlight"
         >
             {title}
         </span>

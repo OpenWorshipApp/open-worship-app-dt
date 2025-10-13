@@ -309,6 +309,16 @@ body {
   .app-inner-shadow {
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
   }
+
+  .form-range {
+    background-color: rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .app-found-highlight {
+    background-color: rgba(0, 0, 0, 0.045);
+    border-radius: 5px;
+    color: #3d680b;
+  }
 }
 
 @keyframes app-highlight-selected-in {

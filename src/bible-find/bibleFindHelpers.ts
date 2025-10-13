@@ -126,7 +126,7 @@ export async function breakItem(
     for (const subText of sanitizedFindText.split(' ')) {
         fullVerseText = fullVerseText.replace(
             new RegExp(`(${subText})`, 'ig'),
-            '<span style="color:#88ff00">$1</span>',
+            '<span class="app-found-highlight">$1</span>',
         );
     }
     const [bookKey, chapter] = bookKeyChapter.split('.');

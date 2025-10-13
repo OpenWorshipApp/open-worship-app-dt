@@ -36,7 +36,7 @@ export default function BibleFindRenderPerPageComp({
                     }, 1000);
                 }}
             >
-                <span style={{ color: '#88ff00' }}>{page}</span>
+                <span className="app-found-highlight">{page}</span>
                 <hr
                     className="w-100"
                     style={{
