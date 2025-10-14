@@ -14,6 +14,7 @@ import {
 } from '../helper/ai/bibleCrossRefHelpers';
 import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 
 function RenderVerseTextComp({
     bibleItem,
@@ -67,8 +68,23 @@ export default function BibleCrossRefRendererComp({
                             className="m-1 p-1"
                             data-bible-key={cloneBibleItem.bibleKey}
                         >
-                            <div className="alert alert-info p-0 px-1 m-0">
-                                ({cloneBibleItem.bibleKey}){' '}
+                            <div
+                                className="alert alert-info p-0 px-1 m-0"
+                                style={{ verticalAlign: 'center' }}
+                            >
+                                <BibleSelectionMiniComp
+                                    bibleKey={bibleItem.bibleKey}
+                                    onBibleKeyChange={(
+                                        _isContextMenu,
+                                        _oldValue,
+                                        newValue,
+                                    ) => {
+                                        const newBibleItem = bibleItem.clone();
+                                        newBibleItem.bibleKey = newValue;
+                                        setBibleItem(newBibleItem);
+                                    }}
+                                    contextMenuTitle="`Add Extra Bible"
+                                />
                                 <BibleViewTitleEditorComp
                                     bibleItem={cloneBibleItem}
                                     isOneVerse

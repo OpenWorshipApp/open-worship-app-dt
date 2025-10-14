@@ -13,6 +13,7 @@ import { getFontFamily, LocaleType } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { CSSProperties } from 'react';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,
@@ -156,6 +157,7 @@ export function BibleSelectionMiniComp({
     onBibleKeyChange,
     isMinimal,
     contextMenuTitle,
+    extraStyle = {},
 }: Readonly<{
     bibleKey: string;
     onBibleKeyChange?: (
@@ -165,6 +167,7 @@ export function BibleSelectionMiniComp({
     ) => void;
     isMinimal?: boolean;
     contextMenuTitle?: string;
+    extraStyle?: CSSProperties;
 }>) {
     const isHandleClickEvent = onBibleKeyChange !== undefined;
     return (
@@ -176,6 +179,7 @@ export function BibleSelectionMiniComp({
             style={{
                 paddingLeft: isMinimal ? '2px' : '6px',
                 paddingRight: isMinimal ? '2px' : '6px',
+                ...extraStyle,
             }}
             onClick={
                 isHandleClickEvent
