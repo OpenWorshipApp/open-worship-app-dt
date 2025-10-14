@@ -1,3 +1,6 @@
+import '../appInit.scss';
+import '../others/theme-override-dark.scss';
+import '../others/theme-override-light.scss';
 import './FinderAppComp.scss';
 
 import { useState } from 'react';
@@ -52,7 +55,7 @@ export default function FinderAppComp({
             className="finder-container card w-100 h-100"
             data-bs-theme="dark"
         >
-            <div className="card-body">
+            <div className="card-body p-0">
                 <div className="finder input-group">
                     <button
                         className="btn btn-info"

@@ -17,8 +17,8 @@ export default class ElectronFinderController {
             backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
-            width: 350,
-            height: 100,
+            width: 270,
+            height: 80,
             webPreferences: {
                 webSecurity: isSecured,
                 nodeIntegration: true,
