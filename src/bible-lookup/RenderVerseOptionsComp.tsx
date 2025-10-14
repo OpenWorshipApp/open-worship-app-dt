@@ -42,7 +42,7 @@ export default function RenderVerseOptionsComp({
         return null;
     }
     return (
-        <div className="render-found" data-bible-key={bibleKey}>
+        <div className="render-found full-view-hide" data-bible-key={bibleKey}>
             <div
                 className={
                     'verse-select w-100 d-flex p-1 align-content-start ' +

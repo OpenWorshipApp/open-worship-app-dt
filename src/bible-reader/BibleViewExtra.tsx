@@ -230,7 +230,11 @@ export function BibleViewTitleWrapperComp({
 }>) {
     const fontSize = useBibleViewFontSizeContext();
     return (
-        <span className="title" data-bible-key={bibleKey} style={{ fontSize }}>
+        <span
+            className="title full-view-reset-font-size"
+            data-bible-key={bibleKey}
+            style={{ fontSize }}
+        >
             {children}
         </span>
     );

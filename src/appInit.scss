@@ -72,6 +72,13 @@ body {
     height: 100vh !important;
     overflow-y: auto !important;
     z-index: $z-index-widget-full-view !important;
+
+    .full-view-reset-font-size {
+      font-size: initial !important;
+    }
+    .full-view-hide {
+      display: none !important;
+    }
   }
 
   .flex-item {
