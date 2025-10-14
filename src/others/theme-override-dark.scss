@@ -166,6 +166,9 @@ $resizer-color: rgb(73, 103, 123);
   .app-border-whiter-round {
     border: 1px dashed var(--bs-gray-400);
   }
+  .app-border-bottom-white-round {
+    border-bottom: 1px solid var(--bs-gray-600);
+  }
 
   .app-full-view {
     background-color: var(--bs-gray-900) !important;
