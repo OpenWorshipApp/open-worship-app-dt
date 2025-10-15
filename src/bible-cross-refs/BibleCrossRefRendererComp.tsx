@@ -2,7 +2,6 @@ import { Fragment } from 'react/jsx-runtime';
 import BibleItem from '../bible-list/BibleItem';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
 import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRendererBodyComp';
-import BibleCrossRefItemRendererBodyComp from './BibleCrossRefItemRendererBodyComp';
 import BibleCrossRefWrapperComp from './BibleCrossRefWrapperComp';
 import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropicItemRendererBodyComp';
 import { RefreshingRefType } from '../helper/ai/aiHelpers';
@@ -15,6 +14,8 @@ import {
 import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
+import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
+import BibleCrossRefItemRendererBodyComp from './BibleCrossRefItemRendererBodyComp';
 
 function RenderVerseTextComp({
     bibleItem,
@@ -104,6 +105,21 @@ export default function BibleCrossRefRendererComp({
                         >
                             <BibleCrossRefItemRendererBodyComp
                                 ref={normalRef}
+                                bookKey={book}
+                                chapter={chapter}
+                                verse={verse}
+                                index={i}
+                            />
+                        </BibleCrossRefWrapperComp>
+                        <hr />
+                        <BibleCrossRefWrapperComp
+                            title="AI Cross References"
+                            settingName="show-standard-bible-ref"
+                            onRefresh={handleRefreshing.bind(null, normalRef)}
+                        >
+                            <BibleCrossRefAIItemRendererBodyComp
+                                ref={normalRef}
+                                bibleKey={bibleKey}
                                 bookKey={book}
                                 chapter={chapter}
                                 verse={verse}

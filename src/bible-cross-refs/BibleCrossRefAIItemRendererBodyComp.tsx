@@ -1,24 +1,27 @@
 import { RefObject } from 'react';
 import LoadingComp from '../others/LoadingComp';
-import BibleCrossRefRenderFoundItemComp from './BibleCrossRefRenderFoundItemComp';
-import { useGettingBibleCrossRef } from './bibleCrossRefsHelpers';
+import { useGettingBibleCrossRefAI } from './bibleCrossRefsHelpers';
 import { RefreshingRefType } from '../helper/ai/aiHelpers';
 import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
+import RenderAIBibleCrossReferenceComp from './RenderAIBibleCrossReferenceComp';
 
-export default function BibleCrossRefItemRendererBodyComp({
+export default function BibleCrossRefAIItemRendererBodyComp({
     ref,
+    bibleKey,
     bookKey,
     chapter,
     verse,
     index,
 }: Readonly<{
     ref: RefObject<RefreshingRefType>;
+    bibleKey: string;
     bookKey: string;
     chapter: number;
     verse: number;
     index: number;
 }>) {
-    const { bibleCrossRef, refresh } = useGettingBibleCrossRef(
+    const { bibleCrossRef, refresh } = useGettingBibleCrossRefAI(
+        bibleKey,
         bookKey,
         chapter,
         verse,
@@ -36,17 +39,14 @@ export default function BibleCrossRefItemRendererBodyComp({
     }
     return (
         <>
-            {index !== 0 ? <hr /> : null}
-            {bibleCrossRef.map((items, i) => {
-                return items.map((item, j) => {
-                    return (
-                        <BibleCrossRefRenderFoundItemComp
-                            key={item.text + i + j}
-                            bibleVersesKey={item.text}
-                            itemInfo={item}
-                        />
-                    );
-                });
+            {index === 0 ? null : <hr />}
+            {bibleCrossRef.map((item) => {
+                return (
+                    <RenderAIBibleCrossReferenceComp
+                        key={item.title}
+                        crossReference={item}
+                    />
+                );
             })}
         </>
     );

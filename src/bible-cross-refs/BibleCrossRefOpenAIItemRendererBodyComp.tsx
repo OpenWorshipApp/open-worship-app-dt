@@ -36,7 +36,7 @@ export default function BibleCrossRefOpenAIItemRendererBodyComp({
     }
     return (
         <>
-            {index !== 0 ? <hr /> : null}
+            {index === 0 ? null : <hr />}
             {bibleCrossRef.map((item) => {
                 return (
                     <RenderAIBibleCrossReferenceComp

@@ -5,5 +5,6 @@ export function appApiFetch(pathName: string, options: any = {}) {
     const apiKey = get_api_key();
     options.headers = options.headers ?? {};
     options.headers['x-api-key'] = apiKey;
+    debugger;
     return fetch(`${apiUrl}/${pathName}`, options);
 }

@@ -4,6 +4,7 @@ import {
     useAISetting,
 } from '../helper/ai/aiHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
+import appProvider from '../server/appProvider';
 
 function AISettingComp() {
     const aiSetting = useAISetting();
@@ -24,7 +25,17 @@ function AISettingComp() {
                         'Audio AI Setting',
                         <>
                             <div className="d-flex flex-column w-100 h-100">
-                                <div>OpenAI API Key :</div>
+                                <div>
+                                    OpenAI API Key{' '}
+                                    <i
+                                        className="bi bi-lightbulb"
+                                        title="`This key will be used in custom Bible Cross Ref and Bible Audio"
+                                        style={{
+                                            color: 'var(--bs-info-text-emphasis)',
+                                        }}
+                                    />
+                                    :
+                                </div>
                                 <div className="flex-grow-1 d-flex align-items-center">
                                     <input
                                         ref={(input) => {
@@ -42,11 +53,33 @@ function AISettingComp() {
                                             openAIAPIKey = e.target.value;
                                         }}
                                     />
+                                    <button
+                                        className="btn btn-sm btn-secondary"
+                                        title="`Create OpenAI api key"
+                                        onClick={async () => {
+                                            appProvider.browserUtils.openExternalURL(
+                                                'https://platform.openai.com/api-keys',
+                                            );
+                                        }}
+                                    >
+                                        API Key
+                                        <i className="bi bi-box-arrow-up-right ms-1" />
+                                    </button>
                                 </div>
                             </div>
                             <hr />
                             <div className="d-flex flex-column w-100 h-100 mb-2">
-                                <div>Anthropic API Key :</div>
+                                <div>
+                                    Anthropic API Key{' '}
+                                    <i
+                                        className="bi bi-lightbulb"
+                                        title="`This key will be used in custom Bible Cross Ref"
+                                        style={{
+                                            color: 'var(--bs-info-text-emphasis)',
+                                        }}
+                                    />
+                                    :
+                                </div>
                                 <div className="flex-grow-1 d-flex align-items-center">
                                     <input
                                         ref={(input) => {
@@ -64,6 +97,18 @@ function AISettingComp() {
                                             anthropicAPIKey = e.target.value;
                                         }}
                                     />
+                                    <button
+                                        className="btn btn-sm btn-secondary"
+                                        title="`Create Anthropic api key"
+                                        onClick={async () => {
+                                            appProvider.browserUtils.openExternalURL(
+                                                'https://console.anthropic.com/settings/keys',
+                                            );
+                                        }}
+                                    >
+                                        API Key
+                                        <i className="bi bi-box-arrow-up-right ms-1" />
+                                    </button>
                                 </div>
                             </div>
                         </>,
