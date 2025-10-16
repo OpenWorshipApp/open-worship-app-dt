@@ -47,7 +47,7 @@ export async function getBibleCrossRef(
     getCrossRefs: GetBibleCrossRefsFuncType,
 ): Promise<CrossReferenceType[] | null> {
     let bibleTitle = '';
-    if ((params as any).bibleTitle !== undefined) {
+    if ((params as any).bibleTitle) {
         bibleTitle = (params as { bibleTitle: string }).bibleTitle;
     } else {
         const kjvBookKeyValue = getKJVBookKeyValue();
@@ -175,6 +175,7 @@ export function useGenRefreshRef(
 
 export type CrossReferenceType = {
     title: string;
+    titleEn?: string;
     verses: string[];
 };
 

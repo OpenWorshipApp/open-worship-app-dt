@@ -15,7 +15,7 @@ import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHel
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
-import BibleCrossRefItemRendererBodyComp from './BibleCrossRefItemRendererBodyComp';
+import appProvider from '../server/appProvider';
 
 function RenderVerseTextComp({
     bibleItem,
@@ -33,6 +33,28 @@ function RenderVerseTextComp({
         >
             {text}
         </div>
+    );
+}
+
+function AIVigilantComp() {
+    return (
+        <i
+            className="bi bi-lightbulb app-caught-hover-pointer"
+            title={
+                '`Generated using AI technology. ' +
+                'Results may vary and may not be ' +
+                'accurate. Please use with caution.'
+            }
+            style={{
+                color: 'var(--bs-info-text-emphasis)',
+            }}
+            onClick={(event) => {
+                event.stopPropagation();
+                appProvider.browserUtils.openExternalURL(
+                    `${appProvider.appInfo.homepage}/ai-vigilant`,
+                );
+            }}
+        />
     );
 }
 
@@ -99,26 +121,18 @@ export default function BibleCrossRefRendererComp({
                         </div>
                         <hr />
                         <BibleCrossRefWrapperComp
-                            title="Open Worship"
-                            settingName="show-standard-bible-ref"
-                            onRefresh={handleRefreshing.bind(null, normalRef)}
-                        >
-                            <BibleCrossRefItemRendererBodyComp
-                                ref={normalRef}
-                                bookKey={book}
-                                chapter={chapter}
-                                verse={verse}
-                                index={i}
-                            />
-                        </BibleCrossRefWrapperComp>
-                        <hr />
-                        <BibleCrossRefWrapperComp
-                            title="AI Cross References"
+                            title={
+                                <>
+                                    <AIVigilantComp />
+                                    AI Cross References
+                                </>
+                            }
                             settingName="show-standard-bible-ref"
                             onRefresh={handleRefreshing.bind(null, normalRef)}
                         >
                             <BibleCrossRefAIItemRendererBodyComp
                                 ref={normalRef}
+                                aiType="anthropic"
                                 bibleKey={bibleKey}
                                 bookKey={book}
                                 chapter={chapter}
@@ -130,7 +144,8 @@ export default function BibleCrossRefRendererComp({
                             <BibleCrossRefWrapperComp
                                 title={
                                     <>
-                                        <i className="bi bi-robot" /> OpenAI
+                                        <i className="bi bi-robot" /> Custom
+                                        OpenAI
                                     </>
                                 }
                                 settingName="show-ai-bible-ref"
@@ -152,7 +167,8 @@ export default function BibleCrossRefRendererComp({
                             <BibleCrossRefWrapperComp
                                 title={
                                     <>
-                                        <i className="bi bi-robot" /> Anthropic
+                                        <i className="bi bi-robot" /> Custom
+                                        Anthropic
                                     </>
                                 }
                                 settingName="show-ai-bible-ref"

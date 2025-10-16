@@ -7,6 +7,7 @@ import RenderAIBibleCrossReferenceComp from './RenderAIBibleCrossReferenceComp';
 
 export default function BibleCrossRefAIItemRendererBodyComp({
     ref,
+    aiType,
     bibleKey,
     bookKey,
     chapter,
@@ -14,6 +15,7 @@ export default function BibleCrossRefAIItemRendererBodyComp({
     index,
 }: Readonly<{
     ref: RefObject<RefreshingRefType>;
+    aiType: string;
     bibleKey: string;
     bookKey: string;
     chapter: number;
@@ -21,6 +23,7 @@ export default function BibleCrossRefAIItemRendererBodyComp({
     index: number;
 }>) {
     const { bibleCrossRef, refresh } = useGettingBibleCrossRefAI(
+        aiType,
         bibleKey,
         bookKey,
         chapter,

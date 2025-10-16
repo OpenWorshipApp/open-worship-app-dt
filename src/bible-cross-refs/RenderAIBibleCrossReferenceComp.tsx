@@ -6,16 +6,18 @@ export default function RenderAIBibleCrossReferenceComp({
 }: Readonly<{
     crossReference: CrossReferenceType;
 }>) {
+    const { title, titleEn, verses } = crossReference;
     return (
         <div>
             <hr />
             <strong
                 className="app-selectable-text"
+                title={titleEn}
                 style={{ color: '#88ff00b8' }}
             >
-                {crossReference.title}
+                <span dangerouslySetInnerHTML={{ __html: title }} />
             </strong>
-            {crossReference.verses.map((item, i) => {
+            {verses.map((item, i) => {
                 return (
                     <BibleCrossRefAIRenderFoundItemComp
                         key={item + i}

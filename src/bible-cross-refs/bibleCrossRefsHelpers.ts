@@ -12,10 +12,11 @@ import CacheManager from '../others/CacheManager';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
-import { LocaleType } from '../lang/langHelpers';
+import { getLangCode } from '../lang/langHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
 import {
     CrossReferenceType,
+    transformCrossReferenceToVerseList,
     validateCrossReference,
 } from '../helper/ai/bibleCrossRefHelpers';
 
@@ -29,9 +30,20 @@ export type BibleCrossRefType = {
     isLXXDSS: boolean;
 };
 
+// TODO: subject to remove
 async function downloadBibleCrossRef(key: string) {
     try {
         const content = await appApiFetch(`bible-refs/${key}`);
+        return await content.text();
+    } catch (error) {
+        handleError(error);
+    }
+    return null;
+}
+
+async function downloadBibleCrossRefAI(key: string) {
+    try {
+        const content = await appApiFetch(`bible-cross-ref/${key}`);
         return await content.text();
     } catch (error) {
         handleError(error);
@@ -85,14 +97,21 @@ export async function getBibleCrossRef(
 const bibleCrossRefAICache = new CacheManager<CrossReferenceType[]>(60); // 1 minute
 export async function getBibleCrossRefAI(
     {
-        locale,
+        aiType,
+        langCode,
         bookKey,
         chapter,
         verse,
-    }: { locale: LocaleType; bookKey: string; chapter: number; verse: number },
+    }: {
+        aiType: string;
+        langCode: string;
+        bookKey: string;
+        chapter: number;
+        verse: number;
+    },
     forceRefresh = false,
 ) {
-    const key = `bible-cross-ref/${locale}/${bookKey}/${chapter}.${verse}.json`;
+    const key = `${aiType}/${langCode}/${bookKey}/${chapter}/${verse}.json`;
     return unlocking(key, async () => {
         if (!forceRefresh) {
             const cachedData = await bibleCrossRefAICache.get(key);
@@ -100,7 +119,7 @@ export async function getBibleCrossRefAI(
                 return cachedData;
             }
         }
-        const jsonText = await downloadBibleCrossRef(key);
+        const jsonText = await downloadBibleCrossRefAI(key);
         if (jsonText === null) {
             return null;
         }
@@ -149,6 +168,7 @@ export function useGettingBibleCrossRef(
 }
 
 async function fetchBibleCrossRefAI(
+    aiType: string,
     bibleKey: string,
     bookKey: string,
     chapter: number,
@@ -156,18 +176,29 @@ async function fetchBibleCrossRefAI(
     forceRefresh = false,
 ) {
     const locale = await getBibleLocale(bibleKey);
-    const data = await getBibleCrossRefAI(
-        {
-            locale,
-            bookKey,
-            chapter,
-            verse: verseNum,
-        },
-        forceRefresh,
-    );
+    const langCode = getLangCode(locale) ?? 'en';
+    const params = {
+        aiType,
+        langCode,
+        bookKey,
+        chapter,
+        verse: verseNum,
+    };
+    let data = await getBibleCrossRefAI(params, forceRefresh);
+    if (data === null && langCode !== 'en') {
+        data = await getBibleCrossRefAI(
+            {
+                ...params,
+                langCode: 'en',
+            },
+            forceRefresh,
+        );
+    }
+    await transformCrossReferenceToVerseList(data);
     return data;
 }
 export function useGettingBibleCrossRefAI(
+    aiType: string,
     bibleKey: string,
     bookKey: string,
     chapter: number,
@@ -179,6 +210,7 @@ export function useGettingBibleCrossRefAI(
     useAppEffectAsync(
         async (methodContext) => {
             const data = await fetchBibleCrossRefAI(
+                aiType,
                 bibleKey,
                 bookKey,
                 chapter,
@@ -194,6 +226,7 @@ export function useGettingBibleCrossRefAI(
         refresh: () => {
             setBibleCrossRef(undefined);
             fetchBibleCrossRefAI(
+                aiType,
                 bibleKey,
                 bookKey,
                 chapter,

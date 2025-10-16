@@ -4,9 +4,13 @@
     "items": {
         "type": "object",
         "properties": {
+            "titleEn": {
+                "type": "string",
+                "description": "An original descriptive theme/context for the cross-references"
+            },
             "title": {
                 "type": "string",
-                "description": "A descriptive theme/context for the cross-references"
+                "description": "A translated descriptive theme/context for the cross-references"
             },
             "verses": {
                 "type": "array",
