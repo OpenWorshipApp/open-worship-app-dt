@@ -3,7 +3,7 @@ import LoadingComp from '../others/LoadingComp';
 import { useGettingBibleCrossRefAI } from './bibleCrossRefsHelpers';
 import { RefreshingRefType } from '../helper/ai/aiHelpers';
 import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
-import RenderAIBibleCrossReferenceComp from './RenderAIBibleCrossReferenceComp';
+import RenderAIBibleCrossReferenceListComp from './RenderAIBibleCrossReferenceListComp';
 
 export default function BibleCrossRefAIItemRendererBodyComp({
     ref,
@@ -41,16 +41,9 @@ export default function BibleCrossRefAIItemRendererBodyComp({
         );
     }
     return (
-        <>
-            {index === 0 ? null : <hr />}
-            {bibleCrossRef.map((item) => {
-                return (
-                    <RenderAIBibleCrossReferenceComp
-                        key={item.title}
-                        crossReference={item}
-                    />
-                );
-            })}
-        </>
+        <RenderAIBibleCrossReferenceListComp
+            index={index}
+            bibleCrossRef={bibleCrossRef}
+        />
     );
 }

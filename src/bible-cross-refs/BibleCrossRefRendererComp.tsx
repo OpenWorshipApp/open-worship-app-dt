@@ -115,6 +115,7 @@ export default function BibleCrossRefRendererComp({
                                         cloneBibleItem.target = newBibleTarget;
                                         setBibleItem(cloneBibleItem);
                                     }}
+                                    waitUntilGotVerseStart
                                 />
                             </div>
                             <RenderVerseTextComp bibleItem={cloneBibleItem} />

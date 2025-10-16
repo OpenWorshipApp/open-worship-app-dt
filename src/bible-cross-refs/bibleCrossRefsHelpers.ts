@@ -194,7 +194,7 @@ async function fetchBibleCrossRefAI(
             forceRefresh,
         );
     }
-    await transformCrossReferenceToVerseList(data);
+    data = await transformCrossReferenceToVerseList(data);
     return data;
 }
 export function useGettingBibleCrossRefAI(

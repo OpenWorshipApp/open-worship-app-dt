@@ -19,6 +19,7 @@ import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import { handleError } from '../errorHelpers';
 import { getKJVBookKeyValue } from '../bible-helpers/serverBibleHelpers';
+import { cloneJson } from '../helpers';
 
 type GetBibleCrossRefParamsType = {
     bookKey: string;
@@ -79,10 +80,10 @@ export async function getBibleCrossRef(
                     const text = await fsReadFile(filePath);
                     const data = JSON.parse(text) as CrossReferenceType[];
                     const { valid, errors } = validateCrossReference(data);
-                    if (!valid) {
-                        handleError(errors);
-                    } else {
+                    if (valid) {
                         return data;
+                    } else {
+                        handleError(errors);
                     }
                 } catch (error) {
                     console.error('Error reading cross reference file:', error);
@@ -105,26 +106,29 @@ export async function getBibleCrossRef(
 export async function transformCrossReferenceToVerseList(
     data: CrossReferenceType[] | null,
 ) {
-    if (data !== null) {
-        for (const crossRef of data) {
-            const verses = await Promise.all(
-                crossRef.verses.map(async (title) => {
-                    return BibleItem.bibleTitleToKJVVerseKey('KJV', title);
-                }),
-            );
-            crossRef.verses = verses.filter((item) => {
-                return item !== null;
-            });
-        }
+    if (data === null) {
+        return null;
     }
+    const clonedData = cloneJson(data);
+    for (const crossRef of clonedData) {
+        const verses = await Promise.all(
+            crossRef.verses.map(async (title) => {
+                return BibleItem.bibleTitleToKJVVerseKey('KJV', title);
+            }),
+        );
+        crossRef.verses = verses.filter((item) => {
+            return item !== null;
+        });
+    }
+    return clonedData;
 }
 
 async function getBibleCrossRefFromParams(
     params: GetBibleCrossRefParamsType,
     getCrossRefs: GetBibleCrossRefsFuncType,
 ) {
-    const data = await getBibleCrossRef(params, getCrossRefs);
-    await transformCrossReferenceToVerseList(data);
+    let data = await getBibleCrossRef(params, getCrossRefs);
+    data = await transformCrossReferenceToVerseList(data);
     return data;
 }
 

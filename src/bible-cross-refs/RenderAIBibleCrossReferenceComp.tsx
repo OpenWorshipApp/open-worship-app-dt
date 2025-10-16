@@ -1,4 +1,7 @@
-import { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
+import {
+    CrossReferenceType,
+    useBibleKeyContext,
+} from '../helper/ai/bibleCrossRefHelpers';
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
 
 export default function RenderAIBibleCrossReferenceComp({
@@ -6,12 +9,13 @@ export default function RenderAIBibleCrossReferenceComp({
 }: Readonly<{
     crossReference: CrossReferenceType;
 }>) {
+    const bibleKey = useBibleKeyContext();
     const { title, titleEn, verses } = crossReference;
     return (
         <div>
-            <hr />
             <strong
                 className="app-selectable-text"
+                data-bible-key={bibleKey}
                 title={titleEn}
                 style={{ color: '#88ff00b8' }}
             >
@@ -25,6 +29,7 @@ export default function RenderAIBibleCrossReferenceComp({
                     />
                 );
             })}
+            <hr />
         </div>
     );
 }

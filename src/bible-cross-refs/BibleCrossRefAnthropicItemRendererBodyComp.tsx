@@ -2,8 +2,8 @@ import { RefObject } from 'react';
 import { useGetBibleCrossRefAnthropic } from '../helper/ai/anthropicBibleCrossRefHelpers';
 import LoadingComp from '../others/LoadingComp';
 import { RefreshingRefType } from '../helper/ai/aiHelpers';
-import RenderAIBibleCrossReferenceComp from './RenderAIBibleCrossReferenceComp';
 import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
+import RenderAIBibleCrossReferenceListComp from './RenderAIBibleCrossReferenceListComp';
 
 export default function BibleCrossRefAnthropicItemRendererBodyComp({
     ref,
@@ -35,16 +35,9 @@ export default function BibleCrossRefAnthropicItemRendererBodyComp({
         );
     }
     return (
-        <>
-            {index !== 0 ? <hr /> : null}
-            {bibleCrossRef.map((item) => {
-                return (
-                    <RenderAIBibleCrossReferenceComp
-                        key={item.title}
-                        crossReference={item}
-                    />
-                );
-            })}
-        </>
+        <RenderAIBibleCrossReferenceListComp
+            index={index}
+            bibleCrossRef={bibleCrossRef}
+        />
     );
 }
