@@ -1,13 +1,13 @@
 [
     {
         "type": "MPEG-4",
-        "title": "",
+        "title": "MPEG-4 Part 14",
         "mimetypeSignature": "video/mp4",
-        "extensions": [".mp4"]
+        "extensions": [".mp4", ".m4v"]
     },
     {
         "type": "WebM",
-        "title": "",
+        "title": "WebM Video Format",
         "mimetypeSignature": "video/webm",
         "extensions": [".webm"]
     },
@@ -16,5 +16,113 @@
         "title": "Apple QuickTime Movie",
         "mimetypeSignature": "video/quicktime",
         "extensions": [".mov"]
+    },
+    {
+        "type": "AVI",
+        "title": "Audio Video Interleave",
+        "mimetypeSignature": "video/x-msvideo",
+        "extensions": [".avi"]
+    },
+    {
+        "type": "MKV",
+        "title": "Matroska Video",
+        "mimetypeSignature": "video/x-matroska",
+        "extensions": [".mkv"]
+    },
+    {
+        "type": "OGV",
+        "title": "Ogg Video",
+        "mimetypeSignature": "video/ogg",
+        "extensions": [".ogv", ".ogg"]
+    },
+    {
+        "type": "3GP",
+        "title": "3GPP Multimedia File",
+        "mimetypeSignature": "video/3gpp",
+        "extensions": [".3gp"]
+    },
+    {
+        "type": "3G2",
+        "title": "3GPP2 Multimedia File",
+        "mimetypeSignature": "video/3gpp2",
+        "extensions": [".3g2"]
+    },
+    {
+        "type": "FLV",
+        "title": "Flash Video",
+        "mimetypeSignature": "video/x-flv",
+        "extensions": [".flv"]
+    },
+    {
+        "type": "WMV",
+        "title": "Windows Media Video",
+        "mimetypeSignature": "video/x-ms-wmv",
+        "extensions": [".wmv"]
+    },
+    {
+        "type": "ASF",
+        "title": "Advanced Systems Format",
+        "mimetypeSignature": "video/x-ms-asf",
+        "extensions": [".asf"]
+    },
+    {
+        "type": "MPG",
+        "title": "MPEG Video",
+        "mimetypeSignature": "video/mpeg",
+        "extensions": [".mpg", ".mpeg", ".mp2", ".mpe", ".mpv"]
+    },
+    {
+        "type": "M4V",
+        "title": "iTunes Video File",
+        "mimetypeSignature": "video/x-m4v",
+        "extensions": [".m4v"]
+    },
+    {
+        "type": "VOB",
+        "title": "DVD Video Object",
+        "mimetypeSignature": "video/dvd",
+        "extensions": [".vob"]
+    },
+    {
+        "type": "RM",
+        "title": "RealMedia File",
+        "mimetypeSignature": "application/vnd.rn-realmedia",
+        "extensions": [".rm"]
+    },
+    {
+        "type": "RMVB",
+        "title": "RealMedia Variable Bitrate",
+        "mimetypeSignature": "application/vnd.rn-realmedia-vbr",
+        "extensions": [".rmvb"]
+    },
+    {
+        "type": "F4V",
+        "title": "Flash MP4 Video File",
+        "mimetypeSignature": "video/x-f4v",
+        "extensions": [".f4v"]
+    },
+    {
+        "type": "M2TS",
+        "title": "MPEG-2 Transport Stream",
+        "mimetypeSignature": "video/mp2t",
+        "extensions": [".m2ts", ".mts"]
+    },
+    {
+        "type": "TS",
+        "title": "MPEG Transport Stream",
+        "mimetypeSignature": "video/mp2t",
+        "extensions": [".ts"]
+    },
+    {
+        "type": "DIVX",
+        "title": "DivX Video",
+        "mimetypeSignature": "video/divx",
+        "extensions": [".divx"]
+    },
+    {
+        "type": "XVID",
+        "title": "Xvid Video",
+        "mimetypeSignature": "video/x-xvid",
+        "extensions": [".xvid"]
     }
 ]
