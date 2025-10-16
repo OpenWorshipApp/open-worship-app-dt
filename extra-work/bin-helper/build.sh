@@ -48,7 +48,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "Build and copy completed successfully."
 
-yt_prefix_url="https://github.com/yt-dlp/yt-dlp/releases/download/2025.09.23/"
+yt_prefix_url="https://github.com/yt-dlp/yt-dlp/releases/download/2025.10.14/"
 download_yt_dlp() {
     local url="$yt_prefix_url$1"
     local output_dir="$dist_dir/yt"
