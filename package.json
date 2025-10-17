@@ -124,7 +124,7 @@
         "cross-env": "^7.0.3",
         "dependency-cruiser": "^16.10.3",
         "diff": "^8.0.2",
-        "electron": "^38.1.2",
+        "electron": "^38.3.0",
         "electron-builder": "^26.0.12",
         "eslint": "^9.22.0",
         "json-schema-library": "^10.2.1",
