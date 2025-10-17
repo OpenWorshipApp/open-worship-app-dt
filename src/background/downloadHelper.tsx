@@ -4,6 +4,7 @@ import DirSource from '../helper/DirSource';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import { readTextFromClipboard } from '../server/appHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
+import appProvider from '../server/appProvider';
 
 function InputUrlComp({
     defaultUrl,
@@ -63,10 +64,23 @@ export async function askForURL(title: string, subTitle: string) {
     return url;
 }
 
+export function getOpenSharedLinkMenuItem(
+    sharedKey: string,
+): ContextMenuItemType {
+    return {
+        menuElement: '`Open Shared Link',
+        onSelect: async () => {
+            const sharedLink = `${appProvider.appInfo.homepage}/shared?key=${sharedKey}`;
+            appProvider.browserUtils.openExternalURL(sharedLink);
+        },
+    };
+}
+
 export async function genDownloadContextMenuItems(
     { title, subTitle }: { title: string; subTitle: string },
     dirSource: DirSource,
     download: (url: string) => Promise<void>,
+    sharedKey?: string,
 ) {
     if (dirSource.dirPath === '') {
         return [];
@@ -82,6 +96,7 @@ export async function genDownloadContextMenuItems(
                 await download(url);
             },
         },
+        ...(sharedKey ? [getOpenSharedLinkMenuItem(sharedKey)] : []),
     ];
     return contextMenuItems;
 }

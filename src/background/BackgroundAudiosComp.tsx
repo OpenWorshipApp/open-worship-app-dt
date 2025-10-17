@@ -1,4 +1,4 @@
-import './BackgroundSoundsComp.scss';
+import './BackgroundAudiosComp.scss';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -11,7 +11,7 @@ import {
     handleAudioPlaying,
     handleAudioPausing,
     handleAudioEnding,
-    getSoundRepeatSettingName,
+    getAudioRepeatSettingName,
 } from './audioBackgroundHelpers';
 import { useMemo, useState } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -40,7 +40,7 @@ function RendBodyComp({
 }>) {
     const fileSource = FileSource.getInstance(filePath);
     const settingName = useMemo(() => {
-        return getSoundRepeatSettingName(fileSource.src);
+        return getAudioRepeatSettingName(fileSource.src);
     }, [fileSource.src]);
     const [isRepeating, setIsRepeating] = useStateSettingBoolean(
         settingName,
@@ -99,51 +99,51 @@ function rendChild(
 }
 
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
+    const title = '`Download From URL';
+    const download = async (audioUrl: string) => {
+        try {
+            showSimpleToast(
+                title,
+                `Downloading audio from "${audioUrl}", please wait...`,
+            );
+            showProgressBar(audioUrl);
+            const defaultPath = getDefaultDataDir();
+            const { filePath, fileFullName } = await downloadVideoOrAudio(
+                audioUrl,
+                defaultPath,
+                false,
+            );
+            const destFileSource = FileSource.getInstance(
+                dirSource.dirPath,
+                fileFullName,
+            );
+            if (await fsCheckFileExist(destFileSource.filePath)) {
+                await fsDeleteFile(destFileSource.filePath);
+            }
+            await fsMove(filePath, destFileSource.filePath);
+            showSimpleToast(
+                title,
+                `Audio downloaded successfully, file path: "${destFileSource.filePath}"`,
+            );
+        } catch (error) {
+            handleError(error);
+            showSimpleToast(title, 'Error occurred during downloading video');
+        } finally {
+            hideProgressBar(audioUrl);
+        }
+    };
     return genDownloadContextMenuItems(
         {
-            title: '`Download From URL',
+            title,
             subTitle: 'Audio URL:',
         },
         dirSource,
-        async (audioUrl) => {
-            try {
-                showSimpleToast(
-                    '`Download From URL',
-                    `Downloading audio from "${audioUrl}", please wait...`,
-                );
-                showProgressBar(audioUrl);
-                const defaultPath = getDefaultDataDir();
-                const { filePath, fileFullName } = await downloadVideoOrAudio(
-                    audioUrl,
-                    defaultPath,
-                    false,
-                );
-                const destFileSource = FileSource.getInstance(
-                    dirSource.dirPath,
-                    fileFullName,
-                );
-                if (await fsCheckFileExist(destFileSource.filePath)) {
-                    await fsDeleteFile(destFileSource.filePath);
-                }
-                await fsMove(filePath, destFileSource.filePath);
-                showSimpleToast(
-                    '`Download From URL',
-                    `Audio downloaded successfully, file path: "${destFileSource.filePath}"`,
-                );
-            } catch (error) {
-                handleError(error);
-                showSimpleToast(
-                    '`Download From URL',
-                    'Error occurred during downloading video',
-                );
-            } finally {
-                hideProgressBar(audioUrl);
-            }
-        },
+        download,
+        'audios',
     );
 }
 
-export default function BackgroundSoundsComp() {
+export default function BackgroundAudiosComp() {
     const [activeMap, setActiveMap] = useState<{ [key: string]: boolean }>({});
     const handleItemClicking = (event: any) => {
         const target = event.target;
@@ -161,7 +161,7 @@ export default function BackgroundSoundsComp() {
         if (!childElement) {
             return;
         }
-        const filePath = childElement.getAttribute('data-file-path');
+        const filePath = childElement.dataset.filePath;
         setActiveMap((preActiveMap) => {
             return {
                 ...preActiveMap,
@@ -184,10 +184,10 @@ export default function BackgroundSoundsComp() {
     return (
         <BackgroundMediaComp
             rendChild={rendChild.bind(null, activeMap)}
-            defaultFolderName={defaultDataDirNames.BACKGROUND_SOUND}
-            dragType={DragTypeEnum.BACKGROUND_SOUND}
+            defaultFolderName={defaultDataDirNames.BACKGROUND_AUDIO}
+            dragType={DragTypeEnum.BACKGROUND_AUDIO}
             onClick={handleItemClicking}
-            dirSourceSettingName={dirSourceSettingNames.BACKGROUND_SOUND}
+            dirSourceSettingName={dirSourceSettingNames.BACKGROUND_AUDIO}
             noDraggable={true}
             isNameOnTop={true}
             genContextMenuItems={genAudioDownloadContextMenuItems}

@@ -28,11 +28,11 @@ const LazyBackgroundImagesComp = lazy(() => {
 const LazyBackgroundVideosComp = lazy(() => {
     return import('./BackgroundVideosComp');
 });
-const LazyBackgroundSoundsComp = lazy(() => {
-    return import('./BackgroundSoundsComp');
+const LazyBackgroundAudiosComp = lazy(() => {
+    return import('./BackgroundAudiosComp');
 });
 
-function RenderSoundsTabComp({
+function RenderAudiosTabComp({
     isActive,
     setIsActive,
 }: Readonly<{
@@ -59,7 +59,7 @@ function RenderSoundsTabComp({
                         setIsActive(!isActive);
                     }}
                 >
-                    ♫{tran('Sounds')}♫
+                    ♫{tran('Audios')}♫
                 </button>
             </li>
         </ul>
@@ -81,10 +81,10 @@ const tabTypeList = [
     ['image', 'Images', LazyBackgroundImagesComp],
     ['video', 'Videos', LazyBackgroundVideosComp],
 ] as const;
-type TabKeyType = (typeof tabTypeList)[number][0] | 'sound';
+type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {
-    const [isSoundActive, setIsSoundActive] = useStateSettingBoolean(
-        'background-sound-active',
+    const [isAudioActive, setIsAudioActive] = useStateSettingBoolean(
+        'background-audio-active',
         false,
     );
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
@@ -118,14 +118,14 @@ export default function BackgroundComp() {
                     setActiveTab={setTabKey}
                 />
                 {appProvider.isPagePresenter ? (
-                    <RenderSoundsTabComp
-                        isActive={isSoundActive}
-                        setIsActive={setIsSoundActive}
+                    <RenderAudiosTabComp
+                        isActive={isAudioActive}
+                        setIsActive={setIsAudioActive}
                     />
                 ) : null}
             </div>
             <div className="body flex-fill d-flex">
-                {appProvider.isPagePresenter && isSoundActive ? (
+                {appProvider.isPagePresenter && isAudioActive ? (
                     <ResizeActorComp
                         flexSizeName={'flex-size-background'}
                         isHorizontal
@@ -145,9 +145,9 @@ export default function BackgroundComp() {
                                 widgetName: 'Background',
                             },
                             {
-                                children: LazyBackgroundSoundsComp,
+                                children: LazyBackgroundAudiosComp,
                                 key: 'h2',
-                                widgetName: 'Background Sound',
+                                widgetName: 'Background Audio',
                             },
                         ]}
                     />

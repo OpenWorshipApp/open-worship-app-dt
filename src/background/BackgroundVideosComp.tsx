@@ -119,46 +119,46 @@ function RendBody({
 }
 
 async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
+    const title = '`Download From URL';
+    const download = async (videoUrl: string) => {
+        try {
+            showSimpleToast(
+                title,
+                `Downloading video from "${videoUrl}", please wait...`,
+            );
+            showProgressBar(videoUrl);
+            const defaultPath = getDefaultDataDir();
+            const { filePath, fileFullName } = await downloadVideoOrAudio(
+                videoUrl,
+                defaultPath,
+            );
+            const destFileSource = FileSource.getInstance(
+                dirSource.dirPath,
+                fileFullName,
+            );
+            if (await fsCheckFileExist(destFileSource.filePath)) {
+                await fsDeleteFile(destFileSource.filePath);
+            }
+            await fsMove(filePath, destFileSource.filePath);
+            showSimpleToast(
+                title,
+                `Video downloaded successfully, file path: "${destFileSource.filePath}"`,
+            );
+        } catch (error) {
+            handleError(error);
+            showSimpleToast(title, 'Error occurred during downloading video');
+        } finally {
+            hideProgressBar(videoUrl);
+        }
+    };
     return genDownloadContextMenuItems(
         {
-            title: '`Download From URL',
+            title,
             subTitle: 'Video URL:',
         },
         dirSource,
-        async (videoUrl) => {
-            try {
-                showSimpleToast(
-                    '`Download From URL',
-                    `Downloading video from "${videoUrl}", please wait...`,
-                );
-                showProgressBar(videoUrl);
-                const defaultPath = getDefaultDataDir();
-                const { filePath, fileFullName } = await downloadVideoOrAudio(
-                    videoUrl,
-                    defaultPath,
-                );
-                const destFileSource = FileSource.getInstance(
-                    dirSource.dirPath,
-                    fileFullName,
-                );
-                if (await fsCheckFileExist(destFileSource.filePath)) {
-                    await fsDeleteFile(destFileSource.filePath);
-                }
-                await fsMove(filePath, destFileSource.filePath);
-                showSimpleToast(
-                    '`Download From URL',
-                    `Video downloaded successfully, file path: "${destFileSource.filePath}"`,
-                );
-            } catch (error) {
-                handleError(error);
-                showSimpleToast(
-                    '`Download From URL',
-                    'Error occurred during downloading video',
-                );
-            } finally {
-                hideProgressBar(videoUrl);
-            }
-        },
+        download,
+        'videos',
     );
 }
 

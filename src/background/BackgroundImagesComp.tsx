@@ -25,7 +25,7 @@ import {
     fsMove,
     getDotExtensionFromBase64Data,
 } from '../server/fileHelpers';
-import { askForURL } from './downloadHelper';
+import { askForURL, getOpenSharedLinkMenuItem } from './downloadHelper';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import {
     hideProgressBar,
@@ -118,50 +118,51 @@ async function genContextMenuItems(dirSource: DirSource) {
             },
         });
     }
-    contextMenuItems.push({
-        menuElement: '`Download from URL',
-        onSelect: async () => {
-            const imageUrl = await askForURL(
-                '`Download From URL',
-                'Image URL:',
-            );
-            if (imageUrl === null) {
-                return;
-            }
-            try {
-                showSimpleToast(
-                    '`Download From URL',
-                    `Downloading image from "${imageUrl}", please wait...`,
-                );
-                showProgressBar(imageUrl);
-                const defaultPath = getDefaultDataDir();
-                const { filePath, fileFullName } = await downloadImage(
-                    imageUrl,
-                    defaultPath,
-                );
-                const destFileSource = FileSource.getInstance(
-                    dirSource.dirPath,
-                    fileFullName,
-                );
-                if (await fsCheckFileExist(destFileSource.filePath)) {
-                    await fsDeleteFile(destFileSource.filePath);
+    const title = '`Download From URL';
+    contextMenuItems.push(
+        {
+            menuElement: title,
+            onSelect: async () => {
+                const imageUrl = await askForURL(title, 'Image URL:');
+                if (imageUrl === null) {
+                    return;
                 }
-                await fsMove(filePath, destFileSource.filePath);
-                showSimpleToast(
-                    '`Download From URL',
-                    `Image downloaded successfully, file path: "${destFileSource.filePath}"`,
-                );
-            } catch (error) {
-                handleError(error);
-                showSimpleToast(
-                    '`Download From URL',
-                    'Error occurred during downloading image',
-                );
-            } finally {
-                hideProgressBar(imageUrl);
-            }
+                try {
+                    showSimpleToast(
+                        title,
+                        `Downloading image from "${imageUrl}", please wait...`,
+                    );
+                    showProgressBar(imageUrl);
+                    const defaultPath = getDefaultDataDir();
+                    const { filePath, fileFullName } = await downloadImage(
+                        imageUrl,
+                        defaultPath,
+                    );
+                    const destFileSource = FileSource.getInstance(
+                        dirSource.dirPath,
+                        fileFullName,
+                    );
+                    if (await fsCheckFileExist(destFileSource.filePath)) {
+                        await fsDeleteFile(destFileSource.filePath);
+                    }
+                    await fsMove(filePath, destFileSource.filePath);
+                    showSimpleToast(
+                        title,
+                        `Image downloaded successfully, file path: "${destFileSource.filePath}"`,
+                    );
+                } catch (error) {
+                    handleError(error);
+                    showSimpleToast(
+                        title,
+                        'Error occurred during downloading image',
+                    );
+                } finally {
+                    hideProgressBar(imageUrl);
+                }
+            },
         },
-    });
+        getOpenSharedLinkMenuItem('images'),
+    );
     return contextMenuItems;
 }
 

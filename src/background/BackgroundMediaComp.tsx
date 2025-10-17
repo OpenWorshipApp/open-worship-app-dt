@@ -34,7 +34,7 @@ export type RenderChildType = (
 const backgroundTypeMapper: any = {
     [DragTypeEnum.BACKGROUND_IMAGE]: 'image',
     [DragTypeEnum.BACKGROUND_VIDEO]: 'video',
-    [DragTypeEnum.BACKGROUND_SOUND]: 'sound',
+    [DragTypeEnum.BACKGROUND_AUDIO]: 'audio',
 };
 
 function genFileNameElement(fileName: string) {
