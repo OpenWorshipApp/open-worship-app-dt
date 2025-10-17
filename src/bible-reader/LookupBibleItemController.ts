@@ -116,7 +116,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         const settingId = getSetting(
             this.toSettingName('-selected-bible-item'),
         );
-        const bibleItemId = settingId ? parseInt(settingId) : -1;
+        const bibleItemId = settingId ? Number.parseInt(settingId) : -1;
         return bibleItemId;
     }
     forceReloadEditingResult() {

@@ -42,7 +42,9 @@ export function useAppDocumentItemThumbnailSizeScale(
     defaultSize = Math.fround(DEFAULT_THUMBNAIL_SIZE_FACTOR / 30),
 ): [number, (newScale: number) => void] {
     const getDefaultSize = () => {
-        return parseInt(getSetting(settingName) ?? defaultSize.toString());
+        return Number.parseInt(
+            getSetting(settingName) ?? defaultSize.toString(),
+        );
     };
     const [thumbnailSizeScale, setThumbnailSizeScale] = useStateSettingNumber(
         settingName,

@@ -271,6 +271,7 @@ export const escapeChars = [
     'capslock',
     'contextmenu',
 ];
+let oldElement: HTMLElement | null = null;
 function listener(event: KeyboardEvent) {
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
         return;
@@ -280,12 +281,17 @@ function listener(event: KeyboardEvent) {
         return;
     }
     const { allChildren } = getDomItems();
-    for (const element of allChildren) {
-        if (element.textContent?.toLowerCase().startsWith(key)) {
-            element.scrollIntoView();
-            break;
-        }
+    const targetElements = allChildren.filter((element) => {
+        return element.textContent?.toLowerCase().startsWith(key);
+    });
+    let index = targetElements.indexOf(oldElement as any);
+    index = (index + 1 + targetElements.length) % targetElements.length;
+    const foundElement = targetElements[index];
+    if (foundElement === undefined) {
+        return;
     }
+    foundElement.scrollIntoView();
+    oldElement = foundElement;
 }
 
 export function useAppContextMenuData() {

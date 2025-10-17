@@ -54,9 +54,9 @@ export function useStateSettingNumber(
     settingName: string,
     defaultNumber: number,
 ): [number, (n: number | ((prev: number) => number)) => void] {
-    const defaultData = parseInt(getSetting(settingName) ?? '', 10);
+    const defaultData = Number.parseInt(getSetting(settingName) ?? '', 10);
     const [data, setData] = useState(
-        isNaN(defaultData) ? defaultNumber : defaultData,
+        Number.isNaN(defaultData) ? defaultNumber : defaultData,
     );
     const setDataSetting = (num: number | ((prev: number) => number)) => {
         if (typeof num === 'function') {

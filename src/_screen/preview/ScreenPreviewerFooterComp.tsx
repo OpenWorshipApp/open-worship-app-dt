@@ -46,7 +46,9 @@ export default function ScreenPreviewerFooterComp() {
                             min="0"
                             value={stageNumber}
                             onChange={(e) => {
-                                setStageNumber1(parseInt(e.target.value, 10));
+                                setStageNumber1(
+                                    Number.parseInt(e.target.value, 10),
+                                );
                             }}
                         />
                     </div>

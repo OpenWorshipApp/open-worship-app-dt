@@ -38,11 +38,11 @@ export async function writeStreamToFile(
         if (!writeStream.writable) {
             throw new Error('Write Stream is not writable');
         }
-        const len = parseInt(response.headers['content-length']);
+        const len = Number.parseInt(response.headers['content-length']);
         let cur = 0;
         const mb = 1048576; //1048576 - bytes in  1Megabyte
         const total = len / mb;
-        options.onStart(parseInt(total.toFixed(2)));
+        options.onStart(Number.parseInt(total.toFixed(2)));
         response.on('data', (chunk: Buffer) => {
             writeStream.write(chunk, (error1) => {
                 if (error1) {

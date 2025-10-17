@@ -27,10 +27,10 @@ export function getDisplayIdByScreenId(screenId: number) {
     const str =
         getSetting(`${SCREEN_MANAGER_SETTING_NAME}-pid-${screenId}`) ??
         defaultDisplay.id.toString();
-    if (isNaN(parseInt(str))) {
+    if (Number.isNaN(Number.parseInt(str))) {
         return defaultDisplay.id;
     }
-    const id = parseInt(str);
+    const id = Number.parseInt(str);
     const { displays } = getAllDisplays();
     return (
         displays.find((display) => {

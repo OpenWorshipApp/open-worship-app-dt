@@ -219,7 +219,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
             const fadeOutListener = async () => {
                 const duration = video.duration;
                 if (
-                    !(isNaN(duration) || duration === Infinity) &&
+                    !(Number.isNaN(duration) || duration === Infinity) &&
                     duration - video.currentTime <= FADING_DURATION_SECOND
                 ) {
                     const isFadingAtTheEnd = getIsFadingAtTheEndSetting(

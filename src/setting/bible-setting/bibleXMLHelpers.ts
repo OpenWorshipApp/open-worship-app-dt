@@ -132,7 +132,7 @@ function downloadXMLToFile(
             filePath,
             {
                 onStart: (total) => {
-                    const fileSize = parseInt(total.toFixed(2));
+                    const fileSize = Number.parseInt(total.toFixed(2));
                     messageCallback(
                         `Start downloading (File size: ${fileSize}MB)...`,
                     );

@@ -156,7 +156,7 @@ function TimeInSetComp({
                         value={timezoneMinuteOffset}
                         onChange={(event) => {
                             setTimezoneMinuteOffset(
-                                parseInt(event.target.value),
+                                Number.parseInt(event.target.value),
                             );
                         }}
                     />

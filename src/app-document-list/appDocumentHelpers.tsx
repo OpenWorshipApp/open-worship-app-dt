@@ -437,7 +437,7 @@ export function appDocumentItemExtractKey(key: string) {
     }
     return {
         filePath,
-        id: parseInt(id),
+        id: Number.parseInt(id),
     };
 }
 
@@ -504,8 +504,8 @@ export async function getSelectedEditingSlideFilePath() {
     if (!isValid) {
         return null;
     }
-    const id = parseInt(idString);
-    if (isNaN(id)) {
+    const id = Number.parseInt(idString);
+    if (Number.isNaN(id)) {
         setSelectedEditingSlideFilePath(null, -1);
         return null;
     }

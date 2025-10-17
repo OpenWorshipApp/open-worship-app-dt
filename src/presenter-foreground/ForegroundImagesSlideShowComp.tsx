@@ -98,7 +98,7 @@ function rendChild(
         <div className="card-body app-overflow-hidden">
             <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
-                    return parseInt(key);
+                    return Number.parseInt(key);
                 })}
             />
             <img

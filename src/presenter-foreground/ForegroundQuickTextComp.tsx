@@ -141,7 +141,7 @@ export default function ForegroundQuickTextComp() {
                             value={timeSecondDelay}
                             onChange={(e) => {
                                 setTimeSecondDelay(
-                                    parseInt(e.target.value, 10),
+                                    Number.parseInt(e.target.value, 10),
                                 );
                             }}
                         />
@@ -161,7 +161,7 @@ export default function ForegroundQuickTextComp() {
                             value={timeSecondToLive}
                             onChange={(e) => {
                                 setTimeSecondToLive(
-                                    parseInt(e.target.value, 10),
+                                    Number.parseInt(e.target.value, 10),
                                 );
                             }}
                         />

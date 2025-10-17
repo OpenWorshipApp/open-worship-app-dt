@@ -222,8 +222,8 @@ function getBookKey(bookXMLElement: Element) {
     if (bookNumberText === null) {
         return null;
     }
-    const bookIndex = parseInt(bookNumberText);
-    if (isNaN(bookIndex)) {
+    const bookIndex = Number.parseInt(bookNumberText);
+    if (Number.isNaN(bookIndex)) {
         return null;
     }
     bookKey = bookKeysOrder[bookIndex - 1];
@@ -322,7 +322,7 @@ export async function getBibleInfoJson(bibleXMLElement: Element) {
             guessValue(bibleXMLElement, attributesMap.title) ?? 'Unknown Title',
         key: bibleKey,
         version:
-            parseInt(
+            Number.parseInt(
                 guessValue(bibleXMLElement, attributesMap.version) ?? '1',
             ) ?? 1,
         locale,

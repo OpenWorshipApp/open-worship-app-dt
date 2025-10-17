@@ -54,7 +54,7 @@ async function genPdfImagePreviewInfo(
     filePath: string,
 ): Promise<PdfItemViewInfoType> {
     const fileSource = FileSource.getInstance(filePath);
-    const pageNumber = parseInt(fileSource.name.split('-')[1]);
+    const pageNumber = Number.parseInt(fileSource.name.split('-')[1]);
     const { width, height } = await getImageSize(fileSource.src);
     return { src: fileSource.src, pageNumber, width, height };
 }

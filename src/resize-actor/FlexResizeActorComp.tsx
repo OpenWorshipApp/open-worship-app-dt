@@ -114,8 +114,12 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         this.setActive();
 
-        this.previousMinSize = parseInt(this.preNode.dataset['minSize'] ?? '');
-        this.nextMinSize = parseInt(this.nextNode.dataset['minSize'] ?? '');
+        this.previousMinSize = Number.parseInt(
+            this.preNode.dataset['minSize'] ?? '',
+        );
+        this.nextMinSize = Number.parseInt(
+            this.nextNode.dataset['minSize'] ?? '',
+        );
         this.preSize = this.getOffsetSize(prev);
         this.nextSize = this.getOffsetSize(next);
         this.sumSize = this.preSize + this.nextSize;

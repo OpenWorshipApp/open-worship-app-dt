@@ -82,7 +82,7 @@ export function findPageNumber(
     pages: string[],
 ) {
     for (const pageNumber of pages) {
-        if (checkIsCurrentPage(data, parseInt(pageNumber), perPage)) {
+        if (checkIsCurrentPage(data, Number.parseInt(pageNumber), perPage)) {
             return pageNumber;
         }
     }
@@ -133,9 +133,9 @@ export async function breakItem(
     const splitVerse = verse.split('-');
     const target = {
         bookKey: bookKey,
-        chapter: parseInt(chapter),
-        verseStart: parseInt(splitVerse[0]),
-        verseEnd: parseInt(splitVerse[1] || splitVerse[0]),
+        chapter: Number.parseInt(chapter),
+        verseStart: Number.parseInt(splitVerse[0]),
+        verseEnd: Number.parseInt(splitVerse[1] || splitVerse[0]),
     };
     const bibleItemJson: BibleItemType = {
         id: -1,
@@ -150,7 +150,7 @@ export async function breakItem(
 
 export function pageNumberToReqData(pagingData: PagingDataTye, page: string) {
     const { perPage } = pagingData;
-    let newPageNumber = parseInt(page);
+    let newPageNumber = Number.parseInt(page);
     newPageNumber -= 1;
     const fromLineNumber = perPage * newPageNumber + 1;
     return {

@@ -37,10 +37,10 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     constructor(appDocument: AppDocument, canvas: Canvas) {
         super();
-        const defaultData = parseFloat(
+        const defaultData = Number.parseFloat(
             getSetting(EDITOR_SCALE_SETTING_NAME) ?? '',
         );
-        if (!isNaN(defaultData)) {
+        if (!Number.isNaN(defaultData)) {
             this._scale = defaultData;
         }
         this.appDocument = appDocument;

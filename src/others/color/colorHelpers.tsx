@@ -10,9 +10,9 @@ export function toHexColorString(color: string): string {
     const regex = /(\d+),\s*(\d+),\s*(\d+)/;
     const rgb = regex.exec(color);
     if (rgb !== null) {
-        const r = parseInt(rgb[1]).toString(16).padStart(2, '0');
-        const g = parseInt(rgb[2]).toString(16).padStart(2, '0');
-        const b = parseInt(rgb[3]).toString(16).padStart(2, '0');
+        const r = Number.parseInt(rgb[1]).toString(16).padStart(2, '0');
+        const g = Number.parseInt(rgb[2]).toString(16).padStart(2, '0');
+        const b = Number.parseInt(rgb[3]).toString(16).padStart(2, '0');
         return `#${r}${g}${b}`;
     }
     return color;
@@ -20,7 +20,7 @@ export function toHexColorString(color: string): string {
 
 export const colorToTransparent = (color: AppColorType): number => {
     const hexStr = `${color[7]}${color[8]}`;
-    return parseInt(hexStr, 16) || 255;
+    return Number.parseInt(hexStr, 16) || 255;
 };
 
 export const transparentColor = (n: number): string => {

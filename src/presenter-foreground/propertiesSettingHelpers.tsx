@@ -23,7 +23,7 @@ function getWidgetRoundExtraStyle(
     settingNamePixel: string,
     settingNamePercentage: string,
 ): CSSProperties {
-    const roundSizePixel = parseInt(
+    const roundSizePixel = Number.parseInt(
         getSetting(settingNamePixel) ?? DEFAULT_ROUND_SIZE_PIXEL.toString(),
     );
     if (roundSizePixel > 0) {
@@ -31,7 +31,7 @@ function getWidgetRoundExtraStyle(
             borderRadius: `${roundSizePixel}px`,
         };
     }
-    const percentage = parseInt(
+    const percentage = Number.parseInt(
         getSetting(settingNamePercentage) ??
             DEFAULT_ROUND_PERCENTAGE.toString(),
     );
@@ -44,7 +44,7 @@ function getWidgetRoundExtraStyle(
 }
 
 function genWidgetWidthExtraStyle(settingName: string): CSSProperties {
-    const widthScale = parseInt(
+    const widthScale = Number.parseInt(
         getSetting(settingName) ?? DEFAULT_WIDGET_WIDTH_PERCENTAGE.toString(),
     );
     return {
@@ -54,7 +54,7 @@ function genWidgetWidthExtraStyle(settingName: string): CSSProperties {
 }
 
 function genWidgetOpacityExtraStyle(settingName: string): CSSProperties {
-    const opacityScale = parseInt(
+    const opacityScale = Number.parseInt(
         getSetting(settingName) ?? DEFAULT_WIDGET_OPACITY_PERCENTAGE.toString(),
     );
     return {
@@ -72,7 +72,7 @@ function genMinusCalc(n: number) {
 }
 
 function genTransformScale(settingName: string) {
-    const scale = parseFloat(
+    const scale = Number.parseFloat(
         getSetting(settingName) ?? DEFAULT_WIDGET_SCALE.toString(),
     );
     return `scale(${scale})`;
@@ -88,10 +88,10 @@ function genTransformingExtraStyle(
     offsetYSettingName: string,
     widgetScaleSettingName: string,
 ): CSSProperties {
-    const widgetOffsetX = parseInt(
+    const widgetOffsetX = Number.parseInt(
         getSetting(offsetXSettingName) ?? DEFAULT_WIDGET_OFFSET_X.toString(),
     );
-    const widgetOffsetY = parseInt(
+    const widgetOffsetY = Number.parseInt(
         getSetting(offsetYSettingName) ?? DEFAULT_WIDGET_OFFSET_Y.toString(),
     );
     const alignmentData = JSON.parse(getSetting(alignSettingName) ?? '{}');
@@ -144,7 +144,7 @@ function genTransformingExtraStyle(
 }
 
 function getFontSizeStyle(fontSizeSettingName: string): CSSProperties {
-    const fontSize = parseInt(
+    const fontSize = Number.parseInt(
         getSetting(fontSizeSettingName) ?? DEFAULT_FONT_SIZE.toString(),
     );
     return {
@@ -250,7 +250,9 @@ function PropertiesSettingComp({
                         type="number"
                         value={widgetOffsetX}
                         onChange={(event) => {
-                            setWidgetOffsetX(parseInt(event.target.value) || 0);
+                            setWidgetOffsetX(
+                                Number.parseInt(event.target.value) || 0,
+                            );
                         }}
                     />
                     <div className="input-group-text">Offset Y:</div>
@@ -259,7 +261,9 @@ function PropertiesSettingComp({
                         type="number"
                         value={widgetOffsetY}
                         onChange={(event) => {
-                            setWidgetOffsetY(parseInt(event.target.value) || 0);
+                            setWidgetOffsetY(
+                                Number.parseInt(event.target.value) || 0,
+                            );
                         }}
                     />
                 </div>
@@ -344,7 +348,7 @@ function PropertiesSettingComp({
                         min={0}
                         onChange={(event) => {
                             setRoundSizePixel(
-                                parseInt(event.target.value) || 0,
+                                Number.parseInt(event.target.value) || 0,
                             );
                         }}
                     />
@@ -362,7 +366,7 @@ function PropertiesSettingComp({
                             value={fontSize}
                             onChange={(event) => {
                                 setFontSize(
-                                    parseInt(event.target.value) ||
+                                    Number.parseInt(event.target.value) ||
                                         DEFAULT_FONT_SIZE,
                                 );
                             }}

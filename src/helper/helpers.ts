@@ -51,7 +51,7 @@ export function isVisible(elem: any) {
     if (style.visibility !== 'visible') {
         return false;
     }
-    if (parseInt(style.opacity) < 0.1) {
+    if (Number.parseInt(style.opacity) < 0.1) {
         return false;
     }
     if (
@@ -92,10 +92,10 @@ export function isVisible(elem: any) {
 
 export function getRotationDeg(str: string) {
     const match = RegExp(/rotate\((.+)deg\)/).exec(str);
-    return match ? parseInt(match[1]) : 0;
+    return match ? Number.parseInt(match[1]) : 0;
 }
 export const removePX = (str: string) => {
-    return parseInt(str.replace('px', ''));
+    return Number.parseInt(str.replace('px', ''));
 };
 
 export function genRandomString(length: number = 5) {

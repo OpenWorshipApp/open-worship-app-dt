@@ -16,7 +16,7 @@ function genMenuItem(
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
     { bookKey, book, bookKJV, isAvailable }: BookMatchDataType,
 ) {
-    const extraName = book !== bookKJV ? ` (${bookKJV})` : '';
+    const extraName = book === bookKJV ? '' : ` (${bookKJV})`;
     return {
         menuElement: (
             <span data-bible-key={bibleKey}>{`${book}${extraName}`}</span>

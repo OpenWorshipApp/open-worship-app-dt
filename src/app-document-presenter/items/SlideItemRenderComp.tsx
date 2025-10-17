@@ -37,7 +37,7 @@ function RenderScreenInfoComp({
     return (
         <div className="d-flex app-border-white-round px-1">
             {selectedList.map(([key]) => {
-                const screenId = parseInt(key);
+                const screenId = Number.parseInt(key);
                 return <ShowingScreenIcon key={key} screenId={screenId} />;
             })}
         </div>

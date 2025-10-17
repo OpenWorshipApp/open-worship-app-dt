@@ -85,7 +85,7 @@ function CustomPortInputComp({
                 value={port ?? ''}
                 onChange={(event) => {
                     const newPort = Number(event.target.value);
-                    if (isNaN(newPort) || newPort <= 0) {
+                    if (Number.isNaN(newPort) || newPort <= 0) {
                         setPort(undefined);
                         return;
                     }

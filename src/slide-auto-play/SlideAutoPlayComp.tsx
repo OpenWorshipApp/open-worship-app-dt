@@ -144,7 +144,10 @@ export default function SlideAutoPlayComp({
                     value={timerSeconds}
                     onChange={(event) => {
                         setTimerSeconds(
-                            Math.max(0, parseInt(event.target.value) || 0),
+                            Math.max(
+                                0,
+                                Number.parseInt(event.target.value) || 0,
+                            ),
                         );
                     }}
                     min="0"

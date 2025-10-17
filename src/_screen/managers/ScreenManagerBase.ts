@@ -62,8 +62,8 @@ export default class ScreenManagerBase
     }
 
     static idFromKey(key: string): number {
-        const id = parseInt(key, 10);
-        if (isNaN(id)) {
+        const id = Number.parseInt(key, 10);
+        if (Number.isNaN(id)) {
             throw new Error(`Invalid screen key: ${key}`);
         }
         return id;

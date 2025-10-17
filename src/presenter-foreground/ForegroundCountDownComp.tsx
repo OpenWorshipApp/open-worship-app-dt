@@ -152,8 +152,8 @@ function CountDownInSetComp({
         const targetDatetime = new Date();
         targetDatetime.setSeconds(
             targetDatetime.getSeconds() +
-                60 * parseInt(minutes) +
-                3600 * parseInt(hours) +
+                60 * Number.parseInt(minutes) +
+                3600 * Number.parseInt(hours) +
                 1,
         );
         return targetDatetime;

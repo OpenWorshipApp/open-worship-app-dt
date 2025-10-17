@@ -30,7 +30,7 @@ export const toLocaleNumQuick = (n: number, numList: string[]) => {
     return `${n}`
         .split('')
         .map((n1) => {
-            return numList[parseInt(n1)];
+            return numList[Number.parseInt(n1)];
         })
         .join('');
 };
@@ -279,8 +279,8 @@ export function fromBibleFileName(fileName: string) {
         return null;
     }
     const bookKey = match[2];
-    const chapterNum = parseInt(match[3], 10);
-    if (isNaN(chapterNum)) {
+    const chapterNum = Number.parseInt(match[3], 10);
+    if (Number.isNaN(chapterNum)) {
         return null;
     }
     return { bookKey, chapterNum };

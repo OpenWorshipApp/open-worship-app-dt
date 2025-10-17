@@ -60,8 +60,8 @@ function RenderDimElementComp({
                 }}
                 value={value}
                 onChange={(e) => {
-                    const newValue = parseInt(e.target.value, 10);
-                    if (!isNaN(newValue)) {
+                    const newValue = Number.parseInt(e.target.value, 10);
+                    if (!Number.isNaN(newValue)) {
                         setValue(newValue);
                     }
                 }}

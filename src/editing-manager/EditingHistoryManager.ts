@@ -46,7 +46,7 @@ export class FileLineHandler {
 
     private toFileIndex(fileFullPath: string) {
         const fileName = pathBasename(fileFullPath);
-        const index = parseInt(fileName.split(CURRENT_FILE_SIGN)[0], 10);
+        const index = Number.parseInt(fileName.split(CURRENT_FILE_SIGN)[0], 10);
         return index;
     }
 
@@ -77,10 +77,10 @@ export class FileLineHandler {
         const fileNames = await this.getAllHistoryFiles();
         return fileNames
             .map((fileFullName) => {
-                return parseInt(fileFullName);
+                return Number.parseInt(fileFullName);
             })
             .filter((fileIndex) => {
-                return !isNaN(fileIndex);
+                return !Number.isNaN(fileIndex);
             });
     }
 

@@ -55,7 +55,7 @@ function roundSize(
     fixedSize: number,
 ): number {
     value = Math.min(defaultSize.max, Math.max(defaultSize.min, value));
-    return parseFloat(value.toFixed(fixedSize));
+    return Number.parseFloat(value.toFixed(fixedSize));
 }
 
 export default function AppRangeComp({
@@ -116,7 +116,7 @@ export default function AppRangeComp({
                 step={defaultSize.step}
                 value={localValue}
                 onChange={(event) => {
-                    setLocalValue1(parseInt(event.target.value));
+                    setLocalValue1(Number.parseInt(event.target.value));
                 }}
             />
             <div

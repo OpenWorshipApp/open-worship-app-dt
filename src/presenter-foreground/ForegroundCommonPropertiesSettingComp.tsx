@@ -111,7 +111,9 @@ export default function ForegroundCommonPropertiesSettingComp() {
                             min="0"
                             value={backdropFilter}
                             onChange={(e) => {
-                                setBackdropFilter(parseInt(e.target.value, 10));
+                                setBackdropFilter(
+                                    Number.parseInt(e.target.value, 10),
+                                );
                             }}
                         />
                     </div>

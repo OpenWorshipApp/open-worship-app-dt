@@ -82,7 +82,7 @@ async function confirmReloading() {
     await unlocking(ERROR_DATETIME_SETTING_NAME, async () => {
         const oldDatetimeString = getSetting(ERROR_DATETIME_SETTING_NAME);
         if (oldDatetimeString) {
-            const oldDatetime = parseInt(oldDatetimeString);
+            const oldDatetime = Number.parseInt(oldDatetimeString);
             if (Date.now() - oldDatetime < ERROR_DURATION) {
                 confirmLocalStorageErasing();
                 return;
