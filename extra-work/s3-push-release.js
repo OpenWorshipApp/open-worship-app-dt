@@ -248,9 +248,9 @@ async function main() {
     const uploadList = getUploadList();
     for (const item of uploadList) {
         if (item.body) {
-            return uploadToS3(s3Client, item.key, item.body, item.fileFullName);
+            await uploadToS3(s3Client, item.key, item.body, item.fileFullName);
         } else {
-            return uploadToS3(
+            await uploadToS3(
                 s3Client,
                 item.key,
                 createReadStream(item.filePath),
