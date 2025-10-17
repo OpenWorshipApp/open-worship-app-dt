@@ -15,7 +15,7 @@ latest_commit=$(git rev-parse HEAD)
 
 is_linux_ubuntu() {
     if command -v lsb_release &> /dev/null; then
-        if [[ "$(lsb_release -is)" == "Ubuntu" ]]; then
+        if [[ "$(lsb_release -is)" == "Ubuntu" || "$(lsb_release -is)" == "Linuxmint" ]]; then
             echo "true"
         fi
     fi
