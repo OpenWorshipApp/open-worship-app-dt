@@ -50,7 +50,7 @@ export function useDownloadBible(
             bibleInfo,
             options: {
                 onStart: (total) => {
-                    const fileSize = parseInt(total.toFixed(2));
+                    const fileSize = Number.parseInt(total.toFixed(2));
                     showSimpleToast(
                         BIBLE_DOWNLOAD_TOAST_TITLE,
                         `Start downloading "${bibleInfo.key}". ` +

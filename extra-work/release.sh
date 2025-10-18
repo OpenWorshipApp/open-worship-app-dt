@@ -15,7 +15,7 @@ latest_commit=$(git rev-parse HEAD)
 
 is_linux_ubuntu() {
     if command -v lsb_release &> /dev/null; then
-        if [[ "$(lsb_release -is)" == "Ubuntu" ]]; then
+        if [[ "$(lsb_release -is)" == "Ubuntu" || "$(lsb_release -is)" == "Linuxmint" ]]; then
             echo "true"
         fi
     fi
@@ -65,6 +65,8 @@ mac_prep() {
 
 linux_prep() {
     start_prep "$1"
+    chmod +x "$1"/*.AppImage
+    chmod +x "$1"/*.deb
     ls "$1" | grep -E '\.deb$|\.AppImage$' | while read -r file; do
         checksum=$(sha512sum "$1/$file" | awk '{print $1}')
         append_file_info "$1" "$file" "$checksum" "$1/latest-linux.yml"

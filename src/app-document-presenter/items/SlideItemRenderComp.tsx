@@ -1,5 +1,7 @@
 import './VaryAppDocumentItem.scss';
 
+import { CSSProperties, ReactNode, MouseEvent, useState, useMemo } from 'react';
+
 import Slide from '../../app-document-list/Slide';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import {
@@ -15,12 +17,12 @@ import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocum
 import { changeDragEventStyle, genTimeoutAttempt } from '../../helper/helpers';
 import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import { useMemo, useState } from 'react';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import AppDocument from '../../app-document-list/AppDocument';
 import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComponent';
 import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import RenderSlideIndexComp from './RenderSlideIndexComp';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -35,7 +37,7 @@ function RenderScreenInfoComp({
     return (
         <div className="d-flex app-border-white-round px-1">
             {selectedList.map(([key]) => {
-                const screenId = parseInt(key);
+                const screenId = Number.parseInt(key);
                 return <ShowingScreenIcon key={key} screenId={screenId} />;
             })}
         </div>
@@ -45,33 +47,23 @@ function RenderScreenInfoComp({
 function RenderHeaderInfoComp({
     varyAppDocumentItem,
     viewIndex,
+    name,
 }: Readonly<{
     varyAppDocumentItem: VaryAppDocumentItemType;
     viewIndex: number;
+    name?: string;
 }>) {
     const isChanged =
         Slide.checkIsThisType(varyAppDocumentItem) &&
         (varyAppDocumentItem as Slide).isChanged;
     return (
-        <div
-            className="card-header d-flex"
-            style={{
-                height: '35px',
-                backgroundColor: 'var(--bs-gray-800)',
-            }}
-        >
-            <div className="d-flex w-100">
-                <div className="flex-fill d-flex">
-                    <div>
-                        <span
-                            className="badge rounded-pill text-bg-info"
-                            title={`Index: ${viewIndex}`}
-                        >
-                            {viewIndex}
-                        </span>
-                    </div>
+        <div className="card-header vary-app-document-item-header d-flex">
+            <div className="d-flex w-100 overflow-hidden">
+                <div className="d-flex overflow-hidden flex-grow-1">
+                    <RenderSlideIndexComp viewIndex={viewIndex} />
+                    <span className="mx-1 app-ellipsis">{name}</span>
                 </div>
-                <div className="flex-fill d-flex justify-content-end">
+                <div className="d-flex justify-content-end">
                     <RenderScreenInfoComp
                         varyAppDocumentItem={varyAppDocumentItem}
                     />
@@ -148,12 +140,15 @@ function genAttachBackgroundComponent(
         element = (
             <video
                 className="w-100 h-100"
+                style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                }}
                 onMouseEnter={(event) => {
                     event.currentTarget.play();
                 }}
                 onMouseLeave={(event) => {
                     event.currentTarget.pause();
-                    event.currentTarget.currentTime = 0;
                 }}
                 loop
                 muted
@@ -220,11 +215,11 @@ export default function SlideItemRenderComp({
     slide: VaryAppDocumentItemType;
     width: number;
     index: number;
-    onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
     onCopy?: () => void;
     selectedItem?: VaryAppDocumentItemType | null;
-    children: React.ReactNode;
+    children: ReactNode;
 }>) {
     const { scale, setTargetDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);
@@ -240,8 +235,8 @@ export default function SlideItemRenderComp({
         return {
             padding: 0,
             margin: 0,
-            height: `${Math.floor(slide.height * scale)}px`,
-        } as React.CSSProperties;
+            height: `${Math.round(slide.height * scale)}px`,
+        } as CSSProperties;
     }, [slide.height, scale]);
     const handleDataDropping = async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
@@ -262,7 +257,7 @@ export default function SlideItemRenderComp({
             className={
                 'data-vary-app-document-item card' +
                 ` app-caught-hover-pointer ${activeCN} ${presenterCN}` +
-                ' overflow-hidden'
+                ' app-overflow-hidden'
             }
             ref={setTargetDiv}
             style={{ width: `${width}px` }}
@@ -302,8 +297,9 @@ export default function SlideItemRenderComp({
             <RenderHeaderInfoComp
                 varyAppDocumentItem={slide}
                 viewIndex={index + 1}
+                name={slide.name}
             />
-            <div className="card-body overflow-hidden w-100" style={style}>
+            <div className="card-body app-overflow-hidden w-100" style={style}>
                 {attachedBackgroundElement && (
                     <div
                         className="w-100"
@@ -316,7 +312,7 @@ export default function SlideItemRenderComp({
                     </div>
                 )}
                 <div
-                    className="w-100"
+                    className="w-100 overflow-hidden"
                     style={{
                         ...style,
                         position: 'absolute',

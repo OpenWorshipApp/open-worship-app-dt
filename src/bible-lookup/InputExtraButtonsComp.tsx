@@ -1,4 +1,4 @@
-import { createRef, useMemo, useState } from 'react';
+import { CSSProperties, createRef, useMemo, useState } from 'react';
 
 import {
     checkIsBibleLookupInputFocused,
@@ -71,7 +71,7 @@ const ctrlEscapeEventMap: KeyboardEventMapper = {
 };
 const tabEventMap: KeyboardEventMapper = { key: 'Tab' };
 
-function genAvailableStyle(isDisabled: boolean): React.CSSProperties {
+function genAvailableStyle(isDisabled: boolean): CSSProperties {
     if (!isDisabled) {
         return {};
     }
@@ -102,33 +102,6 @@ export default function InputExtraButtonsComp() {
         wrapper.style.right = `${parentRect.right - inputRect.right + 5}px`;
         wrapper.style.zIndex = '5';
     }, []);
-    const removeInputTextChunk = () => {
-        const arr = inputText.split(' ').filter((str) => str !== '');
-        if (arr.length === 1) {
-            viewController.inputText = '';
-            return;
-        }
-        arr.pop();
-        const newInputText = arr.join(' ') + (arr.length > 0 ? ' ' : '');
-        viewController.inputText = newInputText;
-        setBibleLookupInputFocus();
-    };
-    useKeyboardRegistering(
-        [escapeEventMap],
-        () => {
-            if (!checkIsBibleLookupInputFocused()) {
-                setBibleLookupInputFocus();
-                return;
-            }
-            removeInputTextChunk();
-        },
-        [inputText],
-    );
-    const removeInputText = () => {
-        viewController.inputText = '';
-        setBibleLookupInputFocus();
-    };
-    useKeyboardRegistering([ctrlEscapeEventMap], removeInputText, [inputText]);
     const handleTabbing = async (event?: any) => {
         const newInputText = await checkNewTabInputText(
             viewController,
@@ -141,6 +114,42 @@ export default function InputExtraButtonsComp() {
         viewController.inputText = newInputText;
     };
     useKeyboardRegistering([tabEventMap], handleTabbing, []);
+    useKeyboardRegistering(
+        [escapeEventMap],
+        () => {
+            if (checkIsBibleLookupInputFocused()) {
+                removeInputTextChunk();
+            } else if (
+                document.activeElement instanceof HTMLInputElement ===
+                false
+            ) {
+                setBibleLookupInputFocus();
+            }
+        },
+        [],
+    );
+    useKeyboardRegistering(
+        [ctrlEscapeEventMap],
+        () => {
+            removeInputText();
+        },
+        [],
+    );
+    const removeInputTextChunk = () => {
+        const arr = inputText.split(' ').filter((str) => str !== '');
+        if (arr.length === 1) {
+            viewController.inputText = '';
+            return;
+        }
+        arr.pop();
+        const newInputText = arr.join(' ') + (arr.length > 0 ? ' ' : '');
+        viewController.inputText = newInputText;
+        setBibleLookupInputFocus();
+    };
+    const removeInputText = () => {
+        viewController.inputText = '';
+        setBibleLookupInputFocus();
+    };
     return (
         <div
             ref={extractButtonsRef}

@@ -4,6 +4,7 @@ import DirSource from '../helper/DirSource';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import { readTextFromClipboard } from '../server/appHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
+import appProvider from '../server/appProvider';
 
 function InputUrlComp({
     defaultUrl,
@@ -22,7 +23,8 @@ function InputUrlComp({
                 <div className="input-group-text">{title}</div>
                 <input
                     className={
-                        'form-control' + (invalidMessage ? ' is-invalid' : '')
+                        'form-control form-control-sm' +
+                        (invalidMessage ? ' is-invalid' : '')
                     }
                     type="text"
                     value={url}
@@ -36,10 +38,49 @@ function InputUrlComp({
     );
 }
 
-export async function genContextMenuItems(
+export async function askForURL(title: string, subTitle: string) {
+    let url = '';
+    const clipboardText = await readTextFromClipboard();
+    if (clipboardText !== null && clipboardText.trim().startsWith('http')) {
+        url = clipboardText.trim();
+    }
+    const isConfirmInput = await showAppInput(
+        title,
+        <InputUrlComp
+            defaultUrl={url}
+            onChange={(newUrl) => {
+                url = newUrl;
+            }}
+            title={subTitle}
+        />,
+    );
+    if (!isConfirmInput) {
+        return null;
+    }
+    if (!url.trim().startsWith('http')) {
+        showSimpleToast('`Download From URL', 'Invalid URL');
+        return null;
+    }
+    return url;
+}
+
+export function getOpenSharedLinkMenuItem(
+    sharedKey: string,
+): ContextMenuItemType {
+    return {
+        menuElement: '`Open Shared Link',
+        onSelect: async () => {
+            const sharedLink = `${appProvider.appInfo.homepage}/shared?key=${sharedKey}`;
+            appProvider.browserUtils.openExternalURL(sharedLink);
+        },
+    };
+}
+
+export async function genDownloadContextMenuItems(
     { title, subTitle }: { title: string; subTitle: string },
     dirSource: DirSource,
     download: (url: string) => Promise<void>,
+    sharedKey?: string,
 ) {
     if (dirSource.dirPath === '') {
         return [];
@@ -48,34 +89,14 @@ export async function genContextMenuItems(
         {
             menuElement: '`Download From URL',
             onSelect: async () => {
-                let url = '';
-                const clipboardText = await readTextFromClipboard();
-                if (
-                    clipboardText !== null &&
-                    clipboardText.trim().startsWith('http')
-                ) {
-                    url = clipboardText.trim();
-                }
-                const isConfirmInput = await showAppInput(
-                    title,
-                    <InputUrlComp
-                        defaultUrl={url}
-                        onChange={(newUrl) => {
-                            url = newUrl;
-                        }}
-                        title={subTitle}
-                    />,
-                );
-                if (!isConfirmInput) {
-                    return;
-                }
-                if (!url.trim().startsWith('http')) {
-                    showSimpleToast('`Download From URL', 'Invalid URL');
+                const url = await askForURL(title, subTitle);
+                if (url === null) {
                     return;
                 }
                 await download(url);
             },
         },
+        ...(sharedKey ? [getOpenSharedLinkMenuItem(sharedKey)] : []),
     ];
     return contextMenuItems;
 }

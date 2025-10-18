@@ -1,3 +1,5 @@
+import './PresenterForegroundComp.scss';
+
 import appProvider from '../server/appProvider';
 import ForegroundCameraComp from './ForegroundCameraComp';
 import ForegroundCommonPropertiesSettingComp from './ForegroundCommonPropertiesSettingComp';
@@ -10,13 +12,7 @@ import ForegroundTimeComp from './ForegroundTimeComp';
 
 export default function PresenterForegroundComp() {
     return (
-        <div
-            className="w-100 h-100 app-border-white-round p-2"
-            style={{
-                overflowY: 'auto',
-                backgroundColor: 'var(--bs-gray-800)',
-            }}
-        >
+        <div className="presenter-foreground w-100 h-100 app-border-white-round p-2">
             <ForegroundCommonPropertiesSettingComp />
             <hr />
             <ForegroundMarqueeComp />

@@ -1,8 +1,10 @@
-import 'bootstrap-icons/font/bootstrap-icons.css';
-import 'bootstrap/dist/css/bootstrap.css';
 import './appInit.scss';
 import './others/bootstrap-override.scss';
+import './others/theme-override-dark.scss';
+import './others/theme-override-light.scss';
 import './others/scrollbar.scss';
+
+import { ReactNode, StrictMode } from 'react';
 
 import { showAppConfirm } from './popup-widget/popupWidgetHelpers';
 import {
@@ -18,8 +20,6 @@ import {
 } from './lang/langHelpers';
 import appProvider from './server/appProvider';
 import initCrypto from './_owa-crypto';
-import { createRoot } from 'react-dom/client';
-import { StrictMode } from 'react';
 import { getSetting, setSetting } from './helper/settingHelpers';
 import { applyFontFamily } from './others/LanguageWrapper';
 import {
@@ -41,6 +41,7 @@ import {
 } from './server/appHelpers';
 import { useAppEffectAsync } from './helper/debuggerHelpers';
 import { goToGeneralSetting } from './setting/settingHelpers';
+import { applyDarkModeToApp, getReactRoot } from './initHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
@@ -81,7 +82,7 @@ async function confirmReloading() {
     await unlocking(ERROR_DATETIME_SETTING_NAME, async () => {
         const oldDatetimeString = getSetting(ERROR_DATETIME_SETTING_NAME);
         if (oldDatetimeString) {
-            const oldDatetime = parseInt(oldDatetimeString);
+            const oldDatetime = Number.parseInt(oldDatetimeString);
             if (Date.now() - oldDatetime < ERROR_DURATION) {
                 confirmLocalStorageErasing();
                 return;
@@ -158,31 +159,21 @@ export function useQuickExitBlock() {
     );
 }
 
-export function getRootElement<T>(): T {
-    const container = document.getElementById('root');
-    if (container === null) {
-        const message = 'Root element not found';
-        window.alert(message);
-        throw new Error(message);
-    }
-    return container as T;
-}
-
 export function RenderApp({
     children,
 }: Readonly<{
-    children: React.ReactNode;
+    children: ReactNode;
 }>) {
     useQuickExitBlock();
     useCheckSetting();
     return (
-        <div id="app" className="dark" data-bs-theme="dark">
+        <div id="app" ref={applyDarkModeToApp}>
             <StrictMode>{children}</StrictMode>
         </div>
     );
 }
 
-export async function main(children: React.ReactNode) {
+export async function main(children: ReactNode) {
     await initApp();
     const hoverMotionHandler = new HoverMotionHandler();
     addDomChangeEventListener(
@@ -210,8 +201,7 @@ export async function main(children: React.ReactNode) {
     if (fontFamily) {
         document.body.style.fontFamily = fontFamily;
     }
-    const container = getRootElement<HTMLDivElement>();
-    const root = createRoot(container);
+    const root = getReactRoot();
 
     root.render(<RenderApp>{children}</RenderApp>);
 

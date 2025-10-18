@@ -21,15 +21,19 @@ export default function ConfirmPopupComp({
     useKeyboardRegistering(
         [{ key: 'Escape' }],
         (event) => {
-            event.preventDefault();
-            handleClosing();
+            if (data.escToCancel ?? true) {
+                event.preventDefault();
+                handleClosing();
+            }
         },
         [data],
     );
     useKeyboardRegistering(
         [{ key: 'Enter' }],
         () => {
-            handleOkClicking();
+            if (data.enterToOk ?? true) {
+                handleOkClicking();
+            }
         },
         [data],
     );
@@ -58,15 +62,15 @@ export default function ConfirmPopupComp({
                 </div>
                 <div className="card-footer btn-group float-end">
                     <button
-                        type="button"
                         className="btn btn-sm"
+                        type="button"
                         onClick={handleClosing}
                     >
                         Cancel
                     </button>
                     <button
-                        type="button"
                         className="btn btn-sm btn-info"
+                        type="button"
                         onClick={handleOkClicking}
                     >
                         Ok

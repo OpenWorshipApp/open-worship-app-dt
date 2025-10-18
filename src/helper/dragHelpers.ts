@@ -66,7 +66,7 @@ function deserializeDragData({ type, data }: DragDataType<any>) {
 }
 
 export function handleAttachBackgroundDrop(
-    event: React.DragEvent<HTMLElement>,
+    event: DragEvent,
     item: { filePath: string; id?: number },
 ) {
     stopDraggingState(event);

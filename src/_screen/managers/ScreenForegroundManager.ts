@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, MouseEvent } from 'react';
 
 import { setSetting } from '../../helper/settingHelpers';
 import {
@@ -223,7 +223,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     static async setData(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         callback: (screenForegroundManager: ScreenForegroundManager) => void,
         isForceChoosing: boolean,
     ) {
@@ -260,7 +260,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
     static async setCountdown(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         dateTime: Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
@@ -297,7 +297,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
     static async setStopwatch(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         dateTime: Date | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
@@ -344,7 +344,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.setTimeDataList(dataList, isNoSyncGroup);
     }
     static async addTimeData(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         data: ForegroundTimeDataType,
         isForceChoosing = false,
     ) {
@@ -357,7 +357,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
     static async removeTimeData(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         data: ForegroundTimeDataType,
         isForceChoosing = false,
     ) {
@@ -391,7 +391,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
     static async setMarquee(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         text: string | null,
         extraStyle: CSSProperties = {},
         isForceChoosing = false,
@@ -430,7 +430,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
     static async setQuickText(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         htmlText: string | null,
         timeSecondDelay: number,
         timeSecondToLive: number,
@@ -498,7 +498,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.setCameraDataList(dataList, isNoSyncGroup);
     }
     static async addCameraData(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         data: ForegroundCameraDataType,
         isForceChoosing = false,
     ) {
@@ -511,7 +511,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
     static async removeCameraData(
-        event: React.MouseEvent<HTMLElement, MouseEvent>,
+        event: MouseEvent,
         data: ForegroundCameraDataType,
         isForceChoosing = false,
     ) {

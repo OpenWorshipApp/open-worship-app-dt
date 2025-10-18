@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
 
@@ -8,7 +8,7 @@ export default function AskingNewNameComp({
     customIcon,
 }: Readonly<{
     defaultName?: string;
-    customIcon?: React.ReactNode;
+    customIcon?: ReactNode;
     applyName: (newName: string | null) => void;
 }>) {
     const [creatingNewName, setCreatingNewName] = useState(defaultName ?? '');
@@ -22,7 +22,7 @@ export default function AskingNewNameComp({
         >
             <input
                 type="text"
-                className="form-control"
+                className="form-control form-control-sm"
                 placeholder="title"
                 value={creatingNewName}
                 aria-label="file name"
@@ -40,9 +40,9 @@ export default function AskingNewNameComp({
                 }}
             />
             <button
-                type="button"
                 id="button-addon2"
                 className={`btn btn-outline-${isValid ? 'success' : 'danger'}`}
+                type="button"
                 onClick={() => {
                     if (!isValid) {
                         showSimpleToast(

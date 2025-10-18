@@ -2,19 +2,23 @@ import { BrowserWindow } from 'electron';
 
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
-import { attemptClosing, isSecured } from './electronHelpers';
+import {
+    attemptClosing,
+    getAppThemeBackgroundColor,
+    isSecured,
+} from './electronHelpers';
 
 const routeProps = genRoutProps(htmlFiles.finder);
 export default class ElectronFinderController {
     win: BrowserWindow | null = null;
     mainWin: BrowserWindow | null = null;
-    createFinderWindow(mainWin: BrowserWindow) {
+    createWindow(mainWin: BrowserWindow) {
         const win = new BrowserWindow({
-            backgroundColor: '#000000',
+            backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
-            width: 350,
-            height: 100,
+            width: 270,
+            height: 80,
             webPreferences: {
                 webSecurity: isSecured,
                 nodeIntegration: true,
@@ -30,7 +34,7 @@ export default class ElectronFinderController {
     open(mainWin: BrowserWindow) {
         if (this.win === null) {
             this.mainWin = mainWin;
-            this.win = this.createFinderWindow(mainWin);
+            this.win = this.createWindow(mainWin);
             this.win.on('closed', () => {
                 attemptClosing(this);
             });

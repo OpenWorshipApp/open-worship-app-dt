@@ -1,3 +1,5 @@
+import { DragEvent } from 'react';
+
 import LookupBibleItemController, {
     closeEventMapper,
     ctrlShiftMetaKeys,
@@ -18,7 +20,7 @@ enum DraggingPosEnum {
     CENTER = '',
 }
 
-type DragDropEventType = React.DragEvent<HTMLDivElement>;
+type DragDropEventType = DragEvent<HTMLDivElement>;
 
 export function genDraggingClass(event: DragDropEventType) {
     const { nativeEvent } = event;

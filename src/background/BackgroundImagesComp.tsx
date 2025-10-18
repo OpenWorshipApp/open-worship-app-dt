@@ -1,6 +1,5 @@
 import './BackgroundImagesComp.scss';
 
-import { RenderScreenIds } from './BackgroundComp';
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -9,40 +8,62 @@ import {
     dirSourceSettingNames,
 } from '../helper/constants';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 import {
     checkIsImagesInClipboard,
+    downloadImage,
     readImagesFromClipboard,
 } from '../server/appHelpers';
 import DirSource from '../helper/DirSource';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { getDotExtensionFromBase64Data } from '../server/fileHelpers';
+import {
+    fsCheckFileExist,
+    fsDeleteFile,
+    fsMove,
+    getDotExtensionFromBase64Data,
+} from '../server/fileHelpers';
+import { askForURL, getOpenSharedLinkMenuItem } from './downloadHelper';
+import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../progress-bar/progressBarHelpers';
+import { handleError } from '../helper/errorHelpers';
+import { ReactElement } from 'react';
+import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 
 function rendChild(
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    height: number,
+    extraChild?: ReactElement,
 ) {
     const fileSource = FileSource.getInstance(filePath);
     return (
-        <div className="card-body overflow-hidden">
-            <RenderScreenIds
+        <div
+            className="card-body app-blank-bg"
+            style={{ height: `${height}px`, overflow: 'hidden' }}
+        >
+            <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
-                    return parseInt(key);
+                    return Number.parseInt(key);
                 })}
             />
             <img
                 loading="lazy"
                 src={fileSource.src}
-                className="card-img-top"
+                className="w-100 h-100 card-img-top"
                 alt={fileSource.name}
                 style={{
-                    width: '100%',
-                    height: '100%',
                     objectFit: 'cover',
                     objectPosition: 'center center',
                     pointerEvents: 'none',
                 }}
             />
+            {extraChild}
         </div>
     );
 }
@@ -54,14 +75,15 @@ async function genContextMenuItems(dirSource: DirSource) {
     const isClipboardHasImage = await checkIsImagesInClipboard();
     const contextMenuItems: ContextMenuItemType[] = [];
     if (isClipboardHasImage) {
+        const pastImageTitle = '`Paste Image';
         contextMenuItems.push({
-            menuElement: '`Paste Image',
+            menuElement: pastImageTitle,
             onSelect: async () => {
                 for await (const blob of readImagesFromClipboard()) {
-                    const srcData = await FileSource.getSrcDataFromBlob(blob);
+                    const srcData = await FileSource.getSrcDataFromFrom(blob);
                     if (srcData === null) {
                         showSimpleToast(
-                            '`Paste Image',
+                            pastImageTitle,
                             'Error occurred during reading image data from clipboard',
                         );
                         continue;
@@ -69,7 +91,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     const dotExt = getDotExtensionFromBase64Data(srcData);
                     if (dotExt === null) {
                         showSimpleToast(
-                            '`Paste Image',
+                            pastImageTitle,
                             'Error occurred during getting image file extension',
                         );
                         continue;
@@ -77,7 +99,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     const filePath = await dirSource.genRandomFilePath(dotExt);
                     if (filePath === null) {
                         showSimpleToast(
-                            '`Paste Image',
+                            pastImageTitle,
                             'Error occurred during generating file name',
                         );
                         continue;
@@ -88,7 +110,7 @@ async function genContextMenuItems(dirSource: DirSource) {
                     );
                     if (!isSuccess) {
                         showSimpleToast(
-                            '`Paste Image',
+                            pastImageTitle,
                             'Error occurred during pasting image',
                         );
                     }
@@ -96,10 +118,66 @@ async function genContextMenuItems(dirSource: DirSource) {
             },
         });
     }
+    const title = '`Download From URL';
+    contextMenuItems.push(
+        {
+            menuElement: title,
+            onSelect: async () => {
+                const imageUrl = await askForURL(title, 'Image URL:');
+                if (imageUrl === null) {
+                    return;
+                }
+                try {
+                    showSimpleToast(
+                        title,
+                        `Downloading image from "${imageUrl}", please wait...`,
+                    );
+                    showProgressBar(imageUrl);
+                    const defaultPath = getDefaultDataDir();
+                    const { filePath, fileFullName } = await downloadImage(
+                        imageUrl,
+                        defaultPath,
+                    );
+                    const destFileSource = FileSource.getInstance(
+                        dirSource.dirPath,
+                        fileFullName,
+                    );
+                    if (await fsCheckFileExist(destFileSource.filePath)) {
+                        await fsDeleteFile(destFileSource.filePath);
+                    }
+                    await fsMove(filePath, destFileSource.filePath);
+                    showSimpleToast(
+                        title,
+                        `Image downloaded successfully, file path: "${destFileSource.filePath}"`,
+                    );
+                } catch (error) {
+                    handleError(error);
+                    showSimpleToast(
+                        title,
+                        'Error occurred during downloading image',
+                    );
+                } finally {
+                    hideProgressBar(imageUrl);
+                }
+            },
+        },
+        getOpenSharedLinkMenuItem('images'),
+    );
     return contextMenuItems;
 }
 
 export default function BackgroundImagesComp() {
+    const handleItemsAdding = async (
+        dirSource: DirSource,
+        defaultContextMenuItems: ContextMenuItemType[],
+        event: any,
+    ) => {
+        const contextMenuItems = await genContextMenuItems(dirSource);
+        showAppContextMenu(event, [
+            ...defaultContextMenuItems,
+            ...contextMenuItems,
+        ]);
+    };
     return (
         <BackgroundMediaComp
             defaultFolderName={defaultDataDirNames.BACKGROUND_IMAGE}
@@ -107,9 +185,7 @@ export default function BackgroundImagesComp() {
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
             genContextMenuItems={genContextMenuItems}
-            sortFilePaths={(filePaths) => {
-                return filePaths.sort();
-            }}
+            onItemsAdding={handleItemsAdding}
         />
     );
 }

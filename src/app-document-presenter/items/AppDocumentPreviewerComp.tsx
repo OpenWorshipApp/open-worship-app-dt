@@ -23,7 +23,7 @@ export default function AppDocumentPreviewerComp() {
             <VaryAppDocumentContext
                 value={selectedAppDocumentContext.selectedVaryAppDocument}
             >
-                <div className="card-body w-100 h-100 overflow-hidden">
+                <div className="card-body w-100 h-100 app-overflow-hidden">
                     <VaryAppDocumentItemsPreviewerComp />
                 </div>
                 <AppDocumentPreviewerFooterComp />

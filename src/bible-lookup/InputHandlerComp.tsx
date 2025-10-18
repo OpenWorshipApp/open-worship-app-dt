@@ -7,7 +7,7 @@ import {
     focusRenderFound,
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import { toInputText } from '../helper/bible-helpers/serverBibleHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
@@ -36,6 +36,14 @@ export default function InputHandlerComp({
 }>) {
     const inputRef = createRef<HTMLInputElement>();
     const { inputText } = useInputTextContext();
+    useAppEffect(() => {
+        const input = inputRef.current;
+        const text = inputText ?? '';
+        if (input && input.value !== text) {
+            document.execCommand('selectAll', false);
+            document.execCommand('insertText', false, text);
+        }
+    }, [inputText]);
     const viewController = useLookupBibleItemControllerContext();
     const bibleKey = useBibleKeyContext();
     const [books] = useAppStateAsync(() => {
@@ -53,11 +61,10 @@ export default function InputHandlerComp({
             />
             <input
                 id={BIBLE_LOOKUP_INPUT_ID}
+                className={`form-control form-control-sm ${INPUT_TEXT_CLASS}`}
                 ref={inputRef}
                 data-bible-key={bibleKey}
                 type="text"
-                className={`form-control ${INPUT_TEXT_CLASS}`}
-                value={inputText}
                 autoFocus
                 placeholder={placeholder ?? ''}
                 onKeyUp={(event) => {
@@ -74,26 +81,26 @@ export default function InputHandlerComp({
                 }}
             />
             <InputExtraButtonsComp />
-            <div className="d-flex justify-content-between h-100">
-                <button
-                    className="btn btn-sm btn-outline-secondary"
-                    title="Previous"
-                    onClick={() => {
-                        viewController.tryJumpingChapter(false);
-                    }}
-                >
-                    <i className="bi bi-caret-left" />
-                </button>
-                <button
-                    className="btn btn-sm btn-outline-secondary"
-                    title="Next"
-                    onClick={() => {
-                        viewController.tryJumpingChapter(true);
-                    }}
-                >
-                    <i className="bi bi-caret-right" />
-                </button>
-            </div>
+            <button
+                className="btn btn-sm btn-outline-secondary"
+                data-previous-chapter-button="1"
+                title="Previous"
+                onClick={() => {
+                    viewController.tryJumpingChapter(false);
+                }}
+            >
+                <i className="bi bi-caret-left" />
+            </button>
+            <button
+                className="btn btn-sm btn-outline-secondary"
+                title="Next"
+                data-next-chapter-button="1"
+                onClick={() => {
+                    viewController.tryJumpingChapter(true);
+                }}
+            >
+                <i className="bi bi-caret-right" />
+            </button>
         </Fragment>
     );
 }

@@ -6,6 +6,7 @@ import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { goToPath } from '../router/routeHelpers';
 import {
     fsCheckFileExist,
+    getDotExtensionFromBase64Data,
     isSupportedMimetype,
     pathJoin,
     pathResolve,
@@ -272,10 +273,10 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     );
 }
 
-(window as any).getSlidesCount = async (
+export async function getSlidesCount(
     powerPointFilePath: string,
     dotNetRootDir?: string,
-) => {
+) {
     const powerPointHelper =
         await appProvider.powerPointUtils.getPowerPointHelper(dotNetRootDir);
     if (powerPointHelper === null) {
@@ -283,7 +284,7 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
         return null;
     }
     return powerPointHelper.countSlides(powerPointFilePath);
-};
+}
 
 async function getPageTitle(url: string) {
     const rawHtml = await fetch(url)
@@ -303,8 +304,48 @@ async function getPageTitle(url: string) {
     }
     return null;
 }
+
+export function downloadImage(targetUrl: string, outputDir: string) {
+    return new Promise<{ filePath: string; fileFullName: string }>(
+        (resolve, reject) => {
+            (async () => {
+                try {
+                    const response = await fetch(targetUrl);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch image');
+                    }
+                    const blob = await response.blob();
+                    const srcData = await FileSource.getSrcDataFromFrom(blob);
+                    if (srcData === null) {
+                        throw new Error('Failed to extract image data');
+                    }
+                    const dotExt = getDotExtensionFromBase64Data(srcData);
+                    if (dotExt === null) {
+                        throw new Error('Failed to get image file extension');
+                    }
+                    const filePath = pathJoin(
+                        outputDir,
+                        `${Date.now()}${dotExt}`,
+                    );
+                    const fileSource = FileSource.getInstance(filePath);
+                    if (await fileSource.writeFileBase64Data(srcData)) {
+                        resolve({
+                            filePath,
+                            fileFullName: fileSource.fullName,
+                        });
+                    } else {
+                        throw new Error('Failed to write image file');
+                    }
+                } catch (error: any) {
+                    reject(new Error('Download failed: ' + error));
+                }
+            })();
+        },
+    );
+}
+
 export function downloadVideoOrAudio(
-    videoUrl: string,
+    targetUrl: string,
     outputDir: string,
     isVideo: boolean = true,
     ffmpegPath?: string,
@@ -312,6 +353,7 @@ export function downloadVideoOrAudio(
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
             (async () => {
+                const videoOrAudioUrl = targetUrl.trim();
                 const resolvedSuccess = (resolvedFilePath: string) => {
                     const fileSource = FileSource.getInstance(resolvedFilePath);
                     resolve({
@@ -319,17 +361,18 @@ export function downloadVideoOrAudio(
                         fileFullName: `${title || temptName}${fileSource.dotExtension}`,
                     });
                 };
-                const title = await getPageTitle(videoUrl);
+                const title = await getPageTitle(videoOrAudioUrl);
                 const temptName = `temp-${Date.now()}`;
                 const outputFormat = pathResolve(
                     `${outputDir}/${temptName}.%(ext)s`,
                 );
                 const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
                 let filePath: string | null = null;
-                const args = [videoUrl, '-o', outputFormat];
+                const args = [videoOrAudioUrl, '-o', outputFormat];
                 args.push(
                     '--ffmpeg-location',
                     ffmpegPath ?? appProvider.ytUtils.ffmpegBinPath,
+                    '--no-playlist',
                 );
                 if (!isVideo) {
                     args.push(

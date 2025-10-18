@@ -21,7 +21,7 @@ export function genHtmlForegroundMarquee(
 ) {
     const duration = text.length / 6;
     const scale = screenManagerBase.height / 768;
-    const fontSize = 75 * scale;
+    const fontSize = Math.round(75 * scale);
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = ReactDOMServer.renderToStaticMarkup(
         <div

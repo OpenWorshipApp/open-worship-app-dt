@@ -132,7 +132,7 @@ export default function SlideEditorComp() {
                 },
             ]}
         >
-            <div className="slide-editor w-100 h-100 overflow-hidden">
+            <div className="slide-editor w-100 h-100 app-overflow-hidden">
                 <ResizeActorComp
                     flexSizeName={resizeSettingNames.slideEditor}
                     isHorizontal

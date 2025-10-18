@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, DragEvent } from 'react';
 
 import { useAppEffect } from './debuggerHelpers';
 import { handleError } from './errorHelpers';
@@ -34,7 +34,7 @@ export function getRandomColor() {
     const letters = '0123456789ABCDEF';
     let color = '#';
     for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
+        color += letters[Math.round(Math.random() * 16)];
     }
     return color;
 }
@@ -51,7 +51,7 @@ export function isVisible(elem: any) {
     if (style.visibility !== 'visible') {
         return false;
     }
-    if (parseInt(style.opacity) < 0.1) {
+    if (Number.parseInt(style.opacity) < 0.1) {
         return false;
     }
     if (
@@ -92,10 +92,10 @@ export function isVisible(elem: any) {
 
 export function getRotationDeg(str: string) {
     const match = RegExp(/rotate\((.+)deg\)/).exec(str);
-    return match ? parseInt(match[1]) : 0;
+    return match ? Number.parseInt(match[1]) : 0;
 }
 export const removePX = (str: string) => {
-    return parseInt(str.replace('px', ''));
+    return Number.parseInt(str.replace('px', ''));
 };
 
 export function genRandomString(length: number = 5) {
@@ -105,7 +105,7 @@ export function genRandomString(length: number = 5) {
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
         result += characters.charAt(
-            Math.floor(Math.random() * charactersLength),
+            Math.round(Math.random() * charactersLength),
         );
     }
     return result;
@@ -270,15 +270,18 @@ export function checkIsSameValues(value1: any, value2: any) {
     return value1 === value2;
 }
 
-export const menuTitleRealFile = `Reveal in ${
+export const menuTitleRevealFile = `Reveal in ${
     appProvider.systemUtils.isMac ? 'Finder' : 'File Explorer'
 }`;
 
-export function genTimeoutAttempt(timeMilliseconds: number = 1e3) {
+export function genTimeoutAttempt(
+    timeMilliseconds: number = 1e3,
+    shouldWait = true,
+) {
     let timeoutId: any = null;
     let lastSchedule = Date.now() - timeMilliseconds - 1;
     return function (func: () => void, isImmediate: boolean = false) {
-        if (Date.now() - lastSchedule > timeMilliseconds) {
+        if (!shouldWait && Date.now() - lastSchedule > timeMilliseconds) {
             isImmediate = true;
         }
         lastSchedule = Date.now();
@@ -337,45 +340,16 @@ export function cumulativeOffset(element: HTMLElement | null) {
     return { top, left };
 }
 
-// TODO: this function does not work for async function
-export function useAppPromise<T>(
-    promise: Promise<T>,
-    onError?: (error: any) => void,
-) {
-    const [state, setState] = useState<T | null | undefined>(undefined);
-    useAppEffect(() => {
-        if (state !== undefined) {
-            return;
-        }
-        const timeOut = setTimeout(() => {
-            if (state === undefined) {
-                onError?.(
-                    new Error('Promise timeout, please check your network'),
-                );
-                setState(null);
-            }
-        }, 5000); // 5 seconds
-        promise
-            .then((data) => {
-                setState(data);
-                clearTimeout(timeOut);
-            })
-            .catch((error) => {
-                onError?.(error);
-                setState(null);
-                clearTimeout(timeOut);
-            });
-    }, [state, promise]);
-
-    return state;
-}
-
 export function changeDragEventStyle(
-    event: React.DragEvent<HTMLElement>,
+    event: DragEvent,
     key: string,
     value: string,
 ) {
-    ((event.currentTarget?.style ?? {}) as any)[key] = value;
+    const eventTarget = event.target;
+    if (!eventTarget || eventTarget instanceof HTMLElement === false) {
+        return;
+    }
+    (eventTarget.style as any)[key] = value;
 }
 
 export function stopDraggingState(event: any) {
@@ -407,10 +381,10 @@ export function bringDomToBottomView(dom: Element) {
     bringDomToView(dom, 'end');
 }
 
-export function checkIsVerticalPartialInvisible(
+function getVisibleDim(
     container: HTMLElement,
     target: HTMLElement,
-    threshold: number = 0,
+    threshold: number,
 ) {
     const containerRect = container.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
@@ -418,5 +392,37 @@ export function checkIsVerticalPartialInvisible(
     const containerBottom = containerRect.bottom - threshold;
     const targetTop = targetRect.top + threshold;
     const targetBottom = targetRect.bottom - threshold;
-    return targetTop < containerBottom && targetBottom > containerTop;
+    return {
+        targetTop,
+        containerTop,
+        targetBottom,
+        containerBottom,
+    };
+}
+
+export function checkIsVerticalPartialInvisible(
+    container: HTMLElement,
+    target: HTMLElement,
+    threshold: number = 0,
+) {
+    const { targetTop, containerTop, targetBottom, containerBottom } =
+        getVisibleDim(container, target, threshold);
+    // targetTop < containerTop
+    // or targetBottom > containerBottom
+    return targetTop < containerTop || targetBottom > containerBottom;
+}
+
+export function checkIsVerticalPartialVisible(
+    container: HTMLElement,
+    target: HTMLElement,
+    threshold: number = 0,
+) {
+    const { targetTop, containerTop, targetBottom, containerBottom } =
+        getVisibleDim(container, target, threshold);
+    // containerTop <= targetTop < containerBottom
+    // or containerTop < targetBottom <= containerBottom
+    return (
+        (targetTop >= containerTop && targetTop < containerBottom) ||
+        (targetBottom > containerTop && targetBottom <= containerBottom)
+    );
 }

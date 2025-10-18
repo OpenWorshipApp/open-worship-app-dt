@@ -15,7 +15,7 @@ import {
     writeFileFromBase64,
 } from '../server/fileHelpers';
 import { isValidJson } from './helpers';
-import { pathToFileURL } from '../server/helpers';
+import { pathToFileURL } from '../server/calcHelpers';
 import EventHandler from '../event/EventHandler';
 import appProvider from '../server/appProvider';
 import DragInf, { DragTypeEnum } from './DragInf';
@@ -328,7 +328,7 @@ export default class FileSource
         FileSource.getInstance(this.filePath).fireDeleteEvent();
     }
 
-    static getSrcDataFromBlob(blob: Blob) {
+    static getSrcDataFromFrom(file: File | Blob) {
         return new Promise<SrcData | null>((resolve) => {
             const reader = new FileReader();
             reader.onload = () => {
@@ -337,7 +337,7 @@ export default class FileSource
             reader.onerror = () => {
                 resolve(null);
             };
-            reader.readAsDataURL(blob);
+            reader.readAsDataURL(file);
         });
     }
 }

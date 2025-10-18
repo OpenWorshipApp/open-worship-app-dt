@@ -107,6 +107,11 @@ const lang: LanguageDataType = {
       <path fill="none" d="M99 664.2h193M115.8 713h9.2m-9.2-6.3h9.2m-9.2-6.2h9.2m-9.2-6.3h9.2m-9.2-6.2h9.2m-9.2-6.3h9.2m-9.2-6.2h9.2m65.8 37.5h8.6m-8.6-6.3h8.6m-8.6-6.2h8.6m-8.6-6.3h8.6m-8.6-6.2h8.6m-8.6-6.3h8.6m-8.6-6.2h8.6m66.2 37.5h9.2m-9.2-6.3h9.2m-9.2-6.2h9.2m-9.2-6.3h9.2m-9.2-6.2h9.2m-9.2-6.3h9.2m-9.2-6.2h9.2"/>
     </g>
   </svg>`,
+    sanitizePreviewText: (text: string) => {
+        text = text.split(' ').join('');
+        text = text.split('​').join('');
+        return text;
+    },
     sanitizeFindingText: (text: string) => {
         // khmer characters from https://en.wikipedia.org/wiki/Khmer_script
         const chars = [
@@ -216,6 +221,21 @@ const lang: LanguageDataType = {
         newText = lang.trimText(newText);
         return newText;
     },
+    stopWords: [
+        'និង',
+        'ដែល',
+        'ដែរ',
+        'ជា',
+        'ក្នុង',
+        'ទៅ',
+        'ពី',
+        'ក៏',
+        'មិន',
+        'បាន',
+        'នេះ',
+        'មាន',
+        'ជា',
+    ],
     trimText: (text: string) => {
         return text.trim().replace(/^[\u200B]+|[\u200B]+$/g, '');
     },
@@ -241,6 +261,7 @@ const lang: LanguageDataType = {
             },
         ];
     },
+    bibleAudioAvailable: false,
 };
 
 export default lang;

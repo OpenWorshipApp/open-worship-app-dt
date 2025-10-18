@@ -14,6 +14,11 @@ import {
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import { DisplayType } from '../_screen/screenTypeHelpers';
+import {
+    checkIsImagesInClipboard,
+    readImagesFromClipboard,
+} from '../server/appHelpers';
+import { createNewSlidesFromDroppedData } from '../app-document-presenter/items/appDocumentHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -160,12 +165,15 @@ export default class AppDocument
         await this.setSlides(slides);
     }
 
-    async addSlide(slide: Slide) {
+    async addSlides(newSlides: Slide[]) {
         const slides = await this.getSlides();
-        const maxSlideId = await this.getMaxSlideId();
-        slide.id = maxSlideId + 1;
-        slide.filePath = this.filePath;
-        slides.push(slide);
+        for (let i = 0; i < newSlides.length; i++) {
+            const newSlide = newSlides[i];
+            const maxSlideId = (await this.getMaxSlideId()) + i;
+            newSlide.id = maxSlideId + 1;
+            newSlide.filePath = this.filePath;
+            slides.push(newSlide);
+        }
         await this.setSlides(slides);
     }
 
@@ -199,12 +207,12 @@ export default class AppDocument
         return this.moveSlideToIndex(slide, toIndex);
     }
 
-    async addNewSlide() {
+    async genNewSlide() {
         const maxSlideId = await this.getMaxSlideId();
-        const slide = Slide.defaultSlideData(maxSlideId + 1);
+        const defaultSlideData = Slide.defaultSlideData(maxSlideId + 1);
         const { width, height } = Slide.getDefaultDim();
         const json = {
-            id: slide.id,
+            id: defaultSlideData.id,
             metadata: {
                 width,
                 height,
@@ -212,7 +220,12 @@ export default class AppDocument
             canvasItems: [], // TODO: add default canvas item
         };
         const newSlide = new Slide(this.filePath, json);
-        await this.addSlide(newSlide);
+        return newSlide;
+    }
+
+    async addNewSlide() {
+        const newSlide = await this.genNewSlide();
+        await this.addSlides([newSlide]);
     }
 
     async deleteSlide(slide: Slide) {
@@ -233,7 +246,7 @@ export default class AppDocument
     async getIsWrongDimension(display: DisplayType) {
         const slides = await this.getSlides();
         const foundSlide = slides.find((slide) => {
-            return slide.checkIsWrongDimension(display);
+            return slide.checkIsWrongDimension(display.bounds);
         });
         if (foundSlide) {
             return {
@@ -259,13 +272,37 @@ export default class AppDocument
         }
     }
 
-    async fixSlideDimension(display: DisplayType) {
+    async changeSlidesDimension(
+        dim: { width: number; height: number },
+        targetSlide?: Slide,
+    ) {
         const slides = await this.getSlides();
         const newSlides = await Promise.all(
             slides.map((slide) => {
                 return (async () => {
                     const json = slide.toJson();
-                    if (slide.checkIsWrongDimension(display)) {
+                    if (
+                        targetSlide === undefined ||
+                        (slide.checkIsSame(targetSlide) &&
+                            slide.checkIsWrongDimension(dim))
+                    ) {
+                        json.metadata.width = dim.width;
+                        json.metadata.height = dim.height;
+                    }
+                    return Slide.fromJson(json, this.filePath);
+                })();
+            }),
+        );
+        await this.setSlides(newSlides);
+    }
+
+    async fixSlidesDimensionForDisplay(display: DisplayType) {
+        const slides = await this.getSlides();
+        const newSlides = await Promise.all(
+            slides.map((slide) => {
+                return (async () => {
+                    const json = slide.toJson();
+                    if (slide.checkIsWrongDimension(display.bounds)) {
                         json.metadata.width = display.bounds.width;
                         json.metadata.height = display.bounds.height;
                     }
@@ -290,6 +327,7 @@ export default class AppDocument
     }
 
     async showContextMenu(event: any) {
+        const isClipboardHasImage = await checkIsImagesInClipboard();
         const copiedSlides = await AppDocument.getCopiedSlides();
         showAppContextMenu(event, [
             {
@@ -304,8 +342,22 @@ export default class AppDocument
                           menuElement: 'Paste',
                           onSelect: () => {
                               for (const copiedSlide of copiedSlides) {
-                                  this.addSlide(copiedSlide);
+                                  this.addSlides([copiedSlide]);
                               }
+                          },
+                      },
+                  ]
+                : []),
+            ...(isClipboardHasImage
+                ? [
+                      {
+                          menuElement: '`Paste Image',
+                          onSelect: async () => {
+                              const blobs: Blob[] = [];
+                              for await (const blob of readImagesFromClipboard()) {
+                                  blobs.push(blob);
+                              }
+                              await createNewSlidesFromDroppedData(this, blobs);
                           },
                       },
                   ]

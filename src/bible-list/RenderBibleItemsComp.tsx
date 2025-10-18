@@ -37,7 +37,7 @@ export default function RenderBibleItemsComp({
                 <button
                     type="button"
                     className={
-                        'btn btn-sm btn-labeled btn-outline-primary p-2 ' +
+                        'btn btn-sm btn-labeled btn-primary p-2 my-1 ' +
                         'pointer app-border-white-round'
                     }
                     style={{
@@ -48,6 +48,7 @@ export default function RenderBibleItemsComp({
                         showBibleLookupPopup();
                     }}
                 >
+                    <i className="bi bi-book px-1" />
                     {'`'}Add Bible Item
                 </button>
             )}

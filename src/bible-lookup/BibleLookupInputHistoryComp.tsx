@@ -6,7 +6,7 @@ import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
 import LookupBibleItemController, {
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
-import { historyStore } from '../bible-reader/BibleItemsViewController';
+import { bibleHistoryStore } from '../bible-reader/BibleItemsViewController';
 import {
     ContextMenuItemType,
     showAppContextMenu,
@@ -33,7 +33,7 @@ function useHistoryTextList(maxHistoryCount: number) {
         );
     };
     useAppEffect(() => {
-        historyStore.addHistory = (text: string) => {
+        bibleHistoryStore.addBibleItemHistory = (text: string) => {
             if (historyTextList.includes(text)) {
                 return historyTextList;
             }
@@ -42,7 +42,7 @@ function useHistoryTextList(maxHistoryCount: number) {
             setHistoryTextList1(newHistory);
         };
         return () => {
-            historyStore.addHistory = () => {};
+            bibleHistoryStore.addBibleItemHistory = () => {};
         };
     }, [historyTextList]);
     return [historyTextList, setHistoryTextList1] as const;
@@ -169,25 +169,28 @@ export default function BibleLookupInputHistoryComp({
     };
     return (
         <div
-            className="d-flex shadow-sm rounded px-1 me-1"
+            className="h-100 d-flex rounded px-1 me-1 app-inner-shadow"
             style={{
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 minWidth: '150px',
+                paddingTop: '2px',
             }}
         >
             {historyTextList.map((historyText) => {
                 const extracted = extractHistoryText(historyText);
                 return (
                     <button
+                        className={
+                            'btn btn-sm d-flex app-border-white-round mx-1 p-0'
+                        }
                         key={historyText}
                         data-bible-key={extracted?.bibleKey ?? ''}
                         title={
                             'Double click to put back, shift double click to ' +
                             'put back split'
                         }
-                        className="btn btn-sm d-flex app-border-white-round"
-                        style={{ height: '25px' }}
+                        style={{ height: '20px' }}
                         draggable
                         onDragStart={async (event: any) => {
                             const bibleItem =
@@ -207,7 +210,7 @@ export default function BibleLookupInputHistoryComp({
                         )}
                     >
                         <small
-                            title="Remove"
+                            title="`Remove"
                             style={{ color: 'red' }}
                             onClick={() => {
                                 removeHistory(
@@ -219,7 +222,9 @@ export default function BibleLookupInputHistoryComp({
                         >
                             <i className="bi bi-x" />
                         </small>
-                        <small className="flex-fill">{historyText}</small>
+                        <small className="flex-fill app-ellipsis">
+                            {historyText}
+                        </small>
                     </button>
                 );
             })}

@@ -1,9 +1,12 @@
+import { MouseEvent } from 'react';
+
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import ReactDOMServer from 'react-dom/server';
 import { getHTMLChild } from '../../helper/helpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
 import SlideItemRenderComp, { useScale } from './SlideItemRenderComp';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import SlideScaleContainerComp from './SlideScaleContainerComp';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,
@@ -44,34 +47,43 @@ export function genPdfSlide(pdfImageSrc: string, isFullWidth = false) {
 }
 
 export default function PdfSlideRenderComp({
-    pdfSlide,
+    slide,
     width,
     index,
     onClick,
     onContextMenu,
 }: Readonly<{
-    pdfSlide: PdfSlide;
+    slide: PdfSlide;
     width: number;
     index: number;
-    onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
 }>) {
-    const { scale, parentWidth, setParentDiv } = useScale(pdfSlide, width);
+    const { scale, parentWidth, setParentDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);
-    const pdfPreviewSrc = pdfSlide.pdfPreviewSrc;
+    const pdfPreviewSrc = slide.pdfPreviewSrc;
     return (
         <SlideItemRenderComp
-            slide={pdfSlide}
+            slide={slide}
             width={width}
             index={index}
             onContextMenu={onContextMenu}
             onClick={onClick}
         >
+            <SlideScaleContainerComp
+                slide={slide}
+                width={width}
+                extraStyle={{
+                    position: 'absolute',
+                }}
+            />
             <div
+                className="overflow-hidden"
                 ref={setParentDiv}
                 style={{
+                    position: 'absolute',
                     width: `${parentWidth}px`,
-                    height: `${pdfSlide.height * scale}px`,
+                    height: `${Math.round(slide.height * scale)}px`,
                 }}
             >
                 {pdfPreviewSrc === null ? (

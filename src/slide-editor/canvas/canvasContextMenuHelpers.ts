@@ -63,7 +63,7 @@ export async function showCanvasContextMenu(
                       onSelect: async () => {
                           for await (const blob of readImagesFromClipboard()) {
                               const newCanvasItem =
-                                  await canvasController.genNewImageItemFromBlob(
+                                  await canvasController.genNewImageItemFromFile(
                                       blob,
                                       event,
                                   );

@@ -1,8 +1,7 @@
 import './BackgroundVideosComp.scss';
 
-import { createRef } from 'react';
+import { createRef, ReactElement, useState } from 'react';
 
-import { RenderScreenIds } from './BackgroundComp';
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -11,8 +10,7 @@ import {
     dirSourceSettingNames,
 } from '../helper/constants';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import VideoHeaderSettingComp from './VideoHeaderSettingComp';
-import { genContextMenuItems } from './downloadHelper';
+import { genDownloadContextMenuItems } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
 import {
     showProgressBar,
@@ -23,15 +21,30 @@ import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import DirSource from '../helper/DirSource';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
+import { useAppEffect } from '../helper/debuggerHelpers';
+import {
+    getIsFadingAtTheEndSetting,
+    methodMapIsFadingAtTheEnd,
+    setIsFadingAtTheEndSetting,
+} from './videoBackgroundHelpers';
+import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 
 function rendChild(
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    height: number,
+    extraChild?: ReactElement,
 ) {
     return (
         <RendBody
             filePath={filePath}
             selectedBackgroundSrcList={selectedBackgroundSrcList}
+            height={height}
+            extraChild={extraChild}
         />
     );
 }
@@ -39,91 +52,154 @@ function rendChild(
 function RendBody({
     filePath,
     selectedBackgroundSrcList,
+    height,
+    extraChild,
 }: Readonly<{
     filePath: string;
     selectedBackgroundSrcList: [string, BackgroundSrcType][];
+    height: number;
+    extraChild?: ReactElement;
 }>) {
-    const vRef = createRef<HTMLVideoElement>();
     const fileSource = FileSource.getInstance(filePath);
+    const [isFadingAtTheEnd, setIsFadingAtTheEnd] = useState(
+        getIsFadingAtTheEndSetting(fileSource.src),
+    );
+    useAppEffect(() => {
+        methodMapIsFadingAtTheEnd[filePath] = setIsFadingAtTheEnd;
+        return () => {
+            delete methodMapIsFadingAtTheEnd[filePath];
+        };
+    }, [filePath]);
+    const vRef = createRef<HTMLVideoElement>();
     return (
         <div
-            className="card-body"
+            className="card-body app-overflow-hidden app-blank-bg"
+            style={{ height: `${height}px`, overflow: 'hidden' }}
             onMouseEnter={() => {
                 vRef.current?.play();
             }}
             onMouseLeave={() => {
-                if (vRef.current) {
-                    vRef.current.pause();
-                    vRef.current.currentTime = 0;
-                }
+                vRef.current?.pause();
             }}
         >
-            <RenderScreenIds
+            <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
-                    return parseInt(key);
+                    return Number.parseInt(key);
                 })}
             />
-            <video ref={vRef} loop muted src={fileSource.src} />
+            <video
+                className="w-100 h-100"
+                ref={vRef}
+                loop
+                muted
+                src={fileSource.src}
+                style={{
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                    pointerEvents: 'none',
+                }}
+            />
+            <div
+                className="position-absolute mx-1 text-white"
+                style={{
+                    top: 0,
+                    right: 20,
+                }}
+            >
+                {isFadingAtTheEnd ? (
+                    <i
+                        className="bi bi-shadows"
+                        title="`Video will fade at the end while screen rendering"
+                    />
+                ) : null}
+            </div>
+            {extraChild}
         </div>
     );
 }
 
 async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
-    return genContextMenuItems(
+    const title = '`Download From URL';
+    const download = async (videoUrl: string) => {
+        try {
+            showSimpleToast(
+                title,
+                `Downloading video from "${videoUrl}", please wait...`,
+            );
+            showProgressBar(videoUrl);
+            const defaultPath = getDefaultDataDir();
+            const { filePath, fileFullName } = await downloadVideoOrAudio(
+                videoUrl,
+                defaultPath,
+            );
+            const destFileSource = FileSource.getInstance(
+                dirSource.dirPath,
+                fileFullName,
+            );
+            if (await fsCheckFileExist(destFileSource.filePath)) {
+                await fsDeleteFile(destFileSource.filePath);
+            }
+            await fsMove(filePath, destFileSource.filePath);
+            showSimpleToast(
+                title,
+                `Video downloaded successfully, file path: "${destFileSource.filePath}"`,
+            );
+        } catch (error) {
+            handleError(error);
+            showSimpleToast(title, 'Error occurred during downloading video');
+        } finally {
+            hideProgressBar(videoUrl);
+        }
+    };
+    return genDownloadContextMenuItems(
         {
-            title: '`Download From URL',
+            title,
             subTitle: 'Video URL:',
         },
         dirSource,
-        async (videoUrl) => {
-            try {
-                showSimpleToast(
-                    '`Download From URL',
-                    `Downloading video from "${videoUrl}", please wait...`,
-                );
-                showProgressBar(videoUrl);
-                const defaultPath = getDefaultDataDir();
-                const { filePath, fileFullName } = await downloadVideoOrAudio(
-                    videoUrl,
-                    defaultPath,
-                );
-                const destFileSource = FileSource.getInstance(
-                    dirSource.dirPath,
-                    fileFullName,
-                );
-                if (await fsCheckFileExist(destFileSource.filePath)) {
-                    await fsDeleteFile(destFileSource.filePath);
-                }
-                await fsMove(filePath, destFileSource.filePath);
-                showSimpleToast(
-                    '`Download From URL',
-                    `Video downloaded successfully, file path: "${destFileSource.filePath}"`,
-                );
-            } catch (error) {
-                handleError(error);
-                showSimpleToast(
-                    '`Download From URL',
-                    'Error occurred during downloading video',
-                );
-            } finally {
-                hideProgressBar(videoUrl);
-            }
-        },
+        download,
+        'videos',
     );
 }
 
+function genExtraItemContextMenuItems(filePath: string) {
+    return [
+        {
+            menuElement: '`Toggle Fading at End`',
+            title: '`Toggle is video should fade at the end',
+            onSelect: () => {
+                const fileSource = FileSource.getInstance(filePath);
+                const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
+                    fileSource.src,
+                );
+                setIsFadingAtTheEndSetting(fileSource.src, !isFadingAtTheEnd);
+            },
+        },
+    ];
+}
+
 export default function BackgroundVideosComp() {
+    const handleItemsAdding = async (
+        dirSource: DirSource,
+        defaultContextMenuItems: ContextMenuItemType[],
+        event: any,
+    ) => {
+        const contextMenuItems =
+            await genVideoDownloadContextMenuItems(dirSource);
+        showAppContextMenu(event, [
+            ...defaultContextMenuItems,
+            ...contextMenuItems,
+        ]);
+    };
     return (
         <BackgroundMediaComp
-            extraHeaderChild={<VideoHeaderSettingComp />}
             defaultFolderName={defaultDataDirNames.BACKGROUND_VIDEO}
             dragType={DragTypeEnum.BACKGROUND_VIDEO}
             rendChild={rendChild}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_VIDEO}
             genContextMenuItems={genVideoDownloadContextMenuItems}
-            sortFilePaths={(filePaths) => {
-                return filePaths.sort();
-            }}
+            onItemsAdding={handleItemsAdding}
+            genExtraItemContextMenuItems={genExtraItemContextMenuItems}
         />
     );
 }

@@ -1,3 +1,5 @@
+import { CSSProperties, ReactNode } from 'react';
+
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 
 export default function ForegroundLayoutComp({
@@ -11,13 +13,13 @@ export default function ForegroundLayoutComp({
     extraBodyStyle,
 }: Readonly<{
     target: string;
-    fullChildHeaders?: React.ReactNode;
-    extraHeaderStyle?: React.CSSProperties;
+    fullChildHeaders?: ReactNode;
+    extraHeaderStyle?: CSSProperties;
     extraHeaderClassName?: string;
-    childHeadersOnHidden?: React.ReactNode;
-    children?: React.ReactNode;
+    childHeadersOnHidden?: ReactNode;
+    children?: ReactNode;
     extraBodyClassName?: string;
-    extraBodyStyle?: React.CSSProperties;
+    extraBodyStyle?: CSSProperties;
 }>) {
     const [isOpened, setIsOpened] = useStateSettingBoolean(
         `foreground-${target}-show-opened`,

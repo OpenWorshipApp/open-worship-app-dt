@@ -1,9 +1,8 @@
 import '../background/BackgroundImagesComp.scss';
 
-import { useState } from 'react';
+import { CSSProperties, useState } from 'react';
 
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
-import { RenderScreenIds } from '../background/BackgroundComp';
 import BackgroundMediaComp from '../background/BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
@@ -21,9 +20,10 @@ import {
     scaleTypeList,
 } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
+import RenderBackgroundScreenIds from '../background/RenderBackgroundScreenIds';
 
 const DIR_SOURCE_SETTING_NAME = 'images-slide-show';
-const extraStyle: React.CSSProperties = {
+const extraStyle: CSSProperties = {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     backdropFilter: 'blur(5px)',
 };
@@ -95,10 +95,10 @@ function rendChild(
 ) {
     const fileSource = FileSource.getInstance(filePath);
     return (
-        <div className="card-body overflow-hidden">
-            <RenderScreenIds
+        <div className="card-body app-overflow-hidden">
+            <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
-                    return parseInt(key);
+                    return Number.parseInt(key);
                 })}
             />
             <img

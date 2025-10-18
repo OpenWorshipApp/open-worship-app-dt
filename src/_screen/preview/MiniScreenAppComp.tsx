@@ -5,11 +5,21 @@ import ScreenBibleComp from '../ScreenBibleComp';
 import { getScreenManagerByScreenId } from '../managers/screenManagerHelpers';
 import { ScreenManagerBaseContext } from '../managers/screenManagerHooks';
 import ScreenEffectManager from '../managers/ScreenEffectManager';
+import { checkIsDarkMode } from '../../initHelpers';
 
-const IMAGE_BACKGROUND = `linear-gradient(45deg, var(--bs-gray-700) 25%, var(--bs-gray-800) 25%),
-linear-gradient(-45deg, var(--bs-gray-700) 25%, var(--bs-gray-800) 25%),
-linear-gradient(45deg, var(--bs-gray-800) 75%, var(--bs-gray-700) 75%),
-linear-gradient(-45deg, var(--bs-gray-800) 75%, var(--bs-gray-700) 75%)`;
+const genBGBlank = () => {
+    const isDarkMode = checkIsDarkMode();
+    if (isDarkMode) {
+        return `linear-gradient(45deg, var(--bs-gray-700) 25%, var(--bs-gray-800) 25%),
+        linear-gradient(-45deg, var(--bs-gray-700) 25%, var(--bs-gray-800) 25%),
+        linear-gradient(45deg, var(--bs-gray-800) 75%, var(--bs-gray-700) 75%),
+        linear-gradient(-45deg, var(--bs-gray-800) 75%, var(--bs-gray-700) 75%)`;
+    }
+    return `linear-gradient(45deg, var(--bs-gray-300) 25%, var(--bs-gray-200) 25%),
+    linear-gradient(-45deg, var(--bs-gray-300) 25%, var(--bs-gray-200) 25%),
+    linear-gradient(45deg, var(--bs-gray-200) 75%, var(--bs-gray-300) 75%),
+    linear-gradient(-45deg, var(--bs-gray-200) 75%, var(--bs-gray-300) 75%)`;
+};
 
 export function genStyleRendering(effectManager: ScreenEffectManager) {
     return Object.entries(effectManager.styleAnimList).map(
@@ -44,7 +54,7 @@ export default function MiniScreenAppComp({
                     position: 'absolute',
                     width: '100%',
                     height: '100%',
-                    backgroundImage: IMAGE_BACKGROUND,
+                    backgroundImage: genBGBlank(),
                     backgroundSize: '20px 20px',
                     backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
                 }}

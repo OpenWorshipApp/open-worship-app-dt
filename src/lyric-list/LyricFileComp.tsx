@@ -92,7 +92,6 @@ export default function LyricFileComp({
             data={lyric}
             reload={handleReloading}
             filePath={filePath}
-            isPointer
             onClick={handleClicking}
             renderChild={handleChildRendering}
             isSelected={isSelected}

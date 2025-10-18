@@ -176,7 +176,7 @@ export class HoverMotionHandler {
         if (parentElement === null || minWidthString === undefined) {
             return;
         }
-        const minWidth = parseInt(minWidthString);
+        const minWidth = Number.parseInt(minWidthString);
         const checkIt = this.checkParentWidth.bind(
             this,
             parentElement,

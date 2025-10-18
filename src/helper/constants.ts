@@ -5,7 +5,7 @@ export const dirSourceSettingNames = {
     PLAYLIST: `${SELECT_DIR}-playlist`,
     BACKGROUND_IMAGE: `${SELECT_DIR}-image-bg`,
     BACKGROUND_VIDEO: `${SELECT_DIR}-video-bg`,
-    BACKGROUND_SOUND: `${SELECT_DIR}-sound-bg`,
+    BACKGROUND_AUDIO: `${SELECT_DIR}-audio-bg`,
     BIBLE_PRESENT: `${SELECT_DIR}-bible-presenter`,
     BIBLE_READ: `${SELECT_DIR}-bible-read`,
 };
@@ -15,7 +15,7 @@ export const defaultDataDirNames = {
     LYRIC: 'lyrics',
     BACKGROUND_IMAGE: 'images',
     BACKGROUND_VIDEO: 'videos',
-    BACKGROUND_SOUND: 'sounds',
+    BACKGROUND_AUDIO: 'audios',
     BIBLE_PRESENT: 'bibles',
     BIBLE_READ: 'bibles-read',
 };

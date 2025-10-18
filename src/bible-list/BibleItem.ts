@@ -10,6 +10,7 @@ import { copyToClipboard } from '../server/appHelpers';
 import { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import DocumentInf from '../others/DocumentInf';
 import { AnyObjectType } from '../helper/typeHelpers';
+import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
 
@@ -58,6 +59,18 @@ export default class BibleItem
     }
     set metadata(metadata: AnyObjectType) {
         this.originalJson.metadata = metadata;
+    }
+    get extraBibleKeys() {
+        return this.originalJson.extraBibleKeys ?? [];
+    }
+    set extraBibleKeys(extraBibleKeys: string[]) {
+        this.originalJson.extraBibleKeys = extraBibleKeys;
+    }
+    get isAudioEnabled() {
+        return this.originalJson.isAudioEnabled ?? false;
+    }
+    set isAudioEnabled(isAudioEnabled: boolean) {
+        this.originalJson.isAudioEnabled = isAudioEnabled;
     }
     checkIsSameId(bibleItem: BibleItem | number) {
         if (typeof bibleItem === 'number') {
@@ -124,6 +137,8 @@ export default class BibleItem
         return {
             id: this.id,
             bibleKey: this.bibleKey,
+            extraBibleKeys: this.extraBibleKeys,
+            isAudioEnabled: this.isAudioEnabled,
             target: this.originalJson.target,
             metadata: this.originalJson.metadata,
         };
@@ -285,5 +300,17 @@ export default class BibleItem
         oldBibleItem.bibleKey = newBibleItem.bibleKey;
         oldBibleItem.target = newBibleItem.target;
         return oldBibleItem.save(bible);
+    }
+
+    static async bibleTitleToKJVVerseKey(bibleKey: string, title: string) {
+        const extractedData = await extractBibleTitle(bibleKey, title);
+        const { bibleItem } = extractedData.result;
+        if (bibleItem === null) {
+            return null;
+        }
+        const { target } = bibleItem;
+        return `${target.bookKey} ${target.chapter}:${target.verseStart}${
+            target.verseEnd !== target.verseStart ? `-${target.verseEnd}` : ''
+        }`;
     }
 }

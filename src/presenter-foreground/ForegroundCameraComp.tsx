@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { CSSProperties, useRef, useState } from 'react';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import LoadingComp from '../others/LoadingComp';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -29,7 +29,7 @@ function RenderCameraInfoComp({
 }: Readonly<{
     cameraInfo: CameraInfoType;
     width: number;
-    genStyle: () => React.CSSProperties;
+    genStyle: () => CSSProperties;
 }>) {
     const containerRef = useRef<HTMLDivElement>(null);
     useAppEffectAsync(async () => {
@@ -73,7 +73,7 @@ function RenderCameraInfoComp({
             </div>
             <div
                 className={
-                    'card-body w-100 p-0 overflow-hidden' +
+                    'card-body w-100 p-0 app-overflow-hidden' +
                     ' app-caught-hover-pointer'
                 }
                 // TODO: implement drag and drop
@@ -112,7 +112,7 @@ function getAllShowingScreenIdDataList() {
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllCameras(
     showingScreenIdDataList: [number, ForegroundCameraDataType][],
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
         showingScreenIdDataList.forEach(([screenId, data]) => {

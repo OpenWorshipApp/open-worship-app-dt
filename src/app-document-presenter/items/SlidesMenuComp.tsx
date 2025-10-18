@@ -21,14 +21,16 @@ function CheckingDimensionComp({
     }
     return (
         <button
-            type="button"
             className="btn btn-sm btn-warning"
+            type="button"
             title={
                 'Fix slide dimension: ' +
                 AppDocument.toWrongDimensionString(wrongDimension)
             }
             onClick={() => {
-                selectedVaryAppDocument.fixSlideDimension(screenDisplay);
+                selectedVaryAppDocument.fixSlidesDimensionForDisplay(
+                    screenDisplay,
+                );
             }}
         >
             <i className="bi bi-aspect-ratio" style={{ color: 'red' }} />

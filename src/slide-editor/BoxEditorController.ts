@@ -342,7 +342,10 @@ export default class BoxEditorController {
         if (transform !== 'none') {
             const values = transform.split('(')[1].split(')')[0].split(',');
             const angle = Math.round(
-                Math.atan2(parseInt(values[1]), parseInt(values[0])) *
+                Math.atan2(
+                    Number.parseInt(values[1]),
+                    Number.parseInt(values[0]),
+                ) *
                     (180 / Math.PI),
             );
             return angle < 0 ? angle + 360 : angle;

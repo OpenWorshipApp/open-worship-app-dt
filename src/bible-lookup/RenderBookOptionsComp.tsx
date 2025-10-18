@@ -13,6 +13,7 @@ import {
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { checkIsOldTestament } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const OPTION_CLASS = 'bible-lookup-book-option';
 const OPTION_SELECTED_CLASS = 'active';
@@ -35,6 +36,7 @@ function genBookOption({
     isAvailable: boolean;
 }) {
     const activeClass = index === 0 && isAvailable ? OPTION_SELECTED_CLASS : '';
+    const isOldTestament = checkIsOldTestament(bookKey);
     return (
         <div
             style={{ margin: '2px' }}
@@ -49,6 +51,8 @@ function genBookOption({
                 style={{
                     width: '240px',
                     overflowX: 'auto',
+                    borderStyle: isOldTestament ? 'dashed' : 'double',
+                    borderWidth: isOldTestament ? '1px' : '2px',
                 }}
                 type="button"
                 onClick={() => {

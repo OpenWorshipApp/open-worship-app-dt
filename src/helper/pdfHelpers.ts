@@ -7,7 +7,6 @@ import {
     fsDeleteDir,
     fsListFiles,
 } from '../server/fileHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
 import FileSource from './FileSource';
 
 function toPdfImagesPreviewDirPath(filePath: string) {
@@ -55,7 +54,7 @@ async function genPdfImagePreviewInfo(
     filePath: string,
 ): Promise<PdfItemViewInfoType> {
     const fileSource = FileSource.getInstance(filePath);
-    const pageNumber = parseInt(fileSource.name.split('-')[1]);
+    const pageNumber = Number.parseInt(fileSource.name.split('-')[1]);
     const { width, height } = await getImageSize(fileSource.src);
     return { src: fileSource.src, pageNumber, width, height };
 }
@@ -101,10 +100,6 @@ export async function genPdfImagesPreview(
             return sortPdfImagePreviewInfo(imageFileInfoList);
         }
     }
-    showSimpleToast(
-        'Generating PDF preview images',
-        'Please do not close the application during this process.',
-    );
     await fsDeleteDir(outDir);
     await fsCreateDir(outDir);
     const previewData: {

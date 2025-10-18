@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import {
     TO_THE_TOP_STYLE_STRING,
     TO_THE_TOP_CLASSNAME,
@@ -9,17 +11,17 @@ import {
 
 export default function ScrollingHandlerComp({
     style,
-    shouldSnowPlayToBottom = false,
+    shouldShowPlayToBottom = false,
     movedCheck,
 }: Readonly<{
-    style?: React.CSSProperties;
-    shouldSnowPlayToBottom?: boolean;
+    style?: CSSProperties;
+    shouldShowPlayToBottom?: boolean;
     movedCheck?: MoveCheckType;
 }>) {
     return (
         <>
             <style>{TO_THE_TOP_STYLE_STRING}</style>
-            {shouldSnowPlayToBottom ? (
+            {shouldShowPlayToBottom ? (
                 <i
                     className={
                         `${PLAY_TO_BOTTOM_CLASSNAME} bi bi-chevron-double-down` +

@@ -11,10 +11,12 @@ import LyricEditingManager, {
 } from './LyricEditingManager';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import AppRangeComp from '../others/AppRangeComp';
+import { checkIsDarkMode } from '../initHelpers';
 
 function genOptions(lyricEditingManager: LyricEditingManager) {
+    const isDarkMode = checkIsDarkMode();
     return {
-        theme: 'dark',
+        theme: isDarkMode ? 'dark' : 'light',
         fontFamily: lyricEditingManager.lyricEditingProps.fontFamily,
         fontWeight: lyricEditingManager.lyricEditingProps.fontWeight,
     };
@@ -126,7 +128,7 @@ export default function LyricPreviewerComp() {
     return (
         <div className="card w-100 h-100 ">
             <RenderHeaderComp />
-            <div className="card-body overflow-hidden">
+            <div className="card-body app-overflow-hidden">
                 <RenderBodyComp />
             </div>
         </div>

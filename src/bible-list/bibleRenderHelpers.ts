@@ -4,15 +4,14 @@ import {
     getBibleInfo,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
-    bibleObj,
+    kjvBibleInfo,
     getKJVChapterCount,
-    getKJVKeyValue,
+    getKJVBookKeyValue,
 } from '../helper/bible-helpers/serverBibleHelpers';
 import {
-    getBibleLocale,
+    getLangFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
-import { getLangAsync } from '../lang/langHelpers';
 import CacheManager from '../others/CacheManager';
 import { unlocking } from '../server/unlockingHelpers';
 
@@ -29,8 +28,12 @@ export type CompiledVerseType = {
     text: string;
     isNewLine: boolean;
     bibleKey: string;
+    bookKey: string;
+    chapter: number;
     kjvBibleVersesKey: string;
     bibleVersesKey: string;
+    isFirst: boolean;
+    isLast: boolean;
 };
 
 const titleCache = new CacheManager<string>(60); // 1 minute
@@ -74,7 +77,8 @@ class BibleRenderHelper {
     }
     async toLocaleBook(bibleKey: string, bookKey: string) {
         return (
-            (await keyToBook(bibleKey, bookKey)) || getKJVKeyValue()[bookKey]
+            (await keyToBook(bibleKey, bookKey)) ||
+            getKJVBookKeyValue()[bookKey]
         );
     }
     async toTitle(bibleKey: string, target: BibleTargetType) {
@@ -115,8 +119,7 @@ class BibleRenderHelper {
             if (!verses) {
                 return null;
             }
-            const locale = await getBibleLocale(bibleKey);
-            const langData = await getLangAsync(locale);
+            const langData = await getLangFromBibleKey(bibleKey);
             const compiledVersesList: CompiledVerseType[] = [];
             for (let i = verseStart; i <= verseEnd; i++) {
                 const localNum = await toLocaleNumBible(bibleKey, i);
@@ -127,24 +130,35 @@ class BibleRenderHelper {
                     );
                 }
                 const iString = i.toString();
+                const genTarget = (verse: number) => {
+                    return {
+                        bookKey,
+                        chapter,
+                        verseStart: verse,
+                        verseEnd: verse,
+                    };
+                };
+                const kjvBibleVersesKey = this.toKJVBibleVersesKey(
+                    genTarget(i),
+                );
+                const bibleVersesKey = this.toBibleVersesKey(
+                    bibleKey,
+                    genTarget(i),
+                );
+                const isFirst = i === verseStart;
+                const isLast = i === verseEnd;
                 compiledVersesList.push({
                     verse: i,
                     localeVerse: localNum ?? iString,
                     text: verses[iString] ?? '??',
                     isNewLine,
                     bibleKey,
-                    kjvBibleVersesKey: this.toKJVBibleVersesKey({
-                        bookKey: bookKey,
-                        chapter,
-                        verseStart: i,
-                        verseEnd: i,
-                    }),
-                    bibleVersesKey: this.toBibleVersesKey(bibleKey, {
-                        bookKey: bookKey,
-                        chapter,
-                        verseStart: i,
-                        verseEnd: i,
-                    }),
+                    bookKey,
+                    chapter,
+                    kjvBibleVersesKey,
+                    bibleVersesKey,
+                    isFirst,
+                    isLast,
                 });
             }
             await compiledVerseListCache.set(
@@ -164,23 +178,23 @@ class BibleRenderHelper {
         if (bibleInfo === null) {
             return null;
         }
-        const booksOrder = bibleObj.booksOrder;
-        const bookIndex = booksOrder.findIndex(
+        const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
+        const bookIndex = bookKeysOrder.findIndex(
             (bookKey1) => bookKey1 === bookKey,
         );
         let nextBookIndex = bookIndex;
         let nextChapter = chapter + (isNext ? 1 : -1);
         if (nextChapter < 1 || nextChapter > getKJVChapterCount(bookKey)) {
-            const bookLength = booksOrder.length;
+            const bookLength = bookKeysOrder.length;
             nextBookIndex =
                 (bookLength + nextBookIndex + (isNext ? 1 : -1)) % bookLength;
             nextChapter = isNext
                 ? 1
-                : getKJVChapterCount(booksOrder[nextBookIndex]);
+                : getKJVChapterCount(bookKeysOrder[nextBookIndex]);
         }
         const verses = await getVerses(bibleKey, bookKey, nextChapter);
         return {
-            bookKey: booksOrder[nextBookIndex],
+            bookKey: bookKeysOrder[nextBookIndex],
             chapter: nextChapter,
             verseStart: 1,
             verseEnd: verses ? Object.keys(verses).length : 1,

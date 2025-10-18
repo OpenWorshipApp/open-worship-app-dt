@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
@@ -15,7 +17,7 @@ import { dragStore } from '../helper/dragHelpers';
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllStopwatches(
     showingScreenIds: [number, ForegroundStopwatchDataType][],
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
         showingScreenIds.forEach(([screenId, data]) => {

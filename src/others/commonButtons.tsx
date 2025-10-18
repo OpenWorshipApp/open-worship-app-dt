@@ -1,4 +1,4 @@
-import { createContext, use } from 'react';
+import { createContext, use, useMemo } from 'react';
 
 import {
     EventMapper,
@@ -7,9 +7,8 @@ import {
 } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
+import { gotoSettingPage } from '../setting/settingHelpers';
 import appProvider from '../server/appProvider';
-import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 
 export function QuitCurrentPageComp({
     title,
@@ -37,7 +36,7 @@ export function SettingButtonComp() {
             className="btn btn-outline-success rotating-hover"
             title="`Setting"
             onClick={() => {
-                goToPath(appProvider.settingHomePage);
+                gotoSettingPage();
             }}
         >
             <i className="bi bi-gear-wide-connected" />
@@ -46,12 +45,19 @@ export function SettingButtonComp() {
 }
 
 export function HelpButtonComp() {
+    const url = useMemo(() => {
+        const helpKey = appProvider.currentHomePage
+            .replace(/^\//, '')
+            .replace(/\.html$/, '');
+        return `${appProvider.appInfo.homepage}/help/#${helpKey}`;
+    }, []);
     return (
         <button
             className="btn btn-outline-info"
-            title="`Help"
+            title={url}
             onClick={() => {
                 console.log('Help button clicked');
+                appProvider.browserUtils.openExternalURL(url);
             }}
         >
             <i className="bi bi-question-circle" />
@@ -104,17 +110,6 @@ export function BibleLookupButtonComp() {
             title={`Bible lookup [${toShortcutKey(openBibleEventMap)}]`}
             type="button"
             onClick={async () => {
-                const localBibleInfoList = await getAllLocalBibleInfoList();
-                if (!localBibleInfoList?.length) {
-                    const isConfirmed = await showAppConfirm(
-                        'No Bible',
-                        'You need to download a Bible to use this feature',
-                    );
-                    if (isConfirmed) {
-                        goToPath(appProvider.settingHomePage);
-                    }
-                    return;
-                }
                 setIsBibleLookupShowing(true);
             }}
         >

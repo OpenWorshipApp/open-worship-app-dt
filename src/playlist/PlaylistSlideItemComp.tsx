@@ -14,7 +14,7 @@ export default function PlaylistSlideItemComp({
     }
     return (
         <div
-            className="card overflow-hidden"
+            className="card app-overflow-hidden"
             onClick={() => {
                 AppDocumentListEventListener.selectAppDocumentItem(item);
             }}

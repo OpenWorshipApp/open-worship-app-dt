@@ -36,7 +36,7 @@ export default function ScreenPreviewerItemComp({
         };
     }, [screenManager]);
     const selectedCN = screenManager.isSelected ? 'app-highlight-selected' : '';
-    const height = Math.ceil(
+    const height = Math.round(
         width * (screenManagerDim.height / screenManagerDim.width),
     );
     return (
@@ -75,7 +75,7 @@ export default function ScreenPreviewerItemComp({
         >
             <ScreenPreviewerHeaderComp />
             <div
-                className="w-100 overflow-hidden"
+                className="w-100 app-overflow-hidden"
                 style={{
                     height: `${height}px`,
                 }}

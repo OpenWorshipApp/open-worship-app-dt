@@ -1,5 +1,7 @@
 import './SlideAutoPlayComp.scss';
 
+import { CSSProperties } from 'react';
+
 import {
     useStateSettingBoolean,
     useStateSettingNumber,
@@ -89,7 +91,7 @@ export default function SlideAutoPlayComp({
 }: Readonly<{
     onNext: (data: NextDataType) => void;
     prefix: string;
-    style?: React.CSSProperties;
+    style?: CSSProperties;
 }>) {
     const [isShowing, setIsShowing] = useStateSettingBoolean(
         `${prefix}-slide-auto-play-show`,
@@ -137,12 +139,15 @@ export default function SlideAutoPlayComp({
             <div className="input-group" style={{ width: '120px' }}>
                 <div className="input-group-text">M:</div>
                 <input
+                    className="form-control form-control-sm"
                     type="number"
-                    className="form-control"
                     value={timerSeconds}
                     onChange={(event) => {
                         setTimerSeconds(
-                            Math.max(0, parseInt(event.target.value) || 0),
+                            Math.max(
+                                0,
+                                Number.parseInt(event.target.value) || 0,
+                            ),
                         );
                     }}
                     min="0"

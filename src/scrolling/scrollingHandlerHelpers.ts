@@ -178,8 +178,8 @@ export function applyPlayToBottom(
     };
     let start = () => {};
     const resetSpeed = () => {
-        const speed = parseFloat(element.dataset['speed'] ?? '0');
-        store.speed = isNaN(speed) ? 0 : speed;
+        const speed = Number.parseFloat(element.dataset['speed'] ?? '0');
+        store.speed = Number.isNaN(speed) ? 0 : speed;
         element.title = store.speed.toFixed(2);
         start();
     };

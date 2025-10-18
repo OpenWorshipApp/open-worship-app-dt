@@ -27,6 +27,9 @@ const lang: LanguageDataType = {
     <path fill="#C8102E" d="M0 193v96h640v-96H0zM273 0v480h96V0h-96z"/>
   </svg>
   `,
+    sanitizePreviewText: (text: string) => {
+        return text;
+    },
     sanitizeFindingText: (text) => {
         return text
             .toLowerCase()
@@ -34,18 +37,49 @@ const lang: LanguageDataType = {
             .replace(/\s+/g, ' ')
             .trim();
     },
+    stopWords: [
+        'a',
+        'an',
+        'and',
+        'are',
+        'as',
+        'at',
+        'be',
+        'by',
+        'for',
+        'from',
+        'has',
+        'he',
+        'in',
+        'is',
+        'it',
+        'its',
+        'of',
+        'on',
+        'that',
+        'the',
+        'to',
+        'was',
+        'were',
+        'will',
+        'with',
+        'there',
+        'before',
+        'which',
+    ],
     trimText: (text: string) => {
         return text.trim();
     },
     endWord: (text: string) => {
         return text + ' ';
     },
-    checkShouldNewLine: (_text: string) => {
-        return false;
+    checkShouldNewLine: (text: string) => {
+        return text.endsWith('.');
     },
     extraBibleContextMenuItems: (_bibleItem, _appProvider) => {
         return [];
     },
+    bibleAudioAvailable: true,
 };
 
 export default lang;

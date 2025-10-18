@@ -80,7 +80,7 @@ export default function BackgroundColorsComp() {
                 />
             ) : (
                 selectedBackgroundSrcList.map(([key, backgroundSrc], i) => {
-                    const screenId = parseInt(key);
+                    const screenId = Number.parseInt(key);
                     return (
                         <RenderColorPickerPerScreenComp
                             key={backgroundSrc.src + i}

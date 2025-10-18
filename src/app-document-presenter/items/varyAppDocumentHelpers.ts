@@ -86,13 +86,15 @@ export function handleNextItemSelecting({
             }[],
             divSelected,
         ) => {
-            const itemId = parseInt(
+            const itemId = Number.parseInt(
                 divSelected?.getAttribute(DATA_QUERY_KEY) ?? '',
             );
             const screenIds = Array.from(
                 divSelected.querySelectorAll('[data-screen-id]'),
             ).map((element) => {
-                return parseInt(element.getAttribute('data-screen-id') ?? '');
+                return Number.parseInt(
+                    element.getAttribute('data-screen-id') ?? '',
+                );
             });
             const targetItem = findNextSlide(
                 isNext,

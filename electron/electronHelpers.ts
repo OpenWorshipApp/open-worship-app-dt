@@ -1,4 +1,4 @@
-import { app, shell } from 'electron';
+import { app, nativeTheme, shell, clipboard } from 'electron';
 import { x as tarX } from 'tar';
 
 import appInfo from '../package.json';
@@ -118,4 +118,41 @@ export async function unlocking<T>(
     const data = await callback();
     lockSet.delete(key);
     return data;
+}
+
+export function getAppThemeBackgroundColor() {
+    return nativeTheme.shouldUseDarkColors ? '#000000' : '#ffffff';
+}
+
+export function copyDebugInfoToClipboard(isFull = false) {
+    const packageInfo = require('../package-info.json');
+    let debugAppInfo = `
+App Version: ${app.getVersion()}
+Electron Version: ${process.versions.electron}
+Chrome Version: ${process.versions.chrome}
+Node.js Version: ${process.versions.node}
+V8 Version: ${process.versions.v8}
+OS: ${process.platform} ${process.arch} ${require('os').release()}
+Commit Hash: ${packageInfo.commitHash}`.trim();
+    if (isFull) {
+        packageInfo.debugAppInfo = debugAppInfo;
+        debugAppInfo = JSON.stringify(packageInfo, null, 2);
+    }
+    clipboard.writeText(debugAppInfo);
+}
+
+export function getCenterScreenPosition(
+    mainWin: Electron.BrowserWindow,
+    {
+        width = 700,
+        height = 435,
+    }: {
+        width: number;
+        height: number;
+    },
+) {
+    const mainBounds = mainWin.getBounds();
+    const x = mainBounds.x + (mainBounds.width - width) / 2;
+    const y = mainBounds.y + (mainBounds.height - height) / 2;
+    return { x, y, width, height };
 }

@@ -17,10 +17,6 @@
     .bible {
       border: 1px solid transparent;
       border-radius: 5px;
-
-      &:hover {
-        border-color: var(--bs-gray-500);
-      }
     }
   }
 }

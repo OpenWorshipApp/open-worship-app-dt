@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, CSSProperties } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import ScreenEffectManager from './managers/ScreenEffectManager';
@@ -36,8 +36,8 @@ export type GenAnimPropsType = {
 };
 
 function genCssProps(duration: number) {
-    const cssProps: React.CSSProperties = {
-        animationDuration: `${Math.ceil(duration / 1000)}s`,
+    const cssProps: CSSProperties = {
+        animationDuration: `${Math.round(duration / 1000)}s`,
         animationFillMode: 'forwards',
     };
     return cssProps;

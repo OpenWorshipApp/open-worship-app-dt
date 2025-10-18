@@ -20,7 +20,7 @@ export default function ShapePropertiesComp() {
                     value={props.backdropFilter}
                     onChange={(e) => {
                         setProps({
-                            backdropFilter: parseInt(e.target.value, 10),
+                            backdropFilter: Number.parseInt(e.target.value, 10),
                         });
                     }}
                 />
@@ -60,12 +60,13 @@ export default function ShapePropertiesComp() {
             >
                 <div className="input-group-text">`Round Size Pixel:</div>
                 <input
+                    className="form-control form-control-sm"
                     type="number"
-                    className="form-control"
                     value={roundSizePixel}
                     min={0}
                     onChange={(event) => {
-                        const value = parseInt(event.target.value, 10) || 0;
+                        const value =
+                            Number.parseInt(event.target.value, 10) || 0;
                         setProps({
                             roundSizePixel: value,
                             roundSizePercentage: 0,

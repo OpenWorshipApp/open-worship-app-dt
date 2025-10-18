@@ -37,10 +37,10 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     constructor(appDocument: AppDocument, canvas: Canvas) {
         super();
-        const defaultData = parseFloat(
+        const defaultData = Number.parseFloat(
             getSetting(EDITOR_SCALE_SETTING_NAME) ?? '',
         );
-        if (!isNaN(defaultData)) {
+        if (!Number.isNaN(defaultData)) {
             this._scale = defaultData;
         }
         this.appDocument = appDocument;
@@ -130,8 +130,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     getMousePosition(event: any) {
         const rect = (event.target as HTMLDivElement).getBoundingClientRect();
-        const x = Math.floor((event.clientX - rect.left) / this.scale);
-        const y = Math.floor((event.clientY - rect.top) / this.scale);
+        const x = Math.round((event.clientX - rect.left) / this.scale);
+        const y = Math.round((event.clientY - rect.top) / this.scale);
         return { x, y };
     }
 
@@ -158,10 +158,10 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         showSimpleToast('Insert Image or Video', 'Fail to insert medias');
     }
 
-    async genNewImageItemFromBlob(blob: Blob, event: any) {
+    async genNewImageItemFromFile(file: File | Blob, event: any) {
         try {
             const { x, y } = this.getMousePosition(event);
-            const newItem = CanvasItemImage.genFromBlob(x, y, blob);
+            const newItem = CanvasItemImage.genFromFile(x, y, file);
             return newItem;
         } catch (error) {
             handleError(error);
@@ -200,7 +200,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         this.setCanvasItems(newCanvasItems);
     }
 
-    scaleCanvasItemToSize(
+    static scaleCanvasItemToSize(
         canvasItem: CanvasItem<any>,
         targetWidth: number,
         targetHeight: number,
@@ -209,16 +209,32 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     ) {
         const scale = Math.min(targetWidth / width, targetHeight / height);
         const props = canvasItem.props as CanvasItemPropsType;
-        props.width = width * scale;
-        props.height = height * scale;
+        props.width = Math.round(width * scale);
+        props.height = Math.round(height * scale);
         const targetDimension = {
-            parentWidth: this.canvas.width,
-            parentHeight: this.canvas.height,
+            parentWidth: targetWidth,
+            parentHeight: targetHeight,
         };
         canvasItem.applyBoxData(targetDimension, {
             horizontalAlignment: 'center',
             verticalAlignment: 'center',
         });
+    }
+
+    scaleCanvasItemToSize(
+        canvasItem: CanvasItem<any>,
+        targetWidth: number,
+        targetHeight: number,
+        width: number,
+        height: number,
+    ) {
+        CanvasController.scaleCanvasItemToSize(
+            canvasItem,
+            targetWidth,
+            targetHeight,
+            width,
+            height,
+        );
         this.applyEditItem(canvasItem);
     }
 
@@ -240,6 +256,18 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             width,
             height,
         );
+    }
+
+    applyCanvasItemOriginal(canvasItem: CanvasItem<any>) {
+        const props = canvasItem.props as CanvasItemPropsType;
+        let width = props.width;
+        let height = props.height;
+        if (['image', 'video'].includes(canvasItem.type)) {
+            const mediaProps = props as any as CanvasItemMediaPropsType;
+            width = mediaProps.mediaWidth;
+            height = mediaProps.mediaHeight;
+        }
+        this.scaleCanvasItemToSize(canvasItem, width, width, width, height);
     }
 
     applyCanvasItemMediaStrip(canvasItem: CanvasItem<any>) {

@@ -15,7 +15,6 @@ import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
     fsCopyFilePathToPath,
-    fsDeleteFile,
     getFileDotExtension,
     getFileFullName,
     getFileName,
@@ -32,7 +31,7 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
-import { convertToPdf } from '../server/appHelpers';
+import { convertToPdf, getSlidesCount } from '../server/appHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
@@ -54,6 +53,9 @@ import {
     VaryAppDocumentItemType,
 } from './appDocumentTypeHelpers';
 import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
+
+import libOfficeLogo from './liboffice-logo.png';
+import FileSource from '../helper/FileSource';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -171,18 +173,26 @@ export const supportOfficeFileExtensions = Object.keys(docFileInfo);
 const alertMessage = ReactDOMServer.renderToStaticMarkup(
     <div>
         <b>LibreOffice </b>
-        is required for converting Office file to PDF.
+        is required for converting Office file to PDF. Please install it and try
+        again.
         <br />
-        <b>
+        <div style={{ margin: '20px' }}>
             <a
                 href={'https://www.google.com/search?q=libreoffice+download'}
                 target="_blank"
             >
-                Download
+                <strong>`Download</strong>
+                <img
+                    height={20}
+                    src={libOfficeLogo}
+                    alt="LibreOffice Logo"
+                    style={{
+                        paddingLeft: '5px',
+                    }}
+                />
             </a>
             <hr />
-            <span>Please download and install LibreOffice then try again.</span>
-        </b>
+        </div>
     </div>,
 );
 
@@ -232,7 +242,6 @@ async function getPdfFilePath(dirPath: string, fileName: string) {
 async function startConvertingOfficeFile(
     file: DroppedFileType,
     dirSource: DirSource,
-    retryCount = 5,
 ) {
     const tempFilePath = await getTempFilePath();
     const fileFullName = getFileFullName(file);
@@ -245,8 +254,28 @@ async function startConvertingOfficeFile(
         if (!(await fsCopyFilePathToPath(file, tempFilePath, ''))) {
             throw new Error('Fail to copy file');
         }
-        showSimpleToast(WIDGET_TITLE, 'Do not close application');
+        let slidesCount: number | null = null;
+        try {
+            slidesCount = await getSlidesCount(tempFilePath);
+        } catch {}
+        const slideMessage =
+            slidesCount !== null
+                ? slidesCount + ' slides'
+                : 'unknown slides count';
+        showSimpleToast(
+            WIDGET_TITLE,
+            `Document with ${slideMessage} is being converted. ` +
+                'Do not close application',
+        );
         await convertToPdf(tempFilePath, targetPdfFilePath);
+        const pdfPagesCount = await getSlidesCount(targetPdfFilePath);
+        if (slidesCount !== null && pdfPagesCount !== slidesCount) {
+            showSimpleToast(
+                WIDGET_TITLE,
+                `Warning: Slides count mismatch. ` +
+                    `Original: ${slidesCount}, Converted: ${pdfPagesCount}`,
+            );
+        }
         showSimpleToast(
             WIDGET_TITLE,
             `${toHtmlBold(fileFullName)} is converted to PDF ` +
@@ -258,17 +287,12 @@ async function startConvertingOfficeFile(
             showAppAlert('LibreOffice is not installed', alertMessage);
         } else {
             handleError(error);
-            if (retryCount > 0) {
-                return await startConvertingOfficeFile(
-                    file,
-                    dirSource,
-                    retryCount - 1,
-                );
-            }
-            showSimpleToast(WIDGET_TITLE, 'Fail to convert to PDF');
-            fsDeleteFile(tempFilePath).catch((error) => {
-                handleError(error);
-            });
+            const pdfFileSource = FileSource.getInstance(targetPdfFilePath);
+            showSimpleToast(
+                WIDGET_TITLE,
+                'Something wrong during converting, please check converted ' +
+                    `file "${pdfFileSource.fullName}" and try again.`,
+            );
         }
     }
     hideProgressBar(WIDGET_TITLE);
@@ -413,7 +437,7 @@ export function appDocumentItemExtractKey(key: string) {
     }
     return {
         filePath,
-        id: parseInt(id),
+        id: Number.parseInt(id),
     };
 }
 
@@ -480,8 +504,8 @@ export async function getSelectedEditingSlideFilePath() {
     if (!isValid) {
         return null;
     }
-    const id = parseInt(idString);
-    if (isNaN(id)) {
+    const id = Number.parseInt(idString);
+    if (Number.isNaN(id)) {
         setSelectedEditingSlideFilePath(null, -1);
         return null;
     }

@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import { useStateSettingString } from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
@@ -41,7 +43,7 @@ function useTiming() {
 
 const handleByDropped = (
     dateTime: Date,
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
     event: any,
 ) => {
     const screenForegroundManager = getScreenForegroundManagerByDropped(event);
@@ -57,7 +59,7 @@ const handleByDropped = (
 function CountDownOnDatetimeComp({
     genStyle,
 }: Readonly<{
-    genStyle: () => React.CSSProperties;
+    genStyle: () => CSSProperties;
 }>) {
     const { date, setDate, time, setTime, nowString, todayString } =
         useTiming();
@@ -136,7 +138,7 @@ function CountDownOnDatetimeComp({
 function CountDownInSetComp({
     genStyle,
 }: Readonly<{
-    genStyle: () => React.CSSProperties;
+    genStyle: () => CSSProperties;
 }>) {
     const [hours, setHours] = useStateSettingString<string>(
         'foreground-hours-setting',
@@ -150,8 +152,8 @@ function CountDownInSetComp({
         const targetDatetime = new Date();
         targetDatetime.setSeconds(
             targetDatetime.getSeconds() +
-                60 * parseInt(minutes) +
-                3600 * parseInt(hours) +
+                60 * Number.parseInt(minutes) +
+                3600 * Number.parseInt(hours) +
                 1,
         );
         return targetDatetime;
@@ -176,8 +178,8 @@ function CountDownInSetComp({
             >
                 <div className="input-group-text">H:</div>
                 <input
+                    className="form-control form-control-sm"
                     type="number"
-                    className="form-control"
                     value={hours}
                     onChange={(event) => {
                         setHours(event.target.value);
@@ -192,8 +194,8 @@ function CountDownInSetComp({
             >
                 <div className="input-group-text">M:</div>
                 <input
+                    className="form-control form-control-sm"
                     type="number"
-                    className="form-control"
                     value={minutes}
                     onChange={(event) => {
                         setMinutes(event.target.value);
@@ -226,7 +228,7 @@ function CountDownInSetComp({
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllCountdowns(
     showingScreenIds: [number, ForegroundCountdownDataType][],
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
         showingScreenIds.forEach(([screenId, data]) => {

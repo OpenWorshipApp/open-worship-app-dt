@@ -5,7 +5,7 @@ import { Component, RefObject, createRef } from 'react';
 import { DisabledType } from './flexSizeHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
 
-export const HIDDEN_WIDGET_CLASS = 'hidden-widget';
+export const HIDDEN_WIDGET_CLASS = 'app-hidden-widget';
 export const ACTIVE_HIDDEN_WIDGET_CLASS = `active-${HIDDEN_WIDGET_CLASS}`;
 function checkIsActiveHiddenWidgetNode(node: HTMLDivElement) {
     return node.classList.contains(ACTIVE_HIDDEN_WIDGET_CLASS);
@@ -45,14 +45,14 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     nextGrow: number = 0;
     sumGrow: number = 0;
     sumSize: number = 0;
-    mouseMoveListener: (mm: MouseEvent) => void;
-    mouseUpListener: (mm: MouseEvent) => void;
+    mouseMoveListener: (event: MouseEvent) => void;
+    mouseUpListener: (event: MouseEvent) => void;
     attemptTimeout: (func: () => void, isImmediate?: boolean) => void;
     constructor(props: Props) {
         super(props);
         this.myRef = createRef();
-        this.mouseMoveListener = (mm: MouseEvent) => {
-            this.onMouseMove(mm);
+        this.mouseMoveListener = (event: MouseEvent) => {
+            this.onMouseMove(event);
         };
         this.mouseUpListener = (event) => {
             this.onMouseUp(event);
@@ -114,8 +114,12 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         this.setActive();
 
-        this.previousMinSize = parseInt(this.preNode.dataset['minSize'] ?? '');
-        this.nextMinSize = parseInt(this.nextNode.dataset['minSize'] ?? '');
+        this.previousMinSize = Number.parseInt(
+            this.preNode.dataset['minSize'] ?? '',
+        );
+        this.nextMinSize = Number.parseInt(
+            this.nextNode.dataset['minSize'] ?? '',
+        );
         this.preSize = this.getOffsetSize(prev);
         this.nextSize = this.getOffsetSize(next);
         this.sumSize = this.preSize + this.nextSize;

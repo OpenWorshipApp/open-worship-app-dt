@@ -1,12 +1,16 @@
+import { CSSProperties } from 'react';
+
 import loading from '../assets/loading.gif';
 
 export default function LoadingComp({
     message,
+    style,
 }: Readonly<{
     message?: string | null;
+    style?: CSSProperties;
 }>) {
     return (
-        <div className="d-flex flex-wrap w-100 h-100">
+        <div className="d-flex flex-wrap w-100 h-100" style={style}>
             <div style={{ margin: 'auto' }}>
                 <div
                     style={{

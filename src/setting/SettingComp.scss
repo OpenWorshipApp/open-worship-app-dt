@@ -3,7 +3,6 @@
 #app-setting {
   .lang {
     .options {
-      background-color: var(--bs-gray-800);
       max-height: 200px;
       overflow-y: auto;
     }
@@ -20,15 +19,15 @@
 
   i.rotating::before {
     animation: rotating 0.5s ease-in-out infinite;
+  }
+}
 
-    @keyframes rotating {
-      from {
-        transform: rotate(0deg);
-      }
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
 
-      to {
-        transform: rotate(360deg);
-      }
-    }
+  to {
+    transform: rotate(360deg);
   }
 }

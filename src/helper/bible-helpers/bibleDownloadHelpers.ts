@@ -161,8 +161,11 @@ export async function getDownloadedBibleInfoList() {
         return null;
     }
     const directoryNames = await fsListDirectories(writableBiblePath);
-    const promises = directoryNames.map(async (bibleKey) => {
-        return getBibleInfo(bibleKey, true);
+    const promises = directoryNames.map(async (fileName) => {
+        if (fileName.endsWith('.cache')) {
+            return null;
+        }
+        return getBibleInfo(fileName, true);
     });
     try {
         const infoList = await Promise.all(promises);

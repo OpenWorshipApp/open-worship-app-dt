@@ -60,7 +60,7 @@ export default function VaryAppDocumentItemRenderWrapperComp({
             <PdfSlideRenderComp
                 key={varyAppDocumentItem.id}
                 onClick={handleClicking}
-                pdfSlide={varyAppDocumentItem}
+                slide={varyAppDocumentItem}
                 width={thumbSize}
                 index={index}
                 onContextMenu={handleContextMenuOpening}

@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import {
     useStateSettingNumber,
     useStateSettingString,
@@ -20,7 +22,7 @@ import { dragStore } from '../helper/dragHelpers';
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllQuickText(
     showingScreenIds: [number, ForegroundQuickTextDataType][],
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
         showingScreenIds.forEach(([screenId, data]) => {
@@ -133,13 +135,13 @@ export default function ForegroundQuickTextComp() {
                     >
                         <small>`Time Second Delay:</small>
                         <input
-                            className="form-control"
+                            className="form-control form-control-sm"
                             type="number"
                             min="0"
                             value={timeSecondDelay}
                             onChange={(e) => {
                                 setTimeSecondDelay(
-                                    parseInt(e.target.value, 10),
+                                    Number.parseInt(e.target.value, 10),
                                 );
                             }}
                         />
@@ -153,13 +155,13 @@ export default function ForegroundQuickTextComp() {
                     >
                         <small>`Time Second to Live:</small>
                         <input
-                            className="form-control"
+                            className="form-control form-control-sm"
                             type="number"
                             min="1"
                             value={timeSecondToLive}
                             onChange={(e) => {
                                 setTimeSecondToLive(
-                                    parseInt(e.target.value, 10),
+                                    Number.parseInt(e.target.value, 10),
                                 );
                             }}
                         />

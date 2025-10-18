@@ -1,3 +1,5 @@
+import { MouseEvent } from 'react';
+
 import Bible from './Bible';
 import BibleItem from './BibleItem';
 import ItemReadErrorComp from '../others/ItemReadErrorComp';
@@ -23,7 +25,7 @@ import BibleItemsViewController, {
 } from '../bible-reader/BibleItemsViewController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
-import { openBibleItemContextMenu } from './bibleHelpers';
+import { openBibleItemContextMenu, useIsOnScreen } from './bibleHelpers';
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -87,8 +89,9 @@ export default function BibleItemRenderComp({
         bibleItem.bibleKey = newBibleKey;
         bibleItem.save(bible);
     };
+    const isOnScreen = useIsOnScreen([bibleItem]);
 
-    const handleContextMenuOpening = async (event: React.MouseEvent<any>) => {
+    const handleContextMenuOpening = async (event: MouseEvent<any>) => {
         const menuItems: ContextMenuItemType[] = [
             {
                 menuElement: '`Open',
@@ -166,15 +169,20 @@ export default function BibleItemRenderComp({
             }}
             onContextMenu={handleContextMenuOpening}
         >
-            <div className="d-flex ps-1">
+            <div className={`d-flex ps-1 ${isOnScreen ? 'app-on-screen' : ''}`}>
                 <ItemColorNoteComp item={bibleItem} />
                 <div className="d-flex flex-fill">
                     <div className="px-1">
                         <BibleSelectionMiniComp
                             bibleKey={bibleItem.bibleKey}
-                            onBibleKeyChange={(_, newValue) => {
+                            onBibleKeyChange={(
+                                _isContextMenu,
+                                _oldValue,
+                                newValue,
+                            ) => {
                                 changeBible(newValue);
                             }}
+                            contextMenuTitle="`Add Extra Bible"
                             isMinimal
                         />
                     </div>

@@ -55,10 +55,10 @@ export function handleAudioPausing(_event: any) {
     audioEvent.onChange(isPlaying);
 }
 
-export function getSoundRepeatSettingName(src: string) {
+export function getAudioRepeatSettingName(src: string) {
     const md5 = appProvider.systemUtils.generateMD5(src);
     const settingName =
-        dirSourceSettingNames.BACKGROUND_SOUND + '-repeat-' + md5;
+        dirSourceSettingNames.BACKGROUND_AUDIO + '-repeat-' + md5;
     return settingName;
 }
 

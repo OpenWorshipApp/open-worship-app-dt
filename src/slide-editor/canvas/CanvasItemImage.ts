@@ -44,8 +44,8 @@ class CanvasItemImage extends CanvasItem<CanvasItemImagePropsType> {
         const srcData = await fileSource.getSrcData();
         return this.genCanvasItem(srcData, mediaWidth, mediaHeight, x, y);
     }
-    static async genFromBlob(x: number, y: number, blob: Blob) {
-        const srcData = await FileSource.getSrcDataFromBlob(blob);
+    static async genFromFile(x: number, y: number, file: File | Blob) {
+        const srcData = await FileSource.getSrcDataFromFrom(file);
         if (srcData === null) {
             throw new Error(
                 'Error occurred during reading image data from blob',

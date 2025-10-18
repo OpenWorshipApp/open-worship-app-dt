@@ -1,4 +1,4 @@
-import { CSSProperties, LazyExoticComponent } from 'react';
+import { ReactNode, CSSProperties, LazyExoticComponent } from 'react';
 
 import { handleError } from '../helper/errorHelpers';
 import { isValidJson } from '../helper/helpers';
@@ -9,9 +9,9 @@ export type FlexSizeType = {
 };
 export type DataInputType = {
     children:
-        | LazyExoticComponent<(props?: any) => React.ReactNode | null>
+        | LazyExoticComponent<(props?: any) => ReactNode | null>
         | {
-              render: () => React.ReactNode | null;
+              render: () => ReactNode | null;
           };
     key: string;
     widgetName: string;
@@ -26,6 +26,7 @@ export type DisabledType = [DisablingTargetType, number];
 export const resizeSettingNames = {
     appEditor: 'app-editor-main',
     appEditorLeft: 'app-editor-left',
+    appEditorRight: 'app-editor-right',
     appPresenter: 'app-presenter-main',
     appPresenterLeft: 'app-presenter-left',
     appPresenterMiddle: 'app-presenter-middle',
@@ -100,6 +101,35 @@ export const setFlexSizeSetting = (
     setSetting(settingString, JSON.stringify(flexSize));
 };
 
+function doubleFlexGrow(size: string) {
+    const parts = size.split(' ');
+    const flexGrow = Number(parts[0]) * 2;
+    parts[0] = flexGrow.toString();
+    return parts.join(' ');
+}
+function sanitizeFlexSizeValue(flexSize: FlexSizeType) {
+    if (
+        Object.values(flexSize).reduce((acc, [size1, size2]) => {
+            if (size2 !== undefined) {
+                return acc;
+            }
+            // size1: '0.1 1 20%'
+            return Number(size1.split(' ')[0]) + acc;
+        }, 0) >= 1
+    ) {
+        return flexSize;
+    }
+    const newFlexSize: FlexSizeType = {};
+    Object.entries(flexSize).forEach(([key, [size1, size2]]) => {
+        if (size2 !== undefined) {
+            newFlexSize[key] = [doubleFlexGrow(size1), size2];
+        } else {
+            newFlexSize[key] = [doubleFlexGrow(size1)];
+        }
+    });
+    return sanitizeFlexSizeValue(newFlexSize);
+}
+
 export function getFlexSizeSetting(
     flexSizeName: string,
     defaultSize: FlexSizeType,
@@ -108,23 +138,26 @@ export function getFlexSizeSetting(
     const str = getSetting(settingString) ?? '';
     try {
         if (isValidJson(str, true)) {
-            const size = JSON.parse(str);
+            const flexSize = JSON.parse(str);
             if (
                 Object.keys(defaultSize).every((k) => {
-                    const fsValue = size[k];
+                    const flexSizeValue = flexSize[k];
+                    // TODO: use schema validation
                     if (
-                        !fsValue ||
-                        fsValue.length === 0 ||
-                        (fsValue[1] &&
-                            !disablingTargetTypeList.includes(fsValue[1][0]) &&
-                            typeof fsValue[1][1] !== 'number')
+                        !flexSizeValue ||
+                        flexSizeValue.length === 0 ||
+                        (flexSizeValue[1] &&
+                            !disablingTargetTypeList.includes(
+                                flexSizeValue[1][0],
+                            ) &&
+                            typeof flexSizeValue[1][1] !== 'number')
                     ) {
                         return false;
                     }
                     return true;
                 })
             ) {
-                return size;
+                return sanitizeFlexSizeValue(flexSize);
             }
         }
     } catch (error) {
