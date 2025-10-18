@@ -12,6 +12,11 @@ import OpacitySlider from './OpacitySlider';
 import RenderColors from './RenderColors';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { freezeObject } from '../../helper/helpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../../context-menu/appContextMenuHelpers';
+import { copyToClipboard } from '../../server/appHelpers';
 
 freezeObject(colorList);
 
@@ -32,14 +37,19 @@ export default function ColorPicker({
     color,
     onColorChange,
     onNoColor,
+    isCollapsable = false,
+    isNoImmediate = false,
 }: Readonly<{
     defaultColor: AppColorType;
-    color: AppColorType | null;
+    color: AppColorType | null | undefined;
     onColorChange?: (color: AppColorType, event: MouseEvent) => void;
     onNoColor?: (color: AppColorType, event: MouseEvent) => void;
+    isCollapsable?: boolean;
+    isNoImmediate?: boolean;
 }>) {
+    const [isOpened, setIsOpened] = useState(false);
     const [localColor, setLocalColor] = useState(color);
-    const opacity = localColor !== null ? colorToTransparent(localColor) : 255;
+    const opacity = localColor ? colorToTransparent(localColor) : 255;
     useAppEffect(() => {
         setLocalColor(color);
     }, [color]);
@@ -60,24 +70,69 @@ export default function ColorPicker({
         applyNewColor(newColorStr, event);
     };
     const handleOpacityChanging = (value: number, event: any) => {
-        if (localColor === null) {
+        if (!localColor) {
             return;
         }
         const newColor = setOpacity(localColor, value);
         applyNewColor(newColor, event);
     };
+    const handleContextMenuOpening = (event: any) => {
+        if (!localColor) {
+            return;
+        }
+        const contextMenuItems: ContextMenuItemType[] = [];
+        // TODO: paste color
+        if (localColor) {
+            contextMenuItems.push({
+                menuElement: 'Copy Color',
+                onSelect: () => {
+                    copyToClipboard(localColor);
+                },
+            });
+        }
+        showAppContextMenu(event, contextMenuItems);
+    };
+    if (isCollapsable && !isOpened) {
+        return (
+            <div
+                className="flex-item color-picker app-caught-hover-pointer "
+                onContextMenu={handleContextMenuOpening}
+                onClick={() => {
+                    setIsOpened(true);
+                }}
+            >
+                <i className="bi bi-chevron-right" />
+                <div
+                    className="h-100 px-1 app-ellipsis text-color-preview"
+                    style={{
+                        backgroundColor: color ?? 'transparent',
+                        width: 'calc(100% - 10px)',
+                    }}
+                >
+                    {color}
+                </div>
+            </div>
+        );
+    }
     return (
         <div
             className="flex-item color-picker"
-            style={{
-                backgroundColor: 'var(--bs-gray-700)',
-            }}
+            onContextMenu={handleContextMenuOpening}
         >
-            <div className="p-1 overflow-hidden">
+            {isCollapsable ? (
+                <i
+                    className="app-caught-hover-pointer bi bi-chevron-down"
+                    onClick={() => {
+                        setIsOpened(false);
+                    }}
+                />
+            ) : null}
+            <div className="p-1 app-overflow-hidden">
                 <RenderColors
                     colors={colorList.main}
                     selectedColor={localColor}
                     onColorChange={handleColorChanging}
+                    isNoImmediate={isNoImmediate}
                 />
                 {localColor !== null && (
                     <OpacitySlider

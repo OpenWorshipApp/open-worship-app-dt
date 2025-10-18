@@ -10,12 +10,16 @@ export type ConfirmDataType = {
     title: string;
     question: string;
     onConfirm: (isOk: boolean) => void;
+    escToCancel?: boolean;
+    enterToOk?: boolean;
 };
 
 export type InputDataType = {
     title: string;
     body: ReactElement;
     onConfirm: (isOk: boolean) => void;
+    escToCancel?: boolean;
+    enterToOk?: boolean;
 };
 
 export type PopupAlertDataType = {
@@ -34,7 +38,11 @@ export const popupWidgetManager: {
     openAlert: null,
 };
 
-export function showAppConfirm(title: string, message: string) {
+export function showAppConfirm(
+    title: string,
+    message: string,
+    options?: { escToCancel?: boolean; enterToOk?: boolean },
+) {
     const openConfirm = popupWidgetManager.openConfirm;
     if (openConfirm === null) {
         return Promise.resolve(false);
@@ -46,11 +54,16 @@ export function showAppConfirm(title: string, message: string) {
             onConfirm: (isOk) => {
                 resolve(isOk);
             },
+            ...options,
         });
     });
 }
 
-export function showAppInput(title: string, body: ReactElement) {
+export function showAppInput(
+    title: string,
+    body: ReactElement,
+    options?: { escToCancel?: boolean; enterToOk?: boolean },
+) {
     const openInput = popupWidgetManager.openInput;
     if (openInput === null) {
         return Promise.resolve(false);
@@ -62,6 +75,7 @@ export function showAppInput(title: string, body: ReactElement) {
             onConfirm: (isOk) => {
                 resolve(isOk);
             },
+            ...options,
         });
     });
 }

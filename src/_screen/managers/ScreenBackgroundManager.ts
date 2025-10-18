@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, MouseEvent } from 'react';
 
 import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
 import { getImageDim, getVideoDim } from '../../helper/helpers';
@@ -25,6 +25,7 @@ import {
     StyleAnimType,
 } from '../screenTypeHelpers';
 import { ANIM_END_DELAY_MILLISECOND } from '../transitionEffectHelpers';
+import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
 
 export type ScreenBackgroundManagerEventType = 'update';
 
@@ -173,7 +174,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
     }
 
     static async handleBackgroundSelecting(
-        event: React.MouseEvent,
+        event: MouseEvent,
         backgroundType: BackgroundType,
         data: BackgroundDataType,
         isForceChoosing = false,
@@ -218,10 +219,13 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
             const fadeOutListener = async () => {
                 const duration = video.duration;
                 if (
-                    !(isNaN(duration) || duration === Infinity) &&
+                    !(Number.isNaN(duration) || duration === Infinity) &&
                     duration - video.currentTime <= FADING_DURATION_SECOND
                 ) {
-                    if (!getIsFadingAtEndSetting()) {
+                    const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
+                        video.src,
+                    );
+                    if (!isFadingAtTheEnd) {
                         return;
                     }
                     video.removeEventListener('timeupdate', fadeOutListener);

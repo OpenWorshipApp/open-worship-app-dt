@@ -21,7 +21,7 @@ function RendElementComp({
     const isOld = data[dataKey] === value;
     return (
         <button
-            className={`btn btn-${isOld ? '' : 'outline-'}info`}
+            className={`btn btn-sm btn-${isOld ? '' : 'outline-'}info`}
             disabled={isOld}
             onClick={() => {
                 onData({ [dataKey]: value });
@@ -59,7 +59,7 @@ function genElements({
 
 export default function SlideEditorToolAlignComp({
     onData,
-    data,
+    data = {},
     isText,
 }: Readonly<{
     data?: AlignmentDataType;
@@ -68,7 +68,7 @@ export default function SlideEditorToolAlignComp({
 }>) {
     return (
         <div className="d-flex">
-            <div className="app-border-white-round">
+            <div>
                 {genElements({
                     elements: [
                         ['bi-align-top', 'start'],
@@ -76,12 +76,12 @@ export default function SlideEditorToolAlignComp({
                         ['bi-align-bottom', 'end'],
                     ],
                     dataKey: 'verticalAlignment',
-                    data: data ?? {},
+                    data,
                     onData,
                 })}
             </div>
             {isText ? (
-                <div className="app-border-white-round">
+                <div>
                     {genElements({
                         elements: [
                             ['bi-text-left', 'left'],
@@ -89,12 +89,12 @@ export default function SlideEditorToolAlignComp({
                             ['bi-text-right', 'right'],
                         ],
                         dataKey: 'horizontalAlignment',
-                        data: data ?? {},
+                        data,
                         onData,
                     })}
                 </div>
             ) : (
-                <div className="app-border-white-round">
+                <div>
                     {genElements({
                         elements: [
                             ['bi-align-start', 'left'],
@@ -102,7 +102,7 @@ export default function SlideEditorToolAlignComp({
                             ['bi-align-end', 'right'],
                         ],
                         dataKey: 'horizontalAlignment',
-                        data: data ?? {},
+                        data,
                         onData,
                     })}
                 </div>

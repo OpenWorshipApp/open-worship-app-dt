@@ -12,7 +12,7 @@ import mimeAppDocumentList from './mime/app-document-types.json';
 import mimeImageList from './mime/image-types.json';
 import mimePlaylistList from './mime/playlist-types.json';
 import mimeVideoList from './mime/video-types.json';
-import mimeSoundList from './mime/sound-types.json';
+import mimeAudioList from './mime/audio-types.json';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
     hideProgressBar,
@@ -27,7 +27,7 @@ freezeObject(mimeAppDocumentList);
 freezeObject(mimeImageList);
 freezeObject(mimePlaylistList);
 freezeObject(mimeVideoList);
-freezeObject(mimeSoundList);
+freezeObject(mimeAudioList);
 
 export const mimetypePdf: AppMimetypeType = {
     type: 'PDF File',
@@ -63,7 +63,7 @@ const mimeTypesMapper = {
     image: mimeImageList,
     playlist: mimePlaylistList,
     video: mimeVideoList,
-    sound: mimeSoundList,
+    audio: mimeAudioList,
 };
 
 export type AppMimetypeType = {
@@ -86,8 +86,8 @@ export function checkIsAppFile(fileFullName: string) {
 }
 
 export const pathSeparator = appProvider.pathUtils.sep;
-export function pathJoin(filePath: string, fileFullName: string) {
-    return appProvider.pathUtils.join(filePath, fileFullName);
+export function pathJoin(...paths: string[]): string {
+    return appProvider.pathUtils.join(...paths);
 }
 
 export function pathResolve(...paths: string[]): string {
@@ -144,7 +144,7 @@ export const mimetypeNameTypeList = [
     'lyric',
     'markdown',
     'bible',
-    'sound',
+    'audio',
     'other',
 ] as const;
 export type MimetypeNameType = (typeof mimetypeNameTypeList)[number];
@@ -287,7 +287,7 @@ function _fsReadFile(filePath: string, options?: any) {
     );
 }
 
-function _fsWriteFile(filePath: string, data: string, options?: any) {
+function _fsWriteFile(filePath: string, data: string | Buffer, options?: any) {
     return fsFilePromise<void>(
         appProvider.fileUtils.writeFile,
         filePath,
@@ -452,10 +452,10 @@ export function fsMkDirSync(dirPath: string, isRecursive = true) {
 
 export async function fsWriteFile(
     filePath: string,
-    txt: string,
+    data: string | Buffer,
     encoding?: string,
 ) {
-    await _fsWriteFile(filePath, txt, {
+    await _fsWriteFile(filePath, data, {
         encoding: encoding ?? 'utf8',
         flag: 'w',
     });
@@ -627,4 +627,30 @@ export function getDotExtensionFromBase64Data(base64Data: string) {
         }
     }
     return null;
+}
+
+export async function ensureDirectory(dirPath: string) {
+    if (await fsCheckFileExist(dirPath)) {
+        return;
+    }
+    if (!(await fsCheckDirExist(dirPath))) {
+        fsMkDirSync(dirPath, true);
+    }
+}
+
+export function getFileMD5(filePath: string) {
+    return new Promise<string | null>((resolve) => {
+        const hash = appProvider.cryptoUtils.createHash('md5');
+        const stream = appProvider.fileUtils.createReadStream(filePath);
+        stream.on('error', (err) => {
+            handleError(err);
+            resolve(null);
+        });
+        stream.on('data', (chunk) => {
+            hash.update(chunk);
+        });
+        stream.on('end', () => {
+            resolve(hash.digest('hex'));
+        });
+    });
 }

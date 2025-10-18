@@ -61,8 +61,8 @@ function PdfAppearanceSettingComp() {
             <div>
                 <div className="btn-group" role="group">
                     <input
-                        type="radio"
                         className="btn-check"
+                        type="radio"
                         name="setting-not-full-width"
                         id="setting-not-full-width"
                         checked={!isFullWidth}
@@ -77,8 +77,8 @@ function PdfAppearanceSettingComp() {
                         `Not Full Width
                     </label>
                     <input
-                        type="radio"
                         className="btn-check"
+                        type="radio"
                         name="setting-not-full-width"
                         id="setting-full-width"
                         checked={isFullWidth}

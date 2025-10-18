@@ -79,16 +79,12 @@ function getWindowsBinFilePath(prefix, systemInfo) {
         commitID: data[0].commitID,
         isWindows: true,
         is64System: !!systemInfo.is64System,
+        isArm64: !!systemInfo.isArm64,
         portable: filterBinFileInfo(prefix, data, '.zip'),
         installer: filterBinFileInfo(prefix, data, '.exe'),
     };
     const s3Key = `${BASE_KEY_PREFIX}/${prefix}`;
     return [
-        {
-            key: s3Key,
-            body: JSON.stringify(info, null, 2),
-            fileFullName: 'info.json',
-        },
         ...data.map((item) => {
             return {
                 key: `${s3Key}/${item.fileFullName}`,
@@ -99,6 +95,11 @@ function getWindowsBinFilePath(prefix, systemInfo) {
                 ),
             };
         }),
+        {
+            key: s3Key,
+            body: JSON.stringify(info, null, 2),
+            fileFullName: 'info.json',
+        },
     ];
 }
 
@@ -115,11 +116,6 @@ function getMacBinFilePath(prefix, systemInfo) {
     };
     const s3Key = `${BASE_KEY_PREFIX}/${prefix}`;
     return [
-        {
-            key: s3Key,
-            body: JSON.stringify(info, null, 2),
-            fileFullName: 'info.json',
-        },
         ...data.map((item) => {
             return {
                 key: `${s3Key}/${item.fileFullName}`,
@@ -130,6 +126,11 @@ function getMacBinFilePath(prefix, systemInfo) {
                 ),
             };
         }),
+        {
+            key: s3Key,
+            body: JSON.stringify(info, null, 2),
+            fileFullName: 'info.json',
+        },
     ];
 }
 
@@ -149,11 +150,6 @@ function getLinuxBinFilePath(prefix, systemInfo) {
     };
     const s3Key = `${BASE_KEY_PREFIX}/${prefix}`;
     return [
-        {
-            key: s3Key,
-            body: JSON.stringify(info, null, 2),
-            fileFullName: 'info.json',
-        },
         ...data.map((item) => {
             return {
                 key: `${s3Key}/${item.fileFullName}`,
@@ -164,6 +160,11 @@ function getLinuxBinFilePath(prefix, systemInfo) {
                 ),
             };
         }),
+        {
+            key: s3Key,
+            body: JSON.stringify(info, null, 2),
+            fileFullName: 'info.json',
+        },
     ];
 }
 
@@ -171,7 +172,9 @@ function getUploadList() {
     const uploadList = [];
     for (const [key, value] of Object.entries(downloadInfo)) {
         if (isWindows && value.isWindows) {
-            uploadList.push(...getWindowsBinFilePath(key, value));
+            if ((isArm64 && value.isArm64) || (!isArm64 && !value.isArm64)) {
+                uploadList.push(...getWindowsBinFilePath(key, value));
+            }
         } else if (isMac && value.isMac) {
             if ((isArm64 && value.isArm64) || (!isArm64 && !value.isArm64)) {
                 uploadList.push(...getMacBinFilePath(key, value));
@@ -242,30 +245,23 @@ async function clearCache(key) {
 
 async function main() {
     const s3Client = new S3Client(instanceInitData);
+    const uploadList = getUploadList();
+    for (const item of uploadList) {
+        if (item.body) {
+            await uploadToS3(s3Client, item.key, item.body, item.fileFullName);
+        } else {
+            await uploadToS3(
+                s3Client,
+                item.key,
+                createReadStream(item.filePath),
+            );
+        }
+    }
     await uploadToS3(
         s3Client,
         BASE_KEY_PREFIX,
         JSON.stringify(downloadInfo, null, 2),
         'info.json',
-    );
-    const uploadList = getUploadList();
-    await Promise.all(
-        uploadList.map((item) => {
-            if (item.body) {
-                return uploadToS3(
-                    s3Client,
-                    item.key,
-                    item.body,
-                    item.fileFullName,
-                );
-            } else {
-                return uploadToS3(
-                    s3Client,
-                    item.key,
-                    createReadStream(item.filePath),
-                );
-            }
-        }),
     );
     await clearCache('download/*');
 }

@@ -1,19 +1,21 @@
+import { ReactNode } from 'react';
+
 export default function HeaderAlertPopupComp({
     header,
     onClose,
 }: Readonly<{
-    header: React.ReactNode;
+    header: ReactNode;
     onClose: () => void;
 }>) {
     return (
         <div className="card-header text-center w-100">
             <div>{header}</div>
             <button
+                className="btn-close float-end"
                 type="button"
                 onClick={() => {
                     onClose();
                 }}
-                className="btn-close float-end"
                 style={{
                     transform: 'translate(0, -90%)',
                 }}

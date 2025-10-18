@@ -41,9 +41,9 @@ export default function RenderTransitionEffectComp({
     const selected = transitionEffect[screenEffectManager.effectType];
     return (
         <button
+            className="btn btn-outline-secondary"
             type="button"
             title={domTitle}
-            className="btn btn-outline-secondary"
             onClick={(event) => {
                 openContextMenu(event, screenEffectManager);
             }}

@@ -1,3 +1,4 @@
+import { CSSProperties } from 'react';
 import { tz } from 'moment-timezone';
 
 import {
@@ -65,7 +66,7 @@ function TimeInSetComp({
     genStyle,
 }: Readonly<{
     id: string;
-    genStyle: () => React.CSSProperties;
+    genStyle: () => CSSProperties;
 }>) {
     const [cityName, setCityName] = useStateSettingString<string>(
         `foreground-city-name-setting-${id}`,
@@ -137,8 +138,8 @@ function TimeInSetComp({
                 <div className="input-group" style={{ width: '250px' }}>
                     <div className="input-group-text">City:</div>
                     <input
+                        className="form-control form-control-sm"
                         type="text"
-                        className="form-control"
                         value={cityName}
                         onChange={(event) => {
                             setCityName(event.target.value);
@@ -150,12 +151,12 @@ function TimeInSetComp({
                         Timezone Minute Offset:
                     </div>
                     <input
+                        className="form-control form-control-sm"
                         type="number"
-                        className="form-control"
                         value={timezoneMinuteOffset}
                         onChange={(event) => {
                             setTimezoneMinuteOffset(
-                                parseInt(event.target.value),
+                                Number.parseInt(event.target.value),
                             );
                         }}
                     />
@@ -181,7 +182,7 @@ function TimeInSetComp({
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllTimes(
     showingScreenIdDataList: [number, ForegroundTimeDataType][],
-    extraStyle: React.CSSProperties,
+    extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
         showingScreenIdDataList.forEach(([screenId, timeData]) => {

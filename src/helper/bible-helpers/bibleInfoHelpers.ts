@@ -1,16 +1,21 @@
-import { getKJVChapterCount, toBibleFileName } from './serverBibleHelpers';
-import { bibleKeyToFilePath } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
-import { bibleDataReader, BibleInfoType, ChapterType } from './BibleDataReader';
-import { fsCheckFileExist } from '../../server/fileHelpers';
-import { showSimpleToast } from '../../toast/toastHelpers';
 import {
-    cacheBibleXMLData,
-    getBibleXMLDataFromKey,
-} from '../../setting/bible-setting/bibleXMLHelpers';
+    getKJVChapterCount,
+    kjvBibleInfo,
+    toBibleFileName,
+} from './serverBibleHelpers';
+import { bibleKeyToXMLFilePath } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
+import {
+    bibleDataReader,
+    BibleInfoType,
+    BibleChapterType,
+} from './BibleDataReader';
+import { fsCheckFileExist } from '../../server/fileHelpers';
 import {
     hideProgressBar,
     showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
+import CacheManager from '../../others/CacheManager';
+import { freezeObject } from '../helpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
     const info = await getBibleInfo(bibleKey);
@@ -39,18 +44,21 @@ export async function getBookVKList(bibleKey: string) {
     if (bibleVKList === null) {
         return null;
     }
-    return Object.fromEntries(
-        Object.entries(bibleVKList).map(([k, v]) => {
+    return Object.fromEntries([
+        ...Object.entries(bibleVKList).map(([k, v]) => {
             return [v, k];
         }),
-    );
+        ...Object.entries(bibleVKList).map(([k, v]) => {
+            return [v.toLocaleLowerCase(), k];
+        }),
+    ]);
 }
 export async function bookToKey(bibleKey: string, book: string) {
     const bookVKList = await getBookVKList(bibleKey);
     if (bookVKList === null) {
         return null;
     }
-    return bookVKList[book] ?? null;
+    return bookVKList[book.toLocaleLowerCase()] ?? null;
 }
 export async function getChapterCount(bibleKey: string, book: string) {
     const bookKey = await bookToKey(bibleKey, book);
@@ -73,7 +81,7 @@ export async function getBookChapterData(
     const verseInfo = (await bibleDataReader.readBibleData(
         bibleKey,
         fileName,
-    )) as ChapterType | null;
+    )) as BibleChapterType | null;
     if (verseInfo === null) {
         return null;
     }
@@ -88,22 +96,9 @@ export async function getVerses(
     return chapterData ? chapterData.verses : null;
 }
 
-async function getBibleInfoXML(bibleKey: string) {
-    const xmlFilePath = await bibleKeyToFilePath(bibleKey);
-    if (!(await fsCheckFileExist(xmlFilePath))) {
-        return false;
-    }
-    const title = `Reload Bible XML Cache ${bibleKey}`;
-    showSimpleToast(title, 'This will take a while');
-    const jsonData = await getBibleXMLDataFromKey(bibleKey);
-    if (jsonData === null) {
-        showSimpleToast(title, 'Failed to load Bible XML');
-        return false;
-    }
-    const isSuccess = await cacheBibleXMLData(jsonData);
-    if (isSuccess) {
-        showSimpleToast(title, 'Bible XML reloaded');
-    } else {
+export async function checkIsBibleXML(bibleKey: string) {
+    const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey);
+    if (xmlFilePath === null || !(await fsCheckFileExist(xmlFilePath))) {
         return false;
     }
     return true;
@@ -116,32 +111,34 @@ function checkIsBooksAvailableMissing(info: BibleInfoType) {
     );
 }
 
-const bibleInfoMap = new Map<
-    string,
-    { info: BibleInfoType; timestamp: number }
->();
-export async function getBibleInfo(bibleKey: string, isForce = false) {
+export function checkIsOldTestament(bookKey: string) {
+    return kjvBibleInfo.bookKeysOld.includes(bookKey);
+}
+
+const cache = new CacheManager<BibleInfoType>(60); // cache for 1 minutes
+export async function getBibleInfo(
+    bibleKey: string,
+    isForce = false,
+): Promise<BibleInfoType | null> {
     if (isForce) {
-        bibleInfoMap.delete(bibleKey);
+        await cache.delete(bibleKey);
     }
-    if (bibleInfoMap.has(bibleKey)) {
-        const item = bibleInfoMap.get(bibleKey);
-        const duration = 1000 * 10; // 10 seconds
-        if (item && Date.now() - item.timestamp < duration) {
-            return item.info;
-        }
+    const cached = await cache.get(bibleKey);
+    if (cached !== null) {
+        return cached;
     }
     const info = await bibleDataReader.readBibleData(bibleKey, '_info');
     if (info === null || checkIsBooksAvailableMissing(info)) {
-        bibleInfoMap.delete(bibleKey);
+        await cache.delete(bibleKey);
         showProgressBar(bibleKey);
-        const bibleInfo = await getBibleInfoXML(bibleKey);
+        const isBibleXML = await checkIsBibleXML(bibleKey);
         hideProgressBar(bibleKey);
-        if (bibleInfo) {
+        if (isBibleXML) {
             return await getBibleInfo(bibleKey, true);
         }
     } else {
-        bibleInfoMap.set(bibleKey, { info, timestamp: Date.now() });
+        freezeObject(info);
+        await cache.set(bibleKey, info);
     }
     return info;
 }

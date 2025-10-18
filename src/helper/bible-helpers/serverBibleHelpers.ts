@@ -1,19 +1,12 @@
 import { useState } from 'react';
 
 import { checkIsBookAvailable, getBibleInfo } from './bibleInfoHelpers';
-import bibleJson from './bible.json';
 import { getOnlineBibleInfoList } from './bibleDownloadHelpers';
 import { useAppEffectAsync } from '../debuggerHelpers';
 import { toLocaleNumBible } from './serverBibleHelpers2';
 import { freezeObject } from '../helpers';
 
-freezeObject(bibleJson);
-
-export const bibleObj = bibleJson as {
-    booksOrder: string[];
-    books: { [key: string]: BookType };
-    kjvKeyValue: { [key: string]: string };
-};
+import bibleJson from './bible.json';
 
 export type BibleStatusType = [string, boolean, string];
 
@@ -22,6 +15,14 @@ export type BookType = {
     chapterCount: number;
 };
 
+export const kjvBibleInfo = bibleJson as {
+    bookKeysOrder: string[];
+    bookKeysOld: string[];
+    books: { [key: string]: BookType };
+    kjvKeyValue: { [key: string]: string };
+};
+freezeObject(kjvBibleInfo);
+
 export const toLocaleNumQuick = (n: number, numList: string[]) => {
     if (!numList) {
         return n;
@@ -29,7 +30,7 @@ export const toLocaleNumQuick = (n: number, numList: string[]) => {
     return `${n}`
         .split('')
         .map((n1) => {
-            return numList[parseInt(n1)];
+            return numList[Number.parseInt(n1)];
         })
         .join('');
 };
@@ -104,7 +105,7 @@ export function useChapterMatch(
     return matches;
 }
 
-type BookMatchDataType = {
+export type BookMatchDataType = {
     bibleKey: string;
     bookKey: string;
     book: string;
@@ -138,7 +139,7 @@ export async function genBookMatches(
         }
     };
     const keys = Object.entries(bookKVList);
-    const kjvKeyValue = getKJVKeyValue();
+    const kjvKeyValue = getKJVBookKeyValue();
     const bestMatchIndices = keys.map(([bookKey, book]) => {
         const kjvValue = kjvKeyValue[bookKey];
         if (
@@ -185,8 +186,8 @@ export async function genBookMatches(
     return mappedKeys;
 }
 
-export function getKJVKeyValue() {
-    return bibleObj.kjvKeyValue;
+export function getKJVBookKeyValue() {
+    return kjvBibleInfo.kjvKeyValue;
 }
 
 async function getBibleInfoWithStatus(
@@ -229,7 +230,7 @@ async function toChapter(
 
 export function getKJVChapterCount(bookKey: string) {
     // KJV, GEN
-    return bibleObj.books[bookKey].chapterCount;
+    return kjvBibleInfo.books[bookKey].chapterCount;
 }
 
 export function toChapterList(bibleKey: string, bookKey: string) {
@@ -243,9 +244,9 @@ export function toChapterList(bibleKey: string, bookKey: string) {
 function toIndex(bookKey: string, chapterNum: number) {
     let index = -1;
     let bIndex = 0;
-    while (bibleObj.booksOrder[bIndex]) {
-        const bookKey1 = bibleObj.booksOrder[bIndex];
-        const chapterCount = bibleObj.books[bookKey1].chapterCount;
+    while (kjvBibleInfo.bookKeysOrder[bIndex]) {
+        const bookKey1 = kjvBibleInfo.bookKeysOrder[bIndex];
+        const chapterCount = kjvBibleInfo.books[bookKey1].chapterCount;
         if (bookKey1 === bookKey) {
             if (chapterNum > chapterCount) {
                 return -1;
@@ -260,6 +261,7 @@ function toIndex(bookKey: string, chapterNum: number) {
 }
 
 export function toBibleFileName(bookKey: string, chapterNum: number) {
+    // GEN, 1 => 0001-GEN.1
     const index = toIndex(bookKey, chapterNum);
     if (index < 0) {
         throw new Error('Invalid chapter number');
@@ -267,4 +269,19 @@ export function toBibleFileName(bookKey: string, chapterNum: number) {
     let indexStr = `000${index}`;
     indexStr = indexStr.substring(indexStr.length - 4);
     return `${indexStr}-${bookKey}.${chapterNum}`;
+}
+
+export function fromBibleFileName(fileName: string) {
+    // 0001-GEN.1 => { bookKey: 'GEN', chapterNum: 1 }
+    const regex = /^(\d+)-([1-3A-Z]+)\.(\d+)$/;
+    const match = fileName.match(regex);
+    if (!match) {
+        return null;
+    }
+    const bookKey = match[2];
+    const chapterNum = Number.parseInt(match[3], 10);
+    if (Number.isNaN(chapterNum)) {
+        return null;
+    }
+    return { bookKey, chapterNum };
 }

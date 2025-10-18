@@ -1,0 +1,29 @@
+{
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "number"
+        },
+        "name": {
+            "type": "string"
+        },
+        "canvasItems": {
+            "type": "array",
+            "items": {
+                "type": "object"
+            }
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "width": {
+                    "type": "number"
+                },
+                "height": {
+                    "type": "number"
+                }
+            }
+        }
+    },
+    "required": ["id", "canvasItems", "metadata"]
+}

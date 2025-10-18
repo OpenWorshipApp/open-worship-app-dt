@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAppEffect } from '../helper/debuggerHelpers';
 
 export type AppRangeDefaultType = {
     size: number;
@@ -54,7 +55,7 @@ function roundSize(
     fixedSize: number,
 ): number {
     value = Math.min(defaultSize.max, Math.max(defaultSize.min, value));
-    return parseFloat(value.toFixed(fixedSize));
+    return Number.parseFloat(value.toFixed(fixedSize));
 }
 
 export default function AppRangeComp({
@@ -78,6 +79,9 @@ export default function AppRangeComp({
     const [localValue, setLocalValue] = useState(
         roundSize(value, defaultSize, fixedSize),
     );
+    useAppEffect(() => {
+        setLocalValue(roundSize(value, defaultSize, fixedSize));
+    }, [value, defaultSize, fixedSize]);
     const setLocalValue1 = (newValue: number) => {
         newValue = roundSize(newValue, defaultSize, fixedSize);
         setLocalValue(newValue);
@@ -105,14 +109,14 @@ export default function AppRangeComp({
             </div>
             <input
                 id={id}
-                type="range"
                 className="form-range px-1"
+                type="range"
                 min={defaultSize.min}
                 max={defaultSize.max}
                 step={defaultSize.step}
                 value={localValue}
                 onChange={(event) => {
-                    setLocalValue1(parseInt(event.target.value));
+                    setLocalValue1(Number.parseInt(event.target.value));
                 }}
             />
             <div

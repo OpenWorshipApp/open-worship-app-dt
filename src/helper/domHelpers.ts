@@ -176,7 +176,7 @@ export class HoverMotionHandler {
         if (parentElement === null || minWidthString === undefined) {
             return;
         }
-        const minWidth = parseInt(minWidthString);
+        const minWidth = Number.parseInt(minWidthString);
         const checkIt = this.checkParentWidth.bind(
             this,
             parentElement,
@@ -249,5 +249,19 @@ export class InputContextMenuHandler {
             .forEach((childElement) => {
                 this.init(childElement as HTMLInputElement);
             });
+    }
+}
+
+export async function removeDomTitle(element: Node, eventType: MutationType) {
+    if (!(element instanceof HTMLElement)) {
+        return;
+    }
+    if (element.title) {
+        element.title = '';
+    }
+    if (eventType === 'added') {
+        Array.from(element.children).forEach((child) => {
+            removeDomTitle(child, eventType);
+        });
     }
 }

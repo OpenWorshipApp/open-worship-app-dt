@@ -7,6 +7,19 @@ import { useGenDirSource } from '../helper/dirSourceHelpers';
 import { getSettingPrefix } from '../helper/settingHelpers';
 import { defaultDataDirNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
+import BibleItem from './BibleItem';
+import { checkIsBibleItemOnScreen } from './bibleHelpers';
+
+async function checkIsOnScreen(filePaths: string[]) {
+    const bibleItems: BibleItem[] = [];
+    for (const filePath of filePaths) {
+        const bible = await Bible.fromFilePath(filePath);
+        if (bible !== null) {
+            bibleItems.push(...bible.items);
+        }
+    }
+    return await checkIsBibleItemOnScreen(bibleItems);
+}
 
 export default function BibleListComp() {
     const dirSourceSettingName = Bible.getDirSourceSettingName();
@@ -38,6 +51,7 @@ export default function BibleListComp() {
             header={<span>Bibles</span>}
             bodyHandler={handleBodyRendering}
             userClassName="p-0"
+            checkIsOnScreen={checkIsOnScreen}
         />
     );
 }

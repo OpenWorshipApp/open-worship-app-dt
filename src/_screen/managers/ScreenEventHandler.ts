@@ -1,3 +1,5 @@
+import { MouseEvent } from 'react';
+
 import EventHandler from '../../event/EventHandler';
 import {
     ContextMenuItemType,
@@ -98,10 +100,7 @@ export default abstract class ScreenEventHandler<
         throw new Error('getInstance is not implemented.');
     }
 
-    static async chooseScreenIds(
-        event: React.MouseEvent,
-        isForceChoosing: boolean,
-    ) {
+    static async chooseScreenIds(event: MouseEvent, isForceChoosing: boolean) {
         if (!appProvider.isPagePresenter) {
             return [];
         }

@@ -138,7 +138,7 @@ if (systemUtils.isMac) {
   copyAllChildren(
     resolve(
       './extra-work/ffmpeg/mac' +
-        (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
+      (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
     ),
     resolve(binHelperDestRootDir, 'ffmpeg', 'bin'),
   );
@@ -149,3 +149,12 @@ if (systemUtils.isMac) {
   );
 }
 console.log('ffmpeg file is copied');
+
+// package-lock.json
+copyFile(
+  {
+    source: resolve('.'),
+    destination: resolve('./electron-build'),
+  },
+  'package-lock.json', 'package-lock.json'
+);

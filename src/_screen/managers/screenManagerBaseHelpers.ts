@@ -50,7 +50,7 @@ export function getValidOnScreen(data: { [key: string]: any }) {
         return screenId;
     });
     const validEntry = Object.entries(data).filter(([key, _]) => {
-        return screenIdList.includes(parseInt(key));
+        return screenIdList.includes(Number.parseInt(key));
     });
     return Object.fromEntries(validEntry);
 }
@@ -105,7 +105,7 @@ export function getSelectedScreenManagerBases() {
 }
 
 export function getScreenManagerBaseByKey(key: string) {
-    const screenId = parseInt(key);
+    const screenId = Number.parseInt(key);
     return getScreenManagerBase(screenId);
 }
 

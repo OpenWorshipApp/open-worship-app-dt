@@ -1,8 +1,12 @@
+import { DragEvent } from 'react';
+
 import { BoxEditorComp } from './box/BoxEditorComp';
 import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 import { showCanvasContextMenu } from './canvasContextMenuHelpers';
-import { isSupportedMimetype } from '../../server/fileHelpers';
-import { useCanvasControllerContext } from './CanvasController';
+import CanvasController, {
+    defaultRangeSize,
+    useCanvasControllerContext,
+} from './CanvasController';
 import { useSlideCanvasScale } from './canvasEventHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
@@ -11,62 +15,62 @@ import {
     useStopAllModes,
 } from './CanvasItem';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
+import { handleCtrlWheel } from '../../others/AppRangeComp';
+import { changeDragEventStyle } from '../../helper/helpers';
+import { readDroppedFiles } from '../../others/droppingFileHelpers';
+import { checkIsSupportMediaType } from './canvasHelpers';
+
+function dragOverHandling(event: any) {
+    event.preventDefault();
+    const items: DataTransferItemList = event.dataTransfer.items;
+    if (
+        Array.from(items).every((item) => {
+            return checkIsSupportMediaType(item.type);
+        })
+    ) {
+        event.currentTarget.style.opacity = '0.5';
+    }
+}
+
+async function handleDropping(
+    canvasController: CanvasController,
+    event: DragEvent,
+) {
+    changeDragEventStyle(event, 'opacity', '1');
+    for await (const file of readDroppedFiles(event)) {
+        if (!checkIsSupportMediaType(file.type)) {
+            showSimpleToast('Insert Image or Video', 'Unsupported file type!');
+        } else {
+            canvasController
+                .genNewImageItemFromFile(file, event)
+                .then((newCanvasItem) => {
+                    if (!newCanvasItem) {
+                        return;
+                    }
+                    canvasController.addNewItem(newCanvasItem);
+                });
+        }
+    }
+}
+
+async function handleContextMenuOpening(
+    canvasController: CanvasController,
+    event: any,
+    stopAllModes: () => void,
+) {
+    (event.target as HTMLDivElement).focus();
+    stopAllModes();
+    showCanvasContextMenu(event, canvasController);
+}
 
 function BodyRendererComp() {
     const canvasController = useCanvasControllerContext();
     const { canvas } = canvasController;
     const canvasItems = useCanvasItemsContext();
     const stopAllModes = useStopAllModes();
-    const isSupportType = (fileType: string) => {
-        return (
-            isSupportedMimetype(fileType, 'image') ||
-            isSupportedMimetype(fileType, 'video')
-        );
-    };
-    const dragOverHandling = (event: any) => {
-        event.preventDefault();
-        const items: DataTransferItemList = event.dataTransfer.items;
-        if (
-            Array.from(items).every((item) => {
-                return isSupportType(item.type);
-            })
-        ) {
-            event.currentTarget.style.opacity = '0.5';
-        }
-    };
-    const handleDropping = async (event: any) => {
-        const dragEvent = event as DragEvent;
-        dragEvent.preventDefault();
-        const style = (dragEvent.currentTarget as any)?.style ?? {};
-        style.opacity = '1';
-        const files = dragEvent.dataTransfer?.files ?? [];
-        Array.from(files).forEach((file) => {
-            if (!isSupportType(file.type)) {
-                showSimpleToast(
-                    'Insert Image or Video',
-                    'Unsupported file type!',
-                );
-            } else {
-                canvasController
-                    .genNewImageItemFromBlob(file, event)
-                    .then((newCanvasItem) => {
-                        if (!newCanvasItem) {
-                            return;
-                        }
-                        canvasController.addNewItem(newCanvasItem);
-                    });
-            }
-        });
-    };
-    const handleContextMenuOpening = async (event: any) => {
-        event.preventDefault();
-        (event.target as HTMLDivElement).focus();
-        stopAllModes();
-        showCanvasContextMenu(event, canvasController);
-    };
     return (
         <div
-            className="editor blank-bg app-border-white-round"
+            className="editor app-blank-bg app-border-white-round"
             style={{
                 width: `${canvas.width}px`,
                 height: `${canvas.height}px`,
@@ -77,8 +81,14 @@ function BodyRendererComp() {
                 event.preventDefault();
                 event.currentTarget.style.opacity = '1';
             }}
-            onDrop={handleDropping}
-            onContextMenu={handleContextMenuOpening}
+            onDrop={(event) => {
+                event.preventDefault();
+                handleDropping(canvasController, event);
+            }}
+            onContextMenu={(event) => {
+                event.preventDefault();
+                handleContextMenuOpening(canvasController, event, stopAllModes);
+            }}
             // import onclick by mouse down/up
             onMouseDown={(event) => {
                 event.stopPropagation();
@@ -127,12 +137,25 @@ export default function SlideEditorCanvasComp() {
     useKeyboardRegistering([{ key: 'Escape' }], stopAllModes, []);
     return (
         <div className="card w-100 h-100">
-            <div className="card-body editor-container">
+            <div
+                className="card-body editor-container"
+                onWheel={(event) => {
+                    event.stopPropagation();
+                    handleCtrlWheel({
+                        event,
+                        value: canvasController.scale * 10,
+                        setValue: (scale) => {
+                            canvasController.scale = scale / 10;
+                        },
+                        defaultSize: defaultRangeSize,
+                    });
+                }}
+            >
                 <div
-                    className="overflow-hidden"
+                    className="app-overflow-hidden"
                     style={{
-                        width: `${canvas.width * scale + 20}px`,
-                        height: `${canvas.height * scale + 20}px`,
+                        width: `${Math.round(canvas.width * scale + 20)}px`,
+                        height: `${Math.round(canvas.height * scale + 20)}px`,
                     }}
                 >
                     <div

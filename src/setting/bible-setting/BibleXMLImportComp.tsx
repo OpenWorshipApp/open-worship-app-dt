@@ -1,4 +1,4 @@
-import { useState, useTransition } from 'react';
+import { useState, useTransition, FormEvent } from 'react';
 
 import { showSimpleToast } from '../../toast/toastHelpers';
 import LoadingComp from '../../others/LoadingComp';
@@ -32,9 +32,7 @@ export default function BibleXMLImportComp({
         }
         setIsFileSelected(false);
     };
-    const handleFormSubmitting = async (
-        event: React.FormEvent<HTMLFormElement>,
-    ) => {
+    const handleFormSubmitting = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         startTransition(async () => {
             try {
@@ -69,7 +67,7 @@ export default function BibleXMLImportComp({
         });
     };
     return (
-        <>
+        <div className="app-border-white-round p-1" style={{ margin: 'auto' }}>
             <h3>
                 Import XML File{' '}
                 <button
@@ -117,9 +115,9 @@ export default function BibleXMLImportComp({
                         />
                         {isFileSelected ? (
                             <button
+                                className="btn btn-sm btn-danger"
                                 type="button"
                                 title="Cancel selection"
-                                className="btn btn-sm btn-danger"
                                 onClick={(event) => {
                                     const form = event.currentTarget.form;
                                     handleFileCanceling(form);
@@ -140,7 +138,7 @@ export default function BibleXMLImportComp({
                             <div className="input-group-text">URL:</div>
                             <input
                                 className={
-                                    'form-control' +
+                                    'form-control form-control-sm' +
                                     (!urlText || isValidUrl
                                         ? ''
                                         : ' is-invalid')
@@ -156,9 +154,9 @@ export default function BibleXMLImportComp({
                             />
                             {isValidUrl ? (
                                 <button
+                                    className="btn btn-sm btn-danger"
                                     type="button"
                                     title="Clear url"
-                                    className="btn btn-sm btn-danger"
                                     onClick={() => {
                                         setUrlText('');
                                     }}
@@ -173,16 +171,16 @@ export default function BibleXMLImportComp({
                     <input
                         className="form-control btn btn-primary"
                         type="submit"
-                        value="Import"
+                        value="`Import"
                         disabled={isPending || !(isFileSelected || isValidUrl)}
                     />
                 </div>
-                <div className="app-border-white-round">
-                    {isPending ? (
+                {isPending ? (
+                    <div className="app-border-white-round">
                         <LoadingComp message={loadingMessage} />
-                    ) : null}
-                </div>
+                    </div>
+                ) : null}
             </form>
-        </>
+        </div>
     );
 }

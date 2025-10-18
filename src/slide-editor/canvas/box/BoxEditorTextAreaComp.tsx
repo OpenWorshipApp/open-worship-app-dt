@@ -8,9 +8,9 @@ function calcAlignmentStyle(props: CanvasItemTextPropsType) {
     if (props.textVerticalAlignment !== 'start') {
         height = props.height / 2 - props.fontSize;
     }
-    const style: { textAlign: string } = {
+    const style: CSSProperties = {
         ...{
-            textAlign: props.horizontalAlignment,
+            textAlign: props.textHorizontalAlignment,
         },
         ...{
             padding: height + 'px 0',

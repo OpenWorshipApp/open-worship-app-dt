@@ -1,10 +1,12 @@
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import SlideEditorToolAlignComp from './SlideEditorToolAlignComp';
 import { useCanvasControllerContext } from '../CanvasController';
-import { ToolingBoxType } from '../canvasHelpers';
-import { useCanvasItemContext } from '../CanvasItem';
-import { AppColorType } from '../../../others/color/colorHelpers';
+import {
+    useCanvasItemContext,
+    useCanvasItemPropsSetterContext,
+} from '../CanvasItem';
 import SlideEditorToolsColorComp from './SlideEditorToolsColorComp';
+import ShapePropertiesComp from './ShapePropertiesComp';
 
 function SizingComp() {
     const canvasController = useCanvasControllerContext();
@@ -12,21 +14,31 @@ function SizingComp() {
     return (
         <SlideEditorToolTitleComp title="Size">
             <button
-                className="btn btn-secondary"
+                className="btn btn-sm btn-secondary"
+                title="Fit to canvas"
                 onClick={() => {
                     canvasController.applyCanvasItemFully(canvasItem);
                 }}
             >
-                Full
+                `Full
+            </button>
+            <button
+                className="btn btn-sm btn-secondary m-1"
+                title="Set to original size"
+                onClick={() => {
+                    canvasController.applyCanvasItemOriginal(canvasItem);
+                }}
+            >
+                `Original Size
             </button>
             {['image', 'video'].includes(canvasItem.type) ? (
                 <button
-                    className="btn btn-secondary ms-1"
+                    className="btn btn-sm btn-secondary"
                     onClick={() => {
                         canvasController.applyCanvasItemMediaStrip(canvasItem);
                     }}
                 >
-                    Strip
+                    `Strip
                 </button>
             ) : null}
         </SlideEditorToolTitleComp>
@@ -36,20 +48,13 @@ function SizingComp() {
 function LayerComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
-    const parentDimension = {
-        parentWidth: canvasController.canvas.width,
-        parentHeight: canvasController.canvas.height,
-    };
-    const applyBoxData = (newData: ToolingBoxType) => {
-        canvasItem.applyBoxData(parentDimension, newData);
-        canvasController.applyEditItem(canvasItem);
-    };
+    const [_, setProps] = useCanvasItemPropsSetterContext();
     return (
         <div className="ps-2">
             <div className="d-flex">
                 <SlideEditorToolTitleComp title="Box Layer">
                     <button
-                        className="btn btn-info"
+                        className="btn btn-sm btn-outline-info"
                         onClick={() => {
                             canvasController.applyOrderingData(
                                 canvasItem,
@@ -60,7 +65,7 @@ function LayerComp() {
                         <i className="bi bi-layer-backward" />
                     </button>
                     <button
-                        className="btn btn-info"
+                        className="btn btn-sm btn-outline-info"
                         onClick={() => {
                             canvasController.applyOrderingData(
                                 canvasItem,
@@ -73,14 +78,14 @@ function LayerComp() {
                 </SlideEditorToolTitleComp>
                 <SlideEditorToolTitleComp title="Rotate">
                     <button
-                        className="btn btn-info"
+                        className="btn btn-sm btn-outline-info"
                         onClick={() => {
-                            applyBoxData({
+                            setProps({
                                 rotate: 0,
                             });
                         }}
                     >
-                        UnRotate
+                        `Reset Rotate
                     </button>
                 </SlideEditorToolTitleComp>
             </div>
@@ -89,36 +94,26 @@ function LayerComp() {
 }
 
 export default function SlideEditorToolsBoxComp() {
-    const canvasController = useCanvasControllerContext();
-    const canvasItem = useCanvasItemContext();
-    const handleDataEvent = (newData: any) => {
-        applyBoxData(newData);
-    };
-    const handleNoColoring = () => {
-        applyBoxData({
-            backgroundColor: null,
-        });
-    };
-    const handleColorChanging = (newColor: AppColorType) => {
-        applyBoxData({
-            backgroundColor: newColor,
-        });
-    };
-    const parentDimension = {
-        parentWidth: canvasController.canvas.width,
-        parentHeight: canvasController.canvas.height,
-    };
-    const applyBoxData = (newData: ToolingBoxType) => {
-        canvasItem.applyBoxData(parentDimension, newData);
-        canvasController.applyEditItem(canvasItem);
-    };
+    const [props, setProps] = useCanvasItemPropsSetterContext();
     return (
         <div className="d-flex flex-wrap app-inner-shadow">
-            <SlideEditorToolsColorComp
-                color={canvasItem.props.backgroundColor}
-                handleNoColoring={handleNoColoring}
-                handleColorChanging={handleColorChanging}
-            />
+            <div className="p-1">
+                <SlideEditorToolTitleComp title="Background Color">
+                    <SlideEditorToolsColorComp
+                        color={props.backgroundColor}
+                        handleNoColoring={() => {
+                            setProps({
+                                backgroundColor: '#00000000',
+                            });
+                        }}
+                        handleColorChanging={(newColor) => {
+                            setProps({
+                                backgroundColor: newColor,
+                            });
+                        }}
+                    />
+                </SlideEditorToolTitleComp>
+            </div>
             <div
                 className="ps-1"
                 style={{
@@ -126,7 +121,10 @@ export default function SlideEditorToolsBoxComp() {
                 }}
             >
                 <SlideEditorToolTitleComp title="Box Alignment">
-                    <SlideEditorToolAlignComp onData={handleDataEvent} />
+                    <SlideEditorToolAlignComp onData={setProps} />
+                </SlideEditorToolTitleComp>
+                <SlideEditorToolTitleComp title="Shape Properties">
+                    <ShapePropertiesComp />
                 </SlideEditorToolTitleComp>
                 <LayerComp />
                 <SizingComp />

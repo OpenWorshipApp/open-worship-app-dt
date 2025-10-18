@@ -18,7 +18,7 @@ export default function SlideEditorPopupComp({
         <ModalComp>
             <div id="slide-editor-popup" className="shadow card">
                 <SlideEditorPopupHeaderComp />
-                <div className="body card-body w-100 overflow-hidden">
+                <div className="body card-body w-100 app-overflow-hidden">
                     <SelectedEditingSlideContext
                         value={{
                             selectedSlide: slide,

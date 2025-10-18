@@ -21,7 +21,7 @@ import LookupBibleItemController, {
 import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
-    checkIsVerticalPartialInvisible,
+    checkIsVerticalPartialVisible,
 } from '../helper/helpers';
 import {
     ContextMenuItemType,
@@ -29,7 +29,7 @@ import {
 } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import { getSelectedText } from '../helper/textSelectionHelpers';
-import BibleFindController from '../bible-search/BibleFindController';
+import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
 
 function handMovedChecking(
     viewController: BibleItemsViewController,
@@ -38,16 +38,12 @@ function handMovedChecking(
     threshold: number,
 ) {
     let kjvVerseKey = null;
-    const currentElements = viewController.getVerseElements<HTMLElement>(
-        bibleItem.id,
-    );
-    for (const currentElement of Array.from(currentElements).reverse()) {
+    const currentElements = Array.from(
+        viewController.getVerseElements<HTMLElement>(bibleItem.id),
+    ).reverse();
+    for (const currentElement of currentElements) {
         if (
-            checkIsVerticalPartialInvisible(
-                container,
-                currentElement,
-                threshold,
-            )
+            checkIsVerticalPartialVisible(container, currentElement, threshold)
         ) {
             kjvVerseKey = currentElement.dataset.kjvVerseKey;
             break;
@@ -104,10 +100,7 @@ export default function BibleViewComp({
                               if (!selectedText) {
                                   return;
                               }
-                              BibleFindController.setFindingContext(
-                                  foundBibleItem.bibleKey,
-                                  selectedText,
-                              );
+                              setBibleFindRecentSearch(selectedText);
                               viewController.openBibleSearch('s');
                               viewController.setIsBibleSearching(true);
                           },
@@ -159,6 +152,7 @@ export default function BibleViewComp({
             )}
             <div
                 className="card-body app-top-hover-motion-1"
+                data-scroll-on-next-chapter={isEditing ? '1' : '0'}
                 style={{
                     paddingBottom: '60px',
                 }}
@@ -170,7 +164,7 @@ export default function BibleViewComp({
                 )}
                 <ScrollingHandlerComp
                     style={{ bottom: '60px' }}
-                    shouldSnowPlayToBottom
+                    shouldShowPlayToBottom
                     movedCheck={{
                         check: (container: HTMLElement) => {
                             handMovedChecking(

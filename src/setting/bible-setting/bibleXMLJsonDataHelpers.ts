@@ -1,4 +1,3 @@
-import kjvBibleInfo from '../../helper/bible-helpers/bible.json';
 import {
     DEFAULT_LOCALE,
     getLangCode,
@@ -10,35 +9,60 @@ import {
 } from '../../popup-widget/popupWidgetHelpers';
 import { genBibleKeyXMLInput } from './bibleXMLAttributesGuessing';
 import { getDownloadedBibleInfoList } from '../../helper/bible-helpers/bibleDownloadHelpers';
-import appProvider from '../../server/appProvider';
-import { cloneJson, freezeObject } from '../../helper/helpers';
+import { cloneJson } from '../../helper/helpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
-import { fsListFiles } from '../../server/fileHelpers';
+import { fsListFiles, pathJoin } from '../../server/fileHelpers';
+import FileSource from '../../helper/FileSource';
+import { showSimpleToast } from '../../toast/toastHelpers';
+import CacheManager from '../../others/CacheManager';
+import { unlockingCacher } from '../../server/unlockingHelpers';
+import {
+    getKJVBookKeyValue,
+    kjvBibleInfo,
+} from '../../helper/bible-helpers/serverBibleHelpers';
 
-freezeObject(kjvBibleInfo);
+const bibleKeyFilePathCache = new CacheManager();
+export async function getBibleKeyFromFile(filePath: string) {
+    return unlockingCacher(
+        filePath,
+        async () => {
+            const xmlText = await FileSource.readFileData(filePath);
+            if (xmlText === null) {
+                return null;
+            }
+            const bibleXMLElement = xmlTextToBibleElement(xmlText);
+            if (!bibleXMLElement) {
+                return null;
+            }
+            const bibleKey = await guessingBibleKey(bibleXMLElement);
+            return bibleKey;
+        },
+        bibleKeyFilePathCache,
+        true,
+    );
+}
 
 export async function getAllXMLFileKeys() {
     const dirPath = await bibleDataReader.getWritableBiblePath();
     const files = await fsListFiles(dirPath);
-    return Object.fromEntries(
-        files
-            .map((file) => {
-                if (!file.endsWith('.xml')) {
-                    return null;
-                }
-                return appProvider.pathUtils.basename(file, '.xml');
-            })
-            .filter((bibleKey) => {
-                return bibleKey !== null;
-            })
-            .map((bibleKey) => {
-                const filePath = appProvider.pathUtils.resolve(
-                    dirPath,
-                    `${bibleKey}.xml`,
-                );
-                return [bibleKey, filePath] as [string, string];
-            }),
+    const entries = await Promise.all(
+        files.map(async (fileFullName) => {
+            if (!fileFullName.toLocaleLowerCase().endsWith('.xml')) {
+                return null;
+            }
+            const filePath = pathJoin(dirPath, fileFullName);
+            const bibleKey = await getBibleKeyFromFile(filePath);
+            if (bibleKey === null) {
+                return null;
+            }
+            return [bibleKey, filePath] as const;
+        }),
+    ).then((results) =>
+        results.filter((entry) => {
+            return entry !== null;
+        }),
     );
+    return Object.fromEntries(entries) as { [bibleKey: string]: string };
 }
 
 /**
@@ -110,10 +134,9 @@ export type BibleJsonInfoType = {
     booksMap: { [booKey: string]: string };
     booksAvailable: string[];
     numbersMap: { [key: string]: string };
-    filePath: string;
 };
 
-export type BibleJsonType = {
+export type BibleXMLJsonType = {
     info: BibleJsonInfoType;
     books: { [booKey: string]: BibleBookJsonType };
 };
@@ -174,9 +197,9 @@ function toGuessingBibleKeys(value: string) {
         });
 }
 
-function getGuessingBibleKeys(bible: Element) {
+function getGuessingBibleKeys(bibleXMLElement: Element) {
     const guessingKeys: string[] = [];
-    for (const attribute of Array.from(bible.attributes)) {
+    for (const attribute of Array.from(bibleXMLElement.attributes)) {
         const value = attribute.nodeValue;
         if (value) {
             guessingKeys.push(...toGuessingBibleKeys(value));
@@ -185,18 +208,22 @@ function getGuessingBibleKeys(bible: Element) {
     return Array.from(new Set(guessingKeys));
 }
 
-function getBookKey(book: Element) {
-    const bookKeysOrder = kjvBibleInfo.booksOrder;
-    let bookKey = guessValue(book, attributesMap.bookKey, null);
+function getBookKey(bookXMLElement: Element) {
+    const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
+    let bookKey = guessValue(bookXMLElement, attributesMap.bookKey, null);
     if (bookKey !== null && bookKeysOrder.includes(bookKey)) {
         return bookKey;
     }
-    const bookNumberText = guessValue(book, attributesMap.index, null);
+    const bookNumberText = guessValue(
+        bookXMLElement,
+        attributesMap.index,
+        null,
+    );
     if (bookNumberText === null) {
         return null;
     }
-    const bookIndex = parseInt(bookNumberText);
-    if (isNaN(bookIndex)) {
+    const bookIndex = Number.parseInt(bookNumberText);
+    if (Number.isNaN(bookIndex)) {
         return null;
     }
     bookKey = bookKeysOrder[bookIndex - 1];
@@ -206,8 +233,8 @@ function getBookKey(book: Element) {
     return bookKey;
 }
 
-async function guessingBibleKey(bible: Element) {
-    let bibleKey = guessValue(bible, attributesMap.bibleKey);
+async function guessingBibleKey(bibleXMLElement: Element) {
+    let bibleKey = guessValue(bibleXMLElement, attributesMap.bibleKey);
     while (bibleKey === null) {
         const downloadedBibleInfoList = await getDownloadedBibleInfoList();
         if (downloadedBibleInfoList === null) {
@@ -227,7 +254,7 @@ async function guessingBibleKey(bible: Element) {
                     newKey = newKey1;
                 },
                 Array.from(takenBibleKeys),
-                getGuessingBibleKeys(bible),
+                getGuessingBibleKeys(bibleXMLElement),
             ),
         );
         if (isConfirmInput) {
@@ -248,9 +275,9 @@ async function guessingBibleKey(bible: Element) {
     return bibleKey;
 }
 
-function getAvailableBooks(books: Element[]) {
+function getAvailableBooks(booksXMLElement: Element[]) {
     const availableBooks: string[] = [];
-    for (const book of books) {
+    for (const book of booksXMLElement) {
         const bookKey = getBookKey(book);
         if (bookKey !== null) {
             availableBooks.push(bookKey);
@@ -259,12 +286,12 @@ function getAvailableBooks(books: Element[]) {
     return availableBooks;
 }
 
-function getBookElements(bible: Element) {
-    return Array.from(guessElement(bible, tagNamesMap.book) ?? []);
+function getBookElements(bibleXMLElement: Element) {
+    return Array.from(guessElement(bibleXMLElement, tagNamesMap.book) ?? []);
 }
 
-export async function getBibleInfoJson(bible: Element) {
-    const mapElement = guessElement(bible, tagNamesMap.map)?.[0];
+export async function getBibleInfoJson(bibleXMLElement: Element) {
+    const mapElement = guessElement(bibleXMLElement, tagNamesMap.map)?.[0];
     const numberKeyMap = getBibleMap(
         mapElement ?? null,
         tagNamesMap.numberMap,
@@ -275,41 +302,50 @@ export async function getBibleInfoJson(bible: Element) {
     const bookKeyMap = getBibleMap(
         mapElement ?? null,
         tagNamesMap.bookMap,
-        cloneJson(kjvBibleInfo.kjvKeyValue),
+        cloneJson(getKJVBookKeyValue()),
     );
-    const bibleKey = await guessingBibleKey(bible);
+    const bibleKey = await guessingBibleKey(bibleXMLElement);
     if (bibleKey === null) {
         return null;
     }
-    const locale = guessValue(bible, attributesMap.locale) ?? DEFAULT_LOCALE;
+    const locale =
+        guessValue(bibleXMLElement, attributesMap.locale) ?? DEFAULT_LOCALE;
     if (getLangCode(locale as any) === null) {
         return null;
     }
-    const filePath = await bibleKeyToFilePath(bibleKey);
-    const books = Array.from(guessElement(bible, tagNamesMap.book) ?? []);
+    const books = Array.from(
+        guessElement(bibleXMLElement, tagNamesMap.book) ?? [],
+    );
     const booksAvailable = getAvailableBooks(books);
     return {
-        title: guessValue(bible, attributesMap.title) ?? 'Unknown Title',
+        title:
+            guessValue(bibleXMLElement, attributesMap.title) ?? 'Unknown Title',
         key: bibleKey,
-        version: parseInt(guessValue(bible, attributesMap.version) ?? '1') ?? 1,
+        version:
+            Number.parseInt(
+                guessValue(bibleXMLElement, attributesMap.version) ?? '1',
+            ) ?? 1,
         locale,
         legalNote:
-            guessValue(bible, attributesMap.legalNote) ?? 'Unknown Legal Note',
+            guessValue(bibleXMLElement, attributesMap.legalNote) ??
+            'Unknown Legal Note',
         publisher:
-            guessValue(bible, attributesMap.publisher) ?? 'Unknown Publisher',
+            guessValue(bibleXMLElement, attributesMap.publisher) ??
+            'Unknown Publisher',
         copyRights:
-            guessValue(bible, attributesMap.copyRights) ??
+            guessValue(bibleXMLElement, attributesMap.copyRights) ??
             'Unknown Copy Rights',
         numbersMap: numberKeyMap,
         booksMap: bookKeyMap,
         booksAvailable,
-        filePath,
     } as BibleJsonInfoType;
 }
 
-function getBibleVerses(chapter: Element): BibleVerseType {
+function getBibleVerses(chapterXMLElement: Element): BibleVerseType {
     const verseJson: BibleVerseType = {};
-    const verses = Array.from(guessElement(chapter, tagNamesMap.verse) || []);
+    const verses = Array.from(
+        guessElement(chapterXMLElement, tagNamesMap.verse) || [],
+    );
     for (const verse of verses) {
         const verseNumber = guessValue(verse, attributesMap.index, null);
         if (verseNumber === null || verse.textContent === null) {
@@ -320,9 +356,11 @@ function getBibleVerses(chapter: Element): BibleVerseType {
     return verseJson;
 }
 
-function getBibleChapters(book: Element): BibleBookJsonType {
+function getBibleChapters(bookXMLElement: Element): BibleBookJsonType {
     const bookJson: BibleBookJsonType = {};
-    const chapters = Array.from(guessElement(book, tagNamesMap.chapter) ?? []);
+    const chapters = Array.from(
+        guessElement(bookXMLElement, tagNamesMap.chapter) ?? [],
+    );
     for (const chapter of chapters) {
         const chapterNumber = guessValue(chapter, attributesMap.index, null);
         if (chapterNumber === null) {
@@ -333,8 +371,8 @@ function getBibleChapters(book: Element): BibleBookJsonType {
     return bookJson;
 }
 
-function getBibleBooksJson(bible: Element) {
-    const books = getBookElements(bible);
+function getBibleBooksJson(bibleXMLElement: Element) {
+    const books = getBookElements(bibleXMLElement);
     const booksJson: { [booKey: string]: BibleBookJsonType } = {};
     for (const book of books) {
         const bookKey = getBookKey(book);
@@ -351,7 +389,7 @@ function getBibleBooksJson(bible: Element) {
     return booksJson;
 }
 
-export function jsonToXMLText(jsonData: BibleJsonType) {
+export function jsonToXMLText(jsonData: BibleXMLJsonType) {
     const { numbersMap, booksMap, ...info } = jsonData.info;
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(
@@ -360,7 +398,11 @@ export function jsonToXMLText(jsonData: BibleJsonType) {
     );
 
     const bible = xmlDoc.getElementsByTagName('bible')[0];
-    for (const [key, value] of Object.entries(info)) {
+    const bibleInfoKey = Object.keys(info).filter((key) => {
+        return !['filePath'].includes(key);
+    });
+    for (const key of bibleInfoKey) {
+        const value = info[key as keyof typeof info];
         bible.setAttribute(key, value.toString());
     }
     const map = xmlDoc.createElement(tagNamesMap.map[0]);
@@ -411,22 +453,38 @@ export function xmlTextToBibleElement(xmlText: string) {
 }
 
 export async function xmlToJson(xmlText: string) {
-    const bible = xmlTextToBibleElement(xmlText);
-    if (!bible) {
+    const bibleXMLElement = xmlTextToBibleElement(xmlText);
+    if (!bibleXMLElement) {
         return null;
     }
-    const bibleInfo = await getBibleInfoJson(bible);
+    const bibleInfo = await getBibleInfoJson(bibleXMLElement);
     if (bibleInfo === null) {
         return null;
     }
-    const bibleBooks = getBibleBooksJson(bible);
+    const bibleBooks = getBibleBooksJson(bibleXMLElement);
     if (bibleBooks === null) {
         return null;
     }
-    return { info: bibleInfo, books: bibleBooks } as BibleJsonType;
+    return { info: bibleInfo, books: bibleBooks } as BibleXMLJsonType;
 }
 
-export async function bibleKeyToFilePath(bibleKey: string) {
-    const dirPath = await bibleDataReader.getWritableBiblePath();
-    return appProvider.pathUtils.resolve(dirPath, `${bibleKey}.xml`);
+export async function bibleKeyToXMLFilePath(
+    bibleKey: string,
+    isFromFileName = false,
+) {
+    if (isFromFileName) {
+        const dirPath = await bibleDataReader.getWritableBiblePath();
+        const filePath = pathJoin(dirPath, `${bibleKey}.xml`);
+        return filePath;
+    }
+    const bibleKeyFilePathMap = await getAllXMLFileKeys();
+    const filePath = bibleKeyFilePathMap[bibleKey];
+    if (filePath) {
+        return filePath;
+    }
+    showSimpleToast(
+        'Fail to get Bible file path',
+        `Unable to find file path for: "${bibleKey}"`,
+    );
+    return null;
 }

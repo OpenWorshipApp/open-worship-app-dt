@@ -109,7 +109,7 @@ export default function RenderResizeActorItemComp({
                     data-fs={keyToDataFlexSizeKey(flexSizeName, key)}
                     data-fs-default={defaultFlexSize[key][0]}
                     data-min-size={50}
-                    className={`${className} overflow-hidden`}
+                    className={`${className} app-overflow-hidden`}
                     style={{
                         flex: `${flexSizeValue[0] || 1}`,
                         ...extraStyle,

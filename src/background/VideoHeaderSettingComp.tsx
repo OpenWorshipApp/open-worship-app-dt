@@ -8,7 +8,7 @@ export default function VideoHeaderSettingComp() {
     );
     return (
         <div className="input-group-text app-inner-shadow p-0">
-            `Fading the End:{' '}
+            `Fading at the End:{' '}
             <input
                 className="form-check-input mt-0"
                 type="checkbox"

@@ -131,9 +131,9 @@ const titleSettingNames = {
         dirSourceSettingNames.BACKGROUND_VIDEO,
         defaultDataDirNames.BACKGROUND_VIDEO,
     ],
-    'Background Sounds': [
-        dirSourceSettingNames.BACKGROUND_SOUND,
-        defaultDataDirNames.BACKGROUND_SOUND,
+    'Background Audios': [
+        dirSourceSettingNames.BACKGROUND_AUDIO,
+        defaultDataDirNames.BACKGROUND_AUDIO,
     ],
     'Bible Present': [
         dirSourceSettingNames.BIBLE_PRESENT,

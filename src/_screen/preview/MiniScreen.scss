@@ -1,17 +1,3 @@
-@keyframes border-blink {
-  0% {
-    color: rgb(213, 72, 154);
-  }
-
-  25% {
-    color: rgb(153, 0, 89);
-  }
-
-  100% {
-    color: rgb(255, 42, 166);
-  }
-}
-
 .mini-screen {
   .show-hide {
     &:hover {
@@ -20,7 +6,8 @@
     }
 
     &.showing .app-showing-indicator {
-      animation: border-blink 3s cubic-bezier(0.075, 0.82, 0.165, 1) infinite;
+      animation: app-live-blinking-amin 3s cubic-bezier(0.075, 0.82, 0.165, 1)
+        infinite;
     }
   }
 

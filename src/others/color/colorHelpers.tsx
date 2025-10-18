@@ -1,5 +1,6 @@
 import { DragTypeEnum } from '../../helper/DragInf';
 import { handleDragStart } from '../../helper/dragHelpers';
+import { removeOpacityFromHexColor } from '../../server/appHelpers';
 
 export const BLACK_COLOR = '#000000';
 export type AppColorType = `#${string}`;
@@ -9,9 +10,9 @@ export function toHexColorString(color: string): string {
     const regex = /(\d+),\s*(\d+),\s*(\d+)/;
     const rgb = regex.exec(color);
     if (rgb !== null) {
-        const r = parseInt(rgb[1]).toString(16).padStart(2, '0');
-        const g = parseInt(rgb[2]).toString(16).padStart(2, '0');
-        const b = parseInt(rgb[3]).toString(16).padStart(2, '0');
+        const r = Number.parseInt(rgb[1]).toString(16).padStart(2, '0');
+        const g = Number.parseInt(rgb[2]).toString(16).padStart(2, '0');
+        const b = Number.parseInt(rgb[3]).toString(16).padStart(2, '0');
         return `#${r}${g}${b}`;
     }
     return color;
@@ -19,7 +20,7 @@ export function toHexColorString(color: string): string {
 
 export const colorToTransparent = (color: AppColorType): number => {
     const hexStr = `${color[7]}${color[8]}`;
-    return parseInt(hexStr, 16) || 255;
+    return Number.parseInt(hexStr, 16) || 255;
 };
 
 export const transparentColor = (n: number): string => {
@@ -32,8 +33,8 @@ export function compareColor(
     color2: AppColorType,
 ): boolean {
     return (
-        color1.substring(0, 7).toLowerCase() ===
-        color2.substring(0, 7).toLocaleLowerCase()
+        removeOpacityFromHexColor(color1).toLowerCase() ===
+        removeOpacityFromHexColor(color2).toLowerCase()
     );
 }
 

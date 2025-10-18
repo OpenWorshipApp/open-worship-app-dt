@@ -13,7 +13,7 @@ export const TO_THE_TOP_STYLE_STRING = `
     transition: opacity 0.3s ease-in-out;
     cursor: pointer;
 }
-.${PLAY_TO_BOTTOM_CLASSNAME}.going {
+.${PLAY_TO_BOTTOM_CLASSNAME}[data-speed]:not([data-speed=""]) {
     opacity: 0.4;
 }
 .${PLAY_TO_BOTTOM_CLASSNAME}:hover {
@@ -52,6 +52,7 @@ function checkElement(parent: HTMLElement, element: HTMLElement) {
     }
 }
 export function applyToTheTop(element: HTMLElement) {
+    element.title = 'Click or Double Click to scroll to the top';
     const parent = element.parentElement;
     if (parent === null) {
         return;
@@ -60,12 +61,12 @@ export function applyToTheTop(element: HTMLElement) {
         checkElement(parent, element);
     });
     parent.addEventListener('scroll', scrollCallback);
-    element.onclick = () => {
-        if (
-            parent
-                .querySelector('.' + PLAY_TO_BOTTOM_CLASSNAME)
-                ?.classList.contains('going')
-        ) {
+    const bringToTop = (event: any) => {
+        preventEvent(event);
+        const targetElement = parent.querySelector<HTMLElement>(
+            '.' + PLAY_TO_BOTTOM_CLASSNAME,
+        );
+        if (targetElement?.dataset['speed']) {
             parent.classList.add('asking-to-top');
         } else {
             parent.scrollTo({
@@ -73,6 +74,16 @@ export function applyToTheTop(element: HTMLElement) {
                 behavior: 'smooth',
             });
         }
+    };
+    element.ondblclick = bringToTop;
+    element.onclick = (event: any) => {
+        const playingElement = parent.querySelector(
+            `.${PLAY_TO_BOTTOM_CLASSNAME}[data-speed]:not([data-speed=""])`,
+        );
+        if (playingElement !== null) {
+            return;
+        }
+        bringToTop(event);
     };
     checkElement(parent, element);
 }
@@ -116,7 +127,7 @@ function startAnimToBottom(
             parent.classList.remove('asking-to-top');
             options.onToTheTop();
             requestAnimationFrame(nexTargetCallback);
-        }, 1000);
+        }, 2e3);
         return;
     }
 
@@ -165,16 +176,24 @@ export function applyPlayToBottom(
         speed: 0,
         scrollTop: 0,
     };
-    const setSpeed = (newSpeed: number) => {
-        store.speed = Math.max(0, newSpeed);
+    let start = () => {};
+    const resetSpeed = () => {
+        const speed = Number.parseFloat(element.dataset['speed'] ?? '0');
+        store.speed = Number.isNaN(speed) ? 0 : speed;
         element.title = store.speed.toFixed(2);
+        start();
     };
-    const start = () => {
-        if (element.classList.contains('going')) {
+    const setSpeed = (newSpeed: number) => {
+        const speed = Math.max(0, newSpeed);
+        element.dataset['speed'] = speed === 0 ? '' : speed.toString();
+        resetSpeed();
+    };
+    const realStart = (start = () => {
+        if (store.speed === 0) {
             return;
         }
+        start = () => {};
         store.scrollTop = parent.scrollTop;
-        element.classList.add('going');
         const movedThreshold = movedCheck?.threshold ?? 0;
         let scrollTop = parent.scrollTop - movedThreshold;
         startAnimToBottom(parent, element, store, {
@@ -190,20 +209,19 @@ export function applyPlayToBottom(
                   }
                 : () => {},
             onStop: () => {
-                element.classList.remove('going');
+                start = realStart;
                 setSpeed(0);
                 element.title = INIT_TITLE;
             },
         });
-    };
+    });
     element.onclick = (event) => {
         preventEvent(event);
         setSpeed(store.speed + speedOffset);
-        start();
     };
     element.oncontextmenu = (event) => {
         preventEvent(event);
-        if (!element.classList.contains('going')) {
+        if (!element.dataset['speed']) {
             return;
         }
         if (event.altKey) {
@@ -215,7 +233,6 @@ export function applyPlayToBottom(
     element.ondblclick = (event) => {
         preventEvent(event);
         setSpeed(store.speed + speedOffset * 3);
-        start();
     };
     const resizeObserver = new ResizeObserver((entries) => {
         for (const entry of entries) {

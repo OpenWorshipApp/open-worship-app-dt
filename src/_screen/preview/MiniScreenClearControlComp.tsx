@@ -1,3 +1,5 @@
+import { ReactNode } from 'react';
+
 import {
     toShortcutKey,
     useKeyboardRegistering,
@@ -13,7 +15,7 @@ function RenderButtonComp({
 }: Readonly<{
     btnMaps: {
         title: string;
-        text: string | React.ReactNode;
+        text: string | ReactNode;
         btnType: string;
         onClick: () => void;
         eventMap: { key: string };
@@ -25,8 +27,8 @@ function RenderButtonComp({
     useKeyboardRegistering([eventMap], onClickCallback, [isEnabled]);
     return (
         <button
-            type="button"
             className={`btn btn-sm btn-${isEnabled ? '' : 'outline-'}${btnType}`}
+            type="button"
             title={`${title} [${toShortcutKey(eventMap)}]`}
             style={{ height: '20px' }}
             onClick={onClickCallback}

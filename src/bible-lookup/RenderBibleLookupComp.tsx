@@ -10,15 +10,16 @@ import RenderBibleLookupHeaderComp from './RenderBibleLookupHeaderComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
-import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
 import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import { EditingResultType } from '../helper/bible-helpers/serverBibleHelpers2';
+import LoadingComp from '../others/LoadingComp';
+import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const LazyBibleSearchBodyPreviewerComp = lazy(() => {
-    return import('../bible-search/BibleSearchPreviewerComp');
+    return import('../bible-find/BibleFindPreviewerComp');
 });
 
 const LOOKUP_ONLINE_SETTING_NAME = 'bible-lookup-online';
@@ -28,9 +29,9 @@ export function useSelectedBibleKey() {
     const [bibleKey, setBibleKey] = useState<string>(
         viewController.selectedBibleItem.bibleKey,
     );
-    const [localBibleInfoList] = useAppStateAsync(() => {
-        return getAllLocalBibleInfoList();
-    }, []);
+    const [bibleInfo] = useAppStateAsync(() => {
+        return getBibleInfo(bibleKey);
+    }, [bibleKey]);
     useAppEffect(() => {
         viewController.setBibleKey = (newBibleKey: string) => {
             setBibleKey(newBibleKey);
@@ -39,10 +40,10 @@ export function useSelectedBibleKey() {
             viewController.setBibleKey = (_: string) => {};
         };
     }, []);
-    const isValid = (localBibleInfoList ?? []).some((bibleInfo) => {
-        return bibleInfo.key === bibleKey;
-    });
-    return { isValid, bibleKey };
+    if (bibleInfo === undefined) {
+        return { bibleKey };
+    }
+    return { isValid: bibleInfo !== null, bibleKey };
 }
 
 export default function RenderBibleLookupComp() {
@@ -84,16 +85,21 @@ export default function RenderBibleLookupComp() {
     }, []);
     if (!isValidBibleKey) {
         return (
-            <div className="w-100 h-100">
-                <div className="d-flex">
-                    <div className="flex-fill"></div>
-                    <RenderExtraButtonsRightComp
-                        setIsLookupOnline={setIsBibleSearching}
-                        isLookupOnline={isBibleSearching}
-                    />
+            <div className="card w-100 h-100">
+                <div className="card-header">
+                    <div className="float-end">
+                        <RenderExtraButtonsRightComp
+                            setIsLookupOnline={setIsBibleSearching}
+                            isLookupOnline={isBibleSearching}
+                        />
+                    </div>
                 </div>
-                <div className="flex-fill">
-                    <BibleNotAvailableComp bibleKey={bibleKey} />
+                <div className="card-body">
+                    {isValidBibleKey === undefined ? (
+                        <LoadingComp />
+                    ) : (
+                        <BibleNotAvailableComp bibleKey={bibleKey} />
+                    )}
                 </div>
             </div>
         );
@@ -134,12 +140,20 @@ export default function RenderBibleLookupComp() {
                 },
             ]}
         >
-            <div id="bible-lookup-popup" className="shadow card w-100 h-100">
+            <div
+                id="bible-lookup-popup"
+                className="shadow card w-100 h-100 overflow-hidden"
+            >
                 <RenderBibleLookupHeaderComp
                     isLookupOnline={isBibleSearching}
                     setIsLookupOnline={setIsBibleSearching}
                 />
-                <div className={'card-body d-flex w-100 h-100 overflow-hidden'}>
+                <div
+                    className={'card-body d-flex w-100 app-overflow-hidden'}
+                    style={{
+                        height: 'calc(100% - 38px)',
+                    }}
+                >
                     {isBibleSearching ? (
                         <ResizeActorComp
                             flexSizeName="bible-lookup-popup-body"

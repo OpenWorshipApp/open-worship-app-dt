@@ -7,11 +7,6 @@ body {
   overflow: hidden;
 }
 
-:root {
-  --app-color-presenter: #ffd500;
-  --app-color-reader: #ff00d4;
-}
-
 #app {
   width: 100vw !important;
   height: 100vh !important;
@@ -19,11 +14,14 @@ body {
   margin: 0 !important;
   overflow: hidden;
   box-sizing: border-box;
-  background-color: var(--bs-gray-800);
-  color: var(--bs-white);
+
+  audio {
+    max-height: 25px;
+  }
 
   & * {
     user-select: none;
+    box-sizing: border-box;
   }
 
   .app-not-selectable-text {
@@ -39,17 +37,12 @@ body {
     width: 100% !important;
     height: $header-height !important;
     overflow: hidden;
-
-    .app-highlight-border-bottom {
-      border-bottom: 1px solid var(--bs-gray-600);
-    }
   }
 
   & #app-body {
     width: 100% !important;
     height: calc(100% - $header-height) !important;
     overflow: hidden;
-    background-color: var(--bs-gray-700);
     padding: 2px;
   }
 
@@ -73,13 +66,19 @@ body {
 
   .app-full-view {
     position: fixed !important;
-    background-color: var(--bs-gray-900) !important;
     top: 0 !important;
     left: 0 !important;
     width: 100vw !important;
     height: 100vh !important;
     overflow-y: auto !important;
     z-index: $z-index-widget-full-view !important;
+
+    .full-view-reset-font-size {
+      font-size: initial !important;
+    }
+    .full-view-hide {
+      display: none !important;
+    }
   }
 
   .flex-item {
@@ -87,10 +86,6 @@ body {
     position: relative;
     overflow: hidden;
     min-width: 120px;
-  }
-
-  * {
-    box-sizing: border-box;
   }
 
   .right {
@@ -106,83 +101,40 @@ body {
     cursor: pointer;
   }
 
-  .background-blank {
-    background-image:
-      linear-gradient(45deg, rgba(204, 204, 204, 0.5) 25%, transparent 25%),
-      linear-gradient(-45deg, rgba(204, 204, 204, 0.5) 25%, transparent 25%),
-      linear-gradient(45deg, transparent 75%, rgba(204, 204, 204, 0.5) 75%),
-      linear-gradient(-45deg, transparent 75%, rgba(204, 204, 204, 0.5) 75%);
-    background-size: 20px 20px;
-    background-position:
-      0 0,
-      0 10px,
-      10px -10px,
-      -10px 0px;
-  }
-
   .rotating {
     i:before {
       animation: rotating-hover 1s linear infinite;
-
-      @keyframes rotating-hover {
-        from {
-          transform: rotate(0deg);
-        }
-
-        to {
-          transform: rotate(360deg);
-        }
-      }
     }
   }
 
   .rotating-hover:hover {
     i:before {
       animation: rotating-hover 1s linear infinite;
-
-      @keyframes rotating-hover {
-        from {
-          transform: rotate(0deg);
-        }
-
-        to {
-          transform: rotate(360deg);
-        }
-      }
     }
   }
 
-  .overflow-hidden {
+  .app-overflow-hidden {
     overflow: hidden;
   }
 
-  .overflow-hidden-x {
+  .app-overflow-hidden-x {
     overflow-x: hidden;
   }
 
-  .overflow-hidden-y {
+  .app-overflow-hidden-y {
     overflow-y: hidden;
   }
 
   .app-border-white-round {
-    border: 1px solid var(--bs-gray-600);
     border-radius: 5px;
   }
   .app-border-whiter-round {
-    border: 1px dashed var(--bs-gray-400);
     border-radius: 5px;
   }
 
-  $bg-color1: var(--bs-gray-700);
-  $bg-color2: var(--bs-gray-800);
-  $bg-width: 60px;
+  $bg-width: 20px;
 
-  .blank-bg {
-    background-image:
-      linear-gradient(45deg, $bg-color1 25%, $bg-color2 25%),
-      linear-gradient(-45deg, $bg-color1 25%, $bg-color2 25%),
-      linear-gradient(45deg, $bg-color2 75%, $bg-color1 75%),
-      linear-gradient(-45deg, $bg-color2 75%, $bg-color1 75%);
+  .app-blank-bg {
     background-size: $bg-width $bg-width;
     background-position:
       0 0,
@@ -213,31 +165,7 @@ body {
     color: $hight-light-color;
   }
 
-  @keyframes app-highlight-selected-in {
-    0% {
-      border-width: 2px;
-    }
-    50% {
-      border-width: 3px;
-    }
-    100% {
-      border: 2px;
-    }
-  }
-  @keyframes app-highlight-selected {
-    0% {
-      border-color: $hight-light-color;
-    }
-    80% {
-      border-color: $hight-light-color;
-    }
-    100% {
-      border-color: transparent;
-    }
-  }
-
   .app-highlight-selected {
-    box-sizing: border-box;
     border: 2px dotted $hight-light-color;
     animation: app-highlight-selected-in 0.5s ease-in-out alternate;
 
@@ -250,7 +178,7 @@ body {
     }
   }
 
-  .hidden-widget {
+  .app-hidden-widget {
     width: 100%;
     height: 100%;
     transition:
@@ -258,20 +186,9 @@ body {
       height 0.3s,
       background-color 0.3s;
     transition-timing-function: step-end;
-    $bg-color: var(--bs-gray-700);
-    $bg-color-hover: var(--bs-gray-600);
-    $color: var(--bs-gray-800);
 
     padding: 3px;
     border-radius: 5px;
-    background-color: $bg-color;
-    background: repeating-linear-gradient(
-      45deg,
-      $color,
-      $color 4px,
-      $bg-color 2px,
-      $bg-color 8px
-    );
 
     &.bar-type-v {
       height: 6px;
@@ -295,17 +212,8 @@ body {
     }
 
     &:hover {
-      background: repeating-linear-gradient(
-        45deg,
-        $color,
-        $color 4px,
-        $bg-color-hover 2px,
-        $bg-color-hover 8px
-      );
-
       * {
         font-size: 10px;
-        color: var(--bs-gray-100);
       }
     }
 
@@ -322,7 +230,6 @@ body {
       transition-timing-function: step-end;
       padding: 0;
       margin: auto;
-      color: var(--bs-gray-400);
       line-height: 0;
     }
   }
@@ -337,7 +244,6 @@ body {
   }
 
   .app-round-icon {
-    background-color: var(--bs-gray-600);
     transition: opacity 0.5s ease-out;
     opacity: 0.3;
     padding: 0 3px;
@@ -402,19 +308,77 @@ body {
     }
   }
 
-  .app-caught-hover-pointer {
-    cursor: pointer;
-    &:hover {
-      text-shadow: 0 0 3px var(--bs-primary);
-    }
-  }
-
   .app-on-screen::before {
     content: '*';
-    color: greenyellow;
+    color: var(--app-yellow-green);
   }
 
   .app-inner-shadow {
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .form-range {
+    background-color: rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .app-found-highlight {
+    background-color: rgba(0, 0, 0, 0.045);
+    border-radius: 5px;
+    color: #3d680b;
+  }
+}
+
+@keyframes app-highlight-selected-in {
+  0% {
+    border-width: 2px;
+  }
+  50% {
+    border-width: 3px;
+  }
+  100% {
+    border: 2px;
+  }
+}
+@keyframes app-highlight-selected {
+  0% {
+    border-color: $hight-light-color;
+  }
+  80% {
+    border-color: $hight-light-color;
+  }
+  100% {
+    border-color: transparent;
+  }
+}
+@keyframes rotating-hover {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes rotating-hover {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes app-live-blinking-amin {
+  0% {
+    color: rgb(213, 72, 154);
+  }
+
+  25% {
+    color: rgb(153, 0, 89);
+  }
+
+  100% {
+    color: rgb(255, 42, 166);
   }
 }

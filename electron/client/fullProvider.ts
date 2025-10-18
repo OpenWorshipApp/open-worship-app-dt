@@ -9,16 +9,9 @@ import fontUtils from './fontUtils';
 import appUtils from './appUtils';
 import databaseUtils from './databaseUtils';
 
-import appInfo from '../../package.json';
 import { powerPointUtils } from './powerPointUtils';
 import { ytUtils } from './ytUtils';
-
-function toVersionNumber(version: string) {
-    const [major, minor, patch] = version
-        .split('.')
-        .map((str) => parseInt(str, 10));
-    return major * 10000 + minor * 100 + patch;
-}
+import appInfo from './appInfo';
 
 export const provider = {
     appType: 'desktop',
@@ -31,14 +24,7 @@ export const provider = {
     pathUtils,
     fileUtils,
     systemUtils,
-    appInfo: {
-        name: appInfo.name,
-        description: appInfo.description,
-        author: appInfo.author,
-        homepage: appInfo.homepage,
-        version: appInfo.version,
-        versionNumber: toVersionNumber(appInfo.version),
-    },
+    appInfo,
     reload: () => {
         window.location.reload();
     },

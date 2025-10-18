@@ -1,9 +1,14 @@
 import { app, Menu, shell } from 'electron';
 
 import ElectronAppController from './ElectronAppController';
-import { goDownload, toShortcutKey } from './electronHelpers';
+import {
+    copyDebugInfoToClipboard,
+    goDownload,
+    toShortcutKey,
+} from './electronHelpers';
 
-import appInfo from '../package.json';
+import packageInfo from '../package.json';
+import appInfo from './client/appInfo';
 
 const findingShortcut = toShortcutKey({
     wControlKey: ['Ctrl'],
@@ -22,7 +27,21 @@ export function initMenu(appController: ElectronAppController) {
                   {
                       label: app.name,
                       submenu: [
-                          { role: 'about' },
+                          {
+                              label: `About ${appInfo.title}`,
+                              click: () => {
+                                  appController.aboutController.open(
+                                      appController.mainWin,
+                                  );
+                              },
+                          },
+                          { type: 'separator' },
+                          {
+                              label: 'Preferences...',
+                              click: () => {
+                                  appController.mainController.gotoSettingHomePage();
+                              },
+                          },
                           { type: 'separator' },
                           { role: 'services' },
                           { type: 'separator' },
@@ -77,6 +96,14 @@ export function initMenu(appController: ElectronAppController) {
                           { role: 'delete' },
                           { type: 'separator' },
                           { role: 'selectAll' },
+                          { type: 'separator' },
+                          {
+                              label: 'Settings...',
+                              click: () => {
+                                  appController.mainController.gotoSettingHomePage();
+                              },
+                          },
+                          { type: 'separator' },
                       ]),
             ],
         },
@@ -93,6 +120,31 @@ export function initMenu(appController: ElectronAppController) {
                 { role: 'zoomOut' },
                 { type: 'separator' },
                 { role: 'togglefullscreen' },
+            ],
+        },
+        {
+            label: 'Tools',
+            submenu: [
+                {
+                    label: 'Copy Debug Info',
+                    click: () => {
+                        copyDebugInfoToClipboard();
+                    },
+                },
+                {
+                    label: 'Copy Full Debug Info',
+                    click: () => {
+                        copyDebugInfoToClipboard(true);
+                    },
+                },
+                {
+                    label: 'Local Web Share',
+                    click: () => {
+                        appController.lwShareController.open(
+                            appController.mainWin,
+                        );
+                    },
+                },
             ],
         },
         // { role: 'windowMenu' }
@@ -112,7 +164,7 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: 'Reset Position and Size',
                     click: () => {
-                        appController.settingController.resetMainBounds(
+                        appController.settingController.restoreMainBounds(
                             appController.mainWin,
                         );
                     },
@@ -125,7 +177,7 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: 'Learn More',
                     click: () => {
-                        shell.openExternal(appInfo.homepage);
+                        shell.openExternal(packageInfo.homepage);
                     },
                 },
                 {
@@ -134,7 +186,19 @@ export function initMenu(appController: ElectronAppController) {
                         goDownload();
                     },
                 },
-                ...(isMac ? [] : [{ role: 'about' }]),
+                ...(isMac
+                    ? []
+                    : [
+                          { type: 'separator' },
+                          {
+                              label: `About ${appInfo.title}`,
+                              click: () => {
+                                  appController.aboutController.open(
+                                      appController.mainWin,
+                                  );
+                              },
+                          },
+                      ]),
             ],
         },
     ];

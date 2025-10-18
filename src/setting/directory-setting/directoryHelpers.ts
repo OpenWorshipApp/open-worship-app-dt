@@ -1,6 +1,7 @@
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import appProvider from '../../server/appProvider';
 import {
+    ensureDirectory,
     fsCheckDirExist,
     fsCreateDir,
     fsExistSync,
@@ -156,4 +157,14 @@ export class BaseDirFileSource {
         }
         return null;
     }
+}
+
+export async function ensureDataDirectory(dataDirName: string) {
+    const parentDir = await appLocalStorage.getSelectedParentDirectory();
+    if (parentDir === null) {
+        return null;
+    }
+    const dataDir = pathJoin(parentDir, dataDirName);
+    await ensureDirectory(dataDir);
+    return dataDir;
 }

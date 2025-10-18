@@ -5,6 +5,17 @@ current_script_dir=$(dirname "$0")
 cd "$current_script_dir"
 pwd
 
+gen_md5() {
+    local input_string="$1"
+    if command -v md5sum &> /dev/null; then
+        echo -n "$input_string" | md5sum | awk '{print $1}'
+    elif command -v md5 &> /dev/null; then
+        echo -n "$input_string" | md5 | awk '{print $4}'
+    else
+        echo ""
+    fi
+}
+
 is_debug=false
 if [ "$1" == "--debug" ]; then
     is_debug=true
@@ -37,13 +48,13 @@ if [ $? -ne 0 ]; then
 fi
 echo "Build and copy completed successfully."
 
-yt_prefix_url="https://github.com/yt-dlp/yt-dlp/releases/download/2025.06.30/"
+yt_prefix_url="https://github.com/yt-dlp/yt-dlp/releases/download/2025.10.14/"
 download_yt_dlp() {
     local url="$yt_prefix_url$1"
     local output_dir="$dist_dir/yt"
     mkdir -p "$output_dir"
     local output="$output_dir/yt-dlp$2"
-    local file_name=$(basename "$url")
+    local file_name="$(basename "$url")_$(gen_md5 "$url")"
     if [ ! -f "$file_name" ]; then
         echo "Downloading $url to $output"
         curl -L "$url" -o "$file_name"
@@ -130,8 +141,8 @@ download_dotnet(){
 }
 
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
-    if [[ "$PROCESSOR_ARCHITECTURE" == "ARM64" ]]; then
-        # TODO: update to arm64 version when available
+    process=$(node -p "process.arch")
+    if [[ "$process" == "arm64" ]]; then
         download_yt_dlp yt-dlp.exe "-arm64.exe"
         download_dotnet win-arm64.zip "-arm64"
         download_ffmpeg ffmpeg-n7.1-latest-winarm64-gpl-7.1.zip

@@ -1,40 +1,31 @@
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import SlideEditorToolAlignComp from './SlideEditorToolAlignComp';
-import CanvasItemText, { ToolingTextType } from '../CanvasItemText';
+import { CanvasItemTextPropsType } from '../CanvasItemText';
 import ToolsTextFontControlComp from './ToolsTextFontControlComp';
-import { AppColorType } from '../../../others/color/colorHelpers';
-import { useCanvasControllerContext } from '../CanvasController';
 import SlideEditorToolsColorComp from './SlideEditorToolsColorComp';
-import { useCanvasItemContext } from '../CanvasItem';
+import { useCanvasItemPropsSetterContext } from '../CanvasItem';
 
 export default function SlideEditorToolsTextComp() {
-    const canvasController = useCanvasControllerContext();
-    const canvasItem = useCanvasItemContext() as CanvasItemText;
-    const handleDataEvent = (newData: any) => {
-        const textData: ToolingTextType = {};
-        if (newData.horizontalAlignment !== undefined) {
-            textData.textHorizontalAlignment = newData.horizontalAlignment;
-        }
-        if (newData.verticalAlignment !== undefined) {
-            textData.textVerticalAlignment = newData.verticalAlignment;
-        }
-        applyTextData(textData);
-    };
-    const handleColorChanging = (newColor: AppColorType) => {
-        applyTextData({
-            color: newColor,
-        });
-    };
-    const applyTextData = (newData: ToolingTextType) => {
-        canvasItem.applyTextData(newData);
-        canvasController.applyEditItem(canvasItem);
+    const [props, setProps] =
+        useCanvasItemPropsSetterContext<CanvasItemTextPropsType>();
+    const textAlignmentData = {
+        horizontalAlignment: props.textHorizontalAlignment,
+        verticalAlignment: props.textVerticalAlignment,
     };
     return (
         <div className="d-flex flex-wrap app-inner-shadow">
-            <SlideEditorToolsColorComp
-                color={canvasItem.props.color}
-                handleColorChanging={handleColorChanging}
-            />
+            <div className="p-1">
+                <SlideEditorToolTitleComp title="Color">
+                    <SlideEditorToolsColorComp
+                        color={props.color}
+                        handleColorChanging={(newColor) => {
+                            setProps({
+                                color: newColor,
+                            });
+                        }}
+                    />
+                </SlideEditorToolTitleComp>
+            </div>
             <div
                 className="ps-1"
                 style={{
@@ -42,7 +33,22 @@ export default function SlideEditorToolsTextComp() {
                 }}
             >
                 <SlideEditorToolTitleComp title="Text Alignment">
-                    <SlideEditorToolAlignComp isText onData={handleDataEvent} />
+                    <SlideEditorToolAlignComp
+                        isText
+                        data={textAlignmentData}
+                        onData={(data) => {
+                            const newData = {
+                                ...textAlignmentData,
+                                ...data,
+                            };
+                            setProps({
+                                textHorizontalAlignment:
+                                    newData.horizontalAlignment,
+                                textVerticalAlignment:
+                                    newData.verticalAlignment,
+                            });
+                        }}
+                    />
                 </SlideEditorToolTitleComp>
                 <hr />
                 <ToolsTextFontControlComp />

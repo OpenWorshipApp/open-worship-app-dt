@@ -1,31 +1,14 @@
 .data-vary-app-document-item {
   display: inline-block;
-  background-color: var(--bs-gray-800);
-  box-shadow: 0 3px 10px rgb(0, 0, 0, 0.2);
   margin: 5px;
-  border: 1px solid gray;
   cursor: pointer;
   box-sizing: content-box;
 
-  &.active {
-    border: 1px solid rgba(0, 255, 255, 0.418);
-    box-shadow: 0 1px 2px rgba(255, 255, 255, 0.048);
-
-    .card-header {
-      background-color: rgba(0, 255, 255, 0.205);
-    }
-
-    .index {
-      background-color: rgba(0, 255, 255, 0.418);
-    }
-  }
-
-  &:not(.active):hover {
-    border: 1px solid rgb(0, 0, 0);
+  .vary-app-document-item-header {
+    height: 35px !important;
   }
 
   .index {
-    background-color: rgba(85, 85, 85, 0.418);
     padding: 2px;
     border-radius: 2px 2px 0 0;
     font-size: 10px;

@@ -1,9 +1,5 @@
 import RenderEditingActionButtonsComp from './RenderEditingActionButtonsComp';
 import { RenderTitleMaterialComp } from '../bible-reader/BibleViewExtra';
-import {
-    fontSizeToHeightStyle,
-    useBibleViewFontSizeContext,
-} from '../helper/bibleViewHelpers';
 import { closeCurrentEditingBibleItem } from '../bible-reader/readBibleHelpers';
 import { toShortcutKey } from '../event/KeyboardEventListener';
 import {
@@ -15,25 +11,34 @@ import { use } from 'react';
 import { HoverMotionHandler } from '../helper/domHelpers';
 
 export default function RenderBibleEditingHeader() {
-    const fontSize = useBibleViewFontSizeContext();
     const viewController = useLookupBibleItemControllerContext();
     const editingResult = use(EditingResultContext);
     const foundBibleItem = editingResult?.result.bibleItem ?? null;
     return (
         <div
             className={
-                'card-header bg-transparent border-success ' +
-                'app-top-hover-motion-1'
+                'bg-transparent app-top-hover-motion-1 app-border-bottom-white-round'
             }
-            style={fontSizeToHeightStyle(fontSize)}
         >
             <div className="d-flex w-100 h-100">
                 <RenderTitleMaterialComp
                     bibleItem={viewController.selectedBibleItem}
-                    onBibleKeyChange={(_oldBibleKey, newBibleKey) => {
+                    onBibleKeyChange={(
+                        isContextMenu,
+                        _oldBibleKey,
+                        newBibleKey,
+                    ) => {
+                        const bibleItem = viewController.selectedBibleItem;
                         viewController.applyTargetOrBibleKey(
-                            viewController.selectedBibleItem,
-                            { bibleKey: newBibleKey },
+                            bibleItem,
+                            isContextMenu
+                                ? {
+                                      extraBibleKeys: [
+                                          ...bibleItem.extraBibleKeys,
+                                          newBibleKey,
+                                      ],
+                                  }
+                                : { bibleKey: newBibleKey },
                         );
                     }}
                 />

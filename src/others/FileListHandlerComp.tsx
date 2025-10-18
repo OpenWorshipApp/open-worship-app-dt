@@ -1,4 +1,4 @@
-import { createContext, lazy, useState } from 'react';
+import { createContext, lazy, useState, MouseEvent } from 'react';
 
 import PathSelectorComp from './PathSelectorComp';
 import { MimetypeNameType, fsCheckDirExist } from '../server/fileHelpers';
@@ -9,10 +9,11 @@ import {
     genOnDragOver,
     genOnDragLeave,
     genOnDrop,
-    genOnContextMenu,
+    genDroppingFileOnContextMenu,
     DroppedFileType,
     FileSelectionOptionType,
     handleFilesSelectionMenuItem,
+    genItemsAddingContextMenuItems,
 } from './droppingFileHelpers';
 import appProvider from '../server/appProvider';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -70,6 +71,7 @@ export default function FileListHandlerComp({
     defaultFolderName,
     fileSelectionOption,
     checkIsOnScreen,
+    onItemsAdding,
 }: Readonly<{
     className: string;
     mimetypeName: MimetypeNameType;
@@ -81,7 +83,7 @@ export default function FileListHandlerComp({
     contextMenuItems?: ContextMenuItemType[];
     genContextMenuItems?: (
         dirSource: DirSource,
-        event: React.MouseEvent<HTMLElement>,
+        event: MouseEvent<HTMLElement>,
     ) => OptionalPromise<ContextMenuItemType[]>;
     checkExtraFile?: (filePath: string) => boolean;
     takeDroppedFile?: (file: DroppedFileType) => boolean;
@@ -89,6 +91,10 @@ export default function FileListHandlerComp({
     defaultFolderName?: string;
     fileSelectionOption?: FileSelectionOptionType;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
+    onItemsAdding?: (
+        event: any,
+        defaultContextMenuItems: ContextMenuItemType[],
+    ) => void;
 }>) {
     const [isOnScreen, setIsOnScreen] = useState(false);
     const handleNameApplying = async (name: string | null) => {
@@ -155,7 +161,7 @@ export default function FileListHandlerComp({
                 ) : null}
                 <div
                     className="card-body d-flex flex-column pb-5 app-inner-shadow"
-                    onContextMenu={genOnContextMenu(dirSource, {
+                    onContextMenu={genDroppingFileOnContextMenu(dirSource, {
                         contextMenuItems,
                         genContextMenuItems,
                         addItems: handleItemsAdding,
@@ -170,7 +176,16 @@ export default function FileListHandlerComp({
                     <PathSelectorComp
                         prefix={`path-${className}`}
                         dirSource={dirSource}
-                        addItems={handleItemsAdding}
+                        addItems={
+                            onItemsAdding !== undefined
+                                ? onItemsAdding.bind(
+                                      null,
+                                      genItemsAddingContextMenuItems(
+                                          handleItemsAdding,
+                                      ),
+                                  )
+                                : handleItemsAdding
+                        }
                     />
                     {!dirSource.dirPath && defaultFolderName ? (
                         <NoDirSelectedComp
@@ -193,7 +208,7 @@ export default function FileListHandlerComp({
                             />
                         </ul>
                     )}
-                    <ScrollingHandlerComp shouldSnowPlayToBottom={false} />
+                    <ScrollingHandlerComp shouldShowPlayToBottom={false} />
                 </div>
             </div>
         </DirSourceContext>

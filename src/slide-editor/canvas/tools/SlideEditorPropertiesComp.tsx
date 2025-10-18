@@ -1,7 +1,6 @@
-import SlideEditorToolsTextComp from './SlideEditorToolsTextComp';
-import SlideEditorToolsBoxComp from './SlideEditorToolsBoxComp';
-import CanvasItem, { CanvasItemContext } from '../CanvasItem';
-import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
+import CanvasItem from '../CanvasItem';
+import CanvasItemPropsEditorComp from './CanvasItemPropsEditorComp';
+import SlidePropertyEditorComp from './SlidePropertyEditorComp';
 
 export default function SlideEditorPropertiesComp({
     canvasItems,
@@ -15,6 +14,7 @@ export default function SlideEditorPropertiesComp({
                 overflowX: 'hidden',
             }}
         >
+            <SlidePropertyEditorComp />
             {canvasItems.length === 0 ? (
                 <div className="d-flex justify-content-center align-items-center h-100">
                     <div>
@@ -28,33 +28,10 @@ export default function SlideEditorPropertiesComp({
             ) : null}
             {canvasItems.map((canvasItem) => {
                 return (
-                    <div key={canvasItem.id} className="card m-1">
-                        <div className="card-header">
-                            <strong>Item ID: {canvasItem.id}</strong>
-                        </div>
-                        <div
-                            className="card-body w-100 d-flex flex-wrap"
-                            style={{
-                                overflow: 'auto',
-                            }}
-                        >
-                            <CanvasItemContext value={canvasItem}>
-                                <div className="m-1 app-border-white-round">
-                                    <SlideEditorToolTitleComp title="Box Properties">
-                                        <SlideEditorToolsBoxComp />
-                                    </SlideEditorToolTitleComp>
-                                </div>
-                                {canvasItem.type === 'text' ? (
-                                    <div className="m-1 app-border-white-round">
-                                        <SlideEditorToolTitleComp title="Text Properties">
-                                            <SlideEditorToolsTextComp />
-                                        </SlideEditorToolTitleComp>
-                                    </div>
-                                ) : null}
-                                <div />
-                            </CanvasItemContext>
-                        </div>
-                    </div>
+                    <CanvasItemPropsEditorComp
+                        key={canvasItem.id}
+                        canvasItem={canvasItem}
+                    />
                 );
             })}
         </div>

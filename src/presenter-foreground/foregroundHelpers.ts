@@ -20,7 +20,7 @@ export function getForegroundShowingScreenIdDataList(
     const showingScreenIdDataList = Object.entries(allForegroundDataList)
         .map(([key, data]) => {
             return [
-                parseInt(key),
+                Number.parseInt(key),
                 ScreenForegroundManager.parseAllForegroundData(data),
             ] as [number, ForegroundDataType];
         })

@@ -9,6 +9,7 @@ import enLangData from './data/en';
 export const DEFAULT_LOCALE = 'en-US';
 
 export const allLocalesMap = {
+    arc: 'arc',
     'af-ZA': 'af',
     'am-ET': 'am',
     'ar-AE': 'ar',
@@ -238,6 +239,193 @@ export const allLocalesMap = {
     'zh-TW': 'zh',
     'zu-ZA': 'zu',
 } as const;
+
+export const languageNameMap: { [key: string]: string } = {
+    ab: 'Abkhazian (Abkhazia)',
+    aa: 'Afar (Afar)',
+    af: 'Afrikaans (Afrikaans)',
+    ak: 'Akan (Akan)',
+    sq: 'Albanian (Shqip)',
+    am: 'Amharic (አማርኛ)',
+    ar: 'Arabic (العربية)',
+    an: 'Aragonese (Aragonés)',
+    hy: 'Armenian (Հայերեն)',
+    as: 'Assamese (অসমীয়া)',
+    av: 'Avaric (Авар)',
+    ae: 'Avestan (أفستائية)',
+    ay: 'Aymara (Aymara)',
+    az: 'Azerbaijani (Azərbaycan dili)',
+    bm: 'Bambara (Bamanankan)',
+    ba: 'Bashkir (Башҡортса)',
+    eu: 'Basque (Euskara)',
+    be: 'Belarusian (Беларуская)',
+    bn: 'Bengali (বাংলা)',
+    bi: 'Bislama (Bislama)',
+    bs: 'Bosnian (Bosanski)',
+    br: 'Breton (Brezhoneg)',
+    bg: 'Bulgarian (Български)',
+    my: 'Burmese (ဗမာစာ)',
+    ca: 'Catalan, Valencian (Català, Valencià)',
+    ch: 'Chamorro (Chamoru)',
+    ce: 'Chechen (Нохчийн)',
+    ny: 'Chichewa, Chewa, Nyanja (Chichewa)',
+    zh: 'Chinese (中文)',
+    cu: 'Church Slavonic, Old Slavonic, Old Church Slavonic (Церковнословенский)',
+    cv: 'Chuvash (Чӑваш)',
+    kw: 'Cornish (Kernewek)',
+    co: 'Corsican (Corsu)',
+    cr: 'Cree (ᓀᐦᐃᔭᐤ)',
+    hr: 'Croatian (Hrvatski)',
+    cs: 'Czech (Čeština)',
+    da: 'Danish (Dansk)',
+    dv: 'Divehi, Dhivehi, Maldivian (ދިވެހި)',
+    nl: 'Dutch, Flemish (Nederlands, Vlaams)',
+    dz: 'Dzongkha (རྫོང་ཁ)',
+    en: 'English (English)',
+    eo: 'Esperanto (Esperanto)',
+    et: 'Estonian (Eesti)',
+    ee: 'Ewe (Ewe)',
+    fo: 'Faroese (Føroyskt)',
+    fj: 'Fijian (Na Vosa Vakaviti)',
+    fi: 'Finnish (Suomi)',
+    fr: 'French (Français)',
+    fy: 'Western Frisian (Frysk)',
+    ff: 'Fulah (Fulfulde)',
+    gd: 'Gaelic, Scottish Gaelic (Gàidhlig)',
+    gl: 'Galician (Galego)',
+    lg: 'Ganda (Oluganda)',
+    ka: 'Georgian (ქართული)',
+    de: 'German (Deutsch)',
+    el: 'Greek, Modern (1453–) (Ελληνικά)',
+    kl: 'Kalaallisut, Greenlandic (Kalaallisut)',
+    gn: "Guarani (Aña ñe'ẽ)",
+    gu: 'Gujarati (ગુજરાતી)',
+    ht: 'Haitian, Haitian Creole (Kreyòl Ayisyen)',
+    ha: 'Hausa (Hausa)',
+    he: 'Hebrew (עברית)',
+    hz: 'Herero (Otjiherero)',
+    hi: 'Hindi (हिन्दी)',
+    ho: 'Hiri Motu (Hiri Motu)',
+    hu: 'Hungarian (Magyar)',
+    is: 'Icelandic (Íslenska)',
+    io: 'Ido (Ido)',
+    ig: 'Igbo (Igbo)',
+    id: 'Indonesian (Bahasa Indonesia)',
+    ia: 'Interlingua (International Auxiliary Language Association)',
+    ie: 'Interlingue, Occidental',
+    iu: 'Inuktitut (ᐃᓄᒃᑎᑐᑦ)',
+    ik: 'Inupiaq (Iñupiatun)',
+    ga: 'Irish (Gaeilge)',
+    it: 'Italian (Italiano)',
+    ja: 'Japanese (日本語)',
+    jv: 'Javanese (Basa Jawa)',
+    kn: 'Kannada (ಕನ್ನಡ)',
+    kr: 'Kanuri (Kanuri)',
+    ks: 'Kashmiri (कश्मीरी)',
+    kk: 'Kazakh (Қазақ)',
+    km: 'Khmer (ភាសាខ្មែរ)',
+    ki: 'Kikuyu, Gikuyu (Gikuyu)',
+    rw: 'Kinyarwanda (Ikinyarwanda)',
+    ky: 'Kyrgyz, Kirghiz (Кыргызча)',
+    kv: 'Komi (Коми)',
+    kg: 'Kongo (Kikongo)',
+    ko: 'Korean (한국어)',
+    kj: 'Kuanyama, Kwanyama (Kuanyama)',
+    ku: 'Kurdish (Kurdî)',
+    lo: 'Lao (ພາສາລາວ)',
+    la: 'Latin (Latina)',
+    lv: 'Latvian (Latviešu)',
+    li: 'Limburgan, Limburger, Limburgish (Limburgs)',
+    ln: 'Lingala (Lingala)',
+    lt: 'Lithuanian (Lietuvių)',
+    lu: 'Luba-Katanga (Tshiluba)',
+    lb: 'Luxembourgish, Letzeburgesch (Lëtzebuergesch)',
+    mk: 'Macedonian (Македонски)',
+    mg: 'Malagasy (Malagasy)',
+    ms: 'Malay (Bahasa Melayu)',
+    ml: 'Malayalam (മലയാളം)',
+    mt: 'Maltese (Malti)',
+    gv: 'Manx (Gaelg)',
+    mi: 'Maori (Māori)',
+    mr: 'Marathi (मराठी)',
+    mh: 'Marshallese (M̧ajeļ)',
+    mn: 'Mongolian (Монгол)',
+    na: 'Nauru (Nauruan)',
+    nv: 'Navajo, Navaho (Diné Bizaad)',
+    nd: 'North Ndebele (Sindebele)',
+    nr: 'South Ndebele (SiNdebele)',
+    ng: 'Ndonga (Oshindonga)',
+    ne: 'Nepali (नेपाली)',
+    no: 'Norwegian (Norsk)',
+    nb: 'Norwegian Bokmål (Norsk Bokmål)',
+    nn: 'Norwegian Nynorsk (Norsk Nynorsk)',
+    oc: 'Occitan (Occitan)',
+    oj: 'Ojibwa (ᐊᓂᔭᐦᑖᑯᓯᐣ)',
+    or: 'Oriya (ଓଡ଼ିଆ)',
+    om: 'Oromo (Afaan Oromoo)',
+    os: 'Ossetian, Ossetic (Ирон)',
+    pi: 'Pali (पाळि)',
+    ps: 'Pashto, Pushto (پښتو)',
+    fa: 'Persian (فارسی)',
+    pl: 'Polish (Polski)',
+    pt: 'Portuguese (Português)',
+    pa: 'Punjabi, Panjabi (ਪੰਜਾਬੀ)',
+    qu: 'Quechua (Runa Simi)',
+    ro: 'Romanian, Moldavian, Moldovan (Română)',
+    rm: 'Romansh (Rumantsch)',
+    rn: 'Rundi (Ikirundi)',
+    ru: 'Russian (Русский)',
+    se: 'Northern Sami (Davvisámegiella)',
+    sm: 'Samoan (Gagana Samoa)',
+    sg: 'Sango (Sängö)',
+    sa: 'Sanskrit (संस्कृतम्)',
+    sc: 'Sardinian (Sardu)',
+    sr: 'Serbian (Српски)',
+    sn: 'Shona (Shona)',
+    sd: 'Sindhi (سنڌي)',
+    si: 'Sinhala, Sinhalese (සිංහල)',
+    sk: 'Slovak (Slovenčina)',
+    sl: 'Slovenian (Slovenščina)',
+    so: 'Somali (Soomaali)',
+    st: 'Southern Sotho (Sesotho)',
+    es: 'Spanish, Castilian (Español)',
+    su: 'Sundanese (Basa Sunda)',
+    sw: 'Swahili (Kiswahili)',
+    ss: 'Swati (SiSwati)',
+    sv: 'Swedish (Svenska)',
+    tl: 'Tagalog (Wikang Tagalog)',
+    ty: 'Tahitian (Reo Tahiti)',
+    tg: 'Tajik (Тоҷикӣ)',
+    ta: 'Tamil (தமிழ்)',
+    tt: 'Tatar (Татар)',
+    te: 'Telugu (తెలుగు)',
+    th: 'Thai (ไทย)',
+    bo: 'Tibetan (བོད་ཡིག)',
+    ti: 'Tigrinya (ትግርኛ)',
+    to: 'Tonga (Tonga Islands)',
+    ts: 'Tsonga (Xitsonga)',
+    tn: 'Tswana (Setswana)',
+    tr: 'Turkish (Türkçe)',
+    tk: 'Turkmen (Türkmençe)',
+    tw: 'Twi (Twi)',
+    ug: 'Uighur, Uyghur (ئۇيغۇرچە)',
+    uk: 'Ukrainian (Українська)',
+    ur: 'Urdu (اردو)',
+    uz: 'Uzbek (Oʻzbek)',
+    ve: 'Venda (TshiVenḓa)',
+    vi: 'Vietnamese (Tiếng Việt)',
+    vo: 'Volapük (Volapük)',
+    wa: 'Walloon (Walon)',
+    cy: 'Welsh (Cymraeg)',
+    wo: 'Wolof (Wolof)',
+    xh: 'Xhosa (Xhosa)',
+    ii: 'Sichuan Yi, Nuosu (四川彝语)',
+    yi: 'Yiddish (ייִדיש)',
+    yo: 'Yoruba (Yorùbá)',
+    za: 'Zhuang, Chuang (壮语)',
+    zu: 'Zulu (isiZulu)',
+};
+
 export const reversedLocalesMap: { [key: string]: string } = Object.fromEntries(
     Object.entries(allLocalesMap).map(([key, value]) => [value, key]),
 );
@@ -263,7 +451,9 @@ export type LanguageDataType = {
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
+    sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
+    stopWords: string[];
     trimText: (text: string) => string;
     endWord: (text: string) => string;
     checkShouldNewLine: (text: string) => boolean;
@@ -271,6 +461,7 @@ export type LanguageDataType = {
         bibleItem: AnyObjectType,
         appProvider: AppProviderType,
     ) => any[];
+    bibleAudioAvailable: boolean;
 };
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
@@ -364,7 +555,7 @@ export function toStringNum(numList: string[], n: number): string {
     return `${n}`
         .split('')
         .map((n1) => {
-            return numList[parseInt(n1)];
+            return numList[Number.parseInt(n1)];
         })
         .join('');
 }
@@ -389,10 +580,10 @@ export function fromStringNum(numList: string[], localeNum: string) {
             return n;
         })
         .join('');
-    if (isNaN(parseInt(nString))) {
+    if (Number.isNaN(Number.parseInt(nString))) {
         return null;
     }
-    return Number(nString);
+    return Number.parseInt(nString);
 }
 
 export async function fromLocaleNum(locale: LocaleType, localeNum: string) {
@@ -402,6 +593,15 @@ export async function fromLocaleNum(locale: LocaleType, localeNum: string) {
     }
     const numList = langData.numList;
     return fromStringNum(numList, localeNum);
+}
+
+export async function sanitizePreviewText(locale: LocaleType, text: string) {
+    let langData = await getLangAsync(locale);
+    langData ??= await getLangAsync(defaultLocale);
+    if (langData === null) {
+        return text;
+    }
+    return langData.sanitizePreviewText(text);
 }
 
 export async function sanitizeFindingText(locale: LocaleType, text: string) {
@@ -421,12 +621,24 @@ export function quickTrimText(locale: LocaleType, text: string) {
     return langData.trimText(text);
 }
 
+export function checkIsStopWord(locale: LocaleType, text: string) {
+    const langData = getLang(locale);
+    if (langData === null) {
+        return false;
+    }
+    return langData.stopWords.includes(text);
+}
+
 export function quickEndWord(locale: LocaleType, text: string) {
     const langData = getLang(locale);
     if (langData === null) {
         return text;
     }
-    return langData.endWord(text);
+    const trimText = langData.trimText(text);
+    if (trimText === '') {
+        return '';
+    }
+    return langData.endWord(trimText);
 }
 
 export async function getFontFamily(locale: LocaleType) {

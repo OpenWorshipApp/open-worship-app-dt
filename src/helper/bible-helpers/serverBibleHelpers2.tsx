@@ -5,6 +5,7 @@ import {
     fromLocaleNum,
     fromStringNum,
     getFontFamily,
+    getLangAsync,
     LocaleType,
     toLocaleNum,
     toStringNum,
@@ -50,6 +51,13 @@ export async function getBibleLocale(bibleKey: string) {
         return 'en' as LocaleType;
     }
     return info.locale;
+}
+
+export async function getLangFromBibleKey(bibleKey: string) {
+    const locale = await getBibleLocale(bibleKey);
+    const langData =
+        (await getLangAsync(locale)) || (await getLangAsync('en-US'));
+    return langData;
 }
 
 export async function getBibleFontFamily(bibleKey: string) {
@@ -249,6 +257,7 @@ async function transformExtracted(
     }
     return result;
 }
+
 const regexTitleMap: [
     string,
     (

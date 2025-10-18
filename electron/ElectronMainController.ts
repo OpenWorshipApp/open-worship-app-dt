@@ -3,14 +3,18 @@ import { BrowserWindow, Menu, MenuItem, shell } from 'electron';
 import { channels, ScreenMessageType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import ElectronSettingController from './ElectronSettingController';
-import { attemptClosing, isSecured } from './electronHelpers';
+import {
+    attemptClosing,
+    getAppThemeBackgroundColor,
+    isSecured,
+} from './electronHelpers';
 
 let instance: ElectronMainController | null = null;
 export default class ElectronMainController {
     win: BrowserWindow;
 
     constructor(settingController: ElectronSettingController) {
-        this.win = this.createMainWindow(settingController);
+        this.win = this.createWindow(settingController);
     }
 
     previewPdf(pdfFilePath: string) {
@@ -21,10 +25,10 @@ export default class ElectronMainController {
         pdfWin.loadURL(pdfFilePath);
     }
 
-    createMainWindow(settingController: ElectronSettingController) {
+    createWindow(settingController: ElectronSettingController) {
         const routeProps = genRoutProps(settingController.mainHtmlPath);
         const win = new BrowserWindow({
-            backgroundColor: '#000000',
+            backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
             webPreferences: {
@@ -98,5 +102,9 @@ export default class ElectronMainController {
             instance = new this(settingController);
         }
         return instance;
+    }
+
+    gotoSettingHomePage() {
+        this.win.webContents.executeJavaScript('gotoSettingPage();');
     }
 }

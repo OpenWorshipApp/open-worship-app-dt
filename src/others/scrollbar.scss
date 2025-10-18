@@ -1,6 +1,33 @@
 #app {
+  &[data-bs-theme='dark'] {
+    *::-webkit-scrollbar-track {
+      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+      background-color: var(--bs-gray-500);
+    }
+
+    *::-webkit-scrollbar {
+      background-color: var(--bs-gray-600);
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background-color: var(--bs-gray-600);
+      background-image: gradient(
+        linear,
+        40% 0%,
+        75% 84%,
+        from(var(--bs-gray-800)),
+        to(var(--bs-gray-800)),
+        color-stop(0.6, var(--bs-gray-600))
+      );
+    }
+
+    *::-webkit-scrollbar-corner {
+      background-color: var(--bs-gray-600);
+    }
+  }
+
   *::-webkit-scrollbar-track {
-    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.1);
     background-color: var(--bs-gray-500);
     border-radius: 10px;
   }
@@ -8,23 +35,23 @@
   *::-webkit-scrollbar {
     width: 7px;
     height: 7px;
-    background-color: var(--bs-gray-600);
+    background-color: var(--bs-gray-400);
   }
 
   *::-webkit-scrollbar-thumb {
     border-radius: 10px;
-    background-color: var(--bs-gray-600);
+    background-color: var(--bs-gray-400);
     background-image: gradient(
       linear,
       40% 0%,
       75% 84%,
-      from(var(--bs-gray-800)),
-      to(var(--bs-gray-800)),
-      color-stop(0.6, var(--bs-gray-600))
+      from(var(--bs-gray-200)),
+      to(var(--bs-gray-200)),
+      color-stop(0.6, var(--bs-gray-400))
     );
   }
 
   *::-webkit-scrollbar-corner {
-    background-color: var(--bs-gray-600);
+    background-color: var(--bs-gray-400);
   }
 }

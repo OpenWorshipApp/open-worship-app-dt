@@ -1,4 +1,5 @@
-import { DOMAttributes } from 'react';
+import { DOMAttributes, CSSProperties } from 'react';
+
 import { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { BibleItemRenderingType } from './bibleScreenComps';
 
@@ -56,12 +57,12 @@ export const scaleTypeList = [
 ] as const;
 export type ImageScaleType = (typeof scaleTypeList)[number];
 
-const _backgroundTypeList = ['color', 'image', 'video', 'sound'] as const;
+const _backgroundTypeList = ['color', 'image', 'video', 'audio'] as const;
 export type BackgroundType = (typeof _backgroundTypeList)[number];
 export type BackgroundDataType = {
     src: string | null;
     scaleType?: ImageScaleType;
-    extraStyle?: React.CSSProperties;
+    extraStyle?: CSSProperties;
 };
 export type BackgroundSrcType = {
     type: BackgroundType;
@@ -69,7 +70,7 @@ export type BackgroundSrcType = {
     width?: number;
     height?: number;
     scaleType?: ImageScaleType;
-    extraStyle?: React.CSSProperties;
+    extraStyle?: CSSProperties;
 };
 export type BackgroundSrcListType = {
     [key: string]: BackgroundSrcType;
@@ -77,31 +78,31 @@ export type BackgroundSrcListType = {
 
 export type ForegroundCountdownDataType = {
     dateTime: Date;
-    extraStyle?: React.CSSProperties;
+    extraStyle?: CSSProperties;
 };
 export type ForegroundStopwatchDataType = {
     dateTime: Date;
-    extraStyle?: React.CSSProperties;
+    extraStyle?: CSSProperties;
 };
 export type ForegroundTimeDataType = {
     id: string;
     timezoneMinuteOffset: number;
     title: string | null;
-    extraStyle?: React.CSSProperties;
+    extraStyle?: CSSProperties;
 };
 export type ForegroundMarqueDataType = {
     text: string;
-    extraStyle?: React.CSSProperties;
+    extraStyle?: CSSProperties;
 };
 export type ForegroundQuickTextDataType = {
     htmlText: string;
     timeSecondDelay: number;
     timeSecondToLive: number;
-    extraStyle?: React.CSSProperties;
+    extraStyle?: CSSProperties;
 };
 export type ForegroundCameraDataType = {
     id: string;
-    extraStyle?: React.CSSProperties;
+    extraStyle?: CSSProperties;
 };
 export type ForegroundDataType = {
     countdownData: ForegroundCountdownDataType | null;

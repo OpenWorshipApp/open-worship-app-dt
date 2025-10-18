@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, ReactNode } from 'react';
 
 import {
     TabOptionType,
@@ -212,7 +212,7 @@ function useLyricContextValues() {
 export default function AppLayoutComp({
     children,
 }: Readonly<{
-    children: React.ReactNode;
+    children: ReactNode;
 }>) {
     const [isBibleLookupShowing, setIsBibleLookupShowing] = useState(false);
     const { varyAppDocumentContextValue, editingSlideContextValue } =

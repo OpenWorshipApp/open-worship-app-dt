@@ -5,9 +5,11 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import ScreenAppComp from './_screen/ScreenAppComp';
 import appProvider from './server/appProvider';
+import { addDomChangeEventListener, removeDomTitle } from './helper/domHelpers';
 
 const container = document.getElementById('root');
 if (container !== null) {
+    addDomChangeEventListener(removeDomTitle);
     const root = createRoot(container);
     root.render(
         <StrictMode>

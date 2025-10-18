@@ -1,5 +1,6 @@
 const appUtils = {
     handleError: (error: any) => {
+        console.trace('An error occurred:');
         console.error(error);
     },
     base64Encode: (str: string) => {

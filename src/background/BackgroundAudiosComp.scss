@@ -1,0 +1,35 @@
+.app-background-audio {
+  .audio-thumbnail {
+    width: 100% !important;
+    padding-left: 5px;
+    margin: 5px;
+    cursor: pointer;
+
+    .card-body {
+      padding: 0 !important;
+
+      audio {
+        width: 100%;
+        max-height: 50px;
+
+        &::-webkit-media-controls-mute-button {
+          display: none !important;
+        }
+
+        &::-webkit-media-controls-volume-slider {
+          display: none !important;
+        }
+      }
+    }
+
+    .card-footer {
+      font-size: 10px;
+      white-space: nowrap;
+      text-align: right;
+      padding: 0 !important;
+      p {
+        font-size: 20px;
+      }
+    }
+  }
+}

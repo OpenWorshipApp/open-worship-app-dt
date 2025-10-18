@@ -54,8 +54,8 @@ export default function RenderEditingActionButtonsComp({
                 <i className="bi bi-vr" />
             </button>
             <button
-                type="button"
                 className="btn btn-sm btn-info"
+                type="button"
                 title={`Split vertical [${toShortcutKey(eventMaps[1])}]`}
                 onClick={() => {
                     viewController.addBibleItemBottom(bibleItem, bibleItem);
@@ -64,8 +64,8 @@ export default function RenderEditingActionButtonsComp({
                 <i className="bi bi-hr" />
             </button>
             <button
+                className="btn btn-sm btn-primary"
                 type="button"
-                className="btn btn-sm btn-info"
                 title={`Save bible item [${toShortcutKey(addListEventMapper)}]`}
                 onClick={() => {
                     saveBibleItem(
@@ -78,8 +78,8 @@ export default function RenderEditingActionButtonsComp({
             </button>
             {appProvider.isPagePresenter ? (
                 <button
+                    className="btn btn-sm btn-primary"
                     type="button"
-                    className="btn btn-sm btn-info"
                     title={`\`Save bible item and show on screen [${toShortcutKey(
                         presenterEventMapper,
                     )}]`}

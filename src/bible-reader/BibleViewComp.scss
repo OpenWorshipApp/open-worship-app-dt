@@ -3,11 +3,12 @@
 .bible-view {
   min-width: 200px;
 
-  &:hover {
-    border: 1px dotted rgba(82, 127, 150, 0.572);
-  }
-
   .card-header {
+    .bible-extra-key:hover {
+      text-decoration: underline;
+      color: red;
+    }
+
     .btn-close {
       margin: 5px;
     }
@@ -20,7 +21,6 @@
         padding: 0;
         padding-left: 5px;
         padding-right: 25px;
-        background-color: var(--bs-gray-800);
       }
     }
   }
@@ -36,42 +36,58 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-}
 
-.bible-view-text {
-  .verse-number,
-  .verse-text {
-    display: inline;
-  }
+  .bible-view-text {
+    .verse-number,
+    .verse-text {
+      display: inline;
+    }
 
-  .verse-number {
-    div {
-      display: inline-block;
-      color: rgba(172, 255, 47, 0.645);
-      transform: scale(0.7) translateY(-0.3em);
-      opacity: 0.7;
-      &.verse-number-rest {
-        opacity: 0.2;
-        pointer-events: none;
-        padding: 0;
-        margin: 0 2px;
-        line-height: 0;
+    .verse-number {
+      &.extra-verses {
+        display: block;
+        margin-top: 5px;
+      }
+      div {
+        display: inline-block;
+        transform: scale(0.7) translateY(-0.3em);
+        opacity: 0.7;
+        &.verse-number-rest {
+          opacity: 0.2;
+          pointer-events: none;
+          padding: 0;
+          margin: 0 2px;
+          line-height: 0;
+        }
       }
     }
-  }
 
-  .verse-text {
-    &:hover {
-      border-bottom: 0.01em dashed rgba(134, 134, 134, 0.431);
-    }
+    .verse-text {
+      &.extra-verses {
+        span::before {
+          content: '.:';
+          opacity: 0.1;
+        }
+      }
+      .verse-audio {
+        display: none;
+      }
+      audio {
+        &::-webkit-media-controls-current-time-display,
+        &::-webkit-media-controls-time-remaining-display {
+          display: none;
+        }
+        vertical-align: middle;
+        margin: 0;
+        max-width: 200px;
+        max-height: 20px;
+      }
 
-    &.selected {
-      background: linear-gradient(
-        transparent,
-        transparent,
-        rgb(134, 0, 120),
-        transparent
-      );
+      &.selected {
+        .verse-audio {
+          display: inline-block;
+        }
+      }
     }
   }
 }

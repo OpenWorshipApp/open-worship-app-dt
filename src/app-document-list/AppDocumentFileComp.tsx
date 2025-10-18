@@ -165,7 +165,6 @@ export default function AppDocumentFileComp({
             data={varyAppDocument}
             reload={handleReloading}
             filePath={filePath}
-            isPointer
             onClick={handleClicking}
             renderChild={handleChildRendering}
             contextMenuItems={genContextMenuItems(

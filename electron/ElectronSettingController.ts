@@ -54,7 +54,8 @@ export default class ElectronSettingController {
         this.save();
     }
 
-    resetMainBounds(win: BrowserWindow) {
+    restoreMainBounds(win: BrowserWindow) {
+        // TODO: check if bounds are valid (outside of screen) reset to default
         this.mainWinBounds = this.primaryDisplay.bounds;
         win.setBounds(this.mainWinBounds);
     }

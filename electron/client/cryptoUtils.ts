@@ -21,6 +21,9 @@ const cryptoUtils = {
         );
         return decrypted.toString();
     },
+    createHash(algorithm: string) {
+        return crypto.createHash(algorithm);
+    },
 };
 
 export default cryptoUtils;

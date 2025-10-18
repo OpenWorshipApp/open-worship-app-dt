@@ -1,4 +1,14 @@
-import { createContext, ReactNode, use, useMemo } from 'react';
+import {
+    createContext,
+    Fragment,
+    ReactNode,
+    RefObject,
+    use,
+    useMemo,
+    useRef,
+    useState,
+    MouseEvent as ReactMouseEvent,
+} from 'react';
 
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 import {
@@ -13,12 +23,16 @@ import {
     ReadIdOnlyBibleItem,
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
-import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
 import {
+    BIBLE_VERSE_TEXT_TITLE,
+    checkIsVerticalPartialInvisible,
+} from '../helper/helpers';
+import {
+    bibleRenderHelper,
     BibleTargetType,
     CompiledVerseType,
 } from '../bible-list/bibleRenderHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import BibleViewTitleEditorComp from './BibleViewTitleEditorComp';
 import {
     getVersesCount,
@@ -27,6 +41,19 @@ import {
 import RenderActionButtonsComp from '../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
+import LoadingComp from '../others/LoadingComp';
+import { getAISetting } from '../helper/ai/aiHelpers';
+import FileSource from '../helper/FileSource';
+import LookupBibleItemController from './LookupBibleItemController';
+import { AudioAIEnablingComp } from './AudioAIEnablingComp';
+import appProvider from '../server/appProvider';
+import BibleItem from '../bible-list/BibleItem';
+import {
+    bibleTextToSpeech,
+    checkIsAIAudioAvailableForBible,
+    useIsAudioAIEnabled,
+} from '../helper/ai/openAIAudioHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -48,7 +75,11 @@ export function RenderTitleMaterialComp({
     onBibleKeyChange,
 }: Readonly<{
     bibleItem: ReadIdOnlyBibleItem;
-    onBibleKeyChange?: (oldBibleKey: string, newBibleKey: string) => void;
+    onBibleKeyChange?: (
+        isContextMenu: boolean,
+        oldBibleKey: string,
+        newBibleKey: string,
+    ) => void;
 }>) {
     const viewController = useBibleItemsViewControllerContext();
     const materialContext = useBibleViewTitleMaterialContext();
@@ -67,15 +98,50 @@ export function RenderTitleMaterialComp({
                 overflowX: 'auto',
             }}
         >
-            <ItemColorNoteComp item={colorNoteHandler} />
+            <div>
+                <div>
+                    <ItemColorNoteComp item={colorNoteHandler} />
+                </div>
+                <div>
+                    <AudioAIEnablingComp bibleItem={bibleItem} />
+                </div>
+            </div>
             <div className="d-flex flex-fill">
                 <div className="d-flex ps-1">
                     <div style={{ margin: 'auto' }}>
                         <BibleSelectionMiniComp
                             bibleKey={bibleItem.bibleKey}
                             onBibleKeyChange={onBibleKeyChange}
+                            contextMenuTitle="`Add Extra Bible"
                         />
                     </div>
+                    {bibleItem.extraBibleKeys.map((extraBibleKey) => (
+                        <span
+                            className="bible-extra-key bg-primary small app-caught-hover-pointer"
+                            title={`Click to remove extra Bible ${extraBibleKey}`}
+                            data-bible-key={extraBibleKey}
+                            key={extraBibleKey}
+                            style={{
+                                borderRadius: '8px',
+                                fontSize: '10px',
+                                padding: '2px',
+                                margin: 'auto 1px',
+                            }}
+                            onClick={() => {
+                                viewController.applyTargetOrBibleKey(
+                                    bibleItem,
+                                    {
+                                        extraBibleKeys:
+                                            bibleItem.extraBibleKeys.filter(
+                                                (key) => key !== extraBibleKey,
+                                            ),
+                                    },
+                                );
+                            }}
+                        >
+                            {extraBibleKey}
+                        </span>
+                    ))}
                 </div>
                 <div className="flex-item">{materialContext.titleElement}</div>
             </div>
@@ -96,12 +162,23 @@ export function RenderHeaderComp({
             <RenderTitleMaterialComp
                 bibleItem={bibleItem}
                 onBibleKeyChange={(
+                    isContextMenu: boolean,
                     _oldBibleKey: string,
                     newBibleKey: string,
                 ) => {
-                    viewController.applyTargetOrBibleKey(bibleItem, {
-                        bibleKey: newBibleKey,
-                    });
+                    viewController.applyTargetOrBibleKey(
+                        bibleItem,
+                        isContextMenu
+                            ? {
+                                  extraBibleKeys: [
+                                      ...bibleItem.extraBibleKeys,
+                                      newBibleKey,
+                                  ],
+                              }
+                            : {
+                                  bibleKey: newBibleKey,
+                              },
+                    );
                 }}
             />
             <div
@@ -137,7 +214,7 @@ export function BibleDirectViewTitleComp({
     return (
         <span
             data-bible-key={bibleItem.bibleKey}
-            className="title app-border-white-round m-1 px-1"
+            className="title app-border-white-round m-1 px-1 app-found-highlight"
         >
             {title}
         </span>
@@ -148,12 +225,16 @@ export function BibleViewTitleWrapperComp({
     children,
     bibleKey,
 }: Readonly<{
-    children: React.ReactNode;
+    children: ReactNode;
     bibleKey: string;
 }>) {
     const fontSize = useBibleViewFontSizeContext();
     return (
-        <span className="title" data-bible-key={bibleKey} style={{ fontSize }}>
+        <span
+            className="title full-view-reset-font-size"
+            data-bible-key={bibleKey}
+            style={{ fontSize }}
+        >
             {children}
         </span>
     );
@@ -165,7 +246,7 @@ export function BibleViewTitleEditingComp({
 }: Readonly<{
     bibleItem: ReadIdOnlyBibleItem;
     onTargetChange: (bibleTarget: BibleTargetType) => void;
-    children?: React.ReactNode;
+    children?: ReactNode;
 }>) {
     return (
         <BibleViewTitleWrapperComp bibleKey={bibleItem.bibleKey}>
@@ -178,16 +259,324 @@ export function BibleViewTitleEditingComp({
     );
 }
 
-function RenderVerseTextComp({
+function cleanupVerseNumberClicked(event: ReactMouseEvent) {
+    event.stopPropagation();
+    event.preventDefault();
+    setTimeout(() => {
+        const selection = window.getSelection();
+        if (selection !== null && selection.rangeCount > 0) {
+            selection.removeAllRanges();
+        }
+    }, 2e3);
+}
+
+function AudioPlayerComp({
+    src,
+    onStart,
+    onEnd,
+    refreshAudio,
+}: Readonly<{
+    src: string | undefined | null;
+    onStart: (audio: HTMLAudioElement) => void;
+    onEnd: (audio: HTMLAudioElement) => void;
+    refreshAudio: () => void;
+}>) {
+    if (src === undefined) {
+        return (
+            <div
+                className="verse-audio"
+                style={{
+                    width: '40px',
+                    height: '40px',
+                }}
+            >
+                <LoadingComp />
+            </div>
+        );
+    }
+    if (src === null) {
+        return null;
+    }
+    const handleContextMenuOpening = (event: any) => {
+        showAppContextMenu(event, [
+            {
+                menuElement: '`Refresh',
+                onSelect: refreshAudio,
+            },
+        ]);
+    };
+    return (
+        <audio
+            className="verse-audio"
+            ref={(element) => {
+                const openAISetting = getAISetting();
+                if (
+                    appProvider.isPageReader &&
+                    openAISetting.isAutoPlay &&
+                    element !== null &&
+                    element.checkVisibility()
+                ) {
+                    element.play();
+                    element.focus();
+                    onStart(element);
+                }
+            }}
+            controls
+            onPlay={(event) => {
+                const el = event.currentTarget;
+                document.querySelectorAll('audio').forEach((el1) => {
+                    if (el1 !== el) {
+                        el1.pause();
+                    }
+                });
+            }}
+            onEnded={(event) => {
+                const el = event.currentTarget;
+                if (el && el.checkVisibility()) {
+                    onEnd(el);
+                }
+            }}
+            onContextMenu={handleContextMenuOpening}
+        >
+            <source src={src} />
+            <track kind="captions" />
+            Browser does not support audio.
+        </audio>
+    );
+}
+
+function handleNextChapterSelection(
+    lookupBibleItemController: LookupBibleItemController,
+    targetElement: HTMLDivElement,
+) {
+    targetElement.click();
+    lookupBibleItemController.shouldSelectFirstItem = true;
+    lookupBibleItemController.tryJumpingChapter(true);
+}
+
+function handleNextVersionSelection(
+    currentTarget: HTMLDivElement,
+    nextKjvVerseKey: string,
+) {
+    const audioAISetting = getAISetting();
+    if (!audioAISetting.isAutoPlay || !appProvider.isPageReader) {
+        return;
+    }
+    const parentElement = currentTarget.parentElement;
+    if (parentElement === null) {
+        return;
+    }
+    const nextTarget = parentElement.querySelector(
+        `[data-kjv-verse-key="${nextKjvVerseKey}"]`,
+    );
+    if (!(nextTarget instanceof HTMLDivElement)) {
+        return;
+    }
+    if (
+        nextTarget.parentElement?.parentElement &&
+        checkIsVerticalPartialInvisible(
+            nextTarget.parentElement.parentElement,
+            nextTarget,
+        )
+    ) {
+        const dblclickEvent = new MouseEvent('dblclick', {
+            bubbles: true,
+            cancelable: true,
+        });
+        nextTarget.dispatchEvent(dblclickEvent);
+    } else {
+        nextTarget.click();
+    }
+}
+
+function RenderVerseTextDetailListComp({
     bibleItem,
     verseInfo,
-    index,
+    nextVerseInfo,
+    extraVerseInfoList = [],
+    verseTextRef,
+    audioSrcMap,
+    refreshAudio,
+}: Readonly<{
+    bibleItem: BibleItem;
+    verseInfo: CompiledVerseType;
+    nextVerseInfo: CompiledVerseType | null;
+    extraVerseInfoList?: CompiledVerseType[];
+    verseTextRef: RefObject<HTMLDivElement | null>;
+    audioSrcMap: { [key: string]: string | undefined | null };
+    refreshAudio: () => void;
+}>) {
+    const { isAudioEnabled } = useIsAudioAIEnabled(bibleItem);
+    const bibleItemViewController = useBibleItemsViewControllerContext();
+    const verseInfoList = [verseInfo, ...extraVerseInfoList];
+    const handleAudioStarting = () => {
+        if (nextVerseInfo === null) {
+            return;
+        }
+        bibleTextToSpeech(nextVerseInfo);
+    };
+    const handleAudioEnding = () => {
+        if (verseTextRef.current === null) {
+            return;
+        }
+        if (
+            verseInfo.isLast &&
+            bibleItemViewController instanceof LookupBibleItemController
+        ) {
+            handleNextChapterSelection(
+                bibleItemViewController,
+                verseTextRef.current,
+            );
+        }
+        if (nextVerseInfo === null) {
+            return;
+        }
+        handleNextVersionSelection(
+            verseTextRef.current,
+            nextVerseInfo.kjvBibleVersesKey,
+        );
+    };
+    return verseInfoList.map(({ bibleKey, text, bibleVersesKey }, i) => (
+        <Fragment key={bibleKey}>
+            {i > 0 ? <br /> : null}
+            {isAudioEnabled &&
+            Object.keys(audioSrcMap).includes(bibleVersesKey) ? (
+                <AudioPlayerComp
+                    src={audioSrcMap[bibleVersesKey]}
+                    onStart={handleAudioStarting}
+                    onEnd={handleAudioEnding}
+                    refreshAudio={refreshAudio}
+                />
+            ) : null}
+            <span data-bible-key={bibleKey}>{text}</span>
+        </Fragment>
+    ));
+}
+
+function RenderVerseTextDetailComp({
+    bibleItem,
+    verseInfo,
+    nextVerseInfo,
+    extraVerseInfoList = [],
 }: Readonly<{
     bibleItem: ReadIdOnlyBibleItem;
     verseInfo: CompiledVerseType;
+    nextVerseInfo: CompiledVerseType | null;
+    extraVerseInfoList?: CompiledVerseType[];
+    index: number;
+}>) {
+    const bibleItemViewController = useBibleItemsViewControllerContext();
+    const verseTextRef = useRef<HTMLDivElement>(null);
+    useAppEffect(() => {
+        if (
+            verseInfo.isFirst &&
+            verseTextRef.current !== null &&
+            bibleItemViewController.shouldSelectFirstItem
+        ) {
+            bibleItemViewController.shouldSelectFirstItem = false;
+            verseTextRef.current.click();
+        }
+    }, [verseTextRef.current, verseInfo]);
+    const [audioSrcMap, setAudioSrcMap] = useState<{
+        [key: string]: string | undefined | null;
+    }>({});
+    const setAudioSrcMap1 = (key: string, value: string | undefined | null) => {
+        setAudioSrcMap((oldAudioSrcMap) => {
+            return {
+                ...oldAudioSrcMap,
+                [key]: value,
+            };
+        });
+    };
+    const viewController = useBibleItemsViewControllerContext();
+    const isExtraVerses = extraVerseInfoList.length > 0;
+    const loadAudio = async (isForce?: boolean) => {
+        const isAudioEnabled = await checkIsAIAudioAvailableForBible(bibleItem);
+        if (!isAudioEnabled) {
+            return;
+        }
+        const { bibleVersesKey } = verseInfo;
+        setAudioSrcMap1(bibleVersesKey, undefined);
+        const speechFile = await bibleTextToSpeech(verseInfo, isForce);
+        if (speechFile === null) {
+            setAudioSrcMap1(bibleVersesKey, null);
+            return;
+        }
+        setAudioSrcMap1(bibleVersesKey, FileSource.getInstance(speechFile).src);
+    };
+    const handleVerseClicking = (event: any) => {
+        if (getSelectedText()) {
+            return;
+        }
+        viewController.handleVersesSelecting(
+            event.currentTarget,
+            event.altKey,
+            false,
+            bibleItem,
+        );
+        loadAudio();
+    };
+    const handleVerseDBClicking = (event: any) => {
+        event.stopPropagation();
+        event.preventDefault();
+        const selection = window.getSelection();
+        if (selection !== null && selection.rangeCount > 0) {
+            selection.removeAllRanges();
+        }
+        viewController.handleVersesSelecting(
+            event.currentTarget,
+            true,
+            false,
+            bibleItem,
+        );
+        loadAudio();
+    };
+    const handleAudioRefreshing = () => {
+        loadAudio(true);
+    };
+    return (
+        <div
+            ref={verseTextRef}
+            className={
+                VERSE_TEXT_CLASS + (isExtraVerses ? ' extra-verses' : '')
+            }
+            data-kjv-verse-key={verseInfo.kjvBibleVersesKey}
+            data-verse-key={verseInfo.bibleVersesKey}
+            data-is-first={verseInfo.isFirst ? '1' : '0'}
+            data-is-last={verseInfo.isLast ? '1' : '0'}
+            title={BIBLE_VERSE_TEXT_TITLE}
+            onClick={handleVerseClicking}
+            onDoubleClick={handleVerseDBClicking}
+        >
+            <RenderVerseTextDetailListComp
+                bibleItem={bibleItem}
+                verseInfo={verseInfo}
+                nextVerseInfo={nextVerseInfo}
+                extraVerseInfoList={extraVerseInfoList}
+                verseTextRef={verseTextRef}
+                audioSrcMap={audioSrcMap}
+                refreshAudio={handleAudioRefreshing}
+            />
+        </div>
+    );
+}
+
+function RenderVerseTextComp({
+    bibleItem,
+    verseInfo,
+    nextVerseInfo,
+    index,
+    extraVerseInfoList = [],
+}: Readonly<{
+    bibleItem: ReadIdOnlyBibleItem;
+    verseInfo: CompiledVerseType;
+    nextVerseInfo: CompiledVerseType | null;
+    extraVerseInfoList?: CompiledVerseType[];
     index: number;
 }>) {
     const viewController = useBibleItemsViewControllerContext();
+    const isExtraVerses = extraVerseInfoList.length > 0;
+    const verseInfoList = [verseInfo, ...extraVerseInfoList];
     return (
         <>
             {viewController.shouldNewLine &&
@@ -196,9 +585,13 @@ function RenderVerseTextComp({
                 <br />
             ) : null}
             <div
-                className="verse-number app-caught-hover-pointer"
-                title={verseInfo.verse.toString()}
-                onClick={() => {
+                className={
+                    'verse-number app-caught-hover-pointer' +
+                    (isExtraVerses ? ' extra-verses' : '')
+                }
+                title={`Double click to select verse ${verseInfo.localeVerse}`}
+                onDoubleClick={(event) => {
+                    cleanupVerseNumberClicked(event);
                     viewController.applyTargetOrBibleKey(bibleItem, {
                         target: {
                             ...bibleItem.target,
@@ -208,47 +601,27 @@ function RenderVerseTextComp({
                     });
                 }}
             >
-                <div data-bible-key={verseInfo.bibleKey}>
+                <div>
                     {verseInfo.isNewLine ? (
                         <span className="verse-number-text">&nbsp;&nbsp;</span>
                     ) : null}
-                    {verseInfo.localeVerse}
+                    {verseInfoList.map((extraVerseInfo, i) => (
+                        <Fragment key={extraVerseInfo.bibleKey}>
+                            {i > 0 ? ', ' : null}
+                            <span data-bible-key={extraVerseInfo.bibleKey}>
+                                {extraVerseInfo.localeVerse}
+                            </span>
+                        </Fragment>
+                    ))}
                 </div>
             </div>
-            <div
-                className={VERSE_TEXT_CLASS}
-                data-bible-key={verseInfo.bibleKey}
-                data-kjv-verse-key={verseInfo.kjvBibleVersesKey}
-                data-verse-key={verseInfo.bibleVersesKey}
-                title={BIBLE_VERSE_TEXT_TITLE}
-                onClick={(event) => {
-                    if (getSelectedText()) {
-                        return;
-                    }
-                    viewController.handleVersesSelecting(
-                        event.currentTarget,
-                        event.altKey,
-                        false,
-                        bibleItem,
-                    );
-                }}
-                onDoubleClick={(event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    const selection = window.getSelection();
-                    if (selection !== null && selection.rangeCount > 0) {
-                        selection.removeAllRanges();
-                    }
-                    viewController.handleVersesSelecting(
-                        event.currentTarget,
-                        true,
-                        false,
-                        bibleItem,
-                    );
-                }}
-            >
-                {verseInfo.text}
-            </div>
+            <RenderVerseTextDetailComp
+                bibleItem={bibleItem}
+                verseInfo={verseInfo}
+                nextVerseInfo={nextVerseInfo}
+                extraVerseInfoList={extraVerseInfoList}
+                index={index}
+            />
         </>
     );
 }
@@ -258,14 +631,14 @@ function RenderRestVerseNumListComp({
     from,
     bibleItem,
     verseCount,
-    onClick,
+    onSelect,
     toTitle,
 }: Readonly<{
     to?: number;
     from?: number;
     bibleItem: ReadIdOnlyBibleItem;
     verseCount: number;
-    onClick: (verse: number) => void;
+    onSelect: (verse: number) => void;
     toTitle: (verse: number) => string;
 }>) {
     const fontSize = useBibleViewFontSizeContext();
@@ -296,9 +669,10 @@ function RenderRestVerseNumListComp({
                     <div
                         key={verse}
                         className="verse-number app-caught-hover-pointer"
-                        title={toTitle(verse)}
-                        onClick={() => {
-                            onClick(verse);
+                        title={`Double click to select verses ${toTitle(verse)}`}
+                        onDoubleClick={(event) => {
+                            cleanupVerseNumberClicked(event);
+                            onSelect(verse);
                         }}
                     >
                         <div
@@ -321,17 +695,36 @@ function RenderRestVerseNumListComp({
 export function BibleViewTextComp({
     bibleItem,
 }: Readonly<{ bibleItem: ReadIdOnlyBibleItem }>) {
-    const { bibleKey, target } = bibleItem;
+    const { bibleKey, extraBibleKeys, target } = bibleItem;
     const fontSize = useBibleViewFontSizeContext();
     const viewController = useBibleItemsViewControllerContext();
     const [verseList] = useAppStateAsync(() => {
-        return bibleItem.toVerseTextList();
-    }, [bibleItem.bibleKey, bibleItem.target]);
+        return bibleRenderHelper.toVerseTextList(bibleKey, target);
+    }, [bibleKey, target]);
+    const [extraVerseInfoListList] = useAppStateAsync(async () => {
+        const results = await Promise.all(
+            extraBibleKeys.map((key) => {
+                return bibleRenderHelper.toVerseTextList(key, target);
+            }),
+        );
+        return results.filter((list) => {
+            return list !== null;
+        });
+    }, [extraBibleKeys, target]);
     const [verseCount] = useAppStateAsync(() => {
         return getVersesCount(bibleKey, target.bookKey, target.chapter);
     }, [bibleKey, target.bookKey, target.chapter]);
-    if (!verseList || !verseCount) {
-        return null;
+    if (verseList === undefined || verseCount === undefined) {
+        return <LoadingComp />;
+    }
+    if (verseList === null || verseCount === null) {
+        return (
+            <div className={`${BIBLE_VIEW_TEXT_CLASS} p-1`}>
+                <span className="text-danger">
+                    `No verses found for this Bible item.
+                </span>
+            </div>
+        );
     }
     return (
         <div
@@ -346,7 +739,7 @@ export function BibleViewTextComp({
                 to={target.verseStart - 1}
                 bibleItem={bibleItem}
                 verseCount={verseCount}
-                onClick={(verse) => {
+                onSelect={(verse) => {
                     viewController.applyTargetOrBibleKey(bibleItem, {
                         target: { ...bibleItem.target, verseStart: verse },
                     });
@@ -356,11 +749,20 @@ export function BibleViewTextComp({
                 }}
             />
             {verseList.map((verseInfo, i) => {
+                const extraVerseInfoList = extraVerseInfoListList
+                    ? extraVerseInfoListList
+                          .map((verseInfoList) => {
+                              return verseInfoList[i];
+                          })
+                          .filter((v) => !!v)
+                    : [];
                 return (
                     <RenderVerseTextComp
                         key={verseInfo.localeVerse}
                         bibleItem={bibleItem}
                         verseInfo={verseInfo}
+                        extraVerseInfoList={extraVerseInfoList}
+                        nextVerseInfo={verseList[i + 1] ?? null}
                         index={i}
                     />
                 );
@@ -369,7 +771,7 @@ export function BibleViewTextComp({
                 from={target.verseEnd + 1}
                 bibleItem={bibleItem}
                 verseCount={verseCount}
-                onClick={(verse) => {
+                onSelect={(verse) => {
                     viewController.applyTargetOrBibleKey(bibleItem, {
                         target: { ...bibleItem.target, verseEnd: verse },
                     });

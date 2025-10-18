@@ -20,8 +20,7 @@ import {
     BIBLE_VIEW_TEXT_CLASS,
     VERSE_TEXT_CLASS,
 } from '../helper/bibleViewHelpers';
-import { getLangAsync } from '../lang/langHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
+import { getLangFromBibleKey } from '../helper/bible-helpers/serverBibleHelpers2';
 import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import {
     elementDivider,
@@ -37,20 +36,20 @@ export type NestedObjectsType = BibleItemType | NestedObjectsType[];
 export const splitHorizontalId = 'split-horizontal';
 export const splitVerticalId = 'split-vertical';
 
-export const historyStore: {
-    addHistory: (text: string) => void;
+export const bibleHistoryStore: {
+    addBibleItemHistory: (text: string) => void;
 } = {
-    addHistory: (_text: string) => {},
+    addBibleItemHistory: (_text: string) => {},
 };
-export function applyHistoryPendingText() {
+const attemptTimeout = genTimeoutAttempt(4e3, true);
+let pendingText = '';
+export function applyBibleItemHistoryPendingText() {
     if (!pendingText) {
         return;
     }
-    historyStore.addHistory(pendingText);
+    bibleHistoryStore.addBibleItemHistory(pendingText);
     pendingText = '';
 }
-const attemptTimeout = genTimeoutAttempt(4e3);
-let pendingText = '';
 export function attemptAddingHistory(
     bibleKey: string,
     text: string,
@@ -58,11 +57,11 @@ export function attemptAddingHistory(
 ) {
     pendingText = `(${bibleKey}) ${text}`;
     if (isImmediate) {
-        applyHistoryPendingText();
+        applyBibleItemHistoryPendingText();
         return;
     }
     attemptTimeout(() => {
-        applyHistoryPendingText();
+        applyBibleItemHistoryPendingText();
     });
 }
 
@@ -249,6 +248,7 @@ export type MovingPositionType = keyof typeof movingPosition;
 
 const BIBLE_ITEMS_PREVIEW_SETTING = 'bible-items-preview';
 class BibleItemsViewController extends EventHandler<UpdateEventType> {
+    shouldSelectFirstItem = false;
     private readonly _settingNameSuffix: string;
     setBibleVerseKey = (_verseKey: string) => {};
     handleScreenBibleVersesHighlighting = (
@@ -396,7 +396,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
 
     genBibleItemUniqueId() {
-        return new Date().getTime() + Math.floor(Math.random() * 1e6);
+        return new Date().getTime() + Math.round(Math.random() * 1e6);
     }
 
     fireUpdateEvent() {
@@ -489,7 +489,17 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
     applyTargetOrBibleKey(
         bibleItem: ReadIdOnlyBibleItem,
-        { target, bibleKey }: { target?: BibleTargetType; bibleKey?: string },
+        {
+            target,
+            bibleKey,
+            extraBibleKeys,
+            isAudioEnabled,
+        }: {
+            target?: BibleTargetType;
+            bibleKey?: string;
+            extraBibleKeys?: string[];
+            isAudioEnabled?: boolean;
+        },
         isSkipColorSync = false,
     ) {
         try {
@@ -502,6 +512,12 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             const actualBibleItem = parentNestedBibleItems[
                 index
             ] as ReadIdOnlyBibleItem;
+            if (extraBibleKeys !== undefined) {
+                actualBibleItem.extraBibleKeys = extraBibleKeys;
+            }
+            if (isAudioEnabled !== undefined) {
+                actualBibleItem.isAudioEnabled = isAudioEnabled;
+            }
             if (bibleKey !== undefined) {
                 bibleItem.bibleKey = bibleKey;
                 actualBibleItem.bibleKey = bibleKey;
@@ -613,8 +629,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         bibleItem: ReadIdOnlyBibleItem,
         uuid: string,
     ): Promise<ContextMenuItemType[]> {
-        const locale = await getBibleLocale(bibleItem.bibleKey);
-        const langData = await getLangAsync(locale);
+        const langData = await getLangFromBibleKey(bibleItem.bibleKey);
         return [
             {
                 menuElement: elementDivider,

@@ -8,19 +8,19 @@ export default function FontSizeControlComp({
     return (
         <div className="d-flex">
             <input
-                className="form-control"
+                className="form-control form-control-sm"
                 type="number"
                 style={{ maxWidth: '100px' }}
                 value={fontSize}
                 onChange={(event) => {
-                    setFontSize(parseInt(event.target.value));
+                    setFontSize(Number.parseInt(event.target.value));
                 }}
             />
             <select
                 className="form-select form-select-sm"
                 value={fontSize}
                 onChange={(event) => {
-                    setFontSize(parseInt(event.target.value));
+                    setFontSize(Number.parseInt(event.target.value));
                 }}
             >
                 <option>--</option>

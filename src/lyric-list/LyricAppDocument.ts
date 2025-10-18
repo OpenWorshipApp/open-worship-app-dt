@@ -16,6 +16,7 @@ import {
     renderMarkdownMusic,
 } from './markdownHelpers';
 import { CanvasItemTextPropsType } from '../slide-editor/canvas/CanvasItemText';
+import { checkIsDarkMode } from '../initHelpers';
 
 export type LyricEditingPropsType = {
     fontFamily: string;
@@ -37,7 +38,7 @@ export default class LyricAppDocument extends AppDocument {
     async getSlides() {
         const display = getDefaultScreenDisplay();
         const offsetPercentage = 1;
-        const left = Math.floor(
+        const left = Math.round(
             display.bounds.width * (offsetPercentage / 100),
         );
         const top = left;
@@ -55,10 +56,11 @@ export default class LyricAppDocument extends AppDocument {
                     if (!text) {
                         return [text, htmlText];
                     }
+                    const isDarkMode = checkIsDarkMode();
                     const htmlData = await renderMarkdownMusic(text, {
                         isJustifyCenter: true,
                         isDisablePointerEvents: true,
-                        theme: 'dark',
+                        theme: isDarkMode ? 'dark' : 'light',
                         fontFamily: this.lyricEditingProps.fontFamily,
                         fontWeight: this.lyricEditingProps.fontWeight,
                         scale: this.lyricEditingProps.scale / 10,
@@ -73,28 +75,32 @@ export default class LyricAppDocument extends AppDocument {
                 canvasItems: text
                     ? [
                           {
+                              id: 0,
+                              type: 'html',
                               text,
                               htmlText,
+
                               color: '#FFFFFFFF',
                               fontSize: 90,
                               fontFamily: this.lyricEditingProps.fontFamily,
                               fontWeight: null,
                               textHorizontalAlignment: 'center',
                               textVerticalAlignment: 'center',
-                              id: 0,
                               top,
                               left,
                               backgroundColor: '#0000008B',
-                              width: Math.floor(
+                              backdropFilter: 5,
+                              width: Math.round(
                                   display.bounds.width - left * 2,
                               ),
-                              height: Math.floor(
+                              height: Math.round(
                                   display.bounds.height - top * 2,
                               ),
                               rotate: 0,
                               horizontalAlignment: 'center',
                               verticalAlignment: 'center',
-                              type: 'html',
+                              roundSizePixel: 0,
+                              roundSizePercentage: 0,
                           } as CanvasItemTextPropsType,
                       ]
                     : [],

@@ -1,3 +1,5 @@
+import { DragEvent } from 'react';
+
 import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import AppDocumentItemsComp from './AppDocumentItemsComp';
 import AppDocument from '../../app-document-list/AppDocument';
@@ -8,6 +10,11 @@ import { DIV_CLASS_NAME } from './varyAppDocumentHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
 import { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
+import { changeDragEventStyle } from '../../helper/helpers';
+import { readDroppedFiles } from '../../others/droppingFileHelpers';
+import { checkIsSupportMediaType } from '../../slide-editor/canvas/canvasHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
+import { createNewSlidesFromDroppedData } from './appDocumentHelpers';
 
 const handlePasting = async (varyAppDocument: VaryAppDocumentType) => {
     if (!AppDocument.checkIsThisType(varyAppDocument)) {
@@ -15,9 +22,26 @@ const handlePasting = async (varyAppDocument: VaryAppDocumentType) => {
     }
     const copiedSlides = await AppDocument.getCopiedSlides();
     for (const copiedSlide of copiedSlides) {
-        varyAppDocument.addSlide(copiedSlide);
+        varyAppDocument.addSlides([copiedSlide]);
     }
 };
+
+async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
+    changeDragEventStyle(event, 'opacity', '1');
+    const files: File[] = [];
+    for await (const file of readDroppedFiles(event)) {
+        if (!checkIsSupportMediaType(file.type)) {
+            showSimpleToast(
+                '`Insert Image or Video',
+                '`Unsupported file type!',
+            );
+        } else {
+            files.push(file);
+        }
+    }
+    await createNewSlidesFromDroppedData(appDocument, files);
+}
+
 export default function VaryAppDocumentItemsPreviewerComp() {
     const varyAppDocument = useVaryAppDocumentContext();
     const [thumbSizeScale, setThumbnailSizeScale] =
@@ -43,6 +67,21 @@ export default function VaryAppDocumentItemsPreviewerComp() {
                     ? handlePasting.bind(null, varyAppDocument)
                     : undefined
             }
+            onDragOver={(event) => {
+                event.preventDefault();
+                changeDragEventStyle(event, 'opacity', '0.5');
+            }}
+            onDragLeave={(event) => {
+                event.preventDefault();
+                changeDragEventStyle(event, 'opacity', '1');
+            }}
+            onDrop={(event) => {
+                event.preventDefault();
+                if (varyAppDocument instanceof AppDocument === false) {
+                    return;
+                }
+                handleDataDropping(varyAppDocument, event);
+            }}
         >
             {varyAppDocument.isEditable ? <SlidesMenuComp /> : null}
             <AppDocumentItemsComp />

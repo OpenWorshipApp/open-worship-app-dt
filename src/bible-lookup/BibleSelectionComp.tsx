@@ -4,7 +4,6 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
-import { useLocalBibleInfoList } from '../setting/bible-setting/bibleSettingHelpers';
 import {
     BibleMinimalInfoType,
     getAllLocalBibleInfoList,
@@ -12,6 +11,9 @@ import {
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { getFontFamily, LocaleType } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { CSSProperties } from 'react';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,
@@ -88,6 +90,7 @@ export async function showBibleOption(
     event: any,
     onSelect: (bibleKey: string) => void,
     excludeBibleKeys: string[] = [],
+    title?: string,
 ) {
     const menuItems = await genContextMenuBibleKeys(
         (_: any, bibleKey: string) => {
@@ -98,13 +101,25 @@ export async function showBibleOption(
     if (menuItems === null) {
         return;
     }
+    if (title !== undefined) {
+        menuItems.unshift(
+            {
+                menuElement: title,
+                disabled: true,
+            },
+            {
+                menuElement: elementDivider,
+            },
+        );
+    }
     showAppContextMenu(event, menuItems);
 }
 
-function handleClickEvent(
+function handleBibleSelectionMini(
     event: any,
     bibleKey: string,
     onChange: (oldBibleKey: string, newBibleKey: string) => void,
+    title?: string,
 ) {
     event.stopPropagation();
     showBibleOption(
@@ -113,6 +128,7 @@ function handleClickEvent(
             onChange(bibleKey, newBibleKey);
         },
         [bibleKey],
+        title,
     );
 }
 
@@ -123,18 +139,11 @@ export default function BibleSelectionComp({
     bibleKey: string;
     onBibleKeyChange: (oldBibleKey: string, newBibleKey: string) => void;
 }>) {
-    const [bibleInfoList] = useLocalBibleInfoList();
-    if (bibleInfoList === null) {
-        return <div>Loading ...</div>;
-    }
-    if (bibleInfoList === undefined) {
-        return <div className="alert alert-danger">Error</div>;
-    }
     return (
         <button
             className="input-group-text"
             onClick={(event) => {
-                handleClickEvent(event, bibleKey, onBibleKeyChange);
+                handleBibleSelectionMini(event, bibleKey, onBibleKeyChange);
             }}
         >
             <BibleKeyWithTileComp bibleKey={bibleKey} />
@@ -147,18 +156,19 @@ export function BibleSelectionMiniComp({
     bibleKey,
     onBibleKeyChange,
     isMinimal,
+    contextMenuTitle,
+    extraStyle = {},
 }: Readonly<{
     bibleKey: string;
-    onBibleKeyChange?: (oldBibleKey: string, newBibleKey: string) => void;
+    onBibleKeyChange?: (
+        isContextMenu: boolean,
+        oldBibleKey: string,
+        newBibleKey: string,
+    ) => void;
     isMinimal?: boolean;
+    contextMenuTitle?: string;
+    extraStyle?: CSSProperties;
 }>) {
-    const [bibleInfoList] = useLocalBibleInfoList();
-    if (bibleInfoList === null) {
-        return <div>...</div>;
-    }
-    if (bibleInfoList === undefined) {
-        return <div className="badge rounded-pill text-bg-danger">Error</div>;
-    }
     const isHandleClickEvent = onBibleKeyChange !== undefined;
     return (
         <span
@@ -166,10 +176,31 @@ export function BibleSelectionMiniComp({
                 `bible-selector ${isHandleClickEvent ? 'pointer' : ''} ` +
                 (isMinimal ? ' bg-info' : 'badge rounded-pill text-bg-info')
             }
+            style={{
+                paddingLeft: isMinimal ? '2px' : '6px',
+                paddingRight: isMinimal ? '2px' : '6px',
+                ...extraStyle,
+            }}
             onClick={
                 isHandleClickEvent
                     ? (event) => {
-                          handleClickEvent(event, bibleKey, onBibleKeyChange);
+                          handleBibleSelectionMini(
+                              event,
+                              bibleKey,
+                              onBibleKeyChange.bind(null, false),
+                          );
+                      }
+                    : undefined
+            }
+            onContextMenu={
+                isHandleClickEvent
+                    ? (event) => {
+                          handleBibleSelectionMini(
+                              event,
+                              bibleKey,
+                              onBibleKeyChange.bind(null, true),
+                              contextMenuTitle,
+                          );
                       }
                     : undefined
             }
@@ -180,12 +211,11 @@ export function BibleSelectionMiniComp({
 }
 
 function BibleKeyWithTileComp({ bibleKey }: Readonly<{ bibleKey: string }>) {
-    const [bibleInfoList] = useLocalBibleInfoList();
-    const currentBibleInfo = bibleInfoList?.find(
-        (bibleInfo) => bibleInfo.key === bibleKey,
-    );
+    const [bibleInfo] = useAppStateAsync(() => {
+        return getBibleInfo(bibleKey);
+    }, [bibleKey]);
     return (
-        <span title={currentBibleInfo?.title} data-bible-key={bibleKey}>
+        <span title={bibleInfo?.title} data-bible-key={bibleKey}>
             {bibleKey}
         </span>
     );

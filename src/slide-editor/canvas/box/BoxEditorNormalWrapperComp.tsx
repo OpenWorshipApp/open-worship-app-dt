@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, ReactNode } from 'react';
 
 import { useCanvasControllerContext } from '../CanvasController';
 import {
@@ -14,7 +14,7 @@ export default function BoxEditorNormalWrapperComp({
     onDoubleClick,
 }: Readonly<{
     style: CSSProperties;
-    children: React.ReactNode;
+    children: ReactNode;
     onContextMenu?: (event: any) => void;
     onDoubleClick?: (event: any) => void;
 }>) {

@@ -1,12 +1,7 @@
 @use '../others/variables.scss' as *;
-$color: rgb(73, 103, 123);
-$dot-border: 1px dashed greenyellow;
 
 .flex-resize-actor {
   flex: 0 0 5px;
-  background: var(--bs-dark);
-  background-repeat: no-repeat;
-  background-position: center;
   transition: opacity 0.2s ease-in;
   opacity: 0.5;
 
@@ -36,7 +31,6 @@ $dot-border: 1px dashed greenyellow;
   }
 
   &.active {
-    background-color: $color;
     .mover {
       .disabling-arrow {
         opacity: 0;
@@ -50,33 +44,17 @@ $dot-border: 1px dashed greenyellow;
 
   &.v {
     background-size: 10px;
-    border-top: 1px solid var(--bs-dark);
-    border-bottom: 1px solid var(--bs-dark);
-    background-image: url(/assets/move-v-icon.svg);
 
     &.attempt {
       cursor: ns-resize;
-    }
-
-    &.active {
-      border-left: $dot-border;
-      padding-right: $dot-border;
     }
   }
 
   &.h {
     background-size: 5px;
-    border-left: 1px solid var(--bs-dark);
-    border-right: 1px solid var(--bs-dark);
-    background-image: url(/assets/move-h-icon.svg);
 
     &.attempt {
       cursor: ew-resize;
-    }
-
-    &.active {
-      border-top: $dot-border;
-      padding-bottom: $dot-border;
     }
   }
 }

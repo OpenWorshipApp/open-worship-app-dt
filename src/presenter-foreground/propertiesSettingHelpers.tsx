@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import {
     getSetting,
     useStateSettingBoolean,
@@ -20,8 +22,8 @@ const DEFAULT_WIDGET_OFFSET_Y = 0;
 function getWidgetRoundExtraStyle(
     settingNamePixel: string,
     settingNamePercentage: string,
-): React.CSSProperties {
-    const roundSizePixel = parseInt(
+): CSSProperties {
+    const roundSizePixel = Number.parseInt(
         getSetting(settingNamePixel) ?? DEFAULT_ROUND_SIZE_PIXEL.toString(),
     );
     if (roundSizePixel > 0) {
@@ -29,11 +31,11 @@ function getWidgetRoundExtraStyle(
             borderRadius: `${roundSizePixel}px`,
         };
     }
-    const percentage = parseInt(
+    const percentage = Number.parseInt(
         getSetting(settingNamePercentage) ??
             DEFAULT_ROUND_PERCENTAGE.toString(),
     );
-    const roundPercentage = Math.ceil(
+    const roundPercentage = Math.round(
         Math.max(0, Math.min(100, percentage)) / 2,
     );
     return {
@@ -41,8 +43,8 @@ function getWidgetRoundExtraStyle(
     };
 }
 
-function genWidgetWidthExtraStyle(settingName: string): React.CSSProperties {
-    const widthScale = parseInt(
+function genWidgetWidthExtraStyle(settingName: string): CSSProperties {
+    const widthScale = Number.parseInt(
         getSetting(settingName) ?? DEFAULT_WIDGET_WIDTH_PERCENTAGE.toString(),
     );
     return {
@@ -51,8 +53,8 @@ function genWidgetWidthExtraStyle(settingName: string): React.CSSProperties {
     };
 }
 
-function genWidgetOpacityExtraStyle(settingName: string): React.CSSProperties {
-    const opacityScale = parseInt(
+function genWidgetOpacityExtraStyle(settingName: string): CSSProperties {
+    const opacityScale = Number.parseInt(
         getSetting(settingName) ?? DEFAULT_WIDGET_OPACITY_PERCENTAGE.toString(),
     );
     return {
@@ -70,7 +72,7 @@ function genMinusCalc(n: number) {
 }
 
 function genTransformScale(settingName: string) {
-    const scale = parseFloat(
+    const scale = Number.parseFloat(
         getSetting(settingName) ?? DEFAULT_WIDGET_SCALE.toString(),
     );
     return `scale(${scale})`;
@@ -80,46 +82,52 @@ function genTransformRotate() {
     return 'rotate(0deg)';
 }
 
-function genAlignmentExtraStyle(
+function genTransformingExtraStyle(
     alignSettingName: string,
     offsetXSettingName: string,
     offsetYSettingName: string,
     widgetScaleSettingName: string,
-): React.CSSProperties {
-    const widgetOffsetX = parseInt(
+): CSSProperties {
+    const widgetOffsetX = Number.parseInt(
         getSetting(offsetXSettingName) ?? DEFAULT_WIDGET_OFFSET_X.toString(),
     );
-    const widgetOffsetY = parseInt(
+    const widgetOffsetY = Number.parseInt(
         getSetting(offsetYSettingName) ?? DEFAULT_WIDGET_OFFSET_Y.toString(),
     );
     const alignmentData = JSON.parse(getSetting(alignSettingName) ?? '{}');
     const { horizontalAlignment = 'center', verticalAlignment = 'center' } =
         alignmentData;
+    const transformScale = genTransformScale(widgetScaleSettingName);
+    const transformRotate = genTransformRotate();
+    const transformScaleRotate = `${transformScale} ${transformRotate}`;
     if (horizontalAlignment === 'center' && verticalAlignment === 'center') {
         const translate =
             `translate(${genMinusCalc(widgetOffsetX)},` +
             ` ${genMinusCalc(widgetOffsetY)})`;
-        const transform =
-            `${translate} ${genTransformScale(widgetScaleSettingName)}` +
-            ` ${genTransformRotate()}`;
         const style = {
             left: '50%',
             top: '50%',
-            transform,
+            transform: `${translate} ${transformScaleRotate}`,
         };
         return style;
     }
-    let style: any = {};
+    let style: any = {
+        transform: transformScaleRotate,
+    };
     if (horizontalAlignment === 'center') {
         style = {
             left: '50%',
-            transform: `translateX(${genMinusCalc(widgetOffsetX)})`,
+            transform:
+                `translateX(${genMinusCalc(widgetOffsetX)})` +
+                ` ${transformScaleRotate}`,
         };
     }
     if (verticalAlignment === 'center') {
         style = {
             top: '50%',
-            transform: `translateY(${genMinusCalc(widgetOffsetY)})`,
+            transform:
+                `translateY(${genMinusCalc(widgetOffsetY)})` +
+                ` ${transformScaleRotate}`,
         };
     }
     if (horizontalAlignment === 'left') {
@@ -135,8 +143,8 @@ function genAlignmentExtraStyle(
     return style;
 }
 
-function getFontSizeStyle(fontSizeSettingName: string): React.CSSProperties {
-    const fontSize = parseInt(
+function getFontSizeStyle(fontSizeSettingName: string): CSSProperties {
+    const fontSize = Number.parseInt(
         getSetting(fontSizeSettingName) ?? DEFAULT_FONT_SIZE.toString(),
     );
     return {
@@ -238,20 +246,24 @@ function PropertiesSettingComp({
                 >
                     <div className="input-group-text">Offset X:</div>
                     <input
+                        className="form-control form-control-sm"
                         type="number"
-                        className="form-control"
                         value={widgetOffsetX}
                         onChange={(event) => {
-                            setWidgetOffsetX(parseInt(event.target.value) || 0);
+                            setWidgetOffsetX(
+                                Number.parseInt(event.target.value) || 0,
+                            );
                         }}
                     />
                     <div className="input-group-text">Offset Y:</div>
                     <input
+                        className="form-control form-control-sm"
                         type="number"
-                        className="form-control"
                         value={widgetOffsetY}
                         onChange={(event) => {
-                            setWidgetOffsetY(parseInt(event.target.value) || 0);
+                            setWidgetOffsetY(
+                                Number.parseInt(event.target.value) || 0,
+                            );
                         }}
                     />
                 </div>
@@ -328,14 +340,15 @@ function PropertiesSettingComp({
                     className="d-flex input-group m-1"
                     style={{ width: '260px', height: '35px' }}
                 >
-                    <div className="input-group-text">`Round size pixel:</div>
+                    <div className="input-group-text">`Round Size Pixel:</div>
                     <input
+                        className="form-control form-control-sm"
                         type="number"
-                        className="form-control"
                         value={roundSizePixel}
+                        min={0}
                         onChange={(event) => {
                             setRoundSizePixel(
-                                parseInt(event.target.value) || 0,
+                                Number.parseInt(event.target.value) || 0,
                             );
                         }}
                     />
@@ -348,12 +361,12 @@ function PropertiesSettingComp({
                     >
                         <div className="input-group-text">Font Size:</div>
                         <input
+                            className="form-control form-control-sm"
                             type="number"
-                            className="form-control"
                             value={fontSize}
                             onChange={(event) => {
                                 setFontSize(
-                                    parseInt(event.target.value) ||
+                                    Number.parseInt(event.target.value) ||
                                         DEFAULT_FONT_SIZE,
                                 );
                             }}
@@ -372,7 +385,7 @@ export function useForegroundPropsSetting({
     isFontSize = false,
 }: Readonly<{
     prefix: string;
-    onChange: (style: React.CSSProperties) => void;
+    onChange: (style: CSSProperties) => void;
     isFontSize?: boolean;
 }>) {
     const widgetRoundPercentageSettingName = `${prefix}-setting-show-widget-round-percentage`;
@@ -396,14 +409,14 @@ export function useForegroundPropsSetting({
             ),
             ...genWidgetWidthExtraStyle(widgetWidthPercentageSettingName),
             ...genWidgetOpacityExtraStyle(opacityPercentageSettingName),
-            ...genAlignmentExtraStyle(
+            ...genTransformingExtraStyle(
                 alignmentSettingName,
                 offsetXSettingName,
                 offsetYSettingName,
                 widgetScaleSettingName,
             ),
             ...getFontSizeStyle(fontSizeSettingName),
-        } as React.CSSProperties;
+        } as CSSProperties;
     };
 
     const onChange1 = () => {

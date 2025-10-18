@@ -1,6 +1,11 @@
 import { useState } from 'react';
 
 import { getLangCode, LocaleType } from '../../lang/langHelpers';
+import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
+import {
+    getKJVBookKeyValue,
+    kjvBibleInfo,
+} from '../../helper/bible-helpers/serverBibleHelpers';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -26,12 +31,13 @@ function BibleKeyXMLInputComp({
     };
     return (
         <div className="w-100 h-100">
-            <div>Define a Bible key</div>
+            <div>`Define a Bible key</div>
             <div className="input-group" title={invalidMessage}>
                 <div className="input-group-text">Key:</div>
                 <input
                     className={
-                        'form-control' + (invalidMessage ? ' is-invalid' : '')
+                        'form-control form-control-sm' +
+                        (invalidMessage ? ' is-invalid' : '')
                     }
                     type="text"
                     value={value}
@@ -116,7 +122,8 @@ function BibleNumbersMapXMLInputComp({
                 <div className="input-group-text">Key:</div>
                 <input
                     className={
-                        'form-control' + (invalidMessage ? ' is-invalid' : '')
+                        'form-control form-control-sm' +
+                        (invalidMessage ? ' is-invalid' : '')
                     }
                     type="text"
                     value={value}
@@ -157,26 +164,39 @@ export function genBibleNumbersMapXMLInput(
     );
 }
 
+const genMonacoBibleLineNumber = (num: number) => {
+    const map = kjvBibleInfo.bookKeysOrder;
+    const index = num - 1;
+    const numString = `0${num}`.slice(-2);
+    if (map[index] === undefined) {
+        return numString;
+    }
+    const bookKey = map[num - 1];
+    const kjvKeyValue = getKJVBookKeyValue();
+    return `${kjvKeyValue[bookKey]} (${bookKey}) ${numString}`;
+};
+
 function BibleBooksMapXMLInputComp({
     defaultVale,
     onChange,
     locale,
 }: Readonly<{
     defaultVale: string;
-    onChange: (key: string) => void;
+    onChange: (newValue: string) => void;
     locale: LocaleType;
 }>) {
-    const [value, setValue] = useState(defaultVale);
-    const [invalidMessage, setInvalidMessage] = useState<string>('');
-    const setValue1 = (value: string) => {
-        setValue(value);
-        onChange(value);
-        if (value.split('\n').length !== 66) {
-            setInvalidMessage('Must have 66 books');
-        } else {
-            setInvalidMessage('');
-        }
-    };
+    const { editorStore, onContainerInit } = useInitMonacoEditor({
+        settingName: 'bible-xml-wrap-text',
+        options: {
+            value: defaultVale,
+            language: 'plaintext',
+            lineNumbersMinChars: 25,
+            lineNumbers: genMonacoBibleLineNumber,
+        },
+        onContentChange: (content) => {
+            onChange(content);
+        },
+    });
     const handleMarkupStringParsing = (markupString: string) => {
         const parser = new DOMParser();
         markupString = markupString.replace(/<\//g, '@newline</');
@@ -187,31 +207,34 @@ function BibleBooksMapXMLInputComp({
         innerText = innerText.replace(/\n\s/g, '\n');
         innerText = innerText.replace(/\n+/g, '\n');
         innerText = innerText.trim();
-        setValue1(innerText);
+        onChange(innerText);
+        editorStore.replaceValue(innerText);
     };
     const langCode = getLangCode(locale) ?? 'en';
-    const isHTML = value.includes('<');
     return (
         <div className="w-100 h-100">
-            <div>Define books map</div>
-            <div className="input-group" title={invalidMessage}>
-                <textarea
-                    style={{
-                        width: '100%',
-                        height: '400px',
+            <h3 className="p-2">Define books map</h3>
+            <div
+                className="input-group"
+                ref={onContainerInit}
+                style={{
+                    height: '400px',
+                }}
+            />
+            <div className="w-100 p-1">
+                <button
+                    className="btn btn-sm btn-warning ms-2"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        editorStore.replaceValue(
+                            Object.values(getKJVBookKeyValue()).join('\n'),
+                        );
                     }}
-                    className={
-                        'form-control' + (invalidMessage ? ' is-invalid' : '')
-                    }
-                    value={value}
-                    onChange={(e) => {
-                        setValue1(e.target.value);
-                    }}
-                />
-            </div>
-            <div className="w-100">
+                >
+                    `Reset
+                </button>
                 <a
-                    className="btn btn-secondary ms-2"
+                    className="btn btn-sm btn-secondary ms-2"
                     href={
                         `https://translate.google.com/?sl=en&tl=${langCode}&` +
                         'text=GENESIS%0AEXODUS%0ALEVITICUS%0ANUMBERS%0ADEUTERONO' +
@@ -234,10 +257,14 @@ function BibleBooksMapXMLInputComp({
                     Translate ({langCode})
                 </a>
                 <button
-                    className="btn btn-info"
-                    disabled={!isHTML}
+                    className="btn btn-sm btn-secondary ms-2"
                     onClick={(event) => {
                         event.stopPropagation();
+                        const value = editorStore.editorInstance.getValue();
+                        const isHTML = value.includes('<');
+                        if (!isHTML) {
+                            return;
+                        }
                         handleMarkupStringParsing(value);
                     }}
                 >

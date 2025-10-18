@@ -1,4 +1,4 @@
-import { createContext, use } from 'react';
+import { createContext, use, useState } from 'react';
 
 import BibleItem from './BibleItem';
 import {
@@ -17,7 +17,7 @@ import DirSource from '../helper/DirSource';
 import FileSource from '../helper/FileSource';
 import { addExtension } from '../server/fileHelpers';
 import appProvider from '../server/appProvider';
-import { VerseList } from '../helper/bible-helpers/BibleDataReader';
+import { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
 import {
     ContextMenuItemType,
     showAppContextMenu,
@@ -27,6 +27,10 @@ import LookupBibleItemController from '../bible-reader/LookupBibleItemController
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
+import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
+import { bibleRenderHelper } from './bibleRenderHelpers';
+import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
 
 export const SelectedBibleKeyContext = createContext<string>('KJV');
 export function useBibleKeyContext() {
@@ -78,7 +82,7 @@ export async function saveBibleItem(bibleItem: BibleItem, onDone?: () => void) {
 export type ConsumeVerseType = {
     sVerse: number;
     eVerse: number;
-    verses: VerseList;
+    verses: BibleVerseList;
 };
 export async function genVerseList({
     bibleKey,
@@ -243,4 +247,51 @@ export async function openBibleItemContextMenu(
         });
     }
     showAppContextMenu(event, [...extraMenuItems, ...menuItem]);
+}
+
+export async function getOnScreenBibleItems() {
+    const allScreenManager = getAllScreenManagers();
+    let titleList: string[] = [];
+    for (const screenManager of allScreenManager) {
+        for (const bibleItemDataList of Object.values(
+            screenManager.screenBibleManager.screenViewData?.bibleItemData ??
+                {},
+        )) {
+            if (Array.isArray(bibleItemDataList)) {
+                for (const bibleItemData of bibleItemDataList) {
+                    titleList.push(bibleItemData.title);
+                }
+            } else {
+                titleList.push(
+                    await bibleRenderHelper.toTitle(
+                        bibleItemDataList.bibleKey,
+                        bibleItemDataList.target,
+                    ),
+                );
+            }
+        }
+    }
+    titleList = Array.from(new Set(titleList));
+    return titleList;
+}
+
+export async function checkIsBibleItemOnScreen(items: BibleItem[]) {
+    const titleList = await getOnScreenBibleItems();
+    for (const bibleItem of items) {
+        if (titleList.includes(await bibleItem.toTitle())) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function useIsOnScreen(items: BibleItem[]) {
+    const [isOnScreen, setIsOnScreen] = useState(false);
+    useAppEffectAsync(async () => {
+        setIsOnScreen(await checkIsBibleItemOnScreen(items));
+    }, [items]);
+    useScreenUpdateEvents(undefined, async () => {
+        setIsOnScreen(await checkIsBibleItemOnScreen(items));
+    });
+    return isOnScreen;
 }
