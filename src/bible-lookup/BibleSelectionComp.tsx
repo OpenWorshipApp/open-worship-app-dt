@@ -9,7 +9,7 @@ import {
     getAllLocalBibleInfoList,
 } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
-import { getFontFamily, LocaleType } from '../lang/langHelpers';
+import { getFontFamilyByLocale, LocaleType } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -41,7 +41,7 @@ export async function genContextMenuBibleKeys(
         (
             await Promise.all(
                 locales.map((locale) => {
-                    return getFontFamily(locale as LocaleType);
+                    return getFontFamilyByLocale(locale as LocaleType);
                 }),
             )
         ).map((fontFamily, index) => {

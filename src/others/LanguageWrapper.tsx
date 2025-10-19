@@ -2,7 +2,7 @@ import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
 import { MutationType } from '../helper/helpers';
 import {
     checkIsValidLocale,
-    getFontFamily,
+    getFontFamilyByLocale,
     LocaleType,
 } from '../lang/langHelpers';
 
@@ -18,7 +18,7 @@ export async function applyFontFamily(element: Node, type: MutationType) {
         }
     }
     if (locale !== null && checkIsValidLocale(locale)) {
-        const fontFamily = await getFontFamily(locale as LocaleType);
+        const fontFamily = await getFontFamilyByLocale(locale as LocaleType);
         if (fontFamily) {
             element.style.fontFamily = fontFamily;
         }

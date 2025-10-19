@@ -4,7 +4,7 @@ import { bookToKey, getBibleInfo, getVerses } from './bibleInfoHelpers';
 import {
     fromLocaleNum,
     fromStringNum,
-    getFontFamily,
+    getFontFamilyByLocale,
     getLangAsync,
     LocaleType,
     toLocaleNum,
@@ -62,7 +62,7 @@ export async function getLangFromBibleKey(bibleKey: string) {
 
 export async function getBibleFontFamily(bibleKey: string) {
     const locale = await getBibleLocale(bibleKey);
-    const fontFamily = await getFontFamily(locale);
+    const fontFamily = await getFontFamilyByLocale(locale);
     return fontFamily;
 }
 

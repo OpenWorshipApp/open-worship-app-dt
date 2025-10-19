@@ -16,7 +16,7 @@ import FileSourceMetaManager from './helper/FileSourceMetaManager';
 import {
     getCurrentLangAsync,
     getCurrentLocale,
-    getFontFamily,
+    getFontFamilyByLocale,
 } from './lang/langHelpers';
 import appProvider from './server/appProvider';
 import initCrypto from './_owa-crypto';
@@ -197,7 +197,7 @@ export async function main(children: ReactNode) {
         ),
     );
     const locale = getCurrentLocale();
-    const fontFamily = await getFontFamily(locale);
+    const fontFamily = await getFontFamilyByLocale(locale);
     if (fontFamily) {
         document.body.style.fontFamily = fontFamily;
     }
