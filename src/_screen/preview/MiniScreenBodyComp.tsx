@@ -30,9 +30,9 @@ function openContextMenu(event: any) {
         {
             menuElement: 'Refresh Preview',
             onSelect() {
-                getAllScreenManagers().forEach((screenManager) => {
+                for (const screenManager of getAllScreenManagers()) {
                     screenManager.fireRefreshEvent();
-                });
+                }
             },
         },
     ]);
@@ -46,14 +46,14 @@ function viewControllerAndScreenManagers(
         kjvVerseKey: string,
         isToTop: boolean,
     ) => {
-        screenManagers.forEach(({ screenBibleManager }) => {
+        for (const { screenBibleManager } of screenManagers) {
             screenBibleManager.handleScreenVersesHighlighting(
                 kjvVerseKey,
                 isToTop,
             );
-        });
+        }
     };
-    screenManagers.forEach(({ screenBibleManager }) => {
+    for (const { screenBibleManager } of screenManagers) {
         screenBibleManager.applyBibleViewData = (
             bibleData: BibleItemDataType | null,
         ) => {
@@ -63,7 +63,8 @@ function viewControllerAndScreenManagers(
             ) {
                 bibleItemViewController.nestedBibleItems = [];
                 const { target } = bibleData.bibleItemData.bibleItem;
-                bibleData.bibleItemData.renderedList.forEach(({ bibleKey }) => {
+                for (const { bibleKey } of bibleData.bibleItemData
+                    .renderedList) {
                     const bibleItem = BibleItem.fromJson({
                         id: -1,
                         bibleKey: bibleKey,
@@ -72,7 +73,7 @@ function viewControllerAndScreenManagers(
                     });
                     bibleItemViewController.appendBibleItem(bibleItem);
                     previewingEventListener.showBibleItem(bibleItem);
-                });
+                }
             }
         };
         screenBibleManager.handleBibleViewVersesHighlighting = (
@@ -84,7 +85,7 @@ function viewControllerAndScreenManagers(
                 isToTop,
             );
         };
-    });
+    }
 }
 
 export default function MiniScreenBodyComp({

@@ -73,12 +73,12 @@ function useAppDocumentItems() {
         if (varyAppDocumentItems.length === 0) {
             return;
         }
-        varyAppDocumentItems.forEach((varyAppDocumentItem) => {
+        for (const varyAppDocumentItem of varyAppDocumentItems) {
             showVaryAppDocumentItemInViewport(varyAppDocumentItem.id);
-        });
-        Object.keys(varyAppDocumentItemsToView).forEach((key) => {
+        }
+        for (const key of Object.keys(varyAppDocumentItemsToView)) {
             delete varyAppDocumentItemsToView[key];
-        });
+        }
     }, [varyAppDocumentItems]);
 
     return {
