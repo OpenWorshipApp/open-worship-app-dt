@@ -1,4 +1,4 @@
-import { lazy, useState } from 'react';
+import { lazy, useState, useCallback, useMemo } from 'react';
 
 import {
     PopupAlertDataType,
@@ -27,32 +27,59 @@ export default function HandleAlertComp() {
     const [inputData, setInputData] = useState<InputDataType | null>(null);
     const [alertData, setAlertData] = useState<PopupAlertDataType | null>(null);
 
-    popupWidgetManager.openConfirm = (newConfirmData) => {
-        setConfirmData(newConfirmData);
-    };
-    popupWidgetManager.openInput = (newInputData) => {
-        setInputData(newInputData);
-    };
-    popupWidgetManager.openAlert = (newAlertData) => {
-        setAlertData(newAlertData);
-    };
+    popupWidgetManager.openConfirm = useCallback(
+        (newConfirmData: ConfirmDataType | null) => {
+            setConfirmData(newConfirmData);
+        },
+        [],
+    );
+
+    popupWidgetManager.openInput = useCallback(
+        (newInputData: InputDataType | null) => {
+            setInputData(newInputData);
+        },
+        [],
+    );
+
+    popupWidgetManager.openAlert = useCallback(
+        (newAlertData: PopupAlertDataType | null) => {
+            setAlertData(newAlertData);
+        },
+        [],
+    );
+
+    const confirmComponent = useMemo(() => {
+        if (confirmData === null) return null;
+        return (
+            <AppSuspenseComp>
+                <LazyConfirmPopupComp data={confirmData} />
+            </AppSuspenseComp>
+        );
+    }, [confirmData]);
+
+    const inputComponent = useMemo(() => {
+        if (inputData === null) return null;
+        return (
+            <AppSuspenseComp>
+                <LazyInputPopupComp data={inputData} />
+            </AppSuspenseComp>
+        );
+    }, [inputData]);
+
+    const alertComponent = useMemo(() => {
+        if (alertData === null) return null;
+        return (
+            <AppSuspenseComp>
+                <LazyAlertPopupComp data={alertData} />
+            </AppSuspenseComp>
+        );
+    }, [alertData]);
+
     return (
         <>
-            {confirmData !== null && (
-                <AppSuspenseComp>
-                    <LazyConfirmPopupComp data={confirmData} />
-                </AppSuspenseComp>
-            )}
-            {inputData !== null && (
-                <AppSuspenseComp>
-                    <LazyInputPopupComp data={inputData} />
-                </AppSuspenseComp>
-            )}
-            {alertData !== null && (
-                <AppSuspenseComp>
-                    <LazyAlertPopupComp data={alertData} />
-                </AppSuspenseComp>
-            )}
+            {confirmComponent}
+            {inputComponent}
+            {alertComponent}
         </>
     );
 }

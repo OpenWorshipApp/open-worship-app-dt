@@ -3,7 +3,7 @@ import '../others/theme-override-dark.scss';
 import '../others/theme-override-light.scss';
 import './FinderAppComp.scss';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { LookupOptions, findString } from './finderHelpers';
@@ -16,36 +16,71 @@ export default function FinderAppComp({
 }>) {
     const [lookupText, setLookupText] = useState('');
     const [isMatchCase, setIsMatchCase] = useState(false);
-    const setLookupText1 = (text: string, options: LookupOptions = {}) => {
-        setLookupText(text);
-        findString(text, {
-            matchCase: isMatchCase,
-            ...options,
-        });
-    };
-    useKeyboardRegistering(
-        [{ key: 'Escape' }],
-        () => {
-            if (!lookupText) {
-                onClose();
-                return;
-            }
-            setLookupText1('');
+
+    const setLookupText1 = useCallback(
+        (text: string, options: LookupOptions = {}) => {
+            setLookupText(text);
+            findString(text, {
+                matchCase: isMatchCase,
+                ...options,
+            });
         },
         [isMatchCase],
     );
-    useKeyboardRegistering(
-        [{ key: 'Enter' }],
-        () => {
-            if (!lookupText) {
-                return;
-            }
+
+    const handleEscape = useCallback(() => {
+        if (!lookupText) {
+            onClose();
+            return;
+        }
+        setLookupText1('');
+    }, [lookupText, onClose, setLookupText1]);
+
+    useKeyboardRegistering([{ key: 'Escape' }], handleEscape, [handleEscape]);
+
+    const handleEnter = useCallback(() => {
+        if (!lookupText) {
+            return;
+        }
+        setLookupText1(lookupText, {
+            forward: true,
+            findNext: true,
+        });
+    }, [lookupText, setLookupText1]);
+
+    useKeyboardRegistering([{ key: 'Enter' }], handleEnter, [handleEnter]);
+
+    const handlePrevClick = useCallback(() => {
+        setLookupText1(lookupText, {
+            forward: false,
+            findNext: true,
+        });
+    }, [lookupText, setLookupText1]);
+
+    const handleNextClick = useCallback(() => {
+        setLookupText1(lookupText, {
+            forward: true,
+            findNext: true,
+        });
+    }, [lookupText, setLookupText1]);
+
+    const handleInputChange = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>) => {
+            const text = event.target.value;
+            setLookupText1(text);
+        },
+        [setLookupText1],
+    );
+
+    const handleMatchCaseChange = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>) => {
+            const checked = event.target.checked;
+            setIsMatchCase(checked);
             setLookupText1(lookupText, {
-                forward: true,
-                findNext: true,
+                matchCase: checked,
             });
         },
-        [lookupText, isMatchCase],
+        [lookupText, setLookupText1],
     );
 
     return (
@@ -57,26 +92,10 @@ export default function FinderAppComp({
         >
             <div className="card-body p-0">
                 <div className="finder input-group">
-                    <button
-                        className="btn btn-info"
-                        onClick={() => {
-                            setLookupText1(lookupText, {
-                                forward: false,
-                                findNext: true,
-                            });
-                        }}
-                    >
+                    <button className="btn btn-info" onClick={handlePrevClick}>
                         <i className="bi bi-arrow-left" />
                     </button>
-                    <button
-                        className="btn btn-info"
-                        onClick={() => {
-                            setLookupText1(lookupText, {
-                                forward: true,
-                                findNext: true,
-                            });
-                        }}
-                    >
+                    <button className="btn btn-info" onClick={handleNextClick}>
                         <i className="bi bi-arrow-right" />
                     </button>
                     <input
@@ -84,10 +103,7 @@ export default function FinderAppComp({
                         type="text"
                         autoFocus
                         value={lookupText}
-                        onChange={(event) => {
-                            const text = event.target.value;
-                            setLookupText1(text);
-                        }}
+                        onChange={handleInputChange}
                     />
                     <div className="input-group-text">
                         Aa{' '}
@@ -95,13 +111,7 @@ export default function FinderAppComp({
                             className="form-check-input mt-0"
                             type="checkbox"
                             checked={isMatchCase}
-                            onChange={(event) => {
-                                const checked = event.target.checked;
-                                setIsMatchCase(checked);
-                                setLookupText1(lookupText, {
-                                    matchCase: checked,
-                                });
-                            }}
+                            onChange={handleMatchCaseChange}
                         />
                     </div>
                 </div>

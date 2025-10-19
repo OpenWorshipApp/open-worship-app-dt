@@ -1,6 +1,13 @@
 import './VaryAppDocumentItem.scss';
 
-import { CSSProperties, ReactNode, MouseEvent, useState, useMemo } from 'react';
+import {
+    CSSProperties,
+    ReactNode,
+    MouseEvent,
+    useState,
+    useMemo,
+    useCallback,
+} from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
@@ -162,36 +169,46 @@ function genAttachBackgroundComponent(
 export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
     const [targetDiv, setTargetDiv] = useState<HTMLDivElement | null>(null);
     const [parentWidth, setParentWidth] = useState(0);
+
     useAppEffect(() => {
         setParentWidth(targetDiv?.clientWidth ?? 0);
     }, [targetDiv, thumbnailSize]);
+
     const scale = useMemo(() => {
         return parentWidth / item.width;
     }, [parentWidth, item]);
+
     const resizeAttemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
     }, []);
-    const listenParentSizing = (parentDiv: HTMLElement | null) => {
-        if (parentDiv !== null) {
-            const resizeObserver = new ResizeObserver(() => {
-                resizeAttemptTimeout(() => {
-                    setParentWidth(targetDiv?.clientWidth ?? 0);
+
+    const listenParentSizing = useCallback(
+        (parentDiv: HTMLElement | null) => {
+            if (parentDiv !== null) {
+                const resizeObserver = new ResizeObserver(() => {
+                    resizeAttemptTimeout(() => {
+                        setParentWidth(targetDiv?.clientWidth ?? 0);
+                    });
                 });
-            });
-            resizeObserver.observe(parentDiv);
-            return () => {
-                resizeObserver.disconnect();
-            };
-        }
-    };
-    return {
-        parentWidth,
-        scale,
-        setTargetDiv: (div: HTMLDivElement | null) => {
+                resizeObserver.observe(parentDiv);
+                return () => {
+                    resizeObserver.disconnect();
+                };
+            }
+        },
+        [resizeAttemptTimeout, targetDiv],
+    );
+
+    const handleSetTargetDiv = useCallback(
+        (div: HTMLDivElement | null) => {
             setTargetDiv(div);
             return listenParentSizing(div?.parentElement ?? null);
         },
-        setParentDiv: (parentDiv: HTMLDivElement | null) => {
+        [listenParentSizing],
+    );
+
+    const handleSetParentDiv = useCallback(
+        (parentDiv: HTMLDivElement | null) => {
             if (parentDiv === null) {
                 setTargetDiv(null);
             } else {
@@ -199,6 +216,14 @@ export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
             }
             return listenParentSizing(parentDiv);
         },
+        [listenParentSizing],
+    );
+
+    return {
+        parentWidth,
+        scale,
+        setTargetDiv: handleSetTargetDiv,
+        setParentDiv: handleSetParentDiv,
     };
 }
 

@@ -1,6 +1,6 @@
 import './PresenterComp.scss';
 
-import { lazy, useState } from 'react';
+import { lazy, useState, useCallback, useMemo } from 'react';
 
 import {
     useBibleItemShowing,
@@ -108,15 +108,18 @@ function RenderToggleFullViewComp({
     const fullScreenClassname = isFullWidget
         ? 'fullscreen-exit'
         : 'arrows-fullscreen';
+
+    const handleClick = useCallback(async () => {
+        setIsFullWidget(!isFullWidget);
+    }, [isFullWidget, setIsFullWidget]);
+
     return (
         <div>
             <button
                 className={
                     `btn btn-${isFullWidget ? '' : 'outline-'}info ` + 'btn-sm'
                 }
-                onClick={async () => {
-                    setIsFullWidget(!isFullWidget);
-                }}
+                onClick={handleClick}
             >
                 <i className={`bi bi-${fullScreenClassname}`} />
             </button>
@@ -133,6 +136,10 @@ function RenderForegroundTabComp({
     setIsActive: (isActive: boolean) => void;
     isOnScreen: boolean;
 }>) {
+    const handleClick = useCallback(() => {
+        setIsActive(!isActive);
+    }, [isActive, setIsActive]);
+
     return (
         <ul className={'nav nav-tabs flex-fill d-flex justify-content-end'}>
             <li className={'nav-item '}>
@@ -142,9 +149,7 @@ function RenderForegroundTabComp({
                         ` ${isActive ? 'active' : ''}` +
                         (isOnScreen ? ' app-on-screen' : '')
                     }
-                    onClick={() => {
-                        setIsActive(!isActive);
-                    }}
+                    onClick={handleClick}
                 >
                     {tran('Foreground')}
                 </button>
@@ -166,34 +171,100 @@ export default function PresenterComp() {
         PRESENT_TAB_SETTING_NAME,
         'd',
     );
-    const setTabKey1 = (value: TabKeyType) => {
-        if (value === 'f') {
-            setIsForegroundActive(false);
-        }
-        setTabKey(value);
-    };
+
+    const setTabKey1 = useCallback(
+        (value: TabKeyType) => {
+            if (value === 'f') {
+                setIsForegroundActive(false);
+            }
+            setTabKey(value);
+        },
+        [setTabKey],
+    );
+
     const [isForegroundActive, setIsForegroundActive] = useStateSettingBoolean(
         'foreground-active',
         false,
     );
-    const setIsForegroundActive1 = (value: boolean) => {
-        if (tabKey === 'f') {
-            setTabKey('d');
-        }
-        setIsForegroundActive(value);
-    };
+
+    const setIsForegroundActive1 = useCallback(
+        (value: boolean) => {
+            if (tabKey === 'f') {
+                setTabKey('d');
+            }
+            setIsForegroundActive(value);
+        },
+        [tabKey, setTabKey, setIsForegroundActive],
+    );
+
     const [isFullWidget, setIsFullWidget] = useState(false);
-    useLyricSelecting(() => setTabKey('l'), []);
-    useBibleItemShowing(() => setTabKey('b'), []);
-    useVaryAppDocumentSelecting(() => setTabKey('d'));
-    useAppDocumentItemSelecting(() => setTabKey('d'));
+
+    const handleLyricSelect = useCallback(() => setTabKey('l'), [setTabKey]);
+    const handleBibleShow = useCallback(() => setTabKey('b'), [setTabKey]);
+    const handleDocumentSelect = useCallback(() => setTabKey('d'), [setTabKey]);
+
+    useLyricSelecting(handleLyricSelect, [handleLyricSelect]);
+    useBibleItemShowing(handleBibleShow, [handleBibleShow]);
+    useVaryAppDocumentSelecting(handleDocumentSelect);
+    useAppDocumentItemSelecting(handleDocumentSelect);
+
     const viewController = useBibleItemsViewControllerContext();
-    useBibleItemViewControllerUpdateEvent(() => {
+
+    const handleBibleUpdate = useCallback(() => {
         ScreenBibleManager.fireUpdateEvent();
-    });
-    const normalPresenterChild = tabTypeList.map(([type, _, target]) => {
-        return genTabBody<TabKeyType>(tabKey, [type, target]);
-    });
+    }, []);
+
+    useBibleItemViewControllerUpdateEvent(handleBibleUpdate);
+
+    const normalPresenterChild = useMemo(
+        () =>
+            tabTypeList.map(([type, _, target]) => {
+                return genTabBody<TabKeyType>(tabKey, [type, target]);
+            }),
+        [tabKey],
+    );
+
+    const tabs = useMemo(
+        () =>
+            tabTypeList.map(([key, name]) => {
+                return {
+                    key,
+                    title: name,
+                    checkIsOnScreen: async () => {
+                        const isOnScreen = await checkIsOnScreen(
+                            key,
+                            viewController,
+                        );
+                        if (key === 'f') {
+                            setIsOnScreen(isOnScreen);
+                        }
+                        return isOnScreen;
+                    },
+                };
+            }),
+        [viewController],
+    );
+
+    const resizeActorData = useMemo(
+        () => [
+            {
+                children: {
+                    render: () => {
+                        return normalPresenterChild;
+                    },
+                },
+                key: 'h1',
+                widgetName: 'Presenter',
+            },
+            {
+                children: LazyPresenterForegroundComp,
+                key: 'h2',
+                widgetName: 'Foreground',
+            },
+        ],
+        [normalPresenterChild],
+    );
+
     return (
         <div
             className={
@@ -203,22 +274,7 @@ export default function PresenterComp() {
         >
             <div className="header d-flex w-100">
                 <TabRenderComp<TabKeyType>
-                    tabs={tabTypeList.map(([key, name]) => {
-                        return {
-                            key,
-                            title: name,
-                            checkIsOnScreen: async () => {
-                                const isOnScreen = await checkIsOnScreen(
-                                    key,
-                                    viewController,
-                                );
-                                if (key === 'f') {
-                                    setIsOnScreen(isOnScreen);
-                                }
-                                return isOnScreen;
-                            },
-                        };
-                    })}
+                    tabs={tabs}
                     activeTab={tabKey}
                     setActiveTab={setTabKey1}
                     className="flex-fill"
@@ -243,22 +299,7 @@ export default function PresenterComp() {
                             h1: ['1'],
                             h2: ['1'],
                         }}
-                        dataInput={[
-                            {
-                                children: {
-                                    render: () => {
-                                        return normalPresenterChild;
-                                    },
-                                },
-                                key: 'h1',
-                                widgetName: 'Presenter',
-                            },
-                            {
-                                children: LazyPresenterForegroundComp,
-                                key: 'h2',
-                                widgetName: 'Foreground',
-                            },
-                        ]}
+                        dataInput={resizeActorData}
                     />
                 ) : (
                     normalPresenterChild

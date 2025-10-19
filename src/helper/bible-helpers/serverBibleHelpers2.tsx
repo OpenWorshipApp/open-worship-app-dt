@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { bookToKey, getBibleInfo, getVerses } from './bibleInfoHelpers';
 import {
@@ -91,9 +91,11 @@ export async function toLocaleNumBible(bibleKey: string, n: number | null) {
 
 export function useToLocaleNumBible(bibleKey: string, nString: number | null) {
     const [str, setStr] = useState<string | null>(null);
-    useAppEffect(() => {
+    const fetchLocaleNum = useCallback(() => {
         toLocaleNumBible(bibleKey, nString).then(setStr);
     }, [bibleKey, nString]);
+
+    useAppEffect(fetchLocaleNum, [fetchLocaleNum]);
     return str;
 }
 
@@ -119,9 +121,11 @@ export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
 
 export function useFromLocaleNumBible(bibleKey: string, localeNum: string) {
     const [newLocaleNum, setNewLocaleNum] = useState<number | null>(null);
-    useAppEffect(() => {
+    const fetchFromLocaleNum = useCallback(() => {
         fromLocaleNumBible(bibleKey, localeNum).then(setNewLocaleNum);
     }, [bibleKey, localeNum]);
+
+    useAppEffect(fetchFromLocaleNum, [fetchFromLocaleNum]);
     return newLocaleNum;
 }
 

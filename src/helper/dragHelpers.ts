@@ -7,7 +7,7 @@ import DragInf, {
 } from './DragInf';
 import FileSource from './FileSource';
 import PdfSlide from '../app-document-list/PdfSlide';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import AttachBackgroundManager, {
     attachBackgroundManager,
 } from '../others/AttachBackgroundManager';
@@ -94,6 +94,7 @@ export function useAttachedBackgroundData(
     const [droppedData, setDroppedData] = useState<
         DroppedDataType | null | undefined
     >(undefined);
+
     useAppEffectAsync(
         async (contextMethods) => {
             const data = await attachBackgroundManager.getAttachedBackground(
@@ -105,18 +106,22 @@ export function useAttachedBackgroundData(
         [filePath, id],
         { setDroppedData },
     );
+
+    const handleFileUpdate = useCallback(() => {
+        attachBackgroundManager
+            .getAttachedBackground(filePath, id)
+            .then((data) => {
+                setDroppedData(data);
+            });
+    }, [filePath, id]);
+
     useFileSourceEvents(
         ['update'],
-        () => {
-            attachBackgroundManager
-                .getAttachedBackground(filePath, id)
-                .then((data) => {
-                    setDroppedData(data);
-                });
-        },
-        [filePath, id],
+        handleFileUpdate,
+        [handleFileUpdate],
         AttachBackgroundManager.genMetaDataFilePath(filePath),
     );
+
     return droppedData;
 }
 
