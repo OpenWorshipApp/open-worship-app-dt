@@ -51,9 +51,9 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
                       onSelect() {
                           const screenManagerBases =
                               getSelectedScreenManagerBases();
-                          screenManagerBases.forEach((screenManager1) => {
+                          for (const screenManager1 of screenManagerBases) {
                               screenManager1.isSelected = false;
-                          });
+                          }
                           screenManager.isSelected = true;
                       },
                   },
@@ -80,9 +80,9 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
         {
             menuElement: 'Refresh Preview',
             onSelect() {
-                getAllScreenManagers().forEach((screenManager) => {
+                for (const screenManager of getAllScreenManagers()) {
                     screenManager.fireRefreshEvent();
-                });
+                }
             },
         },
     ];
@@ -96,14 +96,14 @@ export function getAppDocumentListOnScreenSetting(): AppDocumentListType {
             return {};
         }
         const json = JSON.parse(str);
-        Object.values(json).forEach((item: any) => {
-            if (typeof item.filePath !== 'string') {
+        for (const item of Object.values(json)) {
+            if (typeof (item as any).filePath !== 'string') {
                 throw new Error('Invalid slide path');
             }
-            if (!PdfSlide.tryValidate(item.itemJson)) {
-                Slide.validate(item.itemJson);
+            if (!PdfSlide.tryValidate((item as any).itemJson)) {
+                Slide.validate((item as any).itemJson);
             }
-        });
+        }
         return getValidOnScreen(json);
     } catch (error) {
         handleError(error);

@@ -11,11 +11,11 @@ export const darkModeHook = {
 export function applyDarkModeToApp() {
     const isDarkMode = checkIsDarkMode();
     const theme = isDarkMode ? 'dark' : 'light';
-    document.querySelectorAll('#app').forEach((element) => {
+    for (const element of document.querySelectorAll('#app')) {
         if (element instanceof HTMLElement) {
             element.dataset.bsTheme = theme;
         }
-    });
+    }
     darkModeHook.check();
 }
 

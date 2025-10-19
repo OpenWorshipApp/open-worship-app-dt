@@ -58,9 +58,9 @@ export default class AppDocument
         });
         jsonData = await this.getJsonData(true);
         if (jsonData !== null) {
-            slides.forEach((slide, index) => {
+            for (const [index, slide] of slides.entries()) {
                 this.checkSlideIsChanged(index, slide, jsonData.items);
-            });
+            }
         }
         return slides;
     }

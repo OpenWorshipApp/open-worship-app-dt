@@ -65,13 +65,13 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     applyHeaderEffectOnScroll(div: HTMLDivElement) {
-        div.querySelectorAll('th.header').forEach((th) => {
+        for (const th of div.querySelectorAll('th.header')) {
             if (th instanceof HTMLElement) {
                 th.style.fontSize = this.scroll > 0 ? '0.5em' : '1em';
                 th.style.backgroundColor =
                     this.scroll > 0 ? '#000000da' : '#00000053';
             }
-        });
+        }
     }
 
     private _divScrollListener() {
@@ -369,7 +369,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     static sendSynTextStyle() {
-        getAllScreenManagerBases().forEach((screenManagerBase) => {
+        for (const screenManagerBase of getAllScreenManagerBases()) {
             screenManagerBase.sendScreenMessage({
                 screenId: screenManagerBase.screenId,
                 type: 'bible-screen-view-text-style',
@@ -377,7 +377,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                     textStyle: this.textStyle,
                 },
             });
-        });
+        }
     }
 
     static receiveSyncTextStyle(message: ScreenMessageType) {
@@ -422,10 +422,10 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             const defaultBible = await Bible.getDefault();
             filePath = defaultBible?.filePath ?? undefined;
         }
-        screenIds.forEach(async (screenId) => {
+        for (const screenId of screenIds) {
             const screenBibleManager = this.getInstance(screenId);
-            screenBibleManager.applyNewBibleItemJson(bibleItemJson, filePath);
-        });
+            await screenBibleManager.applyNewBibleItemJson(bibleItemJson, filePath);
+        }
     }
 
     render() {
@@ -465,21 +465,21 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             true,
             `${this.selectedKJVVerseKey}`,
         );
-        selectedBlocks.forEach((block: any) => {
+        for (const block of selectedBlocks) {
             if (isToTop) {
                 bringDomToTopView(block);
                 this.handleBibleViewVersesHighlighting(
-                    block.dataset.kjvVerseKey,
+                    (block as any).dataset.kjvVerseKey,
                     true,
                 );
             } else {
                 bringDomToNearestView(block);
                 this.handleBibleViewVersesHighlighting(
-                    block.dataset.kjvVerseKey,
+                    (block as any).dataset.kjvVerseKey,
                     false,
                 );
             }
-        });
+        }
     }
 
     async receiveScreenDropped(droppedData: DroppedDataType) {

@@ -178,16 +178,16 @@ export function getBibleListOnScreenSetting(): BibleListType {
             return {};
         }
         const json = JSON.parse(str);
-        Object.values(json).forEach((item: any) => {
+        for (const item of Object.values(json)) {
             if (
-                !bibleDataTypeList.includes(item.type) ||
-                (item.type === 'bible-item' &&
-                    validateBible(item.bibleItemData))
+                !bibleDataTypeList.includes((item as any).type) ||
+                ((item as any).type === 'bible-item' &&
+                    validateBible((item as any).bibleItemData))
             ) {
                 loggerHelpers.error(item);
                 throw new Error('Invalid bible-screen-view data');
             }
-        });
+        }
         return getValidOnScreen(json);
     } catch (error) {
         unlocking(screenManagerSettingNames.FULL_TEXT, () => {

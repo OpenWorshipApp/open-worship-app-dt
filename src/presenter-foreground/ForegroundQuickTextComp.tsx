@@ -25,7 +25,7 @@ function refreshAllQuickText(
     extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
-        showingScreenIds.forEach(([screenId, data]) => {
+        for (const [screenId, data] of showingScreenIds) {
             getScreenForegroundManagerInstances(
                 screenId,
                 (screenForegroundManager) => {
@@ -36,7 +36,7 @@ function refreshAllQuickText(
                     });
                 },
             );
-        });
+        }
     });
 }
 

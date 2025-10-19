@@ -128,9 +128,9 @@ export default class ScreenManager extends ScreenManagerBase {
     async delete() {
         this.isDeleted = true;
         this.hide();
-        this.registeredEventListeners.forEach(({ eventName, listener }) => {
+        for (const { eventName, listener } of this.registeredEventListeners) {
             this.removeOnEventListener(eventName, listener);
-        });
+        }
         this.clear();
         this.varyAppDocumentEffectManager.delete();
         this.backgroundEffectManager.delete();
@@ -249,7 +249,7 @@ export default class ScreenManager extends ScreenManagerBase {
             colorNote,
             [currentScreenManager.screenId],
         );
-        screenManagers.forEach((screenManagerBase) => {
+        for (const screenManagerBase of screenManagers) {
             const newMessage: ScreenMessageType = {
                 ...message,
                 screenId: screenManagerBase.screenId,
@@ -260,7 +260,7 @@ export default class ScreenManager extends ScreenManagerBase {
                 if (
                     !currentScreenManager.checkIsSyncGroupEnabled(ScreenHandler)
                 ) {
-                    return;
+                    continue;
                 }
                 screenManagerBase.noSyncGroupMap.set(
                     ScreenHandler.eventNamePrefix,
@@ -268,7 +268,7 @@ export default class ScreenManager extends ScreenManagerBase {
                 );
                 ScreenHandler.receiveSyncScreen(newMessage);
             }
-        });
+        }
     }
 
     sendScreenMessage(message: ScreenMessageType, isForce?: boolean) {

@@ -81,10 +81,10 @@ export function genNewScreenManagerBase() {
 export function getScreenManagersFromSetting() {
     const instanceSetting = getScreenManagersInstanceSetting();
     if (instanceSetting.length > 0) {
-        instanceSetting.forEach(({ screenId, isSelected }: any) => {
+        for (const { screenId, isSelected } of instanceSetting as any[]) {
             const screenManagerBase = createScreenManager(screenId);
             screenManagerBase._isSelected = !!isSelected;
-        });
+        }
     } else {
         createScreenManager(0);
     }

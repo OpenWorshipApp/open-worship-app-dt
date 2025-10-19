@@ -35,7 +35,7 @@ function calculateIndexer(optionClass: string, selectedClass: string) {
     const indexer = [];
     let row: null[] = [];
     let preY = -1;
-    cordList.forEach((cord) => {
+    for (const cord of cordList) {
         if (cord.y !== preY) {
             preY = cord.y;
             if (row.length) {
@@ -44,7 +44,7 @@ function calculateIndexer(optionClass: string, selectedClass: string) {
             row = [];
         }
         row.push(null);
-    });
+    }
     if (row.length) {
         indexer.push(row);
     }
@@ -171,9 +171,9 @@ export function processSelection(
     if (index === -1) {
         return;
     }
-    elements.forEach((element) => {
+    for (const element of elements) {
         element.classList.remove(selectedClass);
-    });
+    }
     elements[index].classList.add(selectedClass);
     blurInputText();
     bringDomToBottomView(elements[index]);

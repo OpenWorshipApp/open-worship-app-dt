@@ -183,9 +183,9 @@ function appKeyUpDown(isUp: boolean) {
     let { index } = domData;
     index += (isUp ? -1 : 1) + allChildren.length;
     index %= allChildren.length;
-    allChildren.forEach((item) => {
+    for (const item of allChildren) {
         item.classList.remove(highlightClass);
-    });
+    }
     allChildren[index].classList.add(highlightClass);
     setTimeout(() => {
         allChildren[index].scrollIntoView({

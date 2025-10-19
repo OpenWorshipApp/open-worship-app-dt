@@ -439,11 +439,9 @@ class LookupBibleItemController extends BibleItemsViewController {
             );
             return;
         }
-        document
-            .querySelectorAll(`[data-scroll-on-next-chapter="1"]`)
-            .forEach((element) => {
-                element.scrollTop = 0;
-            });
+        for (const element of document.querySelectorAll(`[data-scroll-on-next-chapter="1"]`)) {
+            (element as HTMLElement).scrollTop = 0;
+        }
         const newFoundBibleItem = ReadIdOnlyBibleItem.fromJson(
             foundBibleItem.toJson(),
         );

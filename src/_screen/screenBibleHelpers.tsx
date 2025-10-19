@@ -138,9 +138,9 @@ export async function renderScreenBibleManager(
     const screenViewData = screenBibleManager.screenViewData;
     if (screenViewData === null) {
         if (div.lastChild !== null) {
-            Array.from(div.children).forEach((child) => {
+            for (const child of Array.from(div.children)) {
                 child.remove();
-            });
+            }
         }
         div.style.pointerEvents = 'none';
         return;
@@ -189,9 +189,9 @@ export async function renderScreenBibleManager(
         height: `${parentHeight}px`,
         transform: `scale(${scale},${scale}) translate(50%, 50%)`,
     });
-    Array.from(div.children).forEach((child) => {
+    for (const child of Array.from(div.children)) {
         child.remove();
-    });
+    }
     div.appendChild(divContainer);
     screenBibleManager.renderScroll(true);
     screenBibleManager.renderSelectedIndex();

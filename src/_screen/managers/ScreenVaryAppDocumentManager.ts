@@ -186,13 +186,13 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         isForceChoosing = false,
     ) {
         const screenIds = await this.chooseScreenIds(event, isForceChoosing);
-        screenIds.forEach((screenId) => {
+        for (const screenId of screenIds) {
             const screenVaryAppDocumentManager = this.getInstance(screenId);
             screenVaryAppDocumentManager.handleSlideSelecting(
                 filePath,
                 itemJson,
             );
-        });
+        }
     }
 
     renderPdf(divHaftScale: HTMLDivElement, pdfImageData: PdfSlideType) {
@@ -217,16 +217,16 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         if (!appProvider.isPageScreen) {
             return;
         }
-        Array.from(content.children).forEach((child) => {
-            child.querySelectorAll('svg').forEach((svg) => {
+        for (const child of Array.from(content.children)) {
+            for (const svg of child.querySelectorAll('svg')) {
                 svg.style.display = 'none';
-            });
-            child.querySelectorAll('video').forEach((video) => {
+            }
+            for (const video of child.querySelectorAll('video')) {
                 video.loop = false;
                 video.muted = false;
                 video.play();
-            });
-        });
+            }
+        }
     }
 
     renderAppDocument(divHaftScale: HTMLDivElement, itemJson: SlideType) {
@@ -271,10 +271,13 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         if (target === null) {
             return;
         }
-        Array.from(div.children).forEach(async (child) => {
-            await this.effectManager.styleAnim.animOut(child as HTMLDivElement);
-            child.remove();
-        });
+        for (const child of Array.from(div.children)) {
+            this.effectManager.styleAnim
+                .animOut(child as HTMLDivElement)
+                .then(() => {
+                    child.remove();
+                });
+        }
         divHaftScale.appendChild(target.content);
         Object.assign(divContainer.style, {
             position: 'absolute',

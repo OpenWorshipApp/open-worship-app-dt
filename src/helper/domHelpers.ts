@@ -15,24 +15,24 @@ const callBackListeners = new Set<
     (element: Node, type: MutationType) => void
 >();
 const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
+    for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach((node) => {
+            for (const node of mutation.addedNodes) {
                 for (const callback of callBackListeners) {
                     callback(node, 'added');
                 }
-            });
-            mutation.removedNodes.forEach((node) => {
+            }
+            for (const node of mutation.removedNodes) {
                 for (const callback of callBackListeners) {
                     callback(node, 'removed');
                 }
-            });
+            }
         } else if (mutation.type === 'attributes') {
             for (const callback of callBackListeners) {
                 callback(mutation.target, 'attr-modified');
             }
         }
-    });
+    }
 });
 observer.observe(document.body, {
     childList: true,
@@ -93,9 +93,9 @@ export function handleAutoHide(
     if (parentElement === null) {
         return;
     }
-    parentElement.querySelectorAll('.auto-hide-button').forEach((el) => {
+    for (const el of parentElement.querySelectorAll('.auto-hide-button')) {
         el.remove();
-    });
+    }
     targetDom.classList.add(APP_AUTO_HIDE_CLASSNAME);
     const clearButton = document.createElement('i');
     clearButton.className =
@@ -192,18 +192,16 @@ export class HoverMotionHandler {
         if (element instanceof HTMLElement === false) {
             return;
         }
-        element
-            .querySelectorAll('[data-min-parent-width]')
-            .forEach((childElement) => {
-                if (
-                    childElement instanceof HTMLElement &&
-                    childElement.className.includes(
-                        HoverMotionHandler.lowClassname,
-                    )
-                ) {
-                    this.init(childElement);
-                }
-            });
+        for (const childElement of element.querySelectorAll('[data-min-parent-width]')) {
+            if (
+                childElement instanceof HTMLElement &&
+                childElement.className.includes(
+                    HoverMotionHandler.lowClassname,
+                )
+            ) {
+                this.init(childElement);
+            }
+        }
     }
 }
 
@@ -240,15 +238,14 @@ export class InputContextMenuHandler {
         if (element instanceof HTMLElement === false) {
             return;
         }
-        element
-            .querySelectorAll(
-                'input[type="text"], input[type="search"], ' +
-                    'input[type="email"], input[type="password"],' +
-                    ' input[type="number"], input[type="tel"]',
-            )
-            .forEach((childElement) => {
-                this.init(childElement as HTMLInputElement);
-            });
+        const inputElements = element.querySelectorAll(
+            'input[type="text"], input[type="search"], ' +
+                'input[type="email"], input[type="password"],' +
+                ' input[type="number"], input[type="tel"]',
+        );
+        for (const childElement of inputElements) {
+            this.init(childElement as HTMLInputElement);
+        }
     }
 }
 
@@ -260,8 +257,8 @@ export async function removeDomTitle(element: Node, eventType: MutationType) {
         element.title = '';
     }
     if (eventType === 'added') {
-        Array.from(element.children).forEach((child) => {
+        for (const child of Array.from(element.children)) {
             removeDomTitle(child, eventType);
-        });
+        }
     }
 }

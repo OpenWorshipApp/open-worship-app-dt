@@ -89,28 +89,24 @@ export function genHtmlForegroundMarquee(
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const marqueeDiv = getHTMLChild<HTMLDivElement>(div, 'div');
-    marqueeDiv
-        .querySelectorAll(`.${uniqueClassname}`)
-        .forEach((element: any) => {
-            const resizeObserver = new ResizeObserver(() => {
-                if (element.offsetWidth < element.scrollWidth) {
-                    element.classList.add('moving');
-                } else {
-                    element.classList.remove('moving');
-                }
-                resizeObserver.disconnect();
-            });
-            resizeObserver.observe(element);
+    for (const element of marqueeDiv.querySelectorAll(`.${uniqueClassname}`)) {
+        const resizeObserver = new ResizeObserver(() => {
+            if ((element as any).offsetWidth < (element as any).scrollWidth) {
+                element.classList.add('moving');
+            } else {
+                element.classList.remove('moving');
+            }
+            resizeObserver.disconnect();
         });
+        resizeObserver.observe(element);
+    }
     return {
         element: marqueeDiv,
         handleRemoving: () => {
             return new Promise<void>((resolve) => {
-                marqueeDiv
-                    .querySelectorAll(`.${uniqueClassname}`)
-                    .forEach((element: any) => {
-                        element.classList.add('out');
-                    });
+                for (const element of marqueeDiv.querySelectorAll(`.${uniqueClassname}`)) {
+                    (element as any).classList.add('out');
+                }
                 setTimeout(resolve, duration * 1000 + 500);
             });
         },
@@ -360,9 +356,9 @@ export async function getCameraAndShowMedia(
         return async () => {
             await animData.animOut(video);
             const tracks = mediaStream.getVideoTracks();
-            tracks.forEach((track) => {
+            for (const track of tracks) {
                 track.stop();
-            });
+            }
         };
     } catch (error) {
         handleError(error);

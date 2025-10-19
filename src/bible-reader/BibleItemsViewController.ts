@@ -754,9 +754,11 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             classList.remove('selected');
             return;
         }
-        targetDom.parentElement?.childNodes.forEach((element: any) => {
-            element.classList.remove('selected');
-        });
+        if (targetDom.parentElement) {
+            for (const element of targetDom.parentElement.childNodes) {
+                (element as any).classList.remove('selected');
+            }
+        }
         classList.add('selected');
         if (isToTop) {
             bringDomToTopView(targetDom);
@@ -777,7 +779,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         if (!colorNote) {
             return;
         }
-        this.getBibleItemsByColorNote(colorNote).forEach((bibleItem1) => {
+        for (const bibleItem1 of this.getBibleItemsByColorNote(colorNote)) {
             if (bibleItem1.id !== bibleItem.id) {
                 this.syncBibleVerseSelection(
                     bibleItem1,
@@ -785,7 +787,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                     isToTop,
                 );
             }
-        });
+        }
     }
     protected syncTargetByColorNote(bibleItem: ReadIdOnlyBibleItem) {
         const colorNote = this.getColorNote(bibleItem);

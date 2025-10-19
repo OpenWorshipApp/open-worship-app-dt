@@ -58,15 +58,15 @@ function handMovedChecking(
         .filter((targetBibleItem) => {
             return bibleItem.id !== targetBibleItem.id;
         });
-    bibleItems.forEach((targetBibleItem) => {
+    for (const targetBibleItem of bibleItems) {
         const elements = viewController.getVerseElements<HTMLElement>(
             targetBibleItem.id,
             kjvVerseKey,
         );
-        elements.forEach((element) => {
+        for (const element of elements) {
             bringDomToNearestView(element);
-        });
-    });
+        }
+    }
 }
 
 export default function BibleViewComp({
