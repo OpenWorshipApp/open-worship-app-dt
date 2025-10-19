@@ -326,16 +326,16 @@ export default class BoxEditorController {
                 return;
             }
             this.blockMouseEvent(event);
-            window.removeEventListener('mousemove', eventMouseMoveHandler);
-            window.removeEventListener('mouseup', eventMouseUpHandler);
+            globalThis.removeEventListener('mousemove', eventMouseMoveHandler);
+            globalThis.removeEventListener('mouseup', eventMouseUpHandler);
             if (isMoving) {
                 this.onDone();
             } else {
                 this.onClick(event);
             }
         };
-        window.addEventListener('mousemove', eventMouseMoveHandler);
-        window.addEventListener('mouseup', eventMouseUpHandler);
+        globalThis.addEventListener('mousemove', eventMouseMoveHandler);
+        globalThis.addEventListener('mouseup', eventMouseUpHandler);
     }
     rotationFromStyle(style: CSSStyleDeclaration) {
         const transform = style.getPropertyValue('transform');
@@ -353,7 +353,7 @@ export default class BoxEditorController {
         return 0;
     }
     getCurrentRotation(element: HTMLDivElement) {
-        const style = window.getComputedStyle(element, null);
+        const style = globalThis.getComputedStyle(element, null);
         return this.rotationFromStyle(style);
     }
     repositionElement(x: number, y: number) {
@@ -405,12 +405,12 @@ export default class BoxEditorController {
         };
         const eventEndHandler = (event: MouseEvent) => {
             this.blockMouseEvent(event);
-            window.removeEventListener('mousemove', eventMoveHandler);
-            window.removeEventListener('mouseup', eventEndHandler);
+            globalThis.removeEventListener('mousemove', eventMoveHandler);
+            globalThis.removeEventListener('mouseup', eventEndHandler);
             this.onDone();
         };
-        window.addEventListener('mousemove', eventMoveHandler);
-        window.addEventListener('mouseup', eventEndHandler);
+        globalThis.addEventListener('mousemove', eventMoveHandler);
+        globalThis.addEventListener('mouseup', eventEndHandler);
     }
     resizeHandler(event: MouseEvent, options: ResizeType) {
         if (this.editor === null || this.target === null) {
@@ -450,12 +450,12 @@ export default class BoxEditorController {
 
         const eventMouseUpHandler = (event: MouseEvent) => {
             this.blockMouseEvent(event);
-            window.removeEventListener('mousemove', mouseMoveHandler);
-            window.removeEventListener('mouseup', eventMouseUpHandler);
+            globalThis.removeEventListener('mousemove', mouseMoveHandler);
+            globalThis.removeEventListener('mouseup', eventMouseUpHandler);
             this.onDone();
         };
-        window.addEventListener('mousemove', mouseMoveHandler);
-        window.addEventListener('mouseup', eventMouseUpHandler);
+        globalThis.addEventListener('mousemove', mouseMoveHandler);
+        globalThis.addEventListener('mouseup', eventMouseUpHandler);
     }
     getInfo(): BoxInfoType | null {
         if (this.editor === null || this.target === null) {

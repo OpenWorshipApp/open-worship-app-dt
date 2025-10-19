@@ -141,9 +141,9 @@ function move() {
             }
             const newPos = from + easeFn(Math.abs(factor)) * distDiff;
             callback(newPos);
-            window.requestAnimationFrame(step);
+            globalThis.requestAnimationFrame(step);
         };
-        window.requestAnimationFrame(step);
+        globalThis.requestAnimationFrame(step);
     };
     const anim: StyleAnimType = {
         duration: 500,

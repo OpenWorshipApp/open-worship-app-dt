@@ -37,12 +37,12 @@ export const audioEvent = {
 export function handleAudioPlaying(event: any) {
     const audioElement = event.target;
     const audioElements = document.querySelectorAll('audio');
-    audioElements.forEach((element) => {
+    for (const element of audioElements) {
         if (element !== audioElement) {
             element.pause();
             element.currentTime = 0;
         }
-    });
+    }
     window.addEventListener('beforeunload', blockUnload);
     audioEvent.onChange(checkAudioPlaying());
 }

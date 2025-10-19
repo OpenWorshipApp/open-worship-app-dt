@@ -36,10 +36,10 @@ export function setThemeSourceSetting(themeSource: ThemeOptionType) {
 }
 
 function getSystemDarkMatcher() {
-    if (!window.matchMedia) {
+    if (!globalThis.matchMedia) {
         return null;
     }
-    return window.matchMedia('(prefers-color-scheme: dark)');
+    return globalThis.matchMedia('(prefers-color-scheme: dark)');
 }
 export function checkIsDarkMode() {
     const themeSource = getThemeSourceSetting();
@@ -55,7 +55,7 @@ export function getReactRoot() {
     const container = document.getElementById('root');
     if (container === null) {
         const message = 'Root element not found';
-        window.alert(message);
+        globalThis.alert(message);
         throw new Error(message);
     }
     const root = createRoot(container);

@@ -24,10 +24,7 @@ export const BIBLE_VERSE_TEXT_TITLE =
     'Click to highlight, double click or ' + 'Alt + click to bring to view';
 
 export function getRandomUUID() {
-    return (
-        Math.random().toString(36).substring(2) +
-        new Date().getTime().toString(36)
-    );
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
 
 export function getRandomColor() {
@@ -39,7 +36,7 @@ export function getRandomColor() {
     return color;
 }
 export const cloneJson = <T>(obj: T): T => {
-    return JSON.parse(JSON.stringify(obj));
+    return structuredClone(obj);
 };
 
 // https://stackoverflow.com/a/41698614/17066360
@@ -91,7 +88,7 @@ export function isVisible(elem: any) {
 }
 
 export function getRotationDeg(str: string) {
-    const match = RegExp(/rotate\((.+)deg\)/).exec(str);
+    const match = new RegExp(/rotate\((.+)deg\)/).exec(str);
     return match ? Number.parseInt(match[1]) : 0;
 }
 export const removePX = (str: string) => {
@@ -203,9 +200,9 @@ export function freezeObject(obj: any) {
     }
     Object.freeze(obj);
     if (Array.isArray(obj)) {
-        obj.forEach((item) => {
+        for (const item of obj) {
             freezeObject(item);
-        });
+        }
     } else if (obj instanceof Object) {
         for (const key in obj) {
             freezeObject(obj[key]);
