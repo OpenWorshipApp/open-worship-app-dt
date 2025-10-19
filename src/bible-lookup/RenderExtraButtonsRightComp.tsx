@@ -31,6 +31,7 @@ export default function RenderExtraButtonsRightComp({
             {appProvider.isPagePresenter ? (
                 <div
                     className="input-group-text app-caught-hover-pointer"
+                    title="`Keep popup modal open when adding a bible item, useful in presenter mode"
                     onClick={() => {
                         setIsKeepingPopup(!isKeepingPopup);
                     }}
@@ -44,7 +45,7 @@ export default function RenderExtraButtonsRightComp({
                             setIsKeepingPopup(checked);
                         }}
                     />
-                    <span>Keep Window Open</span>
+                    <span>Keep Open</span>
                 </div>
             ) : null}
             <button
@@ -59,7 +60,7 @@ export default function RenderExtraButtonsRightComp({
             >
                 <i className="bi bi-search" />
             </button>
-            {!appProvider.isPageReader ? null : (
+            {appProvider.isPageReader ? (
                 <>
                     <QuitCurrentPageComp
                         title="`Go Back to Presenter"
@@ -68,7 +69,7 @@ export default function RenderExtraButtonsRightComp({
                     <SettingButtonComp />
                     <HelpButtonComp />
                 </>
-            )}
+            ) : null}
         </div>
     );
 }

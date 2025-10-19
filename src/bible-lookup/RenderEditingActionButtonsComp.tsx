@@ -28,6 +28,9 @@ export default function RenderEditingActionButtonsComp({
         });
     }, []);
     const viewController = useLookupBibleItemControllerContext();
+    const onDone = () => {
+        viewController.onLookupSaveBibleItem();
+    };
     useFoundActionKeyboard(bibleItem);
     useKeyboardRegistering(
         eventMaps,
@@ -68,10 +71,7 @@ export default function RenderEditingActionButtonsComp({
                 type="button"
                 title={`Save bible item [${toShortcutKey(addListEventMapper)}]`}
                 onClick={() => {
-                    saveBibleItem(
-                        bibleItem,
-                        viewController.onLookupSaveBibleItem,
-                    );
+                    saveBibleItem(bibleItem, onDone);
                 }}
             >
                 <i className="bi bi-floppy" />
@@ -84,11 +84,7 @@ export default function RenderEditingActionButtonsComp({
                         presenterEventMapper,
                     )}]`}
                     onClick={(event) => {
-                        addBibleItemAndPresent(
-                            event,
-                            bibleItem,
-                            viewController.onLookupSaveBibleItem,
-                        );
+                        addBibleItemAndPresent(event, bibleItem, onDone);
                     }}
                 >
                     <i className="bi bi-cast" />
