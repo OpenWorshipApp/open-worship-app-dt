@@ -22,6 +22,12 @@ Special thanks for others frameworks and tools in [npm package](./package.json)
 - [dotnet 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 - For Windows, [Cygwin](https://cygwin.com/) is needed. `Cygwin` through [Git](https://git-scm.com/) is recommended (by installing `Git` with `Git-bash` we will have all required commands installed)
 
+For Fedora:
+```bash
+sudo dnf install libxcrypt-compat
+```
+
+
 ## Install
 
 ```bash
