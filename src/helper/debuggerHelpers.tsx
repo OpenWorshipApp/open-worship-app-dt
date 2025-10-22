@@ -65,7 +65,7 @@ export function useAppEffectAsync<T extends MethodContextType>(
         ? undefined
         : [...(deps ?? []), ...Object.values(methods ?? {})];
     useEffect(() => {
-        const methodContext = { ...(methods ?? {}) } as T;
+        const methodContext = { ...methods } as T;
         checkStore(toKey);
         const unmount = effectMethod(methodContext);
         return () => {
