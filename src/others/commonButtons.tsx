@@ -49,7 +49,7 @@ export function HelpButtonComp() {
         const helpKey = appProvider.currentHomePage
             .replace(/^\//, '')
             .replace(/\.html$/, '');
-        return `${appProvider.appInfo.homepage}/help/#${helpKey}`;
+        return `${appProvider.appInfo.homepage}/help#${helpKey}`;
     }, []);
     return (
         <button
