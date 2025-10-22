@@ -424,7 +424,10 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         }
         for (const screenId of screenIds) {
             const screenBibleManager = this.getInstance(screenId);
-            await screenBibleManager.applyNewBibleItemJson(bibleItemJson, filePath);
+            await screenBibleManager.applyNewBibleItemJson(
+                bibleItemJson,
+                filePath,
+            );
         }
     }
 

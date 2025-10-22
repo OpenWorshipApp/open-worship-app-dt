@@ -104,7 +104,9 @@ export function genHtmlForegroundMarquee(
         element: marqueeDiv,
         handleRemoving: () => {
             return new Promise<void>((resolve) => {
-                for (const element of marqueeDiv.querySelectorAll(`.${uniqueClassname}`)) {
+                for (const element of marqueeDiv.querySelectorAll(
+                    `.${uniqueClassname}`,
+                )) {
                     (element as any).classList.add('out');
                 }
                 setTimeout(resolve, duration * 1000 + 500);

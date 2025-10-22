@@ -192,12 +192,12 @@ export class HoverMotionHandler {
         if (element instanceof HTMLElement === false) {
             return;
         }
-        for (const childElement of element.querySelectorAll('[data-min-parent-width]')) {
+        for (const childElement of element.querySelectorAll(
+            '[data-min-parent-width]',
+        )) {
             if (
                 childElement instanceof HTMLElement &&
-                childElement.className.includes(
-                    HoverMotionHandler.lowClassname,
-                )
+                childElement.className.includes(HoverMotionHandler.lowClassname)
             ) {
                 this.init(childElement);
             }

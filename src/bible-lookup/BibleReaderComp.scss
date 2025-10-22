@@ -1,22 +1,22 @@
-#bible-lookup-popup {
-  position: relative;
-  width: calc(100% - 20px);
-  height: calc(100% - 20px);
-  min-width: 98%;
-  min-height: 98%;
-  margin: auto;
+#bible-lookup-container {
+  .app-pencil-bible-lookup {
+    opacity: 0.2;
+    &:hover {
+      opacity: 1;
+    }
+  }
 
   .app-input-group-header {
     margin: auto;
     max-width: 350px;
   }
 
-  .chapter-select {
+  .app-chapter-select {
     width: 85px;
     font-size: 13px;
   }
 
-  .found {
+  .app-render-found {
     overflow-y: auto;
 
     .bible-lookup-chapter-option,
@@ -28,7 +28,10 @@
     }
   }
 
-  .select {
-    padding: 0;
+  .verse-select {
+    .item {
+      padding: 0;
+      margin: 0;
+    }
   }
 }

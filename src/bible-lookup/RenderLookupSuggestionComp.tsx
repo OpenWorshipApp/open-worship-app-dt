@@ -40,7 +40,7 @@ export default function RenderLookupSuggestionComp({
     }
     return (
         <div
-            className={`found w-100 h-100 app-focusable ${RENDER_FOUND_CLASS}`}
+            className={`app-render-found w-100 h-100 app-focusable ${RENDER_FOUND_CLASS}`}
             style={{ overflowY: 'auto' }}
             tabIndex={0}
             onClick={(event) => {
@@ -86,7 +86,7 @@ export function BibleNotAvailableComp({
     };
 
     return (
-        <div id="bible-lookup-popup" className="card">
+        <div id="bible-lookup-container" className="card">
             <div className="body card-body w-100 p-3">
                 <h2>
                     `Bible key "

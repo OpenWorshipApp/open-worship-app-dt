@@ -54,7 +54,12 @@ function RenderBodyEditingComp() {
                                     setBibleLookupInputFocus();
                                 }}
                             >
-                                <i className="bi bi-pencil-fill highlight-color" />
+                                <i
+                                    className={
+                                        'bi bi-pencil-fill highlight-color ' +
+                                        'app-pencil-bible-lookup'
+                                    }
+                                />
                             </span>
                         </BibleViewTitleEditingComp>
                     ),
@@ -86,7 +91,7 @@ function RenderBodyComp({
                         <span
                             className={
                                 'pointer app-low-hover-visible-1 ' +
-                                'app-caught-hover-pointer'
+                                'app-caught-hover-pointer app-pencil-bible-lookup'
                             }
                             title='Hit "Escape" to force edit'
                             onClick={() => {
