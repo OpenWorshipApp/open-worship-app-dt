@@ -411,7 +411,7 @@ export async function extractBibleTitle(
     bibleKey: string,
     inputText: string,
 ): Promise<EditingResultType> {
-    const cleanText = inputText.trim().replace(/\s+/g, ' ');
+    const cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
     const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
     if (extractedBibleKeyResult !== null) {
         return extractBibleTitle(
