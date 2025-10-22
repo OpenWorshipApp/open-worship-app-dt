@@ -237,6 +237,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             width: `${width}px`,
             height: `${height}px`,
             transform: 'translate(-50%, -50%)',
+            overflow: 'hidden',
         });
         const scale = Math.min(
             this.screenManagerBase.width / width,

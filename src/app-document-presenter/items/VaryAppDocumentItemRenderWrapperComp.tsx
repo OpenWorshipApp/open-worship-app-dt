@@ -23,16 +23,19 @@ export default function VaryAppDocumentItemRenderWrapperComp({
     const selectedAppDocument = useVaryAppDocumentContext();
     const setSelectedAppDocumentItem = useSelectedEditingSlideSetterContext();
     const handleClicking = (event: any) => {
-        handleAppDocumentItemSelecting(
-            event,
-            index + 1,
-            varyAppDocumentItem,
-            (selectedVaryAppDocumentItem) => {
-                if (selectedVaryAppDocumentItem instanceof Slide) {
-                    setSelectedAppDocumentItem(selectedVaryAppDocumentItem);
-                }
-            },
-        );
+        event.stopPropagation();
+        setTimeout(() => {
+            handleAppDocumentItemSelecting(
+                event,
+                index + 1,
+                varyAppDocumentItem,
+                (selectedVaryAppDocumentItem) => {
+                    if (selectedVaryAppDocumentItem instanceof Slide) {
+                        setSelectedAppDocumentItem(selectedVaryAppDocumentItem);
+                    }
+                },
+            );
+        }, 0);
     };
     const handleContextMenuOpening = (
         event: any,
