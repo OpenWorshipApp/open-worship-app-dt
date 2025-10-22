@@ -242,7 +242,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         return { content, scale };
     }
 
-    async clearJung(div: HTMLDivElement) {
+    async clearJunk(div: HTMLDivElement) {
         if (div.lastChild === null) {
             return;
         }
@@ -257,7 +257,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         }
         const div = this.div;
         if (this.varyAppDocumentItemData === null) {
-            this.clearJung(div);
+            this.clearJunk(div);
             return;
         }
         const divContainer = document.createElement('div');
