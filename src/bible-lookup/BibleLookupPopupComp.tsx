@@ -1,5 +1,3 @@
-import './BibleLookupPopupComp.scss';
-
 import { ModalComp } from '../app-modal/ModalComp';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { getIsKeepingPopup } from './RenderExtraButtonsRightComp';

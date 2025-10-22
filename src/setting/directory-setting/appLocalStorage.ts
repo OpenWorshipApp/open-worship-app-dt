@@ -25,11 +25,13 @@ class AppLocalStorage {
         if (cachedDefaultStorage !== null) {
             return cachedDefaultStorage;
         }
-        let selectedParentDir = window.localStorage.getItem(
+        let selectedParentDir = globalThis.localStorage.getItem(
             SELECTED_PARENT_DIR_SETTING_NAME,
         );
         if (!selectedParentDir || !fsExistSync(selectedParentDir)) {
-            window.localStorage.removeItem(SELECTED_PARENT_DIR_SETTING_NAME);
+            globalThis.localStorage.removeItem(
+                SELECTED_PARENT_DIR_SETTING_NAME,
+            );
             selectedParentDir = getUserWritablePath();
         }
         cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, selectedParentDir);
@@ -51,7 +53,7 @@ class AppLocalStorage {
     }
 
     async getSelectedParentDirectory() {
-        const selectedParentDir = window.localStorage.getItem(
+        const selectedParentDir = globalThis.localStorage.getItem(
             SELECTED_PARENT_DIR_SETTING_NAME,
         );
         if (!selectedParentDir || !(await fsCheckDirExist(selectedParentDir))) {
@@ -65,7 +67,10 @@ class AppLocalStorage {
             throw new Error(`Directory does not exist: ${dirPath}`);
         }
         cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
-        window.localStorage.setItem(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
+        globalThis.localStorage.setItem(
+            SELECTED_PARENT_DIR_SETTING_NAME,
+            dirPath,
+        );
     }
 
     toFullPath(key: string): string {
@@ -115,7 +120,7 @@ class AppLocalStorage {
                     return fsDeleteFile(fullPath);
                 }),
             );
-            window.localStorage.clear();
+            globalThis.localStorage.clear();
         } catch (error) {
             handleError(error);
         }

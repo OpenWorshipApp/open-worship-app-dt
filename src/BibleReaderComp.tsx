@@ -1,3 +1,5 @@
+import './bible-lookup/BibleReaderComp.scss';
+
 import { lazy, useMemo } from 'react';
 
 import { DataInputType, FlexSizeType } from './resize-actor/flexSizeHelpers';

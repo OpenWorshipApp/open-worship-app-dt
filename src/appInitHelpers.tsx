@@ -99,15 +99,15 @@ async function confirmReloading() {
     });
 }
 
-export async function initApp() {
-    function isDomException(error: any) {
-        if (typeof error === 'string' && error.startsWith('ResizeObserver')) {
-            return true;
-        }
-        return error instanceof DOMException;
+function isDomException(error: any) {
+    if (typeof error === 'string' && error.startsWith('ResizeObserver')) {
+        return true;
     }
+    return error instanceof DOMException;
+}
 
-    window.onunhandledrejection = (promiseError) => {
+export async function initApp() {
+    globalThis.onunhandledrejection = (promiseError) => {
         const reason = promiseError.reason;
         if (reason.name === 'Canceled') {
             return;
@@ -119,7 +119,7 @@ export async function initApp() {
         confirmReloading();
     };
 
-    window.onerror = function (error: any) {
+    globalThis.onerror = function (error: any) {
         handleError(error);
         if (isDomException(error)) {
             return;

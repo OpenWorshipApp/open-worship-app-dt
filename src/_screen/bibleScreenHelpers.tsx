@@ -53,9 +53,9 @@ const bibleScreenHelper = {
             `span.${className}`,
         );
         const arrChildren = Array.from(targets);
-        arrChildren.forEach((target) => {
+        for (const target of arrChildren) {
             target.classList.remove(className);
-        });
+        }
         return arrChildren;
     },
     resetClassName(
@@ -92,7 +92,7 @@ const bibleScreenHelper = {
         if (!appProvider.isPageScreen) {
             const divBibleKeys =
                 div.querySelectorAll<HTMLSpanElement>('div.bible-name');
-            Array.from(divBibleKeys).forEach((divBibleKey) => {
+            for (const divBibleKey of Array.from(divBibleKeys)) {
                 divBibleKey.addEventListener('mouseover', () => {
                     divBibleKey.classList.add('hover');
                 });
@@ -105,10 +105,10 @@ const bibleScreenHelper = {
                     );
                     onBibleSelect(event, index);
                 });
-            });
+            }
         }
         const spans = div.querySelectorAll<HTMLSpanElement>('span.highlight');
-        Array.from(spans).forEach((span) => {
+        for (const span of Array.from(spans)) {
             const kjvVerseKey = span.dataset.kjvVerseKey;
             span.addEventListener('mouseover', () => {
                 this.resetClassName(div, 'hover', true, kjvVerseKey);
@@ -133,7 +133,7 @@ const bibleScreenHelper = {
                 event.preventDefault();
                 clickHandler(true);
             });
-        });
+        }
     },
     genBibleItemRenderList(bibleItems: BibleItem[]) {
         return Promise.all(

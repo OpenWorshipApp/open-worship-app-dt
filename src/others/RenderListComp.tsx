@@ -80,12 +80,12 @@ export default function RenderListComp({
     const filePathColorMap: { [key: string]: string[] } = {
         [UNKNOWN_COLOR_NOTE]: [],
     };
-    filePaths.forEach((filePath) => {
+    for (const filePath of filePaths) {
         const fileSource = FileSource.getInstance(filePath);
         const colorNote = fileSource.colorNote ?? UNKNOWN_COLOR_NOTE;
         filePathColorMap[colorNote] = filePathColorMap[colorNote] ?? [];
         filePathColorMap[colorNote].push(filePath);
-    });
+    }
     if (Object.keys(filePathColorMap).length === 1) {
         return bodyHandler(filePaths);
     }

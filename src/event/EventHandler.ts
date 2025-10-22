@@ -92,9 +92,9 @@ export class BasicEventHandler<T extends string> {
     }
 
     unregisterEventListener<F>(regEvents: RegisteredEventType<T, F>[]) {
-        regEvents.forEach(({ eventName, listener }) => {
+        for (const { eventName, listener } of regEvents) {
             this.removeOnEventListener(eventName, listener);
-        });
+        }
     }
 }
 
@@ -141,12 +141,12 @@ export default class EventHandler<
         regEvents: RegisteredEventType<T, F>[],
     ) {
         const eventHandler = this.getEventHandler();
-        regEvents.forEach(({ eventName, listener }) => {
+        for (const { eventName, listener } of regEvents) {
             eventHandler.removeOnEventListener(
                 this.prefixEventName(eventName),
                 listener,
             );
-        });
+        }
     }
 
     static prefixEventName(eventName: string) {

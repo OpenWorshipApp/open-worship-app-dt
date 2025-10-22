@@ -24,8 +24,8 @@ export async function applyFontFamily(element: Node, type: MutationType) {
         }
     }
     if (type === 'added') {
-        Array.from(element.children).forEach((child) => {
+        for (const child of Array.from(element.children)) {
             applyFontFamily(child, type);
-        });
+        }
     }
 }

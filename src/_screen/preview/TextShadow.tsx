@@ -87,9 +87,9 @@ function checkRendered(container: HTMLDivElement) {
         return { child, listener: clickListener };
     });
     return () => {
-        listenList.forEach(({ child, listener }) => {
+        for (const { child, listener } of listenList) {
             child.removeEventListener('click', listener);
-        });
+        }
     };
 }
 
@@ -109,9 +109,9 @@ export default function TextShadow() {
             return { d, listener };
         });
         return () => {
-            listenList.forEach((listen) => {
+            for (const listen of listenList) {
                 listen.d.removeEventListener('click', listen.listener);
-            });
+            }
         };
     }, []);
     const htmlColorText = useMemo(() => {

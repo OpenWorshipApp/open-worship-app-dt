@@ -53,7 +53,7 @@ async function loadApiData() {
         const content = await appApiFetch('bible-online-info.json');
         const json = await content.json();
         if (typeof json.mapper !== 'object') {
-            throw new Error('Cannot get bible list');
+            throw new TypeError('Cannot get bible list');
         }
         return json as APIDataType;
     } catch (error) {
@@ -106,7 +106,7 @@ async function initDatabase(
                     sanitizedText = sanitizedText.split(' ').join('');
                 }
                 let text = `${bookKey}.${chapterKey}:${verse}=>${verses[verse]}`;
-                text = text.replace(/'/g, "''");
+                text = text.replaceAll("'", "''");
                 const sText = sanitizedText ?? verses[verse];
                 bucket.push(`('${text}','${sText}')`);
                 if (bucket.length > 100) {
@@ -370,16 +370,16 @@ export default class BibleFindController {
             return null;
         }
         let database: SQLiteDatabaseType | null = null;
-        if (!(await this.checkDatabaseValid(databaseFilePath))) {
+        if (await this.checkDatabaseValid(databaseFilePath)) {
+            const databaseUtils = appProvider.databaseUtils;
+            database =
+                await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
+        } else {
             database = await initDatabase(
                 instance.bibleKey,
                 databaseFilePath,
                 SUCCESS_FILE_SUFFIX,
             );
-        } else {
-            const databaseUtils = appProvider.databaseUtils;
-            database =
-                await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
         }
         if (database === null) {
             return null;

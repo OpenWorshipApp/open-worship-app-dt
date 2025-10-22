@@ -32,7 +32,7 @@ export default function RenderVerseNumOptionComp({
         <div
             className={`item alert app-caught-hover-pointer text-center ${select}`}
             title={
-                `${verseNum}` !== verseNumText ? `Verse ${verseNum}` : undefined
+                `${verseNum}` === verseNumText ? undefined : `Verse ${verseNum}`
             }
             onMouseDown={(event) => {
                 if (event.shiftKey) {

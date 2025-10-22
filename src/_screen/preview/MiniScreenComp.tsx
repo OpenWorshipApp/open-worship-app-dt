@@ -22,9 +22,9 @@ export default function MiniScreenComp() {
     );
     const setPreviewScale1 = (size: number) => {
         setPreviewScale(size);
-        getAllScreenManagers().forEach((screenManager) => {
+        for (const screenManager of getAllScreenManagers()) {
             screenManager.fireRefreshEvent();
-        });
+        }
     };
     return (
         <div

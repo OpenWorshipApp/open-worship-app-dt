@@ -141,7 +141,7 @@ export default function RenderBibleLookupComp() {
             ]}
         >
             <div
-                id="bible-lookup-popup"
+                id="bible-lookup-container"
                 className="shadow card w-100 h-100 overflow-hidden"
             >
                 <RenderBibleLookupHeaderComp
@@ -156,7 +156,7 @@ export default function RenderBibleLookupComp() {
                 >
                     {isBibleSearching ? (
                         <ResizeActorComp
-                            flexSizeName="bible-lookup-popup-body"
+                            flexSizeName="bible-lookup-container-body"
                             isHorizontal
                             isDisableQuickResize
                             flexSizeDefault={{ h1: ['1'], h2: ['3'] }}

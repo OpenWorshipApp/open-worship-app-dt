@@ -137,8 +137,8 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         event.preventDefault();
         this.init();
         this.lastPos = this.getMousePagePos(event);
-        window.addEventListener('mousemove', this.mouseMoveListener);
-        window.addEventListener('mouseup', this.mouseUpListener);
+        globalThis.addEventListener('mousemove', this.mouseMoveListener);
+        globalThis.addEventListener('mouseup', this.mouseUpListener);
     }
     get isPreReachMinSize() {
         return this.preSize <= this.previousMinSize;
@@ -206,8 +206,8 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         if (!this.currentNode) {
             return;
         }
-        window.removeEventListener('mousemove', this.mouseMoveListener);
-        window.removeEventListener('mouseup', this.mouseUpListener);
+        globalThis.removeEventListener('mousemove', this.mouseMoveListener);
+        globalThis.removeEventListener('mouseup', this.mouseUpListener);
 
         this.setInactive();
         if (this.preNode.classList.contains(HIDDEN_WIDGET_CLASS)) {

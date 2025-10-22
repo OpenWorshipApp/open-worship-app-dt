@@ -140,9 +140,9 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
 
     applyProps(props: AnyObjectType) {
         const propsAny = this.props as any;
-        Object.entries(props).forEach(([key, value]) => {
+        for (const [key, value] of Object.entries(props)) {
             propsAny[key] = value;
-        });
+        }
         cleanupProps(props);
     }
 

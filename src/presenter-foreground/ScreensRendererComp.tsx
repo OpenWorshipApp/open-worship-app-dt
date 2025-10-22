@@ -33,11 +33,11 @@ export default function ScreensRendererComp<T>({
                             data,
                         )}
                     >
-                        {!isMini ? (
+                        {isMini ? null : (
                             <button className="btn btn-secondary">
                                 {buttonText}
                             </button>
-                        ) : null}
+                        )}
                         <div className="input-group-text">
                             <ShowingScreenIcon screenId={screenId} />
                         </div>

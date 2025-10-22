@@ -5,7 +5,7 @@ import EventHandler from './EventHandler';
 import { AppWidgetType } from './WindowEventListener';
 
 function getLastItem<T>(arr: T[]) {
-    return arr[arr.length - 1] ?? null;
+    return arr.at(-1) ?? null;
 }
 
 export type KeyboardType =

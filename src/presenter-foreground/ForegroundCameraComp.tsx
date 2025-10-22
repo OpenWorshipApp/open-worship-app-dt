@@ -115,7 +115,7 @@ function refreshAllCameras(
     extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
-        showingScreenIdDataList.forEach(([screenId, data]) => {
+        for (const [screenId, data] of showingScreenIdDataList) {
             getScreenForegroundManagerInstances(
                 screenId,
                 (screenForegroundManager) => {
@@ -126,7 +126,7 @@ function refreshAllCameras(
                     });
                 },
             );
-        });
+        }
     });
 }
 

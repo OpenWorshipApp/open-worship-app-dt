@@ -234,9 +234,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             screenForegroundManager.saveForegroundData();
         };
         const screenIds = await this.chooseScreenIds(event, isForceChoosing);
-        screenIds.forEach((screenId) => {
+        for (const screenId of screenIds) {
             callbackSave(this.getInstance(screenId));
-        });
+        }
     }
 
     renderCountdown(data: ForegroundCountdownDataType) {

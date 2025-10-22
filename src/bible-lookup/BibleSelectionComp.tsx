@@ -32,10 +32,10 @@ export async function genContextMenuBibleKeys(
         return !excludeBibleKeys.includes(bibleInfo.key);
     });
     const localeBibleInfoMap: { [locale: string]: BibleMinimalInfoType[] } = {};
-    localeBibleInfoList.forEach((bibleInfo) => {
+    for (const bibleInfo of localeBibleInfoList) {
         localeBibleInfoMap[bibleInfo.locale] ??= [];
         localeBibleInfoMap[bibleInfo.locale].push(bibleInfo);
-    });
+    }
     const locales = Object.keys(localeBibleInfoMap);
     const localeFontFamilyMap = Object.fromEntries(
         (

@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, useState } from 'react';
 import { tz } from 'moment-timezone';
 
 import {
@@ -20,7 +20,6 @@ import { genTimeoutAttempt } from '../helper/helpers';
 import { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { useState } from 'react';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { dragStore } from '../helper/dragHelpers';
@@ -36,7 +35,7 @@ function getMinuteOffsetFromCity(event: any) {
             .names()
             .map((name) => {
                 const arr = name.split('/');
-                const city = arr[arr.length - 1];
+                const city = arr.at(-1);
                 return [city, name] as [string, string];
             })
             .sort((a, b) => {
@@ -185,7 +184,7 @@ function refreshAllTimes(
     extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
-        showingScreenIdDataList.forEach(([screenId, timeData]) => {
+        for (const [screenId, timeData] of showingScreenIdDataList) {
             getScreenForegroundManagerInstances(
                 screenId,
                 (screenForegroundManager) => {
@@ -196,7 +195,7 @@ function refreshAllTimes(
                     });
                 },
             );
-        });
+        }
     });
 }
 
@@ -241,7 +240,7 @@ function ForegroundTimeItemComp({
     });
     return (
         <div className="app-border-white-round p-2">
-            {onRemove !== undefined ? (
+            {onRemove ? (
                 <i
                     className="bi bi-x-lg float-end app-caught-hover-pointer"
                     style={{ color: 'red' }}

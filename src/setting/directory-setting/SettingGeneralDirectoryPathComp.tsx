@@ -68,14 +68,14 @@ function RenderPathElementComp({
                         isForceShowEditor={!isValidDirPath}
                     />
                 </div>
-                {!isValidDirPath ? (
+                {isValidDirPath ? null : (
                     <div className="m-1">
                         <SelectDefaultDirButton
                             dirSource={dirSource}
                             defaultFolderName={defaultFolderName}
                         />
                     </div>
-                ) : null}
+                )}
             </div>
             <hr />
         </div>
@@ -97,7 +97,7 @@ function RenderParentDirectoryComp({
                     />
                 </div>
             </div>
-            {!dirSource.dirPath ? (
+            {dirSource.dirPath ? null : (
                 <div>
                     <hr />
                     <button
@@ -111,7 +111,7 @@ function RenderParentDirectoryComp({
                         Set Default Data ({defaultPath})
                     </button>
                 </div>
-            ) : null}
+            )}
         </div>
     );
 }

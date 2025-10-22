@@ -217,7 +217,7 @@ const lang: LanguageDataType = {
                 newText += ' ';
             }
         }
-        newText = newText.replace(/\s+/g, ' ');
+        newText = newText.replaceAll(/\s+/g, ' ');
         newText = lang.trimText(newText);
         return newText;
     },
@@ -237,7 +237,7 @@ const lang: LanguageDataType = {
         'ជា',
     ],
     trimText: (text: string) => {
-        return text.trim().replace(/^[\u200B]+|[\u200B]+$/g, '');
+        return text.trim().replaceAll(/^(\u200B)+|(\u200B)+$/g, '');
     },
     endWord: (text: string) => {
         return text + '\u200B';

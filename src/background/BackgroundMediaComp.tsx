@@ -109,14 +109,14 @@ function genBody(
                 ]);
             }}
             onClick={(event) => {
-                if (onClick !== undefined) {
+                if (onClick) {
                     onClick(event, fileSource);
                 } else {
                     handleSelecting(event);
                 }
             }}
         >
-            {!isNameOnTop ? null : (
+            {isNameOnTop && (
                 <div className="app-ellipsis-left pe-4">
                     {fileSource.fullName}
                 </div>
@@ -209,9 +209,7 @@ export default function BackgroundMediaComp({
         );
         return (
             <div>
-                {extraHeaderChild !== undefined ? (
-                    <>{extraHeaderChild}</>
-                ) : null}
+                {extraHeaderChild ? <>{extraHeaderChild}</> : null}
                 <div className="d-flex justify-content-start flex-wrap">
                     {newFilePaths.map(genBodyWithChild)}
                 </div>
@@ -254,7 +252,7 @@ export default function BackgroundMediaComp({
                               }
                     }
                     onItemsAdding={
-                        onItemsAdding !== undefined
+                        onItemsAdding
                             ? onItemsAdding.bind(null, dirSource)
                             : undefined
                     }

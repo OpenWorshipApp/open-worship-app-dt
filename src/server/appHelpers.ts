@@ -22,8 +22,7 @@ export function getFontListByNodeFont() {
 }
 
 export function genReturningEventName(eventName: string) {
-    const newDate = new Date().getTime();
-    return `${eventName}-return-${newDate}`;
+    return `${eventName}-return-${Date.now()}`;
 }
 
 export function electronSendAsync<T>(
@@ -194,7 +193,7 @@ export async function checkForUpdateSilently() {
 
 const DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME = 'decided-reader-home-page';
 function setDecided() {
-    window.localStorage.setItem(
+    globalThis.localStorage.setItem(
         DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME,
         'true',
     );
@@ -206,7 +205,7 @@ export async function checkDecidedBibleReaderHomePage() {
     if (appProvider.isPageReader) {
         setDecided();
     }
-    const decided = window.localStorage.getItem(
+    const decided = globalThis.localStorage.getItem(
         DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME,
     );
     if (decided !== null) {
@@ -296,7 +295,7 @@ async function getPageTitle(url: string) {
     if (rawHtml === null) {
         return null;
     }
-    const titleMatch = rawHtml.match(/<title>(.*?)<\/title>/);
+    const titleMatch = /<title>(.*?)<\/title>/.exec(rawHtml);
     if (titleMatch && titleMatch[1]) {
         let title = titleMatch[1].trim();
         title = decodeURIComponent(encodeURIComponent(title));

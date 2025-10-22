@@ -438,7 +438,7 @@ export function jsonToXMLText(jsonData: BibleXMLJsonType) {
     }
     const serializer = new XMLSerializer();
     let xmlText = serializer.serializeToString(xmlDoc);
-    xmlText = xmlText.replace(/></g, '>\n<');
+    xmlText = xmlText.replaceAll('><', '>\n<');
     if (xmlText.match(/<book\s/gi)?.length !== Object.keys(books).length) {
         return null;
     }

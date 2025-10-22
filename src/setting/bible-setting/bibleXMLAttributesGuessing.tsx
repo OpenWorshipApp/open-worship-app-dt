@@ -108,10 +108,10 @@ function BibleNumbersMapXMLInputComp({
     const setValue1 = (value: string) => {
         setValue(value);
         onChange(value);
-        if (value.split(' ').length !== 10) {
-            setInvalidMessage('Must have 10 numbers');
-        } else {
+        if (value.split(' ').length === 10) {
             setInvalidMessage('');
+        } else {
+            setInvalidMessage('Must have 10 numbers');
         }
     };
     const langCode = getLangCode(locale) ?? 'en';
@@ -199,13 +199,13 @@ function BibleBooksMapXMLInputComp({
     });
     const handleMarkupStringParsing = (markupString: string) => {
         const parser = new DOMParser();
-        markupString = markupString.replace(/<\//g, '@newline</');
+        markupString = markupString.replaceAll('</', '@newline</');
         const doc = parser.parseFromString(markupString, 'text/html');
         let innerText = doc.body.innerText;
-        innerText = innerText.replace(/@newline/g, '\n');
-        innerText = innerText.replace(/ +/g, ' ');
-        innerText = innerText.replace(/\n\s/g, '\n');
-        innerText = innerText.replace(/\n+/g, '\n');
+        innerText = innerText.replaceAll('@newline', '\n');
+        innerText = innerText.replaceAll(/ +/g, ' ');
+        innerText = innerText.replaceAll(/\n\s/g, '\n');
+        innerText = innerText.replaceAll(/\n+/g, '\n');
         innerText = innerText.trim();
         onChange(innerText);
         editorStore.replaceValue(innerText);
