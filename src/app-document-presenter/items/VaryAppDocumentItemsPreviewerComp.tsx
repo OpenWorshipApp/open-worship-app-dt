@@ -30,13 +30,13 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     changeDragEventStyle(event, 'opacity', '1');
     const files: File[] = [];
     for await (const file of readDroppedFiles(event)) {
-        if (!checkIsSupportMediaType(file.type)) {
+        if (checkIsSupportMediaType(file.type)) {
+            files.push(file);
+        } else {
             showSimpleToast(
                 '`Insert Image or Video',
                 '`Unsupported file type!',
             );
-        } else {
-            files.push(file);
         }
     }
     await createNewSlidesFromDroppedData(appDocument, files);

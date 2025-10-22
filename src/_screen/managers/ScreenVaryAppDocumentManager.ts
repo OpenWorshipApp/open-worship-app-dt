@@ -238,7 +238,10 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             height: `${height}px`,
             transform: 'translate(-50%, -50%)',
         });
-        const scale = this.screenManagerBase.width / width;
+        const scale = Math.min(
+            this.screenManagerBase.width / width,
+            this.screenManagerBase.height / height,
+        );
         return { content, scale };
     }
 
