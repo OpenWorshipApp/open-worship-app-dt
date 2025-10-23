@@ -67,11 +67,11 @@ export function createScreenManager(screenId: number) {
 
 export function genNewScreenManagerBase() {
     const screenManagers = getAllScreenManagers();
-    const screenIds = screenManagers.map((screenManagerBase) => {
+    const screenIds = new Set(screenManagers.map((screenManagerBase) => {
         return screenManagerBase.screenId;
-    });
+    }));
     let newScreenId = 0;
-    while (screenIds.includes(newScreenId)) {
+    while (screenIds.has(newScreenId)) {
         newScreenId++;
     }
     createScreenManager(newScreenId);

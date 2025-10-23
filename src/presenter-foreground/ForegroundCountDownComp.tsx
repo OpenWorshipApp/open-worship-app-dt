@@ -159,10 +159,12 @@ function CountDownInSetComp({
         return targetDatetime;
     };
     const handleShowing = (event: any, isForceChoosing = false) => {
+        const targetDateTime = getTargetDateTime();
+        const style = genStyle();
         ScreenForegroundManager.setCountdown(
             event,
-            getTargetDateTime(),
-            genStyle(),
+            targetDateTime,
+            style,
             isForceChoosing,
         );
     };

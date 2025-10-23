@@ -299,7 +299,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     static readonly maxTextStyleTextFontSize = 200;
     static get textStyleTextFontSize() {
         const textStyle = this.textStyle;
-        return typeof textStyle.fontSize !== 'number' ? 65 : textStyle.fontSize;
+        return typeof textStyle.fontSize === 'number' ? textStyle.fontSize : 65;
     }
 
     static changeTextStyleTextFontSize(isUp: boolean) {
@@ -315,16 +315,16 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     static get textStyleTextColor(): string {
         const textStyle = this.textStyle;
-        return typeof textStyle.color !== 'string'
-            ? '#ffffff'
-            : textStyle.color;
+        return typeof textStyle.color === 'string'
+            ? textStyle.color
+            : '#ffffff';
     }
 
     static get textStyleTextTextShadow(): string {
         const textStyle = this.textStyle;
-        return typeof textStyle.textShadow !== 'string'
-            ? 'none'
-            : textStyle.textShadow;
+        return typeof textStyle.textShadow === 'string'
+            ? textStyle.textShadow
+            : 'none';
     }
 
     static get textStyleText(): string {

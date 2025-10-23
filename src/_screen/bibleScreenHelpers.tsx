@@ -26,9 +26,7 @@ const bibleScreenHelper = {
         const bibleRenderingLangList = await Promise.all(
             bibleRenderingList.map(async (item) => {
                 let langData = await getLangAsync(item.locale, true);
-                if (langData === null) {
-                    langData = await getLangAsync('en-US', true);
-                }
+                langData ??= await getLangAsync('en-US', true);
                 return {
                     ...item,
                     langData: langData!,
@@ -101,7 +99,7 @@ const bibleScreenHelper = {
                 });
                 divBibleKey.addEventListener('click', (event) => {
                     const index = Number(
-                        divBibleKey.getAttribute('data-index'),
+                        divBibleKey.dataset.index,
                     );
                     onBibleSelect(event, index);
                 });

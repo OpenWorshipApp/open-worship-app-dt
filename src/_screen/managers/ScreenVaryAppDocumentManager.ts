@@ -94,7 +94,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         ) {
             return;
         }
-        if (appDocumentItemData !== null && appDocumentItemData.itemJson) {
+        if (appDocumentItemData?.itemJson) {
             applyAttachBackground(
                 this.screenId,
                 appDocumentItemData.filePath,
@@ -173,9 +173,9 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         const selected = toKeyByFilePath(selectedFilePath, selectedSlideId);
         const willSelected = toKeyByFilePath(filePath, itemJson.id);
         const newSlideData =
-            selected !== willSelected
-                ? this.toSlideData(filePath, itemJson)
-                : null;
+            selected === willSelected
+                ? null
+                : this.toSlideData(filePath, itemJson);
         this.applySlideSrcWithSyncGroup(newSlideData);
     }
 

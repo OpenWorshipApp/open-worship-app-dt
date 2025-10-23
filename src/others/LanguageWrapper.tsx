@@ -10,14 +10,14 @@ export async function applyFontFamily(element: Node, type: MutationType) {
     if (!(element instanceof HTMLElement)) {
         return;
     }
-    let locale = element.getAttribute('data-locale');
+    let locale = element.dataset.locale;
     if (locale === null) {
-        const bibleKey = element.getAttribute('data-bible-key');
-        if (bibleKey !== null) {
+        const bibleKey = element.dataset.bibleKey;
+        if (bibleKey) {
             locale = await getBibleLocale(bibleKey);
         }
     }
-    if (locale !== null && checkIsValidLocale(locale)) {
+    if (locale && checkIsValidLocale(locale)) {
         const fontFamily = await getFontFamilyByLocale(locale as LocaleType);
         if (fontFamily) {
             element.style.fontFamily = fontFamily;

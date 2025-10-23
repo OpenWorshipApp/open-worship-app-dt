@@ -98,7 +98,7 @@ export function getAppDocumentListOnScreenSetting(): AppDocumentListType {
         const json = JSON.parse(str);
         for (const item of Object.values(json)) {
             if (typeof (item as any).filePath !== 'string') {
-                throw new Error('Invalid slide path');
+                throw new TypeError('Invalid slide path');
             }
             if (!PdfSlide.tryValidate((item as any).itemJson)) {
                 Slide.validate((item as any).itemJson);

@@ -362,15 +362,7 @@ class LookupBibleItemController extends BibleItemsViewController {
             isBibleItemSelected,
         );
         const menus2 = await super.genContextMenu(event, bibleItem, uuid);
-        if (!isBibleItemSelected) {
-            menus2.push({
-                menuElement: 'Edit',
-                title: 'Double click on header to edit',
-                onSelect: () => {
-                    this.editBibleItem(bibleItem);
-                },
-            });
-        } else {
+        if (isBibleItemSelected) {
             const menu2IdMap: { [key: string]: ContextMenuItemType } =
                 Object.fromEntries(
                     menus2.map((menuItem) => [menuItem.id, menuItem]),
@@ -389,6 +381,14 @@ class LookupBibleItemController extends BibleItemsViewController {
                         key: 'v',
                     });
             }
+        } else {
+            menus2.push({
+                menuElement: 'Edit',
+                title: 'Double click on header to edit',
+                onSelect: () => {
+                    this.editBibleItem(bibleItem);
+                },
+            });
         }
         const menu3: ContextMenuItemType[] = this.isAlone
             ? []
@@ -457,7 +457,7 @@ export default LookupBibleItemController;
 export function useLookupBibleItemControllerContext() {
     const viewController = useBibleItemsViewControllerContext();
     if (viewController instanceof LookupBibleItemController === false) {
-        throw new Error(
+        throw new TypeError(
             'useLookupBibleItemControllerContext must be used within a' +
                 ' BibleItemViewControllerContext',
         );

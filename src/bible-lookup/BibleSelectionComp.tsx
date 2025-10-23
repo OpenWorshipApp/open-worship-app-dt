@@ -63,24 +63,22 @@ export async function genContextMenuBibleKeys(
                       },
                   ]
                 : []),
-            ...[
-                {
-                    menuElement: locale,
-                    disabled: true,
-                },
-                ...bibleInfoList.map((bibleInfo) => {
-                    return {
-                        menuElement: `(${bibleInfo.key}) ${bibleInfo.title}`,
-                        title: bibleInfo.title,
-                        onSelect: (event1: any) => {
-                            onSelect(event1, bibleInfo.key);
-                        },
-                        style: {
-                            fontFamily: localeFontFamilyMap[locale],
-                        },
-                    };
-                }),
-            ],
+            {
+                menuElement: locale,
+                disabled: true,
+            },
+            ...bibleInfoList.map((bibleInfo) => {
+                return {
+                    menuElement: `(${bibleInfo.key}) ${bibleInfo.title}`,
+                    title: bibleInfo.title,
+                    onSelect: (event1: any) => {
+                        onSelect(event1, bibleInfo.key);
+                    },
+                    style: {
+                        fontFamily: localeFontFamilyMap[locale],
+                    },
+                };
+            }),
         );
     }
     return menuItems;

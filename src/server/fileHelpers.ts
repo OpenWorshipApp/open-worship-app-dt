@@ -206,9 +206,7 @@ export function isSupportedMimetype(
         .map((newMimetype) => {
             return newMimetype.mimetypeSignature;
         })
-        .some((type) => {
-            return type === fileMimetype;
-        });
+        .includes(fileMimetype);
 }
 
 export function isSupportedExt(

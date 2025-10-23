@@ -82,7 +82,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             backdropFilter: props.backdropFilter
                 ? `blur(${props.backdropFilter}px)`
                 : undefined,
-            ...(borderRadius !== undefined
+            ...(borderRadius
                 ? { borderRadius: borderRadius, boxSizing: 'border-box' }
                 : {}),
         };
@@ -277,7 +277,7 @@ export function useSetEditingCanvasItem() {
     return (targetCanvasItem: CanvasItem<any>, isEditing = true) => {
         let newCanvasItem: CanvasItem<any> | null = targetCanvasItem;
         if (!isEditing) {
-            newCanvasItem = canvasItem !== targetCanvasItem ? canvasItem : null;
+            newCanvasItem = canvasItem === targetCanvasItem ? null : canvasItem;
         }
         setCanvasItem(newCanvasItem);
     };

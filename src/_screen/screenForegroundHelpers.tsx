@@ -167,7 +167,7 @@ export function genHtmlForegroundCountdown(
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
                 backdropFilter: 'blur(5px)',
-                ...(extraStyle ?? {}),
+                ...extraStyle,
             }}
         >
             <style>{`
@@ -218,7 +218,7 @@ export function genHtmlForegroundStopwatch(
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
                 backdropFilter: 'blur(5px)',
-                ...(extraStyle ?? {}),
+                ...extraStyle,
             }}
         >
             <style>{`
@@ -270,7 +270,7 @@ export function genHtmlForegroundTime(
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
                 backdropFilter: 'blur(5px)',
-                ...(timeData.extraStyle ?? {}),
+                ...timeData.extraStyle,
             }}
         >
             {' '}
