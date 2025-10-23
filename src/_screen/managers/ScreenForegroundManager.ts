@@ -268,8 +268,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.setData(
             event,
             (screenForegroundManager) => {
-                const data =
-                    dateTime ? { dateTime, extraStyle } : null;
+                const data = dateTime ? { dateTime, extraStyle } : null;
                 screenForegroundManager.setCountdownData(data);
             },
             isForceChoosing,

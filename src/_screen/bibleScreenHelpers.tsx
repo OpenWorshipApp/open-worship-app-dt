@@ -98,9 +98,7 @@ const bibleScreenHelper = {
                     divBibleKey.classList.remove('hover');
                 });
                 divBibleKey.addEventListener('click', (event) => {
-                    const index = Number(
-                        divBibleKey.dataset.index,
-                    );
+                    const index = Number(divBibleKey.dataset.index);
                     onBibleSelect(event, index);
                 });
             }

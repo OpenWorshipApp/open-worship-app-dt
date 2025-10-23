@@ -51,6 +51,9 @@ function RenderScreenInfoComp({
     );
 }
 
+const BROKEN_IMAGE_SRC = '/assets/broken-image.png';
+const BROKEN_VIDEO_SRC = '/assets/broken-video.mp4';
+
 function RenderHeaderInfoComp({
     varyAppDocumentItem,
     viewIndex,
@@ -136,11 +139,17 @@ function genAttachBackgroundComponent(
             />
         );
     } else if (droppedData.type === DragTypeEnum.BACKGROUND_IMAGE) {
+        const src = droppedData.item.src;
         element = (
             <img
                 className="w-100 h-100"
-                alt={droppedData.item.src}
-                src={droppedData.item.src}
+                alt={src}
+                src={src}
+                onError={(event) => {
+                    if (!event.currentTarget.src.endsWith(BROKEN_IMAGE_SRC)) {
+                        event.currentTarget.src = BROKEN_IMAGE_SRC;
+                    }
+                }}
             />
         );
     } else if (droppedData.type === DragTypeEnum.BACKGROUND_VIDEO) {
@@ -160,6 +169,11 @@ function genAttachBackgroundComponent(
                 loop
                 muted
                 src={droppedData.item.src}
+                onError={(event) => {
+                    if (!event.currentTarget.src.endsWith(BROKEN_VIDEO_SRC)) {
+                        event.currentTarget.src = BROKEN_VIDEO_SRC;
+                    }
+                }}
             />
         );
     }
