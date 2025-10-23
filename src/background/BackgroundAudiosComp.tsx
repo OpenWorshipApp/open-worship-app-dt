@@ -158,10 +158,13 @@ export default function BackgroundAudiosComp() {
             return;
         }
         const childElement = parentElement.querySelector('[data-file-path]');
-        if (!childElement) {
+        if (childElement instanceof HTMLDivElement === false) {
             return;
         }
         const filePath = childElement.dataset.filePath;
+        if (filePath === undefined) {
+            return;
+        }
         setActiveMap((preActiveMap) => {
             return {
                 ...preActiveMap,
