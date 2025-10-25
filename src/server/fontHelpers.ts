@@ -5,6 +5,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import appProvider, { FontListType } from './appProvider';
 import CacheManager from '../others/CacheManager';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import FileSource from '../helper/FileSource';
 
 function showLoadingFontFail() {
     showSimpleToast('Loading Fonts', 'Fail to load font list');
@@ -49,18 +50,25 @@ export function useFontList() {
     return fontList;
 }
 
-let fixing = false;
-export async function fixMissingFontFamilies(fontFamilies: Set<string>) {
+const handledFontFamilies = new Set<string>();
+export async function fixMissingFontFamilies(
+    fontFamilies: Set<string>,
+    filePath: string,
+) {
+    fontFamilies = new Set(
+        Array.from(fontFamilies).filter((fontFamily) => {
+            return !handledFontFamilies.has(fontFamily);
+        }),
+    );
     if (fontFamilies.size === 0) {
         return;
     }
-    if (fixing) {
-        return;
+    for (const fontFamily of fontFamilies) {
+        handledFontFamilies.add(fontFamily);
     }
-    fixing = true;
-
+    const fileSource = FileSource.getInstance(filePath);
     const isConfirmed = await showAppConfirm(
-        'Missing Fonts',
+        `Missing Fonts in "${fileSource.name}"`,
         `The document is using fonts that are not installed on your system:<br><br>${Array.from(
             fontFamilies,
         )
@@ -70,7 +78,6 @@ export async function fixMissingFontFamilies(fontFamilies: Set<string>) {
             )}<br><br>Would you like to find and install from Google Fonts?`,
     );
     if (!isConfirmed) {
-        fixing = false;
         return;
     }
     showSimpleToast(

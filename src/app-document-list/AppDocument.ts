@@ -70,7 +70,7 @@ export default class AppDocument
             }
             return acc;
         }, new Set<string>());
-        fixMissingFontFamilies(unavailableFontFamiliesSet);
+        fixMissingFontFamilies(unavailableFontFamiliesSet, this.filePath);
         return slides;
     }
 
