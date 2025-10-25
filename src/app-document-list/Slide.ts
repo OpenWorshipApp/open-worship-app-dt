@@ -8,6 +8,7 @@ import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import { ClipboardInf } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { AnyObjectType } from '../helper/typeHelpers';
+import { getFontFamilies } from '../server/fontHelpers';
 
 import slideSchemaJson from './SlideSchema.json';
 const slideSchema: SchemaNode = compileSchema(slideSchemaJson);
@@ -107,6 +108,37 @@ export default class Slide
         const metadata = this.metadata;
         metadata.height = height;
         this.metadata = metadata;
+    }
+
+    fontFamilies() {
+        const fontFamilies = new Set<string>();
+        for (const canvasItem of this.canvasItemsJson) {
+            if (canvasItem.type === 'text') {
+                const fontFamily = (canvasItem as any).fontFamily;
+                if (fontFamily) {
+                    fontFamilies.add(fontFamily);
+                }
+            }
+        }
+        return fontFamilies;
+    }
+
+    getUnavailableFontFamilies() {
+        const availableFontFamilies = getFontFamilies();
+        if (availableFontFamilies === null) {
+            return [];
+        }
+        const fontFamilies = this.fontFamilies();
+        const unavailableFonts: string[] = [];
+        for (const fontFamily of fontFamilies) {
+            const isFontAvailable = availableFontFamilies.includes(
+                fontFamily.trim().toLowerCase(),
+            );
+            if (!isFontAvailable) {
+                unavailableFonts.push(fontFamily);
+            }
+        }
+        return unavailableFonts;
     }
 
     static getDefaultDim() {

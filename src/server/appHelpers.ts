@@ -1,4 +1,4 @@
-import appProvider, { FontListType } from './appProvider';
+import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
@@ -13,13 +13,6 @@ import {
 } from './fileHelpers';
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
-
-export function getFontListByNodeFont() {
-    appProvider.messageUtils.sendData('main:app:get-font-list');
-    return appProvider.messageUtils.sendDataSync(
-        'main:app:get-font-list',
-    ) as FontListType | null;
-}
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${Date.now()}`;
@@ -296,7 +289,7 @@ async function getPageTitle(url: string) {
         return null;
     }
     const titleMatch = /<title>(.*?)<\/title>/.exec(rawHtml);
-    if (titleMatch && titleMatch[1]) {
+    if (titleMatch?.[1]) {
         let title = titleMatch[1].trim();
         title = decodeURIComponent(encodeURIComponent(title));
         return title.length > 0 ? title : null;
@@ -397,7 +390,7 @@ export function downloadVideoOrAudio(
                         if (eventType === 'ExtractAudio') {
                             const regex = /Destination: (.+)$/;
                             const match = eventData.match(regex);
-                            if (match && match[1]) {
+                            if (match?.[1]) {
                                 filePath = match[1];
                             }
                         } else if (eventType === 'Merger') {

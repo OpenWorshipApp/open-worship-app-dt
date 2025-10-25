@@ -1,5 +1,9 @@
+import { useCallback } from 'react';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { fsCheckDirExist, pathBasename } from '../server/fileHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { menuTitleRevealFile } from '../helper/helpers';
+import { showExplorer } from '../server/appHelpers';
 
 // TODO: check direction rtl error with /*
 function cleanPath(path: string) {
@@ -14,11 +18,13 @@ export function PathPreviewerComp({
     isShowingNameOnly = false,
     onClick,
     shouldNotValidate = false,
+    canOpenFileExplorer = false,
 }: Readonly<{
     dirPath: string;
     isShowingNameOnly?: boolean;
     onClick?: (event: any) => void;
     shouldNotValidate?: boolean;
+    canOpenFileExplorer?: boolean;
 }>) {
     const [isValidPath] = useAppStateAsync(() => {
         if (shouldNotValidate) {
@@ -35,6 +41,22 @@ export function PathPreviewerComp({
             directoryPath = directoryPath.substring(0, index);
         }
     }
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            if (!canOpenFileExplorer) {
+                return;
+            }
+            showAppContextMenu(event, [
+                {
+                    menuElement: menuTitleRevealFile,
+                    onSelect: () => {
+                        showExplorer(dirPath);
+                    },
+                },
+            ]);
+        },
+        [canOpenFileExplorer, dirPath],
+    );
     return (
         <div
             className={
@@ -46,6 +68,7 @@ export function PathPreviewerComp({
             style={{
                 color: isValidPath ? '' : 'red',
             }}
+            onContextMenu={handleContextMenuOpening}
         >
             {directoryPath}
         </div>
