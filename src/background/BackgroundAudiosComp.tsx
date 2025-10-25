@@ -12,6 +12,7 @@ import {
     handleAudioPausing,
     handleAudioEnding,
     getAudioRepeatSettingName,
+    showAudioPlayingToast,
 } from './audioBackgroundHelpers';
 import { useMemo, useState } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -151,10 +152,7 @@ export default function BackgroundAudiosComp() {
         // check is audio playing
         const audioElement = parentElement.querySelector('audio');
         if (audioElement && !audioElement.paused) {
-            showSimpleToast(
-                'Audio playing',
-                'Please stop the audio before leaving the page.',
-            );
+            showAudioPlayingToast();
             return;
         }
         const childElement = parentElement.querySelector('[data-file-path]');

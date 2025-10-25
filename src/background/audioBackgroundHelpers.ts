@@ -4,6 +4,13 @@ import { getSetting } from '../helper/settingHelpers';
 import appProvider from '../server/appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 
+export function showAudioPlayingToast() {
+    showSimpleToast(
+        '`Audio playing',
+        '`Please stop the audio before leaving the page.',
+    );
+}
+
 const attemptTimeout = genTimeoutAttempt(3000);
 let attemptCount = 0;
 function blockUnload(event: BeforeUnloadEvent) {
@@ -16,13 +23,10 @@ function blockUnload(event: BeforeUnloadEvent) {
         return;
     }
     event.preventDefault();
-    showSimpleToast(
-        '`Audio playing',
-        '`Please stop the audio before leaving the page.',
-    );
+    showAudioPlayingToast();
 }
 
-function checkAudioPlaying() {
+export function checkAudioPlaying() {
     return Array.from(document.querySelectorAll('audio')).some(
         (audioElement) => {
             return !audioElement.paused;
