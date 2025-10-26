@@ -480,7 +480,7 @@ export type EditingResultType = {
     inputText: string;
     oldInputText: string;
 };
-const extractBibleTitleCache = new CacheManager<EditingResultType>(60); // 1 minute
+const extractBibleTitleCache = new CacheManager<EditingResultType>(4); // 4 seconds
 export async function extractBibleTitle1(
     cacheKey: string,
     bibleKey: string,
