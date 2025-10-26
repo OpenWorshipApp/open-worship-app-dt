@@ -17,9 +17,9 @@ export default function PdfAppearanceSettingComp() {
     };
     return (
         <div className="d-flex">
-            <small>`PDF Setting:</small>
+            <small>`On Screen Width:</small>
             <div>
-                <fieldset className="btn-group">
+                <fieldset className="btn-group btn-group-sm ms-2" role="group">
                     <input
                         className="btn-check"
                         type="radio"
@@ -37,7 +37,7 @@ export default function PdfAppearanceSettingComp() {
                         `Not Full Width
                     </label>
                     <input
-                        className="btn-check"
+                        className="btn-check btn-check-sm"
                         type="radio"
                         name="setting-not-full-width"
                         id="setting-full-width"

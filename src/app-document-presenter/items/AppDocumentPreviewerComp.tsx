@@ -8,6 +8,8 @@ import {
     SelectedVaryAppDocumentContext,
     VaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
+import PdfAppearanceSettingComp from '../../screen-setting/PdfAppearanceSettingComp';
+import PdfAppDocument from '../../app-document-list/PdfAppDocument';
 
 export default function AppDocumentPreviewerComp() {
     const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
@@ -18,6 +20,9 @@ export default function AppDocumentPreviewerComp() {
             </div>
         );
     }
+    const isPDF =
+        selectedAppDocumentContext.selectedVaryAppDocument instanceof
+        PdfAppDocument;
     return (
         <div className="slide-previewer card w-100 h-100">
             <VaryAppDocumentContext
@@ -27,6 +32,7 @@ export default function AppDocumentPreviewerComp() {
                     <VaryAppDocumentItemsPreviewerComp />
                 </div>
                 <AppDocumentPreviewerFooterComp />
+                {isPDF ? <PdfAppearanceSettingComp /> : null}
             </VaryAppDocumentContext>
         </div>
     );
