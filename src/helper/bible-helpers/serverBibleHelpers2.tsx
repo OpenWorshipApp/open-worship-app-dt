@@ -77,12 +77,11 @@ export async function getBibleFontFamily(bibleKey: string) {
     return fontFamily;
 }
 
-// TODO: use LRUCache instead
-const bibleLocaleNumMap = new Map<string, string | null>();
+const toLocaleNumCache = new CacheManager<string | null>(60); // 1 minute
 export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     const cacheKey = `${bibleKey}:${n}`;
-    if (bibleLocaleNumMap.has(cacheKey)) {
-        return bibleLocaleNumMap.get(cacheKey) as string | null;
+    if (await toLocaleNumCache.has(cacheKey)) {
+        return toLocaleNumCache.get(cacheKey);
     }
     if (typeof n !== 'number') {
         return null;
@@ -96,7 +95,7 @@ export async function toLocaleNumBible(bibleKey: string, n: number | null) {
         const locale = await getBibleLocale(bibleKey);
         localeNum = await toLocaleNum(locale, n);
     }
-    bibleLocaleNumMap.set(cacheKey, localeNum);
+    await toLocaleNumCache.set(cacheKey, localeNum);
     return localeNum;
 }
 
