@@ -20,6 +20,7 @@ export const kjvBibleInfo = bibleJson as {
     bookKeysOld: string[];
     books: { [key: string]: BookType };
     kjvKeyValue: { [key: string]: string };
+    oneChapterBooks: string[];
 };
 freezeObject(kjvBibleInfo);
 

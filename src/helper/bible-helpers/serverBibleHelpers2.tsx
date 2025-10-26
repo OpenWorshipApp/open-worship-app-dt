@@ -12,7 +12,7 @@ import {
 } from '../../lang/langHelpers';
 import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
-import { getKJVChapterCount } from './serverBibleHelpers';
+import { getKJVChapterCount, kjvBibleInfo } from './serverBibleHelpers';
 import CacheManager from '../../others/CacheManager';
 import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
@@ -24,25 +24,33 @@ export async function toInputText(
     verseStart?: number | null,
     verseEnd?: number | null,
 ) {
-    let txt = '';
-    if (book) {
-        txt += `${book} `;
-        if (chapter !== undefined && chapter !== null) {
-            txt += `${await toLocaleNumBible(bibleKey, chapter)}`;
-            if (verseStart !== undefined && verseStart !== null) {
-                txt += `:${await toLocaleNumBible(bibleKey, verseStart)}`;
-                if (
-                    verseEnd !== undefined &&
-                    verseEnd !== null &&
-                    verseEnd !== verseStart
-                ) {
-                    txt += `-${await toLocaleNumBible(bibleKey, verseEnd)}`;
-                }
-            }
-        }
+    let text = '';
+    if (!book) {
+        return text;
     }
+    text += `${book} `;
+    if (!chapter) {
+        const bookKey = await bookToKey(bibleKey, book);
+        if (kjvBibleInfo.oneChapterBooks.includes(bookKey ?? '')) {
+            text += `${await toLocaleNumBible(bibleKey, 1)}:`;
+            return text;
+        }
+        // 1 John
+        return text;
+    }
+    text += `${await toLocaleNumBible(bibleKey, chapter)}`;
+    if (!verseStart) {
+        // 1 John 1
+        return text;
+    }
+    text += `:${await toLocaleNumBible(bibleKey, verseStart)}`;
+    if (!verseEnd || verseEnd !== verseStart) {
+        // 1 John 1:1
+        return text;
+    }
+    text += `-${await toLocaleNumBible(bibleKey, verseEnd)}`;
     // 1 John 1:1-2
-    return txt;
+    return text;
 }
 
 export async function getBibleLocale(bibleKey: string) {
@@ -108,7 +116,7 @@ export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     }
     const info = await getBibleInfo(bibleKey);
     let num: number | null = null;
-    if (info !== null && info.numList !== undefined) {
+    if (info?.numList !== undefined) {
         num = fromStringNum(info.numList, localeNum);
     }
     if (num === null) {
@@ -271,7 +279,7 @@ const regexTitleMap: [
 ][] = [
     // "1 John 1:1-2"
     [
-        '(^.+)\\s(.+):(.+)-(.+)$',
+        String.raw`(^.+)\s(.+):(.+)-(.+)$`,
         async (bibleKey, matches) => {
             if (matches.length !== 5) {
                 return null;
@@ -288,7 +296,7 @@ const regexTitleMap: [
     ],
     // "1 John 1:1-"
     [
-        '(^.+)\\s(.+):(.+)-$',
+        String.raw`(^.+)\s(.+):(.+)-$`,
         async (bibleKey, matches) => {
             if (matches.length !== 4) {
                 return null;
@@ -306,7 +314,7 @@ const regexTitleMap: [
     ],
     // "1 John 1:1"
     [
-        '(^.+)\\s(.+):(.+)$',
+        String.raw`(^.+)\s(.+):(.+)$`,
         async (bibleKey, matches) => {
             if (matches.length !== 4) {
                 return null;
@@ -324,7 +332,7 @@ const regexTitleMap: [
     ],
     // "1 John 1:"
     [
-        '(^.+)\\s(.+)$',
+        String.raw`(^.+)\s(.+)$`,
         async (bibleKey, matches) => {
             if (matches.length !== 3) {
                 return null;
@@ -343,7 +351,7 @@ const regexTitleMap: [
     ],
     // "1 John"
     [
-        '(^.+)$',
+        String.raw`(^.+)$`,
         async (bibleKey, matches) => {
             if (matches.length !== 2) {
                 return null;

@@ -441,5 +441,6 @@
         "3JN": "3 John",
         "JUD": "Jude",
         "REV": "Revelation"
-    }
+    },
+    "oneChapterBooks": ["OBA", "PHM", "2JN", "3JN", "JUD"]
 }

@@ -2,7 +2,6 @@ import { Fragment } from 'react';
 
 import { genBookMatches } from '../helper/bible-helpers/serverBibleHelpers';
 import {
-    allArrows,
     KeyboardType,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
@@ -95,7 +94,10 @@ function BookOptionsComp({
             [],
         );
     };
-    allArrows.forEach(useKeyEvent);
+    useKeyEvent('ArrowLeft');
+    useKeyEvent('ArrowRight');
+    useKeyEvent('ArrowUp');
+    useKeyEvent('ArrowDown');
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
 
     if (!matches) {
