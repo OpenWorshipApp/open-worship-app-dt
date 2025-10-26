@@ -381,29 +381,66 @@ async function checkExtractedAndReturn(bibleKey: string, inputText: string) {
     }
     return null;
 }
+
+async function attemptExtractBibleKey1(bibleKey: string, restText: string) {
+    const allLocalBibleInfoList = await getAllLocalBibleInfoList();
+    const foundBibleInfo = allLocalBibleInfoList.find((bibleInfo) => {
+        return bibleInfo.key.toLowerCase() === bibleKey.trim().toLowerCase();
+    });
+    if (foundBibleInfo === undefined) {
+        return null;
+    }
+    return checkExtractedAndReturn(foundBibleInfo.key, restText);
+}
+
+// TODO: change exported title to `1 John 1:1-2 (kjv)`
 async function attemptExtractBibleKey(inputText: string) {
-    if (inputText.startsWith('(')) {
-        const allLocalBibleInfoList = await getAllLocalBibleInfoList();
-        // (kjv) 1 John 1:1-2
-        const regex = /^\((.+)\)\s(.+)$/;
-        const matches = regex.exec(inputText);
-        if (matches !== null && matches.length === 3) {
-            const bibleKey = matches[1].trim();
-            if (allLocalBibleInfoList.some((info) => info.key === bibleKey)) {
-                const inputText1 = matches[2].trim();
-                return checkExtractedAndReturn(bibleKey, inputText1);
-            }
+    const text = inputText.trim().replaceAll(/\s+/g, ' ');
+    if (!text) {
+        return null;
+    }
+    // (kjv) 1 John 1:2-3
+    let matches = /^\((\S+)\)\s(.+)$/.exec(text);
+    if (matches?.length === 3) {
+        const result = await attemptExtractBibleKey1(
+            matches[1].trim(),
+            matches[2].trim(),
+        );
+        if (result !== null) {
+            return result;
         }
     }
-    // 1 John 1:1-2 kjv
-    const regex = /^(.+:.+)\s(.+)$/;
-    const matches = regex.exec(inputText);
-    if (matches !== null && matches.length === 3) {
-        const bookChapter = matches[1].trim();
-        const bibleKey = matches[2].trim();
-        const allLocalBibleInfoList = await getAllLocalBibleInfoList();
-        if (allLocalBibleInfoList.some((info) => info.key === bibleKey)) {
-            return checkExtractedAndReturn(bibleKey, bookChapter);
+    // nkjv 2 Timothy 2:3-4
+    matches = /^(\S+)\s(.+)$/.exec(text);
+    if (matches?.length === 3) {
+        const result = await attemptExtractBibleKey1(
+            matches[1].trim(),
+            matches[2].trim(),
+        );
+        if (result !== null) {
+            return result;
+        }
+    }
+    // 3 John 1:4-5 (esv)
+    matches = /^(.+)\s\((\S+)\)$/.exec(text);
+    if (matches?.length === 3) {
+        const result = await attemptExtractBibleKey1(
+            matches[2].trim(),
+            matches[1].trim(),
+        );
+        if (result !== null) {
+            return result;
+        }
+    }
+    // 1 Kings 4:5-6 niv
+    matches = /^(.+)\s(\S+)$/.exec(text);
+    if (matches?.length === 3) {
+        const result = await attemptExtractBibleKey1(
+            matches[2].trim(),
+            matches[1].trim(),
+        );
+        if (result !== null) {
+            return result;
         }
     }
     return null;
