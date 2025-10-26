@@ -83,6 +83,7 @@ class LookupBibleItemController extends BibleItemsViewController {
     setInputText: (inputText: string) => OptionalPromise<void> = (
         _: string,
     ) => {};
+    inputTextTime: number = Date.now();
     setBibleKey = (_bibleKey: string) => {};
     reloadEditingResult = (_inputText: string) => {};
     onLookupSaveBibleItem = () => {};
@@ -184,6 +185,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         return getSetting(this.toSettingName('-input-text')) ?? '';
     }
     _setInputText(inputText: string) {
+        this.inputTextTime = Date.now();
         setSetting(this.toSettingName('-input-text'), inputText);
         this.setInputText(inputText);
         setBibleLookupInputFocus();
@@ -191,21 +193,22 @@ class LookupBibleItemController extends BibleItemsViewController {
     set inputText(inputText: string) {
         this._setInputText(inputText);
         this.syncTargetByColorNote(this.selectedBibleItem);
-        extractBibleTitle(this.selectedBibleItem.bibleKey, inputText).then(
-            async (editingResult) => {
-                const { bibleKey, oldInputText } = editingResult;
-                if (bibleKey !== this.selectedBibleItem.bibleKey) {
-                    await this.setEditingData(
-                        editingResult.bibleKey,
-                        null,
-                        true,
-                    );
-                }
-                if (oldInputText !== this.inputText) {
-                    this.inputText = oldInputText;
-                }
-            },
-        );
+        extractBibleTitle(
+            this.selectedBibleItem.bibleKey,
+            inputText,
+            this.inputTextTime,
+        ).then(async (editingResult) => {
+            const { bibleKey, oldInputText, time } = editingResult;
+            if (bibleKey !== this.selectedBibleItem.bibleKey) {
+                await this.setEditingData(editingResult.bibleKey, null, true);
+            }
+            if (
+                time === this.inputTextTime &&
+                oldInputText !== this.inputText
+            ) {
+                this.inputText = oldInputText;
+            }
+        });
     }
 
     async setLookupContentFromBibleItem(bibleItem: ReadIdOnlyBibleItem) {

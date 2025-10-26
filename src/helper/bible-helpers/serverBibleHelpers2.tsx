@@ -479,46 +479,89 @@ export type EditingResultType = {
     bibleKey: string;
     inputText: string;
     oldInputText: string;
+    time: number;
 };
-const extractBibleTitleCache = new CacheManager<EditingResultType>(60); // 1 minute
 export async function extractBibleTitle1(
     bibleKey: string,
     inputText: string,
     cleanText: string,
+    time: number,
 ): Promise<EditingResultType> {
-    const cacheKey = `${bibleKey}:${inputText}:${cleanText}`;
-    return unlocking(cacheKey, async () => {
-        if (await extractBibleTitleCache.has(cacheKey)) {
-            return (await extractBibleTitleCache.get(
-                cacheKey,
-            )) as EditingResultType;
+    for (const [regexStr, matcher] of regexTitleMap) {
+        const regex = new RegExp(regexStr);
+        const matches = regex.exec(cleanText);
+        if (matches === null) {
+            continue;
         }
-        for (const [regexStr, matcher] of regexTitleMap) {
-            const regex = new RegExp(regexStr);
-            const matches = regex.exec(cleanText);
-            if (matches === null) {
-                continue;
-            }
-            const result = await matcher(bibleKey, matches);
-            if (result !== null) {
-                const data = {
-                    result,
-                    bibleKey,
-                    inputText,
-                    oldInputText: inputText,
-                };
-                await extractBibleTitleCache.set(cacheKey, data);
-                return data;
-            }
+        const result = await matcher(bibleKey, matches);
+        if (result !== null) {
+            return {
+                result,
+                bibleKey,
+                inputText,
+                oldInputText: inputText,
+                time,
+            };
+        }
+    }
+    const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
+    if (extractedBibleKeyResult !== null) {
+        return extractBibleTitle(
+            extractedBibleKeyResult.bibleKey,
+            extractedBibleKeyResult.inputText,
+            time,
+        );
+    }
+    const result = genExtractedBible();
+    result.guessingBook = cleanText;
+    return {
+        result,
+        bibleKey,
+        inputText: '',
+        oldInputText: inputText,
+        time,
+    };
+}
+const extractBibleTitleCache = new CacheManager<EditingResultType>(4); // 4 seconds
+export async function extractBibleTitle(
+    bibleKey: string,
+    inputText: string,
+    time = Date.now(),
+): Promise<EditingResultType> {
+    const cacheKey = `${bibleKey}:${inputText}`;
+    return unlocking(cacheKey, async () => {
+        const setCache = (data: EditingResultType) => {
+            extractBibleTitleCache.set(cacheKey, data);
+            return data;
+        };
+        const cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
+        if (cleanText === '') {
+            const data = {
+                result: genExtractedBible(),
+                bibleKey,
+                inputText: '',
+                oldInputText: inputText,
+                time,
+            };
+            return setCache(data);
+        }
+        const extractedData = await extractBibleTitle1(
+            bibleKey,
+            inputText,
+            cleanText,
+            time,
+        );
+        if (extractedData !== null) {
+            return setCache(extractedData);
         }
         const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
         if (extractedBibleKeyResult !== null) {
             const data = await extractBibleTitle(
                 extractedBibleKeyResult.bibleKey,
                 extractedBibleKeyResult.inputText,
+                time,
             );
-            await extractBibleTitleCache.set(cacheKey, data);
-            return data;
+            return setCache(data);
         }
         const result = genExtractedBible();
         result.guessingBook = cleanText;
@@ -527,40 +570,8 @@ export async function extractBibleTitle1(
             bibleKey,
             inputText: '',
             oldInputText: inputText,
+            time,
         };
-        await extractBibleTitleCache.set(cacheKey, data);
-        return data;
+        return setCache(data);
     });
-}
-export async function extractBibleTitle(
-    bibleKey: string,
-    inputText: string,
-): Promise<EditingResultType> {
-    const cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
-    if (cleanText === '') {
-        return {
-            result: genExtractedBible(),
-            bibleKey,
-            inputText: '',
-            oldInputText: inputText,
-        };
-    }
-    const extractedData = await extractBibleTitle1(
-        bibleKey,
-        inputText,
-        cleanText,
-    );
-    if (extractedData !== null) {
-        return extractedData;
-    }
-    const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
-    if (extractedBibleKeyResult !== null) {
-        return extractBibleTitle(
-            extractedBibleKeyResult.bibleKey,
-            extractedBibleKeyResult.inputText,
-        );
-    }
-    const result = genExtractedBible();
-    result.guessingBook = cleanText;
-    return { result, bibleKey, inputText: '', oldInputText: inputText };
 }
