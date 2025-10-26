@@ -1,14 +1,14 @@
 import { lazy } from 'react';
 
-import { useStateSettingString } from '../../helper/settingHelpers';
-import TabRenderComp, { genTabBody } from '../../others/TabRenderComp';
-import { bringDomToTopView } from '../../helper/helpers';
+import { useStateSettingString } from '../helper/settingHelpers';
+import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
+import { bringDomToTopView } from '../helper/helpers';
 
 const LazyAppearanceComp = lazy(() => {
     return import('./AppearanceComp');
 });
 const LazyTextShadowComp = lazy(() => {
-    return import('./TextShadow');
+    return import('../_screen/preview/TextShadow');
 });
 
 const tabTypeList = [

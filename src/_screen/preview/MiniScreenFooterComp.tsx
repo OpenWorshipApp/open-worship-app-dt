@@ -11,13 +11,9 @@ export const defaultRangeSize = {
 export default function MiniScreenFooterComp({
     previewSizeScale,
     setPreviewSizeScale,
-    isShowingTools,
-    setIsShowingTools,
 }: Readonly<{
     previewSizeScale: number;
     setPreviewSizeScale: (size: number) => void;
-    setIsShowingTools: (isShowing: boolean) => void;
-    isShowingTools: boolean;
 }>) {
     return (
         <div
@@ -36,24 +32,6 @@ export default function MiniScreenFooterComp({
                             title="Preview Size Scale"
                             setValue={setPreviewSizeScale}
                             defaultSize={defaultRangeSize}
-                        />
-                    </div>
-                    <div className="form-check form-switch col-auto app-caught-hover-pointer">
-                        <label
-                            className="form-check-label"
-                            htmlFor="screen-previewer-showing-tool"
-                        >
-                            Show Tools
-                        </label>
-                        <input
-                            className="form-check-input"
-                            type="checkbox"
-                            role="switch"
-                            id="screen-previewer-showing-tool"
-                            checked={isShowingTools}
-                            onChange={(event) => {
-                                setIsShowingTools(event.target.checked);
-                            }}
                         />
                     </div>
                 </div>

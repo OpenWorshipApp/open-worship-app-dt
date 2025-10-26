@@ -1,6 +1,5 @@
 import ScreenPreviewerItemComp from './ScreenPreviewerItemComp';
 import { DEFAULT_PREVIEW_SIZE } from './MiniScreenFooterComp';
-import ScreenPreviewerTools from './ScreenPreviewerTools';
 import {
     genNewScreenManagerBase,
     getAllScreenManagers,
@@ -89,12 +88,8 @@ function viewControllerAndScreenManagers(
 }
 
 export default function MiniScreenBodyComp({
-    isShowingTools,
-    setIsShowingTools,
     previewScale,
 }: Readonly<{
-    isShowingTools: boolean;
-    setIsShowingTools: (isShowing: boolean) => void;
     previewScale: number;
 }>) {
     useScreenManagerEvents(['instance']);
@@ -126,16 +121,6 @@ export default function MiniScreenBodyComp({
                     );
                 })}
             </div>
-            {isShowingTools ? (
-                <div style={{ zIndex: '0' }}>
-                    <hr />
-                    <ScreenPreviewerTools
-                        onClose={() => {
-                            setIsShowingTools(false);
-                        }}
-                    />
-                </div>
-            ) : null}
         </div>
     );
 }
