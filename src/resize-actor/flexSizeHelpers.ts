@@ -34,6 +34,7 @@ export const resizeSettingNames = {
     slideEditor: 'slide-editor',
     bibleReader: 'bible-reader',
     bibleLookupPopup: 'bible-lookup-popup',
+    presenterBiblePreviewer: 'presenter-bible-previewer',
 };
 
 export function clearWidgetSizeSetting() {

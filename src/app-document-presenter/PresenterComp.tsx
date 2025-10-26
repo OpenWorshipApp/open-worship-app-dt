@@ -33,8 +33,8 @@ import { getOnScreenBibleItems } from '../bible-list/bibleHelpers';
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
 });
-const LazyBiblePreviewerRenderComp = lazy(() => {
-    return import('../bible-reader/BiblePreviewerRenderComp');
+const LazyPresenterBiblePreviewerRenderComp = lazy(() => {
+    return import('./PresenterBiblePreviewerRenderComp');
 });
 const LazyLyricHandlerComp = lazy(() => {
     return import('../lyric-list/LyricHandlerComp');
@@ -161,7 +161,7 @@ function RenderForegroundTabComp({
 const tabTypeList = [
     ['d', 'Documents', LazyAppDocumentPreviewerComp],
     ['l', 'Lyrics', LazyLyricHandlerComp],
-    ['b', 'Bibles', LazyBiblePreviewerRenderComp],
+    ['b', 'Bibles', LazyPresenterBiblePreviewerRenderComp],
     ['f', 'Foreground', LazyPresenterForegroundComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];

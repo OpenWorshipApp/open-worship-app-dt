@@ -1,10 +1,12 @@
 import { AppColorType } from '../others/color/colorHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import AppRangeComp from '../others/AppRangeComp';
-import { useStylingColor, useStylingFontSize } from '../_screen/preview/stylingHelpers';
-import PdfAppearanceSettingComp from './PdfAppearanceSettingComp';
+import {
+    useStylingColor,
+    useStylingFontSize,
+} from '../_screen/preview/stylingHelpers';
 
-export default function AppearanceComp() {
+export default function ScreenBibleAppearanceComp() {
     const [color, setColor] = useStylingColor();
     const [fontSize, setFontSize] = useStylingFontSize();
     return (
@@ -34,8 +36,6 @@ export default function AppearanceComp() {
                     }}
                 />
             </div>
-            <hr />
-            <PdfAppearanceSettingComp />
         </div>
     );
 }
