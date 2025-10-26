@@ -311,7 +311,7 @@ export default class BibleItem
         }
         const { target } = bibleItem;
         return `${target.bookKey} ${target.chapter}:${target.verseStart}${
-            target.verseEnd !== target.verseStart ? `-${target.verseEnd}` : ''
+            target.verseEnd === target.verseStart ? '' : `-${target.verseEnd}`
         }`;
     }
 }
