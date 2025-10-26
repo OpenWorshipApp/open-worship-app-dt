@@ -384,68 +384,95 @@ async function checkExtractedAndReturn(bibleKey: string, inputText: string) {
     return null;
 }
 
-async function attemptExtractBibleKey1(bibleKey: string, restText: string) {
-    const allLocalBibleInfoList = await getAllLocalBibleInfoList();
+const attemptInputTextCache = new CacheManager<{
+    bibleKey: string;
+    inputText: string;
+} | null>(60); // 1 minute
+async function attemptExtractBibleKey1(
+    inputText: string,
+    allLocalBibleInfoList: BibleMinimalInfoType[],
+    bibleKey: string,
+    restText: string,
+) {
     const foundBibleInfo = allLocalBibleInfoList.find((bibleInfo) => {
         return bibleInfo.key.toLowerCase() === bibleKey.trim().toLowerCase();
     });
     if (foundBibleInfo === undefined) {
         return null;
     }
-    return checkExtractedAndReturn(foundBibleInfo.key, restText);
-}
-
-// TODO: change exported title to `1 John 1:1-2 (kjv)`
-async function attemptExtractBibleKey(inputText: string) {
-    const text = inputText.trim().replaceAll(/\s+/g, ' ');
-    if (!text) {
-        return null;
-    }
-    // (kjv) 1 John 1:2-3
-    let matches = /^\((\S+)\)\s(.+)$/.exec(text);
-    if (matches?.length === 3) {
-        const result = await attemptExtractBibleKey1(
-            matches[1].trim(),
-            matches[2].trim(),
-        );
-        if (result !== null) {
-            return result;
-        }
-    }
-    // nkjv 2 Timothy 2:3-4
-    matches = /^(\S+)\s(.+)$/.exec(text);
-    if (matches?.length === 3) {
-        const result = await attemptExtractBibleKey1(
-            matches[1].trim(),
-            matches[2].trim(),
-        );
-        if (result !== null) {
-            return result;
-        }
-    }
-    // 3 John 1:4-5 (esv)
-    matches = /^(.+)\s\((\S+)\)$/.exec(text);
-    if (matches?.length === 3) {
-        const result = await attemptExtractBibleKey1(
-            matches[2].trim(),
-            matches[1].trim(),
-        );
-        if (result !== null) {
-            return result;
-        }
-    }
-    // 1 Kings 4:5-6 niv
-    matches = /^(.+)\s(\S+)$/.exec(text);
-    if (matches?.length === 3) {
-        const result = await attemptExtractBibleKey1(
-            matches[2].trim(),
-            matches[1].trim(),
-        );
-        if (result !== null) {
-            return result;
-        }
+    const result = await checkExtractedAndReturn(foundBibleInfo.key, restText);
+    if (result !== null) {
+        await attemptInputTextCache.set(inputText, result);
+        return result;
     }
     return null;
+}
+
+async function attemptExtractBibleKey(inputText: string) {
+    return unlocking(inputText, async () => {
+        if (await attemptInputTextCache.has(inputText)) {
+            return await attemptInputTextCache.get(inputText);
+        }
+        const text = inputText.trim().replaceAll(/\s+/g, ' ');
+        if (!text) {
+            return null;
+        }
+        const allLocalBibleInfoList = await getAllLocalBibleInfoList();
+        // (kjv) 1 John 1:2-3
+        let matches = /^\((\S+)\)\s(.+)$/.exec(text);
+        if (matches?.length === 3) {
+            const result = await attemptExtractBibleKey1(
+                inputText,
+                allLocalBibleInfoList,
+                matches[1].trim(),
+                matches[2].trim(),
+            );
+            if (result !== null) {
+                return result;
+            }
+        }
+        // nkjv 2 Timothy 2:3-4
+        matches = /^(\S+)\s(.+)$/.exec(text);
+        if (matches?.length === 3) {
+            const result = await attemptExtractBibleKey1(
+                inputText,
+                allLocalBibleInfoList,
+                matches[1].trim(),
+                matches[2].trim(),
+            );
+            if (result !== null) {
+                return result;
+            }
+        }
+        // 3 John 1:4-5 (esv)
+        matches = /^(.+)\s\((\S+)\)$/.exec(text);
+        if (matches?.length === 3) {
+            const result = await attemptExtractBibleKey1(
+                inputText,
+                allLocalBibleInfoList,
+                matches[2].trim(),
+                matches[1].trim(),
+            );
+            if (result !== null) {
+                return result;
+            }
+        }
+        // 1 Kings 4:5-6 niv
+        matches = /^(.+)\s(\S+)$/.exec(text);
+        if (matches?.length === 3) {
+            const result = await attemptExtractBibleKey1(
+                inputText,
+                allLocalBibleInfoList,
+                matches[2].trim(),
+                matches[1].trim(),
+            );
+            if (result !== null) {
+                return result;
+            }
+        }
+        await attemptInputTextCache.set(inputText, null);
+        return null;
+    });
 }
 
 export type EditingResultType = {
@@ -459,13 +486,6 @@ export async function extractBibleTitle(
     inputText: string,
 ): Promise<EditingResultType> {
     const cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
-    const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
-    if (extractedBibleKeyResult !== null) {
-        return extractBibleTitle(
-            extractedBibleKeyResult.bibleKey,
-            extractedBibleKeyResult.inputText,
-        );
-    }
     if (cleanText === '') {
         return {
             result: genExtractedBible(),
@@ -484,6 +504,13 @@ export async function extractBibleTitle(
         if (result !== null) {
             return { result, bibleKey, inputText, oldInputText: inputText };
         }
+    }
+    const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
+    if (extractedBibleKeyResult !== null) {
+        return extractBibleTitle(
+            extractedBibleKeyResult.bibleKey,
+            extractedBibleKeyResult.inputText,
+        );
     }
     const result = genExtractedBible();
     result.guessingBook = cleanText;
