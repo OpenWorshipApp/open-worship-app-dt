@@ -218,6 +218,7 @@ export default class BibleItem
         }
         return [];
     }
+    // TODO: change exported title to `1 John 1:1-2 (kjv)`
     async toTitleText() {
         const title = await this.toTitle();
         const text = await this.toText();

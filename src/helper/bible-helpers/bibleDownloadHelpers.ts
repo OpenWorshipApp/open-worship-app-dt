@@ -16,6 +16,7 @@ import { DownloadOptionsType, writeStreamToFile } from './downloadHelpers';
 import { getBibleXMLCacheInfoList } from '../../setting/bible-setting/bibleXMLHelpers';
 import { bibleDataReader } from './BibleDataReader';
 import { LocaleType } from '../../lang/langHelpers';
+import CacheManager from '../../others/CacheManager';
 
 export const BIBLE_DOWNLOAD_TOAST_TITLE = 'Bible Download';
 
@@ -136,7 +137,7 @@ export async function getOnlineBibleInfoList(): Promise<
         const content = await appApiFetch('info.json');
         const json = await content.json();
         if (typeof json.mapper !== 'object') {
-            throw new Error('Cannot get bible list');
+            throw new TypeError('Cannot get bible list');
         }
         return Object.entries(json.mapper).map(
             ([key, value]: [key: string, value: any]) => {
@@ -178,7 +179,12 @@ export async function getDownloadedBibleInfoList() {
     return null;
 }
 
+const allBibleInfoCache = new CacheManager<BibleMinimalInfoType[]>(60); // 1 minute
 export async function getAllLocalBibleInfoList() {
+    const cached = await allBibleInfoCache.get('allLocalBibleInfoList');
+    if (cached !== null) {
+        return cached;
+    }
     const downloadedBibleInfoList = (await getDownloadedBibleInfoList()) ?? [];
     const bibleXMLInfoList = await getBibleXMLCacheInfoList();
     downloadedBibleInfoList.push(
@@ -188,6 +194,10 @@ export async function getAllLocalBibleInfoList() {
                 isXML: true,
             } as BibleMinimalInfoType;
         }),
+    );
+    await allBibleInfoCache.set(
+        'allLocalBibleInfoList',
+        downloadedBibleInfoList,
     );
     return downloadedBibleInfoList;
 }

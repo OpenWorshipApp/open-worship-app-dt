@@ -14,7 +14,10 @@ import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import { getKJVChapterCount, kjvBibleInfo } from './serverBibleHelpers';
 import CacheManager from '../../others/CacheManager';
-import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
+import {
+    BibleMinimalInfoType,
+    getAllLocalBibleInfoList,
+} from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
 export async function toInputText(
@@ -107,12 +110,11 @@ export function useToLocaleNumBible(bibleKey: string, nString: number | null) {
     return str;
 }
 
-// TODO: use LRUCache instead
-const bibleNumMap = new Map<string, number | null>();
+const localeNumCache = new CacheManager<number | null>(60); // 1 minute
 export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     const cacheKey = `${bibleKey}:${localeNum}`;
-    if (bibleNumMap.has(cacheKey)) {
-        return bibleNumMap.get(cacheKey) as number | null;
+    if (await localeNumCache.has(cacheKey)) {
+        return localeNumCache.get(cacheKey);
     }
     const info = await getBibleInfo(bibleKey);
     let num: number | null = null;
@@ -123,7 +125,7 @@ export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
         const locale = await getBibleLocale(bibleKey);
         num = await fromLocaleNum(locale, localeNum);
     }
-    bibleNumMap.set(cacheKey, num);
+    await localeNumCache.set(cacheKey, num);
     return num;
 }
 
