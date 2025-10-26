@@ -538,12 +538,14 @@ export async function extractBibleTitle(
     return unlocking(cacheKey, async () => {
         const cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
         if (cleanText === '') {
-            return {
+            const data = {
                 result: genExtractedBible(),
                 bibleKey,
                 inputText: '',
                 oldInputText: inputText,
             };
+            await extractBibleTitleCache.set(cacheKey, data);
+            return data;
         }
         const extractedData = await extractBibleTitle1(
             cacheKey,
@@ -552,14 +554,17 @@ export async function extractBibleTitle(
             cleanText,
         );
         if (extractedData !== null) {
+            await extractBibleTitleCache.set(cacheKey, extractedData);
             return extractedData;
         }
         const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
         if (extractedBibleKeyResult !== null) {
-            return extractBibleTitle(
+            const data = await extractBibleTitle(
                 extractedBibleKeyResult.bibleKey,
                 extractedBibleKeyResult.inputText,
             );
+            await extractBibleTitleCache.set(cacheKey, data);
+            return data;
         }
         const result = genExtractedBible();
         result.guessingBook = cleanText;
