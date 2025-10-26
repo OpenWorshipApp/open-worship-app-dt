@@ -486,7 +486,7 @@ export async function extractBibleTitle1(
     inputText: string,
     cleanText: string,
 ): Promise<EditingResultType> {
-    const cacheKey = `${bibleKey}:${cleanText}`;
+    const cacheKey = `${bibleKey}:${inputText}:${cleanText}`;
     return unlocking(cacheKey, async () => {
         if (await extractBibleTitleCache.has(cacheKey)) {
             return (await extractBibleTitleCache.get(
