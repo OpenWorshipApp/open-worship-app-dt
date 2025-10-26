@@ -123,9 +123,6 @@ export default function AppDocumentItemsComp() {
             {isAnyItemSelected ? (
                 <SlideAutoPlayComp
                     prefix="vary-app-document"
-                    style={{
-                        bottom: '40px',
-                    }}
                     onNext={(data) => {
                         const element = getContainerDiv();
                         if (element === null) {

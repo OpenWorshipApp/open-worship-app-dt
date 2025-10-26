@@ -24,11 +24,21 @@ export default function AppDocumentPreviewerComp() {
         selectedAppDocumentContext.selectedVaryAppDocument instanceof
         PdfAppDocument;
     return (
-        <div className="slide-previewer card w-100 h-100">
+        <div
+            className="slide-previewer card w-100 h-100"
+            style={{
+                position: 'relative',
+            }}
+        >
             <VaryAppDocumentContext
                 value={selectedAppDocumentContext.selectedVaryAppDocument}
             >
-                <div className="card-body w-100 h-100 app-overflow-hidden">
+                <div
+                    className="card-body w-100 h-100 app-overflow-hidden"
+                    style={{
+                        position: 'relative',
+                    }}
+                >
                     <VaryAppDocumentItemsPreviewerComp />
                 </div>
                 <AppDocumentPreviewerFooterComp />

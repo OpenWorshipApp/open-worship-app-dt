@@ -85,7 +85,7 @@ export default function VaryAppDocumentItemsPreviewerComp() {
         >
             {varyAppDocument.isEditable ? <SlidesMenuComp /> : null}
             <AppDocumentItemsComp />
-            <ScrollingHandlerComp style={{ bottom: '40px' }} />
+            <ScrollingHandlerComp/>
         </div>
     );
 }
