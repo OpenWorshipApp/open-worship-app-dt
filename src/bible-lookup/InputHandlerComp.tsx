@@ -12,6 +12,10 @@ import { toInputText } from '../helper/bible-helpers/serverBibleHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
 import InputExtraButtonsComp from './InputExtraButtonsComp';
+import {
+    BIBLE_XML_CACHE_DURATION_SEC,
+    getBibleXMLDataFromKeyCaching,
+} from '../setting/bible-setting/bibleXMLHelpers';
 
 export const InputTextContext = createContext<{
     inputText: string;
@@ -46,10 +50,22 @@ export default function InputHandlerComp({
     }, [inputText]);
     const viewController = useLookupBibleItemControllerContext();
     const bibleKey = useBibleKeyContext();
+    useAppEffect(() => {
+        // keep bible data in cache
+        const intervalId = setInterval(
+            () => {
+                getBibleXMLDataFromKeyCaching(bibleKey);
+            },
+            (BIBLE_XML_CACHE_DURATION_SEC - 5) * 1000,
+        );
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, [bibleKey]);
     const [books] = useAppStateAsync(() => {
         return getBookKVList(bibleKey);
     }, [bibleKey]);
-    const bookKey = !books ? null : books['GEN'];
+    const bookKey = books ? books['GEN'] : null;
     const [placeholder] = useAppStateAsync(() => {
         return toInputText(bibleKey, bookKey, 1, 1, 2);
     });
