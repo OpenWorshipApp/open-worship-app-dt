@@ -188,6 +188,6 @@ export type AppProviderType = Readonly<
     }
 >;
 
-const appProvider = (window as any).provider as AppProviderType;
+const appProvider = (globalThis as any).provider as AppProviderType;
 
 export default appProvider;
