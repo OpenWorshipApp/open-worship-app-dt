@@ -1,19 +1,25 @@
 import { useState } from 'react';
 
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
-import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
+import {
+    checkIsPdfFullWidth,
+    setIsPdfFullWidth,
+} from '../_screen/managers/ScreenVaryAppDocumentManager';
 
 export default function PdfAppearanceSettingComp() {
-    const [isFullWidth, setIsFullWidth] = useState(
-        ScreenVaryAppDocumentManager.isPdfFullWidth,
-    );
-    const setIsFullWidth1 = (isFullWidth: boolean) => {
-        ScreenVaryAppDocumentManager.isPdfFullWidth = isFullWidth;
+    const [isFullWidth, setIsFullWidth] = useState(checkIsPdfFullWidth());
+    const setIsFullWidth1 = (newIsFullWidth: boolean) => {
+        setIsPdfFullWidth(newIsFullWidth);
         for (const { screenVaryAppDocumentManager } of getAllScreenManagers()) {
-            screenVaryAppDocumentManager.render();
-            screenVaryAppDocumentManager.sendSyncScreen();
+            if (screenVaryAppDocumentManager.varyAppDocumentItemData === null) {
+                continue;
+            }
+            screenVaryAppDocumentManager.varyAppDocumentItemData = {
+                ...screenVaryAppDocumentManager.varyAppDocumentItemData,
+                isPdfFullWidth: newIsFullWidth,
+            };
         }
-        setIsFullWidth(isFullWidth);
+        setIsFullWidth(newIsFullWidth);
     };
     return (
         <div className="d-flex">

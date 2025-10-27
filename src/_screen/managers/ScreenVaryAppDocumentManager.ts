@@ -74,14 +74,6 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         return this._varyAppDocumentItemData;
     }
 
-    static get isPdfFullWidth() {
-        return checkIsPdfFullWidth();
-    }
-
-    static set isPdfFullWidth(isFullWidth: boolean) {
-        setIsPdfFullWidth(isFullWidth);
-    }
-
     set varyAppDocumentItemData(
         appDocumentItemData: VaryAppDocumentItemScreenDataType | null,
     ) {
@@ -160,7 +152,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         filePath: string,
         itemJson: VaryAppDocumentItemDataType,
     ): VaryAppDocumentItemScreenDataType {
-        return { filePath, itemJson };
+        return { filePath, itemJson, isPdfFullWidth: checkIsPdfFullWidth() };
     }
 
     handleSlideSelecting(
@@ -195,11 +187,14 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         }
     }
 
-    renderPdf(divHaftScale: HTMLDivElement, pdfImageData: PdfSlideType) {
+    renderPdf(
+        divHaftScale: HTMLDivElement,
+        pdfImageData: PdfSlideType,
+        isFullWidth: boolean,
+    ) {
         if (!pdfImageData.imagePreviewSrc) {
             return null;
         }
-        const isFullWidth = checkIsPdfFullWidth();
         const content = genPdfSlide(pdfImageData.imagePreviewSrc, isFullWidth);
         const parentWidth = this.screenManagerBase.width;
         const width = parentWidth;
@@ -267,10 +262,14 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         const divContainer = document.createElement('div');
         const divHaftScale = document.createElement('div');
         divContainer.appendChild(divHaftScale);
-        const { itemJson } = this.varyAppDocumentItemData;
+        const { itemJson, isPdfFullWidth } = this.varyAppDocumentItemData;
 
         const target = PdfSlide.tryValidate(itemJson)
-            ? this.renderPdf(divHaftScale, itemJson as PdfSlideType)
+            ? this.renderPdf(
+                  divHaftScale,
+                  itemJson as PdfSlideType,
+                  isPdfFullWidth,
+              )
             : this.renderAppDocument(divHaftScale, itemJson as SlideType);
         if (target === null) {
             return;
@@ -306,6 +305,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         this.varyAppDocumentItemData = {
             filePath: item.filePath,
             itemJson: item.toJson(),
+            isPdfFullWidth: checkIsPdfFullWidth(),
         };
     }
 
