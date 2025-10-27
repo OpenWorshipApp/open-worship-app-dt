@@ -55,9 +55,7 @@ export default class BibleDataReader {
             const databaseController = await this.getDatabaseController();
             const record = await databaseController.getItem<string>(filePath);
             let b64Data: string | null = null;
-            if (record !== null) {
-                b64Data = record.data;
-            } else {
+            if (record === null) {
                 const fileData = await FileSource.readFileData(filePath, true);
                 if (fileData === null) {
                     return null;
@@ -69,6 +67,8 @@ export default class BibleDataReader {
                     isForceOverride: true,
                     secondaryId: bibleKey,
                 });
+            } else {
+                b64Data = record.data;
             }
             const rawData = base64Decode(b64Data);
             const parsedData = JSON.parse(rawData) as
