@@ -100,7 +100,7 @@ export function calcPaging(data: BibleFindResultType | null): PagingDataTye {
     }
     const perPage = calcPerPage(data.toLineNumber, data.fromLineNumber);
     const pageSize = Math.ceil(data.maxLineNumber / perPage);
-    const pages = Array.from(Array(pageSize)).map((_, i) => {
+    const pages = Array.from(new Array(pageSize)).map((_, i) => {
         return i + 1 + '';
     });
     const currentPage = findPageNumber(data, perPage, pages);
@@ -217,21 +217,22 @@ export function openContextMenu(
         bibleItem: BibleItem;
     },
 ) {
-    const contextMenuItems: ContextMenuItemType[] = [];
-    contextMenuItems.push({
-        menuElement: '`Open',
-        onSelect: () => {
-            openInBibleLookup(event, viewController, bibleItem, true);
+    const contextMenuItems: ContextMenuItemType[] = [
+        {
+            menuElement: '`Open',
+            onSelect: () => {
+                openInBibleLookup(event, viewController, bibleItem, true);
+            },
         },
-    });
-    contextMenuItems.push(...genBibleItemCopyingContextMenu(bibleItem));
-    contextMenuItems.push({
-        childBefore: genContextMenuItemIcon('floppy'),
-        menuElement: '`Save bible item',
-        onSelect: () => {
-            saveBibleItem(bibleItem);
+        ...genBibleItemCopyingContextMenu(bibleItem),
+        {
+            childBefore: genContextMenuItemIcon('floppy'),
+            menuElement: '`Save bible item',
+            onSelect: () => {
+                saveBibleItem(bibleItem);
+            },
         },
-    });
+    ];
     showAppContextMenu(event, contextMenuItems);
 }
 

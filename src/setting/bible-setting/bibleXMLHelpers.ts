@@ -366,7 +366,10 @@ export function addMonacoBibleInfoActions(
     });
 }
 
-const bibleJSONCacheManager = new CacheManager<BibleXMLJsonType>(60);
+export const BIBLE_XML_CACHE_DURATION_SEC = 60; // 1 minute
+const bibleJSONCacheManager = new CacheManager<BibleXMLJsonType>(
+    BIBLE_XML_CACHE_DURATION_SEC,
+);
 export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
     return unlocking(bibleKey, async () => {
         let jsonData = await bibleJSONCacheManager.get(bibleKey);

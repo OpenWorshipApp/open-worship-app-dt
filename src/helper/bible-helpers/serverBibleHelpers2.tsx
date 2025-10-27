@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import { bookToKey, getBibleInfo, getVerses } from './bibleInfoHelpers';
 import {
     fromLocaleNum,
     fromStringNum,
-    getFontFamily,
+    getFontFamilyByLocale,
     getLangAsync,
     LocaleType,
     toLocaleNum,
@@ -12,9 +12,12 @@ import {
 } from '../../lang/langHelpers';
 import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
-import { getKJVChapterCount } from './serverBibleHelpers';
+import { getKJVChapterCount, kjvBibleInfo } from './serverBibleHelpers';
 import CacheManager from '../../others/CacheManager';
-import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
+import {
+    BibleMinimalInfoType,
+    getAllLocalBibleInfoList,
+} from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
 export async function toInputText(
@@ -24,25 +27,33 @@ export async function toInputText(
     verseStart?: number | null,
     verseEnd?: number | null,
 ) {
-    let txt = '';
-    if (book) {
-        txt += `${book} `;
-        if (chapter !== undefined && chapter !== null) {
-            txt += `${await toLocaleNumBible(bibleKey, chapter)}`;
-            if (verseStart !== undefined && verseStart !== null) {
-                txt += `:${await toLocaleNumBible(bibleKey, verseStart)}`;
-                if (
-                    verseEnd !== undefined &&
-                    verseEnd !== null &&
-                    verseEnd !== verseStart
-                ) {
-                    txt += `-${await toLocaleNumBible(bibleKey, verseEnd)}`;
-                }
-            }
-        }
+    let text = '';
+    if (!book) {
+        return text;
     }
+    text += `${book} `;
+    if (!chapter) {
+        const bookKey = await bookToKey(bibleKey, book);
+        if (kjvBibleInfo.oneChapterBooks.includes(bookKey ?? '')) {
+            text += `${await toLocaleNumBible(bibleKey, 1)}:`;
+            return text;
+        }
+        // 1 John
+        return text;
+    }
+    text += `${await toLocaleNumBible(bibleKey, chapter)}`;
+    if (!verseStart) {
+        // 1 John 1
+        return text;
+    }
+    text += `:${await toLocaleNumBible(bibleKey, verseStart)}`;
+    if (!verseEnd || verseEnd !== verseStart) {
+        // 1 John 1:1
+        return text;
+    }
+    text += `-${await toLocaleNumBible(bibleKey, verseEnd)}`;
     // 1 John 1:1-2
-    return txt;
+    return text;
 }
 
 export async function getBibleLocale(bibleKey: string) {
@@ -62,16 +73,15 @@ export async function getLangFromBibleKey(bibleKey: string) {
 
 export async function getBibleFontFamily(bibleKey: string) {
     const locale = await getBibleLocale(bibleKey);
-    const fontFamily = await getFontFamily(locale);
+    const fontFamily = await getFontFamilyByLocale(locale);
     return fontFamily;
 }
 
-// TODO: use LRUCache instead
-const bibleLocaleNumMap = new Map<string, string | null>();
+const toLocaleNumCache = new CacheManager<string | null>(60); // 1 minute
 export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     const cacheKey = `${bibleKey}:${n}`;
-    if (bibleLocaleNumMap.has(cacheKey)) {
-        return bibleLocaleNumMap.get(cacheKey) as string | null;
+    if (await toLocaleNumCache.has(cacheKey)) {
+        return toLocaleNumCache.get(cacheKey);
     }
     if (typeof n !== 'number') {
         return null;
@@ -85,43 +95,46 @@ export async function toLocaleNumBible(bibleKey: string, n: number | null) {
         const locale = await getBibleLocale(bibleKey);
         localeNum = await toLocaleNum(locale, n);
     }
-    bibleLocaleNumMap.set(cacheKey, localeNum);
+    await toLocaleNumCache.set(cacheKey, localeNum);
     return localeNum;
 }
 
 export function useToLocaleNumBible(bibleKey: string, nString: number | null) {
     const [str, setStr] = useState<string | null>(null);
-    useAppEffect(() => {
+    const fetchLocaleNum = useCallback(() => {
         toLocaleNumBible(bibleKey, nString).then(setStr);
     }, [bibleKey, nString]);
+
+    useAppEffect(fetchLocaleNum, [fetchLocaleNum]);
     return str;
 }
 
-// TODO: use LRUCache instead
-const bibleNumMap = new Map<string, number | null>();
+const localeNumCache = new CacheManager<number | null>(60); // 1 minute
 export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     const cacheKey = `${bibleKey}:${localeNum}`;
-    if (bibleNumMap.has(cacheKey)) {
-        return bibleNumMap.get(cacheKey) as number | null;
+    if (await localeNumCache.has(cacheKey)) {
+        return localeNumCache.get(cacheKey);
     }
     const info = await getBibleInfo(bibleKey);
     let num: number | null = null;
-    if (info !== null && info.numList !== undefined) {
+    if (info?.numList !== undefined) {
         num = fromStringNum(info.numList, localeNum);
     }
     if (num === null) {
         const locale = await getBibleLocale(bibleKey);
         num = await fromLocaleNum(locale, localeNum);
     }
-    bibleNumMap.set(cacheKey, num);
+    await localeNumCache.set(cacheKey, num);
     return num;
 }
 
 export function useFromLocaleNumBible(bibleKey: string, localeNum: string) {
     const [newLocaleNum, setNewLocaleNum] = useState<number | null>(null);
-    useAppEffect(() => {
+    const fetchFromLocaleNum = useCallback(() => {
         fromLocaleNumBible(bibleKey, localeNum).then(setNewLocaleNum);
     }, [bibleKey, localeNum]);
+
+    useAppEffect(fetchFromLocaleNum, [fetchFromLocaleNum]);
     return newLocaleNum;
 }
 
@@ -267,7 +280,7 @@ const regexTitleMap: [
 ][] = [
     // "1 John 1:1-2"
     [
-        '(^.+)\\s(.+):(.+)-(.+)$',
+        String.raw`(^.+)\s(.+):(.+)-(.+)$`,
         async (bibleKey, matches) => {
             if (matches.length !== 5) {
                 return null;
@@ -284,7 +297,7 @@ const regexTitleMap: [
     ],
     // "1 John 1:1-"
     [
-        '(^.+)\\s(.+):(.+)-$',
+        String.raw`(^.+)\s(.+):(.+)-$`,
         async (bibleKey, matches) => {
             if (matches.length !== 4) {
                 return null;
@@ -302,7 +315,7 @@ const regexTitleMap: [
     ],
     // "1 John 1:1"
     [
-        '(^.+)\\s(.+):(.+)$',
+        String.raw`(^.+)\s(.+):(.+)$`,
         async (bibleKey, matches) => {
             if (matches.length !== 4) {
                 return null;
@@ -320,7 +333,7 @@ const regexTitleMap: [
     ],
     // "1 John 1:"
     [
-        '(^.+)\\s(.+)$',
+        String.raw`(^.+)\s(.+)$`,
         async (bibleKey, matches) => {
             if (matches.length !== 3) {
                 return null;
@@ -339,7 +352,7 @@ const regexTitleMap: [
     ],
     // "1 John"
     [
-        '(^.+)$',
+        String.raw`(^.+)$`,
         async (bibleKey, matches) => {
             if (matches.length !== 2) {
                 return null;
@@ -369,32 +382,96 @@ async function checkExtractedAndReturn(bibleKey: string, inputText: string) {
     }
     return null;
 }
-async function attemptExtractBibleKey(inputText: string) {
-    if (inputText.startsWith('(')) {
-        const allLocalBibleInfoList = await getAllLocalBibleInfoList();
-        // (kjv) 1 John 1:1-2
-        const regex = /^\((.+)\)\s(.+)$/;
-        const matches = regex.exec(inputText);
-        if (matches !== null && matches.length === 3) {
-            const bibleKey = matches[1].trim();
-            if (allLocalBibleInfoList.some((info) => info.key === bibleKey)) {
-                const inputText1 = matches[2].trim();
-                return checkExtractedAndReturn(bibleKey, inputText1);
-            }
-        }
+
+const attemptInputTextCache = new CacheManager<{
+    bibleKey: string;
+    inputText: string;
+} | null>(60); // 1 minute
+async function attemptExtractBibleKey1(
+    inputText: string,
+    allLocalBibleInfoList: BibleMinimalInfoType[],
+    bibleKey: string,
+    restText: string,
+) {
+    const foundBibleInfo = allLocalBibleInfoList.find((bibleInfo) => {
+        return bibleInfo.key.toLowerCase() === bibleKey.trim().toLowerCase();
+    });
+    if (foundBibleInfo === undefined) {
+        return null;
     }
-    // 1 John 1:1-2 kjv
-    const regex = /^(.+:.+)\s(.+)$/;
-    const matches = regex.exec(inputText);
-    if (matches !== null && matches.length === 3) {
-        const bookChapter = matches[1].trim();
-        const bibleKey = matches[2].trim();
-        const allLocalBibleInfoList = await getAllLocalBibleInfoList();
-        if (allLocalBibleInfoList.some((info) => info.key === bibleKey)) {
-            return checkExtractedAndReturn(bibleKey, bookChapter);
-        }
+    const result = await checkExtractedAndReturn(foundBibleInfo.key, restText);
+    if (result !== null) {
+        await attemptInputTextCache.set(inputText, result);
+        return result;
     }
     return null;
+}
+
+async function attemptExtractBibleKey(inputText: string) {
+    return unlocking(inputText, async () => {
+        if (await attemptInputTextCache.has(inputText)) {
+            return await attemptInputTextCache.get(inputText);
+        }
+        const text = inputText.trim().replaceAll(/\s+/g, ' ');
+        if (!text) {
+            return null;
+        }
+        const allLocalBibleInfoList = await getAllLocalBibleInfoList();
+        // (kjv) 1 John 1:2-3
+        let matches = /^\((\S+)\)\s(.+)$/.exec(text);
+        if (matches?.length === 3) {
+            const result = await attemptExtractBibleKey1(
+                inputText,
+                allLocalBibleInfoList,
+                matches[1].trim(),
+                matches[2].trim(),
+            );
+            if (result !== null) {
+                return result;
+            }
+        }
+        // nkjv 2 Timothy 2:3-4
+        matches = /^(\S+)\s(.+)$/.exec(text);
+        if (matches?.length === 3) {
+            const result = await attemptExtractBibleKey1(
+                inputText,
+                allLocalBibleInfoList,
+                matches[1].trim(),
+                matches[2].trim(),
+            );
+            if (result !== null) {
+                return result;
+            }
+        }
+        // 3 John 1:4-5 (esv)
+        matches = /^(.+)\s\((\S+)\)$/.exec(text);
+        if (matches?.length === 3) {
+            const result = await attemptExtractBibleKey1(
+                inputText,
+                allLocalBibleInfoList,
+                matches[2].trim(),
+                matches[1].trim(),
+            );
+            if (result !== null) {
+                return result;
+            }
+        }
+        // 1 Kings 4:5-6 niv
+        matches = /^(.+)\s(\S+)$/.exec(text);
+        if (matches?.length === 3) {
+            const result = await attemptExtractBibleKey1(
+                inputText,
+                allLocalBibleInfoList,
+                matches[2].trim(),
+                matches[1].trim(),
+            );
+            if (result !== null) {
+                return result;
+            }
+        }
+        await attemptInputTextCache.set(inputText, null);
+        return null;
+    });
 }
 
 export type EditingResultType = {
@@ -402,27 +479,14 @@ export type EditingResultType = {
     bibleKey: string;
     inputText: string;
     oldInputText: string;
+    time: number;
 };
-export async function extractBibleTitle(
+export async function extractBibleTitle1(
     bibleKey: string,
     inputText: string,
+    cleanText: string,
+    time: number,
 ): Promise<EditingResultType> {
-    const cleanText = inputText.trim().replace(/\s+/g, ' ');
-    const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
-    if (extractedBibleKeyResult !== null) {
-        return extractBibleTitle(
-            extractedBibleKeyResult.bibleKey,
-            extractedBibleKeyResult.inputText,
-        );
-    }
-    if (cleanText === '') {
-        return {
-            result: genExtractedBible(),
-            bibleKey,
-            inputText: '',
-            oldInputText: inputText,
-        };
-    }
     for (const [regexStr, matcher] of regexTitleMap) {
         const regex = new RegExp(regexStr);
         const matches = regex.exec(cleanText);
@@ -431,10 +495,83 @@ export async function extractBibleTitle(
         }
         const result = await matcher(bibleKey, matches);
         if (result !== null) {
-            return { result, bibleKey, inputText, oldInputText: inputText };
+            return {
+                result,
+                bibleKey,
+                inputText,
+                oldInputText: inputText,
+                time,
+            };
         }
+    }
+    const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
+    if (extractedBibleKeyResult !== null) {
+        return extractBibleTitle(
+            extractedBibleKeyResult.bibleKey,
+            extractedBibleKeyResult.inputText,
+            time,
+        );
     }
     const result = genExtractedBible();
     result.guessingBook = cleanText;
-    return { result, bibleKey, inputText: '', oldInputText: inputText };
+    return {
+        result,
+        bibleKey,
+        inputText: '',
+        oldInputText: inputText,
+        time,
+    };
+}
+const extractBibleTitleCache = new CacheManager<EditingResultType>(4); // 4 seconds
+export async function extractBibleTitle(
+    bibleKey: string,
+    inputText: string,
+    time = Date.now(),
+): Promise<EditingResultType> {
+    const cacheKey = `${bibleKey}:${inputText}`;
+    return unlocking(cacheKey, async () => {
+        const setCache = (data: EditingResultType) => {
+            extractBibleTitleCache.set(cacheKey, data);
+            return data;
+        };
+        const cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
+        if (cleanText === '') {
+            const data = {
+                result: genExtractedBible(),
+                bibleKey,
+                inputText: '',
+                oldInputText: inputText,
+                time,
+            };
+            return setCache(data);
+        }
+        const extractedData = await extractBibleTitle1(
+            bibleKey,
+            inputText,
+            cleanText,
+            time,
+        );
+        if (extractedData !== null) {
+            return setCache(extractedData);
+        }
+        const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
+        if (extractedBibleKeyResult !== null) {
+            const data = await extractBibleTitle(
+                extractedBibleKeyResult.bibleKey,
+                extractedBibleKeyResult.inputText,
+                time,
+            );
+            return setCache(data);
+        }
+        const result = genExtractedBible();
+        result.guessingBook = cleanText;
+        const data = {
+            result,
+            bibleKey,
+            inputText: '',
+            oldInputText: inputText,
+            time,
+        };
+        return setCache(data);
+    });
 }

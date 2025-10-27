@@ -249,28 +249,28 @@ function takeIsS(text: string) {
 function takeIsFN(text: string) {
     // "fn GEN 1:1"
     const isFN = text.includes('fn');
-    text = text.replace(/(\s?['"]fn['"]\s?)/g, '').trim();
+    text = text.replaceAll(/(\s?['"]fn['"]\s?)/g, '').trim();
     return { isFN, text, extraText: isFN ? " 'fn'" : '' };
 }
 
 function takeIsStar(text: string) {
     // "GEN 1:1 *"
     const isStar = text.includes('*');
-    text = text.replace(/(\s?\*\s?)/g, '').trim();
+    text = text.replaceAll(/(\s?\*\s?)/g, '').trim();
     return { isStar, text, extraText: isStar ? ' *' : '' };
 }
 
 function takeIsTitle(text: string) {
     // "Title GEN 1:1"
     const isTitle = text.includes('Title');
-    text = text.replace(/(\s?Title\s?)/g, '').trim();
+    text = text.replaceAll(/(\s?Title\s?)/g, '').trim();
     return { isTitle, text, extraText: isTitle ? ' Title' : '' };
 }
 
 function takeIsLXXDSS(text: string) {
     // "GEN 1:1 (LXX and DSS)"
     const isLXXDSS = text.includes('(LXX and DSS)');
-    text = text.replace(/(\s?\(LXX and DSS\)\s?)/g, '').trim();
+    text = text.replaceAll(/(\s?\(LXX and DSS\)\s?)/g, '').trim();
     return { isLXXDSS, text, extraText: isLXXDSS ? ' (LXX and DSS)' : '' };
 }
 

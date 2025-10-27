@@ -55,6 +55,7 @@ class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
             color: props.color,
             alignItems: props.textVerticalAlignment,
             justifyContent: props.textHorizontalAlignment,
+            textAlign: props.textHorizontalAlignment,
             padding: `${props.fontSize / 10}px`,
         };
         return style;

@@ -45,7 +45,7 @@ export async function showCanvasContextMenu(
                         extensions: [...imageExtensions, ...videoExtension],
                     },
                 ]);
-                filePaths.forEach((filePath) => {
+                for (const filePath of filePaths) {
                     canvasController
                         .genNewMediaItemFromFilePath(filePath, event)
                         .then((newCanvasItem) => {
@@ -53,7 +53,7 @@ export async function showCanvasContextMenu(
                                 canvasController.addNewItem(newCanvasItem);
                             }
                         });
-                });
+                }
             },
         },
         ...(isClipboardHasImage

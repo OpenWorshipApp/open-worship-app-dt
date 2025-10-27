@@ -159,10 +159,12 @@ function CountDownInSetComp({
         return targetDatetime;
     };
     const handleShowing = (event: any, isForceChoosing = false) => {
+        const targetDateTime = getTargetDateTime();
+        const style = genStyle();
         ScreenForegroundManager.setCountdown(
             event,
-            getTargetDateTime(),
-            genStyle(),
+            targetDateTime,
+            style,
             isForceChoosing,
         );
     };
@@ -231,7 +233,7 @@ function refreshAllCountdowns(
     extraStyle: CSSProperties,
 ) {
     attemptTimeout(() => {
-        showingScreenIds.forEach(([screenId, data]) => {
+        for (const [screenId, data] of showingScreenIds) {
             getScreenForegroundManagerInstances(
                 screenId,
                 (screenForegroundManager) => {
@@ -242,7 +244,7 @@ function refreshAllCountdowns(
                     });
                 },
             );
-        });
+        }
     });
 }
 

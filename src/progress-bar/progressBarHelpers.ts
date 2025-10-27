@@ -18,11 +18,11 @@ export function showProgressBarMessage(...args: any[]) {
     if (message) {
         console.log(message);
     }
-    document
-        .querySelectorAll('.progress-bar-content-text')
-        .forEach((element) => {
-            if (element instanceof HTMLElement) {
-                element.textContent = message;
-            }
-        });
+    for (const element of document.querySelectorAll(
+        '.progress-bar-content-text',
+    )) {
+        if (element instanceof HTMLElement) {
+            element.textContent = message;
+        }
+    }
 }

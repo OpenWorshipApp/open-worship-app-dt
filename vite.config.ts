@@ -51,9 +51,7 @@ export default defineConfig({
     ],
     css: {
         preprocessorOptions: {
-            scss: {
-                api: 'modern-compiler', // or 'modern'
-            },
+            scss: {},
         },
     },
     server: {
@@ -61,7 +59,9 @@ export default defineConfig({
     },
     build: {
         rollupOptions: {
-            input: htmlFiles.map((item) => resolve(item)),
+            input: htmlFiles.map((item) => {
+                return resolve(item);
+            }),
         },
     },
 });

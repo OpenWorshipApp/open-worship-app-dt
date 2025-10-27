@@ -8,7 +8,7 @@ export function closeAlert() {
 
 export type ConfirmDataType = {
     title: string;
-    question: string;
+    body: string | ReactElement;
     onConfirm: (isOk: boolean) => void;
     escToCancel?: boolean;
     enterToOk?: boolean;
@@ -40,7 +40,7 @@ export const popupWidgetManager: {
 
 export function showAppConfirm(
     title: string,
-    message: string,
+    body: string,
     options?: { escToCancel?: boolean; enterToOk?: boolean },
 ) {
     const openConfirm = popupWidgetManager.openConfirm;
@@ -50,7 +50,7 @@ export function showAppConfirm(
     return new Promise<boolean>((resolve) => {
         openConfirm({
             title,
-            question: message,
+            body,
             onConfirm: (isOk) => {
                 resolve(isOk);
             },

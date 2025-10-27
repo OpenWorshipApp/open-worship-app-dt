@@ -2,7 +2,7 @@ import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
 import { MutationType } from '../helper/helpers';
 import {
     checkIsValidLocale,
-    getFontFamily,
+    getFontFamilyByLocale,
     LocaleType,
 } from '../lang/langHelpers';
 
@@ -10,22 +10,22 @@ export async function applyFontFamily(element: Node, type: MutationType) {
     if (!(element instanceof HTMLElement)) {
         return;
     }
-    let locale = element.getAttribute('data-locale');
-    if (locale === null) {
-        const bibleKey = element.getAttribute('data-bible-key');
-        if (bibleKey !== null) {
+    let locale = element.dataset.locale;
+    if (!locale) {
+        const bibleKey = element.dataset.bibleKey;
+        if (bibleKey) {
             locale = await getBibleLocale(bibleKey);
         }
     }
-    if (locale !== null && checkIsValidLocale(locale)) {
-        const fontFamily = await getFontFamily(locale as LocaleType);
+    if (locale && checkIsValidLocale(locale)) {
+        const fontFamily = await getFontFamilyByLocale(locale as LocaleType);
         if (fontFamily) {
             element.style.fontFamily = fontFamily;
         }
     }
     if (type === 'added') {
-        Array.from(element.children).forEach((child) => {
+        for (const child of Array.from(element.children)) {
             applyFontFamily(child, type);
-        });
+        }
     }
 }

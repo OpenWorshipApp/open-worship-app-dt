@@ -37,7 +37,7 @@ function handMovedChecking(
     container: HTMLElement,
     threshold: number,
 ) {
-    let kjvVerseKey = null;
+    let kjvVerseKey: string | null = null;
     const currentElements = Array.from(
         viewController.getVerseElements<HTMLElement>(bibleItem.id),
     ).reverse();
@@ -45,7 +45,7 @@ function handMovedChecking(
         if (
             checkIsVerticalPartialVisible(container, currentElement, threshold)
         ) {
-            kjvVerseKey = currentElement.dataset.kjvVerseKey;
+            kjvVerseKey = currentElement.dataset.kjvVerseKey ?? null;
             break;
         }
     }
@@ -58,15 +58,15 @@ function handMovedChecking(
         .filter((targetBibleItem) => {
             return bibleItem.id !== targetBibleItem.id;
         });
-    bibleItems.forEach((targetBibleItem) => {
+    for (const targetBibleItem of bibleItems) {
         const elements = viewController.getVerseElements<HTMLElement>(
             targetBibleItem.id,
             kjvVerseKey,
         );
-        elements.forEach((element) => {
+        for (const element of elements) {
             bringDomToNearestView(element);
-        });
-    });
+        }
+    }
 }
 
 export default function BibleViewComp({

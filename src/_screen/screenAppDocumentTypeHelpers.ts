@@ -3,6 +3,7 @@ import { VaryAppDocumentItemDataType } from '../app-document-list/appDocumentTyp
 export type VaryAppDocumentItemScreenDataType = {
     filePath: string;
     itemJson: VaryAppDocumentItemDataType;
+    isPdfFullWidth: boolean;
 };
 export type AppDocumentListType = {
     [key: string]: VaryAppDocumentItemScreenDataType;

@@ -8,6 +8,7 @@ import {
 
 import { warn } from './loggerHelpers';
 import { OptionalPromise } from './typeHelpers';
+import appProvider from '../server/appProvider';
 
 const THRESHOLD = 10;
 const MILLIE_SECOND = 1000;
@@ -65,7 +66,7 @@ export function useAppEffectAsync<T extends MethodContextType>(
         ? undefined
         : [...(deps ?? []), ...Object.values(methods ?? {})];
     useEffect(() => {
-        const methodContext = { ...(methods ?? {}) } as T;
+        const methodContext = { ...methods } as T;
         checkStore(toKey);
         const unmount = effectMethod(methodContext);
         return () => {
@@ -81,7 +82,7 @@ export function useAppEffectAsync<T extends MethodContextType>(
     }, totalDeps);
 }
 
-export function useAppEffect(
+function useAppEffect1(
     effect: EffectCallback,
     deps: DependencyList,
     key?: string,
@@ -94,6 +95,10 @@ export function useAppEffect(
         return effect();
     }, deps);
 }
+
+export const useAppEffect = appProvider.systemUtils.isDev
+    ? useAppEffect1
+    : useEffect;
 
 export function TestInfinite() {
     const [count, setCount] = useState(0);

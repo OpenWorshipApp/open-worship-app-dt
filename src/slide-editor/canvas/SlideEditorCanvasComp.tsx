@@ -38,9 +38,7 @@ async function handleDropping(
 ) {
     changeDragEventStyle(event, 'opacity', '1');
     for await (const file of readDroppedFiles(event)) {
-        if (!checkIsSupportMediaType(file.type)) {
-            showSimpleToast('Insert Image or Video', 'Unsupported file type!');
-        } else {
+        if (checkIsSupportMediaType(file.type)) {
             canvasController
                 .genNewImageItemFromFile(file, event)
                 .then((newCanvasItem) => {
@@ -49,6 +47,8 @@ async function handleDropping(
                     }
                     canvasController.addNewItem(newCanvasItem);
                 });
+        } else {
+            showSimpleToast('Insert Image or Video', 'Unsupported file type!');
         }
     }
 }
@@ -94,7 +94,7 @@ function BodyRendererComp() {
                 event.stopPropagation();
                 (event.target as HTMLDivElement).dataset.mouseDown =
                     JSON.stringify({
-                        time: new Date().getTime(),
+                        time: Date.now(),
                         x: event.clientX,
                         y: event.clientY,
                     });
@@ -106,7 +106,7 @@ function BodyRendererComp() {
                 const dataset = (event.target as HTMLDivElement).dataset;
                 if (dataset.mouseDown) {
                     const mouseDown = JSON.parse(dataset.mouseDown);
-                    const timeDiff = new Date().getTime() - mouseDown.time;
+                    const timeDiff = Date.now() - mouseDown.time;
                     const distance = Math.sqrt(
                         Math.pow(event.clientX - mouseDown.x, 2) +
                             Math.pow(event.clientY - mouseDown.y, 2),

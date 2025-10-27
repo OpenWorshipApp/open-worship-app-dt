@@ -179,9 +179,9 @@ export function getAppMimetype(mimetypeName: MimetypeNameType) {
         return [];
     }
     const json = cloneJson(mimeTypesMapper[mimetypeName]);
-    json.forEach((data: any) => {
+    for (const data of json as any[]) {
         data.mimetypeName = mimetypeName;
-    });
+    }
     return json as AppMimetypeType[];
 }
 
@@ -206,9 +206,7 @@ export function isSupportedMimetype(
         .map((newMimetype) => {
             return newMimetype.mimetypeSignature;
         })
-        .some((type) => {
-            return type === fileMimetype;
-        });
+        .includes(fileMimetype);
 }
 
 export function isSupportedExt(

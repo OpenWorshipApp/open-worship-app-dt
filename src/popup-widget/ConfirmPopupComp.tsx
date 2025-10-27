@@ -50,12 +50,16 @@ export default function ConfirmPopupComp({
                     onClose={handleClosing}
                 />
                 <div className="card-body d-flex flex-column">
-                    <div
-                        className="p-2 flex-fill app-selectable-text"
-                        dangerouslySetInnerHTML={{
-                            __html: data.question,
-                        }}
-                    />
+                    {typeof data.body === 'string' ? (
+                        <div
+                            className="p-2 flex-fill app-selectable-text"
+                            dangerouslySetInnerHTML={{
+                                __html: data.body,
+                            }}
+                        />
+                    ) : (
+                        <>{data.body}</>
+                    )}
                     <div className="btn-group float-end">
                         <button
                             className="btn btn-sm"

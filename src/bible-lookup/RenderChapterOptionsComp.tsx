@@ -67,7 +67,7 @@ function ChapterOptions({
         <>
             {matches.map(([chapter, chapterNumStr, bibleKey], i) => {
                 const className =
-                    'chapter-select btn btn-outline-success w-100' +
+                    'app-chapter-select btn btn-outline-success w-100' +
                     ` ${OPTION_CLASS}` +
                     ` ${i === 0 ? OPTION_SELECTED_CLASS : ''}`;
                 const isDiff = `${chapter}` !== chapterNumStr;

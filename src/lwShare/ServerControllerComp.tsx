@@ -133,10 +133,10 @@ export default function ServerControllerComp() {
     const handleServer = async () => {
         if (status === 'starting') {
             return;
-        } else if (status !== 'running') {
-            serverData.restart();
-        } else {
+        } else if (status === 'running') {
             serverData.stop();
+        } else {
+            serverData.restart();
         }
     };
     const statusView = statusViewMap[status];

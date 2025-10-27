@@ -1,14 +1,15 @@
 import HandleAlertComp from './popup-widget/HandleAlertComp';
-import AppReaderComp from './AppReaderComp';
+import BibleReaderComp from './BibleReaderComp';
 import AppContextMenuComp from './context-menu/AppContextMenuComp';
 import TopProgressBarComp from './progress-bar/TopProgressBarComp';
 import ToastComp from './toast/ToastComp';
 import { main } from './appInitHelpers';
 import { hideAllScreens } from './_screen/screenHelpers';
+import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
 
 main(
     <>
-        <AppReaderComp />
+        <BibleReaderComp flexSizeName={resizeSettingNames.bibleReader} />
         <TopProgressBarComp />
         <ToastComp />
         <AppContextMenuComp />

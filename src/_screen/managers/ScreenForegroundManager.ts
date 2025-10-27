@@ -145,7 +145,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             container,
             removeHandler: async () => {
                 await removingHandler?.(container);
-                container.parentNode?.removeChild(container);
+                container.remove();
             },
         });
         this.div.appendChild(container);
@@ -234,9 +234,9 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             screenForegroundManager.saveForegroundData();
         };
         const screenIds = await this.chooseScreenIds(event, isForceChoosing);
-        screenIds.forEach((screenId) => {
+        for (const screenId of screenIds) {
             callbackSave(this.getInstance(screenId));
-        });
+        }
     }
 
     renderCountdown(data: ForegroundCountdownDataType) {
@@ -268,8 +268,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.setData(
             event,
             (screenForegroundManager) => {
-                const data =
-                    dateTime !== null ? { dateTime, extraStyle } : null;
+                const data = dateTime ? { dateTime, extraStyle } : null;
                 screenForegroundManager.setCountdownData(data);
             },
             isForceChoosing,
@@ -306,7 +305,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             event,
             (screenForegroundManager) => {
                 const stopwatchData =
-                    dateTime !== null ? { dateTime, extraStyle } : null;
+                    dateTime === null ? null : { dateTime, extraStyle };
                 screenForegroundManager.setStopwatchData(stopwatchData);
             },
             isForceChoosing,
@@ -399,7 +398,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         this.setData(
             event,
             (screenForegroundManager) => {
-                const marqueeData = text !== null ? { text, extraStyle } : null;
+                const marqueeData = text === null ? null : { text, extraStyle };
                 screenForegroundManager.setMarqueeData(marqueeData);
             },
             isForceChoosing,
@@ -441,14 +440,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             event,
             (screenForegroundManager) => {
                 const quickTextData =
-                    htmlText !== null
-                        ? {
+                    htmlText === null
+                        ? null
+                        : {
                               htmlText,
                               timeSecondDelay,
                               timeSecondToLive,
                               extraStyle,
-                          }
-                        : null;
+                          };
                 screenForegroundManager.setQuickTextData(quickTextData);
             },
             isForceChoosing,

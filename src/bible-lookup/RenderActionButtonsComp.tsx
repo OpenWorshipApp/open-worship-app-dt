@@ -67,10 +67,9 @@ export default function RenderActionButtonsComp({
                         onClick={() => {
                             const lookupViewController =
                                 viewController as LookupBibleItemController;
-                            saveBibleItem(
-                                bibleItem,
-                                lookupViewController.onLookupSaveBibleItem,
-                            );
+                            saveBibleItem(bibleItem, () => {
+                                lookupViewController.onLookupSaveBibleItem();
+                            });
                         }}
                     >
                         <i className="bi bi-floppy" />
@@ -83,11 +82,9 @@ export default function RenderActionButtonsComp({
                             onClick={(event) => {
                                 const lookupViewController =
                                     viewController as LookupBibleItemController;
-                                addBibleItemAndPresent(
-                                    event,
-                                    bibleItem,
-                                    lookupViewController.onLookupSaveBibleItem,
-                                );
+                                addBibleItemAndPresent(event, bibleItem, () => {
+                                    lookupViewController.onLookupSaveBibleItem();
+                                });
                             }}
                         >
                             <i className="bi bi-cast" />

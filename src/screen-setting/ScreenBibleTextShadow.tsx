@@ -1,11 +1,11 @@
-import './TextShadow.scss';
+import './ScreenBibleTextShadow.scss';
 
-import ScreenBibleManager from '../managers/ScreenBibleManager';
-import { AppColorType } from '../../others/color/colorHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import { AppColorType } from '../others/color/colorHelpers';
+import { useAppEffect } from '../helper/debuggerHelpers';
 import ReactDOMServer from 'react-dom/server';
 import { useMemo } from 'react';
-import { useStylingColor } from './stylingHelpers';
+import { useStylingColor } from '../_screen/preview/stylingHelpers';
 
 function genShadow(prefix: string, color1: string, color2: string) {
     const htmlString = ReactDOMServer.renderToStaticMarkup(
@@ -87,13 +87,13 @@ function checkRendered(container: HTMLDivElement) {
         return { child, listener: clickListener };
     });
     return () => {
-        listenList.forEach(({ child, listener }) => {
+        for (const { child, listener } of listenList) {
             child.removeEventListener('click', listener);
-        });
+        }
     };
 }
 
-export default function TextShadow() {
+export default function ScreenBibleTextShadow() {
     const [color] = useStylingColor();
     useAppEffect(() => {
         const divList =
@@ -109,9 +109,9 @@ export default function TextShadow() {
             return { d, listener };
         });
         return () => {
-            listenList.forEach((listen) => {
+            for (const listen of listenList) {
                 listen.d.removeEventListener('click', listen.listener);
-            });
+            }
         };
     }, []);
     const htmlColorText = useMemo(() => {
@@ -123,10 +123,7 @@ export default function TextShadow() {
         return text;
     }, [color]);
     return (
-        <div
-            className="card-body"
-            style={{ maxHeight: '200px', overflowY: 'auto' }}
-        >
+        <div className="card-body">
             <div
                 ref={(element) => {
                     if (element) {

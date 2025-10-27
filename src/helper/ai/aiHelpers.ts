@@ -37,9 +37,9 @@ export function getAISetting(): AISettingType {
 const changingListener = new Set<() => void>();
 export function setAISetting(value: AISettingType) {
     localStorage.setItem(AI_SETTING_NAME, JSON.stringify(value));
-    changingListener.forEach((listener) => {
+    for (const listener of changingListener) {
         listener();
-    });
+    }
 }
 export function useAISetting() {
     const [setting, setSetting] = useState<AISettingType>(getAISetting());

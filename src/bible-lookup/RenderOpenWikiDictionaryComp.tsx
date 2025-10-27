@@ -1,0 +1,78 @@
+import appProvider from '../server/appProvider';
+import {
+    getLangCode,
+    getLangDataByLocaleOrByLangCode,
+    languageNameMap,
+    reversedLocalesMap,
+} from '../lang/langHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
+import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { useBibleKeyContext } from '../bible-list/bibleHelpers';
+
+function genContextMenuItem(langCode: string): ContextMenuItemType {
+    const url = `https://${langCode}.wiktionary.org`;
+    const menuElement = languageNameMap[langCode] ?? `Unknown (${langCode})`;
+    const langData = getLangDataByLocaleOrByLangCode(langCode);
+    const fontFamily = langData === null ? undefined : langData.fontFamily;
+    return {
+        menuElement,
+        title: url,
+        onSelect: () => {
+            appProvider.browserUtils.openExternalURL(url);
+        },
+        style: {
+            fontFamily,
+        },
+    };
+}
+
+async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
+    const targetLang = await getBibleLocale(bibleKey);
+    let targetLangCode = getLangCode(targetLang);
+    if (targetLangCode === 'en') {
+        targetLangCode = null;
+    }
+    const excludeLangCodes = ['en'];
+    if (targetLangCode !== null && !excludeLangCodes.includes(targetLangCode)) {
+        excludeLangCodes.push(targetLangCode);
+    }
+    const langCodes = Object.keys(reversedLocalesMap).filter((langCode) => {
+        return !excludeLangCodes.includes(langCode);
+    });
+    showAppContextMenu(event, [
+        {
+            menuElement: 'Open Wiki Dictionary',
+            disabled: true,
+        },
+        { menuElement: elementDivider },
+        {
+            menuElement: 'English',
+            onSelect: () => {
+                const url = `https://en.wiktionary.org`;
+                appProvider.browserUtils.openExternalURL(url);
+            },
+        },
+        ...(targetLangCode === null
+            ? []
+            : [genContextMenuItem(targetLangCode)]),
+        { menuElement: elementDivider },
+        ...langCodes.map(genContextMenuItem),
+    ]);
+}
+
+export default function RenderOpenWikiDictionaryComp() {
+    const bibleKey = useBibleKeyContext();
+    return (
+        <button
+            className="btn btn-sm btn-secondary"
+            title="Wiki Dictionary"
+            onClick={handleWikiDictionaryOpening.bind(null, bibleKey)}
+        >
+            <i className="bi bi-journal-text" />
+        </button>
+    );
+}

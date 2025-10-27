@@ -74,14 +74,6 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         return this._varyAppDocumentItemData;
     }
 
-    static get isPdfFullWidth() {
-        return checkIsPdfFullWidth();
-    }
-
-    static set isPdfFullWidth(isFullWidth: boolean) {
-        setIsPdfFullWidth(isFullWidth);
-    }
-
     set varyAppDocumentItemData(
         appDocumentItemData: VaryAppDocumentItemScreenDataType | null,
     ) {
@@ -94,7 +86,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         ) {
             return;
         }
-        if (appDocumentItemData !== null && appDocumentItemData.itemJson) {
+        if (appDocumentItemData?.itemJson) {
             applyAttachBackground(
                 this.screenId,
                 appDocumentItemData.filePath,
@@ -160,7 +152,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         filePath: string,
         itemJson: VaryAppDocumentItemDataType,
     ): VaryAppDocumentItemScreenDataType {
-        return { filePath, itemJson };
+        return { filePath, itemJson, isPdfFullWidth: checkIsPdfFullWidth() };
     }
 
     handleSlideSelecting(
@@ -173,9 +165,9 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         const selected = toKeyByFilePath(selectedFilePath, selectedSlideId);
         const willSelected = toKeyByFilePath(filePath, itemJson.id);
         const newSlideData =
-            selected !== willSelected
-                ? this.toSlideData(filePath, itemJson)
-                : null;
+            selected === willSelected
+                ? null
+                : this.toSlideData(filePath, itemJson);
         this.applySlideSrcWithSyncGroup(newSlideData);
     }
 
@@ -186,20 +178,23 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         isForceChoosing = false,
     ) {
         const screenIds = await this.chooseScreenIds(event, isForceChoosing);
-        screenIds.forEach((screenId) => {
+        for (const screenId of screenIds) {
             const screenVaryAppDocumentManager = this.getInstance(screenId);
             screenVaryAppDocumentManager.handleSlideSelecting(
                 filePath,
                 itemJson,
             );
-        });
+        }
     }
 
-    renderPdf(divHaftScale: HTMLDivElement, pdfImageData: PdfSlideType) {
+    renderPdf(
+        divHaftScale: HTMLDivElement,
+        pdfImageData: PdfSlideType,
+        isFullWidth: boolean,
+    ) {
         if (!pdfImageData.imagePreviewSrc) {
             return null;
         }
-        const isFullWidth = checkIsPdfFullWidth();
         const content = genPdfSlide(pdfImageData.imagePreviewSrc, isFullWidth);
         const parentWidth = this.screenManagerBase.width;
         const width = parentWidth;
@@ -217,16 +212,16 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         if (!appProvider.isPageScreen) {
             return;
         }
-        Array.from(content.children).forEach((child) => {
-            child.querySelectorAll('svg').forEach((svg) => {
+        for (const child of Array.from(content.children)) {
+            for (const svg of child.querySelectorAll('svg')) {
                 svg.style.display = 'none';
-            });
-            child.querySelectorAll('video').forEach((video) => {
+            }
+            for (const video of child.querySelectorAll('video')) {
                 video.loop = false;
                 video.muted = false;
                 video.play();
-            });
-        });
+            }
+        }
     }
 
     renderAppDocument(divHaftScale: HTMLDivElement, itemJson: SlideType) {
@@ -237,12 +232,16 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             width: `${width}px`,
             height: `${height}px`,
             transform: 'translate(-50%, -50%)',
+            overflow: 'hidden',
         });
-        const scale = this.screenManagerBase.width / width;
+        const scale = Math.min(
+            this.screenManagerBase.width / width,
+            this.screenManagerBase.height / height,
+        );
         return { content, scale };
     }
 
-    async clearJung(div: HTMLDivElement) {
+    async clearJunk(div: HTMLDivElement) {
         if (div.lastChild === null) {
             return;
         }
@@ -257,24 +256,31 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         }
         const div = this.div;
         if (this.varyAppDocumentItemData === null) {
-            this.clearJung(div);
+            this.clearJunk(div);
             return;
         }
         const divContainer = document.createElement('div');
         const divHaftScale = document.createElement('div');
         divContainer.appendChild(divHaftScale);
-        const { itemJson } = this.varyAppDocumentItemData;
+        const { itemJson, isPdfFullWidth } = this.varyAppDocumentItemData;
 
         const target = PdfSlide.tryValidate(itemJson)
-            ? this.renderPdf(divHaftScale, itemJson as PdfSlideType)
+            ? this.renderPdf(
+                  divHaftScale,
+                  itemJson as PdfSlideType,
+                  isPdfFullWidth,
+              )
             : this.renderAppDocument(divHaftScale, itemJson as SlideType);
         if (target === null) {
             return;
         }
-        Array.from(div.children).forEach(async (child) => {
-            await this.effectManager.styleAnim.animOut(child as HTMLDivElement);
-            child.remove();
-        });
+        for (const child of Array.from(div.children)) {
+            this.effectManager.styleAnim
+                .animOut(child as HTMLDivElement)
+                .then(() => {
+                    child.remove();
+                });
+        }
         divHaftScale.appendChild(target.content);
         Object.assign(divContainer.style, {
             position: 'absolute',
@@ -299,6 +305,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         this.varyAppDocumentItemData = {
             filePath: item.filePath,
             itemJson: item.toJson(),
+            isPdfFullWidth: checkIsPdfFullWidth(),
         };
     }
 

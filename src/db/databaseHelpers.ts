@@ -65,7 +65,7 @@ class InitDBOpeningQueue {
         if (this.request !== null) {
             return;
         }
-        const request = window.indexedDB.open(
+        const request = globalThis.indexedDB.open(
             DB_NAME,
             appProvider.appInfo.versionNumber,
         );
@@ -200,10 +200,8 @@ export abstract class IndexedDbController
                 id,
                 secondaryId,
                 data,
-                ...{
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                },
+                createdAt: new Date(),
+                updatedAt: new Date(),
             };
             return store.add(newItem);
         });
@@ -236,9 +234,7 @@ export abstract class IndexedDbController
             return store.put({
                 id,
                 data,
-                ...{
-                    updatedAt: new Date(),
-                },
+                updatedAt: new Date(),
             });
         });
     }

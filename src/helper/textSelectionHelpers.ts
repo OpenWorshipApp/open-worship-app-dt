@@ -10,7 +10,7 @@ import { getLangCode } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 
 function getSelectedTextElement() {
-    const selection = window.getSelection();
+    const selection = globalThis.getSelection();
     if (!selection || selection.rangeCount === 0) {
         return null;
     }
@@ -32,8 +32,10 @@ async function getSelectedTextLanguageCode() {
                   )
                       .concat([selectedElement])
                       .map((element) => {
-                          const bibleKey =
-                              element.getAttribute('data-bible-key');
+                          if (element instanceof HTMLElement === false) {
+                              return null;
+                          }
+                          const bibleKey = element.dataset.bibleKey;
                           return bibleKey ? bibleKey.trim() : null;
                       })
                       .filter((bibleKey) => {
@@ -58,7 +60,7 @@ async function getSelectedTextLanguageCode() {
 }
 
 export function getSelectedText() {
-    const selection = window.getSelection();
+    const selection = globalThis.getSelection();
     if (!selection || selection.rangeCount === 0) {
         return null;
     }

@@ -1,4 +1,4 @@
-import { useMemo, useState, ReactNode } from 'react';
+import { useMemo, useState, ReactNode, useCallback } from 'react';
 
 import {
     TabOptionType,
@@ -53,7 +53,7 @@ if (appProvider.systemUtils.isDev) {
 }
 
 function TabRenderComp() {
-    const handleClicking = async (tab: TabOptionType) => {
+    const handleClicking = useCallback(async (tab: TabOptionType) => {
         if (tab.preCheck) {
             const isPassed = await tab.preCheck();
             if (!isPassed) {
@@ -61,7 +61,8 @@ function TabRenderComp() {
             }
         }
         goToPath(tab.routePath);
-    };
+    }, []);
+
     return (
         <ul className="nav nav-tabs">
             {tabs.map((tab, i) => {
@@ -83,18 +84,21 @@ function TabRenderComp() {
 function useAppDocumentContextValues() {
     const [varyAppDocument, setVaryAppDocument] =
         useState<VaryAppDocumentType | null>(null);
-    const setVaryAppDocument1 = (
-        newVaryAppDocument: VaryAppDocumentType | null,
-    ) => {
-        setVaryAppDocument(newVaryAppDocument);
-        setSelectedVaryAppDocument(newVaryAppDocument);
-    };
+
+    const setVaryAppDocument1 = useCallback(
+        (newVaryAppDocument: VaryAppDocumentType | null) => {
+            setVaryAppDocument(newVaryAppDocument);
+            setSelectedVaryAppDocument(newVaryAppDocument);
+        },
+        [],
+    );
 
     const [slide, setSlide] = useState<Slide | null>(null);
-    const setSlide1 = (newSlide: Slide | null) => {
+
+    const setSlide1 = useCallback((newSlide: Slide | null) => {
         setSlide(newSlide);
         setSelectedEditingSlide(newSlide);
-    };
+    }, []);
 
     useAppEffectAsync(
         async (methodContext) => {
@@ -109,6 +113,7 @@ function useAppDocumentContextValues() {
             setSlide,
         },
     );
+
     const varyAppDocumentContextValue = useMemo(() => {
         return {
             selectedVaryAppDocument: varyAppDocument,
@@ -128,7 +133,8 @@ function useAppDocumentContextValues() {
                 setSlide1(selectedSlide);
             },
         };
-    }, [varyAppDocument]);
+    }, [varyAppDocument, setVaryAppDocument1, setSlide1]);
+
     const editingSlideContextValue = useMemo(() => {
         return {
             selectedSlide: slide,
@@ -136,38 +142,44 @@ function useAppDocumentContextValues() {
                 setSlide1(newSelectedSlide);
             },
         };
-    }, [slide]);
+    }, [slide, setSlide1]);
+
+    const handleFileUpdate = useCallback(async () => {
+        if (
+            varyAppDocument === null ||
+            !AppDocument.checkIsThisType(varyAppDocument)
+        ) {
+            return;
+        }
+        const slides = await varyAppDocument.getSlides();
+        const newSlide =
+            slides.find((item) => {
+                return slide !== null && item.checkIsSame(slide);
+            }) ??
+            slides[0] ??
+            null;
+        setSlide1(newSlide);
+    }, [varyAppDocument, slide, setSlide1]);
+
     useFileSourceEvents(
         ['update'],
-        async () => {
-            if (
-                varyAppDocument === null ||
-                !AppDocument.checkIsThisType(varyAppDocument)
-            ) {
-                return;
-            }
-            const slides = await varyAppDocument.getSlides();
-            const newSlide =
-                slides.find((item) => {
-                    return slide !== null && item.checkIsSame(slide);
-                }) ??
-                slides[0] ??
-                null;
-            setSlide1(newSlide);
-        },
-        [varyAppDocument, slide],
+        handleFileUpdate,
+        [handleFileUpdate],
         varyAppDocument?.filePath,
     );
-    useFileSourceEvents(
-        ['delete'],
+
+    const handleFileDelete = useCallback(
         (filePath: string) => {
             if (varyAppDocument?.filePath === filePath) {
                 setVaryAppDocument1(null);
                 setSlide1(null);
             }
         },
-        [varyAppDocument],
+        [varyAppDocument, setVaryAppDocument1, setSlide1],
     );
+
+    useFileSourceEvents(['delete'], handleFileDelete, [handleFileDelete]);
+
     return {
         varyAppDocumentContextValue,
         editingSlideContextValue,
@@ -176,10 +188,11 @@ function useAppDocumentContextValues() {
 
 function useLyricContextValues() {
     const [lyric, setLyric] = useState<Lyric | null>(null);
-    const setLyric1 = (newLyric: Lyric | null) => {
+
+    const setLyric1 = useCallback((newLyric: Lyric | null) => {
         setLyric(newLyric);
         setSelectedLyric(newLyric);
-    };
+    }, []);
 
     useAppEffectAsync(
         async (methodContext) => {
@@ -189,6 +202,7 @@ function useLyricContextValues() {
         [],
         { setLyric },
     );
+
     const lyricContextValue = useMemo(() => {
         return {
             selectedLyric: lyric,
@@ -196,16 +210,19 @@ function useLyricContextValues() {
                 setLyric1(newLyric);
             },
         };
-    }, [lyric]);
-    useFileSourceEvents(
-        ['delete'],
+    }, [lyric, setLyric1]);
+
+    const handleFileDelete = useCallback(
         (filePath: string) => {
             if (lyric?.filePath === filePath) {
                 setLyric1(null);
             }
         },
-        [lyric],
+        [lyric, setLyric1],
     );
+
+    useFileSourceEvents(['delete'], handleFileDelete, [handleFileDelete]);
+
     return { lyricContextValue };
 }
 
@@ -218,30 +235,44 @@ export default function AppLayoutComp({
     const { varyAppDocumentContextValue, editingSlideContextValue } =
         useAppDocumentContextValues();
     const { lyricContextValue } = useLyricContextValues();
+
+    const bibleLookupContextValue = useMemo(
+        () => ({
+            isShowing: isBibleLookupShowing,
+            setIsShowing: setIsBibleLookupShowing,
+        }),
+        [isBibleLookupShowing],
+    );
+
+    const contexts = useMemo(
+        () => [
+            {
+                context: BibleLookupTogglePopupContext,
+                value: bibleLookupContextValue,
+            },
+            {
+                context: SelectedVaryAppDocumentContext,
+                value: varyAppDocumentContextValue,
+            },
+            {
+                context: SelectedLyricContext,
+                value: lyricContextValue,
+            },
+            {
+                context: SelectedEditingSlideContext,
+                value: editingSlideContextValue,
+            },
+        ],
+        [
+            bibleLookupContextValue,
+            varyAppDocumentContextValue,
+            lyricContextValue,
+            editingSlideContextValue,
+        ],
+    );
+
     return (
-        <MultiContextRender
-            contexts={[
-                {
-                    context: BibleLookupTogglePopupContext,
-                    value: {
-                        isShowing: isBibleLookupShowing,
-                        setIsShowing: setIsBibleLookupShowing,
-                    },
-                },
-                {
-                    context: SelectedVaryAppDocumentContext,
-                    value: varyAppDocumentContextValue,
-                },
-                {
-                    context: SelectedLyricContext,
-                    value: lyricContextValue,
-                },
-                {
-                    context: SelectedEditingSlideContext,
-                    value: editingSlideContextValue,
-                },
-            ]}
-        >
+        <MultiContextRender contexts={contexts}>
             {/* <TestInfinite /> */}
             <div id="app-header" className="d-flex">
                 <TabRenderComp />

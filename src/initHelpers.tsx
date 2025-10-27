@@ -11,11 +11,11 @@ export const darkModeHook = {
 export function applyDarkModeToApp() {
     const isDarkMode = checkIsDarkMode();
     const theme = isDarkMode ? 'dark' : 'light';
-    document.querySelectorAll('#app').forEach((element) => {
+    for (const element of document.querySelectorAll('#app')) {
         if (element instanceof HTMLElement) {
             element.dataset.bsTheme = theme;
         }
-    });
+    }
     darkModeHook.check();
 }
 
@@ -36,10 +36,10 @@ export function setThemeSourceSetting(themeSource: ThemeOptionType) {
 }
 
 function getSystemDarkMatcher() {
-    if (!window.matchMedia) {
+    if (!globalThis.matchMedia) {
         return null;
     }
-    return window.matchMedia('(prefers-color-scheme: dark)');
+    return globalThis.matchMedia('(prefers-color-scheme: dark)');
 }
 export function checkIsDarkMode() {
     const themeSource = getThemeSourceSetting();
@@ -55,7 +55,7 @@ export function getReactRoot() {
     const container = document.getElementById('root');
     if (container === null) {
         const message = 'Root element not found';
-        window.alert(message);
+        globalThis.alert(message);
         throw new Error(message);
     }
     const root = createRoot(container);

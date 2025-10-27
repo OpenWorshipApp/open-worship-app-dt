@@ -145,6 +145,12 @@ export function initMenu(appController: ElectronAppController) {
                         );
                     },
                 },
+                {
+                    label: 'Google Fonts',
+                    click: () => {
+                        shell.openExternal('https://fonts.google.com/');
+                    },
+                },
             ],
         },
         // { role: 'windowMenu' }

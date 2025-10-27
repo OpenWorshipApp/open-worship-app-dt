@@ -45,7 +45,8 @@ export default function SettingGeneralLanguageComp() {
     const selectedLang = getLang(currentLocale);
     useAppEffect(() => {
         if (allLangs.length === 0) {
-            getAllLangsAsync().then(setAllLangs);
+            const newAllLangs = getAllLangsAsync();
+            setAllLangs(newAllLangs);
         }
     }, [allLangs]);
     if (selectedLang === null) {

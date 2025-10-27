@@ -1,4 +1,4 @@
-import appProvider, { FontListType } from './appProvider';
+import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
@@ -14,16 +14,8 @@ import {
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 
-export function getFontListByNodeFont() {
-    appProvider.messageUtils.sendData('main:app:get-font-list');
-    return appProvider.messageUtils.sendDataSync(
-        'main:app:get-font-list',
-    ) as FontListType | null;
-}
-
 export function genReturningEventName(eventName: string) {
-    const newDate = new Date().getTime();
-    return `${eventName}-return-${newDate}`;
+    return `${eventName}-return-${Date.now()}`;
 }
 
 export function electronSendAsync<T>(
@@ -194,7 +186,7 @@ export async function checkForUpdateSilently() {
 
 const DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME = 'decided-reader-home-page';
 function setDecided() {
-    window.localStorage.setItem(
+    globalThis.localStorage.setItem(
         DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME,
         'true',
     );
@@ -206,7 +198,7 @@ export async function checkDecidedBibleReaderHomePage() {
     if (appProvider.isPageReader) {
         setDecided();
     }
-    const decided = window.localStorage.getItem(
+    const decided = globalThis.localStorage.getItem(
         DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME,
     );
     if (decided !== null) {
@@ -296,8 +288,8 @@ async function getPageTitle(url: string) {
     if (rawHtml === null) {
         return null;
     }
-    const titleMatch = rawHtml.match(/<title>(.*?)<\/title>/);
-    if (titleMatch && titleMatch[1]) {
+    const titleMatch = /<title>(.*?)<\/title>/.exec(rawHtml);
+    if (titleMatch?.[1]) {
         let title = titleMatch[1].trim();
         title = decodeURIComponent(encodeURIComponent(title));
         return title.length > 0 ? title : null;
@@ -398,7 +390,7 @@ export function downloadVideoOrAudio(
                         if (eventType === 'ExtractAudio') {
                             const regex = /Destination: (.+)$/;
                             const match = eventData.match(regex);
-                            if (match && match[1]) {
+                            if (match?.[1]) {
                                 filePath = match[1];
                             }
                         } else if (eventType === 'Merger') {

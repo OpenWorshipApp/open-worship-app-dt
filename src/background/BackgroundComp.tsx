@@ -1,6 +1,6 @@
 import './BackgroundComp.scss';
 
-import { lazy, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import {
     useStateSettingBoolean,
@@ -12,7 +12,11 @@ import { getBackgroundSrcListOnScreenSetting } from '../_screen/screenHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import { audioEvent } from './audioBackgroundHelpers';
+import {
+    audioEvent,
+    checkAudioPlaying,
+    showAudioPlayingToast,
+} from './audioBackgroundHelpers';
 import {
     BackgroundSrcListType,
     BackgroundType,
@@ -83,9 +87,20 @@ const tabTypeList = [
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {
-    const [isAudioActive, setIsAudioActive] = useStateSettingBoolean(
+    const [isAudioTabActive, setIsAudioTabActive] = useStateSettingBoolean(
         'background-audio-active',
         false,
+    );
+    const setIsAudioTabActive1 = useCallback(
+        (newValue: boolean) => {
+            const isAudioPlaying = checkAudioPlaying();
+            if (!newValue && isAudioPlaying) {
+                showAudioPlayingToast();
+                return;
+            }
+            setIsAudioTabActive(newValue);
+        },
+        [isAudioTabActive],
     );
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
         'background-tab',
@@ -119,13 +134,13 @@ export default function BackgroundComp() {
                 />
                 {appProvider.isPagePresenter ? (
                     <RenderAudiosTabComp
-                        isActive={isAudioActive}
-                        setIsActive={setIsAudioActive}
+                        isActive={isAudioTabActive}
+                        setIsActive={setIsAudioTabActive1}
                     />
                 ) : null}
             </div>
             <div className="body flex-fill d-flex">
-                {appProvider.isPagePresenter && isAudioActive ? (
+                {appProvider.isPagePresenter && isAudioTabActive ? (
                     <ResizeActorComp
                         flexSizeName={'flex-size-background'}
                         isHorizontal

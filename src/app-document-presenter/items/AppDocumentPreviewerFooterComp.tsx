@@ -125,6 +125,7 @@ export default function AppDocumentPreviewerFooterComp({
                             isDisableChanging ? undefined : handleSlideChoosing
                         }
                         shouldNotValidate
+                        canOpenFileExplorer
                     />
                 </div>
                 {appProvider.isPagePresenter ? (

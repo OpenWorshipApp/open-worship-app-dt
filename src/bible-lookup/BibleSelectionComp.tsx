@@ -9,7 +9,7 @@ import {
     getAllLocalBibleInfoList,
 } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
-import { getFontFamily, LocaleType } from '../lang/langHelpers';
+import { getFontFamilyByLocale, LocaleType } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -32,16 +32,16 @@ export async function genContextMenuBibleKeys(
         return !excludeBibleKeys.includes(bibleInfo.key);
     });
     const localeBibleInfoMap: { [locale: string]: BibleMinimalInfoType[] } = {};
-    localeBibleInfoList.forEach((bibleInfo) => {
+    for (const bibleInfo of localeBibleInfoList) {
         localeBibleInfoMap[bibleInfo.locale] ??= [];
         localeBibleInfoMap[bibleInfo.locale].push(bibleInfo);
-    });
+    }
     const locales = Object.keys(localeBibleInfoMap);
     const localeFontFamilyMap = Object.fromEntries(
         (
             await Promise.all(
                 locales.map((locale) => {
-                    return getFontFamily(locale as LocaleType);
+                    return getFontFamilyByLocale(locale as LocaleType);
                 }),
             )
         ).map((fontFamily, index) => {
@@ -63,24 +63,22 @@ export async function genContextMenuBibleKeys(
                       },
                   ]
                 : []),
-            ...[
-                {
-                    menuElement: locale,
-                    disabled: true,
-                },
-                ...bibleInfoList.map((bibleInfo) => {
-                    return {
-                        menuElement: `(${bibleInfo.key}) ${bibleInfo.title}`,
-                        title: bibleInfo.title,
-                        onSelect: (event1: any) => {
-                            onSelect(event1, bibleInfo.key);
-                        },
-                        style: {
-                            fontFamily: localeFontFamilyMap[locale],
-                        },
-                    };
-                }),
-            ],
+            {
+                menuElement: locale,
+                disabled: true,
+            },
+            ...bibleInfoList.map((bibleInfo) => {
+                return {
+                    menuElement: `(${bibleInfo.key}) ${bibleInfo.title}`,
+                    title: bibleInfo.title,
+                    onSelect: (event1: any) => {
+                        onSelect(event1, bibleInfo.key);
+                    },
+                    style: {
+                        fontFamily: localeFontFamilyMap[locale],
+                    },
+                };
+            }),
         );
     }
     return menuItems;

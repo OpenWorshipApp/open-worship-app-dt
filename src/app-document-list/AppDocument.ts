@@ -19,6 +19,7 @@ import {
     readImagesFromClipboard,
 } from '../server/appHelpers';
 import { createNewSlidesFromDroppedData } from '../app-document-presenter/items/appDocumentHelpers';
+import { fixMissingFontFamilies } from '../server/fontHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -58,10 +59,18 @@ export default class AppDocument
         });
         jsonData = await this.getJsonData(true);
         if (jsonData !== null) {
-            slides.forEach((slide, index) => {
+            for (const [index, slide] of slides.entries()) {
                 this.checkSlideIsChanged(index, slide, jsonData.items);
-            });
+            }
         }
+        const unavailableFontFamiliesSet = slides.reduce((acc, slide) => {
+            const unavailableFonts = slide.getUnavailableFontFamilies();
+            for (const font of unavailableFonts) {
+                acc.add(font);
+            }
+            return acc;
+        }, new Set<string>());
+        fixMissingFontFamilies(unavailableFontFamiliesSet, this.filePath);
         return slides;
     }
 
@@ -263,7 +272,7 @@ export default class AppDocument
     static validate(json: AnyObjectType): void {
         super.validate(json);
         if (typeof json.items !== 'object' || !Array.isArray(json.items)) {
-            throw new Error(
+            throw new TypeError(
                 `Invalid app document data json:${JSON.stringify(json)}`,
             );
         }
@@ -374,11 +383,7 @@ export default class AppDocument
         const copiedSlides: Slide[] = [];
         const textPlainType = 'text/plain';
         for (const clipboardSlide of clipboardSlides) {
-            if (
-                clipboardSlide.types.some((type) => {
-                    return type === textPlainType;
-                })
-            ) {
+            if (clipboardSlide.types.includes(textPlainType)) {
                 const blob = await clipboardSlide.getType(textPlainType);
                 const json = await blob.text();
                 const copiedSlideSlide = Slide.clipboardDeserialize(json);

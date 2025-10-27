@@ -67,10 +67,11 @@ export async function askForURL(title: string, subTitle: string) {
 export function getOpenSharedLinkMenuItem(
     sharedKey: string,
 ): ContextMenuItemType {
+    const sharedLink = `${appProvider.appInfo.homepage}/shared#${sharedKey}`;
     return {
         menuElement: '`Open Shared Link',
+        title: sharedLink,
         onSelect: async () => {
-            const sharedLink = `${appProvider.appInfo.homepage}/shared?key=${sharedKey}`;
             appProvider.browserUtils.openExternalURL(sharedLink);
         },
     };

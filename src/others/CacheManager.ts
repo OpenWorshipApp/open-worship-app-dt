@@ -53,10 +53,20 @@ export default class CacheManager<T> {
         return null;
     }
 
+    async has(key: string): Promise<boolean> {
+        return await this.unlocking(key, async () => {
+            return this.cache.has(key);
+        });
+    }
+
     async get(key: string): Promise<T | null> {
         return await this.unlocking(key, async () => {
             return this.getSync(key);
         });
+    }
+
+    hasSync(key: string): boolean {
+        return this.cache.has(key);
     }
 
     setSync(key: string, value: T): void {

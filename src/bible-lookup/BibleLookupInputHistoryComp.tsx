@@ -113,29 +113,34 @@ function openContextMenu(
         remove: () => void;
     },
 ) {
-    const contextMenuItems: ContextMenuItemType[] = [];
+    let contextMenuItems: ContextMenuItemType[] = [];
     if (bibleItem !== null) {
-        contextMenuItems.push({
-            menuElement: '`Open',
-            onSelect: () => {
-                openInBibleLookup(event, viewController, bibleItem);
+        contextMenuItems = [
+            {
+                menuElement: '`Open',
+                onSelect: () => {
+                    openInBibleLookup(event, viewController, bibleItem);
+                },
             },
-        });
-        contextMenuItems.push(...genBibleItemCopyingContextMenu(bibleItem));
-        contextMenuItems.push({
-            childBefore: genContextMenuItemIcon('floppy'),
-            menuElement: '`Save bible item',
-            onSelect: () => {
-                saveBibleItem(bibleItem);
+            ...genBibleItemCopyingContextMenu(bibleItem),
+            {
+                childBefore: genContextMenuItemIcon('floppy'),
+                menuElement: '`Save bible item',
+                onSelect: () => {
+                    saveBibleItem(bibleItem);
+                },
             },
-        });
+        ];
     }
-    contextMenuItems.push({
-        menuElement: '`Remove',
-        onSelect: () => {
-            remove();
+    contextMenuItems = [
+        ...contextMenuItems,
+        {
+            menuElement: '`Remove',
+            onSelect: () => {
+                remove();
+            },
         },
-    });
+    ];
     showAppContextMenu(event, contextMenuItems);
 }
 

@@ -10,8 +10,7 @@ export default class StopwatchController {
     }
 
     get timeDiff() {
-        const now = new Date();
-        return now.getTime() - this.targetDateTime.getTime();
+        return Date.now() - this.targetDateTime.getTime();
     }
 
     get hours() {

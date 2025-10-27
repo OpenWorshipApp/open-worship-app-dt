@@ -11,7 +11,7 @@ import { genStyleRendering } from './preview/MiniScreenAppComp';
 
 ScreenManager.initReceiveScreenMessage();
 export default function ScreenAppComp() {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = new URLSearchParams(globalThis.location.search);
     const screenId = Number.parseInt(urlParams.get('screenId') ?? '');
     if (Number.isNaN(screenId)) {
         return null;

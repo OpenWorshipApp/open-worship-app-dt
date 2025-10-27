@@ -1,7 +1,7 @@
 import ReactDOMServer from 'react-dom/server';
 
 export function toIframe(html: string, title: string) {
-    html = html.replace(
+    html = html.replaceAll(
         /background-color:\s*[^;]+;/g,
         'background-color: transparent;',
     );

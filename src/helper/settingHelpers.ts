@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
@@ -26,13 +26,14 @@ export function useStateSettingBoolean(
             ? !!defaultValue
             : originalSettingName === 'true';
     const [data, setData] = useState(defaultData);
-    const setDataSetting = (b: boolean | ((prev: boolean) => boolean)) => {
-        if (typeof b === 'function') {
-            b = b(data);
-        }
-        setData(b);
-        setSetting(settingName, `${b}`);
-    };
+    const setDataSetting = useCallback(
+        (b: boolean | ((prev: boolean) => boolean)) => {
+            const newValue = typeof b === 'function' ? b(data) : b;
+            setData(newValue);
+            setSetting(settingName, `${newValue}`);
+        },
+        [data, settingName],
+    );
     return [data, setDataSetting];
 }
 export function useStateSettingString<T extends string>(
@@ -41,13 +42,14 @@ export function useStateSettingString<T extends string>(
 ): [T, (t: T | ((prev: T) => T)) => void] {
     const defaultData = getSetting(settingName) || defaultString;
     const [data, setData] = useState<T>(defaultData as T);
-    const setDataSetting = (text: string | ((prev: T) => T)) => {
-        if (typeof text === 'function') {
-            text = text(data);
-        }
-        setData(text as T);
-        setSetting(settingName, `${text}`);
-    };
+    const setDataSetting = useCallback(
+        (text: string | ((prev: T) => T)) => {
+            const newValue = typeof text === 'function' ? text(data) : text;
+            setData(newValue as T);
+            setSetting(settingName, `${newValue}`);
+        },
+        [data, settingName],
+    );
     return [data, setDataSetting];
 }
 export function useStateSettingNumber(
@@ -58,13 +60,14 @@ export function useStateSettingNumber(
     const [data, setData] = useState(
         Number.isNaN(defaultData) ? defaultNumber : defaultData,
     );
-    const setDataSetting = (num: number | ((prev: number) => number)) => {
-        if (typeof num === 'function') {
-            num = num(data);
-        }
-        setData(num);
-        setSetting(settingName, `${num}`);
-    };
+    const setDataSetting = useCallback(
+        (num: number | ((prev: number) => number)) => {
+            const newValue = typeof num === 'function' ? num(data) : num;
+            setData(newValue);
+            setSetting(settingName, `${newValue}`);
+        },
+        [data, settingName],
+    );
     return [data, setDataSetting];
 }
 

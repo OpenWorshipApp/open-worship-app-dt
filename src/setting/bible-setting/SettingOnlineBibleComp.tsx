@@ -48,7 +48,6 @@ export default function SettingOnlineBibleComp({
         return (
             bibleInfo.filePath &&
             (!downloadedBibleInfoList ||
-                downloadedBibleInfoList.length === 0 ||
                 downloadedBibleInfoList.every((bible1) => {
                     return bible1.key !== bibleInfo.key;
                 }))

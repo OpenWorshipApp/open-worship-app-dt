@@ -20,6 +20,7 @@ export const kjvBibleInfo = bibleJson as {
     bookKeysOld: string[];
     books: { [key: string]: BookType };
     kjvKeyValue: { [key: string]: string };
+    oneChapterBooks: string[];
 };
 freezeObject(kjvBibleInfo);
 
@@ -131,7 +132,7 @@ export async function genBookMatches(
             const v2Lower = v2.toLowerCase();
             return (
                 v1Lower.startsWith(v2Lower) ||
-                v1Lower.replace(/ /g, '').startsWith(v2Lower)
+                v1Lower.replaceAll(/\s/g, '').startsWith(v2Lower)
             );
         }
         if (v1.toLowerCase().includes(v2.toLowerCase())) {

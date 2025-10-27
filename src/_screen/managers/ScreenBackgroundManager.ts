@@ -236,9 +236,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
                                 FADING_DURATION_MILLISECOND +
                                 ANIM_END_DELAY_MILLISECOND;
                             await new Promise<void>((resolve) => {
-                                setTimeout(() => {
-                                    resolve();
-                                }, duration);
+                                setTimeout(resolve, duration);
                             });
                         },
                         duration: FADING_DURATION_MILLISECOND,

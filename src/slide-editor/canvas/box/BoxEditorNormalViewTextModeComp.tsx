@@ -29,7 +29,7 @@ export function BoxEditorNormalTextRender() {
         handleError(error);
         return <BENViewErrorRender />;
     }
-    const text = props.text.replace(/\n/g, '<br />');
+    const text = props.text.replaceAll('\n', '<br />');
     return (
         <div
             title={props.id.toString()}

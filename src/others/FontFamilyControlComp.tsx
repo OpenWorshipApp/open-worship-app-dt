@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { FontListType } from '../server/appProvider';
 import { useFontList } from '../server/fontHelpers';
 
@@ -15,6 +17,16 @@ export default function FontFamilyControlComp({
     isShowingLabel?: boolean;
 }>) {
     const fontList = useFontList();
+    const fontFamilies = useMemo(() => {
+        if (fontList === null) {
+            return [];
+        }
+        const newFontFamilies = Object.keys(fontList).map((key) => [key, key]);
+        if (fontFamily && !fontList[fontFamily]) {
+            newFontFamilies.unshift([fontFamily, `${fontFamily} (Missing)`]);
+        }
+        return newFontFamilies;
+    }, [fontList, fontFamily]);
     if (fontList === null) {
         return <div>Loading Font ...</div>;
     }
@@ -36,10 +48,10 @@ export default function FontFamilyControlComp({
                     }}
                 >
                     <option>--</option>
-                    {Object.keys(fontList).map((ff) => {
+                    {fontFamilies.map(([key, value]) => {
                         return (
-                            <option key={ff} value={ff}>
-                                {ff}
+                            <option key={key} value={key}>
+                                {value}
                             </option>
                         );
                     })}

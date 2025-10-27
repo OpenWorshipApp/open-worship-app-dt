@@ -263,7 +263,7 @@ function cleanupVerseNumberClicked(event: ReactMouseEvent) {
     event.stopPropagation();
     event.preventDefault();
     setTimeout(() => {
-        const selection = window.getSelection();
+        const selection = globalThis.getSelection();
         if (selection !== null && selection.rangeCount > 0) {
             selection.removeAllRanges();
         }
@@ -324,11 +324,11 @@ function AudioPlayerComp({
             controls
             onPlay={(event) => {
                 const el = event.currentTarget;
-                document.querySelectorAll('audio').forEach((el1) => {
+                for (const el1 of document.querySelectorAll('audio')) {
                     if (el1 !== el) {
                         el1.pause();
                     }
-                });
+                }
             }}
             onEnded={(event) => {
                 const el = event.currentTarget;
@@ -519,7 +519,7 @@ function RenderVerseTextDetailComp({
     const handleVerseDBClicking = (event: any) => {
         event.stopPropagation();
         event.preventDefault();
-        const selection = window.getSelection();
+        const selection = globalThis.getSelection();
         if (selection !== null && selection.rangeCount > 0) {
             selection.removeAllRanges();
         }
@@ -663,7 +663,7 @@ function RenderRestVerseNumListComp({
     }
     return (
         <span className="app-not-selectable-text">
-            {from !== undefined ? <br /> : null}
+            {from ? <br /> : null}
             {numList.map((verse, i) => {
                 return (
                     <div
@@ -687,7 +687,7 @@ function RenderRestVerseNumListComp({
                     </div>
                 );
             })}
-            {top !== undefined ? <br /> : null}
+            {top === undefined ? null : <br />}
         </span>
     );
 }

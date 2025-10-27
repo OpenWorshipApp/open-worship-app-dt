@@ -1,6 +1,5 @@
 import ScreenPreviewerItemComp from './ScreenPreviewerItemComp';
 import { DEFAULT_PREVIEW_SIZE } from './MiniScreenFooterComp';
-import ScreenPreviewerTools from './ScreenPreviewerTools';
 import {
     genNewScreenManagerBase,
     getAllScreenManagers,
@@ -30,9 +29,9 @@ function openContextMenu(event: any) {
         {
             menuElement: 'Refresh Preview',
             onSelect() {
-                getAllScreenManagers().forEach((screenManager) => {
+                for (const screenManager of getAllScreenManagers()) {
                     screenManager.fireRefreshEvent();
-                });
+                }
             },
         },
     ]);
@@ -46,14 +45,14 @@ function viewControllerAndScreenManagers(
         kjvVerseKey: string,
         isToTop: boolean,
     ) => {
-        screenManagers.forEach(({ screenBibleManager }) => {
+        for (const { screenBibleManager } of screenManagers) {
             screenBibleManager.handleScreenVersesHighlighting(
                 kjvVerseKey,
                 isToTop,
             );
-        });
+        }
     };
-    screenManagers.forEach(({ screenBibleManager }) => {
+    for (const { screenBibleManager } of screenManagers) {
         screenBibleManager.applyBibleViewData = (
             bibleData: BibleItemDataType | null,
         ) => {
@@ -63,7 +62,8 @@ function viewControllerAndScreenManagers(
             ) {
                 bibleItemViewController.nestedBibleItems = [];
                 const { target } = bibleData.bibleItemData.bibleItem;
-                bibleData.bibleItemData.renderedList.forEach(({ bibleKey }) => {
+                for (const { bibleKey } of bibleData.bibleItemData
+                    .renderedList) {
                     const bibleItem = BibleItem.fromJson({
                         id: -1,
                         bibleKey: bibleKey,
@@ -72,7 +72,7 @@ function viewControllerAndScreenManagers(
                     });
                     bibleItemViewController.appendBibleItem(bibleItem);
                     previewingEventListener.showBibleItem(bibleItem);
-                });
+                }
             }
         };
         screenBibleManager.handleBibleViewVersesHighlighting = (
@@ -84,16 +84,12 @@ function viewControllerAndScreenManagers(
                 isToTop,
             );
         };
-    });
+    }
 }
 
 export default function MiniScreenBodyComp({
-    isShowingTools,
-    setIsShowingTools,
     previewScale,
 }: Readonly<{
-    isShowingTools: boolean;
-    setIsShowingTools: (isShowing: boolean) => void;
     previewScale: number;
 }>) {
     useScreenManagerEvents(['instance']);
@@ -125,16 +121,6 @@ export default function MiniScreenBodyComp({
                     );
                 })}
             </div>
-            {isShowingTools ? (
-                <div style={{ zIndex: '0' }}>
-                    <hr />
-                    <ScreenPreviewerTools
-                        onClose={() => {
-                            setIsShowingTools(false);
-                        }}
-                    />
-                </div>
-            ) : null}
         </div>
     );
 }

@@ -37,22 +37,22 @@ export async function addBibleItemAndPresent(
     onDone?: () => void,
 ) {
     const addedBibleItem = await saveBibleItem(bibleItem, onDone);
-    if (addedBibleItem !== null) {
-        ScreenBibleManager.handleBibleItemSelecting(event, addedBibleItem);
-    } else {
+    if (addedBibleItem === null) {
         showAddingBibleItemFail();
+    } else {
+        ScreenBibleManager.handleBibleItemSelecting(event, addedBibleItem);
     }
 }
 
 export function useFoundActionKeyboard(bibleItem: BibleItem) {
     const viewController = useLookupBibleItemControllerContext();
+    const onDone = () => {
+        viewController.onLookupSaveBibleItem();
+    };
     useKeyboardRegistering(
         [addListEventMapper],
         async () => {
-            const addedBibleItem = await saveBibleItem(
-                bibleItem,
-                viewController.onLookupSaveBibleItem,
-            );
+            const addedBibleItem = await saveBibleItem(bibleItem, onDone);
             if (addedBibleItem === null) {
                 showAddingBibleItemFail();
             }
@@ -65,11 +65,7 @@ export function useFoundActionKeyboard(bibleItem: BibleItem) {
             if (!appProvider.isPagePresenter) {
                 return;
             }
-            addBibleItemAndPresent(
-                event,
-                bibleItem,
-                viewController.onLookupSaveBibleItem,
-            );
+            addBibleItemAndPresent(event, bibleItem, onDone);
         },
         [bibleItem],
     );
@@ -112,8 +108,9 @@ export function genFoundBibleItemContextMenu(
                 }
             },
         },
-        ...(verseKey !== null
-            ? [
+        ...(verseKey === null
+            ? []
+            : [
                   {
                       menuElement: '`Open in Cross Reference',
                       title: verseKey,
@@ -123,8 +120,7 @@ export function genFoundBibleItemContextMenu(
                           viewController.setIsBibleSearching(true);
                       },
                   },
-              ]
-            : []),
+              ]),
         ...(appProvider.isPagePresenter
             ? [
                   {

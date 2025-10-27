@@ -243,8 +243,8 @@ export const allLocalesMap = {
 export const languageNameMap: { [key: string]: string } = {
     ab: 'Abkhazian (Abkhazia)',
     aa: 'Afar (Afar)',
-    af: 'Afrikaans (Afrikaans)',
-    ak: 'Akan (Akan)',
+    af: 'Afrikaans',
+    ak: 'Akan',
     sq: 'Albanian (Shqip)',
     am: 'Amharic (አማርኛ)',
     ar: 'Arabic (العربية)',
@@ -281,10 +281,10 @@ export const languageNameMap: { [key: string]: string } = {
     dv: 'Divehi, Dhivehi, Maldivian (ދިވެހި)',
     nl: 'Dutch, Flemish (Nederlands, Vlaams)',
     dz: 'Dzongkha (རྫོང་ཁ)',
-    en: 'English (English)',
-    eo: 'Esperanto (Esperanto)',
+    en: 'English',
+    eo: 'Esperanto',
     et: 'Estonian (Eesti)',
-    ee: 'Ewe (Ewe)',
+    ee: 'Ewe',
     fo: 'Faroese (Føroyskt)',
     fj: 'Fijian (Na Vosa Vakaviti)',
     fi: 'Finnish (Suomi)',
@@ -301,15 +301,15 @@ export const languageNameMap: { [key: string]: string } = {
     gn: "Guarani (Aña ñe'ẽ)",
     gu: 'Gujarati (ગુજરાતી)',
     ht: 'Haitian, Haitian Creole (Kreyòl Ayisyen)',
-    ha: 'Hausa (Hausa)',
+    ha: 'Hausa',
     he: 'Hebrew (עברית)',
     hz: 'Herero (Otjiherero)',
     hi: 'Hindi (हिन्दी)',
-    ho: 'Hiri Motu (Hiri Motu)',
+    ho: 'Hiri Motu',
     hu: 'Hungarian (Magyar)',
     is: 'Icelandic (Íslenska)',
-    io: 'Ido (Ido)',
-    ig: 'Igbo (Igbo)',
+    io: 'Ido',
+    ig: 'Igbo',
     id: 'Indonesian (Bahasa Indonesia)',
     ia: 'Interlingua (International Auxiliary Language Association)',
     ie: 'Interlingue, Occidental',
@@ -336,12 +336,12 @@ export const languageNameMap: { [key: string]: string } = {
     la: 'Latin (Latina)',
     lv: 'Latvian (Latviešu)',
     li: 'Limburgan, Limburger, Limburgish (Limburgs)',
-    ln: 'Lingala (Lingala)',
+    ln: 'Lingala',
     lt: 'Lithuanian (Lietuvių)',
     lu: 'Luba-Katanga (Tshiluba)',
     lb: 'Luxembourgish, Letzeburgesch (Lëtzebuergesch)',
     mk: 'Macedonian (Македонски)',
-    mg: 'Malagasy (Malagasy)',
+    mg: 'Malagasy',
     ms: 'Malay (Bahasa Melayu)',
     ml: 'Malayalam (മലയാളം)',
     mt: 'Maltese (Malti)',
@@ -359,7 +359,7 @@ export const languageNameMap: { [key: string]: string } = {
     no: 'Norwegian (Norsk)',
     nb: 'Norwegian Bokmål (Norsk Bokmål)',
     nn: 'Norwegian Nynorsk (Norsk Nynorsk)',
-    oc: 'Occitan (Occitan)',
+    oc: 'Occitan',
     oj: 'Ojibwa (ᐊᓂᔭᐦᑖᑯᓯᐣ)',
     or: 'Oriya (ଓଡ଼ିଆ)',
     om: 'Oromo (Afaan Oromoo)',
@@ -381,7 +381,7 @@ export const languageNameMap: { [key: string]: string } = {
     sa: 'Sanskrit (संस्कृतम्)',
     sc: 'Sardinian (Sardu)',
     sr: 'Serbian (Српски)',
-    sn: 'Shona (Shona)',
+    sn: 'Shona',
     sd: 'Sindhi (سنڌي)',
     si: 'Sinhala, Sinhalese (සිංහල)',
     sk: 'Slovak (Slovenčina)',
@@ -407,7 +407,7 @@ export const languageNameMap: { [key: string]: string } = {
     tn: 'Tswana (Setswana)',
     tr: 'Turkish (Türkçe)',
     tk: 'Turkmen (Türkmençe)',
-    tw: 'Twi (Twi)',
+    tw: 'Twi',
     ug: 'Uighur, Uyghur (ئۇيغۇرچە)',
     uk: 'Ukrainian (Українська)',
     ur: 'Urdu (اردو)',
@@ -417,8 +417,8 @@ export const languageNameMap: { [key: string]: string } = {
     vo: 'Volapük (Volapük)',
     wa: 'Walloon (Walon)',
     cy: 'Welsh (Cymraeg)',
-    wo: 'Wolof (Wolof)',
-    xh: 'Xhosa (Xhosa)',
+    wo: 'Wolof',
+    xh: 'Xhosa',
     ii: 'Sichuan Yi, Nuosu (四川彝语)',
     yi: 'Yiddish (ייִדיש)',
     yo: 'Yoruba (Yorùbá)',
@@ -489,7 +489,7 @@ export function getCurrentLocale(): LocaleType {
     return 'en-US';
 }
 
-const cache = new Map<string, LanguageDataType>();
+const cache = new Map<string, LanguageDataType | null>();
 export function getLang(langCodeOrLocale: string) {
     // TODO: change to completely locale
     const langCode = checkIsValidLocale(langCodeOrLocale)
@@ -498,13 +498,20 @@ export function getLang(langCodeOrLocale: string) {
     return cache.get(langCode ?? langCodeOrLocale) ?? null;
 }
 
+export function getLangDataByLocaleOrByLangCode(
+    localeOrLangCode: string,
+): LanguageDataType | null {
+    return (
+        langDataMap[localeOrLangCode] ??
+        langDataMap[allLocalesMap[localeOrLangCode as LocaleType] ?? ''] ??
+        null
+    );
+}
+
 export async function getLangAsync(locale: LocaleType, isForce = false) {
     if (!cache.has(locale)) {
         try {
-            const langData: LanguageDataType | null =
-                langDataMap[locale] ??
-                langDataMap[allLocalesMap[locale]] ??
-                null;
+            const langData = getLangDataByLocaleOrByLangCode(locale);
             cache.set(locale, langData);
             let langCode = getLangCode(locale);
             if (langCode === null && isForce) {
@@ -538,7 +545,7 @@ export async function getLangAsync(locale: LocaleType, isForce = false) {
 export function getCurrentLangAsync() {
     return getLangAsync(getCurrentLocale());
 }
-export async function getAllLangsAsync() {
+export function getAllLangsAsync() {
     return Object.values(langDataMap);
 }
 
@@ -641,7 +648,7 @@ export function quickEndWord(locale: LocaleType, text: string) {
     return langData.endWord(trimText);
 }
 
-export async function getFontFamily(locale: LocaleType) {
+export async function getFontFamilyByLocale(locale: LocaleType) {
     const langData = await getLangAsync(locale);
     if (langData === null) {
         return '';

@@ -78,7 +78,7 @@ function toStraightItems(
     nestedBibleItems: NestedBibleItemsType,
 ): ReadIdOnlyBibleItem[] {
     const traverse = (items: any): any => {
-        if (items instanceof Array) {
+        if (Array.isArray(items)) {
             return items.flatMap((item) => {
                 return traverse(item);
             });
@@ -94,7 +94,7 @@ function deepSanitizeNestedItems(nestedBibleItems: NestedBibleItemsType): {
     isFoundError: boolean;
 } {
     let isFoundError = false;
-    if (nestedBibleItems instanceof Array) {
+    if (Array.isArray(nestedBibleItems)) {
         if (
             nestedBibleItems.length === 1 &&
             nestedBibleItems[0] instanceof ReadIdOnlyBibleItem
@@ -113,7 +113,7 @@ function deepSanitizeNestedItems(nestedBibleItems: NestedBibleItemsType): {
                 return sanitized.nestedBibleItems;
             })
             .filter((item1) => {
-                if (item1 instanceof Array && item1.length === 0) {
+                if (Array.isArray(item1) && item1.length === 0) {
                     isFoundError = true;
                     return false;
                 }
@@ -141,7 +141,7 @@ export function sanitizeNestedItems(nestedBibleItems: NestedBibleItemsType) {
 export function stringifyNestedBibleItem(
     nestedBibleItems: NestedBibleItemsType,
 ): NestedObjectsType {
-    if (nestedBibleItems instanceof Array) {
+    if (Array.isArray(nestedBibleItems)) {
         return nestedBibleItems.map((item1) => {
             return stringifyNestedBibleItem(item1);
         });
@@ -153,8 +153,8 @@ function checkIsIdentical(
     nestedBibleItem1: NestedBibleItemsType,
     nestedBibleItem2: NestedBibleItemsType | number,
 ) {
-    if (nestedBibleItem1 instanceof Array) {
-        if (!(nestedBibleItem2 instanceof Array)) {
+    if (Array.isArray(nestedBibleItem1)) {
+        if (!Array.isArray(nestedBibleItem2)) {
             return false;
         }
         if (nestedBibleItem1.length !== nestedBibleItem2.length) {
@@ -167,7 +167,7 @@ function checkIsIdentical(
         }
         return true;
     }
-    if (nestedBibleItem2 instanceof Array) {
+    if (Array.isArray(nestedBibleItem2)) {
         return false;
     }
     return nestedBibleItem1.checkIsSameId(nestedBibleItem2);
@@ -188,7 +188,7 @@ function seekParent(
     isHorizontal: boolean;
     targetNestedBibleItem: NestedBibleItemsType;
 } | null {
-    if (nestedBibleItems instanceof Array) {
+    if (Array.isArray(nestedBibleItems)) {
         for (const nestedBibleItem of nestedBibleItems) {
             if (checkIsIdentical(nestedBibleItem, targetNestedBibleItemOrId)) {
                 return {
@@ -196,7 +196,7 @@ function seekParent(
                     isHorizontal,
                     targetNestedBibleItem: nestedBibleItem,
                 };
-            } else if (nestedBibleItem instanceof Array) {
+            } else if (Array.isArray(nestedBibleItem)) {
                 const foundParent = seekParent(
                     nestedBibleItem,
                     targetNestedBibleItemOrId,
@@ -216,7 +216,7 @@ function getFirstBibleItemAtIndex(
     isOrientation: boolean,
     isGoBack: boolean,
 ): ReadIdOnlyBibleItem | null {
-    if (nestedBibleItems instanceof Array) {
+    if (Array.isArray(nestedBibleItems)) {
         if (index < 0) {
             index = nestedBibleItems.length - 1;
         } else if (index >= nestedBibleItems.length) {
@@ -303,7 +303,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         return ReadIdOnlyBibleItem.fromJson(json);
     }
     parseNestedBibleItem(json: any): NestedBibleItemsType {
-        if (json instanceof Array) {
+        if (Array.isArray(json)) {
             const nestedBibleItems: NestedBibleItemsType = json.map(
                 (item: any) => {
                     return this.parseNestedBibleItem(item);
@@ -357,16 +357,18 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
     _setColorNote(bibleItem: ReadIdOnlyBibleItem, color: string | null) {
         const colorNoteMap = this.colorNoteMap;
-        if (!color) {
+        if (color === null || color === '') {
             delete colorNoteMap[bibleItem.id];
         } else {
             colorNoteMap[bibleItem.id] = color;
         }
-        const allBibleItemIds = this.straightBibleItems.map((item) => {
-            return item.id.toString();
-        });
+        const allBibleItemIds = new Set(
+            this.straightBibleItems.map((item) => {
+                return item.id.toString();
+            }),
+        );
         for (const id in colorNoteMap) {
-            if (!allBibleItemIds.includes(id)) {
+            if (!allBibleItemIds.has(id)) {
                 delete colorNoteMap[id];
             }
         }
@@ -396,7 +398,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
     }
 
     genBibleItemUniqueId() {
-        return new Date().getTime() + Math.round(Math.random() * 1e6);
+        return Date.now() + Math.round(Math.random() * 1e6);
     }
 
     fireUpdateEvent() {
@@ -472,7 +474,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         const foundParent = seekParent(nestedBibleItems, bibleItem);
         if (foundParent === null) {
             showSimpleToast(toastTitle, toastMessage);
-            throw new Error();
+            throw new Error('Bible item not found in nested structure');
         }
         const {
             parentNestedBibleItems,
@@ -674,7 +676,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                     });
                 },
             },
-            ...(langData !== null
+            ...(langData
                 ? langData.extraBibleContextMenuItems(bibleItem, appProvider)
                 : []),
             {
@@ -694,7 +696,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             id: this.genBibleItemUniqueId(),
         });
         let nestedBibleItems = this.nestedBibleItems;
-        if (!(nestedBibleItems instanceof Array)) {
+        if (!Array.isArray(nestedBibleItems)) {
             nestedBibleItems = [nestedBibleItems];
         }
         this.nestedBibleItems = [...nestedBibleItems, newBibleItem];
@@ -725,19 +727,21 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         verseKey: string,
         isToTop: boolean,
     ) {
-        this.getVerseElements(bibleItem.id, verseKey).forEach(
-            (element: any) => {
-                this.handleVersesSelecting(element, isToTop, true);
-            },
-        );
+        for (const element of this.getVerseElements(bibleItem.id, verseKey)) {
+            this.handleVersesSelecting(
+                element as HTMLDivElement,
+                isToTop,
+                true,
+            );
+        }
     }
     handleVersesHighlighting(kjvVerseKey: string, isToTop = false) {
         const elements = document.querySelectorAll(
             `.bible-view div[data-kjv-verse-key="${kjvVerseKey}"]`,
         );
-        Array.from(elements).forEach((element: any) => {
-            this.handleVersesSelecting(element, isToTop, true);
-        });
+        for (const element of Array.from(elements)) {
+            this.handleVersesSelecting(element as any, isToTop, true);
+        }
     }
     handleVersesSelecting(
         targetDom: HTMLDivElement,
@@ -750,9 +754,11 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             classList.remove('selected');
             return;
         }
-        targetDom.parentElement?.childNodes.forEach((element: any) => {
-            element.classList.remove('selected');
-        });
+        if (targetDom.parentElement) {
+            for (const element of targetDom.parentElement.childNodes) {
+                (element as any).classList.remove('selected');
+            }
+        }
         classList.add('selected');
         if (isToTop) {
             bringDomToTopView(targetDom);
@@ -773,7 +779,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         if (!colorNote) {
             return;
         }
-        this.getBibleItemsByColorNote(colorNote).forEach((bibleItem1) => {
+        for (const bibleItem1 of this.getBibleItemsByColorNote(colorNote)) {
             if (bibleItem1.id !== bibleItem.id) {
                 this.syncBibleVerseSelection(
                     bibleItem1,
@@ -781,7 +787,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                     isToTop,
                 );
             }
-        });
+        }
     }
     protected syncTargetByColorNote(bibleItem: ReadIdOnlyBibleItem) {
         const colorNote = this.getColorNote(bibleItem);

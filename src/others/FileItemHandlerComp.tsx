@@ -150,26 +150,26 @@ export default function FileItemHandlerComp({
     );
     const [isRenaming, setIsRenaming] = useState(false);
     useFileSourceRefreshEvents(['select']);
-    const applyClick = () => {
-        FileSource.getInstance(filePath).fireSelectEvent();
-        onClick?.();
-    };
+
+    if (data === null) {
+        return null;
+    }
     const selfContextMenu = genContextMenu(filePath, setIsRenaming, reload);
     const preDelete1 = () => {
         data?.preDelete();
         preDelete?.();
     };
     selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
-
-    const handleContextMenuOpening = (event: any) => {
-        showAppContextMenu(event, selfContextMenu);
-    };
-    if (data === null) {
-        return null;
-    }
     if (data === undefined) {
+        const handleContextMenuOpening = (event: any) => {
+            showAppContextMenu(event, selfContextMenu);
+        };
         return <FileReadErrorComp onContextMenu={handleContextMenuOpening} />;
     }
+    const handleClicking = () => {
+        FileSource.getInstance(filePath).fireSelectEvent();
+        onClick?.();
+    };
     const moreClassName =
         `${isSelected ? 'active' : ''} ` + `${className ?? ''}`;
     const fileSource = FileSource.getInstance(filePath);
@@ -180,7 +180,7 @@ export default function FileItemHandlerComp({
                 `list-group-item m-1 ${moreClassName} app-overflow-hidden` +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
-            onClick={applyClick}
+            onClick={handleClicking}
             data-index={index + 1}
             title={filePath}
             onContextMenu={(event) => {

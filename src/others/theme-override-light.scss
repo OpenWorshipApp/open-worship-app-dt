@@ -322,14 +322,6 @@ $resizer-color: rgb(123, 173, 205);
     }
   }
 
-  .custom-style {
-    background-color: var(--bs-gray-200) !important;
-
-    .custom-style-body {
-      background-color: var(--bs-gray-300) !important;
-    }
-  }
-
   #modal-container {
     & > div:first-child {
       background-color: var(--bs-gray-200);

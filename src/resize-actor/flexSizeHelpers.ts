@@ -32,13 +32,15 @@ export const resizeSettingNames = {
     appPresenterMiddle: 'app-presenter-middle',
     appPresenterRight: 'app-presenter-right',
     slideEditor: 'slide-editor',
-    read: 'read',
+    bibleReader: 'bible-reader',
+    bibleLookupPopup: 'bible-lookup-popup',
+    presenterBiblePreviewer: 'presenter-bible-previewer',
 };
 
 export function clearWidgetSizeSetting() {
-    Object.values(resizeSettingNames).forEach((name) => {
+    for (const name of Object.values(resizeSettingNames)) {
         setSetting(`${toSettingString(name)}`, '');
-    });
+    }
 }
 export function toSettingString(flexSizeName: string) {
     return `${settingPrefix}-${flexSizeName}`;
@@ -81,15 +83,15 @@ export const genFlexSizeSetting = (
         document.querySelectorAll<HTMLDivElement>(selectorString);
     const items = Array.from(collection);
     const flexSize = getFlexSizeSetting(flexSizeName, defaultSize);
-    items.forEach((item) => {
-        const dataFlexSizeKey = item.getAttribute('data-fs');
-        if (dataFlexSizeKey !== null) {
+    for (const item of items) {
+        const dataFlexSizeKey = item.dataset.fs;
+        if (dataFlexSizeKey !== undefined) {
             const key = dataFlexSizeKeyToKey(flexSizeName, dataFlexSizeKey);
             if (flexSize[key]) {
                 flexSize[key][0] = item.style.flex;
             }
         }
-    });
+    }
     return flexSize;
 };
 
@@ -110,23 +112,23 @@ function doubleFlexGrow(size: string) {
 function sanitizeFlexSizeValue(flexSize: FlexSizeType) {
     if (
         Object.values(flexSize).reduce((acc, [size1, size2]) => {
-            if (size2 !== undefined) {
-                return acc;
+            if (size2 === undefined) {
+                // size1: '0.1 1 20%'
+                return Number(size1.split(' ')[0]) + acc;
             }
-            // size1: '0.1 1 20%'
-            return Number(size1.split(' ')[0]) + acc;
+            return acc;
         }, 0) >= 1
     ) {
         return flexSize;
     }
     const newFlexSize: FlexSizeType = {};
-    Object.entries(flexSize).forEach(([key, [size1, size2]]) => {
-        if (size2 !== undefined) {
-            newFlexSize[key] = [doubleFlexGrow(size1), size2];
-        } else {
+    for (const [key, [size1, size2]] of Object.entries(flexSize)) {
+        if (size2 === undefined) {
             newFlexSize[key] = [doubleFlexGrow(size1)];
+        } else {
+            newFlexSize[key] = [doubleFlexGrow(size1), size2];
         }
-    });
+    }
     return sanitizeFlexSizeValue(newFlexSize);
 }
 

@@ -67,11 +67,13 @@ export function createScreenManager(screenId: number) {
 
 export function genNewScreenManagerBase() {
     const screenManagers = getAllScreenManagers();
-    const screenIds = screenManagers.map((screenManagerBase) => {
-        return screenManagerBase.screenId;
-    });
+    const screenIds = new Set(
+        screenManagers.map((screenManagerBase) => {
+            return screenManagerBase.screenId;
+        }),
+    );
     let newScreenId = 0;
-    while (screenIds.includes(newScreenId)) {
+    while (screenIds.has(newScreenId)) {
         newScreenId++;
     }
     createScreenManager(newScreenId);
@@ -81,10 +83,10 @@ export function genNewScreenManagerBase() {
 export function getScreenManagersFromSetting() {
     const instanceSetting = getScreenManagersInstanceSetting();
     if (instanceSetting.length > 0) {
-        instanceSetting.forEach(({ screenId, isSelected }: any) => {
+        for (const { screenId, isSelected } of instanceSetting as any[]) {
             const screenManagerBase = createScreenManager(screenId);
             screenManagerBase._isSelected = !!isSelected;
-        });
+        }
     } else {
         createScreenManager(0);
     }

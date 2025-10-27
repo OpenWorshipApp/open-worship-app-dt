@@ -218,6 +218,7 @@ export default class BibleItem
         }
         return [];
     }
+    // TODO: change exported title to `1 John 1:1-2 (kjv)`
     async toTitleText() {
         const title = await this.toTitle();
         const text = await this.toText();
@@ -310,7 +311,7 @@ export default class BibleItem
         }
         const { target } = bibleItem;
         return `${target.bookKey} ${target.chapter}:${target.verseStart}${
-            target.verseEnd !== target.verseStart ? `-${target.verseEnd}` : ''
+            target.verseEnd === target.verseStart ? '' : `-${target.verseEnd}`
         }`;
     }
 }

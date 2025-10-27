@@ -14,10 +14,9 @@ export default function RenderAIBibleCrossReferenceComp({
     return (
         <div>
             <strong
-                className="app-selectable-text"
+                className="app-selectable-text app-found-highlight"
                 data-bible-key={bibleKey}
                 title={titleEn}
-                style={{ color: '#88ff00b8' }}
             >
                 <span dangerouslySetInnerHTML={{ __html: title }} />
             </strong>

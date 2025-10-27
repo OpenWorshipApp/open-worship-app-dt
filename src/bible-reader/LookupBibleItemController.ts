@@ -83,6 +83,7 @@ class LookupBibleItemController extends BibleItemsViewController {
     setInputText: (inputText: string) => OptionalPromise<void> = (
         _: string,
     ) => {};
+    inputTextTime: number = Date.now();
     setBibleKey = (_bibleKey: string) => {};
     reloadEditingResult = (_inputText: string) => {};
     onLookupSaveBibleItem = () => {};
@@ -184,6 +185,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         return getSetting(this.toSettingName('-input-text')) ?? '';
     }
     _setInputText(inputText: string) {
+        this.inputTextTime = Date.now();
         setSetting(this.toSettingName('-input-text'), inputText);
         this.setInputText(inputText);
         setBibleLookupInputFocus();
@@ -191,21 +193,22 @@ class LookupBibleItemController extends BibleItemsViewController {
     set inputText(inputText: string) {
         this._setInputText(inputText);
         this.syncTargetByColorNote(this.selectedBibleItem);
-        extractBibleTitle(this.selectedBibleItem.bibleKey, inputText).then(
-            async (editingResult) => {
-                const { bibleKey, oldInputText } = editingResult;
-                if (bibleKey !== this.selectedBibleItem.bibleKey) {
-                    await this.setEditingData(
-                        editingResult.bibleKey,
-                        null,
-                        true,
-                    );
-                }
-                if (oldInputText !== this.inputText) {
-                    this.inputText = oldInputText;
-                }
-            },
-        );
+        extractBibleTitle(
+            this.selectedBibleItem.bibleKey,
+            inputText,
+            this.inputTextTime,
+        ).then(async (editingResult) => {
+            const { bibleKey, oldInputText, time } = editingResult;
+            if (bibleKey !== this.selectedBibleItem.bibleKey) {
+                await this.setEditingData(editingResult.bibleKey, null, true);
+            }
+            if (
+                time === this.inputTextTime &&
+                oldInputText !== this.inputText
+            ) {
+                this.inputText = oldInputText;
+            }
+        });
     }
 
     async setLookupContentFromBibleItem(bibleItem: ReadIdOnlyBibleItem) {
@@ -362,15 +365,7 @@ class LookupBibleItemController extends BibleItemsViewController {
             isBibleItemSelected,
         );
         const menus2 = await super.genContextMenu(event, bibleItem, uuid);
-        if (!isBibleItemSelected) {
-            menus2.push({
-                menuElement: 'Edit',
-                title: 'Double click on header to edit',
-                onSelect: () => {
-                    this.editBibleItem(bibleItem);
-                },
-            });
-        } else {
+        if (isBibleItemSelected) {
             const menu2IdMap: { [key: string]: ContextMenuItemType } =
                 Object.fromEntries(
                     menus2.map((menuItem) => [menuItem.id, menuItem]),
@@ -389,6 +384,14 @@ class LookupBibleItemController extends BibleItemsViewController {
                         key: 'v',
                     });
             }
+        } else {
+            menus2.push({
+                menuElement: 'Edit',
+                title: 'Double click on header to edit',
+                onSelect: () => {
+                    this.editBibleItem(bibleItem);
+                },
+            });
         }
         const menu3: ContextMenuItemType[] = this.isAlone
             ? []
@@ -439,11 +442,11 @@ class LookupBibleItemController extends BibleItemsViewController {
             );
             return;
         }
-        document
-            .querySelectorAll(`[data-scroll-on-next-chapter="1"]`)
-            .forEach((element) => {
-                element.scrollTop = 0;
-            });
+        for (const element of document.querySelectorAll(
+            `[data-scroll-on-next-chapter="1"]`,
+        )) {
+            (element as HTMLElement).scrollTop = 0;
+        }
         const newFoundBibleItem = ReadIdOnlyBibleItem.fromJson(
             foundBibleItem.toJson(),
         );
@@ -457,7 +460,7 @@ export default LookupBibleItemController;
 export function useLookupBibleItemControllerContext() {
     const viewController = useBibleItemsViewControllerContext();
     if (viewController instanceof LookupBibleItemController === false) {
-        throw new Error(
+        throw new TypeError(
             'useLookupBibleItemControllerContext must be used within a' +
                 ' BibleItemViewControllerContext',
         );
