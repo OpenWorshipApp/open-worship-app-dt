@@ -16,7 +16,7 @@ export default function SettingBibleXMLComp() {
             </div>
             <div
                 className="app-border-white-round m-1 p-1"
-                style={{ minWidth: '625px' }}
+                style={{ minWidth: '600px' }}
             >
                 <BibleXMLListComp
                     isPending={isPending}
