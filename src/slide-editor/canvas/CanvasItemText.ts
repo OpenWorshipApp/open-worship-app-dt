@@ -13,7 +13,7 @@ import { AnyObjectType } from '../../helper/typeHelpers';
 
 export function genTextDefaultProps(): TextPropsType {
     return {
-        text: appProvider.appInfo.name,
+        text: appProvider.appInfo.titleFull,
         color: '#ffffff',
         fontSize: 60,
         fontFamily: null,

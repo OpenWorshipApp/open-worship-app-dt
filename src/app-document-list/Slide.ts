@@ -149,13 +149,14 @@ export default class Slide
 
     static defaultSlideData(id: number) {
         const { width, height } = this.getDefaultDim();
+        const canvasItems: CanvasItemPropsType[] = [];
         return {
             id,
             metadata: {
                 width,
                 height,
             },
-            canvasItems: [],
+            canvasItems,
         };
     }
 
