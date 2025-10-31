@@ -2,7 +2,30 @@ import {
     CrossReferenceType,
     useBibleKeyContext,
 } from '../helper/ai/bibleCrossRefHelpers';
+import appProvider from '../server/appProvider';
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
+
+function genGoogleTranslated() {
+    return (
+        <i
+            className="bi bi-lightbulb app-caught-hover-pointer"
+            title={
+                '`Generated using Google Translate. ' +
+                'Results may vary and may not be ' +
+                'accurate. Please use with caution.'
+            }
+            style={{
+                color: 'var(--bs-info-text-emphasis)',
+            }}
+            onClick={(event) => {
+                event.stopPropagation();
+                appProvider.browserUtils.openExternalURL(
+                    `${appProvider.appInfo.homepage}/google-translate-vigilant`,
+                );
+            }}
+        />
+    );
+}
 
 export default function RenderAIBibleCrossReferenceComp({
     crossReference,
@@ -18,6 +41,7 @@ export default function RenderAIBibleCrossReferenceComp({
                 data-bible-key={bibleKey}
                 title={titleEn}
             >
+                {genGoogleTranslated()}
                 <span dangerouslySetInnerHTML={{ __html: title }} />
             </strong>
             {verses.map((item, i) => {

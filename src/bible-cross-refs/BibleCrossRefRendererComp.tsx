@@ -36,7 +36,7 @@ function RenderVerseTextComp({
     );
 }
 
-function AIVigilantComp() {
+function genAiVigilant() {
     return (
         <i
             className="bi bi-lightbulb app-caught-hover-pointer"
@@ -124,7 +124,7 @@ export default function BibleCrossRefRendererComp({
                         <BibleCrossRefWrapperComp
                             title={
                                 <>
-                                    <AIVigilantComp />
+                                    {genAiVigilant()}
                                     AI Cross References
                                 </>
                             }
