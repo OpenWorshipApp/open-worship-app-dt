@@ -49,6 +49,13 @@ export function checkIsDarkMode() {
     return themeSource === 'dark';
 }
 
+export function getColorParts() {
+    const isDarkMode = checkIsDarkMode();
+    const colorPart = isDarkMode ? '000000' : 'ffffff';
+    const invertColorPart = isDarkMode ? 'ffffff' : '000000';
+    return { colorPart, invertColorPart };
+}
+
 getSystemDarkMatcher()?.addEventListener('change', applyDarkModeToApp);
 
 export function getReactRoot() {

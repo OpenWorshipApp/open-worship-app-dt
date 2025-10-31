@@ -1,4 +1,4 @@
-import ReactDOMServer from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import {
     showAppAlert,
@@ -170,7 +170,7 @@ const docFileInfo = {
 
 export const supportOfficeFileExtensions = Object.keys(docFileInfo);
 
-const alertMessage = ReactDOMServer.renderToStaticMarkup(
+const alertMessage = renderToStaticMarkup(
     <div>
         <b>LibreOffice </b>
         is required for converting Office file to PDF. Please install it and try
@@ -200,7 +200,7 @@ const WIDGET_TITLE = 'Converting to PDF';
 
 function showConfirmPdfConvert(dirPath: string, file: DroppedFileType) {
     const fileFullName = getFileFullName(file);
-    const confirmMessage = ReactDOMServer.renderToStaticMarkup(
+    const confirmMessage = renderToStaticMarkup(
         <div>
             <b>"{fileFullName}"</b>
             {' will be converted to PDF into '}

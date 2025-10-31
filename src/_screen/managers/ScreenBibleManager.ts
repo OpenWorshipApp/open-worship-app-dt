@@ -38,6 +38,7 @@ import {
     BibleItemDataType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
+import { getColorParts } from '../../initHelpers';
 
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
@@ -65,11 +66,12 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     applyHeaderEffectOnScroll(div: HTMLDivElement) {
+        const { colorPart } = getColorParts();
         for (const th of div.querySelectorAll('th.header')) {
             if (th instanceof HTMLElement) {
                 th.style.fontSize = this.scroll > 0 ? '0.5em' : '1em';
                 th.style.backgroundColor =
-                    this.scroll > 0 ? '#000000da' : '#00000053';
+                    this.scroll > 0 ? `#${colorPart}da` : `#${colorPart}53`;
             }
         }
     }

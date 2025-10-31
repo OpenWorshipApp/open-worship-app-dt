@@ -4,5 +4,6 @@
   width: 600px;
   max-width: calc(100% - 10px);
   min-height: 200px;
-  overflow: auto;
+  overflow: hidden;
+  height: 100%;
 }

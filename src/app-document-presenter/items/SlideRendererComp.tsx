@@ -1,4 +1,5 @@
-import ReactDOMServer from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
+
 import CanvasItemRendererComp from '../../slide-editor/CanvasItemRendererComp';
 import CanvasItem, {
     CanvasItemContext,
@@ -8,7 +9,7 @@ import { getHTMLChild } from '../../helper/helpers';
 import Canvas from '../../slide-editor/canvas/Canvas';
 
 export function genSlideHtml(canvasItemsJson: CanvasItemPropsType[]) {
-    const htmlString = ReactDOMServer.renderToStaticMarkup(
+    const htmlString = renderToStaticMarkup(
         <SlideRendererComp
             width={'100%'}
             height={'100%'}

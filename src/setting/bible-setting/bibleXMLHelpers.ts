@@ -11,7 +11,7 @@ import {
     getFileMD5,
     pathJoin,
 } from '../../server/fileHelpers';
-import { allLocalesMap } from '../../lang/langHelpers';
+import { allLocalesMap, languageNameMap } from '../../lang/langHelpers';
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import {
     genBibleBooksMapXMLInput,
@@ -317,9 +317,10 @@ export function addMonacoBibleInfoActions(
         run: async () => {
             showAppContextMenu(
                 genMouseEvent(),
-                Object.entries(allLocalesMap).map(([locale]) => {
+                Object.entries(allLocalesMap).map(([locale, langCode]) => {
+                    const menuElement = `${locale} (${languageNameMap[langCode] ?? 'Unknown'})`;
                     return {
-                        menuElement: locale,
+                        menuElement,
                         onSelect: () => {
                             setPartialBibleInfo({
                                 locale,

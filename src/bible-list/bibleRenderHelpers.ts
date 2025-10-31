@@ -42,7 +42,7 @@ class BibleRenderHelper {
     toKJVBibleVersesKey(bibleTarget: BibleTargetType) {
         const { bookKey: book, chapter, verseStart, verseEnd } = bibleTarget;
         const txtV = `${verseStart}${
-            verseStart !== verseEnd ? '-' + verseEnd : ''
+            verseStart === verseEnd ? '' : '-' + verseEnd
         }`;
         return `${book} ${chapter}:${txtV}`;
     }
@@ -99,7 +99,7 @@ class BibleRenderHelper {
             );
             const verseEndLocale = await toLocaleNumBible(bibleKey, verseEnd);
             const txtV = `${verseStartLocale}${
-                verseStart !== verseEnd ? '-' + verseEndLocale : ''
+                verseStart === verseEnd ? '' : '-' + verseEndLocale
             }`;
             const ensuredBookKey = await this.toLocaleBook(bibleKey, bookKey);
             const title = `${ensuredBookKey} ${chapterLocale}:${txtV}`;
@@ -179,9 +179,7 @@ class BibleRenderHelper {
             return null;
         }
         const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
-        const bookIndex = bookKeysOrder.findIndex(
-            (bookKey1) => bookKey1 === bookKey,
-        );
+        const bookIndex = bookKeysOrder.indexOf(bookKey);
         let nextBookIndex = bookIndex;
         let nextChapter = chapter + (isNext ? 1 : -1);
         if (nextChapter < 1 || nextChapter > getKJVChapterCount(bookKey)) {

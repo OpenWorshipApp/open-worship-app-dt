@@ -1,11 +1,11 @@
-import ReactDOMServer from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 export function toIframe(html: string, title: string) {
     html = html.replaceAll(
         /background-color:\s*[^;]+;/g,
         'background-color: transparent;',
     );
-    html = ReactDOMServer.renderToStaticMarkup(
+    html = renderToStaticMarkup(
         <iframe
             srcDoc={html}
             title={title}

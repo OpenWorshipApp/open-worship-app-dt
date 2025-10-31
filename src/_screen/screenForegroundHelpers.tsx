@@ -1,4 +1,4 @@
-import ReactDOMServer from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import CountdownController from './managers/CountdownController';
 import { getHTMLChild } from '../helper/helpers';
 import ScreenManagerBase from './managers/ScreenManagerBase';
@@ -23,7 +23,7 @@ export function genHtmlForegroundMarquee(
     const scale = screenManagerBase.height / 768;
     const fontSize = Math.round(75 * scale);
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
-    const htmlString = ReactDOMServer.renderToStaticMarkup(
+    const htmlString = renderToStaticMarkup(
         <div
             style={{
                 position: 'absolute',
@@ -126,7 +126,7 @@ export function genHtmlForegroundQuickText(
     remove: () => void,
 ) {
     const uniqueId = `id-${crypto.randomUUID()}`;
-    const htmlString = ReactDOMServer.renderToStaticMarkup(
+    const htmlString = renderToStaticMarkup(
         <div style={extraStyle}>
             <style>{`
             #${uniqueId} * {
@@ -161,7 +161,7 @@ export function genHtmlForegroundCountdown(
     animData: StyleAnimType,
 ) {
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
-    const htmlString = ReactDOMServer.renderToStaticMarkup(
+    const htmlString = renderToStaticMarkup(
         <div
             style={{
                 color: 'white',
@@ -212,7 +212,7 @@ export function genHtmlForegroundStopwatch(
     animData: StyleAnimType,
 ) {
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
-    const htmlString = ReactDOMServer.renderToStaticMarkup(
+    const htmlString = renderToStaticMarkup(
         <div
             style={{
                 color: 'white',
@@ -264,7 +264,7 @@ export function genHtmlForegroundTime(
 ) {
     const { timezoneMinuteOffset, title } = timeData;
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
-    const htmlString = ReactDOMServer.renderToStaticMarkup(
+    const htmlString = renderToStaticMarkup(
         <div
             style={{
                 color: 'white',

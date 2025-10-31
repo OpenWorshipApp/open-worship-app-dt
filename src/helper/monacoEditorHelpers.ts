@@ -119,21 +119,12 @@ function createEditor(
             y: mouseEvent.event.posy,
         };
     });
+    // TODO: fix Monaco native pasting fail
     editorInstance.addAction({
-        id: 'toggle-wrap-text',
-        label: '`Toggle Wrap Text',
-        contextMenuGroupId: 'navigation',
-        keybindings: [KeyMod.Alt | KeyCode.KeyZ],
-        contextMenuOrder: 1.5,
-        run: () => {
-            editorStore.toggleIsWrapText();
-        },
-    });
-    // TODO: fix Monaco native paste fail
-    editorInstance.addAction({
-        id: 'paste',
-        label: 'Paste',
+        id: 'paste-from-clipboard',
+        label: 'Paste from Clipboard',
         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyV],
+        contextMenuGroupId: 'navigation',
         run: async (editor) => {
             const clipboardText = await getCopiedText();
             if (!clipboardText) {
@@ -145,6 +136,16 @@ function createEditor(
                     text: clipboardText,
                 } as any,
             ]);
+        },
+    });
+    editorInstance.addAction({
+        id: 'toggle-wrap-text',
+        label: '`Toggle Wrap Text',
+        contextMenuGroupId: 'navigation',
+        keybindings: [KeyMod.Alt | KeyCode.KeyZ],
+        contextMenuOrder: 1.5,
+        run: () => {
+            editorStore.toggleIsWrapText();
         },
     });
     return editorStore;

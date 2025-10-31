@@ -29,6 +29,7 @@ import {
     SetDisplayType,
     ShowScreenDataType,
 } from './screenTypeHelpers';
+import { checkIsDarkMode } from '../initHelpers';
 
 const messageUtils = appProvider.messageUtils;
 
@@ -213,7 +214,8 @@ export function addToTheTop(div: HTMLDivElement) {
     const target = document.createElement('img');
     target.className = TO_THE_TOP_CLASSNAME;
     target.title = 'Scroll to the top';
-    target.src = 'assets/arrow-up-circle.png';
+    const isDarkMode = checkIsDarkMode();
+    target.src = `assets/arrow-up-circle${isDarkMode ? '-dark' : '-light'}.png`;
     target.style.position = 'fixed';
     target.style.bottom = '80px';
     div.appendChild(target);
@@ -231,7 +233,8 @@ export function addPlayToBottom(div: HTMLDivElement) {
     const target = document.createElement('img');
     target.className = PLAY_TO_BOTTOM_CLASSNAME;
     target.title = 'Play to bottom';
-    target.src = 'assets/chevron-double-down.png';
+    const isDarkMode = checkIsDarkMode();
+    target.src = `assets/chevron-double-down${isDarkMode ? '-dark' : '-light'}.png`;
     target.style.position = 'fixed';
     target.style.bottom = '0px';
     div.appendChild(target);

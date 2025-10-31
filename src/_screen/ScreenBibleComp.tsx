@@ -7,8 +7,12 @@ import {
     useScreenManagerContext,
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
+import { getColorParts } from '../initHelpers';
 
-const styleText = `
+function getStyleText() {
+    const { colorPart, invertColorPart } = getColorParts();
+
+    return `
 #bible-screen-view {
     overflow-x: hidden;
     overflow-y: auto;
@@ -23,7 +27,7 @@ const styleText = `
 }
 
 #bible-screen-view::-webkit-scrollbar-track {
-    background-color: #00000042;
+    background-color: #${colorPart}42;
     border-radius: 5px;
 }
 
@@ -52,14 +56,14 @@ const styleText = `
     border-radius: 0.1em;
     position: sticky;
     top: 0;
-    background-color: #00000053;
+    background-color: #${colorPart}53;
     transition: font-size 1s ease, background-color 1s ease;
 }
 
 #bible-screen-view th,
 #bible-screen-view td {
     -webkit-font-smoothing: antialiased;
-    border-left: 1px solid #000;
+    border-left: 1px solid #${colorPart};
     text-align: left;
     vertical-align: top;
     line-height: 1.5em;
@@ -97,7 +101,7 @@ const styleText = `
 }
 
 #bible-screen-view .header .title::-webkit-scrollbar {
-  background-color: #00000042;
+  background-color: #${colorPart}42;
 }
 
 #bible-screen-view .header .title div {
@@ -113,7 +117,7 @@ const styleText = `
 }
 
 #bible-screen-view .highlight.hover {
-    border-bottom-color: rgba(255, 255, 255, 0.1);
+    border-bottom-color: #${invertColorPart}1a;
 }
 
 #bible-screen-view .highlight.selected {
@@ -122,6 +126,7 @@ const styleText = `
         'rgba(255, 0, 157, 0.6), transparent);'
     }
 }`;
+}
 
 export default function ScreenBibleComp() {
     const screenManager = useScreenManagerContext();
@@ -138,7 +143,7 @@ export default function ScreenBibleComp() {
     }, [div.current]);
     return (
         <>
-            <style>{styleText}</style>
+            <style>{getStyleText()}</style>
             <style>
                 {`#bible-screen-view tr {
                     ${ScreenBibleManager.textStyleText}

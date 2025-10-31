@@ -358,4 +358,11 @@ $resizer-color: rgb(123, 173, 205);
   .app-found-highlight {
     color: #3d680b;
   }
+
+  .bible-lookup-chapter-option,
+  .bible-lookup-book-option {
+    &:hover {
+      color: #3d680b;
+    }
+  }
 }
