@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -xe
 
 current_script_dir=$(dirname "$0")
 cd "$current_script_dir"
@@ -111,7 +111,7 @@ download_ffmpeg(){
     rm -rf "$temp_output_dir"
 }
 
-dn_version="8.0.121"
+dn_version="8.0.21"
 dn_prefix_url="https://builds.dotnet.microsoft.com/dotnet/Runtime/$dn_version/dotnet-runtime-$dn_version-"
 download_dotnet(){
     local url="$dn_prefix_url$1"
