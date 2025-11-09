@@ -77,14 +77,15 @@ export async function getBibleFontFamily(bibleKey: string) {
     return fontFamily;
 }
 
-const toLocaleNumCache = new CacheManager<string | null>(60); // 1 minute
+const toLocaleNumCache = new CacheManager<string>(60); // 1 minute
 export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     const cacheKey = `${bibleKey}:${n}`;
-    if (await toLocaleNumCache.has(cacheKey)) {
-        return toLocaleNumCache.get(cacheKey);
+    const cached = await toLocaleNumCache.get(cacheKey);
+    if (cached !== null) {
+        return cached;
     }
     if (typeof n !== 'number') {
-        return null;
+        return n;
     }
     const info = await getBibleInfo(bibleKey);
     let localeNum: string | null = null;
