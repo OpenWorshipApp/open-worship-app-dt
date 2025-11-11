@@ -258,7 +258,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
         {
             menuElement: '`Clear Cache',
             onSelect: () => {
-                invalidateBibleXMLFolder(bibleKey, true);
+                invalidateBibleXMLCachedFolder(bibleKey, true);
             },
         },
     ];
@@ -388,7 +388,7 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
     });
 }
 
-export async function ensureBibleXMLBasePath(bibleKey: string) {
+export async function ensureBibleXMLCachedBasePath(bibleKey: string) {
     const filePath = await bibleKeyToXMLFilePath(bibleKey, true);
     if (filePath === null) {
         return null;
@@ -398,30 +398,52 @@ export async function ensureBibleXMLBasePath(bibleKey: string) {
     return dirPath;
 }
 
-async function invalidateBibleXMLFolder(
+async function invalidateBibleXMLCachedFolder(
     bibleKey: string,
     isForce: boolean = false,
 ) {
     const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey);
     if (xmlFilePath === null) {
-        return null;
+        return;
     }
     const md5Hash = await getFileMD5(xmlFilePath);
     if (md5Hash === null) {
-        return null;
+        return;
     }
-    const basePath = await ensureBibleXMLBasePath(bibleKey);
+    const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
     if (basePath === null) {
-        return null;
+        return;
     }
     const md5FilePath = pathJoin(basePath, md5Hash);
-    if (!isForce && (await fsCheckFileExist(md5FilePath))) {
-        return;
+    if (!isForce) {
+        if (await fsCheckFileExist(md5FilePath)) {
+            const content = await FileSource.readFileData(md5FilePath);
+            if (content) {
+                try {
+                    // older than 1 week
+                    const fileTime = Number.parseInt(content);
+                    if (Date.now() - fileTime < 7 * 24 * 60 * 60 * 1000) {
+                        return;
+                    }
+                } catch (_error) {}
+            }
+        }
     }
     await fsDeleteDir(basePath);
     await ensureDirectory(basePath);
     const fileSource = FileSource.getInstance(md5FilePath);
-    await fileSource.writeFileData('');
+    await fileSource.writeFileData(Date.now().toString());
+}
+
+const invalidatedBibleKeysSet = new Set<string>();
+export function invalidateBibleXMLCachedFolderByKey(bibleKey: string) {
+    if (invalidatedBibleKeysSet.has(bibleKey)) {
+        return;
+    }
+    invalidatedBibleKeysSet.add(bibleKey);
+    setTimeout(() => {
+        invalidateBibleXMLCachedFolder(bibleKey);
+    }, 1e3);
 }
 
 async function backupBibleXMLData<T>(
@@ -429,7 +451,7 @@ async function backupBibleXMLData<T>(
     fileName: string,
     data: T,
 ) {
-    const basePath = await ensureBibleXMLBasePath(bibleKey);
+    const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
     if (basePath !== null) {
         const filePath = pathJoin(basePath, fileName);
         const fileSource = FileSource.getInstance(filePath);
@@ -439,7 +461,7 @@ async function backupBibleXMLData<T>(
 }
 
 async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
-    const basePath = await ensureBibleXMLBasePath(bibleKey);
+    const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
     if (basePath === null) {
         return null;
     }
@@ -542,7 +564,7 @@ export async function updateBibleXMLInfo(bibleInfo: BibleJsonInfoType) {
     bibleInfo.booksMap = bibleInfo.booksMap ?? getKJVBookKeyValue();
     const jsonData = { ...dataJson, info: bibleInfo };
     await saveJsonDataToXMLfile(jsonData);
-    await invalidateBibleXMLFolder(bibleInfo.key);
+    await invalidateBibleXMLCachedFolder(bibleInfo.key);
 }
 
 export function useBibleXMLInfo(bibleKey: string) {

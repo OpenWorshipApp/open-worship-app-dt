@@ -16,6 +16,7 @@ import {
 } from '../../progress-bar/progressBarHelpers';
 import CacheManager from '../../others/CacheManager';
 import { freezeObject } from '../helpers';
+import { invalidateBibleXMLCachedFolderByKey } from '../../setting/bible-setting/bibleXMLHelpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
     const info = await getBibleInfo(bibleKey);
@@ -120,6 +121,7 @@ export async function getBibleInfo(
     bibleKey: string,
     isForce = false,
 ): Promise<BibleInfoType | null> {
+    invalidateBibleXMLCachedFolderByKey(bibleKey);
     if (isForce) {
         await cache.delete(bibleKey);
     }

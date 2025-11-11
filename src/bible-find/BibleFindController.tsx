@@ -18,7 +18,7 @@ import {
     pathJoin,
 } from '../server/fileHelpers';
 import {
-    ensureBibleXMLBasePath,
+    ensureBibleXMLCachedBasePath,
     getBibleXMLDataFromKey,
 } from '../setting/bible-setting/bibleXMLHelpers';
 import {
@@ -335,7 +335,7 @@ export default class BibleFindController {
         if (bibleInfo === null) {
             return null;
         }
-        const basePath = await ensureBibleXMLBasePath(bibleInfo.info.key);
+        const basePath = await ensureBibleXMLCachedBasePath(bibleInfo.info.key);
         if (basePath === null) {
             return null;
         }
