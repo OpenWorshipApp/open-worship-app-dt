@@ -240,7 +240,7 @@ export const allLocalesMap = {
     'zu-ZA': 'zu',
 } as const;
 
-export const rtlLangs = ['ar', 'he', 'fa', 'ur', 'ps', 'dv'] as const;
+export const rtlLangs = ['arc', 'ar', 'he', 'fa', 'ur', 'ps', 'dv'] as const;
 
 export const languageNameMap: { [key: string]: string } = {
     ab: 'Abkhazian (Abkhazia)',
