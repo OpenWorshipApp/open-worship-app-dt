@@ -240,6 +240,8 @@ export const allLocalesMap = {
     'zu-ZA': 'zu',
 } as const;
 
+export const rtlLangs = ['ar', 'he', 'fa', 'ur', 'ps', 'dv'] as const;
+
 export const languageNameMap: { [key: string]: string } = {
     ab: 'Abkhazian (Abkhazia)',
     aa: 'Afar (Afar)',
@@ -654,4 +656,12 @@ export async function getFontFamilyByLocale(locale: LocaleType) {
         return '';
     }
     return langData.fontFamily;
+}
+
+export function checkIsRtl(locale: LocaleType) {
+    const langCode = getLangCode(locale);
+    if (langCode === null) {
+        return false;
+    }
+    return rtlLangs.includes(langCode as any);
 }

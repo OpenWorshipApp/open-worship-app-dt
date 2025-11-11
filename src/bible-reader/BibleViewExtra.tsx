@@ -54,6 +54,8 @@ import {
     useIsAudioAIEnabled,
 } from '../helper/ai/openAIAudioHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
+import { checkIsRtl } from '../lang/langHelpers';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -662,8 +664,7 @@ function RenderRestVerseNumListComp({
         return null;
     }
     return (
-        <span className="app-not-selectable-text">
-            {from ? <br /> : null}
+        <div className="app-not-selectable-text">
             {numList.map((verse, i) => {
                 return (
                     <div
@@ -687,8 +688,7 @@ function RenderRestVerseNumListComp({
                     </div>
                 );
             })}
-            {top === undefined ? null : <br />}
-        </span>
+        </div>
     );
 }
 
@@ -714,6 +714,14 @@ export function BibleViewTextComp({
     const [verseCount] = useAppStateAsync(() => {
         return getVersesCount(bibleKey, target.bookKey, target.chapter);
     }, [bibleKey, target.bookKey, target.chapter]);
+    const [isRtl] = useAppStateAsync(async () => {
+        const bibleInfo = await getBibleInfo(bibleKey);
+        if (bibleInfo === null) {
+            return false;
+        }
+        const isRtl = checkIsRtl(bibleInfo.locale);
+        return isRtl;
+    }, [bibleKey]);
     if (verseList === undefined || verseCount === undefined) {
         return <LoadingComp />;
     }
@@ -748,25 +756,27 @@ export function BibleViewTextComp({
                     return `${verse}-${target.verseStart}`;
                 }}
             />
-            {verseList.map((verseInfo, i) => {
-                const extraVerseInfoList = extraVerseInfoListList
-                    ? extraVerseInfoListList
-                          .map((verseInfoList) => {
-                              return verseInfoList[i];
-                          })
-                          .filter((v) => !!v)
-                    : [];
-                return (
-                    <RenderVerseTextComp
-                        key={verseInfo.localeVerse}
-                        bibleItem={bibleItem}
-                        verseInfo={verseInfo}
-                        extraVerseInfoList={extraVerseInfoList}
-                        nextVerseInfo={verseList[i + 1] ?? null}
-                        index={i}
-                    />
-                );
-            })}
+            <div dir={isRtl ? 'rtl' : undefined}>
+                {verseList.map((verseInfo, i) => {
+                    const extraVerseInfoList = extraVerseInfoListList
+                        ? extraVerseInfoListList
+                              .map((verseInfoList) => {
+                                  return verseInfoList[i];
+                              })
+                              .filter((v) => !!v)
+                        : [];
+                    return (
+                        <RenderVerseTextComp
+                            key={verseInfo.localeVerse}
+                            bibleItem={bibleItem}
+                            verseInfo={verseInfo}
+                            extraVerseInfoList={extraVerseInfoList}
+                            nextVerseInfo={verseList[i + 1] ?? null}
+                            index={i}
+                        />
+                    );
+                })}
+            </div>
             <RenderRestVerseNumListComp
                 from={target.verseEnd + 1}
                 bibleItem={bibleItem}
