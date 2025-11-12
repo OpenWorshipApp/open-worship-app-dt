@@ -152,6 +152,9 @@ function RenderDimEditComp() {
                             const isConfirmed = await showAppConfirm(
                                 '`This will change all Slides',
                                 '`Are you sure to apply this dimension to all slides?',
+                                {
+                                    confirmButtonLabel: 'Yes',
+                                },
                             );
                             if (!isConfirmed) {
                                 return;

@@ -73,9 +73,6 @@ const lang: LanguageDataType = {
     endWord: (text: string) => {
         return text + ' ';
     },
-    checkShouldNewLine: (text: string) => {
-        return text.endsWith('.');
-    },
     extraBibleContextMenuItems: (_bibleItem, _appProvider) => {
         return [];
     },

@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import { CSSProperties, ReactElement } from 'react';
 
 export function closeAlert() {
     popupWidgetManager.openConfirm?.(null);
@@ -12,6 +12,8 @@ export type ConfirmDataType = {
     onConfirm: (isOk: boolean) => void;
     escToCancel?: boolean;
     enterToOk?: boolean;
+    extraStyles?: CSSProperties;
+    confirmButtonLabel?: string;
 };
 
 export type InputDataType = {
@@ -20,6 +22,7 @@ export type InputDataType = {
     onConfirm: (isOk: boolean) => void;
     escToCancel?: boolean;
     enterToOk?: boolean;
+    extraStyles?: CSSProperties;
 };
 
 export type PopupAlertDataType = {
@@ -41,7 +44,12 @@ export const popupWidgetManager: {
 export function showAppConfirm(
     title: string,
     body: string,
-    options?: { escToCancel?: boolean; enterToOk?: boolean },
+    options?: {
+        escToCancel?: boolean;
+        enterToOk?: boolean;
+        extraStyles?: CSSProperties;
+        confirmButtonLabel?: string;
+    },
 ) {
     const openConfirm = popupWidgetManager.openConfirm;
     if (openConfirm === null) {
@@ -62,7 +70,11 @@ export function showAppConfirm(
 export function showAppInput(
     title: string,
     body: ReactElement,
-    options?: { escToCancel?: boolean; enterToOk?: boolean },
+    options?: {
+        escToCancel?: boolean;
+        enterToOk?: boolean;
+        extraStyles?: CSSProperties;
+    },
 ) {
     const openInput = popupWidgetManager.openInput;
     if (openInput === null) {

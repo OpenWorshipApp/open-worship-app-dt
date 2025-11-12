@@ -6,7 +6,8 @@ import { useAppEffectAsync } from '../debuggerHelpers';
 import { toLocaleNumBible } from './serverBibleHelpers2';
 import { freezeObject } from '../helpers';
 
-import bibleJson from './bible.json';
+import kjvBibleJson from './kjvBible.json';
+import kjvNewLiners from './kjvNewLiners.json';
 
 export type BibleStatusType = [string, boolean, string];
 
@@ -15,7 +16,7 @@ export type BookType = {
     chapterCount: number;
 };
 
-export const kjvBibleInfo = bibleJson as {
+export const kjvBibleInfo = kjvBibleJson as {
     bookKeysOrder: string[];
     bookKeysOld: string[];
     books: { [key: string]: BookType };
@@ -23,6 +24,8 @@ export const kjvBibleInfo = bibleJson as {
     oneChapterBooks: string[];
 };
 freezeObject(kjvBibleInfo);
+export const kjvNewLinerInfo = kjvNewLiners;
+freezeObject(kjvNewLinerInfo);
 
 export const toLocaleNumQuick = (n: number, numList: string[]) => {
     if (!numList) {
@@ -196,7 +199,7 @@ async function getBibleInfoWithStatus(
 ): Promise<BibleStatusType> {
     const bibleInfo = await getBibleInfo(bibleKey);
     const isAvailable = bibleInfo !== null;
-    return [bibleKey, isAvailable, `${!isAvailable ? '🚫' : ''}${bibleKey}`];
+    return [bibleKey, isAvailable, `${isAvailable ? '' : '🚫'}${bibleKey}`];
 }
 
 export async function getBibleInfoWithStatusList() {
@@ -275,7 +278,7 @@ export function toBibleFileName(bookKey: string, chapterNum: number) {
 export function fromBibleFileName(fileName: string) {
     // 0001-GEN.1 => { bookKey: 'GEN', chapterNum: 1 }
     const regex = /^(\d+)-([1-3A-Z]+)\.(\d+)$/;
-    const match = fileName.match(regex);
+    const match = regex.exec(fileName);
     if (!match) {
         return null;
     }

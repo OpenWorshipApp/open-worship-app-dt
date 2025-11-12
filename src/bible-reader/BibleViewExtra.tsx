@@ -738,6 +738,7 @@ export function BibleViewTextComp({
         <div
             className={`${BIBLE_VIEW_TEXT_CLASS} app-selectable-text p-1`}
             data-bible-item-id={bibleItem.id}
+            dir={isRtl ? 'rtl' : undefined}
             style={{
                 fontSize: `${fontSize}px`,
                 paddingBottom: '100px',
@@ -756,7 +757,7 @@ export function BibleViewTextComp({
                     return `${verse}-${target.verseStart}`;
                 }}
             />
-            <div dir={isRtl ? 'rtl' : undefined}>
+            <div>
                 {verseList.map((verseInfo, i) => {
                     const extraVerseInfoList = extraVerseInfoListList
                         ? extraVerseInfoListList

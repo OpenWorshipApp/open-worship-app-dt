@@ -12,7 +12,11 @@ import {
 } from '../../lang/langHelpers';
 import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
-import { getKJVChapterCount, kjvBibleInfo } from './serverBibleHelpers';
+import {
+    getKJVChapterCount,
+    kjvBibleInfo,
+    kjvNewLinerInfo,
+} from './serverBibleHelpers';
 import CacheManager from '../../others/CacheManager';
 import {
     BibleMinimalInfoType,
@@ -575,4 +579,13 @@ export async function extractBibleTitle(
         };
         return setCache(data);
     });
+}
+
+export function checkShouldNewLineKJV(
+    bookKey: string,
+    chapter: number,
+    verse: number,
+) {
+    const verseKey = `${bookKey} ${chapter}:${verse}`;
+    return kjvNewLinerInfo.includes(verseKey);
 }

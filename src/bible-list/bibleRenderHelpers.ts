@@ -9,6 +9,7 @@ import {
     getKJVBookKeyValue,
 } from '../helper/bible-helpers/serverBibleHelpers';
 import {
+    checkShouldNewLineKJV,
     getLangFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
@@ -125,9 +126,7 @@ class BibleRenderHelper {
                 const localNum = await toLocaleNumBible(bibleKey, i);
                 let isNewLine = i == 1;
                 if (langData !== null && i > 1) {
-                    isNewLine = langData.checkShouldNewLine(
-                        verses[(i - 1).toString()] ?? '??',
-                    );
+                    isNewLine = checkShouldNewLineKJV(bookKey, chapter, i);
                 }
                 const iString = i.toString();
                 const genTarget = (verse: number) => {

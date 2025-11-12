@@ -29,9 +29,12 @@ function NewLineSettingComp() {
         viewController.shouldNewLine = newValue;
     };
     return (
-        <div className="d-flex mx-1">
+        <div
+            className="d-flex mx-1"
+            title="Break lines following KJV formatting"
+        >
             <label htmlFor="new-line-setting" className="form-label">
-                Should new Line:
+                Use KJV New Lines:
             </label>
             <input
                 className="form-check-input app-caught-hover-pointer"

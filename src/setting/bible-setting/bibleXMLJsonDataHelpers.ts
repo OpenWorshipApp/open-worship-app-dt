@@ -256,6 +256,9 @@ async function guessingBibleKey(bibleXMLElement: Element) {
                 Array.from(takenBibleKeys),
                 getGuessingBibleKeys(bibleXMLElement),
             ),
+            {
+                extraStyles: { maxWidth: '700px' },
+            },
         );
         if (isConfirmInput) {
             bibleKey = newKey;
@@ -265,6 +268,9 @@ async function guessingBibleKey(bibleXMLElement: Element) {
             bibleKey
                 ? `Do you want to continue with key="${bibleKey}"?`
                 : 'Are you sure you want to quite?',
+            {
+                confirmButtonLabel: 'Yes',
+            },
         );
         if (isConfirm) {
             break;

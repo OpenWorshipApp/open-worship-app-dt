@@ -174,6 +174,9 @@ export async function checkForUpdateSilently() {
                 'Update Available',
                 `A new version of the app is available: "${version}". ` +
                     'Would you like to check for update?',
+                {
+                    confirmButtonLabel: 'Yes',
+                },
             );
             if (isOk) {
                 appProvider.messageUtils.sendData('main:app:go-download');
@@ -207,6 +210,9 @@ export async function checkDecidedBibleReaderHomePage() {
     const isOk = await showAppConfirm(
         'The application is started first time',
         'This will set the home page to "📖 Bible Reader🔎"?',
+        {
+            confirmButtonLabel: 'Yes',
+        },
     );
     setDecided();
     if (isOk) {

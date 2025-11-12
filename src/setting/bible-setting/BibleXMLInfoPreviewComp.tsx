@@ -127,6 +127,9 @@ export default function BibleXMLInfoPreviewComp({
                 `Books available is ${booksAvailableLength}, ` +
                     `which is different from KJV (${kjvBooksAvailableLength}). ` +
                     'Are you sure to continue?',
+                {
+                    confirmButtonLabel: 'Yes',
+                },
             );
             if (!isConfirmed) {
                 return;

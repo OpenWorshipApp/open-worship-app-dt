@@ -32,6 +32,9 @@ export default function BibleXMLInfoComp({
         const isConfirmed = await showAppConfirm(
             'Delete Bible XML',
             `Are you sure to delete bible XML "${bibleKey}"?`,
+            {
+                confirmButtonLabel: 'Yes',
+            },
         );
         if (!isConfirmed) {
             return;

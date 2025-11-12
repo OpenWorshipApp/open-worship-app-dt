@@ -80,6 +80,9 @@ export function genTrashContextMenu(
                     'Moving File to Trash',
                     'Are you sure you want to move ' +
                         `"${fileSource.fullName}" to trash?`,
+                    {
+                        confirmButtonLabel: 'Yes',
+                    },
                 );
                 if (isOk) {
                     const fileSource = FileSource.getInstance(filePath);

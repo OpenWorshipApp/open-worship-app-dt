@@ -275,7 +275,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         setSetting(this.toSettingName('bible-items-color-note'), json);
     }
     get shouldNewLine() {
-        return getSetting(this.toSettingName('-view-new-line')) === 'true';
+        return getSetting(this.toSettingName('-view-new-line')) !== 'false';
     }
     set shouldNewLine(shouldNewLine: boolean) {
         setSetting(

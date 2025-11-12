@@ -6,59 +6,63 @@ import { closeAlert, ConfirmDataType } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 
 export default function ConfirmPopupComp({
-    data,
+    confirmData,
 }: Readonly<{
-    data: ConfirmDataType;
+    confirmData: ConfirmDataType;
 }>) {
     const handleClosing = () => {
-        data.onConfirm(false);
+        confirmData.onConfirm(false);
         closeAlert();
     };
     const handleOkClicking = () => {
-        data.onConfirm(true);
+        confirmData.onConfirm(true);
         closeAlert();
     };
     useKeyboardRegistering(
         [{ key: 'Escape' }],
         (event) => {
-            if (data.escToCancel ?? true) {
+            if (confirmData.escToCancel ?? true) {
                 event.preventDefault();
                 handleClosing();
             }
         },
-        [data],
+        [confirmData],
     );
     useKeyboardRegistering(
         [{ key: 'Enter' }],
         () => {
-            if (data.enterToOk ?? true) {
+            if (confirmData.enterToOk ?? true) {
                 handleOkClicking();
             }
         },
-        [data],
+        [confirmData],
     );
     return (
         <PrimitiveModalComp>
-            <div id="app-confirm-popup" className="shadow card">
+            <div
+                id="app-confirm-popup"
+                className="shadow card"
+                style={confirmData.extraStyles}
+            >
                 <HeaderAlertPopupComp
                     header={
-                        <div className="app-ellipsis" title={data.title}>
+                        <div className="app-ellipsis" title={confirmData.title}>
                             <i className="bi bi-exclamation-circle" />
-                            {data.title}
+                            {confirmData.title}
                         </div>
                     }
                     onClose={handleClosing}
                 />
                 <div className="card-body d-flex flex-column">
-                    {typeof data.body === 'string' ? (
+                    {typeof confirmData.body === 'string' ? (
                         <div
                             className="p-2 flex-fill app-selectable-text"
                             dangerouslySetInnerHTML={{
-                                __html: data.body,
+                                __html: confirmData.body,
                             }}
                         />
                     ) : (
-                        <>{data.body}</>
+                        <>{confirmData.body}</>
                     )}
                     <div className="btn-group float-end">
                         <button
@@ -73,7 +77,7 @@ export default function ConfirmPopupComp({
                             type="button"
                             onClick={handleOkClicking}
                         >
-                            Ok
+                            {confirmData.confirmButtonLabel ?? 'OK'}
                         </button>
                     </div>
                 </div>

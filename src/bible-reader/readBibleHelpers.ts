@@ -24,14 +24,16 @@ type DragDropEventType = DragEvent<HTMLDivElement>;
 
 export function genDraggingClass(event: DragDropEventType) {
     const { nativeEvent } = event;
-    const { offsetX, offsetY } = nativeEvent;
+    const { x, y } = nativeEvent;
     const rect = (
         event.currentTarget as HTMLDivElement
     ).getBoundingClientRect();
-    const isLeft = offsetX < rect.width / 3;
-    const isRight = offsetX > (rect.width * 2) / 3;
-    const isTop = offsetY < rect.height / 3;
-    const isBottom = offsetY > (rect.height * 2) / 3;
+    const relativeX = x - rect.left;
+    const relativeY = y - rect.top;
+    const isLeft = relativeX < rect.width / 4;
+    const isRight = relativeX > (rect.width * 3) / 4;
+    const isTop = relativeY < rect.height / 4;
+    const isBottom = relativeY > (rect.height * 3) / 4;
     let suffix = DraggingPosEnum.CENTER.toString();
     if (isLeft) {
         suffix += DraggingPosEnum.LEFT;

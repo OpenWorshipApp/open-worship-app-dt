@@ -458,7 +458,6 @@ export type LanguageDataType = {
     stopWords: string[];
     trimText: (text: string) => string;
     endWord: (text: string) => string;
-    checkShouldNewLine: (text: string) => boolean;
     extraBibleContextMenuItems: (
         bibleItem: AnyObjectType,
         appProvider: AppProviderType,
