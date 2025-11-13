@@ -130,7 +130,12 @@ class BibleRenderHelper {
                 const localNum = await toLocaleNumBible(bibleKey, i);
                 let isNewLine = i == 1;
                 if (langData !== null && i > 1) {
-                    isNewLine = checkShouldNewLineKJV(bookKey, chapter, i);
+                    isNewLine = await checkShouldNewLineKJV(
+                        bibleKey,
+                        bookKey,
+                        chapter,
+                        i,
+                    );
                 }
                 const iString = i.toString();
                 const genTarget = (verse: number) => {

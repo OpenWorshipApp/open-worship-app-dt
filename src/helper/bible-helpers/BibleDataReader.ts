@@ -28,6 +28,7 @@ export type BibleInfoType = Readonly<{
     booksAvailable: string[];
     numList?: string[];
     version: number;
+    newLines?: string[];
 }>;
 export type BookList = { [key: string]: string };
 export type BibleVerseList = { [key: string]: string };

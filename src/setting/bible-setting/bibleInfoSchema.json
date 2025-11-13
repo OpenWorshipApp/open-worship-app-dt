@@ -867,6 +867,15 @@
                 ]
             },
             "uniqueItems": true
+        },
+        "newLines": {
+            "type": "array",
+            "description": "List of newline characters used in the Bible translation",
+            "items": {
+                "type": "string",
+                "examples": ["MAT 7:6", "MAT 7:13"]
+            },
+            "uniqueItems": true
         }
     },
     "required": [

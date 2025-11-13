@@ -451,11 +451,7 @@ function RenderVerseTextDetailListComp({
             ) : null}
             {isExtraVerses ? (
                 <div className="text d-flex" data-bible-key={bibleKey}>
-                    <div
-                        className={
-                            'flex-fill' + (isRtl ? ' rtl' : '')
-                        }
-                    >
+                    <div className={'flex-fill' + (isRtl ? ' rtl' : '')}>
                         {text}
                     </div>
                 </div>

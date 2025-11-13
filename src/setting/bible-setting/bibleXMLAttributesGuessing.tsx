@@ -435,4 +435,9 @@ export const xmlFormatExample = `<?xml version="1.0" encoding="UTF-8"?>
             </verse>
         </chapter>
     </book>
+    // Optional section for defining new lines in verses
+    <new-lines>
+        <item>MAT 7:6</item>
+        <item>MAT 7:13</item>
+    </new-lines>
 </bible>`;

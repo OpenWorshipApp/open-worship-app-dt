@@ -215,11 +215,11 @@ export async function getBibleXMLInfo(bibleKey: string) {
     if (xmlText === null) {
         return null;
     }
-    const bibleXMLElement = xmlTextToBibleElement(xmlText);
-    if (!bibleXMLElement) {
+    const xmlElementBible = xmlTextToBibleElement(xmlText);
+    if (!xmlElementBible) {
         return null;
     }
-    return await getBibleInfoJson(bibleXMLElement);
+    return await getBibleInfoJson(xmlElementBible);
 }
 
 export async function getBibleXMLCacheInfoList() {

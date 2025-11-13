@@ -1,6 +1,11 @@
 import { useState, useCallback } from 'react';
 
-import { bookToKey, getBibleInfo, getVerses } from './bibleInfoHelpers';
+import {
+    bookToKey,
+    getBibleInfo,
+    getVerses,
+    toVerseKey,
+} from './bibleInfoHelpers';
 import {
     fromLocaleNum,
     fromStringNum,
@@ -581,11 +586,16 @@ export async function extractBibleTitle(
     });
 }
 
-export function checkShouldNewLineKJV(
+export async function checkShouldNewLineKJV(
+    bibleKey: string,
     bookKey: string,
     chapter: number,
     verse: number,
 ) {
-    const verseKey = `${bookKey} ${chapter}:${verse}`;
+    const bibleInfo = await getBibleInfo(bibleKey);
+    const verseKey = toVerseKey(bookKey, chapter, verse);
+    if (bibleInfo?.newLines?.length) {
+        return bibleInfo.newLines.includes(verseKey);
+    }
     return kjvNewLinerInfo.includes(verseKey);
 }
