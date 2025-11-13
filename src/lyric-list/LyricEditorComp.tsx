@@ -39,7 +39,7 @@ export default function LyricEditorComp() {
                     },
                 });
             },
-            onContentChange: (content) => {
+            onContentChange: (_, content) => {
                 selectedLyric.setContent(content);
             },
         });

@@ -11,7 +11,7 @@ import { useAppEffect } from './debuggerHelpers';
 import { genTimeoutAttempt } from './helpers';
 import { checkIsDarkMode } from '../initHelpers';
 
-self.MonacoEnvironment = {
+globalThis.MonacoEnvironment = {
     getWorker(_, label) {
         if (label === 'json') {
             return new jsonWorker();
@@ -29,7 +29,7 @@ self.MonacoEnvironment = {
     },
 };
 
-self.MonacoEnvironment = {
+globalThis.MonacoEnvironment = {
     getWorker(_, label) {
         if (label === 'json') {
             return new jsonWorker();
@@ -54,6 +54,7 @@ async function getCopiedText() {
     return null;
 }
 export type EditorStoreType = {
+    systemContent: string;
     editorInstance: editor.IStandaloneCodeEditor;
     div: HTMLDivElement;
     toggleIsWrapText: () => void;
@@ -91,6 +92,7 @@ function createEditor(
     });
     onInit?.(editorInstance);
     const editorStore: EditorStoreType = {
+        systemContent: '',
         editorInstance,
         div,
         toggleIsWrapText: () => {},
@@ -162,7 +164,7 @@ export function useInitMonacoEditor({
     options: editor.IStandaloneEditorConstructionOptions;
     onInit?: (editorInstance: editor.IStandaloneCodeEditor) => void;
     onStore?: (editorStore: EditorStoreType) => void;
-    onContentChange?: (content: string) => void;
+    onContentChange?: (oldContent: string, newContent: string) => void;
 }) {
     const [isWrapText, setIsWrapText] = useStateSettingBoolean(
         settingName,
@@ -187,7 +189,7 @@ export function useInitMonacoEditor({
         if (onContentChange !== undefined) {
             editorInstance.onDidChangeModelContent(async () => {
                 const editorContent = editorInstance.getValue();
-                onContentChange(editorContent);
+                onContentChange(editorStore.systemContent, editorContent);
             });
         }
         return newEditorStore;
@@ -211,6 +213,10 @@ export function useInitMonacoEditor({
         isWrapText,
         setIsWrapText,
         editorStore,
+        setNewValue: (newContent: string) => {
+            editorStore.replaceValue(newContent);
+            editorStore.systemContent = newContent;
+        },
         onContainerInit: (container: HTMLElement | null) => {
             if (container === null) {
                 return;
@@ -224,7 +230,7 @@ export function useInitMonacoEditor({
             container.appendChild(editorStore.div);
             return () => {
                 resizeObserver.disconnect();
-                container.removeChild(editorStore.div);
+                editorStore.div.remove();
             };
         },
     };

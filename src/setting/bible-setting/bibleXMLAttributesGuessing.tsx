@@ -194,7 +194,7 @@ function BibleBooksMapXMLInputComp({
             lineNumbersMinChars: 25,
             lineNumbers: genMonacoBibleLineNumber,
         },
-        onContentChange: (content) => {
+        onContentChange: (_, content) => {
             onChange(content);
         },
     });

@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { editor, languages } from 'monaco-editor';
+import { useState } from 'react';
+import { languages } from 'monaco-editor';
 import { compileSchema, SchemaNode } from 'json-schema-library';
 
 import LoadingComp from '../../others/LoadingComp';
@@ -17,6 +17,7 @@ import bibleInfoSchemaJson from './bibleInfoSchema.json';
 import { AnyObjectType } from '../../helper/typeHelpers';
 import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
+import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
 
 const bibleInfoSchema: SchemaNode = compileSchema(bibleInfoSchemaJson);
 languages.json.jsonDefaults.setDiagnosticsOptions({
@@ -35,15 +36,87 @@ languages.json.jsonDefaults.setDiagnosticsOptions({
     schemaValidation: 'error',
 });
 
-function getEditorBibleInfo(
-    editorInstance: editor.IStandaloneCodeEditor,
-): BibleJsonInfoType {
-    const oldBibleInfo = editorInstance.getValue();
+function getEditorBibleInfo(content: string): BibleJsonInfoType {
     try {
-        return JSON.parse(oldBibleInfo) as BibleJsonInfoType;
+        return JSON.parse(content) as BibleJsonInfoType;
     } catch (_error) {
         return {} as any;
     }
+}
+
+async function handleSaving(
+    canSave: boolean,
+    newBibleInfo: BibleJsonInfoType,
+    loadBibleKeys: () => void,
+) {
+    const booksAvailableLength = newBibleInfo.booksAvailable.length;
+    const kjvBooksAvailableLength = kjvBibleInfo.bookKeysOrder.length;
+
+    if (booksAvailableLength !== kjvBooksAvailableLength) {
+        const isConfirmed = await showAppConfirm(
+            'Confirm Book Count Mismatch',
+            `Books available is ${booksAvailableLength}, ` +
+                `which is different from KJV (${kjvBooksAvailableLength}). ` +
+                'Are you sure to continue?',
+            {
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (!isConfirmed) {
+            return;
+        }
+    }
+    if (canSave) {
+        updateBibleXMLInfo(newBibleInfo);
+        loadBibleKeys();
+    }
+}
+
+let setCanSave1: (canSave: boolean) => void = () => {};
+function validateCanSave(oldContent: string, newContent: string) {
+    const oldBibleInfo = getEditorBibleInfo(oldContent);
+    const newBibleInfo = getEditorBibleInfo(newContent);
+    const { valid, errors } = bibleInfoSchema.validate(newBibleInfo);
+    const isNoError = valid && errors.length === 0;
+    const isChanged =
+        oldBibleInfo !== null &&
+        checkAreObjectsEqual(oldBibleInfo, newBibleInfo) === false;
+    setCanSave1(isNoError && isChanged);
+    return { canSave: isNoError, newBibleInfo };
+}
+
+function RenderSaveButton({
+    editorStore,
+    loadBibleKeys,
+}: Readonly<{
+    editorStore: ReturnType<typeof useInitMonacoEditor>['editorStore'];
+    loadBibleKeys: () => void;
+}>) {
+    const [canSave, setCanSave] = useState(false);
+    useAppEffect(() => {
+        setCanSave1 = setCanSave;
+        return () => {
+            setCanSave1 = () => {};
+        };
+    }, []);
+    return (
+        <button
+            className="btn btn-sm btn-success m-1"
+            disabled={!canSave}
+            style={{
+                position: 'absolute',
+            }}
+            onClick={() => {
+                const { canSave, newBibleInfo } = validateCanSave(
+                    editorStore.systemContent,
+                    editorStore.editorInstance.getValue(),
+                );
+                handleSaving(canSave, newBibleInfo, loadBibleKeys);
+            }}
+        >
+            `Save
+        </button>
+    );
 }
 
 export default function BibleXMLInfoPreviewComp({
@@ -54,20 +127,7 @@ export default function BibleXMLInfoPreviewComp({
     loadBibleKeys: () => void;
 }>) {
     const { bibleInfo, isPending } = useBibleXMLInfo(bibleKey);
-    const saveButtonRef = useRef<HTMLButtonElement>(null);
-    const setCanSave = (canSave: boolean) => {
-        if (saveButtonRef.current) {
-            saveButtonRef.current.disabled = !canSave;
-        }
-    };
-    const validateCanSave = () => {
-        const newBibleInfo = getEditorBibleInfo(editorStore.editorInstance);
-        const { valid, errors } = bibleInfoSchema.validate(newBibleInfo);
-        const canSave = valid && errors.length === 0;
-        setCanSave(canSave);
-        return { canSave, newBibleInfo };
-    };
-    const { editorStore, onContainerInit } = useInitMonacoEditor({
+    const store = useInitMonacoEditor({
         settingName: 'bible-xml-wrap-text',
         options: {
             value: '',
@@ -81,11 +141,13 @@ export default function BibleXMLInfoPreviewComp({
             addMonacoBibleInfoActions(
                 editorStore,
                 () => {
-                    return getEditorBibleInfo(editorStore.editorInstance);
+                    return getEditorBibleInfo(
+                        editorStore.editorInstance.getValue(),
+                    );
                 },
                 (partialBibleInfo: AnyObjectType) => {
                     const oldBibleInfo = getEditorBibleInfo(
-                        editorStore.editorInstance,
+                        editorStore.editorInstance.getValue(),
                     );
                     if (oldBibleInfo === null) {
                         return;
@@ -100,15 +162,15 @@ export default function BibleXMLInfoPreviewComp({
         },
         onContentChange: validateCanSave,
     });
-    const applyBibleInfo = (newBibleInfo: BibleJsonInfoType) => {
-        const content = JSON.stringify(newBibleInfo, null, 2);
-        editorStore.replaceValue(content);
-        validateCanSave();
+    const { editorStore, onContainerInit } = store;
+    const applyBibleInfo = (newBibleInfo: BibleJsonInfoType | null) => {
+        const content =
+            newBibleInfo === null ? '' : JSON.stringify(newBibleInfo, null, 2);
+        store.setNewValue(content);
+        validateCanSave(content, content);
     };
     useAppEffect(() => {
-        const content =
-            bibleInfo === null ? '' : JSON.stringify(bibleInfo, null, 2);
-        editorStore.replaceValue(content);
+        applyBibleInfo(bibleInfo);
     }, [bibleInfo]);
     if (isPending) {
         return <LoadingComp />;
@@ -116,30 +178,7 @@ export default function BibleXMLInfoPreviewComp({
     if (bibleInfo === null) {
         return null;
     }
-    const handleSaving = async () => {
-        const { canSave, newBibleInfo } = validateCanSave();
-        const booksAvailableLength = newBibleInfo.booksAvailable.length;
-        const kjvBooksAvailableLength = kjvBibleInfo.bookKeysOrder.length;
 
-        if (booksAvailableLength !== kjvBooksAvailableLength) {
-            const isConfirmed = await showAppConfirm(
-                'Confirm Book Count Mismatch',
-                `Books available is ${booksAvailableLength}, ` +
-                    `which is different from KJV (${kjvBooksAvailableLength}). ` +
-                    'Are you sure to continue?',
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            );
-            if (!isConfirmed) {
-                return;
-            }
-        }
-        if (canSave) {
-            updateBibleXMLInfo(newBibleInfo);
-            loadBibleKeys();
-        }
-    };
     return (
         <div className="w-100 card app-border-white-round app-overflow-hidden">
             <div
@@ -153,16 +192,10 @@ export default function BibleXMLInfoPreviewComp({
                     height: '35px',
                 }}
             >
-                <button
-                    ref={saveButtonRef}
-                    className="btn btn-sm btn-success m-1"
-                    style={{
-                        position: 'absolute',
-                    }}
-                    onClick={handleSaving}
-                >
-                    `Save
-                </button>
+                <RenderSaveButton
+                    editorStore={editorStore}
+                    loadBibleKeys={loadBibleKeys}
+                />
             </div>
         </div>
     );
