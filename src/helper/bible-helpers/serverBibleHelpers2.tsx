@@ -586,7 +586,7 @@ export async function extractBibleTitle(
     });
 }
 
-export async function checkShouldNewLineKJV(
+export async function checkShouldNewLine(
     bibleKey: string,
     bookKey: string,
     chapter: number,

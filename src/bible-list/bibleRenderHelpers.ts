@@ -11,7 +11,7 @@ import {
     getKJVBookKeyValue,
 } from '../helper/bible-helpers/serverBibleHelpers';
 import {
-    checkShouldNewLineKJV,
+    checkShouldNewLine,
     getLangFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
@@ -106,7 +106,11 @@ class BibleRenderHelper {
                 verseStart === verseEnd ? '' : '-' + verseEndLocale
             }`;
             const ensuredBookKey = await this.toLocaleBook(bibleKey, bookKey);
-            const title = `${ensuredBookKey} ${chapterLocale}:${txtV}`;
+            const title = toVerseKey(
+                ensuredBookKey,
+                chapterLocale ?? '-1',
+                txtV,
+            );
             await titleCache.set(bibleVersesKey, title);
             return title;
         });
@@ -130,7 +134,7 @@ class BibleRenderHelper {
                 const localNum = await toLocaleNumBible(bibleKey, i);
                 let isNewLine = i == 1;
                 if (langData !== null && i > 1) {
-                    isNewLine = await checkShouldNewLineKJV(
+                    isNewLine = await checkShouldNewLine(
                         bibleKey,
                         bookKey,
                         chapter,

@@ -162,5 +162,6 @@ export function toVerseKey(
     verseEnd?: string | number,
 ) {
     verseEnd ??= verseStart;
-    return `${bookKey} ${chapter}:${verseStart}${verseEnd === verseStart ? '' : '-' + verseEnd}`;
+    verseEnd = verseEnd === verseStart ? '' : '-' + verseEnd;
+    return `${bookKey} ${chapter}:${verseStart}${verseEnd}`;
 }
