@@ -2,6 +2,7 @@ import {
     keyToBook,
     getVerses,
     getBibleInfo,
+    getBibleInfoIsRtl,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     kjvBibleInfo,
@@ -35,6 +36,7 @@ export type CompiledVerseType = {
     bibleVersesKey: string;
     isFirst: boolean;
     isLast: boolean;
+    isRtl: boolean;
 };
 
 const titleCache = new CacheManager<string>(60); // 1 minute
@@ -110,6 +112,7 @@ class BibleRenderHelper {
     }
 
     async toVerseTextList(bibleKey: string, target: BibleTargetType) {
+        const isRtl = await getBibleInfoIsRtl(bibleKey);
         const bibleVersesKey = bibleRenderHelper.toBibleVersesKey(
             bibleKey,
             target,
@@ -158,6 +161,7 @@ class BibleRenderHelper {
                     bibleVersesKey,
                     isFirst,
                     isLast,
+                    isRtl,
                 });
             }
             await compiledVerseListCache.set(

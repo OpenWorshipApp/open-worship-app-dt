@@ -64,9 +64,17 @@
 
     .verse-text {
       &.extra-verses {
-        span::before {
-          content: '.:';
-          opacity: 0.1;
+        .text {
+          &::before {
+            content: '.: ';
+            opacity: 0.1;
+          }
+          div {
+            &.rtl {
+              direction: rtl;
+            }
+            display: inline;
+          }
         }
       }
       .verse-audio {

@@ -54,8 +54,7 @@ import {
     useIsAudioAIEnabled,
 } from '../helper/ai/openAIAudioHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
-import { checkIsRtl } from '../lang/langHelpers';
+import { getBibleInfoIsRtl } from '../helper/bible-helpers/bibleInfoHelpers';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -315,8 +314,7 @@ function AudioPlayerComp({
                 if (
                     appProvider.isPageReader &&
                     openAISetting.isAutoPlay &&
-                    element !== null &&
-                    element.checkVisibility()
+                    element?.checkVisibility()
                 ) {
                     element.play();
                     element.focus();
@@ -399,6 +397,7 @@ function RenderVerseTextDetailListComp({
     verseTextRef,
     audioSrcMap,
     refreshAudio,
+    isExtraVerses,
 }: Readonly<{
     bibleItem: BibleItem;
     verseInfo: CompiledVerseType;
@@ -407,6 +406,7 @@ function RenderVerseTextDetailListComp({
     verseTextRef: RefObject<HTMLDivElement | null>;
     audioSrcMap: { [key: string]: string | undefined | null };
     refreshAudio: () => void;
+    isExtraVerses: boolean;
 }>) {
     const { isAudioEnabled } = useIsAudioAIEnabled(bibleItem);
     const bibleItemViewController = useBibleItemsViewControllerContext();
@@ -438,9 +438,8 @@ function RenderVerseTextDetailListComp({
             nextVerseInfo.kjvBibleVersesKey,
         );
     };
-    return verseInfoList.map(({ bibleKey, text, bibleVersesKey }, i) => (
+    return verseInfoList.map(({ bibleKey, text, bibleVersesKey, isRtl }) => (
         <Fragment key={bibleKey}>
-            {i > 0 ? <br /> : null}
             {isAudioEnabled &&
             Object.keys(audioSrcMap).includes(bibleVersesKey) ? (
                 <AudioPlayerComp
@@ -450,7 +449,19 @@ function RenderVerseTextDetailListComp({
                     refreshAudio={refreshAudio}
                 />
             ) : null}
-            <span data-bible-key={bibleKey}>{text}</span>
+            {isExtraVerses ? (
+                <div className="text d-flex" data-bible-key={bibleKey}>
+                    <div
+                        className={
+                            'flex-fill' + (isRtl ? ' rtl' : '')
+                        }
+                    >
+                        {text}
+                    </div>
+                </div>
+            ) : (
+                <span data-bible-key={bibleKey}>{text}</span>
+            )}
         </Fragment>
     ));
 }
@@ -558,6 +569,7 @@ function RenderVerseTextDetailComp({
                 verseTextRef={verseTextRef}
                 audioSrcMap={audioSrcMap}
                 refreshAudio={handleAudioRefreshing}
+                isExtraVerses={isExtraVerses}
             />
         </div>
     );
@@ -579,13 +591,14 @@ function RenderVerseTextComp({
     const viewController = useBibleItemsViewControllerContext();
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
+    const isNewLine =
+        viewController.shouldNewLine &&
+        verseInfo.isNewLine &&
+        index > 0 &&
+        !isExtraVerses;
     return (
         <>
-            {viewController.shouldNewLine &&
-            verseInfo.isNewLine &&
-            index > 0 ? (
-                <br />
-            ) : null}
+            {isNewLine ? <br /> : null}
             <div
                 className={
                     'verse-number app-caught-hover-pointer' +
@@ -714,13 +727,8 @@ export function BibleViewTextComp({
     const [verseCount] = useAppStateAsync(() => {
         return getVersesCount(bibleKey, target.bookKey, target.chapter);
     }, [bibleKey, target.bookKey, target.chapter]);
-    const [isRtl] = useAppStateAsync(async () => {
-        const bibleInfo = await getBibleInfo(bibleKey);
-        if (bibleInfo === null) {
-            return false;
-        }
-        const isRtl = checkIsRtl(bibleInfo.locale);
-        return isRtl;
+    const [isRtl] = useAppStateAsync(() => {
+        return getBibleInfoIsRtl(bibleKey);
     }, [bibleKey]);
     if (verseList === undefined || verseCount === undefined) {
         return <LoadingComp />;

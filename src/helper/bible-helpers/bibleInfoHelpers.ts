@@ -17,6 +17,7 @@ import {
 import CacheManager from '../../others/CacheManager';
 import { freezeObject } from '../helpers';
 import { invalidateBibleXMLCachedFolderByKey } from '../../setting/bible-setting/bibleXMLHelpers';
+import { checkIsRtl } from '../../lang/langHelpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
     const info = await getBibleInfo(bibleKey);
@@ -143,4 +144,13 @@ export async function getBibleInfo(
         await cache.set(bibleKey, info);
     }
     return info;
+}
+
+export async function getBibleInfoIsRtl(bibleKey: string) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
+        return false;
+    }
+    const isRtl = checkIsRtl(bibleInfo.locale);
+    return isRtl;
 }
