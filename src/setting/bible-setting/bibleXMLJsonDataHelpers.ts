@@ -135,6 +135,7 @@ export type BibleJsonInfoType = {
     booksAvailable: string[];
     numbersMap: { [key: string]: string };
     newLines: string[];
+    newLinesTitleMap: { [key: string]: string };
 };
 
 export type BibleXMLJsonType = {
@@ -334,6 +335,52 @@ function setNewLines(
     }
 }
 
+function getNewLinesTitleMap(xmlElementBible: Element) {
+    const result = guessElement(xmlElementBible, [
+        'new-lines-title-map',
+        'newlinestitlemap',
+        'new_lines_title_map',
+    ]);
+    if (!result?.length) {
+        return {};
+    }
+    const xmlElementNewLines = result[0];
+    const itemElements = Array.from(
+        guessElement(xmlElementNewLines, ['item']) ?? [],
+    );
+    const newLinesTitleMap: { [key: string]: string } = {};
+    for (const xmlElement of itemElements) {
+        if (xmlElement.textContent) {
+            const key = xmlElement.getAttribute('key');
+            if (!key) {
+                continue;
+            }
+            const text = xmlElement.textContent.trim();
+            if (!text) {
+                continue;
+            }
+            newLinesTitleMap[key] = text;
+        }
+    }
+    return newLinesTitleMap;
+}
+function setNewLinesTitleMap(
+    xmlDoc: Document,
+    xmlElementBible: Element,
+    newLinesTitleMap: { [key: string]: string },
+) {
+    const xmlElementNewLinesTitleMap = xmlDoc.createElement(
+        'new-lines-title-map',
+    );
+    xmlElementBible.appendChild(xmlElementNewLinesTitleMap);
+    for (const [key, value] of Object.entries(newLinesTitleMap)) {
+        const xmlElementItem = xmlDoc.createElement('item');
+        xmlElementItem.setAttribute('key', key);
+        xmlElementItem.textContent = value;
+        xmlElementNewLinesTitleMap.appendChild(xmlElementItem);
+    }
+}
+
 export async function getBibleInfoJson(xmlElementBible: Element) {
     const xmlElementMap = guessElement(xmlElementBible, tagNamesMap.map)?.[0];
     const numberKeyMap = getBibleMap(
@@ -361,7 +408,8 @@ export async function getBibleInfoJson(xmlElementBible: Element) {
         guessElement(xmlElementBible, tagNamesMap.book) ?? [],
     );
     const booksAvailable = getAvailableBooks(books);
-    const newLines: string[] = getNewLines(xmlElementBible);
+    const newLines = getNewLines(xmlElementBible);
+    const newLinesTitleMap = getNewLinesTitleMap(xmlElementBible);
     return {
         title:
             guessValue(xmlElementBible, attributesMap.title) ?? 'Unknown Title',
@@ -384,6 +432,7 @@ export async function getBibleInfoJson(xmlElementBible: Element) {
         booksMap: bookKeyMap,
         booksAvailable,
         newLines,
+        newLinesTitleMap,
     } as BibleJsonInfoType;
 }
 
@@ -436,7 +485,8 @@ function getBibleBooksJson(xmlElementBible: Element) {
 }
 
 export function jsonToXMLText(jsonData: BibleXMLJsonType) {
-    const { numbersMap, booksMap, newLines, ...info } = jsonData.info;
+    const { numbersMap, booksMap, newLines, newLinesTitleMap, ...info } =
+        jsonData.info;
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(
         '<?xml version="1.0" encoding="UTF-8"?><bible></bible>',
@@ -468,6 +518,7 @@ export function jsonToXMLText(jsonData: BibleXMLJsonType) {
     }
     xmlElementBible.appendChild(xmlElementMap);
     setNewLines(xmlDoc, xmlElementBible, newLines);
+    setNewLinesTitleMap(xmlDoc, xmlElementBible, newLinesTitleMap);
     const books = jsonData.books;
     for (const [bookKey, book] of Object.entries(books)) {
         const xmlElementBook = xmlDoc.createElement(tagNamesMap.book[0]);

@@ -29,6 +29,7 @@ export type BibleInfoType = Readonly<{
     numList?: string[];
     version: number;
     newLines?: string[];
+    newLinesTitleMap?: { [key: string]: string };
 }>;
 export type BookList = { [key: string]: string };
 export type BibleVerseList = { [key: string]: string };

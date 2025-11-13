@@ -165,7 +165,7 @@ export default function BibleXMLInfoPreviewComp({
     const { editorStore, onContainerInit } = store;
     const applyBibleInfo = (newBibleInfo: BibleJsonInfoType | null) => {
         const content =
-            newBibleInfo === null ? '' : JSON.stringify(newBibleInfo, null, 2);
+            newBibleInfo === null ? '' : JSON.stringify(newBibleInfo, null, 4);
         store.setNewValue(content);
         validateCanSave(content, content);
     };

@@ -440,4 +440,9 @@ export const xmlFormatExample = `<?xml version="1.0" encoding="UTF-8"?>
         <item>MAT 7:6</item>
         <item>MAT 7:13</item>
     </new-lines>
+    // Optional section for defining titles for new lines
+    <new-lines-title-map>
+        <item key="MAT 7:6">Some title for MAT 7:6</item>
+        <item key="MAT 7:13">Some title for MAT 7:13</item>
+    </new-lines-title-map>
 </bible>`;

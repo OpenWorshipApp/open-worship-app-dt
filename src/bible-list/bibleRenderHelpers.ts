@@ -13,6 +13,7 @@ import {
 import {
     checkShouldNewLine,
     getLangFromBibleKey,
+    getNewLineTitle,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
 import CacheManager from '../others/CacheManager';
@@ -30,6 +31,7 @@ export type CompiledVerseType = {
     localeVerse: string;
     text: string;
     isNewLine: boolean;
+    newLineTitle: string | null;
     bibleKey: string;
     bookKey: string;
     chapter: number;
@@ -141,6 +143,15 @@ class BibleRenderHelper {
                         i,
                     );
                 }
+                let newLineTitle = null;
+                if (isNewLine) {
+                    newLineTitle = await getNewLineTitle(
+                        bibleKey,
+                        bookKey,
+                        chapter,
+                        i,
+                    );
+                }
                 const iString = i.toString();
                 const genTarget = (verse: number) => {
                     return {
@@ -164,6 +175,7 @@ class BibleRenderHelper {
                     localeVerse: localNum ?? iString,
                     text: verses[iString] ?? '??',
                     isNewLine,
+                    newLineTitle,
                     bibleKey,
                     bookKey,
                     chapter,

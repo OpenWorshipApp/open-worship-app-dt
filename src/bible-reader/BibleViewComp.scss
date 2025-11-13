@@ -38,6 +38,13 @@
   }
 
   .bible-view-text {
+    .new-line-title {
+      display: inline-block;
+      font-weight: bold;
+      text-decoration: underline;
+      padding: 0.6em 0.4em;
+      font-size: 1.1em;
+    }
     .verse-number,
     .verse-text {
       display: inline;
@@ -64,6 +71,10 @@
 
     .verse-text {
       &.extra-verses {
+        display: inline-block;
+        &.selected {
+          background: rgba(220, 0, 198, 0.2) !important;
+        }
         .text {
           &::before {
             content: '.: ';

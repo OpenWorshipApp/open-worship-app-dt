@@ -599,3 +599,17 @@ export async function checkShouldNewLine(
     }
     return kjvNewLinerInfo.includes(verseKey);
 }
+
+export async function getNewLineTitle(
+    bibleKey: string,
+    bookKey: string,
+    chapter: number,
+    verse: number,
+) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (!bibleInfo?.newLinesTitleMap) {
+        return null;
+    }
+    const verseKey = toVerseKey(bookKey, chapter, verse);
+    return bibleInfo.newLinesTitleMap[verseKey] || null;
+}

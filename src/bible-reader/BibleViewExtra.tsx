@@ -594,7 +594,19 @@ function RenderVerseTextComp({
         !isExtraVerses;
     return (
         <>
-            {isNewLine ? <br /> : null}
+            {isNewLine ? (
+                <>
+                    {verseInfo.newLineTitle === null ? null : (
+                        <>
+                            <br />
+                            <div className="w-100 new-line-title">
+                                {verseInfo.newLineTitle}
+                            </div>
+                        </>
+                    )}
+                    <br />
+                </>
+            ) : null}
             <div
                 className={
                     'verse-number app-caught-hover-pointer' +
@@ -738,11 +750,12 @@ export function BibleViewTextComp({
             </div>
         );
     }
+    const isExtraVerses = extraBibleKeys.length > 0;
     return (
         <div
             className={`${BIBLE_VIEW_TEXT_CLASS} app-selectable-text p-1`}
             data-bible-item-id={bibleItem.id}
-            dir={isRtl ? 'rtl' : undefined}
+            dir={isRtl && !isExtraVerses ? 'rtl' : undefined}
             style={{
                 fontSize: `${fontSize}px`,
                 paddingBottom: '100px',

@@ -876,6 +876,14 @@
                 "examples": ["MAT 7:6", "MAT 7:13"]
             },
             "uniqueItems": true
+        },
+        "newLinesTitleMap": {
+            "type": "object",
+            "description": "Mapping of newline identifiers to their titles",
+            "additionalProperties": {
+                "type": "string",
+                "examples": ["Sermon on the Mount", "The Narrow and Wide Gates"]
+            }
         }
     },
     "required": [

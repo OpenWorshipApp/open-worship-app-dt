@@ -706,7 +706,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         const containerDoms = document.querySelectorAll(
             `.${BIBLE_VIEW_TEXT_CLASS}[data-bible-item-id="${bibleItemId}"]`,
         );
-        return Array.from(containerDoms).reduce(
+        const elements = Array.from(containerDoms).reduce(
             (elements: T[], containerDom: any) => {
                 const dataString = kjvVerseKey
                     ? `div[data-kjv-verse-key="${kjvVerseKey}"]`
@@ -721,6 +721,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             },
             [],
         );
+        return elements;
     }
     syncBibleVerseSelection(
         bibleItem: ReadIdOnlyBibleItem,
