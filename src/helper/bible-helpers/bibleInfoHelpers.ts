@@ -154,3 +154,13 @@ export async function getBibleInfoIsRtl(bibleKey: string) {
     const isRtl = checkIsRtl(bibleInfo.locale);
     return isRtl;
 }
+
+export function toVerseKey(
+    bookKey: string,
+    chapter: string | number,
+    verseStart: string | number,
+    verseEnd?: string | number,
+) {
+    verseEnd ??= verseStart;
+    return `${bookKey} ${chapter}:${verseStart}${verseEnd === verseStart ? '' : '-' + verseEnd}`;
+}

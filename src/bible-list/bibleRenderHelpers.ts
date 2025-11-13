@@ -3,6 +3,7 @@ import {
     getVerses,
     getBibleInfo,
     getBibleInfoIsRtl,
+    toVerseKey,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     kjvBibleInfo,
@@ -47,7 +48,7 @@ class BibleRenderHelper {
         const txtV = `${verseStart}${
             verseStart === verseEnd ? '' : '-' + verseEnd
         }`;
-        return `${book} ${chapter}:${txtV}`;
+        return toVerseKey(book, chapter, txtV);
     }
     toBibleVersesKey(bibleKey: string, bibleTarget: BibleTargetType) {
         return `(${bibleKey}) ${this.toKJVBibleVersesKey(bibleTarget)}`;

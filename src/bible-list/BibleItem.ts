@@ -11,6 +11,7 @@ import { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import DocumentInf from '../others/DocumentInf';
 import { AnyObjectType } from '../helper/typeHelpers';
 import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
+import { toVerseKey } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
 
@@ -310,8 +311,7 @@ export default class BibleItem
             return null;
         }
         const { target } = bibleItem;
-        return `${target.bookKey} ${target.chapter}:${target.verseStart}${
-            target.verseEnd === target.verseStart ? '' : `-${target.verseEnd}`
-        }`;
+        const { bookKey, chapter, verseStart, verseEnd } = target;
+        return toVerseKey(bookKey, chapter, verseStart, verseEnd);
     }
 }

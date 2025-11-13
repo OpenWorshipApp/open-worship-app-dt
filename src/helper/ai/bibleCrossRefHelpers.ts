@@ -20,6 +20,7 @@ import BibleItem from '../../bible-list/BibleItem';
 import { handleError } from '../errorHelpers';
 import { getKJVBookKeyValue } from '../bible-helpers/serverBibleHelpers';
 import { cloneJson } from '../helpers';
+import { toVerseKey } from '../bible-helpers/bibleInfoHelpers';
 
 type GetBibleCrossRefParamsType = {
     bookKey: string;
@@ -54,7 +55,7 @@ export async function getBibleCrossRef(
         const kjvBookKeyValue = getKJVBookKeyValue();
         const { bookKey, chapter, verseNum } =
             params as GetBibleCrossRefParamsType;
-        bibleTitle = `${kjvBookKeyValue[bookKey]} ${chapter}:${verseNum}`;
+        bibleTitle = toVerseKey(kjvBookKeyValue[bookKey], chapter, verseNum);
     }
     const dataDir = params.dataDir;
     const forceRefresh = params.forceRefresh ?? false;
