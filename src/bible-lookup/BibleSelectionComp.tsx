@@ -9,7 +9,7 @@ import {
     getAllLocalBibleInfoList,
 } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
-import { getFontFamilyByLocale, LocaleType } from '../lang/langHelpers';
+import { getLanguageTitle, LocaleType } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -36,25 +36,16 @@ export async function genContextMenuBibleKeys(
         localeBibleInfoMap[bibleInfo.locale] ??= [];
         localeBibleInfoMap[bibleInfo.locale].push(bibleInfo);
     }
-    const locales = Object.keys(localeBibleInfoMap);
-    const localeFontFamilyMap = Object.fromEntries(
-        (
-            await Promise.all(
-                locales.map((locale) => {
-                    return getFontFamilyByLocale(locale as LocaleType);
-                }),
-            )
-        ).map((fontFamily, index) => {
-            const locale = locales[index];
-            return [locale, fontFamily];
-        }),
-    );
     const menuItems: ContextMenuItemType[] = [];
     let i = 0;
     for (const locale of Object.keys(localeBibleInfoMap).sort((a, b) =>
         a.localeCompare(b),
     )) {
         const bibleInfoList = localeBibleInfoMap[locale];
+        const langTitle = getLanguageTitle(
+            { locale: locale as LocaleType },
+            true,
+        );
         menuItems.push(
             ...(i++ > 0
                 ? [
@@ -64,18 +55,19 @@ export async function genContextMenuBibleKeys(
                   ]
                 : []),
             {
-                menuElement: locale,
+                menuElement: <span data-locale={locale}>{langTitle}</span>,
                 disabled: true,
             },
             ...bibleInfoList.map((bibleInfo) => {
                 return {
-                    menuElement: `(${bibleInfo.key}) ${bibleInfo.title}`,
+                    menuElement: (
+                        <span
+                            data-locale={bibleInfo.locale}
+                        >{`(${bibleInfo.key}) ${bibleInfo.title}`}</span>
+                    ),
                     title: bibleInfo.title,
                     onSelect: (event1: any) => {
                         onSelect(event1, bibleInfo.key);
-                    },
-                    style: {
-                        fontFamily: localeFontFamilyMap[locale],
                     },
                 };
             }),

@@ -664,3 +664,23 @@ export function checkIsRtl(locale: LocaleType) {
     }
     return rtlLangs.includes(langCode as any);
 }
+
+export function getLanguageTitle(
+    { locale, langCode }: { locale?: LocaleType; langCode?: string | null },
+    isWithLocale = false,
+) {
+    if (!locale && !langCode) {
+        return 'Unknown';
+    }
+    langCode ??= getLangCode(locale as LocaleType);
+    let languageName = '';
+    if (langCode === null || !(langCode in languageNameMap)) {
+        languageName = 'Unknown';
+    } else {
+        languageName = languageNameMap[langCode];
+    }
+    if (locale !== undefined) {
+        languageName += isWithLocale ? ` <${locale}>` : '';
+    }
+    return languageName;
+}
