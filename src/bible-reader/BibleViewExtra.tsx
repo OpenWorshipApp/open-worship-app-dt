@@ -594,19 +594,19 @@ function RenderVerseTextComp({
         !isExtraVerses;
     return (
         <>
-            {isNewLine ? (
+            {verseInfo.newLineTitle === null ? null : (
                 <>
-                    {verseInfo.newLineTitle === null ? null : (
-                        <>
-                            <br />
-                            <div className="w-100 new-line-title">
-                                {verseInfo.newLineTitle}
-                            </div>
-                        </>
-                    )}
-                    <br />
+                    {index > 0 ? <br /> : null}
+                    <div
+                        data-bible-key={bibleItem.bibleKey}
+                        className="w-100 new-line-title"
+                        dangerouslySetInnerHTML={{
+                            __html: verseInfo.newLineTitle,
+                        }}
+                    />
                 </>
-            ) : null}
+            )}
+            {isNewLine ? <br /> : null}
             <div
                 className={
                     'verse-number app-caught-hover-pointer' +
