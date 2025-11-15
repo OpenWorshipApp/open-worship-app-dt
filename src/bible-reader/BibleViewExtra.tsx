@@ -588,10 +588,11 @@ function RenderVerseTextComp({
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
     const isNewLine =
-        viewController.shouldNewLine &&
-        verseInfo.isNewLine &&
         index > 0 &&
-        !isExtraVerses;
+        !isExtraVerses &&
+        viewController.shouldNewLine &&
+        (verseInfo.isNewLine ||
+            (viewController.shouldKJVNewLine && verseInfo.isKJVNewLine));
     return (
         <>
             {verseInfo.newLineTitle === null ? null : (

@@ -30,7 +30,7 @@ export default function BibleViewSettingComp({
                 <div className="flex-fill d-flex mx-1">
                     <div className="d-flex flex-fill">
                         <label htmlFor={rangeId} className="form-label">
-                            {'`'}Font Size (Ctrl + Scroll) ({fontSize}px):
+                            {'`'}Font Size [Ctrl + Scroll] ({fontSize}px):
                         </label>
                         <AppRangeComp
                             value={fontSize}

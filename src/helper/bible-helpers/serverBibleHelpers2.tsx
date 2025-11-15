@@ -28,6 +28,7 @@ import {
     getAllLocalBibleInfoList,
 } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
+import { getSetting, setSetting } from '../settingHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -586,6 +587,29 @@ export async function extractBibleTitle(
     });
 }
 
+const SHOULD_KJV_NEW_LINE_SETTING_NAME = 'view-should-kjv-new-line';
+export function getShouldKJVNewLine() {
+    return getSetting(SHOULD_KJV_NEW_LINE_SETTING_NAME) !== 'false';
+}
+export function setShouldKJVNewLine(useKJVNewLine: boolean) {
+    setSetting(
+        SHOULD_KJV_NEW_LINE_SETTING_NAME,
+        useKJVNewLine ? 'true' : 'false',
+    );
+}
+
+export function checkShouldNewLineKJV(
+    bookKey: string,
+    chapter: number,
+    verse: number,
+) {
+    if (!getShouldKJVNewLine()) {
+        return false;
+    }
+    const verseKey = toVerseKey(bookKey, chapter, verse);
+    return kjvNewLinerInfo.includes(verseKey);
+}
+
 export async function checkShouldNewLine(
     bibleKey: string,
     bookKey: string,
@@ -597,7 +621,7 @@ export async function checkShouldNewLine(
     if (bibleInfo?.newLines?.length) {
         return bibleInfo.newLines.includes(verseKey);
     }
-    return kjvNewLinerInfo.includes(verseKey);
+    return false;
 }
 
 export async function getNewLineTitle(

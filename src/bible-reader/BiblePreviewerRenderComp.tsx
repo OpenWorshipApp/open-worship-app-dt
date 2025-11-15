@@ -28,24 +28,57 @@ function NewLineSettingComp() {
         setShouldNewLine(newValue);
         viewController.shouldNewLine = newValue;
     };
+    const [useKJVNewLine, setUseKJVNewLine] = useState(
+        viewController.shouldKJVNewLine,
+    );
+    const setUseKJVNewLine1 = (newValue: boolean) => {
+        setUseKJVNewLine(newValue);
+        viewController.shouldKJVNewLine = newValue;
+    };
     return (
-        <div
-            className="d-flex mx-1"
-            title="Break lines following KJV formatting"
-        >
-            <label htmlFor="new-line-setting" className="form-label">
-                Use KJV New Lines:
-            </label>
-            <input
-                className="form-check-input app-caught-hover-pointer"
-                type="checkbox"
-                id="new-line-setting"
-                checked={shouldNewLine}
-                onChange={(event) => {
-                    setShouldNewLine1(event.target.checked);
+        <>
+            <div
+                className="d-flex mx-1"
+                title="Break lines following KJV formatting"
+            >
+                <label htmlFor="new-line-setting" className="form-label">
+                    Should New Lines:
+                </label>
+                <input
+                    className="form-check-input app-caught-hover-pointer"
+                    type="checkbox"
+                    id="new-line-setting"
+                    checked={shouldNewLine}
+                    onChange={(event) => {
+                        setShouldNewLine1(event.target.checked);
+                    }}
+                />
+            </div>
+            <div
+                className="d-flex mx-1"
+                title="Break lines following KJV formatting"
+                style={{
+                    opacity: shouldNewLine ? 1 : 0.5,
                 }}
-            />
-        </div>
+            >
+                <label
+                    htmlFor="use-kjv-new-line-setting"
+                    className="form-label"
+                >
+                    Use KJV New Lines:
+                </label>
+                <input
+                    className="form-check-input app-caught-hover-pointer"
+                    type="checkbox"
+                    id="use-kjv-new-line-setting"
+                    disabled={!shouldNewLine}
+                    checked={useKJVNewLine}
+                    onChange={(event) => {
+                        setUseKJVNewLine1(event.target.checked);
+                    }}
+                />
+            </div>
+        </>
     );
 }
 
@@ -100,7 +133,7 @@ export default function BiblePreviewerRenderComp() {
         >
             <div className={'card-body d-flex app-overflow-hidden w-100 h-100'}>
                 <BibleViewFontSizeContext value={fontSize}>
-                    <Render />
+                    <RenderComp />
                 </BibleViewFontSizeContext>
             </div>
             <div
@@ -129,7 +162,7 @@ export default function BiblePreviewerRenderComp() {
     );
 }
 
-function Render() {
+function RenderComp() {
     const nestedBibleItems = useBibleItemViewControllerUpdateEvent();
     return <BibleViewRendererComp nestedBibleItems={nestedBibleItems} />;
 }

@@ -13,7 +13,6 @@ import { cloneJson } from '../../helper/helpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 import { fsListFiles, pathJoin } from '../../server/fileHelpers';
 import FileSource from '../../helper/FileSource';
-import { showSimpleToast } from '../../toast/toastHelpers';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
 import {
@@ -582,7 +581,7 @@ export async function bibleKeyToXMLFilePath(
     if (filePath) {
         return filePath;
     }
-    showSimpleToast(
+    console.log(
         'Fail to get Bible file path',
         `Unable to find file path for: "${bibleKey}"`,
     );
