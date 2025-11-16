@@ -50,8 +50,7 @@ function genBookOption({
                 style={{
                     width: '240px',
                     overflowX: 'auto',
-                    borderStyle: isOldTestament ? 'dashed' : 'double',
-                    borderWidth: isOldTestament ? '1px' : '2px',
+                    borderColor: isOldTestament ? '#53854420' : '#3a3a8eb2',
                 }}
                 type="button"
                 onClick={() => {
