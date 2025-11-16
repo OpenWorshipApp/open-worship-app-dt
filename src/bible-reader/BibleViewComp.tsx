@@ -122,9 +122,10 @@ export default function BibleViewComp({
                       },
                   );
               };
+    const id = `uuid-${uuid}`;
     return (
         <div
-            id={`uuid-${uuid}`}
+            id={id}
             className={
                 'bible-view card flex-fill w-100 h-100 app-top-hover-motion-0' +
                 (isEditing ? ' app-highlight-selected ' : '')
@@ -153,6 +154,7 @@ export default function BibleViewComp({
             <div
                 className="card-body app-top-hover-motion-1"
                 data-scroll-on-next-chapter={isEditing ? '1' : '0'}
+                data-scroll-verses-container={id}
                 style={{
                     paddingBottom: '60px',
                 }}

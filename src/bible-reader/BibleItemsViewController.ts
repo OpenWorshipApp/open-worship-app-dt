@@ -12,6 +12,7 @@ import { showBibleOption } from '../bible-lookup/BibleSelectionComp';
 import appProvider from '../server/appProvider';
 import {
     APP_FULL_VIEW_CLASSNAME,
+    bringDomToCenterView,
     bringDomToNearestView,
     bringDomToTopView,
     genTimeoutAttempt,
@@ -30,6 +31,10 @@ import {
     elementDivider,
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
+import {
+    checkIsVerseAtBottom,
+    checkIsVersePartialInvisible,
+} from './readBibleHelpers';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';
@@ -742,12 +747,11 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         verseKey: string,
         isToTop: boolean,
     ) {
-        for (const element of this.getVerseElements(bibleItem.id, verseKey)) {
-            this.handleVersesSelecting(
-                element as HTMLDivElement,
-                isToTop,
-                true,
-            );
+        for (const element of this.getVerseElements<HTMLDivElement>(
+            bibleItem.id,
+            verseKey,
+        )) {
+            this.handleVersesSelecting(element, isToTop, true);
         }
     }
     handleVersesHighlighting(kjvVerseKey: string, isToTop = false) {
@@ -778,7 +782,13 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         if (isToTop) {
             bringDomToTopView(targetDom);
         } else {
-            bringDomToNearestView(targetDom);
+            const isPartialInvisible = checkIsVersePartialInvisible(targetDom);
+            const isElementInBottomView = checkIsVerseAtBottom(targetDom);
+            if (isPartialInvisible && isElementInBottomView) {
+                bringDomToCenterView(targetDom);
+            } else {
+                bringDomToNearestView(targetDom);
+            }
         }
         if (bibleItem === undefined) {
             return;

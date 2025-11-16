@@ -10,7 +10,11 @@ import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import BibleItemsViewController, {
     ReadIdOnlyBibleItem,
 } from './BibleItemsViewController';
-import { RECEIVING_DROP_CLASSNAME } from '../helper/helpers';
+import {
+    checkIsVerticalAtBottom,
+    checkIsVerticalPartialInvisible,
+    RECEIVING_DROP_CLASSNAME,
+} from '../helper/helpers';
 
 enum DraggingPosEnum {
     TOP = '-top',
@@ -192,4 +196,30 @@ export function useCloseBibleItemRenderer() {
         },
         [],
     );
+}
+
+function getContainer(element: HTMLElement) {
+    const parentElement = element.parentElement;
+    if (!parentElement) {
+        return null;
+    }
+    const dataset = parentElement.dataset;
+    if (dataset.scrollVersesContainer) {
+        return parentElement;
+    }
+    return getContainer(parentElement);
+}
+export function checkIsVersePartialInvisible(target: HTMLElement) {
+    const container = getContainer(target);
+    if (container === null) {
+        return null;
+    }
+    return checkIsVerticalPartialInvisible(container, target, 1);
+}
+export function checkIsVerseAtBottom(target: HTMLElement) {
+    const container = getContainer(target);
+    if (container === null) {
+        return null;
+    }
+    return checkIsVerticalAtBottom(container, target);
 }
