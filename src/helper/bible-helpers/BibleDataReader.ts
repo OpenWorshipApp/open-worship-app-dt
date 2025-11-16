@@ -17,6 +17,19 @@ import { readBibleXMLData } from '../../setting/bible-setting/bibleXMLHelpers';
 
 const { base64Decode } = appProvider.appUtils;
 
+export type CustomVerseContentType = {
+    content: string;
+    isHtml?: boolean;
+    isGW?: boolean;
+};
+export type ContentTitleType = CustomVerseContentType & {
+    cssStyle?: React.CSSProperties;
+};
+export type CustomTitlesVerseType = {
+    titles: ContentTitleType[];
+    isTitle: boolean;
+};
+export type CustomVerseType = CustomVerseContentType | CustomTitlesVerseType;
 export type BibleInfoType = Readonly<{
     title: string;
     key: string;
@@ -29,7 +42,10 @@ export type BibleInfoType = Readonly<{
     numList?: string[];
     version: number;
     newLines?: string[];
-    newLinesTitleMap?: { [key: string]: string };
+    newLinesTitleMap?: { [key: string]: ContentTitleType[] };
+    customVersesMap?: {
+        [key: string]: CustomVerseType[];
+    };
 }>;
 export type BookList = { [key: string]: string };
 export type BibleVerseList = { [key: string]: string };

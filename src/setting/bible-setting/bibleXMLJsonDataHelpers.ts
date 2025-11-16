@@ -10,7 +10,11 @@ import {
 import { genBibleKeyXMLInput } from './bibleXMLAttributesGuessing';
 import { getDownloadedBibleInfoList } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { cloneJson } from '../../helper/helpers';
-import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
+import {
+    bibleDataReader,
+    ContentTitleType,
+    CustomVerseType,
+} from '../../helper/bible-helpers/BibleDataReader';
 import { fsListFiles, pathJoin } from '../../server/fileHelpers';
 import FileSource from '../../helper/FileSource';
 import CacheManager from '../../others/CacheManager';
@@ -134,7 +138,8 @@ export type BibleJsonInfoType = {
     booksAvailable: string[];
     numbersMap: { [key: string]: string };
     newLines: string[];
-    newLinesTitleMap: { [key: string]: string };
+    newLinesTitleMap: { [key: string]: ContentTitleType[] };
+    customVersesMap: { [key: string]: CustomVerseType[] };
 };
 
 export type BibleXMLJsonType = {
@@ -334,6 +339,20 @@ function setNewLines(
     }
 }
 
+function readContentJson<T>(xmlElement: Element) {
+    if (xmlElement.textContent) {
+        try {
+            const data = JSON.parse(
+                xmlElement.textContent.replace(/^<!\[CDATA\[|\]\]>$/g, ''),
+            ) as T;
+            return data;
+        } catch (error) {
+            console.log('Fail to parse custom verses map', error);
+        }
+    }
+    return null;
+}
+
 function getNewLinesTitleMap(xmlElementBible: Element) {
     const result = guessElement(xmlElementBible, [
         'new-lines-title-map',
@@ -347,18 +366,18 @@ function getNewLinesTitleMap(xmlElementBible: Element) {
     const itemElements = Array.from(
         guessElement(xmlElementNewLines, ['item']) ?? [],
     );
-    const newLinesTitleMap: { [key: string]: string } = {};
+    const newLinesTitleMap: { [key: string]: ContentTitleType[] } = {};
     for (const xmlElement of itemElements) {
         if (xmlElement.textContent) {
             const key = xmlElement.getAttribute('key');
             if (!key) {
                 continue;
             }
-            const text = xmlElement.textContent.trim();
-            if (!text) {
+            const data = readContentJson<ContentTitleType[]>(xmlElement);
+            if (!data?.length) {
                 continue;
             }
-            newLinesTitleMap[key] = text;
+            newLinesTitleMap[key] = data;
         }
     }
     return newLinesTitleMap;
@@ -366,7 +385,7 @@ function getNewLinesTitleMap(xmlElementBible: Element) {
 function setNewLinesTitleMap(
     xmlDoc: Document,
     xmlElementBible: Element,
-    newLinesTitleMap: { [key: string]: string },
+    newLinesTitleMap: { [key: string]: ContentTitleType[] },
 ) {
     const xmlElementNewLinesTitleMap = xmlDoc.createElement(
         'new-lines-title-map',
@@ -375,9 +394,53 @@ function setNewLinesTitleMap(
     for (const [key, value] of Object.entries(newLinesTitleMap)) {
         const xmlElementItem = xmlDoc.createElement('item');
         xmlElementItem.setAttribute('key', key);
-        xmlElementItem.textContent = value;
+        xmlElementItem.textContent = `<![CDATA[${JSON.stringify(value)}]]>`;
         xmlElementNewLinesTitleMap.appendChild(xmlElementItem);
     }
+}
+
+function getCustomVersesMap(xmlElementBible: Element) {
+    const result = guessElement(xmlElementBible, [
+        'custom-verses-map',
+        'customversesmap',
+        'custom_verses_map',
+    ]);
+    if (!result?.length) {
+        return {};
+    }
+    const xmlElementCustomVersesMap = result[0];
+    const itemElements = Array.from(
+        guessElement(xmlElementCustomVersesMap, ['item']) ?? [],
+    );
+    const customVersesMap: { [key: string]: CustomVerseType[] } = {};
+    for (const xmlElement of itemElements) {
+        if (xmlElement.textContent) {
+            const key = xmlElement.getAttribute('key');
+            if (!key) {
+                continue;
+            }
+            const data = readContentJson<CustomVerseType[]>(xmlElement);
+            if (data === null) {
+                continue;
+            }
+            customVersesMap[key] = data;
+        }
+    }
+    return customVersesMap;
+}
+function setCustomVersesMap(
+    xmlDoc: Document,
+    xmlElementBible: Element,
+    customVersesMap: { [key: string]: CustomVerseType[] },
+) {
+    const xmlElementCustomVersesMap = xmlDoc.createElement('custom-verses-map');
+    for (const [key, value] of Object.entries(customVersesMap)) {
+        const xmlElementItem = xmlDoc.createElement('item');
+        xmlElementItem.setAttribute('key', key);
+        xmlElementItem.textContent = `<![CDATA[${JSON.stringify(value)}]]>`;
+        xmlElementCustomVersesMap.appendChild(xmlElementItem);
+    }
+    xmlElementBible.appendChild(xmlElementCustomVersesMap);
 }
 
 export async function getBibleInfoJson(xmlElementBible: Element) {
@@ -409,6 +472,7 @@ export async function getBibleInfoJson(xmlElementBible: Element) {
     const booksAvailable = getAvailableBooks(books);
     const newLines = getNewLines(xmlElementBible);
     const newLinesTitleMap = getNewLinesTitleMap(xmlElementBible);
+    const customVersesMap = getCustomVersesMap(xmlElementBible);
     return {
         title:
             guessValue(xmlElementBible, attributesMap.title) ?? 'Unknown Title',
@@ -432,6 +496,7 @@ export async function getBibleInfoJson(xmlElementBible: Element) {
         booksAvailable,
         newLines,
         newLinesTitleMap,
+        customVersesMap,
     } as BibleJsonInfoType;
 }
 
@@ -484,8 +549,14 @@ function getBibleBooksJson(xmlElementBible: Element) {
 }
 
 export function jsonToXMLText(jsonData: BibleXMLJsonType) {
-    const { numbersMap, booksMap, newLines, newLinesTitleMap, ...info } =
-        jsonData.info;
+    const {
+        numbersMap,
+        booksMap,
+        newLines,
+        newLinesTitleMap,
+        customVersesMap,
+        ...info
+    } = jsonData.info;
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(
         '<?xml version="1.0" encoding="UTF-8"?><bible></bible>',
@@ -518,6 +589,7 @@ export function jsonToXMLText(jsonData: BibleXMLJsonType) {
     xmlElementBible.appendChild(xmlElementMap);
     setNewLines(xmlDoc, xmlElementBible, newLines);
     setNewLinesTitleMap(xmlDoc, xmlElementBible, newLinesTitleMap);
+    setCustomVersesMap(xmlDoc, xmlElementBible, customVersesMap);
     const books = jsonData.books;
     for (const [bookKey, book] of Object.entries(books)) {
         const xmlElementBook = xmlDoc.createElement(tagNamesMap.book[0]);

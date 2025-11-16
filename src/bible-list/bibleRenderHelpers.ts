@@ -1,3 +1,4 @@
+import { ContentTitleType } from '../helper/bible-helpers/BibleDataReader';
 import {
     keyToBook,
     getVerses,
@@ -32,7 +33,7 @@ export type CompiledVerseType = {
     text: string;
     isNewLine: boolean;
     isKJVNewLine: boolean;
-    newLineTitle: string | null;
+    newLineTitles: ContentTitleType[] | null;
     bibleKey: string;
     bookKey: string;
     chapter: number;
@@ -138,15 +139,12 @@ class BibleRenderHelper {
                     i == 1 ||
                     (await checkShouldNewLine(bibleKey, bookKey, chapter, i));
                 const isKJVNewLine = checkShouldNewLineKJV(bookKey, chapter, i);
-                let newLineTitle = null;
-                if (isNewLine) {
-                    newLineTitle = await getNewLineTitle(
-                        bibleKey,
-                        bookKey,
-                        chapter,
-                        i,
-                    );
-                }
+                const newLineTitles = await getNewLineTitle(
+                    bibleKey,
+                    bookKey,
+                    chapter,
+                    i,
+                );
                 const iString = i.toString();
                 const genTarget = (verse: number) => {
                     return {
@@ -171,7 +169,7 @@ class BibleRenderHelper {
                     text: verses[iString] ?? '??',
                     isNewLine,
                     isKJVNewLine,
-                    newLineTitle,
+                    newLineTitles,
                     bibleKey,
                     bookKey,
                     chapter,

@@ -635,6 +635,9 @@ export async function getNewLineTitle(
         return null;
     }
     const verseKey = toVerseKey(bookKey, chapter, verse);
-    const title = bibleInfo.newLinesTitleMap[verseKey];
-    return title || null;
+    const titles = bibleInfo.newLinesTitleMap[verseKey] ?? [];
+    if (titles.length === 0) {
+        return null;
+    }
+    return titles;
 }

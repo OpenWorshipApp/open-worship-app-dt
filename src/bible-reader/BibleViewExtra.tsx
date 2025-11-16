@@ -55,6 +55,7 @@ import {
 } from '../helper/ai/openAIAudioHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { getBibleInfoIsRtl } from '../helper/bible-helpers/bibleInfoHelpers';
+import { ContentTitleType } from '../helper/bible-helpers/BibleDataReader';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -571,6 +572,32 @@ function RenderVerseTextDetailComp({
     );
 }
 
+function RenderNewLineTitleComp({
+    title,
+    bibleKey,
+}: Readonly<{ title: ContentTitleType; bibleKey: string }>) {
+    if (title.isHtml) {
+        return (
+            <div
+                data-bible-key={bibleKey}
+                className="w-100 new-line-title"
+                dangerouslySetInnerHTML={{
+                    __html: title.content,
+                }}
+            />
+        );
+    }
+    return (
+        <div
+            data-bible-key={bibleKey}
+            className="w-100 new-line-title"
+            style={title.cssStyle ?? {}}
+        >
+            {title.content}
+        </div>
+    );
+}
+
 function RenderVerseTextComp({
     bibleItem,
     verseInfo,
@@ -588,23 +615,24 @@ function RenderVerseTextComp({
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
     const isNewLine =
-        index > 0 &&
         !isExtraVerses &&
         viewController.shouldNewLine &&
         (verseInfo.isNewLine ||
             (viewController.shouldKJVNewLine && verseInfo.isKJVNewLine));
     return (
         <>
-            {verseInfo.newLineTitle === null ? null : (
+            {!isNewLine || verseInfo.newLineTitles === null ? null : (
                 <>
                     {index > 0 ? <br /> : null}
-                    <div
-                        data-bible-key={bibleItem.bibleKey}
-                        className="w-100 new-line-title"
-                        dangerouslySetInnerHTML={{
-                            __html: verseInfo.newLineTitle,
-                        }}
-                    />
+                    {verseInfo.newLineTitles.map((title, i) => {
+                        return (
+                            <RenderNewLineTitleComp
+                                key={i}
+                                title={title}
+                                bibleKey={bibleItem.bibleKey}
+                            />
+                        );
+                    })}
                 </>
             )}
             {isNewLine ? <br /> : null}

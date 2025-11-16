@@ -18,6 +18,7 @@ import { AnyObjectType } from '../../helper/typeHelpers';
 import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
+import { useStateSettingBoolean } from '../../helper/settingHelpers';
 
 const bibleInfoSchema: SchemaNode = compileSchema(bibleInfoSchemaJson);
 languages.json.jsonDefaults.setDiagnosticsOptions({
@@ -103,9 +104,6 @@ function RenderSaveButton({
         <button
             className="btn btn-sm btn-success m-1"
             disabled={!canSave}
-            style={{
-                position: 'absolute',
-            }}
             onClick={() => {
                 const { canSave, newBibleInfo } = validateCanSave(
                     editorStore.systemContent,
@@ -126,6 +124,10 @@ export default function BibleXMLInfoPreviewComp({
     bibleKey: string;
     loadBibleKeys: () => void;
 }>) {
+    const [isFullView, setIsFullView] = useStateSettingBoolean(
+        `bible-xml-info-full-view-${bibleKey}`,
+        false,
+    );
     const { bibleInfo, isPending } = useBibleXMLInfo(bibleKey);
     const store = useInitMonacoEditor({
         settingName: 'bible-xml-wrap-text',
@@ -180,22 +182,39 @@ export default function BibleXMLInfoPreviewComp({
     }
 
     return (
-        <div className="w-100 card app-border-white-round app-overflow-hidden">
+        <div
+            className={
+                'w-100 card app-border-white-round app-overflow-hidden' +
+                (isFullView ? ' app-full-view' : '')
+            }
+        >
             <div
                 className="w-100 card-body p-0 m-0 app-overflow-hidden"
                 ref={onContainerInit}
                 style={{ height: '450px' }}
             />
             <div
-                className="card-footer d-flex justify-content-end p-0"
+                className="w-100 card-footer d-flex p-0 app-overflow-hidden"
                 style={{
                     height: '35px',
                 }}
             >
-                <RenderSaveButton
-                    editorStore={editorStore}
-                    loadBibleKeys={loadBibleKeys}
-                />
+                <div className="flex-grow-1">
+                    <button
+                        className="btn btn-sm btn-secondary m-1"
+                        onClick={() => {
+                            setIsFullView(!isFullView);
+                        }}
+                    >
+                        {isFullView ? 'Exit Full View' : 'Full View'}
+                    </button>
+                </div>
+                <div>
+                    <RenderSaveButton
+                        editorStore={editorStore}
+                        loadBibleKeys={loadBibleKeys}
+                    />
+                </div>
             </div>
         </div>
     );

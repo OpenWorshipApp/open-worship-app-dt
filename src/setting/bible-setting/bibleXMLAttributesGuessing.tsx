@@ -442,7 +442,10 @@ export const xmlFormatExample = `<?xml version="1.0" encoding="UTF-8"?>
     </new-lines>
     // Optional section for defining titles for new lines
     <new-lines-title-map>
-        <item key="MAT 7:6">Some title for MAT 7:6</item>
-        <item key="MAT 7:13">Some title for MAT 7:13</item>
+        <item key="GEN 1:1">&lt;![CDATA[[{"content":"Title","cssStyle":{"fontSize":"1.2em"}}]]]&gt;</item>
     </new-lines-title-map>
+    // Optional section for defining custom verses content
+    <custom-verses-map>
+        <item key="MAT 3:15">&lt;![CDATA[[{"content":"This is "},{"content":"God's word","isGW":true}]]]&gt;</item>
+    </custom-verses-map>
 </bible>`;
