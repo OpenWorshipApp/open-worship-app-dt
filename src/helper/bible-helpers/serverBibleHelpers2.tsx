@@ -29,6 +29,7 @@ import {
 } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
+import { CustomVerseContentType } from './BibleDataReader';
 
 export async function toInputText(
     bibleKey: string,
@@ -640,4 +641,37 @@ export async function getNewLineTitle(
         return null;
     }
     return titles;
+}
+
+export async function getCustomVerseText(
+    bibleKey: string,
+    bookKey: string,
+    chapter: number,
+    verse: number,
+) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (!bibleInfo?.customVersesMap) {
+        return null;
+    }
+    const verseKey = toVerseKey(bookKey, chapter, verse);
+    const customVerseList = bibleInfo.customVersesMap[verseKey] ?? [];
+    const renderList = customVerseList.map((item) => {
+        // TODO: handle titles
+        if (!(item as any).content) {
+            return '';
+        }
+        const itemVerse = item as CustomVerseContentType;
+        if (itemVerse.isGW) {
+            return `<span class="app-god-word">${itemVerse.content}</span>`;
+        }
+        return itemVerse.content;
+    });
+    const text = renderList
+        .join('')
+        .replaceAll(/\n/g, '')
+        .replaceAll(/\s+/g, ' ');
+    if (text.trim() === '') {
+        return null;
+    }
+    return text;
 }

@@ -365,4 +365,12 @@ $resizer-color: rgb(123, 173, 205);
       color: #3d680b;
     }
   }
+
+  .bible-view {
+    .bible-view-text {
+      .app-god-word {
+        color: red;
+      }
+    }
+  }
 }

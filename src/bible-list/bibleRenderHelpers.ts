@@ -14,6 +14,7 @@ import {
 import {
     checkShouldNewLine,
     checkShouldNewLineKJV,
+    getCustomVerseText,
     getNewLineTitle,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
@@ -31,6 +32,7 @@ export type CompiledVerseType = {
     verse: number;
     localeVerse: string;
     text: string;
+    customText: string | null;
     isNewLine: boolean;
     isKJVNewLine: boolean;
     newLineTitles: ContentTitleType[] | null;
@@ -145,6 +147,12 @@ class BibleRenderHelper {
                     chapter,
                     i,
                 );
+                const customText = await getCustomVerseText(
+                    bibleKey,
+                    bookKey,
+                    chapter,
+                    i,
+                );
                 const iString = i.toString();
                 const genTarget = (verse: number) => {
                     return {
@@ -167,6 +175,7 @@ class BibleRenderHelper {
                     verse: i,
                     localeVerse: localNum ?? iString,
                     text: verses[iString] ?? '??',
+                    customText,
                     isNewLine,
                     isKJVNewLine,
                     newLineTitles,

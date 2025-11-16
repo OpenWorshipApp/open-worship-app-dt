@@ -390,6 +390,58 @@ function handleNextVersionSelection(
     }
 }
 
+function RenderVerseTextViewComp({
+    verseInfo,
+    isAudioEnabled,
+    isExtraVerses,
+    audioSrcMap,
+    refreshAudio,
+    handleAudioStarting,
+    handleAudioEnding,
+}: Readonly<{
+    verseInfo: CompiledVerseType;
+    isAudioEnabled: boolean;
+    isExtraVerses: boolean;
+    audioSrcMap: { [key: string]: string | undefined | null };
+    refreshAudio: () => void;
+    handleAudioStarting: () => void;
+    handleAudioEnding: () => void;
+}>) {
+    const { bibleKey, text, customText, bibleVersesKey, isRtl } = verseInfo;
+    const textElement =
+        customText === null ? (
+            text
+        ) : (
+            <span
+                dangerouslySetInnerHTML={{
+                    __html: customText,
+                }}
+            />
+        );
+    return (
+        <Fragment key={bibleKey}>
+            {isAudioEnabled &&
+            Object.keys(audioSrcMap).includes(bibleVersesKey) ? (
+                <AudioPlayerComp
+                    src={audioSrcMap[bibleVersesKey]}
+                    onStart={handleAudioStarting}
+                    onEnd={handleAudioEnding}
+                    refreshAudio={refreshAudio}
+                />
+            ) : null}
+            {isExtraVerses ? (
+                <div className="text d-flex" data-bible-key={bibleKey}>
+                    <div className={'flex-fill' + (isRtl ? ' rtl' : '')}>
+                        {textElement}
+                    </div>
+                </div>
+            ) : (
+                <span data-bible-key={bibleKey}>{textElement}</span>
+            )}
+        </Fragment>
+    );
+}
+
 function RenderVerseTextDetailListComp({
     bibleItem,
     verseInfo,
@@ -439,28 +491,20 @@ function RenderVerseTextDetailListComp({
             nextVerseInfo.kjvBibleVersesKey,
         );
     };
-    return verseInfoList.map(({ bibleKey, text, bibleVersesKey, isRtl }) => (
-        <Fragment key={bibleKey}>
-            {isAudioEnabled &&
-            Object.keys(audioSrcMap).includes(bibleVersesKey) ? (
-                <AudioPlayerComp
-                    src={audioSrcMap[bibleVersesKey]}
-                    onStart={handleAudioStarting}
-                    onEnd={handleAudioEnding}
-                    refreshAudio={refreshAudio}
-                />
-            ) : null}
-            {isExtraVerses ? (
-                <div className="text d-flex" data-bible-key={bibleKey}>
-                    <div className={'flex-fill' + (isRtl ? ' rtl' : '')}>
-                        {text}
-                    </div>
-                </div>
-            ) : (
-                <span data-bible-key={bibleKey}>{text}</span>
-            )}
-        </Fragment>
-    ));
+    return verseInfoList.map((verseInfo) => {
+        return (
+            <RenderVerseTextViewComp
+                key={verseInfo.bibleKey}
+                verseInfo={verseInfo}
+                isAudioEnabled={isAudioEnabled}
+                isExtraVerses={isExtraVerses}
+                audioSrcMap={audioSrcMap}
+                refreshAudio={refreshAudio}
+                handleAudioStarting={handleAudioStarting}
+                handleAudioEnding={handleAudioEnding}
+            />
+        );
+    });
 }
 
 function RenderVerseTextDetailComp({
