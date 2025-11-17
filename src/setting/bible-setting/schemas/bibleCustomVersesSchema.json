@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "https://wwww.openworship.app/schemas/bibleInfoSchema.json",
+    "$id": "https://wwww.openworship.app/schemas/bibleCustomVersesSchema.json",
     "type": "object",
     "$defs": {
         "titles": {
@@ -19,9 +19,7 @@
                         "description": "Style properties for the title"
                     }
                 },
-                "required": [
-                    "content"
-                ],
+                "required": ["content"],
                 "additionalProperties": false
             }
         },

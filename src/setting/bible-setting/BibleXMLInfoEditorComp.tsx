@@ -1,4 +1,5 @@
 import { compileSchema, SchemaNode } from 'json-schema-library';
+import { Uri } from 'monaco-editor';
 
 import LoadingComp from '../../others/LoadingComp';
 import { updateBibleXMLInfo, useBibleXMLInfo } from './bibleXMLHelpers';
@@ -9,7 +10,8 @@ import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 
-export const bibleInfoSchema: SchemaNode = compileSchema(bibleInfoSchemaJson);
+export const schemaHandler: SchemaNode = compileSchema(bibleInfoSchemaJson);
+export const uri = Uri.parse('bible-info');
 
 async function handleSaving(
     newBibleInfo: BibleJsonInfoType,
@@ -56,10 +58,11 @@ export default function BibleXMLInfoEditorComp({
             id={bibleKey}
             jsonData={bibleInfo}
             onStore={() => {}}
-            jsonDataSchema={bibleInfoSchema}
+            jsonDataSchema={schemaHandler}
             save={(newBibleInfo: BibleJsonInfoType) => {
                 handleSaving(newBibleInfo, loadBibleKeys);
             }}
+            editorUri={uri}
         />
     );
 }

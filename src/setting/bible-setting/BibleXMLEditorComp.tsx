@@ -10,6 +10,7 @@ import { useAppEffect } from '../../helper/debuggerHelpers';
 import { AnyObjectType } from '../../helper/typeHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
+import { Uri } from 'monaco-editor';
 
 function parseJsonData(content: string) {
     try {
@@ -78,12 +79,14 @@ export default function BibleXMLEditorComp({
     onStore,
     jsonDataSchema,
     save,
+    editorUri,
 }: Readonly<{
     id: string;
     jsonData: AnyObjectType;
     onStore: (editorStore: EditorStoreType) => void;
     jsonDataSchema: SchemaNode;
     save: (newJsonData: any) => void;
+    editorUri: Uri;
 }>) {
     const [isFullView, setIsFullView] = useStateSettingBoolean(
         `bible-xml-info-full-view-${id}`,
@@ -101,6 +104,8 @@ export default function BibleXMLEditorComp({
         },
         onStore,
         onContentChange: validateCanSave.bind(null, jsonDataSchema),
+        uri: editorUri,
+        language: 'json',
     });
     const { editorStore, onContainerInit } = store;
     const applyJsonData = (newJsonData: AnyObjectType | null) => {

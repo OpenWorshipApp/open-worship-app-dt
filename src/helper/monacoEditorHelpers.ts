@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { editor, KeyMod, KeyCode } from 'monaco-editor';
+import { editor, KeyMod, KeyCode, Uri } from 'monaco-editor';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
@@ -65,11 +65,31 @@ export type EditorStoreType = {
     };
 };
 
-function createEditor(
-    options: editor.IStandaloneEditorConstructionOptions,
-    onInit?: (editor: editor.IStandaloneCodeEditor) => void,
-    onStore?: (editorStore: EditorStoreType) => void,
-) {
+const modelsMap: Record<string, editor.ITextModel> = {};
+function getModel(uri: Uri, language: string) {
+    const key = uri.toString();
+    console.log(key);
+
+    if (modelsMap[key] !== undefined) {
+        return modelsMap[key];
+    }
+    const model = editor.createModel('', language, uri);
+    modelsMap[key] = model;
+    return model;
+}
+function createEditor({
+    options,
+    language,
+    onInit,
+    onStore,
+    uri,
+}: {
+    uri: Uri;
+    language: string;
+    options: editor.IStandaloneEditorConstructionOptions;
+    onInit?: (editor: editor.IStandaloneCodeEditor) => void;
+    onStore?: (editorStore: EditorStoreType) => void;
+}) {
     const div = document.createElement('div');
     Object.assign(div.style, {
         width: '100%',
@@ -79,9 +99,9 @@ function createEditor(
     });
     let editorInstance: editor.IStandaloneCodeEditor | null = null;
     const isDarkMode = checkIsDarkMode();
+    const model = getModel(uri, language);
     editorInstance = editor.create(div, {
         value: '',
-        language: 'plaintext',
         theme: isDarkMode ? 'vs-dark' : 'vs-light',
         fontSize: 17,
         minimap: {
@@ -89,7 +109,9 @@ function createEditor(
         },
         scrollbar: {},
         ...options,
+        model,
     });
+
     onInit?.(editorInstance);
     const editorStore: EditorStoreType = {
         systemContent: '',
@@ -166,19 +188,29 @@ export function useInitMonacoEditor({
     onInit,
     onStore,
     onContentChange,
+    uri,
+    language,
 }: {
     settingName: string;
     options: editor.IStandaloneEditorConstructionOptions;
     onInit?: (editorInstance: editor.IStandaloneCodeEditor) => void;
     onStore?: (editorStore: EditorStoreType) => void;
     onContentChange?: (oldContent: string, newContent: string) => void;
+    uri: Uri;
+    language: string;
 }) {
     const [isWrapText, setIsWrapText] = useStateSettingBoolean(
         settingName,
         false,
     );
     const editorStore = useMemo(() => {
-        const newEditorStore = createEditor(options, onInit, onStore);
+        const newEditorStore = createEditor({
+            options,
+            onInit,
+            onStore,
+            uri,
+            language,
+        });
         const { editorInstance } = newEditorStore;
         editor.onDidChangeMarkers((uriList) => {
             const currentUri = editorInstance.getModel()?.uri;

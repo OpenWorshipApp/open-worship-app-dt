@@ -7,6 +7,7 @@ import {
     kjvBibleInfo,
 } from '../../helper/bible-helpers/serverBibleHelpers';
 import appProvider from '../../server/appProvider';
+import { Uri } from 'monaco-editor';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -197,6 +198,8 @@ function BibleBooksMapXMLInputComp({
         onContentChange: (_, content) => {
             onChange(content);
         },
+        uri: Uri.parse('bible-books-map-editor'),
+        language: 'plaintext',
     });
     const handleMarkupStringParsing = (markupString: string) => {
         const parser = new DOMParser();

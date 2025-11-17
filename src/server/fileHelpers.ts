@@ -399,7 +399,10 @@ export async function fsListFiles(dirPath: string) {
 export async function fsListDirectories(dirPath: string) {
     const foundFileList = await fsList(dirPath);
     return foundFileList
-        .filter(({ isDirectory }) => {
+        .filter(({ name, isDirectory }) => {
+            if (name.startsWith('.')) {
+                return false;
+            }
             return isDirectory;
         })
         .map(({ name }) => {
