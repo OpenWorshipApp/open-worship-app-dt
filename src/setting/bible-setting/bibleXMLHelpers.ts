@@ -258,7 +258,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
         {
             menuElement: '`Clear Cache',
             onSelect: () => {
-                invalidateBibleXMLCachedFolder(bibleKey, true);
+                invalidateBibleXMLCachedFolder(bibleKey);
             },
         },
     ];
@@ -398,10 +398,7 @@ export async function ensureBibleXMLCachedBasePath(bibleKey: string) {
     return dirPath;
 }
 
-async function invalidateBibleXMLCachedFolder(
-    bibleKey: string,
-    isForce: boolean = false,
-) {
+async function invalidateBibleXMLCachedFolder(bibleKey: string) {
     const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey);
     if (xmlFilePath === null) {
         return;
@@ -415,35 +412,10 @@ async function invalidateBibleXMLCachedFolder(
         return;
     }
     const md5FilePath = pathJoin(basePath, md5Hash);
-    if (!isForce) {
-        if (await fsCheckFileExist(md5FilePath)) {
-            const content = await FileSource.readFileData(md5FilePath);
-            if (content) {
-                try {
-                    // older than 1 week
-                    const fileTime = Number.parseInt(content);
-                    if (Date.now() - fileTime < 7 * 24 * 60 * 60 * 1000) {
-                        return;
-                    }
-                } catch (_error) {}
-            }
-        }
-    }
     await fsDeleteDir(basePath);
     await ensureDirectory(basePath);
     const fileSource = FileSource.getInstance(md5FilePath);
     await fileSource.writeFileData(Date.now().toString());
-}
-
-const invalidatedBibleKeysSet = new Set<string>();
-export function invalidateBibleXMLCachedFolderByKey(bibleKey: string) {
-    if (invalidatedBibleKeysSet.has(bibleKey)) {
-        return;
-    }
-    invalidatedBibleKeysSet.add(bibleKey);
-    setTimeout(() => {
-        invalidateBibleXMLCachedFolder(bibleKey);
-    }, 1e3);
 }
 
 async function backupBibleXMLData<T>(
@@ -452,10 +424,17 @@ async function backupBibleXMLData<T>(
     data: T,
 ) {
     const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
+    console.log(basePath);
+    
     if (basePath !== null) {
         const filePath = pathJoin(basePath, fileName);
         const fileSource = FileSource.getInstance(filePath);
-        await fileSource.writeFileData(JSON.stringify(data));
+        await fileSource.writeFileData(
+            JSON.stringify({
+                _cachingTime: Date.now(),
+                value: data,
+            }),
+        );
     }
     return data;
 }
@@ -474,7 +453,14 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
     if (jsonText !== null) {
         try {
             const data = JSON.parse(jsonText);
-            return data;
+            const time = data?._cachingTime ?? 0;
+            console.log(time);
+
+            // if the backup data is older than 7 days, ignore it
+            if (Date.now() - time > 7 * 24 * 60 * 60 * 1000) {
+                return null;
+            }
+            return data.value;
         } catch (_error) {}
     }
     return null;
