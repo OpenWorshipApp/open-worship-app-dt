@@ -68,8 +68,6 @@ export type EditorStoreType = {
 const modelsMap: Record<string, editor.ITextModel> = {};
 function getModel(uri: Uri, language: string) {
     const key = uri.toString();
-    console.log(key);
-
     if (modelsMap[key] !== undefined) {
         return modelsMap[key];
     }

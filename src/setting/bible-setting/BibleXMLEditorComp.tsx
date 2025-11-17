@@ -55,7 +55,9 @@ function RenderSaveButton({
     }, []);
     return (
         <button
-            className="btn btn-sm btn-success m-1"
+            className={
+                'btn btn-sm m-1 ' + (canSave ? 'btn-primary' : 'btn-secondary')
+            }
             disabled={!canSave}
             onClick={() => {
                 const { canSave, newJsonData } = validateCanSave(

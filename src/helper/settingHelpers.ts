@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, SetStateAction, Dispatch } from 'react';
 
 import appProvider from '../server/appProvider';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
@@ -19,7 +19,7 @@ export function getSetting(key: string) {
 export function useStateSettingBoolean(
     settingName: string,
     defaultValue?: boolean,
-): [boolean, (b: boolean | ((prev: boolean) => boolean)) => void] {
+): [boolean, Dispatch<SetStateAction<boolean>>] {
     const originalSettingName = getSetting(settingName);
     const defaultData =
         originalSettingName === null
@@ -39,7 +39,7 @@ export function useStateSettingBoolean(
 export function useStateSettingString<T extends string>(
     settingName: string,
     defaultString: T = '' as T,
-): [T, (t: T | ((prev: T) => T)) => void] {
+): [T, Dispatch<SetStateAction<T>>] {
     const defaultData = getSetting(settingName) || defaultString;
     const [data, setData] = useState<T>(defaultData as T);
     const setDataSetting = useCallback(
@@ -55,7 +55,7 @@ export function useStateSettingString<T extends string>(
 export function useStateSettingNumber(
     settingName: string,
     defaultNumber: number,
-): [number, (n: number | ((prev: number) => number)) => void] {
+): [number, Dispatch<SetStateAction<number>>] {
     const defaultData = Number.parseInt(getSetting(settingName) ?? '', 10);
     const [data, setData] = useState(
         Number.isNaN(defaultData) ? defaultNumber : defaultData,

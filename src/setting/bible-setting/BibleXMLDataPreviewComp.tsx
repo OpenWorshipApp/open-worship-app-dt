@@ -3,15 +3,13 @@ import { languages } from 'monaco-editor';
 import BibleXMLInfoEditorComp, {
     uri as bibleInfoUri,
 } from './BibleXMLInfoEditorComp';
-import BibleXMLNewLinesEditorComp, {
-    uri as bibleNewLinesUri,
-} from './BibleXMLNewLinesEditorComp';
+import BibleXMLExtraEditorComp, {
+    uri as bibleExtraUri,
+} from './BibleXMLExtraEditorComp';
 
 import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
-import bibleNewLinesSchemaJson from './schemas/bibleNewLinesSchema.json';
-import bibleNewLinesTitleSchemaJson from './schemas/bibleNewLinesTitleSchema.json';
-import bibleCustomVersesSchemaJson from './schemas/bibleCustomVersesSchema.json';
-import { useState } from 'react';
+import bibleExtraSchemaJson from './schemas/bibleExtraSchema.json';
+import { useStateSettingString } from '../../helper/settingHelpers';
 
 languages.json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
@@ -25,19 +23,9 @@ languages.json.jsonDefaults.setDiagnosticsOptions({
             schema: bibleInfoSchemaJson,
         },
         {
-            uri: bibleNewLinesSchemaJson.$id,
-            fileMatch: [bibleNewLinesUri.toString()],
-            schema: bibleNewLinesSchemaJson,
-        },
-        {
-            uri: bibleNewLinesTitleSchemaJson.$id,
-            fileMatch: ['bible-new-lines-title'],
-            schema: bibleNewLinesTitleSchemaJson,
-        },
-        {
-            uri: bibleCustomVersesSchemaJson.$id,
-            fileMatch: ['bible-custom-verses'],
-            schema: bibleCustomVersesSchemaJson,
+            uri: bibleExtraSchemaJson.$id,
+            fileMatch: [bibleExtraUri.toString()],
+            schema: bibleExtraSchemaJson,
         },
     ],
     enableSchemaRequest: false,
@@ -55,10 +43,10 @@ function RenderChoiceComp({
     editingType: string;
     targetEditingType: string;
 }>) {
+    const isActive = editingType === targetEditingType;
     return (
         <button
-            className="btn btn-sm btn-info"
-            disabled={editingType === targetEditingType}
+            className={'btn btn-sm ' + (isActive ? 'btn-light' : 'btn-primary')}
             onClick={() => {
                 setEditingType(targetEditingType);
             }}
@@ -75,7 +63,10 @@ export default function BibleXMLDataPreviewComp({
     bibleKey: string;
     loadBibleKeys: () => void;
 }>) {
-    const [editingType, setEditingType] = useState<string>('info');
+    const [editingType, setEditingType] = useStateSettingString<string>(
+        `bible-setting-${bibleKey}-xml-data-editing-type`,
+        'info',
+    );
     let element: any = null;
     if (editingType === 'info') {
         element = (
@@ -84,9 +75,9 @@ export default function BibleXMLDataPreviewComp({
                 loadBibleKeys={loadBibleKeys}
             />
         );
-    } else if (editingType === 'new-lines') {
+    } else {
         element = (
-            <BibleXMLNewLinesEditorComp
+            <BibleXMLExtraEditorComp
                 bibleKey={bibleKey}
                 loadBibleKeys={loadBibleKeys}
             />
@@ -94,7 +85,12 @@ export default function BibleXMLDataPreviewComp({
     }
     return (
         <div className="card">
-            <div className="card-header d-flex justify-content-start">
+            <div
+                className="card-header d-flex justify-content-start p-0"
+                style={{
+                    height: '30px',
+                }}
+            >
                 <RenderChoiceComp
                     setEditingType={setEditingType}
                     title="Info"
@@ -103,8 +99,8 @@ export default function BibleXMLDataPreviewComp({
                 />
                 <RenderChoiceComp
                     setEditingType={setEditingType}
-                    title="New Lines"
-                    targetEditingType="new-lines"
+                    title="Extra"
+                    targetEditingType="extra"
                     editingType={editingType}
                 />
             </div>

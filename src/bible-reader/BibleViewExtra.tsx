@@ -97,11 +97,11 @@ export function RenderTitleMaterialComp({
                 overflowX: 'auto',
             }}
         >
-            <div>
+            <div className='d-flex'>
                 <div>
                     <ItemColorNoteComp item={colorNoteHandler} />
                 </div>
-                <div>
+                <div className='mx-1'>
                     <AudioAIEnablingComp bibleItem={bibleItem} />
                 </div>
             </div>
@@ -155,7 +155,7 @@ export function RenderHeaderComp({
     const fontSize = useBibleViewFontSizeContext();
     return (
         <div
-            className="card-header d-flex app-top-hover-motion-1"
+            className="card-header d-flex app-top-hover-motion-1 p-0"
             style={{ ...fontSizeToHeightStyle(fontSize) }}
         >
             <RenderTitleMaterialComp

@@ -504,6 +504,9 @@ export async function extractBibleTitle1(
     cleanText: string,
     time: number,
 ): Promise<EditingResultType> {
+    const oldInputText = inputText;
+    // 1 John 1.1 => 1 John 1:1
+    cleanText = cleanText.replaceAll(/(.+\s+.+)\.(.?)/g, '$1:$2');
     for (const [regexStr, matcher] of regexTitleMap) {
         const regex = new RegExp(regexStr);
         const matches = regex.exec(cleanText);
@@ -516,7 +519,7 @@ export async function extractBibleTitle1(
                 result,
                 bibleKey,
                 inputText,
-                oldInputText: inputText,
+                oldInputText,
                 time,
             };
         }
@@ -535,7 +538,7 @@ export async function extractBibleTitle1(
         result,
         bibleKey,
         inputText: '',
-        oldInputText: inputText,
+        oldInputText,
         time,
     };
 }

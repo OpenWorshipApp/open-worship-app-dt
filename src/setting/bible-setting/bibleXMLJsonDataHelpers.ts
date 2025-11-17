@@ -139,12 +139,14 @@ export type BibleJsonInfoType = {
     numbersMap: { [key: string]: string };
 };
 
-export type BibleXMLJsonType = {
-    info: BibleJsonInfoType;
-    books: { [booKey: string]: BibleBookJsonType };
+export type BibleXMLExtraType = {
     newLines: string[];
     newLinesTitleMap: { [key: string]: ContentTitleType[] };
     customVersesMap: { [key: string]: CustomVerseType[] };
+};
+export type BibleXMLJsonType = BibleXMLExtraType & {
+    info: BibleJsonInfoType;
+    books: { [booKey: string]: BibleBookJsonType };
 };
 
 function guessValue(

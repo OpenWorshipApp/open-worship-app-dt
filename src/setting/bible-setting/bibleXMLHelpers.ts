@@ -535,6 +535,7 @@ export async function saveJsonDataToXMLfile(jsonData: BibleXMLJsonType) {
         return false;
     }
     await saveXMLText(jsonData.info.key, xmlText);
+    await invalidateBibleXMLCachedFolder(jsonData.info.key);
     return true;
 }
 
@@ -566,9 +567,8 @@ export async function updateBibleXMLInfo(bibleInfo: BibleJsonInfoType) {
         return;
     }
     bibleInfo.booksMap = bibleInfo.booksMap ?? getKJVBookKeyValue();
-    const jsonData = { ...dataJson, info: bibleInfo };
-    await saveJsonDataToXMLfile(jsonData);
-    await invalidateBibleXMLCachedFolder(bibleInfo.key);
+    const newJsonData = { ...dataJson, info: bibleInfo };
+    await saveJsonDataToXMLfile(newJsonData);
 }
 
 export function useBibleXMLInfo(bibleKey: string) {
