@@ -1,6 +1,5 @@
 import { ReactNode, createContext, use, useState } from 'react';
 
-import BibleItem from '../bible-list/BibleItem';
 import EventHandler from '../event/EventHandler';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
@@ -31,10 +30,11 @@ import {
     elementDivider,
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
+import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import {
     checkIsVerseAtBottom,
     checkIsVersePartialInvisible,
-} from './readBibleHelpers';
+} from './readBibleScrollHelpers';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';
@@ -72,15 +72,6 @@ export function attemptAddingHistory(
     attemptTimeout(() => {
         applyBibleItemHistoryPendingText();
     });
-}
-
-export class ReadIdOnlyBibleItem extends BibleItem {
-    get id() {
-        return super.id;
-    }
-    set id(_id: number) {
-        throw new Error('ReadOnlyBibleItem: id cannot be set');
-    }
 }
 
 function toStraightItems(

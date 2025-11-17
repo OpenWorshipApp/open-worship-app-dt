@@ -3,7 +3,7 @@ import '../others/theme-override-dark.scss';
 import '../others/theme-override-light.scss';
 import './FinderAppComp.scss';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, ChangeEvent } from 'react';
 
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { LookupOptions, findString } from './finderHelpers';
@@ -65,7 +65,7 @@ export default function FinderAppComp({
     }, [lookupText, setLookupText1]);
 
     const handleInputChange = useCallback(
-        (event: React.ChangeEvent<HTMLInputElement>) => {
+        (event: ChangeEvent<HTMLInputElement>) => {
             const text = event.target.value;
             setLookupText1(text);
         },
@@ -73,7 +73,7 @@ export default function FinderAppComp({
     );
 
     const handleMatchCaseChange = useCallback(
-        (event: React.ChangeEvent<HTMLInputElement>) => {
+        (event: ChangeEvent<HTMLInputElement>) => {
             const checked = event.target.checked;
             setIsMatchCase(checked);
             setLookupText1(lookupText, {

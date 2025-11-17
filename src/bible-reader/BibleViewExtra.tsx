@@ -19,10 +19,7 @@ import {
 } from '../helper/bibleViewHelpers';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import ColorNoteInf from '../helper/ColorNoteInf';
-import {
-    ReadIdOnlyBibleItem,
-    useBibleItemsViewControllerContext,
-} from './BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 import {
     BIBLE_VERSE_TEXT_TITLE,
     checkIsVerticalPartialInvisible,
@@ -55,7 +52,7 @@ import {
 } from '../helper/ai/openAIAudioHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { getBibleInfoIsRtl } from '../helper/bible-helpers/bibleInfoHelpers';
-import { ContentTitleType } from '../helper/bible-helpers/BibleDataReader';
+import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -616,32 +613,6 @@ function RenderVerseTextDetailComp({
     );
 }
 
-function RenderNewLineTitleComp({
-    title,
-    bibleKey,
-}: Readonly<{ title: ContentTitleType; bibleKey: string }>) {
-    if (title.isHtml) {
-        return (
-            <div
-                data-bible-key={bibleKey}
-                className="w-100 new-line-title"
-                dangerouslySetInnerHTML={{
-                    __html: title.content,
-                }}
-            />
-        );
-    }
-    return (
-        <div
-            data-bible-key={bibleKey}
-            className="w-100 new-line-title"
-            style={title.cssStyle ?? {}}
-        >
-            {title.content}
-        </div>
-    );
-}
-
 function RenderVerseTextComp({
     bibleItem,
     verseInfo,
@@ -665,21 +636,20 @@ function RenderVerseTextComp({
             (viewController.shouldKJVNewLine && verseInfo.isKJVNewLine));
     return (
         <>
-            {!isNewLine || verseInfo.newLineTitles === null ? null : (
+            {!isNewLine || verseInfo.newLineTitlesHtmlText === null ? null : (
                 <>
                     {index > 0 ? <br /> : null}
-                    {verseInfo.newLineTitles.map((title, i) => {
-                        return (
-                            <RenderNewLineTitleComp
-                                key={i}
-                                title={title}
-                                bibleKey={bibleItem.bibleKey}
-                            />
-                        );
-                    })}
+                    <div
+                        className="mt-2"
+                        dangerouslySetInnerHTML={{
+                            __html: verseInfo.newLineTitlesHtmlText,
+                        }}
+                    />
                 </>
             )}
-            {isNewLine ? <br /> : null}
+            {isNewLine && verseInfo.newLineTitlesHtmlText === null ? (
+                <br />
+            ) : null}
             <div
                 className={
                     'verse-number app-caught-hover-pointer' +

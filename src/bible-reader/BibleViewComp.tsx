@@ -1,7 +1,6 @@
 import './BibleViewComp.scss';
 
 import BibleItemsViewController, {
-    ReadIdOnlyBibleItem,
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
 import {
@@ -30,6 +29,7 @@ import {
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
+import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 
 function handMovedChecking(
     viewController: BibleItemsViewController,

@@ -23,7 +23,7 @@ export type CustomVerseContentType = {
     isGW?: boolean;
 };
 export type ContentTitleType = CustomVerseContentType & {
-    cssStyle?: React.CSSProperties;
+    cssStyle?: string;
 };
 export type CustomTitlesVerseType = {
     titles: ContentTitleType[];

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, ChangeEvent } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import {
@@ -21,8 +21,8 @@ export default function SettingGeneralThemeComp() {
     }, []);
 
     const handleChange = useCallback(
-        (e: React.ChangeEvent<HTMLSelectElement>) => {
-            const value = e.target.value;
+        (event: ChangeEvent<HTMLSelectElement>) => {
+            const value = event.target.value;
             setMode1(value as ThemeOptionType);
         },
         [setMode1],

@@ -29,7 +29,11 @@ import {
 } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
-import { CustomVerseContentType } from './BibleDataReader';
+import {
+    ContentTitleType,
+    CustomTitlesVerseType,
+    CustomVerseContentType,
+} from './BibleDataReader';
 
 export async function toInputText(
     bibleKey: string,
@@ -599,12 +603,17 @@ export function setShouldKJVNewLine(useKJVNewLine: boolean) {
     );
 }
 
-export function checkShouldNewLineKJV(
+export async function checkShouldNewLineKJV(
+    bibleKey: string,
     bookKey: string,
     chapter: number,
     verse: number,
 ) {
     if (!getShouldKJVNewLine()) {
+        return false;
+    }
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo?.newLines?.length) {
         return false;
     }
     const verseKey = toVerseKey(bookKey, chapter, verse);
@@ -625,7 +634,24 @@ export async function checkShouldNewLine(
     return false;
 }
 
-export async function getNewLineTitle(
+const defaultCssStyle =
+    'width: 100%; display: inline-block; padding: 0.2em 0.4em; font-weight: bold; ';
+export function genNewLineTitlesHtmlText(
+    bibleKey: string,
+    titles: ContentTitleType[],
+) {
+    return titles
+        .map((title) => {
+            return `
+                    <div data-bible-key="${bibleKey}"
+                    style="${defaultCssStyle} ${title.cssStyle ?? ''}">
+                    ${title.content}
+                    </div>
+                    `;
+        })
+        .join('');
+}
+export async function getNewLineTitlesHtmlText(
     bibleKey: string,
     bookKey: string,
     chapter: number,
@@ -640,7 +666,7 @@ export async function getNewLineTitle(
     if (titles.length === 0) {
         return null;
     }
-    return titles;
+    return genNewLineTitlesHtmlText(bibleKey, titles);
 }
 
 export async function getCustomVerseText(
@@ -656,7 +682,14 @@ export async function getCustomVerseText(
     const verseKey = toVerseKey(bookKey, chapter, verse);
     const customVerseList = bibleInfo.customVersesMap[verseKey] ?? [];
     const renderList = customVerseList.map((item) => {
-        // TODO: handle titles
+        if ((item as any).isTitle) {
+            const itemTitle = item as CustomTitlesVerseType;
+            return `
+            <div class="mt-2">
+                ${genNewLineTitlesHtmlText(bibleKey, itemTitle.titles)}
+            </div>
+            `;
+        }
         if (!(item as any).content) {
             return '';
         }
@@ -668,7 +701,7 @@ export async function getCustomVerseText(
     });
     const text = renderList
         .join('')
-        .replaceAll(/\n/g, '')
+        .replaceAll('\n', '')
         .replaceAll(/\s+/g, ' ');
     if (text.trim() === '') {
         return null;

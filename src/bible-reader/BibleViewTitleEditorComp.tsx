@@ -15,9 +15,9 @@ import {
     getVersesCount,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
-import { ReadIdOnlyBibleItem } from './BibleItemsViewController';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { OptionalPromise } from '../helper/typeHelpers';
+import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 
 function chose<T>(
     event: any,

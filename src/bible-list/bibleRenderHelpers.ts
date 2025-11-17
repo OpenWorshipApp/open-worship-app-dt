@@ -1,4 +1,3 @@
-import { ContentTitleType } from '../helper/bible-helpers/BibleDataReader';
 import {
     keyToBook,
     getVerses,
@@ -15,7 +14,7 @@ import {
     checkShouldNewLine,
     checkShouldNewLineKJV,
     getCustomVerseText,
-    getNewLineTitle,
+    getNewLineTitlesHtmlText,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
 import CacheManager from '../others/CacheManager';
@@ -35,7 +34,7 @@ export type CompiledVerseType = {
     customText: string | null;
     isNewLine: boolean;
     isKJVNewLine: boolean;
-    newLineTitles: ContentTitleType[] | null;
+    newLineTitlesHtmlText: string | null;
     bibleKey: string;
     bookKey: string;
     chapter: number;
@@ -140,8 +139,13 @@ class BibleRenderHelper {
                 const isNewLine =
                     i == 1 ||
                     (await checkShouldNewLine(bibleKey, bookKey, chapter, i));
-                const isKJVNewLine = checkShouldNewLineKJV(bookKey, chapter, i);
-                const newLineTitles = await getNewLineTitle(
+                const isKJVNewLine = await checkShouldNewLineKJV(
+                    bibleKey,
+                    bookKey,
+                    chapter,
+                    i,
+                );
+                const newLineTitlesHtmlText = await getNewLineTitlesHtmlText(
                     bibleKey,
                     bookKey,
                     chapter,
@@ -178,7 +182,7 @@ class BibleRenderHelper {
                     customText,
                     isNewLine,
                     isKJVNewLine,
-                    newLineTitles,
+                    newLineTitlesHtmlText,
                     bibleKey,
                     bookKey,
                     chapter,
