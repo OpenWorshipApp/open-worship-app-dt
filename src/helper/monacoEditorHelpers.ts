@@ -153,6 +153,13 @@ function createEditor(
     return editorStore;
 }
 
+export type StoreType = {
+    isWrapText: boolean;
+    setIsWrapText: (value: boolean) => void;
+    editorStore: EditorStoreType;
+    setNewValue: (newContent: string) => void;
+    onContainerInit: (container: HTMLElement | null) => () => void;
+};
 export function useInitMonacoEditor({
     settingName,
     options,
@@ -233,5 +240,5 @@ export function useInitMonacoEditor({
                 editorStore.div.remove();
             };
         },
-    };
+    } as StoreType;
 }

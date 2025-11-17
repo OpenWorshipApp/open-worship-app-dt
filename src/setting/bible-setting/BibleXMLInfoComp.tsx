@@ -9,8 +9,8 @@ import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 
-const BibleXMLInfoPreviewCompLazy = lazy(
-    () => import('./BibleXMLInfoPreviewComp'),
+const BibleXMLDataPreviewCompLazy = lazy(
+    () => import('./BibleXMLDataPreviewComp'),
 );
 
 export default function BibleXMLInfoComp({
@@ -89,7 +89,7 @@ export default function BibleXMLInfoComp({
             </div>
             {isShowing ? (
                 <AppSuspenseComp>
-                    <BibleXMLInfoPreviewCompLazy
+                    <BibleXMLDataPreviewCompLazy
                         bibleKey={bibleKey}
                         loadBibleKeys={loadBibleKeys}
                     />
