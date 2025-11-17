@@ -15,7 +15,7 @@
                         "description": "The title content"
                     },
                     "cssStyle": {
-                        "type": "object",
+                        "type": "string",
                         "description": "Style properties for the title"
                     }
                 },
