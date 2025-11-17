@@ -424,8 +424,6 @@ async function backupBibleXMLData<T>(
     data: T,
 ) {
     const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
-    console.log(basePath);
-    
     if (basePath !== null) {
         const filePath = pathJoin(basePath, fileName);
         const fileSource = FileSource.getInstance(filePath);
@@ -454,8 +452,6 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
         try {
             const data = JSON.parse(jsonText);
             const time = data?._cachingTime ?? 0;
-            console.log(time);
-
             // if the backup data is older than 7 days, ignore it
             if (Date.now() - time > 7 * 24 * 60 * 60 * 1000) {
                 return null;
@@ -466,6 +462,9 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
     return null;
 }
 
+function checkIsMatchBookChapterKey(verseKey: string, bookChapterKey: string) {
+    return verseKey.split(':')[0] === bookChapterKey;
+}
 export async function readBibleXMLData(
     bibleKey: string,
     fileName: string,
@@ -480,7 +479,7 @@ export async function readBibleXMLData(
     }
     const bibleInfo = jsonData.info;
     if (fileName === '_info') {
-        return backupBibleXMLData(bibleKey, fileName, {
+        return backupBibleXMLData<BibleInfoType>(bibleKey, fileName, {
             ...bibleInfo,
             books: bibleInfo.booksMap,
             numList: Array.from(
@@ -496,17 +495,36 @@ export async function readBibleXMLData(
         return null;
     }
     const { bookKey, chapterNum } = fileNameData;
-    const book = jsonData.books[bookKey];
-    if (!book) {
+    const chapterMap = jsonData.books[bookKey];
+    if (!chapterMap) {
         return null;
     }
-    const chapterInfo = book[chapterNum];
-    if (!chapterInfo) {
+    const chapterData = chapterMap[chapterNum];
+    if (!chapterData) {
         return null;
     }
-    return backupBibleXMLData(bibleKey, fileName, {
+    const bookChapterKey = `${bookKey} ${chapterNum}`;
+    const newLines = jsonData.newLines.filter((verseKey) => {
+        return checkIsMatchBookChapterKey(verseKey, bookChapterKey);
+    });
+    const newLinesTitleMap: { [key: string]: any } = {};
+    for (const verseKey of Object.keys(jsonData.newLinesTitleMap)) {
+        if (checkIsMatchBookChapterKey(verseKey, bookChapterKey)) {
+            newLinesTitleMap[verseKey] = jsonData.newLinesTitleMap[verseKey];
+        }
+    }
+    const customVersesMap: { [key: string]: any } = {};
+    for (const verseKey of Object.keys(jsonData.customVersesMap)) {
+        if (checkIsMatchBookChapterKey(verseKey, bookChapterKey)) {
+            customVersesMap[verseKey] = jsonData.customVersesMap[verseKey];
+        }
+    }
+    return backupBibleXMLData<BibleChapterType>(bibleKey, fileName, {
         title: `${bibleInfo.booksMap[bookKey]} ${chapterNum}`,
-        verses: chapterInfo,
+        verses: chapterData,
+        newLines,
+        newLinesTitleMap,
+        customVersesMap,
     });
 }
 

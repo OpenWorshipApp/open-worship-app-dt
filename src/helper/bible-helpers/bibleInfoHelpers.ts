@@ -69,7 +69,7 @@ export async function getChapterCount(bibleKey: string, book: string) {
     const chapterCount = getKJVChapterCount(bookKey);
     return chapterCount;
 }
-export async function getBookChapterData(
+export async function getChapterData(
     bibleKey: string,
     bookKey: string,
     chapter: number,
@@ -79,21 +79,21 @@ export async function getBookChapterData(
         return null;
     }
     const fileName = toBibleFileName(bookKey, chapter);
-    const verseInfo = (await bibleDataReader.readBibleData(
+    const chapterData = (await bibleDataReader.readBibleData(
         bibleKey,
         fileName,
     )) as BibleChapterType | null;
-    if (verseInfo === null) {
+    if (chapterData === null) {
         return null;
     }
-    return verseInfo;
+    return chapterData;
 }
 export async function getVerses(
     bibleKey: string,
     bookKey: string,
     chapter: number,
 ) {
-    const chapterData = await getBookChapterData(bibleKey, bookKey, chapter);
+    const chapterData = await getChapterData(bibleKey, bookKey, chapter);
     return chapterData ? chapterData.verses : null;
 }
 

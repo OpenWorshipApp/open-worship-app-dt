@@ -41,15 +41,18 @@ export type BibleInfoType = Readonly<{
     booksAvailable: string[];
     numList?: string[];
     version: number;
+}>;
+export type BookList = { [key: string]: string };
+export type BibleVerseList = { [key: string]: string };
+export type BibleChapterType = {
+    title: string;
+    verses: BibleVerseList;
     newLines?: string[];
     newLinesTitleMap?: { [key: string]: ContentTitleType[] };
     customVersesMap?: {
         [key: string]: CustomVerseType[];
     };
-}>;
-export type BookList = { [key: string]: string };
-export type BibleVerseList = { [key: string]: string };
-export type BibleChapterType = { title: string; verses: BibleVerseList };
+};
 
 const bibleDataCacher = new CacheManager<BibleInfoType | BibleChapterType>(60); // 1 minute
 export default class BibleDataReader {

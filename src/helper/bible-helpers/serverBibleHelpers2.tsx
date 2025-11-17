@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import {
     bookToKey,
     getBibleInfo,
+    getChapterData,
     getVerses,
     toVerseKey,
 } from './bibleInfoHelpers';
@@ -612,8 +613,8 @@ export async function checkShouldNewLineKJV(
     if (!getShouldKJVNewLine()) {
         return false;
     }
-    const bibleInfo = await getBibleInfo(bibleKey);
-    if (bibleInfo?.newLines?.length) {
+    const chapterData = await getChapterData(bibleKey, bookKey, chapter);
+    if (chapterData?.newLines?.length) {
         return false;
     }
     const verseKey = toVerseKey(bookKey, chapter, verse);
@@ -626,10 +627,10 @@ export async function checkShouldNewLine(
     chapter: number,
     verse: number,
 ) {
-    const bibleInfo = await getBibleInfo(bibleKey);
+    const chapterData = await getChapterData(bibleKey, bookKey, chapter);
     const verseKey = toVerseKey(bookKey, chapter, verse);
-    if (bibleInfo?.newLines?.length) {
-        return bibleInfo.newLines.includes(verseKey);
+    if (chapterData?.newLines?.length) {
+        return chapterData.newLines.includes(verseKey);
     }
     return false;
 }
@@ -657,12 +658,12 @@ export async function getNewLineTitlesHtmlText(
     chapter: number,
     verse: number,
 ) {
-    const bibleInfo = await getBibleInfo(bibleKey);
-    if (!bibleInfo?.newLinesTitleMap) {
+    const chapterData = await getChapterData(bibleKey, bookKey, chapter);
+    if (!chapterData?.newLinesTitleMap) {
         return null;
     }
     const verseKey = toVerseKey(bookKey, chapter, verse);
-    const titles = bibleInfo.newLinesTitleMap[verseKey] ?? [];
+    const titles = chapterData.newLinesTitleMap[verseKey] ?? [];
     if (titles.length === 0) {
         return null;
     }
@@ -675,12 +676,12 @@ export async function getCustomVerseText(
     chapter: number,
     verse: number,
 ) {
-    const bibleInfo = await getBibleInfo(bibleKey);
-    if (!bibleInfo?.customVersesMap) {
+    const chapterData = await getChapterData(bibleKey, bookKey, chapter);
+    if (!chapterData?.customVersesMap) {
         return null;
     }
     const verseKey = toVerseKey(bookKey, chapter, verse);
-    const customVerseList = bibleInfo.customVersesMap[verseKey] ?? [];
+    const customVerseList = chapterData.customVersesMap[verseKey] ?? [];
     const renderList = customVerseList.map((item) => {
         if ((item as any).isTitle) {
             const itemTitle = item as CustomTitlesVerseType;

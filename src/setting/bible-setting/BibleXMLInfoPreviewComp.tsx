@@ -13,7 +13,7 @@ import { useAppEffect } from '../../helper/debuggerHelpers';
 import { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
 import appProvider from '../../server/appProvider';
 
-import bibleInfoSchemaJson from './bibleInfoSchema.json';
+import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
 import { AnyObjectType } from '../../helper/typeHelpers';
 import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';

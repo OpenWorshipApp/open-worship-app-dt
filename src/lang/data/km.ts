@@ -114,7 +114,7 @@ const lang: LanguageDataType = {
     },
     sanitizeFindingText: (text: string) => {
         // khmer characters from https://en.wikipedia.org/wiki/Khmer_script
-        const chars = [
+        const chars = new Set([
             'ក',
             'ខ',
             'គ',
@@ -208,10 +208,10 @@ const lang: LanguageDataType = {
             '៧',
             '៨',
             '៩',
-        ];
+        ]);
         let newText = '';
         for (const c of text) {
-            if (chars.includes(c)) {
+            if (chars.has(c)) {
                 newText += c;
             } else {
                 newText += ' ';
@@ -237,7 +237,7 @@ const lang: LanguageDataType = {
         'ជា',
     ],
     trimText: (text: string) => {
-        return text.trim().replaceAll(/^(\u200B)+|(\u200B)+$/g, '');
+        return text.trim().replaceAll(/(^(\u200B)+|(\u200B)+$)/g, '');
     },
     endWord: (text: string) => {
         return text + '\u200B';
