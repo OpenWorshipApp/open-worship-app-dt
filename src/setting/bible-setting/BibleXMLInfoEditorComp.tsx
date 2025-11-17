@@ -1,32 +1,15 @@
-import { languages } from 'monaco-editor';
 import { compileSchema, SchemaNode } from 'json-schema-library';
 
 import LoadingComp from '../../others/LoadingComp';
 import { updateBibleXMLInfo, useBibleXMLInfo } from './bibleXMLHelpers';
 import { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
-import appProvider from '../../server/appProvider';
 
 import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
 import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 
-const bibleInfoSchema: SchemaNode = compileSchema(bibleInfoSchemaJson);
-languages.json.jsonDefaults.setDiagnosticsOptions({
-    validate: true,
-    allowComments: false,
-    trailingCommas: 'error',
-    comments: 'error',
-    schemas: [
-        {
-            uri: `${appProvider.appInfo.homepage}/bible-info-schema.json`,
-            fileMatch: ['*'],
-            schema: bibleInfoSchemaJson,
-        },
-    ],
-    enableSchemaRequest: false,
-    schemaValidation: 'error',
-});
+export const bibleInfoSchema: SchemaNode = compileSchema(bibleInfoSchemaJson);
 
 async function handleSaving(
     newBibleInfo: BibleJsonInfoType,
@@ -53,7 +36,7 @@ async function handleSaving(
     loadBibleKeys();
 }
 
-export default function BibleXMLInfoPreviewComp({
+export default function BibleXMLInfoEditorComp({
     bibleKey,
     loadBibleKeys,
 }: Readonly<{
