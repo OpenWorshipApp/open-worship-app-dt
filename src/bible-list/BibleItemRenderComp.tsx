@@ -43,9 +43,7 @@ function handleOpening(
     } else if (appProvider.isPageReader) {
         if (viewController instanceof LookupBibleItemController === false) {
             const lastBibleItem = viewController.straightBibleItems.pop();
-            if (lastBibleItem !== undefined) {
-                viewController.addBibleItemRight(lastBibleItem, bibleItem);
-            } else {
+            if (lastBibleItem === undefined) {
                 viewController.addBibleItem(
                     null,
                     bibleItem,
@@ -53,6 +51,8 @@ function handleOpening(
                     false,
                     false,
                 );
+            } else {
+                viewController.addBibleItemRight(lastBibleItem, bibleItem);
             }
             return;
         }
@@ -177,12 +177,11 @@ export default function BibleItemRenderComp({
                             bibleKey={bibleItem.bibleKey}
                             onBibleKeyChange={(
                                 _isContextMenu,
-                                _oldValue,
-                                newValue,
+                                _oldBibleKey,
+                                newBibleKey,
                             ) => {
-                                changeBible(newValue);
+                                changeBible(newBibleKey);
                             }}
-                            contextMenuTitle="`Add Extra Bible"
                             isMinimal
                         />
                     </div>

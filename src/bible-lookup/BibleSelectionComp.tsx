@@ -94,6 +94,14 @@ export async function showBibleOption(
     if (title !== undefined) {
         menuItems.unshift(
             {
+                childBefore: (
+                    <i
+                        className="bi bi-lightbulb"
+                        style={{
+                            color: 'var(--bs-info-text-emphasis)',
+                        }}
+                    />
+                ),
                 menuElement: title,
                 disabled: true,
             },

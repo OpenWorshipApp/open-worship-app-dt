@@ -106,7 +106,6 @@ export default function BibleCrossRefRendererComp({
                                         newBibleItem.bibleKey = newValue;
                                         setBibleItem(newBibleItem);
                                     }}
-                                    contextMenuTitle="`Add Extra Bible"
                                 />
                                 <BibleViewTitleEditorComp
                                     bibleItem={cloneBibleItem}
