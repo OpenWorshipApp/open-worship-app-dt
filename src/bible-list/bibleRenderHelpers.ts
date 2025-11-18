@@ -121,7 +121,55 @@ class BibleRenderHelper {
         });
     }
 
-    async toVerseTextList(bibleKey: string, target: BibleTargetType) {
+    async getVerseTextExtra(
+        bibleKey: string,
+        bookKey: string,
+        chapter: number,
+        verse: number,
+        isSkipExtra: boolean,
+    ) {
+        if (isSkipExtra) {
+            return {
+                customText: null,
+                isNewLine: false,
+                isKJVNewLine: false,
+                newLineTitlesHtmlText: null,
+            };
+        }
+        const isNewLine =
+            verse == 1 ||
+            (await checkShouldNewLine(bibleKey, bookKey, chapter, verse));
+        const isKJVNewLine = await checkShouldNewLineKJV(
+            bibleKey,
+            bookKey,
+            chapter,
+            verse,
+        );
+        const newLineTitlesHtmlText = await getNewLineTitlesHtmlText(
+            bibleKey,
+            bookKey,
+            chapter,
+            verse,
+        );
+        const customText = await getCustomVerseText(
+            bibleKey,
+            bookKey,
+            chapter,
+            verse,
+        );
+        return {
+            customText,
+            isNewLine,
+            isKJVNewLine,
+            newLineTitlesHtmlText,
+        };
+    }
+
+    async toVerseTextList(
+        bibleKey: string,
+        target: BibleTargetType,
+        isSkipExtra = false,
+    ) {
         const isRtl = await getBibleInfoIsRtl(bibleKey);
         const bibleVersesKey = bibleRenderHelper.toBibleVersesKey(
             bibleKey,
@@ -135,28 +183,14 @@ class BibleRenderHelper {
             }
             const compiledVersesList: CompiledVerseType[] = [];
             for (let i = verseStart; i <= verseEnd; i++) {
+                const extra = await this.getVerseTextExtra(
+                    bibleKey,
+                    bookKey,
+                    chapter,
+                    i,
+                    isSkipExtra,
+                );
                 const localNum = await toLocaleNumBible(bibleKey, i);
-                const isNewLine =
-                    i == 1 ||
-                    (await checkShouldNewLine(bibleKey, bookKey, chapter, i));
-                const isKJVNewLine = await checkShouldNewLineKJV(
-                    bibleKey,
-                    bookKey,
-                    chapter,
-                    i,
-                );
-                const newLineTitlesHtmlText = await getNewLineTitlesHtmlText(
-                    bibleKey,
-                    bookKey,
-                    chapter,
-                    i,
-                );
-                const customText = await getCustomVerseText(
-                    bibleKey,
-                    bookKey,
-                    chapter,
-                    i,
-                );
                 const iString = i.toString();
                 const genTarget = (verse: number) => {
                     return {
@@ -179,10 +213,6 @@ class BibleRenderHelper {
                     verse: i,
                     localeVerse: localNum ?? iString,
                     text: verses[iString] ?? '??',
-                    customText,
-                    isNewLine,
-                    isKJVNewLine,
-                    newLineTitlesHtmlText,
                     bibleKey,
                     bookKey,
                     chapter,
@@ -191,6 +221,7 @@ class BibleRenderHelper {
                     isFirst,
                     isLast,
                     isRtl,
+                    ...extra,
                 });
             }
             await compiledVerseListCache.set(
@@ -230,8 +261,16 @@ class BibleRenderHelper {
             verseEnd: verses ? Object.keys(verses).length : 1,
         };
     }
-    async toText(bibleKey: string, target: BibleTargetType) {
-        const verseTextList = await this.toVerseTextList(bibleKey, target);
+    async toText(
+        bibleKey: string,
+        target: BibleTargetType,
+        isSkipExtra = false,
+    ) {
+        const verseTextList = await this.toVerseTextList(
+            bibleKey,
+            target,
+            isSkipExtra,
+        );
         if (verseTextList === null) {
             const bibleVersesKey = bibleRenderHelper.toBibleVersesKey(
                 bibleKey,

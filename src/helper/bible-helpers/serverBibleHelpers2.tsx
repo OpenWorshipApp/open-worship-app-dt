@@ -35,6 +35,8 @@ import {
     CustomTitlesVerseType,
     CustomVerseContentType,
 } from './BibleDataReader';
+import appProvider from '../../server/appProvider';
+import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -638,22 +640,62 @@ export async function checkShouldNewLine(
     return false;
 }
 
+async function compileVerseTitle(bibleKey: string, content: string) {
+    const dom = document.createElement('div');
+    dom.innerHTML = content;
+    const spans = dom.querySelectorAll<HTMLSpanElement>(
+        'span[data-title-verse-key]',
+    );
+    for (const span of spans) {
+        const verseKey = span.dataset.titleVerseKey;
+        if (!verseKey) {
+            continue;
+        }
+        span.classList.add('app-caught-hover-pointer');
+        span.title = verseKey;
+        const result = await extractBibleTitle(bibleKey, verseKey);
+        const bibleItem = result.result.bibleItem;
+        if (bibleItem === null) {
+            continue;
+        }
+        const text = await bibleRenderHelper.toText(
+            bibleKey,
+            bibleItem.target,
+            true,
+        );
+        span.title = `${verseKey}  ${text}`;
+    }
+    return dom.innerHTML;
+}
+
 const defaultCssStyle =
     'width: 100%; display: inline-block; padding: 0.2em 0.4em; font-weight: bold; ';
-export function genNewLineTitlesHtmlText(
+const newLineTitleCache = new CacheManager<string>(60); // 1 minute
+export async function genNewLineTitlesHtmlText(
     bibleKey: string,
     titles: ContentTitleType[],
 ) {
-    return titles
-        .map((title) => {
-            return `
-                    <div data-bible-key="${bibleKey}"
-                    style="${defaultCssStyle} ${title.cssStyle ?? ''}">
-                    ${title.content}
-                    </div>
-                    `;
-        })
-        .join('');
+    const md5 = appProvider.systemUtils.generateMD5(JSON.stringify(titles));
+    const cacheKey = `${bibleKey}:${md5}`;
+    return unlocking(cacheKey, async () => {
+        const cachedData = await newLineTitleCache.get(cacheKey);
+        if (cachedData !== null) {
+            return cachedData;
+        }
+        const list = await Promise.all(
+            titles.map(async (title) => {
+                return `
+                        <div data-bible-key="${bibleKey}"
+                        style="${defaultCssStyle} ${title.cssStyle ?? ''}">
+                        ${await compileVerseTitle(bibleKey, title.content)}
+                        </div>
+                        `;
+            }),
+        );
+        const verseText = list.join('');
+        await newLineTitleCache.set(cacheKey, verseText);
+        return verseText;
+    });
 }
 export async function getNewLineTitlesHtmlText(
     bibleKey: string,
@@ -685,24 +727,26 @@ export async function getCustomVerseText(
     }
     const verseKey = toVerseKey(bookKey, chapter, verse);
     const customVerseList = chapterData.customVersesMap[verseKey] ?? [];
-    const renderList = customVerseList.map((item) => {
-        if ((item as any).isTitle) {
-            const itemTitle = item as CustomTitlesVerseType;
-            return `
+    const renderList = await Promise.all(
+        customVerseList.map(async (item) => {
+            if ((item as any).isTitle) {
+                const itemTitle = item as CustomTitlesVerseType;
+                return `
             <div class="mt-2">
-                ${genNewLineTitlesHtmlText(bibleKey, itemTitle.titles)}
+                ${await genNewLineTitlesHtmlText(bibleKey, itemTitle.titles)}
             </div>
             `;
-        }
-        if (!(item as any).content) {
-            return '';
-        }
-        const itemVerse = item as CustomVerseContentType;
-        if (itemVerse.isGW) {
-            return `<span class="app-god-word">${itemVerse.content}</span>`;
-        }
-        return itemVerse.content;
-    });
+            }
+            if (!(item as any).content) {
+                return '';
+            }
+            const itemVerse = item as CustomVerseContentType;
+            if (itemVerse.isGW) {
+                return `<span class="app-god-word">${itemVerse.content}</span>`;
+            }
+            return itemVerse.content;
+        }),
+    );
     const text = renderList
         .join('')
         .replaceAll('\n', '')
