@@ -75,8 +75,8 @@ export default function RenderVerseOptionsComp({
                 })}
                 {isFull ? null : (
                     <div
-                        className="item alert text-center px-2"
-                        title="Show all verses"
+                        className="item alert pointer text-center px-2"
+                        title="`Show all verses"
                         style={{
                             color: 'var(--bs-info-text-emphasis)',
                         }}
