@@ -36,7 +36,12 @@ import {
     CustomVerseContentType,
 } from './BibleDataReader';
 import appProvider from '../../server/appProvider';
-import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../../context-menu/appContextMenuHelpers';
+import { elementDivider } from '../../context-menu/AppContextMenuComp';
+import BibleItemsViewController from '../../bible-reader/BibleItemsViewController';
 
 export async function toInputText(
     bibleKey: string,
@@ -556,7 +561,12 @@ export async function extractBibleTitle(
             extractBibleTitleCache.set(cacheKey, data);
             return data;
         };
-        const cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
+        let cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
+        const locale = await getBibleLocale(bibleKey);
+        const lang = await getLangAsync(locale);
+        if (lang !== null) {
+            cleanText = lang.sanitizeText(cleanText);
+        }
         if (cleanText === '') {
             const data = {
                 result: genExtractedBible(),
@@ -640,6 +650,39 @@ export async function checkShouldNewLine(
     return false;
 }
 
+async function getBibleItemsFromTitleVerseKey(
+    bibleKey: string,
+    verseKey: string,
+) {
+    let verseKey2: string | null = null;
+    if (verseKey.match(/(\s.+:.+)-(.+:.+)/)) {
+        const arr = verseKey.split('-');
+        const verseKey1 = arr[0].trim() + '-';
+        const key2Arr = arr[1].trim().split(':');
+        const key2 = `${key2Arr[0]}:1-${key2Arr[1]}`;
+        verseKey2 = `${verseKey1.split(' ')[0]} ${key2}`;
+        verseKey = verseKey1;
+    }
+    const bibleItem = await BibleItem.fromVerseKey(bibleKey, verseKey);
+    if (bibleItem === null) {
+        return {
+            bibleItem1: null,
+            bibleItem2: null,
+        };
+    }
+    if (verseKey2 === null) {
+        return {
+            bibleItem1: bibleItem,
+            bibleItem2: null,
+        };
+    }
+    const bibleItem2 = await BibleItem.fromVerseKey(bibleKey, verseKey2);
+    return {
+        bibleItem1: bibleItem,
+        bibleItem2,
+    };
+}
+
 async function compileVerseTitle(bibleKey: string, content: string) {
     const dom = document.createElement('div');
     dom.innerHTML = content;
@@ -653,19 +696,118 @@ async function compileVerseTitle(bibleKey: string, content: string) {
         }
         span.classList.add('app-caught-hover-pointer');
         span.title = verseKey;
-        const result = await extractBibleTitle(bibleKey, verseKey);
-        const bibleItem = result.result.bibleItem;
-        if (bibleItem === null) {
+        span.dataset.bibleKey = bibleKey;
+        const { bibleItem1, bibleItem2 } = await getBibleItemsFromTitleVerseKey(
+            bibleKey,
+            verseKey,
+        );
+        if (bibleItem1 === null) {
             continue;
         }
-        const text = await bibleRenderHelper.toText(
-            bibleKey,
-            bibleItem.target,
-            true,
-        );
-        span.title = `${verseKey}  ${text}`;
+        const text1 = await bibleItem1.toText();
+        const title1 = await bibleItem1.toTitle();
+        let title = `${title1}  ${text1}`;
+        if (bibleItem2 !== null) {
+            const text2 = await bibleItem2.toText();
+            const title2 = await bibleItem2.toTitle();
+            title += `\n${title2}  ${text2}`;
+        }
+        span.title = title;
     }
     return dom.innerHTML;
+}
+
+async function handleCustomTitleVerseClicking(
+    bibleItemViewController: BibleItemsViewController,
+    bibleItem: BibleItem,
+    event: MouseEvent,
+) {
+    const span = event.currentTarget as HTMLSpanElement;
+    const verseKey = span.dataset.titleVerseKey;
+    const bibleKey = span.dataset.bibleKey;
+    if (!verseKey || !bibleKey) {
+        return;
+    }
+    // TODO: open context menu for copy, save and open verse
+    const { bibleItem1, bibleItem2 } = await getBibleItemsFromTitleVerseKey(
+        bibleKey,
+        verseKey,
+    );
+    if (bibleItem1 === null) {
+        return;
+    }
+    const contextMenuItems: ContextMenuItemType[] = [];
+    const title1 = await bibleItem1.toTitle();
+    contextMenuItems.push(
+        {
+            menuElement: <span data-bible-key={bibleKey}>{title1}</span>,
+            disabled: true,
+        },
+        {
+            menuElement: '`Open',
+            onSelect: () => {
+                bibleItemViewController.addBibleItemRight(
+                    bibleItem,
+                    bibleItem1,
+                );
+            },
+        },
+        {
+            menuElement: '`Copy',
+            onSelect: () => {
+                bibleItem1.copyTitleToClipboard();
+            },
+        },
+    );
+    if (bibleItem2 !== null) {
+        const title2 = await bibleItem2.toTitle();
+        contextMenuItems.push(
+            { menuElement: elementDivider },
+            {
+                menuElement: <span data-bible-key={bibleKey}>{title2}</span>,
+                disabled: true,
+            },
+            {
+                menuElement: '`Open',
+                onSelect: () => {
+                    bibleItemViewController.addBibleItemRight(
+                        bibleItem,
+                        bibleItem2,
+                    );
+                },
+            },
+            {
+                menuElement: '`Copy',
+                onSelect: () => {
+                    bibleItem2.copyTitleToClipboard();
+                },
+            },
+        );
+    }
+    showAppContextMenu(event, contextMenuItems);
+}
+
+export async function reformCustomTitle(
+    bibleItemViewController: BibleItemsViewController,
+    bibleItem: BibleItem,
+    span: HTMLSpanElement,
+) {
+    const targetSpans = span.querySelectorAll<HTMLSpanElement>(
+        'span[data-title-verse-key]',
+    );
+    for (const span of targetSpans) {
+        const verseKey = span.dataset.titleVerseKey;
+        if (!verseKey) {
+            continue;
+        }
+        span.addEventListener('click', (event) =>
+            handleCustomTitleVerseClicking(
+                bibleItemViewController,
+                bibleItem,
+                event,
+            ),
+        );
+    }
 }
 
 const defaultCssStyle =

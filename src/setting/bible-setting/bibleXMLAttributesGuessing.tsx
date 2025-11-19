@@ -1,6 +1,11 @@
 import { useState } from 'react';
 
-import { getLangCode, LocaleType } from '../../lang/langHelpers';
+import {
+    getLangAsync,
+    getLangCode,
+    LanguageDataType,
+    LocaleType,
+} from '../../lang/langHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import {
     getKJVBookKeyValue,
@@ -201,7 +206,10 @@ function BibleBooksMapXMLInputComp({
         uri: Uri.parse('bible-books-map-editor'),
         language: 'plaintext',
     });
-    const handleMarkupStringParsing = (markupString: string) => {
+    const handleMarkupStringParsing = (
+        markupString: string,
+        lang: LanguageDataType | null,
+    ) => {
         const parser = new DOMParser();
         markupString = markupString.replaceAll('</', '@newline</');
         const doc = parser.parseFromString(markupString, 'text/html');
@@ -211,6 +219,9 @@ function BibleBooksMapXMLInputComp({
         innerText = innerText.replaceAll(/\n\s/g, '\n');
         innerText = innerText.replaceAll(/\n+/g, '\n');
         innerText = innerText.trim();
+        if (lang !== null) {
+            innerText = lang.sanitizeText(innerText);
+        }
         onChange(innerText);
         editorStore.replaceValue(innerText);
     };
@@ -262,14 +273,15 @@ function BibleBooksMapXMLInputComp({
                 </a>
                 <button
                     className="btn btn-sm btn-secondary ms-2"
-                    onClick={(event) => {
+                    onClick={async (event) => {
                         event.stopPropagation();
                         const value = editorStore.editorInstance.getValue();
                         const isHTML = value.includes('<');
                         if (!isHTML) {
                             return;
                         }
-                        handleMarkupStringParsing(value);
+                        const lang = await getLangAsync(locale);
+                        handleMarkupStringParsing(value, lang);
                     }}
                 >
                     `Parse Markup String (HTML|XML)

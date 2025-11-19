@@ -34,7 +34,7 @@ import {
     BibleJsonInfoType,
     BibleXMLJsonType,
     jsonToXMLText,
-    xmlToJson,
+    xmlTextToJson,
     xmlTextToBibleElement,
     getBibleInfoJson,
     getAllXMLFileKeys,
@@ -557,7 +557,7 @@ export async function getBibleXMLDataFromKey(bibleKey: string) {
     if (xmlText === null) {
         return null;
     }
-    return await xmlToJson(xmlText);
+    return await xmlTextToJson(xmlText);
 }
 
 export async function updateBibleXMLInfo(bibleInfo: BibleJsonInfoType) {

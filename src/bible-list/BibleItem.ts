@@ -11,7 +11,10 @@ import { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import DocumentInf from '../others/DocumentInf';
 import { AnyObjectType } from '../helper/typeHelpers';
 import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
-import { toVerseKey } from '../helper/bible-helpers/bibleInfoHelpers';
+import {
+    fromVerseKey,
+    toVerseKey,
+} from '../helper/bible-helpers/bibleInfoHelpers';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
 
@@ -131,6 +134,22 @@ export default class BibleItem
             metadata: {},
         });
     }
+
+    static async fromVerseKey(bibleKey: string, verseKey: string) {
+        const target = await fromVerseKey(bibleKey, verseKey);
+        if (target === null) {
+            return null;
+        }
+        const bibleItem = this.fromData(
+            bibleKey,
+            target.bookKey,
+            target.chapter,
+            target.verseStart,
+            target.verseEnd,
+        );
+        return bibleItem;
+    }
+
     toJson(): BibleItemType {
         if (this.isError) {
             return this.jsonError;
@@ -229,7 +248,7 @@ export default class BibleItem
         return bibleRenderHelper.toTitle(this.bibleKey, this.target);
     }
     toText() {
-        return bibleRenderHelper.toText(this.bibleKey, this.target);
+        return bibleRenderHelper.toText(this.bibleKey, this.target, true);
     }
     toVerseTextList() {
         return bibleRenderHelper.toVerseTextList(this.bibleKey, this.target);

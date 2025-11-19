@@ -156,7 +156,10 @@ export default function BibleViewComp({
                 data-scroll-on-next-chapter={isEditing ? '1' : '0'}
                 data-scroll-verses-container={id}
                 style={{
-                    paddingBottom: '60px',
+                    paddingBottom:
+                        !isEditing && !editingResult?.result.guessingChapter
+                            ? '60px'
+                            : '',
                 }}
             >
                 {isEditing ? (

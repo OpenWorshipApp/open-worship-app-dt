@@ -453,6 +453,7 @@ export type LanguageDataType = {
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
+    sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
     stopWords: string[];

@@ -10,7 +10,7 @@ import {
     saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
 import { xmlFormatExample } from './bibleXMLAttributesGuessing';
-import { xmlToJson } from './bibleXMLJsonDataHelpers';
+import { xmlTextToJson } from './bibleXMLJsonDataHelpers';
 
 export default function BibleXMLImportComp({
     loadBibleKeys,
@@ -50,7 +50,7 @@ export default function BibleXMLImportComp({
                     showSimpleToast('No Data', 'No data to process');
                     return;
                 }
-                const dataJson = await xmlToJson(dataText);
+                const dataJson = await xmlTextToJson(dataText);
                 if (dataJson === null) {
                     showSimpleToast('Parsing XML', 'Failed to parse XML data');
                     return;

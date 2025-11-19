@@ -89,9 +89,7 @@ function ChapterOptions({
                                     {chapterNumStr}
                                 </span>
                                 {isDiff ? (
-                                    <small className="text-muted">
-                                        ({chapter})
-                                    </small>
+                                    <small className="px-1">({chapter})</small>
                                 ) : null}
                             </span>
                         </button>

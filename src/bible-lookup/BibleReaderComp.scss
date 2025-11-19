@@ -12,6 +12,7 @@
   }
 
   .app-chapter-select {
+    color: var(--text-color);
     width: 85px;
     font-size: 13px;
   }
@@ -21,6 +22,7 @@
 
     .bible-lookup-chapter-option,
     .bible-lookup-book-option {
+      color: var(--text-color);
       &:hover {
         font-weight: bold;
         background-color: transparent !important;

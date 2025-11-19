@@ -23,7 +23,7 @@ import {
 } from '../setting/bible-setting/bibleXMLHelpers';
 import {
     getAllXMLFileKeys,
-    xmlToJson,
+    xmlTextToJson,
 } from '../setting/bible-setting/bibleXMLJsonDataHelpers';
 import {
     APIDataMapType,
@@ -331,7 +331,7 @@ export default class BibleFindController {
         if (xmlText === null) {
             return null;
         }
-        const bibleInfo = await xmlToJson(xmlText);
+        const bibleInfo = await xmlTextToJson(xmlText);
         if (bibleInfo === null) {
             return null;
         }

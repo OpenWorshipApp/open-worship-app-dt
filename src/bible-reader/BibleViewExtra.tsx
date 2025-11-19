@@ -53,6 +53,7 @@ import {
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { getBibleInfoIsRtl } from '../helper/bible-helpers/bibleInfoHelpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import RenderCustomVerseComp from './RenderCustomVerseComp';
 
 export const BibleViewTitleMaterialContext = createContext<{
     titleElement: ReactNode;
@@ -97,11 +98,11 @@ export function RenderTitleMaterialComp({
                 overflowX: 'auto',
             }}
         >
-            <div className='d-flex'>
+            <div className="d-flex">
                 <div>
                     <ItemColorNoteComp item={colorNoteHandler} />
                 </div>
-                <div className='mx-1'>
+                <div className="mx-1">
                     <AudioAIEnablingComp bibleItem={bibleItem} />
                 </div>
             </div>
@@ -388,6 +389,7 @@ function handleNextVersionSelection(
 }
 
 function RenderVerseTextViewComp({
+    bibleItem,
     verseInfo,
     isAudioEnabled,
     isExtraVerses,
@@ -396,6 +398,7 @@ function RenderVerseTextViewComp({
     handleAudioStarting,
     handleAudioEnding,
 }: Readonly<{
+    bibleItem: ReadIdOnlyBibleItem;
     verseInfo: CompiledVerseType;
     isAudioEnabled: boolean;
     isExtraVerses: boolean;
@@ -409,10 +412,9 @@ function RenderVerseTextViewComp({
         customText === null ? (
             text
         ) : (
-            <span
-                dangerouslySetInnerHTML={{
-                    __html: customText,
-                }}
+            <RenderCustomVerseComp
+                bibleItem={bibleItem}
+                customHtml={customText}
             />
         );
     return (
@@ -492,6 +494,7 @@ function RenderVerseTextDetailListComp({
         return (
             <RenderVerseTextViewComp
                 key={verseInfo.bibleKey}
+                bibleItem={bibleItem}
                 verseInfo={verseInfo}
                 isAudioEnabled={isAudioEnabled}
                 isExtraVerses={isExtraVerses}
@@ -639,12 +642,12 @@ function RenderVerseTextComp({
             {!isNewLine || verseInfo.newLineTitlesHtmlText === null ? null : (
                 <>
                     {index > 0 ? <br /> : null}
-                    <div
-                        className="mt-2"
-                        dangerouslySetInnerHTML={{
-                            __html: verseInfo.newLineTitlesHtmlText,
-                        }}
-                    />
+                    <div className="mt-2">
+                        <RenderCustomVerseComp
+                            bibleItem={bibleItem}
+                            customHtml={verseInfo.newLineTitlesHtmlText}
+                        />
+                    </div>
                 </>
             )}
             {isNewLine && verseInfo.newLineTitlesHtmlText === null ? (

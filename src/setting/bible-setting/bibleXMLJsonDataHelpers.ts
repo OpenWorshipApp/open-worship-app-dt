@@ -1,5 +1,6 @@
 import {
     DEFAULT_LOCALE,
+    getLangAsync,
     getLangCode,
     LocaleType,
 } from '../../lang/langHelpers';
@@ -289,9 +290,10 @@ async function guessingBibleKey(xmlElementBible: Element) {
 
 function getAvailableBooks(xmlElementBooks: Element[]) {
     const availableBooks: string[] = [];
+    const kjvKeyValue = getKJVBookKeyValue();
     for (const book of xmlElementBooks) {
         const bookKey = getBookKey(book);
-        if (bookKey !== null) {
+        if (bookKey !== null && kjvKeyValue[bookKey]) {
             availableBooks.push(bookKey);
         }
     }
@@ -454,18 +456,24 @@ export async function getBibleInfoJson(xmlElementBible: Element) {
             Array.from({ length: 10 }, (_, i) => [i.toString(), i.toString()]),
         ),
     );
+    const locale =
+        guessValue(xmlElementBible, attributesMap.locale) ?? DEFAULT_LOCALE;
+    if (getLangCode(locale as any) === null) {
+        return null;
+    }
+    const lang = await getLangAsync(locale as any);
     const bookKeyMap = getBibleMap(
         xmlElementMap ?? null,
         tagNamesMap.bookMap,
         cloneJson(getKJVBookKeyValue()),
     );
+    if (lang !== null) {
+        for (const [key, value] of Object.entries(bookKeyMap)) {
+            bookKeyMap[key] = lang.sanitizeText(value);
+        }
+    }
     const bibleKey = await guessingBibleKey(xmlElementBible);
     if (bibleKey === null) {
-        return null;
-    }
-    const locale =
-        guessValue(xmlElementBible, attributesMap.locale) ?? DEFAULT_LOCALE;
-    if (getLangCode(locale as any) === null) {
         return null;
     }
     const books = Array.from(
@@ -498,9 +506,9 @@ export async function getBibleInfoJson(xmlElementBible: Element) {
 function setBibleInfo(
     xmlDoc: Document,
     xmlElementBible: Element,
-    info: BibleJsonInfoType,
+    bibleInfo: BibleJsonInfoType,
 ) {
-    const { numbersMap, booksMap, ...restInfo } = info;
+    const { numbersMap, booksMap, ...restInfo } = bibleInfo;
     const bibleInfoKey = Object.keys(restInfo).filter((key) => {
         return !['filePath'].includes(key);
     });
@@ -627,7 +635,7 @@ export function xmlTextToBibleElement(xmlText: string) {
     return bible;
 }
 
-export async function xmlToJson(xmlText: string) {
+export async function xmlTextToJson(xmlText: string) {
     const xmlElementBible = xmlTextToBibleElement(xmlText);
     if (!xmlElementBible) {
         return null;

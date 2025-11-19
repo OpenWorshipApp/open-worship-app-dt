@@ -2,13 +2,18 @@ import { compileSchema, SchemaNode } from 'json-schema-library';
 import { Uri } from 'monaco-editor';
 
 import LoadingComp from '../../others/LoadingComp';
-import { updateBibleXMLInfo, useBibleXMLInfo } from './bibleXMLHelpers';
+import {
+    addMonacoBibleInfoActions,
+    updateBibleXMLInfo,
+    useBibleXMLInfo,
+} from './bibleXMLHelpers';
 import { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
 
 import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
 import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
+import { AnyObjectType } from '../../helper/typeHelpers';
 
 export const schemaHandler: SchemaNode = compileSchema(bibleInfoSchemaJson);
 export const uri = Uri.parse('bible-info');
@@ -56,8 +61,34 @@ export default function BibleXMLInfoEditorComp({
     return (
         <BibleXMLEditorComp
             id={bibleKey}
-            jsonData={bibleInfo}
-            onStore={() => {}}
+            jsonData={{ ...bibleInfo, booksAvailable: undefined }}
+            onStore={(editorStore) => {
+                addMonacoBibleInfoActions(
+                    editorStore,
+                    // getBibleInfo
+                    () => {
+                        return JSON.parse(
+                            editorStore.editorInstance.getValue(),
+                        );
+                    },
+                    // setPartialBibleInfo
+                    (partialBibleInfo: AnyObjectType) => {
+                        const oldBibleInfo = JSON.parse(
+                            editorStore.editorInstance.getValue(),
+                        );
+                        if (oldBibleInfo === null) {
+                            return;
+                        }
+                        const newBibleInfo = {
+                            ...oldBibleInfo,
+                            ...partialBibleInfo,
+                        } as BibleJsonInfoType;
+                        editorStore.replaceValue(
+                            JSON.stringify(newBibleInfo, null, 4),
+                        );
+                    },
+                );
+            }}
             jsonDataSchema={schemaHandler}
             save={(newBibleInfo: BibleJsonInfoType) => {
                 handleSaving(newBibleInfo, loadBibleKeys);
