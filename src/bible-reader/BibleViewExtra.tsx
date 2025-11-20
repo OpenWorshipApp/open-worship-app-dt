@@ -139,6 +139,7 @@ export function RenderTitleMaterialComp({
                                 );
                             }}
                         >
+                            <i className="bi bi-x" style={{ color: 'red' }} />
                             {extraBibleKey}
                         </span>
                     ))}
