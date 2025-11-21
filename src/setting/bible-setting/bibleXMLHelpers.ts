@@ -528,14 +528,18 @@ export async function readBibleXMLData(
     });
 }
 
-export async function saveJsonDataToXMLfile(jsonData: BibleXMLJsonType) {
+export async function saveJsonDataToXMLfile(
+    jsonData: BibleXMLJsonType,
+    bibleKey?: string,
+) {
+    bibleKey = bibleKey ?? jsonData.info.key;
     const xmlText = jsonToXMLText(jsonData);
     if (xmlText === null) {
         showSimpleToast('Error', 'Error occurred during saving to XML');
         return false;
     }
-    await saveXMLText(jsonData.info.key, xmlText);
-    await invalidateBibleXMLCachedFolder(jsonData.info.key);
+    await saveXMLText(bibleKey, xmlText);
+    await invalidateBibleXMLCachedFolder(bibleKey);
     return true;
 }
 
@@ -560,15 +564,19 @@ export async function getBibleXMLDataFromKey(bibleKey: string) {
     return await xmlTextToJson(xmlText);
 }
 
-export async function updateBibleXMLInfo(bibleInfo: BibleJsonInfoType) {
-    const dataJson = await getBibleXMLDataFromKey(bibleInfo.key);
+export async function updateBibleXMLInfo(
+    oldBibleInfo: BibleJsonInfoType,
+    newBibleInfo: BibleJsonInfoType,
+) {
+    const dataJson = await getBibleXMLDataFromKey(oldBibleInfo.key);
     if (dataJson === null) {
         showSimpleToast('Error', 'Error occurred during reading file');
-        return;
+        return false;
     }
-    bibleInfo.booksMap = bibleInfo.booksMap ?? getKJVBookKeyValue();
-    const newJsonData = { ...dataJson, info: bibleInfo };
-    await saveJsonDataToXMLfile(newJsonData);
+    newBibleInfo.booksMap = newBibleInfo.booksMap ?? getKJVBookKeyValue();
+    const newJsonData = { ...dataJson, info: newBibleInfo };
+    await saveJsonDataToXMLfile(newJsonData, oldBibleInfo.key);
+    return true;
 }
 
 export function useBibleXMLInfo(bibleKey: string) {

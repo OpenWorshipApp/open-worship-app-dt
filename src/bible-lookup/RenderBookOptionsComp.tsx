@@ -59,9 +59,7 @@ function genBookOption({
             >
                 <span data-bible-key={bibleKey}>{book}</span>
                 {book === bookKJV ? null : (
-                    <>
-                        <small className="px-1">({bookKJV})</small>
-                    </>
+                    <small className="px-1">({bookKJV})</small>
                 )}
             </button>
         </div>

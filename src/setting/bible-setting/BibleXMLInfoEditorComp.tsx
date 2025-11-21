@@ -8,47 +8,29 @@ import {
     useBibleXMLInfo,
 } from './bibleXMLHelpers';
 import { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
-
-import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
-import { kjvBibleInfo } from '../../helper/bible-helpers/serverBibleHelpers';
-import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 import { AnyObjectType } from '../../helper/typeHelpers';
+
+import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
+import appProvider from '../../server/appProvider';
 
 export const schemaHandler: SchemaNode = compileSchema(bibleInfoSchemaJson);
 export const uri = Uri.parse('bible-info');
 
 async function handleSaving(
+    oldBibleInfo: BibleJsonInfoType,
     newBibleInfo: BibleJsonInfoType,
-    loadBibleKeys: () => void,
 ) {
-    const booksAvailableLength = newBibleInfo.booksAvailable.length;
-    const kjvBooksAvailableLength = kjvBibleInfo.bookKeysOrder.length;
-
-    if (booksAvailableLength !== kjvBooksAvailableLength) {
-        const isConfirmed = await showAppConfirm(
-            'Confirm Book Count Mismatch',
-            `Books available is ${booksAvailableLength}, ` +
-                `which is different from KJV (${kjvBooksAvailableLength}). ` +
-                'Are you sure to continue?',
-            {
-                confirmButtonLabel: 'Yes',
-            },
-        );
-        if (!isConfirmed) {
-            return;
-        }
+    const isSuccess = await updateBibleXMLInfo(oldBibleInfo, newBibleInfo);
+    if (isSuccess) {
+        appProvider.reload();
     }
-    await updateBibleXMLInfo(newBibleInfo);
-    loadBibleKeys();
 }
 
 export default function BibleXMLInfoEditorComp({
     bibleKey,
-    loadBibleKeys,
 }: Readonly<{
     bibleKey: string;
-    loadBibleKeys: () => void;
 }>) {
     const { bibleInfo, isPending } = useBibleXMLInfo(bibleKey);
     if (isPending) {
@@ -91,7 +73,7 @@ export default function BibleXMLInfoEditorComp({
             }}
             jsonDataSchema={schemaHandler}
             save={(newBibleInfo: BibleJsonInfoType) => {
-                handleSaving(newBibleInfo, loadBibleKeys);
+                handleSaving(bibleInfo, newBibleInfo);
             }}
             editorUri={uri}
         />

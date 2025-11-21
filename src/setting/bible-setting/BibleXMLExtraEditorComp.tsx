@@ -7,14 +7,15 @@ import {
     saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
-
-import bibleNewLinesSchemaJson from './schemas/bibleExtraSchema.json';
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
 import { useMemo } from 'react';
 import { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
-export const bibleExtraSchema: SchemaNode = compileSchema(
+import bibleNewLinesSchemaJson from './schemas/bibleExtraSchema.json';
+import appProvider from '../../server/appProvider';
+
+export const bookChapterSchema: SchemaNode = compileSchema(
     bibleNewLinesSchemaJson,
 );
 export const uri = Uri.parse('bible-extra');
@@ -23,11 +24,7 @@ type DataType = BibleXMLExtraType & {
     bibleKey: string;
 };
 
-async function handleSaving(
-    bibleKey: string,
-    newJsonData: BibleXMLExtraType,
-    loadBibleKeys: () => void,
-) {
+async function handleSaving(bibleKey: string, newJsonData: BibleXMLExtraType) {
     const xmlBibleData = await getBibleXMLDataFromKey(bibleKey);
     if (!xmlBibleData) {
         showSimpleToast(
@@ -44,16 +41,14 @@ async function handleSaving(
     };
     const isSuccess = await saveJsonDataToXMLfile(newXmlBibleData);
     if (isSuccess) {
-        loadBibleKeys();
+        appProvider.reload();
     }
 }
 
 export default function BibleXMLExtraEditorComp({
     bibleKey,
-    loadBibleKeys,
 }: Readonly<{
     bibleKey: string;
-    loadBibleKeys: () => void;
 }>) {
     const [xmlBibleData] = useAppStateAsync(() => {
         return getBibleXMLDataFromKey(bibleKey);
@@ -80,7 +75,7 @@ export default function BibleXMLExtraEditorComp({
             id={bibleKey}
             jsonData={jsonData}
             onStore={() => {}}
-            jsonDataSchema={bibleExtraSchema}
+            jsonDataSchema={bookChapterSchema}
             save={(newJsonData: DataType) => {
                 if (newJsonData.bibleKey !== bibleKey) {
                     showSimpleToast(
@@ -89,7 +84,7 @@ export default function BibleXMLExtraEditorComp({
                     );
                     return;
                 }
-                handleSaving(bibleKey, newJsonData, loadBibleKeys);
+                handleSaving(bibleKey, newJsonData);
             }}
             editorUri={uri}
         />

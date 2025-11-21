@@ -6,10 +6,14 @@ import BibleXMLInfoEditorComp, {
 import BibleXMLExtraEditorComp, {
     uri as bibleExtraUri,
 } from './BibleXMLExtraEditorComp';
+import BibleXMLBookChapterEditorComp, {
+    uri as bibleBookChapterUri,
+} from './BibleXMLBookChapterEditorComp';
+import { useStateSettingString } from '../../helper/settingHelpers';
 
 import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
 import bibleExtraSchemaJson from './schemas/bibleExtraSchema.json';
-import { useStateSettingString } from '../../helper/settingHelpers';
+import bookChapterSchemaJson from './schemas/bibleBookChapterSchema.json';
 
 languages.json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
@@ -26,6 +30,11 @@ languages.json.jsonDefaults.setDiagnosticsOptions({
             uri: bibleExtraSchemaJson.$id,
             fileMatch: [bibleExtraUri.toString()],
             schema: bibleExtraSchemaJson,
+        },
+        {
+            uri: bookChapterSchemaJson.$id,
+            fileMatch: [bibleBookChapterUri.toString()],
+            schema: bookChapterSchemaJson,
         },
     ],
     enableSchemaRequest: false,
@@ -58,10 +67,8 @@ function RenderChoiceComp({
 
 export default function BibleXMLDataPreviewComp({
     bibleKey,
-    loadBibleKeys,
 }: Readonly<{
     bibleKey: string;
-    loadBibleKeys: () => void;
 }>) {
     const [editingType, setEditingType] = useStateSettingString<string>(
         `bible-setting-${bibleKey}-xml-data-editing-type`,
@@ -69,19 +76,11 @@ export default function BibleXMLDataPreviewComp({
     );
     let element: any = null;
     if (editingType === 'info') {
-        element = (
-            <BibleXMLInfoEditorComp
-                bibleKey={bibleKey}
-                loadBibleKeys={loadBibleKeys}
-            />
-        );
+        element = <BibleXMLInfoEditorComp bibleKey={bibleKey} />;
+    } else if (editingType === 'book-chapter') {
+        element = <BibleXMLBookChapterEditorComp bibleKey={bibleKey} />;
     } else {
-        element = (
-            <BibleXMLExtraEditorComp
-                bibleKey={bibleKey}
-                loadBibleKeys={loadBibleKeys}
-            />
-        );
+        element = <BibleXMLExtraEditorComp bibleKey={bibleKey} />;
     }
     return (
         <div className="card">
@@ -101,6 +100,12 @@ export default function BibleXMLDataPreviewComp({
                     setEditingType={setEditingType}
                     title="Extra"
                     targetEditingType="extra"
+                    editingType={editingType}
+                />
+                <RenderChoiceComp
+                    setEditingType={setEditingType}
+                    title="Book Chapter"
+                    targetEditingType="book-chapter"
                     editingType={editingType}
                 />
             </div>

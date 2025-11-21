@@ -1,0 +1,118 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://wwww.openworship.app/schemas/bibleExtraSchema.json",
+    "type": "object",
+    "$defs": {
+        "titles": {
+            "type": "array",
+            "description": "List of titles associated with the content",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "The title content"
+                    },
+                    "cssStyle": {
+                        "type": "string",
+                        "description": "Style properties for the title"
+                    }
+                },
+                "required": ["content"],
+                "additionalProperties": false
+            }
+        },
+        "customVerse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The content of the custom verse"
+                },
+                "titles": {
+                    "$ref": "#/$defs/titles"
+                },
+                "isHtml": {
+                    "type": "boolean",
+                    "description": "Indicates if the content is in HTML format"
+                },
+                "isGW": {
+                    "type": "boolean",
+                    "description": "Indicates if the verse is from God's Word translation"
+                },
+                "isTitle": {
+                    "type": "boolean",
+                    "description": "Indicates if the content is a title"
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "properties": {
+        "bibleKey": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The unique key identifying the Bible translation"
+        },
+        "bookKey": {
+            "type": "string",
+            "pattern": "^[123A-Z]{3}$",
+            "description": "The unique key identifying the book in the Bible"
+        },
+        "chapter": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The chapter number in the book"
+        },
+        "verses": {
+            "type": "object",
+            "description": "Mapping of verse numbers to their content",
+            "patternProperties": {
+                "^[1-9][0-9]*$": {
+                    "type": "string",
+                    "description": "The content of the verse"
+                }
+            },
+            "additionalProperties": false
+        },
+        "newLines": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "$id": "https://wwww.openworship.app/schemas/bibleExtraSchema.json",
+            "type": "array",
+            "description": "List of newline characters used in the Bible translation",
+            "items": {
+                "type": "string",
+                "pattern": "^[123A-Z]{3} [1-9][0-9]{0,2}:[1-9][0-9]{0,2}$",
+                "examples": ["MAT 7:6", "MAT 7:13"]
+            },
+            "uniqueItems": true
+        },
+        "newLinesTitleMap": {
+            "type": "object",
+            "description": "Mapping of newline identifiers to their titles",
+            "patternProperties": {
+                "^[123A-Z]{3} [1-9][0-9]{0,2}:[1-9][0-9]{0,2}$": {
+                    "$ref": "#/$defs/titles"
+                }
+            },
+            "additionalProperties": false
+        },
+        "customVersesMap": {
+            "type": "object",
+            "description": "Mapping of custom verse identifiers to their content",
+            "patternProperties": {
+                "^[123A-Z]{3} [1-9][0-9]{0,2}:[1-9][0-9]{0,2}$": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/customVerse"
+                    }
+                }
+            },
+            "additionalProperties": false
+        }
+    },
+    "required": ["bibleKey", "newLines", "newLinesTitleMap", "customVersesMap"],
+    "additionalProperties": false
+}

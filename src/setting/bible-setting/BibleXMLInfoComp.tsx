@@ -89,10 +89,7 @@ export default function BibleXMLInfoComp({
             </div>
             {isShowing ? (
                 <AppSuspenseComp>
-                    <BibleXMLDataPreviewCompLazy
-                        bibleKey={bibleKey}
-                        loadBibleKeys={loadBibleKeys}
-                    />
+                    <BibleXMLDataPreviewCompLazy bibleKey={bibleKey} />
                 </AppSuspenseComp>
             ) : null}
         </li>
