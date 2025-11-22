@@ -2,7 +2,6 @@ import RenderBookOptionsComp from './RenderBookOptionsComp';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
 import { BibleSelectionMiniComp } from './BibleSelectionComp';
 import { RENDER_FOUND_CLASS } from './selectionHelpers';
-import { BibleViewTextComp } from '../bible-reader/BibleViewExtra';
 import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
@@ -10,6 +9,7 @@ import {
 import RenderVerseOptionsComp from './RenderVerseOptionsComp';
 import { use } from 'react';
 import { goToBibleSetting } from '../setting/settingHelpers';
+import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
 
 export default function RenderLookupSuggestionComp({
     applyChapterSelection,

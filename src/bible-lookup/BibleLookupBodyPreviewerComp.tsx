@@ -8,15 +8,13 @@ import {
     useNextEditingBibleItem,
 } from '../bible-reader/readBibleHelpers';
 import {
-    BibleViewTitleEditingComp,
-    BibleViewTitleMaterialContext,
-    BibleViewTitleWrapperComp,
-} from '../bible-reader/BibleViewExtra';
-import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import { setBibleLookupInputFocus } from './selectionHelpers';
+import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewTitleEditingComp';
+import BibleViewTitleWrapperComp from '../bible-reader/view-extra/BibleViewTitleWrapperComp';
+import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
 
 const LazyBiblePreviewerRenderComp = lazy(() => {
     return import('../bible-reader/BiblePreviewerRenderComp');

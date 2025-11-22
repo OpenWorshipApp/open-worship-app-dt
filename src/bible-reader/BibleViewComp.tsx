@@ -8,7 +8,6 @@ import {
     genDraggingClass,
     removeDraggingClass,
 } from './readBibleHelpers';
-import { BibleViewTextComp, RenderHeaderComp } from './BibleViewExtra';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import RenderBibleEditingHeader from '../bible-lookup/RenderBibleEditingHeader';
@@ -30,6 +29,8 @@ import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import BibleViewTextComp from './view-extra/BibleViewTextComp';
+import BibleViewRenderHeaderComp from './view-extra/BibleViewRenderHeaderComp';
 
 function handMovedChecking(
     viewController: BibleItemsViewController,
@@ -149,7 +150,7 @@ export default function BibleViewComp({
             {isEditing ? (
                 <RenderBibleEditingHeader />
             ) : (
-                <RenderHeaderComp bibleItem={bibleItem} />
+                <BibleViewRenderHeaderComp bibleItem={bibleItem} />
             )}
             <div
                 className="card-body app-top-hover-motion-1"

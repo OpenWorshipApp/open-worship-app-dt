@@ -1,5 +1,5 @@
-import { BibleDirectViewTitleComp } from '../bible-reader/BibleViewExtra';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
+import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
 import { useBibleFindController } from './BibleFindController';

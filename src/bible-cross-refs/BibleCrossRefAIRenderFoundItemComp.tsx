@@ -1,4 +1,3 @@
-import { BibleDirectViewTitleComp } from '../bible-reader/BibleViewExtra';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import {
     openContextMenu,
@@ -8,6 +7,7 @@ import { handleDragStart } from '../helper/dragHelpers';
 import { breakItem } from './bibleCrossRefsHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
 
 export default function BibleCrossRefAIRenderFoundItemComp({
     bibleVersesKey,
