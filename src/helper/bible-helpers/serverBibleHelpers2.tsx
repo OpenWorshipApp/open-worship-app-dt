@@ -42,6 +42,7 @@ import {
 } from '../../context-menu/appContextMenuHelpers';
 import { elementDivider } from '../../context-menu/AppContextMenuComp';
 import BibleItemsViewController from '../../bible-reader/BibleItemsViewController';
+import { log } from '../loggerHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -168,6 +169,7 @@ export type ExtractedBibleResult = {
     chapter: number | null;
     guessingChapter: string | null;
     bibleItem: BibleItem | null;
+    extraBibleItems?: BibleItem[];
 };
 
 export function genExtractedBible(): ExtractedBibleResult {
@@ -505,22 +507,20 @@ export type EditingResultType = {
     oldInputText: string;
     time: number;
 };
-export async function extractBibleTitle1(
+export async function extractBibleTitleByRegex(
     bibleKey: string,
     inputText: string,
     cleanText: string,
     time: number,
 ): Promise<EditingResultType> {
     const oldInputText = inputText;
-    // 1 John 1.1 => 1 John 1:1
-    cleanText = cleanText.replaceAll(/(.+\s+.+)\.(.?)/g, '$1:$2');
-    for (const [regexStr, matcher] of regexTitleMap) {
+    for (const [regexStr, parse] of regexTitleMap) {
         const regex = new RegExp(regexStr);
         const matches = regex.exec(cleanText);
         if (matches === null) {
             continue;
         }
-        const result = await matcher(bibleKey, matches);
+        const result = await parse(bibleKey, matches);
         if (result !== null) {
             return {
                 result,
@@ -549,7 +549,65 @@ export async function extractBibleTitle1(
         time,
     };
 }
+
+// John 1:1-2:5 => John 1:1-, John 2:5
+const brokenRegex = /^(.+[^\s]+\s[^\s]+:[^\s]+-)([^\s]+:[^\s]+)$/;
+function breakText(inputText: string) {
+    let extra: string | null = null;
+    const matches = brokenRegex.exec(inputText);
+    if (matches !== null && matches.length === 3) {
+        inputText = matches[1].trim();
+        extra = matches[2].trim();
+    }
+    if (extra) {
+        const arr = extra.split(':');
+        extra = `${arr[0]}:1-${arr[1]}`;
+    }
+    return {
+        inputText,
+        extra,
+    };
+}
+async function genExtraBibleItems(
+    bibleItem: BibleItem,
+    extraInputText: string,
+): Promise<BibleItem[] | undefined> {
+    const title = await bibleItem.toTitle();
+    const arr = title.split(' ');
+    arr.pop();
+    const book = arr.join(' ');
+    const extraVerseKey = `${book} ${extraInputText}`;
+    const { bibleKey } = bibleItem;
+    const endBibleItem = await BibleItem.fromVerseKey(bibleKey, extraVerseKey);
+    const startChapter = bibleItem.target.chapter;
+    if (endBibleItem === null || endBibleItem.target.chapter <= startChapter) {
+        return undefined;
+    }
+    const extraBibleItems: BibleItem[] = [];
+    const chapterRange =
+        endBibleItem.target.chapter - bibleItem.target.chapter - 1;
+    for (let i = 1; i <= chapterRange; i++) {
+        const chapterNum = startChapter + i;
+        const newBibleItem = await BibleItem.fromVerseKey(
+            bibleKey,
+            `${book} ${chapterNum}:`,
+        );
+        if (newBibleItem === null) {
+            log(
+                'Failed to generate extra bible item for',
+                `${book} ${chapterNum}:`,
+            );
+            return undefined;
+        }
+        extraBibleItems.push(newBibleItem);
+    }
+    return [...extraBibleItems, endBibleItem];
+}
 const extractBibleTitleCache = new CacheManager<EditingResultType>(4); // 4 seconds
+function setCache(cacheKey: string, data: EditingResultType) {
+    extractBibleTitleCache.set(cacheKey, data);
+    return data;
+}
 export async function extractBibleTitle(
     bibleKey: string,
     inputText: string,
@@ -557,11 +615,16 @@ export async function extractBibleTitle(
 ): Promise<EditingResultType> {
     const cacheKey = `${bibleKey}:${inputText}`;
     return unlocking(cacheKey, async () => {
-        const setCache = (data: EditingResultType) => {
-            extractBibleTitleCache.set(cacheKey, data);
-            return data;
-        };
+        const cachedData = await extractBibleTitleCache.get(cacheKey);
+        if (cachedData !== null) {
+            return cachedData;
+        }
+        // "   Matthew  5.1-2 " => "Matthew 5:1-2"
         let cleanText = inputText.trim().replaceAll(/\s+/g, ' ');
+        // 1 John 1.1 => 1 John 1:1
+        cleanText = cleanText.replaceAll(/(.+\s+.+)\.(.?)/g, '$1:$2');
+        const brokenInputText = breakText(cleanText);
+        cleanText = brokenInputText.inputText;
         const locale = await getBibleLocale(bibleKey);
         const lang = await getLangAsync(locale);
         if (lang !== null) {
@@ -575,36 +638,23 @@ export async function extractBibleTitle(
                 oldInputText: inputText,
                 time,
             };
-            return setCache(data);
+            return setCache(cacheKey, data);
         }
-        const extractedData = await extractBibleTitle1(
+        const extractedData = await extractBibleTitleByRegex(
             bibleKey,
             inputText,
             cleanText,
             time,
         );
-        if (extractedData !== null) {
-            return setCache(extractedData);
-        }
-        const extractedBibleKeyResult = await attemptExtractBibleKey(inputText);
-        if (extractedBibleKeyResult !== null) {
-            const data = await extractBibleTitle(
-                extractedBibleKeyResult.bibleKey,
-                extractedBibleKeyResult.inputText,
-                time,
+        const { bibleItem } = extractedData.result;
+        if (bibleItem !== null && brokenInputText.extra !== null) {
+            const extraBibleItems = await genExtraBibleItems(
+                bibleItem,
+                brokenInputText.extra,
             );
-            return setCache(data);
+            extractedData.result.extraBibleItems = extraBibleItems;
         }
-        const result = genExtractedBible();
-        result.guessingBook = cleanText;
-        const data = {
-            result,
-            bibleKey,
-            inputText: '',
-            oldInputText: inputText,
-            time,
-        };
-        return setCache(data);
+        return setCache(cacheKey, extractedData);
     });
 }
 
@@ -655,7 +705,7 @@ async function getBibleItemsFromTitleVerseKey(
     verseKey: string,
 ) {
     let verseKey2: string | null = null;
-    if (verseKey.match(/(\s.+:.+)-(.+:.+)/)) {
+    if (/(\s.+:.+)-(.+:.+)/.exec(verseKey)) {
         const arr = verseKey.split('-');
         const verseKey1 = arr[0].trim() + '-';
         const key2Arr = arr[1].trim().split(':');

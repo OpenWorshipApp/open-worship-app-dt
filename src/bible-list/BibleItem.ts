@@ -11,10 +11,7 @@ import { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import DocumentInf from '../others/DocumentInf';
 import { AnyObjectType } from '../helper/typeHelpers';
 import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
-import {
-    fromVerseKey,
-    toVerseKey,
-} from '../helper/bible-helpers/bibleInfoHelpers';
+import { toVerseKey } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
 
@@ -136,18 +133,11 @@ export default class BibleItem
     }
 
     static async fromVerseKey(bibleKey: string, verseKey: string) {
-        const target = await fromVerseKey(bibleKey, verseKey);
-        if (target === null) {
+        const result = await extractBibleTitle(bibleKey, verseKey);
+        if (result.result.bibleItem === null) {
             return null;
         }
-        const bibleItem = this.fromData(
-            bibleKey,
-            target.bookKey,
-            target.chapter,
-            target.verseStart,
-            target.verseEnd,
-        );
-        return bibleItem;
+        return result.result.bibleItem;
     }
 
     toJson(): BibleItemType {

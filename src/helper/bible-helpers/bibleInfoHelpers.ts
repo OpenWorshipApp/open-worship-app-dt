@@ -17,8 +17,6 @@ import {
 import CacheManager from '../../others/CacheManager';
 import { freezeObject } from '../helpers';
 import { checkIsRtl } from '../../lang/langHelpers';
-import { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
-import { getVersesCount } from './serverBibleHelpers2';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
     const info = await getBibleInfo(bibleKey);
@@ -154,42 +152,6 @@ export async function getBibleInfoIsRtl(bibleKey: string) {
     }
     const isRtl = checkIsRtl(bibleInfo.locale);
     return isRtl;
-}
-
-const regex = /^([A-Z]{3}) (\d+):(\d+)(-(\d+))?$/;
-export async function fromVerseKey(
-    bibleKey: string,
-    // JHN 18:33-
-    verseKey: string,
-) {
-    const isLastDash = verseKey.endsWith('-');
-    if (isLastDash) {
-        verseKey = verseKey.slice(0, -1);
-    }
-    const match = verseKey.match(regex);
-    if (!match) {
-        return null;
-    }
-    const bookKey = match[1];
-    const chapter = parseInt(match[2], 10);
-    const verseStart = parseInt(match[3], 10);
-    let verseEnd = verseStart;
-    if (match[5] !== undefined) {
-        verseEnd = parseInt(match[5], 10);
-    }
-    if (isLastDash) {
-        const verseCount = await getVersesCount(bibleKey, bookKey, chapter);
-        if (verseCount === null) {
-            return null;
-        }
-        verseEnd = verseCount;
-    }
-    return {
-        bookKey,
-        chapter,
-        verseStart,
-        verseEnd,
-    } as BibleTargetType;
 }
 
 export function toVerseKey(
