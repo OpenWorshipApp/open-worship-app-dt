@@ -68,7 +68,10 @@ export default function RenderVerseTextComp({
                     {verseInfoList.map((extraVerseInfo, i) => (
                         <Fragment key={extraVerseInfo.bibleKey}>
                             {i > 0 ? ', ' : null}
-                            <span data-bible-key={extraVerseInfo.bibleKey}>
+                            <span
+                                data-bible-key={extraVerseInfo.bibleKey}
+                                style={extraVerseInfo.style}
+                            >
                                 {extraVerseInfo.localeVerse}
                             </span>
                         </Fragment>

@@ -922,11 +922,16 @@ export async function genNewLineTitlesHtmlText(
         if (cachedData !== null) {
             return cachedData;
         }
+        const langData = await getLangFromBibleKey(bibleKey);
         const list = await Promise.all(
             titles.map(async (title) => {
+                let style = `${defaultCssStyle} ${title.cssStyle ?? ''};`;
+                if (langData !== null) {
+                    style += ` font-family: ${langData.fontFamily};`;
+                }
                 return `
                         <div data-bible-key="${bibleKey}"
-                        style="${defaultCssStyle} ${title.cssStyle ?? ''}">
+                        style="${style}">
                         ${await compileVerseTitle(bibleKey, title.content)}
                         </div>
                         `;

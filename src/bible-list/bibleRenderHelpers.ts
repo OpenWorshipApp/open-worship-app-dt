@@ -1,3 +1,5 @@
+import { CSSProperties } from 'react';
+
 import {
     keyToBook,
     getVerses,
@@ -14,6 +16,7 @@ import {
     checkShouldNewLine,
     checkShouldNewLineKJV,
     getCustomVerseText,
+    getLangFromBibleKey,
     getNewLineTitlesHtmlText,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
@@ -43,6 +46,7 @@ export type CompiledVerseType = {
     isFirst: boolean;
     isLast: boolean;
     isRtl: boolean;
+    style: CSSProperties;
 };
 
 const titleCache = new CacheManager<string>(60); // 1 minute
@@ -207,6 +211,7 @@ class BibleRenderHelper {
             bibleKey,
             target,
         );
+        const langData = await getLangFromBibleKey(bibleKey);
         return unlocking(bibleVersesKey, async () => {
             const { bookKey, chapter, verseStart, verseEnd } = target;
             const verses = await getVerses(bibleKey, bookKey, chapter);
@@ -253,6 +258,10 @@ class BibleRenderHelper {
                     isFirst,
                     isLast,
                     isRtl,
+                    style:
+                        langData === null
+                            ? {}
+                            : { fontFamily: langData.fontFamily },
                     ...extra,
                 });
             }

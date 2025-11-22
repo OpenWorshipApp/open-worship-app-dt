@@ -24,7 +24,8 @@ export default function RenderVerseTextViewComp({
     handleAudioStarting: () => void;
     handleAudioEnding: () => void;
 }>) {
-    const { bibleKey, text, customText, bibleVersesKey, isRtl } = verseInfo;
+    const { bibleKey, text, customText, bibleVersesKey, isRtl, style } =
+        verseInfo;
     const textElement =
         customText === null ? (
             text
@@ -46,13 +47,19 @@ export default function RenderVerseTextViewComp({
                 />
             ) : null}
             {isExtraVerses ? (
-                <div className="text d-flex" data-bible-key={bibleKey}>
+                <div
+                    className="text d-flex"
+                    data-bible-key={bibleKey}
+                    style={style}
+                >
                     <div className={'flex-fill' + (isRtl ? ' rtl' : '')}>
                         {textElement}
                     </div>
                 </div>
             ) : (
-                <span data-bible-key={bibleKey}>{textElement}</span>
+                <span data-bible-key={bibleKey} style={style}>
+                    {textElement}
+                </span>
             )}
         </Fragment>
     );
