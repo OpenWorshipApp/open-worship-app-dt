@@ -11,7 +11,6 @@ import {
     getKJVBookKeyValue,
     kjvBibleInfo,
 } from '../../helper/bible-helpers/serverBibleHelpers';
-import appProvider from '../../server/appProvider';
 import { Uri } from 'monaco-editor';
 
 function BibleKeyXMLInputComp({
@@ -285,17 +284,6 @@ function BibleBooksMapXMLInputComp({
                     }}
                 >
                     `Parse Markup String (HTML|XML)
-                </button>
-                <button
-                    className="btn btn-sm btn-secondary ms-2"
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        appProvider.browserUtils.openExternalURL(
-                            'https://www.bible.com/bible',
-                        );
-                    }}
-                >
-                    `Check on "bible.com"
                 </button>
             </div>
         </div>

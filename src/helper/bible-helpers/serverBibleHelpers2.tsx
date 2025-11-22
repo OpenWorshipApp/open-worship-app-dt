@@ -5,7 +5,7 @@ import {
     getBibleInfo,
     getChapterData,
     getVerses,
-    toVerseKey,
+    toVerseKeyFormat,
 } from './bibleInfoHelpers';
 import {
     fromLocaleNum,
@@ -40,9 +40,12 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
-import { elementDivider } from '../../context-menu/AppContextMenuComp';
 import BibleItemsViewController from '../../bible-reader/BibleItemsViewController';
 import { log } from '../loggerHelpers';
+import { copyToClipboard } from '../../server/appHelpers';
+import LookupBibleItemController from '../../bible-reader/LookupBibleItemController';
+import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
+import { elementDivider } from '../../context-menu/AppContextMenuComp';
 
 export async function toInputText(
     bibleKey: string,
@@ -582,7 +585,7 @@ async function genExtraBibleItems(
     const book = arr.join(' ');
     const extraVerseKey = `${book} ${extraInputText}`;
     const { bibleKey } = bibleItem;
-    const endBibleItem = await BibleItem.fromVerseKey(bibleKey, extraVerseKey);
+    const endBibleItem = await BibleItem.fromTitleText(bibleKey, extraVerseKey);
     const startChapter = bibleItem.target.chapter;
     if (endBibleItem === null || endBibleItem.target.chapter <= startChapter) {
         return undefined;
@@ -592,7 +595,7 @@ async function genExtraBibleItems(
         endBibleItem.target.chapter - bibleItem.target.chapter - 1;
     for (let i = 1; i <= chapterRange; i++) {
         const chapterNum = startChapter + i;
-        const newBibleItem = await BibleItem.fromVerseKey(
+        const newBibleItem = await BibleItem.fromTitleText(
             bibleKey,
             `${book} ${chapterNum}:`,
         );
@@ -686,7 +689,7 @@ export async function checkShouldNewLineKJV(
     if (chapterData?.newLines?.length) {
         return false;
     }
-    const verseKey = toVerseKey(bookKey, chapter, verse);
+    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
     return kjvNewLinerInfo.includes(verseKey);
 }
 
@@ -697,7 +700,7 @@ export async function checkShouldNewLine(
     verse: number,
 ) {
     const chapterData = await getChapterData(bibleKey, bookKey, chapter);
-    const verseKey = toVerseKey(bookKey, chapter, verse);
+    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
     if (chapterData?.newLines?.length) {
         return chapterData.newLines.includes(verseKey);
     }
@@ -720,18 +723,27 @@ async function getBibleItemsFromTitleVerseKey(
     const bibleItem = await BibleItem.fromVerseKey(bibleKey, verseKey);
     if (bibleItem === null) {
         return {
+            title: null,
             bibleItem1: null,
             bibleItem2: null,
         };
     }
+    let title = await bibleRenderHelper.toTitle(bibleKey, bibleItem.target);
     if (verseKey2 === null) {
         return {
+            title,
             bibleItem1: bibleItem,
             bibleItem2: null,
         };
     }
     const bibleItem2 = await BibleItem.fromVerseKey(bibleKey, verseKey2);
+    title = await bibleRenderHelper.toTitle(
+        bibleKey,
+        bibleItem.target,
+        bibleItem2?.target,
+    );
     return {
+        title,
         bibleItem1: bibleItem,
         bibleItem2,
     };
@@ -771,8 +783,46 @@ async function compileVerseTitle(bibleKey: string, content: string) {
     return dom.innerHTML;
 }
 
-async function handleCustomTitleVerseClicking(
+function genContextMenuItems(
     bibleItemViewController: BibleItemsViewController,
+    bibleKey: string,
+    bibleItem: BibleItem,
+    targetBibleItem: BibleItem,
+    title: string,
+    onSelect?: () => void,
+) {
+    return [
+        {
+            menuElement: elementDivider,
+            disabled: true,
+        },
+        {
+            childBefore: <i className="bi bi-eye" />,
+            menuElement: <span data-bible-key={bibleKey}>{title}</span>,
+            title: `Open "${title}"`,
+            onSelect:
+                onSelect ??
+                (() => {
+                    bibleItemViewController.addBibleItemRight(
+                        bibleItem,
+                        targetBibleItem,
+                    );
+                }),
+        },
+        {
+            childBefore: <i className="bi bi-copy" />,
+            menuElement: <span data-bible-key={bibleKey}>{title}</span>,
+            title: `Copy "${title}" to clipboard`,
+            onSelect: () => {
+                copyToClipboard(`${bibleItem.getCopyingBibleKey()} ${title}`);
+            },
+        },
+    ];
+}
+async function handleCustomTitleVerseClicking(
+    bibleItemViewController:
+        | BibleItemsViewController
+        | LookupBibleItemController,
     bibleItem: BibleItem,
     event: MouseEvent,
 ) {
@@ -783,60 +833,54 @@ async function handleCustomTitleVerseClicking(
         return;
     }
     // TODO: open context menu for copy, save and open verse
-    const { bibleItem1, bibleItem2 } = await getBibleItemsFromTitleVerseKey(
-        bibleKey,
-        verseKey,
-    );
+    const { title, bibleItem1, bibleItem2 } =
+        await getBibleItemsFromTitleVerseKey(bibleKey, verseKey);
     if (bibleItem1 === null) {
         return;
     }
-    const contextMenuItems: ContextMenuItemType[] = [];
+    let contextMenuItems: ContextMenuItemType[] = [];
     const title1 = await bibleItem1.toTitle();
     contextMenuItems.push(
-        {
-            menuElement: <span data-bible-key={bibleKey}>{title1}</span>,
-            disabled: true,
-        },
-        {
-            menuElement: '`Open',
-            onSelect: () => {
-                bibleItemViewController.addBibleItemRight(
-                    bibleItem,
-                    bibleItem1,
-                );
-            },
-        },
-        {
-            menuElement: '`Copy',
-            onSelect: () => {
-                bibleItem1.copyTitleToClipboard();
-            },
-        },
+        ...genContextMenuItems(
+            bibleItemViewController,
+            bibleKey,
+            bibleItem,
+            bibleItem1,
+            title1,
+        ),
     );
     if (bibleItem2 !== null) {
         const title2 = await bibleItem2.toTitle();
-        contextMenuItems.push(
-            { menuElement: elementDivider },
-            {
-                menuElement: <span data-bible-key={bibleKey}>{title2}</span>,
-                disabled: true,
-            },
-            {
-                menuElement: '`Open',
-                onSelect: () => {
-                    bibleItemViewController.addBibleItemRight(
-                        bibleItem,
-                        bibleItem2,
-                    );
-                },
-            },
-            {
-                menuElement: '`Copy',
-                onSelect: () => {
-                    bibleItem2.copyTitleToClipboard();
-                },
-            },
-        );
+        const isLookup =
+            bibleItemViewController instanceof LookupBibleItemController;
+        contextMenuItems = [
+            ...(isLookup
+                ? genContextMenuItems(
+                      bibleItemViewController,
+                      bibleKey,
+                      bibleItem,
+                      bibleItem,
+                      title,
+                      () => {
+                          bibleItemViewController.addBibleItemRight(
+                              bibleItem,
+                              bibleItem,
+                          );
+                          setTimeout(() => {
+                              bibleItemViewController.inputText = title;
+                          }, 100);
+                      },
+                  )
+                : []),
+            ...contextMenuItems,
+            ...genContextMenuItems(
+                bibleItemViewController,
+                bibleKey,
+                bibleItem,
+                bibleItem2,
+                title2,
+            ),
+        ];
     }
     showAppContextMenu(event, contextMenuItems);
 }
@@ -903,7 +947,7 @@ export async function getNewLineTitlesHtmlText(
     if (!chapterData?.newLinesTitleMap) {
         return null;
     }
-    const verseKey = toVerseKey(bookKey, chapter, verse);
+    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
     const titles = chapterData.newLinesTitleMap[verseKey] ?? [];
     if (titles.length === 0) {
         return null;
@@ -921,7 +965,7 @@ export async function getCustomVerseText(
     if (!chapterData?.customVersesMap) {
         return null;
     }
-    const verseKey = toVerseKey(bookKey, chapter, verse);
+    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
     const customVerseList = chapterData.customVersesMap[verseKey] ?? [];
     const renderList = await Promise.all(
         customVerseList.map(async (item) => {

@@ -21,7 +21,7 @@ import {
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import BibleFindController from './BibleFindController';
-import { toVerseKey } from '../helper/bible-helpers/bibleInfoHelpers';
+import { toVerseKeyFormat } from '../helper/bible-helpers/bibleInfoHelpers';
 
 export type FindDataType = {
     pagingData: PagingDataTye;
@@ -145,7 +145,7 @@ export async function breakItem(
         target,
     };
     const bibleItem = BibleItem.fromJson(bibleItemJson);
-    const kjvVerseKey = toVerseKey(bookKey, chapter, verse);
+    const kjvVerseKey = toVerseKeyFormat(bookKey, chapter, verse);
     return { newItem: fullVerseText, bibleItem, kjvVerseKey };
 }
 
