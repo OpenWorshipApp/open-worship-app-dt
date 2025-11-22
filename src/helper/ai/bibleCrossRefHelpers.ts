@@ -16,7 +16,6 @@ import { unlocking } from '../../server/unlockingHelpers';
 
 import { useAppEffect, useAppEffectAsync } from '../debuggerHelpers';
 import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
-import BibleItem from '../../bible-list/BibleItem';
 import { handleError } from '../errorHelpers';
 import { getKJVBookKeyValue } from '../bible-helpers/serverBibleHelpers';
 import { cloneJson } from '../helpers';
@@ -79,18 +78,19 @@ export async function getBibleCrossRef(
             if (!forceRefresh) {
                 try {
                     const text = await fsReadFile(filePath);
-                    const data = JSON.parse(text);
-                    data.cachingTime = data.cachingTime ?? 0;
+                    const cachedData = JSON.parse(text);
+                    cachedData.cachingTime = cachedData.cachingTime ?? 0;
                     // expire in 7 days
                     if (
-                        Date.now() - data.cachingTime <
+                        Date.now() - cachedData.cachingTime <
                         7 * 24 * 60 * 60 * 1000
                     ) {
-                        const dataValue = data.value as CrossReferenceType[];
+                        const dataValue =
+                            cachedData.value as CrossReferenceType[];
                         const { valid, errors } =
                             validateCrossReference(dataValue);
                         if (valid) {
-                            return data;
+                            return cachedData.value as CrossReferenceType[];
                         } else {
                             handleError(errors);
                         }
@@ -122,6 +122,9 @@ export async function getBibleCrossRef(
     });
 }
 
+const reverseKJVBookKeyValue = Object.fromEntries(
+    Object.entries(getKJVBookKeyValue()).map(([key, value]) => [value, key]),
+);
 export async function transformCrossReferenceToVerseList(
     data: CrossReferenceType[] | null,
 ) {
@@ -132,7 +135,19 @@ export async function transformCrossReferenceToVerseList(
     for (const crossRef of clonedData) {
         const verses = await Promise.all(
             crossRef.verses.map(async (title) => {
-                return BibleItem.bibleTitleToKJVVerseKey('KJV', title);
+                title = title.trim();
+                const arr = title.split(' ');
+                if (arr.length < 2) {
+                    return null;
+                }
+                const rest = arr.pop() as string;
+                const bookName = arr.join(' ');
+                const bookKey = reverseKJVBookKeyValue[bookName];
+                if (!bookKey) {
+                    return null;
+                }
+                const verseKey = `${bookKey} ${rest}`;
+                return verseKey;
             }),
         );
         crossRef.verses = verses.filter((item) => {

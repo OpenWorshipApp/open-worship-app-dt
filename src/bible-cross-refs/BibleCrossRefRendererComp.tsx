@@ -120,72 +120,77 @@ export default function BibleCrossRefRendererComp({
                             <RenderVerseTextComp bibleItem={cloneBibleItem} />
                         </div>
                         <hr />
-                        <BibleCrossRefWrapperComp
-                            title={
-                                <>
-                                    {genAiVigilant()}
-                                    AI Cross References
-                                </>
-                            }
-                            settingName="show-standard-bible-ref"
-                            onRefresh={handleRefreshing.bind(null, normalRef)}
-                        >
-                            <BibleCrossRefAIItemRendererBodyComp
-                                ref={normalRef}
-                                aiType="anthropic"
-                                bibleKey={bibleKey}
-                                bookKey={book}
-                                chapter={chapter}
-                                verse={verse}
-                                index={i}
-                            />
-                        </BibleCrossRefWrapperComp>
-                        {isOpenAIAvailable ? (
+                        <div className="d-flex flex-wrap">
                             <BibleCrossRefWrapperComp
                                 title={
                                     <>
-                                        <i className="bi bi-robot" /> Custom
-                                        OpenAI
+                                        {genAiVigilant()}
+                                        AI Cross References
                                     </>
                                 }
-                                settingName="show-ai-bible-ref"
+                                settingName="show-standard-bible-ref"
                                 onRefresh={handleRefreshing.bind(
                                     null,
-                                    openAIRef,
+                                    normalRef,
                                 )}
                             >
-                                <BibleCrossRefOpenAIItemRendererBodyComp
-                                    ref={openAIRef}
+                                <BibleCrossRefAIItemRendererBodyComp
+                                    ref={normalRef}
+                                    aiType="anthropic"
+                                    bibleKey={bibleKey}
                                     bookKey={book}
                                     chapter={chapter}
                                     verse={verse}
                                     index={i}
                                 />
                             </BibleCrossRefWrapperComp>
-                        ) : null}
-                        {isAnthropicAvailable ? (
-                            <BibleCrossRefWrapperComp
-                                title={
-                                    <>
-                                        <i className="bi bi-robot" /> Custom
-                                        Anthropic
-                                    </>
-                                }
-                                settingName="show-ai-bible-ref"
-                                onRefresh={handleRefreshing.bind(
-                                    null,
-                                    anthropicRef,
-                                )}
-                            >
-                                <BibleCrossRefAnthropicItemRendererBodyComp
-                                    ref={anthropicRef}
-                                    bookKey={book}
-                                    chapter={chapter}
-                                    verse={verse}
-                                    index={i}
-                                />
-                            </BibleCrossRefWrapperComp>
-                        ) : null}
+                            {isOpenAIAvailable ? (
+                                <BibleCrossRefWrapperComp
+                                    title={
+                                        <>
+                                            <i className="bi bi-robot" /> Custom
+                                            OpenAI
+                                        </>
+                                    }
+                                    settingName="show-ai-bible-ref"
+                                    onRefresh={handleRefreshing.bind(
+                                        null,
+                                        openAIRef,
+                                    )}
+                                >
+                                    <BibleCrossRefOpenAIItemRendererBodyComp
+                                        ref={openAIRef}
+                                        bookKey={book}
+                                        chapter={chapter}
+                                        verse={verse}
+                                        index={i}
+                                    />
+                                </BibleCrossRefWrapperComp>
+                            ) : null}
+                            {isAnthropicAvailable ? (
+                                <BibleCrossRefWrapperComp
+                                    title={
+                                        <>
+                                            <i className="bi bi-robot" /> Custom
+                                            Anthropic
+                                        </>
+                                    }
+                                    settingName="show-ai-bible-ref"
+                                    onRefresh={handleRefreshing.bind(
+                                        null,
+                                        anthropicRef,
+                                    )}
+                                >
+                                    <BibleCrossRefAnthropicItemRendererBodyComp
+                                        ref={anthropicRef}
+                                        bookKey={book}
+                                        chapter={chapter}
+                                        verse={verse}
+                                        index={i}
+                                    />
+                                </BibleCrossRefWrapperComp>
+                            ) : null}
+                        </div>
                     </Fragment>
                 );
             })}

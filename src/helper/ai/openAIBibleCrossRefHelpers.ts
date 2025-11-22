@@ -59,7 +59,33 @@ const responseFormat: ResponseFormatJSONSchema = {
         schema: {
             type: 'object',
             properties: {
-                result: clonedBibleCrossRefSchema,
+                result: {
+                    type: 'array',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            title: {
+                                type: 'string',
+                                description:
+                                    'A descriptive theme/context for the cross-references',
+                            },
+                            verses: {
+                                type: 'array',
+                                items: {
+                                    type: 'string',
+                                    description:
+                                        'A Bible verse reference in BOOK CHAPTER:VERSE[-VERSE] format',
+                                },
+                                description:
+                                    'An array of Bible verse references that relate to the input verse',
+                            },
+                        },
+                        required: ['title', 'verses'],
+                        additionalProperties: false,
+                    },
+                    description:
+                        'An array of cross-reference objects grouped by thematic relevance',
+                },
             },
             required: ['result'],
             additionalProperties: false,

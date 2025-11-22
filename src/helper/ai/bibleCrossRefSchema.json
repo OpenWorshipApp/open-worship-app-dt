@@ -21,10 +21,7 @@
                 "description": "An array of Bible verse references that relate to the input verse"
             }
         },
-        "required": [
-            "title",
-            "verses"
-        ],
+        "required": ["title", "verses"],
         "additionalProperties": false
     },
     "description": "An array of cross-reference objects grouped by thematic relevance"
