@@ -16,7 +16,6 @@ import { getLangCode } from '../lang/langHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
 import {
     CrossReferenceType,
-    transformCrossReferenceToVerseList,
     validateCrossReference,
 } from '../helper/ai/bibleCrossRefHelpers';
 
@@ -43,7 +42,7 @@ async function downloadBibleCrossRef(key: string) {
 
 async function downloadBibleCrossRefAI(key: string) {
     try {
-        const content = await appApiFetch(`bible-cross-ref/${key}`);
+        const content = await appApiFetch(`bcr/${key}`);
         return await content.text();
     } catch (error) {
         handleError(error);
@@ -194,7 +193,6 @@ async function fetchBibleCrossRefAI(
             forceRefresh,
         );
     }
-    data = await transformCrossReferenceToVerseList(data);
     return data;
 }
 export function useGettingBibleCrossRefAI(

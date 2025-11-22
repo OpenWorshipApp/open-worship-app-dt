@@ -79,16 +79,24 @@ export async function getBibleCrossRef(
             if (!forceRefresh) {
                 try {
                     const text = await fsReadFile(filePath);
-                    const data = JSON.parse(text) as CrossReferenceType[];
-                    const { valid, errors } = validateCrossReference(data);
-                    if (valid) {
-                        return data;
-                    } else {
-                        handleError(errors);
+                    const data = JSON.parse(text);
+                    data.cachingTime = data.cachingTime ?? 0;
+                    // expire in 7 days
+                    if (
+                        Date.now() - data.cachingTime <
+                        7 * 24 * 60 * 60 * 1000
+                    ) {
+                        const dataValue = data.value as CrossReferenceType[];
+                        const { valid, errors } =
+                            validateCrossReference(dataValue);
+                        if (valid) {
+                            return data;
+                        } else {
+                            handleError(errors);
+                        }
                     }
                 } catch (error) {
                     console.error('Error reading cross reference file:', error);
-                    return null;
                 }
             }
             await fsDeleteFile(filePath);
@@ -99,7 +107,17 @@ export async function getBibleCrossRef(
             handleError(errors);
             return null;
         }
-        await fsWriteFile(filePath, JSON.stringify(data, null, 2));
+        await fsWriteFile(
+            filePath,
+            JSON.stringify(
+                {
+                    cachingTime: Date.now(),
+                    value: data,
+                },
+                null,
+                2,
+            ),
+        );
         return data;
     });
 }
