@@ -66,12 +66,12 @@ export type EditorStoreType = {
 };
 
 const modelsMap: Record<string, editor.ITextModel> = {};
-function getModel(uri: Uri, language: string) {
+function getModel(value: string, uri: Uri, language: string) {
     const key = uri.toString();
     if (modelsMap[key] !== undefined) {
         return modelsMap[key];
     }
-    const model = editor.createModel('', language, uri);
+    const model = editor.createModel(value, language, uri);
     modelsMap[key] = model;
     return model;
 }
@@ -97,7 +97,7 @@ function createEditor({
     });
     let editorInstance: editor.IStandaloneCodeEditor | null = null;
     const isDarkMode = checkIsDarkMode();
-    const model = getModel(uri, language);
+    const model = getModel(options.value ?? '', uri, language);
     editorInstance = editor.create(div, {
         value: '',
         theme: isDarkMode ? 'vs-dark' : 'vs-light',

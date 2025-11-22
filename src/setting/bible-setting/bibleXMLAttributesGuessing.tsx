@@ -291,13 +291,13 @@ function BibleBooksMapXMLInputComp({
 }
 
 export function genBibleBooksMapXMLInput(
-    numbers: string[],
+    books: string[],
     locale: LocaleType,
-    onChange: (numbers: string[]) => void,
+    onChange: (books: string[]) => void,
 ) {
     return (
         <BibleBooksMapXMLInputComp
-            defaultVale={numbers.join('\n')}
+            defaultVale={books.join('\n')}
             onChange={(newValue) => {
                 onChange(newValue.split('\n'));
             }}
