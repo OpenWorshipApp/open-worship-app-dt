@@ -70,6 +70,52 @@ function handMovedChecking(
     }
 }
 
+async function openContextMenu(
+    event: any,
+    {
+        viewController,
+        foundBibleItem,
+        uuid,
+    }: {
+        viewController: BibleItemsViewController | LookupBibleItemController;
+        foundBibleItem: ReadIdOnlyBibleItem;
+        uuid: string;
+    },
+) {
+    const isLookup = viewController instanceof LookupBibleItemController;
+    const extraSelectedTextContextMenuItems: ContextMenuItemType[] = [];
+    if (isLookup) {
+        extraSelectedTextContextMenuItems.push({
+            childBefore: genContextMenuItemIcon('search'),
+            menuElement: '`Search in Bible Search',
+            onSelect: () => {
+                const selectedText = getSelectedText();
+                if (!selectedText) {
+                    return;
+                }
+                setBibleFindRecentSearch(selectedText);
+                viewController.openBibleSearch('s');
+                viewController.setIsBibleSearching(true);
+            },
+        });
+    }
+    showAppContextMenu(
+        event,
+        [
+            ...genBibleItemCopyingContextMenu(foundBibleItem),
+            ...(await viewController.genContextMenu(
+                event,
+                foundBibleItem,
+                uuid,
+            )),
+        ],
+        {
+            shouldHandleSelectedText: true,
+            extraSelectedTextContextMenuItems,
+        },
+    );
+}
+
 export default function BibleViewComp({
     bibleItem,
     isEditing = false,
@@ -77,53 +123,14 @@ export default function BibleViewComp({
     bibleItem: ReadIdOnlyBibleItem;
     isEditing?: boolean;
 }>) {
-    const viewController = useBibleItemsViewControllerContext();
     const uuid = crypto.randomUUID();
+    const id = `uuid-${uuid}`;
+    const viewController = useBibleItemsViewControllerContext();
     const editingResult = use(EditingResultContext);
     const textViewFontSize = useBibleViewFontSizeContext();
     const foundBibleItem = isEditing
         ? (editingResult?.result.bibleItem ?? null)
         : bibleItem;
-    const handleContextMenuOpening =
-        foundBibleItem === null
-            ? undefined
-            : async (event: any) => {
-                  const isLookup =
-                      viewController instanceof LookupBibleItemController;
-                  const extraSelectedTextContextMenuItems: ContextMenuItemType[] =
-                      [];
-                  if (isLookup) {
-                      extraSelectedTextContextMenuItems.push({
-                          childBefore: genContextMenuItemIcon('search'),
-                          menuElement: '`Search in Bible Search',
-                          onSelect: () => {
-                              const selectedText = getSelectedText();
-                              if (!selectedText) {
-                                  return;
-                              }
-                              setBibleFindRecentSearch(selectedText);
-                              viewController.openBibleSearch('s');
-                              viewController.setIsBibleSearching(true);
-                          },
-                      });
-                  }
-                  showAppContextMenu(
-                      event,
-                      [
-                          ...genBibleItemCopyingContextMenu(foundBibleItem),
-                          ...(await viewController.genContextMenu(
-                              event,
-                              foundBibleItem,
-                              uuid,
-                          )),
-                      ],
-                      {
-                          shouldHandleSelectedText: true,
-                          extraSelectedTextContextMenuItems,
-                      },
-                  );
-              };
-    const id = `uuid-${uuid}`;
     return (
         <div
             id={id}
@@ -145,7 +152,16 @@ export default function BibleViewComp({
             onDrop={async (event) => {
                 applyDropped(event, viewController, bibleItem);
             }}
-            onContextMenu={handleContextMenuOpening}
+            onContextMenu={(event) => {
+                if (foundBibleItem === null) {
+                    return;
+                }
+                openContextMenu(event, {
+                    viewController,
+                    foundBibleItem,
+                    uuid,
+                });
+            }}
         >
             {isEditing ? (
                 <RenderBibleEditingHeader />

@@ -1,3 +1,5 @@
+import { Fragment } from 'react';
+
 import {
     BIBLE_VIEW_TEXT_CLASS,
     useBibleViewFontSizeContext,
@@ -12,12 +14,35 @@ import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderRestVerseNumListComp from './RenderRestVerseNumListComp';
 import RenderVerseTextComp from './RenderVerseTextComp';
 
-export default function BibleViewTextComp({
+function RenderVerseTitleComp({
     bibleItem,
 }: Readonly<{ bibleItem: ReadIdOnlyBibleItem }>) {
-    const { bibleKey, extraBibleKeys, target } = bibleItem;
-    const fontSize = useBibleViewFontSizeContext();
-    const viewController = useBibleItemsViewControllerContext();
+    const [title] = useAppStateAsync(() => {
+        return bibleItem.toTitle();
+    }, [bibleItem]);
+    return (
+        <>
+            <hr />
+            <span className="text-muted " data-bible-key={bibleItem.bibleKey}>
+                {title}
+            </span>
+        </>
+    );
+}
+
+function RenderVerseListDetailComp({
+    bibleItem,
+    extraBibleKeys,
+    isExtraBibleItem = false,
+}: Readonly<{
+    bibleItem: ReadIdOnlyBibleItem;
+    extraBibleKeys: string[];
+    isExtraBibleItem?: boolean;
+}>) {
+    const { bibleKey, target } = bibleItem;
+    const [verseCount] = useAppStateAsync(() => {
+        return getVersesCount(bibleKey, target.bookKey, target.chapter);
+    }, [bibleKey, target.bookKey, target.chapter]);
     const [verseList] = useAppStateAsync(() => {
         return bibleRenderHelper.toVerseTextList(bibleKey, target);
     }, [bibleKey, target]);
@@ -31,12 +56,6 @@ export default function BibleViewTextComp({
             return list !== null;
         });
     }, [extraBibleKeys, target]);
-    const [verseCount] = useAppStateAsync(() => {
-        return getVersesCount(bibleKey, target.bookKey, target.chapter);
-    }, [bibleKey, target.bookKey, target.chapter]);
-    const [isRtl] = useAppStateAsync(() => {
-        return getBibleInfoIsRtl(bibleKey);
-    }, [bibleKey]);
     if (verseList === undefined || verseCount === undefined) {
         return <LoadingComp />;
     }
@@ -49,6 +68,50 @@ export default function BibleViewTextComp({
             </div>
         );
     }
+    return (
+        <div>
+            {isExtraBibleItem ? (
+                <RenderVerseTitleComp bibleItem={bibleItem} />
+            ) : null}
+            {verseList.map((verseInfo, i) => {
+                const extraVerseInfoList = extraVerseInfoListList
+                    ? extraVerseInfoListList
+                          .map((verseInfoList) => {
+                              return verseInfoList[i];
+                          })
+                          .filter((v) => !!v)
+                    : [];
+                return (
+                    <RenderVerseTextComp
+                        key={verseInfo.localeVerse}
+                        bibleItem={bibleItem}
+                        verseInfo={verseInfo}
+                        extraVerseInfoList={extraVerseInfoList}
+                        nextVerseInfo={verseList[i + 1] ?? null}
+                        index={i}
+                    />
+                );
+            })}
+        </div>
+    );
+}
+
+export default function BibleViewTextComp({
+    bibleItem,
+    extraBibleItems,
+}: Readonly<{
+    bibleItem: ReadIdOnlyBibleItem;
+    extraBibleItems?: ReadIdOnlyBibleItem[];
+}>) {
+    const { bibleKey, extraBibleKeys, target } = bibleItem;
+    const fontSize = useBibleViewFontSizeContext();
+    const viewController = useBibleItemsViewControllerContext();
+    const [verseCount] = useAppStateAsync(() => {
+        return getVersesCount(bibleKey, target.bookKey, target.chapter);
+    }, [bibleKey, target.bookKey, target.chapter]);
+    const [isRtl] = useAppStateAsync(() => {
+        return getBibleInfoIsRtl(bibleKey);
+    }, [bibleKey]);
     const isExtraVerses = extraBibleKeys.length > 0;
     return (
         <div
@@ -63,7 +126,7 @@ export default function BibleViewTextComp({
             <RenderRestVerseNumListComp
                 to={target.verseStart - 1}
                 bibleItem={bibleItem}
-                verseCount={verseCount}
+                verseCount={verseCount ?? 0}
                 onSelect={(verse) => {
                     viewController.applyTargetOrBibleKey(bibleItem, {
                         target: { ...bibleItem.target, verseStart: verse },
@@ -73,31 +136,14 @@ export default function BibleViewTextComp({
                     return `${verse}-${target.verseStart}`;
                 }}
             />
-            <div>
-                {verseList.map((verseInfo, i) => {
-                    const extraVerseInfoList = extraVerseInfoListList
-                        ? extraVerseInfoListList
-                              .map((verseInfoList) => {
-                                  return verseInfoList[i];
-                              })
-                              .filter((v) => !!v)
-                        : [];
-                    return (
-                        <RenderVerseTextComp
-                            key={verseInfo.localeVerse}
-                            bibleItem={bibleItem}
-                            verseInfo={verseInfo}
-                            extraVerseInfoList={extraVerseInfoList}
-                            nextVerseInfo={verseList[i + 1] ?? null}
-                            index={i}
-                        />
-                    );
-                })}
-            </div>
+            <RenderVerseListDetailComp
+                bibleItem={bibleItem}
+                extraBibleKeys={extraBibleKeys}
+            />
             <RenderRestVerseNumListComp
                 from={target.verseEnd + 1}
                 bibleItem={bibleItem}
-                verseCount={verseCount}
+                verseCount={verseCount ?? 0}
                 onSelect={(verse) => {
                     viewController.applyTargetOrBibleKey(bibleItem, {
                         target: { ...bibleItem.target, verseEnd: verse },
@@ -107,6 +153,19 @@ export default function BibleViewTextComp({
                     return `${target.verseStart}-${verse}`;
                 }}
             />
+            {extraBibleItems?.length
+                ? extraBibleItems.map((extraBibleItem, i) => {
+                      return (
+                          <Fragment key={i}>
+                              <RenderVerseListDetailComp
+                                  bibleItem={extraBibleItem}
+                                  extraBibleKeys={extraBibleKeys}
+                                  isExtraBibleItem
+                              />
+                          </Fragment>
+                      );
+                  })
+                : null}
         </div>
     );
 }

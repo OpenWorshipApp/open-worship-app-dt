@@ -550,8 +550,12 @@ export async function extractBibleTitleByRegex(
     };
 }
 
-// John 1:1-2:5 => John 1:1-, John 2:5
-const brokenRegex = /^(.+[^\s]+\s[^\s]+:[^\s]+-)([^\s]+:[^\s]+)$/;
+// John 1:1-2: => John 1:1-, John 2:
+const numRegexString = String.raw`[^\s-:]`;
+const brokenRegex = new RegExp(
+    `^(.+${numRegexString}+\\s${numRegexString}+:${numRegexString}+-)` +
+        `(${numRegexString}+:${numRegexString}*)$`,
+);
 function breakText(inputText: string) {
     let extra: string | null = null;
     const matches = brokenRegex.exec(inputText);
