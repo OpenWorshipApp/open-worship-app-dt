@@ -1,8 +1,9 @@
 @use '../others/variables.scss' as *;
 
 #app-input-popup {
-  width: 600px;
+  min-width: 620px;
   max-width: calc(100% - 10px);
   min-height: 200px;
-  overflow: auto;
+  overflow: hidden;
+  max-height: 100%;
 }

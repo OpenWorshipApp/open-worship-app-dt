@@ -2,7 +2,6 @@ import RenderBookOptionsComp from './RenderBookOptionsComp';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
 import { BibleSelectionMiniComp } from './BibleSelectionComp';
 import { RENDER_FOUND_CLASS } from './selectionHelpers';
-import { BibleViewTextComp } from '../bible-reader/BibleViewExtra';
 import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
@@ -10,6 +9,7 @@ import {
 import RenderVerseOptionsComp from './RenderVerseOptionsComp';
 import { use } from 'react';
 import { goToBibleSetting } from '../setting/settingHelpers';
+import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
 
 export default function RenderLookupSuggestionComp({
     applyChapterSelection,
@@ -28,13 +28,17 @@ export default function RenderLookupSuggestionComp({
         chapter,
         guessingChapter,
         bibleItem: foundBibleItem,
+        extraBibleItems,
     } = editingResult.result;
 
     if (foundBibleItem !== null) {
         return (
             <>
                 <RenderVerseOptionsComp bibleItem={foundBibleItem} />
-                <BibleViewTextComp bibleItem={foundBibleItem} />
+                <BibleViewTextComp
+                    bibleItem={foundBibleItem}
+                    extraBibleItems={extraBibleItems}
+                />
             </>
         );
     }
@@ -89,9 +93,9 @@ export function BibleNotAvailableComp({
         <div id="bible-lookup-container" className="card">
             <div className="body card-body w-100 p-3">
                 <h2>
-                    `Bible key "
-                    <span data-bible-key={bibleKey}>{bibleKey}</span>" is not
-                    available!
+                    {'`Bible key '}
+                    <span data-bible-key={bibleKey}>"{bibleKey}"</span>
+                    {' is not available!'}
                 </h2>
                 Please change bible key here:{' '}
                 <BibleSelectionMiniComp

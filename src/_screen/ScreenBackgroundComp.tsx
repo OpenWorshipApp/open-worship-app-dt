@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-import ReactDOMServer from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import ScreenBackgroundColorComp from './ScreenBackgroundColorComp';
 import ScreenBackgroundImageComp from './ScreenBackgroundImageComp';
 import ScreenBackgroundVideoComp from './ScreenBackgroundVideoComp';
@@ -40,7 +40,7 @@ export function genHtmlBackground(
     backgroundSrc: BackgroundSrcType,
 ) {
     const screenManagerBase = getScreenManagerBase(screenId);
-    const htmlStr = ReactDOMServer.renderToStaticMarkup(
+    const htmlStr = renderToStaticMarkup(
         <ScreenManagerBaseContext value={screenManagerBase}>
             <RenderBackground backgroundSrc={backgroundSrc} />
         </ScreenManagerBaseContext>,

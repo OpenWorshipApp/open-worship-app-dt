@@ -1,7 +1,7 @@
 import { MouseEvent } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
-import ReactDOMServer from 'react-dom/server';
 import { getHTMLChild } from '../../helper/helpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
 import SlideItemRenderComp, { useScale } from './SlideItemRenderComp';
@@ -35,7 +35,7 @@ function PdfSlideRenderContentComp({
 }
 
 export function genPdfSlide(pdfImageSrc: string, isFullWidth = false) {
-    const htmlString = ReactDOMServer.renderToStaticMarkup(
+    const htmlString = renderToStaticMarkup(
         <PdfSlideRenderContentComp
             pdfImageSrc={pdfImageSrc}
             isFullWidth={isFullWidth}

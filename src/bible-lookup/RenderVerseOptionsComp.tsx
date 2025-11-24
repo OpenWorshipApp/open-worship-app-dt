@@ -74,9 +74,12 @@ export default function RenderVerseOptionsComp({
                     );
                 })}
                 {isFull ? null : (
-                    <span
-                        className="p-2 app-caught-hover-pointer"
-                        title="Full Verse"
+                    <div
+                        className="item alert pointer text-center px-2"
+                        title="`Show all verses"
+                        style={{
+                            color: 'var(--bs-info-text-emphasis)',
+                        }}
                         onClick={() => {
                             viewController.applyTargetOrBibleKey(bibleItem, {
                                 target: {
@@ -87,8 +90,10 @@ export default function RenderVerseOptionsComp({
                             });
                         }}
                     >
-                        <i className="bi bi-asterisk" />
-                    </span>
+                        <span>
+                            <i className="bi bi-arrows-expand-vertical" />
+                        </span>
+                    </div>
                 )}
             </div>
         </div>

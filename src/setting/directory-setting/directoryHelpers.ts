@@ -32,6 +32,9 @@ export async function selectPathForChildDir(parentDirPath: string) {
     const isOk = await showAppConfirm(
         'Set according paths',
         `All child directories will be set under "${parentDirPath}"?`,
+        {
+            confirmButtonLabel: 'Yes',
+        },
     );
     if (!isOk) {
         return;

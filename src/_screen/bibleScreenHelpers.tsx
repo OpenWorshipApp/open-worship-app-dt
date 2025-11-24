@@ -1,4 +1,4 @@
-import ReactDOMServer from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     getBibleLocale,
@@ -34,7 +34,7 @@ const bibleScreenHelper = {
             }),
         );
         const versesCount = bibleRenderingList[0].verses.length;
-        const htmlString = ReactDOMServer.renderToStaticMarkup(
+        const htmlString = renderToStaticMarkup(
             <BibleBibleTable
                 bibleRenderingList={bibleRenderingLangList}
                 isLineSync={isLineSync}

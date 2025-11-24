@@ -1,6 +1,5 @@
 import { ReactNode, createContext, use, useState } from 'react';
 
-import BibleItem from '../bible-list/BibleItem';
 import EventHandler from '../event/EventHandler';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
@@ -12,6 +11,7 @@ import { showBibleOption } from '../bible-lookup/BibleSelectionComp';
 import appProvider from '../server/appProvider';
 import {
     APP_FULL_VIEW_CLASSNAME,
+    bringDomToCenterView,
     bringDomToNearestView,
     bringDomToTopView,
     genTimeoutAttempt,
@@ -20,12 +20,21 @@ import {
     BIBLE_VIEW_TEXT_CLASS,
     VERSE_TEXT_CLASS,
 } from '../helper/bibleViewHelpers';
-import { getLangFromBibleKey } from '../helper/bible-helpers/serverBibleHelpers2';
+import {
+    getLangFromBibleKey,
+    getShouldKJVNewLine,
+    setShouldKJVNewLine,
+} from '../helper/bible-helpers/serverBibleHelpers2';
 import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import {
     elementDivider,
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
+import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import {
+    checkIsVerseAtBottom,
+    checkIsVersePartialInvisible,
+} from './readBibleScrollHelpers';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';
@@ -63,15 +72,6 @@ export function attemptAddingHistory(
     attemptTimeout(() => {
         applyBibleItemHistoryPendingText();
     });
-}
-
-export class ReadIdOnlyBibleItem extends BibleItem {
-    get id() {
-        return super.id;
-    }
-    set id(_id: number) {
-        throw new Error('ReadOnlyBibleItem: id cannot be set');
-    }
 }
 
 function toStraightItems(
@@ -275,13 +275,23 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         setSetting(this.toSettingName('bible-items-color-note'), json);
     }
     get shouldNewLine() {
-        return getSetting(this.toSettingName('-view-new-line')) === 'true';
+        return getSetting(this.toSettingName('-view-new-line')) !== 'false';
     }
     set shouldNewLine(shouldNewLine: boolean) {
         setSetting(
             this.toSettingName('-view-new-line'),
             shouldNewLine ? 'true' : 'false',
         );
+        this.fireUpdateEvent();
+    }
+    get shouldKJVNewLine() {
+        if (!this.shouldNewLine) {
+            return false;
+        }
+        return getShouldKJVNewLine();
+    }
+    set shouldKJVNewLine(useKJVNewLine: boolean) {
+        setShouldKJVNewLine(useKJVNewLine);
         this.fireUpdateEvent();
     }
 
@@ -706,7 +716,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         const containerDoms = document.querySelectorAll(
             `.${BIBLE_VIEW_TEXT_CLASS}[data-bible-item-id="${bibleItemId}"]`,
         );
-        return Array.from(containerDoms).reduce(
+        const elements = Array.from(containerDoms).reduce(
             (elements: T[], containerDom: any) => {
                 const dataString = kjvVerseKey
                     ? `div[data-kjv-verse-key="${kjvVerseKey}"]`
@@ -721,18 +731,18 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             },
             [],
         );
+        return elements;
     }
     syncBibleVerseSelection(
         bibleItem: ReadIdOnlyBibleItem,
         verseKey: string,
         isToTop: boolean,
     ) {
-        for (const element of this.getVerseElements(bibleItem.id, verseKey)) {
-            this.handleVersesSelecting(
-                element as HTMLDivElement,
-                isToTop,
-                true,
-            );
+        for (const element of this.getVerseElements<HTMLDivElement>(
+            bibleItem.id,
+            verseKey,
+        )) {
+            this.handleVersesSelecting(element, isToTop, true);
         }
     }
     handleVersesHighlighting(kjvVerseKey: string, isToTop = false) {
@@ -763,7 +773,13 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         if (isToTop) {
             bringDomToTopView(targetDom);
         } else {
-            bringDomToNearestView(targetDom);
+            const isPartialInvisible = checkIsVersePartialInvisible(targetDom);
+            const isElementInBottomView = checkIsVerseAtBottom(targetDom);
+            if (isPartialInvisible && isElementInBottomView) {
+                bringDomToCenterView(targetDom);
+            } else {
+                bringDomToNearestView(targetDom);
+            }
         }
         if (bibleItem === undefined) {
             return;

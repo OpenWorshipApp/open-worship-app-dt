@@ -3,6 +3,6 @@ obj/
 dist/
 dotnet-runtime*.zip
 dotnet-runtime*.tar.gz
-ffmpeg-n7.1-*.zip
-ffmpeg-n7.1-*.tar.xz
+ffmpeg-*.zip
+ffmpeg-*.tar.xz
 yt-dlp*

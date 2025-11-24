@@ -53,7 +53,7 @@ export default function RenderExtraButtonsRightComp({
                     'btn btn-sm btn' +
                     `-${isLookupOnline ? '' : 'outline-'}info`
                 }
-                title="Lookup bible online"
+                title="`Advance Bible Lookup"
                 onClick={() => {
                     setIsLookupOnline(!isLookupOnline);
                 }}

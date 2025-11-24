@@ -16,6 +16,9 @@ import {
 } from '../../progress-bar/progressBarHelpers';
 import CacheManager from '../../others/CacheManager';
 import { freezeObject } from '../helpers';
+import { checkIsRtl } from '../../lang/langHelpers';
+import { getVersesCount } from './serverBibleHelpers2';
+import { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
     const info = await getBibleInfo(bibleKey);
@@ -68,7 +71,7 @@ export async function getChapterCount(bibleKey: string, book: string) {
     const chapterCount = getKJVChapterCount(bookKey);
     return chapterCount;
 }
-export async function getBookChapterData(
+export async function getChapterData(
     bibleKey: string,
     bookKey: string,
     chapter: number,
@@ -78,21 +81,21 @@ export async function getBookChapterData(
         return null;
     }
     const fileName = toBibleFileName(bookKey, chapter);
-    const verseInfo = (await bibleDataReader.readBibleData(
+    const chapterData = (await bibleDataReader.readBibleData(
         bibleKey,
         fileName,
     )) as BibleChapterType | null;
-    if (verseInfo === null) {
+    if (chapterData === null) {
         return null;
     }
-    return verseInfo;
+    return chapterData;
 }
 export async function getVerses(
     bibleKey: string,
     bookKey: string,
     chapter: number,
 ) {
-    const chapterData = await getBookChapterData(bibleKey, bookKey, chapter);
+    const chapterData = await getChapterData(bibleKey, bookKey, chapter);
     return chapterData ? chapterData.verses : null;
 }
 
@@ -116,6 +119,7 @@ export function checkIsOldTestament(bookKey: string) {
 }
 
 const cache = new CacheManager<BibleInfoType>(60); // cache for 1 minutes
+// TODO: cache newLines and newLinesTitleMap instead of attaching to bibleInfo
 export async function getBibleInfo(
     bibleKey: string,
     isForce = false,
@@ -141,4 +145,60 @@ export async function getBibleInfo(
         await cache.set(bibleKey, info);
     }
     return info;
+}
+
+export async function getBibleInfoIsRtl(bibleKey: string) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
+        return false;
+    }
+    const isRtl = checkIsRtl(bibleInfo.locale);
+    return isRtl;
+}
+
+export function toVerseKeyFormat(
+    bookKey: string,
+    chapter: string | number,
+    verseStart: string | number,
+    verseEnd?: string | number,
+) {
+    verseEnd ??= verseStart;
+    verseEnd = verseEnd === verseStart ? '' : '-' + verseEnd;
+    return `${bookKey} ${chapter}:${verseStart}${verseEnd}`;
+}
+
+const regex = /^([A-Z]{3}) (\d+):(\d+)(-(\d+))?$/;
+export async function fromVerseKey(
+    bibleKey: string,
+    // JHN 18:33-
+    verseKey: string,
+) {
+    const isLastDash = verseKey.endsWith('-');
+    if (isLastDash) {
+        verseKey = verseKey.slice(0, -1);
+    }
+    const match = regex.exec(verseKey);
+    if (!match) {
+        return null;
+    }
+    const bookKey = match[1];
+    const chapter = Number.parseInt(match[2], 10);
+    const verseStart = Number.parseInt(match[3], 10);
+    let verseEnd = verseStart;
+    if (match[5] !== undefined) {
+        verseEnd = Number.parseInt(match[5], 10);
+    }
+    if (isLastDash) {
+        const verseCount = await getVersesCount(bibleKey, bookKey, chapter);
+        if (verseCount === null) {
+            return null;
+        }
+        verseEnd = verseCount;
+    }
+    return {
+        bookKey,
+        chapter,
+        verseStart,
+        verseEnd,
+    } as BibleTargetType;
 }

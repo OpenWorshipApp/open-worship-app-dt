@@ -240,6 +240,8 @@ export const allLocalesMap = {
     'zu-ZA': 'zu',
 } as const;
 
+export const rtlLangs = ['arc', 'ar', 'he', 'fa', 'ur', 'ps', 'dv'] as const;
+
 export const languageNameMap: { [key: string]: string } = {
     ab: 'Abkhazian (Abkhazia)',
     aa: 'Afar (Afar)',
@@ -451,12 +453,12 @@ export type LanguageDataType = {
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
+    sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
     stopWords: string[];
     trimText: (text: string) => string;
     endWord: (text: string) => string;
-    checkShouldNewLine: (text: string) => boolean;
     extraBibleContextMenuItems: (
         bibleItem: AnyObjectType,
         appProvider: AppProviderType,
@@ -654,4 +656,32 @@ export async function getFontFamilyByLocale(locale: LocaleType) {
         return '';
     }
     return langData.fontFamily;
+}
+
+export function checkIsRtl(locale: LocaleType) {
+    const langCode = getLangCode(locale);
+    if (langCode === null) {
+        return false;
+    }
+    return rtlLangs.includes(langCode as any);
+}
+
+export function getLanguageTitle(
+    { locale, langCode }: { locale?: LocaleType; langCode?: string | null },
+    isWithLocale = false,
+) {
+    if (!locale && !langCode) {
+        return 'Unknown';
+    }
+    langCode ??= getLangCode(locale as LocaleType);
+    let languageName = '';
+    if (langCode === null || !(langCode in languageNameMap)) {
+        languageName = 'Unknown';
+    } else {
+        languageName = languageNameMap[langCode];
+    }
+    if (locale !== undefined) {
+        languageName += isWithLocale ? ` <${locale}>` : '';
+    }
+    return languageName;
 }

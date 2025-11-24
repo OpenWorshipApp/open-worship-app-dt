@@ -8,6 +8,7 @@ import { genTimeoutAttempt } from '../helper/helpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
 import { useInitMonacoEditor } from '../helper/monacoEditorHelpers';
+import { Uri } from 'monaco-editor';
 
 async function loadLyricContent(lyric: Lyric, editorInstance: any) {
     const lyricContent = await lyric.getContent();
@@ -39,9 +40,11 @@ export default function LyricEditorComp() {
                     },
                 });
             },
-            onContentChange: (content) => {
+            onContentChange: (_, content) => {
                 selectedLyric.setContent(content);
             },
+            uri: Uri.parse('lyric-editor'),
+            language: 'markdown',
         });
     useAppEffectAsync(async () => {
         await loadLyricContent(selectedLyric, editorStore.editorInstance);

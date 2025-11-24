@@ -1,7 +1,11 @@
+import { CSSProperties } from 'react';
+
 import {
     keyToBook,
     getVerses,
     getBibleInfo,
+    getBibleInfoIsRtl,
+    toVerseKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     kjvBibleInfo,
@@ -9,7 +13,11 @@ import {
     getKJVBookKeyValue,
 } from '../helper/bible-helpers/serverBibleHelpers';
 import {
+    checkShouldNewLine,
+    checkShouldNewLineKJV,
+    getCustomVerseText,
     getLangFromBibleKey,
+    getNewLineTitlesHtmlText,
     toLocaleNumBible,
 } from '../helper/bible-helpers/serverBibleHelpers2';
 import CacheManager from '../others/CacheManager';
@@ -26,7 +34,10 @@ export type CompiledVerseType = {
     verse: number;
     localeVerse: string;
     text: string;
+    customText: string | null;
     isNewLine: boolean;
+    isKJVNewLine: boolean;
+    newLineTitlesHtmlText: string | null;
     bibleKey: string;
     bookKey: string;
     chapter: number;
@@ -34,20 +45,35 @@ export type CompiledVerseType = {
     bibleVersesKey: string;
     isFirst: boolean;
     isLast: boolean;
+    isRtl: boolean;
+    style: CSSProperties;
 };
 
 const titleCache = new CacheManager<string>(60); // 1 minute
 const compiledVerseListCache = new CacheManager<CompiledVerseType[]>(60); // 1 minute
 class BibleRenderHelper {
-    toKJVBibleVersesKey(bibleTarget: BibleTargetType) {
+    toKJVBibleVersesKey(
+        bibleTarget: BibleTargetType,
+        endBibleTarget?: BibleTargetType,
+    ) {
         const { bookKey: book, chapter, verseStart, verseEnd } = bibleTarget;
-        const txtV = `${verseStart}${
-            verseStart !== verseEnd ? '-' + verseEnd : ''
+        let txtV = `${verseStart}${
+            verseStart === verseEnd ? '' : '-' + verseEnd
         }`;
-        return `${book} ${chapter}:${txtV}`;
+        if (endBibleTarget != undefined) {
+            const { chapter: endChapter, verseEnd: endVerseEnd } =
+                endBibleTarget;
+            txtV = txtV.split('-')[0];
+            txtV += `-${endChapter}:${endVerseEnd}`;
+        }
+        return toVerseKeyFormat(book, chapter, txtV);
     }
-    toBibleVersesKey(bibleKey: string, bibleTarget: BibleTargetType) {
-        return `(${bibleKey}) ${this.toKJVBibleVersesKey(bibleTarget)}`;
+    toBibleVersesKey(
+        bibleKey: string,
+        bibleTarget: BibleTargetType,
+        endBibleTarget?: BibleTargetType,
+    ) {
+        return `(${bibleKey}) ${this.toKJVBibleVersesKey(bibleTarget, endBibleTarget)}`;
     }
     fromKJVBibleVersesKey(kjvBibleVersesKey: string) {
         const arr = kjvBibleVersesKey.split(':');
@@ -81,10 +107,15 @@ class BibleRenderHelper {
             getKJVBookKeyValue()[bookKey]
         );
     }
-    async toTitle(bibleKey: string, target: BibleTargetType) {
+    async toTitle(
+        bibleKey: string,
+        target: BibleTargetType,
+        endTarget?: BibleTargetType,
+    ) {
         const bibleVersesKey = bibleRenderHelper.toBibleVersesKey(
             bibleKey,
             target,
+            endTarget,
         );
         return await unlocking(bibleVersesKey, async () => {
             const cachedTitle = await titleCache.get(bibleVersesKey);
@@ -99,36 +130,104 @@ class BibleRenderHelper {
             );
             const verseEndLocale = await toLocaleNumBible(bibleKey, verseEnd);
             const txtV = `${verseStartLocale}${
-                verseStart !== verseEnd ? '-' + verseEndLocale : ''
+                verseStart === verseEnd ? '' : '-' + verseEndLocale
             }`;
             const ensuredBookKey = await this.toLocaleBook(bibleKey, bookKey);
-            const title = `${ensuredBookKey} ${chapterLocale}:${txtV}`;
+            let title = toVerseKeyFormat(
+                ensuredBookKey,
+                chapterLocale ?? '-1',
+                txtV,
+            );
+            if (endTarget !== undefined) {
+                const endChapterLocale = await toLocaleNumBible(
+                    bibleKey,
+                    endTarget.chapter,
+                );
+                const endVerseEndLocale = await toLocaleNumBible(
+                    bibleKey,
+                    endTarget.verseEnd,
+                );
+                if (endChapterLocale && endVerseEndLocale) {
+                    title = title.split('-')[0];
+                    title += `-${endChapterLocale}:${endVerseEndLocale}`;
+                }
+            }
             await titleCache.set(bibleVersesKey, title);
             return title;
         });
     }
 
-    async toVerseTextList(bibleKey: string, target: BibleTargetType) {
+    async getVerseTextExtra(
+        bibleKey: string,
+        bookKey: string,
+        chapter: number,
+        verse: number,
+        isSkipExtra: boolean,
+    ) {
+        if (isSkipExtra) {
+            return {
+                customText: null,
+                isNewLine: false,
+                isKJVNewLine: false,
+                newLineTitlesHtmlText: null,
+            };
+        }
+        const isNewLine =
+            verse == 1 ||
+            (await checkShouldNewLine(bibleKey, bookKey, chapter, verse));
+        const isKJVNewLine = await checkShouldNewLineKJV(
+            bibleKey,
+            bookKey,
+            chapter,
+            verse,
+        );
+        const newLineTitlesHtmlText = await getNewLineTitlesHtmlText(
+            bibleKey,
+            bookKey,
+            chapter,
+            verse,
+        );
+        const customText = await getCustomVerseText(
+            bibleKey,
+            bookKey,
+            chapter,
+            verse,
+        );
+        return {
+            customText,
+            isNewLine,
+            isKJVNewLine,
+            newLineTitlesHtmlText,
+        };
+    }
+
+    async toVerseTextList(
+        bibleKey: string,
+        target: BibleTargetType,
+        isSkipExtra = false,
+    ) {
+        const isRtl = await getBibleInfoIsRtl(bibleKey);
         const bibleVersesKey = bibleRenderHelper.toBibleVersesKey(
             bibleKey,
             target,
         );
+        const langData = await getLangFromBibleKey(bibleKey);
         return unlocking(bibleVersesKey, async () => {
             const { bookKey, chapter, verseStart, verseEnd } = target;
             const verses = await getVerses(bibleKey, bookKey, chapter);
             if (!verses) {
                 return null;
             }
-            const langData = await getLangFromBibleKey(bibleKey);
             const compiledVersesList: CompiledVerseType[] = [];
             for (let i = verseStart; i <= verseEnd; i++) {
+                const extra = await this.getVerseTextExtra(
+                    bibleKey,
+                    bookKey,
+                    chapter,
+                    i,
+                    isSkipExtra,
+                );
                 const localNum = await toLocaleNumBible(bibleKey, i);
-                let isNewLine = i == 1;
-                if (langData !== null && i > 1) {
-                    isNewLine = langData.checkShouldNewLine(
-                        verses[(i - 1).toString()] ?? '??',
-                    );
-                }
                 const iString = i.toString();
                 const genTarget = (verse: number) => {
                     return {
@@ -151,7 +250,6 @@ class BibleRenderHelper {
                     verse: i,
                     localeVerse: localNum ?? iString,
                     text: verses[iString] ?? '??',
-                    isNewLine,
                     bibleKey,
                     bookKey,
                     chapter,
@@ -159,6 +257,12 @@ class BibleRenderHelper {
                     bibleVersesKey,
                     isFirst,
                     isLast,
+                    isRtl,
+                    style:
+                        langData === null
+                            ? {}
+                            : { fontFamily: langData.fontFamily },
+                    ...extra,
                 });
             }
             await compiledVerseListCache.set(
@@ -179,9 +283,7 @@ class BibleRenderHelper {
             return null;
         }
         const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
-        const bookIndex = bookKeysOrder.findIndex(
-            (bookKey1) => bookKey1 === bookKey,
-        );
+        const bookIndex = bookKeysOrder.indexOf(bookKey);
         let nextBookIndex = bookIndex;
         let nextChapter = chapter + (isNext ? 1 : -1);
         if (nextChapter < 1 || nextChapter > getKJVChapterCount(bookKey)) {
@@ -200,8 +302,16 @@ class BibleRenderHelper {
             verseEnd: verses ? Object.keys(verses).length : 1,
         };
     }
-    async toText(bibleKey: string, target: BibleTargetType) {
-        const verseTextList = await this.toVerseTextList(bibleKey, target);
+    async toText(
+        bibleKey: string,
+        target: BibleTargetType,
+        isSkipExtra = false,
+    ) {
+        const verseTextList = await this.toVerseTextList(
+            bibleKey,
+            target,
+            isSkipExtra,
+        );
         if (verseTextList === null) {
             const bibleVersesKey = bibleRenderHelper.toBibleVersesKey(
                 bibleKey,

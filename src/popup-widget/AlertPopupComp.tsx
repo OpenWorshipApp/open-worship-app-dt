@@ -6,12 +6,12 @@ import { PopupAlertDataType, closeAlert } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 
 export default function AlertPopupComp({
-    data,
+    alertData,
 }: Readonly<{
-    data: PopupAlertDataType;
+    alertData: PopupAlertDataType;
 }>) {
     const handClose = () => {
-        data.onClose();
+        alertData.onClose();
         closeAlert();
     };
     useKeyboardRegistering(
@@ -20,7 +20,7 @@ export default function AlertPopupComp({
             event.preventDefault();
             handClose();
         },
-        [data],
+        [alertData],
     );
     return (
         <PrimitiveModalComp>
@@ -29,7 +29,7 @@ export default function AlertPopupComp({
                     header={
                         <>
                             <i className="bi bi-exclamation-circle" />
-                            {data.title}
+                            {alertData.title}
                         </>
                     }
                     onClose={handClose}
@@ -38,7 +38,7 @@ export default function AlertPopupComp({
                     <div
                         className="p-2 flex-fill app-selectable-text"
                         dangerouslySetInnerHTML={{
-                            __html: data.message,
+                            __html: alertData.message,
                         }}
                     />
                 </div>

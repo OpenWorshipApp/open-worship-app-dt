@@ -7,6 +7,9 @@ export default function ScreenCloseButtonComp() {
     return (
         <button
             id="close"
+            style={{
+                borderRadius: '0 0 0 1em',
+            }}
             onClick={() => {
                 screenManagerBase.hide();
             }}

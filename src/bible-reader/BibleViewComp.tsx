@@ -1,7 +1,6 @@
 import './BibleViewComp.scss';
 
 import BibleItemsViewController, {
-    ReadIdOnlyBibleItem,
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
 import {
@@ -9,7 +8,6 @@ import {
     genDraggingClass,
     removeDraggingClass,
 } from './readBibleHelpers';
-import { BibleViewTextComp, RenderHeaderComp } from './BibleViewExtra';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import RenderBibleEditingHeader from '../bible-lookup/RenderBibleEditingHeader';
@@ -30,6 +28,9 @@ import {
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
+import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import BibleViewTextComp from './view-extra/BibleViewTextComp';
+import BibleViewRenderHeaderComp from './view-extra/BibleViewRenderHeaderComp';
 
 function handMovedChecking(
     viewController: BibleItemsViewController,
@@ -69,6 +70,52 @@ function handMovedChecking(
     }
 }
 
+async function openContextMenu(
+    event: any,
+    {
+        viewController,
+        foundBibleItem,
+        uuid,
+    }: {
+        viewController: BibleItemsViewController | LookupBibleItemController;
+        foundBibleItem: ReadIdOnlyBibleItem;
+        uuid: string;
+    },
+) {
+    const isLookup = viewController instanceof LookupBibleItemController;
+    const extraSelectedTextContextMenuItems: ContextMenuItemType[] = [];
+    if (isLookup) {
+        extraSelectedTextContextMenuItems.push({
+            childBefore: genContextMenuItemIcon('search'),
+            menuElement: '`Search in Bible Search',
+            onSelect: () => {
+                const selectedText = getSelectedText();
+                if (!selectedText) {
+                    return;
+                }
+                setBibleFindRecentSearch(selectedText);
+                viewController.openBibleSearch('s');
+                viewController.setIsBibleSearching(true);
+            },
+        });
+    }
+    showAppContextMenu(
+        event,
+        [
+            ...genBibleItemCopyingContextMenu(foundBibleItem),
+            ...(await viewController.genContextMenu(
+                event,
+                foundBibleItem,
+                uuid,
+            )),
+        ],
+        {
+            shouldHandleSelectedText: true,
+            extraSelectedTextContextMenuItems,
+        },
+    );
+}
+
 export default function BibleViewComp({
     bibleItem,
     isEditing = false,
@@ -76,55 +123,17 @@ export default function BibleViewComp({
     bibleItem: ReadIdOnlyBibleItem;
     isEditing?: boolean;
 }>) {
-    const viewController = useBibleItemsViewControllerContext();
     const uuid = crypto.randomUUID();
+    const id = `uuid-${uuid}`;
+    const viewController = useBibleItemsViewControllerContext();
     const editingResult = use(EditingResultContext);
     const textViewFontSize = useBibleViewFontSizeContext();
     const foundBibleItem = isEditing
         ? (editingResult?.result.bibleItem ?? null)
         : bibleItem;
-    const handleContextMenuOpening =
-        foundBibleItem === null
-            ? undefined
-            : async (event: any) => {
-                  const isLookup =
-                      viewController instanceof LookupBibleItemController;
-                  const extraSelectedTextContextMenuItems: ContextMenuItemType[] =
-                      [];
-                  if (isLookup) {
-                      extraSelectedTextContextMenuItems.push({
-                          childBefore: genContextMenuItemIcon('search'),
-                          menuElement: '`Search in Bible Search',
-                          onSelect: () => {
-                              const selectedText = getSelectedText();
-                              if (!selectedText) {
-                                  return;
-                              }
-                              setBibleFindRecentSearch(selectedText);
-                              viewController.openBibleSearch('s');
-                              viewController.setIsBibleSearching(true);
-                          },
-                      });
-                  }
-                  showAppContextMenu(
-                      event,
-                      [
-                          ...genBibleItemCopyingContextMenu(foundBibleItem),
-                          ...(await viewController.genContextMenu(
-                              event,
-                              foundBibleItem,
-                              uuid,
-                          )),
-                      ],
-                      {
-                          shouldHandleSelectedText: true,
-                          extraSelectedTextContextMenuItems,
-                      },
-                  );
-              };
     return (
         <div
-            id={`uuid-${uuid}`}
+            id={id}
             className={
                 'bible-view card flex-fill w-100 h-100 app-top-hover-motion-0' +
                 (isEditing ? ' app-highlight-selected ' : '')
@@ -143,18 +152,31 @@ export default function BibleViewComp({
             onDrop={async (event) => {
                 applyDropped(event, viewController, bibleItem);
             }}
-            onContextMenu={handleContextMenuOpening}
+            onContextMenu={(event) => {
+                if (foundBibleItem === null) {
+                    return;
+                }
+                openContextMenu(event, {
+                    viewController,
+                    foundBibleItem,
+                    uuid,
+                });
+            }}
         >
             {isEditing ? (
                 <RenderBibleEditingHeader />
             ) : (
-                <RenderHeaderComp bibleItem={bibleItem} />
+                <BibleViewRenderHeaderComp bibleItem={bibleItem} />
             )}
             <div
                 className="card-body app-top-hover-motion-1"
                 data-scroll-on-next-chapter={isEditing ? '1' : '0'}
+                data-scroll-verses-container={id}
                 style={{
-                    paddingBottom: '60px',
+                    paddingBottom:
+                        !isEditing && !editingResult?.result.guessingChapter
+                            ? '60px'
+                            : '',
                 }}
             >
                 {isEditing ? (

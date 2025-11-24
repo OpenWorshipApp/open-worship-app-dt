@@ -76,6 +76,9 @@ export async function fixMissingFontFamilies(
             .join(
                 ', ',
             )}<br><br>Would you like to find and install from Google Fonts?`,
+        {
+            confirmButtonLabel: 'Yes',
+        },
     );
     if (!isConfirmed) {
         return;

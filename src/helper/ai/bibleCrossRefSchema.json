@@ -16,7 +16,7 @@
                 "type": "array",
                 "items": {
                     "type": "string",
-                    "description": "A Bible verse reference in BOOK CHAPTER:VERSE[-VERSE] format"
+                    "description": "Bible verse key"
                 },
                 "description": "An array of Bible verse references that relate to the input verse"
             }

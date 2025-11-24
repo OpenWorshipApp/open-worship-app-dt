@@ -385,8 +385,8 @@ function getVisibleDim(
 ) {
     const containerRect = container.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
-    const containerTop = containerRect.top + threshold;
-    const containerBottom = containerRect.bottom - threshold;
+    const containerTop = containerRect.top;
+    const containerBottom = containerRect.bottom;
     const targetTop = targetRect.top + threshold;
     const targetBottom = targetRect.bottom - threshold;
     return {
@@ -400,10 +400,10 @@ function getVisibleDim(
 export function checkIsVerticalPartialInvisible(
     container: HTMLElement,
     target: HTMLElement,
-    threshold: number = 0,
+    threshold: number = 1,
 ) {
-    const { targetTop, containerTop, targetBottom, containerBottom } =
-        getVisibleDim(container, target, threshold);
+    const data = getVisibleDim(container, target, threshold);
+    const { targetTop, containerTop, targetBottom, containerBottom } = data;
     // targetTop < containerTop
     // or targetBottom > containerBottom
     return targetTop < containerTop || targetBottom > containerBottom;
@@ -412,14 +412,25 @@ export function checkIsVerticalPartialInvisible(
 export function checkIsVerticalPartialVisible(
     container: HTMLElement,
     target: HTMLElement,
-    threshold: number = 0,
+    threshold: number = 1,
 ) {
-    const { targetTop, containerTop, targetBottom, containerBottom } =
-        getVisibleDim(container, target, threshold);
+    const data = getVisibleDim(container, target, threshold);
+    const { targetTop, containerTop, targetBottom, containerBottom } = data;
     // containerTop <= targetTop < containerBottom
     // or containerTop < targetBottom <= containerBottom
     return (
         (targetTop >= containerTop && targetTop < containerBottom) ||
         (targetBottom > containerTop && targetBottom <= containerBottom)
     );
+}
+
+export function checkIsVerticalAtBottom(
+    container: HTMLElement,
+    target: HTMLElement,
+) {
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const containerBottom = containerRect.bottom;
+    const targetBottom = targetRect.bottom;
+    return targetBottom > containerBottom;
 }

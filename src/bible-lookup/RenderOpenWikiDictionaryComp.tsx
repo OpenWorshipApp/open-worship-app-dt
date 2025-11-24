@@ -2,7 +2,7 @@ import appProvider from '../server/appProvider';
 import {
     getLangCode,
     getLangDataByLocaleOrByLangCode,
-    languageNameMap,
+    getLanguageTitle,
     reversedLocalesMap,
 } from '../lang/langHelpers';
 import {
@@ -15,7 +15,12 @@ import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 
 function genContextMenuItem(langCode: string): ContextMenuItemType {
     const url = `https://${langCode}.wiktionary.org`;
-    const menuElement = languageNameMap[langCode] ?? `Unknown (${langCode})`;
+    let menuElement = getLanguageTitle({ langCode });
+    if (menuElement === 'Unknown') {
+        menuElement = `${langCode} (Unknown)`;
+    } else {
+        menuElement += ` [${langCode}]`;
+    }
     const langData = getLangDataByLocaleOrByLangCode(langCode);
     const fontFamily = langData === null ? undefined : langData.fontFamily;
     return {
@@ -31,8 +36,8 @@ function genContextMenuItem(langCode: string): ContextMenuItemType {
 }
 
 async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
-    const targetLang = await getBibleLocale(bibleKey);
-    let targetLangCode = getLangCode(targetLang);
+    const targetLocale = await getBibleLocale(bibleKey);
+    let targetLangCode = getLangCode(targetLocale);
     if (targetLangCode === 'en') {
         targetLangCode = null;
     }

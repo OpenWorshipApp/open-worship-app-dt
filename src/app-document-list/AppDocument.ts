@@ -20,6 +20,7 @@ import {
 } from '../server/appHelpers';
 import { createNewSlidesFromDroppedData } from '../app-document-presenter/items/appDocumentHelpers';
 import { fixMissingFontFamilies } from '../server/fontHelpers';
+import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -375,7 +376,10 @@ export default class AppDocument
     }
 
     static async create(dir: string, name: string) {
-        return super.create(dir, name, { items: [Slide.defaultSlideData(0)] });
+        const newCanvasItem = CanvasItemText.genDefaultItem();
+        const appDocumentJson = Slide.defaultSlideData(0);
+        appDocumentJson.canvasItems.push(newCanvasItem.toJson());
+        return super.create(dir, name, { items: [appDocumentJson] });
     }
 
     static async getCopiedSlides() {

@@ -44,6 +44,9 @@ function genContextMenu(
                 showAppConfirm(
                     'Empty Bible List',
                     'Are you sure to empty this bible list?',
+                    {
+                        confirmButtonLabel: 'Yes',
+                    },
                 ).then((isOk) => {
                     if (!isOk) {
                         return;

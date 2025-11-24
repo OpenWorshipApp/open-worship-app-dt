@@ -18,12 +18,12 @@ import {
     pathJoin,
 } from '../server/fileHelpers';
 import {
-    ensureBibleXMLBasePath,
+    ensureBibleXMLCachedBasePath,
     getBibleXMLDataFromKey,
 } from '../setting/bible-setting/bibleXMLHelpers';
 import {
     getAllXMLFileKeys,
-    xmlToJson,
+    xmlTextToJson,
 } from '../setting/bible-setting/bibleXMLJsonDataHelpers';
 import {
     APIDataMapType,
@@ -331,11 +331,11 @@ export default class BibleFindController {
         if (xmlText === null) {
             return null;
         }
-        const bibleInfo = await xmlToJson(xmlText);
+        const bibleInfo = await xmlTextToJson(xmlText);
         if (bibleInfo === null) {
             return null;
         }
-        const basePath = await ensureBibleXMLBasePath(bibleInfo.info.key);
+        const basePath = await ensureBibleXMLCachedBasePath(bibleInfo.info.key);
         if (basePath === null) {
             return null;
         }

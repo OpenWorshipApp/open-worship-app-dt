@@ -1,5 +1,5 @@
 import { showBibleOption } from '../bible-lookup/BibleSelectionComp';
-import { ReadIdOnlyBibleItem } from './BibleItemsViewController';
+import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 
 export default function ButtonAddMoreBibleComp({
     bibleItems,

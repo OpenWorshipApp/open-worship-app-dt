@@ -22,6 +22,9 @@ export default function DownloadedBibleItemComp({
         const isOk = await showAppConfirm(
             'Delete Bible',
             `Are you sure to delete bible "${title}"?`,
+            {
+                confirmButtonLabel: 'Yes',
+            },
         );
         if (!isOk) {
             return;

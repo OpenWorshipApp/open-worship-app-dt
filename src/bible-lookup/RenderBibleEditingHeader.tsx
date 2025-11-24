@@ -1,5 +1,4 @@
 import RenderEditingActionButtonsComp from './RenderEditingActionButtonsComp';
-import { RenderTitleMaterialComp } from '../bible-reader/BibleViewExtra';
 import { closeCurrentEditingBibleItem } from '../bible-reader/readBibleHelpers';
 import { toShortcutKey } from '../event/KeyboardEventListener';
 import {
@@ -9,6 +8,7 @@ import {
 } from '../bible-reader/LookupBibleItemController';
 import { use } from 'react';
 import { HoverMotionHandler } from '../helper/domHelpers';
+import { RenderTitleMaterialComp } from '../bible-reader/view-extra/RenderTitleMaterialComp';
 
 export default function RenderBibleEditingHeader() {
     const viewController = useLookupBibleItemControllerContext();

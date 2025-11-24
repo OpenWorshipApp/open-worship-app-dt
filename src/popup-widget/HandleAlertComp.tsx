@@ -52,7 +52,7 @@ export default function HandleAlertComp() {
         if (confirmData === null) return null;
         return (
             <AppSuspenseComp>
-                <LazyConfirmPopupComp data={confirmData} />
+                <LazyConfirmPopupComp confirmData={confirmData} />
             </AppSuspenseComp>
         );
     }, [confirmData]);
@@ -61,7 +61,7 @@ export default function HandleAlertComp() {
         if (inputData === null) return null;
         return (
             <AppSuspenseComp>
-                <LazyInputPopupComp data={inputData} />
+                <LazyInputPopupComp inputData={inputData} />
             </AppSuspenseComp>
         );
     }, [inputData]);
@@ -70,7 +70,7 @@ export default function HandleAlertComp() {
         if (alertData === null) return null;
         return (
             <AppSuspenseComp>
-                <LazyAlertPopupComp data={alertData} />
+                <LazyAlertPopupComp alertData={alertData} />
             </AppSuspenseComp>
         );
     }, [alertData]);

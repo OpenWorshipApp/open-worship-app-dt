@@ -27,6 +27,9 @@ const lang: LanguageDataType = {
     <path fill="#C8102E" d="M0 193v96h640v-96H0zM273 0v480h96V0h-96z"/>
   </svg>
   `,
+    sanitizeText: (text: string) => {
+        return text;
+    },
     sanitizePreviewText: (text: string) => {
         return text;
     },
@@ -72,9 +75,6 @@ const lang: LanguageDataType = {
     },
     endWord: (text: string) => {
         return text + ' ';
-    },
-    checkShouldNewLine: (text: string) => {
-        return text.endsWith('.');
     },
     extraBibleContextMenuItems: (_bibleItem, _appProvider) => {
         return [];

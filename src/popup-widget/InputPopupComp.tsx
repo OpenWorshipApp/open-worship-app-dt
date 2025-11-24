@@ -6,45 +6,49 @@ import { closeAlert, InputDataType } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 
 export default function ConfirmPopupComp({
-    data,
+    inputData,
 }: Readonly<{
-    data: InputDataType;
+    inputData: InputDataType;
 }>) {
     const handleClosing = () => {
-        data.onConfirm(false);
+        inputData.onConfirm(false);
         closeAlert();
     };
     const handleOkClicking = () => {
-        data.onConfirm(true);
+        inputData.onConfirm(true);
         closeAlert();
     };
     useKeyboardRegistering(
         [{ key: 'Escape' }],
         (event) => {
-            if (data.escToCancel ?? true) {
+            if (inputData.escToCancel ?? true) {
                 event.preventDefault();
                 handleClosing();
             }
         },
-        [data],
+        [inputData],
     );
     useKeyboardRegistering(
         [{ key: 'Enter' }],
         () => {
-            if (data.enterToOk ?? true) {
+            if (inputData.enterToOk ?? true) {
                 handleOkClicking();
             }
         },
-        [data],
+        [inputData],
     );
     return (
         <PrimitiveModalComp>
-            <div id="app-input-popup" className="shadow card">
+            <div
+                id="app-input-popup"
+                className="shadow card"
+                style={inputData.extraStyles}
+            >
                 <HeaderAlertPopupComp
                     header={
-                        <div className="app-ellipsis" title={data.title}>
+                        <div className="app-ellipsis" title={inputData.title}>
                             <i className="bi bi-exclamation-circle" />
-                            {data.title}
+                            {inputData.title}
                         </div>
                     }
                     onClose={handleClosing}
@@ -57,7 +61,7 @@ export default function ConfirmPopupComp({
                             overflow: 'auto',
                         }}
                     >
-                        {data.body}
+                        {inputData.body}
                     </div>
                 </div>
                 <div className="card-footer btn-group float-end">

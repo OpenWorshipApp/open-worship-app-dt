@@ -68,6 +68,9 @@ function MenuIsModifying({
                     const isOk = await showAppConfirm(
                         '`Discard changed',
                         '`Are you sure to discard all histories?',
+                        {
+                            confirmButtonLabel: 'Yes',
+                        },
                     );
                     if (!isOk) {
                         return;

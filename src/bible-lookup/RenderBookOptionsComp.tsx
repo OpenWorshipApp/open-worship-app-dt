@@ -50,8 +50,7 @@ function genBookOption({
                 style={{
                     width: '240px',
                     overflowX: 'auto',
-                    borderStyle: isOldTestament ? 'dashed' : 'double',
-                    borderWidth: isOldTestament ? '1px' : '2px',
+                    borderColor: isOldTestament ? '#53854420' : '#3a3a8eb2',
                 }}
                 type="button"
                 onClick={() => {
@@ -60,9 +59,7 @@ function genBookOption({
             >
                 <span data-bible-key={bibleKey}>{book}</span>
                 {book === bookKJV ? null : (
-                    <>
-                        (<small className="text-muted">{bookKJV}</small>)
-                    </>
+                    <small className="px-1">({bookKJV})</small>
                 )}
             </button>
         </div>

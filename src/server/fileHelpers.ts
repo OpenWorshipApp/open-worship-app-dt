@@ -399,7 +399,10 @@ export async function fsListFiles(dirPath: string) {
 export async function fsListDirectories(dirPath: string) {
     const foundFileList = await fsList(dirPath);
     return foundFileList
-        .filter(({ isDirectory }) => {
+        .filter(({ name, isDirectory }) => {
+            if (name.startsWith('.')) {
+                return false;
+            }
             return isDirectory;
         })
         .map(({ name }) => {
@@ -547,6 +550,9 @@ export async function fsCopyFilePathToPath(
             const isConfirm = await showAppConfirm(
                 'Copy File',
                 `File path "${targetPath}" exist, do you want to override it?`,
+                {
+                    confirmButtonLabel: 'Yes',
+                },
             );
             if (!isConfirm) {
                 throw new Error('Canceled by user');

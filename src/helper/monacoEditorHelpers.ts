@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { editor, KeyMod, KeyCode } from 'monaco-editor';
+import { editor, KeyMod, KeyCode, Uri } from 'monaco-editor';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
@@ -11,7 +11,7 @@ import { useAppEffect } from './debuggerHelpers';
 import { genTimeoutAttempt } from './helpers';
 import { checkIsDarkMode } from '../initHelpers';
 
-self.MonacoEnvironment = {
+globalThis.MonacoEnvironment = {
     getWorker(_, label) {
         if (label === 'json') {
             return new jsonWorker();
@@ -29,7 +29,7 @@ self.MonacoEnvironment = {
     },
 };
 
-self.MonacoEnvironment = {
+globalThis.MonacoEnvironment = {
     getWorker(_, label) {
         if (label === 'json') {
             return new jsonWorker();
@@ -54,6 +54,7 @@ async function getCopiedText() {
     return null;
 }
 export type EditorStoreType = {
+    systemContent: string;
     editorInstance: editor.IStandaloneCodeEditor;
     div: HTMLDivElement;
     toggleIsWrapText: () => void;
@@ -64,11 +65,29 @@ export type EditorStoreType = {
     };
 };
 
-function createEditor(
-    options: editor.IStandaloneEditorConstructionOptions,
-    onInit?: (editor: editor.IStandaloneCodeEditor) => void,
-    onStore?: (editorStore: EditorStoreType) => void,
-) {
+const modelsMap: Record<string, editor.ITextModel> = {};
+function getModel(value: string, uri: Uri, language: string) {
+    const key = uri.toString();
+    if (modelsMap[key] !== undefined) {
+        return modelsMap[key];
+    }
+    const model = editor.createModel(value, language, uri);
+    modelsMap[key] = model;
+    return model;
+}
+function createEditor({
+    options,
+    language,
+    onInit,
+    onStore,
+    uri,
+}: {
+    uri: Uri;
+    language: string;
+    options: editor.IStandaloneEditorConstructionOptions;
+    onInit?: (editor: editor.IStandaloneCodeEditor) => void;
+    onStore?: (editorStore: EditorStoreType) => void;
+}) {
     const div = document.createElement('div');
     Object.assign(div.style, {
         width: '100%',
@@ -78,9 +97,9 @@ function createEditor(
     });
     let editorInstance: editor.IStandaloneCodeEditor | null = null;
     const isDarkMode = checkIsDarkMode();
+    const model = getModel(options.value ?? '', uri, language);
     editorInstance = editor.create(div, {
         value: '',
-        language: 'plaintext',
         theme: isDarkMode ? 'vs-dark' : 'vs-light',
         fontSize: 17,
         minimap: {
@@ -88,9 +107,12 @@ function createEditor(
         },
         scrollbar: {},
         ...options,
+        model,
     });
+
     onInit?.(editorInstance);
     const editorStore: EditorStoreType = {
+        systemContent: '',
         editorInstance,
         div,
         toggleIsWrapText: () => {},
@@ -119,21 +141,12 @@ function createEditor(
             y: mouseEvent.event.posy,
         };
     });
+    // TODO: fix Monaco native pasting fail
     editorInstance.addAction({
-        id: 'toggle-wrap-text',
-        label: '`Toggle Wrap Text',
-        contextMenuGroupId: 'navigation',
-        keybindings: [KeyMod.Alt | KeyCode.KeyZ],
-        contextMenuOrder: 1.5,
-        run: () => {
-            editorStore.toggleIsWrapText();
-        },
-    });
-    // TODO: fix Monaco native paste fail
-    editorInstance.addAction({
-        id: 'paste',
-        label: 'Paste',
+        id: 'paste-from-clipboard',
+        label: 'Paste from Clipboard',
         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyV],
+        contextMenuGroupId: 'navigation',
         run: async (editor) => {
             const clipboardText = await getCopiedText();
             if (!clipboardText) {
@@ -147,28 +160,55 @@ function createEditor(
             ]);
         },
     });
+    editorInstance.addAction({
+        id: 'toggle-wrap-text',
+        label: '`Toggle Wrap Text',
+        contextMenuGroupId: 'navigation',
+        keybindings: [KeyMod.Alt | KeyCode.KeyZ],
+        contextMenuOrder: 1.5,
+        run: () => {
+            editorStore.toggleIsWrapText();
+        },
+    });
     return editorStore;
 }
 
+export type StoreType = {
+    isWrapText: boolean;
+    setIsWrapText: (value: boolean) => void;
+    editorStore: EditorStoreType;
+    setNewValue: (newContent: string) => void;
+    onContainerInit: (container: HTMLElement | null) => () => void;
+};
 export function useInitMonacoEditor({
     settingName,
     options,
     onInit,
     onStore,
     onContentChange,
+    uri,
+    language,
 }: {
     settingName: string;
     options: editor.IStandaloneEditorConstructionOptions;
     onInit?: (editorInstance: editor.IStandaloneCodeEditor) => void;
     onStore?: (editorStore: EditorStoreType) => void;
-    onContentChange?: (content: string) => void;
+    onContentChange?: (oldContent: string, newContent: string) => void;
+    uri: Uri;
+    language: string;
 }) {
     const [isWrapText, setIsWrapText] = useStateSettingBoolean(
         settingName,
         false,
     );
     const editorStore = useMemo(() => {
-        const newEditorStore = createEditor(options, onInit, onStore);
+        const newEditorStore = createEditor({
+            options,
+            onInit,
+            onStore,
+            uri,
+            language,
+        });
         const { editorInstance } = newEditorStore;
         editor.onDidChangeMarkers((uriList) => {
             const currentUri = editorInstance.getModel()?.uri;
@@ -186,7 +226,7 @@ export function useInitMonacoEditor({
         if (onContentChange !== undefined) {
             editorInstance.onDidChangeModelContent(async () => {
                 const editorContent = editorInstance.getValue();
-                onContentChange(editorContent);
+                onContentChange(editorStore.systemContent, editorContent);
             });
         }
         return newEditorStore;
@@ -210,6 +250,10 @@ export function useInitMonacoEditor({
         isWrapText,
         setIsWrapText,
         editorStore,
+        setNewValue: (newContent: string) => {
+            editorStore.replaceValue(newContent);
+            editorStore.systemContent = newContent;
+        },
         onContainerInit: (container: HTMLElement | null) => {
             if (container === null) {
                 return;
@@ -223,8 +267,8 @@ export function useInitMonacoEditor({
             container.appendChild(editorStore.div);
             return () => {
                 resizeObserver.disconnect();
-                container.removeChild(editorStore.div);
+                editorStore.div.remove();
             };
         },
-    };
+    } as StoreType;
 }

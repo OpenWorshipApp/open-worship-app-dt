@@ -1,11 +1,17 @@
 import { useState } from 'react';
 
-import { getLangCode, LocaleType } from '../../lang/langHelpers';
+import {
+    getLangAsync,
+    getLangCode,
+    LanguageDataType,
+    LocaleType,
+} from '../../lang/langHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import {
     getKJVBookKeyValue,
     kjvBibleInfo,
 } from '../../helper/bible-helpers/serverBibleHelpers';
+import { Uri } from 'monaco-editor';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -193,11 +199,16 @@ function BibleBooksMapXMLInputComp({
             lineNumbersMinChars: 25,
             lineNumbers: genMonacoBibleLineNumber,
         },
-        onContentChange: (content) => {
+        onContentChange: (_, content) => {
             onChange(content);
         },
+        uri: Uri.parse('bible-books-map-editor'),
+        language: 'plaintext',
     });
-    const handleMarkupStringParsing = (markupString: string) => {
+    const handleMarkupStringParsing = (
+        markupString: string,
+        lang: LanguageDataType | null,
+    ) => {
         const parser = new DOMParser();
         markupString = markupString.replaceAll('</', '@newline</');
         const doc = parser.parseFromString(markupString, 'text/html');
@@ -207,6 +218,9 @@ function BibleBooksMapXMLInputComp({
         innerText = innerText.replaceAll(/\n\s/g, '\n');
         innerText = innerText.replaceAll(/\n+/g, '\n');
         innerText = innerText.trim();
+        if (lang !== null) {
+            innerText = lang.sanitizeText(innerText);
+        }
         onChange(innerText);
         editorStore.replaceValue(innerText);
     };
@@ -258,17 +272,18 @@ function BibleBooksMapXMLInputComp({
                 </a>
                 <button
                     className="btn btn-sm btn-secondary ms-2"
-                    onClick={(event) => {
+                    onClick={async (event) => {
                         event.stopPropagation();
                         const value = editorStore.editorInstance.getValue();
                         const isHTML = value.includes('<');
                         if (!isHTML) {
                             return;
                         }
-                        handleMarkupStringParsing(value);
+                        const lang = await getLangAsync(locale);
+                        handleMarkupStringParsing(value, lang);
                     }}
                 >
-                    Parse Markup String (HTML|XML)
+                    `Parse Markup String (HTML|XML)
                 </button>
             </div>
         </div>
@@ -276,13 +291,13 @@ function BibleBooksMapXMLInputComp({
 }
 
 export function genBibleBooksMapXMLInput(
-    numbers: string[],
+    books: string[],
     locale: LocaleType,
-    onChange: (numbers: string[]) => void,
+    onChange: (books: string[]) => void,
 ) {
     return (
         <BibleBooksMapXMLInputComp
-            defaultVale={numbers.join('\n')}
+            defaultVale={books.join('\n')}
             onChange={(newValue) => {
                 onChange(newValue.split('\n'));
             }}
@@ -423,4 +438,17 @@ export const xmlFormatExample = `<?xml version="1.0" encoding="UTF-8"?>
             </verse>
         </chapter>
     </book>
+    // Optional section for defining new lines in verses
+    <new-lines>
+        <item>MAT 7:6</item>
+        <item>MAT 7:13</item>
+    </new-lines>
+    // Optional section for defining titles for new lines
+    <new-lines-title-map>
+        <item key="GEN 1:1">&lt;![CDATA[[{"content":"Title","cssStyle":{"fontSize":"1.2em"}}]]]&gt;</item>
+    </new-lines-title-map>
+    // Optional section for defining custom verses content
+    <custom-verses-map>
+        <item key="MAT 3:15">&lt;![CDATA[[{"content":"This is "},{"content":"God's word","isGW":true}]]]&gt;</item>
+    </custom-verses-map>
 </bible>`;

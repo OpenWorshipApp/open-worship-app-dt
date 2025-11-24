@@ -1,9 +1,7 @@
 import { handleError } from '../helper/errorHelpers';
 import { RECEIVING_DROP_CLASSNAME } from '../helper/helpers';
-import {
-    ReadIdOnlyBibleItem,
-    useBibleItemsViewControllerContext,
-} from './BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
+import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 
 export default function NoBibleViewAvailableComp() {
     const viewController = useBibleItemsViewControllerContext();

@@ -1,4 +1,4 @@
-import ReactDOMServer from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import {
     showAppAlert,
@@ -170,37 +170,45 @@ const docFileInfo = {
 
 export const supportOfficeFileExtensions = Object.keys(docFileInfo);
 
-const alertMessage = ReactDOMServer.renderToStaticMarkup(
-    <div>
-        <b>LibreOffice </b>
-        is required for converting Office file to PDF. Please install it and try
-        again.
-        <br />
-        <div style={{ margin: '20px' }}>
-            <a
-                href={'https://www.google.com/search?q=libreoffice+download'}
-                target="_blank"
-            >
-                <strong>`Download</strong>
-                <img
-                    height={20}
-                    src={libOfficeLogo}
-                    alt="LibreOffice Logo"
-                    style={{
-                        paddingLeft: '5px',
-                    }}
-                />
-            </a>
-            <hr />
-        </div>
-    </div>,
-);
+function genAlertMessage() {
+    return renderToStaticMarkup(
+        <div>
+            <b>LibreOffice </b>
+            is required for converting Office file to PDF. Please install it and
+            try again.
+            <br />
+            <div style={{ margin: '20px' }}>
+                <a
+                    href={
+                        'https://www.google.com/search?q=libreoffice+download'
+                    }
+                    target="_blank"
+                >
+                    <strong>`Download</strong>
+                    <img
+                        height={20}
+                        src={libOfficeLogo}
+                        alt="LibreOffice Logo"
+                        style={{
+                            paddingLeft: '5px',
+                            padding: '2px',
+                            borderRadius: '3px',
+                            margin: '0 5px',
+                            backgroundColor: '#00000074',
+                        }}
+                    />
+                </a>
+                <hr />
+            </div>
+        </div>,
+    );
+}
 
 const WIDGET_TITLE = 'Converting to PDF';
 
 function showConfirmPdfConvert(dirPath: string, file: DroppedFileType) {
     const fileFullName = getFileFullName(file);
-    const confirmMessage = ReactDOMServer.renderToStaticMarkup(
+    const confirmMessage = renderToStaticMarkup(
         <div>
             <b>"{fileFullName}"</b>
             {' will be converted to PDF into '}
@@ -259,9 +267,9 @@ async function startConvertingOfficeFile(
             slidesCount = await getSlidesCount(tempFilePath);
         } catch {}
         const slideMessage =
-            slidesCount !== null
-                ? slidesCount + ' slides'
-                : 'unknown slides count';
+            slidesCount === null
+                ? 'unknown slides count'
+                : slidesCount + ' slides';
         showSimpleToast(
             WIDGET_TITLE,
             `Document with ${slideMessage} is being converted. ` +
@@ -269,7 +277,7 @@ async function startConvertingOfficeFile(
         );
         await convertToPdf(tempFilePath, targetPdfFilePath);
         const pdfPagesCount = await getSlidesCount(targetPdfFilePath);
-        if (slidesCount !== null && pdfPagesCount !== slidesCount) {
+        if (slidesCount != null && pdfPagesCount !== slidesCount) {
             showSimpleToast(
                 WIDGET_TITLE,
                 `Warning: Slides count mismatch. ` +
@@ -284,7 +292,7 @@ async function startConvertingOfficeFile(
     } catch (error: any) {
         const regex = /Could not find .+ binary/i;
         if (regex.test(error.message)) {
-            showAppAlert('LibreOffice is not installed', alertMessage);
+            showAppAlert('LibreOffice is not installed', genAlertMessage());
         } else {
             handleError(error);
             const pdfFileSource = FileSource.getInstance(targetPdfFilePath);

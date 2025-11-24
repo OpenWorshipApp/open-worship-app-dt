@@ -9,8 +9,8 @@ import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 
-const BibleXMLInfoPreviewCompLazy = lazy(
-    () => import('./BibleXMLInfoPreviewComp'),
+const BibleXMLDataPreviewCompLazy = lazy(
+    () => import('./BibleXMLDataPreviewComp'),
 );
 
 export default function BibleXMLInfoComp({
@@ -32,6 +32,9 @@ export default function BibleXMLInfoComp({
         const isConfirmed = await showAppConfirm(
             'Delete Bible XML',
             `Are you sure to delete bible XML "${bibleKey}"?`,
+            {
+                confirmButtonLabel: 'Yes',
+            },
         );
         if (!isConfirmed) {
             return;
@@ -86,10 +89,7 @@ export default function BibleXMLInfoComp({
             </div>
             {isShowing ? (
                 <AppSuspenseComp>
-                    <BibleXMLInfoPreviewCompLazy
-                        bibleKey={bibleKey}
-                        loadBibleKeys={loadBibleKeys}
-                    />
+                    <BibleXMLDataPreviewCompLazy bibleKey={bibleKey} />
                 </AppSuspenseComp>
             ) : null}
         </li>

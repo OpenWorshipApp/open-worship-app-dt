@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -xe
 
 current_script_dir=$(dirname "$0")
 cd "$current_script_dir"
@@ -48,13 +48,15 @@ if [ $? -ne 0 ]; then
 fi
 echo "Build and copy completed successfully."
 
-yt_prefix_url="https://github.com/yt-dlp/yt-dlp/releases/download/2025.10.14/"
+yt_version="2025.10.22"
+yt_prefix_url="https://github.com/yt-dlp/yt-dlp/releases/download/$yt_version/"
 download_yt_dlp() {
     local url="$yt_prefix_url$1"
     local output_dir="$dist_dir/yt"
     mkdir -p "$output_dir"
     local output="$output_dir/yt-dlp$2"
-    local file_name="$(basename "$url")_$(gen_md5 "$url")"
+    local file_basic_name="$(basename $url)"
+    local file_name="${file_basic_name}_$yt_version"
     if [ ! -f "$file_name" ]; then
         echo "Downloading $url to $output"
         curl -L "$url" -o "$file_name"
@@ -72,9 +74,6 @@ download_yt_dlp() {
 ffmpeg_prefix_url="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/"
 download_ffmpeg(){
     local url="$ffmpeg_prefix_url$1"
-    # download ffmpeg-n7.1-latest-win64-gpl-7.1.zip 
-    # extract to ffmpeg-n7.1-latest-win64-gpl-7.1
-    # copy ffmpeg-n7.1-latest-win64-gpl-7.1/bin/ffmpeg.exe to ./dist/ffmpeg/bin/ffmpeg.exe
     local output_dir="$dist_dir/ffmpeg/bin"
     mkdir -p "$output_dir"
     local temp_output_dir="$dist_dir/ffmpeg/temp"
@@ -106,14 +105,14 @@ download_ffmpeg(){
         echo "Unknown file type for $file_name. Skipping extraction."
         return
     fi
-    # copy ffmpeg binary to output directory
     ls "$temp_output_dir/$dir_name/bin/ffmpeg"*
     cp "$temp_output_dir/$dir_name/bin/ffmpeg"* "$output_dir"
     chmod +x "$output_dir/ffmpeg"*
     rm -rf "$temp_output_dir"
 }
 
-dn_prefix_url="https://builds.dotnet.microsoft.com/dotnet/Runtime/8.0.18/dotnet-runtime-8.0.18-"
+dn_version="8.0.21"
+dn_prefix_url="https://builds.dotnet.microsoft.com/dotnet/Runtime/$dn_version/dotnet-runtime-$dn_version-"
 download_dotnet(){
     local url="$dn_prefix_url$1"
     local output="$dist_dir/bin$2"
@@ -140,18 +139,20 @@ download_dotnet(){
     fi
 }
 
+ffmpeg_build_version="n8.0-latest"
+ffmpeg_version="8.0"
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
     process=$(node -p "process.arch")
     if [[ "$process" == "arm64" ]]; then
         download_yt_dlp yt-dlp.exe "-arm64.exe"
         download_dotnet win-arm64.zip "-arm64"
-        download_ffmpeg ffmpeg-n7.1-latest-winarm64-gpl-7.1.zip
+        download_ffmpeg ffmpeg-$ffmpeg_build_version-winarm64-gpl-$ffmpeg_version.zip
     else
         download_yt_dlp yt-dlp.exe ".exe"
         download_yt_dlp yt-dlp_x86.exe "-i386.exe"
         download_dotnet win-x64.zip
         download_dotnet win-x86.zip "-i386"
-        download_ffmpeg ffmpeg-n7.1-latest-win64-gpl-7.1.zip
+        download_ffmpeg ffmpeg-$ffmpeg_build_version-win64-gpl-$ffmpeg_version.zip
     fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ "$(uname -m)" == "arm64" ]]; then
@@ -164,10 +165,10 @@ elif [[ "$OSTYPE" == "linux-gnu" ]]; then
     if [[ "$(uname -m)" == "aarch64" ]]; then
         download_yt_dlp yt-dlp_linux_aarch64 "-arm64"
         download_dotnet linux-arm64.tar.gz "-arm64"
-        download_ffmpeg ffmpeg-n7.1-latest-linuxarm64-gpl-7.1.tar.xz
+        download_ffmpeg ffmpeg-$ffmpeg_build_version-linuxarm64-gpl-$ffmpeg_version.tar.xz
     else
         download_yt_dlp yt-dlp_linux
         download_dotnet linux-x64.tar.gz
-        download_ffmpeg ffmpeg-n7.1-latest-linux64-gpl-7.1.tar.xz
+        download_ffmpeg ffmpeg-$ffmpeg_build_version-linux64-gpl-$ffmpeg_version.tar.xz
     fi
 fi

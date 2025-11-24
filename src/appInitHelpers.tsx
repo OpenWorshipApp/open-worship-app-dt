@@ -149,6 +149,9 @@ export function useQuickExitBlock() {
             await showAppConfirm(
                 'Quick Exit',
                 'Are you sure you want to quit the app?',
+                {
+                    confirmButtonLabel: 'Yes',
+                },
             ).then((isOk) => {
                 if (isOk) {
                     window.close();
