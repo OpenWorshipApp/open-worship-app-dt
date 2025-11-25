@@ -174,9 +174,9 @@ export default function BibleViewComp({
                 data-scroll-verses-container={id}
                 style={{
                     paddingBottom:
-                        !isEditing && !editingResult?.result.guessingChapter
-                            ? '60px'
-                            : '',
+                        isEditing && editingResult?.result.bibleItem === null
+                            ? '0'
+                            : '60px',
                 }}
             >
                 {isEditing ? (
