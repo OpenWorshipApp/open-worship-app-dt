@@ -247,20 +247,8 @@ const lang: LanguageDataType = {
     endWord: (text: string) => {
         return text + '\u200B';
     },
-    extraBibleContextMenuItems: (bibleItem, appProvider) => {
-        return [
-            {
-                menuElement: '📖Open Khmer Study Bible',
-                onSelect: () => {
-                    const url = 'https://sb1954sb.openworship.app';
-                    const bookKey = bibleItem.target.bookKey;
-                    const chapterKey = bibleItem.target.chapter;
-                    appProvider.browserUtils.openExternalURL(
-                        `${url}/view.html?bookKey=${bookKey}&chapterKey=${chapterKey}`,
-                    );
-                },
-            },
-        ];
+    extraBibleContextMenuItems: (_bibleItem, _appProvider) => {
+        return [];
     },
     bibleAudioAvailable: false,
 };
