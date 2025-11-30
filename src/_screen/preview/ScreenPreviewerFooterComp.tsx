@@ -2,6 +2,42 @@ import { useState } from 'react';
 import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
 import DisplayControl from './DisplayControl';
 import ScreenEffectControlComp from './ScreenEffectControlComp';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../../context-menu/appContextMenuHelpers';
+
+function getNewStageNumber(
+    event: any,
+    currentStageNumber: number,
+    onChange: (newStageNumber: number) => void,
+) {
+    const items = Array.from({ length: 5 }, (_, i) => i).map((i) => {
+        return {
+            menuElement: `${i}`,
+            disabled: i === currentStageNumber,
+            onSelect: () => {
+                onChange(i);
+            },
+        } as ContextMenuItemType;
+    });
+    items.push(
+        {
+            menuElement: '`Decrement',
+            disabled: currentStageNumber <= 0,
+            onSelect: () => {
+                onChange(Math.max(0, currentStageNumber - 1));
+            },
+        },
+        {
+            menuElement: '`Increment',
+            onSelect: () => {
+                onChange(currentStageNumber + 1);
+            },
+        },
+    );
+    showAppContextMenu(event, items);
+}
 
 export default function ScreenPreviewerFooterComp() {
     const screenManagerBase = useScreenManagerBaseContext();
@@ -23,34 +59,24 @@ export default function ScreenPreviewerFooterComp() {
             }}
         >
             <div className="d-flex w-100 h-100">
-                <div className="d-flex justify-content-start flex-fill">
+                <div className="d-flex justify-content-start">
                     <DisplayControl />
                     <ScreenEffectControlComp />
                 </div>
-                <div>
+                <div className="flex-grow-1 d-flex justify-content-end">
                     <div
-                        className="d-flex input-group input-group-sm"
-                        title="Stage number"
-                        style={{
-                            minWidth: '100px',
+                        className="d-flex app-caught-hover-pointer"
+                        title="`Click to change Stage Number"
+                        onClick={(event) => {
+                            getNewStageNumber(
+                                event,
+                                stageNumber,
+                                setStageNumber1,
+                            );
                         }}
                     >
                         <small>`Stage:</small>
-                        <input
-                            className="form-control form-control-sm"
-                            type="number"
-                            style={{
-                                width: '30px',
-                                height: '20px',
-                            }}
-                            min="0"
-                            value={stageNumber}
-                            onChange={(e) => {
-                                setStageNumber1(
-                                    Number.parseInt(e.target.value, 10),
-                                );
-                            }}
-                        />
+                        <div className="px-1 text-muted">{stageNumber}</div>
                     </div>
                 </div>
             </div>
