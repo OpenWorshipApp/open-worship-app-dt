@@ -122,6 +122,13 @@ npm run lint:es
 npm run lint
 ```
 
+
+## 🕸️ Dependencies Troubleshooting
+
+```bash
+npm run dc:err
+```
+
 ---
 
 ## 🤝 Contributing
@@ -191,5 +198,5 @@ This project is under active development and not fully production-ready yet — 
 ---
 
 <p align="center">
-  Made with ❤️ for churches worldwide
+  Made with ❤️ in Christ for churches worldwide
 </p>

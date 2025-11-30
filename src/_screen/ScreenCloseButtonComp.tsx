@@ -14,7 +14,7 @@ export default function ScreenCloseButtonComp() {
                 screenManagerBase.hide();
             }}
         >
-            x
+            ❌
         </button>
     );
 }
