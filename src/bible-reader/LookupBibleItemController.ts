@@ -83,12 +83,12 @@ class LookupBibleItemController extends BibleItemsViewController {
     isLookup = true;
     setInputText: (inputText: string) => OptionalPromise<void> = (
         _: string,
-    ) => { };
+    ) => {};
     inputTextTime: number = Date.now();
-    setBibleKey = (_bibleKey: string) => { };
-    reloadEditingResult = (_inputText: string) => { };
-    onLookupSaveBibleItem = () => { };
-    setIsBibleSearching = (_isLookupOnline: boolean) => { };
+    setBibleKey = (_bibleKey: string) => {};
+    reloadEditingResult = (_inputText: string) => {};
+    onLookupSaveBibleItem = () => {};
+    setIsBibleSearching = (_isLookupOnline: boolean) => {};
     openBibleSearch = setBibleSearchingTabType;
 
     constructor() {
@@ -397,26 +397,26 @@ class LookupBibleItemController extends BibleItemsViewController {
         const menu3: ContextMenuItemType[] = this.isAlone
             ? []
             : [
-                {
-                    menuElement: elementDivider,
-                },
-                {
-                    childBefore: genContextMenuItemIcon('x-lg', {
-                        color: 'var(--bs-danger-text-emphasis)',
-                    }),
-                    menuElement: 'Close',
-                    childAfter: isBibleItemSelected
-                        ? genContextMenuItemShortcutKey(closeEventMapper)
-                        : undefined,
-                    onSelect: () => {
-                        if (this.checkIsBibleItemSelected(bibleItem)) {
-                            closeCurrentEditingBibleItem(this);
-                        } else {
-                            this.deleteBibleItem(bibleItem);
-                        }
-                    },
-                },
-            ];
+                  {
+                      menuElement: elementDivider,
+                  },
+                  {
+                      childBefore: genContextMenuItemIcon('x-lg', {
+                          color: 'var(--bs-danger-text-emphasis)',
+                      }),
+                      menuElement: 'Close',
+                      childAfter: isBibleItemSelected
+                          ? genContextMenuItemShortcutKey(closeEventMapper)
+                          : undefined,
+                      onSelect: () => {
+                          if (this.checkIsBibleItemSelected(bibleItem)) {
+                              closeCurrentEditingBibleItem(this);
+                          } else {
+                              this.deleteBibleItem(bibleItem);
+                          }
+                      },
+                  },
+              ];
         return [...menu1, ...menus2, ...menu3];
     }
     deleteBibleItem(bibleItem: ReadIdOnlyBibleItem) {
@@ -463,7 +463,7 @@ export function useLookupBibleItemControllerContext() {
     if (!viewController.isLookup) {
         throw new TypeError(
             'useLookupBibleItemControllerContext must be used within a' +
-            ' BibleItemViewControllerContext',
+                ' BibleItemViewControllerContext',
         );
     }
     return viewController as LookupBibleItemController;

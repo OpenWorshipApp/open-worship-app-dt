@@ -3,8 +3,10 @@ import { CSSProperties } from 'react';
 import BibleItem from '../../bible-list/BibleItem';
 import { DroppedDataType, DragTypeEnum } from '../../helper/DragInf';
 import {
+    bringDomToCenterView,
     bringDomToNearestView,
     bringDomToTopView,
+    checkIsVerticalPartialInvisible,
     cloneJson,
     isValidJson,
 } from '../../helper/helpers';
@@ -464,23 +466,31 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         bibleScreenHelper.removeClassName(this.div, 'selected');
         const isToTop = this.isToTop;
         this.isToTop = false;
-        const selectedBlocks = bibleScreenHelper.resetClassName(
+        const selectedBlockDoms = bibleScreenHelper.resetClassName(
             this.div,
             'selected',
             true,
             `${this.selectedKJVVerseKey}`,
         );
-        for (const block of selectedBlocks) {
+        for (const blockDom of selectedBlockDoms) {
             if (isToTop) {
-                bringDomToTopView(block);
+                bringDomToTopView(blockDom);
                 this.handleBibleViewVersesHighlighting(
-                    (block as any).dataset.kjvVerseKey,
+                    (blockDom as any).dataset.kjvVerseKey,
                     true,
                 );
             } else {
-                bringDomToNearestView(block);
+                const isPartiallyInvisible = checkIsVerticalPartialInvisible(
+                    this.div,
+                    blockDom as HTMLElement,
+                );
+                if (isPartiallyInvisible) {
+                    bringDomToCenterView(blockDom);
+                } else {
+                    bringDomToNearestView(blockDom);
+                }
                 this.handleBibleViewVersesHighlighting(
-                    (block as any).dataset.kjvVerseKey,
+                    (blockDom as any).dataset.kjvVerseKey,
                     false,
                 );
             }
