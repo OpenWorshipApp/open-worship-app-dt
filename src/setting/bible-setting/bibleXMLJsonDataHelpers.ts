@@ -20,10 +20,8 @@ import { fsListFiles, pathJoin } from '../../server/fileHelpers';
 import FileSource from '../../helper/FileSource';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
-import {
-    getKJVBookKeyValue,
-    kjvBibleInfo,
-} from '../../helper/bible-helpers/bibleLogicHelpers1';
+import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
+import { getModelBibleInfo } from '../../helper/bible-helpers/bibleModelHelpers';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
@@ -216,7 +214,8 @@ function getGuessingBibleKeys(xmlElementBible: Element) {
 }
 
 function getBookKey(xmlElementBook: Element) {
-    const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
+    const modelBibleInfo = getModelBibleInfo();
+    const bookKeysOrder = modelBibleInfo.bookKeysOrder;
     let bookKey = guessValue(xmlElementBook, attributesMap.bookKey, null);
     if (bookKey !== null && bookKeysOrder.includes(bookKey)) {
         return bookKey;
@@ -290,10 +289,10 @@ async function guessingBibleKey(xmlElementBible: Element) {
 
 function getAvailableBooks(xmlElementBooks: Element[]) {
     const availableBooks: string[] = [];
-    const kjvKeyValue = getKJVBookKeyValue();
+    const modelKeyBook = getModelKeyBookMap();
     for (const book of xmlElementBooks) {
         const bookKey = getBookKey(book);
-        if (bookKey !== null && kjvKeyValue[bookKey]) {
+        if (bookKey !== null && modelKeyBook[bookKey]) {
             availableBooks.push(bookKey);
         }
     }
@@ -465,7 +464,7 @@ export async function getBibleInfoJson(xmlElementBible: Element) {
     const bookKeyMap = getBibleMap(
         xmlElementMap ?? null,
         tagNamesMap.bookMap,
-        cloneJson(getKJVBookKeyValue()),
+        cloneJson(getModelKeyBookMap()),
     );
     if (lang !== null) {
         for (const [key, value] of Object.entries(bookKeyMap)) {

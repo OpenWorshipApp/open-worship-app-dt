@@ -1,8 +1,4 @@
-import {
-    getKJVChapterCount,
-    kjvBibleInfo,
-    toBibleFileName,
-} from './bibleLogicHelpers1';
+import { getKJVChapterCount, toBibleFileName } from './bibleLogicHelpers1';
 import { bibleKeyToXMLFilePath } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
 import {
     bibleDataReader,
@@ -19,6 +15,7 @@ import { freezeObject } from '../helpers';
 import { checkIsRtl } from '../../lang/langHelpers';
 import { getVersesCount } from './bibleLogicHelpers2';
 import { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
+import { getModelBibleInfo } from './bibleModelHelpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {
     const info = await getBibleInfo(bibleKey);
@@ -115,7 +112,8 @@ function checkIsBooksAvailableMissing(info: BibleInfoType) {
 }
 
 export function checkIsOldTestament(bookKey: string) {
-    return kjvBibleInfo.bookKeysOld.includes(bookKey);
+    const modelBibleInfo = getModelBibleInfo();
+    return modelBibleInfo.bookKeysOld.includes(bookKey);
 }
 
 const cache = new CacheManager<BibleInfoType>(60); // cache for 1 minutes

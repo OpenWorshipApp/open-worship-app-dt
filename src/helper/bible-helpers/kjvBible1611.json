@@ -1,5 +1,5 @@
 {
-    "title": "King James Version Standard",
+    "title": "King James Version 1611",
     "bookKeysOrder": [
         "GEN",
         "EXO",
@@ -40,6 +40,21 @@
         "HAG",
         "ZEC",
         "MAL",
+        "1ES",
+        "2ES",
+        "TOB",
+        "JDT",
+        "ESG",
+        "WIS",
+        "SIR",
+        "BAR",
+        "LJE",
+        "AZA",
+        "SUS",
+        "BEL",
+        "MAN",
+        "1MA",
+        "2MA",
         "MAT",
         "MRK",
         "LUK",
@@ -108,6 +123,23 @@
         "HAG",
         "ZEC",
         "MAL"
+    ],
+    "apocryphalBooks": [
+        "1ES",
+        "2ES",
+        "TOB",
+        "JDT",
+        "ESG",
+        "WIS",
+        "SIR",
+        "BAR",
+        "LJE",
+        "AZA",
+        "SUS",
+        "BEL",
+        "MAN",
+        "1MA",
+        "2MA"
     ],
     "books": {
         "GEN": {
@@ -266,6 +298,70 @@
             "key": "MAL",
             "chapterCount": 4
         },
+        "1ES": {
+            "key": "1ES",
+            "chapterCount": 9
+        },
+        "2ES": {
+            "key": "2ES",
+            "chapterCount": 16
+        },
+        "TOB": {
+            "key": "TOB",
+            "chapterCount": 14
+        },
+        "JDT": {
+            "key": "JDT",
+            "chapterCount": 16
+        },
+        "ESG": {
+            "key": "ESG",
+            "chapterCount": 7,
+            "chapterOffset": 9,
+            "verseOffsetMap": {
+                "10": 3
+            }
+        },
+        "WIS": {
+            "key": "WIS",
+            "chapterCount": 19
+        },
+        "SIR": {
+            "key": "SIR",
+            "chapterCount": 51
+        },
+        "BAR": {
+            "key": "BAR",
+            "chapterCount": 5
+        },
+        "LJE": {
+            "key": "LJE",
+            "chapterCount": 1
+        },
+        "AZA": {
+            "key": "AZA",
+            "chapterCount": 1
+        },
+        "SUS": {
+            "key": "SUS",
+            "chapterCount": 1
+        },
+        "BEL": {
+            "key": "BEL",
+            "chapterCount": 1
+        },
+        "MAN": {
+            "key": "MAN",
+            "chapterCount": 1
+        },
+        "1MA": {
+            "key": "1MA",
+            "chapterCount": 16
+        },
+        "2MA": {
+            "key": "2MA",
+            "chapterCount": 15
+        },
         "MAT": {
             "key": "MAT",
             "chapterCount": 28
@@ -415,6 +511,21 @@
         "HAG": "Haggai",
         "ZEC": "Zechariah",
         "MAL": "Malachi",
+        "1ES": "1 Esdras",
+        "2ES": "2 Esdras",
+        "TOB": "Tobit",
+        "JDT": "Judith",
+        "ESG": "Additions to Esther",
+        "WIS": "Wisdom of Solomon",
+        "SIR": "Ecclesiasticus",
+        "BAR": "Baruch",
+        "LJE": "Letter of Jeremiah",
+        "AZA": "Prayer of Azariah",
+        "SUS": "Susanna",
+        "BEL": "Bel and the Dragon",
+        "MAN": "Prayer of Manasseh",
+        "1MA": "1 Maccabees",
+        "2MA": "2 Maccabees",
         "MAT": "Matthew",
         "MRK": "Mark",
         "LUK": "Luke",
@@ -443,5 +554,16 @@
         "JUD": "Jude",
         "REV": "Revelation"
     },
-    "oneChapterBooks": ["OBA", "PHM", "2JN", "3JN", "JUD"]
+    "oneChapterBooks": [
+        "OBA",
+        "PHM",
+        "2JN",
+        "3JN",
+        "JUD",
+        "LJE",
+        "AZA",
+        "SUS",
+        "BEL",
+        "MAN"
+    ]
 }

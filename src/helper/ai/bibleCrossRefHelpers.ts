@@ -17,7 +17,7 @@ import { unlocking } from '../../server/unlockingHelpers';
 import { useAppEffect, useAppEffectAsync } from '../debuggerHelpers';
 import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
 import { handleError } from '../errorHelpers';
-import { getKJVBookKeyValue } from '../bible-helpers/bibleLogicHelpers1';
+import { getModelKeyBookMap } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';
 import { toVerseKeyFormat } from '../bible-helpers/bibleInfoHelpers';
 
@@ -51,7 +51,7 @@ export async function getBibleCrossRef(
     if ((params as any).bibleTitle) {
         bibleTitle = (params as { bibleTitle: string }).bibleTitle;
     } else {
-        const kjvBookKeyValue = getKJVBookKeyValue();
+        const kjvBookKeyValue = getModelKeyBookMap();
         const { bookKey, chapter, verseNum } =
             params as GetBibleCrossRefParamsType;
         bibleTitle = toVerseKeyFormat(
@@ -127,7 +127,7 @@ export async function getBibleCrossRef(
 }
 
 const reverseKJVBookKeyValue = Object.fromEntries(
-    Object.entries(getKJVBookKeyValue()).map(([key, value]) => [value, key]),
+    Object.entries(getModelKeyBookMap()).map(([key, value]) => [value, key]),
 );
 export async function transformCrossReferenceToVerseList(
     data: CrossReferenceType[] | null,

@@ -27,7 +27,7 @@ import { useState, useTransition } from 'react';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import {
     fromBibleFileName,
-    getKJVBookKeyValue,
+    getModelKeyBookMap,
 } from '../../helper/bible-helpers/bibleLogicHelpers1';
 import {
     bibleKeyToXMLFilePath,
@@ -573,7 +573,7 @@ export async function updateBibleXMLInfo(
         showSimpleToast('Error', 'Error occurred during reading file');
         return false;
     }
-    newBibleInfo.booksMap = newBibleInfo.booksMap ?? getKJVBookKeyValue();
+    newBibleInfo.booksMap = newBibleInfo.booksMap ?? getModelKeyBookMap();
     const newJsonData = { ...dataJson, info: newBibleInfo };
     await saveJsonDataToXMLfile(newJsonData, oldBibleInfo.key);
     return true;

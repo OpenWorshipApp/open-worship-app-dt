@@ -18,11 +18,7 @@ import {
 } from '../../lang/langHelpers';
 import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
-import {
-    getKJVChapterCount,
-    kjvBibleInfo,
-    kjvNewLinerInfo,
-} from './bibleLogicHelpers1';
+import { getKJVChapterCount } from './bibleLogicHelpers1';
 import CacheManager from '../../others/CacheManager';
 import {
     BibleMinimalInfoType,
@@ -31,6 +27,7 @@ import {
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
 import { log } from '../loggerHelpers';
+import { getModelBibleInfo, kjvNewLinerInfo } from './bibleModelHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -46,7 +43,8 @@ export async function toInputText(
     text += `${book} `;
     if (!chapter) {
         const bookKey = await bookToKey(bibleKey, book);
-        if (kjvBibleInfo.oneChapterBooks.includes(bookKey ?? '')) {
+        const modelBibleInfo = getModelBibleInfo();
+        if (modelBibleInfo.oneChapterBooks.includes(bookKey ?? '')) {
             text += `${await toLocaleNumBible(bibleKey, 1)}:`;
             return text;
         }

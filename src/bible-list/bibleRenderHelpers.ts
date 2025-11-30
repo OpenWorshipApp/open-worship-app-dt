@@ -8,9 +8,8 @@ import {
     toVerseKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
-    kjvBibleInfo,
     getKJVChapterCount,
-    getKJVBookKeyValue,
+    getModelKeyBookMap,
 } from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
     checkShouldNewLine,
@@ -24,6 +23,7 @@ import {
     getCustomVerseText,
     getNewLineTitlesHtmlText,
 } from '../helper/bible-helpers/bibleLogicHelpers3';
+import { getModelBibleInfo } from '../helper/bible-helpers/bibleModelHelpers';
 
 export type BibleTargetType = {
     bookKey: string;
@@ -106,7 +106,7 @@ class BibleRenderHelper {
     async toLocaleBook(bibleKey: string, bookKey: string) {
         return (
             (await keyToBook(bibleKey, bookKey)) ||
-            getKJVBookKeyValue()[bookKey]
+            getModelKeyBookMap()[bookKey]
         );
     }
     async toTitle(
@@ -284,7 +284,8 @@ class BibleRenderHelper {
         if (bibleInfo === null) {
             return null;
         }
-        const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
+        const modelBibleInfo = getModelBibleInfo();
+        const bookKeysOrder = modelBibleInfo.bookKeysOrder;
         const bookIndex = bookKeysOrder.indexOf(bookKey);
         let nextBookIndex = bookIndex;
         let nextChapter = chapter + (isNext ? 1 : -1);

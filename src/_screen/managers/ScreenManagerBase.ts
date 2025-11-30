@@ -32,7 +32,8 @@ export type ScreenManagerEventType =
 
 export default class ScreenManagerBase
     extends EventHandler<ScreenManagerEventType>
-    implements ScreenManagerInf, ColorNoteInf {
+    implements ScreenManagerInf, ColorNoteInf
+{
     static readonly eventNamePrefix: string = 'screen-m';
     readonly screenId: number;
     isDeleted: boolean;
