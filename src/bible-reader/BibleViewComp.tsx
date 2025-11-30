@@ -82,9 +82,8 @@ async function openContextMenu(
         uuid: string;
     },
 ) {
-    const isLookup = viewController instanceof LookupBibleItemController;
     const extraSelectedTextContextMenuItems: ContextMenuItemType[] = [];
-    if (isLookup) {
+    if (viewController.isLookup) {
         extraSelectedTextContextMenuItems.push({
             childBefore: genContextMenuItemIcon('search'),
             menuElement: '`Search in Bible Search',
@@ -94,8 +93,10 @@ async function openContextMenu(
                     return;
                 }
                 setBibleFindRecentSearch(selectedText);
-                viewController.openBibleSearch('s');
-                viewController.setIsBibleSearching(true);
+                const lookupController =
+                    viewController as LookupBibleItemController;
+                lookupController.openBibleSearch('s');
+                lookupController.setIsBibleSearching(true);
             },
         });
     }

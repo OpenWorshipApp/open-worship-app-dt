@@ -32,8 +32,7 @@ export type ScreenManagerEventType =
 
 export default class ScreenManagerBase
     extends EventHandler<ScreenManagerEventType>
-    implements ScreenManagerInf, ColorNoteInf
-{
+    implements ScreenManagerInf, ColorNoteInf {
     static readonly eventNamePrefix: string = 'screen-m';
     readonly screenId: number;
     isDeleted: boolean;
@@ -98,6 +97,9 @@ export default class ScreenManagerBase
     }
 
     set stageNumber(stageNumber: number) {
+        if (stageNumber < 0) {
+            throw new Error('Stage number cannot be negative');
+        }
         this._stageNumber = stageNumber;
     }
 

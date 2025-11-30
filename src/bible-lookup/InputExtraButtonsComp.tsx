@@ -15,7 +15,7 @@ import {
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { useInputTextContext } from './InputHandlerComp';
-import { parseChapterFromGuessing } from '../helper/bible-helpers/serverBibleHelpers2';
+import { parseChapterFromGuessing } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 async function checkNewTabInputText(
     viewController: LookupBibleItemController,

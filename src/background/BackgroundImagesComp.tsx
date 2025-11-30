@@ -45,7 +45,11 @@ function rendChild(
     return (
         <div
             className="card-body app-blank-bg"
-            style={{ height: `${height}px`, overflow: 'hidden' }}
+            style={{
+                height: `${height}px`,
+                overflow: 'hidden',
+                borderRadius: '5px 5px 0px 0px',
+            }}
         >
             <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {

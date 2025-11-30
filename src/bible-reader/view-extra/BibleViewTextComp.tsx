@@ -7,7 +7,7 @@ import {
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
-import { getVersesCount } from '../../helper/bible-helpers/serverBibleHelpers2';
+import { getVersesCount } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../../others/LoadingComp';
 import { getBibleInfoIsRtl } from '../../helper/bible-helpers/bibleInfoHelpers';
 import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';

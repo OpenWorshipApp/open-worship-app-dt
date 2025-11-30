@@ -8,7 +8,7 @@ import {
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
-import { toInputText } from '../helper/bible-helpers/serverBibleHelpers2';
+import { toInputText } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
 import InputExtraButtonsComp from './InputExtraButtonsComp';

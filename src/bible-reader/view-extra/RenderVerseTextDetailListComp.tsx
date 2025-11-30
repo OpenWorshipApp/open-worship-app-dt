@@ -89,12 +89,9 @@ export default function RenderVerseTextDetailListComp({
         if (verseTextRef.current === null) {
             return;
         }
-        if (
-            verseInfo.isLast &&
-            bibleItemViewController instanceof LookupBibleItemController
-        ) {
+        if (verseInfo.isLast && bibleItemViewController.isLookup) {
             handleNextChapterSelection(
-                bibleItemViewController,
+                bibleItemViewController as LookupBibleItemController,
                 verseTextRef.current,
             );
         }

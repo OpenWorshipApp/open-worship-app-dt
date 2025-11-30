@@ -11,17 +11,19 @@ import {
     kjvBibleInfo,
     getKJVChapterCount,
     getKJVBookKeyValue,
-} from '../helper/bible-helpers/serverBibleHelpers';
+} from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
     checkShouldNewLine,
     checkShouldNewLineKJV,
-    getCustomVerseText,
     getLangFromBibleKey,
-    getNewLineTitlesHtmlText,
     toLocaleNumBible,
-} from '../helper/bible-helpers/serverBibleHelpers2';
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import CacheManager from '../others/CacheManager';
 import { unlocking } from '../server/unlockingHelpers';
+import {
+    getCustomVerseText,
+    getNewLineTitlesHtmlText,
+} from '../helper/bible-helpers/bibleLogicHelpers3';
 
 export type BibleTargetType = {
     bookKey: string;

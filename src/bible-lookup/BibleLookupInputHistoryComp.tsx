@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
+import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
 import LookupBibleItemController, {
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';

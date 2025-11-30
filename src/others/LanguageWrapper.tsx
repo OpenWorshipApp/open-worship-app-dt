@@ -1,4 +1,4 @@
-import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
+import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { MutationType } from '../helper/helpers';
 import {
     checkIsValidLocale,

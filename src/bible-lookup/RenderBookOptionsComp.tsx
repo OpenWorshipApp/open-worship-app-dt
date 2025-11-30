@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 
-import { genBookMatches } from '../helper/bible-helpers/serverBibleHelpers';
+import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
     KeyboardType,
     useKeyboardRegistering,

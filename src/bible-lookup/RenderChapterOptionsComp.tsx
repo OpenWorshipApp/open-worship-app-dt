@@ -4,7 +4,7 @@ import {
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { processSelection, userEnteringSelected } from './selectionHelpers';
-import { useChapterMatch } from '../helper/bible-helpers/serverBibleHelpers';
+import { useChapterMatch } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { getChapterData } from '../helper/bible-helpers/bibleInfoHelpers';

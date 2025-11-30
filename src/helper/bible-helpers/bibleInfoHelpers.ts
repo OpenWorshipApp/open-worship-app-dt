@@ -2,7 +2,7 @@ import {
     getKJVChapterCount,
     kjvBibleInfo,
     toBibleFileName,
-} from './serverBibleHelpers';
+} from './bibleLogicHelpers1';
 import { bibleKeyToXMLFilePath } from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
 import {
     bibleDataReader,
@@ -17,7 +17,7 @@ import {
 import CacheManager from '../../others/CacheManager';
 import { freezeObject } from '../helpers';
 import { checkIsRtl } from '../../lang/langHelpers';
-import { getVersesCount } from './serverBibleHelpers2';
+import { getVersesCount } from './bibleLogicHelpers2';
 import { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
 
 export async function checkIsBookAvailable(bibleKey: string, bookKey: string) {

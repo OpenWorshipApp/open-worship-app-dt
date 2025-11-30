@@ -5,7 +5,7 @@ import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { genVerseList } from '../bible-list/bibleHelpers';
 import { useMemo } from 'react';
-import { getVersesCount } from '../helper/bible-helpers/serverBibleHelpers2';
+import { getVersesCount } from '../helper/bible-helpers/bibleLogicHelpers2';
 import BibleItem from '../bible-list/BibleItem';
 
 export default function RenderVerseOptionsComp({

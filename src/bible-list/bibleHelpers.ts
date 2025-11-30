@@ -10,7 +10,7 @@ import {
     extractBibleTitle,
     toInputText,
     toLocaleNumBible,
-} from '../helper/bible-helpers/serverBibleHelpers2';
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import Bible from './Bible';
 import { showSimpleToast } from '../toast/toastHelpers';
 import DirSource from '../helper/DirSource';

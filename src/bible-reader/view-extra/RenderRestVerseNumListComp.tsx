@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
-import { toLocaleNumBible } from '../../helper/bible-helpers/serverBibleHelpers2';
+import { toLocaleNumBible } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 

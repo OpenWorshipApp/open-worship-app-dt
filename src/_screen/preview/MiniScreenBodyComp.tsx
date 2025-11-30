@@ -79,10 +79,12 @@ function viewControllerAndScreenManagers(
             kjvVerseKey: string,
             isToTop: boolean,
         ) => {
-            bibleItemViewController.handleVersesHighlighting(
-                kjvVerseKey,
-                isToTop,
-            );
+            setTimeout(() => {
+                bibleItemViewController.handleVersesHighlighting(
+                    kjvVerseKey,
+                    isToTop,
+                );
+            }, 0);
         };
     }
 }

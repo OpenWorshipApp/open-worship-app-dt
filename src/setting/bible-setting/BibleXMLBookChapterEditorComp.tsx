@@ -6,7 +6,7 @@ import { useAppEffect, useAppStateAsync } from '../../helper/debuggerHelpers';
 import {
     genBookMatches,
     useChapterMatch,
-} from '../../helper/bible-helpers/serverBibleHelpers';
+} from '../../helper/bible-helpers/bibleLogicHelpers1';
 import LoadingComp from '../../others/LoadingComp';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 

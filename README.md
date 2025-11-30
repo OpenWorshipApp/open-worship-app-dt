@@ -1,4 +1,4 @@
-# Open Worship App
+# Open Worship app
 
 **PSA.150.6 — Praise the Lord** 🙏
 
@@ -6,32 +6,83 @@
 [![GitHub issues](https://img.shields.io/github/issues/OpenWorshipApp/open-worship-app-dt)](https://github.com/OpenWorshipApp/open-worship-app-dt/issues)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/OpenWorshipApp/open-worship-app-dt/pulls)
 
-> A simple, all-in-one, **free** and **open-source** presentation app for churches.
+> A simple PC cross-platform, **free** and **open-source**, presentation plus bible-studying app for churches. Built to run offline on lower-spec PCs to help budget-conscious churches.
+
+Main Goals:
+- **Portable** — No installation required, run from any folder
+- **Cross-Platform** — Windows, macOS, and Linux support
+- **Fast** — Optimized for low-spec machines
+- **Privacy-Focused** — No data collection or tracking
+- **Freedom for Worship** — Empowering churches with unrestricted access to digital worship tools
+- **Bible Study Tools** — Save time with powerful search, cross-references, and study aids
 
 <p align="center">
-  <img src="screenshots/Screenshot 2025-11-25 at 10.41.36 PM.png" alt="Main Interface" width="600">
+  <img src="screenshots/Screenshot 2025-11-25 at 10.41.36 PM.png" alt="Presenter" width="700">
 </p>
 
-<summary>📸 More Screenshots</summary>
-
-<p align="center">
-  <img src="screenshots/Screenshot 2025-11-25 at 10.35.35 PM.png" alt="Screenshot 2" width="500">
-</p>
+<summary>📸 <strong>More Screenshots</strong></summary>
+<br>
 
 <p align="center">
-  <img src="screenshots/Screenshot 2025-11-25 at 10.37.31 PM.png" alt="Screenshot 3" width="500">
+  <img src="screenshots/Screenshot 2025-11-30 at 1.22.40 PM.png" alt="Bible Study Dark" width="600">
 </p>
+
+<p align="center">
+  <img src="screenshots/Screenshot 2025-11-25 at 10.37.31 PM.png" alt="Bible Study Light" width="600">
+</p>
+
+---
+
+## 📑 Table of Contents
+
+- [✨ Features](#-features)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [📋 Requirements](#-requirements)
+- [🚀 Quick Start](#-quick-start)
+- [📦 Building for Production](#-building-for-production)
+- [🧹 Linting and Formatting](#-linting-and-formatting)
+- [🕸️ Dependencies Troubleshooting](#️-dependencies-troubleshooting)
+- [🤝 Contributing](#-contributing)
+- [💡 About This Project](#-about-this-project)
+- [📄 License](#-license)
 
 ---
 
 ## ✨ Features
 
-- 📖 **Bible Display** — Show scripture verses with multiple translations
-- 🎵 **Lyrics Presentation** — Display song lyrics with easy navigation
+- 📚 **Bible Study** — Search, highlight, and lookup
+- 🔍 **Fast Bible Search** — Lightning-quick verse lookup and advanced search capabilities
+- 📖 **Bible Presentation** — Display verses and passages on screen for congregation
+- 📖 **Parallel Bible Display** — Show multiple Bible translations side-by-side on presentation screen
+- 🎨 **Slide Creation & Presentation** — Create, edit, and present custom slides with text, images, and media
+- 📄 **PDF Support** — View and present PDF documents during services
+- 📊 **PowerPoint Support** — Import and present Microsoft PowerPoint presentations directly
+- 🌐 **Network Sharing** — Share files and chat with devices
+- 🎵 **Lyric Presentation** — Display song lyrics and hymns with customizable formatting
 - 🖼️ **Media Support** — Images, videos, and backgrounds
 - 📺 **Multi-Display** — Separate presenter and audience views
 - 🎨 **Customizable** — Themes, fonts, and layouts
 - 💾 **Offline Ready** — Works without internet connection
+- 📺 **Video and Audio Download** — Download videos and audios from the internet instantly for offline presentation
+
+Other Features:
+- ✂️ **Cut, Copy, Paste** — Standard editing features for text and slides
+- 🔄 **Undo/Redo** — Easily revert or reapply changes
+- 🔍 **Find in Page** — Find text within slides and documents
+- ⏰ **Timer and Countdown** — Built-in timers for sermons, prayers, and service segments
+- 📜 **Scrolling Messages** — Display scrolling marquee text for announcements and notices
+- 🖱️ **Drag and Drop** — Easily arrange slides, import media files, and organize content by dragging and dropping
+- 🖼️ **Dynamic Wallpaper Display** — Automatically cycle through background images
+- And a lot more
+
+
+Future Features:
+- 🎵 **Dynamic Lyric Import** — Import song lyrics from various sources and formats
+- 📖 **Dynamic Bible Import** — Import Bible translations from various sources and formats
+- 🌍 **Multi-Language Support** — Interface and Bible translations in multiple languages
+- 🔄 **Auto Updates** — Stay up-to-date with the latest features and improvements
+- ☁️ **Cloud Data Sync** — Synchronize presentations, slides, and settings across multiple devices
+- 🎮 **Interactive Bible Games** — Engaging games and quizzes to help memorize scripture and learn Bible context
 
 ---
 
@@ -50,7 +101,7 @@ Special thanks to all frameworks and tools listed in [package.json](./package.js
 ## 📋 Requirements
 
 - [Node.js v22](https://nodejs.org/en/download/) or higher
-- [dotnet 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- [dotnet 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for MS PowerPoint support
 - For Windows, [Cygwin](https://cygwin.com/) is needed. `Cygwin` through [Git](https://git-scm.com/) is recommended (by installing `Git` with `Git-bash` we will have all required commands installed)
 
 For Fedora:
@@ -62,65 +113,95 @@ sudo dnf install libxcrypt-compat
 
 ## 🚀 Quick Start
 
-### Install
+### 1. Install Dependencies
 
 ```bash
-npm i
+npm install
 ```
 
-### Run
+### 2. Run Development Server
 
 ```bash
 npm run dev
 ```
 
----
-
-## 🔧 Troubleshooting
-
-### NuGet Package Source Issue
-
-If you encounter errors during `npm run install` related to NuGet packages not being resolved (such as `Unable to resolve 'DocumentFormat.OpenXml'`, `Microsoft.JavaScript.NodeApi`, etc.), this is likely because no NuGet package sources are configured on your system.
-
-**Solution:**
-Add the default NuGet.org package source:
-
-```bash
-dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
-```
-
-After adding the source, run the install command again:
-
-```bash
-npm run install
-```
-
-This will properly restore the required NuGet packages and download the necessary dependencies (yt-dlp, FFmpeg, .NET runtime) for the application.
+The app will launch in development mode with hot reload enabled.
 
 ---
 
 ## 📦 Building for Production
 
+### Windows
 ```bash
-# Windows x86_64 (Developer mode required)
-# See: https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development
 npm run pack:win
+```
+> **Note:** Developer mode must be enabled. [Learn more](https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development)
 
-# macOS
+### macOS
+```bash
+# Standard build
 npm run pack:mac
 
-# Linux
-npm run pack:linux
-
+# Universal build (Intel + Apple Silicon)
+npm run pack:mac:uni
 ```
+
+### Linux
+```bash
+npm run pack:linux
+```
+
+---
 
 ## 🧹 Linting and Formatting
 
+Run code quality checks and formatting:
+
+Run code quality checks and formatting:
+
 ```bash
+# Pre-commit checks
 npm run lint:pre
+
+# ESLint
 npm run lint:es
+
+# All linting
 npm run lint
 ```
+
+---
+
+## 🕸️ Dependencies Troubleshooting
+
+Check for dependency issues:
+
+```bash
+npm run dc:err
+```
+
+### Common Issues
+
+<details>
+<summary><strong>NuGet Package Source Error</strong></summary>
+
+If you encounter errors during `npm install` related to NuGet packages not being resolved:
+
+```bash
+dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
+npm install
+```
+
+</details>
+
+<details>
+<summary><strong>Fedora Dependencies</strong></summary>
+
+```bash
+sudo dnf install libxcrypt-compat
+```
+
+</details>
 
 ---
 
@@ -143,22 +224,57 @@ This project is open-source and actively growing. Whether you're a developer, de
 | 𝌭 **Legal** | Assist with licensing, compliance, and legal documentation |
 | Others | Any other skills you can offer! |
 
-### Getting Started
+### Getting Started with Contributing
 
-1. **Fork** this repository
-2. **Clone** your fork:
+1. **🍴 Fork** this repository on GitHub
+
+2. **📥 Clone** your fork:
    ```bash
    git clone https://github.com/YOUR-USERNAME/open-worship-app-dt.git
    cd open-worship-app-dt
    ```
-3. **Install** dependencies and run:
+
+3. **📦 Install** dependencies:
    ```bash
    npm install
+   ```
+
+4. **🌿 Create a branch** for your feature:
+   ```bash
+   git checkout -b feature/your-awesome-feature
+   ```
+
+5. **🔨 Make your changes** and test thoroughly:
+   ```bash
    npm run dev
    ```
-4. **Create a branch**, make changes, and submit a **Pull Request**
 
-Check out our [Issues](https://github.com/OpenWorshipApp/open-worship-app-dt/issues) for things to work on, or open a new issue with your idea!
+6. **✅ Commit** your changes:
+   ```bash
+   git add .
+   git commit -m "Add: your descriptive commit message"
+   ```
+
+7. **🚀 Push** to your fork:
+   ```bash
+   git push origin feature/your-awesome-feature
+   ```
+
+8. **🎯 Create a Pull Request** on GitHub with a clear description
+
+### 📌 Where to Start
+
+- 🐛 Check [Issues](https://github.com/OpenWorshipApp/open-worship-app-dt/issues) for bugs to fix
+- ✨ Look for issues labeled `good first issue` or `help wanted`
+- 💡 Have an idea? Open a new issue to discuss it first
+
+### 📝 Contribution Guidelines
+
+- Follow the existing code style and conventions
+- Write clear, descriptive commit messages
+- Test your changes before submitting
+- Update documentation when adding new features
+- Be respectful and constructive in discussions
 
 ---
 
@@ -167,20 +283,34 @@ Check out our [Issues](https://github.com/OpenWorshipApp/open-worship-app-dt/iss
 > *"Let every thing that hath breath praise the LORD. Praise ye the LORD."*  
 > — Psalm 150:6 (KJV)
 
-### Vision
+### 🎯 Vision
 
-We want to build a powerful, easy-to-use, and **free** application for churches to use during worship services. This app will be **free forever** and completely **open-source**.
+We're building a powerful, easy-to-use, and **free** application for churches worldwide to use during worship services. This app will be **free forever** and completely **open-source**.
 
-### Status
+### 📊 Status
 
-This project is under active development and not fully production-ready yet — which is exactly why your contributions matter so much!
+This project is under **active development** and approaching production-ready status. We're continuously improving and adding features — which is why your contributions matter so much!
 
-### Contact
+### 🌟 Why This Project?
 
-- 💬 Questions or ideas? → [Open an Issue](https://github.com/OpenWorshipApp/open-worship-app-dt/issues)
-- 📧 Email → <owf2025@gmail.com>
+Many churches, especially in developing countries or smaller congregations, cannot afford expensive presentation software. This project aims to:
 
-🙏🏻 May God bless you and everyone 🙏🏻
+- ✅ Provide a **professional-grade** worship presentation tool
+- ✅ Work **offline** on lower-spec computers
+- ✅ Support **multiple languages** and Bible translations
+- ✅ Remain **100% free** and open-source forever
+- ✅ Empower churches to focus on worship, not technology costs
+
+### 📞 Contact & Support
+
+- 💬 **Questions or Ideas?** → [Open an Issue](https://github.com/OpenWorshipApp/open-worship-app-dt/issues)
+- 🐛 **Found a Bug?** → [Report it](https://github.com/OpenWorshipApp/open-worship-app-dt/issues/new)
+- 📧 **Email** → <owf2025@gmail.com>
+- 💡 **Feature Requests** → [Share your ideas](https://github.com/OpenWorshipApp/open-worship-app-dt/issues/new)
+
+---
+
+🙏🏻 **May God bless you and everyone who contributes to this ministry** 🙏🏻
 
 ---
 
@@ -191,5 +321,5 @@ This project is under active development and not fully production-ready yet — 
 ---
 
 <p align="center">
-  Made with ❤️ for churches worldwide
+  Made with ❤️ in Christ for churches worldwide
 </p>

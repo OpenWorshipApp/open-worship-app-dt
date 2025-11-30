@@ -5,7 +5,7 @@ import {
     elementDivider,
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
-import { getBibleLocale } from './bible-helpers/serverBibleHelpers2';
+import { getBibleLocale } from './bible-helpers/bibleLogicHelpers2';
 import { getLangCode } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 

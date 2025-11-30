@@ -122,7 +122,7 @@
         "bootstrap-icons": "^1.13.1",
         "concurrently": "^9.2.1",
         "cross-env": "^10.1.0",
-        "dependency-cruiser": "^17.1.0",
+        "dependency-cruiser": "^17.3.2",
         "diff": "^8.0.2",
         "electron": "^38.3.0",
         "electron-builder": "^26.0.12",

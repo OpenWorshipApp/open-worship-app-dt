@@ -41,7 +41,7 @@ function handleOpening(
     if (appProvider.isPagePresenter) {
         ScreenBibleManager.handleBibleItemSelecting(event, bibleItem);
     } else if (appProvider.isPageReader) {
-        if (viewController instanceof LookupBibleItemController === false) {
+        if (!viewController.isLookup) {
             const lastBibleItem = viewController.straightBibleItems.pop();
             if (lastBibleItem === undefined) {
                 viewController.addBibleItem(
@@ -56,13 +56,14 @@ function handleOpening(
             }
             return;
         }
+        const lookupController = viewController as LookupBibleItemController;
         if (event.shiftKey) {
             viewController.addBibleItemRight(
-                viewController.selectedBibleItem,
+                lookupController.selectedBibleItem,
                 bibleItem,
             );
         } else {
-            viewController.setLookupContentFromBibleItem(bibleItem);
+            lookupController.setLookupContentFromBibleItem(bibleItem);
         }
     }
 }

@@ -21,7 +21,7 @@ import { getSetting, setSetting } from '../helper/settingHelpers';
 import {
     EditingResultType,
     extractBibleTitle,
-} from '../helper/bible-helpers/serverBibleHelpers2';
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import {
     bibleRenderHelper,
     BibleTargetType,
@@ -80,6 +80,7 @@ class FoundBibleItem extends ReadIdOnlyBibleItem {
 
 const editingResultCacher = new CacheManager<EditingResultType>(3);
 class LookupBibleItemController extends BibleItemsViewController {
+    isLookup = true;
     setInputText: (inputText: string) => OptionalPromise<void> = (
         _: string,
     ) => {};
@@ -459,13 +460,13 @@ export default LookupBibleItemController;
 
 export function useLookupBibleItemControllerContext() {
     const viewController = useBibleItemsViewControllerContext();
-    if (viewController instanceof LookupBibleItemController === false) {
+    if (!viewController.isLookup) {
         throw new TypeError(
             'useLookupBibleItemControllerContext must be used within a' +
                 ' BibleItemViewControllerContext',
         );
     }
-    return viewController;
+    return viewController as LookupBibleItemController;
 }
 
 export const EditingResultContext = createContext<EditingResultType | null>(

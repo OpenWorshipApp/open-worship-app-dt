@@ -6,7 +6,7 @@ import { checkIsOldTestament } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     BookMatchDataType,
     genBookMatches,
-} from '../helper/bible-helpers/serverBibleHelpers';
+} from '../helper/bible-helpers/bibleLogicHelpers1';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { SelectedBookKeyType } from './bibleFindHelpers';
 

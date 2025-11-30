@@ -17,7 +17,7 @@ import { unlocking } from '../../server/unlockingHelpers';
 import { useAppEffect, useAppEffectAsync } from '../debuggerHelpers';
 import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
 import { handleError } from '../errorHelpers';
-import { getKJVBookKeyValue } from '../bible-helpers/serverBibleHelpers';
+import { getKJVBookKeyValue } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';
 import { toVerseKeyFormat } from '../bible-helpers/bibleInfoHelpers';
 
