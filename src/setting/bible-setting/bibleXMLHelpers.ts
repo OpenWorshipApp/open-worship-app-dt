@@ -28,7 +28,7 @@ import { useAppEffect } from '../../helper/debuggerHelpers';
 import {
     fromBibleFileName,
     getKJVBookKeyValue,
-} from '../../helper/bible-helpers/serverBibleHelpers';
+} from '../../helper/bible-helpers/bibleLogicHelpers1';
 import {
     bibleKeyToXMLFilePath,
     BibleJsonInfoType,

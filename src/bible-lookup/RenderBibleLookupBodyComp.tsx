@@ -1,4 +1,4 @@
-import { toInputText } from '../helper/bible-helpers/serverBibleHelpers2';
+import { toInputText } from '../helper/bible-helpers/bibleLogicHelpers2';
 import RenderLookupSuggestionComp from './RenderLookupSuggestionComp';
 import { keyToBook } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';

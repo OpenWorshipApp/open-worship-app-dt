@@ -1,5 +1,5 @@
 import { createContext, use } from 'react';
-import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
+import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { handleError } from '../helper/errorHelpers';
 import FileSource from '../helper/FileSource';
 import { appApiFetch } from '../helper/networkHelpers';

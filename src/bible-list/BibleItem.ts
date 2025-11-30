@@ -10,7 +10,7 @@ import { copyToClipboard } from '../server/appHelpers';
 import { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import DocumentInf from '../others/DocumentInf';
 import { AnyObjectType } from '../helper/typeHelpers';
-import { extractBibleTitle } from '../helper/bible-helpers/serverBibleHelpers2';
+import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
 import {
     fromVerseKey,
     toVerseKeyFormat,

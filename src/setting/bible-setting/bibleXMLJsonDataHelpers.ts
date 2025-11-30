@@ -23,7 +23,7 @@ import { unlockingCacher } from '../../server/unlockingHelpers';
 import {
     getKJVBookKeyValue,
     kjvBibleInfo,
-} from '../../helper/bible-helpers/serverBibleHelpers';
+} from '../../helper/bible-helpers/bibleLogicHelpers1';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {

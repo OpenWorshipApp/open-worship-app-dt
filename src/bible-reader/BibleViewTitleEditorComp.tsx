@@ -9,12 +9,12 @@ import {
 import {
     getKJVChapterCount,
     getKJVBookKeyValue,
-} from '../helper/bible-helpers/serverBibleHelpers';
+} from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
     getBibleFontFamily,
     getVersesCount,
     toLocaleNumBible,
-} from '../helper/bible-helpers/serverBibleHelpers2';
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { OptionalPromise } from '../helper/typeHelpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';

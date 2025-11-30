@@ -10,7 +10,7 @@ import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import {
     getKJVBookKeyValue,
     kjvBibleInfo,
-} from '../../helper/bible-helpers/serverBibleHelpers';
+} from '../../helper/bible-helpers/bibleLogicHelpers1';
 import { Uri } from 'monaco-editor';
 
 function BibleKeyXMLInputComp({

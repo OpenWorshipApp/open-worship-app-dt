@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
@@ -32,9 +31,6 @@ export default function RenderActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
     const viewController = useBibleItemsViewControllerContext();
-    const isBibleLookup = useMemo(() => {
-        return viewController instanceof LookupBibleItemController;
-    }, [viewController]);
     return (
         <div className="btn-group mx-1">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />
@@ -58,7 +54,7 @@ export default function RenderActionButtonsComp({
             >
                 <i className="bi bi-hr" />
             </button>
-            {isBibleLookup ? (
+            {viewController.isLookup ? (
                 <>
                     <button
                         className="btn btn-sm btn-primary"

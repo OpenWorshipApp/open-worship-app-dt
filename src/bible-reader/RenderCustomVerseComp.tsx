@@ -1,5 +1,5 @@
 import BibleItem from '../bible-list/BibleItem';
-import { reformCustomTitle } from '../helper/bible-helpers/serverBibleHelpers2';
+import { reformCustomTitle } from '../helper/bible-helpers/bibleLogicHelpers3';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 
 export default function RenderCustomVerseComp({

@@ -9,7 +9,7 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
+import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 

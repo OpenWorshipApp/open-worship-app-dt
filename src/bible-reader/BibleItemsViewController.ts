@@ -24,7 +24,7 @@ import {
     getLangFromBibleKey,
     getShouldKJVNewLine,
     setShouldKJVNewLine,
-} from '../helper/bible-helpers/serverBibleHelpers2';
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import {
     elementDivider,
@@ -248,6 +248,7 @@ export type MovingPositionType = keyof typeof movingPosition;
 
 const BIBLE_ITEMS_PREVIEW_SETTING = 'bible-items-preview';
 class BibleItemsViewController extends EventHandler<UpdateEventType> {
+    isLookup = false;
     shouldSelectFirstItem = false;
     private readonly _settingNameSuffix: string;
     setBibleVerseKey = (_verseKey: string) => {};

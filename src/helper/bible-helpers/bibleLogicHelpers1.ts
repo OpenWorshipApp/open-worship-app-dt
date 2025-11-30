@@ -7,7 +7,7 @@ import {
 } from './bibleInfoHelpers';
 import { getOnlineBibleInfoList } from './bibleDownloadHelpers';
 import { useAppEffectAsync } from '../debuggerHelpers';
-import { toLocaleNumBible } from './serverBibleHelpers2';
+import { toLocaleNumBible } from './bibleLogicHelpers2';
 import { freezeObject } from '../helpers';
 
 import kjvBibleJson from './kjvBible.json';

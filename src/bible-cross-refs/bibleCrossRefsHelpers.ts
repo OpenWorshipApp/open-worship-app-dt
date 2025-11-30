@@ -5,7 +5,7 @@ import { handleError } from '../helper/errorHelpers';
 import {
     kjvBibleInfo,
     toBibleFileName,
-} from '../helper/bible-helpers/serverBibleHelpers';
+} from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { appApiFetch } from '../helper/networkHelpers';
 import CacheManager from '../others/CacheManager';
@@ -13,7 +13,7 @@ import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
 import { getLangCode } from '../lang/langHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/serverBibleHelpers2';
+import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import {
     CrossReferenceType,
     validateCrossReference,
