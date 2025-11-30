@@ -33,23 +33,12 @@ import {
 } from './videoBackgroundHelpers';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 
-function rendChild(
-    filePath: string,
-    selectedBackgroundSrcList: [string, BackgroundSrcType][],
-    height: number,
-    extraChild?: ReactElement,
-) {
-    return (
-        <RendBody
-            filePath={filePath}
-            selectedBackgroundSrcList={selectedBackgroundSrcList}
-            height={height}
-            extraChild={extraChild}
-        />
-    );
-}
+const onToggledFadingAtTheEnd: Record<
+    string,
+    (isFadingAtTheEnd: boolean) => void
+> = {};
 
-function RendBody({
+function RendBodyComp({
     filePath,
     selectedBackgroundSrcList,
     height,
@@ -64,6 +53,16 @@ function RendBody({
     const [isFadingAtTheEnd, setIsFadingAtTheEnd] = useState(
         getIsFadingAtTheEndSetting(fileSource.src),
     );
+    useAppEffect(() => {
+        onToggledFadingAtTheEnd[fileSource.src] = (
+            isFadingAtTheEnd: boolean,
+        ) => {
+            setIsFadingAtTheEnd(isFadingAtTheEnd);
+        };
+        return () => {
+            delete onToggledFadingAtTheEnd[fileSource.src];
+        };
+    }, []);
     useAppEffect(() => {
         methodMapIsFadingAtTheEnd[filePath] = setIsFadingAtTheEnd;
         return () => {
@@ -113,12 +112,31 @@ function RendBody({
                 {isFadingAtTheEnd ? (
                     <i
                         className="bi bi-shadows"
-                        title="`Video will fade at the end while screen rendering"
+                        title={
+                            '`Video will fade at the end while screen rendering.' +
+                            ' Use *.loop.[extension] file to disable fading.'
+                        }
                     />
                 ) : null}
             </div>
             {extraChild}
         </div>
+    );
+}
+
+function rendChild(
+    filePath: string,
+    selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    height: number,
+    extraChild?: ReactElement,
+) {
+    return (
+        <RendBodyComp
+            filePath={filePath}
+            selectedBackgroundSrcList={selectedBackgroundSrcList}
+            height={height}
+            extraChild={extraChild}
+        />
     );
 }
 
@@ -169,14 +187,16 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
 function genExtraItemContextMenuItems(filePath: string) {
     return [
         {
-            menuElement: '`Toggle Fading at End`',
+            menuElement: '`Toggle Fading at End',
             title: '`Toggle is video should fade at the end',
             onSelect: () => {
                 const fileSource = FileSource.getInstance(filePath);
-                const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
+                let isFadingAtTheEnd = getIsFadingAtTheEndSetting(
                     fileSource.src,
                 );
-                setIsFadingAtTheEndSetting(fileSource.src, !isFadingAtTheEnd);
+                isFadingAtTheEnd = !isFadingAtTheEnd;
+                setIsFadingAtTheEndSetting(fileSource.src, isFadingAtTheEnd);
+                onToggledFadingAtTheEnd[fileSource.src]?.(isFadingAtTheEnd);
             },
         },
     ];
