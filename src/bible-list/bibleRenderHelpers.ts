@@ -13,7 +13,7 @@ import {
 } from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
     checkShouldNewLine,
-    checkShouldNewLineKJV,
+    checkShouldNewLineModel,
     getLangFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
@@ -38,7 +38,7 @@ export type CompiledVerseType = {
     text: string;
     customText: string | null;
     isNewLine: boolean;
-    isKJVNewLine: boolean;
+    isModelNewLine: boolean;
     newLineTitlesHtmlText: string | null;
     bibleKey: string;
     bookKey: string;
@@ -170,14 +170,14 @@ class BibleRenderHelper {
             return {
                 customText: null,
                 isNewLine: false,
-                isKJVNewLine: false,
+                isModelNewLine: false,
                 newLineTitlesHtmlText: null,
             };
         }
         const isNewLine =
             verse == 1 ||
             (await checkShouldNewLine(bibleKey, bookKey, chapter, verse));
-        const isKJVNewLine = await checkShouldNewLineKJV(
+        const isModelNewLine = await checkShouldNewLineModel(
             bibleKey,
             bookKey,
             chapter,
@@ -198,7 +198,7 @@ class BibleRenderHelper {
         return {
             customText,
             isNewLine,
-            isKJVNewLine,
+            isModelNewLine,
             newLineTitlesHtmlText,
         };
     }

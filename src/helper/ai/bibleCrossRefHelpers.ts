@@ -126,7 +126,7 @@ export async function getBibleCrossRef(
     });
 }
 
-const reverseKJVBookKeyValue = Object.fromEntries(
+const reverseModelBookKeyValue = Object.fromEntries(
     Object.entries(getModelKeyBookMap()).map(([key, value]) => [value, key]),
 );
 export async function transformCrossReferenceToVerseList(
@@ -146,7 +146,7 @@ export async function transformCrossReferenceToVerseList(
                 }
                 const rest = arr.pop() as string;
                 const bookName = arr.join(' ');
-                const bookKey = reverseKJVBookKeyValue[bookName];
+                const bookKey = reverseModelBookKeyValue[bookName];
                 if (!bookKey) {
                     return null;
                 }

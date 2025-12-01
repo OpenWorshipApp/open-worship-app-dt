@@ -27,7 +27,7 @@ export default function RenderVerseTextComp({
         !isExtraVerses &&
         viewController.shouldNewLine &&
         (verseInfo.isNewLine ||
-            (viewController.shouldKJVNewLine && verseInfo.isKJVNewLine));
+            (viewController.shouldModelNewLine && verseInfo.isModelNewLine));
     return (
         <>
             {!isNewLine || verseInfo.newLineTitlesHtmlText === null ? null : (

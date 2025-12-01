@@ -11,18 +11,18 @@ export default function NewLineSettingComp() {
         setShouldNewLine(newValue);
         viewController.shouldNewLine = newValue;
     };
-    const [useKJVNewLine, setUseKJVNewLine] = useState(
-        viewController.shouldKJVNewLine,
+    const [useModelNewLine, setUseModelNewLine] = useState(
+        viewController.shouldModelNewLine,
     );
-    const setUseKJVNewLine1 = (newValue: boolean) => {
-        setUseKJVNewLine(newValue);
-        viewController.shouldKJVNewLine = newValue;
+    const setUseModelNewLine1 = (newValue: boolean) => {
+        setUseModelNewLine(newValue);
+        viewController.shouldModelNewLine = newValue;
     };
     return (
         <>
             <div
                 className="d-flex mx-1"
-                title="Break lines following KJV formatting"
+                title="Break lines following bible info"
             >
                 <label htmlFor="new-line-setting" className="form-label">
                     Should New Lines:
@@ -39,25 +39,25 @@ export default function NewLineSettingComp() {
             </div>
             <div
                 className="d-flex mx-1"
-                title="Break lines following KJV formatting"
+                title="Break lines following model formatting"
                 style={{
                     opacity: shouldNewLine ? 1 : 0.5,
                 }}
             >
                 <label
-                    htmlFor="use-kjv-new-line-setting"
+                    htmlFor="use-model-new-line-setting"
                     className="form-label"
                 >
-                    Use KJV New Lines:
+                    Use Model New Lines:
                 </label>
                 <input
                     className="form-check-input app-caught-hover-pointer"
                     type="checkbox"
-                    id="use-kjv-new-line-setting"
+                    id="use-model-new-line-setting"
                     disabled={!shouldNewLine}
-                    checked={useKJVNewLine}
+                    checked={useModelNewLine}
                     onChange={(event) => {
-                        setUseKJVNewLine1(event.target.checked);
+                        setUseModelNewLine1(event.target.checked);
                     }}
                 />
             </div>

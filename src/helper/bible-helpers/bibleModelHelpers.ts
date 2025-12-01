@@ -4,7 +4,7 @@ import kjvBibleJson from './kjvBible.json';
 import kjvdBibleJson from './kjvdBible.json';
 import douayRheimsBibleJson from './douayRheimsBible.json';
 
-import kjvNewLiners from './kjvNewLiners.json';
+import modelNewLiners from './newLiners.json';
 import { getSetting, setSetting } from '../settingHelpers';
 
 export type BookType = {
@@ -29,8 +29,8 @@ freezeObject(kjvdBibleModelInfo);
 const douayRheimsBibleModelInfo = douayRheimsBibleJson as BibleModelInfoType;
 freezeObject(douayRheimsBibleModelInfo);
 
-export const kjvNewLinerInfo = kjvNewLiners;
-freezeObject(kjvNewLinerInfo);
+export const modelNewLinerInfo: string[] = modelNewLiners;
+freezeObject(modelNewLinerInfo);
 
 export enum BibleModelInfoEnum {
     KJV = 'KJV',

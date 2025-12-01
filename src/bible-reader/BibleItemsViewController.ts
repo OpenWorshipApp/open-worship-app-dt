@@ -22,8 +22,8 @@ import {
 } from '../helper/bibleViewHelpers';
 import {
     getLangFromBibleKey,
-    getShouldKJVNewLine,
-    setShouldKJVNewLine,
+    getShouldModelNewLine,
+    setShouldModelNewLine,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import {
@@ -285,14 +285,14 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         );
         this.fireUpdateEvent();
     }
-    get shouldKJVNewLine() {
+    get shouldModelNewLine() {
         if (!this.shouldNewLine) {
             return false;
         }
-        return getShouldKJVNewLine();
+        return getShouldModelNewLine();
     }
-    set shouldKJVNewLine(useKJVNewLine: boolean) {
-        setShouldKJVNewLine(useKJVNewLine);
+    set shouldModelNewLine(shouldModelNewLine: boolean) {
+        setShouldModelNewLine(shouldModelNewLine);
         this.fireUpdateEvent();
     }
 

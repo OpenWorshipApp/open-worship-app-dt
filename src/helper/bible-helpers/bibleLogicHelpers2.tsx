@@ -27,7 +27,7 @@ import {
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
 import { log } from '../loggerHelpers';
-import { getBibleModelInfo, kjvNewLinerInfo } from './bibleModelHelpers';
+import { getBibleModelInfo, modelNewLinerInfo } from './bibleModelHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -648,24 +648,24 @@ export async function extractBibleTitle(
     });
 }
 
-const SHOULD_KJV_NEW_LINE_SETTING_NAME = 'view-should-kjv-new-line';
-export function getShouldKJVNewLine() {
-    return getSetting(SHOULD_KJV_NEW_LINE_SETTING_NAME) !== 'false';
+const SHOULD_MODEL_NEW_LINE_SETTING_NAME = 'view-should-model-new-line';
+export function getShouldModelNewLine() {
+    return getSetting(SHOULD_MODEL_NEW_LINE_SETTING_NAME) !== 'false';
 }
-export function setShouldKJVNewLine(useKJVNewLine: boolean) {
+export function setShouldModelNewLine(shouldModelNewLine: boolean) {
     setSetting(
-        SHOULD_KJV_NEW_LINE_SETTING_NAME,
-        useKJVNewLine ? 'true' : 'false',
+        SHOULD_MODEL_NEW_LINE_SETTING_NAME,
+        shouldModelNewLine ? 'true' : 'false',
     );
 }
 
-export async function checkShouldNewLineKJV(
+export async function checkShouldNewLineModel(
     bibleKey: string,
     bookKey: string,
     chapter: number,
     verse: number,
 ) {
-    if (!getShouldKJVNewLine()) {
+    if (!getShouldModelNewLine()) {
         return false;
     }
     const chapterData = await getChapterData(bibleKey, bookKey, chapter);
@@ -673,7 +673,7 @@ export async function checkShouldNewLineKJV(
         return false;
     }
     const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
-    return kjvNewLinerInfo.includes(verseKey);
+    return modelNewLinerInfo.includes(verseKey);
 }
 
 export async function checkShouldNewLine(
