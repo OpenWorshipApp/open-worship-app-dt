@@ -20,7 +20,10 @@ import FileSource from '../../helper/FileSource';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
-import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
+import {
+    getBibleModelInfo,
+    getBibleModelInfoSetting,
+} from '../../helper/bible-helpers/bibleModelHelpers';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
@@ -497,7 +500,7 @@ export async function getBibleInfoJson(
     const copyRights =
         guessValue(xmlElementBible, attributesMap.copyRights) ??
         'Unknown Copy Rights';
-    return {
+    const bibleInfo = {
         title,
         description,
         key: bibleKey,
@@ -510,6 +513,7 @@ export async function getBibleInfoJson(
         keyBookMap,
         booksAvailable,
     };
+    return bibleInfo;
 }
 function setBibleInfo(
     xmlDoc: Document,
@@ -637,6 +641,11 @@ export function jsonToXMLText(jsonData: BibleXMLJsonType) {
 }
 
 export function xmlTextToBibleElement(xmlText: string) {
+    const bibleModel = getBibleModelInfoSetting();
+    if (bibleModel === 'DR') {
+        // Douay-Rheims uses JAM instead of JAS for James book
+        xmlText = xmlText.replaceAll('JAS', 'JAM');
+    }
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
     const bible = guessElement(xmlDoc, tagNamesMap.bible)?.[0];
@@ -661,13 +670,14 @@ export async function xmlTextToJson(
     const newLines = getNewLines(xmlElementBible);
     const newLinesTitleMap = getNewLinesTitleMap(xmlElementBible);
     const customVersesMap = getCustomVersesMap(xmlElementBible);
-    return {
+    const bibleXMLData = {
         info: bibleInfo,
         books: bibleBooks,
         newLines,
         newLinesTitleMap,
         customVersesMap,
     };
+    return bibleXMLData;
 }
 
 export async function bibleKeyToXMLFilePath(

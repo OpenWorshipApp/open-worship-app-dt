@@ -20,6 +20,7 @@ import { handleError } from '../errorHelpers';
 import { getModelKeyBookMap } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';
 import { toVerseKeyFormat } from '../bible-helpers/bibleInfoHelpers';
+import { getBibleModelInfoSetting } from '../bible-helpers/bibleModelHelpers';
 
 type GetBibleCrossRefParamsType = {
     bookKey: string;
@@ -83,11 +84,12 @@ export async function getBibleCrossRef(
                 try {
                     const text = await fsReadFile(filePath);
                     const cachedData = JSON.parse(text);
-                    cachedData.cachingTime = cachedData.cachingTime ?? 0;
+                    const bibleModel = getBibleModelInfoSetting();
+                    const time = cachedData._cachingTime ?? 0;
                     // expire in 7 days
                     if (
-                        Date.now() - cachedData.cachingTime <
-                        7 * 24 * 60 * 60 * 1000
+                        Date.now() - time < 7 * 24 * 60 * 60 * 1000 ||
+                        cachedData._bibleModel !== bibleModel
                     ) {
                         const dataValue =
                             cachedData.value as CrossReferenceType[];
@@ -115,7 +117,7 @@ export async function getBibleCrossRef(
             filePath,
             JSON.stringify(
                 {
-                    cachingTime: Date.now(),
+                    _cachingTime: Date.now(),
                     value: data,
                 },
                 null,

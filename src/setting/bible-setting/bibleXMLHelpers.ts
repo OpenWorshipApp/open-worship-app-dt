@@ -56,6 +56,7 @@ import { EditorStoreType } from '../../helper/monacoEditorHelpers';
 import { AnyObjectType } from '../../helper/typeHelpers';
 import { schemaHandler as infoEditorSchemaHandler } from './BibleXMLInfoEditorComp';
 import { schemaHandler as bookChapterEditorSchemaHandler } from './BibleXMLBookChapterEditorComp';
+import { getBibleModelInfoSetting } from '../../helper/bible-helpers/bibleModelHelpers';
 
 type MessageCallbackType = (message: string | null) => void;
 
@@ -428,9 +429,11 @@ async function backupBibleXMLData<T>(
     if (basePath !== null) {
         const filePath = pathJoin(basePath, fileName);
         const fileSource = FileSource.getInstance(filePath);
+        const bibleModel = getBibleModelInfoSetting();
         await fileSource.writeFileData(
             JSON.stringify({
                 _cachingTime: Date.now(),
+                _bibleModel: bibleModel,
                 value: data,
             }),
         );
@@ -452,9 +455,13 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
     if (jsonText !== null) {
         try {
             const data = JSON.parse(jsonText);
-            const time = data?._cachingTime ?? 0;
+            const bibleModel = getBibleModelInfoSetting();
+            const time = data._cachingTime ?? 0;
             // if the backup data is older than 7 days, ignore it
-            if (Date.now() - time > 7 * 24 * 60 * 60 * 1000) {
+            if (
+                Date.now() - time > 7 * 24 * 60 * 60 * 1000 ||
+                data._bibleModel !== bibleModel
+            ) {
                 return null;
             }
             const backData = data.value;
