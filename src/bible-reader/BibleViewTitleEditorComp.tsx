@@ -225,16 +225,20 @@ async function getBookList(bibleKey: string) {
         .filter(([bookKey]) => {
             return booksAvailable.includes(bookKey);
         })
-        .map(([bookKey, book]) => {
+        .map(([bookKey, book]): [string, string, string] => {
             const title = `${modelKeyBook[bookKey]}(${getModelChapterCount(bookKey)})`;
-            return [bookKey, book, title] as [string, string, string];
+            return [bookKey, book, title];
         });
     return bookList;
 }
 
-async function getNumItem(bibleKey: string, n: number) {
-    const localeNum = await toLocaleNumBible(bibleKey, n);
-    return [n, localeNum, n.toString()] as [number, string, string];
+async function getNumItem(
+    bibleKey: string,
+    n: number,
+): Promise<[number, string, string]> {
+    const nString = n.toString();
+    const localeNum = (await toLocaleNumBible(bibleKey, n)) ?? nString;
+    return [n, localeNum, nString];
 }
 
 function breakTitle(

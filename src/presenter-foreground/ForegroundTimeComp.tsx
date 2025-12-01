@@ -33,10 +33,10 @@ function getMinuteOffsetFromCity(event: any) {
     return new Promise<[string, number] | null>((resolve) => {
         const cityNames = tz
             .names()
-            .map((name) => {
+            .map((name): [string, string] => {
                 const arr = name.split('/');
                 const city = arr.at(-1);
-                return [city, name] as [string, string];
+                return [city ?? 'Unknown', name];
             })
             .sort((a, b) => {
                 return a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]);

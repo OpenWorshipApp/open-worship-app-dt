@@ -47,12 +47,20 @@ export default function ForegroundStopwatchComp() {
         (data) => {
             return data.stopwatchData !== null;
         },
-    ).map(([screenId, data]) => {
-        return [screenId, data.stopwatchData] as [
-            number,
-            ForegroundStopwatchDataType,
-        ];
-    });
+    )
+        .map(
+            ([screenId, data]):
+                | [number, ForegroundStopwatchDataType]
+                | null => {
+                if (data.stopwatchData === null) {
+                    return null;
+                }
+                return [screenId, data.stopwatchData];
+            },
+        )
+        .filter((item) => {
+            return item !== null;
+        });
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix: 'stopwatch',
         onChange: (extraStyle) => {
