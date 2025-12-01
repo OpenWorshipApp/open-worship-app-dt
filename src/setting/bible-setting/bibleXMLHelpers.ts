@@ -27,7 +27,7 @@ import { useState, useTransition } from 'react';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import {
     fromBibleFileName,
-    getKJVBookKeyValue,
+    getModelKeyBookMap,
 } from '../../helper/bible-helpers/bibleLogicHelpers1';
 import {
     bibleKeyToXMLFilePath,
@@ -54,6 +54,8 @@ import {
 } from '../../progress-bar/progressBarHelpers';
 import { EditorStoreType } from '../../helper/monacoEditorHelpers';
 import { AnyObjectType } from '../../helper/typeHelpers';
+import { schemaHandler as infoEditorSchemaHandler } from './BibleXMLInfoEditorComp';
+import { schemaHandler as bookChapterEditorSchemaHandler } from './BibleXMLBookChapterEditorComp';
 
 type MessageCallbackType = (message: string | null) => void;
 
@@ -337,14 +339,14 @@ export function addMonacoBibleInfoActions(
         contextMenuGroupId: 'navigation',
         run: async () => {
             const bibleInfo = getBibleInfo();
-            let booksMap = Object.values(bibleInfo.booksMap);
+            let keyBookMap = Object.values(bibleInfo.keyBookMap);
             const isConfirmInput = await showAppInput(
                 'Books map',
                 genBibleBooksMapXMLInput(
-                    booksMap,
+                    keyBookMap,
                     bibleInfo.locale,
                     (newNumbers) => {
-                        booksMap = newNumbers;
+                        keyBookMap = newNumbers;
                     },
                 ),
                 {
@@ -355,11 +357,10 @@ export function addMonacoBibleInfoActions(
             if (isConfirmInput) {
                 setPartialBibleInfo({
                     ...bibleInfo,
-                    booksMap: Object.fromEntries(
-                        Object.keys(bibleInfo.booksMap).map((value, index) => [
-                            value,
-                            booksMap[index],
-                        ]),
+                    keyBookMap: Object.fromEntries(
+                        Object.keys(bibleInfo.keyBookMap).map(
+                            (value, index) => [value, keyBookMap[index]],
+                        ),
                     ),
                 });
             }
@@ -456,7 +457,17 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
             if (Date.now() - time > 7 * 24 * 60 * 60 * 1000) {
                 return null;
             }
-            return data.value;
+            const backData = data.value;
+            const validatedData = (
+                fileName === '_info'
+                    ? infoEditorSchemaHandler
+                    : bookChapterEditorSchemaHandler
+            ).validate(backData);
+            if (!validatedData.valid) {
+                console.log(validatedData.errors);
+                return null;
+            }
+            return backData;
         } catch (_error) {}
     }
     return null;
@@ -479,16 +490,7 @@ export async function readBibleXMLData(
     }
     const bibleInfo = jsonData.info;
     if (fileName === '_info') {
-        return backupBibleXMLData<BibleInfoType>(bibleKey, fileName, {
-            ...bibleInfo,
-            books: bibleInfo.booksMap,
-            numList: Array.from(
-                {
-                    length: 10,
-                },
-                (_, i) => bibleInfo.numbersMap?.[i],
-            ),
-        });
+        return backupBibleXMLData<BibleInfoType>(bibleKey, fileName, bibleInfo);
     }
     const fileNameData = fromBibleFileName(fileName);
     if (fileNameData === null) {
@@ -520,7 +522,7 @@ export async function readBibleXMLData(
         }
     }
     return backupBibleXMLData<BibleChapterType>(bibleKey, fileName, {
-        title: `${bibleInfo.booksMap[bookKey]} ${chapterNum}`,
+        title: `${bibleInfo.keyBookMap[bookKey]} ${chapterNum}`,
         verses: chapterData,
         newLines,
         newLinesTitleMap,
@@ -573,7 +575,7 @@ export async function updateBibleXMLInfo(
         showSimpleToast('Error', 'Error occurred during reading file');
         return false;
     }
-    newBibleInfo.booksMap = newBibleInfo.booksMap ?? getKJVBookKeyValue();
+    newBibleInfo.keyBookMap = newBibleInfo.keyBookMap ?? getModelKeyBookMap();
     const newJsonData = { ...dataJson, info: newBibleInfo };
     await saveJsonDataToXMLfile(newJsonData, oldBibleInfo.key);
     return true;

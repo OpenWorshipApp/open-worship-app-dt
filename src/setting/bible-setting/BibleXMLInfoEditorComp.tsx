@@ -61,10 +61,10 @@ export default function BibleXMLInfoEditorComp({
                         if (oldBibleInfo === null) {
                             return;
                         }
-                        const newBibleInfo = {
+                        const newBibleInfo: BibleJsonInfoType = {
                             ...oldBibleInfo,
                             ...partialBibleInfo,
-                        } as BibleJsonInfoType;
+                        };
                         editorStore.replaceValue(
                             JSON.stringify(newBibleInfo, null, 4),
                         );

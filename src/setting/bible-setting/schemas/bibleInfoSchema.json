@@ -8,6 +8,11 @@
             "minLength": 1,
             "description": "The display title of the Bible translation"
         },
+        "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A brief description of the Bible translation"
+        },
         "key": {
             "type": "string",
             "minLength": 1,
@@ -322,7 +327,7 @@
             "required": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"],
             "additionalProperties": false
         },
-        "booksMap": {
+        "keyBookMap": {
             "type": "object",
             "description": "Mapping of book abbreviations to their full names",
             "properties": {
@@ -723,75 +728,21 @@
                     "examples": ["Revelation"]
                 }
             },
-            "required": [
-                "GEN",
-                "EXO",
-                "LEV",
-                "NUM",
-                "DEU",
-                "JOS",
-                "JDG",
-                "RUT",
-                "1SA",
-                "2SA",
-                "1KI",
-                "2KI",
-                "1CH",
-                "2CH",
-                "EZR",
-                "NEH",
-                "EST",
-                "JOB",
-                "PSA",
-                "PRO",
-                "ECC",
-                "SNG",
-                "ISA",
-                "JER",
-                "LAM",
-                "EZK",
-                "DAN",
-                "HOS",
-                "JOL",
-                "AMO",
-                "OBA",
-                "JON",
-                "MIC",
-                "NAM",
-                "HAB",
-                "ZEP",
-                "HAG",
-                "ZEC",
-                "MAL",
-                "MAT",
-                "MRK",
-                "LUK",
-                "JHN",
-                "ACT",
-                "ROM",
-                "1CO",
-                "2CO",
-                "GAL",
-                "EPH",
-                "PHP",
-                "COL",
-                "1TH",
-                "2TH",
-                "1TI",
-                "2TI",
-                "TIT",
-                "PHM",
-                "HEB",
-                "JAS",
-                "1PE",
-                "2PE",
-                "1JN",
-                "2JN",
-                "3JN",
-                "JUD",
-                "REV"
-            ],
+            "patternProperties": {
+                "[1-9A-Z]{3}": {
+                    "type": "string",
+                    "description": "Book key"
+                }
+            },
             "additionalProperties": false
+        },
+        "booksAvailable": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "pattern": "[1-9A-Z]{3}"
+            },
+            "description": "Array of book keys that are available in this Bible translation"
         }
     },
     "required": [
@@ -803,7 +754,7 @@
         "publisher",
         "copyRights",
         "numbersMap",
-        "booksMap"
+        "keyBookMap"
     ],
     "additionalProperties": false
 }

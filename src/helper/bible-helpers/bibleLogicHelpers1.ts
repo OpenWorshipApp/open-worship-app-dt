@@ -8,28 +8,9 @@ import {
 import { getOnlineBibleInfoList } from './bibleDownloadHelpers';
 import { useAppEffectAsync } from '../debuggerHelpers';
 import { toLocaleNumBible } from './bibleLogicHelpers2';
-import { freezeObject } from '../helpers';
-
-import kjvBibleJson from './kjvBible.json';
-import kjvNewLiners from './kjvNewLiners.json';
+import { getBibleModelInfo } from './bibleModelHelpers';
 
 export type BibleStatusType = [string, boolean, string];
-
-export type BookType = {
-    key: string;
-    chapterCount: number;
-};
-
-export const kjvBibleInfo = kjvBibleJson as {
-    bookKeysOrder: string[];
-    bookKeysOld: string[];
-    books: { [key: string]: BookType };
-    kjvKeyValue: { [key: string]: string };
-    oneChapterBooks: string[];
-};
-freezeObject(kjvBibleInfo);
-export const kjvNewLinerInfo = kjvNewLiners;
-freezeObject(kjvNewLinerInfo);
 
 export const toLocaleNumQuick = (n: number, numList: string[]) => {
     if (!numList) {
@@ -53,7 +34,8 @@ export async function genChapterMatches(
     bookKey: string,
     guessingChapter: string | null,
 ) {
-    const chapterCount = getKJVChapterCount(bookKey);
+    const chapterCount = getModelChapterCount(bookKey);
+    // TODO: chapter list have to support shifting to support Apocrypha(ESG)
     const chapterList = Array.from({ length: chapterCount }, (_, i) => {
         return i + 1;
     });
@@ -62,12 +44,16 @@ export async function genChapterMatches(
             return toLocaleNumBible(bibleKey, chapter);
         }),
     );
-    const newList = chapterLocaleStringList.map((chapterLocaleString, i) => {
-        return {
-            chapter: chapterList[i],
-            chapterLocaleString,
-        } as ChapterMatchType;
-    });
+    const newList: ChapterMatchType[] = chapterLocaleStringList
+        .filter((chapterLocaleString) => {
+            return chapterLocaleString !== null;
+        })
+        .map((chapterLocaleString, i) => {
+            return {
+                chapter: chapterList[i],
+                chapterLocaleString,
+            };
+        });
     const newFilteredList = newList.filter((chapterMatch) => {
         return chapterMatch.chapterLocaleString !== null;
     });
@@ -100,7 +86,9 @@ export function useChapterMatch(
     bookKey: string,
     guessingChapter: string | null,
 ) {
-    const [matches, setMatches] = useState<ChapterMatchType[] | null>(null);
+    const [matchedChapters, setMatchedChapters] = useState<
+        ChapterMatchType[] | null
+    >(null);
     useAppEffectAsync(
         async (methodContext) => {
             if (!(await checkIsBookAvailable(bibleKey, bookKey))) {
@@ -119,97 +107,101 @@ export function useChapterMatch(
                 chapterLocaleString: 'Introduction',
                 isIntro,
             });
-            methodContext.setMatches(chapterLocaleStringList);
+            methodContext.setMatchedChapters(chapterLocaleStringList);
         },
         [bookKey, guessingChapter],
-        { setMatches },
+        { setMatchedChapters },
     );
-    return matches;
+    return matchedChapters;
 }
 
 export type BookMatchDataType = {
     bibleKey: string;
     bookKey: string;
     book: string;
-    bookKJV: string;
+    modelBook: string;
     isAvailable: boolean;
 };
+function check(v1: string, v2: string, isStartsWith = false) {
+    if (isStartsWith) {
+        const v1Lower = v1.toLowerCase();
+        const v2Lower = v2.toLowerCase();
+        return (
+            v1Lower.startsWith(v2Lower) ||
+            v1Lower.replaceAll(/\s/g, '').startsWith(v2Lower)
+        );
+    }
+    if (v1.toLowerCase().includes(v2.toLowerCase())) {
+        return true;
+    }
+}
 export async function genBookMatches(
     bibleKey: string,
     guessingBook: string = '',
 ): Promise<BookMatchDataType[] | null> {
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         return null;
     }
-    const bookKVList = info.books;
-    const booksAvailable = info.booksAvailable;
-    if (bookKVList === null) {
-        return null;
-    }
-    const check = (v1: string, v2: string, isStartsWith = false) => {
-        if (isStartsWith) {
-            const v1Lower = v1.toLowerCase();
-            const v2Lower = v2.toLowerCase();
-            return (
-                v1Lower.startsWith(v2Lower) ||
-                v1Lower.replaceAll(/\s/g, '').startsWith(v2Lower)
-            );
-        }
-        if (v1.toLowerCase().includes(v2.toLowerCase())) {
-            return true;
-        }
-    };
-    const keys = Object.entries(bookKVList);
-    const kjvKeyValue = getKJVBookKeyValue();
-    const bestMatchIndices = keys.map(([bookKey, book]) => {
-        const kjvValue = kjvKeyValue[bookKey];
+    const keyBookMap = bibleInfo.keyBookMap;
+    const modelKeyBook = getModelKeyBookMap();
+    const bookKeys = Object.entries(modelKeyBook).map(
+        ([bookKey, book]): [string, string] => {
+            if (keyBookMap[bookKey]) {
+                return [bookKey, keyBookMap[bookKey]];
+            }
+            return [bookKey, book];
+        },
+    );
+    const bestMatchIndices = bookKeys.map(([bookKey, book]) => {
+        const modelValue = modelKeyBook[bookKey];
         if (
             check(book, guessingBook, true) ||
             check(guessingBook, book, true) ||
-            check(kjvValue, guessingBook, true)
+            check(modelValue, guessingBook, true)
         ) {
             return true;
         }
         return false;
     });
-    const bestMatchKeys = keys.filter((_, i) => {
+    let bestMatchKeys = bookKeys.filter((_, i) => {
         return bestMatchIndices[i];
     });
-    const mappedKeys = bestMatchKeys
-        .concat(
-            keys.filter(([bookKey, book], i) => {
-                if (bestMatchIndices[i]) {
-                    return false;
-                }
-                const kjvValue = kjvKeyValue[bookKey];
-                if (
-                    check(kjvValue, guessingBook) ||
-                    check(guessingBook, kjvValue) ||
-                    check(kjvValue, guessingBook) ||
-                    check(guessingBook, kjvValue) ||
-                    check(book, guessingBook) ||
-                    check(guessingBook, book)
-                ) {
-                    return true;
-                }
+    bestMatchKeys = bestMatchKeys.concat(
+        bookKeys.filter(([bookKey, book], i) => {
+            if (bestMatchIndices[i]) {
                 return false;
-            }),
-        )
-        .map(([bookKey, book]) => {
-            return {
-                bibleKey,
-                bookKey,
-                book,
-                bookKJV: kjvKeyValue[bookKey],
-                isAvailable: booksAvailable.includes(bookKey),
-            };
-        });
+            }
+            const modelValue = modelKeyBook[bookKey];
+            if (
+                check(modelValue, guessingBook) ||
+                check(guessingBook, modelValue) ||
+                check(modelValue, guessingBook) ||
+                check(guessingBook, modelValue) ||
+                check(book, guessingBook) ||
+                check(guessingBook, book)
+            ) {
+                return true;
+            }
+            return false;
+        }),
+    );
+    const booksAvailable = bibleInfo.booksAvailable;
+    const mappedKeys = bestMatchKeys.map(([bookKey, book]) => {
+        return {
+            bibleKey,
+            bookKey,
+            book,
+            modelBook: modelKeyBook[bookKey],
+            isAvailable: booksAvailable.includes(bookKey),
+        };
+    });
     return mappedKeys;
 }
 
-export function getKJVBookKeyValue() {
-    return kjvBibleInfo.kjvKeyValue;
+export function getModelKeyBookMap() {
+    const bibleModelInfo = getBibleModelInfo();
+    return bibleModelInfo.keyBookMap;
 }
 
 async function getBibleInfoWithStatus(
@@ -238,26 +230,27 @@ async function toChapter(
     chapterNum: number,
 ) {
     // KJV, GEN, 1
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         return null;
     }
-    const book = info.books[bookKey];
+    const book = bibleInfo.keyBookMap[bookKey];
     return `${book} ${
-        info.numList === undefined
+        bibleInfo.numList === undefined
             ? chapterNum
-            : toLocaleNumQuick(chapterNum, info.numList)
+            : toLocaleNumQuick(chapterNum, bibleInfo.numList)
     }`;
 }
 
-export function getKJVChapterCount(bookKey: string) {
+export function getModelChapterCount(bookKey: string) {
     // KJV, GEN
-    return kjvBibleInfo.books[bookKey].chapterCount;
+    const bibleModelInfo = getBibleModelInfo();
+    return bibleModelInfo.books[bookKey].chapterCount;
 }
 
 export function toChapterList(bibleKey: string, bookKey: string) {
     // KJV, GEN
-    const chapterCount = getKJVChapterCount(bookKey);
+    const chapterCount = getModelChapterCount(bookKey);
     return Array.from({ length: chapterCount }, (_, i) => {
         return toChapter(bibleKey, bookKey, i + 1);
     });
@@ -269,9 +262,10 @@ function toIndex(bookKey: string, chapterNum: number) {
     if (chapterNum === 0) {
         chapterNum = 1;
     }
-    while (kjvBibleInfo.bookKeysOrder[bookIndex]) {
-        const bookKey1 = kjvBibleInfo.bookKeysOrder[bookIndex];
-        const chapterCount = kjvBibleInfo.books[bookKey1].chapterCount;
+    const bibleModelInfo = getBibleModelInfo();
+    while (bibleModelInfo.bookKeysOrder[bookIndex]) {
+        const bookKey1 = bibleModelInfo.bookKeysOrder[bookIndex];
+        const chapterCount = bibleModelInfo.books[bookKey1].chapterCount;
         if (bookKey1 === bookKey) {
             if (chapterNum > chapterCount) {
                 return -1;

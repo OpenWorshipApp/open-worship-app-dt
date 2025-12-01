@@ -253,7 +253,9 @@ export default class AppDocument
         );
     }
 
-    async getIsWrongDimension(display: DisplayType) {
+    async getIsWrongDimension(
+        display: DisplayType,
+    ): Promise<WrongDimensionType | null> {
         const slides = await this.getSlides();
         const foundSlide = slides.find((slide) => {
             return slide.checkIsWrongDimension(display.bounds);
@@ -265,7 +267,7 @@ export default class AppDocument
                     width: display.bounds.width,
                     height: display.bounds.height,
                 },
-            } as WrongDimensionType;
+            };
         }
         return null;
     }

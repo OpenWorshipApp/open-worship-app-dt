@@ -19,10 +19,9 @@ import {
     saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
 import appProvider from '../../server/appProvider';
+import { AnyObjectType } from '../../helper/typeHelpers';
 
-export const bookChapterSchema: SchemaNode = compileSchema(
-    bookChapterSchemaJson,
-);
+export const schemaHandler: SchemaNode = compileSchema(bookChapterSchemaJson);
 export const uri = Uri.parse('book-chapter');
 
 function RenderBookOptionsComp({
@@ -188,24 +187,25 @@ function EditorComp({
     bookKey: string;
     chapter: number;
 }>) {
-    const [chapterData] = useAppStateAsync(async () => {
-        const localChapterData = await getChapterData(
-            bibleKey,
-            bookKey,
-            chapter,
-        );
-        if (chapter === 0 && localChapterData === null) {
-            return {
-                title: 'Introduction',
-                verses: {},
-                newLines: [],
-                newLinesTitleMap: {},
-                customVersesMap: {},
-            } as BibleChapterType;
-        }
-        return localChapterData;
-    }, [bibleKey, bookKey, chapter]);
-    const jsonData = useMemo(() => {
+    const [chapterData] =
+        useAppStateAsync<BibleChapterType | null>(async () => {
+            const localChapterData = await getChapterData(
+                bibleKey,
+                bookKey,
+                chapter,
+            );
+            if (chapter === 0 && localChapterData === null) {
+                return {
+                    title: 'Introduction',
+                    verses: {},
+                    newLines: [],
+                    newLinesTitleMap: {},
+                    customVersesMap: {},
+                };
+            }
+            return localChapterData;
+        }, [bibleKey, bookKey, chapter]);
+    const jsonData: DataType | AnyObjectType = useMemo(() => {
         if (!chapterData) {
             return {};
         }
@@ -217,7 +217,7 @@ function EditorComp({
             newLines: chapterData.newLines ?? [],
             newLinesTitleMap: chapterData.newLinesTitleMap ?? {},
             customVersesMap: chapterData.customVersesMap ?? {},
-        } as DataType;
+        };
     }, [chapterData]);
     if (chapterData === undefined) {
         return <LoadingComp />;
@@ -230,7 +230,7 @@ function EditorComp({
             id={bibleKey}
             jsonData={jsonData}
             onStore={() => {}}
-            jsonDataSchema={bookChapterSchema}
+            jsonDataSchema={schemaHandler}
             save={(newJsonData: DataType) => {
                 if (newJsonData.bibleKey !== bibleKey) {
                     showSimpleToast(

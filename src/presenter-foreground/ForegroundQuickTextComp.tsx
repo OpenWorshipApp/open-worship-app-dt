@@ -65,12 +65,20 @@ export default function ForegroundQuickTextComp() {
         (data) => {
             return data.quickTextData !== null;
         },
-    ).map(([screenId, data]) => {
-        return [screenId, data.quickTextData] as [
-            number,
-            ForegroundQuickTextDataType,
-        ];
-    });
+    )
+        .map(
+            ([screenId, data]):
+                | [number, ForegroundQuickTextDataType]
+                | null => {
+                if (data.quickTextData === null) {
+                    return null;
+                }
+                return [screenId, data.quickTextData];
+            },
+        )
+        .filter((item) => {
+            return item !== null;
+        });
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix: 'quick-text',
         onChange: (extraStyle) => {

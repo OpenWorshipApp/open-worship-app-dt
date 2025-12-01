@@ -18,11 +18,11 @@ export function getForegroundShowingScreenIdDataList(
 ) {
     const allForegroundDataList = getForegroundDataListOnScreenSetting();
     const showingScreenIdDataList = Object.entries(allForegroundDataList)
-        .map(([key, data]) => {
+        .map(([key, data]): [number, ForegroundDataType] => {
             return [
                 Number.parseInt(key),
                 ScreenForegroundManager.parseAllForegroundData(data),
-            ] as [number, ForegroundDataType];
+            ];
         })
         .filter(([_, data]) => {
             return filterFunc(data, allForegroundDataList);

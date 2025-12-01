@@ -260,12 +260,20 @@ export default function ForegroundCountDownComp() {
         (data) => {
             return data.countdownData !== null;
         },
-    ).map(([screenId, data]) => {
-        return [screenId, data.countdownData] as [
-            number,
-            ForegroundCountdownDataType,
-        ];
-    });
+    )
+        .map(
+            ([screenId, data]):
+                | [number, ForegroundCountdownDataType]
+                | null => {
+                if (data.countdownData === null) {
+                    return null;
+                }
+                return [screenId, data.countdownData];
+            },
+        )
+        .filter((item) => {
+            return item !== null;
+        });
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix: 'countdown',
         onChange: (extraStyle) => {

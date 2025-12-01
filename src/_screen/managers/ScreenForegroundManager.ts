@@ -85,7 +85,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         return this.effectManager.styleAnimList.fade;
     }
 
-    static parseAllForegroundData(foregroundData: any) {
+    static parseAllForegroundData(foregroundData: any): ForegroundDataType {
         const countdownData = foregroundData['countdownData'] ?? null;
         if (countdownData !== null) {
             countdownData.dateTime = new Date(countdownData.dateTime);
@@ -101,7 +101,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             marqueeData: foregroundData['marqueeData'] ?? null,
             quickTextData: foregroundData['quickTextData'] ?? null,
             cameraDataList: foregroundData['cameraDataList'] ?? [],
-        } as ForegroundDataType;
+        };
         return newForegroundData;
     }
 

@@ -8,13 +8,12 @@ import {
     toVerseKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
-    kjvBibleInfo,
-    getKJVChapterCount,
-    getKJVBookKeyValue,
+    getModelChapterCount,
+    getModelKeyBookMap,
 } from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
     checkShouldNewLine,
-    checkShouldNewLineKJV,
+    checkShouldNewLineModel,
     getLangFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
@@ -24,6 +23,7 @@ import {
     getCustomVerseText,
     getNewLineTitlesHtmlText,
 } from '../helper/bible-helpers/bibleLogicHelpers3';
+import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 
 export type BibleTargetType = {
     bookKey: string;
@@ -38,7 +38,7 @@ export type CompiledVerseType = {
     text: string;
     customText: string | null;
     isNewLine: boolean;
-    isKJVNewLine: boolean;
+    isModelNewLine: boolean;
     newLineTitlesHtmlText: string | null;
     bibleKey: string;
     bookKey: string;
@@ -106,7 +106,7 @@ class BibleRenderHelper {
     async toLocaleBook(bibleKey: string, bookKey: string) {
         return (
             (await keyToBook(bibleKey, bookKey)) ||
-            getKJVBookKeyValue()[bookKey]
+            getModelKeyBookMap()[bookKey]
         );
     }
     async toTitle(
@@ -170,14 +170,14 @@ class BibleRenderHelper {
             return {
                 customText: null,
                 isNewLine: false,
-                isKJVNewLine: false,
+                isModelNewLine: false,
                 newLineTitlesHtmlText: null,
             };
         }
         const isNewLine =
             verse == 1 ||
             (await checkShouldNewLine(bibleKey, bookKey, chapter, verse));
-        const isKJVNewLine = await checkShouldNewLineKJV(
+        const isModelNewLine = await checkShouldNewLineModel(
             bibleKey,
             bookKey,
             chapter,
@@ -198,7 +198,7 @@ class BibleRenderHelper {
         return {
             customText,
             isNewLine,
-            isKJVNewLine,
+            isModelNewLine,
             newLineTitlesHtmlText,
         };
     }
@@ -284,17 +284,18 @@ class BibleRenderHelper {
         if (bibleInfo === null) {
             return null;
         }
-        const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
+        const bibleModelInfo = getBibleModelInfo();
+        const bookKeysOrder = bibleModelInfo.bookKeysOrder;
         const bookIndex = bookKeysOrder.indexOf(bookKey);
         let nextBookIndex = bookIndex;
         let nextChapter = chapter + (isNext ? 1 : -1);
-        if (nextChapter < 1 || nextChapter > getKJVChapterCount(bookKey)) {
+        if (nextChapter < 1 || nextChapter > getModelChapterCount(bookKey)) {
             const bookLength = bookKeysOrder.length;
             nextBookIndex =
                 (bookLength + nextBookIndex + (isNext ? 1 : -1)) % bookLength;
             nextChapter = isNext
                 ? 1
-                : getKJVChapterCount(bookKeysOrder[nextBookIndex]);
+                : getModelChapterCount(bookKeysOrder[nextBookIndex]);
         }
         const verses = await getVerses(bibleKey, bookKey, nextChapter);
         return {

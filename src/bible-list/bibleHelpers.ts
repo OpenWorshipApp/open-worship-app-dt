@@ -97,6 +97,7 @@ export async function genVerseList({
     if (verses === null) {
         return null;
     }
+    // TODO: verse list have to support shifting to support Apocrypha(ESG)
     const verseNumbList = await Promise.all(
         Array.from({ length: Object.keys(verses).length }, (_, i) => {
             return toLocaleNumBible(bibleKey, i + 1);

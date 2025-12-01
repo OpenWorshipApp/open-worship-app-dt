@@ -7,11 +7,9 @@ import {
     LocaleType,
 } from '../../lang/langHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
-import {
-    getKJVBookKeyValue,
-    kjvBibleInfo,
-} from '../../helper/bible-helpers/bibleLogicHelpers1';
+import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
 import { Uri } from 'monaco-editor';
+import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -171,15 +169,16 @@ export function genBibleNumbersMapXMLInput(
 }
 
 const genMonacoBibleLineNumber = (num: number) => {
-    const map = kjvBibleInfo.bookKeysOrder;
+    const bibleModelInfo = getBibleModelInfo();
+    const map = bibleModelInfo.bookKeysOrder;
     const index = num - 1;
     const numString = `0${num}`.slice(-2);
     if (map[index] === undefined) {
         return numString;
     }
     const bookKey = map[num - 1];
-    const kjvKeyValue = getKJVBookKeyValue();
-    return `${kjvKeyValue[bookKey]} (${bookKey}) ${numString}`;
+    const modelKeyBook = getModelKeyBookMap();
+    return `${modelKeyBook[bookKey]} (${bookKey}) ${numString}`;
 };
 
 function BibleBooksMapXMLInputComp({
@@ -241,7 +240,7 @@ function BibleBooksMapXMLInputComp({
                     onClick={(event) => {
                         event.stopPropagation();
                         editorStore.replaceValue(
-                            Object.values(getKJVBookKeyValue()).join('\n'),
+                            Object.values(getModelKeyBookMap()).join('\n'),
                         );
                     }}
                 >

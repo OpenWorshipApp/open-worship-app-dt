@@ -2,10 +2,7 @@ import { useState } from 'react';
 
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import BibleViewSettingComp, { defaultRangeSize } from './BibleViewSettingComp';
-import {
-    useBibleItemsViewControllerContext,
-    useBibleItemViewControllerUpdateEvent,
-} from './BibleItemsViewController';
+import { useBibleItemViewControllerUpdateEvent } from './BibleItemsViewController';
 import BibleViewRendererComp from './BibleViewRendererComp';
 import {
     BibleViewFontSizeContext,
@@ -18,68 +15,12 @@ import appProvider from '../server/appProvider';
 import { handleAutoHide } from '../helper/domHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
+import NewLineSettingComp from './NewLineSettingComp';
+import BibleModelInfoSettingComp from './BibleModelInfoSettingComp';
 
-function NewLineSettingComp() {
-    const viewController = useBibleItemsViewControllerContext();
-    const [shouldNewLine, setShouldNewLine] = useState(
-        viewController.shouldNewLine,
-    );
-    const setShouldNewLine1 = (newValue: boolean) => {
-        setShouldNewLine(newValue);
-        viewController.shouldNewLine = newValue;
-    };
-    const [useKJVNewLine, setUseKJVNewLine] = useState(
-        viewController.shouldKJVNewLine,
-    );
-    const setUseKJVNewLine1 = (newValue: boolean) => {
-        setUseKJVNewLine(newValue);
-        viewController.shouldKJVNewLine = newValue;
-    };
-    return (
-        <>
-            <div
-                className="d-flex mx-1"
-                title="Break lines following KJV formatting"
-            >
-                <label htmlFor="new-line-setting" className="form-label">
-                    Should New Lines:
-                </label>
-                <input
-                    className="form-check-input app-caught-hover-pointer"
-                    type="checkbox"
-                    id="new-line-setting"
-                    checked={shouldNewLine}
-                    onChange={(event) => {
-                        setShouldNewLine1(event.target.checked);
-                    }}
-                />
-            </div>
-            <div
-                className="d-flex mx-1"
-                title="Break lines following KJV formatting"
-                style={{
-                    opacity: shouldNewLine ? 1 : 0.5,
-                }}
-            >
-                <label
-                    htmlFor="use-kjv-new-line-setting"
-                    className="form-label"
-                >
-                    Use KJV New Lines:
-                </label>
-                <input
-                    className="form-check-input app-caught-hover-pointer"
-                    type="checkbox"
-                    id="use-kjv-new-line-setting"
-                    disabled={!shouldNewLine}
-                    checked={useKJVNewLine}
-                    onChange={(event) => {
-                        setUseKJVNewLine1(event.target.checked);
-                    }}
-                />
-            </div>
-        </>
-    );
+function RenderComp() {
+    const nestedBibleItems = useBibleItemViewControllerUpdateEvent();
+    return <BibleViewRendererComp nestedBibleItems={nestedBibleItems} />;
 }
 
 export default function BiblePreviewerRenderComp() {
@@ -151,6 +92,7 @@ export default function BiblePreviewerRenderComp() {
                             setFontSize={setFontSize}
                         />
                         <NewLineSettingComp />
+                        <BibleModelInfoSettingComp />
                     </div>
                     <FullScreenButtonComp
                         isFulledScreen={isFulledScreen}
@@ -160,9 +102,4 @@ export default function BiblePreviewerRenderComp() {
             </div>
         </div>
     );
-}
-
-function RenderComp() {
-    const nestedBibleItems = useBibleItemViewControllerUpdateEvent();
-    return <BibleViewRendererComp nestedBibleItems={nestedBibleItems} />;
 }

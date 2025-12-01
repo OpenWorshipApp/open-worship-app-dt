@@ -12,14 +12,17 @@ function getNewStageNumber(
     currentStageNumber: number,
     onChange: (newStageNumber: number) => void,
 ) {
-    const items = Array.from({ length: 5 }, (_, i) => i).map((i) => {
+    const items: ContextMenuItemType[] = Array.from(
+        { length: 5 },
+        (_, i) => i,
+    ).map((i) => {
         return {
             menuElement: `${i}`,
             disabled: i === currentStageNumber,
             onSelect: () => {
                 onChange(i);
             },
-        } as ContextMenuItemType;
+        };
     });
     items.push(
         {

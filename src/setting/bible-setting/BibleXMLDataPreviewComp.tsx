@@ -1,19 +1,18 @@
 import { languages } from 'monaco-editor';
 
 import BibleXMLInfoEditorComp, {
+    schemaHandler as infoEditorSchemaHandler,
     uri as bibleInfoUri,
 } from './BibleXMLInfoEditorComp';
 import BibleXMLExtraEditorComp, {
+    schemaHandler as extraEditorSchemaHandler,
     uri as bibleExtraUri,
 } from './BibleXMLExtraEditorComp';
 import BibleXMLBookChapterEditorComp, {
+    schemaHandler as bookChapterEditorSchemaHandler,
     uri as bibleBookChapterUri,
 } from './BibleXMLBookChapterEditorComp';
 import { useStateSettingString } from '../../helper/settingHelpers';
-
-import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
-import bibleExtraSchemaJson from './schemas/bibleExtraSchema.json';
-import bookChapterSchemaJson from './schemas/bibleBookChapterSchema.json';
 
 languages.json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
@@ -22,19 +21,19 @@ languages.json.jsonDefaults.setDiagnosticsOptions({
     comments: 'error',
     schemas: [
         {
-            uri: bibleInfoSchemaJson.$id,
+            uri: infoEditorSchemaHandler.schema.$id,
             fileMatch: [bibleInfoUri.toString()],
-            schema: bibleInfoSchemaJson,
+            schema: infoEditorSchemaHandler.schema,
         },
         {
-            uri: bibleExtraSchemaJson.$id,
+            uri: extraEditorSchemaHandler.schema.$id,
             fileMatch: [bibleExtraUri.toString()],
-            schema: bibleExtraSchemaJson,
+            schema: extraEditorSchemaHandler.schema,
         },
         {
-            uri: bookChapterSchemaJson.$id,
+            uri: bookChapterEditorSchemaHandler.schema.$id,
             fileMatch: [bibleBookChapterUri.toString()],
-            schema: bookChapterSchemaJson,
+            schema: bookChapterEditorSchemaHandler.schema,
         },
     ],
     enableSchemaRequest: false,

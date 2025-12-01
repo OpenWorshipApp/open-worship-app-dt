@@ -1,5 +1,5 @@
 {
-    "title": "King James Version Standard",
+    "title": "Douay-Rheims Bible",
     "bookKeysOrder": [
         "GEN",
         "EXO",
@@ -17,15 +17,20 @@
         "2CH",
         "EZR",
         "NEH",
+        "TOB",
+        "JDT",
         "EST",
         "JOB",
         "PSA",
         "PRO",
         "ECC",
         "SNG",
+        "WIS",
+        "SIR",
         "ISA",
         "JER",
         "LAM",
+        "BAR",
         "EZK",
         "DAN",
         "HOS",
@@ -40,6 +45,8 @@
         "HAG",
         "ZEC",
         "MAL",
+        "1MA",
+        "2MA",
         "MAT",
         "MRK",
         "LUK",
@@ -59,7 +66,7 @@
         "TIT",
         "PHM",
         "HEB",
-        "JAS",
+        "JAM",
         "1PE",
         "2PE",
         "1JN",
@@ -85,15 +92,20 @@
         "2CH",
         "EZR",
         "NEH",
+        "TOB",
+        "JDT",
         "EST",
         "JOB",
         "PSA",
         "PRO",
         "ECC",
         "SNG",
+        "WIS",
+        "SIR",
         "ISA",
         "JER",
         "LAM",
+        "BAR",
         "EZK",
         "DAN",
         "HOS",
@@ -107,7 +119,9 @@
         "ZEP",
         "HAG",
         "ZEC",
-        "MAL"
+        "MAL",
+        "1MA",
+        "2MA"
     ],
     "books": {
         "GEN": {
@@ -174,9 +188,17 @@
             "key": "NEH",
             "chapterCount": 13
         },
+        "TOB": {
+            "key": "TOB",
+            "chapterCount": 14
+        },
+        "JDT": {
+            "key": "JDT",
+            "chapterCount": 16
+        },
         "EST": {
             "key": "EST",
-            "chapterCount": 10
+            "chapterCount": 16
         },
         "JOB": {
             "key": "JOB",
@@ -198,6 +220,14 @@
             "key": "SNG",
             "chapterCount": 8
         },
+        "WIS": {
+            "key": "WIS",
+            "chapterCount": 19
+        },
+        "SIR": {
+            "key": "SIR",
+            "chapterCount": 51
+        },
         "ISA": {
             "key": "ISA",
             "chapterCount": 66
@@ -210,13 +240,17 @@
             "key": "LAM",
             "chapterCount": 5
         },
+        "BAR": {
+            "key": "BAR",
+            "chapterCount": 6
+        },
         "EZK": {
             "key": "EZK",
             "chapterCount": 48
         },
         "DAN": {
             "key": "DAN",
-            "chapterCount": 12
+            "chapterCount": 14
         },
         "HOS": {
             "key": "HOS",
@@ -265,6 +299,14 @@
         "MAL": {
             "key": "MAL",
             "chapterCount": 4
+        },
+        "1MA": {
+            "key": "1MA",
+            "chapterCount": 16
+        },
+        "2MA": {
+            "key": "2MA",
+            "chapterCount": 15
         },
         "MAT": {
             "key": "MAT",
@@ -342,8 +384,8 @@
             "key": "HEB",
             "chapterCount": 13
         },
-        "JAS": {
-            "key": "JAS",
+        "JAM": {
+            "key": "JAM",
             "chapterCount": 5
         },
         "1PE": {
@@ -384,42 +426,49 @@
         "JOS": "Joshua",
         "JDG": "Judges",
         "RUT": "Ruth",
-        "1SA": "1 Samuel",
-        "2SA": "2 Samuel",
-        "1KI": "1 Kings",
-        "2KI": "2 Kings",
-        "1CH": "1 Chronicles",
-        "2CH": "2 Chronicles",
-        "EZR": "Ezra",
-        "NEH": "Nehemiah",
+        "1SA": "1 Kings",
+        "2SA": "2 Kings",
+        "1KI": "3 Kings",
+        "2KI": "4 Kings",
+        "1CH": "1 Paralipomenon",
+        "2CH": "2 Paralipomenon",
+        "EZR": "1 Esdras",
+        "NEH": "2 Esdras (Nehemiah)",
+        "TOB": "Tobias",
+        "JDT": "Judith",
         "EST": "Esther",
         "JOB": "Job",
-        "PSA": "Psalm",
+        "PSA": "Psalms",
         "PRO": "Proverbs",
         "ECC": "Ecclesiastes",
-        "SNG": "Song of Solomon",
-        "ISA": "Isaiah",
-        "JER": "Jeremiah",
+        "SNG": "Canticle of Canticles",
+        "WIS": "Wisdom",
+        "SIR": "Sirach (Ecclesiasticus)",
+        "ISA": "Isaias",
+        "JER": "Jeremias",
         "LAM": "Lamentations",
-        "EZK": "Ezekiel",
+        "BAR": "Baruch",
+        "EZK": "Ezechiel",
         "DAN": "Daniel",
-        "HOS": "Hosea",
+        "HOS": "Osee",
         "JOL": "Joel",
         "AMO": "Amos",
-        "OBA": "Obadiah",
-        "JON": "Jonah",
-        "MIC": "Micah",
+        "OBA": "Abdias",
+        "JON": "Jonas",
+        "MIC": "Micheas",
         "NAM": "Nahum",
-        "HAB": "Habakkuk",
-        "ZEP": "Zephaniah",
-        "HAG": "Haggai",
-        "ZEC": "Zechariah",
-        "MAL": "Malachi",
+        "HAB": "Habacuc",
+        "ZEP": "Sophonias",
+        "HAG": "Aggeus",
+        "ZEC": "Zacharias",
+        "MAL": "Malachias",
+        "1MA": "1 Machabees",
+        "2MA": "2 Machabees",
         "MAT": "Matthew",
         "MRK": "Mark",
         "LUK": "Luke",
         "JHN": "John",
-        "ACT": "Acts",
+        "ACT": "Acts of Apostles",
         "ROM": "Romans",
         "1CO": "1 Corinthians",
         "2CO": "2 Corinthians",
@@ -434,14 +483,14 @@
         "TIT": "Titus",
         "PHM": "Philemon",
         "HEB": "Hebrews",
-        "JAS": "James",
+        "JAM": "James",
         "1PE": "1 Peter",
         "2PE": "2 Peter",
         "1JN": "1 John",
         "2JN": "2 John",
         "3JN": "3 John",
         "JUD": "Jude",
-        "REV": "Revelation"
+        "REV": "Apocalypse"
     },
     "oneChapterBooks": ["OBA", "PHM", "2JN", "3JN", "JUD"]
 }

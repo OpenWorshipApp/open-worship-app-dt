@@ -2,10 +2,7 @@ import { useState } from 'react';
 
 import { decrypt, bible_ref } from '../_owa-crypto';
 import { handleError } from '../helper/errorHelpers';
-import {
-    kjvBibleInfo,
-    toBibleFileName,
-} from '../helper/bible-helpers/bibleLogicHelpers1';
+import { toBibleFileName } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { appApiFetch } from '../helper/networkHelpers';
 import CacheManager from '../others/CacheManager';
@@ -18,6 +15,7 @@ import {
     CrossReferenceType,
     validateCrossReference,
 } from '../helper/ai/bibleCrossRefHelpers';
+import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 
 export type RawBibleCrossRefListType = string[][];
 export type BibleCrossRefType = {
@@ -295,7 +293,8 @@ export function fromBibleCrossRefText(text: string): BibleCrossRefType {
 
 export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     const extracted = bibleRenderHelper.fromKJVBibleVersesKey(bibleVerseKey);
-    const bookKeysOrder = kjvBibleInfo.bookKeysOrder;
+    const bibleModelInfo = getBibleModelInfo();
+    const bookKeysOrder = bibleModelInfo.bookKeysOrder;
     if (!bookKeysOrder.includes(extracted.bookKey)) {
         return null;
     }

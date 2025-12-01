@@ -39,7 +39,10 @@ export function extractDropData(event: any) {
     return deserializeDragData(dragData);
 }
 
-function deserializeDragData({ type, data }: DragDataType<any>) {
+function deserializeDragData({
+    type,
+    data,
+}: DragDataType<any>): DroppedDataType | null {
     let item: any = null;
     if (type === DragTypeEnum.SLIDE) {
         item = Slide.dragDeserialize(data);
@@ -62,7 +65,7 @@ function deserializeDragData({ type, data }: DragDataType<any>) {
     if (item === null) {
         return null;
     }
-    return { type, item } as DroppedDataType;
+    return { type, item };
 }
 
 export function handleAttachBackgroundDrop(

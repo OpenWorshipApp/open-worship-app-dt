@@ -326,7 +326,7 @@ export async function selectSlide(event: any, currentFilePath: string) {
         return null;
     }
     return new Promise<AppDocument | null>((resolve) => {
-        const menuItems = newFilePaths
+        const menuItems: ContextMenuItemType[] = newFilePaths
             .filter((filePath) => {
                 return filePath !== currentFilePath;
             })
@@ -338,7 +338,7 @@ export async function selectSlide(event: any, currentFilePath: string) {
                         const appDocument = AppDocument.getInstance(filePath);
                         resolve(appDocument);
                     },
-                } as ContextMenuItemType;
+                };
             });
         showAppContextMenu(event, menuItems);
     });

@@ -96,11 +96,11 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         this.sendSyncScreen();
     }
 
-    toSyncMessage() {
+    toSyncMessage(): BasicScreenMessageType {
         return {
             type: 'background',
             data: this.backgroundSrc,
-        } as BasicScreenMessageType;
+        };
     }
 
     receiveSyncScreen(message: ScreenMessageType) {

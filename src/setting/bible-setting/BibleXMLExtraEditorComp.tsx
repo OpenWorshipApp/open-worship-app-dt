@@ -14,10 +14,9 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 
 import bibleNewLinesSchemaJson from './schemas/bibleExtraSchema.json';
 import appProvider from '../../server/appProvider';
+import { AnyObjectType } from '../../helper/typeHelpers';
 
-export const bookChapterSchema: SchemaNode = compileSchema(
-    bibleNewLinesSchemaJson,
-);
+export const schemaHandler: SchemaNode = compileSchema(bibleNewLinesSchemaJson);
 export const uri = Uri.parse('bible-extra');
 
 type DataType = BibleXMLExtraType & {
@@ -53,7 +52,7 @@ export default function BibleXMLExtraEditorComp({
     const [xmlBibleData] = useAppStateAsync(() => {
         return getBibleXMLDataFromKey(bibleKey);
     });
-    const jsonData = useMemo(() => {
+    const jsonData: DataType | AnyObjectType = useMemo(() => {
         if (!xmlBibleData) {
             return {};
         }
@@ -62,7 +61,7 @@ export default function BibleXMLExtraEditorComp({
             newLines: xmlBibleData.newLines,
             newLinesTitleMap: xmlBibleData.newLinesTitleMap,
             customVersesMap: xmlBibleData.customVersesMap,
-        } as DataType;
+        };
     }, [xmlBibleData]);
     if (xmlBibleData === undefined) {
         return <LoadingComp />;
@@ -75,7 +74,7 @@ export default function BibleXMLExtraEditorComp({
             id={bibleKey}
             jsonData={jsonData}
             onStore={() => {}}
-            jsonDataSchema={bookChapterSchema}
+            jsonDataSchema={schemaHandler}
             save={(newJsonData: DataType) => {
                 if (newJsonData.bibleKey !== bibleKey) {
                     showSimpleToast(

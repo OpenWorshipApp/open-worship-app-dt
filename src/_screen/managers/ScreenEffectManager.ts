@@ -69,7 +69,7 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
             data: {
                 target: this.target,
                 effect: this.effectType,
-            } as PTEffectDataType,
+            },
         });
     }
 

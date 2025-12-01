@@ -18,11 +18,7 @@ import {
 } from '../../lang/langHelpers';
 import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
-import {
-    getKJVChapterCount,
-    kjvBibleInfo,
-    kjvNewLinerInfo,
-} from './bibleLogicHelpers1';
+import { getModelChapterCount } from './bibleLogicHelpers1';
 import CacheManager from '../../others/CacheManager';
 import {
     BibleMinimalInfoType,
@@ -31,6 +27,7 @@ import {
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
 import { log } from '../loggerHelpers';
+import { getBibleModelInfo, modelNewLinerInfo } from './bibleModelHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -46,7 +43,8 @@ export async function toInputText(
     text += `${book} `;
     if (!chapter) {
         const bookKey = await bookToKey(bibleKey, book);
-        if (kjvBibleInfo.oneChapterBooks.includes(bookKey ?? '')) {
+        const bibleModelInfo = getBibleModelInfo();
+        if (bibleModelInfo.oneChapterBooks.includes(bookKey ?? '')) {
             text += `${await toLocaleNumBible(bibleKey, 1)}:`;
             return text;
         }
@@ -69,11 +67,11 @@ export async function toInputText(
 }
 
 export async function getBibleLocale(bibleKey: string) {
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         return 'en' as LocaleType;
     }
-    return info.locale;
+    return bibleInfo.locale;
 }
 
 export async function getLangFromBibleKey(bibleKey: string) {
@@ -99,10 +97,10 @@ export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     if (typeof n !== 'number') {
         return n;
     }
-    const info = await getBibleInfo(bibleKey);
+    const bibleInfo = await getBibleInfo(bibleKey);
     let localeNum: string | null = null;
-    if (info?.numList !== undefined) {
-        localeNum = toStringNum(info.numList, n);
+    if (bibleInfo?.numList !== undefined) {
+        localeNum = toStringNum(bibleInfo.numList, n);
     }
     if (localeNum === null) {
         const locale = await getBibleLocale(bibleKey);
@@ -128,10 +126,10 @@ export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     if (await localeNumCache.has(cacheKey)) {
         return localeNumCache.get(cacheKey);
     }
-    const info = await getBibleInfo(bibleKey);
+    const bibleInfo = await getBibleInfo(bibleKey);
     let num: number | null = null;
-    if (info?.numList !== undefined) {
-        num = fromStringNum(info.numList, localeNum);
+    if (bibleInfo?.numList !== undefined) {
+        num = fromStringNum(bibleInfo.numList, localeNum);
     }
     if (num === null) {
         const locale = await getBibleLocale(bibleKey);
@@ -176,7 +174,7 @@ export async function parseChapterFromGuessing(
     chapter: string,
 ) {
     const chapterNum = await fromLocaleNumBible(bibleKey, chapter);
-    const chapterCount = getKJVChapterCount(bookKey);
+    const chapterCount = getModelChapterCount(bookKey);
     if (chapterNum === null || chapterNum < 1 || chapterNum > chapterCount) {
         return null;
     }
@@ -650,24 +648,24 @@ export async function extractBibleTitle(
     });
 }
 
-const SHOULD_KJV_NEW_LINE_SETTING_NAME = 'view-should-kjv-new-line';
-export function getShouldKJVNewLine() {
-    return getSetting(SHOULD_KJV_NEW_LINE_SETTING_NAME) !== 'false';
+const SHOULD_MODEL_NEW_LINE_SETTING_NAME = 'view-should-model-new-line';
+export function getShouldModelNewLine() {
+    return getSetting(SHOULD_MODEL_NEW_LINE_SETTING_NAME) !== 'false';
 }
-export function setShouldKJVNewLine(useKJVNewLine: boolean) {
+export function setShouldModelNewLine(shouldModelNewLine: boolean) {
     setSetting(
-        SHOULD_KJV_NEW_LINE_SETTING_NAME,
-        useKJVNewLine ? 'true' : 'false',
+        SHOULD_MODEL_NEW_LINE_SETTING_NAME,
+        shouldModelNewLine ? 'true' : 'false',
     );
 }
 
-export async function checkShouldNewLineKJV(
+export async function checkShouldNewLineModel(
     bibleKey: string,
     bookKey: string,
     chapter: number,
     verse: number,
 ) {
-    if (!getShouldKJVNewLine()) {
+    if (!getShouldModelNewLine()) {
         return false;
     }
     const chapterData = await getChapterData(bibleKey, bookKey, chapter);
@@ -675,7 +673,7 @@ export async function checkShouldNewLineKJV(
         return false;
     }
     const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
-    return kjvNewLinerInfo.includes(verseKey);
+    return modelNewLinerInfo.includes(verseKey);
 }
 
 export async function checkShouldNewLine(

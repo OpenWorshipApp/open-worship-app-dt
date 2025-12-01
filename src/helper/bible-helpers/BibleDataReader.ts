@@ -32,12 +32,13 @@ export type CustomTitlesVerseType = {
 export type CustomVerseType = CustomVerseContentType | CustomTitlesVerseType;
 export type BibleInfoType = Readonly<{
     title: string;
+    description: string;
     key: string;
     locale: LocaleType;
     legalNote: string;
     publisher: string;
     copyRights: string;
-    books: { [key: string]: string };
+    keyBookMap: { [key: string]: string };
     booksAvailable: string[];
     numList?: string[];
     version: number;

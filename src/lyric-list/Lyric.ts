@@ -26,13 +26,21 @@ export default class Lyric extends AppEditableDocumentSourceAbs<LyricType> {
     static validate(json: AnyObjectType): void {
         super.validate(json);
         if (typeof json.content !== 'string') {
-            throw new Error(`Invalid lyric data json:${JSON.stringify(json)}`);
+            throw new TypeError(
+                `Invalid lyric data json:${JSON.stringify(json)}`,
+            );
         }
     }
 
-    async getMetadata() {
+    async getMetadata(): Promise<AppDocumentMetadataType> {
         const jsonData = await this.getJsonData();
-        return jsonData?.metadata ?? ({} as AppDocumentMetadataType);
+        return (
+            jsonData?.metadata ?? {
+                app: 'open-worship',
+                fileVersion: 1,
+                initDate: '',
+            }
+        );
     }
 
     async getContent() {

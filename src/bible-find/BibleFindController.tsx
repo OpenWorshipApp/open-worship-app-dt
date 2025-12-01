@@ -36,7 +36,6 @@ import {
 } from './bibleFindHelpers';
 import {
     AppContextMenuControlType,
-    ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import { cumulativeOffset } from '../helper/helpers';
@@ -151,10 +150,13 @@ class DatabaseFindingHandler {
     constructor(database: SQLiteDatabaseType) {
         this.database = database;
     }
-    async doFinding(bibleKey: string, findData: BibleFindForType) {
+    async doFinding(
+        bibleKey: string,
+        findData: BibleFindForType,
+    ): Promise<BibleFindResultType | null> {
         // TODO: use dictionary to break text text to words.
         // e.g: Khmer language has no space between words so we need to break it to words
-        const { bookKeys, isFresh, text } = findData;
+        const { bookKeys, text } = findData;
         if (!text) {
             return null;
         }
@@ -205,8 +207,7 @@ class DatabaseFindingHandler {
             fromLineNumber,
             toLineNumber,
             content: foundResult,
-            isFresh,
-        } as BibleFindResultType;
+        };
     }
     async loadSuggestionWords(
         attemptingWord: string,
@@ -271,7 +272,7 @@ export default class BibleFindController {
 
     async getSelectedBooks() {
         const bookKeys = this.selectedBookKeys;
-        return (
+        const books: SelectedBookKeyType[] = (
             await Promise.all(
                 bookKeys.map(async (bookKey) => {
                     const bibleInfo = await getBibleInfo(this.bibleKey);
@@ -280,11 +281,12 @@ export default class BibleFindController {
                     }
                     return {
                         bookKey,
-                        book: bibleInfo.books[bookKey] ?? bookKey,
-                    } as SelectedBookKeyType;
+                        book: bibleInfo.keyBookMap[bookKey] ?? bookKey,
+                    };
                 }),
             )
         ).filter((item) => item !== null);
+        return books;
     }
 
     get bibleKey() {
@@ -453,7 +455,7 @@ export default class BibleFindController {
                         newText = quickEndWord(this.locale, newText + trimText);
                         pasteTextToInput(input, newText);
                     },
-                } as ContextMenuItemType;
+                };
             }),
             {
                 coord: { x: left, y: top + input.offsetHeight },

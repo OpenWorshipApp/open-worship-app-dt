@@ -196,7 +196,7 @@ export function useInitMonacoEditor({
     onContentChange?: (oldContent: string, newContent: string) => void;
     uri: Uri;
     language: string;
-}) {
+}): StoreType {
     const [isWrapText, setIsWrapText] = useStateSettingBoolean(
         settingName,
         false,
@@ -256,7 +256,7 @@ export function useInitMonacoEditor({
         },
         onContainerInit: (container: HTMLElement | null) => {
             if (container === null) {
-                return;
+                return () => {};
             }
             const resizeObserver = new ResizeObserver(() => {
                 resizeAttemptTimeout(() => {
@@ -270,5 +270,5 @@ export function useInitMonacoEditor({
                 editorStore.div.remove();
             };
         },
-    } as StoreType;
+    };
 }

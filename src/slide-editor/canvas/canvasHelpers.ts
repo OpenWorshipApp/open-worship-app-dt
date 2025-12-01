@@ -17,7 +17,7 @@ export function validateMediaProps(props: AnyObjectType) {
         typeof props.mediaWidth !== 'number' ||
         typeof props.mediaHeight !== 'number'
     ) {
-        throw new Error('Invalid canvas item media data');
+        throw new TypeError('Invalid canvas item media data');
     }
 }
 

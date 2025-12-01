@@ -27,7 +27,6 @@ import {
     BibleListType,
     bibleDataTypeList,
     SetDisplayType,
-    ShowScreenDataType,
 } from './screenTypeHelpers';
 import { checkIsDarkMode } from '../initHelpers';
 
@@ -101,7 +100,7 @@ export function showScreen({ screenId, displayId }: SetDisplayType) {
     return electronSendAsync<void>('main:app:show-screen', {
         screenId,
         displayId,
-    } as ShowScreenDataType);
+    });
 }
 
 export function hideScreen(screenId: number) {

@@ -7,8 +7,8 @@ import {
     getVerses,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
-    getKJVChapterCount,
-    getKJVBookKeyValue,
+    getModelChapterCount,
+    getModelKeyBookMap,
 } from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
     getBibleFontFamily,
@@ -85,7 +85,7 @@ async function choseChapter(
     chapter: number,
     fontFamily: string | null,
 ) {
-    const chapterCount = getKJVChapterCount(bookKey);
+    const chapterCount = getModelChapterCount(bookKey);
     const chapterList = await Promise.all(
         Array.from({ length: chapterCount }, (_, i) => {
             return getNumItem(bibleKey, i + 1);
@@ -214,27 +214,31 @@ async function handleContextMenu(
 }
 
 async function getBookList(bibleKey: string) {
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         return null;
     }
-    const bookKVList = info.books;
-    const booksAvailable = info.booksAvailable;
-    const kjvKeyValue = getKJVBookKeyValue();
+    const bookKVList = bibleInfo.keyBookMap;
+    const booksAvailable = bibleInfo.booksAvailable;
+    const modelKeyBook = getModelKeyBookMap();
     const bookList = Object.entries(bookKVList)
         .filter(([bookKey]) => {
             return booksAvailable.includes(bookKey);
         })
-        .map(([bookKey, book]) => {
-            const title = `${kjvKeyValue[bookKey]}(${getKJVChapterCount(bookKey)})`;
-            return [bookKey, book, title] as [string, string, string];
+        .map(([bookKey, book]): [string, string, string] => {
+            const title = `${modelKeyBook[bookKey]}(${getModelChapterCount(bookKey)})`;
+            return [bookKey, book, title];
         });
     return bookList;
 }
 
-async function getNumItem(bibleKey: string, n: number) {
-    const localeNum = await toLocaleNumBible(bibleKey, n);
-    return [n, localeNum, n.toString()] as [number, string, string];
+async function getNumItem(
+    bibleKey: string,
+    n: number,
+): Promise<[number, string, string]> {
+    const nString = n.toString();
+    const localeNum = (await toLocaleNumBible(bibleKey, n)) ?? nString;
+    return [n, localeNum, nString];
 }
 
 function breakTitle(
