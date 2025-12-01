@@ -88,7 +88,7 @@ function BookOptionsComp({
     guessingBook: string;
 }>) {
     const bibleKey = useBibleKeyContext();
-    const [matches] = useAppStateAsync(() => {
+    const [matchedBooks] = useAppStateAsync(() => {
         return genBookMatches(bibleKey, guessingBook);
     }, [bibleKey, guessingBook]);
     const useKeyEvent = (key: KeyboardType) => {
@@ -111,12 +111,12 @@ function BookOptionsComp({
     useKeyEvent('ArrowDown');
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
 
-    if (!matches) {
+    if (!matchedBooks) {
         return <div>No book options available</div>;
     }
     return (
         <>
-            {matches.map(
+            {matchedBooks.map(
                 ({ bibleKey, bookKey, book, modelBook, isAvailable }, i) => {
                     return (
                         <Fragment key={bookKey}>

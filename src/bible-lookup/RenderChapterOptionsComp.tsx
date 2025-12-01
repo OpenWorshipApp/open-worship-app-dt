@@ -107,7 +107,7 @@ function ChapterOptions({
     onSelect: (chapter: number) => void;
 }>) {
     const bibleKey = useBibleKeyContext();
-    const matches = useChapterMatch(bibleKey, bookKey, guessingChapter);
+    const matchedChapters = useChapterMatch(bibleKey, bookKey, guessingChapter);
     const arrowListener = (event: KeyboardEvent) => {
         processSelection(
             OPTION_CLASS,
@@ -124,11 +124,11 @@ function ChapterOptions({
         [],
     );
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
-    if (matches === null) {
+    if (matchedChapters === null) {
         return null;
     }
     const chapterZero =
-        matches.find((match) => {
+        matchedChapters.find((match) => {
             return match.chapter === 0;
         }) ?? null;
     return (
@@ -136,7 +136,7 @@ function ChapterOptions({
             {chapterZero?.isIntro ? (
                 <RenderChapterZeroComp bibleKey={bibleKey} bookKey={bookKey} />
             ) : null}
-            {matches.map(({ chapter, chapterLocaleString }, i) => {
+            {matchedChapters.map(({ chapter, chapterLocaleString }, i) => {
                 if (chapter === 0) {
                     return null;
                 }

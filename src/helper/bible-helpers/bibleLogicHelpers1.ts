@@ -85,7 +85,9 @@ export function useChapterMatch(
     bookKey: string,
     guessingChapter: string | null,
 ) {
-    const [matches, setMatches] = useState<ChapterMatchType[] | null>(null);
+    const [matchedChapters, setMatchedChapters] = useState<
+        ChapterMatchType[] | null
+    >(null);
     useAppEffectAsync(
         async (methodContext) => {
             if (!(await checkIsBookAvailable(bibleKey, bookKey))) {
@@ -104,12 +106,12 @@ export function useChapterMatch(
                 chapterLocaleString: 'Introduction',
                 isIntro,
             });
-            methodContext.setMatches(chapterLocaleStringList);
+            methodContext.setMatchedChapters(chapterLocaleStringList);
         },
         [bookKey, guessingChapter],
-        { setMatches },
+        { setMatchedChapters },
     );
-    return matches;
+    return matchedChapters;
 }
 
 export type BookMatchDataType = {
@@ -119,6 +121,19 @@ export type BookMatchDataType = {
     modelBook: string;
     isAvailable: boolean;
 };
+function check(v1: string, v2: string, isStartsWith = false) {
+    if (isStartsWith) {
+        const v1Lower = v1.toLowerCase();
+        const v2Lower = v2.toLowerCase();
+        return (
+            v1Lower.startsWith(v2Lower) ||
+            v1Lower.replaceAll(/\s/g, '').startsWith(v2Lower)
+        );
+    }
+    if (v1.toLowerCase().includes(v2.toLowerCase())) {
+        return true;
+    }
+}
 export async function genBookMatches(
     bibleKey: string,
     guessingBook: string = '',
@@ -127,26 +142,17 @@ export async function genBookMatches(
     if (bibleInfo === null) {
         return null;
     }
-    const bookKVList = bibleInfo.keyBookMap;
-    if (bookKVList === null) {
-        return null;
-    }
-    const check = (v1: string, v2: string, isStartsWith = false) => {
-        if (isStartsWith) {
-            const v1Lower = v1.toLowerCase();
-            const v2Lower = v2.toLowerCase();
-            return (
-                v1Lower.startsWith(v2Lower) ||
-                v1Lower.replaceAll(/\s/g, '').startsWith(v2Lower)
-            );
-        }
-        if (v1.toLowerCase().includes(v2.toLowerCase())) {
-            return true;
-        }
-    };
-    const keys = Object.entries(bookKVList);
+    const keyBookMap = bibleInfo.keyBookMap;
     const modelKeyBook = getModelKeyBookMap();
-    const bestMatchIndices = keys.map(([bookKey, book]) => {
+    const bookKeys = Object.entries(modelKeyBook).map(
+        ([bookKey, book]): [string, string] => {
+            if (keyBookMap[bookKey]) {
+                return [bookKey, keyBookMap[bookKey]];
+            }
+            return [bookKey, book];
+        },
+    );
+    const bestMatchIndices = bookKeys.map(([bookKey, book]) => {
         const modelValue = modelKeyBook[bookKey];
         if (
             check(book, guessingBook, true) ||
@@ -157,39 +163,38 @@ export async function genBookMatches(
         }
         return false;
     });
-    const bestMatchKeys = keys.filter((_, i) => {
+    let bestMatchKeys = bookKeys.filter((_, i) => {
         return bestMatchIndices[i];
     });
-    const booksAvailable = bibleInfo.booksAvailable;
-    const mappedKeys = bestMatchKeys
-        .concat(
-            keys.filter(([bookKey, book], i) => {
-                if (bestMatchIndices[i]) {
-                    return false;
-                }
-                const modelValue = modelKeyBook[bookKey];
-                if (
-                    check(modelValue, guessingBook) ||
-                    check(guessingBook, modelValue) ||
-                    check(modelValue, guessingBook) ||
-                    check(guessingBook, modelValue) ||
-                    check(book, guessingBook) ||
-                    check(guessingBook, book)
-                ) {
-                    return true;
-                }
+    bestMatchKeys = bestMatchKeys.concat(
+        bookKeys.filter(([bookKey, book], i) => {
+            if (bestMatchIndices[i]) {
                 return false;
-            }),
-        )
-        .map(([bookKey, book]) => {
-            return {
-                bibleKey,
-                bookKey,
-                book,
-                modelBook: modelKeyBook[bookKey],
-                isAvailable: booksAvailable.includes(bookKey),
-            };
-        });
+            }
+            const modelValue = modelKeyBook[bookKey];
+            if (
+                check(modelValue, guessingBook) ||
+                check(guessingBook, modelValue) ||
+                check(modelValue, guessingBook) ||
+                check(guessingBook, modelValue) ||
+                check(book, guessingBook) ||
+                check(guessingBook, book)
+            ) {
+                return true;
+            }
+            return false;
+        }),
+    );
+    const booksAvailable = bibleInfo.booksAvailable;
+    const mappedKeys = bestMatchKeys.map(([bookKey, book]) => {
+        return {
+            bibleKey,
+            bookKey,
+            book,
+            modelBook: modelKeyBook[bookKey],
+            isAvailable: booksAvailable.includes(bookKey),
+        };
+    });
     return mappedKeys;
 }
 
