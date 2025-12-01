@@ -1,5 +1,5 @@
 import AppDocument from '../app-document-list/AppDocument';
-import Slide from '../app-document-list/Slide';
+import type Slide from '../app-document-list/Slide';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import { getMimetypeExtensions, MimetypeNameType } from '../server/fileHelpers';
 import {
@@ -8,14 +8,13 @@ import {
 } from '../context-menu/appContextMenuHelpers';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
-import LyricSlide from './LyricSlide';
+import LyricSlide, { CanvasItemPropsTypeWithText } from './LyricSlide';
 import FileSource from '../helper/FileSource';
 import Lyric from './Lyric';
 import {
     renderLyricSlideMarkdownMusicTextList,
     renderMarkdownMusic,
 } from './markdownHelpers';
-import { CanvasItemTextPropsType } from '../slide-editor/canvas/CanvasItemText';
 import { checkIsDarkMode } from '../initHelpers';
 
 export type LyricEditingPropsType = {
@@ -45,65 +44,61 @@ export default class LyricAppDocument extends AppDocument {
         const lyric = Lyric.getInstance(
             LyricAppDocument.toLyricFilePath(this.filePath),
         );
-        let textList = (await renderLyricSlideMarkdownMusicTextList(lyric)).map(
-            (text) => {
-                return [text, text, undefined];
-            },
-        );
+        let textList: [string, string, string | undefined][] = (
+            await renderLyricSlideMarkdownMusicTextList(lyric)
+        ).map((text) => {
+            return [text, text, undefined];
+        });
         if (this.isPreRender) {
             textList = await Promise.all(
-                textList.map(async ([text, htmlText]) => {
-                    if (!text) {
-                        return [text, htmlText];
-                    }
-                    const isDarkMode = checkIsDarkMode();
-                    const htmlData = await renderMarkdownMusic(text, {
-                        isJustifyCenter: true,
-                        isDisablePointerEvents: true,
-                        theme: isDarkMode ? 'dark' : 'light',
-                        fontFamily: this.lyricEditingProps.fontFamily,
-                        fontWeight: this.lyricEditingProps.fontWeight,
-                        scale: this.lyricEditingProps.scale / 10,
-                    });
-                    return [text, htmlData.html, htmlData.id];
-                }),
+                textList.map(
+                    async ([text, htmlText]): Promise<
+                        [string, string, string | undefined]
+                    > => {
+                        if (!text) {
+                            return [text, htmlText, undefined];
+                        }
+                        const isDarkMode = checkIsDarkMode();
+                        const htmlData = await renderMarkdownMusic(text, {
+                            isJustifyCenter: true,
+                            isDisablePointerEvents: true,
+                            theme: isDarkMode ? 'dark' : 'light',
+                            fontFamily: this.lyricEditingProps.fontFamily,
+                            fontWeight: this.lyricEditingProps.fontWeight,
+                            scale: this.lyricEditingProps.scale / 10,
+                        });
+                        return [text, htmlData.html, htmlData.id];
+                    },
+                ),
             );
         }
         return textList.map(([text, htmlText, id], i) => {
+            const canvasItems: CanvasItemPropsTypeWithText[] = [
+                {
+                    id: 0,
+                    type: 'html',
+                    text,
+                    htmlText,
+                    color: '#FFFFFFFF',
+                    fontSize: 90,
+                    fontFamily: this.lyricEditingProps.fontFamily,
+                    fontWeight: null,
+                    textHorizontalAlignment: 'center',
+                    textVerticalAlignment: 'center',
+                    top,
+                    left,
+                    backgroundColor: '#0000008B',
+                    backdropFilter: 5,
+                    width: Math.round(display.bounds.width - left * 2),
+                    height: Math.round(display.bounds.height - top * 2),
+                    rotate: 0,
+                    roundSizePixel: 0,
+                    roundSizePercentage: 0,
+                },
+            ];
             return new LyricSlide(this.filePath, {
                 id: i,
-                canvasItems: text
-                    ? [
-                          {
-                              id: 0,
-                              type: 'html',
-                              text,
-                              htmlText,
-
-                              color: '#FFFFFFFF',
-                              fontSize: 90,
-                              fontFamily: this.lyricEditingProps.fontFamily,
-                              fontWeight: null,
-                              textHorizontalAlignment: 'center',
-                              textVerticalAlignment: 'center',
-                              top,
-                              left,
-                              backgroundColor: '#0000008B',
-                              backdropFilter: 5,
-                              width: Math.round(
-                                  display.bounds.width - left * 2,
-                              ),
-                              height: Math.round(
-                                  display.bounds.height - top * 2,
-                              ),
-                              rotate: 0,
-                              horizontalAlignment: 'center',
-                              verticalAlignment: 'center',
-                              roundSizePixel: 0,
-                              roundSizePercentage: 0,
-                          } as CanvasItemTextPropsType,
-                      ]
-                    : [],
+                canvasItems,
                 metadata: {
                     width: display.bounds.width,
                     height: display.bounds.height,

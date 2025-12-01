@@ -15,14 +15,16 @@ function chooseModel(
     currentModel: BibleModelInfoEnum,
     setModel: (newModel: BibleModelInfoEnum) => void,
 ) {
-    const items = Object.keys(bibleModelInfoTitleMap).map((key) => {
+    const items: ContextMenuItemType[] = Object.keys(
+        bibleModelInfoTitleMap,
+    ).map((key) => {
         return {
             menuElement: key,
             disabled: key === currentModel,
             onSelect: () => {
                 setModel(key as BibleModelInfoEnum);
             },
-        } as ContextMenuItemType;
+        };
     });
     showAppContextMenu(event, items);
 }

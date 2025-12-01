@@ -16,6 +16,7 @@ export type BibleModelInfoType = {
     title: string;
     bookKeysOrder: string[];
     bookKeysOld: string[];
+    apocryphalBooks?: string[];
     books: { [key: string]: BookType };
     keyBookMap: { [key: string]: string };
     oneChapterBooks: string[];
@@ -30,8 +31,7 @@ export const bibleModelInfoTitleMap: { [key in BibleModelInfoEnum]: string } = {
     [BibleModelInfoEnum.KJV]: 'King James Version',
     [BibleModelInfoEnum.KJV1611]: 'King James Version 1611',
     [BibleModelInfoEnum.DR]: 'Douay Rheims',
-}
-
+};
 
 const kjvBibleModelInfo = kjvBibleJson as BibleModelInfoType;
 freezeObject(kjvBibleModelInfo);

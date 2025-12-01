@@ -192,7 +192,7 @@ export async function getAllLocalBibleInfoList() {
             return {
                 ...info,
                 isXML: true,
-            } as BibleMinimalInfoType;
+            };
         }),
     );
     await allBibleInfoCache.set(

@@ -214,12 +214,12 @@ async function handleContextMenu(
 }
 
 async function getBookList(bibleKey: string) {
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         return null;
     }
-    const bookKVList = info.books;
-    const booksAvailable = info.booksAvailable;
+    const bookKVList = bibleInfo.keyBookMap;
+    const booksAvailable = bibleInfo.booksAvailable;
     const modelKeyBook = getModelKeyBookMap();
     const bookList = Object.entries(bookKVList)
         .filter(([bookKey]) => {

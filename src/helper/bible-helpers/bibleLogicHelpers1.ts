@@ -43,12 +43,16 @@ export async function genChapterMatches(
             return toLocaleNumBible(bibleKey, chapter);
         }),
     );
-    const newList = chapterLocaleStringList.map((chapterLocaleString, i) => {
-        return {
-            chapter: chapterList[i],
-            chapterLocaleString,
-        } as ChapterMatchType;
-    });
+    const newList: ChapterMatchType[] = chapterLocaleStringList
+        .filter((chapterLocaleString) => {
+            return chapterLocaleString !== null;
+        })
+        .map((chapterLocaleString, i) => {
+            return {
+                chapter: chapterList[i],
+                chapterLocaleString,
+            };
+        });
     const newFilteredList = newList.filter((chapterMatch) => {
         return chapterMatch.chapterLocaleString !== null;
     });
@@ -112,19 +116,18 @@ export type BookMatchDataType = {
     bibleKey: string;
     bookKey: string;
     book: string;
-    bookKJV: string;
+    modelBook: string;
     isAvailable: boolean;
 };
 export async function genBookMatches(
     bibleKey: string,
     guessingBook: string = '',
 ): Promise<BookMatchDataType[] | null> {
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         return null;
     }
-    const bookKVList = info.books;
-    const booksAvailable = info.booksAvailable;
+    const bookKVList = bibleInfo.keyBookMap;
     if (bookKVList === null) {
         return null;
     }
@@ -157,6 +160,7 @@ export async function genBookMatches(
     const bestMatchKeys = keys.filter((_, i) => {
         return bestMatchIndices[i];
     });
+    const booksAvailable = bibleInfo.booksAvailable;
     const mappedKeys = bestMatchKeys
         .concat(
             keys.filter(([bookKey, book], i) => {
@@ -182,12 +186,10 @@ export async function genBookMatches(
                 bibleKey,
                 bookKey,
                 book,
-                bookKJV: modelKeyBook[bookKey],
+                modelBook: modelKeyBook[bookKey],
                 isAvailable: booksAvailable.includes(bookKey),
             };
         });
-    console.log(mappedKeys);
-
     return mappedKeys;
 }
 
@@ -222,15 +224,16 @@ async function toChapter(
     chapterNum: number,
 ) {
     // KJV, GEN, 1
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         return null;
     }
-    const book = info.books[bookKey];
-    return `${book} ${info.numList === undefined
-        ? chapterNum
-        : toLocaleNumQuick(chapterNum, info.numList)
-        }`;
+    const book = bibleInfo.keyBookMap[bookKey];
+    return `${book} ${
+        bibleInfo.numList === undefined
+            ? chapterNum
+            : toLocaleNumQuick(chapterNum, bibleInfo.numList)
+    }`;
 }
 
 export function getModelChapterCount(bookKey: string) {

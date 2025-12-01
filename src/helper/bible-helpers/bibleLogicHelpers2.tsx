@@ -67,11 +67,11 @@ export async function toInputText(
 }
 
 export async function getBibleLocale(bibleKey: string) {
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         return 'en' as LocaleType;
     }
-    return info.locale;
+    return bibleInfo.locale;
 }
 
 export async function getLangFromBibleKey(bibleKey: string) {
@@ -97,10 +97,10 @@ export async function toLocaleNumBible(bibleKey: string, n: number | null) {
     if (typeof n !== 'number') {
         return n;
     }
-    const info = await getBibleInfo(bibleKey);
+    const bibleInfo = await getBibleInfo(bibleKey);
     let localeNum: string | null = null;
-    if (info?.numList !== undefined) {
-        localeNum = toStringNum(info.numList, n);
+    if (bibleInfo?.numList !== undefined) {
+        localeNum = toStringNum(bibleInfo.numList, n);
     }
     if (localeNum === null) {
         const locale = await getBibleLocale(bibleKey);
@@ -126,10 +126,10 @@ export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     if (await localeNumCache.has(cacheKey)) {
         return localeNumCache.get(cacheKey);
     }
-    const info = await getBibleInfo(bibleKey);
+    const bibleInfo = await getBibleInfo(bibleKey);
     let num: number | null = null;
-    if (info?.numList !== undefined) {
-        num = fromStringNum(info.numList, localeNum);
+    if (bibleInfo?.numList !== undefined) {
+        num = fromStringNum(bibleInfo.numList, localeNum);
     }
     if (num === null) {
         const locale = await getBibleLocale(bibleKey);

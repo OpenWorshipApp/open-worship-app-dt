@@ -12,7 +12,10 @@ import {
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
-import { checkIsOldTestament } from '../helper/bible-helpers/bibleInfoHelpers';
+import {
+    checkIsApocrypha,
+    checkIsOldTestament,
+} from '../helper/bible-helpers/bibleInfoHelpers';
 
 const OPTION_CLASS = 'bible-lookup-book-option';
 const OPTION_SELECTED_CLASS = 'active';
@@ -23,7 +26,7 @@ function genBookOption({
     index,
     bookKey,
     book,
-    bookKJV,
+    modelBook,
     isAvailable,
 }: {
     bibleKey: string;
@@ -31,15 +34,26 @@ function genBookOption({
     index: number;
     bookKey: string;
     book: string;
-    bookKJV: string;
+    modelBook: string;
     isAvailable: boolean;
 }) {
     const activeClass = index === 0 && isAvailable ? OPTION_SELECTED_CLASS : '';
     const isOldTestament = checkIsOldTestament(bookKey);
+    const isApocrypha = checkIsApocrypha(bookKey);
+    let borderColor = '#3a3a8eb2';
+    if (isOldTestament) {
+        borderColor = '#53854420';
+    }
+    if (isApocrypha) {
+        borderColor = '#733a8eb2';
+    }
     return (
         <div
-            style={{ margin: '2px' }}
             title={isAvailable ? undefined : 'Not available'}
+            style={{
+                margin: '2px',
+                cursor: isAvailable ? undefined : 'not-allowed',
+            }}
         >
             <button
                 className={
@@ -50,7 +64,7 @@ function genBookOption({
                 style={{
                     width: '240px',
                     overflowX: 'auto',
-                    borderColor: isOldTestament ? '#53854420' : '#3a3a8eb2',
+                    borderColor,
                 }}
                 type="button"
                 onClick={() => {
@@ -58,8 +72,8 @@ function genBookOption({
                 }}
             >
                 <span data-bible-key={bibleKey}>{book}</span>
-                {book === bookKJV ? null : (
-                    <small className="px-1">({bookKJV})</small>
+                {book === modelBook ? null : (
+                    <small className="px-1">({modelBook})</small>
                 )}
             </button>
         </div>
@@ -103,14 +117,14 @@ function BookOptionsComp({
     return (
         <>
             {matches.map(
-                ({ bibleKey, bookKey, book, bookKJV, isAvailable }, i) => {
+                ({ bibleKey, bookKey, book, modelBook, isAvailable }, i) => {
                     return (
                         <Fragment key={bookKey}>
                             {genBookOption({
                                 bibleKey,
                                 bookKey,
                                 book,
-                                bookKJV,
+                                modelBook,
                                 onSelect,
                                 index: i,
                                 isAvailable,

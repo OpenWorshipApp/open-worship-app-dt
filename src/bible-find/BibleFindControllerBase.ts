@@ -22,7 +22,7 @@ async function loadApiData() {
         const content = await appApiFetch('bible-online-info.json');
         const json = await content.json();
         if (typeof json.mapper !== 'object') {
-            throw new Error('Cannot get bible list');
+            throw new TypeError('Cannot get bible list');
         }
         return json as APIDataType;
     } catch (error) {
@@ -92,15 +92,18 @@ class DatabaseFindHandler {
     constructor(database: SQLiteDatabaseType) {
         this.database = database;
     }
-    async doFinding(bibleKey: string, findData: BibleFindForType) {
-        const { bookKeys, isFresh, text } = findData;
+    async doFinding(
+        bibleKey: string,
+        findData: BibleFindForType,
+    ): Promise<BibleFindResultType> {
+        const { bookKeys, text } = findData;
         let { fromLineNumber, toLineNumber } = findData;
         const locale = await getBibleLocale(bibleKey);
         const sText = (await sanitizeFindingText(locale, text)) ?? text;
         const sqlBookKey =
-            bookKeys !== undefined
-                ? ` AND bookKey IN (${bookKeys.join(',')})`
-                : '';
+            bookKeys === undefined
+                ? ''
+                : ` AND bookKey IN (${bookKeys.join(',')})`;
         const sqlFrom = `FROM verses WHERE sText LIKE '%${sText}%'${sqlBookKey}`;
         let sql = `SELECT text ${sqlFrom}`;
         if (fromLineNumber == undefined || toLineNumber == undefined) {
@@ -132,8 +135,7 @@ class DatabaseFindHandler {
             fromLineNumber,
             toLineNumber,
             content: foundResult,
-            isFresh,
-        } as BibleFindResultType;
+        };
     }
 }
 
@@ -196,12 +198,12 @@ export default class BibleFindControllerBase {
             `${fileSource.name}.db`,
         );
         let database: SQLiteDatabaseType | null = null;
-        if (!(await fsCheckFileExist(databasePath))) {
-            database = await initDatabase(instance.bibleKey, databasePath);
-        } else {
+        if (await fsCheckFileExist(databasePath)) {
             const databaseUtils = appProvider.databaseUtils;
             database =
                 await databaseUtils.getSQLiteDatabaseInstance(databasePath);
+        } else {
+            database = await initDatabase(instance.bibleKey, databasePath);
         }
         if (database === null) {
             return null;

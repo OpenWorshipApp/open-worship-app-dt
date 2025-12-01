@@ -15,7 +15,7 @@ function handleDisplayChoosing(
     event: any,
 ) {
     const { primaryDisplay, displays } = getAllDisplays();
-    const contextMenuItems = displays.map((display) => {
+    const contextMenuItems: ContextMenuItemType[] = displays.map((display) => {
         const label = (display as any).label ?? 'Unknown';
         const bounds = display.bounds;
         const isPrimary = display.id === primaryDisplay.id;
@@ -30,7 +30,7 @@ function handleDisplayChoosing(
             onSelect: () => {
                 screenManagerBase.displayId = display.id;
             },
-        } as ContextMenuItemType;
+        };
     });
     showAppContextMenu(event, contextMenuItems);
 }

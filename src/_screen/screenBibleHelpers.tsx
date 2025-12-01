@@ -14,6 +14,7 @@ import { cloneJson } from '../helper/helpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { genContextMenuBibleKeys } from '../bible-lookup/BibleSelectionComp';
 import { BibleItemDataType } from './screenTypeHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 export type ScreenBibleManagerEventType = 'update' | 'text-style';
 
@@ -199,18 +200,23 @@ export async function renderScreenBibleManager(
     addPlayToBottom(div);
 }
 
-export async function bibleItemToScreenViewData(bibleItems: BibleItem[]) {
+export async function bibleItemToScreenViewData(
+    bibleItems: BibleItem[],
+): Promise<BibleItemDataType> {
     const bibleRenderingList =
         await bibleScreenHelper.genBibleItemRenderList(bibleItems);
+    const bibleKey = bibleItems[0].bibleKey || null;
+    const locale = bibleKey === null ? 'en' : await getBibleLocale(bibleKey);
     return {
         type: 'bible-item',
+        locale,
         bibleItemData: {
             renderedList: bibleRenderingList,
             bibleItem: bibleItems[0].toJson(),
         },
         scroll: 0,
         selectedKJVVerseKey: null,
-    } as BibleItemDataType;
+    };
 }
 
 export async function bibleItemJsonToScreenViewData(

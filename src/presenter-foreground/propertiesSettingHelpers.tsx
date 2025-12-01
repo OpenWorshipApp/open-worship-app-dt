@@ -398,7 +398,7 @@ export function useForegroundPropsSetting({
     const fontSizeSettingName = `${prefix}-setting-show-widget-font-size`;
     const roundSizePixelSettingName = `${prefix}-setting-show-widget-round-size-px`;
 
-    const genStyle = () => {
+    const genStyle: () => CSSProperties = () => {
         return {
             ...getForegroundCommonProperties(),
             position: 'absolute',
@@ -416,7 +416,7 @@ export function useForegroundPropsSetting({
                 widgetScaleSettingName,
             ),
             ...getFontSizeStyle(fontSizeSettingName),
-        } as CSSProperties;
+        };
     };
 
     const onChange1 = () => {

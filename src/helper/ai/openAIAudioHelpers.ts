@@ -92,8 +92,8 @@ export async function bibleTextToSpeech(
     if (getOpenAIInstance() === null) {
         return null;
     }
-    const info = await getBibleInfo(bibleKey);
-    if (info === null) {
+    const bibleInfo = await getBibleInfo(bibleKey);
+    if (bibleInfo === null) {
         showSimpleToast(
             'Bible Text to Speech',
             `Fail to get Bible info for bible key "${bibleKey}".`,
@@ -123,7 +123,7 @@ export async function bibleTextToSpeech(
     return textToSpeech(
         {
             text,
-            locale: info.locale,
+            locale: bibleInfo.locale,
             filePath,
         },
         isForce,

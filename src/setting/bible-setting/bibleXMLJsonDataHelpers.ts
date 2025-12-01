@@ -1,7 +1,6 @@
 import {
     DEFAULT_LOCALE,
     getLangAsync,
-    getLangCode,
     LocaleType,
 } from '../../lang/langHelpers';
 import {
@@ -107,6 +106,7 @@ const attributesMap = {
     bibleKey: ['key', 'abbr'],
     locale: ['locale'],
     title: ['title', 'name', 'translation'],
+    description: ['description', 'desc'],
     version: ['version'],
     legalNote: ['legalNote', 'status'],
     publisher: ['publisher'],
@@ -127,13 +127,14 @@ export type BibleBookJsonType = {
 
 export type BibleJsonInfoType = {
     title: string;
+    description: string;
     key: string;
     version: number;
     locale: LocaleType;
     legalNote: string;
     publisher: string;
     copyRights: string;
-    booksMap: { [booKey: string]: string };
+    keyBookMap: { [booKey: string]: string };
     booksAvailable: string[];
     numbersMap: { [key: string]: string };
 };
@@ -446,68 +447,76 @@ function setCustomVersesMap(
     xmlElementBible.appendChild(xmlElementCustomVersesMap);
 }
 
-export async function getBibleInfoJson(xmlElementBible: Element) {
+export async function getBibleInfoJson(
+    xmlElementBible: Element,
+): Promise<BibleJsonInfoType | null> {
     const xmlElementMap = guessElement(xmlElementBible, tagNamesMap.map)?.[0];
-    const numberKeyMap = getBibleMap(
+    const numbersMap = getBibleMap(
         xmlElementMap ?? null,
         tagNamesMap.numberMap,
         Object.fromEntries(
             Array.from({ length: 10 }, (_, i) => [i.toString(), i.toString()]),
         ),
     );
-    const locale =
-        guessValue(xmlElementBible, attributesMap.locale) ?? DEFAULT_LOCALE;
-    if (getLangCode(locale as any) === null) {
-        return null;
-    }
-    const lang = await getLangAsync(locale as any);
-    const bookKeyMap = getBibleMap(
+    const locale = (guessValue(xmlElementBible, attributesMap.locale) ??
+        DEFAULT_LOCALE) as LocaleType;
+    const keyBookMap = getBibleMap(
         xmlElementMap ?? null,
         tagNamesMap.bookMap,
         cloneJson(getModelKeyBookMap()),
     );
-    if (lang !== null) {
-        for (const [key, value] of Object.entries(bookKeyMap)) {
-            bookKeyMap[key] = lang.sanitizeText(value);
+    const langData = await getLangAsync(locale);
+    if (langData !== null) {
+        for (const [key, value] of Object.entries(keyBookMap)) {
+            keyBookMap[key] = langData.sanitizeText(value);
         }
     }
     const bibleKey = await guessingBibleKey(xmlElementBible);
     if (bibleKey === null) {
         return null;
     }
-    const books = Array.from(
+    const xmlElementBooks = Array.from(
         guessElement(xmlElementBible, tagNamesMap.book) ?? [],
     );
-    const booksAvailable = getAvailableBooks(books);
+    const booksAvailable = getAvailableBooks(xmlElementBooks);
+    const title =
+        guessValue(xmlElementBible, attributesMap.title) ?? 'Unknown Title';
+    const description =
+        guessValue(xmlElementBible, attributesMap.description) ??
+        'Unknown Description';
+    const version =
+        Number.parseInt(
+            guessValue(xmlElementBible, attributesMap.version) ?? '1',
+        ) ?? 1;
+    const legalNote =
+        guessValue(xmlElementBible, attributesMap.legalNote) ??
+        'Unknown Legal Note';
+    const publisher =
+        guessValue(xmlElementBible, attributesMap.publisher) ??
+        'Unknown Publisher';
+    const copyRights =
+        guessValue(xmlElementBible, attributesMap.copyRights) ??
+        'Unknown Copy Rights';
     return {
-        title:
-            guessValue(xmlElementBible, attributesMap.title) ?? 'Unknown Title',
+        title,
+        description,
         key: bibleKey,
-        version:
-            Number.parseInt(
-                guessValue(xmlElementBible, attributesMap.version) ?? '1',
-            ) ?? 1,
+        version,
         locale,
-        legalNote:
-            guessValue(xmlElementBible, attributesMap.legalNote) ??
-            'Unknown Legal Note',
-        publisher:
-            guessValue(xmlElementBible, attributesMap.publisher) ??
-            'Unknown Publisher',
-        copyRights:
-            guessValue(xmlElementBible, attributesMap.copyRights) ??
-            'Unknown Copy Rights',
-        numbersMap: numberKeyMap,
-        booksMap: bookKeyMap,
+        legalNote,
+        publisher,
+        copyRights,
+        numbersMap,
+        keyBookMap,
         booksAvailable,
-    } as BibleJsonInfoType;
+    };
 }
 function setBibleInfo(
     xmlDoc: Document,
     xmlElementBible: Element,
     bibleInfo: BibleJsonInfoType,
 ) {
-    const { numbersMap, booksMap, ...restInfo } = bibleInfo;
+    const { numbersMap, keyBookMap, ...restInfo } = bibleInfo;
     const bibleInfoKey = Object.keys(restInfo).filter((key) => {
         return !['filePath'].includes(key);
     });
@@ -524,7 +533,7 @@ function setBibleInfo(
         xmlElementNumberMap.setAttribute(attributesMap.mapValue[0], value);
         xmlElementMap.appendChild(xmlElementNumberMap);
     }
-    for (const [key, value] of Object.entries(booksMap)) {
+    for (const [key, value] of Object.entries(keyBookMap)) {
         const xmlElementBookMap = xmlDoc.createElement(tagNamesMap.bookMap[0]);
         xmlElementBookMap.setAttribute(attributesMap.mapKey[0], key);
         xmlElementBookMap.setAttribute(attributesMap.mapValue[0], value);
@@ -564,14 +573,14 @@ function getBibleChapters(xmlElementBook: Element): BibleBookJsonType {
 }
 
 function getBibleBooksJson(xmlElementBible: Element) {
-    const books = getBookElements(xmlElementBible);
+    const xmlElementBooks = getBookElements(xmlElementBible);
     const booksJson: { [booKey: string]: BibleBookJsonType } = {};
-    for (const book of books) {
-        const bookKey = getBookKey(book);
+    for (const xmlElementBook of xmlElementBooks) {
+        const bookKey = getBookKey(xmlElementBook);
         if (bookKey === null) {
             continue;
         }
-        booksJson[bookKey] = getBibleChapters(book);
+        booksJson[bookKey] = getBibleChapters(xmlElementBook);
     }
     for (const book of Object.values(booksJson)) {
         if (Object.keys(book).length === 0) {
@@ -634,7 +643,9 @@ export function xmlTextToBibleElement(xmlText: string) {
     return bible;
 }
 
-export async function xmlTextToJson(xmlText: string) {
+export async function xmlTextToJson(
+    xmlText: string,
+): Promise<BibleXMLJsonType | null> {
     const xmlElementBible = xmlTextToBibleElement(xmlText);
     if (!xmlElementBible) {
         return null;
@@ -656,7 +667,7 @@ export async function xmlTextToJson(xmlText: string) {
         newLines,
         newLinesTitleMap,
         customVersesMap,
-    } as BibleXMLJsonType;
+    };
 }
 
 export async function bibleKeyToXMLFilePath(

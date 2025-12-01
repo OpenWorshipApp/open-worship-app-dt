@@ -109,11 +109,11 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         this.sendSyncScreen();
     }
 
-    toSyncMessage() {
+    toSyncMessage(): BasicScreenMessageType {
         return {
             type: 'vary-app-document',
             data: this.varyAppDocumentItemData,
-        } as BasicScreenMessageType;
+        };
     }
 
     receiveSyncScreen(message: ScreenMessageType) {

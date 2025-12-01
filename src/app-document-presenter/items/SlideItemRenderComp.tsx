@@ -270,12 +270,12 @@ export default function SlideItemRenderComp({
     const attachedBackgroundElement = useMemo(() => {
         return genAttachBackgroundComponent(attachedBackgroundData);
     }, [attachedBackgroundData]);
-    const style = useMemo(() => {
+    const style: CSSProperties = useMemo(() => {
         return {
             padding: 0,
             margin: 0,
             height: `${Math.round(slide.height * scale)}px`,
-        } as CSSProperties;
+        };
     }, [slide.height, scale]);
     const handleDataDropping = async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
