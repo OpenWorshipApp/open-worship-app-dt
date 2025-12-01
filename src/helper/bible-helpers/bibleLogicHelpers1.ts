@@ -35,7 +35,7 @@ export async function genChapterMatches(
     guessingChapter: string | null,
 ) {
     const chapterCount = getModelChapterCount(bookKey);
-    // TODO: chapter list have to support shifting to support Apocrypha
+    // TODO: chapter list have to support shifting to support Apocrypha(ESG)
     const chapterList = Array.from({ length: chapterCount }, (_, i) => {
         return i + 1;
     });
