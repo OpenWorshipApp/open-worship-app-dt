@@ -18,7 +18,7 @@ import {
 } from '../../lang/langHelpers';
 import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
-import { getKJVChapterCount } from './bibleLogicHelpers1';
+import { getModelChapterCount } from './bibleLogicHelpers1';
 import CacheManager from '../../others/CacheManager';
 import {
     BibleMinimalInfoType,
@@ -27,7 +27,7 @@ import {
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
 import { log } from '../loggerHelpers';
-import { getModelBibleInfo, kjvNewLinerInfo } from './bibleModelHelpers';
+import { getBibleModelInfo, kjvNewLinerInfo } from './bibleModelHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -43,8 +43,8 @@ export async function toInputText(
     text += `${book} `;
     if (!chapter) {
         const bookKey = await bookToKey(bibleKey, book);
-        const modelBibleInfo = getModelBibleInfo();
-        if (modelBibleInfo.oneChapterBooks.includes(bookKey ?? '')) {
+        const bibleModelInfo = getBibleModelInfo();
+        if (bibleModelInfo.oneChapterBooks.includes(bookKey ?? '')) {
             text += `${await toLocaleNumBible(bibleKey, 1)}:`;
             return text;
         }
@@ -174,7 +174,7 @@ export async function parseChapterFromGuessing(
     chapter: string,
 ) {
     const chapterNum = await fromLocaleNumBible(bibleKey, chapter);
-    const chapterCount = getKJVChapterCount(bookKey);
+    const chapterCount = getModelChapterCount(bookKey);
     if (chapterNum === null || chapterNum < 1 || chapterNum > chapterCount) {
         return null;
     }

@@ -8,7 +8,7 @@ import {
     toVerseKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
-    getKJVChapterCount,
+    getModelChapterCount,
     getModelKeyBookMap,
 } from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
@@ -23,7 +23,7 @@ import {
     getCustomVerseText,
     getNewLineTitlesHtmlText,
 } from '../helper/bible-helpers/bibleLogicHelpers3';
-import { getModelBibleInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 
 export type BibleTargetType = {
     bookKey: string;
@@ -284,18 +284,18 @@ class BibleRenderHelper {
         if (bibleInfo === null) {
             return null;
         }
-        const modelBibleInfo = getModelBibleInfo();
-        const bookKeysOrder = modelBibleInfo.bookKeysOrder;
+        const bibleModelInfo = getBibleModelInfo();
+        const bookKeysOrder = bibleModelInfo.bookKeysOrder;
         const bookIndex = bookKeysOrder.indexOf(bookKey);
         let nextBookIndex = bookIndex;
         let nextChapter = chapter + (isNext ? 1 : -1);
-        if (nextChapter < 1 || nextChapter > getKJVChapterCount(bookKey)) {
+        if (nextChapter < 1 || nextChapter > getModelChapterCount(bookKey)) {
             const bookLength = bookKeysOrder.length;
             nextBookIndex =
                 (bookLength + nextBookIndex + (isNext ? 1 : -1)) % bookLength;
             nextChapter = isNext
                 ? 1
-                : getKJVChapterCount(bookKeysOrder[nextBookIndex]);
+                : getModelChapterCount(bookKeysOrder[nextBookIndex]);
         }
         const verses = await getVerses(bibleKey, bookKey, nextChapter);
         return {

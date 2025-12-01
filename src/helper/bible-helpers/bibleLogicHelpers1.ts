@@ -8,7 +8,7 @@ import {
 import { getOnlineBibleInfoList } from './bibleDownloadHelpers';
 import { useAppEffectAsync } from '../debuggerHelpers';
 import { toLocaleNumBible } from './bibleLogicHelpers2';
-import { getModelBibleInfo } from './bibleModelHelpers';
+import { getBibleModelInfo } from './bibleModelHelpers';
 
 export type BibleStatusType = [string, boolean, string];
 
@@ -34,7 +34,7 @@ export async function genChapterMatches(
     bookKey: string,
     guessingChapter: string | null,
 ) {
-    const chapterCount = getKJVChapterCount(bookKey);
+    const chapterCount = getModelChapterCount(bookKey);
     const chapterList = Array.from({ length: chapterCount }, (_, i) => {
         return i + 1;
     });
@@ -144,11 +144,11 @@ export async function genBookMatches(
     const keys = Object.entries(bookKVList);
     const modelKeyBook = getModelKeyBookMap();
     const bestMatchIndices = keys.map(([bookKey, book]) => {
-        const kjvValue = modelKeyBook[bookKey];
+        const modelValue = modelKeyBook[bookKey];
         if (
             check(book, guessingBook, true) ||
             check(guessingBook, book, true) ||
-            check(kjvValue, guessingBook, true)
+            check(modelValue, guessingBook, true)
         ) {
             return true;
         }
@@ -163,12 +163,12 @@ export async function genBookMatches(
                 if (bestMatchIndices[i]) {
                     return false;
                 }
-                const kjvValue = modelKeyBook[bookKey];
+                const modelValue = modelKeyBook[bookKey];
                 if (
-                    check(kjvValue, guessingBook) ||
-                    check(guessingBook, kjvValue) ||
-                    check(kjvValue, guessingBook) ||
-                    check(guessingBook, kjvValue) ||
+                    check(modelValue, guessingBook) ||
+                    check(guessingBook, modelValue) ||
+                    check(modelValue, guessingBook) ||
+                    check(guessingBook, modelValue) ||
                     check(book, guessingBook) ||
                     check(guessingBook, book)
                 ) {
@@ -186,12 +186,14 @@ export async function genBookMatches(
                 isAvailable: booksAvailable.includes(bookKey),
             };
         });
+    console.log(mappedKeys);
+
     return mappedKeys;
 }
 
 export function getModelKeyBookMap() {
-    const modelBibleInfo = getModelBibleInfo();
-    return modelBibleInfo.keyBookMap;
+    const bibleModelInfo = getBibleModelInfo();
+    return bibleModelInfo.keyBookMap;
 }
 
 async function getBibleInfoWithStatus(
@@ -225,22 +227,21 @@ async function toChapter(
         return null;
     }
     const book = info.books[bookKey];
-    return `${book} ${
-        info.numList === undefined
-            ? chapterNum
-            : toLocaleNumQuick(chapterNum, info.numList)
-    }`;
+    return `${book} ${info.numList === undefined
+        ? chapterNum
+        : toLocaleNumQuick(chapterNum, info.numList)
+        }`;
 }
 
-export function getKJVChapterCount(bookKey: string) {
+export function getModelChapterCount(bookKey: string) {
     // KJV, GEN
-    const modelBibleInfo = getModelBibleInfo();
-    return modelBibleInfo.books[bookKey].chapterCount;
+    const bibleModelInfo = getBibleModelInfo();
+    return bibleModelInfo.books[bookKey].chapterCount;
 }
 
 export function toChapterList(bibleKey: string, bookKey: string) {
     // KJV, GEN
-    const chapterCount = getKJVChapterCount(bookKey);
+    const chapterCount = getModelChapterCount(bookKey);
     return Array.from({ length: chapterCount }, (_, i) => {
         return toChapter(bibleKey, bookKey, i + 1);
     });
@@ -252,10 +253,10 @@ function toIndex(bookKey: string, chapterNum: number) {
     if (chapterNum === 0) {
         chapterNum = 1;
     }
-    const modelBibleInfo = getModelBibleInfo();
-    while (modelBibleInfo.bookKeysOrder[bookIndex]) {
-        const bookKey1 = modelBibleInfo.bookKeysOrder[bookIndex];
-        const chapterCount = modelBibleInfo.books[bookKey1].chapterCount;
+    const bibleModelInfo = getBibleModelInfo();
+    while (bibleModelInfo.bookKeysOrder[bookIndex]) {
+        const bookKey1 = bibleModelInfo.bookKeysOrder[bookIndex];
+        const chapterCount = bibleModelInfo.books[bookKey1].chapterCount;
         if (bookKey1 === bookKey) {
             if (chapterNum > chapterCount) {
                 return -1;

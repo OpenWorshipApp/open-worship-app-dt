@@ -21,7 +21,7 @@ import FileSource from '../../helper/FileSource';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
-import { getModelBibleInfo } from '../../helper/bible-helpers/bibleModelHelpers';
+import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
@@ -214,8 +214,8 @@ function getGuessingBibleKeys(xmlElementBible: Element) {
 }
 
 function getBookKey(xmlElementBook: Element) {
-    const modelBibleInfo = getModelBibleInfo();
-    const bookKeysOrder = modelBibleInfo.bookKeysOrder;
+    const bibleModelInfo = getBibleModelInfo();
+    const bookKeysOrder = bibleModelInfo.bookKeysOrder;
     let bookKey = guessValue(xmlElementBook, attributesMap.bookKey, null);
     if (bookKey !== null && bookKeysOrder.includes(bookKey)) {
         return bookKey;

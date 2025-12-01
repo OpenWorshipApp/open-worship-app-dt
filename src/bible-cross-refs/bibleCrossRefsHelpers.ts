@@ -15,7 +15,7 @@ import {
     CrossReferenceType,
     validateCrossReference,
 } from '../helper/ai/bibleCrossRefHelpers';
-import { getModelBibleInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 
 export type RawBibleCrossRefListType = string[][];
 export type BibleCrossRefType = {
@@ -293,8 +293,8 @@ export function fromBibleCrossRefText(text: string): BibleCrossRefType {
 
 export async function breakItem(bibleKey: string, bibleVerseKey: string) {
     const extracted = bibleRenderHelper.fromKJVBibleVersesKey(bibleVerseKey);
-    const modelBibleInfo = getModelBibleInfo();
-    const bookKeysOrder = modelBibleInfo.bookKeysOrder;
+    const bibleModelInfo = getBibleModelInfo();
+    const bookKeysOrder = bibleModelInfo.bookKeysOrder;
     if (!bookKeysOrder.includes(extracted.bookKey)) {
         return null;
     }

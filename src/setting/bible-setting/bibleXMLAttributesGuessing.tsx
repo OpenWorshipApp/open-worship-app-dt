@@ -9,7 +9,7 @@ import {
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
 import { Uri } from 'monaco-editor';
-import { getModelBibleInfo } from '../../helper/bible-helpers/bibleModelHelpers';
+import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -169,8 +169,8 @@ export function genBibleNumbersMapXMLInput(
 }
 
 const genMonacoBibleLineNumber = (num: number) => {
-    const modelBibleInfo = getModelBibleInfo();
-    const map = modelBibleInfo.bookKeysOrder;
+    const bibleModelInfo = getBibleModelInfo();
+    const map = bibleModelInfo.bookKeysOrder;
     const index = num - 1;
     const numString = `0${num}`.slice(-2);
     if (map[index] === undefined) {

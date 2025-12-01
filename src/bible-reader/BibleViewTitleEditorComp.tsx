@@ -7,7 +7,7 @@ import {
     getVerses,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
-    getKJVChapterCount,
+    getModelChapterCount,
     getModelKeyBookMap,
 } from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
@@ -85,7 +85,7 @@ async function choseChapter(
     chapter: number,
     fontFamily: string | null,
 ) {
-    const chapterCount = getKJVChapterCount(bookKey);
+    const chapterCount = getModelChapterCount(bookKey);
     const chapterList = await Promise.all(
         Array.from({ length: chapterCount }, (_, i) => {
             return getNumItem(bibleKey, i + 1);
@@ -226,7 +226,7 @@ async function getBookList(bibleKey: string) {
             return booksAvailable.includes(bookKey);
         })
         .map(([bookKey, book]) => {
-            const title = `${modelKeyBook[bookKey]}(${getKJVChapterCount(bookKey)})`;
+            const title = `${modelKeyBook[bookKey]}(${getModelChapterCount(bookKey)})`;
             return [bookKey, book, title] as [string, string, string];
         });
     return bookList;

@@ -1,0 +1,52 @@
+import {
+    BibleModelInfoEnum,
+    bibleModelInfoTitleMap,
+    getBibleModelInfoSetting,
+    setBibleModelInfoSetting,
+} from '../helper/bible-helpers/bibleModelHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
+import appProvider from '../server/appProvider';
+
+function chooseModel(
+    event: any,
+    currentModel: BibleModelInfoEnum,
+    setModel: (newModel: BibleModelInfoEnum) => void,
+) {
+    const items = Object.keys(bibleModelInfoTitleMap).map((key) => {
+        return {
+            menuElement: key,
+            disabled: key === currentModel,
+            onSelect: () => {
+                setModel(key as BibleModelInfoEnum);
+            },
+        } as ContextMenuItemType;
+    });
+    showAppContextMenu(event, items);
+}
+
+export default function BibleModelInfoSettingComp() {
+    const model = getBibleModelInfoSetting();
+    const setModel1 = (newModel: BibleModelInfoEnum) => {
+        setBibleModelInfoSetting(newModel);
+        appProvider.reload();
+    };
+    return (
+        <div className="d-flex mx-1" title="`Change Bible Model Info">
+            <label htmlFor="change-bible-model-info" className="form-label">
+                Change Bible Model Info:
+            </label>
+            <button
+                className="btn btn-sm p-1"
+                title={bibleModelInfoTitleMap[model]}
+                onClick={(event) => {
+                    chooseModel(event, model, setModel1);
+                }}
+            >
+                {model}
+            </button>
+        </div>
+    );
+}
