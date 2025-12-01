@@ -18,8 +18,10 @@ function chooseModel(
     const items: ContextMenuItemType[] = Object.keys(
         bibleModelInfoTitleMap,
     ).map((key) => {
+        const title = bibleModelInfoTitleMap[key as BibleModelInfoEnum];
         return {
-            menuElement: key,
+            menuElement: `${key} - (${title})`,
+            title,
             disabled: key === currentModel,
             onSelect: () => {
                 setModel(key as BibleModelInfoEnum);

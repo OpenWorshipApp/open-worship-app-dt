@@ -25,7 +25,7 @@ export type BibleModelInfoType = {
 export enum BibleModelInfoEnum {
     KJV = 'KJV',
     KJV1611 = 'KJV1611',
-    DR = 'DouayRheims',
+    DR = 'DR',
 }
 export const bibleModelInfoTitleMap: { [key in BibleModelInfoEnum]: string } = {
     [BibleModelInfoEnum.KJV]: 'King James Version',
