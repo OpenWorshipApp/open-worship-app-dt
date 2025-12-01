@@ -23,6 +23,7 @@
     .bible-lookup-chapter-option,
     .bible-lookup-book-option {
       color: var(--text-color);
+      font-size: 15px;
       &:hover {
         font-weight: bold;
         background-color: transparent !important;
