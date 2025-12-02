@@ -20,6 +20,7 @@ export type BibleModelInfoType = {
     books: { [key: string]: BookType };
     keyBookMap: { [key: string]: string };
     oneChapterBooks: string[];
+    flippingKey: { [key: string]: string };
 };
 
 const kjvBibleModelInfo = kjvBibleJson as BibleModelInfoType;

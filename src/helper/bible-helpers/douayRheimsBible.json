@@ -492,5 +492,8 @@
         "JUD": "Jude",
         "REV": "Apocalypse"
     },
-    "oneChapterBooks": ["OBA", "PHM", "2JN", "3JN", "JUD"]
+    "oneChapterBooks": ["OBA", "PHM", "2JN", "3JN", "JUD"],
+    "flippingKey": {
+        "JAS": "JAM"
+    }
 }

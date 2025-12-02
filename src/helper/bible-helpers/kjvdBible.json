@@ -1,5 +1,5 @@
 {
-    "title": "King James Version with Apocrypha/Deuterocanon",
+    "title": "King James Version with Apocrypha/Deuterocanon (1611)",
     "bookKeysOrder": [
         "GEN",
         "EXO",
@@ -565,5 +565,8 @@
         "SUS",
         "BEL",
         "MAN"
-    ]
+    ],
+    "flippingKey": {
+        "JAM": "JAS"
+    }
 }

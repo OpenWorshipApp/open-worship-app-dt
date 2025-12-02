@@ -20,10 +20,7 @@ import FileSource from '../../helper/FileSource';
 import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
-import {
-    getBibleModelInfo,
-    getBibleModelInfoSetting,
-} from '../../helper/bible-helpers/bibleModelHelpers';
+import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
@@ -641,10 +638,9 @@ export function jsonToXMLText(jsonData: BibleXMLJsonType) {
 }
 
 export function xmlTextToBibleElement(xmlText: string) {
-    const bibleModel = getBibleModelInfoSetting();
-    if (bibleModel === 'DR') {
-        // Douay-Rheims uses JAM instead of JAS for James book
-        xmlText = xmlText.replaceAll('JAS', 'JAM');
+    const bibleModelInfo = getBibleModelInfo();
+    for (const [key, value] of Object.entries(bibleModelInfo.flippingKey)) {
+        xmlText = xmlText.replaceAll(key, value);
     }
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
