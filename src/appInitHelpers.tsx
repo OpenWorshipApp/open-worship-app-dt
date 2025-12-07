@@ -22,16 +22,14 @@ import appProvider from './server/appProvider';
 import initCrypto from './_owa-crypto';
 import { getSetting, setSetting } from './helper/settingHelpers';
 import { applyFontFamily } from './others/LanguageWrapper';
-import {
-    bringDomToNearestView,
-    HIGHLIGHT_SELECTED_CLASSNAME,
-} from './helper/helpers';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from './helper/helpers';
 import {
     handleClassNameAction,
     handleFullWidgetView,
     addDomChangeEventListener,
     HoverMotionHandler,
     InputContextMenuHandler,
+    handleActiveSelectedElementScrolling,
 } from './helper/domHelpers';
 import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
 import { unlocking } from './server/unlockingHelpers';
@@ -194,9 +192,7 @@ export async function main(children: ReactNode) {
         handleClassNameAction.bind(
             null,
             HIGHLIGHT_SELECTED_CLASSNAME,
-            (target) => {
-                bringDomToNearestView(target as HTMLDivElement);
-            },
+            handleActiveSelectedElementScrolling,
         ),
     );
     const locale = getCurrentLocale();
