@@ -141,7 +141,7 @@ export default function FileListHandlerComp({
                     <div
                         className="card-header"
                         style={{
-                            maxHeight: '35px',
+                            maxHeight: '30px',
                         }}
                     >
                         <strong className={isOnScreen ? 'app-on-screen' : ''}>

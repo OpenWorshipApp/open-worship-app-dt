@@ -1,4 +1,4 @@
-import { createContext, use, useState } from 'react';
+import { createContext, Fragment, use, useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import DirSource from '../helper/DirSource';
@@ -100,7 +100,7 @@ export default function RenderListComp({
             {colorNotes.map((colorNote) => {
                 const subFilePaths = filePathColorMap[colorNote];
                 return (
-                    <div key={colorNote}>
+                    <Fragment key={colorNote}>
                         <hr
                             style={
                                 colorNote === UNKNOWN_COLOR_NOTE
@@ -113,7 +113,7 @@ export default function RenderListComp({
                             }
                         />
                         {bodyHandler(subFilePaths)}
-                    </div>
+                    </Fragment>
                 );
             })}
         </>
