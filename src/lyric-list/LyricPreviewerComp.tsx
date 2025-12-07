@@ -126,7 +126,7 @@ function RenderBodyComp() {
 
 export default function LyricPreviewerComp() {
     return (
-        <div className="card w-100 h-100 ">
+        <div className="card w-100 h-100">
             <RenderHeaderComp />
             <div className="card-body app-overflow-hidden">
                 <RenderBodyComp />

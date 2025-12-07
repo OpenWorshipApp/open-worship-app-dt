@@ -38,11 +38,16 @@ export default function BibleFindPreviewerComp() {
         };
     }, []);
     return (
-        <div className="card w-100 h-100 app-overflow-hidden d-flex flex-column">
+        <div
+            className={
+                'card w-100 h-100 app-overflow-hidden d-flex flex-column ' +
+                'card app-zero-border-radius'
+            }
+        >
             <div
                 className="card-header overflow-hidden p-0"
                 style={{
-                    height: '42px',
+                    height: '35px',
                 }}
             >
                 <TabRenderComp<TabKeyType>
@@ -54,7 +59,6 @@ export default function BibleFindPreviewerComp() {
                     })}
                     activeTab={tabKey}
                     setActiveTab={setTabKey}
-                    className="card-header"
                 />
             </div>
             <div

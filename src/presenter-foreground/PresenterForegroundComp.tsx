@@ -12,7 +12,12 @@ import ForegroundTimeComp from './ForegroundTimeComp';
 
 export default function PresenterForegroundComp() {
     return (
-        <div className="presenter-foreground w-100 h-100 app-border-white-round p-2">
+        <div
+            className={
+                'presenter-foreground w-100 h-100 app-border-white-round ' +
+                'p-2 app-zero-border-radius'
+            }
+        >
             <ForegroundCommonPropertiesSettingComp />
             <hr />
             <ForegroundMarqueeComp />

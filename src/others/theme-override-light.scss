@@ -296,6 +296,10 @@ $resizer-color: rgb(123, 173, 205);
     }
 
     .bible-view-text {
+      .app-god-word {
+        color: red;
+      }
+
       .verse-number {
         &.extra-verses {
           border-top: 3px solid rgba(0, 0, 0, 0.121);
@@ -363,14 +367,6 @@ $resizer-color: rgb(123, 173, 205);
   .bible-lookup-book-option {
     &:hover {
       color: #3d680b;
-    }
-  }
-
-  .bible-view {
-    .bible-view-text {
-      .app-god-word {
-        color: red;
-      }
     }
   }
 }

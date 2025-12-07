@@ -291,9 +291,7 @@ export default function AppLayoutComp({
                     <HelpButtonComp />
                 </div>
             </div>
-            <div id="app-body" className="app-border-white-round">
-                {children}
-            </div>
+            <div id="app-body">{children}</div>
             <TopProgressBarComp />
             <ToastComp />
             <AppContextMenuComp />

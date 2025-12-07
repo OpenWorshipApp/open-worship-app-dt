@@ -123,7 +123,10 @@ export default function FileListHandlerComp({
     return (
         <DirSourceContext value={dirSource}>
             <div
-                className={`${className} card w-100 h-100 app-inner-shadow ${userClassName ?? ''}`}
+                className={
+                    `${className} card w-100 h-100 app-inner-shadow` +
+                    ` ${userClassName ?? ''} app-zero-border-radius`
+                }
                 onDragOver={genOnDragOver(dirSource)}
                 onDragLeave={genOnDragLeave()}
                 tabIndex={0}
@@ -134,7 +137,7 @@ export default function FileListHandlerComp({
                     takeDroppedFile,
                 })}
             >
-                {header !== undefined ? (
+                {header ? (
                     <div
                         className="card-header"
                         style={{
@@ -177,14 +180,14 @@ export default function FileListHandlerComp({
                         prefix={`path-${className}`}
                         dirSource={dirSource}
                         addItems={
-                            onItemsAdding !== undefined
-                                ? onItemsAdding.bind(
+                            onItemsAdding === undefined
+                                ? handleItemsAdding
+                                : onItemsAdding.bind(
                                       null,
                                       genItemsAddingContextMenuItems(
                                           handleItemsAdding,
                                       ),
                                   )
-                                : handleItemsAdding
                         }
                     />
                     {!dirSource.dirPath && defaultFolderName ? (

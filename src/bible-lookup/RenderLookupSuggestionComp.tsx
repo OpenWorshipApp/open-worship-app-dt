@@ -90,7 +90,10 @@ export function BibleNotAvailableComp({
     };
 
     return (
-        <div id="bible-lookup-container" className="card">
+        <div
+            id="bible-lookup-container"
+            className="card card app-zero-border-radius"
+        >
             <div className="body card-body w-100 p-3">
                 <h2>
                     {'`Bible key '}

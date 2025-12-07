@@ -47,7 +47,6 @@ body {
     width: 100% !important;
     height: calc(100% - $header-height) !important;
     overflow: hidden;
-    padding: 2px;
   }
 
   & > .footer {
@@ -329,6 +328,14 @@ body {
     background-color: rgba(0, 0, 0, 0.045);
     border-radius: 5px;
     color: #3d680b;
+  }
+
+  .app-zero-border-radius {
+    border-radius: 0 !important;
+  }
+
+  .nav-item .btn {
+    border-radius: 0 !important;
   }
 }
 

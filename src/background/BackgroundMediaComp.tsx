@@ -222,7 +222,7 @@ export default function BackgroundMediaComp({
     }
     return (
         <div
-            className="w-100 h-100 card"
+            className="w-100 h-100 card app-zero-border-radius"
             onWheel={(event) => {
                 handleCtrlWheel({
                     event,

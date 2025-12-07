@@ -21,7 +21,7 @@ export default function MiniScreenComp() {
     };
     return (
         <div
-            className="card w-100 h-100"
+            className="card w-100 h-100 app-zero-border-radius"
             onWheel={(event) => {
                 handleCtrlWheel({
                     event,

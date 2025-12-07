@@ -37,7 +37,7 @@ export default function LyricHandlerComp() {
     }
     return (
         <LyricEditingManagerContext value={lyricEditingManager}>
-            <div className="card w-100 h-100">
+            <div className="card w-100 h-100 app-zero-border-radius">
                 <div className="card-body">
                     <ResizeActorComp
                         flexSizeName={'lyric-previewer'}

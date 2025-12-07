@@ -116,9 +116,7 @@ function RenderToggleFullViewComp({
     return (
         <div>
             <button
-                className={
-                    `btn btn-${isFullWidget ? '' : 'outline-'}info ` + 'btn-sm'
-                }
+                className={`btn btn-${isFullWidget ? '' : 'outline-'}info `}
                 onClick={handleClick}
             >
                 <i className={`bi bi-${fullScreenClassname}`} />
