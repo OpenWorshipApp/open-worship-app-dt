@@ -52,8 +52,22 @@ export default function RenderVerseTextViewComp({
                     data-bible-key={bibleKey}
                     style={style}
                 >
-                    <div className={'flex-fill' + (isRtl ? ' rtl' : '')}>
+                    <div
+                        className={
+                            'app-top-hover-motion-10 flex-fill' +
+                            (isRtl ? ' rtl' : '')
+                        }
+                    >
                         {textElement}
+                        <span
+                            className="text-muted px-1 app-low-hover-visible-10"
+                            style={{
+                                fontSize: '0.8em',
+                                opacity: '0.6',
+                            }}
+                        >
+                            {bibleKey}
+                        </span>
                     </div>
                 </div>
             ) : (
