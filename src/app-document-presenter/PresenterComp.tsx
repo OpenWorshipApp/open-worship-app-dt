@@ -143,7 +143,7 @@ function RenderForegroundTabComp({
             <li className={'nav-item '}>
                 <button
                     className={
-                        'btn btn-link nav-link' +
+                        'btn btn-sm btn-link nav-link' +
                         ` ${isActive ? 'active' : ''}` +
                         (isOnScreen ? ' app-on-screen' : '')
                     }

@@ -3,10 +3,11 @@
 #app {
   .btn {
     white-space: nowrap;
+    padding: 0.25rem;
   }
 
   .form-range {
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
   }
 
   .card-header {
@@ -24,7 +25,8 @@
   }
 
   .list-group-item {
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
+    padding: 0.25rem 0.5rem;
 
     &:before {
       display: block;

@@ -99,7 +99,7 @@ export default function ForegroundCommonPropertiesSettingComp() {
                         />
                     </div>
                     <div
-                        className="input-group input-group-sm p-1 m-1 app-border-white-round"
+                        className="input-group input-group-sm m-1 app-border-white-round"
                         style={{
                             width: '250px',
                         }}

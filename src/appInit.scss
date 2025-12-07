@@ -129,10 +129,10 @@ body {
   }
 
   .app-border-white-round {
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
   }
   .app-border-whiter-round {
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
   }
 
   $bg-width: 20px;
@@ -191,7 +191,7 @@ body {
     transition-timing-function: step-end;
 
     padding: 3px;
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
 
     &.bar-type-v {
       height: 6px;
@@ -299,6 +299,7 @@ body {
     .app-top-hover-motion-#{$i} {
       .app-low-hover-visible-#{$i} {
         visibility: hidden;
+        transition: visibility 0.2s ease-in-out;
       }
       .app-low-hover-display-#{$i} {
         display: none;
@@ -317,6 +318,15 @@ body {
     }
   }
 
+  .app-opacity-hover {
+    opacity: attr(data-opacity-hover number);
+    transition: opacity 0.5s ease-in-out;
+    &:hover {
+      transition: opacity 0.5s ease-in-out;
+      opacity: 1;
+    }
+  }
+
   .app-on-screen::before {
     content: '*';
     color: var(--app-yellow-green);
@@ -332,7 +342,7 @@ body {
 
   .app-found-highlight {
     background-color: rgba(0, 0, 0, 0.045);
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
     color: #3d680b;
   }
 

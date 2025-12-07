@@ -4,6 +4,7 @@ import { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
 import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import AudioPlayerComp from './AudioPlayerComp';
+import { HoverMotionHandler } from '../../helper/domHelpers';
 
 export default function RenderVerseTextViewComp({
     bibleItem,
@@ -60,7 +61,7 @@ export default function RenderVerseTextViewComp({
                     >
                         {textElement}
                         <span
-                            className="text-muted px-1 app-low-hover-visible-10"
+                            className={`text-muted px-1 ${HoverMotionHandler.lowVisibleClassname}-10`}
                             style={{
                                 fontSize: '0.8em',
                                 opacity: '0.6',

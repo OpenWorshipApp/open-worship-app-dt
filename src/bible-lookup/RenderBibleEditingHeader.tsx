@@ -44,8 +44,8 @@ export default function RenderBibleEditingHeader() {
                 />
                 {foundBibleItem === null ? null : (
                     <div
-                        className={`${HoverMotionHandler.lowClassname}-1`}
-                        data-min-parent-width="550"
+                        className={`${HoverMotionHandler.lowVisibleClassname}-0 app-opacity-hover`}
+                        data-opacity-hover="0.1"
                     >
                         <RenderEditingActionButtonsComp
                             bibleItem={foundBibleItem}
@@ -53,8 +53,9 @@ export default function RenderBibleEditingHeader() {
                     </div>
                 )}
                 <div
-                    className={`${HoverMotionHandler.lowClassname}-0`}
+                    className={`${HoverMotionHandler.lowDisplayClassname}-0 app-opacity-hover`}
                     data-min-parent-width="550"
+                    data-opacity-hover="0.2"
                 >
                     {viewController.isAlone ? null : (
                         <i

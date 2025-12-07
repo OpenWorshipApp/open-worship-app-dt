@@ -12,7 +12,7 @@
     position: fixed;
     max-width: 210px;
     min-width: 50px;
-    border-radius: 4px;
+    border-radius: var(--bs-border-radius);
     padding: 10px 0;
     z-index: $z-index-context-menu + 1;
     overflow-x: hidden;

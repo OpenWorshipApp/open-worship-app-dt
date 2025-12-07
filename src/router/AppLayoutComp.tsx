@@ -69,7 +69,7 @@ function TabRenderComp() {
                 return (
                     <li key={i} className="nav-item">
                         <button
-                            className="btn btn-link nav-link"
+                            className="btn btn-sm btn-link nav-link"
                             onClick={handleClicking.bind(null, tab)}
                         >
                             {tab.title}

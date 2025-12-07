@@ -183,7 +183,7 @@ function RenderNameEditorComp() {
     };
     return (
         <div className="m-1 p-1 d-flex align-items-center">
-            Name:
+            Name:{' '}
             <input
                 className="form-control form-control-sm"
                 type="text"

@@ -15,6 +15,7 @@ import { setBibleLookupInputFocus } from './selectionHelpers';
 import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewTitleEditingComp';
 import BibleViewTitleWrapperComp from '../bible-reader/view-extra/BibleViewTitleWrapperComp';
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
+import { HoverMotionHandler } from '../helper/domHelpers';
 
 const LazyBiblePreviewerRenderComp = lazy(() => {
     return import('../bible-reader/BiblePreviewerRenderComp');
@@ -88,7 +89,7 @@ function RenderBodyComp({
                     >
                         <span
                             className={
-                                'pointer app-low-hover-visible-1 ' +
+                                `pointer ${HoverMotionHandler.lowVisibleClassname}-1 ` +
                                 'app-caught-hover-pointer app-pencil-bible-lookup'
                             }
                             title='Hit "Escape" to force edit'

@@ -167,7 +167,8 @@ export function handleAutoHide(
 export class HoverMotionHandler {
     map: WeakMap<HTMLElement, ResizeObserver>;
     static readonly topClassname = 'app-top-hover-motion';
-    static readonly lowClassname = 'app-low-hover-display';
+    static readonly lowDisplayClassname = 'app-low-hover-display';
+    static readonly lowVisibleClassname = 'app-low-hover-visible';
     forceShowClassname = 'force-show';
     constructor() {
         this.map = new WeakMap<HTMLElement, ResizeObserver>();
@@ -225,7 +226,9 @@ export class HoverMotionHandler {
         )) {
             if (
                 childElement instanceof HTMLElement &&
-                childElement.className.includes(HoverMotionHandler.lowClassname)
+                childElement.className.includes(
+                    HoverMotionHandler.lowDisplayClassname,
+                )
             ) {
                 this.init(childElement);
             }

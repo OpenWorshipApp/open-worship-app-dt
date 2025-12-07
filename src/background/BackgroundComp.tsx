@@ -55,7 +55,7 @@ function RenderAudiosTabComp({
             <li className={'nav-item '}>
                 <button
                     className={
-                        'btn btn-link nav-link' +
+                        'btn btn-sm btn-link nav-link' +
                         ` ${isActive ? 'active' : ''}` +
                         ` ${isPlaying ? ' app-on-screen' : ''}`
                     }
