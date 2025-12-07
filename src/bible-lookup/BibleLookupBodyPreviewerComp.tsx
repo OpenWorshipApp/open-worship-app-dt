@@ -47,8 +47,9 @@ function RenderBodyEditingComp() {
                             }}
                         >
                             <span
-                                className="app-caught-hover-pointer"
-                                title='Hit "Escape" to force edit'
+                                className="app-caught-hover-pointer app-opacity-hover"
+                                title='Hit "Escape" to jump back to editing input'
+                                data-opacity-hover="0.2"
                                 onClick={() => {
                                     setBibleLookupInputFocus();
                                 }}
@@ -89,10 +90,11 @@ function RenderBodyComp({
                     >
                         <span
                             className={
-                                `pointer ${HoverMotionHandler.lowVisibleClassname}-1 ` +
-                                'app-caught-hover-pointer app-pencil-bible-lookup'
+                                `pointer ${HoverMotionHandler.lowVisibleClassname}-0 ` +
+                                'app-caught-hover-pointer app-opacity-hover'
                             }
-                            title='Hit "Escape" to force edit'
+                            title="Click to edit this section"
+                            data-opacity-hover="0.2"
                             onClick={() => {
                                 viewController.editBibleItem(bibleItem);
                             }}
