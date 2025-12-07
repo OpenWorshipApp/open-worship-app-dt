@@ -125,7 +125,7 @@
         "dependency-cruiser": "^17.3.2",
         "diff": "^8.0.2",
         "electron": "^39.2.6",
-        "electron-builder": "^26.0.12",
+        "electron-builder": "^26.3.4",
         "eslint": "^9.39.1",
         "json-schema-library": "^10.3.0",
         "lexical": "^0.37.0",
@@ -149,7 +149,7 @@
         "libreoffice-convert": "^1.7.0",
         "lw-share": "^0.0.7",
         "mupdf": "^1.26.4",
-        "tar": "^7.5.1",
+        "tar": "^7.5.2",
         "yt-dlp-wrap": "^2.3.12"
     }
 }
