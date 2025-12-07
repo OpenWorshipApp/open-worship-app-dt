@@ -214,16 +214,18 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     async sendSyncScroll() {
-        this.screenManagerBase.sendScreenMessage(
-            {
-                screenId: this.screenId,
-                type: 'bible-screen-view-scroll',
-                data: {
-                    scroll: this.scroll,
+        setTimeout(() => {
+            this.screenManagerBase.sendScreenMessage(
+                {
+                    screenId: this.screenId,
+                    type: 'bible-screen-view-scroll',
+                    data: {
+                        scroll: this.scroll,
+                    },
                 },
-            },
-            true,
-        );
+                true,
+            );
+        }, 100);
     }
 
     static receiveSyncScroll(message: ScreenMessageType) {
