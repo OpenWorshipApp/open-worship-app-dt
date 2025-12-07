@@ -235,6 +235,12 @@ body {
       margin: auto;
       line-height: 0;
     }
+
+    &.app-hidden-widget-on-screen {
+      * {
+        color: var(--app-yellow-green) !important;
+      }
+    }
   }
 
   .app-popup-full {
