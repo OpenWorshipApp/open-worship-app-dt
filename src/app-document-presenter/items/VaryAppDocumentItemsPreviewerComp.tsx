@@ -6,7 +6,7 @@ import AppDocument from '../../app-document-list/AppDocument';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
-import { DIV_CLASS_NAME } from './varyAppDocumentHelpers';
+import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
 import { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
@@ -48,7 +48,7 @@ export default function VaryAppDocumentItemsPreviewerComp() {
         useAppDocumentItemThumbnailSizeScale();
     return (
         <div
-            className={`${DIV_CLASS_NAME} app-focusable w-100 h-100 pb-5`}
+            className={`${SLIDE_ITEMS_CONTAINER_CLASS_NAME} app-focusable w-100 h-100 pb-5`}
             tabIndex={0}
             style={{ overflow: 'auto' }}
             onWheel={(event) => {

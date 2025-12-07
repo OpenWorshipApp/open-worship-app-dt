@@ -20,6 +20,7 @@ import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
     checkIsVerticalPartialVisible,
+    HIGHLIGHT_SELECTED_CLASSNAME,
 } from '../helper/helpers';
 import {
     ContextMenuItemType,
@@ -137,7 +138,7 @@ export default function BibleViewComp({
             id={id}
             className={
                 'bible-view card flex-fill w-100 h-100 app-top-hover-motion-0' +
-                (isEditing ? ' app-highlight-selected ' : '')
+                (isEditing ? ` ${HIGHLIGHT_SELECTED_CLASSNAME} ` : '')
             }
             style={{ minWidth: '30%' }}
             onDragOver={(event) => {

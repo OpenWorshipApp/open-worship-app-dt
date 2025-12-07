@@ -23,6 +23,7 @@ import { OptionalPromise } from '../helper/typeHelpers';
 import DirSource from '../helper/DirSource';
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 
 export type RenderChildType = (
     filePath: string,
@@ -71,7 +72,9 @@ function genBody(
             backgroundType,
         );
     const isInScreen = selectedBackgroundSrcList.length > 0;
-    const selectedCN = isInScreen ? 'app-highlight-selected animation' : '';
+    const selectedCN = isInScreen
+        ? `${HIGHLIGHT_SELECTED_CLASSNAME} animation`
+        : '';
     const screenKeys = selectedBackgroundSrcList.map(([key]) => key);
     const title =
         `${filePath}` +

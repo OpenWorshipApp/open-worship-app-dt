@@ -21,7 +21,11 @@ import {
 import ShowingScreenIcon from '../../_screen/preview/ShowingScreenIcon';
 import appProvider from '../../server/appProvider';
 import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
-import { changeDragEventStyle, genTimeoutAttempt } from '../../helper/helpers';
+import {
+    changeDragEventStyle,
+    genTimeoutAttempt,
+    HIGHLIGHT_SELECTED_CLASSNAME,
+} from '../../helper/helpers';
 import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
@@ -30,6 +34,7 @@ import AppDocument from '../../app-document-list/AppDocument';
 import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComponent';
 import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
+import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -113,7 +118,7 @@ export function toClassNameHighlight(
     const presenterClassname =
         appProvider.isPageEditor || !isOnScreen
             ? ''
-            : 'app-highlight-selected animation';
+            : `${HIGHLIGHT_SELECTED_CLASSNAME} animation`;
     return {
         selectedList: ScreenVaryAppDocumentManager.getDataList(
             varyAppDocumentItem.filePath,
@@ -262,7 +267,8 @@ export default function SlideItemRenderComp({
 }>) {
     const { scale, setTargetDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);
-    const { activeCN, presenterCN } = toClassNameHighlight(slide, selectedItem);
+    const { activeCN: activeClassName, presenterCN: presenterClassName } =
+        toClassNameHighlight(slide, selectedItem);
     const attachedBackgroundData = useAttachedBackgroundData(
         slide.filePath,
         slide.id,
@@ -295,12 +301,13 @@ export default function SlideItemRenderComp({
         <div
             className={
                 'data-vary-app-document-item card' +
-                ` app-caught-hover-pointer ${activeCN} ${presenterCN}` +
-                ' app-overflow-hidden'
+                ` app-caught-hover-pointer ${activeClassName} ` +
+                `${presenterClassName} app-overflow-hidden`
             }
             ref={setTargetDiv}
             style={{ width: `${width}px` }}
             data-vary-app-document-item-id={slide.id}
+            data-scroll-container-selector={`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`}
             draggable
             onDragOver={(event) => {
                 event.preventDefault();

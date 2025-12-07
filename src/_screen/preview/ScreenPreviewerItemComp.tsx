@@ -8,7 +8,10 @@ import { useScreenManagerContext } from '../managers/screenManagerHooks';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import ScreenPreviewerHeaderComp from './ScreenPreviewerHeaderComp';
 import ScreenPreviewerFooterComp from './ScreenPreviewerFooterComp';
-import { RECEIVING_DROP_CLASSNAME } from '../../helper/helpers';
+import {
+    HIGHLIGHT_SELECTED_CLASSNAME,
+    RECEIVING_DROP_CLASSNAME,
+} from '../../helper/helpers';
 
 export default function ScreenPreviewerItemComp({
     width,
@@ -35,7 +38,9 @@ export default function ScreenPreviewerItemComp({
             screenManager.unregisterEventListener(registeredEvent);
         };
     }, [screenManager]);
-    const selectedCN = screenManager.isSelected ? 'app-highlight-selected' : '';
+    const selectedCN = screenManager.isSelected
+        ? HIGHLIGHT_SELECTED_CLASSNAME
+        : '';
     const height = Math.round(
         width * (screenManagerDim.height / screenManagerDim.width),
     );
