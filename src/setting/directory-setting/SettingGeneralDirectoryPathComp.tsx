@@ -186,7 +186,7 @@ function RenderBodyComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
         }
     }, [dirSource]);
     return (
-        <div className="card">
+        <div className="card h-100">
             <div className="card-header">`Path Settings</div>
             <div className="card-body w-100 p-2">
                 <RenderParentDirectoryComp dirSource={dirSource} />
