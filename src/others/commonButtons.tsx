@@ -105,7 +105,7 @@ export function BibleLookupButtonComp() {
     );
     return (
         <button
-            className="btn btn-sm btn-labeled btn-primary"
+            className="btn btn-sm btn-labeled btn-primary app-zero-border-radius"
             style={{ width: '220px' }}
             title={`Bible lookup [${toShortcutKey(openBibleEventMap)}]`}
             type="button"
