@@ -135,6 +135,17 @@ export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
         const locale = await getBibleLocale(bibleKey);
         num = await fromLocaleNum(locale, localeNum);
     }
+    if (num === null) {
+        try {
+            const parsed = Number.parseInt(
+                localeNum.replaceAll(/[^\d]/g, ''),
+                10,
+            );
+            if (!Number.isNaN(parsed)) {
+                num = parsed;
+            }
+        } catch (_error) {}
+    }
     await localeNumCache.set(cacheKey, num);
     return num;
 }
