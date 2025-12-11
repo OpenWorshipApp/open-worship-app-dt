@@ -4,7 +4,7 @@
     "author": "Open Worship Foundation <owf2025@gmail.com> (https://github.com/orgs/OpenWorshipApp/people)",
     "gitRepository": "https://github.com/OpenWorshipApp/open-worship-app-dt",
     "homepage": "https://www.openworship.app",
-    "version": "2025.11.22",
+    "version": "2025.12.10",
     "type": "commonjs",
     "main": "./electron-build/electron/index.js",
     "scripts": {
