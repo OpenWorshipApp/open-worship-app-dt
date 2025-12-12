@@ -15,15 +15,15 @@ let lwShareController: ElectronLWShareController | null = null;
 let aboutController: ElectronAboutController | null = null;
 export default class ElectronAppController {
     constructor() {
-        this.settingController.syncMainWindow(this.mainWin);
+        this.settingManager.syncMainWindow(this.mainWin);
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) {
-                this.settingController.syncMainWindow(this.mainWin);
+                this.settingManager.syncMainWindow(this.mainWin);
             }
         });
         const webContents = this.mainWin.webContents;
         webContents.on('did-finish-load', () => {
-            this.settingController.mainHtmlPath = getCurrent(webContents);
+            this.settingManager.mainHtmlPath = getCurrent(webContents);
         });
     }
 
@@ -31,7 +31,7 @@ export default class ElectronAppController {
         return this.mainController.win;
     }
 
-    get settingController() {
+    get settingManager() {
         if (settingManager === null) {
             settingManager = new ElectronSettingManager();
         }
@@ -39,7 +39,7 @@ export default class ElectronAppController {
     }
 
     get mainController() {
-        return ElectronMainController.getInstance(this.settingController);
+        return ElectronMainController.getInstance(this.settingManager);
     }
 
     get finderController() {
