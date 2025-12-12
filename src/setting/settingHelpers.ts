@@ -1,20 +1,18 @@
 import { setSetting } from '../helper/settingHelpers';
-import { goToPath } from '../router/routeHelpers';
 import appProvider from '../server/appProvider';
 
 export const SETTING_SETTING_NAME = 'setting-tabs';
 
-export function gotoSettingPage() {
-    goToPath(appProvider.settingHomePage);
+export function openSettingPage() {
+    appProvider.messageUtils.sendData('main:app:open-setting');
 }
-(window as any).gotoSettingPage = gotoSettingPage;
 
-export function goToGeneralSetting() {
+export function openGeneralSetting() {
     setSetting(SETTING_SETTING_NAME, 'g');
-    gotoSettingPage();
+    openSettingPage();
 }
 
-export function goToBibleSetting() {
+export function openBibleSetting() {
     setSetting(SETTING_SETTING_NAME, 'b');
-    gotoSettingPage();
+    openSettingPage();
 }

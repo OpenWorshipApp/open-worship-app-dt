@@ -38,7 +38,7 @@ import {
     checkForUpdateSilently,
 } from './server/appHelpers';
 import { useAppEffectAsync } from './helper/debuggerHelpers';
-import { goToGeneralSetting } from './setting/settingHelpers';
+import { openGeneralSetting } from './setting/settingHelpers';
 import { applyDarkModeToApp, getReactRoot } from './initHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
@@ -56,7 +56,7 @@ function useCheckSetting() {
                     'select a parent directory.',
             );
             if (isOk) {
-                goToGeneralSetting();
+                openGeneralSetting();
             }
             return;
         }

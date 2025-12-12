@@ -4,24 +4,24 @@ import electron, { BrowserWindow } from 'electron';
 
 import { htmlFiles } from './fsServe';
 
-const settingObject: {
-    mainWinBounds: Electron.Rectangle | null;
-    appScreenDisplayId: number | null;
-    mainHtmlPath: string;
-} = {
-    mainWinBounds: null,
-    appScreenDisplayId: null,
-    mainHtmlPath: htmlFiles.presenter,
-};
 export default class ElectronSettingManager {
+    settingObject: {
+        mainWinBounds: Electron.Rectangle | null;
+        appScreenDisplayId: number | null;
+        mainHtmlPath: string;
+    } = {
+        mainWinBounds: null,
+        appScreenDisplayId: null,
+        mainHtmlPath: htmlFiles.presenter,
+    };
     constructor() {
         try {
             const str = fs.readFileSync(this.fileSettingPath, 'utf8');
             const json = JSON.parse(str);
-            settingObject.mainWinBounds = json.mainWinBounds;
-            settingObject.appScreenDisplayId = json.appScreenDisplayId;
-            settingObject.mainHtmlPath =
-                json.mainHtmlPath ?? settingObject.mainHtmlPath;
+            this.settingObject.mainWinBounds = json.mainWinBounds;
+            this.settingObject.appScreenDisplayId = json.appScreenDisplayId;
+            this.settingObject.mainHtmlPath =
+                json.mainHtmlPath ?? this.settingObject.mainHtmlPath;
         } catch (error: any) {
             if (error.code === 'ENOENT') {
                 this.save();
@@ -38,20 +38,36 @@ export default class ElectronSettingManager {
 
     get isWinMaximized() {
         return (
-            (settingObject.mainWinBounds?.width ?? 0) >=
+            (this.settingObject.mainWinBounds?.width ?? 0) >=
                 this.primaryDisplay.bounds.width &&
-            (settingObject.mainWinBounds?.height ?? 0) >=
+            (this.settingObject.mainWinBounds?.height ?? 0) >=
                 this.primaryDisplay.bounds.height
         );
     }
 
     get mainWinBounds() {
-        return settingObject.mainWinBounds ?? this.primaryDisplay.bounds;
+        return this.settingObject.mainWinBounds ?? this.primaryDisplay.bounds;
     }
 
     set mainWinBounds(bounds) {
-        settingObject.mainWinBounds = bounds;
+        this.settingObject.mainWinBounds = bounds;
         this.save();
+    }
+
+    applyMainWindowBounds(
+        win: BrowserWindow,
+        { width, height }: { width?: number; height?: number } = {},
+    ) {
+        const [x, y] = win.getPosition();
+        const [currentWidth, currentHeight] = win.getSize();
+        const mainWinBounds = this.mainWinBounds;
+        this.mainWinBounds = {
+            ...mainWinBounds,
+            x,
+            y,
+            width: width ?? currentWidth,
+            height: height ?? currentHeight,
+        };
     }
 
     restoreMainBounds(win: BrowserWindow) {
@@ -77,7 +93,7 @@ export default class ElectronSettingManager {
     save() {
         fs.writeFileSync(
             this.fileSettingPath,
-            JSON.stringify(settingObject),
+            JSON.stringify(this.settingObject),
             'utf8',
         );
     }
@@ -88,28 +104,25 @@ export default class ElectronSettingManager {
             win.maximize();
         }
         win.on('resize', () => {
-            const [width, height] = win.getSize();
-            this.mainWinBounds = { ...this.mainWinBounds, width, height };
+            this.applyMainWindowBounds(win);
         });
         win.on('maximize', () => {
-            this.mainWinBounds = {
-                ...this.mainWinBounds,
+            this.applyMainWindowBounds(win, {
                 width: this.primaryDisplay.bounds.width,
                 height: this.primaryDisplay.bounds.height,
-            };
+            });
         });
         win.on('move', () => {
-            const [x, y] = win.getPosition();
-            this.mainWinBounds = { ...this.mainWinBounds, x, y };
+            this.applyMainWindowBounds(win);
         });
     }
 
     get mainHtmlPath() {
-        return settingObject.mainHtmlPath;
+        return this.settingObject.mainHtmlPath;
     }
 
     set mainHtmlPath(path: string) {
-        settingObject.mainHtmlPath = path;
+        this.settingObject.mainHtmlPath = path;
         this.save();
     }
 }

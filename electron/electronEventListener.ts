@@ -175,12 +175,15 @@ export function initEventScreen(appController: ElectronAppController) {
 }
 
 export function initEventFinder(appController: ElectronAppController) {
-    ipcMain.on('main:app:open-finder', () => {
-        appController.finderController.open(appController.mainWin);
-    });
-
     ipcMain.on('finder:app:close-finder', () => {
         attemptClosing(appController.finderController);
+    });
+
+    ipcMain.on('main:app:open-setting', () => {
+        appController.settingController.open(
+            appController.mainWin,
+            appController.settingManager,
+        );
     });
 
     const mainWinWebContents = appController.mainWin.webContents;
@@ -287,10 +290,10 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             const error = await officeFileToPdf(officeFilePath, pdfFilePath);
-            if (error !== null) {
-                appController.mainController.sendData(replyEventName, error);
-            } else {
+            if (error === null) {
                 appController.mainController.sendData(replyEventName);
+            } else {
+                appController.mainController.sendData(replyEventName, error);
             }
         },
     );
@@ -340,8 +343,17 @@ export function initEventOther(appController: ElectronAppController) {
     ipcMain.on(
         'main:app:set-theme',
         (_event, theme: 'dark' | 'light' | 'system') => {
+            if (
+                ['dark', 'light', 'system'].includes(theme) === false ||
+                nativeTheme.themeSource === theme
+            ) {
+                return;
+            }
             nativeTheme.themeSource = theme;
             appController.resetThemeBackgroundColor();
         },
     );
+    ipcMain.on('main:app:get-theme', (event) => {
+        event.returnValue = nativeTheme.themeSource;
+    });
 }

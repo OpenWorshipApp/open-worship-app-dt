@@ -8,7 +8,7 @@ import {
 } from '../bible-reader/LookupBibleItemController';
 import RenderVerseOptionsComp from './RenderVerseOptionsComp';
 import { use } from 'react';
-import { goToBibleSetting } from '../setting/settingHelpers';
+import { openBibleSetting } from '../setting/settingHelpers';
 import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
 
 export default function RenderLookupSuggestionComp({
@@ -110,7 +110,7 @@ export function BibleNotAvailableComp({
                 <button
                     className="btn btn-primary"
                     onClick={() => {
-                        goToBibleSetting();
+                        openBibleSetting();
                     }}
                 >
                     <span>`Go to Bible Setting </span>

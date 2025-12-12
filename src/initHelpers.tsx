@@ -2,7 +2,6 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'bootstrap/dist/css/bootstrap.css';
 
 import { createRoot } from 'react-dom/client';
-import { getSetting, setSetting } from './helper/settingHelpers';
 import appProvider from './server/appProvider';
 
 export const darkModeHook = {
@@ -21,17 +20,13 @@ export function applyDarkModeToApp() {
 
 export const themeOptions = ['light', 'dark', 'system'] as const;
 export type ThemeOptionType = (typeof themeOptions)[number];
-const DARK_MODE_SETTING_NAME = 'dark-mode-setting';
 export function getThemeSourceSetting(): ThemeOptionType {
-    let themeSource: any = getSetting(DARK_MODE_SETTING_NAME);
-    if (!themeOptions.includes(themeSource)) {
-        themeSource = 'system';
-    }
-    appProvider.messageUtils.sendData('main:app:set-theme', themeSource);
+    const themeSource =
+        appProvider.messageUtils.sendDataSync('main:app:get-theme');
     return themeSource;
 }
 export function setThemeSourceSetting(themeSource: ThemeOptionType) {
-    setSetting(DARK_MODE_SETTING_NAME, themeSource);
+    appProvider.messageUtils.sendData('main:app:set-theme', themeSource);
     applyDarkModeToApp();
 }
 

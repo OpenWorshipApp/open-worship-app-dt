@@ -7,7 +7,7 @@ import {
 } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
-import { gotoSettingPage } from '../setting/settingHelpers';
+import { openSettingPage } from '../setting/settingHelpers';
 import appProvider from '../server/appProvider';
 
 export function QuitCurrentPageComp({
@@ -36,7 +36,7 @@ export function SettingButtonComp() {
             className="btn btn-outline-success rotating-hover"
             title="`Setting"
             onClick={() => {
-                gotoSettingPage();
+                openSettingPage();
             }}
         >
             <i className="bi bi-gear-wide-connected" />
