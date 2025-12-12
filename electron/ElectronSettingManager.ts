@@ -13,7 +13,7 @@ const settingObject: {
     appScreenDisplayId: null,
     mainHtmlPath: htmlFiles.presenter,
 };
-export default class ElectronSettingController {
+export default class ElectronSettingManager {
     constructor() {
         try {
             const str = fs.readFileSync(this.fileSettingPath, 'utf8');

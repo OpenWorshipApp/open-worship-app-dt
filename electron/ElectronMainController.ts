@@ -2,7 +2,7 @@ import { BrowserWindow, Menu, MenuItem, shell } from 'electron';
 
 import { channels, ScreenMessageType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
-import ElectronSettingController from './ElectronSettingController';
+import ElectronSettingManager from './ElectronSettingManager';
 import {
     attemptClosing,
     getAppThemeBackgroundColor,
@@ -13,8 +13,8 @@ let instance: ElectronMainController | null = null;
 export default class ElectronMainController {
     win: BrowserWindow;
 
-    constructor(settingController: ElectronSettingController) {
-        this.win = this.createWindow(settingController);
+    constructor(settingManager: ElectronSettingManager) {
+        this.win = this.createWindow(settingManager);
     }
 
     previewPdf(pdfFilePath: string) {
@@ -25,8 +25,8 @@ export default class ElectronMainController {
         pdfWin.loadURL(pdfFilePath);
     }
 
-    createWindow(settingController: ElectronSettingController) {
-        const routeProps = genRoutProps(settingController.mainHtmlPath);
+    createWindow(settingManager: ElectronSettingManager) {
+        const routeProps = genRoutProps(settingManager.mainHtmlPath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
@@ -97,9 +97,9 @@ export default class ElectronMainController {
         });
     }
 
-    static getInstance(settingController: ElectronSettingController) {
+    static getInstance(settingManager: ElectronSettingManager) {
         if (instance === null) {
-            instance = new this(settingController);
+            instance = new this(settingManager);
         }
         return instance;
     }

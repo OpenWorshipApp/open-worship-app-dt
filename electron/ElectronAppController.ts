@@ -2,14 +2,14 @@ import { app, BrowserWindow } from 'electron';
 
 import ElectronFinderController from './ElectronFinderController';
 import ElectronMainController from './ElectronMainController';
-import ElectronSettingController from './ElectronSettingController';
+import ElectronSettingManager from './ElectronSettingManager';
 import { getCurrent } from './fsServe';
 import ElectronAboutController from './ElectronAboutController';
 import { getAppThemeBackgroundColor } from './electronHelpers';
 import ElectronLWShareController from './ElectronLWShareController';
 
 let instance: ElectronAppController | null = null;
-let settingController: ElectronSettingController | null = null;
+let settingManager: ElectronSettingManager | null = null;
 let finderController: ElectronFinderController | null = null;
 let lwShareController: ElectronLWShareController | null = null;
 let aboutController: ElectronAboutController | null = null;
@@ -32,10 +32,10 @@ export default class ElectronAppController {
     }
 
     get settingController() {
-        if (settingController === null) {
-            settingController = new ElectronSettingController();
+        if (settingManager === null) {
+            settingManager = new ElectronSettingManager();
         }
-        return settingController;
+        return settingManager;
     }
 
     get mainController() {
