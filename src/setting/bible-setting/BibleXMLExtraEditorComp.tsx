@@ -13,8 +13,8 @@ import { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
 import bibleNewLinesSchemaJson from './schemas/bibleExtraSchema.json';
-import appProvider from '../../server/appProvider';
 import { AnyObjectType } from '../../helper/typeHelpers';
+import { forceReloadAppWindows } from '../settingHelpers';
 
 export const schemaHandler: SchemaNode = compileSchema(bibleNewLinesSchemaJson);
 export const uri = Uri.parse('bible-extra');
@@ -40,7 +40,7 @@ async function handleSaving(bibleKey: string, newJsonData: BibleXMLExtraType) {
     };
     const isSuccess = await saveJsonDataToXMLfile(newXmlBibleData);
     if (isSuccess) {
-        appProvider.reload();
+        forceReloadAppWindows();
     }
 }
 

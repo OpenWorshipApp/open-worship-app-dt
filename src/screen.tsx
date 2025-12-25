@@ -11,8 +11,11 @@ import {
     removeDomTitle,
 } from './helper/domHelpers';
 
-const container = document.getElementById('root');
-if (container !== null) {
+function main() {
+    const container = document.getElementById('root');
+    if (container === null) {
+        throw new Error('Root container not found');
+    }
     addDomChangeEventListener(removeDomTitle);
     const root = createRoot(container);
     root.render(
@@ -20,21 +23,25 @@ if (container !== null) {
             <ScreenAppComp />
         </StrictMode>,
     );
+
+    document.addEventListener('keyup', function (event) {
+        if (
+            (event.ctrlKey || event.altKey) &&
+            ['ArrowLeft', 'ArrowRight'].includes(event.key)
+        ) {
+            const isNext = event.key === 'ArrowRight';
+            appProvider.messageUtils.sendData(
+                'screen:app:change-bible',
+                isNext,
+            );
+        }
+    });
+
+    document.body.style.backgroundColor = 'transparent';
+
+    console.log('Is zoom', checkIsZoomed());
+    window.addEventListener('resize', () => {
+        appProvider.reload();
+    });
 }
-
-document.addEventListener('keyup', function (event) {
-    if (
-        (event.ctrlKey || event.altKey) &&
-        ['ArrowLeft', 'ArrowRight'].includes(event.key)
-    ) {
-        const isNext = event.key === 'ArrowRight';
-        appProvider.messageUtils.sendData('screen:app:change-bible', isNext);
-    }
-});
-
-document.body.style.backgroundColor = 'transparent';
-
-console.log('Is zoom', checkIsZoomed());
-window.addEventListener('resize', () => {
-    appProvider.reload();
-});
+main();

@@ -18,6 +18,7 @@ import { handleError } from '../../helper/errorHelpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { appLocalStorage } from './appLocalStorage';
 import FileSource from '../../helper/FileSource';
+import { applyStore } from '../SettingApplyComp';
 
 export function getDefaultDataDir() {
     const desktopPath = getDesktopPath();
@@ -54,7 +55,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
                 );
             }
         }
-        appProvider.reload();
+        applyStore.pendingApply();
     } catch (error: any) {
         if (!error.message.includes('file already exists')) {
             handleError(error);

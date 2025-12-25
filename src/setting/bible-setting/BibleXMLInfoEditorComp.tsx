@@ -12,7 +12,7 @@ import BibleXMLEditorComp from './BibleXMLEditorComp';
 import { AnyObjectType } from '../../helper/typeHelpers';
 
 import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
-import appProvider from '../../server/appProvider';
+import { forceReloadAppWindows } from '../settingHelpers';
 
 export const schemaHandler: SchemaNode = compileSchema(bibleInfoSchemaJson);
 export const uri = Uri.parse('bible-info');
@@ -23,7 +23,7 @@ async function handleSaving(
 ) {
     const isSuccess = await updateBibleXMLInfo(oldBibleInfo, newBibleInfo);
     if (isSuccess) {
-        appProvider.reload();
+        forceReloadAppWindows();
     }
 }
 

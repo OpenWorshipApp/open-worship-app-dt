@@ -271,8 +271,8 @@ export class InputContextMenuHandler {
         }
         const inputElements = element.querySelectorAll(
             'input[type="text"], input[type="search"], ' +
-            'input[type="email"], input[type="password"],' +
-            ' input[type="number"], input[type="tel"]',
+                'input[type="email"], input[type="password"],' +
+                ' input[type="number"], input[type="tel"]',
         );
         for (const childElement of inputElements) {
             this.init(childElement as HTMLInputElement);
@@ -295,5 +295,5 @@ export async function removeDomTitle(element: Node, eventType: MutationType) {
 }
 
 export function checkIsZoomed() {
-    return window.outerWidth / window.innerWidth !== 1
+    return window.outerWidth / window.innerWidth !== 1;
 }

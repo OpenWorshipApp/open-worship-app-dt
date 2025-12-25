@@ -79,12 +79,26 @@ export default class ElectronAppController {
         return settingController;
     }
 
+    allWindows() {
+        return [
+            this.mainController.win,
+            this.finderController.win,
+            this.lwShareController.win,
+            this.aboutController.win,
+            this.settingController.win,
+        ].filter((win): win is BrowserWindow => win !== null);
+    }
+
     resetThemeBackgroundColor() {
         const backgroundColor = getAppThemeBackgroundColor();
-        this.mainWin.setBackgroundColor(backgroundColor);
-        this.finderController.win?.setBackgroundColor(backgroundColor);
-        this.lwShareController.win?.setBackgroundColor(backgroundColor);
-        this.aboutController.win?.setBackgroundColor(backgroundColor);
-        this.settingController.win?.setBackgroundColor(backgroundColor);
+        this.allWindows().forEach((win) => {
+            win.setBackgroundColor(backgroundColor);
+        });
+    }
+
+    reloadAll() {
+        this.allWindows().forEach((win) => {
+            win.reload();
+        });
     }
 }

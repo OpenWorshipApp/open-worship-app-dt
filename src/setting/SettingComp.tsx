@@ -6,6 +6,7 @@ import { useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { QuitCurrentPageComp } from '../others/commonButtons';
 import { SETTING_SETTING_NAME } from './settingHelpers';
+import SettingApplyComp from './SettingApplyComp';
 
 const LazySettingGeneralComp = lazy(() => {
     return import('./SettingGeneralComp');
@@ -52,6 +53,7 @@ export default function SettingComp() {
                         right: 0,
                     }}
                 >
+                    <SettingApplyComp />
                     <QuitCurrentPageComp title="Quit Setting" />
                 </div>
             </div>

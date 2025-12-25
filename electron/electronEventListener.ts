@@ -356,4 +356,8 @@ export function initEventOther(appController: ElectronAppController) {
     ipcMain.on('main:app:get-theme', (event) => {
         event.returnValue = nativeTheme.themeSource;
     });
+
+    ipcMain.on('all:app:force-reload', () => {
+        appController.reloadAll();
+    });
 }

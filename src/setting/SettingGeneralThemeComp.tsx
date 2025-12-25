@@ -40,7 +40,7 @@ export default function SettingGeneralThemeComp() {
     }, []);
 
     return (
-        <div className="card">
+        <div className="card m-1">
             <div className="card-header">`Theme</div>
             <div className="card-body">
                 <select
