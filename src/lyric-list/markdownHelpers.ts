@@ -31,7 +31,6 @@ function wrapHTML({
         .dark::-webkit-scrollbar-track {
             box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
             background-color: #adb5bd;
-            border-radius: 10px;
         }
         .dark::-webkit-scrollbar {
             width: 7px;
@@ -39,7 +38,6 @@ function wrapHTML({
             background-color: #6c757d;
         }
         .dark::-webkit-scrollbar-thumb {
-            border-radius: 10px;
             background-color: #6c757d;
             background-image: gradient(linear, 40% 0%, 75% 84%, from(#343a40), to(#343a40), color-stop(0.6, #6c757d));
         }

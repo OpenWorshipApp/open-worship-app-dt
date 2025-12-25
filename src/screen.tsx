@@ -5,7 +5,11 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import ScreenAppComp from './_screen/ScreenAppComp';
 import appProvider from './server/appProvider';
-import { addDomChangeEventListener, removeDomTitle } from './helper/domHelpers';
+import {
+    addDomChangeEventListener,
+    checkIsZoomed,
+    removeDomTitle,
+} from './helper/domHelpers';
 
 const container = document.getElementById('root');
 if (container !== null) {
@@ -29,3 +33,8 @@ document.addEventListener('keyup', function (event) {
 });
 
 document.body.style.backgroundColor = 'transparent';
+
+console.log('Is zoom', checkIsZoomed());
+window.addEventListener('resize', () => {
+    appProvider.reload();
+});
