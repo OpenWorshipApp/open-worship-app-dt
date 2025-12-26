@@ -5,6 +5,7 @@ import { genRoutProps } from './protocolHelpers';
 import ElectronSettingManager from './ElectronSettingManager';
 import {
     attemptClosing,
+    genCenterSubDisplay,
     getAppThemeBackgroundColor,
     isSecured,
 } from './electronHelpers';
@@ -27,19 +28,37 @@ export default class ElectronMainController {
 
     createWindow(settingManager: ElectronSettingManager) {
         const routeProps = genRoutProps(settingManager.mainHtmlPath);
+        const webPreferences = {
+            webSecurity: isSecured,
+            nodeIntegration: true,
+            contextIsolation: false,
+            preload: routeProps.preloadFilePath,
+        };
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
-            webPreferences: {
-                webSecurity: isSecured,
-                nodeIntegration: true,
-                contextIsolation: false,
-                preload: routeProps.preloadFilePath,
-            },
+            webPreferences,
         });
-        win.webContents.setWindowOpenHandler(({ url }) => {
-            shell.openExternal(url);
+        win.webContents.setWindowOpenHandler((options) => {
+            if (options.frameName === 'popup_window') {
+                const bounds = win.getBounds();
+                const subDisplay = genCenterSubDisplay({
+                    displayPercent: 0.9,
+                    x: bounds.x,
+                    y: bounds.y,
+                    width: bounds.width,
+                    height: bounds.height,
+                });
+                return {
+                    action: 'allow',
+                    overrideBrowserWindowOptions: {
+                        ...subDisplay,
+                        webPreferences,
+                    },
+                };
+            }
+            shell.openExternal(options.url);
             return { action: 'deny' };
         });
         win.on('closed', () => {

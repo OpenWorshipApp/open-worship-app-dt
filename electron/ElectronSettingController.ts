@@ -4,6 +4,7 @@ import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {
     attemptClosing,
+    genCenterSubDisplay,
     getAppThemeBackgroundColor,
     isSecured,
 } from './electronHelpers';
@@ -16,32 +17,12 @@ export default class ElectronSettingController {
     win: BrowserWindow | null = null;
     mainWin: BrowserWindow | null = null;
 
-    _resizeCenterSubDisplay({
-        x,
-        y,
-        width,
-        height,
-    }: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    }) {
-        const offsetWidth = width * (1 - displayPercent);
-        const offsetHeight = height * (1 - displayPercent);
-        return {
-            x: Math.floor(x + offsetWidth / 2),
-            y: Math.floor(y + offsetHeight / 2),
-            width: Math.floor(width - offsetWidth),
-            height: Math.floor(height - offsetHeight),
-        };
-    }
-
     getSubDisplay(settingManager: ElectronSettingManager) {
         const mainWinBounds = settingManager.settingObject.mainWinBounds;
         if (mainWinBounds === null) {
             const primaryDisplay = settingManager.primaryDisplay;
-            return this._resizeCenterSubDisplay({
+            return genCenterSubDisplay({
+                displayPercent,
                 x: primaryDisplay.bounds.x,
                 y: primaryDisplay.bounds.y,
                 width: primaryDisplay.bounds.width,
@@ -49,7 +30,8 @@ export default class ElectronSettingController {
             });
         }
         const { x, y, width, height } = mainWinBounds;
-        return this._resizeCenterSubDisplay({
+        return genCenterSubDisplay({
+            displayPercent,
             x,
             y,
             width,

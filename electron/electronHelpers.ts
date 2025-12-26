@@ -156,3 +156,26 @@ export function getCenterScreenPosition(
     const y = mainBounds.y + (mainBounds.height - height) / 2;
     return { x, y, width, height };
 }
+
+export function genCenterSubDisplay({
+    displayPercent,
+    x,
+    y,
+    width,
+    height,
+}: {
+    displayPercent: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}) {
+    const offsetWidth = width * (1 - displayPercent);
+    const offsetHeight = height * (1 - displayPercent);
+    return {
+        x: Math.floor(x + offsetWidth / 2),
+        y: Math.floor(y + offsetHeight / 2),
+        width: Math.floor(width - offsetWidth),
+        height: Math.floor(height - offsetHeight),
+    };
+}
