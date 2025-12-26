@@ -124,6 +124,6 @@ export default class ElectronMainController {
     }
 
     gotoSettingHomePage() {
-        this.win.webContents.executeJavaScript('gotoSettingPage();');
+        this.win.webContents.executeJavaScript('openBibleSetting();');
     }
 }

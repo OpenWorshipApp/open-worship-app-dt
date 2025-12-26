@@ -17,6 +17,7 @@ export function openBibleSetting() {
     setSetting(SETTING_SETTING_NAME, 'b');
     openSettingPage();
 }
+(globalThis as any).openBibleSetting = openBibleSetting;
 
 export const APP_FONT_FAMILY_SETTING_NAME = 'app-font-family';
 export const APP_FONT_WEIGHT_SETTING_NAME = 'app-font-weight';
