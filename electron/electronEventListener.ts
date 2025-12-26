@@ -7,7 +7,12 @@ import electron, {
 import fontList from 'font-list';
 
 import ElectronAppController from './ElectronAppController';
-import { attemptClosing, goDownload, tarExtract } from './electronHelpers';
+import {
+    attemptClosing,
+    goDownload,
+    isMac,
+    tarExtract,
+} from './electronHelpers';
 import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
@@ -363,14 +368,16 @@ export function initEventOther(appController: ElectronAppController) {
     });
 
     ipcMain.on('main:app:ask-camera-access', () => {
-        systemPreferences
-            .askForMediaAccess('camera')
-            .then((access) => {
-                console.log('Camera access:', access);
-            })
-            .catch((error) => {
-                console.error('Camera access error:', error);
-            });
+        if (isMac) {
+            systemPreferences
+                .askForMediaAccess('camera')
+                .then((access) => {
+                    console.log('Camera access:', access);
+                })
+                .catch((error) => {
+                    console.error('Camera access error:', error);
+                });
+        }
     });
 
     ipcMain.on('all:app:force-reload', () => {
