@@ -27,11 +27,13 @@ export default class ElectronSettingController {
         width: number;
         height: number;
     }) {
+        const offsetWidth = (width * (1 - displayPercent));
+        const offsetHeight = (height * (1 - displayPercent));
         return {
-            x: Math.floor(x - (width * (1 - displayPercent)) / 2),
-            y: Math.floor(y - (height * (1 - displayPercent)) / 2),
-            width: Math.floor(width * displayPercent),
-            height: Math.floor(height * displayPercent),
+            x: Math.floor(x + offsetWidth / 2),
+            y: Math.floor(y + offsetHeight / 2),
+            width: Math.floor(width - offsetWidth),
+            height: Math.floor(height - offsetHeight),
         };
     }
 
