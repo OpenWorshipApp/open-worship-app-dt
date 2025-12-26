@@ -11,7 +11,7 @@ import LyricEditingManager, {
 } from './LyricEditingManager';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import AppRangeComp from '../others/AppRangeComp';
-import { checkIsDarkMode } from '../initHelpers';
+import { checkIsDarkMode } from '../others/initHelpers';
 
 function genOptions(lyricEditingManager: LyricEditingManager) {
     const isDarkMode = checkIsDarkMode();

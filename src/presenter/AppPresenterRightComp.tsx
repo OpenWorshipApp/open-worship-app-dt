@@ -1,13 +1,13 @@
 import { lazy } from 'react';
 
-import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
-import ResizeActorComp from './resize-actor/ResizeActorComp';
+import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
 
 const LazyBibleListComp = lazy(() => {
-    return import('./bible-list/BibleListComp');
+    return import('../bible-list/BibleListComp');
 });
 const LazyMiniScreenComp = lazy(() => {
-    return import('./_screen/preview/MiniScreenComp');
+    return import('../_screen/preview/MiniScreenComp');
 });
 
 export default function AppPresenterRightComp() {

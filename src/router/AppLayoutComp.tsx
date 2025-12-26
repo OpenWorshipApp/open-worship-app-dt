@@ -44,7 +44,7 @@ import { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers
 const tabs: TabOptionType[] = [];
 if (!appProvider.isPagePresenter) {
     tabs.push(presenterTab);
-} else if (!appProvider.isPageEditor) {
+} else if (!appProvider.isPageAppDocumentEditor) {
     tabs.push(editorTab);
 }
 tabs.push(readerTab);

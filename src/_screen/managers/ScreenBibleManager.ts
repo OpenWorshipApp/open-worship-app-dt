@@ -40,7 +40,7 @@ import {
     BibleItemDataType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
-import { getColorParts } from '../../initHelpers';
+import { getColorParts } from '../../others/initHelpers';
 
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';

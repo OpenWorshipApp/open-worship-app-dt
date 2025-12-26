@@ -1,4 +1,4 @@
-import '../appInit.scss';
+import '../others/appInit.scss';
 import '../others/theme-override-dark.scss';
 import '../others/theme-override-light.scss';
 import './FinderAppComp.scss';
@@ -7,7 +7,7 @@ import { useState, useCallback, ChangeEvent } from 'react';
 
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { LookupOptions, findString } from './finderHelpers';
-import { applyDarkModeToApp } from '../initHelpers';
+import { applyDarkModeToApp } from '../others/initHelpers';
 
 export default function FinderAppComp({
     onClose,

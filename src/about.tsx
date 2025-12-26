@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 
 import AboutComp from './others/AboutComp';
-import { getReactRoot } from './initHelpers';
+import { getReactRoot } from './others/initHelpers';
 
 const root = getReactRoot();
 root.render(

@@ -27,8 +27,8 @@ export default class ElectronSettingController {
         width: number;
         height: number;
     }) {
-        const offsetWidth = (width * (1 - displayPercent));
-        const offsetHeight = (height * (1 - displayPercent));
+        const offsetWidth = width * (1 - displayPercent);
+        const offsetHeight = height * (1 - displayPercent);
         return {
             x: Math.floor(x + offsetWidth / 2),
             y: Math.floor(y + offsetHeight / 2),

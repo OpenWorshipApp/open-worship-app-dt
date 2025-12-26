@@ -1,17 +1,17 @@
 import { lazy } from 'react';
 
-import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
-import ResizeActorComp from './resize-actor/ResizeActorComp';
-import appProvider from './server/appProvider';
+import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import appProvider from '../server/appProvider';
 
 const LazyAppDocumentListComp = lazy(() => {
-    return import('./app-document-list/AppDocumentListComp');
+    return import('../app-document-list/AppDocumentListComp');
 });
 const LazyLyricListComp = lazy(() => {
-    return import('./lyric-list/LyricListComp');
+    return import('../lyric-list/LyricListComp');
 });
 const LazyPlaylistListComp = lazy(() => {
-    return import('./playlist/PlaylistListComp');
+    return import('../playlist/PlaylistListComp');
 });
 
 export default function AppPresenterLeftComp() {

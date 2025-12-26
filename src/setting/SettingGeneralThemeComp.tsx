@@ -7,7 +7,7 @@ import {
     getThemeSourceSetting,
     setThemeSourceSetting,
     ThemeOptionType,
-} from '../initHelpers';
+} from '../others/initHelpers';
 
 export default function SettingGeneralThemeComp() {
     const [themeSource, setThemeSource] = useState<ThemeOptionType>(

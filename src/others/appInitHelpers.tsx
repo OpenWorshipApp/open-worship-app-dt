@@ -1,28 +1,28 @@
 import './appInit.scss';
-import './others/bootstrap-override.scss';
-import './others/theme-override-dark.scss';
-import './others/theme-override-light.scss';
-import './others/scrollbar.scss';
+import './bootstrap-override.scss';
+import './theme-override-dark.scss';
+import './theme-override-light.scss';
+import './scrollbar.scss';
 
 import { ReactNode, StrictMode } from 'react';
 
-import { showAppConfirm } from './popup-widget/popupWidgetHelpers';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
     PlatformEnum,
     useKeyboardRegistering,
-} from './event/KeyboardEventListener';
-import { handleError } from './helper/errorHelpers';
-import FileSourceMetaManager from './helper/FileSourceMetaManager';
+} from '../event/KeyboardEventListener';
+import { handleError } from '../helper/errorHelpers';
+import FileSourceMetaManager from '../helper/FileSourceMetaManager';
 import {
     getCurrentLangAsync,
     getCurrentLocale,
     getFontFamilyByLocale,
-} from './lang/langHelpers';
-import appProvider from './server/appProvider';
-import initCrypto from './_owa-crypto';
-import { getSetting, setSetting } from './helper/settingHelpers';
-import { applyFontFamily } from './others/LanguageWrapper';
-import { HIGHLIGHT_SELECTED_CLASSNAME } from './helper/helpers';
+} from '../lang/langHelpers';
+import appProvider from '../server/appProvider';
+import initCrypto from '../_owa-crypto';
+import { getSetting, setSetting } from '../helper/settingHelpers';
+import { applyFontFamily } from './LanguageWrapper';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import {
     handleClassNameAction,
     handleFullWidgetView,
@@ -30,15 +30,15 @@ import {
     HoverMotionHandler,
     InputContextMenuHandler,
     handleActiveSelectedElementScrolling,
-} from './helper/domHelpers';
-import { appLocalStorage } from './setting/directory-setting/appLocalStorage';
-import { unlocking } from './server/unlockingHelpers';
+} from '../helper/domHelpers';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import { unlocking } from '../server/unlockingHelpers';
 import {
     checkDecidedBibleReaderHomePage,
     checkForUpdateSilently,
-} from './server/appHelpers';
-import { useAppEffectAsync } from './helper/debuggerHelpers';
-import { openGeneralSetting } from './setting/settingHelpers';
+} from '../server/appHelpers';
+import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { openGeneralSetting } from '../setting/settingHelpers';
 import { applyDarkModeToApp, getReactRoot } from './initHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';

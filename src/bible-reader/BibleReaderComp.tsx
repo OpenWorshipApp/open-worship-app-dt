@@ -1,17 +1,17 @@
-import './bible-lookup/BibleReaderComp.scss';
+import '../bible-lookup/BibleReaderComp.scss';
 
 import { lazy, useMemo } from 'react';
 
-import { DataInputType, FlexSizeType } from './resize-actor/flexSizeHelpers';
-import ResizeActorComp from './resize-actor/ResizeActorComp';
-import LookupBibleItemController from './bible-reader/LookupBibleItemController';
-import { BibleItemsViewControllerContext } from './bible-reader/BibleItemsViewController';
+import { DataInputType, FlexSizeType } from '../resize-actor/flexSizeHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import LookupBibleItemController from './LookupBibleItemController';
+import { BibleItemsViewControllerContext } from './BibleItemsViewController';
 
 const LazyBibleListComp = lazy(() => {
-    return import('./bible-list/BibleListComp');
+    return import('../bible-list/BibleListComp');
 });
 const LazyRenderBibleLookupComp = lazy(() => {
-    return import('./bible-lookup/RenderBibleLookupComp');
+    return import('../bible-lookup/RenderBibleLookupComp');
 });
 
 const flexSizeDefault: FlexSizeType = {

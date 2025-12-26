@@ -11,7 +11,7 @@ export function handleAppDocumentItemSelecting(
     varyAppDocumentItem: VaryAppDocumentItemType,
     selectSelectedSlide: (varyAppDocumentItem: VaryAppDocumentItemType) => void,
 ) {
-    if (appProvider.isPageEditor) {
+    if (appProvider.isPageAppDocumentEditor) {
         selectSelectedSlide(varyAppDocumentItem);
     } else {
         slidePreviewerMethods.handleSlideItemSelected(

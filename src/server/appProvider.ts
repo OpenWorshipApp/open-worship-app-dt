@@ -97,8 +97,8 @@ export type PagePropsType = {
     finderHomePage: string;
     isPagePresenter: boolean;
     presenterHomePage: string;
-    isPageEditor: boolean;
-    editorHomePage: string;
+    isPageAppDocumentEditor: boolean;
+    appDocumentEditorHomePage: string;
     isPageReader: boolean;
     readerHomePage: string;
     isPageScreen: boolean;

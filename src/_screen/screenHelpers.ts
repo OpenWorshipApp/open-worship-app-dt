@@ -28,7 +28,7 @@ import {
     bibleDataTypeList,
     SetDisplayType,
 } from './screenTypeHelpers';
-import { checkIsDarkMode } from '../initHelpers';
+import { checkIsDarkMode } from '../others/initHelpers';
 
 const messageUtils = appProvider.messageUtils;
 

@@ -17,7 +17,7 @@ function freezeObject(obj: any) {
 }
 
 export function initProvider(provider: { [key: string]: any }) {
-    const pathName = window.location.pathname;
+    const pathName = globalThis.location.pathname;
     for (const [name, htmlFileFullName] of Object.entries(htmlFiles)) {
         provider[`${name}HomePage`] = `/${htmlFileFullName}`;
         const isCurrentPage = pathName.startsWith(`/${htmlFileFullName}`);
@@ -25,5 +25,5 @@ export function initProvider(provider: { [key: string]: any }) {
         provider['currentHomePage'] = pathName;
     }
     freezeObject(provider);
-    (global as any).provider = (window as any).provider = provider;
+    (globalThis as any).provider = (globalThis as any).provider = provider;
 }

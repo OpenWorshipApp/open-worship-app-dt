@@ -3,7 +3,7 @@ import path from 'node:path';
 import { app, net, protocol, session, WebContents } from 'electron';
 
 export const htmlFiles = {
-    editor: 'editor.html',
+    appDocumentEditor: 'app-document-editor.html',
     presenter: 'presenter.html',
     screen: 'screen.html',
     reader: 'reader.html',
@@ -15,7 +15,7 @@ export const htmlFiles = {
 };
 export const preloadFileMap = {
     full: [
-        htmlFiles.editor,
+        htmlFiles.appDocumentEditor,
         htmlFiles.presenter,
         htmlFiles.reader,
         htmlFiles.setting,
@@ -97,7 +97,7 @@ export function getCurrent(webContents: WebContents) {
     const htmlFileFullName =
         url.pathname.substring(1).split('.html')[0] + '.html';
     const validHtmlFiles = [
-        htmlFiles.editor,
+        htmlFiles.appDocumentEditor,
         htmlFiles.presenter,
         htmlFiles.reader,
         htmlFiles.setting,

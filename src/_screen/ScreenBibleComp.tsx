@@ -7,7 +7,7 @@ import {
     useScreenManagerContext,
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
-import { getColorParts } from '../initHelpers';
+import { getColorParts } from '../others/initHelpers';
 import { checkIsZoomed } from '../helper/domHelpers';
 
 function getStyleText() {

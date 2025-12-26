@@ -109,14 +109,14 @@ export function toClassNameHighlight(
     selectedVaryAppDocumentItem?: VaryAppDocumentItemType | null,
 ) {
     const activeClassname =
-        appProvider.isPageEditor &&
+        appProvider.isPageAppDocumentEditor &&
         selectedVaryAppDocumentItem &&
         varyAppDocumentItem.checkIsSame(selectedVaryAppDocumentItem)
             ? 'active'
             : '';
     const isOnScreen = checkIsAppDocumentItemOnScreen(varyAppDocumentItem);
     const presenterClassname =
-        appProvider.isPageEditor || !isOnScreen
+        appProvider.isPageAppDocumentEditor || !isOnScreen
             ? ''
             : `${HIGHLIGHT_SELECTED_CLASSNAME} animation`;
     return {
