@@ -1,4 +1,9 @@
-import electron, { FileFilter, nativeTheme, shell } from 'electron';
+import electron, {
+    FileFilter,
+    nativeTheme,
+    shell,
+    systemPreferences,
+} from 'electron';
 import fontList from 'font-list';
 
 import ElectronAppController from './ElectronAppController';
@@ -355,6 +360,17 @@ export function initEventOther(appController: ElectronAppController) {
     );
     ipcMain.on('main:app:get-theme', (event) => {
         event.returnValue = nativeTheme.themeSource;
+    });
+
+    ipcMain.on('main:app:ask-camera-access', () => {
+        systemPreferences
+            .askForMediaAccess('camera')
+            .then((access) => {
+                console.log('Camera access:', access);
+            })
+            .catch((error) => {
+                console.error('Camera access error:', error);
+            });
     });
 
     ipcMain.on('all:app:force-reload', () => {

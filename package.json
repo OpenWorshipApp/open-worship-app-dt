@@ -88,7 +88,10 @@
                 "dmg",
                 "zip"
             ],
-            "category": "public.app-category.productivity"
+            "category": "public.app-category.productivity",
+            "extendInfo": {
+                "NSCameraUsageDescription": "This app requires camera access to use as background video."
+            }
         },
         "directories": {
             "buildResources": "resources",

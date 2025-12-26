@@ -1,3 +1,4 @@
+import appProvider from './server/appProvider';
 import { getAppFontFamily, getAppFontWeight } from './setting/settingHelpers';
 
 const id = 'app-custom-style';
@@ -24,5 +25,8 @@ function initApp() {
         }
     `;
     }
+    setTimeout(() => {
+        appProvider.messageUtils.sendData('main:app:ask-camera-access');
+    }, 3e3);
 }
 initApp();
