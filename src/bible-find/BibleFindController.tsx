@@ -61,6 +61,15 @@ async function loadApiData() {
     return null;
 }
 
+function flushBucket(
+    databaseAdmin: SQLiteDatabaseType,
+    sql: string,
+    bucket: string[],
+) {
+    databaseAdmin.exec(`${sql} ${bucket.join(',')};`);
+    bucket.length = 0;
+}
+
 async function initDatabase(
     bibleKey: string,
     databaseFilePath: string,
@@ -71,7 +80,7 @@ async function initDatabase(
         await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
     databaseAdmin.exec(`
         CREATE TABLE verses(text TEXT, sText TEXT);
-        CREATE VIRTUAL TABLE spell USING fts5(text);
+        CREATE VIRTUAL TABLE spell USING fts5(text, bookKeys);
     `);
     const jsonData = await getBibleXMLDataFromKey(bibleKey);
     if (jsonData === null) {
@@ -80,7 +89,7 @@ async function initDatabase(
     const sql = `INSERT INTO verses(text, sText) VALUES`;
     const locale = await getBibleLocale(bibleKey);
     const bucket = [];
-    const words = new Set<string>();
+    const words: { [key: string]: Set<string> } = {};
     for (const [bookKey, book] of Object.entries(jsonData.books)) {
         console.log(`DB: Processing ${bookKey}`);
         for (const [chapterKey, verses] of Object.entries(book)) {
@@ -99,7 +108,8 @@ async function initDatabase(
                             sanitizedWord.length > 1 &&
                             !checkIsStopWord(locale, sanitizedWord)
                         ) {
-                            words.add(sanitizedWord);
+                            words[sanitizedWord] ??= new Set();
+                            words[sanitizedWord].add(bookKey);
                         }
                     }
                     sanitizedText = sanitizedText.split(' ').join('');
@@ -109,18 +119,26 @@ async function initDatabase(
                 const sText = sanitizedText ?? verses[verse];
                 bucket.push(`('${text}','${sText}')`);
                 if (bucket.length > 100) {
-                    databaseAdmin.exec(`${sql} ${bucket.join(',')};`);
-                    bucket.length = 0;
+                    flushBucket(databaseAdmin, sql, bucket);
                 }
             }
         }
     }
-    if (words.size > 0) {
-        console.log(`DB: Inserting ${words.size} words`);
+    if (bucket.length > 0) {
+        flushBucket(databaseAdmin, sql, bucket);
+    }
+    const wordsLength = Object.keys(words).length;
+    if (wordsLength > 0) {
+        console.log(`DB: Inserting ${wordsLength} words`);
+        const values = Object.entries(words)
+            .map(([word, bookKeys]) => {
+                const text = word.split('').join(' ');
+                const bookKeysStr = Array.from(bookKeys).join(' ');
+                return `('${text}', '${bookKeysStr}')`;
+            })
+            .join(',');
         databaseAdmin.exec(
-            `INSERT INTO spell(text) VALUES ${Array.from(words)
-                .map((word) => `('${word.split('').join(' ')}')`)
-                .join(',')};`,
+            `INSERT INTO spell(text, bookKeys) VALUES ${values};`,
         );
     }
     await fsWriteFile(databaseFilePath + successFileSuffix, 'success');
@@ -212,18 +230,29 @@ class DatabaseFindingHandler {
     async loadSuggestionWords(
         attemptingWord: string,
         limit: number,
+        bookKeys: string[] = [],
     ): Promise<string[]> {
         if (!attemptingWord) {
             return [];
         }
-        const result = this.database.getAll(`
-            SELECT text FROM spell
+        let result = this.database.getAll(`
+            SELECT text, bookKeys FROM spell
             WHERE text MATCH '${attemptingWord.split('').join(' ')}'
-            ORDER BY bm25(spell) LIMIT ${limit};
+            ORDER BY bm25(spell);
         `);
-        const mappedResult = result.map((item) =>
-            item.text.split(' ').join(''),
-        );
+        if (bookKeys.length > 0) {
+            result = result.filter(({ bookKeys: foundBookKeys }) => {
+                const foundKeys = foundBookKeys.split(' ');
+                if (bookKeys.some((bookKey) => foundKeys.includes(bookKey))) {
+                    return true;
+                }
+                return false;
+            });
+        }
+        result = result.slice(0, limit);
+        const mappedResult = result.map(({ text }) => {
+            return text.split(' ').join('');
+        });
         if (mappedResult.includes(attemptingWord)) {
             mappedResult.splice(mappedResult.indexOf(attemptingWord), 1);
             mappedResult.unshift(attemptingWord);
@@ -235,7 +264,7 @@ class DatabaseFindingHandler {
 const BIBLE_FIND_SELECTED_BOOK_SETTING_NAME = 'bible-find-selected-book-key';
 
 const instanceCache: Record<string, BibleFindController | null> = {};
-const VERSIONS = ['', '1'];
+const VERSIONS = ['', '1', '2'];
 export default class BibleFindController {
     onlineFindHandler: OnlineFindHandler | null = null;
     databaseFindHandler: DatabaseFindingHandler | null = null;
@@ -419,9 +448,11 @@ export default class BibleFindController {
         limit = 5,
     ): Promise<string[]> {
         if (this.databaseFindHandler !== null) {
+            const bookKeys = await this.getSelectedBooks();
             return await this.databaseFindHandler.loadSuggestionWords(
                 attemptingWord,
                 limit,
+                bookKeys.map(({ bookKey }) => bookKey),
             );
         }
         if (this.onlineFindHandler !== null) {

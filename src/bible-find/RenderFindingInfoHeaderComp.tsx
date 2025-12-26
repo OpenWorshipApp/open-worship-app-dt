@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import {
     ContextMenuItemType,
     showAppContextMenu,
@@ -113,10 +115,15 @@ export default function RenderFindingInfoHeaderComp({
     selectedBooks: SelectedBookKeyType[];
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void;
 }>) {
-    const text =
-        selectedBooks.length === 0
+    const text = useMemo(() => {
+        return selectedBooks.length === 0
             ? 'All Books'
-            : `${selectedBooks.map((book) => book.book).join(', ')}`;
+            : `${selectedBooks
+                  .map(({ book }) => {
+                      return book;
+                  })
+                  .join(', ')}`;
+    }, [selectedBooks]);
     return (
         <div className="w-100 d-flex overflow-hidden app-inner-shadow p-1">
             <div className="w-100 overflow-hidden">
