@@ -12,6 +12,7 @@ export const htmlFiles = {
     lwShare: 'lwShare.html',
     about: 'about.html',
     experiment: 'experiment.html',
+    lyricEditor: 'lyricEditor.html',
 };
 export const preloadFileMap = {
     full: [

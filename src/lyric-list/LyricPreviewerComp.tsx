@@ -23,6 +23,7 @@ function genOptions(lyricEditingManager: LyricEditingManager) {
 }
 
 function RenderHeaderComp() {
+    const selectedLyric = useSelectedLyricContext();
     const lyricEditingManager = useLyricEditingManagerContext();
     const [localFontFamily, setLocalFontFamily] = useState(
         lyricEditingManager.fontFamily,
@@ -49,7 +50,7 @@ function RenderHeaderComp() {
         });
     };
     return (
-        <div className="card-header" style={{ height: '70px' }}>
+        <div>
             <div className="d-flex">
                 <strong>Font:</strong>
                 <FontFamilyControlComp
@@ -75,6 +76,17 @@ function RenderHeaderComp() {
                         }}
                     />
                 </div>
+            </div>
+            <div className="w-100 d-flex justify-content-center py-2">
+                <button
+                    className="btn btn-sm btn-outline-info"
+                    title={'`Editor ' + `"${selectedLyric.filePath}"`}
+                    onClick={() => {
+                        console.log('edit');
+                    }}
+                >
+                    Edit <i className="bi bi-box-arrow-up-right"></i>
+                </button>
             </div>
         </div>
     );
@@ -126,10 +138,18 @@ function RenderBodyComp() {
 
 export default function LyricPreviewerComp() {
     return (
-        <div className="card w-100 h-100">
-            <RenderHeaderComp />
-            <div className="card-body app-overflow-hidden">
-                <RenderBodyComp />
+        <div className="d-flex w-100 h-100">
+            <div className="card h-100">
+                <div className="card-header">Control</div>
+                <div className="card-body">
+                    <RenderHeaderComp />
+                </div>
+            </div>
+            <div className="card h-100 flex-grow-1">
+                <div className="card-header">Preview</div>
+                <div className="card-body app-overflow-hidden">
+                    <RenderBodyComp />
+                </div>
             </div>
         </div>
     );
