@@ -13,6 +13,7 @@ import {
 } from './fileHelpers';
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
+import { getNodeBinPath } from '../setting/settingHelpers';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${Date.now()}`;
@@ -342,16 +343,26 @@ export function downloadImage(targetUrl: string, outputDir: string) {
     );
 }
 
+function getExternalBinPath(): {
+    jsRuntimeBinPath?: string;
+    ffmpegPath?: string;
+} {
+    return {
+        jsRuntimeBinPath: getNodeBinPath() || undefined,
+        ffmpegPath: undefined,
+    };
+}
+
 export function downloadVideoOrAudio(
     targetUrl: string,
     outputDir: string,
-    isVideo: boolean = true,
-    ffmpegPath?: string,
+    isVideo: boolean,
 ) {
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
             (async () => {
                 const videoOrAudioUrl = targetUrl.trim();
+                const title = await getPageTitle(videoOrAudioUrl);
                 const resolvedSuccess = (resolvedFilePath: string) => {
                     const fileSource = FileSource.getInstance(resolvedFilePath);
                     resolve({
@@ -359,19 +370,26 @@ export function downloadVideoOrAudio(
                         fileFullName: `${title || temptName}${fileSource.dotExtension}`,
                     });
                 };
-                const title = await getPageTitle(videoOrAudioUrl);
                 const temptName = `temp-${Date.now()}`;
                 const outputFormat = pathResolve(
                     `${outputDir}/${temptName}.%(ext)s`,
                 );
-                const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
+                const { ytUtils } = appProvider;
+                const ytDlpWrap = await ytUtils.getYTHelper();
                 let filePath: string | null = null;
                 const args = [videoOrAudioUrl, '-o', outputFormat];
-                args.push(
-                    '--ffmpeg-location',
-                    ffmpegPath ?? appProvider.ytUtils.ffmpegBinPath,
-                    '--no-playlist',
-                );
+                args.push('--no-playlist');
+                const { jsRuntimeBinPath, ffmpegPath } = getExternalBinPath();
+                const ffmpegPath1 = ffmpegPath ?? ytUtils.ffmpegBinPath ?? null;
+                if (ffmpegPath1 !== null) {
+                    args.push('--ffmpeg-location', `${ffmpegPath1}`);
+                }
+                const jsRuntimeBinPath1 =
+                    jsRuntimeBinPath ?? ytUtils.jsRuntimeBinPath ?? null;
+                if (jsRuntimeBinPath1 !== null) {
+                    console.log(jsRuntimeBinPath1);
+                    args.push('--js-runtimes', `${jsRuntimeBinPath1}`);
+                }
                 if (!isVideo) {
                     args.push(
                         '-x',

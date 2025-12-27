@@ -186,6 +186,7 @@ export type AppProviderType = Readonly<
         ytUtils: {
             getYTHelper: () => Promise<YTHelper>;
             ffmpegBinPath: string;
+            jsRuntimeBinPath: string | null;
         };
     }
 >;
