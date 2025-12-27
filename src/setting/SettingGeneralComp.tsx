@@ -4,7 +4,6 @@ import SettingGeneralPath from './directory-setting/SettingGeneralDirectoryPathC
 import SettingGeneralThemeComp from './SettingGeneralThemeComp';
 import SettingGeneralOtherOptionsComp from './SettingGeneralOtherOptionsComp';
 import SettingGeneralFontFamilyComp from './SettingGeneralFontFamilyComp';
-import SettingGeneralBinPathComp from './SettingGeneralBinPathComp';
 
 export default function SettingGeneralComp() {
     return (
@@ -24,7 +23,6 @@ export default function SettingGeneralComp() {
                 <SettingGeneralThemeComp />
                 <SettingGeneralFontFamilyComp />
                 <SettingGeneralOtherOptionsComp />
-                <SettingGeneralBinPathComp />
             </div>
         </div>
     );

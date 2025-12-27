@@ -48,8 +48,3 @@ export function getAppFontWeight() {
 export function forceReloadAppWindows() {
     appProvider.messageUtils.sendData('all:app:force-reload');
 }
-
-export const NODE_BIN_PATH_SETTING_NAME = 'node-bin-path';
-export function getNodeBinPath() {
-    return getSetting(NODE_BIN_PATH_SETTING_NAME) || '';
-}
