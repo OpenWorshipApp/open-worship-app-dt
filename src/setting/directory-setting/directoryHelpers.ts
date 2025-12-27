@@ -131,7 +131,8 @@ export class BaseDirFileSource {
                 this.initFileFullName = fileFullNameOrFilePath;
             }
         } catch (_error) {}
-        this.initBaseDir = DirSource.getDirPathBySettingName(baseDirSettingName);
+        this.initBaseDir =
+            DirSource.getDirPathBySettingName(baseDirSettingName);
     }
 
     get fileFullNameOrFilePath() {

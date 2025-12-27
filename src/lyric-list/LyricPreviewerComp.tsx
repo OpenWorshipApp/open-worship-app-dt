@@ -98,9 +98,7 @@ function RenderControlBodyComp() {
                         className="btn btn-sm btn-outline-info"
                         title={'`Editor ' + `"${selectedLyric.filePath}"`}
                         onClick={() => {
-                            openPopupLyricEditorWindow(
-                                selectedLyric,
-                            );
+                            openPopupLyricEditorWindow(selectedLyric);
                         }}
                     >
                         Edit <i className="bi bi-box-arrow-up-right"></i>
