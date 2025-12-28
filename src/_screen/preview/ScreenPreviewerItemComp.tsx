@@ -50,7 +50,7 @@ export default function ScreenPreviewerItemComp({
             data-screen-key={screenManager.screenId}
             data-screen-manager-key={screenManager.key}
             title={`Screen: ${screenManager.screenId}`}
-            className={`mini-screen card m-1 ${selectedCN}`}
+            className={`mini-screen card ${selectedCN}`}
             style={{
                 overflow: 'hidden',
                 width: `${width}px`,
