@@ -110,6 +110,7 @@ export default function AppRangeComp({
             <input
                 id={id}
                 className="form-range px-1"
+                title={localValue.toString()}
                 type="range"
                 min={defaultSize.min}
                 max={defaultSize.max}
