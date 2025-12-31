@@ -1,5 +1,6 @@
 import './LyricListComp.scss';
 
+import { lazy, useState } from 'react';
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import {
     getFileDotExtension,
@@ -17,6 +18,11 @@ import Lyric from './Lyric';
 import LyricFileComp from './LyricFileComp';
 import LyricAppDocument from './LyricAppDocument';
 import { checkIsVaryAppDocumentOnScreen } from '../app-document-list/appDocumentHelpers';
+import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+
+const LazyCCLISongSearchComp = lazy(() => {
+    return import('./ccli/CCLISongSearchComp');
+});
 
 async function newFileHandling(dirPath: string, name: string) {
     return !(await Lyric.create(dirPath, name));
@@ -51,6 +57,8 @@ async function checkIsOnScreen(filePaths: string[]) {
 
 export default function LyricListComp() {
     const dirSource = useGenDirSource(dirSourceSettingNames.LYRIC);
+    const [showCCLISearch, setShowCCLISearch] = useState(false);
+
     if (dirSource === null) {
         return null;
     }
@@ -64,6 +72,33 @@ export default function LyricListComp() {
         return null;
     };
 
+    const handleCCLIImportComplete = () => {
+        setShowCCLISearch(false);
+        dirSource.fireReloadEvent();
+    };
+
+    const ccliContextMenuItems: ContextMenuItemType[] = [
+        {
+            menuElement: 'Import from CCLI',
+            icon: 'bi bi-cloud-download',
+            onSelect: () => {
+                setShowCCLISearch(true);
+            },
+        },
+    ];
+
+    if (showCCLISearch) {
+        return (
+            <div className="card w-100 h-100">
+                <LazyCCLISongSearchComp
+                    dirSource={dirSource}
+                    onImportComplete={handleCCLIImportComplete}
+                    onClose={() => setShowCCLISearch(false)}
+                />
+            </div>
+        );
+    }
+
     return (
         <FileListHandlerComp
             className="app-lyric-list"
@@ -75,6 +110,7 @@ export default function LyricListComp() {
             header={<span>Lyrics</span>}
             bodyHandler={handleBodyRendering}
             checkIsOnScreen={checkIsOnScreen}
+            contextMenuItems={ccliContextMenuItems}
             fileSelectionOption={{
                 windowTitle: 'Select lyric files',
                 dirPath: dirSource.dirPath,

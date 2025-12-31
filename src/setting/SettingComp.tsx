@@ -13,10 +13,14 @@ const LazySettingGeneralComp = lazy(() => {
 const LazySettingBibleComp = lazy(() => {
     return import('./bible-setting/SettingBibleComp');
 });
+const LazySettingCCLIComp = lazy(() => {
+    return import('./SettingCCLIComp');
+});
 
 const tabTypeList = [
     ['g', 'General', LazySettingGeneralComp],
     ['b', 'Bible', LazySettingBibleComp],
+    ['c', 'CCLI', LazySettingCCLIComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function SettingComp() {
