@@ -10,6 +10,8 @@ import {
 } from './BackgroundMediaComp';
 import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
 
+const TITLE_HEIGHT = 30;
+
 function RenderCameraInfoComp({
     cameraInfo,
     width,
@@ -40,12 +42,15 @@ function RenderCameraInfoComp({
             className="card"
             style={{
                 width: `${width}px`,
-                height: `${height + 40}px`,
+                height: `${height + TITLE_HEIGHT}px`,
                 margin: '2px',
             }}
         >
             <div
-                className="card-header w-100 app-ellipsis"
+                className="card-header w-100 app-ellipsis p-0 px-1"
+                style={{
+                    height: `${TITLE_HEIGHT}px`,
+                }}
                 title={cameraInfo.label}
             >
                 {cameraInfo.label}
