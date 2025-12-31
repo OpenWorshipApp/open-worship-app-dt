@@ -1,4 +1,4 @@
-import { CSSProperties, useRef, useState } from 'react';
+import { CSSProperties, useRef } from 'react';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import LoadingComp from '../others/LoadingComp';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -15,12 +15,7 @@ import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
-
-type CameraInfoType = {
-    deviceId: string;
-    groupId: string;
-    label: string;
-};
+import { CameraInfoType, useCameraInfoList } from '../helper/cameraHelpers';
 
 function RenderCameraInfoComp({
     cameraInfo,
@@ -36,7 +31,7 @@ function RenderCameraInfoComp({
         if (containerRef.current === null) {
             return;
         }
-        await getCameraAndShowMedia({
+        return await getCameraAndShowMedia({
             id: cameraInfo.deviceId,
             parentContainer: containerRef.current,
             width,
@@ -193,29 +188,14 @@ function RenderShownMiniComp() {
 }
 
 export default function ForegroundCameraComp() {
-    const [cameraInfoList, setCameraInfoList] = useState<CameraInfoType[]>([]);
-    useAppEffectAsync(
-        async (contextMethods) => {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const cameraList: CameraInfoType[] = [];
-            for (const device of devices) {
-                if (device.kind === 'videoinput') {
-                    cameraList.push(device);
-                }
-            }
-            contextMethods.setCameraInfoList(cameraList);
-        },
-        [],
-        { setCameraInfoList },
-    );
-
+    const cameraInfoList = useCameraInfoList();
     return (
         <ForegroundLayoutComp
             target="camera"
             fullChildHeaders={<h4>`Camera Show</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
         >
-            <div className="d-flex">
+            <div className="d-flex flex-wrap">
                 {cameraInfoList.map((cameraInfo) => {
                     return (
                         <ForegroundCameraItemComp

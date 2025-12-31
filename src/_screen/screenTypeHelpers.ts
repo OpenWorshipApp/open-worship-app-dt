@@ -57,7 +57,13 @@ export const scaleTypeList = [
 ] as const;
 export type ImageScaleType = (typeof scaleTypeList)[number];
 
-const _backgroundTypeList = ['color', 'image', 'video', 'audio'] as const;
+const _backgroundTypeList = [
+    'color',
+    'image',
+    'video',
+    'audio',
+    'camera',
+] as const;
 export type BackgroundType = (typeof _backgroundTypeList)[number];
 export type BackgroundDataType = {
     src: string | null;

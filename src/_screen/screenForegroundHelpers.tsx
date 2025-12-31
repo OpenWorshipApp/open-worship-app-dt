@@ -324,17 +324,19 @@ export async function getCameraAndShowMedia(
     {
         id,
         extraStyle,
-        width,
         parentContainer,
+        width,
+        height,
     }: ForegroundCameraDataType & {
         parentContainer: HTMLElement;
         width?: number;
+        height?: number;
     },
     animData?: StyleAnimType,
 ) {
     const constraints = {
         audio: false,
-        video: { width },
+        video: { width, height },
         id,
     };
     try {
@@ -350,19 +352,24 @@ export async function getCameraAndShowMedia(
         }
         Object.assign(video.style, extraStyle ?? {});
         parentContainer.innerHTML = '';
-        if (animData === undefined) {
-            parentContainer.appendChild(video);
-            return;
-        }
-        animData.animIn(video, parentContainer);
-        return async () => {
-            await animData.animOut(video);
+        const stopAllStreams = () => {
             const tracks = mediaStream.getVideoTracks();
             for (const track of tracks) {
                 track.stop();
             }
         };
+        if (animData === undefined) {
+            parentContainer.appendChild(video);
+            return stopAllStreams;
+        }
+        animData.animIn(video, parentContainer);
+        return async () => {
+            console.log('stop');
+            await animData.animOut(video);
+            stopAllStreams();
+        };
     } catch (error) {
         handleError(error);
     }
+    return () => {};
 }

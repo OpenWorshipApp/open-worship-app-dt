@@ -32,6 +32,9 @@ const LazyBackgroundImagesComp = lazy(() => {
 const LazyBackgroundVideosComp = lazy(() => {
     return import('./BackgroundVideosComp');
 });
+const LazyBackgroundCamerasComp = lazy(() => {
+    return import('./BackgroundCamerasComp');
+});
 const LazyBackgroundAudiosComp = lazy(() => {
     return import('./BackgroundAudiosComp');
 });
@@ -84,6 +87,7 @@ const tabTypeList = [
     ['color', 'Colors', LazyBackgroundColorsComp],
     ['image', 'Images', LazyBackgroundImagesComp],
     ['video', 'Videos', LazyBackgroundVideosComp],
+    ['camera', 'Cameras', LazyBackgroundCamerasComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {

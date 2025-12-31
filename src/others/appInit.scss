@@ -117,15 +117,15 @@ body {
   }
 
   .app-overflow-hidden {
-    overflow: hidden;
+    overflow: hidden !important;
   }
 
   .app-overflow-hidden-x {
-    overflow-x: hidden;
+    overflow-x: hidden !important;
   }
 
   .app-overflow-hidden-y {
-    overflow-y: hidden;
+    overflow-y: hidden !important;
   }
 
   .app-border-white-round {
