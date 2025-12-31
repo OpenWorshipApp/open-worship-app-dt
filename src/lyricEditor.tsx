@@ -1,14 +1,9 @@
 import LyricEditorComp from './lyric-list/LyricEditorComp';
 import { main } from './others/appInitHelpers';
-import AppLayoutComp from './router/AppLayoutComp';
-import { forceReloadAppWindows } from './setting/settingHelpers';
+import PopupLayoutComp from './router/PopupLayoutComp';
 
 main(
-    <AppLayoutComp>
+    <PopupLayoutComp>
         <LyricEditorComp />
-    </AppLayoutComp>,
+    </PopupLayoutComp>,
 );
-
-window.addEventListener('beforeunload', () => {
-    forceReloadAppWindows();
-});

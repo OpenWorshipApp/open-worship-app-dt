@@ -188,9 +188,13 @@ export type AppProviderType = Readonly<
             ffmpegBinPath: string;
             jsRuntimeBinPath: string | null;
         };
+        windowTitle: string;
     }
 >;
 
-const appProvider = (globalThis as any).provider as AppProviderType;
+const appProvider = {
+    ...(globalThis as any).provider,
+    windowTitle: document.title,
+} as AppProviderType;
 
 export default appProvider;

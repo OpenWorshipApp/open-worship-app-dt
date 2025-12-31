@@ -15,7 +15,7 @@ import {
 } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
 import { MultiContextRender } from '../helper/MultiContextRender';
-import AppPopupWindowsComp from '../app-modal/AppPopupWindowsComp';
+import AppPopupBibleLookupComp from '../app-modal/AppPopupBibleLookupComp';
 import AppContextMenuComp from '../context-menu/AppContextMenuComp';
 import HandleAlertComp from '../popup-widget/HandleAlertComp';
 import ToastComp from '../toast/ToastComp';
@@ -296,7 +296,7 @@ export default function AppLayoutComp({
             <ToastComp />
             <AppContextMenuComp />
             <HandleAlertComp />
-            <AppPopupWindowsComp />
+            <AppPopupBibleLookupComp />
         </MultiContextRender>
     );
 }

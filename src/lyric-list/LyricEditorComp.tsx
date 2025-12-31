@@ -8,8 +8,11 @@ import { dirSourceSettingNames } from '../helper/constants';
 import LyricEditingManager, {
     LyricEditingManagerContext,
 } from './LyricEditingManager';
+import { MultiContextRender } from '../helper/MultiContextRender';
+import { SelectedLyricContext } from './lyricHelpers';
+import appProvider from '../server/appProvider';
 
-const LazyLyricEditorComp = lazy(() => {
+const LazyLyricEditorIDEComp = lazy(() => {
     return import('./LyricEditorIDEComp');
 });
 const LazyLyricPreviewerComp = lazy(() => {
@@ -43,10 +46,26 @@ export default function LyricEditorComp() {
     const lyricEditingManager = useMemo(() => {
         const lyricEditingManager = new LyricEditingManager('');
         lyricEditingManager.filePath = lyric.filePath;
+        const suffix = `(${lyric.fileSource.name})`;
+        document.title = `${appProvider.windowTitle} - ${suffix}`;
         return lyricEditingManager;
     }, [lyric]);
     return (
-        <LyricEditingManagerContext value={lyricEditingManager}>
+        <MultiContextRender
+            contexts={[
+                {
+                    context: LyricEditingManagerContext,
+                    value: lyricEditingManager,
+                },
+                {
+                    context: SelectedLyricContext,
+                    value: {
+                        selectedLyric: lyric,
+                        setContent: () => {},
+                    },
+                },
+            ]}
+        >
             <ResizeActorComp
                 flexSizeName={'lyric-previewer'}
                 isHorizontal
@@ -56,7 +75,7 @@ export default function LyricEditorComp() {
                 }}
                 dataInput={[
                     {
-                        children: LazyLyricEditorComp,
+                        children: LazyLyricEditorIDEComp,
                         key: 'h1',
                         widgetName: 'Editor',
                     },
@@ -67,6 +86,6 @@ export default function LyricEditorComp() {
                     },
                 ]}
             />
-        </LyricEditingManagerContext>
+        </MultiContextRender>
     );
 }
