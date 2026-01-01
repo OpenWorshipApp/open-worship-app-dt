@@ -231,7 +231,7 @@ export default function FileItemHandlerComp({
                     >
                         {renderChild(data)}
                     </div>
-                    {!isDisabledColorNote && (
+                    {isDisabledColorNote ? null : (
                         <div className="color-note-container">
                             <ItemColorNoteComp item={fileSource} />
                         </div>

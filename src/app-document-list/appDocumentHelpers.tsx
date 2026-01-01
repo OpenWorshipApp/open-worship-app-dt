@@ -19,6 +19,7 @@ import {
     getFileFullName,
     getFileName,
     getTempPath,
+    KEY_SEPARATOR,
     mimetypePdf,
     pathBasename,
 } from '../server/fileHelpers';
@@ -431,8 +432,6 @@ export function useSlideWrongDimension(
     }, [varyAppDocument, display]);
     return wrong;
 }
-
-const KEY_SEPARATOR = '<id>';
 
 export function toKeyByFilePath(filePath: string, id: number) {
     return `${filePath}${KEY_SEPARATOR}${id}`;

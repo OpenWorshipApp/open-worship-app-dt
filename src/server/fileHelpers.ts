@@ -658,3 +658,5 @@ export function getFileMD5(filePath: string) {
         });
     });
 }
+
+export const KEY_SEPARATOR = '<id>';

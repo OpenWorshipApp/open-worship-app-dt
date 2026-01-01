@@ -35,6 +35,11 @@ import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComp
 import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
+import {
+    getColorNoteFilePathSetting,
+    setColorNoteFilePathSetting,
+} from '../../helper/FileSourceMetaManager';
+import { chooseColorNote } from '../../others/ItemColorNoteComp';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -59,7 +64,7 @@ function RenderScreenInfoComp({
 const BROKEN_IMAGE_SRC = '/assets/broken-image.png';
 const BROKEN_VIDEO_SRC = '/assets/broken-video.mp4';
 
-function RenderHeaderInfoComp({
+function RenderItemHeaderComp({
     varyAppDocumentItem,
     viewIndex,
     name,
@@ -71,8 +76,17 @@ function RenderHeaderInfoComp({
     const isChanged =
         Slide.checkIsThisType(varyAppDocumentItem) &&
         (varyAppDocumentItem as Slide).isChanged;
+    const colorNote = getColorNoteFilePathSetting(
+        varyAppDocumentItem.filePath,
+        varyAppDocumentItem.id,
+    );
     return (
-        <div className="card-header vary-app-document-item-header d-flex">
+        <div
+            className="card-header vary-app-document-item-header d-flex"
+            style={{
+                borderColor: colorNote || undefined,
+            }}
+        >
             <div className="d-flex w-100 overflow-hidden">
                 <div className="d-flex overflow-hidden flex-grow-1">
                     <RenderSlideIndexComp viewIndex={viewIndex} />
@@ -246,6 +260,34 @@ export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
     };
 }
 
+export function genChooseColorNoteOption(
+    filePath: string,
+    id: number,
+): ContextMenuItemType[] {
+    const colorCode = getColorNoteFilePathSetting(filePath, id);
+    return [
+        {
+            menuElement: 'Choose Color',
+            childBefore: (
+                <i
+                    className="bi bi-record-circle px-1"
+                    style={{ color: colorCode || undefined }}
+                />
+            ),
+            onSelect: (event) => {
+                chooseColorNote(
+                    colorCode,
+                    (newColorCode) => {
+                        setColorNoteFilePathSetting(filePath, id, newColorCode);
+                        ScreenVaryAppDocumentManager.fireUpdateEvent();
+                    },
+                    event,
+                );
+            },
+        },
+    ];
+}
+
 export default function SlideItemRenderComp({
     slide,
     width,
@@ -297,6 +339,16 @@ export default function SlideItemRenderComp({
             handleAttachBackgroundDrop(event, slide);
         }
     };
+    const handleContextMenuOpening = (event: any) => {
+        const menuItems: ContextMenuItemType[] = [];
+        if (attachedBackgroundData) {
+            menuItems.push(
+                ...genRemovingAttachedBackgroundMenu(slide.filePath, slide.id),
+            );
+        }
+        menuItems.push(...genChooseColorNoteOption(slide.filePath, slide.id));
+        onContextMenu(event, menuItems);
+    };
     return (
         <div
             className={
@@ -326,21 +378,10 @@ export default function SlideItemRenderComp({
                 changeDragEventStyle(event, 'opacity', '1');
             }}
             onClick={onClick}
-            onContextMenu={(event) => {
-                const menuItems: ContextMenuItemType[] = [];
-                if (attachedBackgroundData) {
-                    menuItems.push(
-                        ...genRemovingAttachedBackgroundMenu(
-                            slide.filePath,
-                            slide.id,
-                        ),
-                    );
-                }
-                onContextMenu(event, menuItems);
-            }}
+            onContextMenu={handleContextMenuOpening}
             onCopy={onCopy ?? (() => {})}
         >
-            <RenderHeaderInfoComp
+            <RenderItemHeaderComp
                 varyAppDocumentItem={slide}
                 viewIndex={index + 1}
                 name={slide.name}
