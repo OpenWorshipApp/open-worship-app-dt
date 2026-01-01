@@ -4,8 +4,9 @@ import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {
     attemptClosing,
+    genWebPreferences,
     getAppThemeBackgroundColor,
-    isSecured,
+    guardBrowsing,
 } from './electronHelpers';
 
 const routeProps = genRoutProps(htmlFiles.finder);
@@ -13,21 +14,18 @@ export default class ElectronFinderController {
     win: BrowserWindow | null = null;
     mainWin: BrowserWindow | null = null;
     createWindow(mainWin: BrowserWindow) {
+        const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
             width: 270,
             height: 80,
-            webPreferences: {
-                webSecurity: isSecured,
-                nodeIntegration: true,
-                contextIsolation: false,
-                preload: routeProps.preloadFilePath,
-            },
+            webPreferences,
             parent: mainWin,
             autoHideMenuBar: true,
         });
+        guardBrowsing(win, webPreferences);
         routeProps.loadURL(win);
         return win;
     }

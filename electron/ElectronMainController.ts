@@ -5,9 +5,9 @@ import { genRoutProps } from './protocolHelpers';
 import ElectronSettingManager from './ElectronSettingManager';
 import {
     attemptClosing,
-    genCenterSubDisplay,
+    genWebPreferences,
     getAppThemeBackgroundColor,
-    isSecured,
+    guardBrowsing,
 } from './electronHelpers';
 
 let instance: ElectronMainController | null = null;
@@ -20,47 +20,26 @@ export default class ElectronMainController {
 
     previewPdf(pdfFilePath: string) {
         const mainWin = this.win;
-        const pdfWin = new BrowserWindow({
+        const win = new BrowserWindow({
             parent: mainWin,
         });
-        pdfWin.loadURL(pdfFilePath);
+        win.webContents.setWindowOpenHandler((options) => {
+            shell.openExternal(options.url);
+            return { action: 'deny' };
+        });
+        win.loadURL(pdfFilePath);
     }
 
     createWindow(settingManager: ElectronSettingManager) {
         const routeProps = genRoutProps(settingManager.mainHtmlPath);
-        const webPreferences = {
-            webSecurity: isSecured,
-            nodeIntegration: true,
-            contextIsolation: false,
-            preload: routeProps.preloadFilePath,
-        };
+        const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
             webPreferences,
         });
-        win.webContents.setWindowOpenHandler((options) => {
-            if (options.frameName === 'popup_window') {
-                const bounds = win.getBounds();
-                const subDisplay = genCenterSubDisplay({
-                    displayPercent: 0.9,
-                    x: bounds.x,
-                    y: bounds.y,
-                    width: bounds.width,
-                    height: bounds.height,
-                });
-                return {
-                    action: 'allow',
-                    overrideBrowserWindowOptions: {
-                        ...subDisplay,
-                        webPreferences,
-                    },
-                };
-            }
-            shell.openExternal(options.url);
-            return { action: 'deny' };
-        });
+        guardBrowsing(win, webPreferences);
         win.on('closed', () => {
             process.exit(0);
         });

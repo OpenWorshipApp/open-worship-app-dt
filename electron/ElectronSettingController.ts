@@ -5,8 +5,9 @@ import { htmlFiles } from './fsServe';
 import {
     attemptClosing,
     genCenterSubDisplay,
+    genWebPreferences,
     getAppThemeBackgroundColor,
-    isSecured,
+    guardBrowsing,
 } from './electronHelpers';
 import type ElectronSettingManager from './ElectronSettingManager';
 
@@ -44,21 +45,18 @@ export default class ElectronSettingController {
         settingManager: ElectronSettingManager,
     ) {
         const { x, y, width, height } = this.getSubDisplay(settingManager);
+        const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             x,
             y,
             width,
             height,
-            webPreferences: {
-                webSecurity: isSecured,
-                nodeIntegration: true,
-                contextIsolation: false,
-                preload: routeProps.preloadFilePath,
-            },
+            webPreferences,
             parent: mainWin,
             autoHideMenuBar: true,
         });
+        guardBrowsing(win, webPreferences);
         routeProps.loadURL(win);
         return win;
     }

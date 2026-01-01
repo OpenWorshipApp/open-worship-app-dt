@@ -1,4 +1,11 @@
-import { app, nativeTheme, shell, clipboard } from 'electron';
+import {
+    app,
+    nativeTheme,
+    shell,
+    clipboard,
+    BrowserWindow,
+    WebPreferences,
+} from 'electron';
 import { x as tarX } from 'tar';
 
 import appInfo from '../package.json';
@@ -132,7 +139,7 @@ Electron Version: ${process.versions.electron}
 Chrome Version: ${process.versions.chrome}
 Node.js Version: ${process.versions.node}
 V8 Version: ${process.versions.v8}
-OS: ${process.platform} ${process.arch} ${require('os').release()}
+OS: ${process.platform} ${process.arch} ${require('node:os').release()}
 Commit Hash: ${packageInfo.commitHash}`.trim();
     if (isFull) {
         packageInfo.debugAppInfo = debugAppInfo;
@@ -178,4 +185,40 @@ export function genCenterSubDisplay({
         width: Math.floor(width - offsetWidth),
         height: Math.floor(height - offsetHeight),
     };
+}
+
+export function genWebPreferences(preloadPath: string): WebPreferences {
+    return {
+        webSecurity: isSecured,
+        nodeIntegration: true,
+        contextIsolation: false,
+        preload: preloadPath,
+    };
+}
+
+export function guardBrowsing(
+    win: BrowserWindow,
+    webPreferences: WebPreferences,
+) {
+    win.webContents.setWindowOpenHandler((options) => {
+        if (options.frameName === 'popup_window') {
+            const bounds = win.getBounds();
+            const subDisplay = genCenterSubDisplay({
+                displayPercent: 0.9,
+                x: bounds.x,
+                y: bounds.y,
+                width: bounds.width,
+                height: bounds.height,
+            });
+            return {
+                action: 'allow',
+                overrideBrowserWindowOptions: {
+                    ...subDisplay,
+                    webPreferences,
+                },
+            };
+        }
+        shell.openExternal(options.url);
+        return { action: 'deny' };
+    });
 }

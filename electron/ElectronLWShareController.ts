@@ -4,8 +4,10 @@ import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {
     attemptClosing,
+    genWebPreferences,
     getAppThemeBackgroundColor,
     getCenterScreenPosition,
+    guardBrowsing,
     isSecured,
 } from './electronHelpers';
 import { join } from 'node:path';
@@ -19,6 +21,9 @@ export default class ElectronLWShareController {
             width: 550,
             height: 600,
         });
+        const webPreferences = genWebPreferences(
+            join(__dirname, 'client', 'lwShare.preload.js'),
+        );
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             x,
@@ -34,6 +39,7 @@ export default class ElectronLWShareController {
             parent: mainWin,
             autoHideMenuBar: true,
         });
+        guardBrowsing(win, webPreferences);
         routeProps.loadURL(win);
         return win;
     }
