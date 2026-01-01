@@ -16,6 +16,7 @@ import { useFileSourceEvents } from './dirSourceHelpers';
 import { stopDraggingState } from './helpers';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import Slide from '../app-document-list/Slide';
+import { cameraDragDeserialize } from '../background/backgroundHelpers';
 
 export const dragStore: {
     onDropped?: ((event: any) => void) | null;
@@ -59,6 +60,8 @@ function deserializeDragData({
         )
     ) {
         item = FileSource.dragDeserialize(data);
+    } else if (type === DragTypeEnum.BACKGROUND_CAMERA) {
+        item = cameraDragDeserialize(data);
     } else if (type === DragTypeEnum.BACKGROUND_COLOR) {
         item = colorDeserialize(data);
     }

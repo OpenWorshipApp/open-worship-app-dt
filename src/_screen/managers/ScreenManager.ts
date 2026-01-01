@@ -149,6 +149,7 @@ export default class ScreenManager extends ScreenManagerBase {
                 DragTypeEnum.BACKGROUND_COLOR,
                 DragTypeEnum.BACKGROUND_IMAGE,
                 DragTypeEnum.BACKGROUND_VIDEO,
+                DragTypeEnum.BACKGROUND_CAMERA,
             ].includes(droppedData.type)
         ) {
             this.screenBackgroundManager.receiveScreenDropped(droppedData);

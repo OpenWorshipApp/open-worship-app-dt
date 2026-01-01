@@ -4,6 +4,7 @@ import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
+import { CameraInfoType } from '../helper/cameraHelpers';
 
 export type RenderChildType = (
     filePath: string,
@@ -50,5 +51,17 @@ export function genBackgroundMediaItemData(
         backgroundType,
         isInScreen,
         selectedBackgroundSrcList,
+    };
+}
+
+export function cameraDragSerialize(cameraInfo: CameraInfoType) {
+    return {
+        type: DragTypeEnum.BACKGROUND_CAMERA,
+        data: cameraInfo.deviceId,
+    };
+}
+export function cameraDragDeserialize(data: string) {
+    return {
+        src: data,
     };
 }

@@ -7,9 +7,13 @@ import { getCameraAndShowMedia } from '../_screen/screenForegroundHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { genBackgroundMediaItemData } from './backgroundHelpers';
+import {
+    cameraDragSerialize,
+    genBackgroundMediaItemData,
+} from './backgroundHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
+import { handleDragStart } from '../helper/dragHelpers';
 
 const TITLE_HEIGHT = 30;
 
@@ -56,6 +60,14 @@ export default function BackgroundCameraItemComp({
                 width: `${width}px`,
                 height: `${height + TITLE_HEIGHT}px`,
                 margin: '2px',
+            }}
+            draggable
+            onDragStart={(event) => {
+                handleDragStart(event, {
+                    dragSerialize: () => {
+                        return cameraDragSerialize(cameraInfo);
+                    },
+                });
             }}
             onContextMenu={(event) => {
                 showAppContextMenu(event as any, [
