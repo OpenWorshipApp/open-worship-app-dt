@@ -326,22 +326,18 @@ export async function getCameraAndShowMedia(
         extraStyle,
         parentContainer,
         width,
-        height,
     }: ForegroundCameraDataType & {
         parentContainer: HTMLElement;
         width?: number;
-        height?: number;
     },
     animData?: StyleAnimType,
 ) {
-    const constraints = {
-        audio: false,
-        video: { width, height },
-        id,
-    };
     try {
-        const mediaStream =
-            await navigator.mediaDevices.getUserMedia(constraints);
+        const { mediaDevices } = navigator;
+        const mediaStream = await mediaDevices.getUserMedia({
+            audio: false,
+            video: { deviceId: { exact: id } },
+        });
         const video = document.createElement('video');
         video.srcObject = mediaStream;
         video.onloadedmetadata = () => {

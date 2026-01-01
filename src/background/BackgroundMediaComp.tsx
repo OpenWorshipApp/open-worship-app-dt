@@ -11,10 +11,8 @@ import { OptionalPromise } from '../helper/typeHelpers';
 import DirSource from '../helper/DirSource';
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
-import BackgroundMediaItemComp, {
-    backgroundTypeMapper,
-    RenderChildType,
-} from './BackgroundMediaItemComp';
+import BackgroundMediaItemComp from './BackgroundMediaItemComp';
+import { backgroundTypeMapper, RenderChildType } from './backgroundHelpers';
 
 export const defaultRangeSize = {
     size: 100,

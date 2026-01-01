@@ -1,11 +1,8 @@
-import { ReactNode, ReactElement, useMemo } from 'react';
-
 import {
     genCommonMenu,
     genShowOnScreensContextMenu,
     genTrashContextMenu,
 } from '../others/FileItemHandlerComp';
-import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import FileSource from '../helper/FileSource';
 import { DragTypeEnum } from '../helper/DragInf';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
@@ -14,21 +11,10 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
-
-export type RenderChildType = (
-    filePath: string,
-    selectedBackgroundSrcList: [string, BackgroundSrcType][],
-    height: number,
-    extraChild?: ReactElement,
-) => ReactNode;
-
-export const backgroundTypeMapper: any = {
-    [DragTypeEnum.BACKGROUND_IMAGE]: 'image',
-    [DragTypeEnum.BACKGROUND_VIDEO]: 'video',
-    [DragTypeEnum.BACKGROUND_AUDIO]: 'audio',
-};
+import {
+    genBackgroundMediaItemData,
+    RenderChildType,
+} from './backgroundHelpers';
 
 function genFileNameElement(fileName: string) {
     return (
@@ -43,44 +29,6 @@ function genFileNameElement(fileName: string) {
             </p>
         </div>
     );
-}
-
-function useBackgroundMediaItemData(filePath: string, dragType: DragTypeEnum) {
-    const fileSource = FileSource.getInstance(filePath);
-    const backgroundType = backgroundTypeMapper[dragType];
-    const selectedBackgroundSrcList =
-        ScreenBackgroundManager.getSelectBackgroundSrcList(
-            fileSource.src,
-            backgroundType,
-        );
-    const isInScreen = selectedBackgroundSrcList.length > 0;
-    const selectedCN = isInScreen
-        ? `${HIGHLIGHT_SELECTED_CLASSNAME} animation`
-        : '';
-    const title = useMemo(() => {
-        const screenKeys = selectedBackgroundSrcList.map(([key]) => key);
-        const title =
-            `${filePath}` +
-            (isInScreen ? ` \nShow in presents:${screenKeys.join(',')}` : '');
-        return title;
-    }, [filePath, isInScreen, selectedBackgroundSrcList]);
-    const handleSelecting = (event: any, isForceChoosing = false) => {
-        ScreenBackgroundManager.handleBackgroundSelecting(
-            event,
-            backgroundType,
-            { src: fileSource.src },
-            isForceChoosing,
-        );
-    };
-    return {
-        fileSource,
-        selectedCN,
-        title,
-        handleSelecting,
-        backgroundType,
-        isInScreen,
-        selectedBackgroundSrcList,
-    };
 }
 
 export default function BackgroundMediaItemComp({
@@ -104,18 +52,21 @@ export default function BackgroundMediaItemComp({
     thumbnailHeight: number;
     filePath: string;
 }>) {
+    const fileSource = FileSource.getInstance(filePath);
     const {
-        fileSource,
         selectedCN,
         title,
         handleSelecting,
         backgroundType,
         isInScreen,
         selectedBackgroundSrcList,
-    } = useBackgroundMediaItemData(filePath, dragType);
+    } = genBackgroundMediaItemData(
+        fileSource.fullName,
+        fileSource.src,
+        dragType,
+    );
     return (
         <div
-            key={fileSource.fullName}
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
             title={title}
             style={{
