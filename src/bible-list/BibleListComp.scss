@@ -16,7 +16,7 @@
   .item {
     .bible {
       border: 1px solid transparent;
-      border-radius: 5px;
+      border-radius: var(--bs-border-radius);
     }
   }
 }

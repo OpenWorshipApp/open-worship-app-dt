@@ -96,6 +96,12 @@ class AppLocalStorage {
         }
     }
 
+    getItemForce(key: string): string | null {
+        const fullPath = this.toFullPath(key);
+        cache.deleteSync(fullPath);
+        return this.getItem(key);
+    }
+
     setItem(key: string, value: string): void {
         const fullPath = this.toFullPath(key);
         fsWriteFileSync(fullPath, value);

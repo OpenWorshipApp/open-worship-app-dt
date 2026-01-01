@@ -39,4 +39,5 @@ const ffmpegBinPath = toUnpackedPath(
 export const ytUtils = {
     getYTHelper,
     ffmpegBinPath,
+    jsRuntimeBinPath: null,
 };

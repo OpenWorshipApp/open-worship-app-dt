@@ -1,13 +1,13 @@
 import { lazy } from 'react';
 
-import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
-import ResizeActorComp from './resize-actor/ResizeActorComp';
+import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
 
 const LazyPresenterComp = lazy(() => {
-    return import('./app-document-presenter/PresenterComp');
+    return import('../app-document-presenter/PresenterComp');
 });
 const LazyBackgroundComp = lazy(() => {
-    return import('./background/BackgroundComp');
+    return import('../background/BackgroundComp');
 });
 
 export default function AppPresenterMiddleComp() {

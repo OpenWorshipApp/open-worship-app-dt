@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 
-import { getReactRoot } from './initHelpers';
+import { getReactRoot } from './others/initHelpers';
 import LWShareAppComp from './lwShare/LWShareAppComp';
 
 const root = getReactRoot();

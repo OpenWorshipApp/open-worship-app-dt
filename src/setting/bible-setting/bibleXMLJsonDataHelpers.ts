@@ -497,7 +497,7 @@ export async function getBibleInfoJson(
     const copyRights =
         guessValue(xmlElementBible, attributesMap.copyRights) ??
         'Unknown Copy Rights';
-    return {
+    const bibleInfo = {
         title,
         description,
         key: bibleKey,
@@ -510,6 +510,7 @@ export async function getBibleInfoJson(
         keyBookMap,
         booksAvailable,
     };
+    return bibleInfo;
 }
 function setBibleInfo(
     xmlDoc: Document,
@@ -637,6 +638,10 @@ export function jsonToXMLText(jsonData: BibleXMLJsonType) {
 }
 
 export function xmlTextToBibleElement(xmlText: string) {
+    const bibleModelInfo = getBibleModelInfo();
+    for (const [key, value] of Object.entries(bibleModelInfo.flippingKey)) {
+        xmlText = xmlText.replaceAll(key, value);
+    }
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
     const bible = guessElement(xmlDoc, tagNamesMap.bible)?.[0];
@@ -661,13 +666,14 @@ export async function xmlTextToJson(
     const newLines = getNewLines(xmlElementBible);
     const newLinesTitleMap = getNewLinesTitleMap(xmlElementBible);
     const customVersesMap = getCustomVersesMap(xmlElementBible);
-    return {
+    const bibleXMLData = {
         info: bibleInfo,
         books: bibleBooks,
         newLines,
         newLinesTitleMap,
         customVersesMap,
     };
+    return bibleXMLData;
 }
 
 export async function bibleKeyToXMLFilePath(

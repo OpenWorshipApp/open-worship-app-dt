@@ -1,115 +1,82 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import electron, { BrowserWindow } from 'electron';
+import { BrowserWindow } from 'electron';
 
+import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
+import {
+    attemptClosing,
+    genCenterSubDisplay,
+    getAppThemeBackgroundColor,
+    isSecured,
+} from './electronHelpers';
+import type ElectronSettingManager from './ElectronSettingManager';
 
-const settingObject: {
-    mainWinBounds: Electron.Rectangle | null;
-    appScreenDisplayId: number | null;
-    mainHtmlPath: string;
-} = {
-    mainWinBounds: null,
-    appScreenDisplayId: null,
-    mainHtmlPath: htmlFiles.presenter,
-};
+const displayPercent = 0.9;
+
+const routeProps = genRoutProps(htmlFiles.setting);
 export default class ElectronSettingController {
-    constructor() {
-        try {
-            const str = fs.readFileSync(this.fileSettingPath, 'utf8');
-            const json = JSON.parse(str);
-            settingObject.mainWinBounds = json.mainWinBounds;
-            settingObject.appScreenDisplayId = json.appScreenDisplayId;
-            settingObject.mainHtmlPath =
-                json.mainHtmlPath ?? settingObject.mainHtmlPath;
-        } catch (error: any) {
-            if (error.code === 'ENOENT') {
-                this.save();
-            } else {
-                console.log(error);
-            }
+    win: BrowserWindow | null = null;
+    mainWin: BrowserWindow | null = null;
+
+    getSubDisplay(settingManager: ElectronSettingManager) {
+        const mainWinBounds = settingManager.settingObject.mainWinBounds;
+        if (mainWinBounds === null) {
+            const primaryDisplay = settingManager.primaryDisplay;
+            return genCenterSubDisplay({
+                displayPercent,
+                x: primaryDisplay.bounds.x,
+                y: primaryDisplay.bounds.y,
+                width: primaryDisplay.bounds.width,
+                height: primaryDisplay.bounds.height,
+            });
+        }
+        const { x, y, width, height } = mainWinBounds;
+        return genCenterSubDisplay({
+            displayPercent,
+            x,
+            y,
+            width,
+            height,
+        });
+    }
+
+    createWindow(
+        mainWin: BrowserWindow,
+        settingManager: ElectronSettingManager,
+    ) {
+        const { x, y, width, height } = this.getSubDisplay(settingManager);
+        const win = new BrowserWindow({
+            backgroundColor: getAppThemeBackgroundColor(),
+            x,
+            y,
+            width,
+            height,
+            webPreferences: {
+                webSecurity: isSecured,
+                nodeIntegration: true,
+                contextIsolation: false,
+                preload: routeProps.preloadFilePath,
+            },
+            parent: mainWin,
+            autoHideMenuBar: true,
+        });
+        routeProps.loadURL(win);
+        return win;
+    }
+    open(mainWin: BrowserWindow, settingManager: ElectronSettingManager) {
+        if (this.win === null) {
+            this.mainWin = mainWin;
+            this.win = this.createWindow(mainWin, settingManager);
+            this.win.on('closed', () => {
+                attemptClosing(this);
+            });
+        } else {
+            this.win.show();
         }
     }
-
-    get fileSettingPath() {
-        const useDataPath = electron.app.getPath('userData');
-        return path.join(useDataPath, 'setting.json');
-    }
-
-    get isWinMaximized() {
-        return (
-            (settingObject.mainWinBounds?.width ?? 0) >=
-                this.primaryDisplay.bounds.width &&
-            (settingObject.mainWinBounds?.height ?? 0) >=
-                this.primaryDisplay.bounds.height
-        );
-    }
-
-    get mainWinBounds() {
-        return settingObject.mainWinBounds ?? this.primaryDisplay.bounds;
-    }
-
-    set mainWinBounds(bounds) {
-        settingObject.mainWinBounds = bounds;
-        this.save();
-    }
-
-    restoreMainBounds(win: BrowserWindow) {
-        // TODO: check if bounds are valid (outside of screen) reset to default
-        this.mainWinBounds = this.primaryDisplay.bounds;
-        win.setBounds(this.mainWinBounds);
-    }
-
-    get allDisplays() {
-        return electron.screen.getAllDisplays();
-    }
-
-    get primaryDisplay() {
-        return electron.screen.getPrimaryDisplay();
-    }
-
-    getDisplayById(displayId: number) {
-        return this.allDisplays.find((display) => {
-            return display.id == displayId;
-        });
-    }
-
-    save() {
-        fs.writeFileSync(
-            this.fileSettingPath,
-            JSON.stringify(settingObject),
-            'utf8',
-        );
-    }
-
-    syncMainWindow(win: BrowserWindow) {
-        win.setBounds(this.mainWinBounds);
-        if (this.isWinMaximized) {
-            win.maximize();
-        }
-        win.on('resize', () => {
-            const [width, height] = win.getSize();
-            this.mainWinBounds = { ...this.mainWinBounds, width, height };
-        });
-        win.on('maximize', () => {
-            this.mainWinBounds = {
-                ...this.mainWinBounds,
-                width: this.primaryDisplay.bounds.width,
-                height: this.primaryDisplay.bounds.height,
-            };
-        });
-        win.on('move', () => {
-            const [x, y] = win.getPosition();
-            this.mainWinBounds = { ...this.mainWinBounds, x, y };
-        });
-    }
-
-    get mainHtmlPath() {
-        return settingObject.mainHtmlPath;
-    }
-
-    set mainHtmlPath(path: string) {
-        settingObject.mainHtmlPath = path;
-        this.save();
+    close() {
+        this.mainWin?.reload();
+        attemptClosing(this.win);
+        this.mainWin = null;
+        this.win = null;
     }
 }

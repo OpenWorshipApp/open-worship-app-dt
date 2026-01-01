@@ -21,6 +21,7 @@ const dictionary = {
     Slide: 'ស្លាយ',
     'Full Text': 'បង្ហាញពេញ',
 };
+const fontFamily = 'km-font-family';
 const lang: LanguageDataType = {
     locale: 'km-KH',
     langCode: 'km',
@@ -32,17 +33,17 @@ const lang: LanguageDataType = {
         const fontBB = `${lang.dirPath}/Battambang-Bold.ttf`;
         return `
         @font-face {
-            font-family: KhmerFont;
+            font-family: ${fontFamily};
             src: url(${fontBR}) format("truetype");
         }
         @font-face {
-            font-family: KhmerFont;
+            font-family: ${fontFamily};
             src: url(${fontBB}) format("truetype");
             font-weight: bold;
         }
         `;
     },
-    fontFamily: 'KhmerFont',
+    fontFamily,
     numList,
     dictionary,
     name: 'Khmer',

@@ -201,9 +201,7 @@ export default class Slide
             const { filePath, data } = JSON.parse(jsonString);
             this.validate(data);
             return this.fromJson(data, filePath);
-        } catch (error) {
-            handleError(error);
-        }
+        } catch (_error) {}
         return null;
     }
 

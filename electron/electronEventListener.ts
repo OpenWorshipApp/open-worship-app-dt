@@ -1,8 +1,18 @@
-import electron, { FileFilter, nativeTheme, shell } from 'electron';
+import electron, {
+    FileFilter,
+    nativeTheme,
+    shell,
+    systemPreferences,
+} from 'electron';
 import fontList from 'font-list';
 
 import ElectronAppController from './ElectronAppController';
-import { attemptClosing, goDownload, tarExtract } from './electronHelpers';
+import {
+    attemptClosing,
+    goDownload,
+    isMac,
+    tarExtract,
+} from './electronHelpers';
 import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
@@ -73,8 +83,8 @@ export function initEventListenerApp(appController: ElectronAppController) {
 export function initEventScreen(appController: ElectronAppController) {
     ipcMain.on('main:app:get-displays', (event) => {
         event.returnValue = {
-            primaryDisplay: appController.settingController.primaryDisplay,
-            displays: appController.settingController.allDisplays,
+            primaryDisplay: appController.settingManager.primaryDisplay,
+            displays: appController.settingManager.allDisplays,
         };
     });
 
@@ -87,7 +97,7 @@ export function initEventScreen(appController: ElectronAppController) {
         const screenController = ElectronScreenController.createInstance(
             data.screenId,
         );
-        const display = appController.settingController.getDisplayById(
+        const display = appController.settingManager.getDisplayById(
             data.displayId,
         );
         if (display !== undefined) {
@@ -129,7 +139,7 @@ export function initEventScreen(appController: ElectronAppController) {
             },
         ) => {
             const display =
-                appController.settingController.getDisplayById(displayId);
+                appController.settingManager.getDisplayById(displayId);
             const screenController =
                 ElectronScreenController.getInstance(screenId);
             if (display !== undefined && screenController !== null) {
@@ -175,12 +185,15 @@ export function initEventScreen(appController: ElectronAppController) {
 }
 
 export function initEventFinder(appController: ElectronAppController) {
-    ipcMain.on('main:app:open-finder', () => {
-        appController.finderController.open(appController.mainWin);
-    });
-
     ipcMain.on('finder:app:close-finder', () => {
         attemptClosing(appController.finderController);
+    });
+
+    ipcMain.on('main:app:open-setting', () => {
+        appController.settingController.open(
+            appController.mainWin,
+            appController.settingManager,
+        );
     });
 
     const mainWinWebContents = appController.mainWin.webContents;
@@ -287,10 +300,10 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             const error = await officeFileToPdf(officeFilePath, pdfFilePath);
-            if (error !== null) {
-                appController.mainController.sendData(replyEventName, error);
-            } else {
+            if (error === null) {
                 appController.mainController.sendData(replyEventName);
+            } else {
+                appController.mainController.sendData(replyEventName, error);
             }
         },
     );
@@ -340,8 +353,34 @@ export function initEventOther(appController: ElectronAppController) {
     ipcMain.on(
         'main:app:set-theme',
         (_event, theme: 'dark' | 'light' | 'system') => {
+            if (
+                ['dark', 'light', 'system'].includes(theme) === false ||
+                nativeTheme.themeSource === theme
+            ) {
+                return;
+            }
             nativeTheme.themeSource = theme;
             appController.resetThemeBackgroundColor();
         },
     );
+    ipcMain.on('main:app:get-theme', (event) => {
+        event.returnValue = nativeTheme.themeSource;
+    });
+
+    ipcMain.on('main:app:ask-camera-access', () => {
+        if (isMac) {
+            systemPreferences
+                .askForMediaAccess('camera')
+                .then((access) => {
+                    console.log('Camera access:', access);
+                })
+                .catch((error) => {
+                    console.error('Camera access error:', error);
+                });
+        }
+    });
+
+    ipcMain.on('all:app:force-reload', () => {
+        appController.reloadAll();
+    });
 }

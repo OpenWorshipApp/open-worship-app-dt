@@ -78,7 +78,7 @@ export function genFoundBibleItemContextMenu(
     isKeyboardShortcut?: boolean,
 ): ContextMenuItemType[] {
     // TODO: fix slide select editing
-    if (appProvider.isPageEditor) {
+    if (appProvider.isPageAppDocumentEditor) {
         return [];
     }
     let verseKey: string | null = null;

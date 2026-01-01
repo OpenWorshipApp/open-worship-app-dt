@@ -47,7 +47,7 @@ function RendTabComp<T>({
         <li key={tab.title} className={'nav-item ' + (tab.className ?? '')}>
             <button
                 className={
-                    `btn btn-link nav-link ${activeClass}` +
+                    `btn btn-sm btn-link nav-link ${activeClass}` +
                     (isOnScreen ? ' app-on-screen' : '')
                 }
                 onClick={() => {

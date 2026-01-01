@@ -27,10 +27,9 @@ function RenderButtonComp({
     useKeyboardRegistering([eventMap], onClickCallback, [isEnabled]);
     return (
         <button
-            className={`btn btn-sm btn-${isEnabled ? '' : 'outline-'}${btnType}`}
+            className={`btn btn-${isEnabled ? '' : 'outline-'}${btnType}`}
             type="button"
             title={`${title} [${toShortcutKey(eventMap)}]`}
-            style={{ height: '20px' }}
             onClick={onClickCallback}
         >
             {text}

@@ -9,6 +9,10 @@ import {
     MutationType,
     APP_FULL_VIEW_CLASSNAME,
     APP_AUTO_HIDE_CLASSNAME,
+    bringDomToNearestView,
+    checkIsVerticalPartialInvisible,
+    bringDomToCenterView,
+    checkIsVerticalAtBottom,
 } from './helpers';
 
 const callBackListeners = new Set<
@@ -69,7 +73,7 @@ export function handleFullWidgetView(element: Node, type: MutationType) {
     );
 }
 
-export function handleClassNameAction<T>(
+export function handleClassNameAction<T extends HTMLElement>(
     className: string,
     handle: (target: T) => void,
     element: Node,
@@ -83,6 +87,30 @@ export function handleClassNameAction<T>(
         return;
     }
     handle(element as T);
+}
+
+export function handleActiveSelectedElementScrolling(target: Node) {
+    if (target instanceof HTMLElement === false) {
+        return;
+    }
+    const scrollContainerSelector = target.dataset.scrollContainerSelector;
+    const container = scrollContainerSelector
+        ? document.querySelector(scrollContainerSelector)
+        : null;
+    if (container instanceof HTMLElement) {
+        const isPartialInvisible = checkIsVerticalPartialInvisible(
+            container,
+            target,
+        );
+        if (isPartialInvisible) {
+            const isAtBottom = checkIsVerticalAtBottom(container, target);
+            if (isAtBottom) {
+                bringDomToCenterView(target);
+                return;
+            }
+        }
+    }
+    bringDomToNearestView(target);
 }
 
 export function handleAutoHide(
@@ -139,7 +167,8 @@ export function handleAutoHide(
 export class HoverMotionHandler {
     map: WeakMap<HTMLElement, ResizeObserver>;
     static readonly topClassname = 'app-top-hover-motion';
-    static readonly lowClassname = 'app-low-hover-display';
+    static readonly lowDisplayClassname = 'app-low-hover-display';
+    static readonly lowVisibleClassname = 'app-low-hover-visible';
     forceShowClassname = 'force-show';
     constructor() {
         this.map = new WeakMap<HTMLElement, ResizeObserver>();
@@ -197,7 +226,9 @@ export class HoverMotionHandler {
         )) {
             if (
                 childElement instanceof HTMLElement &&
-                childElement.className.includes(HoverMotionHandler.lowClassname)
+                childElement.className.includes(
+                    HoverMotionHandler.lowDisplayClassname,
+                )
             ) {
                 this.init(childElement);
             }
@@ -261,4 +292,8 @@ export async function removeDomTitle(element: Node, eventType: MutationType) {
             removeDomTitle(child, eventType);
         }
     }
+}
+
+export function checkIsZoomed() {
+    return window.outerWidth / window.innerWidth !== 1;
 }

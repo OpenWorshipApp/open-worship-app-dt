@@ -63,7 +63,7 @@ export async function genInputText(
 }
 
 export async function saveBibleItem(bibleItem: BibleItem, onDone?: () => void) {
-    if (appProvider.isPageEditor) {
+    if (appProvider.isPageAppDocumentEditor) {
         // TODO: Implement this, find canvasController
         // canvasController.addNewBibleItem(bibleItem);
         return null;

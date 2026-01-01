@@ -7,10 +7,13 @@ import {
     useScreenManagerContext,
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
-import { getColorParts } from '../initHelpers';
+import { getColorParts } from '../others/initHelpers';
+import { checkIsZoomed } from '../helper/domHelpers';
 
 function getStyleText() {
     const { colorPart, invertColorPart } = getColorParts();
+    const isZoomed = checkIsZoomed();
+    // TODO: find solution for sticky header when zoomed
 
     return `
 #bible-screen-view {
@@ -28,11 +31,9 @@ function getStyleText() {
 
 #bible-screen-view::-webkit-scrollbar-track {
     background-color: #${colorPart}42;
-    border-radius: 5px;
 }
 
 #bible-screen-view::-webkit-scrollbar-thumb {
-    border-radius: 5px;
     background-color: white;
 }
 
@@ -54,8 +55,7 @@ function getStyleText() {
 
 #bible-screen-view th {
     border-radius: 0.1em;
-    position: sticky;
-    top: 0;
+    ${isZoomed ? '' : 'position: sticky; top: 0;'}
     background-color: #${colorPart}53;
     transition: font-size 1s ease, background-color 1s ease;
 }

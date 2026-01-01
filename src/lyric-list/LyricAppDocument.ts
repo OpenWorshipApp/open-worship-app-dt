@@ -15,7 +15,7 @@ import {
     renderLyricSlideMarkdownMusicTextList,
     renderMarkdownMusic,
 } from './markdownHelpers';
-import { checkIsDarkMode } from '../initHelpers';
+import { checkIsDarkMode } from '../others/initHelpers';
 
 export type LyricEditingPropsType = {
     fontFamily: string;

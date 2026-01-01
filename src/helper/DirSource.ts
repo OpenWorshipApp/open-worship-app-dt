@@ -45,7 +45,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return this.dirPath && this._isDirPathValid;
     }
 
-    static dirPathBySettingName(settingName: string) {
+    static getDirPathBySettingName(settingName: string) {
         const dirPath = getSetting(settingName) ?? '';
         if (!dirPath) {
             return null;
@@ -54,7 +54,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     get dirPath() {
-        return DirSource.dirPathBySettingName(this.settingName) ?? '';
+        return DirSource.getDirPathBySettingName(this.settingName) ?? '';
     }
 
     set dirPath(newDirPath: string) {

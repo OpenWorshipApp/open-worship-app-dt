@@ -25,7 +25,7 @@ export default function AppDocumentPreviewerComp() {
         PdfAppDocument;
     return (
         <div
-            className="slide-previewer card w-100 h-100"
+            className="slide-previewer card w-100 h-100 app-zero-border-radius"
             style={{
                 position: 'relative',
             }}

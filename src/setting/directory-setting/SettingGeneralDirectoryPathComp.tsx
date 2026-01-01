@@ -21,6 +21,7 @@ import {
 import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
 import { useGenDirSource } from '../../helper/dirSourceHelpers';
 import { OptionalPromise } from '../../helper/typeHelpers';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
 class ParentDirSource extends DirSource {
     _dirPath: string;
@@ -88,7 +89,7 @@ function RenderParentDirectoryComp({
     const defaultPath = getDefaultDataDir();
     return (
         <div className="d-flex flex-column">
-            <div className="app-highlight-selected p-2">
+            <div className={`${HIGHLIGHT_SELECTED_CLASSNAME} p-2`}>
                 <div>`Parent Directory:</div>
                 <div>
                     <PathSelectorComp
@@ -185,7 +186,7 @@ function RenderBodyComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
         }
     }, [dirSource]);
     return (
-        <div className="card">
+        <div className="card h-100">
             <div className="card-header">`Path Settings</div>
             <div className="card-body w-100 p-2">
                 <RenderParentDirectoryComp dirSource={dirSource} />

@@ -9,7 +9,7 @@ export async function checkSelectedFilePathExist(
     filePath: string,
 ) {
     if (!filePath || !(await fsCheckFileExist(filePath))) {
-        const baseDir = DirSource.dirPathBySettingName(baseDirSettingName);
+        const baseDir = DirSource.getDirPathBySettingName(baseDirSettingName);
         if (baseDir == null || !(await fsCheckDirExist(baseDir))) {
             setSelectedFilePath(settingName, baseDirSettingName, null);
         }

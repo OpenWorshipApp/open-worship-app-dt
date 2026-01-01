@@ -1,16 +1,16 @@
 import { lazy } from 'react';
 
-import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
-import ResizeActorComp from './resize-actor/ResizeActorComp';
+import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
 
 const LazySlideEditorGroundComp = lazy(() => {
-    return import('./slide-editor/SlideEditorGroundComp');
+    return import('../slide-editor/SlideEditorGroundComp');
 });
 const LazyBackgroundComp = lazy(() => {
-    return import('./background/BackgroundComp');
+    return import('../background/BackgroundComp');
 });
 
-export default function AppEditorRightComp() {
+export default function AppDocumentEditorRightComp() {
     return (
         <ResizeActorComp
             flexSizeName={resizeSettingNames.appEditorRight}

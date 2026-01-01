@@ -117,7 +117,7 @@ export function gemSlideContextMenuItems(
                   {
                       menuElement: '`Quick Edit',
                       onSelect: () => {
-                          if (appProvider.isPageEditor) {
+                          if (appProvider.isPageAppDocumentEditor) {
                               AppDocumentListEventListener.selectAppDocumentItem(
                                   slide,
                               );

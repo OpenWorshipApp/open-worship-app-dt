@@ -2,28 +2,30 @@ import { app, BrowserWindow } from 'electron';
 
 import ElectronFinderController from './ElectronFinderController';
 import ElectronMainController from './ElectronMainController';
-import ElectronSettingController from './ElectronSettingController';
+import ElectronSettingManager from './ElectronSettingManager';
 import { getCurrent } from './fsServe';
 import ElectronAboutController from './ElectronAboutController';
 import { getAppThemeBackgroundColor } from './electronHelpers';
 import ElectronLWShareController from './ElectronLWShareController';
+import ElectronSettingController from './ElectronSettingController';
 
 let instance: ElectronAppController | null = null;
-let settingController: ElectronSettingController | null = null;
+let settingManager: ElectronSettingManager | null = null;
 let finderController: ElectronFinderController | null = null;
 let lwShareController: ElectronLWShareController | null = null;
 let aboutController: ElectronAboutController | null = null;
+let settingController: ElectronSettingController | null = null;
 export default class ElectronAppController {
     constructor() {
-        this.settingController.syncMainWindow(this.mainWin);
+        this.settingManager.syncMainWindow(this.mainWin);
         app.on('activate', () => {
             if (BrowserWindow.getAllWindows().length === 0) {
-                this.settingController.syncMainWindow(this.mainWin);
+                this.settingManager.syncMainWindow(this.mainWin);
             }
         });
         const webContents = this.mainWin.webContents;
         webContents.on('did-finish-load', () => {
-            this.settingController.mainHtmlPath = getCurrent(webContents);
+            this.settingManager.mainHtmlPath = getCurrent(webContents);
         });
     }
 
@@ -31,15 +33,15 @@ export default class ElectronAppController {
         return this.mainController.win;
     }
 
-    get settingController() {
-        if (settingController === null) {
-            settingController = new ElectronSettingController();
+    get settingManager() {
+        if (settingManager === null) {
+            settingManager = new ElectronSettingManager();
         }
-        return settingController;
+        return settingManager;
     }
 
     get mainController() {
-        return ElectronMainController.getInstance(this.settingController);
+        return ElectronMainController.getInstance(this.settingManager);
     }
 
     get finderController() {
@@ -70,11 +72,33 @@ export default class ElectronAppController {
         return instance;
     }
 
+    get settingController() {
+        if (settingController === null) {
+            settingController = new ElectronSettingController();
+        }
+        return settingController;
+    }
+
+    allWindows() {
+        return [
+            this.mainController.win,
+            this.finderController.win,
+            this.lwShareController.win,
+            this.aboutController.win,
+            this.settingController.win,
+        ].filter((win): win is BrowserWindow => win !== null);
+    }
+
     resetThemeBackgroundColor() {
         const backgroundColor = getAppThemeBackgroundColor();
-        this.mainWin.setBackgroundColor(backgroundColor);
-        this.finderController.win?.setBackgroundColor(backgroundColor);
-        this.lwShareController.win?.setBackgroundColor(backgroundColor);
-        this.aboutController.win?.setBackgroundColor(backgroundColor);
+        this.allWindows().forEach((win) => {
+            win.setBackgroundColor(backgroundColor);
+        });
+    }
+
+    reloadAll() {
+        this.allWindows().forEach((win) => {
+            win.reload();
+        });
     }
 }

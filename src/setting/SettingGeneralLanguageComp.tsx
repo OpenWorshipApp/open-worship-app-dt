@@ -4,18 +4,20 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import {
     getAllLangsAsync,
     getCurrentLocale,
-    getLang,
     LanguageDataType,
+    LocaleType,
     setCurrentLocale,
 } from '../lang/langHelpers';
-import appProvider from '../server/appProvider';
+import { applyStore } from './SettingApplyComp';
 
 function RenderLanguageButtonComp({
     currentLocale,
     langData,
+    setLocale,
 }: Readonly<{
     currentLocale: string;
     langData: LanguageDataType;
+    setLocale: (newLocale: LocaleType) => void;
 }>) {
     const btnType =
         langData.locale === currentLocale ? 'btn-info' : 'btn-outline-info';
@@ -24,7 +26,8 @@ function RenderLanguageButtonComp({
             key={langData.locale}
             onClick={() => {
                 setCurrentLocale(langData.locale);
-                appProvider.reload();
+                setLocale(langData.locale);
+                applyStore.pendingApply();
             }}
             className={`item btn ${btnType}`}
         >
@@ -41,19 +44,15 @@ function RenderLanguageButtonComp({
 
 export default function SettingGeneralLanguageComp() {
     const [allLangs, setAllLangs] = useState<LanguageDataType[]>([]);
-    const currentLocale = getCurrentLocale();
-    const selectedLang = getLang(currentLocale);
+    const [locale, setLocale] = useState(getCurrentLocale());
     useAppEffect(() => {
         if (allLangs.length === 0) {
             const newAllLangs = getAllLangsAsync();
             setAllLangs(newAllLangs);
         }
     }, [allLangs]);
-    if (selectedLang === null) {
-        return null;
-    }
     return (
-        <div className="card lang">
+        <div className="card lang m-1">
             <div className="card-header">`Language</div>
             <div className="card-body">
                 <div className="options d-flex flex-wrap">
@@ -61,8 +60,9 @@ export default function SettingGeneralLanguageComp() {
                         return (
                             <RenderLanguageButtonComp
                                 key={langData.locale}
-                                currentLocale={currentLocale}
+                                currentLocale={locale}
                                 langData={langData}
+                                setLocale={setLocale}
                             />
                         );
                     })}

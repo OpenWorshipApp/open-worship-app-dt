@@ -7,7 +7,7 @@ import {
 } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
-import { gotoSettingPage } from '../setting/settingHelpers';
+import { openSettingPage } from '../setting/settingHelpers';
 import appProvider from '../server/appProvider';
 
 export function QuitCurrentPageComp({
@@ -36,7 +36,7 @@ export function SettingButtonComp() {
             className="btn btn-outline-success rotating-hover"
             title="`Setting"
             onClick={() => {
-                gotoSettingPage();
+                openSettingPage();
             }}
         >
             <i className="bi bi-gear-wide-connected" />
@@ -105,7 +105,7 @@ export function BibleLookupButtonComp() {
     );
     return (
         <button
-            className="btn btn-labeled btn-primary"
+            className="btn btn-sm btn-labeled btn-primary app-zero-border-radius"
             style={{ width: '220px' }}
             title={`Bible lookup [${toShortcutKey(openBibleEventMap)}]`}
             type="button"

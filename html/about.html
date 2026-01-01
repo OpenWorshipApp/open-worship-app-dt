@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
@@ -8,20 +8,28 @@
     <!-- TODO: change logo192.png -->
     <link rel="apple-touch-icon" href="/logo192.png" />
     <link rel="manifest" href="/manifest.json" />
-    <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'">prod -->
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Open Worship App" />
-    <title>Document Editor</title>
+    <title>About</title>
+    <style>
+        body,
+        html,
+        #root {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
 </head>
 
 <body style="background-color: transparent !important">
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root">
-        <!-- TODO: change loading.gif -->
-        <img style="position: absolute; width: 70px; top: 50%; left: 50%; transform: translate(-35px);" class="loading"
-            src="/loading.gif" alt="loading">
-    </div>
-    <script type="module" src="/src/editor.tsx"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/appInit.ts"></script>
+    <script type="module" src="/src/about.tsx"></script>
 </body>
 
 </html>

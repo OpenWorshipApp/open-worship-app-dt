@@ -9,7 +9,7 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import { useStateSettingBoolean } from './settingHelpers';
 import { useAppEffect } from './debuggerHelpers';
 import { genTimeoutAttempt } from './helpers';
-import { checkIsDarkMode } from '../initHelpers';
+import { checkIsDarkMode } from '../others/initHelpers';
 
 globalThis.MonacoEnvironment = {
     getWorker(_, label) {

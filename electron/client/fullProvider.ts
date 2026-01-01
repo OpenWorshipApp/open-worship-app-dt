@@ -26,7 +26,7 @@ export const provider = {
     systemUtils,
     appInfo,
     reload: () => {
-        window.location.reload();
+        globalThis.location.reload();
     },
     appUtils,
     databaseUtils,

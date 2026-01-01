@@ -99,6 +99,9 @@ export default class FileSource
     get name() {
         return getFileName(this.fullName);
     }
+    set name(newName: string) {
+        this.fullName = newName + this.dotExtension;
+    }
 
     get dotExtension() {
         return getFileDotExtension(this.fullName);

@@ -1,5 +1,5 @@
-import { main } from './appInitHelpers';
-import AppPresenterComp from './AppPresenterComp';
+import { main } from './others/appInitHelpers';
+import AppPresenterComp from './presenter/AppPresenterComp';
 import AppLayoutComp from './router/AppLayoutComp';
 
 main(

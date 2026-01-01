@@ -14,11 +14,12 @@ export default function ScreenPreviewerHeaderComp() {
     };
     return (
         <div
-            className="card-header w-100 p-1"
+            className="card-header w-100"
             style={{
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 height: '30px',
+                padding: '2px',
             }}
         >
             <div className="d-flex w-100 h-100">

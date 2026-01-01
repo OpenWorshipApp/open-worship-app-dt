@@ -6,6 +6,7 @@ import { useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { QuitCurrentPageComp } from '../others/commonButtons';
 import { SETTING_SETTING_NAME } from './settingHelpers';
+import SettingApplyComp from './SettingApplyComp';
 
 const LazySettingGeneralComp = lazy(() => {
     return import('./SettingGeneralComp');
@@ -25,9 +26,12 @@ export default function SettingComp() {
         'g',
     );
     return (
-        <div id="app-setting" className="card w-100 h-100 app-overflow-hidden">
+        <div
+            id="app-setting"
+            className="card w-100 h-100 app-overflow-hidden app-zero-border-radius"
+        >
             <div
-                className="card-header overflow-hidden"
+                className="card-header overflow-hidden p-0"
                 style={{
                     height: '37px',
                 }}
@@ -49,6 +53,7 @@ export default function SettingComp() {
                         right: 0,
                     }}
                 >
+                    <SettingApplyComp />
                     <QuitCurrentPageComp title="Quit Setting" />
                 </div>
             </div>

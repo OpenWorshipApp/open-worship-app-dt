@@ -1,5 +1,5 @@
 @use 'sass:math';
-@use './others/variables.scss' as *;
+@use './variables.scss' as *;
 
 body {
   margin: 0;
@@ -47,7 +47,6 @@ body {
     width: 100% !important;
     height: calc(100% - $header-height) !important;
     overflow: hidden;
-    padding: 2px;
   }
 
   & > .footer {
@@ -118,22 +117,22 @@ body {
   }
 
   .app-overflow-hidden {
-    overflow: hidden;
+    overflow: hidden !important;
   }
 
   .app-overflow-hidden-x {
-    overflow-x: hidden;
+    overflow-x: hidden !important;
   }
 
   .app-overflow-hidden-y {
-    overflow-y: hidden;
+    overflow-y: hidden !important;
   }
 
   .app-border-white-round {
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
   }
   .app-border-whiter-round {
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
   }
 
   $bg-width: 20px;
@@ -192,7 +191,7 @@ body {
     transition-timing-function: step-end;
 
     padding: 3px;
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
 
     &.bar-type-v {
       height: 6px;
@@ -235,6 +234,12 @@ body {
       padding: 0;
       margin: auto;
       line-height: 0;
+    }
+
+    &.app-hidden-widget-on-screen {
+      * {
+        color: var(--app-yellow-green) !important;
+      }
     }
   }
 
@@ -294,6 +299,7 @@ body {
     .app-top-hover-motion-#{$i} {
       .app-low-hover-visible-#{$i} {
         visibility: hidden;
+        transition: visibility 0.2s ease-in-out;
       }
       .app-low-hover-display-#{$i} {
         display: none;
@@ -312,6 +318,15 @@ body {
     }
   }
 
+  .app-opacity-hover {
+    opacity: attr(data-opacity-hover number);
+    transition: opacity 0.5s ease-in-out;
+    &:hover {
+      transition: opacity 0.5s ease-in-out;
+      opacity: 1;
+    }
+  }
+
   .app-on-screen::before {
     content: '*';
     color: var(--app-yellow-green);
@@ -327,8 +342,16 @@ body {
 
   .app-found-highlight {
     background-color: rgba(0, 0, 0, 0.045);
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
     color: #3d680b;
+  }
+
+  .app-zero-border-radius {
+    border-radius: 0 !important;
+  }
+
+  .nav-item .btn {
+    border-radius: 0 !important;
   }
 }
 

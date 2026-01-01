@@ -32,6 +32,9 @@ const LazyBackgroundImagesComp = lazy(() => {
 const LazyBackgroundVideosComp = lazy(() => {
     return import('./BackgroundVideosComp');
 });
+const LazyBackgroundCamerasComp = lazy(() => {
+    return import('./BackgroundCamerasComp');
+});
 const LazyBackgroundAudiosComp = lazy(() => {
     return import('./BackgroundAudiosComp');
 });
@@ -55,7 +58,7 @@ function RenderAudiosTabComp({
             <li className={'nav-item '}>
                 <button
                     className={
-                        'btn btn-link nav-link' +
+                        'btn btn-sm btn-link nav-link' +
                         ` ${isActive ? 'active' : ''}` +
                         ` ${isPlaying ? ' app-on-screen' : ''}`
                     }
@@ -84,6 +87,7 @@ const tabTypeList = [
     ['color', 'Colors', LazyBackgroundColorsComp],
     ['image', 'Images', LazyBackgroundImagesComp],
     ['video', 'Videos', LazyBackgroundVideosComp],
+    ['camera', 'Cameras', LazyBackgroundCamerasComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {

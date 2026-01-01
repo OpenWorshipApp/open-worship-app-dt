@@ -1,16 +1,16 @@
 import { lazy } from 'react';
 
-import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
-import ResizeActorComp from './resize-actor/ResizeActorComp';
+import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
-    return import('./app-document-presenter/items/AppDocumentPreviewerComp');
+    return import('../app-document-presenter/items/AppDocumentPreviewerComp');
 });
-const LazyAppEditorRightComp = lazy(() => {
-    return import('./AppEditorRightComp');
+const LazyAppDocumentEditorRightComp = lazy(() => {
+    return import('./AppDocumentEditorRightComp');
 });
 
-export default function AppEditorComp() {
+export default function AppDocumentEditorComp() {
     return (
         <ResizeActorComp
             flexSizeName={resizeSettingNames.appEditor}
@@ -26,7 +26,7 @@ export default function AppEditorComp() {
                     widgetName: 'App Editor Left',
                 },
                 {
-                    children: LazyAppEditorRightComp,
+                    children: LazyAppDocumentEditorRightComp,
                     key: 'h2',
                     widgetName: 'App Editor Right',
                 },

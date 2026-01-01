@@ -15,6 +15,10 @@ export function getSetting(key: string) {
     // TODO: Change to use SettingManager
     return appLocalStorage.getItem(key);
 }
+export function getSettingForce(key: string) {
+    // TODO: Change to use SettingManager
+    return appLocalStorage.getItemForce(key);
+}
 
 export function useStateSettingBoolean(
     settingName: string,

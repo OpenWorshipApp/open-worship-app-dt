@@ -1,9 +1,9 @@
 import HandleAlertComp from './popup-widget/HandleAlertComp';
-import BibleReaderComp from './BibleReaderComp';
+import BibleReaderComp from './bible-reader/BibleReaderComp';
 import AppContextMenuComp from './context-menu/AppContextMenuComp';
 import TopProgressBarComp from './progress-bar/TopProgressBarComp';
 import ToastComp from './toast/ToastComp';
-import { main } from './appInitHelpers';
+import { main } from './others/appInitHelpers';
 import { hideAllScreens } from './_screen/screenHelpers';
 import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
 

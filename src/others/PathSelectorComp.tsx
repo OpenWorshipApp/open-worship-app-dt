@@ -11,7 +11,7 @@ import {
 import { menuTitleRevealFile } from '../helper/helpers';
 import { copyToClipboard, showExplorer } from '../server/appHelpers';
 import appProvider from '../server/appProvider';
-import { goToGeneralSetting } from '../setting/settingHelpers';
+import { openGeneralSetting } from '../setting/settingHelpers';
 import RenderPathTitleComp from './RenderPathTitleComp';
 
 const LazyPathEditorComp = lazy(() => {
@@ -42,7 +42,7 @@ function openContextMenu(dirPath: string, event: any) {
         menuItems.push({
             menuElement: '`Edit Parent Path`',
             onSelect: () => {
-                goToGeneralSetting();
+                openGeneralSetting();
             },
         });
     }

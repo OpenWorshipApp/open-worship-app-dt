@@ -18,8 +18,8 @@ import {
     getBibleXMLDataFromKey,
     saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
-import appProvider from '../../server/appProvider';
 import { AnyObjectType } from '../../helper/typeHelpers';
+import { forceReloadAppWindows } from '../settingHelpers';
 
 export const schemaHandler: SchemaNode = compileSchema(bookChapterSchemaJson);
 export const uri = Uri.parse('book-chapter');
@@ -174,7 +174,7 @@ async function handleSaving(
     };
     const isSuccess = await saveJsonDataToXMLfile(xmlBibleData);
     if (isSuccess) {
-        appProvider.reload();
+        forceReloadAppWindows();
     }
 }
 

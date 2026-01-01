@@ -23,6 +23,7 @@ import { OptionalPromise } from '../helper/typeHelpers';
 import DirSource from '../helper/DirSource';
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 
 export type RenderChildType = (
     filePath: string,
@@ -71,7 +72,9 @@ function genBody(
             backgroundType,
         );
     const isInScreen = selectedBackgroundSrcList.length > 0;
-    const selectedCN = isInScreen ? 'app-highlight-selected animation' : '';
+    const selectedCN = isInScreen
+        ? `${HIGHLIGHT_SELECTED_CLASSNAME} animation`
+        : '';
     const screenKeys = selectedBackgroundSrcList.map(([key]) => key);
     const title =
         `${filePath}` +
@@ -147,6 +150,14 @@ export const defaultRangeSize = {
     step: 10,
 };
 
+export function useThumbnailWidthSetting() {
+    const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
+        'bg-thumbnail-width',
+        100,
+    );
+    return [thumbnailWidth, setThumbnailWidth] as const;
+}
+
 export default function BackgroundMediaComp({
     shouldHideFooter,
     extraHeaderChild,
@@ -187,10 +198,7 @@ export default function BackgroundMediaComp({
     ) => void;
     genExtraItemContextMenuItems?: (filePath: string) => ContextMenuItemType[];
 }>) {
-    const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
-        'bg-thumbnail-width',
-        100,
-    );
+    const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
     const backgroundType = backgroundTypeMapper[dragType];
     const dirSource = useGenDirSource(dirSourceSettingName);
     const handleBodyRendering = (filePaths: string[]) => {
@@ -222,7 +230,7 @@ export default function BackgroundMediaComp({
     }
     return (
         <div
-            className="w-100 h-100 card"
+            className="card w-100 h-100 app-zero-border-radius"
             onWheel={(event) => {
                 handleCtrlWheel({
                     event,

@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -8,16 +8,21 @@
     <!-- TODO: change logo192.png -->
     <link rel="apple-touch-icon" href="/logo192.png" />
     <link rel="manifest" href="/manifest.json" />
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'" />
+    <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'">prod -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Open Worship App" />
-    <title>Local Web Share</title>
+    <title>Document Editor</title>
 </head>
 
 <body style="background-color: transparent !important">
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <script type="module" src="/src/lwShare.tsx"></script>
+    <div id="root">
+        <!-- TODO: change loading.gif -->
+        <img style="position: absolute; width: 70px; top: 50%; left: 50%; transform: translate(-35px);" class="loading"
+            src="/loading.gif" alt="loading">
+    </div>
+    <script type="module" src="/src/appInit.ts"></script>
+    <script type="module" src="/src/appDocumentEditor.tsx"></script>
 </body>
 
 </html>

@@ -195,7 +195,7 @@ export default function BibleLookupInputHistoryComp({
                             'Double click to put back, shift double click to ' +
                             'put back split'
                         }
-                        style={{ height: '20px' }}
+                        style={{ height: '27px' }}
                         draggable
                         onDragStart={async (event: any) => {
                             const bibleItem =

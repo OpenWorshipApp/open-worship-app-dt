@@ -7,7 +7,7 @@ import {
     getThemeSourceSetting,
     setThemeSourceSetting,
     ThemeOptionType,
-} from '../initHelpers';
+} from '../others/initHelpers';
 
 export default function SettingGeneralThemeComp() {
     const [themeSource, setThemeSource] = useState<ThemeOptionType>(
@@ -40,7 +40,7 @@ export default function SettingGeneralThemeComp() {
     }, []);
 
     return (
-        <div className="card">
+        <div className="card m-1">
             <div className="card-header">`Theme</div>
             <div className="card-body">
                 <select

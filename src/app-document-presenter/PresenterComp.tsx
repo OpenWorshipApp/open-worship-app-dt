@@ -116,9 +116,7 @@ function RenderToggleFullViewComp({
     return (
         <div>
             <button
-                className={
-                    `btn btn-${isFullWidget ? '' : 'outline-'}info ` + 'btn-sm'
-                }
+                className={`btn btn-${isFullWidget ? '' : 'outline-'}info `}
                 onClick={handleClick}
             >
                 <i className={`bi bi-${fullScreenClassname}`} />
@@ -145,7 +143,7 @@ function RenderForegroundTabComp({
             <li className={'nav-item '}>
                 <button
                     className={
-                        'btn btn-link nav-link' +
+                        'btn btn-sm btn-link nav-link' +
                         ` ${isActive ? 'active' : ''}` +
                         (isOnScreen ? ' app-on-screen' : '')
                     }

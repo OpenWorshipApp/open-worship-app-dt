@@ -1,4 +1,4 @@
-import { applyDarkModeToApp } from '../initHelpers';
+import { applyDarkModeToApp } from '../others/initHelpers';
 import appProvider from '../server/appProvider';
 
 const { appInfo } = appProvider;
