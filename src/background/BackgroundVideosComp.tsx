@@ -127,6 +127,7 @@ function RendBodyComp({
 function rendChild(
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    _width: number,
     height: number,
     extraChild?: ReactElement,
 ) {

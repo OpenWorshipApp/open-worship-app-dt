@@ -104,6 +104,7 @@ export default function BackgroundMediaItemComp({
             {rendChild(
                 filePath,
                 selectedBackgroundSrcList,
+                thumbnailWidth,
                 thumbnailHeight,
                 <div
                     style={{

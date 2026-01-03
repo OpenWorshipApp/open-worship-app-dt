@@ -9,6 +9,7 @@ import { CameraInfoType } from '../helper/cameraHelpers';
 export type RenderChildType = (
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    width: number,
     height: number,
     extraChild?: ReactElement,
 ) => ReactNode;

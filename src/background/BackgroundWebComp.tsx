@@ -12,7 +12,7 @@ import {
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import DirSource from '../helper/DirSource';
-import { ReactElement, useState } from 'react';
+import { ReactElement, useMemo, useState } from 'react';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -20,6 +20,7 @@ import { fsWriteFile } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
 import appProvider from '../server/appProvider';
 import { openPopupEditorWindow } from '../helper/domHelpers';
+import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 
 function openPopupWebEditorWindow(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
@@ -41,14 +42,56 @@ function genExtraItemContextMenuItems(filePath: string) {
     ];
 }
 
+function RenderIframeComp({
+    fileSource,
+    width,
+    height,
+}: Readonly<{
+    fileSource: FileSource;
+    width: number;
+    height: number;
+}>) {
+    const { scale, actualWidth, actualHeight } = useMemo(() => {
+        const display = getDefaultScreenDisplay();
+        const scale = Math.max(
+            width / display.bounds.width,
+            height / display.bounds.height,
+        );
+        return {
+            scale,
+            actualWidth: display.bounds.width,
+            actualHeight: display.bounds.height,
+        };
+    }, [height]);
+    return (
+        <iframe
+            src={fileSource.src}
+            title={fileSource.fullName}
+            style={{
+                pointerEvents: 'none',
+                colorScheme: 'normal',
+                border: 'none',
+                backgroundColor: 'transparent',
+                width: `${actualWidth}px`,
+                height: `${actualHeight}px`,
+                overflow: 'hidden',
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left',
+            }}
+        />
+    );
+}
+
 function RenderChildComp({
     filePath,
     selectedBackgroundSrcList,
+    width,
     height,
     extraChild,
 }: Readonly<{
     filePath: string;
     selectedBackgroundSrcList: [string, BackgroundSrcType][];
+    width: number;
     height: number;
     extraChild?: ReactElement;
 }>) {
@@ -81,18 +124,10 @@ function RenderChildComp({
                 })}
             />
             {isPlaying ? (
-                <iframe
-                    src={fileSource.src}
-                    title={filePath}
-                    className="w-100 h-100 app-zero-border-radius"
-                    style={{
-                        pointerEvents: 'none',
-                        colorScheme: 'normal',
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        width: '100%',
-                        height: '100%',
-                    }}
+                <RenderIframeComp
+                    fileSource={fileSource}
+                    width={width}
+                    height={height}
                 />
             ) : (
                 <div className="w-100 h-100 d-flex justify-content-center align-items-center">
@@ -112,6 +147,7 @@ function RenderChildComp({
 function rendChild(
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    width: number,
     height: number,
     extraChild?: ReactElement,
 ) {
@@ -119,6 +155,7 @@ function rendChild(
         <RenderChildComp
             filePath={filePath}
             selectedBackgroundSrcList={selectedBackgroundSrcList}
+            width={width}
             height={height}
             extraChild={extraChild}
         />
