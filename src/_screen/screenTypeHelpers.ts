@@ -61,8 +61,9 @@ const _backgroundTypeList = [
     'color',
     'image',
     'video',
-    'audio',
     'camera',
+    'web',
+    'audio',
 ] as const;
 export type BackgroundType = (typeof _backgroundTypeList)[number];
 export type BackgroundDataType = {

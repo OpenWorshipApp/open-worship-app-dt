@@ -1,0 +1,16 @@
+.app-background-web {
+  .web-thumbnail {
+    margin: 2px;
+    cursor: pointer;
+
+    .card-body {
+      padding: 0 !important;
+    }
+    .card-footer {
+      font-size: 10px;
+      white-space: nowrap;
+      text-align: right;
+      padding: 0 !important;
+    }
+  }
+}

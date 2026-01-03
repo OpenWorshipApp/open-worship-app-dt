@@ -55,9 +55,11 @@ function deserializeDragData({
     } else if (type === DragTypeEnum.BIBLE_ITEM) {
         item = BibleItem.dragDeserialize(data);
     } else if (
-        [DragTypeEnum.BACKGROUND_VIDEO, DragTypeEnum.BACKGROUND_IMAGE].includes(
-            type,
-        )
+        [
+            DragTypeEnum.BACKGROUND_VIDEO,
+            DragTypeEnum.BACKGROUND_IMAGE,
+            DragTypeEnum.BACKGROUND_WEB,
+        ].includes(type)
     ) {
         item = FileSource.dragDeserialize(data);
     } else if (type === DragTypeEnum.BACKGROUND_CAMERA) {

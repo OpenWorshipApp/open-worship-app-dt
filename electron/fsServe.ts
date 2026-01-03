@@ -13,6 +13,7 @@ export const htmlFiles = {
     about: 'about.html',
     experiment: 'experiment.html',
     lyricEditor: 'lyricEditor.html',
+    webEditor: 'webEditor.html',
 };
 export const preloadFileMap = {
     full: [

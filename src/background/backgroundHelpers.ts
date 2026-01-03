@@ -17,6 +17,7 @@ export const backgroundTypeMapper: any = {
     [DragTypeEnum.BACKGROUND_IMAGE]: 'image',
     [DragTypeEnum.BACKGROUND_VIDEO]: 'video',
     [DragTypeEnum.BACKGROUND_CAMERA]: 'camera',
+    [DragTypeEnum.BACKGROUND_WEB]: 'web',
     [DragTypeEnum.BACKGROUND_AUDIO]: 'audio',
 };
 

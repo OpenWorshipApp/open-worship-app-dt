@@ -108,6 +108,7 @@ export type PagePropsType = {
     isPageExperiment: boolean;
     isPageLyricEditor: boolean;
     lyricEditorHomePage: string;
+    webEditorHomePage: string;
     experimentHomePage: string;
 };
 

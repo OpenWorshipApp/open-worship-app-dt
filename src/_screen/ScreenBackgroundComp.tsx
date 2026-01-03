@@ -70,6 +70,16 @@ export function genHtmlBackground(
                     };
                 });
         });
+    } else if (backgroundSrc.type === 'web') {
+        const iframe = document.createElement('iframe');
+        Object.assign(iframe.style, {
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            backgroundColor: 'transparent',
+        });
+        iframe.src = backgroundSrc.src;
+        child = iframe;
     } else {
         const div = document.createElement('div');
         const screenManagerBase = getScreenManagerBase(screenId);

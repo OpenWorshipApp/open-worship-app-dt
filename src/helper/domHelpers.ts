@@ -297,3 +297,18 @@ export async function removeDomTitle(element: Node, eventType: MutationType) {
 export function checkIsZoomed() {
     return window.outerWidth / window.innerWidth !== 1;
 }
+
+const WINDOW_FEATURES =
+    'popup,top=0,left=0,width=400,height=400,scrollbars=yes,' +
+    'toolbar=no,location=no,status=no,menubar=no';
+
+export function openPopupEditorWindow(pathName: string) {
+    return window.open(pathName, 'popup_window', WINDOW_FEATURES);
+}
+
+export function getParamFileFullName() {
+    const fileFullName = new URLSearchParams(globalThis.location.search).get(
+        'file',
+    );
+    return fileFullName;
+}

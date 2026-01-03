@@ -13,6 +13,7 @@ import mimeImageList from './mime/image-types.json';
 import mimePlaylistList from './mime/playlist-types.json';
 import mimeVideoList from './mime/video-types.json';
 import mimeAudioList from './mime/audio-types.json';
+import mimeWebList from './mime/web-types.json';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
     hideProgressBar,
@@ -20,14 +21,19 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { cloneJson, freezeObject } from '../helper/helpers';
 
-freezeObject(mimeBibleList);
-freezeObject(mimeLyricList);
-freezeObject(mimeMarkdownList);
-freezeObject(mimeAppDocumentList);
-freezeObject(mimeImageList);
-freezeObject(mimePlaylistList);
-freezeObject(mimeVideoList);
-freezeObject(mimeAudioList);
+for (const ml of [
+    mimeBibleList,
+    mimeLyricList,
+    mimeMarkdownList,
+    mimeAppDocumentList,
+    mimeImageList,
+    mimePlaylistList,
+    mimeVideoList,
+    mimeAudioList,
+    mimeWebList,
+]) {
+    freezeObject(ml);
+}
 
 export const mimetypePdf: AppMimetypeType = {
     type: 'PDF File',
@@ -63,6 +69,7 @@ const mimeTypesMapper = {
     image: mimeImageList,
     playlist: mimePlaylistList,
     video: mimeVideoList,
+    web: mimeWebList,
     audio: mimeAudioList,
 };
 
@@ -145,6 +152,7 @@ export const mimetypeNameTypeList = [
     'markdown',
     'bible',
     'audio',
+    'web',
     'other',
 ] as const;
 export type MimetypeNameType = (typeof mimetypeNameTypeList)[number];

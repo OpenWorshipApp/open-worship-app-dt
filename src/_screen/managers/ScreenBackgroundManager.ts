@@ -208,7 +208,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
 
     removeOldElements(
         aminData: StyleAnimType,
-        elements: HTMLDivElement[],
+        elements: HTMLElement[],
         clearTracks: () => void,
     ) {
         Promise.all(
@@ -270,7 +270,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
             );
             const childList = Array.from(rootContainer.children).filter(
                 (element) => {
-                    return element instanceof HTMLDivElement;
+                    return element instanceof HTMLElement;
                 },
             );
             promise.then((clearTracks) => {
@@ -280,8 +280,8 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
                 this.clearTracks = clearTracks;
             });
         } else if (rootContainer.lastChild !== null) {
-            const targetDiv = rootContainer.lastChild as HTMLDivElement;
-            this.removeOldElements(aminData, [targetDiv], this.clearTracks);
+            const targetElement = rootContainer.lastChild as HTMLElement;
+            this.removeOldElements(aminData, [targetElement], this.clearTracks);
         }
     }
 
@@ -299,6 +299,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         const backgroundTypeMap: { [key: string]: BackgroundType } = {
             [DragTypeEnum.BACKGROUND_IMAGE]: 'image',
             [DragTypeEnum.BACKGROUND_VIDEO]: 'video',
+            [DragTypeEnum.BACKGROUND_WEB]: 'web',
             [DragTypeEnum.BACKGROUND_CAMERA]: 'camera',
         };
         if (type in backgroundTypeMap) {

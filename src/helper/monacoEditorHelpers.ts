@@ -29,15 +29,6 @@ globalThis.MonacoEnvironment = {
     },
 };
 
-globalThis.MonacoEnvironment = {
-    getWorker(_, label) {
-        if (label === 'json') {
-            return new jsonWorker();
-        }
-        return new editorWorker();
-    },
-};
-
 async function getCopiedText() {
     try {
         if (navigator.clipboard?.readText) {
