@@ -91,7 +91,7 @@ const tabTypeList = [
     ['image', 'Images', LazyBackgroundImagesComp],
     ['video', 'Videos', LazyBackgroundVideosComp],
     ['camera', 'Cameras', LazyBackgroundCamerasComp],
-    ['web', 'Web', LazyBackgroundWebComp],
+    ['web', 'Webs', LazyBackgroundWebComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {
