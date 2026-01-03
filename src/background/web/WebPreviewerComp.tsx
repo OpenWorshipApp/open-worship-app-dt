@@ -22,6 +22,7 @@ export default function WebPreviewerComp() {
                 title={filePath}
                 className="w-100 h-100 app-zero-border-radius"
                 style={{
+                    colorScheme: 'normal',
                     border: 'none',
                     backgroundColor: 'transparent',
                     width: '100%',
