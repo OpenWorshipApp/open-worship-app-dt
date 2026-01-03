@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Uri } from 'monaco-editor';
 
 import { useSelectedLyricContext } from './lyricHelpers';
 import Lyric from './Lyric';
@@ -8,7 +9,6 @@ import { genTimeoutAttempt } from '../helper/helpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
 import { useInitMonacoEditor } from '../helper/monacoEditorHelpers';
-import { Uri } from 'monaco-editor';
 
 async function loadLyricContent(lyric: Lyric, editorInstance: any) {
     const lyricContent = await lyric.getContent();
@@ -26,7 +26,7 @@ export default function LyricEditorIDEComp() {
     const selectedLyric = useSelectedLyricContext();
     const { editorStore, isWrapText, setIsWrapText, onContainerInit } =
         useInitMonacoEditor({
-            settingName: 'lytic-editor-wrap-text',
+            settingName: 'lyric-editor-wrap-text',
             options: { language: 'markdown' },
             onInit: (editorInstance) => {
                 editorInstance.addAction({

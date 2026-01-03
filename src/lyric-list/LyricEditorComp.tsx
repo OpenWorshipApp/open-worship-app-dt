@@ -11,6 +11,7 @@ import LyricEditingManager, {
 import { MultiContextRender } from '../helper/MultiContextRender';
 import { SelectedLyricContext } from './lyricHelpers';
 import appProvider from '../server/appProvider';
+import { getParamFileFullName } from '../helper/domHelpers';
 
 const LazyLyricEditorIDEComp = lazy(() => {
     return import('./LyricEditorIDEComp');
@@ -20,9 +21,7 @@ const LazyLyricPreviewerComp = lazy(() => {
 });
 
 function getLyric() {
-    const fileFullName = new URLSearchParams(globalThis.location.search).get(
-        'lyric',
-    );
+    const fileFullName = getParamFileFullName();
     if (fileFullName === null) {
         throw new Error('Lyric file not specified');
     }
