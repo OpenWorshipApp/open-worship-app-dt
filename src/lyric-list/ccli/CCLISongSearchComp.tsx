@@ -13,7 +13,7 @@ import { searchCCLISongs, getCCLISongDetails, hasCCLICredentials } from './ccliS
 import { CCLISongType, CCLISearchResultType } from './ccliTypes';
 import LoadingComp from '../../others/LoadingComp';
 import { handleError } from '../../helper/errorHelpers';
-import { importCCLISongAsLyric } from './ccliImportHelpers.js';
+import { importCCLISongAsLyric } from './ccliImportHelpers';
 import DirSource from '../../helper/DirSource';
 
 type CCLISongSearchCompProps = {
