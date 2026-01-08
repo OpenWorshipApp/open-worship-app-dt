@@ -78,13 +78,13 @@ Currently using mock songs for development:
 ### API Endpoints (To Implement)
 ```typescript
 // Search endpoint
-GET https://api.songselect.ccli.com/v1/songs?query={query}
+GET https://api.ccli.com/v2/songs?query={query}
 
 // Song details endpoint
-GET https://api.songselect.ccli.com/v1/songs/{songId}
+GET https://api.ccli.com/v2/songs/{songId}
 
 // Authentication
-POST https://api.songselect.ccli.com/oauth/token
+POST https://api.ccli.com/v2/oauth/token
 ```
 
 ### Security Considerations
