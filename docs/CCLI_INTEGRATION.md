@@ -113,7 +113,7 @@ The current implementation uses **mock data** for development and testing. To us
 
 3. **Update API endpoints**:
    ```typescript
-   const CCLI_API_BASE_URL = 'https://api.songselect.ccli.com/v1';
+   const CCLI_API_BASE_URL = 'https://api.ccli.com/v2';
    ```
 
 ### API Integration Points
