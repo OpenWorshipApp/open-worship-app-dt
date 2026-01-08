@@ -43,9 +43,17 @@ export async function getCCLICredentials(): Promise<CCLICredentialsType | null> 
  */
 export async function hasCCLICredentials(): Promise<boolean> {
     const credentials = await getCCLICredentials();
-    return credentials !== null && 
-           !!credentials.subscriptionId && 
-           credentials.subscriptionId.length > 0 && 
+
+    // In developer mode (useMockData), credentials are optional according to the UI.
+    // If we have settings and mock mode is enabled, treat credentials as present.
+    if (credentials && credentials.useMockData) {
+        return true;
+    }
+
+    // For real API usage, require both subscriptionId and apiKey to be non-empty.
+    return credentials !== null &&
+           !!credentials.subscriptionId &&
+           credentials.subscriptionId.length > 0 &&
            !!credentials.apiKey &&
            credentials.apiKey.length > 0;
 }
