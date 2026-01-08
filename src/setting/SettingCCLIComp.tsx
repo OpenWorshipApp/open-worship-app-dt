@@ -146,7 +146,7 @@ export default function SettingCCLIComp() {
                 <button
                     className="btn btn-primary"
                     onClick={handleSave}
-                    disabled={isSaving || (!useMockData && !subscriptionId.trim() && !apiKey.trim())}
+                    disabled={isSaving || (!useMockData && (!subscriptionId.trim() || !apiKey.trim()))}
                 >
                     {isSaving ? 'Saving...' : 'Save Settings'}
                 </button>
