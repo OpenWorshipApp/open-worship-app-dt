@@ -40,7 +40,6 @@ import {
     checkForUpdateSilently,
 } from './server/appHelpers';
 import { useAppEffectAsync } from './helper/debuggerHelpers';
-import { goToGeneralSetting } from './setting/settingHelpers';
 import { applyDarkModeToApp, getReactRoot } from './initHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
@@ -52,14 +51,11 @@ function useCheckSetting() {
             !appProvider.isPageSetting &&
             !(await appLocalStorage.getSelectedParentDirectory())
         ) {
-            const isOk = await showAppConfirm(
-                '`No Parent Directory Selected',
-                '`You will be redirected to the General Settings page to ' +
-                    'select a parent directory.',
+            // Auto-initialize default directories silently
+            const { initializeDefaultDirectories } = await import(
+                './setting/directory-setting/directoryHelpers'
             );
-            if (isOk) {
-                goToGeneralSetting();
-            }
+            await initializeDefaultDirectories();
             return;
         }
         checkDecidedBibleReaderHomePage();

@@ -15,6 +15,7 @@ import LoadingComp from '../../others/LoadingComp';
 import { handleError } from '../../helper/errorHelpers';
 import { importCCLISongAsLyric } from './ccliImportHelpers';
 import DirSource from '../../helper/DirSource';
+import { useAppEffect } from '../../helper/debuggerHelpers';
 
 type CCLISongSearchCompProps = {
     dirSource: DirSource;
@@ -35,9 +36,9 @@ export default function CCLISongSearchComp({
     const [hasCredentials, setHasCredentials] = useState<boolean | null>(null);
 
     // Check credentials on mount
-    useState(() => {
+    useAppEffect(() => {
         hasCCLICredentials().then(setHasCredentials);
-    });
+    }, []);
 
     const handleSearch = async (event?: FormEvent) => {
         if (event) {

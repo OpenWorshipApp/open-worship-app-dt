@@ -80,7 +80,7 @@ export default function LyricListComp() {
     const ccliContextMenuItems: ContextMenuItemType[] = [
         {
             menuElement: 'Import from CCLI',
-            icon: 'bi bi-cloud-download',
+            childBefore: <i className="bi bi-cloud-download me-2" />,
             onSelect: () => {
                 setShowCCLISearch(true);
             },

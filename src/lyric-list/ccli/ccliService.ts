@@ -16,14 +16,41 @@ import {
 import { getSetting } from '../../helper/settingHelpers';
 
 // const CCLI_API_BASE_URL = 'https://songselect.ccli.com/api'; // For future API implementation
-const CCLI_SETTINGS_KEY = 'ccli-credentials';
+export const CCLI_SETTINGS_KEY = 'ccli-credentials';
+
+type CCLIApiSongType = {
+    song_id?: string | number;
+    id?: string | number;
+    title?: string;
+    author?: string;
+    authors?: string[];
+    ccli_number?: string;
+    song_number?: string;
+    copyright?: string;
+    publisher?: string;
+    themes?: string[];
+    keys?: string[];
+    tempo?: string;
+    time_signature?: string;
+    lyrics?: string;
+    verse_order?: string[];
+};
+
+type CCLIApiSongSearchResponseType = {
+    songs?: CCLIApiSongType[];
+    total?: number;
+    page?: number;
+    page_size?: number;
+};
+
+type CCLIApiSongDetailsResponseType = CCLIApiSongType;
 
 /**
  * Get stored CCLI credentials from settings
  */
 export async function getCCLICredentials(): Promise<CCLICredentialsType | null> {
     try {
-        const credentials = await getSetting(CCLI_SETTINGS_KEY);
+        const credentials = getSetting(CCLI_SETTINGS_KEY);
         if (!credentials) {
             return null;
         }
@@ -266,22 +293,24 @@ async function searchCCLIAPIReal(
             throw new Error(`CCLI API error: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json();
+        const data: CCLIApiSongSearchResponseType = await response.json();
         
         // Transform API response to our format
-        const songs: CCLISongType[] = (data.songs || []).map((apiSong: any) => ({
-            songId: apiSong.song_id?.toString() || apiSong.id?.toString() || '',
-            title: apiSong.title || 'Untitled',
-            author: apiSong.author || (apiSong.authors || []).join(', '),
-            ccliNumber: apiSong.ccli_number || apiSong.song_number || '',
-            copyright: apiSong.copyright || '',
-            publisher: apiSong.publisher || '',
-            themes: apiSong.themes || [],
-            keys: apiSong.keys || [],
-            tempo: apiSong.tempo,
-            timeSignature: apiSong.time_signature || '',
-            lyrics: apiSong.lyrics || undefined,
-        }));
+        const songs: CCLISongType[] = (data.songs || []).map((apiSong: CCLIApiSongType) => {
+            return {
+                songId: apiSong.song_id?.toString() || apiSong.id?.toString() || '',
+                title: apiSong.title || 'Untitled',
+                author: apiSong.author || (apiSong.authors || []).join(', '),
+                ccliNumber: apiSong.ccli_number || apiSong.song_number || '',
+                copyright: apiSong.copyright || '',
+                publisher: apiSong.publisher || '',
+                themes: apiSong.themes || [],
+                keys: apiSong.keys || [],
+                tempo: apiSong.tempo,
+                timeSignature: apiSong.time_signature || '',
+                lyrics: apiSong.lyrics || undefined,
+            };
+        });
 
         return {
             songs,
@@ -344,7 +373,7 @@ async function getCCLISongDetailsAPIReal(
             throw new Error(`CCLI API error: ${response.status} ${response.statusText}`);
         }
 
-        const data = await response.json();
+        const data: CCLIApiSongDetailsResponseType = await response.json();
         
         // Transform API response to our format
         const song: CCLISongType = {

@@ -10,8 +10,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { CCLICredentialsType } from '../lyric-list/ccli/ccliTypes';
 import { useAppEffect } from '../helper/debuggerHelpers';
-
-const CCLI_SETTINGS_KEY = 'ccli-credentials';
+import { CCLI_SETTINGS_KEY } from '../lyric-list/ccli/ccliService';
 
 export default function SettingCCLIComp() {
     const [subscriptionId, setSubscriptionId] = useState('');
@@ -24,9 +23,9 @@ export default function SettingCCLIComp() {
         loadCredentials();
     }, []);
 
-    const loadCredentials = async () => {
+    const loadCredentials = () => {
         try {
-            const saved = await getSetting(CCLI_SETTINGS_KEY);
+            const saved = getSetting(CCLI_SETTINGS_KEY);
             if (saved) {
                 const credentials: CCLICredentialsType = JSON.parse(saved);
                 setSubscriptionId(credentials.subscriptionId || '');
@@ -38,7 +37,7 @@ export default function SettingCCLIComp() {
         }
     };
 
-    const handleSave = async () => {
+    const handleSave = () => {
         setIsSaving(true);
         try {
             const credentials: CCLICredentialsType = {
@@ -47,7 +46,7 @@ export default function SettingCCLIComp() {
                 useMockData,
             };
 
-            await setSetting(CCLI_SETTINGS_KEY, JSON.stringify(credentials));
+            setSetting(CCLI_SETTINGS_KEY, JSON.stringify(credentials));
             showSimpleToast('CCLI Settings', 'Settings saved successfully');
         } catch (error) {
             handleError(error);
@@ -57,9 +56,9 @@ export default function SettingCCLIComp() {
         }
     };
 
-    const handleClear = async () => {
+    const handleClear = () => {
         try {
-            await setSetting(CCLI_SETTINGS_KEY, null);
+            setSetting(CCLI_SETTINGS_KEY, null);
             setSubscriptionId('');
             setApiKey('');
             setUseMockData(true);
@@ -70,7 +69,7 @@ export default function SettingCCLIComp() {
     };
 
     return (
-        <div className="p-3">
+        <div className="p-3 w-100 h-100" style={{ overflow: 'auto' }}>
             <h5>CCLI SongSelect Integration</h5>
             <p className="text-muted">
                 Configure your CCLI SongSelect credentials to search and import

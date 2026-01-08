@@ -11,6 +11,12 @@ import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
 import { fsCheckFileExist } from '../../server/fileHelpers';
 
+const MAX_FILENAME_ATTEMPTS = 1000;
+
+function toStringOrUndefined(value: unknown): string | undefined {
+    return typeof value === 'string' ? value : undefined;
+}
+
 /**
  * Convert CCLI song to lyric content format
  */
@@ -98,6 +104,12 @@ export async function importCCLISongAsLyric(
             }
             fileName = `${baseName}-${counter}`;
             counter++;
+
+            if (counter > MAX_FILENAME_ATTEMPTS) {
+                throw new Error(
+                    `Unable to generate unique lyric filename for "${song.title}" after ${MAX_FILENAME_ATTEMPTS} attempts`,
+                );
+            }
         }
 
         // Format lyrics content
@@ -147,10 +159,27 @@ export async function getCCLIMetadataFromLyric(
 ): Promise<CCLILyricMetadataType | null> {
     try {
         const metadata = await lyric.getMetadata();
-        
+
+        if (metadata === null || typeof metadata !== 'object') {
+            return null;
+        }
+
+        const record = metadata as Record<string, unknown>;
+        const hasAnyCcli =
+            typeof record.ccliNumber === 'string' || typeof record.ccliSongId === 'string';
+
         // Check if this lyric has CCLI metadata
-        if ('ccliNumber' in metadata || 'ccliSongId' in metadata) {
-            return metadata as any;
+        if (hasAnyCcli) {
+            return {
+                ccliNumber: toStringOrUndefined(record.ccliNumber),
+                ccliSongId: toStringOrUndefined(record.ccliSongId),
+                title: toStringOrUndefined(record.title),
+                author: toStringOrUndefined(record.author),
+                copyright: toStringOrUndefined(record.copyright),
+                publisher: toStringOrUndefined(record.publisher),
+                importDate: toStringOrUndefined(record.importDate),
+                lastModified: toStringOrUndefined(record.lastModified),
+            };
         }
         
         return null;
