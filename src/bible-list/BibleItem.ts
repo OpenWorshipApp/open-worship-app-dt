@@ -13,7 +13,8 @@ import { AnyObjectType } from '../helper/typeHelpers';
 import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
 import {
     fromVerseKey,
-    toVerseKeyFormat,
+    toChapterFullKeyFormat,
+    toVerseFullKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
@@ -261,6 +262,16 @@ export default class BibleItem
     toVerseTextList() {
         return bibleRenderHelper.toVerseTextList(this.bibleKey, this.target);
     }
+    toChapterFullKey() {
+        const { target } = this;
+        const { bookKey, chapter } = target;
+        return toChapterFullKeyFormat(bookKey, chapter);
+    }
+    toVerseFullKey() {
+        const { target } = this;
+        const { bookKey, chapter, verseStart, verseEnd } = target;
+        return toVerseFullKeyFormat(bookKey, chapter, verseStart, verseEnd);
+    }
     getCopyingBibleKey() {
         return `(${this.bibleKey})`;
     }
@@ -275,6 +286,12 @@ export default class BibleItem
     async copyToClipboard() {
         const { title, text } = await this.toTitleText();
         copyToClipboard(`${this.getCopyingBibleKey()} ${title}\n${text}`);
+    }
+    copyVerseFullKeyToClipboard() {
+        copyToClipboard(this.toVerseFullKey());
+    }
+    copyChapterFullKeyToClipboard() {
+        copyToClipboard(this.toChapterFullKey());
     }
     async getJumpingChapter(isNext: boolean) {
         const nextChapter = await bibleRenderHelper.getJumpingChapter(
@@ -337,8 +354,6 @@ export default class BibleItem
         if (bibleItem === null) {
             return null;
         }
-        const { target } = bibleItem;
-        const { bookKey, chapter, verseStart, verseEnd } = target;
-        return toVerseKeyFormat(bookKey, chapter, verseStart, verseEnd);
+        return bibleItem.toVerseFullKey();
     }
 }

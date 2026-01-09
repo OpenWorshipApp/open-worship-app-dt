@@ -19,7 +19,7 @@ import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
 import { handleError } from '../errorHelpers';
 import { getModelKeyBookMap } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';
-import { toVerseKeyFormat } from '../bible-helpers/bibleInfoHelpers';
+import { toVerseFullKeyFormat } from '../bible-helpers/bibleInfoHelpers';
 import { getBibleModelInfoSetting } from '../bible-helpers/bibleModelHelpers';
 
 type GetBibleCrossRefParamsType = {
@@ -55,7 +55,7 @@ export async function getBibleCrossRef(
         const kjvBookKeyValue = getModelKeyBookMap();
         const { bookKey, chapter, verseNum } =
             params as GetBibleCrossRefParamsType;
-        bibleTitle = toVerseKeyFormat(
+        bibleTitle = toVerseFullKeyFormat(
             kjvBookKeyValue[bookKey],
             chapter,
             verseNum,

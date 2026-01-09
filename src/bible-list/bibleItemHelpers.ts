@@ -44,6 +44,24 @@ export function genBibleItemCopyingContextMenu(
                 bibleItem.copyToClipboard();
             },
         },
+        {
+            childBefore: genContextMenuItemIcon('copy', {
+                color: 'var(--bs-secondary-text-emphasis)',
+            }),
+            menuElement: '`Copy Verse Full Key',
+            onSelect: () => {
+                bibleItem.copyVerseFullKeyToClipboard();
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('copy', {
+                color: 'var(--bs-secondary-text-emphasis)',
+            }),
+            menuElement: '`Copy Chapter Full Key',
+            onSelect: () => {
+                bibleItem.copyChapterFullKeyToClipboard();
+            },
+        },
     ];
 }
 

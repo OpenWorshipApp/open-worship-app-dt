@@ -5,7 +5,7 @@ import {
     getBibleInfo,
     getChapterData,
     getVerses,
-    toVerseKeyFormat,
+    toVerseFullKeyFormat,
 } from './bibleInfoHelpers';
 import {
     fromLocaleNum,
@@ -683,7 +683,7 @@ export async function checkShouldNewLineModel(
     if (chapterData?.newLines?.length) {
         return false;
     }
-    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
+    const verseKey = toVerseFullKeyFormat(bookKey, chapter, verse);
     return modelNewLinerInfo.includes(verseKey);
 }
 
@@ -694,7 +694,7 @@ export async function checkShouldNewLine(
     verse: number,
 ) {
     const chapterData = await getChapterData(bibleKey, bookKey, chapter);
-    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
+    const verseKey = toVerseFullKeyFormat(bookKey, chapter, verse);
     if (chapterData?.newLines?.length) {
         return chapterData.newLines.includes(verseKey);
     }
