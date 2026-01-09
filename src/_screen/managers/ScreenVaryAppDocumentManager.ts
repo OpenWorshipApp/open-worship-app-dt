@@ -86,7 +86,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         ) {
             return;
         }
-        if (appDocumentItemData?.itemJson) {
+        if (!appProvider.isPageScreen && appDocumentItemData?.itemJson) {
             applyAttachBackground(
                 this.screenId,
                 appDocumentItemData.filePath,
