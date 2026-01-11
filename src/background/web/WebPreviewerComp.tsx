@@ -18,6 +18,7 @@ export default function WebPreviewerComp() {
     return (
         <div className="d-flex w-100 h-100">
             <iframe
+                sandbox="allow-scripts"
                 src={src}
                 title={filePath}
                 className="w-100 h-100 app-zero-border-radius"

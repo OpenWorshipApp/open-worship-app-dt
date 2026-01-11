@@ -1,4 +1,5 @@
 import { CSSProperties, useRef } from 'react';
+
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import LoadingComp from '../others/LoadingComp';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -62,7 +63,7 @@ function RenderCameraInfoComp({
         });
     };
     return (
-        <div className="card m-2" style={{ width: `${width}px` }}>
+        <div className="card m-1" style={{ width: `${width}px` }}>
             <div className="card-header app-ellipsis" title={cameraInfo.label}>
                 {cameraInfo.label}
             </div>
@@ -141,13 +142,13 @@ function ForegroundCameraItemComp({
         ([, data]) => data.id === cameraInfo.deviceId,
     );
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
-        prefix: 'camera-' + cameraInfo.deviceId,
+        prefix: `camera-${cameraInfo.deviceId}`,
         onChange: (extraStyle) => {
             refreshAllCameras(showingScreenIdDataList, extraStyle);
         },
     });
     return (
-        <div className="app-border-white-round p-2">
+        <div className="app-border-white-round p-1" style={{ margin: '2px' }}>
             {propsSetting}
             <hr />
             <div className="d-flex flex-wrap">

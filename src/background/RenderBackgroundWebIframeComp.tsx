@@ -2,29 +2,48 @@ import { useMemo } from 'react';
 import FileSource from '../helper/FileSource';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 
+export function BackgroundWebPlaceHolderComp({
+    height,
+}: Readonly<{ height: number }>) {
+    return (
+        <div className="w-100 h-100 d-flex justify-content-center align-items-center">
+            <i
+                className="bi bi-filetype-html"
+                style={{
+                    fontSize: `${Math.floor(height / 2)}px`,
+                }}
+            />
+        </div>
+    );
+}
+
 export default function RenderBackgroundWebIframeComp({
     fileSource,
     width,
     height,
+    targetWidth,
+    targetHeight,
 }: Readonly<{
     fileSource: FileSource;
     width: number;
     height: number;
+    targetWidth?: number;
+    targetHeight?: number;
 }>) {
     const { scale, actualWidth, actualHeight } = useMemo(() => {
         const display = getDefaultScreenDisplay();
-        const scale = Math.max(
-            width / display.bounds.width,
-            height / display.bounds.height,
-        );
+        targetWidth = targetWidth ?? display.bounds.width;
+        targetHeight = targetHeight ?? display.bounds.height;
+        const scale = Math.max(width / targetWidth, height / targetHeight);
         return {
             scale,
-            actualWidth: display.bounds.width,
-            actualHeight: display.bounds.height,
+            actualWidth: targetWidth,
+            actualHeight: targetHeight,
         };
-    }, [height]);
+    }, [targetWidth, width, height, targetHeight]);
     return (
         <iframe
+            sandbox="allow-scripts"
             src={fileSource.src}
             title={fileSource.fullName}
             style={{

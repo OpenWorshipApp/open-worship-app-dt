@@ -10,10 +10,13 @@ import {
     ForegroundQuickTextDataType,
     ForegroundStopwatchDataType,
     ForegroundTimeDataType,
+    ForegroundWebDataType,
     StyleAnimType,
 } from './screenTypeHelpers';
 import TimingController from './managers/TimingController';
 import StopwatchController from './managers/StopwatchController';
+import FileSource from '../helper/FileSource';
+import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
 
 export function genHtmlForegroundMarquee(
     { text, extraStyle = {} }: ForegroundMarqueDataType,
@@ -367,4 +370,36 @@ export async function getCameraAndShowMedia(
         handleError(error);
     }
     return () => {};
+}
+
+export function genHtmlForegroundWeb(
+    webData: ForegroundWebDataType,
+    animData: StyleAnimType,
+    displayDim: { width: number; height: number },
+) {
+    const { filePath, extraStyle = {}, widthScale, heightScale } = webData;
+    const width = Math.round(displayDim.width * widthScale);
+    const height = Math.round(displayDim.height * heightScale);
+    const fileSource = FileSource.getInstance(filePath);
+    const htmlString = renderToStaticMarkup(
+        <RenderBackgroundWebIframeComp
+            fileSource={fileSource}
+            width={width}
+            height={height}
+            targetWidth={displayDim.width}
+            targetHeight={displayDim.height}
+        />,
+    );
+    const div = document.createElement('div');
+    Object.assign(div.style, extraStyle);
+    div.innerHTML = htmlString;
+    const element = getHTMLChild<HTMLIFrameElement>(div, 'iframe');
+    return {
+        handleAdding: async (parentContainer: HTMLElement) => {
+            await animData.animIn(element, parentContainer);
+        },
+        handleRemoving: async () => {
+            await animData.animOut(element);
+        },
+    };
 }

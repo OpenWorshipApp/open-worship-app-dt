@@ -29,9 +29,7 @@ const extraStyle: CSSProperties = {
 };
 
 function findNextSrc(isNext: boolean, srcList: string[], src: string) {
-    let index = srcList.findIndex((src1) => {
-        return src1 === src;
-    });
+    let index = srcList.indexOf(src);
     if (index === -1) {
         return null;
     }
@@ -128,7 +126,7 @@ function HeaderElements({
 }>) {
     return (
         <div className="d-flex">
-            {!isMini ? <div>Scale Type:</div> : null}
+            {isMini ? null : <div>Scale Type:</div>}
             <button
                 className="btn btn-sm btn-outline-info mx-1"
                 style={{
@@ -162,14 +160,16 @@ function useAnyItemSelected(filePaths: string[] | undefined) {
             setIsAnyItemSelected(false);
             return;
         }
-        const srcList = filePaths.map((filePath) => {
-            const fileSource = FileSource.getInstance(filePath);
-            return fileSource.src;
-        });
+        const srcList = new Set(
+            filePaths.map((filePath) => {
+                const fileSource = FileSource.getInstance(filePath);
+                return fileSource.src;
+            }),
+        );
         const dataList =
             ScreenBackgroundManager.getBackgroundSrcListByType('image');
         const isSelected = dataList.some(([_, data]) => {
-            return srcList.includes(data.src);
+            return srcList.has(data.src);
         });
         setIsAnyItemSelected(isSelected);
     };

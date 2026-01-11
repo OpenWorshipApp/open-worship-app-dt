@@ -111,6 +111,12 @@ export type ForegroundCameraDataType = {
     id: string;
     extraStyle?: CSSProperties;
 };
+export type ForegroundWebDataType = {
+    filePath: string;
+    widthScale: number;
+    heightScale: number;
+    extraStyle?: CSSProperties;
+};
 export type ForegroundDataType = {
     countdownData: ForegroundCountdownDataType | null;
     stopwatchData: ForegroundStopwatchDataType | null;
@@ -118,6 +124,7 @@ export type ForegroundDataType = {
     marqueeData: ForegroundMarqueDataType | null;
     quickTextData: ForegroundQuickTextDataType | null;
     cameraDataList: ForegroundCameraDataType[];
+    webDataList: ForegroundWebDataType[];
 };
 export type ForegroundSrcListType = {
     [key: string]: ForegroundDataType;

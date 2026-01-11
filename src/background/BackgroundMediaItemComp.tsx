@@ -83,9 +83,7 @@ export default function BackgroundMediaItemComp({
                         handleSelecting(event, true);
                     }),
                     ...genExtraItemContextMenuItems(filePath),
-                    ...(isInScreen
-                        ? []
-                        : genTrashContextMenu(fileSource.filePath)),
+                    ...(isInScreen ? [] : genTrashContextMenu(filePath)),
                 ]);
             }}
             onClick={(event) => {

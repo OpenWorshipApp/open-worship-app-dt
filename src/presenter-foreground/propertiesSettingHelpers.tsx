@@ -43,12 +43,16 @@ function getWidgetRoundExtraStyle(
     };
 }
 
-function genWidgetWidthExtraStyle(settingName: string): CSSProperties {
+function getWidgetWidthScale(settingName: string) {
     const widthScale = Number.parseInt(
         getSetting(settingName) ?? DEFAULT_WIDGET_WIDTH_PERCENTAGE.toString(),
     );
+    return Math.max(1, Math.min(100, widthScale));
+}
+function genWidgetWidthExtraStyle(settingName: string): CSSProperties {
+    const widthScale = getWidgetWidthScale(settingName);
     return {
-        width: `${Math.max(1, Math.min(100, widthScale))}%`,
+        width: `${widthScale}%`,
         height: 'auto',
     };
 }
@@ -268,7 +272,7 @@ function PropertiesSettingComp({
                     />
                 </div>
                 <div className="d-flex app-border-white-round m-1">
-                    `Width:
+                    `Width (%):
                     <AppRangeComp
                         value={widgetWidthPercentage}
                         title="`Width (%)"
@@ -503,6 +507,9 @@ export function useForegroundPropsSetting({
 
     return {
         genStyle,
+        getWidthScale: () => {
+            return getWidgetWidthScale(widgetWidthPercentageSettingName);
+        },
         element: (
             <PropertiesSettingComp
                 alignmentData={alignmentData}
