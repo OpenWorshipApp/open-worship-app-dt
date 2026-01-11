@@ -4,6 +4,15 @@ current_script_dir=$(dirname "$0")
 cd "$current_script_dir/.."
 pwd
 
+package_version=$(node -p "require('./package.json').version")
+# ask for confirmation for the version
+echo "Preparing release for version: $package_version"
+read -p "Do you want to continue? (y/n): " confirm
+if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    echo "Release process aborted."
+    exit 1
+fi
+
 git pull
 npm i
 
