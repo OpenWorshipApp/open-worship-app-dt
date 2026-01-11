@@ -121,7 +121,6 @@ function TimeInSetComp({
                     className="btn btn-outline-secondary"
                     onClick={async (event) => {
                         const result = await getMinuteOffsetFromCity(event);
-                        console.log(result);
                         if (result === null) {
                             return;
                         }

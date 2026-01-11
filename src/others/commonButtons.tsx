@@ -56,7 +56,6 @@ export function HelpButtonComp() {
             className="btn btn-outline-info"
             title={url}
             onClick={() => {
-                console.log('Help button clicked');
                 appProvider.browserUtils.openExternalURL(url);
             }}
         >

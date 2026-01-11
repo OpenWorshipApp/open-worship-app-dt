@@ -471,7 +471,7 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
                     : bookChapterEditorSchemaHandler
             ).validate(backData);
             if (!validatedData.valid) {
-                console.log(validatedData.errors);
+                handleError(validatedData.errors);
                 return null;
             }
             return backData;

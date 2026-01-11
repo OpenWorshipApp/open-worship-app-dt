@@ -43,6 +43,7 @@ import { unlocking } from '../server/unlockingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
+import { log } from '../helper/loggerHelpers';
 
 const DEFAULT_ROW_LIMIT = 20;
 const SUCCESS_FILE_SUFFIX = '-success';
@@ -91,7 +92,7 @@ async function initDatabase(
     const bucket = [];
     const words: { [key: string]: Set<string> } = {};
     for (const [bookKey, book] of Object.entries(jsonData.books)) {
-        console.log(`DB: Processing ${bookKey}`);
+        log(`DB: Processing ${bookKey}`);
         for (const [chapterKey, verses] of Object.entries(book)) {
             for (const verse in verses) {
                 let sanitizedText = await sanitizeFindingText(
@@ -129,7 +130,7 @@ async function initDatabase(
     }
     const wordsLength = Object.keys(words).length;
     if (wordsLength > 0) {
-        console.log(`DB: Inserting ${wordsLength} words`);
+        log(`DB: Inserting ${wordsLength} words`);
         const values = Object.entries(words)
             .map(([word, bookKeys]) => {
                 const text = word.split('').join(' ');
@@ -501,7 +502,7 @@ export default class BibleFindController {
             },
         );
         this.menuControllerSession.promiseDone.then(() => {
-            console.log('Closed suggestion menu');
+            log('Closed suggestion menu');
         });
     }
 

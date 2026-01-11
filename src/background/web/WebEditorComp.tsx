@@ -36,8 +36,6 @@ export default function LyricEditorComp() {
     const filePath = useMemo(() => {
         return getWebFilePath();
     }, []);
-    console.log(filePath);
-
     return (
         <SelectedWebContext value={filePath}>
             <ResizeActorComp

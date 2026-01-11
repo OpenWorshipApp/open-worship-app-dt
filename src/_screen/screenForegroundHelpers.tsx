@@ -360,7 +360,6 @@ export async function getCameraAndShowMedia(
         }
         animData.animIn(video, parentContainer);
         return async () => {
-            console.log('stop');
             await animData.animOut(video);
             stopAllStreams();
         };

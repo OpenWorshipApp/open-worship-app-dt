@@ -21,6 +21,7 @@ import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
 import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
+import { handleError } from '../../helper/errorHelpers';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
@@ -351,7 +352,7 @@ function readContentJson<T>(xmlElement: Element) {
             ) as T;
             return data;
         } catch (error) {
-            console.log('Fail to parse custom verses map', error);
+            handleError(`Fail to parse custom verses map, error: ${error}`);
         }
     }
     return null;
@@ -690,9 +691,9 @@ export async function bibleKeyToXMLFilePath(
     if (filePath) {
         return filePath;
     }
-    console.log(
-        'Fail to get Bible file path',
-        `Unable to find file path for: "${bibleKey}"`,
+    handleError(
+        'Fail to get Bible file path' +
+            `Unable to find file path for: "${bibleKey}"`,
     );
     return null;
 }

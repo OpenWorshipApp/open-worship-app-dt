@@ -13,6 +13,7 @@ import {
 } from './fileHelpers';
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
+import { log } from '../helper/loggerHelpers';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${Date.now()}`;
@@ -164,7 +165,7 @@ export async function checkForUpdateSilently() {
     }
     try {
         const version = updateData.version as string;
-        console.log(
+        log(
             `Current version: ${appProvider.appInfo.version}, ` +
                 `Latest version: ${version}`,
         );
@@ -278,7 +279,7 @@ export async function getSlidesCount(
     const powerPointHelper =
         await appProvider.powerPointUtils.getPowerPointHelper(dotNetRootDir);
     if (powerPointHelper === null) {
-        console.log('PowerPoint helper is not available');
+        log('PowerPoint helper is not available');
         return null;
     }
     return powerPointHelper.countSlides(powerPointFilePath);
