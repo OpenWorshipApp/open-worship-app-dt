@@ -1,8 +1,10 @@
+import { CSSProperties } from 'react';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useAttachedBackgroundData } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { menuTitleRevealFile } from '../helper/helpers';
 import { showExplorer } from '../server/appHelpers';
+import FileSource from '../helper/FileSource';
 
 function showMediaContextMenu(event: any, filePath: string) {
     event.stopPropagation();
@@ -15,6 +17,33 @@ function showMediaContextMenu(event: any, filePath: string) {
             },
         },
     ]);
+}
+
+function RendItemComp({
+    title,
+    iStyle,
+    iType,
+    onContextMenu,
+}: Readonly<{
+    title: string;
+    iStyle?: CSSProperties;
+    iType: string;
+    onContextMenu?: (event: any) => void;
+}>) {
+    return (
+        <button
+            className="btn btn-secondary btn-sm"
+            title={title}
+            onContextMenu={
+                onContextMenu ??
+                ((event) => {
+                    event.stopPropagation();
+                })
+            }
+        >
+            <i className={`bi bi-${iType}`} style={iStyle} />
+        </button>
+    );
 }
 
 export default function AttachBackgroundIconComponent({
@@ -31,43 +60,56 @@ export default function AttachBackgroundIconComponent({
     ) {
         return null;
     }
-    if (attachedBackgroundData.type === DragTypeEnum.BACKGROUND_COLOR) {
+    const { type: backgroundType, item } = attachedBackgroundData;
+    if (backgroundType === DragTypeEnum.BACKGROUND_COLOR) {
         return (
-            <button
-                className="btn btn-secondary btn-sm"
-                title={attachedBackgroundData.item}
-            >
-                <i
-                    className="bi bi-filter-circle-fill"
-                    style={{
-                        color: attachedBackgroundData.item,
-                    }}
-                />
-            </button>
+            <RendItemComp
+                title={`Color: ${item}`}
+                iType="filter-circle-fill"
+                iStyle={{ color: item }}
+            />
         );
-    } else if (attachedBackgroundData.type === DragTypeEnum.BACKGROUND_IMAGE) {
+    }
+    if (backgroundType === DragTypeEnum.BACKGROUND_CAMERA) {
         return (
-            <button
-                className="btn btn-secondary btn-sm"
-                title={attachedBackgroundData.item.src}
-                onContextMenu={(event) =>
-                    showMediaContextMenu(event, attachedBackgroundData.item.src)
-                }
-            >
-                <i className="bi bi-image" />
-            </button>
+            <RendItemComp
+                title={`Camera: ${item.src}`}
+                iType="camera-video-fill"
+                iStyle={{}}
+            />
         );
-    } else if (attachedBackgroundData.type === DragTypeEnum.BACKGROUND_VIDEO) {
+    }
+    if (backgroundType === DragTypeEnum.BACKGROUND_WEB) {
         return (
-            <button
-                className="btn btn-secondary btn-sm"
-                title={attachedBackgroundData.item.src}
+            <RendItemComp
+                title={(item as FileSource).src}
+                iType="globe"
+                onContextMenu={(event) => {
+                    showMediaContextMenu(event, (item as FileSource).filePath);
+                }}
+            />
+        );
+    }
+    if (backgroundType === DragTypeEnum.BACKGROUND_IMAGE) {
+        return (
+            <RendItemComp
+                title={(item as FileSource).src}
+                iType="image"
                 onContextMenu={(event) =>
-                    showMediaContextMenu(event, attachedBackgroundData.item.src)
+                    showMediaContextMenu(event, (item as FileSource).filePath)
                 }
-            >
-                <i className="bi bi-file-earmark-play-fill" />
-            </button>
+            />
+        );
+    }
+    if (backgroundType === DragTypeEnum.BACKGROUND_VIDEO) {
+        return (
+            <RendItemComp
+                title={(item as FileSource).src}
+                iType="file-earmark-play-fill"
+                onContextMenu={(event) =>
+                    showMediaContextMenu(event, (item as FileSource).filePath)
+                }
+            />
         );
     }
     // TODO: show bg on button click

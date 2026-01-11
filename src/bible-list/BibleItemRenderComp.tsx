@@ -106,7 +106,7 @@ export default function BibleItemRenderComp({
                 filePath,
                 bibleItem.id,
             );
-        if (attachedBackgroundData) {
+        if (attachedBackgroundData !== null) {
             menuItems.push(
                 ...genRemovingAttachedBackgroundMenu(filePath, bibleItem.id),
             );
