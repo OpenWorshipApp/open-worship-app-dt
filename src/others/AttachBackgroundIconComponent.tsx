@@ -32,7 +32,7 @@ function RendItemComp({
 }>) {
     return (
         <button
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary btn-sm p-0 mx-1"
             title={title}
             onContextMenu={
                 onContextMenu ??
