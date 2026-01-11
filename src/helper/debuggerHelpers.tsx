@@ -51,37 +51,6 @@ function checkStore(toKey: string) {
     }
 }
 
-type MethodContextType = { [key: string]: any };
-export function useAppEffectAsync<T extends MethodContextType>(
-    effectMethod: (methodContext: T) => Promise<(() => void) | void>,
-    deps: DependencyList,
-    methods?: T,
-    key?: string,
-) {
-    const toKey = useMemo(() => {
-        return key ?? effectMethod.toString();
-    }, []);
-    const isAllUndefined = deps === undefined && methods === undefined;
-    const totalDeps = isAllUndefined
-        ? undefined
-        : [...(deps ?? []), ...Object.values(methods ?? {})];
-    useEffect(() => {
-        const methodContext = { ...methods } as T;
-        checkStore(toKey);
-        const unmount = effectMethod(methodContext);
-        return () => {
-            for (const key in methodContext) {
-                methodContext[key] = warningMethod.bind(null, key) as any;
-            }
-            unmount.then((cleanupResolved) => {
-                if (typeof cleanupResolved === 'function') {
-                    cleanupResolved();
-                }
-            });
-        };
-    }, totalDeps);
-}
-
 function useAppEffect1(
     effect: EffectCallback,
     deps: DependencyList,
@@ -99,6 +68,37 @@ function useAppEffect1(
 export const useAppEffect = appProvider.systemUtils.isDev
     ? useAppEffect1
     : useEffect;
+
+type MethodContextType = { [key: string]: any };
+export function useAppEffectAsync<T extends MethodContextType>(
+    effectMethod: (methodContext: T) => Promise<(() => void) | void>,
+    deps: DependencyList,
+    methods?: T,
+    key?: string,
+) {
+    const toKey = useMemo(() => {
+        return key ?? effectMethod.toString();
+    }, []);
+    const isAllUndefined = deps === undefined && methods === undefined;
+    const totalDeps = isAllUndefined
+        ? undefined
+        : [...(deps ?? []), ...Object.values(methods ?? {})];
+    useAppEffect(() => {
+        const methodContext = { ...methods } as T;
+        checkStore(toKey);
+        const unmount = effectMethod(methodContext);
+        return () => {
+            for (const key in methodContext) {
+                methodContext[key] = warningMethod.bind(null, key) as any;
+            }
+            unmount.then((cleanupResolved) => {
+                if (typeof cleanupResolved === 'function') {
+                    cleanupResolved();
+                }
+            });
+        };
+    }, totalDeps as DependencyList);
+}
 
 export function TestInfinite() {
     const [count, setCount] = useState(0);
