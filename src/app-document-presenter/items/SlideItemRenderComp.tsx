@@ -1,13 +1,6 @@
 import './VaryAppDocumentItem.scss';
 
-import {
-    CSSProperties,
-    ReactNode,
-    MouseEvent,
-    useState,
-    useMemo,
-    useCallback,
-} from 'react';
+import { CSSProperties, ReactNode, MouseEvent, useMemo } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
@@ -20,26 +13,21 @@ import {
 } from '../../helper/dragHelpers';
 import ShowingScreenIcon from '../../_screen/preview/ShowingScreenIcon';
 import appProvider from '../../server/appProvider';
-import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
-import {
-    changeDragEventStyle,
-    genTimeoutAttempt,
-    HIGHLIGHT_SELECTED_CLASSNAME,
-} from '../../helper/helpers';
-import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
+import { changeDragEventStyle } from '../../helper/helpers';
+import { DragTypeEnum } from '../../helper/DragInf';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
-import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import AppDocument from '../../app-document-list/AppDocument';
 import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComponent';
 import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
+import { getColorNoteFilePathSetting } from '../../helper/FileSourceMetaManager';
 import {
-    getColorNoteFilePathSetting,
-    setColorNoteFilePathSetting,
-} from '../../helper/FileSourceMetaManager';
-import { chooseColorNote } from '../../others/ItemColorNoteComp';
+    genAttachBackgroundComponent,
+    genChooseColorNoteOption,
+    toClassNameHighlight,
+    useScale,
+} from './slideItemRenderHelpers';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -60,9 +48,6 @@ function RenderScreenInfoComp({
         </div>
     );
 }
-
-const BROKEN_IMAGE_SRC = '/assets/broken-image.png';
-const BROKEN_VIDEO_SRC = '/assets/broken-video.mp4';
 
 function RenderItemHeaderComp({
     varyAppDocumentItem,
@@ -116,176 +101,6 @@ function RenderItemHeaderComp({
             </div>
         </div>
     );
-}
-
-export function toClassNameHighlight(
-    varyAppDocumentItem: VaryAppDocumentItemType,
-    selectedVaryAppDocumentItem?: VaryAppDocumentItemType | null,
-) {
-    const activeClassname =
-        appProvider.isPageAppDocumentEditor &&
-        selectedVaryAppDocumentItem &&
-        varyAppDocumentItem.checkIsSame(selectedVaryAppDocumentItem)
-            ? 'active'
-            : '';
-    const isOnScreen = checkIsAppDocumentItemOnScreen(varyAppDocumentItem);
-    const presenterClassname =
-        appProvider.isPageAppDocumentEditor || !isOnScreen
-            ? ''
-            : `${HIGHLIGHT_SELECTED_CLASSNAME} animation`;
-    return {
-        selectedList: ScreenVaryAppDocumentManager.getDataList(
-            varyAppDocumentItem.filePath,
-            varyAppDocumentItem.id,
-        ),
-        activeCN: activeClassname,
-        presenterCN: presenterClassname,
-    };
-}
-
-function genAttachBackgroundComponent(
-    droppedData: DroppedDataType | null | undefined,
-) {
-    if (droppedData === null || droppedData === undefined) {
-        return null;
-    }
-    let element = null;
-    if (droppedData.type === DragTypeEnum.BACKGROUND_COLOR) {
-        element = (
-            <div
-                className="w-100 h-100"
-                style={{ backgroundColor: droppedData.item }}
-            />
-        );
-    } else if (droppedData.type === DragTypeEnum.BACKGROUND_IMAGE) {
-        const src = droppedData.item.src;
-        element = (
-            <img
-                className="w-100 h-100"
-                alt={src}
-                src={src}
-                onError={(event) => {
-                    if (!event.currentTarget.src.endsWith(BROKEN_IMAGE_SRC)) {
-                        event.currentTarget.src = BROKEN_IMAGE_SRC;
-                    }
-                }}
-            />
-        );
-    } else if (droppedData.type === DragTypeEnum.BACKGROUND_VIDEO) {
-        element = (
-            <video
-                className="w-100 h-100"
-                style={{
-                    objectFit: 'cover',
-                    objectPosition: 'center center',
-                }}
-                onMouseEnter={(event) => {
-                    event.currentTarget.play();
-                }}
-                onMouseLeave={(event) => {
-                    event.currentTarget.pause();
-                }}
-                loop
-                muted
-                src={droppedData.item.src}
-                onError={(event) => {
-                    if (!event.currentTarget.src.endsWith(BROKEN_VIDEO_SRC)) {
-                        event.currentTarget.src = BROKEN_VIDEO_SRC;
-                    }
-                }}
-            />
-        );
-    }
-    return element;
-}
-
-export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
-    const [targetDiv, setTargetDiv] = useState<HTMLDivElement | null>(null);
-    const [parentWidth, setParentWidth] = useState(0);
-
-    useAppEffect(() => {
-        setParentWidth(targetDiv?.clientWidth ?? 0);
-    }, [targetDiv, thumbnailSize]);
-
-    const scale = useMemo(() => {
-        return parentWidth / item.width;
-    }, [parentWidth, item]);
-
-    const resizeAttemptTimeout = useMemo(() => {
-        return genTimeoutAttempt(500);
-    }, []);
-
-    const listenParentSizing = useCallback(
-        (parentDiv: HTMLElement | null) => {
-            if (parentDiv !== null) {
-                const resizeObserver = new ResizeObserver(() => {
-                    resizeAttemptTimeout(() => {
-                        setParentWidth(targetDiv?.clientWidth ?? 0);
-                    });
-                });
-                resizeObserver.observe(parentDiv);
-                return () => {
-                    resizeObserver.disconnect();
-                };
-            }
-        },
-        [resizeAttemptTimeout, targetDiv],
-    );
-
-    const handleSetTargetDiv = useCallback(
-        (div: HTMLDivElement | null) => {
-            setTargetDiv(div);
-            return listenParentSizing(div?.parentElement ?? null);
-        },
-        [listenParentSizing],
-    );
-
-    const handleSetParentDiv = useCallback(
-        (parentDiv: HTMLDivElement | null) => {
-            if (parentDiv === null) {
-                setTargetDiv(null);
-            } else {
-                setTargetDiv(parentDiv.parentElement as HTMLDivElement);
-            }
-            return listenParentSizing(parentDiv);
-        },
-        [listenParentSizing],
-    );
-
-    return {
-        parentWidth,
-        scale,
-        setTargetDiv: handleSetTargetDiv,
-        setParentDiv: handleSetParentDiv,
-    };
-}
-
-export function genChooseColorNoteOption(
-    filePath: string,
-    id: number,
-): ContextMenuItemType[] {
-    const colorCode = getColorNoteFilePathSetting(filePath, id);
-    return [
-        {
-            menuElement: 'Choose Color',
-            childBefore: (
-                <i
-                    className="bi bi-record-circle px-1"
-                    style={{ color: colorCode || undefined }}
-                />
-            ),
-            onSelect: (event) => {
-                chooseColorNote(
-                    colorCode,
-                    (newColorCode) => {
-                        setColorNoteFilePathSetting(filePath, id, newColorCode);
-                        ScreenVaryAppDocumentManager.fireUpdateEvent();
-                    },
-                    event,
-                );
-            },
-        },
-    ];
 }
 
 export default function SlideItemRenderComp({

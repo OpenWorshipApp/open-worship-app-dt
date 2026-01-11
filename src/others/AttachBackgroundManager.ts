@@ -23,6 +23,8 @@ export default class AttachBackgroundManager {
             return dirSourceSettingNames.BACKGROUND_IMAGE;
         } else if (droppedData.type === DragTypeEnum.BACKGROUND_VIDEO) {
             return dirSourceSettingNames.BACKGROUND_VIDEO;
+        } else if (droppedData.type === DragTypeEnum.BACKGROUND_WEB) {
+            return dirSourceSettingNames.BACKGROUND_WEB;
         }
         throw new Error(`Unsupported dropped data type: ${droppedData.type}`);
     }
@@ -33,23 +35,32 @@ export default class AttachBackgroundManager {
         const newData = Object.fromEntries(
             Object.entries(data)
                 .map(([key, value]) => {
-                    if (value.type !== DragTypeEnum.BACKGROUND_COLOR) {
-                        const fileSource = value.item as FileSource;
-                        const baseDirFileSource = new BaseDirFileSource(
-                            this.getBaseDirSettingName(value),
-                            fileSource.filePath,
-                        );
-                        const fileFullNameOrFilePath =
-                            baseDirFileSource.fileFullNameOrFilePath;
-                        if (fileFullNameOrFilePath === null) {
-                            return [key, null];
-                        }
-                        value = {
+                    if (
+                        [
+                            DragTypeEnum.BACKGROUND_COLOR,
+                            DragTypeEnum.BACKGROUND_CAMERA,
+                        ].includes(value.type)
+                    ) {
+                        return [key, value];
+                    }
+                    const fileSource = value.item as FileSource;
+                    const baseDirSettingName =
+                        this.getBaseDirSettingName(value);
+                    const baseDirFileSource = new BaseDirFileSource(
+                        baseDirSettingName,
+                        fileSource.filePath,
+                    );
+                    const { fileFullNameOrFilePath } = baseDirFileSource;
+                    if (fileFullNameOrFilePath === null) {
+                        return [key, null];
+                    }
+                    return [
+                        key,
+                        {
                             ...value,
                             item: fileFullNameOrFilePath,
-                        };
-                    }
-                    return [key, value];
+                        },
+                    ];
                 })
                 .filter(([_, value]) => {
                     return value !== null;
@@ -74,25 +85,30 @@ export default class AttachBackgroundManager {
         }
         const newData = Object.fromEntries(
             Object.entries(data)
-                .filter(([_, value]) => {
-                    return typeof value.item === 'string';
-                })
                 .map(([key, value]) => {
-                    if (value.type !== DragTypeEnum.BACKGROUND_COLOR) {
-                        const baseDirFileSource = new BaseDirFileSource(
-                            this.getBaseDirSettingName(value),
-                            value.item,
-                        );
-                        const fileSource = baseDirFileSource.fileSource;
-                        if (fileSource === null) {
-                            return [key, null];
-                        }
-                        value = {
+                    if (
+                        [
+                            DragTypeEnum.BACKGROUND_COLOR,
+                            DragTypeEnum.BACKGROUND_CAMERA,
+                        ].includes(value.type)
+                    ) {
+                        return [key, value];
+                    }
+                    const baseDirFileSource = new BaseDirFileSource(
+                        this.getBaseDirSettingName(value),
+                        value.item,
+                    );
+                    const fileSource = baseDirFileSource.fileSource;
+                    if (fileSource === null) {
+                        return [key, null];
+                    }
+                    return [
+                        key,
+                        {
                             ...value,
                             item: fileSource,
-                        };
-                    }
-                    return [key, value];
+                        },
+                    ];
                 })
                 .filter(([_, value]) => {
                     return value !== null;

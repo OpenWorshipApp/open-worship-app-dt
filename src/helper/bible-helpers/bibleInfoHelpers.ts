@@ -145,7 +145,10 @@ export async function getBibleInfoIsRtl(bibleKey: string) {
     return isRtl;
 }
 
-export function toChapterFullKeyFormat(bookKey: string, chapter: string | number) {
+export function toChapterFullKeyFormat(
+    bookKey: string,
+    chapter: string | number,
+) {
     return `${bookKey} ${chapter}`;
 }
 

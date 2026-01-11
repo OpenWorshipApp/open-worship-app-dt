@@ -1,9 +1,4 @@
-import { useRef } from 'react';
-
 import { CameraInfoType } from '../helper/cameraHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
-import LoadingComp from '../others/LoadingComp';
-import { getCameraAndShowMedia } from '../_screen/screenForegroundHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -14,6 +9,7 @@ import {
 import { DragTypeEnum } from '../helper/DragInf';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 import { handleDragStart } from '../helper/dragHelpers';
+import RenderCameraVideoComp from './RenderCameraVideoComp';
 
 const TITLE_HEIGHT = 30;
 
@@ -37,21 +33,6 @@ export default function BackgroundCameraItemComp({
         cameraInfo.deviceId,
         DragTypeEnum.BACKGROUND_CAMERA,
     );
-    const containerRef = useRef<HTMLDivElement>(null);
-    useAppEffectAsync(async () => {
-        if (containerRef.current === null) {
-            return;
-        }
-        return await getCameraAndShowMedia({
-            id: cameraInfo.deviceId,
-            parentContainer: containerRef.current,
-            width,
-            extraStyle: {
-                borderBottomLeftRadius: 'var(--bs-border-radius)',
-                borderBottomRightRadius: 'var(--bs-border-radius)',
-            },
-        });
-    }, [containerRef.current, width]);
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
@@ -108,9 +89,10 @@ export default function BackgroundCameraItemComp({
                         return Number.parseInt(key);
                     })}
                 />
-                <div className="w-100 h-100" ref={containerRef}>
-                    <LoadingComp />
-                </div>
+                <RenderCameraVideoComp
+                    deviceId={cameraInfo.deviceId}
+                    width={width}
+                />
             </div>
         </div>
     );

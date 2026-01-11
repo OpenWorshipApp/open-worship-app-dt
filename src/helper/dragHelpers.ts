@@ -85,6 +85,8 @@ export function handleAttachBackgroundDrop(
             DragTypeEnum.BACKGROUND_COLOR,
             DragTypeEnum.BACKGROUND_IMAGE,
             DragTypeEnum.BACKGROUND_VIDEO,
+            DragTypeEnum.BACKGROUND_CAMERA,
+            DragTypeEnum.BACKGROUND_WEB,
         ].includes(droppedData.type)
     ) {
         attachBackgroundManager.attachDroppedBackground(

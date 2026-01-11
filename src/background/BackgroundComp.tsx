@@ -120,7 +120,7 @@ export default function BackgroundComp() {
         return genTabBody<TabKeyType>(tabKey, [type, target]);
     });
     return (
-        <div className="background w-100 d-flex flex-column">
+        <div className="background w-100 h-100 d-flex flex-column">
             <div className="header d-flex">
                 <TabRenderComp<TabKeyType>
                     tabs={tabTypeList.map(([key, name]) => {

@@ -1,9 +1,9 @@
 import { CSSProperties, ReactNode } from 'react';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
-import { useScale } from './SlideItemRenderComp';
 import { useAttachedBackgroundData } from '../../helper/dragHelpers';
 import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import { useScale } from './slideItemRenderHelpers';
 
 export default function SlideScaleContainerComp({
     slide,
@@ -33,7 +33,7 @@ export default function SlideScaleContainerComp({
             }}
         >
             <div
-                className={!attachedBackgroundData ? 'app-blank-bg' : ''}
+                className={attachedBackgroundData ? '' : 'app-blank-bg'}
                 style={{
                     pointerEvents: 'none',
                     width: `${slide.width}px`,
