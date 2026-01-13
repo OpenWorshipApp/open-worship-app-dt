@@ -1,5 +1,4 @@
 import SettingGeneralLanguageComp from './SettingGeneralLanguageComp';
-import appProvider from '../server/appProvider';
 import SettingGeneralPath from './directory-setting/SettingGeneralDirectoryPathComp';
 import SettingGeneralThemeComp from './SettingGeneralThemeComp';
 import SettingGeneralOtherOptionsComp from './SettingGeneralOtherOptionsComp';
@@ -17,9 +16,7 @@ export default function SettingGeneralComp() {
                 <SettingGeneralPath />
             </div>
             <div className="app-border-white-round m-1">
-                {appProvider.systemUtils.isDev ? (
-                    <SettingGeneralLanguageComp />
-                ) : null}
+                <SettingGeneralLanguageComp />
                 <SettingGeneralThemeComp />
                 <SettingGeneralFontFamilyComp />
                 <SettingGeneralOtherOptionsComp />
