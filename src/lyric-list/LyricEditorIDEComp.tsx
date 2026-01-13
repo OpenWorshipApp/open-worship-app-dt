@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Uri } from 'monaco-editor';
 
+import { tran } from '../lang/langHelpers';
 import { useSelectedLyricContext } from './lyricHelpers';
 import Lyric from './Lyric';
 import LyricMenuComp from './LyricMenuComp';
@@ -31,7 +32,7 @@ export default function LyricEditorIDEComp() {
             onInit: (editorInstance) => {
                 editorInstance.addAction({
                     id: 'help',
-                    label: '`Markdown Music Help',
+                    label: tran('Markdown Music Help'),
                     contextMenuGroupId: 'navigation',
                     run: async () => {
                         appProvider.browserUtils.openExternalURL(

@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import {
     BibleModelInfoEnum,
     bibleModelInfoTitleMap,
@@ -38,7 +39,7 @@ export default function BibleModelInfoSettingComp() {
         appProvider.reload();
     };
     return (
-        <div className="d-flex mx-1" title="`Change Bible Model Info">
+        <div className="d-flex mx-1" title={tran('Change Bible Model Info')}>
             <label htmlFor="change-bible-model-info" className="form-label">
                 Change Bible Model Info:
             </label>

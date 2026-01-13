@@ -1,5 +1,6 @@
 import { createContext, lazy, useState, MouseEvent } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import PathSelectorComp from './PathSelectorComp';
 import { MimetypeNameType, fsCheckDirExist } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
@@ -150,7 +151,7 @@ export default function FileListHandlerComp({
                         {onNewFile && dirSource.dirPath ? (
                             <div
                                 className="float-end app-caught-hover-pointer"
-                                title="`New File"
+                                title={tran('New File')}
                                 onClick={() => setIsCreatingNew(true)}
                                 style={{
                                     color: 'var(--bs-info-text-emphasis)',

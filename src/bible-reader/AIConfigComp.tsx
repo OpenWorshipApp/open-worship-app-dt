@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import {
     getAISetting,
     setAISetting,
@@ -21,7 +22,9 @@ async function handleAISetting() {
                     OpenAI API Key{' '}
                     <i
                         className="bi bi-lightbulb"
-                        title="`This key will be used in custom Bible Cross Ref and Bible Audio"
+                        title={tran(
+                            'This key will be used in custom Bible Cross Ref and Bible Audio',
+                        )}
                         style={{
                             color: 'var(--bs-info-text-emphasis)',
                         }}
@@ -47,7 +50,7 @@ async function handleAISetting() {
                     />
                     <button
                         className="btn btn-sm btn-secondary"
-                        title="`Create OpenAI api key"
+                        title={tran('Create OpenAI api key')}
                         onClick={async () => {
                             appProvider.browserUtils.openExternalURL(
                                 'https://platform.openai.com/api-keys',
@@ -64,7 +67,9 @@ async function handleAISetting() {
                     Anthropic API Key{' '}
                     <i
                         className="bi bi-lightbulb"
-                        title="`This key will be used in custom Bible Cross Ref"
+                        title={tran(
+                            'This key will be used in custom Bible Cross Ref',
+                        )}
                         style={{
                             color: 'var(--bs-info-text-emphasis)',
                         }}
@@ -90,7 +95,7 @@ async function handleAISetting() {
                     />
                     <button
                         className="btn btn-sm btn-secondary"
-                        title="`Create Anthropic api key"
+                        title={tran('Create Anthropic api key')}
                         onClick={async () => {
                             appProvider.browserUtils.openExternalURL(
                                 'https://console.anthropic.com/settings/keys',
@@ -119,7 +124,7 @@ function AISettingComp() {
         <div className="ms-2">
             <i
                 className="bi bi-robot app-caught-hover-pointer"
-                title="`Set OpenAI API Key for Audio AI"
+                title={tran('Set OpenAI API Key for Audio AI')}
                 style={{
                     color: aiSetting.openAIAPIKey ? 'green' : '',
                     fontSize: '25px',
@@ -139,7 +144,7 @@ function AudioAutoPlayComp() {
         <div className="ms-2">
             <i
                 className="bi bi-megaphone app-caught-hover-pointer"
-                title="`Auto Play Audio AI when available"
+                title={tran('Auto Play Audio AI when available')}
                 style={{ color: aiSetting.isAutoPlay ? 'green' : '' }}
                 onClick={() => {
                     const audioAISetting = getAISetting();

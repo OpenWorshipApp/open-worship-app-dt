@@ -2,6 +2,7 @@ import Slide, { SlideType } from './Slide';
 import AppEditableDocumentSourceAbs, {
     AppDocumentMetadataType,
 } from '../helper/AppEditableDocumentSourceAbs';
+import { tran } from '../lang/langHelpers';
 import { gemSlideContextMenuItems } from './appDocumentHelpers';
 import { checkIsSameValues, toMaxId } from '../helper/helpers';
 import { MimetypeNameType } from '../server/fileHelpers';
@@ -363,7 +364,7 @@ export default class AppDocument
             ...(isClipboardHasImage
                 ? [
                       {
-                          menuElement: '`Paste Image',
+                          menuElement: tran('Paste Image'),
                           onSelect: async () => {
                               const blobs: Blob[] = [];
                               for await (const blob of readImagesFromClipboard()) {

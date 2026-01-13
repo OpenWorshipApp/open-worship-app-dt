@@ -1,3 +1,4 @@
+import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import { getAISetting } from '../../helper/ai/aiHelpers';
 import appProvider from '../../server/appProvider';
@@ -33,7 +34,7 @@ export default function AudioPlayerComp({
     const handleContextMenuOpening = (event: any) => {
         showAppContextMenu(event, [
             {
-                menuElement: '`Refresh',
+                menuElement: tran('Refresh'),
                 onSelect: refreshAudio,
             },
         ]);

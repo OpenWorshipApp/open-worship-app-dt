@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import { getSetting, useStateSettingBoolean } from '../helper/settingHelpers';
 import {
     HelpButtonComp,
@@ -31,7 +32,9 @@ export default function RenderExtraButtonsRightComp({
             {appProvider.isPagePresenter ? (
                 <div
                     className="input-group-text app-caught-hover-pointer"
-                    title="`Keep popup modal open when adding a bible item, useful in presenter mode"
+                    title={tran(
+                        'Keep popup modal open when adding a bible item, useful in presenter mode',
+                    )}
                     onClick={() => {
                         setIsKeepingPopup(!isKeepingPopup);
                     }}
@@ -53,7 +56,7 @@ export default function RenderExtraButtonsRightComp({
                     'btn btn-sm btn' +
                     `-${isLookupOnline ? '' : 'outline-'}info`
                 }
-                title="`Advance Bible Lookup"
+                title={tran('Advance Bible Lookup')}
                 onClick={() => {
                     setIsLookupOnline(!isLookupOnline);
                 }}
@@ -63,7 +66,7 @@ export default function RenderExtraButtonsRightComp({
             {appProvider.isPageReader ? (
                 <>
                     <QuitCurrentPageComp
-                        title="`Go Back to Presenter"
+                        title={tran('Go Back to Presenter')}
                         pathname={appProvider.presenterHomePage}
                     />
                     <SettingButtonComp />

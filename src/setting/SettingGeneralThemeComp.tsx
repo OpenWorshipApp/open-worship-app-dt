@@ -1,5 +1,6 @@
 import { useState, useCallback, ChangeEvent } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import {
     applyDarkModeToApp,
@@ -41,7 +42,7 @@ export default function SettingGeneralThemeComp() {
 
     return (
         <div className="card m-1">
-            <div className="card-header">`Theme</div>
+            <div className="card-header">{tran('Theme')}</div>
             <div className="card-body">
                 <select
                     className="form-select"
@@ -49,9 +50,9 @@ export default function SettingGeneralThemeComp() {
                     value={themeSource}
                     onChange={handleChange}
                 >
-                    <option value="light">`Light</option>
-                    <option value="dark">`Dark</option>
-                    <option value="system">`System</option>
+                    <option value="light">{tran('Light')}</option>
+                    <option value="dark">{tran('Dark')}</option>
+                    <option value="system">{tran('System')}</option>
                 </select>
             </div>
         </div>

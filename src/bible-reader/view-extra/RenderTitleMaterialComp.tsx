@@ -1,3 +1,4 @@
+import { tran } from '../../lang/langHelpers';
 import { BibleSelectionMiniComp } from '../../bible-lookup/BibleSelectionComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import ColorNoteInf from '../../helper/ColorNoteInf';
@@ -48,7 +49,7 @@ export function RenderTitleMaterialComp({
                         <BibleSelectionMiniComp
                             bibleKey={bibleItem.bibleKey}
                             onBibleKeyChange={onBibleKeyChange}
-                            contextMenuTitle="`Add Extra Bible"
+                            contextMenuTitle={tran('Add Extra Bible')}
                         />
                     </div>
                     {bibleItem.extraBibleKeys.map((extraBibleKey) => (

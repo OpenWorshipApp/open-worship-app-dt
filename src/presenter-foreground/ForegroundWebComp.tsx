@@ -1,5 +1,6 @@
 import { CSSProperties, useMemo, useRef, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { ForegroundWebDataType } from '../_screen/screenTypeHelpers';
 import { backgroundTypeMapper } from '../background/backgroundHelpers';
@@ -96,7 +97,7 @@ function RenderShownMiniComp() {
     return (
         <ScreensRendererComp
             showingScreenIdDataList={allShowingScreenIdDataList}
-            buttonText="`Hide Web"
+            buttonText={tran('Hide Web')}
             genTitle={(data) => {
                 const fileSource = FileSource.getInstance(data.filePath);
                 return `Web: ${fileSource.fullName}`;
@@ -238,7 +239,7 @@ function ForegroundWebItemComp({
             <hr />
             <ScreensRendererComp
                 showingScreenIdDataList={showingScreenIdDataList}
-                buttonText="`Hide Web"
+                buttonText={tran('Hide Web')}
                 genTitle={(data) => {
                     const fileSource = FileSource.getInstance(data.filePath);
                     return `Web: ${fileSource.fullName}`;
@@ -272,7 +273,7 @@ export default function ForegroundWebComp() {
     return (
         <ForegroundLayoutComp
             target="web"
-            fullChildHeaders={<h4>`Web Show</h4>}
+            fullChildHeaders={<h4>{tran('Web Show')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
             extraBodyStyle={{
                 maxHeight: '500px',

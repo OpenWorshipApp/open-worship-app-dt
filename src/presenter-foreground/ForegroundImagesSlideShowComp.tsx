@@ -2,6 +2,7 @@ import '../background/BackgroundImagesComp.scss';
 
 import { CSSProperties, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import BackgroundMediaComp from '../background/BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -209,7 +210,7 @@ export default function ForegroundImagesSlideShowComp() {
     return (
         <ForegroundLayoutComp
             target="images-slide-show"
-            fullChildHeaders={<h4>`Background Images Slide Show</h4>}
+            fullChildHeaders={<h4>{tran('Background Images Slide Show')}</h4>}
             childHeadersOnHidden={genHeaderElements(true)}
             extraBodyStyle={{ maxHeight: '450px' }}
         >

@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 
+import { tran } from '../lang/langHelpers';
 import {
     showAppAlert,
     showAppConfirm,
@@ -89,26 +90,26 @@ export function gemSlideContextMenuItems(
     });
     const menuItems: ContextMenuItemType[] = [
         {
-            menuElement: '`Copy',
+            menuElement: tran('Copy'),
             onSelect: async () => {
                 navigator.clipboard.writeText(slide.clipboardSerialize());
                 showSimpleToast('Copied', 'Slide is copied');
             },
         },
         {
-            menuElement: '`Duplicate',
+            menuElement: tran('Duplicate'),
             onSelect: () => {
                 appDocument.duplicateSlide(slide);
             },
         },
         {
-            menuElement: '`Move forward',
+            menuElement: tran('Move forward'),
             onSelect: () => {
                 appDocument.moveSlide(slide, true);
             },
         },
         {
-            menuElement: '`Move backward',
+            menuElement: tran('Move backward'),
             onSelect: () => {
                 appDocument.moveSlide(slide, false);
             },
@@ -116,7 +117,7 @@ export function gemSlideContextMenuItems(
         ...(appProvider.isPagePresenter
             ? [
                   {
-                      menuElement: '`Quick Edit',
+                      menuElement: tran('Quick Edit'),
                       onSelect: () => {
                           if (appProvider.isPageAppDocumentEditor) {
                               AppDocumentListEventListener.selectAppDocumentItem(
@@ -131,7 +132,7 @@ export function gemSlideContextMenuItems(
             : []),
         ...menuItemOnScreens,
         {
-            menuElement: '`Delete',
+            menuElement: tran('Delete'),
             onSelect: () => {
                 appDocument.deleteSlide(slide);
             },
@@ -185,7 +186,7 @@ function genAlertMessage() {
                     }
                     target="_blank"
                 >
-                    <strong>`Download</strong>
+                    <strong>{tran('Download')}</strong>
                     <img
                         height={20}
                         src={libOfficeLogo}

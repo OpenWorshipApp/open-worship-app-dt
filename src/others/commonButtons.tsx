@@ -34,7 +34,7 @@ export function SettingButtonComp() {
     return (
         <button
             className="btn btn-outline-success rotating-hover"
-            title="`Setting"
+            title={tran('Setting')}
             onClick={() => {
                 openSettingPage();
             }}
@@ -114,7 +114,7 @@ export function BibleLookupButtonComp() {
         >
             <span className="btn-label">
                 <i className="bi bi-book px-1" />
-                {tran('bible-lookup')}
+                {tran('Bible Lookup')}
             </span>
         </button>
     );

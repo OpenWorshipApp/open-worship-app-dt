@@ -1,5 +1,6 @@
 import { lazy, use, useMemo } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { SelectedLyricContext } from './lyricHelpers';
 import LyricEditingManager, {
@@ -31,7 +32,7 @@ export default function LyricHandlerComp() {
                     ' align-items-center'
                 }
             >
-                <h3 className="text-muted">`No Lyric Selected</h3>
+                <h3 className="text-muted">{tran('No Lyric Selected')}</h3>
             </div>
         );
     }

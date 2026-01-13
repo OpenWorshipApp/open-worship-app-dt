@@ -1,3 +1,4 @@
+import { tran } from '../../lang/langHelpers';
 import PathSelectorComp from '../../others/PathSelectorComp';
 import {
     useAppEffectAsync,
@@ -90,7 +91,7 @@ function RenderParentDirectoryComp({
     return (
         <div className="d-flex flex-column">
             <div className={`${HIGHLIGHT_SELECTED_CLASSNAME} p-2`}>
-                <div>`Parent Directory:</div>
+                <div>{tran('Parent Directory:')}</div>
                 <div>
                     <PathSelectorComp
                         prefix="path-parent-dir"
@@ -158,7 +159,7 @@ function RenderChildDirectoriesComp({
                         selectPathForChildDir(parentDirPath);
                     }}
                 >
-                    `Reset All Child Directories
+                    {tran('Reset All Child Directories')}
                 </button>
             </div>
             <div className="card-body">
@@ -187,7 +188,7 @@ function RenderBodyComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
     }, [dirSource]);
     return (
         <div className="card h-100">
-            <div className="card-header">`Path Settings</div>
+            <div className="card-header">{tran('Path Settings')}</div>
             <div className="card-body w-100 p-2">
                 <RenderParentDirectoryComp dirSource={dirSource} />
                 <div className="card app-border-white-round p-1">

@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import {
     EventMapper as KeyboardEventMapper,
     useKeyboardRegistering,
@@ -97,7 +98,7 @@ export function genFoundBibleItemContextMenu(
         },
         {
             childBefore: genContextMenuItemIcon('floppy'),
-            menuElement: '`Save bible item',
+            menuElement: tran('Save bible item'),
             childAfter: isKeyboardShortcut
                 ? genContextMenuItemShortcutKey(addListEventMapper)
                 : undefined,
@@ -112,7 +113,7 @@ export function genFoundBibleItemContextMenu(
             ? []
             : [
                   {
-                      menuElement: '`Open in Cross Reference',
+                      menuElement: tran('Open in Cross Reference'),
                       title: verseKey,
                       onSelect: () => {
                           viewController.bibleCrossReferenceVerseKey = verseKey;
@@ -125,7 +126,7 @@ export function genFoundBibleItemContextMenu(
             ? [
                   {
                       childBefore: genContextMenuItemIcon('display'),
-                      menuElement: '`Show bible item',
+                      menuElement: tran('Show bible item'),
                       onSelect: (event: any) => {
                           ScreenBibleManager.handleBibleItemSelecting(
                               event,
@@ -138,7 +139,7 @@ export function genFoundBibleItemContextMenu(
                       childAfter: isKeyboardShortcut
                           ? genContextMenuItemShortcutKey(presenterEventMapper)
                           : undefined,
-                      menuElement: '`Save bible item and show on screen',
+                      menuElement: tran('Save bible item and show on screen'),
                       onSelect: async (event: any) => {
                           addBibleItemAndPresent(event, bibleItem, onDone);
                       },

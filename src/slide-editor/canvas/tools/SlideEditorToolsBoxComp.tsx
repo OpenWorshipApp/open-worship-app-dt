@@ -1,3 +1,4 @@
+import { tran } from '../../../lang/langHelpers';
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import SlideEditorToolAlignComp from './SlideEditorToolAlignComp';
 import { useCanvasControllerContext } from '../CanvasController';
@@ -20,7 +21,7 @@ function SizingComp() {
                     canvasController.applyCanvasItemFully(canvasItem);
                 }}
             >
-                `Full
+                {tran('Full')}
             </button>
             <button
                 className="btn btn-sm btn-secondary m-1"
@@ -29,7 +30,7 @@ function SizingComp() {
                     canvasController.applyCanvasItemOriginal(canvasItem);
                 }}
             >
-                `Original Size
+                {tran('Original Size')}
             </button>
             {['image', 'video'].includes(canvasItem.type) ? (
                 <button
@@ -38,7 +39,7 @@ function SizingComp() {
                         canvasController.applyCanvasItemMediaStrip(canvasItem);
                     }}
                 >
-                    `Strip
+                    {tran('Strip')}
                 </button>
             ) : null}
         </SlideEditorToolTitleComp>
@@ -85,7 +86,7 @@ function LayerComp() {
                             });
                         }}
                     >
-                        `Reset Rotate
+                        {tran('Reset Rotate')}
                     </button>
                 </SlideEditorToolTitleComp>
             </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import colorList from './color-list.json';
 import ColorNoteInf from '../helper/ColorNoteInf';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
@@ -27,8 +28,8 @@ export function chooseColorNote(
     const items: ContextMenuItemType[] = [
         {
             childBefore: <i className="bi bi-x-lg" style={{ color: 'red' }} />,
-            menuElement: '`No Color',
-            title: '`Clear Color Note',
+            menuElement: tran('No Color'),
+            title: tran('Clear Color Note'),
             disabled: colorNote === null,
             onSelect: () => {
                 setColorNote(null);

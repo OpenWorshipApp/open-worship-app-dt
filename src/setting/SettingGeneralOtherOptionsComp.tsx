@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import { clearWidgetSizeSetting } from '../resize-actor/flexSizeHelpers';
 import { appLocalStorage } from './directory-setting/appLocalStorage';
 import { applyStore } from './SettingApplyComp';
@@ -5,7 +6,7 @@ import { applyStore } from './SettingApplyComp';
 export default function SettingGeneralOtherOptionsComp() {
     return (
         <div className="card m-1">
-            <div className="card-header">`Other General Options</div>
+            <div className="card-header">{tran('Other General Options')}</div>
             <div className="card-body">
                 <div className="m-2">
                     <button
@@ -15,7 +16,7 @@ export default function SettingGeneralOtherOptionsComp() {
                             applyStore.pendingApply();
                         }}
                     >
-                        `Reset Widgets Size
+                        {tran('Reset Widgets Size')}
                     </button>
                 </div>
                 <div className="m-2 p-2">
@@ -26,7 +27,7 @@ export default function SettingGeneralOtherOptionsComp() {
                             applyStore.pendingApply();
                         }}
                     >
-                        `Clear All Settings
+                        {tran('Clear All Settings')}
                     </button>
                 </div>
             </div>

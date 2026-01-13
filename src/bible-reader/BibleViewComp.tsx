@@ -1,5 +1,6 @@
 import './BibleViewComp.scss';
 
+import { tran } from '../lang/langHelpers';
 import BibleItemsViewController, {
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
@@ -87,7 +88,7 @@ async function openContextMenu(
     if (viewController.isLookup) {
         extraSelectedTextContextMenuItems.push({
             childBefore: genContextMenuItemIcon('search'),
-            menuElement: '`Search in Bible Search',
+            menuElement: tran('Search in Bible Search'),
             onSelect: () => {
                 const selectedText = getSelectedText();
                 if (!selectedText) {

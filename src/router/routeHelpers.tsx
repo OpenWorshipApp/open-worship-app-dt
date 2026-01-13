@@ -2,6 +2,7 @@ import { CSSProperties, ReactNode } from 'react';
 
 import { OptionalPromise } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
+import { tran } from '../lang/langHelpers';
 
 export type TabOptionType = {
     title: ReactNode;
@@ -18,7 +19,7 @@ export enum WindowModEnum {
 export function toTitleExternal(title: string, style?: CSSProperties) {
     return (
         <span style={style}>
-            {title + ' '}
+            {tran(title) + ' '}
             <i className="bi bi-box-arrow-up-right" />
         </span>
     );

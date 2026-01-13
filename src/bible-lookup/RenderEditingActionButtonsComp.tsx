@@ -18,6 +18,7 @@ import {
     useFoundActionKeyboard,
 } from './bibleActionHelpers';
 import { RenderCopyBibleItemActionButtonsComp } from './RenderActionButtonsComp';
+import { tran } from '../lang/langHelpers';
 
 export default function RenderEditingActionButtonsComp({
     bibleItem,
@@ -49,7 +50,7 @@ export default function RenderEditingActionButtonsComp({
             <button
                 type="button"
                 className="btn btn-sm btn-info"
-                title={`Split horizontal [${toShortcutKey(eventMaps[0])}]`}
+                title={tran`Split horizontal [${toShortcutKey(eventMaps[0])}]`}
                 onClick={() => {
                     viewController.addBibleItemLeft(bibleItem, bibleItem);
                 }}
@@ -69,7 +70,7 @@ export default function RenderEditingActionButtonsComp({
             <button
                 className="btn btn-sm btn-primary"
                 type="button"
-                title={`Save bible item [${toShortcutKey(addListEventMapper)}]`}
+                title={tran`Save bible item [${toShortcutKey(addListEventMapper)}]`}
                 onClick={() => {
                     saveBibleItem(bibleItem, onDone);
                 }}
@@ -80,7 +81,7 @@ export default function RenderEditingActionButtonsComp({
                 <button
                     className="btn btn-sm btn-primary"
                     type="button"
-                    title={`\`Save bible item and show on screen [${toShortcutKey(
+                    title={tran`Save bible item and show on screen [${toShortcutKey(
                         presenterEventMapper,
                     )}]`}
                     onClick={(event) => {

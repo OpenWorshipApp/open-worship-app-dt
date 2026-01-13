@@ -1,14 +1,5 @@
 import { LanguageDataType } from '../langHelpers';
 
-const numList = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-
-const dictionary = {
-    'bible-lookup': 'Bible Lookup',
-    'bible-presenter': 'Bible Presenter',
-    general: 'General',
-    bible: 'Bible',
-    about: 'About',
-};
 const lang: LanguageDataType = {
     locale: 'en-US',
     langCode: 'en',
@@ -16,8 +7,8 @@ const lang: LanguageDataType = {
         return '';
     },
     fontFamily: 'Arial',
-    numList,
-    dictionary,
+    numList:['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+    dictionary:{},
     name: 'English',
     flagSVG: `<svg xmlns="http://www.w3.org/2000/svg" id="flag-icons-gb" viewBox="0 0 640 480">
     <path fill="#012169" d="M0 0h640v480H0z"/>

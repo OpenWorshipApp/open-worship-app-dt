@@ -1,5 +1,6 @@
 import { useState, ReactNode } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import EditingHistoryManager from './EditingHistoryManager';
@@ -62,12 +63,12 @@ function MenuIsModifying({
                 className="btn btn-sm btn-danger"
                 type="button"
                 disabled={!caDiscard}
-                title="`Discard changed"
+                title={tran('Discard changed')}
                 style={genDisabledStyle(!caDiscard)}
                 onClick={async () => {
                     const isOk = await showAppConfirm(
-                        '`Discard changed',
-                        '`Are you sure to discard all histories?',
+                        tran('Discard changed'),
+                        tran('Are you sure to discard all histories?'),
                         {
                             confirmButtonLabel: 'Yes',
                         },
@@ -84,7 +85,7 @@ function MenuIsModifying({
                 className="btn btn-sm btn-success"
                 type="button"
                 disabled={!canSave}
-                title={`\`Save [${toShortcutKey(savingEventMapper)}]`}
+                title={tran`Save [${toShortcutKey(savingEventMapper)}]`}
                 style={genDisabledStyle(!canSave)}
                 onClick={() => {
                     editableDocument.save();

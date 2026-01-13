@@ -1,5 +1,6 @@
 import { CSSProperties } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
     getScreenForegroundManagerInstances,
@@ -71,7 +72,7 @@ export default function ForegroundStopwatchComp() {
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
-            buttonText="`Hide Stopwatch"
+            buttonText={tran('Hide Stopwatch')}
             handleForegroundHiding={handleHiding}
             isMini={isMini}
         />
@@ -101,7 +102,7 @@ export default function ForegroundStopwatchComp() {
     return (
         <ForegroundLayoutComp
             target="stopwatch"
-            fullChildHeaders={<h4>`Stopwatch</h4>}
+            fullChildHeaders={<h4>{tran('Stopwatch')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
         >
             {propsSetting}

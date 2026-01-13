@@ -2,6 +2,7 @@ import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import DirSource from '../helper/DirSource';
 import { openPopupEditorWindow } from '../helper/domHelpers';
 import FileSource from '../helper/FileSource';
+import { tran } from '../lang/langHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import appProvider from '../server/appProvider';
 import { fsWriteFile } from '../server/fileHelpers';
@@ -66,11 +67,11 @@ export function genBackgroundWebContextMenuItems(
 ): ContextMenuItemType[] {
     return [
         {
-            menuElement: '`New File',
+            menuElement: tran('New File'),
             onSelect: async () => {
                 let fileName = '';
                 const isConfirmInput = await showAppInput(
-                    '`New File Name',
+                    tran('New File Name'),
                     genNewFileNameInput(fileName, (newFileName) => {
                         fileName = newFileName;
                     }),
@@ -113,8 +114,8 @@ function openPopupWebEditorWindow(filePath: string) {
 export function genBackgroundWebExtraItemContextMenuItems(filePath: string) {
     return [
         {
-            menuElement: '`Edit',
-            title: '`Edit this web file',
+            menuElement: tran('Edit'),
+            title: tran('Edit this web file'),
             onSelect: () => {
                 openPopupWebEditorWindow(filePath);
             },

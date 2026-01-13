@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import DirSource from '../helper/DirSource';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
@@ -30,7 +31,7 @@ export function GotoSettingDirectoryPathComp() {
                     openGeneralSetting();
                 }}
             >
-                <span>`Go to Settings </span>
+                <span>{tran('Go to Settings ')}</span>
                 <i className="bi bi-gear-wide-connected" />
             </button>
         </div>

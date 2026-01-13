@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { forceReloadAppWindows } from './settingHelpers';
 
@@ -20,7 +21,7 @@ export default function SettingApplyComp() {
     return (
         <button
             className={`btn btn-sm btn-outline-${isApplied ? 'success' : 'warning'} mx-2`}
-            title="`Will reload the app to apply settings"
+            title={tran('Will reload the app to apply settings')}
             onClick={() => {
                 forceReloadAppWindows();
             }}

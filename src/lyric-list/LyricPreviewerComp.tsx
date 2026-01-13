@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useSelectedLyricContext } from './lyricHelpers';
 import { HTMLDataType, renderLyricSlide } from './markdownHelpers';
@@ -84,7 +85,7 @@ function RenderControlBodyComp() {
                 <div className="w-100 d-flex justify-content-center py-2">
                     <button
                         className="btn btn-sm btn-outline-warning"
-                        title={'`Editor ' + `"${selectedLyric.filePath}"`}
+                        title={tran('Editor') + ` "${selectedLyric.filePath}"`}
                         onClick={() => {
                             forceReloadAppWindows();
                         }}
@@ -96,7 +97,7 @@ function RenderControlBodyComp() {
                 <div className="w-100 d-flex justify-content-center py-2">
                     <button
                         className="btn btn-sm btn-outline-info"
-                        title={'`Editor ' + `"${selectedLyric.filePath}"`}
+                        title={tran('Editor') + ` "${selectedLyric.filePath}"`}
                         onClick={() => {
                             openPopupLyricEditorWindow(selectedLyric);
                         }}

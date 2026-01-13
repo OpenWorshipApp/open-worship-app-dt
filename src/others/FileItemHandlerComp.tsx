@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import FileReadErrorComp from './FileReadErrorComp';
 import {
     copyToClipboard,
@@ -73,7 +74,7 @@ export function genTrashContextMenu(
 ): ContextMenuItemType[] {
     return [
         {
-            menuElement: '`Move to Trash',
+            menuElement: tran('Move to Trash'),
             onSelect: async () => {
                 const fileSource = FileSource.getInstance(filePath);
                 const isOk = await showAppConfirm(

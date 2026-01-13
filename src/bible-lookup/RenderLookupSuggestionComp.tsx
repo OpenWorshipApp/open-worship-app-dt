@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import RenderBookOptionsComp from './RenderBookOptionsComp';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
 import { BibleSelectionMiniComp } from './BibleSelectionComp';
@@ -96,7 +97,7 @@ export function BibleNotAvailableComp({
         >
             <div className="body card-body w-100 p-3">
                 <h2>
-                    {'`Bible key '}
+                    {tran('Bible key ')}
                     <span data-bible-key={bibleKey}>"{bibleKey}"</span>
                     {' is not available!'}
                 </h2>
@@ -113,7 +114,7 @@ export function BibleNotAvailableComp({
                         openBibleSetting();
                     }}
                 >
-                    <span>`Go to Bible Setting </span>
+                    <span>{tran('Go to Bible Setting ')}</span>
                     <i className="bi bi-gear-wide-connected" />
                 </button>
             </div>

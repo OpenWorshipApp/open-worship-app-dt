@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 
+import { tran } from '../../lang/langHelpers';
 import {
     handBibleKeyContextMenuOpening,
     deleteBibleXML,
@@ -70,7 +71,11 @@ export default function BibleXMLInfoComp({
                     <div className="btn-group">
                         <button
                             className={`btn btn-${isShowing ? '' : 'outline-'}primary`}
-                            title={isShowing ? '`Hide Editor' : '`Show Editor'}
+                            title={
+                                isShowing
+                                    ? tran('Hide Editor')
+                                    : tran('Show Editor')
+                            }
                             onClick={() => {
                                 setIsShowing(!isShowing);
                             }}
@@ -79,7 +84,7 @@ export default function BibleXMLInfoComp({
                         </button>
                         <button
                             className="btn btn-sm btn-danger"
-                            title="`Move to Trash"
+                            title={tran('Move to Trash')}
                             onClick={handleFileTrashing}
                         >
                             <i className="bi bi-trash" />

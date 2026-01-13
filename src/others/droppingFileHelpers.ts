@@ -1,5 +1,6 @@
 import { DragEvent, MouseEvent } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import {
     fsCopyFilePathToPath,
     isSupportedExt,
@@ -174,7 +175,7 @@ export function genItemsAddingContextMenuItems(addItems?: () => void) {
     }
     return [
         {
-            menuElement: '`Add Items',
+            menuElement: tran('Add Items'),
             onSelect: addItems,
         },
     ];
@@ -207,7 +208,7 @@ export function genDroppingFileOnContextMenu(
         }
         if (onStartNewFile !== undefined) {
             menuItems.push({
-                menuElement: '`Create New File',
+                menuElement: tran('Create New File'),
                 onSelect: onStartNewFile,
             });
         }

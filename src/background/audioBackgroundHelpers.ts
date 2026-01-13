@@ -1,13 +1,14 @@
 import { dirSourceSettingNames } from '../helper/constants';
 import { genTimeoutAttempt } from '../helper/helpers';
 import { getSetting } from '../helper/settingHelpers';
+import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 
 export function showAudioPlayingToast() {
     showSimpleToast(
-        '`Audio playing',
-        '`Please stop the audio before leaving the page.',
+        tran('Audio playing'),
+        tran('Please stop the audio before leaving the page.'),
     );
 }
 

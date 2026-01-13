@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import { applyStore } from './SettingApplyComp';
@@ -23,7 +24,7 @@ export default function SettingGeneralFontFamilyComp() {
     };
     return (
         <div className="card m-1">
-            <div className="card-header">`Font Family</div>
+            <div className="card-header">{tran('Font Family')}</div>
             <div className="card-body">
                 <FontFamilyControlComp
                     fontFamily={fontFamily}

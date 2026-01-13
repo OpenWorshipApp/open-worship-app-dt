@@ -7,6 +7,7 @@ import {
     LanguageDataType,
     LocaleType,
     setCurrentLocale,
+    tran,
 } from '../lang/langHelpers';
 import { applyStore } from './SettingApplyComp';
 
@@ -53,7 +54,7 @@ export default function SettingGeneralLanguageComp() {
     }, [allLangs]);
     return (
         <div className="card lang m-1">
-            <div className="card-header">`Language</div>
+            <div className="card-header">{tran('Language')}</div>
             <div className="card-body">
                 <div className="options d-flex flex-wrap">
                     {allLangs.map((langData) => {

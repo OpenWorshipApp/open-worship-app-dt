@@ -2,6 +2,7 @@ import {
     DEFAULT_LOCALE,
     getLangAsync,
     LocaleType,
+    tran,
 } from '../../lang/langHelpers';
 import {
     showAppConfirm,
@@ -255,7 +256,7 @@ async function guessingBibleKey(xmlElementBible: Element) {
         }
         let newKey = '';
         const isConfirmInput = await showAppInput(
-            '`Key is missing',
+            tran('Key is missing'),
             genBibleKeyXMLInput(
                 newKey,
                 (newKey1) => {

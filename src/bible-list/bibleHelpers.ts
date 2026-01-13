@@ -1,5 +1,6 @@
 import { createContext, use, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import BibleItem from './BibleItem';
 import {
     checkIsBookAvailable,
@@ -182,7 +183,7 @@ export async function openBibleItemContextMenu(
         ...(openBibleLookup !== null
             ? [
                   {
-                      menuElement: '`Lookup',
+                      menuElement: tran('Lookup'),
                       onSelect: async () => {
                           const viewController =
                               new LookupBibleItemController();
@@ -201,7 +202,7 @@ export async function openBibleItemContextMenu(
               ]
             : []),
         {
-            menuElement: '`Duplicate',
+            menuElement: tran('Duplicate'),
             onSelect: () => {
                 bible.duplicate(index);
                 bible.save();
@@ -211,13 +212,13 @@ export async function openBibleItemContextMenu(
             ScreenBibleManager.handleBibleItemSelecting(event, bibleItem, true);
         }),
         {
-            menuElement: '`Move To',
+            menuElement: tran('Move To'),
             onSelect: (event1: any) => {
                 moveBibleItemTo(event1, bible, bibleItem);
             },
         },
         {
-            menuElement: '`Delete',
+            menuElement: tran('Delete'),
             onSelect: async () => {
                 await bible.deleteBibleItem(bibleItem);
                 if (bibleItem.filePath !== undefined) {
@@ -231,7 +232,7 @@ export async function openBibleItemContextMenu(
     ];
     if (index !== 0) {
         menuItem.push({
-            menuElement: '`Move up',
+            menuElement: tran('Move up'),
             onSelect: () => {
                 bible.swapItems(index, index - 1);
                 bible.save();
@@ -240,7 +241,7 @@ export async function openBibleItemContextMenu(
     }
     if (index !== bible.itemsLength - 1) {
         menuItem.push({
-            menuElement: '`Move down',
+            menuElement: tran('Move down'),
             onSelect: () => {
                 bible.swapItems(index, index + 1);
                 bible.save();

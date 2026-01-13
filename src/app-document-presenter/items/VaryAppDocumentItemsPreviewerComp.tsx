@@ -11,6 +11,7 @@ import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHe
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
 import { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
 import { changeDragEventStyle } from '../../helper/helpers';
+import { tran } from '../../lang/langHelpers';
 import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from '../../slide-editor/canvas/canvasHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -34,8 +35,8 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
             files.push(file);
         } else {
             showSimpleToast(
-                '`Insert Image or Video',
-                '`Unsupported file type!',
+                tran('Insert Image or Video'),
+                tran('Unsupported file type!'),
             );
         }
     }

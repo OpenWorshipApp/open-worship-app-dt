@@ -9,6 +9,7 @@ import {
     pathJoin,
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -88,14 +89,14 @@ export async function selectDefaultDataDirName(
         await appLocalStorage.getSelectedParentDirectory();
     if (selectedParentDir === null) {
         showSimpleToast(
-            '`No Parent Directory Selected`',
-            '`There is no parent directory selected`',
+            tran('No Parent Directory Selected'),
+            tran('There is no parent directory selected'),
         );
         return;
     }
     const dirPath = appProvider.pathUtils.join(selectedParentDir, dirName);
     const isOk = await showAppConfirm(
-        '`Select Default Folder',
+        tran('Select Default Folder'),
         `This will select "${dirPath}" (will create if not exist)`,
     );
     if (!isOk) {
@@ -108,7 +109,7 @@ export async function selectDefaultDataDirName(
             handleError(error);
         }
         showSimpleToast(
-            '`Creating Default Folder',
+            tran('Creating Default Folder'),
             `Fail to create folder "${dirPath}"`,
         );
         return;

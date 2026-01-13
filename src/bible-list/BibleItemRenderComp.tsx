@@ -1,5 +1,6 @@
 import { MouseEvent } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import Bible from './Bible';
 import BibleItem from './BibleItem';
 import ItemReadErrorComp from '../others/ItemReadErrorComp';
@@ -95,7 +96,7 @@ export default function BibleItemRenderComp({
     const handleContextMenuOpening = async (event: MouseEvent<any>) => {
         const menuItems: ContextMenuItemType[] = [
             {
-                menuElement: '`Open',
+                menuElement: tran('Open'),
                 onSelect: (event) => {
                     handleOpening(event, viewController, bibleItem);
                 },

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import {
     checkIsPdfFullWidth,
@@ -23,7 +24,7 @@ export default function PdfAppearanceSettingComp() {
     };
     return (
         <div className="d-flex">
-            <small>`On Screen Width:</small>
+            <small>{tran('On Screen Width:')}</small>
             <div>
                 <fieldset className="btn-group btn-group-sm ms-2" role="group">
                     <input
@@ -40,7 +41,7 @@ export default function PdfAppearanceSettingComp() {
                         className="btn btn-outline-info"
                         htmlFor="setting-not-full-width"
                     >
-                        `Not Full Width
+                        {tran('Not Full Width')}
                     </label>
                     <input
                         className="btn-check btn-check-sm"
@@ -56,7 +57,7 @@ export default function PdfAppearanceSettingComp() {
                         className="btn btn-outline-info"
                         htmlFor="setting-full-width"
                     >
-                        `Full Width
+                        {tran('Full Width')}
                     </label>
                 </fieldset>
             </div>

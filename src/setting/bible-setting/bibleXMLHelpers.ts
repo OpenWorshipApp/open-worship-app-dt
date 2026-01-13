@@ -11,7 +11,7 @@ import {
     getFileMD5,
     pathJoin,
 } from '../../server/fileHelpers';
-import { allLocalesMap, languageNameMap } from '../../lang/langHelpers';
+import { allLocalesMap, languageNameMap, tran } from '../../lang/langHelpers';
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import {
     genBibleBooksMapXMLInput,
@@ -259,7 +259,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
             },
         },
         {
-            menuElement: '`Clear Cache',
+            menuElement: tran('Clear Cache'),
             onSelect: () => {
                 invalidateBibleXMLCachedFolder(bibleKey);
             },
@@ -288,7 +288,7 @@ export function addMonacoBibleInfoActions(
             const bibleInfo = getBibleInfo();
             let numbers = Object.values(bibleInfo.numbersMap);
             const isConfirmInput = await showAppInput(
-                '`Numbers map',
+                tran('Numbers map'),
                 genBibleNumbersMapXMLInput(
                     numbers,
                     bibleInfo.locale,

@@ -1,3 +1,4 @@
+import { tran } from '../../../lang/langHelpers';
 import CanvasItem from '../CanvasItem';
 import CanvasItemPropsEditorComp from './CanvasItemPropsEditorComp';
 import SlidePropertyEditorComp from './SlidePropertyEditorComp';
@@ -18,10 +19,12 @@ export default function SlideEditorPropertiesComp({
             {canvasItems.length === 0 ? (
                 <div className="d-flex justify-content-center align-items-center h-100">
                     <div>
-                        <h2 className="text-muted">`No canvas item selected</h2>
+                        <h2 className="text-muted">
+                            {tran('No canvas item selected')}
+                        </h2>
                         <hr />
                         <h3 className="text-muted">
-                            `Please select an item to edit
+                            {tran('Please select an item to edit')}
                         </h3>
                     </div>
                 </div>

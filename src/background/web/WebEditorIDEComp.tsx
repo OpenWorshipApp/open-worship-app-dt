@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Uri } from 'monaco-editor';
 
+import { tran } from '../../lang/langHelpers';
 import FileSource from '../../helper/FileSource';
 import { useSelectedWebContext } from './webEditorHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
@@ -30,7 +31,7 @@ export default function WebEditorIDEComp() {
         onInit: (editorInstance) => {
             editorInstance.addAction({
                 id: 'learn',
-                label: '`Learn More About Web Development`',
+                label: tran('Learn More About Web Development'),
                 contextMenuGroupId: 'navigation',
                 run: async () => {
                     appProvider.browserUtils.openExternalURL(

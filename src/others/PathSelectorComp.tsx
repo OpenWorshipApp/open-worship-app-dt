@@ -2,6 +2,7 @@ import './PathSelectorComp.scss';
 
 import { lazy, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import DirSource from '../helper/DirSource';
 import AppSuspenseComp from './AppSuspenseComp';
 import {
@@ -40,7 +41,7 @@ function openContextMenu(dirPath: string, event: any) {
     ];
     if (!appProvider.isPageSetting) {
         menuItems.push({
-            menuElement: '`Edit Parent Path`',
+            menuElement: tran('Edit Parent Path'),
             onSelect: () => {
                 openGeneralSetting();
             },

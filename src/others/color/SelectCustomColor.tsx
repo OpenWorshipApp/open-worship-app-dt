@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 
+import { tran } from '../../lang/langHelpers';
 import { createMouseEvent } from '../../context-menu/appContextMenuHelpers';
 import { AppColorType } from './colorHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
@@ -51,7 +52,7 @@ export default function SelectCustomColor({
     }, [color]);
     return (
         <>
-            <span>`Mix Color: </span>
+            <span>{tran('Mix Color: ')}</span>
             <input
                 ref={inputRef}
                 title="Select custom color"

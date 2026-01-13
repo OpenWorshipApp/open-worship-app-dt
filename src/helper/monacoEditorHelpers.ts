@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { editor, KeyMod, KeyCode, Uri } from 'monaco-editor';
+
+import { tran } from '../lang/langHelpers';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
@@ -153,7 +155,7 @@ function createEditor({
     });
     editorInstance.addAction({
         id: 'toggle-wrap-text',
-        label: '`Toggle Wrap Text',
+        label: tran('Toggle Wrap Text'),
         contextMenuGroupId: 'navigation',
         keybindings: [KeyMod.Alt | KeyCode.KeyZ],
         contextMenuOrder: 1.5,

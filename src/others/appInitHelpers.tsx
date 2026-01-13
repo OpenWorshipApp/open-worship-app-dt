@@ -6,6 +6,12 @@ import './scrollbar.scss';
 
 import { ReactNode, StrictMode } from 'react';
 
+// keep this on top to have Language helper ready
+import {
+    getCurrentLocale,
+    getFontFamilyByLocale,
+    tran,
+} from '../lang/langHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
     PlatformEnum,
@@ -13,11 +19,6 @@ import {
 } from '../event/KeyboardEventListener';
 import { handleError } from '../helper/errorHelpers';
 import FileSourceMetaManager from '../helper/FileSourceMetaManager';
-import {
-    getCurrentLangAsync,
-    getCurrentLocale,
-    getFontFamilyByLocale,
-} from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import initCrypto from '../_owa-crypto';
 import { getSetting, setSetting } from '../helper/settingHelpers';
@@ -51,9 +52,11 @@ function useCheckSetting() {
             !(await appLocalStorage.getSelectedParentDirectory())
         ) {
             const isOk = await showAppConfirm(
-                '`No Parent Directory Selected',
-                '`You will be redirected to the General Settings page to ' +
-                    'select a parent directory.',
+                tran('No Parent Directory Selected'),
+                tran(
+                    'You will be redirected to the General Settings page to ' +
+                        'select a parent directory.',
+                ),
             );
             if (isOk) {
                 openGeneralSetting();
@@ -126,10 +129,7 @@ export async function initApp() {
     };
 
     await initCrypto();
-    const promises = [
-        FileSourceMetaManager.checkAllColorNotes(),
-        getCurrentLangAsync(),
-    ];
+    const promises = [FileSourceMetaManager.checkAllColorNotes()];
     await Promise.all(promises);
 }
 

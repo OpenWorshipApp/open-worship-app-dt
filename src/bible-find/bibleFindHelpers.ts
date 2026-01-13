@@ -12,6 +12,7 @@ import {
     LocaleType,
     sanitizeFindingText,
     sanitizePreviewText,
+    tran,
 } from '../lang/langHelpers';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import {
@@ -220,7 +221,7 @@ export function openContextMenu(
 ) {
     const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: '`Open',
+            menuElement: tran('Open'),
             onSelect: () => {
                 openInBibleLookup(event, viewController, bibleItem, true);
             },
@@ -228,7 +229,7 @@ export function openContextMenu(
         ...genBibleItemCopyingContextMenu(bibleItem),
         {
             childBefore: genContextMenuItemIcon('floppy'),
-            menuElement: '`Save bible item',
+            menuElement: tran('Save bible item'),
             onSelect: () => {
                 saveBibleItem(bibleItem);
             },

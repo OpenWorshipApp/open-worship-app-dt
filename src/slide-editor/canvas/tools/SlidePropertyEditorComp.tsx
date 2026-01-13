@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+
+import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';
 import { useSelectedEditingSlideContext } from '../../../app-document-list/appDocumentHelpers';
 import RenderSlideIndexComp from '../../../app-document-presenter/items/RenderSlideIndexComp';
@@ -119,18 +121,18 @@ function RenderDimEditComp() {
                 {hasChanged ? (
                     <button
                         className="btn btn-primary btn-sm m-1"
-                        title="`Apply changed dimension to this slide"
+                        title={tran('Apply changed dimension to this slide')}
                         onClick={() => {
                             applyDim(width, height);
                         }}
                     >
-                        `Apply
+                        {tran('Apply')}
                     </button>
                 ) : null}
                 {isScreenDiff ? (
                     <button
                         className="btn btn-primary btn-sm m-1"
-                        title="`Reset to default display dimension"
+                        title={tran('Reset to default display dimension')}
                         onClick={() => {
                             const { bounds } = getDefaultScreenDisplay();
                             if (
@@ -141,17 +143,21 @@ function RenderDimEditComp() {
                             }
                         }}
                     >
-                        `Reset
+                        {tran('Reset')}
                     </button>
                 ) : null}
                 {isDiffOther ? (
                     <button
                         className="btn btn-danger btn-sm m-1"
-                        title="`Apply this dimension to all slides in this document"
+                        title={tran(
+                            'Apply this dimension to all slides in this document',
+                        )}
                         onClick={async () => {
                             const isConfirmed = await showAppConfirm(
-                                '`This will change all Slides',
-                                '`Are you sure to apply this dimension to all slides?',
+                                tran('This will change all Slides'),
+                                tran(
+                                    'Are you sure to apply this dimension to all slides?',
+                                ),
                                 {
                                     confirmButtonLabel: 'Yes',
                                 },
@@ -162,7 +168,7 @@ function RenderDimEditComp() {
                             applyDim(width, height, true);
                         }}
                     >
-                        `Apply All Slides
+                        {tran('Apply All Slides')}
                     </button>
                 ) : null}
             </div>
@@ -199,10 +205,10 @@ function RenderNameEditorComp() {
             {hasChanged ? (
                 <button
                     className="btn btn-primary btn-sm m-1"
-                    title="`Apply changed name to this slide"
+                    title={tran('Apply changed name to this slide')}
                     onClick={handleNameChanging}
                 >
-                    `Apply
+                    {tran('Apply')}
                 </button>
             ) : null}
         </div>

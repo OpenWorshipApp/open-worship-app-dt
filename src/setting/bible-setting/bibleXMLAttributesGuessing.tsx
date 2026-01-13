@@ -5,6 +5,7 @@ import {
     getLangCode,
     LanguageDataType,
     LocaleType,
+    tran,
 } from '../../lang/langHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
@@ -35,7 +36,7 @@ function BibleKeyXMLInputComp({
     };
     return (
         <div className="w-100 h-100">
-            <div>`Define a Bible key</div>
+            <div>{tran('Define a Bible key')}</div>
             <div className="input-group" title={invalidMessage}>
                 <div className="input-group-text">Key:</div>
                 <input
@@ -244,7 +245,7 @@ function BibleBooksMapXMLInputComp({
                         );
                     }}
                 >
-                    `Reset
+                    {tran('Reset')}
                 </button>
                 <a
                     className="btn btn-sm btn-secondary ms-2"
@@ -282,7 +283,7 @@ function BibleBooksMapXMLInputComp({
                         handleMarkupStringParsing(value, lang);
                     }}
                 >
-                    `Parse Markup String (HTML|XML)
+                    {tran('Parse Markup String (HTML|XML)')}
                 </button>
             </div>
         </div>

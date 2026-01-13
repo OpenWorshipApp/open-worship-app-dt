@@ -3,6 +3,7 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
+import { tran } from '../lang/langHelpers';
 import { BibleItemRenderingType } from './bibleScreenComps';
 import bibleScreenHelper from './bibleScreenHelpers';
 import ScreenBibleManager from './managers/ScreenBibleManager';
@@ -84,7 +85,7 @@ async function onBibleSelect(
                       childBefore: (
                           <i className="bi bi-x-lg" style={{ color: 'red' }} />
                       ),
-                      title: '`Remove',
+                      title: tran('Remove'),
                       menuElement: (
                           <span
                               style={{ color: 'red' }}
@@ -118,7 +119,7 @@ async function onBibleSelect(
                     }}
                 />
             ),
-            menuElement: <span>`Shift Click to Add</span>,
+            menuElement: <span>{tran('Shift Click to Add')}</span>,
             disabled: true,
         },
         {

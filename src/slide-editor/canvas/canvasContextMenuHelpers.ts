@@ -1,3 +1,4 @@
+import { tran } from '../../lang/langHelpers';
 import { getMimetypeExtensions, selectFiles } from '../../server/fileHelpers';
 import CanvasItem from './CanvasItem';
 import CanvasController from './CanvasController';
@@ -59,7 +60,7 @@ export async function showCanvasContextMenu(
         ...(isClipboardHasImage
             ? [
                   {
-                      menuElement: '`Paste Image',
+                      menuElement: tran('Paste Image'),
                       onSelect: async () => {
                           for await (const blob of readImagesFromClipboard()) {
                               const newCanvasItem =

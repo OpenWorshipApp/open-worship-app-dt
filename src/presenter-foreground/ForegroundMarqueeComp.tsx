@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
@@ -56,7 +57,7 @@ export default function ForegroundMarqueeComp() {
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
-            buttonText="`Hide Marquee"
+            buttonText={tran('Hide Marquee')}
             handleForegroundHiding={handleHiding}
             isMini={isMini}
         />
@@ -64,7 +65,7 @@ export default function ForegroundMarqueeComp() {
     return (
         <ForegroundLayoutComp
             target="marquee"
-            fullChildHeaders={<h4>`Marquee</h4>}
+            fullChildHeaders={<h4>{tran('Marquee')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
         >
             <div>

@@ -4,6 +4,7 @@ import {
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
+import { tran } from '../lang/langHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import {
     MutationType,
@@ -136,7 +137,7 @@ export function handleAutoHide(
     }
     clearButton.style.bottom = '5px';
     clearButton.style.position = 'absolute';
-    clearButton.title = '`Show';
+    clearButton.title = tran('Show');
     let timeoutId: any = null;
     const mouseEnterListener = () => {
         if (timeoutId !== null) {
@@ -244,7 +245,7 @@ export class InputContextMenuHandler {
             if (copiedText) {
                 contextMenuItems.push({
                     childBefore: genContextMenuItemIcon('clipboard'),
-                    menuElement: '`Paste',
+                    menuElement: tran('Paste'),
                     onSelect: () => {
                         pasteTextToInput(inputElement, copiedText);
                     },
@@ -253,7 +254,7 @@ export class InputContextMenuHandler {
             if (inputElement.value.length > 0) {
                 contextMenuItems.push({
                     childBefore: genContextMenuItemIcon('x'),
-                    menuElement: '`Clear',
+                    menuElement: tran('Clear'),
                     onSelect: () => {
                         pasteTextToInput(inputElement, '');
                     },

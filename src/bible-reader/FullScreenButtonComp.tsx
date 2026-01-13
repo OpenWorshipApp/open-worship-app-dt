@@ -1,3 +1,5 @@
+import { tran } from '../lang/langHelpers';
+
 export default function FullScreenButtonComp({
     isFulledScreen,
     toggleFullScreen,
@@ -17,7 +19,7 @@ export default function FullScreenButtonComp({
                 }}
             >
                 <i className={`bi bi-${fullScreenClassname}`} />
-                {isFulledScreen ? '`Exit ' : '`'}Full
+                {isFulledScreen ? tran('Exit Full') : tran('Full')}
             </button>
         </div>
     );
