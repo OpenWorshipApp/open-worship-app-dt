@@ -1,4 +1,6 @@
 import { useCallback } from 'react';
+
+import { tran } from '../lang/langHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { fsCheckDirExist, pathBasename } from '../server/fileHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -64,7 +66,7 @@ export function PathPreviewerComp({
                 ` ${onClick ? 'pointer' : ''}`
             }
             onClick={onClick}
-            title={isValidPath ? cleanedDirectoryPath : '`Invalid Path'}
+            title={isValidPath ? cleanedDirectoryPath : tran('Invalid Path')}
             style={{
                 color: isValidPath ? '' : 'red',
             }}

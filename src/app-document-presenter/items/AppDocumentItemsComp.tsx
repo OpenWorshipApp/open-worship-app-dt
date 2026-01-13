@@ -109,7 +109,7 @@ export default function AppDocumentItemsComp() {
         );
     }
     return (
-        <div className="d-flex flex-wrap p-1">
+        <div className="d-flex flex-wrap">
             {varyAppDocumentItems.map((varyAppDocumentItem, i) => {
                 return (
                     <VaryAppDocumentItemRenderWrapperComp

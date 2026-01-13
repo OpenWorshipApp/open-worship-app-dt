@@ -4,7 +4,7 @@
     "author": "Open Worship Foundation <owf2025@gmail.com> (https://github.com/orgs/OpenWorshipApp/people)",
     "gitRepository": "https://github.com/OpenWorshipApp/open-worship-app-dt",
     "homepage": "https://www.openworship.app",
-    "version": "2025.11.22",
+    "version": "2026.01.11",
     "type": "commonjs",
     "main": "./electron-build/electron/index.js",
     "scripts": {
@@ -27,8 +27,10 @@
         "lint:es": "eslint src/**/*.ts* electron/**/*.ts",
         "lint": "npm run lint:all:error && npm run lint:pre && npm run lint:es && npm run build",
         "dc:err": "depcruise src --include-only \"^src\" --output-type err-html > dc-dependency-graph/errors.html",
+        "release:tag": "bash extra-work/release-tag.sh",
         "release": "bash extra-work/release.sh",
-        "install": "bash extra-work/bin-helper/build.sh"
+        "install": "bash extra-work/bin-helper/build.sh",
+        "apply:version": "node extra-work/setTodayVersion.mjs && npm install"
     },
     "browserslist": {
         "production": [
@@ -88,7 +90,10 @@
                 "dmg",
                 "zip"
             ],
-            "category": "public.app-category.productivity"
+            "category": "public.app-category.productivity",
+            "extendInfo": {
+                "NSCameraUsageDescription": "This app requires camera access to use as background video."
+            }
         },
         "directories": {
             "buildResources": "resources",
@@ -113,20 +118,20 @@
         "@types/diff": "^8.0.0",
         "@types/markdown-it": "^14.1.2",
         "@types/node": "^24.8.1",
-        "@types/react": "^19.2.2",
-        "@types/react-dom": "^19.2.2",
+        "@types/react": "^19.2.7",
+        "@types/react-dom": "^19.2.3",
         "@types/tar": "^6.1.13",
         "@vitejs/plugin-basic-ssl": "^2.1.0",
-        "@vitejs/plugin-react-swc": "^4.1.0",
+        "@vitejs/plugin-react-swc": "^4.2.2",
         "bootstrap": "^5.3.8",
         "bootstrap-icons": "^1.13.1",
         "concurrently": "^9.2.1",
         "cross-env": "^10.1.0",
         "dependency-cruiser": "^17.3.2",
         "diff": "^8.0.2",
-        "electron": "^38.3.0",
+        "electron": "^39.2.7",
         "electron-builder": "^26.0.12",
-        "eslint": "^9.38.0",
+        "eslint": "^9.39.1",
         "json-schema-library": "^10.3.0",
         "lexical": "^0.37.0",
         "markdown-it": "^14.1.0",
@@ -137,19 +142,19 @@
         "nodemon": "^3.1.10",
         "openai": "^6.5.0",
         "prettier": "^3.6.2",
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "sass": "^1.93.2",
+        "react": "^19.2.1",
+        "react-dom": "^19.2.1",
+        "sass": "^1.94.2",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.46.1",
-        "vite": "^7.1.10"
+        "typescript-eslint": "^8.48.1",
+        "vite": "^7.2.6"
     },
     "dependencies": {
         "font-list": "^2.0.1",
         "libreoffice-convert": "^1.7.0",
         "lw-share": "^0.0.7",
         "mupdf": "^1.26.4",
-        "tar": "^7.5.1",
+        "tar": "^7.5.2",
         "yt-dlp-wrap": "^2.3.12"
     }
 }

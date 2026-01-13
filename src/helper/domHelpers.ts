@@ -4,11 +4,16 @@ import {
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
+import { tran } from '../lang/langHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import {
     MutationType,
     APP_FULL_VIEW_CLASSNAME,
     APP_AUTO_HIDE_CLASSNAME,
+    bringDomToNearestView,
+    checkIsVerticalPartialInvisible,
+    bringDomToCenterView,
+    checkIsVerticalAtBottom,
 } from './helpers';
 
 const callBackListeners = new Set<
@@ -69,7 +74,7 @@ export function handleFullWidgetView(element: Node, type: MutationType) {
     );
 }
 
-export function handleClassNameAction<T>(
+export function handleClassNameAction<T extends HTMLElement>(
     className: string,
     handle: (target: T) => void,
     element: Node,
@@ -83,6 +88,30 @@ export function handleClassNameAction<T>(
         return;
     }
     handle(element as T);
+}
+
+export function handleActiveSelectedElementScrolling(target: Node) {
+    if (target instanceof HTMLElement === false) {
+        return;
+    }
+    const scrollContainerSelector = target.dataset.scrollContainerSelector;
+    const container = scrollContainerSelector
+        ? document.querySelector(scrollContainerSelector)
+        : null;
+    if (container instanceof HTMLElement) {
+        const isPartialInvisible = checkIsVerticalPartialInvisible(
+            container,
+            target,
+        );
+        if (isPartialInvisible) {
+            const isAtBottom = checkIsVerticalAtBottom(container, target);
+            if (isAtBottom) {
+                bringDomToCenterView(target);
+                return;
+            }
+        }
+    }
+    bringDomToNearestView(target);
 }
 
 export function handleAutoHide(
@@ -108,7 +137,7 @@ export function handleAutoHide(
     }
     clearButton.style.bottom = '5px';
     clearButton.style.position = 'absolute';
-    clearButton.title = '`Show';
+    clearButton.title = tran('Show');
     let timeoutId: any = null;
     const mouseEnterListener = () => {
         if (timeoutId !== null) {
@@ -139,7 +168,8 @@ export function handleAutoHide(
 export class HoverMotionHandler {
     map: WeakMap<HTMLElement, ResizeObserver>;
     static readonly topClassname = 'app-top-hover-motion';
-    static readonly lowClassname = 'app-low-hover-display';
+    static readonly lowDisplayClassname = 'app-low-hover-display';
+    static readonly lowVisibleClassname = 'app-low-hover-visible';
     forceShowClassname = 'force-show';
     constructor() {
         this.map = new WeakMap<HTMLElement, ResizeObserver>();
@@ -197,7 +227,9 @@ export class HoverMotionHandler {
         )) {
             if (
                 childElement instanceof HTMLElement &&
-                childElement.className.includes(HoverMotionHandler.lowClassname)
+                childElement.className.includes(
+                    HoverMotionHandler.lowDisplayClassname,
+                )
             ) {
                 this.init(childElement);
             }
@@ -213,7 +245,7 @@ export class InputContextMenuHandler {
             if (copiedText) {
                 contextMenuItems.push({
                     childBefore: genContextMenuItemIcon('clipboard'),
-                    menuElement: '`Paste',
+                    menuElement: tran('Paste'),
                     onSelect: () => {
                         pasteTextToInput(inputElement, copiedText);
                     },
@@ -222,7 +254,7 @@ export class InputContextMenuHandler {
             if (inputElement.value.length > 0) {
                 contextMenuItems.push({
                     childBefore: genContextMenuItemIcon('x'),
-                    menuElement: '`Clear',
+                    menuElement: tran('Clear'),
                     onSelect: () => {
                         pasteTextToInput(inputElement, '');
                     },
@@ -261,4 +293,23 @@ export async function removeDomTitle(element: Node, eventType: MutationType) {
             removeDomTitle(child, eventType);
         }
     }
+}
+
+export function checkIsZoomed() {
+    return window.outerWidth / window.innerWidth !== 1;
+}
+
+const WINDOW_FEATURES =
+    'popup,top=0,left=0,width=400,height=400,scrollbars=yes,' +
+    'toolbar=no,location=no,status=no,menubar=no';
+
+export function openPopupEditorWindow(pathName: string) {
+    return window.open(pathName, 'popup_window', WINDOW_FEATURES);
+}
+
+export function getParamFileFullName() {
+    const fileFullName = new URLSearchParams(globalThis.location.search).get(
+        'file',
+    );
+    return fileFullName;
 }

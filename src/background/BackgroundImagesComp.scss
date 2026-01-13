@@ -1,9 +1,6 @@
-// @use is deprecated, use @use instead
-@use '../others/variables.scss' as *;
-
 .app-background-image {
   .image-thumbnail {
-    margin: 5px;
+    margin: 2px;
     cursor: pointer;
 
     .card-body {

@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 
 import FinderAppComp from './find/FinderAppComp';
 import appProvider from './server/appProvider';
-import { getReactRoot } from './initHelpers';
+import { getReactRoot } from './others/initHelpers';
 
 const root = getReactRoot();
 root.render(

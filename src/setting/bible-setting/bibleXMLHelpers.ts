@@ -11,7 +11,7 @@ import {
     getFileMD5,
     pathJoin,
 } from '../../server/fileHelpers';
-import { allLocalesMap, languageNameMap } from '../../lang/langHelpers';
+import { allLocalesMap, languageNameMap, tran } from '../../lang/langHelpers';
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import {
     genBibleBooksMapXMLInput,
@@ -56,6 +56,7 @@ import { EditorStoreType } from '../../helper/monacoEditorHelpers';
 import { AnyObjectType } from '../../helper/typeHelpers';
 import { schemaHandler as infoEditorSchemaHandler } from './BibleXMLInfoEditorComp';
 import { schemaHandler as bookChapterEditorSchemaHandler } from './BibleXMLBookChapterEditorComp';
+import { getBibleModelInfoSetting } from '../../helper/bible-helpers/bibleModelHelpers';
 
 type MessageCallbackType = (message: string | null) => void;
 
@@ -258,7 +259,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
             },
         },
         {
-            menuElement: '`Clear Cache',
+            menuElement: tran('Clear Cache'),
             onSelect: () => {
                 invalidateBibleXMLCachedFolder(bibleKey);
             },
@@ -287,7 +288,7 @@ export function addMonacoBibleInfoActions(
             const bibleInfo = getBibleInfo();
             let numbers = Object.values(bibleInfo.numbersMap);
             const isConfirmInput = await showAppInput(
-                '`Numbers map',
+                tran('Numbers map'),
                 genBibleNumbersMapXMLInput(
                     numbers,
                     bibleInfo.locale,
@@ -428,9 +429,11 @@ async function backupBibleXMLData<T>(
     if (basePath !== null) {
         const filePath = pathJoin(basePath, fileName);
         const fileSource = FileSource.getInstance(filePath);
+        const bibleModel = getBibleModelInfoSetting();
         await fileSource.writeFileData(
             JSON.stringify({
                 _cachingTime: Date.now(),
+                _bibleModel: bibleModel,
                 value: data,
             }),
         );
@@ -452,9 +455,13 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
     if (jsonText !== null) {
         try {
             const data = JSON.parse(jsonText);
-            const time = data?._cachingTime ?? 0;
+            const bibleModel = getBibleModelInfoSetting();
+            const time = data._cachingTime ?? 0;
             // if the backup data is older than 7 days, ignore it
-            if (Date.now() - time > 7 * 24 * 60 * 60 * 1000) {
+            if (
+                Date.now() - time > 7 * 24 * 60 * 60 * 1000 ||
+                data._bibleModel !== bibleModel
+            ) {
                 return null;
             }
             const backData = data.value;
@@ -464,7 +471,7 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
                     : bookChapterEditorSchemaHandler
             ).validate(backData);
             if (!validatedData.valid) {
-                console.log(validatedData.errors);
+                handleError(validatedData.errors);
                 return null;
             }
             return backData;

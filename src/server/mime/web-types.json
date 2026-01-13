@@ -1,0 +1,14 @@
+[
+    {
+        "type": "HTML",
+        "title": "HyperText Markup Language",
+        "mimetypeSignature": "text/html",
+        "extensions": [".html", ".htm"]
+    },
+    {
+        "type": "XML",
+        "title": "Extensible Markup Language",
+        "mimetypeSignature": "application/xml",
+        "extensions": [".xml", ".xhtml", ".xht"]
+    }
+]

@@ -28,7 +28,7 @@ import {
     bibleDataTypeList,
     SetDisplayType,
 } from './screenTypeHelpers';
-import { checkIsDarkMode } from '../initHelpers';
+import { checkIsDarkMode } from '../others/initHelpers';
 
 const messageUtils = appProvider.messageUtils;
 
@@ -68,7 +68,7 @@ export function calMediaSizes(
             offsetV: (parentHeight - newHeight) / 2,
         };
     }
-    console.log(scaleType);
+    loggerHelpers.log(scaleType);
     const scale = Math.max(parentWidth / width, parentHeight / height);
     const newWidth = Math.round(width * scale);
     const newHeight = Math.round(height * scale);

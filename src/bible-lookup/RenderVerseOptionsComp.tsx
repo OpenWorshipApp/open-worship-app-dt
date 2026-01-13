@@ -1,5 +1,6 @@
 import './RenderVersesOptionComp.scss';
 
+import { tran } from '../lang/langHelpers';
 import RenderVerseNumOptionComp, { mouseUp } from './RenderVerseNumOptionComp';
 import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
@@ -76,7 +77,7 @@ export default function RenderVerseOptionsComp({
                 {isFull ? null : (
                     <div
                         className="item alert pointer text-center px-2"
-                        title="`Show all verses"
+                        title={tran('Show all verses')}
                         style={{
                             color: 'var(--bs-info-text-emphasis)',
                         }}

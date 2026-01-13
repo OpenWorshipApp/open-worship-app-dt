@@ -145,7 +145,14 @@ export async function getBibleInfoIsRtl(bibleKey: string) {
     return isRtl;
 }
 
-export function toVerseKeyFormat(
+export function toChapterFullKeyFormat(
+    bookKey: string,
+    chapter: string | number,
+) {
+    return `${bookKey} ${chapter}`;
+}
+
+export function toVerseFullKeyFormat(
     bookKey: string,
     chapter: string | number,
     verseStart: string | number,
@@ -153,7 +160,7 @@ export function toVerseKeyFormat(
 ) {
     verseEnd ??= verseStart;
     verseEnd = verseEnd === verseStart ? '' : '-' + verseEnd;
-    return `${bookKey} ${chapter}:${verseStart}${verseEnd}`;
+    return `${toChapterFullKeyFormat(bookKey, chapter)}:${verseStart}${verseEnd}`;
 }
 
 const regex = /^([A-Z]{3}) (\d+):(\d+)(-(\d+))?$/;

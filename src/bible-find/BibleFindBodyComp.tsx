@@ -40,10 +40,10 @@ export default function BibleFindBodyComp({
         { setData },
     );
     useAppEffect(() => {
-        if (!findText) {
-            setData(null);
-        } else {
+        if (findText) {
             setData(undefined);
+        } else {
+            setData(null);
         }
     }, [findText, selectedBooks]);
     const setSelectedBooks1 = (newSelectedBooks: SelectedBookKeyType[]) => {

@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
@@ -14,7 +15,7 @@ export function RenderCopyBibleItemActionButtonsComp({
         <button
             className="btn btn-sm btn-success"
             type="button"
-            title="`Copy"
+            title={tran('Copy')}
             onClick={(event: any) => {
                 showAppContextMenu(
                     event,
@@ -37,7 +38,7 @@ export default function RenderActionButtonsComp({
             <button
                 type="button"
                 className="btn btn-sm btn-info"
-                title="`Split horizontal"
+                title={tran('Split horizontal')}
                 onClick={() => {
                     viewController.addBibleItemLeft(bibleItem, bibleItem);
                 }}
@@ -47,7 +48,7 @@ export default function RenderActionButtonsComp({
             <button
                 className="btn btn-sm btn-info"
                 type="button"
-                title="`Split vertical"
+                title={tran('Split vertical')}
                 onClick={() => {
                     viewController.addBibleItemBottom(bibleItem, bibleItem);
                 }}
@@ -59,7 +60,7 @@ export default function RenderActionButtonsComp({
                     <button
                         className="btn btn-sm btn-primary"
                         type="button"
-                        title="`Save bible item"
+                        title={tran('Save bible item')}
                         onClick={() => {
                             const lookupViewController =
                                 viewController as LookupBibleItemController;
@@ -74,7 +75,7 @@ export default function RenderActionButtonsComp({
                         <button
                             className="btn btn-sm btn-primary"
                             type="button"
-                            title="`Save bible item and show on screen"
+                            title={tran('Save bible item and show on screen')}
                             onClick={(event) => {
                                 const lookupViewController =
                                     viewController as LookupBibleItemController;

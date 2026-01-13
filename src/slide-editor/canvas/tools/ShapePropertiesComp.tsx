@@ -1,3 +1,4 @@
+import { tran } from '../../../lang/langHelpers';
 import AppRangeComp from '../../../others/AppRangeComp';
 import { useCanvasItemPropsSetterContext } from '../CanvasItem';
 
@@ -34,13 +35,13 @@ export default function ShapePropertiesComp() {
                         : {}
                 }
             >
-                `Round Size %:
+                {tran('Round Size %:')}
                 <AppRangeComp
                     value={roundSizePercentage}
                     title={
                         roundSizePercentage > 0
                             ? 'Set round size pixel to 0 to use this'
-                            : '`Round (%)'
+                            : tran('Round (%)')
                     }
                     setValue={(value) => {
                         setProps({ roundSizePercentage: value });
@@ -58,7 +59,9 @@ export default function ShapePropertiesComp() {
                 className="d-flex input-group m-1"
                 style={{ width: '260px', height: '35px' }}
             >
-                <div className="input-group-text">`Round Size Pixel:</div>
+                <div className="input-group-text">
+                    {tran('Round Size Pixel:')}
+                </div>
                 <input
                     className="form-control form-control-sm"
                     type="number"

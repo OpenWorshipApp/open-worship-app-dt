@@ -45,7 +45,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return this.dirPath && this._isDirPathValid;
     }
 
-    static dirPathBySettingName(settingName: string) {
+    static getDirPathBySettingName(settingName: string) {
         const dirPath = getSetting(settingName) ?? '';
         if (!dirPath) {
             return null;
@@ -54,7 +54,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     get dirPath() {
-        return DirSource.dirPathBySettingName(this.settingName) ?? '';
+        return DirSource.getDirPathBySettingName(this.settingName) ?? '';
     }
 
     set dirPath(newDirPath: string) {
@@ -118,14 +118,19 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return DirSource.checkIsSameDirPath(this.dirPath, dirPath);
     }
 
+    async getAllFileFullNames() {
+        const files = await fsListFiles(this.dirPath);
+        return files;
+    }
+
     async getFilePaths(mimetypeName: MimetypeNameType) {
         if (!this.dirPath) {
             return [];
         }
         try {
             const mimetypeList = getAppMimetype(mimetypeName);
-            const files = await fsListFiles(this.dirPath);
-            const matchedFiles = files
+            const fileFullNames = await this.getAllFileFullNames();
+            const matchedFileFullNames = fileFullNames
                 .filter((fileFullName) => {
                     // MacOS creates hidden files that start with '._'
                     return !fileFullName.startsWith('._');
@@ -143,7 +148,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
                 .filter((fileMetadata) => {
                     return fileMetadata !== null;
                 });
-            const filePaths = matchedFiles.map((fileMetadata) => {
+            const filePaths = matchedFileFullNames.map((fileMetadata) => {
                 const fileSource = this.getFileSourceInstance(
                     fileMetadata.fileFullName,
                 );

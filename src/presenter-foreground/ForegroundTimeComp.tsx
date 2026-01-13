@@ -1,6 +1,7 @@
 import { CSSProperties, useState } from 'react';
 import { tz } from 'moment-timezone';
 
+import { tran } from '../lang/langHelpers';
 import {
     getSetting,
     setSetting,
@@ -121,7 +122,6 @@ function TimeInSetComp({
                     className="btn btn-outline-secondary"
                     onClick={async (event) => {
                         const result = await getMinuteOffsetFromCity(event);
-                        console.log(result);
                         if (result === null) {
                             return;
                         }
@@ -263,7 +263,7 @@ function ForegroundTimeItemComp({
             <div>
                 <ScreensRendererComp
                     showingScreenIdDataList={showingScreenIdDataList}
-                    buttonText="`Hide Time"
+                    buttonText={tran('Hide Time')}
                     handleForegroundHiding={handleHiding}
                     isMini={false}
                 />
@@ -278,7 +278,7 @@ function RenderShownMiniComp() {
     return (
         <ScreensRendererComp
             showingScreenIdDataList={allShowingScreenIdDataList}
-            buttonText="`Hide Time"
+            buttonText={tran('Hide Time')}
             genTitle={(data) => {
                 return `Time: ${data.id}`;
             }}
@@ -315,7 +315,7 @@ export default function ForegroundTimeComp() {
     return (
         <ForegroundLayoutComp
             target="time"
-            fullChildHeaders={<h4>`Time</h4>}
+            fullChildHeaders={<h4>{tran('Time')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
         >
             <div className="d-flex flex-wrap gap-1">
@@ -340,7 +340,7 @@ export default function ForegroundTimeComp() {
                 })}
                 <button
                     className="btn btn-outline-info"
-                    title="`Add Time"
+                    title={tran('Add Time')}
                     style={{ width: '20px', padding: '0' }}
                     onClick={() => {
                         setIdList([...idList, crypto.randomUUID()]);

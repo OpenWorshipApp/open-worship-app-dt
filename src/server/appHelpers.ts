@@ -13,6 +13,7 @@ import {
 } from './fileHelpers';
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
+import { log } from '../helper/loggerHelpers';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${Date.now()}`;
@@ -164,7 +165,7 @@ export async function checkForUpdateSilently() {
     }
     try {
         const version = updateData.version as string;
-        console.log(
+        log(
             `Current version: ${appProvider.appInfo.version}, ` +
                 `Latest version: ${version}`,
         );
@@ -278,7 +279,7 @@ export async function getSlidesCount(
     const powerPointHelper =
         await appProvider.powerPointUtils.getPowerPointHelper(dotNetRootDir);
     if (powerPointHelper === null) {
-        console.log('PowerPoint helper is not available');
+        log('PowerPoint helper is not available');
         return null;
     }
     return powerPointHelper.countSlides(powerPointFilePath);
@@ -345,13 +346,13 @@ export function downloadImage(targetUrl: string, outputDir: string) {
 export function downloadVideoOrAudio(
     targetUrl: string,
     outputDir: string,
-    isVideo: boolean = true,
-    ffmpegPath?: string,
+    isVideo: boolean,
 ) {
     return new Promise<{ filePath: string; fileFullName: string }>(
         (resolve, reject) => {
             (async () => {
                 const videoOrAudioUrl = targetUrl.trim();
+                const title = await getPageTitle(videoOrAudioUrl);
                 const resolvedSuccess = (resolvedFilePath: string) => {
                     const fileSource = FileSource.getInstance(resolvedFilePath);
                     resolve({
@@ -359,18 +360,18 @@ export function downloadVideoOrAudio(
                         fileFullName: `${title || temptName}${fileSource.dotExtension}`,
                     });
                 };
-                const title = await getPageTitle(videoOrAudioUrl);
                 const temptName = `temp-${Date.now()}`;
                 const outputFormat = pathResolve(
                     `${outputDir}/${temptName}.%(ext)s`,
                 );
-                const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
+                const { ytUtils } = appProvider;
+                const ytDlpWrap = await ytUtils.getYTHelper();
                 let filePath: string | null = null;
                 const args = [videoOrAudioUrl, '-o', outputFormat];
                 args.push(
-                    '--ffmpeg-location',
-                    ffmpegPath ?? appProvider.ytUtils.ffmpegBinPath,
                     '--no-playlist',
+                    '--ffmpeg-location',
+                    `${ytUtils.ffmpegBinPath}`,
                 );
                 if (!isVideo) {
                     args.push(

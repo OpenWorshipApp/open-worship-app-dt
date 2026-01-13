@@ -12,6 +12,7 @@ import {
     defaultRefreshingRef,
 } from '../helper/ai/bibleCrossRefHelpers';
 import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
+import { tran } from '../lang/langHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
@@ -41,8 +42,8 @@ function genAiVigilant() {
         <i
             className="bi bi-lightbulb app-caught-hover-pointer"
             title={
-                '`Generated using AI technology. ' +
-                'Results may vary and may not be ' +
+                tran('Generated using AI technology.') +
+                ' Results may vary and may not be ' +
                 'accurate. Please use with caution.'
             }
             style={{

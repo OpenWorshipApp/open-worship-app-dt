@@ -32,7 +32,7 @@ export default function BibleFindHeaderComp({
     const setText1 = (newText: string) => {
         setText((preText) => {
             attemptTimeout(() => {
-                handleFinding(!preText ? '' : newText);
+                handleFinding(preText ? newText : '');
             });
             return newText;
         });

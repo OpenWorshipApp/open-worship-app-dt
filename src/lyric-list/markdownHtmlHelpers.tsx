@@ -7,6 +7,7 @@ export function toIframe(html: string, title: string) {
     );
     html = renderToStaticMarkup(
         <iframe
+            sandbox="allow-scripts"
             srcDoc={html}
             title={title}
             style={{

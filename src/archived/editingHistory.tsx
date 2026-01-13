@@ -10,7 +10,7 @@ import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
-import { getReactRoot } from '../initHelpers';
+import { getReactRoot } from '../others/initHelpers';
 
 const root = getReactRoot();
 

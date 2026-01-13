@@ -60,7 +60,7 @@ export default function BiblePreviewerRenderComp() {
     return (
         <div
             className={
-                'card w-100 h-100' +
+                'card w-100 h-100 app-zero-border-radius' +
                 ` ${isFulledScreen ? 'app-popup-full' : ''}`
             }
             onWheel={(event) => {

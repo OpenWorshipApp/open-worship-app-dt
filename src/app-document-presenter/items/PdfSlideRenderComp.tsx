@@ -4,9 +4,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { getHTMLChild } from '../../helper/helpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
-import SlideItemRenderComp, { useScale } from './SlideItemRenderComp';
+import SlideItemRenderComp from './SlideItemRenderComp';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import SlideScaleContainerComp from './SlideScaleContainerComp';
+import { useScale } from './slideItemRenderHelpers';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import DirSource from '../helper/DirSource';
+import { tran } from '../lang/langHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import { readTextFromClipboard } from '../server/appHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -58,7 +59,7 @@ export async function askForURL(title: string, subTitle: string) {
         return null;
     }
     if (!url.trim().startsWith('http')) {
-        showSimpleToast('`Download From URL', 'Invalid URL');
+        showSimpleToast(tran('Download From URL'), 'Invalid URL');
         return null;
     }
     return url;
@@ -69,7 +70,7 @@ export function getOpenSharedLinkMenuItem(
 ): ContextMenuItemType {
     const sharedLink = `${appProvider.appInfo.homepage}/shared#${sharedKey}`;
     return {
-        menuElement: '`Open Shared Link',
+        menuElement: tran('Open Shared Link'),
         title: sharedLink,
         onSelect: async () => {
             appProvider.browserUtils.openExternalURL(sharedLink);
@@ -88,7 +89,7 @@ export async function genDownloadContextMenuItems(
     }
     const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: '`Download From URL',
+            menuElement: tran('Download From URL'),
             onSelect: async () => {
                 const url = await askForURL(title, subTitle);
                 if (url === null) {

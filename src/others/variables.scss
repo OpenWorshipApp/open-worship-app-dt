@@ -3,9 +3,9 @@
 
 $base-color: white;
 $box-border: 2px ridge color.adjust($base-color, $lightness: 50%);
-$header-height: 37px;
+$header-height: 34px;
 
-$card-header-height: 48px;
+$card-header-height: 40px;
 
 $base-z-index: 10;
 $z-index-bible-lookup: $base-z-index + 10;

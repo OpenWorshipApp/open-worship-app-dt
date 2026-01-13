@@ -1,6 +1,5 @@
 import './PresenterForegroundComp.scss';
 
-import appProvider from '../server/appProvider';
 import ForegroundCameraComp from './ForegroundCameraComp';
 import ForegroundCommonPropertiesSettingComp from './ForegroundCommonPropertiesSettingComp';
 import ForegroundCountDownComp from './ForegroundCountDownComp';
@@ -9,10 +8,16 @@ import ForegroundMarqueeComp from './ForegroundMarqueeComp';
 import ForegroundQuickTextComp from './ForegroundQuickTextComp';
 import ForegroundStopwatchComp from './ForegroundStopwatchComp';
 import ForegroundTimeComp from './ForegroundTimeComp';
+import ForegroundWebComp from './ForegroundWebComp';
 
 export default function PresenterForegroundComp() {
     return (
-        <div className="presenter-foreground w-100 h-100 app-border-white-round p-2">
+        <div
+            className={
+                'presenter-foreground w-100 h-100 app-border-white-round ' +
+                'p-2 app-zero-border-radius'
+            }
+        >
             <ForegroundCommonPropertiesSettingComp />
             <hr />
             <ForegroundMarqueeComp />
@@ -28,12 +33,8 @@ export default function PresenterForegroundComp() {
             <ForegroundImagesSlideShowComp />
             <hr />
             <ForegroundCameraComp />
-            {appProvider.systemUtils.isDev ? (
-                <>
-                    <hr />
-                    <div>TODO: Javascript Show</div>
-                </>
-            ) : null}
+            <hr />
+            <ForegroundWebComp />
         </div>
     );
 }

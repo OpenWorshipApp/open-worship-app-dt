@@ -1,4 +1,5 @@
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import ScreenEffectManager from './managers/ScreenEffectManager';
 import {
     ScreenTransitionEffectType,
@@ -20,7 +21,7 @@ function openContextMenu(event: any, screenEffectManager: ScreenEffectManager) {
                 },
                 childAfter: (
                     <i
-                        className={`${icon} ps-1 ${isSelected ? 'app-highlight-selected' : ''}`}
+                        className={`${icon} ps-1 ${isSelected ? HIGHLIGHT_SELECTED_CLASSNAME : ''}`}
                     />
                 ),
             };
@@ -49,7 +50,9 @@ export default function RenderTransitionEffectComp({
             }}
         >
             {title}
-            <i className={`${selected[0]} ps-1 'app-highlight-selected`} />
+            <i
+                className={`${selected[0]} ps-1 ${HIGHLIGHT_SELECTED_CLASSNAME}`}
+            />
         </button>
     );
 }

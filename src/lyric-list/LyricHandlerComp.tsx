@@ -1,5 +1,6 @@
 import { lazy, use, useMemo } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { SelectedLyricContext } from './lyricHelpers';
 import LyricEditingManager, {
@@ -7,8 +8,8 @@ import LyricEditingManager, {
 } from './LyricEditingManager';
 import { useAppEffect } from '../helper/debuggerHelpers';
 
-const LazyLyricPreviewerTopComp = lazy(() => {
-    return import('./LyricPreviewerTopComp');
+const LazyLyricPreviewerComp = lazy(() => {
+    return import('./LyricPreviewerComp');
 });
 const LazyLyricSlidesPreviewerComp = lazy(() => {
     return import('./LyricSlidesPreviewerComp');
@@ -31,13 +32,13 @@ export default function LyricHandlerComp() {
                     ' align-items-center'
                 }
             >
-                <h3 className="text-muted">`No Lyric Selected</h3>
+                <h3 className="text-muted">{tran('No Lyric Selected')}</h3>
             </div>
         );
     }
     return (
         <LyricEditingManagerContext value={lyricEditingManager}>
-            <div className="card w-100 h-100">
+            <div className="card w-100 h-100 app-zero-border-radius">
                 <div className="card-body">
                     <ResizeActorComp
                         flexSizeName={'lyric-previewer'}
@@ -48,9 +49,9 @@ export default function LyricHandlerComp() {
                         }}
                         dataInput={[
                             {
-                                children: LazyLyricPreviewerTopComp,
+                                children: LazyLyricPreviewerComp,
                                 key: 'v1',
-                                widgetName: 'Editor',
+                                widgetName: 'Previewer',
                             },
                             {
                                 children: LazyLyricSlidesPreviewerComp,

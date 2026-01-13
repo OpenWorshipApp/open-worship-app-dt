@@ -16,6 +16,6 @@
   }
 
   .canvas-board-size-container {
-    border-radius: 5px;
+    border-radius: var(--bs-border-radius);
   }
 }

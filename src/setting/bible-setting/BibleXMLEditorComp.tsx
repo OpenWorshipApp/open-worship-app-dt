@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SchemaNode } from 'json-schema-library';
 
+import { tran } from '../../lang/langHelpers';
 import {
     EditorStoreType,
     useInitMonacoEditor,
@@ -70,7 +71,7 @@ function RenderSaveButton({
                 }
             }}
         >
-            `Save
+            {tran('Save')}
         </button>
     );
 }

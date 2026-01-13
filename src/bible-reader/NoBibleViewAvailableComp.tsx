@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { RECEIVING_DROP_CLASSNAME } from '../helper/helpers';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
@@ -39,7 +40,7 @@ export default function NoBibleViewAvailableComp() {
                 }
             }}
         >
-            '`No Bible Available'
+            {tran('No Bible Available')}
         </div>
     );
 }

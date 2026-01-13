@@ -79,7 +79,6 @@ function RenderChapterZeroComp({
             <button
                 className="btn btn-outline-success"
                 onClick={() => {
-                    console.log('click');
                     setExpanded(!expanded);
                 }}
             >

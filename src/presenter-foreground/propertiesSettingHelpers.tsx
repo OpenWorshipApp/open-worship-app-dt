@@ -1,5 +1,6 @@
 import { CSSProperties } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import {
     getSetting,
     useStateSettingBoolean,
@@ -43,12 +44,16 @@ function getWidgetRoundExtraStyle(
     };
 }
 
-function genWidgetWidthExtraStyle(settingName: string): CSSProperties {
+function getWidgetWidthScale(settingName: string) {
     const widthScale = Number.parseInt(
         getSetting(settingName) ?? DEFAULT_WIDGET_WIDTH_PERCENTAGE.toString(),
     );
+    return Math.max(1, Math.min(100, widthScale));
+}
+function genWidgetWidthExtraStyle(settingName: string): CSSProperties {
+    const widthScale = getWidgetWidthScale(settingName);
     return {
-        width: `${Math.max(1, Math.min(100, widthScale))}%`,
+        width: `${widthScale}%`,
         height: 'auto',
     };
 }
@@ -208,8 +213,7 @@ function PropertiesSettingComp({
                 }}
             >
                 <i className="bi bi-chevron-right" />
-                <i className="bi bi-gear" />
-                {' `Properties'}
+                <i className="bi bi-gear" /> {tran('Properties')}
             </button>
         );
     }
@@ -222,8 +226,7 @@ function PropertiesSettingComp({
                 }}
             >
                 <i className="bi bi-chevron-down" />
-                <i className="bi bi-gear" />
-                {' `Properties'}
+                <i className="bi bi-gear" /> {tran('Properties')}
             </button>
             <div className="d-flex flex-wrap p-1 align-items-center app-inner-shadow">
                 <div className="m-1">
@@ -268,10 +271,10 @@ function PropertiesSettingComp({
                     />
                 </div>
                 <div className="d-flex app-border-white-round m-1">
-                    `Width:
+                    {tran('Width (%):')}
                     <AppRangeComp
                         value={widgetWidthPercentage}
-                        title="`Width (%)"
+                        title={tran('Width (%)')}
                         setValue={setWidgetWidthPercentage}
                         defaultSize={{
                             size: widgetWidthPercentage,
@@ -283,10 +286,10 @@ function PropertiesSettingComp({
                     />
                 </div>
                 <div className="d-flex app-border-white-round m-1">
-                    `Scale:
+                    {tran('Scale:')}
                     <AppRangeComp
                         value={widgetScale}
-                        title="`Scale"
+                        title={tran('Scale')}
                         setValue={setWidgetScale}
                         defaultSize={{
                             size: widgetScale,
@@ -298,10 +301,10 @@ function PropertiesSettingComp({
                     />
                 </div>
                 <div className="d-flex app-border-white-round m-1">
-                    `Opacity:
+                    {tran('Opacity:')}
                     <AppRangeComp
                         value={opacityPercentage}
-                        title="`Opacity (%)"
+                        title={tran('Opacity (%)')}
                         setValue={setOpacityPercentage}
                         defaultSize={{
                             size: opacityPercentage,
@@ -318,13 +321,13 @@ function PropertiesSettingComp({
                         opacity: roundSizePixel > 0 ? 0.5 : 1,
                     }}
                 >
-                    `Round Size %:
+                    {tran('Round Size %:')}
                     <AppRangeComp
                         value={roundPercentage}
                         title={
                             roundSizePixel > 0
                                 ? 'Set round size pixel to 0 to use this'
-                                : '`Round (%)'
+                                : tran('Round (%)')
                         }
                         setValue={setRoundPercentage}
                         defaultSize={{
@@ -340,7 +343,9 @@ function PropertiesSettingComp({
                     className="d-flex input-group m-1"
                     style={{ width: '260px', height: '35px' }}
                 >
-                    <div className="input-group-text">`Round Size Pixel:</div>
+                    <div className="input-group-text">
+                        {tran('Round Size Pixel:')}
+                    </div>
                     <input
                         className="form-control form-control-sm"
                         type="number"
@@ -503,6 +508,9 @@ export function useForegroundPropsSetting({
 
     return {
         genStyle,
+        getWidthScale: () => {
+            return getWidgetWidthScale(widgetWidthPercentageSettingName);
+        },
         element: (
             <PropertiesSettingComp
                 alignmentData={alignmentData}

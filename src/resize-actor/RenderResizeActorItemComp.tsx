@@ -1,10 +1,7 @@
 import { Fragment } from 'react';
 
 import AppSuspenseComp from '../others/AppSuspenseComp';
-import FlexResizeActorComp, {
-    ACTIVE_HIDDEN_WIDGET_CLASS,
-    HIDDEN_WIDGET_CLASS,
-} from './FlexResizeActorComp';
+import FlexResizeActorComp from './FlexResizeActorComp';
 import {
     DisabledType,
     keyToDataFlexSizeKey,
@@ -15,6 +12,7 @@ import {
     DataInputType,
     FlexSizeType,
 } from './flexSizeHelpers';
+import RenderHiddenWidgetTitleComp from './RenderHiddenWidgetTitleComp';
 
 const renderChildren = (Children: any) => {
     if (typeof Children === 'object' && 'render' in Children) {
@@ -38,6 +36,7 @@ export default function RenderResizeActorItemComp({
     dataInput,
     isDisableQuickResize,
     isHorizontal,
+    isOnScreen,
 }: Readonly<{
     data: DataInputType;
     index: number;
@@ -49,6 +48,7 @@ export default function RenderResizeActorItemComp({
     isDisableQuickResize: boolean;
     isHorizontal: boolean;
     setFlexSize: (flexSize: FlexSizeType) => void;
+    isOnScreen: boolean;
 }>) {
     const handleDisabling = (
         targetDataFlexSizeKey: string,
@@ -119,20 +119,12 @@ export default function RenderResizeActorItemComp({
                 </div>
             )}
             {isWidgetHidden ? (
-                <div
-                    title={`Enable ${widgetName}`}
-                    className={
-                        `${ACTIVE_HIDDEN_WIDGET_CLASS} ` +
-                        `${HIDDEN_WIDGET_CLASS} app-caught-hover-pointer` +
-                        ` bar-type-${type}`
-                    }
-                    style={{
-                        color: 'green',
-                    }}
+                <RenderHiddenWidgetTitleComp
+                    widgetName={widgetName}
+                    type={type}
                     onClick={onHiddenWidgetClick ?? (() => {})}
-                >
-                    <div className="hidden-context">{widgetName}</div>
-                </div>
+                    isOnScreen={isOnScreen}
+                />
             ) : null}
         </Fragment>
     );

@@ -1,5 +1,6 @@
 import { createContext, lazy, useState, MouseEvent } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import PathSelectorComp from './PathSelectorComp';
 import { MimetypeNameType, fsCheckDirExist } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
@@ -123,7 +124,10 @@ export default function FileListHandlerComp({
     return (
         <DirSourceContext value={dirSource}>
             <div
-                className={`${className} card w-100 h-100 app-inner-shadow ${userClassName ?? ''}`}
+                className={
+                    `${className} card w-100 h-100 app-inner-shadow` +
+                    ` ${userClassName ?? ''} app-zero-border-radius`
+                }
                 onDragOver={genOnDragOver(dirSource)}
                 onDragLeave={genOnDragLeave()}
                 tabIndex={0}
@@ -134,11 +138,11 @@ export default function FileListHandlerComp({
                     takeDroppedFile,
                 })}
             >
-                {header !== undefined ? (
+                {header ? (
                     <div
                         className="card-header"
                         style={{
-                            maxHeight: '35px',
+                            maxHeight: '30px',
                         }}
                     >
                         <strong className={isOnScreen ? 'app-on-screen' : ''}>
@@ -147,7 +151,7 @@ export default function FileListHandlerComp({
                         {onNewFile && dirSource.dirPath ? (
                             <div
                                 className="float-end app-caught-hover-pointer"
-                                title="`New File"
+                                title={tran('New File')}
                                 onClick={() => setIsCreatingNew(true)}
                                 style={{
                                     color: 'var(--bs-info-text-emphasis)',
@@ -177,14 +181,14 @@ export default function FileListHandlerComp({
                         prefix={`path-${className}`}
                         dirSource={dirSource}
                         addItems={
-                            onItemsAdding !== undefined
-                                ? onItemsAdding.bind(
+                            onItemsAdding === undefined
+                                ? handleItemsAdding
+                                : onItemsAdding.bind(
                                       null,
                                       genItemsAddingContextMenuItems(
                                           handleItemsAdding,
                                       ),
                                   )
-                                : handleItemsAdding
                         }
                     />
                     {!dirSource.dirPath && defaultFolderName ? (

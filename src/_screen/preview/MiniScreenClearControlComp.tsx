@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 
+import { tran } from '../../lang/langHelpers';
 import {
     toShortcutKey,
     useKeyboardRegistering,
@@ -27,10 +28,9 @@ function RenderButtonComp({
     useKeyboardRegistering([eventMap], onClickCallback, [isEnabled]);
     return (
         <button
-            className={`btn btn-sm btn-${isEnabled ? '' : 'outline-'}${btnType}`}
+            className={`btn btn-${isEnabled ? '' : 'outline-'}${btnType}`}
             type="button"
             title={`${title} [${toShortcutKey(eventMap)}]`}
-            style={{ height: '20px' }}
             onClick={onClickCallback}
         >
             {text}
@@ -58,7 +58,7 @@ function genBtnMaps(screenManager: ScreenManager) {
     return [
         {
             text: <i className="bi bi-eraser" />,
-            title: '`Clear All',
+            title: tran('Clear All'),
             btnType: 'danger',
             isEnabled: isShowing,
             eventMap: { key: 'F6' },
@@ -68,7 +68,7 @@ function genBtnMaps(screenManager: ScreenManager) {
         },
         {
             text: 'BG',
-            title: '`Clear Background',
+            title: tran('Clear Background'),
             btnType: 'secondary',
             isEnabled: isShowingBackground,
             eventMap: { key: 'F7' },
@@ -78,7 +78,7 @@ function genBtnMaps(screenManager: ScreenManager) {
         },
         {
             text: 'SL',
-            title: '`Clear Slide',
+            title: tran('Clear Slide'),
             btnType: 'info',
             isEnabled: isShowingSlide,
             eventMap: { key: 'F8' },
@@ -88,7 +88,7 @@ function genBtnMaps(screenManager: ScreenManager) {
         },
         {
             text: 'BB',
-            title: '`Clear Bible',
+            title: tran('Clear Bible'),
             btnType: 'primary',
             isEnabled: isShowingBible,
             eventMap: { key: 'F9' },
@@ -98,7 +98,7 @@ function genBtnMaps(screenManager: ScreenManager) {
         },
         {
             text: 'FG',
-            title: '`Clear Foreground',
+            title: tran('Clear Foreground'),
             btnType: 'secondary',
             isEnabled: isShowingForeground,
             eventMap: { key: 'F10' },

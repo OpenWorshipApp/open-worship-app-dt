@@ -97,8 +97,8 @@ export type PagePropsType = {
     finderHomePage: string;
     isPagePresenter: boolean;
     presenterHomePage: string;
-    isPageEditor: boolean;
-    editorHomePage: string;
+    isPageAppDocumentEditor: boolean;
+    appDocumentEditorHomePage: string;
     isPageReader: boolean;
     readerHomePage: string;
     isPageScreen: boolean;
@@ -106,6 +106,9 @@ export type PagePropsType = {
     isPageSetting: boolean;
     settingHomePage: string;
     isPageExperiment: boolean;
+    isPageLyricEditor: boolean;
+    lyricEditorHomePage: string;
+    webEditorHomePage: string;
     experimentHomePage: string;
 };
 
@@ -184,10 +187,15 @@ export type AppProviderType = Readonly<
         ytUtils: {
             getYTHelper: () => Promise<YTHelper>;
             ffmpegBinPath: string;
+            jsRuntimeBinPath: string | null;
         };
+        windowTitle: string;
     }
 >;
 
-const appProvider = (globalThis as any).provider as AppProviderType;
+const appProvider = {
+    ...(globalThis as any).provider,
+    windowTitle: document.title,
+} as AppProviderType;
 
 export default appProvider;

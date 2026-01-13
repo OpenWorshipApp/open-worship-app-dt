@@ -2,6 +2,7 @@ import {
     DEFAULT_LOCALE,
     getLangAsync,
     LocaleType,
+    tran,
 } from '../../lang/langHelpers';
 import {
     showAppConfirm,
@@ -21,6 +22,7 @@ import CacheManager from '../../others/CacheManager';
 import { unlockingCacher } from '../../server/unlockingHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
 import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
+import { handleError } from '../../helper/errorHelpers';
 
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
@@ -254,7 +256,7 @@ async function guessingBibleKey(xmlElementBible: Element) {
         }
         let newKey = '';
         const isConfirmInput = await showAppInput(
-            '`Key is missing',
+            tran('Key is missing'),
             genBibleKeyXMLInput(
                 newKey,
                 (newKey1) => {
@@ -351,7 +353,7 @@ function readContentJson<T>(xmlElement: Element) {
             ) as T;
             return data;
         } catch (error) {
-            console.log('Fail to parse custom verses map', error);
+            handleError(`Fail to parse custom verses map, error: ${error}`);
         }
     }
     return null;
@@ -497,7 +499,7 @@ export async function getBibleInfoJson(
     const copyRights =
         guessValue(xmlElementBible, attributesMap.copyRights) ??
         'Unknown Copy Rights';
-    return {
+    const bibleInfo = {
         title,
         description,
         key: bibleKey,
@@ -510,6 +512,7 @@ export async function getBibleInfoJson(
         keyBookMap,
         booksAvailable,
     };
+    return bibleInfo;
 }
 function setBibleInfo(
     xmlDoc: Document,
@@ -637,6 +640,10 @@ export function jsonToXMLText(jsonData: BibleXMLJsonType) {
 }
 
 export function xmlTextToBibleElement(xmlText: string) {
+    const bibleModelInfo = getBibleModelInfo();
+    for (const [key, value] of Object.entries(bibleModelInfo.flippingKey)) {
+        xmlText = xmlText.replaceAll(key, value);
+    }
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
     const bible = guessElement(xmlDoc, tagNamesMap.bible)?.[0];
@@ -661,13 +668,14 @@ export async function xmlTextToJson(
     const newLines = getNewLines(xmlElementBible);
     const newLinesTitleMap = getNewLinesTitleMap(xmlElementBible);
     const customVersesMap = getCustomVersesMap(xmlElementBible);
-    return {
+    const bibleXMLData = {
         info: bibleInfo,
         books: bibleBooks,
         newLines,
         newLinesTitleMap,
         customVersesMap,
     };
+    return bibleXMLData;
 }
 
 export async function bibleKeyToXMLFilePath(
@@ -684,9 +692,9 @@ export async function bibleKeyToXMLFilePath(
     if (filePath) {
         return filePath;
     }
-    console.log(
-        'Fail to get Bible file path',
-        `Unable to find file path for: "${bibleKey}"`,
+    handleError(
+        'Fail to get Bible file path' +
+            `Unable to find file path for: "${bibleKey}"`,
     );
     return null;
 }

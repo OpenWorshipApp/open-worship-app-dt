@@ -15,7 +15,7 @@ import {
 } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
 import { MultiContextRender } from '../helper/MultiContextRender';
-import AppPopupWindowsComp from '../app-modal/AppPopupWindowsComp';
+import AppPopupBibleLookupComp from '../app-modal/AppPopupBibleLookupComp';
 import AppContextMenuComp from '../context-menu/AppContextMenuComp';
 import HandleAlertComp from '../popup-widget/HandleAlertComp';
 import ToastComp from '../toast/ToastComp';
@@ -44,7 +44,7 @@ import { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers
 const tabs: TabOptionType[] = [];
 if (!appProvider.isPagePresenter) {
     tabs.push(presenterTab);
-} else if (!appProvider.isPageEditor) {
+} else if (!appProvider.isPageAppDocumentEditor) {
     tabs.push(editorTab);
 }
 tabs.push(readerTab);
@@ -69,7 +69,7 @@ function TabRenderComp() {
                 return (
                     <li key={i} className="nav-item">
                         <button
-                            className="btn btn-link nav-link"
+                            className="btn btn-sm btn-link nav-link"
                             onClick={handleClicking.bind(null, tab)}
                         >
                             {tab.title}
@@ -291,14 +291,12 @@ export default function AppLayoutComp({
                     <HelpButtonComp />
                 </div>
             </div>
-            <div id="app-body" className="app-border-white-round">
-                {children}
-            </div>
+            <div id="app-body">{children}</div>
             <TopProgressBarComp />
             <ToastComp />
             <AppContextMenuComp />
             <HandleAlertComp />
-            <AppPopupWindowsComp />
+            <AppPopupBibleLookupComp />
         </MultiContextRender>
     );
 }

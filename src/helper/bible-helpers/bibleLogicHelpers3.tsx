@@ -1,4 +1,4 @@
-import { getChapterData, toVerseKeyFormat } from './bibleInfoHelpers';
+import { getChapterData, toVerseFullKeyFormat } from './bibleInfoHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import CacheManager from '../../others/CacheManager';
 import { unlocking } from '../../server/unlockingHelpers';
@@ -264,7 +264,7 @@ export async function getNewLineTitlesHtmlText(
     if (!chapterData?.newLinesTitleMap) {
         return null;
     }
-    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
+    const verseKey = toVerseFullKeyFormat(bookKey, chapter, verse);
     const titles = chapterData.newLinesTitleMap[verseKey] ?? [];
     if (titles.length === 0) {
         return null;
@@ -282,7 +282,7 @@ export async function getCustomVerseText(
     if (!chapterData?.customVersesMap) {
         return null;
     }
-    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
+    const verseKey = toVerseFullKeyFormat(bookKey, chapter, verse);
     const customVerseList = chapterData.customVersesMap[verseKey] ?? [];
     const renderList = await Promise.all(
         customVerseList.map(async (item) => {

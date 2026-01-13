@@ -2,6 +2,7 @@ import '../background/BackgroundImagesComp.scss';
 
 import { CSSProperties, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import BackgroundMediaComp from '../background/BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -29,9 +30,7 @@ const extraStyle: CSSProperties = {
 };
 
 function findNextSrc(isNext: boolean, srcList: string[], src: string) {
-    let index = srcList.findIndex((src1) => {
-        return src1 === src;
-    });
+    let index = srcList.indexOf(src);
     if (index === -1) {
         return null;
     }
@@ -128,7 +127,7 @@ function HeaderElements({
 }>) {
     return (
         <div className="d-flex">
-            {!isMini ? <div>Scale Type:</div> : null}
+            {isMini ? null : <div>Scale Type:</div>}
             <button
                 className="btn btn-sm btn-outline-info mx-1"
                 style={{
@@ -162,14 +161,16 @@ function useAnyItemSelected(filePaths: string[] | undefined) {
             setIsAnyItemSelected(false);
             return;
         }
-        const srcList = filePaths.map((filePath) => {
-            const fileSource = FileSource.getInstance(filePath);
-            return fileSource.src;
-        });
+        const srcList = new Set(
+            filePaths.map((filePath) => {
+                const fileSource = FileSource.getInstance(filePath);
+                return fileSource.src;
+            }),
+        );
         const dataList =
             ScreenBackgroundManager.getBackgroundSrcListByType('image');
         const isSelected = dataList.some(([_, data]) => {
-            return srcList.includes(data.src);
+            return srcList.has(data.src);
         });
         setIsAnyItemSelected(isSelected);
     };
@@ -209,7 +210,7 @@ export default function ForegroundImagesSlideShowComp() {
     return (
         <ForegroundLayoutComp
             target="images-slide-show"
-            fullChildHeaders={<h4>`Background Images Slide Show</h4>}
+            fullChildHeaders={<h4>{tran('Background Images Slide Show')}</h4>}
             childHeadersOnHidden={genHeaderElements(true)}
             extraBodyStyle={{ maxHeight: '450px' }}
         >

@@ -1,11 +1,11 @@
 .data-vary-app-document-item {
   display: inline-block;
-  margin: 5px;
+  margin: 2px;
   cursor: pointer;
-  box-sizing: content-box;
 
   .vary-app-document-item-header {
     height: 35px !important;
+    border-bottom-width: 2px;
   }
 
   .index {

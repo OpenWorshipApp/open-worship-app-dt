@@ -6,11 +6,12 @@ import AppDocument from '../../app-document-list/AppDocument';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
-import { DIV_CLASS_NAME } from './varyAppDocumentHelpers';
+import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
 import { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
 import { changeDragEventStyle } from '../../helper/helpers';
+import { tran } from '../../lang/langHelpers';
 import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from '../../slide-editor/canvas/canvasHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -34,8 +35,8 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
             files.push(file);
         } else {
             showSimpleToast(
-                '`Insert Image or Video',
-                '`Unsupported file type!',
+                tran('Insert Image or Video'),
+                tran('Unsupported file type!'),
             );
         }
     }
@@ -48,7 +49,7 @@ export default function VaryAppDocumentItemsPreviewerComp() {
         useAppDocumentItemThumbnailSizeScale();
     return (
         <div
-            className={`${DIV_CLASS_NAME} app-focusable w-100 h-100 pb-5`}
+            className={`${SLIDE_ITEMS_CONTAINER_CLASS_NAME} app-focusable w-100 h-100 pb-5`}
             tabIndex={0}
             style={{ overflow: 'auto' }}
             onWheel={(event) => {

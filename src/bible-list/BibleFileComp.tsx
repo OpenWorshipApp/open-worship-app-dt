@@ -1,5 +1,6 @@
 import { lazy, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
 import Bible from './Bible';
@@ -39,7 +40,7 @@ function genContextMenu(
     }
     return [
         {
-            menuElement: '`Empty',
+            menuElement: tran('Empty'),
             onSelect: () => {
                 showAppConfirm(
                     'Empty Bible List',
@@ -57,7 +58,7 @@ function genContextMenu(
             },
         },
         {
-            menuElement: '`Copy All Items',
+            menuElement: tran('Copy All Items'),
             onSelect: async () => {
                 const promises = bible.items.map((item) => {
                     return item.toTitleText();
@@ -70,7 +71,7 @@ function genContextMenu(
             },
         },
         {
-            menuElement: '`Move All Items To',
+            menuElement: tran('Move All Items To'),
             onSelect: (event: any) => {
                 moveBibleItemTo(event, bible);
             },

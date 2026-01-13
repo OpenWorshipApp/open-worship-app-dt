@@ -1,9 +1,8 @@
-import { clearWidgetSizeSetting } from '../resize-actor/flexSizeHelpers';
 import SettingGeneralLanguageComp from './SettingGeneralLanguageComp';
-import appProvider from '../server/appProvider';
 import SettingGeneralPath from './directory-setting/SettingGeneralDirectoryPathComp';
-import { appLocalStorage } from './directory-setting/appLocalStorage';
 import SettingGeneralThemeComp from './SettingGeneralThemeComp';
+import SettingGeneralOtherOptionsComp from './SettingGeneralOtherOptionsComp';
+import SettingGeneralFontFamilyComp from './SettingGeneralFontFamilyComp';
 
 export default function SettingGeneralComp() {
     return (
@@ -17,37 +16,10 @@ export default function SettingGeneralComp() {
                 <SettingGeneralPath />
             </div>
             <div className="app-border-white-round m-1">
-                {appProvider.systemUtils.isDev ? (
-                    <>
-                        <SettingGeneralLanguageComp />
-                        <hr />
-                    </>
-                ) : null}
+                <SettingGeneralLanguageComp />
                 <SettingGeneralThemeComp />
-                <div className="app-border-white-round m-1 p-1">
-                    <div className="m-2">
-                        <button
-                            className="btn btn-warning"
-                            onClick={() => {
-                                clearWidgetSizeSetting();
-                                appProvider.reload();
-                            }}
-                        >
-                            `Reset Widgets Size
-                        </button>
-                    </div>
-                    <div className="m-2 p-2">
-                        <button
-                            className="btn btn-danger"
-                            onClick={async () => {
-                                await appLocalStorage.clear();
-                                appProvider.reload();
-                            }}
-                        >
-                            `Clear All Settings
-                        </button>
-                    </div>
-                </div>
+                <SettingGeneralFontFamilyComp />
+                <SettingGeneralOtherOptionsComp />
             </div>
         </div>
     );

@@ -19,7 +19,6 @@ $resizer-color: rgb(123, 173, 205);
 
   .receiving-data-drop {
     border: 1px solid $dragging-color-full !important;
-    box-sizing: content-box;
   }
 
   .receiving-data-drop-left {
@@ -296,6 +295,10 @@ $resizer-color: rgb(123, 173, 205);
     }
 
     .bible-view-text {
+      .app-god-word {
+        color: red;
+      }
+
       .verse-number {
         &.extra-verses {
           border-top: 3px solid rgba(0, 0, 0, 0.121);
@@ -363,14 +366,6 @@ $resizer-color: rgb(123, 173, 205);
   .bible-lookup-book-option {
     &:hover {
       color: #3d680b;
-    }
-  }
-
-  .bible-view {
-    .bible-view-text {
-      .app-god-word {
-        color: red;
-      }
     }
   }
 }

@@ -1,5 +1,6 @@
 import { CSSProperties } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
@@ -284,7 +285,7 @@ export default function ForegroundCountDownComp() {
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
-            buttonText="`Hide Countdown"
+            buttonText={tran('Hide Countdown')}
             handleForegroundHiding={handleCountdownHiding}
             isMini={isMini}
         />
@@ -292,7 +293,7 @@ export default function ForegroundCountDownComp() {
     return (
         <ForegroundLayoutComp
             target="countdown"
-            fullChildHeaders={<h4>`Countdown</h4>}
+            fullChildHeaders={<h4>{tran('Countdown')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
         >
             {propsSetting}

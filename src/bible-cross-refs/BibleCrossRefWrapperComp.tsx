@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
@@ -23,7 +24,7 @@ export default function BibleCrossRefWrapperComp({
         }
         showAppContextMenu(event, [
             {
-                menuElement: '`Refresh',
+                menuElement: tran('Refresh'),
                 onSelect: onRefresh,
             },
         ]);

@@ -45,9 +45,9 @@ export default function ForegroundLayoutComp({
                     />
                     {fullChildHeaders}
                 </div>
-                {!isOpened ? (
+                {isOpened ? null : (
                     <div className="d-flex">{childHeadersOnHidden}</div>
-                ) : null}
+                )}
             </div>
             {isOpened ? (
                 <div

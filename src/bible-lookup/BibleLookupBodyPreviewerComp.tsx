@@ -15,6 +15,7 @@ import { setBibleLookupInputFocus } from './selectionHelpers';
 import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewTitleEditingComp';
 import BibleViewTitleWrapperComp from '../bible-reader/view-extra/BibleViewTitleWrapperComp';
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
+import { HoverMotionHandler } from '../helper/domHelpers';
 
 const LazyBiblePreviewerRenderComp = lazy(() => {
     return import('../bible-reader/BiblePreviewerRenderComp');
@@ -46,8 +47,9 @@ function RenderBodyEditingComp() {
                             }}
                         >
                             <span
-                                className="app-caught-hover-pointer"
-                                title='Hit "Escape" to force edit'
+                                className="app-caught-hover-pointer app-opacity-hover"
+                                title='Hit "Escape" to jump back to editing input'
+                                data-opacity-hover="0.2"
                                 onClick={() => {
                                     setBibleLookupInputFocus();
                                 }}
@@ -88,10 +90,11 @@ function RenderBodyComp({
                     >
                         <span
                             className={
-                                'pointer app-low-hover-visible-1 ' +
-                                'app-caught-hover-pointer app-pencil-bible-lookup'
+                                `pointer ${HoverMotionHandler.lowVisibleClassname}-0 ` +
+                                'app-caught-hover-pointer app-opacity-hover'
                             }
-                            title='Hit "Escape" to force edit'
+                            title="Click to edit this section"
+                            data-opacity-hover="0.2"
                             onClick={() => {
                                 viewController.editBibleItem(bibleItem);
                             }}

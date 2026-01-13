@@ -3,6 +3,7 @@ import appProvider from '../../server/appProvider';
 import { getScreenManagerByScreenId } from '../../_screen/managers/screenManagerHelpers';
 import { slidePreviewerMethods } from './AppDocumentPreviewerFooterComp';
 import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
 export function handleAppDocumentItemSelecting(
     event: any,
@@ -10,7 +11,7 @@ export function handleAppDocumentItemSelecting(
     varyAppDocumentItem: VaryAppDocumentItemType,
     selectSelectedSlide: (varyAppDocumentItem: VaryAppDocumentItemType) => void,
 ) {
-    if (appProvider.isPageEditor) {
+    if (appProvider.isPageAppDocumentEditor) {
         selectSelectedSlide(varyAppDocumentItem);
     } else {
         slidePreviewerMethods.handleSlideItemSelected(
@@ -31,7 +32,7 @@ export function genSlideIds(varyAppDocumentItems: VaryAppDocumentItemType[]) {
     });
 }
 
-export const DIV_CLASS_NAME = 'app-slides-comp';
+export const SLIDE_ITEMS_CONTAINER_CLASS_NAME = 'app-slide-items-container';
 export const DATA_QUERY_KEY = 'data-vary-app-document-item-id';
 
 export function showVaryAppDocumentItemInViewport(id: number) {
@@ -76,7 +77,7 @@ export function handleNextItemSelecting({
     isNext: boolean;
 }) {
     const divSelectedList = container.querySelectorAll(
-        `[${DATA_QUERY_KEY}].app-highlight-selected`,
+        `[${DATA_QUERY_KEY}].${HIGHLIGHT_SELECTED_CLASSNAME}`,
     );
     const foundList = Array.from(divSelectedList).reduce(
         (
@@ -133,7 +134,7 @@ export function handleNextItemSelecting({
 }
 
 export function getContainerDiv(): HTMLDivElement | null {
-    return document.querySelector(`.${DIV_CLASS_NAME}`);
+    return document.querySelector(`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`);
 }
 
 export function handleArrowing(

@@ -5,6 +5,8 @@ export enum DragTypeEnum {
     BIBLE_ITEM = 'bibleItem',
     LYRIC_ITEM = 'lyricItem',
     BACKGROUND_VIDEO = 'bg-video',
+    BACKGROUND_CAMERA = 'bg-camera',
+    BACKGROUND_WEB = 'bg-web',
     BACKGROUND_AUDIO = 'bg-audio',
     BACKGROUND_IMAGE = 'bg-image',
     BACKGROUND_COLOR = 'bg-color',

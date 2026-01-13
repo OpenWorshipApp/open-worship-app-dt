@@ -41,14 +41,15 @@ export default function BibleViewRenderHeaderComp({
                 }}
             />
             <div
-                className={`${HoverMotionHandler.lowClassname}-1`}
-                data-min-parent-width="550"
+                className={`${HoverMotionHandler.lowVisibleClassname}-0 app-opacity-hover`}
+                data-opacity-hover="0.1"
             >
                 <RenderActionButtonsComp bibleItem={bibleItem} />
             </div>
             <div
-                className={`${HoverMotionHandler.lowClassname}-0`}
+                className={`${HoverMotionHandler.lowDisplayClassname}-0 app-opacity-hover`}
                 data-min-parent-width="550"
+                data-opacity-hover="0.2"
             >
                 <i
                     className="bi bi-x-lg app-caught-hover-pointer"

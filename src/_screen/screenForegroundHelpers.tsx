@@ -10,10 +10,13 @@ import {
     ForegroundQuickTextDataType,
     ForegroundStopwatchDataType,
     ForegroundTimeDataType,
+    ForegroundWebDataType,
     StyleAnimType,
 } from './screenTypeHelpers';
 import TimingController from './managers/TimingController';
 import StopwatchController from './managers/StopwatchController';
+import FileSource from '../helper/FileSource';
+import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
 
 export function genHtmlForegroundMarquee(
     { text, extraStyle = {} }: ForegroundMarqueDataType,
@@ -324,22 +327,20 @@ export async function getCameraAndShowMedia(
     {
         id,
         extraStyle,
-        width,
         parentContainer,
+        width,
     }: ForegroundCameraDataType & {
         parentContainer: HTMLElement;
         width?: number;
     },
     animData?: StyleAnimType,
 ) {
-    const constraints = {
-        audio: false,
-        video: { width },
-        id,
-    };
     try {
-        const mediaStream =
-            await navigator.mediaDevices.getUserMedia(constraints);
+        const { mediaDevices } = navigator;
+        const mediaStream = await mediaDevices.getUserMedia({
+            audio: false,
+            video: { deviceId: { exact: id } },
+        });
         const video = document.createElement('video');
         video.srcObject = mediaStream;
         video.onloadedmetadata = () => {
@@ -350,19 +351,55 @@ export async function getCameraAndShowMedia(
         }
         Object.assign(video.style, extraStyle ?? {});
         parentContainer.innerHTML = '';
-        if (animData === undefined) {
-            parentContainer.appendChild(video);
-            return;
-        }
-        animData.animIn(video, parentContainer);
-        return async () => {
-            await animData.animOut(video);
+        const stopAllStreams = () => {
             const tracks = mediaStream.getVideoTracks();
             for (const track of tracks) {
                 track.stop();
             }
         };
+        if (animData === undefined) {
+            parentContainer.appendChild(video);
+            return stopAllStreams;
+        }
+        animData.animIn(video, parentContainer);
+        return async () => {
+            await animData.animOut(video);
+            stopAllStreams();
+        };
     } catch (error) {
         handleError(error);
     }
+    return () => {};
+}
+
+export function genHtmlForegroundWeb(
+    webData: ForegroundWebDataType,
+    animData: StyleAnimType,
+    displayDim: { width: number; height: number },
+) {
+    const { filePath, extraStyle = {}, widthScale, heightScale } = webData;
+    const width = Math.round(displayDim.width * widthScale);
+    const height = Math.round(displayDim.height * heightScale);
+    const fileSource = FileSource.getInstance(filePath);
+    const htmlString = renderToStaticMarkup(
+        <RenderBackgroundWebIframeComp
+            fileSource={fileSource}
+            width={width}
+            height={height}
+            targetWidth={displayDim.width}
+            targetHeight={displayDim.height}
+        />,
+    );
+    const div = document.createElement('div');
+    Object.assign(div.style, extraStyle);
+    div.innerHTML = htmlString;
+    const element = getHTMLChild<HTMLIFrameElement>(div, 'iframe');
+    return {
+        handleAdding: async (parentContainer: HTMLElement) => {
+            await animData.animIn(element, parentContainer);
+        },
+        handleRemoving: async () => {
+            await animData.animOut(element);
+        },
+    };
 }

@@ -6,6 +6,7 @@ import {
     ContextMenuItemType,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
 function showContextMenu(event: any, color: AppColorType) {
     const menuItems: ContextMenuItemType[] = [
@@ -63,7 +64,9 @@ export default function RenderColor({
     );
     if (isSelected) {
         return (
-            <span className="app-highlight-selected animation">{element}</span>
+            <span className={`${HIGHLIGHT_SELECTED_CLASSNAME} animation`}>
+                {element}
+            </span>
         );
     }
     return element;

@@ -7,6 +7,7 @@ import {
     genHtmlForegroundQuickText,
     genHtmlForegroundStopwatch,
     genHtmlForegroundTime,
+    genHtmlForegroundWeb,
     getCameraAndShowMedia,
 } from '../screenForegroundHelpers';
 import { getForegroundDataListOnScreenSetting } from '../screenHelpers';
@@ -24,6 +25,7 @@ import {
     ForegroundTimeDataType,
     ForegroundQuickTextDataType,
     ForegroundStopwatchDataType,
+    ForegroundWebDataType,
 } from '../screenTypeHelpers';
 import {
     checkAreObjectsEqual,
@@ -67,6 +69,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['marqueeData', this.renderMarquee.bind(this)],
             ['quickTextData', this.renderQuickText.bind(this)],
             ['cameraDataList', this.renderCamera.bind(this)],
+            ['webDataList', this.renderWeb.bind(this)],
         ]);
         this.setterMap = new Map<
             string,
@@ -78,6 +81,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['marqueeData', this.setMarqueeData.bind(this)],
             ['quickTextData', this.setQuickTextData.bind(this)],
             ['cameraDataList', this.setCameraDataList.bind(this)],
+            ['webDataList', this.setWebDataList.bind(this)],
         ]);
     }
 
@@ -101,6 +105,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             marqueeData: foregroundData['marqueeData'] ?? null,
             quickTextData: foregroundData['quickTextData'] ?? null,
             cameraDataList: foregroundData['cameraDataList'] ?? [],
+            webDataList: foregroundData['webDataList'] ?? [],
         };
         return newForegroundData;
     }
@@ -518,6 +523,67 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             event,
             (screenForegroundManager) => {
                 screenForegroundManager.removeCameraData(data);
+            },
+            isForceChoosing,
+        );
+    }
+
+    renderWeb(data: ForegroundWebDataType) {
+        const { handleAdding, handleRemoving } = genHtmlForegroundWeb(
+            data,
+            this.styleAnimFade,
+            {
+                width: this.screenManagerBase.width,
+                height: this.screenManagerBase.height,
+            },
+        );
+        const divContainer = this.createDivContainer(data, handleRemoving);
+        handleAdding(divContainer!);
+    }
+    setWebDataList(dataList: ForegroundWebDataType[], isNoSyncGroup = false) {
+        this.applyForegroundDataWithSyncGroup(
+            {
+                ...this.foregroundData,
+                webDataList: dataList,
+            },
+            isNoSyncGroup,
+        );
+    }
+    addWebData(data: ForegroundWebDataType, isNoSyncGroup = false) {
+        if (checkIsItemInArray(data, this.foregroundData.webDataList)) {
+            return;
+        }
+        const dataList = [...this.foregroundData.webDataList, data];
+        this.setWebDataList(dataList, isNoSyncGroup);
+    }
+    removeWebData(data: ForegroundWebDataType, isNoSyncGroup = false) {
+        const dataList = this.foregroundData.webDataList.filter((item) => {
+            return !checkAreObjectsEqual(item, data);
+        });
+        this.setWebDataList(dataList, isNoSyncGroup);
+    }
+    static async addWebData(
+        event: MouseEvent,
+        data: ForegroundWebDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.addWebData(data);
+            },
+            isForceChoosing,
+        );
+    }
+    static async removeWebData(
+        event: MouseEvent,
+        data: ForegroundWebDataType,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeWebData(data);
             },
             isForceChoosing,
         );

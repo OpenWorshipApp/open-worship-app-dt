@@ -1,4 +1,5 @@
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { tran } from '../lang/langHelpers';
 import BibleItem from './BibleItem';
 import { BibleTargetType } from './bibleRenderHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
@@ -21,7 +22,7 @@ export function genBibleItemCopyingContextMenu(
             childBefore: genContextMenuItemIcon('copy', {
                 color: 'var(--bs-secondary-text-emphasis)',
             }),
-            menuElement: '`Copy Title',
+            menuElement: tran('Copy Title'),
             onSelect: () => {
                 bibleItem.copyTitleToClipboard();
             },
@@ -30,7 +31,7 @@ export function genBibleItemCopyingContextMenu(
             childBefore: genContextMenuItemIcon('copy', {
                 color: 'var(--bs-secondary-text-emphasis)',
             }),
-            menuElement: '`Copy Text',
+            menuElement: tran('Copy Text'),
             onSelect: () => {
                 bibleItem.copyTextToClipboard();
             },
@@ -39,9 +40,27 @@ export function genBibleItemCopyingContextMenu(
             childBefore: genContextMenuItemIcon('copy', {
                 color: 'var(--bs-secondary-text-emphasis)',
             }),
-            menuElement: '`Copy All',
+            menuElement: tran('Copy All'),
             onSelect: () => {
                 bibleItem.copyToClipboard();
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('copy', {
+                color: 'var(--bs-secondary-text-emphasis)',
+            }),
+            menuElement: tran('Copy Verse Full Key'),
+            onSelect: () => {
+                bibleItem.copyVerseFullKeyToClipboard();
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('copy', {
+                color: 'var(--bs-secondary-text-emphasis)',
+            }),
+            menuElement: tran('Copy Chapter Full Key'),
+            onSelect: () => {
+                bibleItem.copyChapterFullKeyToClipboard();
             },
         },
     ];

@@ -4,9 +4,10 @@ import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {
     attemptClosing,
+    genWebPreferences,
     getAppThemeBackgroundColor,
     getCenterScreenPosition,
-    isSecured,
+    guardBrowsing,
 } from './electronHelpers';
 
 const routeProps = genRoutProps(htmlFiles.about);
@@ -18,21 +19,18 @@ export default class ElectronAboutController {
             width: 700,
             height: 435,
         });
+        const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             x,
             y,
             width,
             height,
-            webPreferences: {
-                webSecurity: isSecured,
-                nodeIntegration: true,
-                contextIsolation: false,
-                preload: routeProps.preloadFilePath,
-            },
+            webPreferences,
             parent: mainWin,
             autoHideMenuBar: true,
         });
+        guardBrowsing(win, webPreferences);
         routeProps.loadURL(win);
         return win;
     }

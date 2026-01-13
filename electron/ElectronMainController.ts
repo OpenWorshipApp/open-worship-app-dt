@@ -2,46 +2,44 @@ import { BrowserWindow, Menu, MenuItem, shell } from 'electron';
 
 import { channels, ScreenMessageType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
-import ElectronSettingController from './ElectronSettingController';
+import ElectronSettingManager from './ElectronSettingManager';
 import {
     attemptClosing,
+    genWebPreferences,
     getAppThemeBackgroundColor,
-    isSecured,
+    guardBrowsing,
 } from './electronHelpers';
 
 let instance: ElectronMainController | null = null;
 export default class ElectronMainController {
     win: BrowserWindow;
 
-    constructor(settingController: ElectronSettingController) {
-        this.win = this.createWindow(settingController);
+    constructor(settingManager: ElectronSettingManager) {
+        this.win = this.createWindow(settingManager);
     }
 
     previewPdf(pdfFilePath: string) {
         const mainWin = this.win;
-        const pdfWin = new BrowserWindow({
+        const win = new BrowserWindow({
             parent: mainWin,
         });
-        pdfWin.loadURL(pdfFilePath);
+        win.webContents.setWindowOpenHandler((options) => {
+            shell.openExternal(options.url);
+            return { action: 'deny' };
+        });
+        win.loadURL(pdfFilePath);
     }
 
-    createWindow(settingController: ElectronSettingController) {
-        const routeProps = genRoutProps(settingController.mainHtmlPath);
+    createWindow(settingManager: ElectronSettingManager) {
+        const routeProps = genRoutProps(settingManager.mainHtmlPath);
+        const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             x: 0,
             y: 0,
-            webPreferences: {
-                webSecurity: isSecured,
-                nodeIntegration: true,
-                contextIsolation: false,
-                preload: routeProps.preloadFilePath,
-            },
+            webPreferences,
         });
-        win.webContents.setWindowOpenHandler(({ url }) => {
-            shell.openExternal(url);
-            return { action: 'deny' };
-        });
+        guardBrowsing(win, webPreferences);
         win.on('closed', () => {
             process.exit(0);
         });
@@ -97,14 +95,14 @@ export default class ElectronMainController {
         });
     }
 
-    static getInstance(settingController: ElectronSettingController) {
+    static getInstance(settingManager: ElectronSettingManager) {
         if (instance === null) {
-            instance = new this(settingController);
+            instance = new this(settingManager);
         }
         return instance;
     }
 
     gotoSettingHomePage() {
-        this.win.webContents.executeJavaScript('gotoSettingPage();');
+        this.win.webContents.executeJavaScript('openBibleSetting();');
     }
 }

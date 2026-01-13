@@ -39,20 +39,64 @@ export function genHtmlBackground(
     screenId: number,
     backgroundSrc: BackgroundSrcType,
 ) {
-    const screenManagerBase = getScreenManagerBase(screenId);
-    const htmlStr = renderToStaticMarkup(
-        <ScreenManagerBaseContext value={screenManagerBase}>
-            <RenderBackground backgroundSrc={backgroundSrc} />
-        </ScreenManagerBaseContext>,
-    );
-    const div = document.createElement('div');
-    div.innerHTML = htmlStr;
-    const child = div.querySelector('div');
-    if (child === null) {
-        throw new Error('child is null');
+    let promise: Promise<() => void> = Promise.resolve(() => {});
+    let child: HTMLDivElement = document.createElement('div');
+    if (backgroundSrc.type === 'camera') {
+        const video = document.createElement('video');
+        Object.assign(video.style, {
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+        });
+        child.appendChild(video);
+        promise = new Promise<() => void>((resolve) => {
+            navigator.mediaDevices
+                .getUserMedia({
+                    audio: false,
+                    video: {
+                        deviceId: { exact: backgroundSrc.src },
+                    },
+                })
+                .then((mediaStream) => {
+                    const clearTracks = () => {
+                        mediaStream.getTracks().forEach((track) => {
+                            track.stop();
+                        });
+                    };
+                    video.srcObject = mediaStream;
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve(clearTracks);
+                    };
+                });
+        });
+    } else if (backgroundSrc.type === 'web') {
+        const iframe = document.createElement('iframe');
+        Object.assign(iframe.style, {
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            backgroundColor: 'transparent',
+        });
+        iframe.src = backgroundSrc.src;
+        child = iframe;
+    } else {
+        const div = document.createElement('div');
+        const screenManagerBase = getScreenManagerBase(screenId);
+        const htmlStr = renderToStaticMarkup(
+            <ScreenManagerBaseContext value={screenManagerBase}>
+                <RenderBackground backgroundSrc={backgroundSrc} />
+            </ScreenManagerBaseContext>,
+        );
+        div.innerHTML = htmlStr;
+        const childDive = div.querySelector('div');
+        if (childDive === null) {
+            throw new Error('child is null');
+        }
+        child = childDive;
     }
     Object.assign(child.style, backgroundSrc.extraStyle ?? {});
-    return child;
+    return { newDiv: child, promise };
 }
 
 export function RenderBackground({
@@ -92,5 +136,9 @@ function RenderScreenBackground({
                     color={backgroundSrc.src as AppColorType}
                 />
             );
+        case 'camera':
+            return null;
+        default:
+            return null;
     }
 }

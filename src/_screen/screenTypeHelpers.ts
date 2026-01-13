@@ -57,7 +57,14 @@ export const scaleTypeList = [
 ] as const;
 export type ImageScaleType = (typeof scaleTypeList)[number];
 
-const _backgroundTypeList = ['color', 'image', 'video', 'audio'] as const;
+const _backgroundTypeList = [
+    'color',
+    'image',
+    'video',
+    'camera',
+    'web',
+    'audio',
+] as const;
 export type BackgroundType = (typeof _backgroundTypeList)[number];
 export type BackgroundDataType = {
     src: string | null;
@@ -104,6 +111,12 @@ export type ForegroundCameraDataType = {
     id: string;
     extraStyle?: CSSProperties;
 };
+export type ForegroundWebDataType = {
+    filePath: string;
+    widthScale: number;
+    heightScale: number;
+    extraStyle?: CSSProperties;
+};
 export type ForegroundDataType = {
     countdownData: ForegroundCountdownDataType | null;
     stopwatchData: ForegroundStopwatchDataType | null;
@@ -111,6 +124,7 @@ export type ForegroundDataType = {
     marqueeData: ForegroundMarqueDataType | null;
     quickTextData: ForegroundQuickTextDataType | null;
     cameraDataList: ForegroundCameraDataType[];
+    webDataList: ForegroundWebDataType[];
 };
 export type ForegroundSrcListType = {
     [key: string]: ForegroundDataType;

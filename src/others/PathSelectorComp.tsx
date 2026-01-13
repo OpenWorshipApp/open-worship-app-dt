@@ -2,6 +2,7 @@ import './PathSelectorComp.scss';
 
 import { lazy, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import DirSource from '../helper/DirSource';
 import AppSuspenseComp from './AppSuspenseComp';
 import {
@@ -11,7 +12,7 @@ import {
 import { menuTitleRevealFile } from '../helper/helpers';
 import { copyToClipboard, showExplorer } from '../server/appHelpers';
 import appProvider from '../server/appProvider';
-import { goToGeneralSetting } from '../setting/settingHelpers';
+import { openGeneralSetting } from '../setting/settingHelpers';
 import RenderPathTitleComp from './RenderPathTitleComp';
 
 const LazyPathEditorComp = lazy(() => {
@@ -40,9 +41,9 @@ function openContextMenu(dirPath: string, event: any) {
     ];
     if (!appProvider.isPageSetting) {
         menuItems.push({
-            menuElement: '`Edit Parent Path`',
+            menuElement: tran('Edit Parent Path'),
             onSelect: () => {
-                goToGeneralSetting();
+                openGeneralSetting();
             },
         });
     }

@@ -1,5 +1,6 @@
 import { ReactNode, createContext, use, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import EventHandler from '../event/EventHandler';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
@@ -649,7 +650,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             },
             {
                 childBefore: genContextMenuItemIcon('vr'),
-                menuElement: '`Split Horizontal',
+                menuElement: tran('Split Horizontal'),
                 onSelect: () => {
                     this.addBibleItemLeft(bibleItem, bibleItem);
                 },

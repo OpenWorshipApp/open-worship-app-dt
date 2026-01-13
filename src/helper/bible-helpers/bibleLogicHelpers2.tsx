@@ -5,7 +5,8 @@ import {
     getBibleInfo,
     getChapterData,
     getVerses,
-    toVerseKeyFormat,
+    keyToBook,
+    toVerseFullKeyFormat,
 } from './bibleInfoHelpers';
 import {
     fromLocaleNum,
@@ -134,6 +135,17 @@ export async function fromLocaleNumBible(bibleKey: string, localeNum: string) {
     if (num === null) {
         const locale = await getBibleLocale(bibleKey);
         num = await fromLocaleNum(locale, localeNum);
+    }
+    if (num === null) {
+        try {
+            const parsed = Number.parseInt(
+                localeNum.replaceAll(/[^\d]/g, ''),
+                10,
+            );
+            if (!Number.isNaN(parsed)) {
+                num = parsed;
+            }
+        } catch (_error) {}
     }
     await localeNumCache.set(cacheKey, num);
     return num;
@@ -315,13 +327,12 @@ const regexTitleMap: [
                 return null;
             }
             const [_, book, chapter, verseStart] = matches;
-            const verseEnd = null;
             return transformExtracted(
                 bibleKey,
                 book,
                 chapter,
                 verseStart,
-                verseEnd,
+                null,
             );
         },
     ],
@@ -351,15 +362,7 @@ const regexTitleMap: [
                 return null;
             }
             const [_, book, chapter] = matches;
-            const verseStart = null;
-            const verseEnd = null;
-            return transformExtracted(
-                bibleKey,
-                book,
-                chapter,
-                verseStart,
-                verseEnd,
-            );
+            return transformExtracted(bibleKey, book, chapter, null, null);
         },
     ],
     // "1 John"
@@ -370,9 +373,21 @@ const regexTitleMap: [
                 return null;
             }
             const [_, book] = matches;
-            const chapter = null;
-            const verseStart = null;
-            const verseEnd = null;
+            return transformExtracted(bibleKey, book, null, null, null);
+        },
+    ],
+    // "2JN 10:1-2"
+    [
+        String.raw`^([123A-Z]{3})\s(\d+):(\d+)-(\d+)$`,
+        async (bibleKey, matches) => {
+            if (matches.length !== 5) {
+                return null;
+            }
+            const [_, booKey, chapter, verseStart, verseEnd] = matches;
+            const book = await keyToBook(bibleKey, booKey);
+            if (book === null) {
+                return null;
+            }
             return transformExtracted(
                 bibleKey,
                 book,
@@ -380,6 +395,57 @@ const regexTitleMap: [
                 verseStart,
                 verseEnd,
             );
+        },
+    ],
+    // "2JN 10:1"
+    [
+        String.raw`^([123A-Z]{3})\s(\d+):(\d+)$`,
+        async (bibleKey, matches) => {
+            if (matches.length !== 4) {
+                return null;
+            }
+            const [_, booKey, chapter, verseStart] = matches;
+            const book = await keyToBook(bibleKey, booKey);
+            if (book === null) {
+                return null;
+            }
+            return transformExtracted(
+                bibleKey,
+                book,
+                chapter,
+                verseStart,
+                null,
+            );
+        },
+    ],
+    // "2JN 10"
+    [
+        String.raw`^([123A-Z]{3})\s(\d+)$`,
+        async (bibleKey, matches) => {
+            if (matches.length !== 3) {
+                return null;
+            }
+            const [_, booKey, chapter] = matches;
+            const book = await keyToBook(bibleKey, booKey);
+            if (book === null) {
+                return null;
+            }
+            return transformExtracted(bibleKey, book, chapter, null, null);
+        },
+    ],
+    // "2JN"
+    [
+        String.raw`^([123A-Z]{3})$`,
+        async (bibleKey, matches) => {
+            if (matches.length !== 2) {
+                return null;
+            }
+            const [_, booKey] = matches;
+            const book = await keyToBook(bibleKey, booKey);
+            if (book === null) {
+                return null;
+            }
+            return transformExtracted(bibleKey, book, null, null, null);
         },
     ],
 ];
@@ -539,8 +605,8 @@ export async function extractBibleTitleByRegex(
 // John 1:1-2: => John 1:1-, John 2:
 const numRegexString = String.raw`[^\s-:]`;
 const brokenRegex = new RegExp(
-    `^(.+${numRegexString}+\\s${numRegexString}+:${numRegexString}+-)` +
-        `(${numRegexString}+:${numRegexString}*)$`,
+    String.raw`^(.+${numRegexString}+\s${numRegexString}+:${numRegexString}+-)` +
+        String.raw`(${numRegexString}+:${numRegexString}*)$`,
 );
 function breakText(inputText: string) {
     let extra: string | null = null;
@@ -672,7 +738,7 @@ export async function checkShouldNewLineModel(
     if (chapterData?.newLines?.length) {
         return false;
     }
-    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
+    const verseKey = toVerseFullKeyFormat(bookKey, chapter, verse);
     return modelNewLinerInfo.includes(verseKey);
 }
 
@@ -683,7 +749,7 @@ export async function checkShouldNewLine(
     verse: number,
 ) {
     const chapterData = await getChapterData(bibleKey, bookKey, chapter);
-    const verseKey = toVerseKeyFormat(bookKey, chapter, verse);
+    const verseKey = toVerseFullKeyFormat(bookKey, chapter, verse);
     if (chapterData?.newLines?.length) {
         return chapterData.newLines.includes(verseKey);
     }

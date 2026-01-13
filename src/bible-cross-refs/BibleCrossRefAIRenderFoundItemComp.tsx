@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import {
     openContextMenu,
@@ -36,7 +37,7 @@ export default function BibleCrossRefAIRenderFoundItemComp({
     return (
         <div
             className="w-100 app-border-white-round my-1 p-1 app-caught-hover-pointer"
-            title="`shift + click to append"
+            title={tran('shift + click to append')}
             draggable
             onDragStart={(event) => {
                 handleDragStart(event, bibleItem);

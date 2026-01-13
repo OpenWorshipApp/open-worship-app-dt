@@ -1,5 +1,6 @@
 import './BibleViewComp.scss';
 
+import { tran } from '../lang/langHelpers';
 import BibleItemsViewController, {
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
@@ -20,6 +21,7 @@ import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
     checkIsVerticalPartialVisible,
+    HIGHLIGHT_SELECTED_CLASSNAME,
 } from '../helper/helpers';
 import {
     ContextMenuItemType,
@@ -86,7 +88,7 @@ async function openContextMenu(
     if (viewController.isLookup) {
         extraSelectedTextContextMenuItems.push({
             childBefore: genContextMenuItemIcon('search'),
-            menuElement: '`Search in Bible Search',
+            menuElement: tran('Search in Bible Search'),
             onSelect: () => {
                 const selectedText = getSelectedText();
                 if (!selectedText) {
@@ -137,7 +139,7 @@ export default function BibleViewComp({
             id={id}
             className={
                 'bible-view card flex-fill w-100 h-100 app-top-hover-motion-0' +
-                (isEditing ? ' app-highlight-selected ' : '')
+                (isEditing ? ` ${HIGHLIGHT_SELECTED_CLASSNAME} ` : '')
             }
             style={{ minWidth: '30%' }}
             onDragOver={(event) => {

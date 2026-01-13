@@ -1,4 +1,6 @@
-import { CSSProperties, useRef, useState } from 'react';
+import { CSSProperties, useRef } from 'react';
+
+import { tran } from '../lang/langHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import LoadingComp from '../others/LoadingComp';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -15,12 +17,7 @@ import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
-
-type CameraInfoType = {
-    deviceId: string;
-    groupId: string;
-    label: string;
-};
+import { CameraInfoType, useCameraInfoList } from '../helper/cameraHelpers';
 
 function RenderCameraInfoComp({
     cameraInfo,
@@ -36,7 +33,7 @@ function RenderCameraInfoComp({
         if (containerRef.current === null) {
             return;
         }
-        await getCameraAndShowMedia({
+        return await getCameraAndShowMedia({
             id: cameraInfo.deviceId,
             parentContainer: containerRef.current,
             width,
@@ -67,7 +64,7 @@ function RenderCameraInfoComp({
         });
     };
     return (
-        <div className="card m-2" style={{ width: `${width}px` }}>
+        <div className="card m-1" style={{ width: `${width}px` }}>
             <div className="card-header app-ellipsis" title={cameraInfo.label}>
                 {cameraInfo.label}
             </div>
@@ -146,13 +143,13 @@ function ForegroundCameraItemComp({
         ([, data]) => data.id === cameraInfo.deviceId,
     );
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
-        prefix: 'camera-' + cameraInfo.deviceId,
+        prefix: `camera-${cameraInfo.deviceId}`,
         onChange: (extraStyle) => {
             refreshAllCameras(showingScreenIdDataList, extraStyle);
         },
     });
     return (
-        <div className="app-border-white-round p-2">
+        <div className="app-border-white-round p-1" style={{ margin: '2px' }}>
             {propsSetting}
             <hr />
             <div className="d-flex flex-wrap">
@@ -165,7 +162,7 @@ function ForegroundCameraItemComp({
             <hr />
             <ScreensRendererComp
                 showingScreenIdDataList={showingScreenIdDataList}
-                buttonText="`Hide Camera"
+                buttonText={tran('Hide Camera')}
                 genTitle={(data) => {
                     return `Camera: ${data.id}`;
                 }}
@@ -182,7 +179,7 @@ function RenderShownMiniComp() {
     return (
         <ScreensRendererComp
             showingScreenIdDataList={allShowingScreenIdDataList}
-            buttonText="`Hide Camera"
+            buttonText={tran('Hide Camera')}
             genTitle={(data) => {
                 return `Camera: ${data.id}`;
             }}
@@ -193,29 +190,14 @@ function RenderShownMiniComp() {
 }
 
 export default function ForegroundCameraComp() {
-    const [cameraInfoList, setCameraInfoList] = useState<CameraInfoType[]>([]);
-    useAppEffectAsync(
-        async (contextMethods) => {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const cameraList: CameraInfoType[] = [];
-            for (const device of devices) {
-                if (device.kind === 'videoinput') {
-                    cameraList.push(device);
-                }
-            }
-            contextMethods.setCameraInfoList(cameraList);
-        },
-        [],
-        { setCameraInfoList },
-    );
-
+    const cameraInfoList = useCameraInfoList();
     return (
         <ForegroundLayoutComp
             target="camera"
-            fullChildHeaders={<h4>`Camera Show</h4>}
+            fullChildHeaders={<h4>{tran('Camera Show')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
         >
-            <div className="d-flex">
+            <div className="d-flex flex-wrap">
                 {cameraInfoList.map((cameraInfo) => {
                     return (
                         <ForegroundCameraItemComp

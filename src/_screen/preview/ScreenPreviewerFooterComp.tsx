@@ -1,4 +1,6 @@
 import { useState } from 'react';
+
+import { tran } from '../../lang/langHelpers';
 import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
 import DisplayControl from './DisplayControl';
 import ScreenEffectControlComp from './ScreenEffectControlComp';
@@ -26,14 +28,14 @@ function getNewStageNumber(
     });
     items.push(
         {
-            menuElement: '`Decrement',
+            menuElement: tran('Decrement'),
             disabled: currentStageNumber <= 0,
             onSelect: () => {
                 onChange(Math.max(0, currentStageNumber - 1));
             },
         },
         {
-            menuElement: '`Increment',
+            menuElement: tran('Increment'),
             onSelect: () => {
                 onChange(currentStageNumber + 1);
             },
@@ -69,7 +71,7 @@ export default function ScreenPreviewerFooterComp() {
                 <div className="flex-grow-1 d-flex justify-content-end">
                     <div
                         className="d-flex app-caught-hover-pointer"
-                        title="`Click to change Stage Number"
+                        title={tran('Click to change Stage Number')}
                         onClick={(event) => {
                             getNewStageNumber(
                                 event,
@@ -78,7 +80,7 @@ export default function ScreenPreviewerFooterComp() {
                             );
                         }}
                     >
-                        <small>`Stage:</small>
+                        <small>{tran('Stage:')}</small>
                         <div className="px-1 text-muted">{stageNumber}</div>
                     </div>
                 </div>

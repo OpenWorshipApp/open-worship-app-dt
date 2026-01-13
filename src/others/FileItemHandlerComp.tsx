@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import FileReadErrorComp from './FileReadErrorComp';
 import {
     copyToClipboard,
@@ -73,7 +74,7 @@ export function genTrashContextMenu(
 ): ContextMenuItemType[] {
     return [
         {
-            menuElement: '`Move to Trash',
+            menuElement: tran('Move to Trash'),
             onSelect: async () => {
                 const fileSource = FileSource.getInstance(filePath);
                 const isOk = await showAppConfirm(
@@ -180,7 +181,7 @@ export default function FileItemHandlerComp({
     return (
         <li
             className={
-                `list-group-item m-1 ${moreClassName} app-overflow-hidden` +
+                `list-group-item ${moreClassName} app-overflow-hidden` +
                 ` ${userClassName ?? ''} ${isPointer ? 'pointer' : ''}`
             }
             onClick={handleClicking}
@@ -231,7 +232,7 @@ export default function FileItemHandlerComp({
                     >
                         {renderChild(data)}
                     </div>
-                    {!isDisabledColorNote && (
+                    {isDisabledColorNote ? null : (
                         <div className="color-note-container">
                             <ItemColorNoteComp item={fileSource} />
                         </div>

@@ -43,6 +43,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
     private _backgroundSrc: BackgroundSrcType | null = null;
     private _rootContainer: HTMLDivElement | null = null;
     effectManager: ScreenEffectManager;
+    clearTracks = () => {};
 
     constructor(
         screenManagerBase: ScreenManagerBase,
@@ -205,12 +206,21 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         return [undefined, undefined];
     }
 
-    removeOldElements(aminData: StyleAnimType, elements: HTMLDivElement[]) {
-        for (const element of elements) {
-            aminData.animOut(element).then(() => {
+    removeOldElements(
+        aminData: StyleAnimType,
+        elements: HTMLElement[],
+        clearTracks: () => void,
+    ) {
+        Promise.all(
+            elements.map((element) => {
+                return aminData.animOut(element);
+            }),
+        ).then(() => {
+            for (const element of elements) {
                 element.remove();
-            });
-        }
+            }
+            clearTracks();
+        });
     }
 
     _checkVideoFadingAtEnd(container: HTMLDivElement) {
@@ -248,23 +258,30 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
     }
 
     render(overrideAnimData?: StyleAnimType) {
-        if (this.rootContainer === null) {
+        const rootContainer = this.rootContainer;
+        if (rootContainer === null) {
             return;
         }
         const aminData = overrideAnimData ?? this.effectManager.styleAnim;
         if (this.backgroundSrc !== null) {
-            const newDiv = genHtmlBackground(this.screenId, this.backgroundSrc);
-            const childList = Array.from(this.rootContainer.children).filter(
+            const { newDiv, promise } = genHtmlBackground(
+                this.screenId,
+                this.backgroundSrc,
+            );
+            const childList = Array.from(rootContainer.children).filter(
                 (element) => {
-                    return element instanceof HTMLDivElement;
+                    return element instanceof HTMLElement;
                 },
             );
-            this._checkVideoFadingAtEnd(newDiv);
-            aminData.animIn(newDiv, this.rootContainer);
-            this.removeOldElements(aminData, childList);
-        } else if (this.rootContainer.lastChild !== null) {
-            const targetDiv = this.rootContainer.lastChild as HTMLDivElement;
-            this.removeOldElements(aminData, [targetDiv]);
+            promise.then((clearTracks) => {
+                this._checkVideoFadingAtEnd(newDiv);
+                aminData.animIn(newDiv, rootContainer);
+                this.removeOldElements(aminData, childList, this.clearTracks);
+                this.clearTracks = clearTracks;
+            });
+        } else if (rootContainer.lastChild !== null) {
+            const targetElement = rootContainer.lastChild as HTMLElement;
+            this.removeOldElements(aminData, [targetElement], this.clearTracks);
         }
     }
 
@@ -282,6 +299,8 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         const backgroundTypeMap: { [key: string]: BackgroundType } = {
             [DragTypeEnum.BACKGROUND_IMAGE]: 'image',
             [DragTypeEnum.BACKGROUND_VIDEO]: 'video',
+            [DragTypeEnum.BACKGROUND_WEB]: 'web',
+            [DragTypeEnum.BACKGROUND_CAMERA]: 'camera',
         };
         if (type in backgroundTypeMap) {
             const backgroundSrc =

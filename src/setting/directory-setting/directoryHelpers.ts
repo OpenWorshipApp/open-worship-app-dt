@@ -9,6 +9,7 @@ import {
     pathJoin,
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { tran } from '../../lang/langHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -18,6 +19,7 @@ import { handleError } from '../../helper/errorHelpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { appLocalStorage } from './appLocalStorage';
 import FileSource from '../../helper/FileSource';
+import { applyStore } from '../SettingApplyComp';
 
 export function getDefaultDataDir() {
     const desktopPath = getDesktopPath();
@@ -54,7 +56,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
                 );
             }
         }
-        appProvider.reload();
+        applyStore.pendingApply();
     } catch (error: any) {
         if (!error.message.includes('file already exists')) {
             handleError(error);
@@ -87,14 +89,14 @@ export async function selectDefaultDataDirName(
         await appLocalStorage.getSelectedParentDirectory();
     if (selectedParentDir === null) {
         showSimpleToast(
-            '`No Parent Directory Selected`',
-            '`There is no parent directory selected`',
+            tran('No Parent Directory Selected'),
+            tran('There is no parent directory selected'),
         );
         return;
     }
     const dirPath = appProvider.pathUtils.join(selectedParentDir, dirName);
     const isOk = await showAppConfirm(
-        '`Select Default Folder',
+        tran('Select Default Folder'),
         `This will select "${dirPath}" (will create if not exist)`,
     );
     if (!isOk) {
@@ -107,7 +109,7 @@ export async function selectDefaultDataDirName(
             handleError(error);
         }
         showSimpleToast(
-            '`Creating Default Folder',
+            tran('Creating Default Folder'),
             `Fail to create folder "${dirPath}"`,
         );
         return;
@@ -130,7 +132,8 @@ export class BaseDirFileSource {
                 this.initFileFullName = fileFullNameOrFilePath;
             }
         } catch (_error) {}
-        this.initBaseDir = DirSource.dirPathBySettingName(baseDirSettingName);
+        this.initBaseDir =
+            DirSource.getDirPathBySettingName(baseDirSettingName);
     }
 
     get fileFullNameOrFilePath() {

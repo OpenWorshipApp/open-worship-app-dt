@@ -17,6 +17,7 @@ export type DataInputType = {
     widgetName: string;
     className?: string;
     extraStyle?: CSSProperties;
+    isOnScreen?: boolean;
 };
 
 export const settingPrefix = 'widget-size';

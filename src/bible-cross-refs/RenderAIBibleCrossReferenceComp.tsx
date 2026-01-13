@@ -2,6 +2,7 @@ import {
     CrossReferenceType,
     useBibleKeyContext,
 } from '../helper/ai/bibleCrossRefHelpers';
+import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
 
@@ -10,8 +11,8 @@ function genGoogleTranslated() {
         <i
             className="bi bi-lightbulb app-caught-hover-pointer"
             title={
-                '`Generated using Google Translate. ' +
-                'Results may vary and may not be ' +
+                tran('Generated using Google Translate.') +
+                ' Results may vary and may not be ' +
                 'accurate. Please use with caution.'
             }
             style={{

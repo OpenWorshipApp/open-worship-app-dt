@@ -6,7 +6,7 @@ import {
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
 import { getBibleLocale } from './bible-helpers/bibleLogicHelpers2';
-import { getLangCode } from '../lang/langHelpers';
+import { getLangCode, tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 
 function getSelectedTextElement() {
@@ -77,14 +77,14 @@ export function genSelectedTextContextMenus(
     return [
         {
             childBefore: genContextMenuItemIcon('copy'),
-            menuElement: '`Copy Selected Text',
+            menuElement: tran('Copy Selected Text'),
             onSelect: () => {
                 copyToClipboard(selectedText);
             },
         },
         {
             childBefore: genContextMenuItemIcon('google'),
-            menuElement: '`Search Selected Text on Google',
+            menuElement: tran('Search Selected Text on Google'),
             onSelect: () => {
                 const url = new URL('https://www.google.com/search');
                 url.searchParams.set('q', selectedText);
@@ -93,7 +93,7 @@ export function genSelectedTextContextMenus(
         },
         {
             childBefore: genContextMenuItemIcon('journal-arrow-up'),
-            menuElement: '`Dictionary for Selected Text',
+            menuElement: tran('Dictionary for Selected Text'),
             onSelect: async () => {
                 const langCodes = await getSelectedTextLanguageCode();
                 if (langCodes.length === 0) {

@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { editor, KeyMod, KeyCode, Uri } from 'monaco-editor';
+
+import { tran } from '../lang/langHelpers';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
@@ -9,7 +11,7 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import { useStateSettingBoolean } from './settingHelpers';
 import { useAppEffect } from './debuggerHelpers';
 import { genTimeoutAttempt } from './helpers';
-import { checkIsDarkMode } from '../initHelpers';
+import { checkIsDarkMode } from '../others/initHelpers';
 
 globalThis.MonacoEnvironment = {
     getWorker(_, label) {
@@ -24,15 +26,6 @@ globalThis.MonacoEnvironment = {
         }
         if (label === 'typescript' || label === 'javascript') {
             return new tsWorker();
-        }
-        return new editorWorker();
-    },
-};
-
-globalThis.MonacoEnvironment = {
-    getWorker(_, label) {
-        if (label === 'json') {
-            return new jsonWorker();
         }
         return new editorWorker();
     },
@@ -162,7 +155,7 @@ function createEditor({
     });
     editorInstance.addAction({
         id: 'toggle-wrap-text',
-        label: '`Toggle Wrap Text',
+        label: tran('Toggle Wrap Text'),
         contextMenuGroupId: 'navigation',
         keybindings: [KeyMod.Alt | KeyCode.KeyZ],
         contextMenuOrder: 1.5,

@@ -15,6 +15,7 @@ import {
     showAudioPlayingToast,
 } from './audioBackgroundHelpers';
 import { useMemo, useState } from 'react';
+import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
@@ -65,7 +66,7 @@ function RendBodyComp({
                 <div>
                     <i
                         className="bi bi-repeat-1 p-1"
-                        title="`Repeat this audio"
+                        title={tran('Repeat this audio')}
                         style={{
                             fontSize: '1.5rem',
                             opacity: isRepeating ? 1 : 0.5,
@@ -100,7 +101,7 @@ function rendChild(
 }
 
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
-    const title = '`Download From URL';
+    const title = tran('Download From URL');
     const download = async (audioUrl: string) => {
         try {
             showSimpleToast(

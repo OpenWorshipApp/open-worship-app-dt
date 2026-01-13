@@ -12,6 +12,7 @@ import {
     LocaleType,
     sanitizeFindingText,
     sanitizePreviewText,
+    tran,
 } from '../lang/langHelpers';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import {
@@ -21,7 +22,7 @@ import {
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import BibleFindController from './BibleFindController';
-import { toVerseKeyFormat } from '../helper/bible-helpers/bibleInfoHelpers';
+import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleInfoHelpers';
 
 export type FindDataType = {
     pagingData: PagingDataTye;
@@ -145,7 +146,7 @@ export async function breakItem(
         target,
     };
     const bibleItem = BibleItem.fromJson(bibleItemJson);
-    const kjvVerseKey = toVerseKeyFormat(bookKey, chapter, verse);
+    const kjvVerseKey = toVerseFullKeyFormat(bookKey, chapter, verse);
     return { newItem: fullVerseText, bibleItem, kjvVerseKey };
 }
 
@@ -220,7 +221,7 @@ export function openContextMenu(
 ) {
     const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: '`Open',
+            menuElement: tran('Open'),
             onSelect: () => {
                 openInBibleLookup(event, viewController, bibleItem, true);
             },
@@ -228,7 +229,7 @@ export function openContextMenu(
         ...genBibleItemCopyingContextMenu(bibleItem),
         {
             childBefore: genContextMenuItemIcon('floppy'),
-            menuElement: '`Save bible item',
+            menuElement: tran('Save bible item'),
             onSelect: () => {
                 saveBibleItem(bibleItem);
             },

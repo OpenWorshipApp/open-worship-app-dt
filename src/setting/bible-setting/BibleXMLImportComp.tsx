@@ -1,5 +1,6 @@
 import { useState, useTransition, FormEvent } from 'react';
 
+import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import {
@@ -171,7 +172,7 @@ export default function BibleXMLImportComp({
                     <input
                         className="form-control btn btn-primary"
                         type="submit"
-                        value="`Import"
+                        value={tran('Import')}
                         disabled={isPending || !(isFileSelected || isValidUrl)}
                     />
                 </div>

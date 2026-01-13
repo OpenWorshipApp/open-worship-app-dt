@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useSelectedLyricContext } from './lyricHelpers';
 import { HTMLDataType, renderLyricSlide } from './markdownHelpers';
@@ -11,7 +12,10 @@ import LyricEditingManager, {
 } from './LyricEditingManager';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import AppRangeComp from '../others/AppRangeComp';
-import { checkIsDarkMode } from '../initHelpers';
+import { checkIsDarkMode } from '../others/initHelpers';
+import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
+import appProvider from '../server/appProvider';
+import { forceReloadAppWindows } from '../setting/settingHelpers';
 
 function genOptions(lyricEditingManager: LyricEditingManager) {
     const isDarkMode = checkIsDarkMode();
@@ -22,7 +26,8 @@ function genOptions(lyricEditingManager: LyricEditingManager) {
     };
 }
 
-function RenderHeaderComp() {
+function RenderControlBodyComp() {
+    const selectedLyric = useSelectedLyricContext();
     const lyricEditingManager = useLyricEditingManagerContext();
     const [localFontFamily, setLocalFontFamily] = useState(
         lyricEditingManager.fontFamily,
@@ -49,7 +54,7 @@ function RenderHeaderComp() {
         });
     };
     return (
-        <div className="card-header" style={{ height: '70px' }}>
+        <div>
             <div className="d-flex">
                 <strong>Font:</strong>
                 <FontFamilyControlComp
@@ -76,11 +81,36 @@ function RenderHeaderComp() {
                     />
                 </div>
             </div>
+            {appProvider.isPageLyricEditor ? (
+                <div className="w-100 d-flex justify-content-center py-2">
+                    <button
+                        className="btn btn-sm btn-outline-warning"
+                        title={tran('Editor') + ` "${selectedLyric.filePath}"`}
+                        onClick={() => {
+                            forceReloadAppWindows();
+                        }}
+                    >
+                        Apply
+                    </button>
+                </div>
+            ) : (
+                <div className="w-100 d-flex justify-content-center py-2">
+                    <button
+                        className="btn btn-sm btn-outline-info"
+                        title={tran('Editor') + ` "${selectedLyric.filePath}"`}
+                        onClick={() => {
+                            openPopupLyricEditorWindow(selectedLyric);
+                        }}
+                    >
+                        Edit <i className="bi bi-box-arrow-up-right"></i>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
 
-function RenderBodyComp() {
+function RenderPreviewBodyComp() {
     const selectedLyric = useSelectedLyricContext();
     const lyricEditingManager = useLyricEditingManagerContext();
     const [htmlData, setHtmlData] = useAppStateAsync<HTMLDataType>(() => {
@@ -126,10 +156,18 @@ function RenderBodyComp() {
 
 export default function LyricPreviewerComp() {
     return (
-        <div className="card w-100 h-100 ">
-            <RenderHeaderComp />
-            <div className="card-body app-overflow-hidden">
-                <RenderBodyComp />
+        <div className="d-flex w-100 h-100">
+            <div className="card h-100">
+                <div className="card-header">Control</div>
+                <div className="card-body">
+                    <RenderControlBodyComp />
+                </div>
+            </div>
+            <div className="card h-100 flex-grow-1">
+                <div className="card-header">Preview</div>
+                <div className="card-body app-overflow-hidden">
+                    <RenderPreviewBodyComp />
+                </div>
             </div>
         </div>
     );

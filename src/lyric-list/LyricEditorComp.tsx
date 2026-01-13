@@ -1,96 +1,90 @@
-import { useMemo } from 'react';
+import { lazy, useMemo } from 'react';
 
-import { useSelectedLyricContext } from './lyricHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import Lyric from './Lyric';
-import LyricMenuComp from './LyricMenuComp';
-import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { fsExistSync, pathJoin } from '../server/fileHelpers';
+import DirSource from '../helper/DirSource';
+import { dirSourceSettingNames } from '../helper/constants';
+import LyricEditingManager, {
+    LyricEditingManagerContext,
+} from './LyricEditingManager';
+import { MultiContextRender } from '../helper/MultiContextRender';
+import { SelectedLyricContext } from './lyricHelpers';
 import appProvider from '../server/appProvider';
-import { useInitMonacoEditor } from '../helper/monacoEditorHelpers';
-import { Uri } from 'monaco-editor';
+import { getParamFileFullName } from '../helper/domHelpers';
 
-async function loadLyricContent(lyric: Lyric, editorInstance: any) {
-    const lyricContent = await lyric.getContent();
-    if (lyricContent === null) {
-        return;
+const LazyLyricEditorIDEComp = lazy(() => {
+    return import('./LyricEditorIDEComp');
+});
+const LazyLyricPreviewerComp = lazy(() => {
+    return import('./LyricPreviewerComp');
+});
+
+function getLyric() {
+    const fileFullName = getParamFileFullName();
+    if (fileFullName === null) {
+        throw new Error('Lyric file not specified');
     }
-    const editorContent = editorInstance.getValue();
-    if (editorContent === lyricContent) {
-        return;
+    const dirPath = DirSource.getDirPathBySettingName(
+        dirSourceSettingNames.LYRIC,
+    );
+    if (dirPath === null) {
+        throw new Error('Lyric directory not set');
     }
-    editorInstance.setValue(lyricContent);
+    const filePath = pathJoin(dirPath, fileFullName);
+    if (fsExistSync(filePath) === false) {
+        throw new Error(`Lyric file not found: ${fileFullName}`);
+    }
+    return Lyric.getInstance(filePath);
 }
 
 export default function LyricEditorComp() {
-    const selectedLyric = useSelectedLyricContext();
-    const { editorStore, isWrapText, setIsWrapText, onContainerInit } =
-        useInitMonacoEditor({
-            settingName: 'lytic-editor-wrap-text',
-            options: { language: 'markdown' },
-            onInit: (editorInstance) => {
-                editorInstance.addAction({
-                    id: 'help',
-                    label: '`Markdown Music Help',
-                    contextMenuGroupId: 'navigation',
-                    run: async () => {
-                        appProvider.browserUtils.openExternalURL(
-                            'https://github.com/music-markdown/music-markdown?tab=readme-ov-file#verses',
-                        );
-                    },
-                });
-            },
-            onContentChange: (_, content) => {
-                selectedLyric.setContent(content);
-            },
-            uri: Uri.parse('lyric-editor'),
-            language: 'markdown',
-        });
-    useAppEffectAsync(async () => {
-        await loadLyricContent(selectedLyric, editorStore.editorInstance);
-    }, [selectedLyric, editorStore.editorInstance]);
-    const attemptTimeout = useMemo(() => {
-        return genTimeoutAttempt(500);
+    const lyric = useMemo(() => {
+        return getLyric();
     }, []);
-    useFileSourceEvents(
-        ['update'],
-        () => {
-            attemptTimeout(() => {
-                loadLyricContent(selectedLyric, editorStore.editorInstance);
-            });
-        },
-        [selectedLyric],
-        selectedLyric.filePath,
-    );
-
+    const lyricEditingManager = useMemo(() => {
+        const lyricEditingManager = new LyricEditingManager('');
+        lyricEditingManager.filePath = lyric.filePath;
+        const suffix = `(${lyric.fileSource.name})`;
+        document.title = `${appProvider.windowTitle} - ${suffix}`;
+        return lyricEditingManager;
+    }, [lyric]);
     return (
-        <div className="w-100 h-100 d-flex flex-column">
-            <div className="d-flex">
-                <div
-                    className="input-group-text"
-                    style={{
-                        height: '30px',
-                    }}
-                >
-                    Wrap Text:{' '}
-                    <input
-                        className="form-check-input mt-0"
-                        type="checkbox"
-                        checked={isWrapText}
-                        onChange={(event) => {
-                            const checked = event.target.checked;
-                            setIsWrapText(checked);
-                        }}
-                    />
-                </div>
-                <div className="flex-grow-1">
-                    <LyricMenuComp />
-                </div>
-            </div>
-            <div
-                className="w-100 h-100 app-overflow-hidden"
-                ref={onContainerInit}
+        <MultiContextRender
+            contexts={[
+                {
+                    context: LyricEditingManagerContext,
+                    value: lyricEditingManager,
+                },
+                {
+                    context: SelectedLyricContext,
+                    value: {
+                        selectedLyric: lyric,
+                        setContent: () => {},
+                    },
+                },
+            ]}
+        >
+            <ResizeActorComp
+                flexSizeName={'lyric-previewer'}
+                isHorizontal
+                flexSizeDefault={{
+                    h1: ['1'],
+                    h2: ['1'],
+                }}
+                dataInput={[
+                    {
+                        children: LazyLyricEditorIDEComp,
+                        key: 'h1',
+                        widgetName: 'Editor',
+                    },
+                    {
+                        children: LazyLyricPreviewerComp,
+                        key: 'h2',
+                        widgetName: 'Previewer',
+                    },
+                ]}
             />
-        </div>
+        </MultiContextRender>
     );
 }

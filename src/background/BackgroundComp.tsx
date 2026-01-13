@@ -32,6 +32,12 @@ const LazyBackgroundImagesComp = lazy(() => {
 const LazyBackgroundVideosComp = lazy(() => {
     return import('./BackgroundVideosComp');
 });
+const LazyBackgroundCamerasComp = lazy(() => {
+    return import('./BackgroundCamerasComp');
+});
+const LazyBackgroundWebComp = lazy(() => {
+    return import('./BackgroundWebComp');
+});
 const LazyBackgroundAudiosComp = lazy(() => {
     return import('./BackgroundAudiosComp');
 });
@@ -55,7 +61,7 @@ function RenderAudiosTabComp({
             <li className={'nav-item '}>
                 <button
                     className={
-                        'btn btn-link nav-link' +
+                        'btn btn-sm btn-link nav-link' +
                         ` ${isActive ? 'active' : ''}` +
                         ` ${isPlaying ? ' app-on-screen' : ''}`
                     }
@@ -84,6 +90,8 @@ const tabTypeList = [
     ['color', 'Colors', LazyBackgroundColorsComp],
     ['image', 'Images', LazyBackgroundImagesComp],
     ['video', 'Videos', LazyBackgroundVideosComp],
+    ['camera', 'Cameras', LazyBackgroundCamerasComp],
+    ['web', 'Webs', LazyBackgroundWebComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {
@@ -112,7 +120,7 @@ export default function BackgroundComp() {
         return genTabBody<TabKeyType>(tabKey, [type, target]);
     });
     return (
-        <div className="background w-100 d-flex flex-column">
+        <div className="background w-100 h-100 d-flex flex-column">
             <div className="header d-flex">
                 <TabRenderComp<TabKeyType>
                     tabs={tabTypeList.map(([key, name]) => {

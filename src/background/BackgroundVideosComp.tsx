@@ -12,12 +12,13 @@ import {
 import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { genDownloadContextMenuItems } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
+import { tran } from '../lang/langHelpers';
 import {
     showProgressBar,
     hideProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { downloadVideoOrAudio } from '../server/appHelpers';
-import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
+import { fsCheckFileExist, fsMove } from '../server/fileHelpers';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import DirSource from '../helper/DirSource';
@@ -113,7 +114,9 @@ function RendBodyComp({
                     <i
                         className="bi bi-shadows"
                         title={
-                            '`Video will fade at the end while screen rendering.' +
+                            tran(
+                                'Video will fade at the end while screen rendering.',
+                            ) +
                             ' Use *.loop.[extension] file to disable fading.'
                         }
                     />
@@ -127,6 +130,7 @@ function RendBodyComp({
 function rendChild(
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    _width: number,
     height: number,
     extraChild?: ReactElement,
 ) {
@@ -141,7 +145,7 @@ function rendChild(
 }
 
 async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
-    const title = '`Download From URL';
+    const title = tran('Download From URL');
     const download = async (videoUrl: string) => {
         try {
             showSimpleToast(
@@ -153,13 +157,16 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
             const { filePath, fileFullName } = await downloadVideoOrAudio(
                 videoUrl,
                 defaultPath,
+                true,
             );
             const destFileSource = FileSource.getInstance(
                 dirSource.dirPath,
                 fileFullName,
             );
-            if (await fsCheckFileExist(destFileSource.filePath)) {
-                await fsDeleteFile(destFileSource.filePath);
+            let i = 0;
+            while (await fsCheckFileExist(destFileSource.filePath)) {
+                i++;
+                destFileSource.name = destFileSource.name + ` (${i})`;
             }
             await fsMove(filePath, destFileSource.filePath);
             showSimpleToast(
@@ -187,8 +194,8 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
 function genExtraItemContextMenuItems(filePath: string) {
     return [
         {
-            menuElement: '`Toggle Fading at End',
-            title: '`Toggle is video should fade at the end',
+            menuElement: tran('Toggle Fading at End'),
+            title: tran('Toggle is video should fade at the end'),
             onSelect: () => {
                 const fileSource = FileSource.getInstance(filePath);
                 let isFadingAtTheEnd = getIsFadingAtTheEndSetting(

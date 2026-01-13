@@ -15,6 +15,24 @@ import { getIsShowingLyricPreviewer } from '../app-document-presenter/PresenterC
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
 import { checkIsVaryAppDocumentOnScreen } from '../app-document-list/appDocumentHelpers';
 import LyricAppDocument from './LyricAppDocument';
+import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
+
+function genContextMenuItems(
+    lyric: Lyric | null | undefined,
+): ContextMenuItemType[] {
+    if (lyric === null || lyric === undefined) {
+        return [];
+    }
+    return [
+        {
+            menuElement: 'Edit',
+            onSelect: () => {
+                openPopupLyricEditorWindow(lyric);
+            },
+        },
+    ];
+}
 
 function LyricFilePreview({ lyric }: Readonly<{ lyric: Lyric }>) {
     const fileSource = FileSource.getInstance(lyric.filePath);
@@ -94,6 +112,7 @@ export default function LyricFileComp({
             filePath={filePath}
             onClick={handleClicking}
             renderChild={handleChildRendering}
+            contextMenuItems={genContextMenuItems(lyric)}
             isSelected={isSelected}
             checkIsOnScreen={checkIsOnScreen}
             renamedCallback={handleRenaming}

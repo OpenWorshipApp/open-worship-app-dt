@@ -142,7 +142,10 @@ export default function RenderBibleLookupComp() {
         >
             <div
                 id="bible-lookup-container"
-                className="shadow card w-100 h-100 overflow-hidden"
+                className={
+                    'shadow card w-100 h-100 overflow-hidden' +
+                    ' card app-zero-border-radius'
+                }
             >
                 <RenderBibleLookupHeaderComp
                     isLookupOnline={isBibleSearching}

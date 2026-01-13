@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
@@ -117,7 +118,7 @@ function openContextMenu(
     if (bibleItem !== null) {
         contextMenuItems = [
             {
-                menuElement: '`Open',
+                menuElement: tran('Open'),
                 onSelect: () => {
                     openInBibleLookup(event, viewController, bibleItem);
                 },
@@ -125,7 +126,7 @@ function openContextMenu(
             ...genBibleItemCopyingContextMenu(bibleItem),
             {
                 childBefore: genContextMenuItemIcon('floppy'),
-                menuElement: '`Save bible item',
+                menuElement: tran('Save bible item'),
                 onSelect: () => {
                     saveBibleItem(bibleItem);
                 },
@@ -135,7 +136,7 @@ function openContextMenu(
     contextMenuItems = [
         ...contextMenuItems,
         {
-            menuElement: '`Remove',
+            menuElement: tran('Remove'),
             onSelect: () => {
                 remove();
             },
@@ -195,7 +196,7 @@ export default function BibleLookupInputHistoryComp({
                             'Double click to put back, shift double click to ' +
                             'put back split'
                         }
-                        style={{ height: '20px' }}
+                        style={{ height: '27px' }}
                         draggable
                         onDragStart={async (event: any) => {
                             const bibleItem =
@@ -215,7 +216,7 @@ export default function BibleLookupInputHistoryComp({
                         )}
                     >
                         <small
-                            title="`Remove"
+                            title={tran('Remove')}
                             style={{ color: 'red' }}
                             onClick={() => {
                                 removeHistory(

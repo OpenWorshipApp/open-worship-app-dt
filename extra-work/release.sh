@@ -4,7 +4,21 @@ current_script_dir=$(dirname "$0")
 cd "$current_script_dir/.."
 pwd
 
+package_version=$(node -p "require('./package.json').version")
+# ask for confirmation for the version
+echo "Preparing release for version: $package_version"
+read -p "Do you want to continue? (y/n): " confirm
+if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+    echo "Release process aborted."
+    exit 1
+fi
+release_tag="release-$package_version"
+
 git pull
+# reset main to release tag
+commit_hash=$(git rev-list -n 1 "$release_tag")
+git reset --mixed "$commit_hash"
+
 npm i
 
 release_dir="./release"
@@ -135,3 +149,5 @@ export RELEASE_STORAGE_DIR="$tmp_dir"
 export RELEASE_BIN_FILE_SEPARATOR="$sep"
 export RELEASE_BIN_FILE_INFO="$bin_file_info"
 node ./extra-work/s3-push-release.js
+
+git pull

@@ -72,7 +72,7 @@ export default function ResizeActorComp({
             }
         >
             {dataInput.map((data, i) => {
-                const { key, className } = data;
+                const { key, className, isOnScreen } = data;
                 return (
                     <RenderResizeActorItemComp
                         key={`${key}-${className}}`}
@@ -86,6 +86,7 @@ export default function ResizeActorComp({
                         dataInput={dataInput}
                         isDisableQuickResize={!!isDisableQuickResize}
                         isHorizontal={isHorizontal}
+                        isOnScreen={!!isOnScreen}
                     />
                 );
             })}

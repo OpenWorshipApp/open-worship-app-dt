@@ -1,5 +1,6 @@
 import { CSSProperties } from 'react';
 
+import { tran } from '../lang/langHelpers';
 import {
     useStateSettingNumber,
     useStateSettingString,
@@ -119,7 +120,7 @@ export default function ForegroundQuickTextComp() {
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
-            buttonText="`Hide Quick Text"
+            buttonText={tran('Hide Quick Text')}
             handleForegroundHiding={handleHiding}
             isMini={isMini}
         />
@@ -127,7 +128,7 @@ export default function ForegroundQuickTextComp() {
     return (
         <ForegroundLayoutComp
             target="quick-text"
-            fullChildHeaders={<h4>`Quick Text</h4>}
+            fullChildHeaders={<h4>{tran('Quick Text')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
         >
             {propsSetting}
@@ -141,7 +142,7 @@ export default function ForegroundQuickTextComp() {
                             width: '250px',
                         }}
                     >
-                        <small>`Time Second Delay:</small>
+                        <small>{tran('Time Second Delay:')}</small>
                         <input
                             className="form-control form-control-sm"
                             type="number"
@@ -161,7 +162,7 @@ export default function ForegroundQuickTextComp() {
                             width: '250px',
                         }}
                     >
-                        <small>`Time Second to Live:</small>
+                        <small>{tran('Time Second to Live:')}</small>
                         <input
                             className="form-control form-control-sm"
                             type="number"

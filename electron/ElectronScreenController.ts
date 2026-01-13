@@ -3,7 +3,11 @@ import { BrowserWindow } from 'electron';
 import { AnyObjectType, channels } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
-import { attemptClosing, isSecured } from './electronHelpers';
+import {
+    attemptClosing,
+    genWebPreferences,
+    guardBrowsing,
+} from './electronHelpers';
 
 const routeProps = genRoutProps(htmlFiles.screen);
 const cache = new Map<string, ElectronScreenController>();
@@ -19,27 +23,24 @@ export default class ElectronScreenController {
     createWindow() {
         const isWin32 = process.platform === 'win32';
         const isScreenCanFullScreen = isWin32;
-        const screenWin = new BrowserWindow({
+        const webPreferences = genWebPreferences(routeProps.preloadFilePath);
+        const win = new BrowserWindow({
             transparent: true,
             x: 0,
             y: 0,
             frame: false,
-            webPreferences: {
-                webSecurity: isSecured,
-                nodeIntegration: true,
-                contextIsolation: false,
-                preload: routeProps.preloadFilePath,
-            },
+            webPreferences,
         });
+        guardBrowsing(win, webPreferences);
         const query = `?screenId=${this.screenId}`;
-        routeProps.loadURL(screenWin, query);
+        routeProps.loadURL(win, query);
         if (isScreenCanFullScreen) {
-            screenWin.setFullScreen(true);
+            win.setFullScreen(true);
         }
-        screenWin.on('close', () => {
+        win.on('close', () => {
             this.destroyInstance();
         });
-        return screenWin;
+        return win;
     }
 
     listenLoading() {

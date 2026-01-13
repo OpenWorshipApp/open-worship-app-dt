@@ -29,7 +29,7 @@ type ControllerType = {
         params: InitServerParamsType,
     ) => Promise<ServerDataType | null>;
 };
-export const controller: ControllerType = (window as any).lwShareController;
+export const controller: ControllerType = (globalThis as any).lwShareController;
 
 export const lwSharePackage = controller.info.lwShareInfo.lwSharePackage;
 export const handleForkingOnGithub = () => {

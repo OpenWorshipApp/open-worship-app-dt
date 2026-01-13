@@ -18,6 +18,7 @@ import {
     readImagesFromClipboard,
 } from '../server/appHelpers';
 import DirSource from '../helper/DirSource';
+import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import {
     fsCheckFileExist,
@@ -38,6 +39,7 @@ import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 function rendChild(
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    _width: number,
     height: number,
     extraChild?: ReactElement,
 ) {
@@ -79,7 +81,7 @@ async function genContextMenuItems(dirSource: DirSource) {
     const isClipboardHasImage = await checkIsImagesInClipboard();
     const contextMenuItems: ContextMenuItemType[] = [];
     if (isClipboardHasImage) {
-        const pastImageTitle = '`Paste Image';
+        const pastImageTitle = tran('Paste Image');
         contextMenuItems.push({
             menuElement: pastImageTitle,
             onSelect: async () => {
@@ -122,7 +124,7 @@ async function genContextMenuItems(dirSource: DirSource) {
             },
         });
     }
-    const title = '`Download From URL';
+    const title = tran('Download From URL');
     contextMenuItems.push(
         {
             menuElement: title,

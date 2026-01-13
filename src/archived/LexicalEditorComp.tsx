@@ -1,6 +1,6 @@
 import './LexicalEditorComp.scss';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { createEditor, HISTORY_MERGE_TAG, type LexicalEditor } from 'lexical';
 import { registerDragonSupport } from '@lexical/dragon';
 import { createEmptyHistoryState, registerHistory } from '@lexical/history';
@@ -8,6 +8,7 @@ import { HeadingNode, QuoteNode, registerRichText } from '@lexical/rich-text';
 import { mergeRegister } from '@lexical/utils';
 
 import prepopulatedRichText from './prepopulatedRichText';
+import { useAppEffect } from '../helper/debuggerHelpers';
 
 function initEditor() {
     const target = document.createElement('div');
@@ -57,7 +58,7 @@ function initEditor() {
     editor.update(prepopulatedRichText, { tag: HISTORY_MERGE_TAG });
 
     editor.registerUpdateListener(({ editorState }) => {
-        stateRef!.value = JSON.stringify(editorState.toJSON(), undefined, 2);
+        stateRef.value = JSON.stringify(editorState.toJSON(), undefined, 2);
     });
 
     return {
@@ -71,20 +72,18 @@ let store: {
     target: HTMLDivElement;
 } | null = null;
 function updateEditorContainer(container: HTMLDivElement | null) {
-    if (store === null) {
-        store = initEditor();
-    }
+    store ??= initEditor();
     if (store.target.parentElement === container) {
         return;
     }
     const { target } = store;
-    target?.parentElement?.removeChild(target);
+    target?.remove();
     container?.appendChild(target);
 }
 
 export default function LexicalEditorComp() {
     const [n, setN] = useState(0);
-    useEffect(() => {
+    useAppEffect(() => {
         const interval = setInterval(() => {
             setN((prev) => prev + 1);
         }, 1000);

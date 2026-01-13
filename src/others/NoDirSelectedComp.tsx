@@ -1,6 +1,7 @@
+import { tran } from '../lang/langHelpers';
 import DirSource from '../helper/DirSource';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
-import { goToGeneralSetting } from '../setting/settingHelpers';
+import { openGeneralSetting } from '../setting/settingHelpers';
 
 export function SelectDefaultDirButton({
     dirSource,
@@ -27,10 +28,10 @@ export function GotoSettingDirectoryPathComp() {
             <button
                 className="btn btn-sm btn-warning"
                 onClick={() => {
-                    goToGeneralSetting();
+                    openGeneralSetting();
                 }}
             >
-                <span>`Go to Settings </span>
+                <span>{tran('Go to Settings ')}</span>
                 <i className="bi bi-gear-wide-connected" />
             </button>
         </div>

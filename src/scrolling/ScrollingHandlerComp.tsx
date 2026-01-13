@@ -8,6 +8,7 @@ import {
     MoveCheckType,
     PLAY_TO_BOTTOM_CLASSNAME,
 } from './scrollingHandlerHelpers';
+import { HoverMotionHandler } from '../helper/domHelpers';
 
 export default function ScrollingHandlerComp({
     style,
@@ -26,7 +27,7 @@ export default function ScrollingHandlerComp({
                     className={
                         `${PLAY_TO_BOTTOM_CLASSNAME} bi bi-chevron-double-down` +
                         ' app-caught-hover-pointer' +
-                        ' app-low-hover-visible-1'
+                        ` ${HoverMotionHandler.lowVisibleClassname}-1`
                     }
                     style={{
                         width: '45px',
@@ -42,13 +43,13 @@ export default function ScrollingHandlerComp({
             <i
                 className={
                     `${TO_THE_TOP_CLASSNAME} bi bi-arrow-up-circle ` +
-                    'app-low-hover-visible-1'
+                    `${HoverMotionHandler.lowVisibleClassname}-1`
                 }
                 title="Scroll to the top"
                 style={{
                     width: '45px',
                     height: '45px',
-                    ...(style ?? {}),
+                    ...style,
                 }}
                 ref={(element) => {
                     if (element) {

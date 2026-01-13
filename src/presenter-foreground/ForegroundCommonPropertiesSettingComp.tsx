@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import {
     getSetting,
@@ -62,8 +63,7 @@ export default function ForegroundCommonPropertiesSettingComp() {
                 }}
             >
                 <i className="bi bi-chevron-right" />
-                <i className="bi bi-gear" />
-                {' `Properties'}
+                <i className="bi bi-gear" /> {tran('Properties')}
             </button>
         );
     }
@@ -77,8 +77,7 @@ export default function ForegroundCommonPropertiesSettingComp() {
                     }}
                 >
                     <i className="bi bi-chevron-down" />
-                    <i className="bi bi-gear" />
-                    {' `Properties'}
+                    <i className="bi bi-gear" /> {tran('Properties')}
                 </button>
             </div>
             <div
@@ -99,12 +98,12 @@ export default function ForegroundCommonPropertiesSettingComp() {
                         />
                     </div>
                     <div
-                        className="input-group input-group-sm p-1 m-1 app-border-white-round"
+                        className="input-group input-group-sm m-1 app-border-white-round"
                         style={{
                             width: '250px',
                         }}
                     >
-                        <small>`Backdrop Filter (PX):</small>
+                        <small>{tran('Backdrop Filter (PX):')}</small>
                         <input
                             className="form-control form-control-sm"
                             type="number"
@@ -122,7 +121,7 @@ export default function ForegroundCommonPropertiesSettingComp() {
                     className="p-1 m-1 app-border-white-round"
                     style={{ minWidth: '280px' }}
                 >
-                    <strong>`Text Color:</strong>
+                    <strong>{tran('Text Color:')}</strong>
                     <ColorPicker
                         color={color}
                         defaultColor={DEFAULT_TEXT_COLOR}
@@ -136,7 +135,7 @@ export default function ForegroundCommonPropertiesSettingComp() {
                     className="p-1 m-1 app-border-white-round"
                     style={{ minWidth: '280px' }}
                 >
-                    <strong>`Background Color:</strong>
+                    <strong>{tran('Background Color:')}</strong>
                     <ColorPicker
                         color={backgroundColor}
                         defaultColor={DEFAULT_BACKGROUND_COLOR}

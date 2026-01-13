@@ -16,6 +16,7 @@ import { useFileSourceEvents } from './dirSourceHelpers';
 import { stopDraggingState } from './helpers';
 import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import Slide from '../app-document-list/Slide';
+import { cameraDragDeserialize } from '../background/backgroundHelpers';
 
 export const dragStore: {
     onDropped?: ((event: any) => void) | null;
@@ -54,11 +55,15 @@ function deserializeDragData({
     } else if (type === DragTypeEnum.BIBLE_ITEM) {
         item = BibleItem.dragDeserialize(data);
     } else if (
-        [DragTypeEnum.BACKGROUND_VIDEO, DragTypeEnum.BACKGROUND_IMAGE].includes(
-            type,
-        )
+        [
+            DragTypeEnum.BACKGROUND_VIDEO,
+            DragTypeEnum.BACKGROUND_IMAGE,
+            DragTypeEnum.BACKGROUND_WEB,
+        ].includes(type)
     ) {
         item = FileSource.dragDeserialize(data);
+    } else if (type === DragTypeEnum.BACKGROUND_CAMERA) {
+        item = cameraDragDeserialize(data);
     } else if (type === DragTypeEnum.BACKGROUND_COLOR) {
         item = colorDeserialize(data);
     }
@@ -80,6 +85,8 @@ export function handleAttachBackgroundDrop(
             DragTypeEnum.BACKGROUND_COLOR,
             DragTypeEnum.BACKGROUND_IMAGE,
             DragTypeEnum.BACKGROUND_VIDEO,
+            DragTypeEnum.BACKGROUND_CAMERA,
+            DragTypeEnum.BACKGROUND_WEB,
         ].includes(droppedData.type)
     ) {
         attachBackgroundManager.attachDroppedBackground(

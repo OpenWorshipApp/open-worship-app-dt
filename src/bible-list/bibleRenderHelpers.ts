@@ -5,7 +5,7 @@ import {
     getVerses,
     getBibleInfo,
     getBibleInfoIsRtl,
-    toVerseKeyFormat,
+    toVerseFullKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     getModelChapterCount,
@@ -68,7 +68,7 @@ class BibleRenderHelper {
             txtV = txtV.split('-')[0];
             txtV += `-${endChapter}:${endVerseEnd}`;
         }
-        return toVerseKeyFormat(book, chapter, txtV);
+        return toVerseFullKeyFormat(book, chapter, txtV);
     }
     toBibleVersesKey(
         bibleKey: string,
@@ -135,7 +135,7 @@ class BibleRenderHelper {
                 verseStart === verseEnd ? '' : '-' + verseEndLocale
             }`;
             const ensuredBookKey = await this.toLocaleBook(bibleKey, bookKey);
-            let title = toVerseKeyFormat(
+            let title = toVerseFullKeyFormat(
                 ensuredBookKey,
                 chapterLocale ?? '-1',
                 txtV,

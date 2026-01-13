@@ -33,9 +33,14 @@ const htmlPlugin = () => {
     };
 };
 
-const htmlFiles = readdirSync(__dirname).filter((fileName) => {
-    return fileName.endsWith('.html');
-});
+const htmlDir = resolve(__dirname, 'html');
+const htmlFiles = readdirSync(htmlDir)
+    .filter((fileName) => {
+        return fileName.endsWith('.html');
+    })
+    .map((fileFullName) => {
+        return [fileFullName, resolve(htmlDir, fileFullName)];
+    });
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -57,11 +62,19 @@ export default defineConfig({
     server: {
         port: 3000,
     },
+
+    root: './html',
+    resolve: {
+        alias: {
+            '/src': '../src',
+        },
+    },
+    publicDir: '../public',
     build: {
+        outDir: '../dist',
+        emptyOutDir: true,
         rollupOptions: {
-            input: htmlFiles.map((item) => {
-                return resolve(item);
-            }),
+            input: Object.fromEntries(htmlFiles),
         },
     },
 });
