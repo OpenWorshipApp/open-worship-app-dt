@@ -17,7 +17,7 @@ release_tag="release-$package_version"
 git pull
 # reset main to release tag
 commit_hash=$(git rev-list -n 1 "$release_tag")
-git reset --mixed "$commit_hash"
+git reset --hard "$commit_hash"
 
 npm i
 
