@@ -471,13 +471,11 @@ export function getCurrentLocale(): LocaleType {
     }
     return DEFAULT_LOCALE;
 }
-let currentLocale = getCurrentLocale();
 export function setCurrentLocale(locale: LocaleType) {
     if (!checkIsValidLocale(locale)) {
         locale = DEFAULT_LOCALE;
     }
     localStorage.setItem(LANGUAGE_LOCALE_SETTING_NAME, locale);
-    currentLocale = locale;
 }
 
 const langCache = new Map<string, LanguageDataType>();
@@ -545,6 +543,7 @@ export function tran(...args: any[]): string {
     if (typeof text !== 'string') {
         return `${text}`;
     }
+    const currentLocale = getCurrentLocale();
     const langData = getLangData(currentLocale);
     if (langData === null) {
         return text;
@@ -646,7 +645,7 @@ export function quickEndWord(locale: LocaleType, text: string) {
 export async function getFontFamilyByLocale(locale: LocaleType) {
     const langData = await getLangDataAsync(locale);
     if (langData === null) {
-        return '';
+        return undefined;
     }
     return langData.fontFamily;
 }

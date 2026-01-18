@@ -6,11 +6,7 @@ import './scrollbar.scss';
 
 import { ReactNode, StrictMode } from 'react';
 
-import {
-    getCurrentLocale,
-    getFontFamilyByLocale,
-    tran,
-} from '../lang/langHelpers';
+import { getCurrentLocale, getLangData, tran } from '../lang/langHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
     PlatformEnum,
@@ -106,7 +102,7 @@ function isDomException(error: any) {
     return error instanceof DOMException;
 }
 
-export async function init() {
+async function init() {
     globalThis.onunhandledrejection = (promiseError) => {
         const reason = promiseError.reason;
         if (reason.name === 'Canceled') {
@@ -173,7 +169,7 @@ export function RenderApp({
     );
 }
 
-export async function main(children: ReactNode) {
+export async function run(children: ReactNode) {
     await init();
     const hoverMotionHandler = new HoverMotionHandler();
     addDomChangeEventListener(
@@ -195,7 +191,11 @@ export async function main(children: ReactNode) {
         ),
     );
     const currentLocale = getCurrentLocale();
-    const fontFamily = await getFontFamilyByLocale(currentLocale);
+    const langData = getLangData(currentLocale);
+    if (langData === null) {
+        throw new Error(`Lang data not found for locale ${currentLocale}`);
+    }
+    const { fontFamily } = langData;
     if (fontFamily != undefined) {
         document.body.style.fontFamily = fontFamily;
     }

@@ -1,11 +1,14 @@
 import { StrictMode } from 'react';
 
-import AboutComp from './others/AboutComp';
+import { init } from './boot';
 import { getReactRoot } from './others/initHelpers';
 
-const root = getReactRoot();
-root.render(
-    <StrictMode>
-        <AboutComp />
-    </StrictMode>,
-);
+init(async () => {
+    const AboutComp = (await import('./others/AboutComp')).default;
+    const root = getReactRoot();
+    root.render(
+        <StrictMode>
+            <AboutComp />
+        </StrictMode>,
+    );
+});

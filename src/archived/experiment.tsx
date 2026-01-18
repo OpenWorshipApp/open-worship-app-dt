@@ -5,7 +5,7 @@ import LexicalEditorComp from './LexicalEditorComp';
 const container = document.getElementById('root');
 if (container === null) {
     const message = 'Root element not found';
-    window.alert(message);
+    globalThis.alert(message);
     throw new Error(message);
 }
 const root = createRoot(container);

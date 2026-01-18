@@ -13,7 +13,7 @@ import {
 } from './fileHelpers';
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
-import { log } from '../helper/loggerHelpers';
+import { log, error as logError } from '../helper/loggerHelpers';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${Date.now()}`;
@@ -115,7 +115,7 @@ async function getDownloadTargetUrl() {
             return response.json();
         })
         .catch((error) => {
-            console.error('Error fetching update download info:', error);
+            logError('Error fetching update download info:', error);
             return null;
         });
     if (downloadInfo === null) {
@@ -157,7 +157,7 @@ export async function checkForUpdateSilently() {
             return response.json();
         })
         .catch((error) => {
-            console.error('Error fetching update info:', error);
+            logError('Error fetching update info:', error);
             return null;
         });
     if (updateData === null) {
@@ -289,7 +289,7 @@ async function getPageTitle(url: string) {
     const rawHtml = await fetch(url)
         .then((response) => response.text())
         .catch((error) => {
-            console.error('Error fetching page:', error);
+            logError('Error fetching page:', error);
             return null;
         });
     if (rawHtml === null) {

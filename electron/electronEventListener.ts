@@ -81,6 +81,7 @@ export function initEventListenerApp(appController: ElectronAppController) {
 }
 
 export function initEventScreen(appController: ElectronAppController) {
+    const sendData = appController.mainController.sendData;
     ipcMain.on('main:app:get-displays', (event) => {
         event.returnValue = {
             primaryDisplay: appController.settingManager.primaryDisplay,
@@ -102,7 +103,7 @@ export function initEventScreen(appController: ElectronAppController) {
         );
         if (display !== undefined) {
             screenController.listenLoading().then(() => {
-                appController.mainController.sendData(data.replyEventName);
+                sendData(data.replyEventName);
             });
             screenController.setDisplay(display);
             appController.mainWin.focus();
@@ -226,6 +227,7 @@ export function initEventFinder(appController: ElectronAppController) {
 }
 
 export function initEventOther(appController: ElectronAppController) {
+    const sendData = appController.mainController.sendData;
     ipcMain.on(
         'main:app:tar-extract',
         async (
@@ -241,7 +243,7 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             await tarExtract(filePath, outputDir);
-            appController.mainController.sendData(replyEventName);
+            sendData(replyEventName);
         },
     );
 
@@ -278,7 +280,7 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             await shell.trashItem(data.path);
-            appController.mainController.sendData(data.replyEventName);
+            sendData(data.replyEventName);
         },
     );
 
@@ -301,9 +303,9 @@ export function initEventOther(appController: ElectronAppController) {
         ) => {
             const error = await officeFileToPdf(officeFilePath, pdfFilePath);
             if (error === null) {
-                appController.mainController.sendData(replyEventName);
+                sendData(replyEventName);
             } else {
-                appController.mainController.sendData(replyEventName, error);
+                sendData(replyEventName, error);
             }
         },
     );
@@ -325,7 +327,7 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             const data = await pdfToImages(filePath, outDir, isForce);
-            appController.mainController.sendData(replyEventName, data);
+            sendData(replyEventName, data);
         },
     );
 
@@ -342,7 +344,7 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             const data = await getPagesCount(filePath);
-            appController.mainController.sendData(replyEventName, data);
+            sendData(replyEventName, data);
         },
     );
 
@@ -367,18 +369,24 @@ export function initEventOther(appController: ElectronAppController) {
         event.returnValue = nativeTheme.themeSource;
     });
 
-    ipcMain.on('main:app:ask-camera-access', () => {
-        if (isMac) {
-            systemPreferences
-                .askForMediaAccess('camera')
-                .then((access) => {
-                    console.log('Camera access:', access);
-                })
-                .catch((error) => {
-                    console.error('Camera access error:', error);
-                });
-        }
-    });
+    ipcMain.on(
+        'main:app:ask-camera-access',
+        async (_event, { replyEventName }) => {
+            if (!isMac) {
+                sendData(replyEventName, true);
+                return;
+            }
+            try {
+                const access =
+                    await systemPreferences.askForMediaAccess('camera');
+                console.log('Camera access:', access);
+                sendData(replyEventName, access);
+            } catch (error) {
+                console.error('Camera access error:', error);
+            }
+            sendData(replyEventName, false);
+        },
+    );
 
     ipcMain.on('all:app:force-reload', () => {
         appController.reloadAll();

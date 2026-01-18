@@ -16,6 +16,7 @@ import {
     validateCrossReference,
 } from '../helper/ai/bibleCrossRefHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { error as logError } from '../helper/loggerHelpers';
 
 export type RawBibleCrossRefListType = string[][];
 export type BibleCrossRefType = {
@@ -84,7 +85,7 @@ export async function getBibleCrossRef(
                 return data;
             }
         } catch (error) {
-            console.error('Error parsing JSON: for key', bibleTitle);
+            logError('Error parsing JSON: for key', bibleTitle);
             handleError(error);
         }
         return null;
@@ -128,7 +129,7 @@ export async function getBibleCrossRefAI(
             await bibleCrossRefAICache.set(key, data);
             return data as CrossReferenceType[];
         } catch (error) {
-            console.error('Error parsing JSON: for key', key);
+            logError('Error parsing JSON: for key', key);
             handleError(error);
         }
         return null;

@@ -1,9 +1,14 @@
-import { main } from './others/bootstrap';
-import AppPresenterComp from './presenter/AppPresenterComp';
+import { init } from './boot';
+import { run } from './others/main';
 import AppLayoutComp from './router/AppLayoutComp';
 
-main(
-    <AppLayoutComp>
-        <AppPresenterComp />
-    </AppLayoutComp>,
-);
+init(async () => {
+    // Load AppPresenterComp dynamically to ensure lang data is ready
+    const AppPresenterComp = (await import('./presenter/AppPresenterComp'))
+        .default;
+    run(
+        <AppLayoutComp>
+            <AppPresenterComp />
+        </AppLayoutComp>,
+    );
+});

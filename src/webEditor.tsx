@@ -1,9 +1,13 @@
-import WebEditorComp from './background/web/WebEditorComp';
-import { main } from './others/bootstrap';
+import { init } from './boot';
+import { run } from './others/main';
 import PopupLayoutComp from './router/PopupLayoutComp';
 
-main(
-    <PopupLayoutComp>
-        <WebEditorComp />
-    </PopupLayoutComp>,
-);
+init(async () => {
+    const WebEditorComp = (await import('./background/web/WebEditorComp'))
+        .default;
+    run(
+        <PopupLayoutComp>
+            <WebEditorComp />
+        </PopupLayoutComp>,
+    );
+});

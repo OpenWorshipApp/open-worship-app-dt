@@ -3,7 +3,7 @@ import path from 'node:path';
 import { app, net, protocol, session, WebContents } from 'electron';
 
 export const htmlFiles = {
-    appDocumentEditor: 'app-document-editor.html',
+    appDocumentEditor: 'appDocumentEditor.html',
     presenter: 'presenter.html',
     screen: 'screen.html',
     reader: 'reader.html',

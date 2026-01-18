@@ -2,7 +2,7 @@ import { useRef } from 'react';
 
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import LoadingComp from '../others/LoadingComp';
-import { getCameraAndShowMedia } from '../_screen/screenForegroundHelpers';
+import { getCameraAndShowMedia } from '../helper/cameraHelpers';
 
 export default function RenderCameraVideoComp({
     deviceId,

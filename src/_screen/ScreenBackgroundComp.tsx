@@ -13,6 +13,10 @@ import {
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
 import { BackgroundSrcType } from './screenTypeHelpers';
+import { getCameraStream } from '../helper/cameraHelpers';
+import { handleError } from '../helper/errorHelpers';
+import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
+import { tran } from '../lang/langHelpers';
 
 export default function ScreenBackgroundComp() {
     const screenManager = useScreenManagerContext();
@@ -50,24 +54,29 @@ export function genHtmlBackground(
         });
         child.appendChild(video);
         promise = new Promise<() => void>((resolve) => {
-            navigator.mediaDevices
-                .getUserMedia({
-                    audio: false,
-                    video: {
-                        deviceId: { exact: backgroundSrc.src },
-                    },
-                })
+            getCameraStream(backgroundSrc.src)
                 .then((mediaStream) => {
-                    const clearTracks = () => {
-                        mediaStream.getTracks().forEach((track) => {
-                            track.stop();
-                        });
-                    };
                     video.srcObject = mediaStream;
+                    const clearTracks = () => {
+                        const tracks = mediaStream.getTracks();
+                        for (const track of tracks) {
+                            track.stop();
+                        }
+                    };
                     video.onloadedmetadata = () => {
                         video.play();
                         resolve(clearTracks);
                     };
+                })
+                .catch((error) => {
+                    handleError(error);
+                    showAppAlert(
+                        tran('Camera Error'),
+                        tran(
+                            'Unable to access the camera for background. ' +
+                                'Please check your camera settings.',
+                        ),
+                    );
                 });
         });
     } else if (backgroundSrc.type === 'web') {

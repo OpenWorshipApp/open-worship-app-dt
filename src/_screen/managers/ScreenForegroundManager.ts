@@ -8,7 +8,6 @@ import {
     genHtmlForegroundStopwatch,
     genHtmlForegroundTime,
     genHtmlForegroundWeb,
-    getCameraAndShowMedia,
 } from '../screenForegroundHelpers';
 import { getForegroundDataListOnScreenSetting } from '../screenHelpers';
 import { screenManagerSettingNames } from '../../helper/constants';
@@ -33,6 +32,7 @@ import {
 } from '../../server/comparisonHelpers';
 import { OptionalPromise } from '../../helper/typeHelpers';
 import ScreenEffectManager from './ScreenEffectManager';
+import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
 
 export type ScreenForegroundEventType = 'update';
 

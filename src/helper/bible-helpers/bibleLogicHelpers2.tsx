@@ -84,7 +84,7 @@ export async function getLangDataFromBibleKey(bibleKey: string) {
 
 export async function getBibleFontFamily(bibleKey: string) {
     const locale = await getBibleLocale(bibleKey);
-    const fontFamily = await getFontFamilyByLocale(locale);
+    const fontFamily = getFontFamilyByLocale(locale);
     return fontFamily;
 }
 

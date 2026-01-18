@@ -21,6 +21,7 @@ import { getModelKeyBookMap } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';
 import { toVerseFullKeyFormat } from '../bible-helpers/bibleInfoHelpers';
 import { getBibleModelInfoSetting } from '../bible-helpers/bibleModelHelpers';
+import { error as logError } from '../loggerHelpers';
 
 type GetBibleCrossRefParamsType = {
     bookKey: string;
@@ -102,7 +103,7 @@ export async function getBibleCrossRef(
                         }
                     }
                 } catch (error) {
-                    console.error('Error reading cross reference file:', error);
+                    logError('Error reading cross reference file:', error);
                 }
             }
             await fsDeleteFile(filePath);

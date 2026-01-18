@@ -45,4 +45,5 @@ function main() {
         appProvider.reload();
     });
 }
+
 main();

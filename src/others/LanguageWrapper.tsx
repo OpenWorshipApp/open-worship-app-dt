@@ -19,7 +19,7 @@ export async function applyFontFamily(element: Node, type: MutationType) {
     }
     if (locale && checkIsValidLocale(locale)) {
         const fontFamily = await getFontFamilyByLocale(locale as LocaleType);
-        if (fontFamily) {
+        if (fontFamily != undefined) {
             element.style.fontFamily = fontFamily;
         }
     }

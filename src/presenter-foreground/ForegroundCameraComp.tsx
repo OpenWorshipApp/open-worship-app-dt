@@ -4,7 +4,6 @@ import { tran } from '../lang/langHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import LoadingComp from '../others/LoadingComp';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
-import { getCameraAndShowMedia } from '../_screen/screenForegroundHelpers';
 import {
     getScreenForegroundManagerInstances,
     getForegroundShowingScreenIdDataList,
@@ -17,7 +16,11 @@ import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
-import { CameraInfoType, useCameraInfoList } from '../helper/cameraHelpers';
+import {
+    CameraInfoType,
+    getCameraAndShowMedia,
+    useCameraInfoList,
+} from '../helper/cameraHelpers';
 
 function RenderCameraInfoComp({
     cameraInfo,

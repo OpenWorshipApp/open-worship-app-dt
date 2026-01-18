@@ -1,16 +1,24 @@
-import HandleAlertComp from './popup-widget/HandleAlertComp';
-import { main } from './others/bootstrap';
-import TopProgressBarComp from './progress-bar/TopProgressBarComp';
-import SettingComp from './setting/SettingComp';
-import ToastComp from './toast/ToastComp';
-import AppContextMenuComp from './context-menu/AppContextMenuComp';
+import { init } from './boot';
+import { run } from './others/main';
 
-main(
-    <>
-        <SettingComp />
-        <TopProgressBarComp />
-        <ToastComp />
-        <HandleAlertComp />
-        <AppContextMenuComp />
-    </>,
-);
+init(async () => {
+    const SettingComp = (await import('./setting/SettingComp')).default;
+    const TopProgressBarComp = (
+        await import('./progress-bar/TopProgressBarComp')
+    ).default;
+    const ToastComp = (await import('./toast/ToastComp')).default;
+    const HandleAlertComp = (await import('./popup-widget/HandleAlertComp'))
+        .default;
+    const AppContextMenuComp = (
+        await import('./context-menu/AppContextMenuComp')
+    ).default;
+    run(
+        <>
+            <SettingComp />
+            <TopProgressBarComp />
+            <ToastComp />
+            <HandleAlertComp />
+            <AppContextMenuComp />
+        </>,
+    );
+});

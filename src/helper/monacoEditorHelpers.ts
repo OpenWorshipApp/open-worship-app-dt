@@ -12,6 +12,7 @@ import { useStateSettingBoolean } from './settingHelpers';
 import { useAppEffect } from './debuggerHelpers';
 import { genTimeoutAttempt } from './helpers';
 import { checkIsDarkMode } from '../others/initHelpers';
+import { error as logError } from './loggerHelpers';
 
 globalThis.MonacoEnvironment = {
     getWorker(_, label) {
@@ -39,10 +40,10 @@ async function getCopiedText() {
                 return text;
             }
         } else {
-            console.error('Clipboard API not supported in this browser.');
+            logError('Clipboard API not supported in this browser.');
         }
     } catch (err) {
-        console.error('Failed to read clipboard contents:', err);
+        logError('Failed to read clipboard contents:', err);
     }
     return null;
 }

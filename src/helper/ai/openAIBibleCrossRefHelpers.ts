@@ -9,6 +9,7 @@ import {
     useGetBibleCrossRef,
 } from './bibleCrossRefHelpers';
 import { cloneJson } from '../helpers';
+import { error as logError } from '../loggerHelpers';
 
 function genPrompt(bibleTitle: string, additionalData?: CrossReferenceType[]) {
     const extraContext =
@@ -140,7 +141,7 @@ export async function getCrossRefs(
         const data = JSON.parse(cleaned) as CrossRefResultType;
         return data.result;
     } catch (error) {
-        console.error('Error in getCrossRefs:', error);
+        logError('Error in getCrossRefs:', error);
         showSimpleToast(
             'Cross References',
             'Failed to get cross references. ' +

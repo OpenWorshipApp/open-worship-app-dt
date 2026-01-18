@@ -2,9 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import CountdownController from './managers/CountdownController';
 import { getHTMLChild } from '../helper/helpers';
 import ScreenManagerBase from './managers/ScreenManagerBase';
-import { handleError } from '../helper/errorHelpers';
 import {
-    ForegroundCameraDataType,
     ForegroundCountdownDataType,
     ForegroundMarqueDataType,
     ForegroundQuickTextDataType,
@@ -321,55 +319,6 @@ export function genHtmlForegroundTime(
             await animData.animOut(element);
         },
     };
-}
-
-export async function getCameraAndShowMedia(
-    {
-        id,
-        extraStyle,
-        parentContainer,
-        width,
-    }: ForegroundCameraDataType & {
-        parentContainer: HTMLElement;
-        width?: number;
-    },
-    animData?: StyleAnimType,
-) {
-    try {
-        const { mediaDevices } = navigator;
-        const mediaStream = await mediaDevices.getUserMedia({
-            audio: false,
-            video: { deviceId: { exact: id } },
-        });
-        const video = document.createElement('video');
-        video.srcObject = mediaStream;
-        video.onloadedmetadata = () => {
-            video.play();
-        };
-        if (width !== undefined) {
-            video.style.width = `${width}px`;
-        }
-        Object.assign(video.style, extraStyle ?? {});
-        parentContainer.innerHTML = '';
-        const stopAllStreams = () => {
-            const tracks = mediaStream.getVideoTracks();
-            for (const track of tracks) {
-                track.stop();
-            }
-        };
-        if (animData === undefined) {
-            parentContainer.appendChild(video);
-            return stopAllStreams;
-        }
-        animData.animIn(video, parentContainer);
-        return async () => {
-            await animData.animOut(video);
-            stopAllStreams();
-        };
-    } catch (error) {
-        handleError(error);
-    }
-    return () => {};
 }
 
 export function genHtmlForegroundWeb(
