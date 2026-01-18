@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import {
-    getLangAsync,
+    getLangDataAsync,
     getLangCode,
     LanguageDataType,
     LocaleType,
@@ -279,7 +279,7 @@ function BibleBooksMapXMLInputComp({
                         if (!isHTML) {
                             return;
                         }
-                        const lang = await getLangAsync(locale);
+                        const lang = await getLangDataAsync(locale);
                         handleMarkupStringParsing(value, lang);
                     }}
                 >

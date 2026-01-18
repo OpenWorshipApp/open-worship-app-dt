@@ -12,7 +12,7 @@ import {
     fromLocaleNum,
     fromStringNum,
     getFontFamilyByLocale,
-    getLangAsync,
+    getLangDataAsync,
     LocaleType,
     toLocaleNum,
     toStringNum,
@@ -75,10 +75,10 @@ export async function getBibleLocale(bibleKey: string) {
     return bibleInfo.locale;
 }
 
-export async function getLangFromBibleKey(bibleKey: string) {
+export async function getLangDataFromBibleKey(bibleKey: string) {
     const locale = await getBibleLocale(bibleKey);
     const langData =
-        (await getLangAsync(locale)) || (await getLangAsync('en-US'));
+        (await getLangDataAsync(locale)) || (await getLangDataAsync('en-US'));
     return langData;
 }
 
@@ -682,7 +682,7 @@ export async function extractBibleTitle(
         const brokenInputText = breakText(cleanText);
         cleanText = brokenInputText.inputText;
         const locale = await getBibleLocale(bibleKey);
-        const lang = await getLangAsync(locale);
+        const lang = await getLangDataAsync(locale);
         if (lang !== null) {
             cleanText = lang.sanitizeText(cleanText);
         }

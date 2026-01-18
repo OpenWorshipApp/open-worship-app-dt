@@ -14,7 +14,7 @@ import {
 import {
     checkShouldNewLine,
     checkShouldNewLineModel,
-    getLangFromBibleKey,
+    getLangDataFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import CacheManager from '../others/CacheManager';
@@ -213,7 +213,7 @@ class BibleRenderHelper {
             bibleKey,
             target,
         );
-        const langData = await getLangFromBibleKey(bibleKey);
+        const langData = await getLangDataFromBibleKey(bibleKey);
         return unlocking(bibleVersesKey, async () => {
             const { bookKey, chapter, verseStart, verseEnd } = target;
             const verses = await getVerses(bibleKey, bookKey, chapter);

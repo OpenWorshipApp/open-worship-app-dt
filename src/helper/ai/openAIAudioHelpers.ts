@@ -15,7 +15,7 @@ import { unlocking } from '../../server/unlockingHelpers';
 import { useState } from 'react';
 import { useAppEffectAsync, useAppStateAsync } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
-import { getLangFromBibleKey } from '../bible-helpers/bibleLogicHelpers2';
+import { getLangDataFromBibleKey } from '../bible-helpers/bibleLogicHelpers2';
 import { LocaleType } from '../../lang/langHelpers';
 import {
     checkIsAvailable,
@@ -134,7 +134,7 @@ export async function checkIsAIAudioAvailableForBible(bibleItem: BibleItem) {
     if (!checkIsAvailable()) {
         return false;
     }
-    const langData = await getLangFromBibleKey(bibleItem.bibleKey);
+    const langData = await getLangDataFromBibleKey(bibleItem.bibleKey);
     if (langData === null || !langData.bibleAudioAvailable) {
         return false;
     }
@@ -143,7 +143,7 @@ export async function checkIsAIAudioAvailableForBible(bibleItem: BibleItem) {
 
 export function useIsAudioAIEnabled(bibleItem: BibleItem) {
     const [isAvailable] = useAppStateAsync(async () => {
-        const langData = await getLangFromBibleKey(bibleItem.bibleKey);
+        const langData = await getLangDataFromBibleKey(bibleItem.bibleKey);
         if (langData === null || !langData.bibleAudioAvailable) {
             return false;
         }

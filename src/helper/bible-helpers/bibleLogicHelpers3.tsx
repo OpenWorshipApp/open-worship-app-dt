@@ -17,7 +17,7 @@ import type BibleItemsViewController from '../../bible-reader/BibleItemsViewCont
 import { copyToClipboard } from '../../server/appHelpers';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 import { elementDivider } from '../../context-menu/AppContextMenuComp';
-import { getLangFromBibleKey } from './bibleLogicHelpers2';
+import { getLangDataFromBibleKey } from './bibleLogicHelpers2';
 
 async function getBibleItemsFromTitleVerseKey(
     bibleKey: string,
@@ -234,7 +234,7 @@ export async function genNewLineTitlesHtmlText(
         if (cachedData !== null) {
             return cachedData;
         }
-        const langData = await getLangFromBibleKey(bibleKey);
+        const langData = await getLangDataFromBibleKey(bibleKey);
         const list = await Promise.all(
             titles.map(async (title) => {
                 let style = `${defaultCssStyle} ${title.cssStyle ?? ''};`;

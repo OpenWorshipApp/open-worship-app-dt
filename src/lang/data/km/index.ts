@@ -35,7 +35,7 @@ const dictionary = {
     'Are you sure to discard all histories?':
         'Are you sure to discard all histories?',
     'Audio playing': 'Audio playing',
-    Audios: 'Audios',
+    Audios: 'សំលេង',
     'Auto Play Audio AI when available': 'Auto Play Audio AI when available',
     'Backdrop Filter (PX):': 'Backdrop Filter (PX):',
     'Background Color:': 'Background Color:',
@@ -232,9 +232,6 @@ const lang: LanguageDataType = {
             font-family: ${fontFamily};
             src: url(${btbBlack}) format("truetype");
             font-weight: 900;
-        }
-        * {
-            font-family: ${fontFamily}, sans-serif;
         }
         `;
     },

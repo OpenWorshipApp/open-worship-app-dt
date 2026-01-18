@@ -22,7 +22,7 @@ import {
     VERSE_TEXT_CLASS,
 } from '../helper/bibleViewHelpers';
 import {
-    getLangFromBibleKey,
+    getLangDataFromBibleKey,
     getShouldModelNewLine,
     setShouldModelNewLine,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
@@ -643,7 +643,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
         bibleItem: ReadIdOnlyBibleItem,
         uuid: string,
     ): Promise<ContextMenuItemType[]> {
-        const langData = await getLangFromBibleKey(bibleItem.bibleKey);
+        const langData = await getLangDataFromBibleKey(bibleItem.bibleKey);
         return [
             {
                 menuElement: elementDivider,

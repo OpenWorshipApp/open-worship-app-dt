@@ -433,13 +433,12 @@ export function getLangCode(locale: LocaleType): string | null {
     return (allLocalesMap as any)[locale] ?? null;
 }
 
-export const langCodes = ['km', 'en'] as const;
 export type LocaleType = keyof typeof allLocalesMap;
 export type LanguageDataType = {
     locale: LocaleType;
     langCode: string;
     genCss: () => string;
-    fontFamily: string;
+    fontFamily?: string;
     numList: string[];
     dictionary: AnyObjectType;
     name: string;
@@ -458,7 +457,7 @@ export type LanguageDataType = {
 };
 
 export function checkIsValidLangCode(text: string) {
-    return langCodes.includes(text as any);
+    return includedLangCodes.includes(text as any);
 }
 export function checkIsValidLocale(text: string) {
     return !!(allLocalesMap as any)[text];
@@ -482,7 +481,7 @@ export function setCurrentLocale(locale: LocaleType) {
 }
 
 const langCache = new Map<string, LanguageDataType>();
-export function getLang(langCodeOrLocale: string) {
+export function getLangData(langCodeOrLocale: string) {
     return langCache.get(langCodeOrLocale) ?? null;
 }
 
@@ -506,7 +505,7 @@ async function fetchLangData(langCode: string) {
     return module.default as LanguageDataType;
 }
 
-export async function getLangAsync(
+export async function getLangDataAsync(
     locale: LocaleType,
 ): Promise<LanguageDataType | null> {
     const cachedLangData = langCache.get(locale);
@@ -546,7 +545,7 @@ export function tran(...args: any[]): string {
     if (typeof text !== 'string') {
         return `${text}`;
     }
-    const langData = getLang(currentLocale);
+    const langData = getLangData(currentLocale);
     if (langData === null) {
         return text;
     }
@@ -564,7 +563,7 @@ export function toStringNum(numList: string[], n: number): string {
 }
 
 export async function toLocaleNum(locale: LocaleType, n: number) {
-    const langData = await getLangAsync(locale);
+    const langData = await getLangDataAsync(locale);
     if (langData === null) {
         return `${n}`;
     }
@@ -590,7 +589,7 @@ export function fromStringNum(numList: string[], localeNum: string) {
 }
 
 export async function fromLocaleNum(locale: LocaleType, localeNum: string) {
-    const langData = await getLangAsync(locale);
+    const langData = await getLangDataAsync(locale);
     if (langData === null) {
         return null;
     }
@@ -599,8 +598,8 @@ export async function fromLocaleNum(locale: LocaleType, localeNum: string) {
 }
 
 export async function sanitizePreviewText(locale: LocaleType, text: string) {
-    let langData = await getLangAsync(locale);
-    langData ??= await getLangAsync(DEFAULT_LOCALE);
+    let langData = await getLangDataAsync(locale);
+    langData ??= await getLangDataAsync(DEFAULT_LOCALE);
     if (langData === null) {
         return text;
     }
@@ -608,8 +607,8 @@ export async function sanitizePreviewText(locale: LocaleType, text: string) {
 }
 
 export async function sanitizeFindingText(locale: LocaleType, text: string) {
-    let langData = await getLangAsync(locale);
-    langData ??= await getLangAsync(DEFAULT_LOCALE);
+    let langData = await getLangDataAsync(locale);
+    langData ??= await getLangDataAsync(DEFAULT_LOCALE);
     if (langData === null) {
         return text;
     }
@@ -617,7 +616,7 @@ export async function sanitizeFindingText(locale: LocaleType, text: string) {
 }
 
 export function quickTrimText(locale: LocaleType, text: string) {
-    const langData = getLang(locale);
+    const langData = getLangData(locale);
     if (langData === null) {
         return text;
     }
@@ -625,7 +624,7 @@ export function quickTrimText(locale: LocaleType, text: string) {
 }
 
 export function checkIsStopWord(locale: LocaleType, text: string) {
-    const langData = getLang(locale);
+    const langData = getLangData(locale);
     if (langData === null) {
         return false;
     }
@@ -633,7 +632,7 @@ export function checkIsStopWord(locale: LocaleType, text: string) {
 }
 
 export function quickEndWord(locale: LocaleType, text: string) {
-    const langData = getLang(locale);
+    const langData = getLangData(locale);
     if (langData === null) {
         return text;
     }
@@ -645,7 +644,7 @@ export function quickEndWord(locale: LocaleType, text: string) {
 }
 
 export async function getFontFamilyByLocale(locale: LocaleType) {
-    const langData = await getLangAsync(locale);
+    const langData = await getLangDataAsync(locale);
     if (langData === null) {
         return '';
     }

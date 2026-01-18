@@ -8,7 +8,7 @@ import {
     extractDownloadedBible,
 } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
-import { getLangAsync } from '../../lang/langHelpers';
+import { getLangDataAsync } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 
@@ -19,7 +19,7 @@ async function syncBibleLanguage(bibleKey: string) {
         showSimpleToast('Getting Bible Info', message);
         throw new Error('Cannot get bible info');
     }
-    await getLangAsync(bibleInfo.locale);
+    await getLangDataAsync(bibleInfo.locale);
 }
 
 export function useDownloadBible(

@@ -6,7 +6,6 @@ import './scrollbar.scss';
 
 import { ReactNode, StrictMode } from 'react';
 
-// keep this on top to have Language helper ready
 import {
     getCurrentLocale,
     getFontFamilyByLocale,
@@ -107,7 +106,7 @@ function isDomException(error: any) {
     return error instanceof DOMException;
 }
 
-export async function initApp() {
+export async function init() {
     globalThis.onunhandledrejection = (promiseError) => {
         const reason = promiseError.reason;
         if (reason.name === 'Canceled') {
@@ -175,7 +174,7 @@ export function RenderApp({
 }
 
 export async function main(children: ReactNode) {
-    await initApp();
+    await init();
     const hoverMotionHandler = new HoverMotionHandler();
     addDomChangeEventListener(
         hoverMotionHandler.listenForHoverMotion.bind(hoverMotionHandler),
@@ -195,9 +194,9 @@ export async function main(children: ReactNode) {
             handleActiveSelectedElementScrolling,
         ),
     );
-    const locale = getCurrentLocale();
-    const fontFamily = await getFontFamilyByLocale(locale);
-    if (fontFamily) {
+    const currentLocale = getCurrentLocale();
+    const fontFamily = await getFontFamilyByLocale(currentLocale);
+    if (fontFamily != undefined) {
         document.body.style.fontFamily = fontFamily;
     }
     const root = getReactRoot();

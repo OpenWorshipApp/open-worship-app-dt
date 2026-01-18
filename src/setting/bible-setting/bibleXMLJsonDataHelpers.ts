@@ -1,6 +1,6 @@
 import {
     DEFAULT_LOCALE,
-    getLangAsync,
+    getLangDataAsync,
     LocaleType,
     tran,
 } from '../../lang/langHelpers';
@@ -467,7 +467,7 @@ export async function getBibleInfoJson(
         tagNamesMap.bookMap,
         cloneJson(getModelKeyBookMap()),
     );
-    const langData = await getLangAsync(locale);
+    const langData = await getLangDataAsync(locale);
     if (langData !== null) {
         for (const [key, value] of Object.entries(keyBookMap)) {
             keyBookMap[key] = langData.sanitizeText(value);
