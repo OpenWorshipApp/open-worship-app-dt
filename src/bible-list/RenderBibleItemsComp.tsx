@@ -2,6 +2,7 @@ import Bible from './Bible';
 import BibleItemRenderComp from './BibleItemRenderComp';
 import { genDuplicatedMessage } from './bibleItemHelpers';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
+import { tran } from '../lang/langHelpers';
 
 export default function RenderBibleItemsComp({
     bible,
@@ -49,7 +50,7 @@ export default function RenderBibleItemsComp({
                     }}
                 >
                     <i className="bi bi-book px-1" />
-                    {'`'}Add Bible Item
+                    {' ' + tran('Add Bible Item')}
                 </button>
             )}
         </ul>

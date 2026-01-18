@@ -1,5 +1,6 @@
 import type { AppProviderType } from '../server/appProvider';
 import type { AnyObjectType } from '../helper/typeHelpers';
+import appProvider from '../server/appProvider';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -544,12 +545,31 @@ export function tran(...args: any[]): string {
         return `${text}`;
     }
     const currentLocale = getCurrentLocale();
+    if (currentLocale === DEFAULT_LOCALE) {
+        return text;
+    }
     const langData = getLangData(currentLocale);
     if (langData === null) {
+        if (appProvider.systemUtils.isDev) {
+            throw new Error(
+                `Language data for locale ${currentLocale} not found when ` +
+                    `translating text.`,
+            );
+        }
         return text;
     }
     const dictionary = langData.dictionary;
-    return dictionary[text] ?? text;
+    const translated = dictionary[text];
+    if (translated === undefined) {
+        if (appProvider.systemUtils.isDev) {
+            throw new Error(
+                `Translation for text "${text}" not found in ` +
+                    `locale ${currentLocale}.`,
+            );
+        }
+        return text;
+    }
+    return translated;
 }
 
 export function toStringNum(numList: string[], n: number): string {

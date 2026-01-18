@@ -6,14 +6,15 @@ import { useStateSettingString } from '../../../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../../../others/TabRenderComp';
 import SlideEditorPropertiesComp from './SlideEditorPropertiesComp';
 import { useSelectedCanvasItemsAndSetterContext } from '../CanvasItem';
+import { tran } from '../../../lang/langHelpers';
 
 const LazyToolCanvasItemsComp = lazy(() => {
     return import('./ToolCanvasItemsComp');
 });
 
 const tabTypeList = [
-    ['p', 'Properties'],
-    ['c', 'Canvas Items'],
+    ['p', tran('Properties')],
+    ['c', tran('Canvas Items')],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function SlideEditorToolsComp() {

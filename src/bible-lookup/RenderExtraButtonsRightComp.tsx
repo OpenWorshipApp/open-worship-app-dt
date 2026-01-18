@@ -48,7 +48,7 @@ export default function RenderExtraButtonsRightComp({
                             setIsKeepingPopup(checked);
                         }}
                     />
-                    <span>Keep Open</span>
+                    <span>{tran('Keep Open')}</span>
                 </div>
             ) : null}
             <button

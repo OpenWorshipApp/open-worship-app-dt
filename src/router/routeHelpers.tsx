@@ -1,6 +1,6 @@
 import { CSSProperties, ReactNode } from 'react';
 
-import { OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
 import { tran } from '../lang/langHelpers';
 
@@ -24,30 +24,6 @@ export function toTitleExternal(title: string, style?: CSSProperties) {
         </span>
     );
 }
-
-export const presenterTab: TabOptionType = {
-    title: toTitleExternal('Presenter', {
-        color: 'var(--app-color-presenter)',
-    }),
-    routePath: appProvider.presenterHomePage,
-};
-export const readerTab: TabOptionType = {
-    title: (
-        <span
-            style={{
-                color: 'var(--app-color-reader)',
-            }}
-        >
-            <i className="bi bi-book px-1" />
-            {toTitleExternal('Bible Reader')}
-        </span>
-    ),
-    routePath: appProvider.readerHomePage,
-};
-export const experimentTab: TabOptionType = {
-    title: toTitleExternal('(dev)Experiment'),
-    routePath: appProvider.experimentHomePage,
-};
 
 const PATH_NAME_SETTING_NAME = 'last-page-location';
 export function goToPath(pathname?: string) {

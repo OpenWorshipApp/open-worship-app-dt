@@ -157,10 +157,10 @@ function RenderForegroundTabComp({
 }
 
 const tabTypeList = [
-    ['d', 'Documents', LazyAppDocumentPreviewerComp],
-    ['l', 'Lyrics', LazyLyricHandlerComp],
-    ['b', 'Bibles', LazyPresenterBiblePreviewerRenderComp],
-    ['f', 'Foreground', LazyPresenterForegroundComp],
+    ['d', tran('Documents'), LazyAppDocumentPreviewerComp],
+    ['l', tran('Lyrics'), LazyLyricHandlerComp],
+    ['b', tran('Bibles'), LazyPresenterBiblePreviewerRenderComp],
+    ['f', tran('Foreground'), LazyPresenterForegroundComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function PresenterComp() {

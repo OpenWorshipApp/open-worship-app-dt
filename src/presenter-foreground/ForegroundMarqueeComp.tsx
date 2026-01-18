@@ -1,4 +1,4 @@
-import { tran } from '../lang/langHelpers';
+import { DEFAULT_LOCALE, tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
@@ -74,12 +74,15 @@ export default function ForegroundMarqueeComp() {
                     onClick={() => {
                         // Sunday September 24, 2023
                         const date = new Date();
-                        const formattedDate = date.toLocaleString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                        });
+                        const formattedDate = date.toLocaleString(
+                            DEFAULT_LOCALE,
+                            {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            },
+                        );
                         setText(formattedDate);
                     }}
                 >

@@ -23,6 +23,12 @@ import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import BibleFindController from './BibleFindController';
 import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleInfoHelpers';
+import { setSetting } from '../helper/settingHelpers';
+
+export const BIBLE_SEARCH_SETTING_NAME = 'bible-search-tab';
+export function setBibleSearchingTabType(tabType: 's' | 'c') {
+    setSetting(BIBLE_SEARCH_SETTING_NAME, tabType);
+}
 
 export type FindDataType = {
     pagingData: PagingDataTye;

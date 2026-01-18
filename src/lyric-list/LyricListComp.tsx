@@ -17,6 +17,7 @@ import Lyric from './Lyric';
 import LyricFileComp from './LyricFileComp';
 import LyricAppDocument from './LyricAppDocument';
 import { checkIsVaryAppDocumentOnScreen } from '../app-document-list/appDocumentHelpers';
+import { tran } from '../lang/langHelpers';
 
 async function newFileHandling(dirPath: string, name: string) {
     return !(await Lyric.create(dirPath, name));
@@ -72,7 +73,7 @@ export default function LyricListComp() {
             dirSource={dirSource}
             checkExtraFile={handleExtraFileChecking}
             onNewFile={newFileHandling}
-            header={<span>Lyrics</span>}
+            header={<span>{tran('Lyrics')}</span>}
             bodyHandler={handleBodyRendering}
             checkIsOnScreen={checkIsOnScreen}
             fileSelectionOption={{

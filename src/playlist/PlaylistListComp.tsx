@@ -8,6 +8,7 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
+import { tran } from '../lang/langHelpers';
 
 export default function PlaylistListComp() {
     const dirSource = useGenDirSource(dirSourceSettingNames.PLAYLIST);
@@ -38,7 +39,7 @@ export default function PlaylistListComp() {
             onNewFile={async (dirPath: string, name: string) => {
                 return !(await Playlist.create(dirPath, name));
             }}
-            header={<span>Playlists</span>}
+            header={<span>{tran('Playlists')}</span>}
             bodyHandler={handleBodyRendering}
         />
     );

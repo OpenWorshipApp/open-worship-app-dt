@@ -24,6 +24,7 @@ import {
     varyAppDocumentFromFilePath,
 } from './appDocumentHelpers';
 import DirSource from '../helper/DirSource';
+import { tran } from '../lang/langHelpers';
 
 function handleExtraFileChecking(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
@@ -97,7 +98,7 @@ export default function AppDocumentListComp() {
             checkExtraFile={handleExtraFileChecking}
             takeDroppedFile={handleFileTaking.bind(null, dirSource)}
             onNewFile={newFileHandling}
-            header={<span>Documents</span>}
+            header={<span>{tran('Documents')}</span>}
             bodyHandler={handleBodyRendering}
             checkIsOnScreen={checkIsOnScreen}
             fileSelectionOption={{

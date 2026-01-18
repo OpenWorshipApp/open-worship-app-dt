@@ -1,230 +1,27 @@
-import { useMemo, useState, ReactNode, useCallback } from 'react';
+import { useMemo, useState, ReactNode } from 'react';
 
-import {
-    TabOptionType,
-    experimentTab,
-    goToPath,
-    presenterTab,
-    readerTab,
-} from './routeHelpers';
 import {
     BibleLookupButtonComp,
     BibleLookupTogglePopupContext,
     HelpButtonComp,
     SettingButtonComp,
 } from '../others/commonButtons';
-import appProvider from '../server/appProvider';
 import { MultiContextRender } from '../helper/MultiContextRender';
 import AppPopupBibleLookupComp from '../app-modal/AppPopupBibleLookupComp';
 import AppContextMenuComp from '../context-menu/AppContextMenuComp';
 import HandleAlertComp from '../popup-widget/HandleAlertComp';
 import ToastComp from '../toast/ToastComp';
-import AppDocument from '../app-document-list/AppDocument';
-import Slide from '../app-document-list/Slide';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import TopProgressBarComp from '../progress-bar/TopProgressBarComp';
-import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import {
     SelectedEditingSlideContext,
     SelectedVaryAppDocumentContext,
-    getSelectedVaryAppDocument,
-    getSelectedEditingSlide,
-    setSelectedVaryAppDocument,
-    setSelectedEditingSlide,
 } from '../app-document-list/appDocumentHelpers';
+import { SelectedLyricContext } from '../lyric-list/lyricHelpers';
+import LayoutTabRenderComp from './LayoutTabRenderComp';
 import {
-    getSelectedLyric,
-    SelectedLyricContext,
-    setSelectedLyric,
-} from '../lyric-list/lyricHelpers';
-import Lyric from '../lyric-list/Lyric';
-import { editorTab } from './routeCompHelpers';
-import { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
-
-const tabs: TabOptionType[] = [];
-if (!appProvider.isPagePresenter) {
-    tabs.push(presenterTab);
-} else if (!appProvider.isPageAppDocumentEditor) {
-    tabs.push(editorTab);
-}
-tabs.push(readerTab);
-if (appProvider.systemUtils.isDev) {
-    tabs.push(experimentTab);
-}
-
-function TabRenderComp() {
-    const handleClicking = useCallback(async (tab: TabOptionType) => {
-        if (tab.preCheck) {
-            const isPassed = await tab.preCheck();
-            if (!isPassed) {
-                return;
-            }
-        }
-        goToPath(tab.routePath);
-    }, []);
-
-    return (
-        <ul className="nav nav-tabs">
-            {tabs.map((tab, i) => {
-                return (
-                    <li key={i} className="nav-item">
-                        <button
-                            className="btn btn-sm btn-link nav-link"
-                            onClick={handleClicking.bind(null, tab)}
-                        >
-                            {tab.title}
-                        </button>
-                    </li>
-                );
-            })}
-        </ul>
-    );
-}
-
-function useAppDocumentContextValues() {
-    const [varyAppDocument, setVaryAppDocument] =
-        useState<VaryAppDocumentType | null>(null);
-
-    const setVaryAppDocument1 = useCallback(
-        (newVaryAppDocument: VaryAppDocumentType | null) => {
-            setVaryAppDocument(newVaryAppDocument);
-            setSelectedVaryAppDocument(newVaryAppDocument);
-        },
-        [],
-    );
-
-    const [slide, setSlide] = useState<Slide | null>(null);
-
-    const setSlide1 = useCallback((newSlide: Slide | null) => {
-        setSlide(newSlide);
-        setSelectedEditingSlide(newSlide);
-    }, []);
-
-    useAppEffectAsync(
-        async (methodContext) => {
-            const varyAppDocument = await getSelectedVaryAppDocument();
-            methodContext.setVaryAppDocument(varyAppDocument);
-            const varyAppDocumentItem = await getSelectedEditingSlide();
-            methodContext.setSlide(varyAppDocumentItem);
-        },
-        [],
-        {
-            setVaryAppDocument,
-            setSlide,
-        },
-    );
-
-    const varyAppDocumentContextValue = useMemo(() => {
-        return {
-            selectedVaryAppDocument: varyAppDocument,
-            setSelectedVaryAppDocument: async (
-                newVaryAppDocument: VaryAppDocumentType | null,
-            ) => {
-                setVaryAppDocument1(newVaryAppDocument);
-                let selectedSlide: Slide | null = null;
-                if (
-                    newVaryAppDocument !== null &&
-                    AppDocument.checkIsThisType(newVaryAppDocument)
-                ) {
-                    const varyAppDocumentItems =
-                        await newVaryAppDocument.getSlides();
-                    selectedSlide = varyAppDocumentItems[0] ?? null;
-                }
-                setSlide1(selectedSlide);
-            },
-        };
-    }, [varyAppDocument, setVaryAppDocument1, setSlide1]);
-
-    const editingSlideContextValue = useMemo(() => {
-        return {
-            selectedSlide: slide,
-            setSelectedDocument: (newSelectedSlide: Slide) => {
-                setSlide1(newSelectedSlide);
-            },
-        };
-    }, [slide, setSlide1]);
-
-    const handleFileUpdate = useCallback(async () => {
-        if (
-            varyAppDocument === null ||
-            !AppDocument.checkIsThisType(varyAppDocument)
-        ) {
-            return;
-        }
-        const slides = await varyAppDocument.getSlides();
-        const newSlide =
-            slides.find((item) => {
-                return slide !== null && item.checkIsSame(slide);
-            }) ??
-            slides[0] ??
-            null;
-        setSlide1(newSlide);
-    }, [varyAppDocument, slide, setSlide1]);
-
-    useFileSourceEvents(
-        ['update'],
-        handleFileUpdate,
-        [handleFileUpdate],
-        varyAppDocument?.filePath,
-    );
-
-    const handleFileDelete = useCallback(
-        (filePath: string) => {
-            if (varyAppDocument?.filePath === filePath) {
-                setVaryAppDocument1(null);
-                setSlide1(null);
-            }
-        },
-        [varyAppDocument, setVaryAppDocument1, setSlide1],
-    );
-
-    useFileSourceEvents(['delete'], handleFileDelete, [handleFileDelete]);
-
-    return {
-        varyAppDocumentContextValue,
-        editingSlideContextValue,
-    };
-}
-
-function useLyricContextValues() {
-    const [lyric, setLyric] = useState<Lyric | null>(null);
-
-    const setLyric1 = useCallback((newLyric: Lyric | null) => {
-        setLyric(newLyric);
-        setSelectedLyric(newLyric);
-    }, []);
-
-    useAppEffectAsync(
-        async (methodContext) => {
-            const lyric = await getSelectedLyric();
-            methodContext.setLyric(lyric);
-        },
-        [],
-        { setLyric },
-    );
-
-    const lyricContextValue = useMemo(() => {
-        return {
-            selectedLyric: lyric,
-            setSelectedLyric: async (newLyric: Lyric | null) => {
-                setLyric1(newLyric);
-            },
-        };
-    }, [lyric, setLyric1]);
-
-    const handleFileDelete = useCallback(
-        (filePath: string) => {
-            if (lyric?.filePath === filePath) {
-                setLyric1(null);
-            }
-        },
-        [lyric, setLyric1],
-    );
-
-    useFileSourceEvents(['delete'], handleFileDelete, [handleFileDelete]);
-
-    return { lyricContextValue };
-}
+    useAppDocumentContextValues,
+    useLyricContextValues,
+} from './popupLayoutHelpers';
 
 export default function AppLayoutComp({
     children,
@@ -275,7 +72,7 @@ export default function AppLayoutComp({
         <MultiContextRender contexts={contexts}>
             {/* <TestInfinite /> */}
             <div id="app-header" className="d-flex">
-                <TabRenderComp />
+                <LayoutTabRenderComp />
                 <div
                     className={
                         'app-highlight-border-bottom d-flex' +

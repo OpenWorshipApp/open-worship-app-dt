@@ -8,13 +8,13 @@ export default function ScreenEffectControlComp() {
         <>
             <small>{tran('Transition:')}</small>
             <RenderTransitionEffectComp
-                title="Slide:"
-                domTitle="Slide transition"
+                title={tran('Slide') + ':'}
+                domTitle={tran('Slide transition')}
                 screenEffectManager={screenManager.varyAppDocumentEffectManager}
             />
             <RenderTransitionEffectComp
-                title="BG:"
-                domTitle="Background transition"
+                title={tran('Background') + ':'}
+                domTitle={tran('Background transition')}
                 screenEffectManager={screenManager.backgroundEffectManager}
             />
         </>

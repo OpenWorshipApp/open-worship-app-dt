@@ -7,6 +7,7 @@ import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { QuitCurrentPageComp } from '../others/commonButtons';
 import { SETTING_SETTING_NAME } from './settingHelpers';
 import SettingApplyComp from './SettingApplyComp';
+import { tran } from '../lang/langHelpers';
 
 const LazySettingGeneralComp = lazy(() => {
     return import('./SettingGeneralComp');
@@ -16,8 +17,8 @@ const LazySettingBibleComp = lazy(() => {
 });
 
 const tabTypeList = [
-    ['g', 'General', LazySettingGeneralComp],
-    ['b', 'Bible', LazySettingBibleComp],
+    ['g', tran('General'), LazySettingGeneralComp],
+    ['b', tran('Bible'), LazySettingBibleComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function SettingComp() {

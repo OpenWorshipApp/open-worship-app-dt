@@ -26,7 +26,7 @@ export default function SettingApplyComp() {
                 forceReloadAppWindows();
             }}
         >
-            `Apply Settings{' '}
+            {tran('Apply Settings') + ' '}
             <i className={`bi bi-${isApplied ? 'check' : 'asterisk'}`} />
         </button>
     );

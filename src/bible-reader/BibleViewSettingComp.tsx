@@ -1,3 +1,4 @@
+import { tran } from '../lang/langHelpers';
 import AppRangeComp from '../others/AppRangeComp';
 
 const MIN_FONT_SIZE = 5;
@@ -30,11 +31,11 @@ export default function BibleViewSettingComp({
                 <div className="flex-fill d-flex mx-1">
                     <div className="d-flex flex-fill">
                         <label htmlFor={rangeId} className="form-label">
-                            {'`'}Font Size [Ctrl + Scroll] ({fontSize}px):
+                            {tran('Font Size')} [Ctrl + Scroll] ({fontSize}px):
                         </label>
                         <AppRangeComp
                             value={fontSize}
-                            title="Font Size"
+                            title={tran('Font Size')}
                             id={rangeId}
                             setValue={setFontSize}
                             defaultSize={defaultRangeSize}

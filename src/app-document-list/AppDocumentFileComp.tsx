@@ -20,11 +20,11 @@ import {
 import PdfAppDocument from './PdfAppDocument';
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
-import { editorTab } from '../router/routeCompHelpers';
 import {
     VaryAppDocumentDynamicType,
     VaryAppDocumentType,
 } from './appDocumentTypeHelpers';
+import { genLayoutTabs } from '../router/popupLayoutHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
@@ -47,6 +47,7 @@ function genContextMenuItems(
             },
         ];
     }
+    const { editorTab } = genLayoutTabs();
     return [
         {
             menuElement: 'Edit',

@@ -12,7 +12,7 @@ import {
 } from './bibleScreenComps';
 import { getHTMLChild } from '../helper/helpers';
 import appProvider from '../server/appProvider';
-import { getLangDataAsync } from '../lang/langHelpers';
+import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 
 const bibleScreenHelper = {
@@ -26,7 +26,7 @@ const bibleScreenHelper = {
         const bibleRenderingLangList = await Promise.all(
             bibleRenderingList.map(async (item) => {
                 let langData = await getLangDataAsync(item.locale);
-                langData ??= await getLangDataAsync('en-US');
+                langData ??= await getLangDataAsync(DEFAULT_LOCALE);
                 return {
                     ...item,
                     langData: langData!,

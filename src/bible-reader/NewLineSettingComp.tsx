@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
+import { tran } from '../lang/langHelpers';
 
 export default function NewLineSettingComp() {
     const viewController = useBibleItemsViewControllerContext();
@@ -25,7 +26,7 @@ export default function NewLineSettingComp() {
                 title="Break lines following bible info"
             >
                 <label htmlFor="new-line-setting" className="form-label">
-                    Should New Lines:
+                    {tran('Should New Lines')}:
                 </label>
                 <input
                     className="form-check-input app-caught-hover-pointer"
@@ -39,7 +40,7 @@ export default function NewLineSettingComp() {
             </div>
             <div
                 className="d-flex mx-1"
-                title="Break lines following model formatting"
+                title={tran('Break lines following model formatting')}
                 style={{
                     opacity: shouldNewLine ? 1 : 0.5,
                 }}
@@ -48,7 +49,7 @@ export default function NewLineSettingComp() {
                     htmlFor="use-model-new-line-setting"
                     className="form-label"
                 >
-                    Use Model New Lines:
+                    {tran('Use Model New Lines')}:
                 </label>
                 <input
                     className="form-check-input app-caught-hover-pointer"

@@ -1,6 +1,5 @@
 import { ReactNode, LazyExoticComponent, useMemo } from 'react';
 
-import { tran } from '../lang/langHelpers';
 import AppSuspenseComp from './AppSuspenseComp';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
@@ -54,7 +53,7 @@ function RendTabComp<T>({
                     setActiveTab?.(tab.key);
                 }}
             >
-                {tran(tab.title)}
+                {tab.title}
             </button>
         </li>
     );

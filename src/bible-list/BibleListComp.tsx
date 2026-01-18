@@ -9,6 +9,7 @@ import { defaultDataDirNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
 import BibleItem from './BibleItem';
 import { checkIsBibleItemOnScreen } from './bibleHelpers';
+import { tran } from '../lang/langHelpers';
 
 async function checkIsOnScreen(filePaths: string[]) {
     const bibleItems: BibleItem[] = [];
@@ -48,7 +49,7 @@ export default function BibleListComp() {
             onNewFile={async (dirPath: string, name: string) => {
                 return !(await Bible.create(dirPath, name));
             }}
-            header={<span>Bibles</span>}
+            header={<span>{tran('Bibles')}</span>}
             bodyHandler={handleBodyRendering}
             userClassName="p-0"
             checkIsOnScreen={checkIsOnScreen}

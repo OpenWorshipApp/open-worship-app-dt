@@ -9,6 +9,7 @@ import {
     toVerseFullKeyFormat,
 } from './bibleInfoHelpers';
 import {
+    DEFAULT_LOCALE,
     fromLocaleNum,
     fromStringNum,
     getFontFamilyByLocale,
@@ -78,7 +79,8 @@ export async function getBibleLocale(bibleKey: string) {
 export async function getLangDataFromBibleKey(bibleKey: string) {
     const locale = await getBibleLocale(bibleKey);
     const langData =
-        (await getLangDataAsync(locale)) || (await getLangDataAsync('en-US'));
+        (await getLangDataAsync(locale)) ||
+        (await getLangDataAsync(DEFAULT_LOCALE));
     return langData;
 }
 

@@ -87,11 +87,11 @@ const genIsSelected = (
 };
 
 const tabTypeList = [
-    ['color', 'Colors', LazyBackgroundColorsComp],
-    ['image', 'Images', LazyBackgroundImagesComp],
-    ['video', 'Videos', LazyBackgroundVideosComp],
-    ['camera', 'Cameras', LazyBackgroundCamerasComp],
-    ['web', 'Webs', LazyBackgroundWebComp],
+    ['color', tran('Colors'), LazyBackgroundColorsComp],
+    ['image', tran('Images'), LazyBackgroundImagesComp],
+    ['video', tran('Videos'), LazyBackgroundVideosComp],
+    ['camera', tran('Cameras'), LazyBackgroundCamerasComp],
+    ['web', tran('Webs'), LazyBackgroundWebComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {
