@@ -1,4 +1,10 @@
-import { LanguageDataType } from '../langHelpers';
+import type { LanguageDataType } from '../../langHelpers';
+
+import btbBlack from './fonts/Battambang-Black.ttf';
+import btbBold from './fonts/Battambang-Bold.ttf';
+import btbLight from './fonts/Battambang-Light.ttf';
+import btbRegular from './fonts/Battambang-Regular.ttf';
+import btbThin from './fonts/Battambang-Thin.ttf';
 
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
@@ -202,17 +208,33 @@ const lang: LanguageDataType = {
     locale: 'km-KH',
     langCode: 'km',
     genCss: () => {
-        const fontBR = '/fonts/km/Battambang/Battambang-Regular.ttf';
-        const fontBB = '/fonts/km/Battambang/Battambang-Bold.ttf';
         return `
         @font-face {
             font-family: ${fontFamily};
-            src: url(${fontBR}) format("truetype");
+            src: url(${btbRegular}) format("truetype");
         }
         @font-face {
             font-family: ${fontFamily};
-            src: url(${fontBB}) format("truetype");
+            src: url(${btbBold}) format("truetype");
             font-weight: bold;
+        }
+        @font-face {
+            font-family: ${fontFamily};
+            src: url(${btbLight}) format("truetype");
+            font-weight: 300;
+        }
+        @font-face {
+            font-family: ${fontFamily};
+            src: url(${btbThin}) format("truetype");
+            font-weight: 100;
+        }
+        @font-face {
+            font-family: ${fontFamily};
+            src: url(${btbBlack}) format("truetype");
+            font-weight: 900;
+        }
+        * {
+            font-family: ${fontFamily}, sans-serif;
         }
         `;
     },

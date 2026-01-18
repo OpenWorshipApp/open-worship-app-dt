@@ -25,6 +25,7 @@ export default function FontFamilyControlComp({
         if (fontFamily && !fontList[fontFamily]) {
             newFontFamilies.unshift([fontFamily, `${fontFamily} (Missing)`]);
         }
+        newFontFamilies.unshift(['--', '--']);
         return newFontFamilies;
     }, [fontList, fontFamily]);
     if (fontList === null) {
@@ -41,13 +42,13 @@ export default function FontFamilyControlComp({
                     className="form-select form-select-sm"
                     value={fontFamily}
                     onChange={(event) => {
-                        if (event.target.value === '--') {
-                            return;
+                        let value = event.target.value;
+                        if (value === '--') {
+                            value = '';
                         }
-                        setFontFamily(event.target.value);
+                        setFontFamily(value);
                     }}
                 >
-                    <option>--</option>
                     {fontFamilies.map(([key, value]) => {
                         return (
                             <option key={key} value={key}>

@@ -502,7 +502,7 @@ async function fetchLangData(langCode: string) {
         // TODO: implement loading language data from server
         return null;
     }
-    const module = await import(`./data/${langCode}.ts`);
+    const module = await import(`./data/${langCode}/index.ts`);
     return module.default as LanguageDataType;
 }
 
