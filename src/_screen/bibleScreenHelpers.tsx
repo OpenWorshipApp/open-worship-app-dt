@@ -25,8 +25,8 @@ const bibleScreenHelper = {
         }
         const bibleRenderingLangList = await Promise.all(
             bibleRenderingList.map(async (item) => {
-                let langData = await getLangAsync(item.locale, true);
-                langData ??= await getLangAsync('en-US', true);
+                let langData = await getLangAsync(item.locale);
+                langData ??= await getLangAsync('en-US');
                 return {
                     ...item,
                     langData: langData!,

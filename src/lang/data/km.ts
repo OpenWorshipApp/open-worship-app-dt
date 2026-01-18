@@ -202,11 +202,8 @@ const lang: LanguageDataType = {
     locale: 'km-KH',
     langCode: 'km',
     genCss: () => {
-        if (lang.dirPath === undefined) {
-            return '';
-        }
-        const fontBR = `${lang.dirPath}/Battambang-Regular.ttf`;
-        const fontBB = `${lang.dirPath}/Battambang-Bold.ttf`;
+        const fontBR = '/fonts/km/Battambang/Battambang-Regular.ttf';
+        const fontBB = '/fonts/km/Battambang/Battambang-Bold.ttf';
         return `
         @font-face {
             font-family: ${fontFamily};

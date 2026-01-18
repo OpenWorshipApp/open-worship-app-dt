@@ -1,7 +1,7 @@
 import appProvider from '../server/appProvider';
 import {
+    getLang,
     getLangCode,
-    getLangDataByLocaleOrByLangCode,
     getLanguageTitle,
     reversedLocalesMap,
 } from '../lang/langHelpers';
@@ -21,7 +21,7 @@ function genContextMenuItem(langCode: string): ContextMenuItemType {
     } else {
         menuElement += ` [${langCode}]`;
     }
-    const langData = getLangDataByLocaleOrByLangCode(langCode);
+    const langData = getLang(langCode);
     const fontFamily = langData === null ? undefined : langData.fontFamily;
     return {
         menuElement,

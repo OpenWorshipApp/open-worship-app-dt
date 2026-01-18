@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
 import {
     getAllLangsAsync,
     getCurrentLocale,
@@ -10,6 +10,7 @@ import {
     tran,
 } from '../lang/langHelpers';
 import { applyStore } from './SettingApplyComp';
+import LoadingComp from '../others/LoadingComp';
 
 function RenderLanguageButtonComp({
     currentLocale,
@@ -44,31 +45,36 @@ function RenderLanguageButtonComp({
 }
 
 export default function SettingGeneralLanguageComp() {
-    const [allLangs, setAllLangs] = useState<LanguageDataType[]>([]);
+    const [allLangs] = useAppStateAsync(() => {
+        return getAllLangsAsync();
+    });
     const [locale, setLocale] = useState(getCurrentLocale());
-    useAppEffect(() => {
-        if (allLangs.length === 0) {
-            const newAllLangs = getAllLangsAsync();
-            setAllLangs(newAllLangs);
-        }
-    }, [allLangs]);
+    let element: ReactNode = null;
+    if (allLangs === undefined) {
+        element = <LoadingComp />;
+    } else if (allLangs === null || allLangs.length === 0) {
+        element = <div>{tran('No languages available.')}</div>;
+    } else {
+        element = (
+            <div className="options d-flex flex-wrap">
+                {allLangs.map((langData) => {
+                    return (
+                        <RenderLanguageButtonComp
+                            key={langData.locale}
+                            currentLocale={locale}
+                            langData={langData}
+                            setLocale={setLocale}
+                        />
+                    );
+                })}
+            </div>
+        );
+    }
+
     return (
         <div className="card lang m-1">
             <div className="card-header">{tran('Language')}</div>
-            <div className="card-body">
-                <div className="options d-flex flex-wrap">
-                    {allLangs.map((langData) => {
-                        return (
-                            <RenderLanguageButtonComp
-                                key={langData.locale}
-                                currentLocale={locale}
-                                langData={langData}
-                                setLocale={setLocale}
-                            />
-                        );
-                    })}
-                </div>
-            </div>
+            <div className="card-body">{element}</div>
         </div>
     );
 }

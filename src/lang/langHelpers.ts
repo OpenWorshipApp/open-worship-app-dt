@@ -1,13 +1,9 @@
-import { handleError } from '../helper/errorHelpers';
-import { AppProviderType } from '../server/appProvider';
-import { AnyObjectType } from '../helper/typeHelpers';
-
-import kmLangData from './data/km';
-import enLangData from './data/en';
-import { log } from '../helper/loggerHelpers';
+import type { AppProviderType } from '../server/appProvider';
+import type { AnyObjectType } from '../helper/typeHelpers';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
+const includedLangCodes = ['km', 'en'];
 
 export const allLocalesMap = {
     arc: 'arc',
@@ -437,17 +433,11 @@ export function getLangCode(locale: LocaleType): string | null {
     return (allLocalesMap as any)[locale] ?? null;
 }
 
-export const langDataMap: { [key: string]: LanguageDataType } = {
-    km: kmLangData,
-    en: enLangData,
-};
-
 export const langCodes = ['km', 'en'] as const;
 export type LocaleType = keyof typeof allLocalesMap;
 export type LanguageDataType = {
     locale: LocaleType;
     langCode: string;
-    dirPath?: string;
     genCss: () => string;
     fontFamily: string;
     numList: string[];
@@ -474,14 +464,6 @@ export function checkIsValidLocale(text: string) {
     return !!(allLocalesMap as any)[text];
 }
 
-let currentLocale: LocaleType = DEFAULT_LOCALE;
-export function setCurrentLocale(locale: LocaleType) {
-    if (!checkIsValidLocale(locale)) {
-        locale = DEFAULT_LOCALE;
-    }
-    localStorage.setItem(LANGUAGE_LOCALE_SETTING_NAME, locale);
-    currentLocale = locale;
-}
 export function getCurrentLocale(): LocaleType {
     const locale =
         localStorage.getItem(LANGUAGE_LOCALE_SETTING_NAME) ?? DEFAULT_LOCALE;
@@ -490,66 +472,65 @@ export function getCurrentLocale(): LocaleType {
     }
     return DEFAULT_LOCALE;
 }
-currentLocale = getCurrentLocale();
-
-const langCache = new Map<string, LanguageDataType | null>();
-export function getLang(langCodeOrLocale: string) {
-    // TODO: change to completely locale
-    const langCode = checkIsValidLocale(langCodeOrLocale)
-        ? getLangCode(langCodeOrLocale as any)
-        : langCodeOrLocale;
-    return langCache.get(langCode ?? langCodeOrLocale) ?? null;
-}
-
-export function getLangDataByLocaleOrByLangCode(
-    localeOrLangCode: string,
-): LanguageDataType | null {
-    return (
-        langDataMap[localeOrLangCode] ??
-        langDataMap[allLocalesMap[localeOrLangCode as LocaleType] ?? ''] ??
-        null
-    );
-}
-
-export async function getLangAsync(locale: LocaleType, isForce = false) {
-    if (!langCache.has(locale)) {
-        try {
-            const langData = getLangDataByLocaleOrByLangCode(locale);
-            langCache.set(locale, langData);
-            let langCode = getLangCode(locale);
-            if (langCode === null && isForce) {
-                langCode = getLangCode(DEFAULT_LOCALE);
-            }
-            if (langCode === 'km' && langData !== null) {
-                // TODO: implement downloadable lang package
-                langData.dirPath = '/fonts/km/Battambang';
-            }
-            if (langCode !== null) {
-                langCache.set(langCode, langData);
-                if (langData !== null) {
-                    const elementID = `lang-${langCode}`;
-                    let styleElement = document.querySelector(
-                        `style#${elementID}`,
-                    );
-                    if (styleElement === null) {
-                        styleElement = document.createElement('style');
-                        styleElement.id = elementID;
-                        document.head.appendChild(styleElement);
-                    }
-                    styleElement.innerHTML = langData.genCss();
-                }
-            }
-        } catch (error) {
-            handleError(error);
-        }
+let currentLocale = getCurrentLocale();
+export function setCurrentLocale(locale: LocaleType) {
+    if (!checkIsValidLocale(locale)) {
+        locale = DEFAULT_LOCALE;
     }
-    return getLang(locale);
+    localStorage.setItem(LANGUAGE_LOCALE_SETTING_NAME, locale);
+    currentLocale = locale;
 }
-getLangAsync(currentLocale).then(() => {
-    log(`Loaded language data for locale: ${currentLocale}`);
-});
-export function getAllLangsAsync() {
-    return Object.values(langDataMap);
+
+const langCache = new Map<string, LanguageDataType>();
+export function getLang(langCodeOrLocale: string) {
+    return langCache.get(langCodeOrLocale) ?? null;
+}
+
+function initLangCss(langData: LanguageDataType) {
+    const elementID = `lang-${langData.langCode}`;
+    let styleElement = document.querySelector(`style#${elementID}`);
+    if (styleElement === null) {
+        styleElement = document.createElement('style');
+        styleElement.id = elementID;
+        document.head.appendChild(styleElement);
+    }
+    styleElement.innerHTML = langData.genCss();
+}
+
+async function fetchLangData(langCode: string) {
+    if (!includedLangCodes.includes(langCode)) {
+        // TODO: implement loading language data from server
+        return null;
+    }
+    const module = await import(`./data/${langCode}.ts`);
+    return module.default as LanguageDataType;
+}
+
+export async function getLangAsync(
+    locale: LocaleType,
+): Promise<LanguageDataType | null> {
+    const cachedLangData = langCache.get(locale);
+    if (cachedLangData !== undefined) {
+        return cachedLangData;
+    }
+    const langCode = getLangCode(locale);
+    if (langCode === null) {
+        return null;
+    }
+    const langData = await fetchLangData(langCode);
+    if (langData === null) {
+        return null;
+    }
+    langCache.set(locale, langData);
+    langCache.set(langCode, langData);
+    initLangCss(langData);
+    return langData;
+}
+export async function getAllLangsAsync() {
+    const allLangData = await Promise.all(
+        includedLangCodes.map((langCode) => fetchLangData(langCode)),
+    );
+    return allLangData.filter((data) => data !== null);
 }
 
 export function tran(...args: any[]): string {
