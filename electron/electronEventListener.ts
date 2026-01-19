@@ -81,7 +81,9 @@ export function initEventListenerApp(appController: ElectronAppController) {
 }
 
 export function initEventScreen(appController: ElectronAppController) {
-    const sendData = appController.mainController.sendData;
+    const sendDataToMain = appController.mainController.sendData.bind(
+        appController.mainController,
+    );
     ipcMain.on('main:app:get-displays', (event) => {
         event.returnValue = {
             primaryDisplay: appController.settingManager.primaryDisplay,
@@ -103,7 +105,7 @@ export function initEventScreen(appController: ElectronAppController) {
         );
         if (display !== undefined) {
             screenController.listenLoading().then(() => {
-                sendData(data.replyEventName);
+                sendDataToMain(data.replyEventName);
             });
             screenController.setDisplay(display);
             appController.mainWin.focus();
@@ -227,7 +229,9 @@ export function initEventFinder(appController: ElectronAppController) {
 }
 
 export function initEventOther(appController: ElectronAppController) {
-    const sendData = appController.mainController.sendData;
+    const sendDataToMain = appController.mainController.sendData.bind(
+        appController.mainController,
+    );
     ipcMain.on(
         'main:app:tar-extract',
         async (
@@ -243,7 +247,7 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             await tarExtract(filePath, outputDir);
-            sendData(replyEventName);
+            sendDataToMain(replyEventName);
         },
     );
 
@@ -280,7 +284,7 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             await shell.trashItem(data.path);
-            sendData(data.replyEventName);
+            sendDataToMain(data.replyEventName);
         },
     );
 
@@ -303,9 +307,9 @@ export function initEventOther(appController: ElectronAppController) {
         ) => {
             const error = await officeFileToPdf(officeFilePath, pdfFilePath);
             if (error === null) {
-                sendData(replyEventName);
+                sendDataToMain(replyEventName);
             } else {
-                sendData(replyEventName, error);
+                sendDataToMain(replyEventName, error);
             }
         },
     );
@@ -327,7 +331,7 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             const data = await pdfToImages(filePath, outDir, isForce);
-            sendData(replyEventName, data);
+            sendDataToMain(replyEventName, data);
         },
     );
 
@@ -344,7 +348,7 @@ export function initEventOther(appController: ElectronAppController) {
             },
         ) => {
             const data = await getPagesCount(filePath);
-            sendData(replyEventName, data);
+            sendDataToMain(replyEventName, data);
         },
     );
 
@@ -373,18 +377,18 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:ask-camera-access',
         async (_event, { replyEventName }) => {
             if (!isMac) {
-                sendData(replyEventName, true);
+                sendDataToMain(replyEventName, true);
                 return;
             }
             try {
                 const access =
                     await systemPreferences.askForMediaAccess('camera');
                 console.log('Camera access:', access);
-                sendData(replyEventName, access);
+                sendDataToMain(replyEventName, access);
             } catch (error) {
                 console.error('Camera access error:', error);
             }
-            sendData(replyEventName, false);
+            sendDataToMain(replyEventName, false);
         },
     );
 

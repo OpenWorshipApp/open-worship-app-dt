@@ -6,7 +6,7 @@ import {
     ForegroundCameraDataType,
     StyleAnimType,
 } from '../_screen/screenTypeHelpers';
-import appProvider from '../server/appProvider';
+import { electronSendAsync } from '../server/appHelpers';
 
 export type CameraInfoType = {
     deviceId: string;
@@ -17,11 +17,10 @@ export type CameraInfoType = {
 const { mediaDevices } = navigator;
 
 export async function requestCameraAccess() {
-    const canAccess = await appProvider.messageUtils.sendDataSync(
+    const canAccess = await electronSendAsync<boolean>(
         'main:app:ask-camera-access',
     );
-    console.log('***', canAccess);
-    return canAccess as boolean;
+    return canAccess;
 }
 
 async function getAllCameraDevices() {
