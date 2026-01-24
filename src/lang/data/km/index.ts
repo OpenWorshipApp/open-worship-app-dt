@@ -228,6 +228,9 @@ const dictionary = {
     'Background transition': 'ការផ្លាស់ប្តូរផ្ទៃខាងក្រោយ',
     'Clear input': 'លុបទិន្នន័យកំពុងបញ្ចូល',
     'Clear input chunk': 'លុបផ្នែកទិន្នន័យកំពុងបញ្ចូល',
+    'Keep popup modal open when adding a bible item, useful in presenter mode':
+        'រក្សាទុកផ្ទាំងបង្ហាញពហុមុខងារឱ្យបើកនៅពេលបន្ថែមធាតុព្រះគម្ពីរ មានប្រយោជន៍នៅក្នុងរបៀបកម្មវិធីបង្ហាញ',
+    'Canvas Items': 'ធាតុផ្ទាំង',
 };
 const fontFamily = 'km-font-family';
 const lang: LanguageDataType = {
