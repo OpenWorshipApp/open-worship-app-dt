@@ -86,7 +86,7 @@ function MenuIsModifying({
                 className="btn btn-sm btn-success"
                 type="button"
                 disabled={!canSave}
-                title={tran`Save [${toShortcutKey(savingEventMapper)}]`}
+                title={tran('Save') + ` [${toShortcutKey(savingEventMapper)}]`}
                 style={genDisabledStyle(!canSave)}
                 onClick={() => {
                     editableDocument.save();

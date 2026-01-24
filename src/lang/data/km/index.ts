@@ -226,6 +226,8 @@ const dictionary = {
     Background: 'ផ្ទៃខាងក្រោយ',
     'Slide transition': 'ការផ្លាស់ប្តូរស្លាយ',
     'Background transition': 'ការផ្លាស់ប្តូរផ្ទៃខាងក្រោយ',
+    'Clear input': 'លុបទិន្នន័យកំពុងបញ្ចូល',
+    'Clear input chunk': 'លុបផ្នែកទិន្នន័យកំពុងបញ្ចូល',
 };
 const fontFamily = 'km-font-family';
 const lang: LanguageDataType = {

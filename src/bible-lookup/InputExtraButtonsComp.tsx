@@ -162,7 +162,10 @@ export default function InputExtraButtonsComp() {
         >
             <i
                 className="bi bi-x app-caught-hover-pointer"
-                title={tran`Clear input [${toShortcutKey(ctrlEscapeEventMap)}]`}
+                title={
+                    tran('Clear input') +
+                    ` [${toShortcutKey(ctrlEscapeEventMap)}]`
+                }
                 style={{
                     color: 'red',
                     ...availableStyle,
@@ -171,7 +174,10 @@ export default function InputExtraButtonsComp() {
             />
             <i
                 className="bi bi-x app-caught-hover-pointer"
-                title={tran`Clear input chunk [${toShortcutKey(escapeEventMap)}]`}
+                title={
+                    tran('Clear input chunk') +
+                    ` [${toShortcutKey(escapeEventMap)}]`
+                }
                 style={{
                     color: 'var(--bs-danger-text-emphasis)',
                     ...availableStyle,
