@@ -32,14 +32,14 @@ function getWebFilePath() {
     return filePath;
 }
 
-export default function LyricEditorComp() {
+export default function WebEditorComp() {
     const filePath = useMemo(() => {
         return getWebFilePath();
     }, []);
     return (
         <SelectedWebContext value={filePath}>
             <ResizeActorComp
-                flexSizeName={'lyric-previewer'}
+                flexSizeName={'web-previewer'}
                 isHorizontal
                 flexSizeDefault={{
                     h1: ['1'],
