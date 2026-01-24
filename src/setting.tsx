@@ -1,17 +1,12 @@
 import { init } from './boot';
+import AppContextMenuComp from './context-menu/AppContextMenuComp';
 import { run } from './others/main';
+import HandleAlertComp from './popup-widget/HandleAlertComp';
+import TopProgressBarComp from './progress-bar/TopProgressBarComp';
+import ToastComp from './toast/ToastComp';
 
 init(async () => {
     const SettingComp = (await import('./setting/SettingComp')).default;
-    const TopProgressBarComp = (
-        await import('./progress-bar/TopProgressBarComp')
-    ).default;
-    const ToastComp = (await import('./toast/ToastComp')).default;
-    const HandleAlertComp = (await import('./popup-widget/HandleAlertComp'))
-        .default;
-    const AppContextMenuComp = (
-        await import('./context-menu/AppContextMenuComp')
-    ).default;
     run(
         <>
             <SettingComp />

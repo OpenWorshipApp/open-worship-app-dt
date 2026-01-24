@@ -1,7 +1,7 @@
 import { getCurrentLocale, getLangDataAsync } from './lang/langHelpers';
 import { getAppFontFamily, getAppFontWeight } from './setting/settingHelpers';
 
-export async function init(callback: () => void) {
+export async function init(callback: () => void = () => {}) {
     const id = 'app-custom-style';
     let style = document.getElementById(id) as HTMLStyleElement | null;
     if (style === null) {
