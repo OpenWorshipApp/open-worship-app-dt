@@ -1,11 +1,11 @@
 import { lazy, useState, useCallback, useMemo } from 'react';
 
-import {
+import type {
     PopupAlertDataType,
-    popupWidgetManager,
     ConfirmDataType,
     InputDataType,
 } from './popupWidgetHelpers';
+import { popupWidgetManager } from './popupWidgetHelpers';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 
 const LazyConfirmPopupComp = lazy(() => {

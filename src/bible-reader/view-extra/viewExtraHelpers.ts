@@ -1,9 +1,5 @@
-import {
-    createContext,
-    MouseEvent as ReactMouseEvent,
-    ReactNode,
-    use,
-} from 'react';
+import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import { createContext, use } from 'react';
 
 export function cleanupVerseNumberClicked(event: ReactMouseEvent) {
     event.stopPropagation();

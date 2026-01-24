@@ -1,5 +1,5 @@
 import EventHandler from '../../event/EventHandler';
-import { DroppedDataType } from '../../helper/DragInf';
+import type { DroppedDataType } from '../../helper/DragInf';
 import { getWindowDim } from '../../helper/helpers';
 import { setSetting } from '../../helper/settingHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
@@ -11,9 +11,9 @@ import {
     setDisplay,
     showScreen,
 } from '../screenHelpers';
-import ScreenManagerInf from '../preview/ScreenManagerInf';
+import type ScreenManagerInf from '../preview/ScreenManagerInf';
 import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
-import ColorNoteInf from '../../helper/ColorNoteInf';
+import type ColorNoteInf from '../../helper/ColorNoteInf';
 import {
     getDisplayByScreenId,
     getDisplayIdByScreenId,
@@ -21,7 +21,7 @@ import {
 } from './screenHelpers';
 import appProvider from '../../server/appProvider';
 import { showSimpleToast } from '../../toast/toastHelpers';
-import { ScreenMessageType } from '../screenTypeHelpers';
+import type { ScreenMessageType } from '../screenTypeHelpers';
 
 export type ScreenManagerEventType =
     | 'instance'

@@ -1,4 +1,5 @@
-import { useState, useCallback, SetStateAction, Dispatch } from 'react';
+import type { SetStateAction, Dispatch } from 'react';
+import { useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';

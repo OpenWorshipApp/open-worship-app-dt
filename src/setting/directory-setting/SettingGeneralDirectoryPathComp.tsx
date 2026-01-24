@@ -21,7 +21,7 @@ import {
 } from './appLocalStorage';
 import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
 import { useGenDirSource } from '../../helper/dirSourceHelpers';
-import { OptionalPromise } from '../../helper/typeHelpers';
+import type { OptionalPromise } from '../../helper/typeHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
 class ParentDirSource extends DirSource {

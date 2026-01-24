@@ -1,9 +1,9 @@
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
 
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
-import { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
-import LookupBibleItemController from '../LookupBibleItemController';
-import BibleItem from '../../bible-list/BibleItem';
+import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
+import type LookupBibleItemController from '../LookupBibleItemController';
+import type BibleItem from '../../bible-list/BibleItem';
 import {
     bibleTextToSpeech,
     useIsAudioAIEnabled,

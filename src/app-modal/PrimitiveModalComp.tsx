@@ -1,6 +1,6 @@
 import './ModalComp.scss';
 
-import { PropsWithChildren, ReactNode } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 
 interface MyProps {
     children?: ReactNode;

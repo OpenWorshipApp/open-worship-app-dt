@@ -1,10 +1,8 @@
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
-import ScreenEffectManager from './managers/ScreenEffectManager';
-import {
-    ScreenTransitionEffectType,
-    transitionEffect,
-} from './screenTypeHelpers';
+import type ScreenEffectManager from './managers/ScreenEffectManager';
+import type { ScreenTransitionEffectType } from './screenTypeHelpers';
+import { transitionEffect } from './screenTypeHelpers';
 import { useScreenEffectEvents } from './transitionEffectHelpers';
 
 function openContextMenu(event: any, screenEffectManager: ScreenEffectManager) {

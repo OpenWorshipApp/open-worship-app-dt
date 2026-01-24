@@ -2,19 +2,17 @@ import { screenManagerSettingNames } from '../../helper/constants';
 import { handleError } from '../../helper/errorHelpers';
 import { isValidJson } from '../../helper/helpers';
 import { getSetting } from '../../helper/settingHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import Slide from '../../app-document-list/Slide';
-import ScreenManager from '../managers/ScreenManager';
+import type ScreenManager from '../managers/ScreenManager';
 import {
     getSelectedScreenManagerBases,
     getValidOnScreen,
 } from '../managers/screenManagerBaseHelpers';
 import { getAllScreenManagers } from '../managers/screenManagerHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
-import { AppDocumentListType } from '../screenAppDocumentTypeHelpers';
+import type { AppDocumentListType } from '../screenAppDocumentTypeHelpers';
 
 export function openContextMenu(event: any, screenManager: ScreenManager) {
     const screenManagers = getAllScreenManagers();

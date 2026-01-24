@@ -1,6 +1,6 @@
 import { openPopupEditorWindow } from '../helper/domHelpers';
 import appProvider from '../server/appProvider';
-import Lyric from './Lyric';
+import type Lyric from './Lyric';
 
 export function openPopupLyricEditorWindow(lyric: Lyric) {
     const fileFullName = lyric.fileSource.fullName;

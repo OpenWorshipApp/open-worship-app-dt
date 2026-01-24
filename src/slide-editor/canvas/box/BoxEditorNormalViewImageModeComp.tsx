@@ -1,6 +1,7 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
-import CanvasItemImage, { CanvasItemImagePropsType } from '../CanvasItemImage';
+import type { CanvasItemImagePropsType } from '../CanvasItemImage';
+import CanvasItemImage from '../CanvasItemImage';
 import img404 from '../404.png';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';

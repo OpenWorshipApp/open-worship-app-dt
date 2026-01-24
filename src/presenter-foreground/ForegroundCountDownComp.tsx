@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
@@ -12,7 +12,7 @@ import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
-import { ForegroundCountdownDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundCountdownDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
 

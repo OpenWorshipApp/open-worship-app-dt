@@ -1,7 +1,5 @@
-import {
-    KeyboardType,
-    useKeyboardRegistering,
-} from '../event/KeyboardEventListener';
+import type { KeyboardType } from '../event/KeyboardEventListener';
+import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { bringDomToBottomView } from '../helper/helpers';
 
 export const INPUT_TEXT_CLASS = 'bible-lookup-input-text';

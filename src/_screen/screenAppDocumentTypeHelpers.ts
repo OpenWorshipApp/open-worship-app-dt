@@ -1,4 +1,4 @@
-import { VaryAppDocumentItemDataType } from '../app-document-list/appDocumentTypeHelpers';
+import type { VaryAppDocumentItemDataType } from '../app-document-list/appDocumentTypeHelpers';
 
 export type VaryAppDocumentItemScreenDataType = {
     filePath: string;

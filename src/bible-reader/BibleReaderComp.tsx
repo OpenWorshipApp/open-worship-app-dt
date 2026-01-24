@@ -2,7 +2,10 @@ import '../bible-lookup/BibleReaderComp.scss';
 
 import { lazy, useMemo } from 'react';
 
-import { DataInputType, FlexSizeType } from '../resize-actor/flexSizeHelpers';
+import type {
+    DataInputType,
+    FlexSizeType,
+} from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import LookupBibleItemController from './LookupBibleItemController';
 import { BibleItemsViewControllerContext } from './BibleItemsViewController';

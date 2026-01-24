@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { createMouseEvent } from '../../context-menu/appContextMenuHelpers';
-import { AppColorType } from './colorHelpers';
+import type { AppColorType } from './colorHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { genTimeoutAttempt } from '../../helper/helpers';
 import { removeOpacityFromHexColor } from '../../server/appHelpers';

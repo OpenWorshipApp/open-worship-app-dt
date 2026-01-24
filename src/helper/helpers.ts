@@ -1,9 +1,10 @@
-import { useState, DragEvent } from 'react';
+import type { DragEvent } from 'react';
+import { useState } from 'react';
 
 import { useAppEffect } from './debuggerHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
-import { AppDocumentSourceAbs } from './AppEditableDocumentSourceAbs';
+import type { AppDocumentSourceAbs } from './AppEditableDocumentSourceAbs';
 import { trace } from './loggerHelpers';
 import appProvider from '../server/appProvider';
 import {

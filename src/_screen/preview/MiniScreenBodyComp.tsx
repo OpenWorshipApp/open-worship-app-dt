@@ -5,18 +5,17 @@ import {
     getAllScreenManagers,
     getScreenManagersFromSetting,
 } from '../managers/screenManagerHelpers';
-import ScreenManager from '../managers/ScreenManager';
+import type ScreenManager from '../managers/ScreenManager';
 import {
     ScreenManagerBaseContext,
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
-import BibleItemsViewController, {
-    useBibleItemsViewControllerContext,
-} from '../../bible-reader/BibleItemsViewController';
+import type BibleItemsViewController from '../../bible-reader/BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from '../../bible-reader/BibleItemsViewController';
 import BibleItem from '../../bible-list/BibleItem';
 import { previewingEventListener } from '../../event/PreviewingEventListener';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
-import { BibleItemDataType } from '../screenTypeHelpers';
+import type { BibleItemDataType } from '../screenTypeHelpers';
 
 function openContextMenu(event: any) {
     showAppContextMenu(event, [

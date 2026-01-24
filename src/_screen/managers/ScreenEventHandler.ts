@@ -1,18 +1,16 @@
-import { MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 
 import EventHandler from '../../event/EventHandler';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import appProvider from '../../server/appProvider';
-import ScreenManagerBase from './ScreenManagerBase';
+import type ScreenManagerBase from './ScreenManagerBase';
 import {
     getSelectedScreenManagerBases,
     getAllScreenManagerBases,
     getScreenManagerBase,
 } from './screenManagerBaseHelpers';
-import {
+import type {
     BasicScreenMessageType,
     ScreenMessageType,
 } from '../screenTypeHelpers';

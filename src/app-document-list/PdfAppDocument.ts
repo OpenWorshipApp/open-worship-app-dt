@@ -1,15 +1,15 @@
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
-import { MimetypeNameType } from '../server/fileHelpers';
-import ItemSourceInf from '../others/ItemSourceInf';
+import type { MimetypeNameType } from '../server/fileHelpers';
+import type ItemSourceInf from '../others/ItemSourceInf';
 import {
     genPdfImagesPreview,
     removePdfImagesPreview,
 } from '../helper/pdfHelpers';
 import PdfSlide from './PdfSlide';
 import { showPdfDocumentContextMenu } from './appDocumentHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 
 export default class PdfAppDocument
     extends AppDocumentSourceAbs

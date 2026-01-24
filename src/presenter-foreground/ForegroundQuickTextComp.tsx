@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import {
@@ -15,7 +15,7 @@ import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
-import { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { renderMarkdown } from '../lyric-list/markdownHelpers';
 import { dragStore } from '../helper/dragHelpers';

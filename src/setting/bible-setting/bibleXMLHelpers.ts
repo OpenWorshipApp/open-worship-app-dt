@@ -18,8 +18,8 @@ import {
     genBibleNumbersMapXMLInput,
 } from './bibleXMLAttributesGuessing';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import {
-    ContextMenuItemType,
     createMouseEvent,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
@@ -29,17 +29,19 @@ import {
     fromBibleFileName,
     getModelKeyBookMap,
 } from '../../helper/bible-helpers/bibleLogicHelpers1';
-import {
-    bibleKeyToXMLFilePath,
+import type {
     BibleJsonInfoType,
     BibleXMLJsonType,
+} from './bibleXMLJsonDataHelpers';
+import {
+    bibleKeyToXMLFilePath,
     jsonToXMLText,
     xmlTextToJson,
     xmlTextToBibleElement,
     getBibleInfoJson,
     getAllXMLFileKeys,
 } from './bibleXMLJsonDataHelpers';
-import {
+import type {
     BibleChapterType,
     BibleInfoType,
 } from '../../helper/bible-helpers/BibleDataReader';
@@ -52,8 +54,8 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
-import { EditorStoreType } from '../../helper/monacoEditorHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { EditorStoreType } from '../../helper/monacoEditorHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 import { schemaHandler as infoEditorSchemaHandler } from './BibleXMLInfoEditorComp';
 import { schemaHandler as bookChapterEditorSchemaHandler } from './BibleXMLBookChapterEditorComp';
 import { getBibleModelInfoSetting } from '../../helper/bible-helpers/bibleModelHelpers';

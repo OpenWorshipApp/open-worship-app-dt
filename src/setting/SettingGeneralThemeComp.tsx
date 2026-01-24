@@ -1,13 +1,14 @@
-import { useState, useCallback, ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
+import { useState, useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
+import type { ThemeOptionType } from '../others/initHelpers';
 import {
     applyDarkModeToApp,
     darkModeHook,
     getThemeSourceSetting,
     setThemeSourceSetting,
-    ThemeOptionType,
 } from '../others/initHelpers';
 
 export default function SettingGeneralThemeComp() {

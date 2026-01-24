@@ -1,6 +1,7 @@
 import './BackgroundVideosComp.scss';
 
-import { createRef, ReactElement, useState } from 'react';
+import type { ReactElement } from 'react';
+import { createRef, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -9,7 +10,7 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { genDownloadContextMenuItems } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
 import { tran } from '../lang/langHelpers';
@@ -21,11 +22,9 @@ import { downloadVideoOrAudio } from '../server/appHelpers';
 import { fsCheckFileExist, fsMove } from '../server/fileHelpers';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
-import DirSource from '../helper/DirSource';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type DirSource from '../helper/DirSource';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import {
     getIsFadingAtTheEndSetting,

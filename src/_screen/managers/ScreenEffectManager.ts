@@ -1,15 +1,15 @@
 import EventHandler from '../../event/EventHandler';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
-import {
+import type {
     PTEffectDataType,
     PTFEventType,
     ScreenMessageType,
     ScreenTransitionEffectType,
     StyleAnimType,
-    transitionEffect,
 } from '../screenTypeHelpers';
+import { transitionEffect } from '../screenTypeHelpers';
 import { styleAnimList } from '../transitionEffectHelpers';
-import ScreenManagerBase from './ScreenManagerBase';
+import type ScreenManagerBase from './ScreenManagerBase';
 
 const cache = new Map<string, ScreenEffectManager>();
 class ScreenEffectManager extends EventHandler<PTFEventType> {

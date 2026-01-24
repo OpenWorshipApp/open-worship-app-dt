@@ -1,6 +1,7 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
-import CanvasItemVideo, { CanvasItemVideoPropsType } from '../CanvasItemVideo';
+import type { CanvasItemVideoPropsType } from '../CanvasItemVideo';
+import CanvasItemVideo from '../CanvasItemVideo';
 import img404 from '../404.png';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';

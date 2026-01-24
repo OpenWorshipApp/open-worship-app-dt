@@ -1,6 +1,7 @@
-import { CSSProperties, MouseEvent } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 
-import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
+import type { DroppedDataType } from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
 import { getImageDim, getVideoDim } from '../../helper/helpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { genHtmlBackground } from '../ScreenBackgroundComp';
@@ -11,12 +12,12 @@ import {
     screenManagerSettingNames,
 } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
-import ScreenManagerBase from './ScreenManagerBase';
-import ScreenEffectManager from './ScreenEffectManager';
+import type ScreenManagerBase from './ScreenManagerBase';
+import type ScreenEffectManager from './ScreenEffectManager';
 import appProvider from '../../server/appProvider';
 import { unlocking } from '../../server/unlockingHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
-import {
+import type {
     BackgroundDataType,
     BackgroundSrcType,
     BackgroundType,

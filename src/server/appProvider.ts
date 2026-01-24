@@ -1,7 +1,7 @@
-import http from 'node:http';
-import fs from 'node:fs';
-import path from 'node:path';
-import * as nodeCrypto from 'node:crypto';
+import type http from 'node:http';
+import type fs from 'node:fs';
+import type path from 'node:path';
+import type * as nodeCrypto from 'node:crypto';
 
 export type MessageEventType = {
     returnValue: any;

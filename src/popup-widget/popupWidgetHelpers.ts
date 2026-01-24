@@ -1,4 +1,4 @@
-import { CSSProperties, ReactElement } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
 
 export function closeAlert() {
     popupWidgetManager.openConfirm?.(null);

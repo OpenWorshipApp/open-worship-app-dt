@@ -1,6 +1,7 @@
 import SlideEditorToolsTextComp from './SlideEditorToolsTextComp';
 import SlideEditorToolsBoxComp from './SlideEditorToolsBoxComp';
-import CanvasItem, {
+import type CanvasItem from '../CanvasItem';
+import {
     CanvasItemContext,
     CanvasItemPropsSetterContext,
     useCanvasItemEditEvent,

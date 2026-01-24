@@ -1,11 +1,11 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
+import type { MoveCheckType } from './scrollingHandlerHelpers';
 import {
     TO_THE_TOP_STYLE_STRING,
     TO_THE_TOP_CLASSNAME,
     applyToTheTop,
     applyPlayToBottom,
-    MoveCheckType,
     PLAY_TO_BOTTOM_CLASSNAME,
 } from './scrollingHandlerHelpers';
 import { HoverMotionHandler } from '../helper/domHelpers';

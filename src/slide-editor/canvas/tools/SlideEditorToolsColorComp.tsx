@@ -1,5 +1,5 @@
 import ColorPicker from '../../../others/color/ColorPicker';
-import { AppColorType } from '../../../others/color/colorHelpers';
+import type { AppColorType } from '../../../others/color/colorHelpers';
 
 export default function SlideEditorToolsColorComp({
     color,

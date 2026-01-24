@@ -2,7 +2,7 @@ import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDo
 import appProvider from '../../server/appProvider';
 import { getScreenManagerByScreenId } from '../../_screen/managers/screenManagerHelpers';
 import { slidePreviewerMethods } from './AppDocumentPreviewerFooterComp';
-import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
 export function handleAppDocumentItemSelecting(

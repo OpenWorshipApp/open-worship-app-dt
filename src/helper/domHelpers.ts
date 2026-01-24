@@ -1,13 +1,11 @@
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
+import type { MutationType } from './helpers';
 import {
-    MutationType,
     APP_FULL_VIEW_CLASSNAME,
     APP_AUTO_HIDE_CLASSNAME,
     bringDomToNearestView,

@@ -1,13 +1,14 @@
 import EventHandler from '../../event/EventHandler';
 import Canvas from './Canvas';
-import CanvasItem, { CanvasItemPropsType } from './CanvasItem';
+import type { CanvasItemPropsType } from './CanvasItem';
+import type CanvasItem from './CanvasItem';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import FileSource from '../../helper/FileSource';
 import CanvasItemText from './CanvasItemText';
 import CanvasItemImage from './CanvasItemImage';
 import CanvasItemBibleItem from './CanvasItemBibleItem';
-import BibleItem from '../../bible-list/BibleItem';
-import {
+import type BibleItem from '../../bible-list/BibleItem';
+import type {
     CanvasItemMediaPropsType,
     CanvasControllerEventType,
 } from './canvasHelpers';
@@ -17,7 +18,7 @@ import { handleError } from '../../helper/errorHelpers';
 import { createContext, use } from 'react';
 import { showCanvasItemContextMenu } from './canvasContextMenuHelpers';
 import AppDocument from '../../app-document-list/AppDocument';
-import Slide from '../../app-document-list/Slide';
+import type Slide from '../../app-document-list/Slide';
 
 const EDITOR_SCALE_SETTING_NAME = 'canvas-editor-scale';
 export const defaultRangeSize = {

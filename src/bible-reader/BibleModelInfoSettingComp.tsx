@@ -1,14 +1,12 @@
 import { tran } from '../lang/langHelpers';
+import type { BibleModelInfoEnum } from '../helper/bible-helpers/bibleModelHelpers';
 import {
-    BibleModelInfoEnum,
     bibleModelInfoTitleMap,
     getBibleModelInfoSetting,
     setBibleModelInfoSetting,
 } from '../helper/bible-helpers/bibleModelHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import appProvider from '../server/appProvider';
 
 function chooseModel(

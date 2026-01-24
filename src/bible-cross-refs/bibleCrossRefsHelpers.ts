@@ -11,10 +11,8 @@ import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
 import { getLangCode } from '../lang/langHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
-import {
-    CrossReferenceType,
-    validateCrossReference,
-} from '../helper/ai/bibleCrossRefHelpers';
+import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
+import { validateCrossReference } from '../helper/ai/bibleCrossRefHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 import { error as logError } from '../helper/loggerHelpers';
 

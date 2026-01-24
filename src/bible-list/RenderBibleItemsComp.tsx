@@ -1,4 +1,4 @@
-import Bible from './Bible';
+import type Bible from './Bible';
 import BibleItemRenderComp from './BibleItemRenderComp';
 import { genDuplicatedMessage } from './bibleItemHelpers';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';

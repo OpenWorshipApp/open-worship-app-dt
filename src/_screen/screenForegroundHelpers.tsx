@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import CountdownController from './managers/CountdownController';
 import { getHTMLChild } from '../helper/helpers';
-import ScreenManagerBase from './managers/ScreenManagerBase';
-import {
+import type ScreenManagerBase from './managers/ScreenManagerBase';
+import type {
     ForegroundCountdownDataType,
     ForegroundMarqueDataType,
     ForegroundQuickTextDataType,

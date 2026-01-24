@@ -7,7 +7,7 @@ import RenderSlideIndexComp from '../../../app-document-presenter/items/RenderSl
 import { useAppStateAsync } from '../../../helper/debuggerHelpers';
 import { getDefaultScreenDisplay } from '../../../_screen/managers/screenHelpers';
 import { showAppConfirm } from '../../../popup-widget/popupWidgetHelpers';
-import Slide from '../../../app-document-list/Slide';
+import type Slide from '../../../app-document-list/Slide';
 import { useFileSourceEvents } from '../../../helper/dirSourceHelpers';
 
 async function checkIsDiffOtherSlides(

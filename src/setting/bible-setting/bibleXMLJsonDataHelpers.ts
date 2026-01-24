@@ -1,9 +1,5 @@
-import {
-    DEFAULT_LOCALE,
-    getLangDataAsync,
-    LocaleType,
-    tran,
-} from '../../lang/langHelpers';
+import type { LocaleType } from '../../lang/langHelpers';
+import { DEFAULT_LOCALE, getLangDataAsync, tran } from '../../lang/langHelpers';
 import {
     showAppConfirm,
     showAppInput,
@@ -11,11 +7,11 @@ import {
 import { genBibleKeyXMLInput } from './bibleXMLAttributesGuessing';
 import { getDownloadedBibleInfoList } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { cloneJson } from '../../helper/helpers';
-import {
-    bibleDataReader,
+import type {
     ContentTitleType,
     CustomVerseType,
 } from '../../helper/bible-helpers/BibleDataReader';
+import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 import { fsListFiles, pathJoin } from '../../server/fileHelpers';
 import FileSource from '../../helper/FileSource';
 import CacheManager from '../../others/CacheManager';

@@ -1,4 +1,5 @@
-import { DragTypeEnum, DroppedDataType } from '../../helper/DragInf';
+import type { DroppedDataType } from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
 import { log } from '../../helper/loggerHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
@@ -12,9 +13,9 @@ import {
     saveScreenManagersSetting,
 } from './screenManagerBaseHelpers';
 import ScreenManagerBase from './ScreenManagerBase';
-import { RegisteredEventType } from '../../event/EventHandler';
+import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
-import { ScreenMessageType } from '../screenTypeHelpers';
+import type { ScreenMessageType } from '../screenTypeHelpers';
 
 export default class ScreenManager extends ScreenManagerBase {
     readonly screenBackgroundManager: ScreenBackgroundManager;

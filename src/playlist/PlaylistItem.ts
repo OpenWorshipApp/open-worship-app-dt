@@ -1,7 +1,7 @@
 import Bible from '../bible-list/Bible';
 import { cloneJson } from '../helper/helpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { AnyObjectType } from '../helper/typeHelpers';
 
 const itemTypeList = ['error', 'slide', 'bible-item', 'lyric'] as const;
 type ItemType = (typeof itemTypeList)[number];

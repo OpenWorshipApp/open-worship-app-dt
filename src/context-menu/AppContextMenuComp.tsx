@@ -1,10 +1,11 @@
 import './AppContextMenuComp.scss';
 
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
-import { EventMapper, toShortcutKey } from '../event/KeyboardEventListener';
+import type { EventMapper } from '../event/KeyboardEventListener';
+import { toShortcutKey } from '../event/KeyboardEventListener';
+import type { ContextMenuItemType } from './appContextMenuHelpers';
 import {
-    ContextMenuItemType,
     setPositionMenu,
     useAppContextMenuData,
     APP_CONTEXT_MENU_ITEM_CLASS,

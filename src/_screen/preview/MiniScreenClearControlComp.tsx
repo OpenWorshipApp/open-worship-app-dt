@@ -1,11 +1,11 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../../event/KeyboardEventListener';
-import ScreenManager from '../managers/ScreenManager';
+import type ScreenManager from '../managers/ScreenManager';
 import {
     useScreenManagerContext,
     useScreenUpdateEvents,

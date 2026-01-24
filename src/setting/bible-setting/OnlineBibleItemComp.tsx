@@ -1,4 +1,4 @@
-import { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
+import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useDownloadBible } from './bibleDownloadingHelpers';
 import { getAllXMLFileKeys } from './bibleXMLJsonDataHelpers';

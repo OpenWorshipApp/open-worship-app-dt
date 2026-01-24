@@ -1,20 +1,18 @@
 import BibleItem from '../bible-list/BibleItem';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
-import { BibleItemRenderingType } from './bibleScreenComps';
+import type { BibleItemRenderingType } from './bibleScreenComps';
 import bibleScreenHelper from './bibleScreenHelpers';
-import ScreenBibleManager from './managers/ScreenBibleManager';
+import type ScreenBibleManager from './managers/ScreenBibleManager';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { addPlayToBottom, addToTheTop } from './screenHelpers';
 import { getDisplayByScreenId } from './managers/screenHelpers';
-import { BibleItemType } from '../bible-list/bibleItemHelpers';
+import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { cloneJson } from '../helper/helpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { genContextMenuBibleKeys } from '../bible-lookup/BibleSelectionComp';
-import { BibleItemDataType } from './screenTypeHelpers';
+import type { BibleItemDataType } from './screenTypeHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 export type ScreenBibleManagerEventType = 'update' | 'text-style';

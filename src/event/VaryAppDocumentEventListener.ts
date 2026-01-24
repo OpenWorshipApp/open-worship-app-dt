@@ -1,11 +1,12 @@
+import type { VaryAppDocumentItemType } from '../app-document-list/appDocumentTypeHelpers';
 import {
-    VaryAppDocumentItemType,
     THUMBNAIL_WIDTH_SETTING_NAME,
     DEFAULT_THUMBNAIL_SIZE_FACTOR,
 } from '../app-document-list/appDocumentTypeHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, useStateSettingNumber } from '../helper/settingHelpers';
-import EventHandler, { ListenerType } from './EventHandler';
+import type { ListenerType } from './EventHandler';
+import EventHandler from './EventHandler';
 
 export type AppDocumentListEventType =
     | 'app-document-item-select'

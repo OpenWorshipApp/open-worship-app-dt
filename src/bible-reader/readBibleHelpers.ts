@@ -1,13 +1,14 @@
-import { DragEvent } from 'react';
+import type { DragEvent } from 'react';
 
-import LookupBibleItemController, {
+import type LookupBibleItemController from './LookupBibleItemController';
+import {
     closeEventMapper,
     ctrlShiftMetaKeys,
     useLookupBibleItemControllerContext,
 } from './LookupBibleItemController';
 import { handleError } from '../helper/errorHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
-import BibleItemsViewController from './BibleItemsViewController';
+import type BibleItemsViewController from './BibleItemsViewController';
 import { RECEIVING_DROP_CLASSNAME } from '../helper/helpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 

@@ -1,4 +1,4 @@
-import Slide from '../../app-document-list/Slide';
+import type Slide from '../../app-document-list/Slide';
 import SlideRendererComp from './SlideRendererComp';
 import SlideScaleContainerComp from './SlideScaleContainerComp';
 

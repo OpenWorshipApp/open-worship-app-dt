@@ -1,18 +1,15 @@
 import { useState } from 'react';
 
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import ScreenBackgroundManager, {
-    ScreenBackgroundManagerEventType,
-} from './ScreenBackgroundManager';
-import { ScreenBibleManagerEventType } from '../screenBibleHelpers';
+import type { ScreenBackgroundManagerEventType } from './ScreenBackgroundManager';
+import ScreenBackgroundManager from './ScreenBackgroundManager';
+import type { ScreenBibleManagerEventType } from '../screenBibleHelpers';
 import ScreenBibleManager from './ScreenBibleManager';
-import ScreenVaryAppDocumentManager, {
-    ScreenVaryAppDocumentManagerEventType,
-} from './ScreenVaryAppDocumentManager';
-import EventHandler from '../../event/EventHandler';
-import ScreenForegroundManager, {
-    ScreenForegroundEventType,
-} from './ScreenForegroundManager';
+import type { ScreenVaryAppDocumentManagerEventType } from './ScreenVaryAppDocumentManager';
+import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
+import type EventHandler from '../../event/EventHandler';
+import type { ScreenForegroundEventType } from './ScreenForegroundManager';
+import ScreenForegroundManager from './ScreenForegroundManager';
 
 export function useScreenEvents<T extends string>(
     events: T[],

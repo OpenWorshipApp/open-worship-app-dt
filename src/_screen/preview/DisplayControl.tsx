@@ -1,8 +1,6 @@
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
-import ScreenManagerBase from '../managers/ScreenManagerBase';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import type ScreenManagerBase from '../managers/ScreenManagerBase';
 import {
     useScreenManagerBaseContext,
     useScreenManagerEvents,

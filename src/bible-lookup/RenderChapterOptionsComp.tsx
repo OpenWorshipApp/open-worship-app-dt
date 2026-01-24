@@ -1,6 +1,6 @@
+import type { KeyboardType } from '../event/KeyboardEventListener';
 import {
     allArrows,
-    KeyboardType,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { processSelection, userEnteringSelected } from './selectionHelpers';

@@ -1,13 +1,11 @@
-import { ResponseFormatJSONSchema } from 'openai/resources/shared';
+import type { ResponseFormatJSONSchema } from 'openai/resources/shared';
 import { handleError } from '../errorHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
 import { DATA_DIR_NAME, getOpenAIInstance } from './openAIHelpers';
 import { bibleCrossRefSchemaJson } from './aiHelpers';
-import {
-    CrossReferenceType,
-    useGetBibleCrossRef,
-} from './bibleCrossRefHelpers';
+import type { CrossReferenceType } from './bibleCrossRefHelpers';
+import { useGetBibleCrossRef } from './bibleCrossRefHelpers';
 import { cloneJson } from '../helpers';
 import { error as logError } from '../loggerHelpers';
 

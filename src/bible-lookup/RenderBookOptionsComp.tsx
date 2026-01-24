@@ -1,15 +1,10 @@
 import { Fragment } from 'react';
 
 import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
-import {
-    KeyboardType,
-    useKeyboardRegistering,
-} from '../event/KeyboardEventListener';
-import {
-    SelectBookType,
-    processSelection,
-    userEnteringSelected,
-} from './selectionHelpers';
+import type { KeyboardType } from '../event/KeyboardEventListener';
+import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import type { SelectBookType } from './selectionHelpers';
+import { processSelection, userEnteringSelected } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import {

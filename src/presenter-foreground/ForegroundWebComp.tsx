@@ -1,8 +1,9 @@
-import { CSSProperties, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { ForegroundWebDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundWebDataType } from '../_screen/screenTypeHelpers';
 import { backgroundTypeMapper } from '../background/backgroundHelpers';
 import {
     defaultDataDirNames,

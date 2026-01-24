@@ -4,16 +4,13 @@ import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
-import LookupBibleItemController, {
-    useLookupBibleItemControllerContext,
-} from '../bible-reader/LookupBibleItemController';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { bibleHistoryStore } from '../bible-reader/BibleItemsViewController';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';

@@ -1,6 +1,6 @@
 import { genTimeoutAttempt } from '../helper/helpers';
-import { OptionalPromise } from '../helper/typeHelpers';
-import CacheManager from '../others/CacheManager';
+import type { OptionalPromise } from '../helper/typeHelpers';
+import type CacheManager from '../others/CacheManager';
 
 const lockSet = new Set<string>();
 export async function unlocking<T>(

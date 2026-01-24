@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { useAppEffectAsync } from './debuggerHelpers';
 import { handleError } from './errorHelpers';
-import {
+import type {
     ForegroundCameraDataType,
     StyleAnimType,
 } from '../_screen/screenTypeHelpers';

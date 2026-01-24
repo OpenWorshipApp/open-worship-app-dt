@@ -3,12 +3,10 @@ import './PathSelectorComp.scss';
 import { lazy, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import AppSuspenseComp from './AppSuspenseComp';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { menuTitleRevealFile } from '../helper/helpers';
 import { copyToClipboard, showExplorer } from '../server/appHelpers';
 import appProvider from '../server/appProvider';

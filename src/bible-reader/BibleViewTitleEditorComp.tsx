@@ -1,6 +1,7 @@
-import { CSSProperties, useMemo } from 'react';
+import type { CSSProperties } from 'react';
+import { useMemo } from 'react';
 
-import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import {
     getBibleInfo,
@@ -16,8 +17,8 @@ import {
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { OptionalPromise } from '../helper/typeHelpers';
-import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import type { OptionalPromise } from '../helper/typeHelpers';
+import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 
 function chose<T>(
     event: any,

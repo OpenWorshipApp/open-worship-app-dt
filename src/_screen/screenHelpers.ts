@@ -19,15 +19,15 @@ import {
 import { unlocking } from '../server/unlockingHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useScreenUpdateEvents } from './managers/screenManagerHooks';
-import {
+import type {
     ImageScaleType,
     AllDisplayType,
     ForegroundSrcListType,
     BackgroundSrcListType,
     BibleListType,
-    bibleDataTypeList,
     SetDisplayType,
 } from './screenTypeHelpers';
+import { bibleDataTypeList } from './screenTypeHelpers';
 import { checkIsDarkMode } from '../others/initHelpers';
 
 const messageUtils = appProvider.messageUtils;

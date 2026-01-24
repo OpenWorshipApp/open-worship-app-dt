@@ -1,4 +1,4 @@
-import { ReactNode, CSSProperties, LazyExoticComponent } from 'react';
+import type { ReactNode, CSSProperties, LazyExoticComponent } from 'react';
 
 import { handleError } from '../helper/errorHelpers';
 import { isValidJson } from '../helper/helpers';

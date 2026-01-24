@@ -4,7 +4,8 @@ import './theme-override-dark.scss';
 import './theme-override-light.scss';
 import './scrollbar.scss';
 
-import { ReactNode, StrictMode } from 'react';
+import type { ReactNode } from 'react';
+import { StrictMode } from 'react';
 
 import { getCurrentLocale, getLangData, tran } from '../lang/langHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';

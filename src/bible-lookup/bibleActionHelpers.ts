@@ -1,12 +1,10 @@
 import { tran } from '../lang/langHelpers';
-import {
-    EventMapper as KeyboardEventMapper,
-    useKeyboardRegistering,
-} from '../event/KeyboardEventListener';
+import type { EventMapper as KeyboardEventMapper } from '../event/KeyboardEventListener';
+import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
-import BibleItem from '../bible-list/BibleItem';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type BibleItem from '../bible-list/BibleItem';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import appProvider from '../server/appProvider';
 import {
@@ -14,9 +12,8 @@ import {
     genContextMenuItemIcon,
     genContextMenuItemShortcutKey,
 } from '../context-menu/AppContextMenuComp';
-import LookupBibleItemController, {
-    useLookupBibleItemControllerContext,
-} from '../bible-reader/LookupBibleItemController';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 
 export const presenterEventMapper: KeyboardEventMapper = {
     allControlKey: ['Ctrl', 'Shift'],

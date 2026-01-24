@@ -1,10 +1,8 @@
 import BibleItem from '../bible-list/BibleItem';
 import { colorDeserialize } from '../others/color/colorHelpers';
-import DragInf, {
-    DragDataType,
-    DragTypeEnum,
-    DroppedDataType,
-} from './DragInf';
+import type { DragDataType, DroppedDataType } from './DragInf';
+import type DragInf from './DragInf';
+import { DragTypeEnum } from './DragInf';
 import FileSource from './FileSource';
 import PdfSlide from '../app-document-list/PdfSlide';
 import { useState, useCallback } from 'react';
@@ -14,7 +12,7 @@ import AttachBackgroundManager, {
 import { useAppEffectAsync } from './debuggerHelpers';
 import { useFileSourceEvents } from './dirSourceHelpers';
 import { stopDraggingState } from './helpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import Slide from '../app-document-list/Slide';
 import { cameraDragDeserialize } from '../background/backgroundHelpers';
 

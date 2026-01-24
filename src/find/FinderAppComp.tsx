@@ -3,10 +3,12 @@ import '../others/theme-override-dark.scss';
 import '../others/theme-override-light.scss';
 import './FinderAppComp.scss';
 
-import { useState, useCallback, ChangeEvent } from 'react';
+import type { ChangeEvent } from 'react';
+import { useState, useCallback } from 'react';
 
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
-import { LookupOptions, findString } from './finderHelpers';
+import type { LookupOptions } from './finderHelpers';
+import { findString } from './finderHelpers';
 import { applyDarkModeToApp } from '../others/initHelpers';
 
 export default function FinderAppComp({

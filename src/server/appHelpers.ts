@@ -2,7 +2,7 @@ import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
-import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { goToPath } from '../router/routeHelpers';
 import {
     fsCheckFileExist,

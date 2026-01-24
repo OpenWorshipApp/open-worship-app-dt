@@ -10,7 +10,7 @@ import { useAppStateAsync } from '../../helper/debuggerHelpers';
 import { getVersesCount } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../../others/LoadingComp';
 import { getBibleInfoIsRtl } from '../../helper/bible-helpers/bibleInfoHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderRestVerseNumListComp from './RenderRestVerseNumListComp';
 import RenderVerseTextComp from './RenderVerseTextComp';
 

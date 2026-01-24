@@ -1,7 +1,7 @@
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
 import { useGetBibleCrossRefOpenAI } from '../helper/ai/openAIBibleCrossRefHelpers';
 import LoadingComp from '../others/LoadingComp';
-import { RefreshingRefType } from '../helper/ai/aiHelpers';
+import type { RefreshingRefType } from '../helper/ai/aiHelpers';
 import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
 import RenderAIBibleCrossReferenceListComp from './RenderAIBibleCrossReferenceListComp';
 

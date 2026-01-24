@@ -1,7 +1,7 @@
+import type { MimetypeNameType } from '../server/fileHelpers';
 import {
     createNewFileDetail,
     fsListFilesWithMimetype,
-    MimetypeNameType,
 } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
 import { cloneJson, toMaxId } from '../helper/helpers';
@@ -9,13 +9,13 @@ import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { getSetting } from '../helper/settingHelpers';
 import BibleItem from './BibleItem';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { BibleItemType } from './bibleItemHelpers';
+import type { BibleItemType } from './bibleItemHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
-import DocumentInf from '../others/DocumentInf';
+import type DocumentInf from '../others/DocumentInf';
 import { handleError } from '../helper/errorHelpers';
-import { ItemSourceInfBasic } from '../others/ItemSourceInf';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
+import type { AnyObjectType } from '../helper/typeHelpers';
 
 export type BibleType = {
     items: BibleItemType[];

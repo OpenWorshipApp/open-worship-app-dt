@@ -1,7 +1,8 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
-import BibleItem from '../../bible-list/BibleItem';
-import { DroppedDataType, DragTypeEnum } from '../../helper/DragInf';
+import type BibleItem from '../../bible-list/BibleItem';
+import type { DroppedDataType } from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
 import {
     bringDomToCenterView,
     bringDomToNearestView,
@@ -12,8 +13,8 @@ import {
 } from '../../helper/helpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import bibleScreenHelper from '../bibleScreenHelpers';
+import type { ScreenBibleManagerEventType } from '../screenBibleHelpers';
 import {
-    ScreenBibleManagerEventType,
     SCREEN_BIBLE_SETTING_PREFIX,
     renderScreenBibleManager,
     bibleItemJsonToScreenViewData,
@@ -27,15 +28,15 @@ import * as loggerHelpers from '../../helper/loggerHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
-import ScreenManagerBase from './ScreenManagerBase';
+import type ScreenManagerBase from './ScreenManagerBase';
 import { getAllScreenManagerBases } from './screenManagerBaseHelpers';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
-import { BibleItemType } from '../../bible-list/bibleItemHelpers';
+import type { BibleItemType } from '../../bible-list/bibleItemHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import Bible from '../../bible-list/Bible';
-import { AnyObjectType } from '../../helper/typeHelpers';
-import {
+import type { AnyObjectType } from '../../helper/typeHelpers';
+import type {
     BasicScreenMessageType,
     BibleItemDataType,
     ScreenMessageType,

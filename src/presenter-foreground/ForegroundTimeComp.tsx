@@ -1,4 +1,5 @@
-import { CSSProperties, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { useState } from 'react';
 import { tz } from 'moment-timezone';
 
 import { tran } from '../lang/langHelpers';
@@ -18,7 +19,7 @@ import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
-import { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useAppEffect } from '../helper/debuggerHelpers';

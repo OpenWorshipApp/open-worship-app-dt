@@ -1,13 +1,13 @@
 import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
+import type { MimetypeNameType } from '../server/fileHelpers';
 import {
-    MimetypeNameType,
     createNewFileDetail,
     getMimetypeExtensions,
 } from '../server/fileHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
-import { AnyObjectType } from './typeHelpers';
+import type { AnyObjectType } from './typeHelpers';
 
 export type AppDocumentMetadataType = {
     app: string;

@@ -1,5 +1,6 @@
 import appProvider from '../../server/appProvider';
-import { IndexedDbController, ItemParamsType } from '../../db/databaseHelpers';
+import type { ItemParamsType } from '../../db/databaseHelpers';
+import { IndexedDbController } from '../../db/databaseHelpers';
 
 const { base64Encode } = appProvider.appUtils;
 

@@ -1,6 +1,7 @@
 import './VaryAppDocumentItem.scss';
 
-import { CSSProperties, ReactNode, MouseEvent, useMemo } from 'react';
+import type { CSSProperties, ReactNode, MouseEvent } from 'react';
+import { useMemo } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
@@ -15,10 +16,10 @@ import ShowingScreenIcon from '../../_screen/preview/ShowingScreenIcon';
 import appProvider from '../../server/appProvider';
 import { changeDragEventStyle } from '../../helper/helpers';
 import { DragTypeEnum } from '../../helper/DragInf';
-import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import AppDocument from '../../app-document-list/AppDocument';
 import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComponent';
-import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
 import { getColorNoteFilePathSetting } from '../../helper/FileSourceMetaManager';

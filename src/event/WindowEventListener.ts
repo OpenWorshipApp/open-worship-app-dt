@@ -1,5 +1,6 @@
 import { useAppEffect } from '../helper/debuggerHelpers';
-import EventHandler, { ListenerType } from './EventHandler';
+import type { ListenerType } from './EventHandler';
+import EventHandler from './EventHandler';
 import KeyboardEventListener from './KeyboardEventListener';
 
 export type AppWidgetType =

@@ -3,13 +3,13 @@ import { useMemo, useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useSelectedLyricContext } from './lyricHelpers';
-import { HTMLDataType, renderLyricSlide } from './markdownHelpers';
+import type { HTMLDataType } from './markdownHelpers';
+import { renderLyricSlide } from './markdownHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
 import LoadingComp from '../others/LoadingComp';
-import LyricEditingManager, {
-    useLyricEditingManagerContext,
-} from './LyricEditingManager';
+import type LyricEditingManager from './LyricEditingManager';
+import { useLyricEditingManagerContext } from './LyricEditingManager';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import AppRangeComp from '../others/AppRangeComp';
 import { checkIsDarkMode } from '../others/initHelpers';

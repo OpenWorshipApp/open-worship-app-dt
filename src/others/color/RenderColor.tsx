@@ -1,11 +1,10 @@
 import { copyToClipboard } from '../../server/appHelpers';
-import { AppColorType, serializeForDragging } from './colorHelpers';
+import type { AppColorType } from './colorHelpers';
+import { serializeForDragging } from './colorHelpers';
 import { genShowOnScreensContextMenu } from '../FileItemHandlerComp';
 import ScreenBackgroundManager from '../../_screen/managers/ScreenBackgroundManager';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
 function showContextMenu(event: any, color: AppColorType) {

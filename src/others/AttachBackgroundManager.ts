@@ -1,5 +1,6 @@
 import { dirSourceSettingNames } from '../helper/constants';
-import { DragTypeEnum, DroppedDataType } from '../helper/DragInf';
+import type { DroppedDataType } from '../helper/DragInf';
+import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import {
     fsCheckFileExist,

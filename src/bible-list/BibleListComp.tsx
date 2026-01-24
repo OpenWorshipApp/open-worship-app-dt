@@ -7,7 +7,7 @@ import { useGenDirSource } from '../helper/dirSourceHelpers';
 import { getSettingPrefix } from '../helper/settingHelpers';
 import { defaultDataDirNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
-import BibleItem from './BibleItem';
+import type BibleItem from './BibleItem';
 import { checkIsBibleItemOnScreen } from './bibleHelpers';
 import { tran } from '../lang/langHelpers';
 

@@ -5,13 +5,13 @@ import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
 import Bible from './Bible';
 import AppSuspenseComp from '../others/AppSuspenseComp';
-import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { moveBibleItemTo, useIsOnScreen } from './bibleHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import {
     extractDropData,
     genRemovingAttachedBackgroundMenu,
@@ -20,7 +20,7 @@ import {
 } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { stopDraggingState } from '../helper/helpers';
-import BibleItem from './BibleItem';
+import type BibleItem from './BibleItem';
 import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
 
 const LazyRenderBibleItemsComp = lazy(() => {

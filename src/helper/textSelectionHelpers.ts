@@ -1,6 +1,6 @@
 import appProvider from '../server/appProvider';
 import { copyToClipboard } from '../server/appHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import {
     elementDivider,
     genContextMenuItemIcon,

@@ -1,6 +1,6 @@
-import { SrcData } from '../../helper/FileSource';
-import { AppColorType } from '../../others/color/colorHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { SrcData } from '../../helper/FileSource';
+import type { AppColorType } from '../../others/color/colorHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 import { isSupportedMimetype } from '../../server/fileHelpers';
 
 export type CanvasControllerEventType = 'update' | 'scale';

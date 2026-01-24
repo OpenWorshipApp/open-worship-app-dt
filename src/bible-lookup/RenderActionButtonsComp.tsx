@@ -1,8 +1,8 @@
 import { tran } from '../lang/langHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
-import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import appProvider from '../server/appProvider';
 import { addBibleItemAndPresent } from './bibleActionHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';

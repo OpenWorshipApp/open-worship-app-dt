@@ -1,13 +1,15 @@
-import { compileSchema, SchemaNode } from 'json-schema-library';
+import type { SchemaNode } from 'json-schema-library';
+import { compileSchema } from 'json-schema-library';
 
 import { ItemBase } from '../helper/ItemBase';
 import { cloneJson } from '../helper/helpers';
-import { CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
-import DragInf, { DragTypeEnum } from '../helper/DragInf';
+import type { CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
+import type DragInf from '../helper/DragInf';
+import { DragTypeEnum } from '../helper/DragInf';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
-import { ClipboardInf } from '../server/appHelpers';
+import type { ClipboardInf } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { AnyObjectType } from '../helper/typeHelpers';
 import { getFontFamilies } from '../server/fontHelpers';
 
 import slideSchemaJson from './SlideSchema.json';

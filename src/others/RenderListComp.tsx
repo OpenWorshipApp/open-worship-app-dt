@@ -1,9 +1,9 @@
 import { createContext, Fragment, use, useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import FileSource from '../helper/FileSource';
-import { MimetypeNameType } from '../server/fileHelpers';
+import type { MimetypeNameType } from '../server/fileHelpers';
 import LoadingComp from './LoadingComp';
 import { GotoSettingDirectoryPathComp } from './NoDirSelectedComp';
 import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';

@@ -1,6 +1,6 @@
 import { screenManagerSettingNames } from '../../helper/constants';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
-import ScreenManagerBase from './ScreenManagerBase';
+import type ScreenManagerBase from './ScreenManagerBase';
 import { isValidJson } from '../../helper/helpers';
 import { unlocking } from '../../server/unlockingHelpers';
 

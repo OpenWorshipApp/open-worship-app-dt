@@ -1,19 +1,16 @@
 import './BibleSelectionComp.scss';
 
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import {
-    BibleMinimalInfoType,
-    getAllLocalBibleInfoList,
-} from '../helper/bible-helpers/bibleDownloadHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import type { BibleMinimalInfoType } from '../helper/bible-helpers/bibleDownloadHelpers';
+import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
-import { getLanguageTitle, LocaleType } from '../lang/langHelpers';
+import type { LocaleType } from '../lang/langHelpers';
+import { getLanguageTitle } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,

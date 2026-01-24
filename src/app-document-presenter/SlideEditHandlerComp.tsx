@@ -1,10 +1,10 @@
 import { lazy, useState } from 'react';
 
+import type { EventMapper as WEventMapper } from '../event/WindowEventListener';
 import WindowEventListener, {
     useWindowEvent,
-    EventMapper as WEventMapper,
 } from '../event/WindowEventListener';
-import Slide from '../app-document-list/Slide';
+import type Slide from '../app-document-list/Slide';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 
 const LazySlideEditorPopupComp = lazy(() => {

@@ -1,12 +1,13 @@
 import { Fragment } from 'react/jsx-runtime';
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
 import BibleCrossRefOpenAIItemRendererBodyComp from './BibleCrossRefOpenAIItemRendererBodyComp';
 import BibleCrossRefWrapperComp from './BibleCrossRefWrapperComp';
 import BibleCrossRefAnthropicItemRendererBodyComp from './BibleCrossRefAnthropicItemRendererBodyComp';
-import { RefreshingRefType } from '../helper/ai/aiHelpers';
+import type { RefreshingRefType } from '../helper/ai/aiHelpers';
 import { useAvailable as useOpenAIAvailable } from '../helper/ai/openAIHelpers';
-import { RefObject, useRef } from 'react';
+import type { RefObject } from 'react';
+import { useRef } from 'react';
 import {
     BibleKeyContext,
     defaultRefreshingRef,

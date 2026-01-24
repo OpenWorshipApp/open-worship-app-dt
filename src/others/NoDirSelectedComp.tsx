@@ -1,5 +1,5 @@
 import { tran } from '../lang/langHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { selectDefaultDataDirName } from '../setting/directory-setting/directoryHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
 

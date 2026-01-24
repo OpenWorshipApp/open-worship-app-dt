@@ -2,7 +2,8 @@ import { useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
-import appProvider, { FontListType } from './appProvider';
+import type { FontListType } from './appProvider';
+import appProvider from './appProvider';
 import CacheManager from '../others/CacheManager';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import FileSource from '../helper/FileSource';

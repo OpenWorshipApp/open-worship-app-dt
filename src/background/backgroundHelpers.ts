@@ -1,10 +1,10 @@
-import { ReactElement, ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
-import { CameraInfoType } from '../helper/cameraHelpers';
+import type { CameraInfoType } from '../helper/cameraHelpers';
 
 export type RenderChildType = (
     filePath: string,

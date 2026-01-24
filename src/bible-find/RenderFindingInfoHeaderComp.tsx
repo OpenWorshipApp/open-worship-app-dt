@@ -1,16 +1,12 @@
 import { useMemo } from 'react';
 
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { checkIsOldTestament } from '../helper/bible-helpers/bibleInfoHelpers';
-import {
-    BookMatchDataType,
-    genBookMatches,
-} from '../helper/bible-helpers/bibleLogicHelpers1';
+import type { BookMatchDataType } from '../helper/bible-helpers/bibleLogicHelpers1';
+import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { SelectedBookKeyType } from './bibleFindHelpers';
+import type { SelectedBookKeyType } from './bibleFindHelpers';
 
 function genMenuItem(
     bibleKey: string,

@@ -1,30 +1,31 @@
-import { MouseEvent, CSSProperties } from 'react';
+import type { MouseEvent, CSSProperties } from 'react';
 
-import { DroppedDataType } from '../../helper/DragInf';
+import type { DroppedDataType } from '../../helper/DragInf';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
-import { SlideType } from '../../app-document-list/Slide';
+import type { SlideType } from '../../app-document-list/Slide';
 import { genPdfSlide } from '../../app-document-presenter/items/PdfSlideRenderComp';
 import { genSlideHtml } from '../../app-document-presenter/items/SlideRendererComp';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
-import ScreenManagerBase from './ScreenManagerBase';
-import ScreenEffectManager from './ScreenEffectManager';
+import type ScreenManagerBase from './ScreenManagerBase';
+import type ScreenEffectManager from './ScreenEffectManager';
 import { getAppDocumentListOnScreenSetting } from '../preview/screenPreviewerHelpers';
 import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
-import PdfSlide, { PdfSlideType } from '../../app-document-list/PdfSlide';
+import type { PdfSlideType } from '../../app-document-list/PdfSlide';
+import PdfSlide from '../../app-document-list/PdfSlide';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
-import {
+import type {
     VaryAppDocumentItemDataType,
     VaryAppDocumentItemType,
 } from '../../app-document-list/appDocumentTypeHelpers';
-import {
+import type {
     BasicScreenMessageType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
-import { VaryAppDocumentItemScreenDataType } from '../screenAppDocumentTypeHelpers';
+import type { VaryAppDocumentItemScreenDataType } from '../screenAppDocumentTypeHelpers';
 
 export type ScreenVaryAppDocumentManagerEventType = 'update';
 

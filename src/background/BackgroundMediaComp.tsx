@@ -1,18 +1,19 @@
-import { ReactNode, MouseEvent } from 'react';
+import type { ReactNode, MouseEvent } from 'react';
 
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import FileSource from '../helper/FileSource';
-import { DragTypeEnum } from '../helper/DragInf';
+import type FileSource from '../helper/FileSource';
+import type { DragTypeEnum } from '../helper/DragInf';
 import { useGenDirSource } from '../helper/dirSourceHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { OptionalPromise } from '../helper/typeHelpers';
-import DirSource from '../helper/DirSource';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
+import type DirSource from '../helper/DirSource';
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
 import BackgroundMediaItemComp from './BackgroundMediaItemComp';
-import { backgroundTypeMapper, RenderChildType } from './backgroundHelpers';
+import type { RenderChildType } from './backgroundHelpers';
+import { backgroundTypeMapper } from './backgroundHelpers';
 
 export const defaultRangeSize = {
     size: 100,

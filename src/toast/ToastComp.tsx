@@ -3,7 +3,8 @@ import './ToastComp.scss';
 import { useState } from 'react';
 
 import { useToastSimpleShowing } from '../event/ToastEventListener';
-import SimpleToastComp, { SimpleToastType } from './SimpleToastComp';
+import type { SimpleToastType } from './SimpleToastComp';
+import SimpleToastComp from './SimpleToastComp';
 
 let timeoutId: any = null;
 export default function ToastComp() {

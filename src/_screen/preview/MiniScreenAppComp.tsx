@@ -4,7 +4,7 @@ import ScreenSlideComp from '../ScreenVaryAppDocumentComp';
 import ScreenBibleComp from '../ScreenBibleComp';
 import { getScreenManagerByScreenId } from '../managers/screenManagerHelpers';
 import { ScreenManagerBaseContext } from '../managers/screenManagerHooks';
-import ScreenEffectManager from '../managers/ScreenEffectManager';
+import type ScreenEffectManager from '../managers/ScreenEffectManager';
 import { checkIsDarkMode } from '../../others/initHelpers';
 
 const genBGBlank = () => {

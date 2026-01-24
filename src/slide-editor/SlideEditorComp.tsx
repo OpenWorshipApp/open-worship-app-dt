@@ -6,7 +6,8 @@ import CanvasController, {
     CanvasControllerContext,
 } from './canvas/CanvasController';
 import { MultiContextRender } from '../helper/MultiContextRender';
-import CanvasItem, {
+import type CanvasItem from './canvas/CanvasItem';
+import {
     CanvasItemsContext,
     checkCanvasItemsIncludes,
     EditingCanvasItemAndSetterContext,

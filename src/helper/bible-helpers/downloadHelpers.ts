@@ -6,9 +6,9 @@ import {
     fsCreateDir,
     fsCheckDirExist,
 } from '../../server/fileHelpers';
-import { WriteStream } from 'node:fs';
+import type { WriteStream } from 'node:fs';
 import appProvider from '../../server/appProvider';
-import { OptionalPromise } from '../typeHelpers';
+import type { OptionalPromise } from '../typeHelpers';
 
 export const BIBLE_DOWNLOAD_TOAST_TITLE = 'Bible Download';
 

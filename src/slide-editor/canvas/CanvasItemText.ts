@@ -1,15 +1,13 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 import { handleError } from '../../helper/errorHelpers';
-import { AppColorType } from '../../others/color/colorHelpers';
+import type { AppColorType } from '../../others/color/colorHelpers';
 import appProvider from '../../server/appProvider';
-import {
-    genTextDefaultBoxStyle,
-    HAlignmentType,
-    VAlignmentType,
-} from './canvasHelpers';
-import CanvasItem, { CanvasItemError, CanvasItemPropsType } from './CanvasItem';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { HAlignmentType, VAlignmentType } from './canvasHelpers';
+import { genTextDefaultBoxStyle } from './canvasHelpers';
+import type { CanvasItemPropsType } from './CanvasItem';
+import CanvasItem, { CanvasItemError } from './CanvasItem';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
 export function genTextDefaultProps(): TextPropsType {
     return {

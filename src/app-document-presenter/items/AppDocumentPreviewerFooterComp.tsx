@@ -12,8 +12,8 @@ import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumen
 import appProvider from '../../server/appProvider';
 import { showAppAlert } from '../../popup-widget/popupWidgetHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
+import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import {
-    VaryAppDocumentItemType,
     MIN_THUMBNAIL_SCALE,
     MAX_THUMBNAIL_SCALE,
     THUMBNAIL_SCALE_STEP,

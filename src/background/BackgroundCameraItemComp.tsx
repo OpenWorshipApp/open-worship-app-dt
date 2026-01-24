@@ -1,4 +1,4 @@
-import { CameraInfoType } from '../helper/cameraHelpers';
+import type { CameraInfoType } from '../helper/cameraHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';

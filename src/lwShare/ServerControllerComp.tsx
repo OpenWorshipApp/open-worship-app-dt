@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
-import { controller, StatusDataType, StatusType } from './lwShareHelpers';
+import type { StatusDataType, StatusType } from './lwShareHelpers';
+import { controller } from './lwShareHelpers';
 import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import { ensureDataDirectory } from '../setting/directory-setting/directoryHelpers';
 import LoadingComp from '../others/LoadingComp';

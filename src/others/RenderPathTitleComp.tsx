@@ -1,4 +1,4 @@
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { PathPreviewerComp } from './PathPreviewerComp';
 
 export default function RenderPathTitleComp({

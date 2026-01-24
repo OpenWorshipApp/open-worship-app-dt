@@ -1,4 +1,5 @@
-import { compileSchema, SchemaNode } from 'json-schema-library';
+import type { SchemaNode } from 'json-schema-library';
+import { compileSchema } from 'json-schema-library';
 import { Uri } from 'monaco-editor';
 
 import LoadingComp from '../../others/LoadingComp';
@@ -7,9 +8,9 @@ import {
     updateBibleXMLInfo,
     useBibleXMLInfo,
 } from './bibleXMLHelpers';
-import { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
+import type { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
 import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
 import { forceReloadAppWindows } from '../settingHelpers';

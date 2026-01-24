@@ -1,12 +1,12 @@
-import { ReactNode, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 
 import { useAppStateAsync } from '../helper/debuggerHelpers';
+import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
 import {
     getAllLangsAsync,
     getCurrentLocale,
     getLangDataAsync,
-    LanguageDataType,
-    LocaleType,
     setCurrentLocale,
     tran,
 } from '../lang/langHelpers';

@@ -1,9 +1,8 @@
 import './BibleViewComp.scss';
 
 import { tran } from '../lang/langHelpers';
-import BibleItemsViewController, {
-    useBibleItemsViewControllerContext,
-} from './BibleItemsViewController';
+import type BibleItemsViewController from './BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 import {
     applyDropped,
     genDraggingClass,
@@ -14,23 +13,20 @@ import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import RenderBibleEditingHeader from '../bible-lookup/RenderBibleEditingHeader';
 import RenderBibleLookupBodyComp from '../bible-lookup/RenderBibleLookupBodyComp';
 import { use } from 'react';
-import LookupBibleItemController, {
-    EditingResultContext,
-} from './LookupBibleItemController';
+import type LookupBibleItemController from './LookupBibleItemController';
+import { EditingResultContext } from './LookupBibleItemController';
 import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';
 import {
     bringDomToNearestView,
     checkIsVerticalPartialVisible,
     HIGHLIGHT_SELECTED_CLASSNAME,
 } from '../helper/helpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
-import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import BibleViewTextComp from './view-extra/BibleViewTextComp';
 import BibleViewRenderHeaderComp from './view-extra/BibleViewRenderHeaderComp';
 

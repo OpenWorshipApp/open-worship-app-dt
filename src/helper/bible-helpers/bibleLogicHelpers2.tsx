@@ -8,13 +8,13 @@ import {
     keyToBook,
     toVerseFullKeyFormat,
 } from './bibleInfoHelpers';
+import type { LocaleType } from '../../lang/langHelpers';
 import {
     DEFAULT_LOCALE,
     fromLocaleNum,
     fromStringNum,
     getFontFamilyByLocale,
     getLangDataAsync,
-    LocaleType,
     toLocaleNum,
     toStringNum,
 } from '../../lang/langHelpers';
@@ -22,10 +22,8 @@ import { useAppEffect } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import { getModelChapterCount } from './bibleLogicHelpers1';
 import CacheManager from '../../others/CacheManager';
-import {
-    BibleMinimalInfoType,
-    getAllLocalBibleInfoList,
-} from './bibleDownloadHelpers';
+import type { BibleMinimalInfoType } from './bibleDownloadHelpers';
+import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
 import { log } from '../loggerHelpers';

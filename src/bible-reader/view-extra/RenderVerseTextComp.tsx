@@ -1,8 +1,8 @@
 import { Fragment } from 'react';
 
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
-import { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 import RenderVerseTextDetailComp from './RenderVerseTextDetailComp';

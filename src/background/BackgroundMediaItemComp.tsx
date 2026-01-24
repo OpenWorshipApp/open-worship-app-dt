@@ -4,17 +4,13 @@ import {
     genTrashContextMenu,
 } from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
-import { DragTypeEnum } from '../helper/DragInf';
+import type { DragTypeEnum } from '../helper/DragInf';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { handleDragStart } from '../helper/dragHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import {
-    genBackgroundMediaItemData,
-    RenderChildType,
-} from './backgroundHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import type { RenderChildType } from './backgroundHelpers';
+import { genBackgroundMediaItemData } from './backgroundHelpers';
 
 function genFileNameElement(fileName: string) {
     return (

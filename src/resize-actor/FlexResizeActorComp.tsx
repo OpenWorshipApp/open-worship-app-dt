@@ -1,8 +1,9 @@
 import './FlexResizeActorComp.scss';
 
-import { Component, RefObject, createRef } from 'react';
+import type { RefObject } from 'react';
+import { Component, createRef } from 'react';
 
-import { DisabledType } from './flexSizeHelpers';
+import type { DisabledType } from './flexSizeHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
 
 export const HIDDEN_WIDGET_CLASS = 'app-hidden-widget';

@@ -1,6 +1,6 @@
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import SlideEditorToolAlignComp from './SlideEditorToolAlignComp';
-import { CanvasItemTextPropsType } from '../CanvasItemText';
+import type { CanvasItemTextPropsType } from '../CanvasItemText';
 import ToolsTextFontControlComp from './ToolsTextFontControlComp';
 import SlideEditorToolsColorComp from './SlideEditorToolsColorComp';
 import { useCanvasItemPropsSetterContext } from '../CanvasItem';

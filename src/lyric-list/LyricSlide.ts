@@ -1,5 +1,5 @@
 import Slide from '../app-document-list/Slide';
-import { CanvasItemTextPropsType } from '../slide-editor/canvas/CanvasItemText';
+import type { CanvasItemTextPropsType } from '../slide-editor/canvas/CanvasItemText';
 
 export type CanvasItemPropsTypeWithText = CanvasItemTextPropsType & {
     htmlText: string;

@@ -1,5 +1,5 @@
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 
 export function BibleDirectViewTitleComp({
     bibleItem,

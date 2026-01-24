@@ -1,13 +1,8 @@
-import {
-    DependencyList,
-    EffectCallback,
-    useEffect,
-    useMemo,
-    useState,
-} from 'react';
+import type { DependencyList, EffectCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { warn } from './loggerHelpers';
-import { OptionalPromise } from './typeHelpers';
+import type { OptionalPromise } from './typeHelpers';
 import appProvider from '../server/appProvider';
 
 const THRESHOLD = 10;

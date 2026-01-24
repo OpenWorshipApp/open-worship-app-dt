@@ -8,10 +8,8 @@ import {
 import AppDocumentListEventListener from '../event/VaryAppDocumentEventListener';
 import DirSource from '../helper/DirSource';
 import { handleError } from '../helper/errorHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
@@ -26,9 +24,10 @@ import {
 } from '../server/fileHelpers';
 import { openSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerComp';
 import { showSimpleToast } from '../toast/toastHelpers';
-import AppDocument, { WrongDimensionType } from './AppDocument';
+import type { WrongDimensionType } from './AppDocument';
+import AppDocument from './AppDocument';
 import Slide from './Slide';
-import { DroppedFileType } from '../others/droppingFileHelpers';
+import type { DroppedFileType } from '../others/droppingFileHelpers';
 import {
     hideProgressBar,
     showProgressBar,
@@ -40,7 +39,7 @@ import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocum
 import PdfAppDocument from './PdfAppDocument';
 import { createContext, use, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import PdfSlide from './PdfSlide';
+import type PdfSlide from './PdfSlide';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -49,8 +48,8 @@ import {
     getSelectedFilePath,
     setSelectedFilePath,
 } from '../others/selectedHelpers';
-import { DisplayType } from '../_screen/screenTypeHelpers';
-import {
+import type { DisplayType } from '../_screen/screenTypeHelpers';
+import type {
     VaryAppDocumentType,
     VaryAppDocumentItemType,
 } from './appDocumentTypeHelpers';

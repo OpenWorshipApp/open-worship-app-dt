@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { VERSE_TEXT_CLASS } from '../../helper/bibleViewHelpers';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import { BIBLE_VERSE_TEXT_TITLE } from '../../helper/helpers';
-import { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
+import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { getSelectedText } from '../../helper/textSelectionHelpers';
 import FileSource from '../../helper/FileSource';
@@ -11,7 +11,7 @@ import {
     bibleTextToSpeech,
     checkIsAIAudioAvailableForBible,
 } from '../../helper/ai/openAIAudioHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderVerseTextDetailListComp from './RenderVerseTextDetailListComp';
 
 export default function RenderVerseTextDetailComp({

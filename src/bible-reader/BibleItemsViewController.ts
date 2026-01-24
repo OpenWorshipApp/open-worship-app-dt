@@ -1,13 +1,14 @@
-import { ReactNode, createContext, use, useState } from 'react';
+import type { ReactNode } from 'react';
+import { createContext, use, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import EventHandler from '../event/EventHandler';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { BibleItemType } from '../bible-list/bibleItemHelpers';
+import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showBibleOption } from '../bible-lookup/BibleSelectionComp';
 import appProvider from '../server/appProvider';
 import {
@@ -26,7 +27,7 @@ import {
     getShouldModelNewLine,
     setShouldModelNewLine,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
-import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 import {
     elementDivider,
     genContextMenuItemIcon,

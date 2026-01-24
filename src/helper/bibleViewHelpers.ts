@@ -1,4 +1,5 @@
-import { CSSProperties, createContext, use } from 'react';
+import type { CSSProperties } from 'react';
+import { createContext, use } from 'react';
 
 export const BIBLE_VIEW_TEXT_CLASS = 'bible-view-text';
 export const VERSE_TEXT_CLASS = 'verse-text';

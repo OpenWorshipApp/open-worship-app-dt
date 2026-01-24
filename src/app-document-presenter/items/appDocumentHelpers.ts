@@ -1,4 +1,4 @@
-import AppDocument from '../../app-document-list/AppDocument';
+import type AppDocument from '../../app-document-list/AppDocument';
 import Slide from '../../app-document-list/Slide';
 import CanvasController from '../../slide-editor/canvas/CanvasController';
 import CanvasItemImage from '../../slide-editor/canvas/CanvasItemImage';

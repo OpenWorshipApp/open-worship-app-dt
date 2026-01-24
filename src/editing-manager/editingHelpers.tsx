@@ -1,13 +1,14 @@
-import { useState, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import EditingHistoryManager from './EditingHistoryManager';
-import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
+import type AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
+import type { EventMapper as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import {
     useKeyboardRegistering,
-    EventMapper as KeyboardEventMapper,
     toShortcutKey,
 } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';

@@ -1,11 +1,11 @@
-import { MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { getHTMLChild } from '../../helper/helpers';
-import PdfSlide from '../../app-document-list/PdfSlide';
+import type PdfSlide from '../../app-document-list/PdfSlide';
 import SlideItemRenderComp from './SlideItemRenderComp';
-import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import SlideScaleContainerComp from './SlideScaleContainerComp';
 import { useScale } from './slideItemRenderHelpers';
 

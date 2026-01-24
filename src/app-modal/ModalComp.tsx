@@ -1,8 +1,9 @@
 import './ModalComp.scss';
 
-import { PropsWithChildren, ReactNode } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 
-import { EventMapper, toShortcutKey } from '../event/KeyboardEventListener';
+import type { EventMapper } from '../event/KeyboardEventListener';
+import { toShortcutKey } from '../event/KeyboardEventListener';
 
 interface MyProps {
     children?: ReactNode;

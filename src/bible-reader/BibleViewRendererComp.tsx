@@ -1,11 +1,14 @@
+import type { NestedBibleItemsType } from './BibleItemsViewController';
 import {
-    NestedBibleItemsType,
     RESIZE_SETTING_NAME,
     useBibleItemsViewControllerContext,
 } from './BibleItemsViewController';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import NoBibleViewAvailableComp from './NoBibleViewAvailableComp';
-import { FlexSizeType, DataInputType } from '../resize-actor/flexSizeHelpers';
+import type {
+    FlexSizeType,
+    DataInputType,
+} from '../resize-actor/flexSizeHelpers';
 
 export default function BibleViewRendererComp({
     isHorizontal = true,

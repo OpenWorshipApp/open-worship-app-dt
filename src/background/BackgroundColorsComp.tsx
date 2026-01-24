@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
 import ColorPicker from '../others/color/ColorPicker';
-import { AppColorType } from '../others/color/colorHelpers';
+import type { AppColorType } from '../others/color/colorHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 
 function RenderColorPickerPerScreenComp({
     screenId,

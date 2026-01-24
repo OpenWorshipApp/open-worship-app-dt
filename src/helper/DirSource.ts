@@ -1,8 +1,7 @@
 import EventHandler from '../event/EventHandler';
+import type { FileMetadataType, MimetypeNameType } from '../server/fileHelpers';
 import {
-    FileMetadataType,
     getFileMetaData,
-    MimetypeNameType,
     getAppMimetype,
     fsListFiles,
     fsCheckDirExist,

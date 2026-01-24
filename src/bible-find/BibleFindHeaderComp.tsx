@@ -1,4 +1,5 @@
-import { useMemo, useRef, KeyboardEvent } from 'react';
+import type { KeyboardEvent } from 'react';
+import { useMemo, useRef } from 'react';
 
 import { useBibleFindController } from './BibleFindController';
 import { useAppEffect } from '../helper/debuggerHelpers';

@@ -17,7 +17,7 @@ import {
     checkAudioPlaying,
     showAudioPlayingToast,
 } from './audioBackgroundHelpers';
-import {
+import type {
     BackgroundSrcListType,
     BackgroundType,
 } from '../_screen/screenTypeHelpers';

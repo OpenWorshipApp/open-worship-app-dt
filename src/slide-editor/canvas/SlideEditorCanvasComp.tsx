@@ -1,9 +1,10 @@
-import { DragEvent } from 'react';
+import type { DragEvent } from 'react';
 
 import { BoxEditorComp } from './box/BoxEditorComp';
 import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 import { showCanvasContextMenu } from './canvasContextMenuHelpers';
-import CanvasController, {
+import type CanvasController from './CanvasController';
+import {
     defaultRangeSize,
     useCanvasControllerContext,
 } from './CanvasController';

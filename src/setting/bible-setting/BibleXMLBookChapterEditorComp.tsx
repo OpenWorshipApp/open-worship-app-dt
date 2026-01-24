@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { compileSchema, SchemaNode } from 'json-schema-library';
+import type { SchemaNode } from 'json-schema-library';
+import { compileSchema } from 'json-schema-library';
 import { Uri } from 'monaco-editor';
 
 import { useAppEffect, useAppStateAsync } from '../../helper/debuggerHelpers';
@@ -13,12 +14,12 @@ import BibleXMLEditorComp from './BibleXMLEditorComp';
 import bookChapterSchemaJson from './schemas/bibleBookChapterSchema.json';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getChapterData } from '../../helper/bible-helpers/bibleInfoHelpers';
-import { BibleChapterType } from '../../helper/bible-helpers/BibleDataReader';
+import type { BibleChapterType } from '../../helper/bible-helpers/BibleDataReader';
 import {
     getBibleXMLDataFromKey,
     saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
 
 export const schemaHandler: SchemaNode = compileSchema(bookChapterSchemaJson);

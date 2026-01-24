@@ -1,9 +1,9 @@
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
-import BibleItem from './BibleItem';
-import { BibleTargetType } from './bibleRenderHelpers';
+import type BibleItem from './BibleItem';
+import type { BibleTargetType } from './bibleRenderHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { AnyObjectType } from '../helper/typeHelpers';
 
 export type BibleItemType = {
     id: number;

@@ -7,17 +7,15 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import {
     checkIsImagesInClipboard,
     downloadImage,
     readImagesFromClipboard,
 } from '../server/appHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import {
@@ -33,7 +31,7 @@ import {
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 
 function rendChild(

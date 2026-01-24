@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import { handleError } from '../../helper/errorHelpers';
+import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import {
     BIBLE_DOWNLOAD_TOAST_TITLE,
-    BibleMinimalInfoType,
     downloadBible,
     extractDownloadedBible,
 } from '../../helper/bible-helpers/bibleDownloadHelpers';

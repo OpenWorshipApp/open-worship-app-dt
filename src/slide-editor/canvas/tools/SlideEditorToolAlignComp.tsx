@@ -1,4 +1,4 @@
-import { VAlignmentType, HAlignmentType } from '../canvasHelpers';
+import type { VAlignmentType, HAlignmentType } from '../canvasHelpers';
 
 type AlignmentDataType = {
     verticalAlignment?: VAlignmentType;

@@ -3,7 +3,7 @@ import { Uri } from 'monaco-editor';
 
 import { tran } from '../lang/langHelpers';
 import { useSelectedLyricContext } from './lyricHelpers';
-import Lyric from './Lyric';
+import type Lyric from './Lyric';
 import LyricMenuComp from './LyricMenuComp';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';

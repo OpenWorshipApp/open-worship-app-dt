@@ -1,7 +1,8 @@
 import { createContext, use } from 'react';
 
 import ScreenManager from './ScreenManager';
-import ScreenManagerBase, { ScreenManagerEventType } from './ScreenManagerBase';
+import type { ScreenManagerEventType } from './ScreenManagerBase';
+import ScreenManagerBase from './ScreenManagerBase';
 import {
     useScreenEvents,
     useScreenBackgroundManagerEvents,

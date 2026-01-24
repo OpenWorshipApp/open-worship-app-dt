@@ -6,13 +6,12 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import DirSource from '../helper/DirSource';
-import { ReactElement, useState } from 'react';
+import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import type DirSource from '../helper/DirSource';
+import type { ReactElement } from 'react';
+import { useState } from 'react';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 import FileSource from '../helper/FileSource';
 import RenderBackgroundWebIframeComp, {

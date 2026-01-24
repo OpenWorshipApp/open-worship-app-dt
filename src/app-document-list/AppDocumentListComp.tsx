@@ -15,7 +15,7 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { DroppedFileType } from '../others/droppingFileHelpers';
+import type { DroppedFileType } from '../others/droppingFileHelpers';
 import {
     checkIsPdf,
     checkIsVaryAppDocumentOnScreen,
@@ -23,7 +23,7 @@ import {
     supportOfficeFileExtensions,
     varyAppDocumentFromFilePath,
 } from './appDocumentHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
 
 function handleExtraFileChecking(filePath: string) {

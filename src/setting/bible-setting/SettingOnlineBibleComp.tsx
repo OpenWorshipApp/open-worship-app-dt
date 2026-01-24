@@ -1,5 +1,5 @@
 import LoadingComp from '../../others/LoadingComp';
-import { BibleListType } from './bibleSettingHelpers';
+import type { BibleListType } from './bibleSettingHelpers';
 import { useBibleXMLKeys } from './bibleXMLHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
 

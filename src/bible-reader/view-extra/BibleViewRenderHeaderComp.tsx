@@ -5,7 +5,7 @@ import {
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import RenderActionButtonsComp from '../../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../../helper/domHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { RenderTitleMaterialComp } from './RenderTitleMaterialComp';
 
 export default function BibleViewRenderHeaderComp({

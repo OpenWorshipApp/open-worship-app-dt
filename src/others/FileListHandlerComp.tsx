@@ -1,18 +1,22 @@
-import { createContext, lazy, useState, MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
+import { createContext, lazy, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import PathSelectorComp from './PathSelectorComp';
-import { MimetypeNameType, fsCheckDirExist } from '../server/fileHelpers';
-import FileSource from '../helper/FileSource';
+import type { MimetypeNameType } from '../server/fileHelpers';
+import { fsCheckDirExist } from '../server/fileHelpers';
+import type FileSource from '../helper/FileSource';
 import RenderListComp from './RenderListComp';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
+import type {
+    DroppedFileType,
+    FileSelectionOptionType,
+} from './droppingFileHelpers';
 import {
     genOnDragOver,
     genOnDragLeave,
     genOnDrop,
     genDroppingFileOnContextMenu,
-    DroppedFileType,
-    FileSelectionOptionType,
     handleFilesSelectionMenuItem,
     genItemsAddingContextMenuItems,
 } from './droppingFileHelpers';
@@ -20,9 +24,9 @@ import appProvider from '../server/appProvider';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { handleError } from '../helper/errorHelpers';
 import NoDirSelectedComp from './NoDirSelectedComp';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
-import { OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 
 const LazyAskingNewNameComp = lazy(() => {
     return import('./AskingNewNameComp');

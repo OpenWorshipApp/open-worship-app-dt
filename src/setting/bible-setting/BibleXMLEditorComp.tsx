@@ -1,17 +1,15 @@
 import { useState } from 'react';
-import { SchemaNode } from 'json-schema-library';
+import type { SchemaNode } from 'json-schema-library';
 
 import { tran } from '../../lang/langHelpers';
-import {
-    EditorStoreType,
-    useInitMonacoEditor,
-} from '../../helper/monacoEditorHelpers';
+import type { EditorStoreType } from '../../helper/monacoEditorHelpers';
+import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
-import { Uri } from 'monaco-editor';
+import type { Uri } from 'monaco-editor';
 
 function parseJsonData(content: string) {
     try {

@@ -1,13 +1,13 @@
 import { useState } from 'react';
 
 import { useStateSettingBoolean } from '../helper/settingHelpers';
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import PlaylistSlideItemComp from './PlaylistSlideItemComp';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
-import Playlist from './Playlist';
+import type Playlist from './Playlist';
 import BibleItemRenderComp from '../bible-list/BibleItemRenderComp';
-import PlaylistItem from './PlaylistItem';
-import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import type PlaylistItem from './PlaylistItem';
+import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import FileSource from '../helper/FileSource';
 import AppSuspenseComp from '../others/AppSuspenseComp';

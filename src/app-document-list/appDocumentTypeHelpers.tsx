@@ -1,7 +1,9 @@
-import AppDocument from './AppDocument';
-import Slide, { SlideType } from './Slide';
-import PdfAppDocument from './PdfAppDocument';
-import PdfSlide, { PdfSlideType } from './PdfSlide';
+import type AppDocument from './AppDocument';
+import type { SlideType } from './Slide';
+import type Slide from './Slide';
+import type PdfAppDocument from './PdfAppDocument';
+import type { PdfSlideType } from './PdfSlide';
+import type PdfSlide from './PdfSlide';
 
 export const MIN_THUMBNAIL_SCALE = 20;
 export const THUMBNAIL_SCALE_STEP = 1;

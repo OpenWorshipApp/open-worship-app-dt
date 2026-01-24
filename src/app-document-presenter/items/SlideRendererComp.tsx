@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import CanvasItemRendererComp from '../../slide-editor/CanvasItemRendererComp';
+import type { CanvasItemPropsType } from '../../slide-editor/canvas/CanvasItem';
 import CanvasItem, {
     CanvasItemContext,
-    CanvasItemPropsType,
 } from '../../slide-editor/canvas/CanvasItem';
 import { getHTMLChild } from '../../helper/helpers';
 import Canvas from '../../slide-editor/canvas/Canvas';

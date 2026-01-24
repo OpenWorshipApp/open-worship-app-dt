@@ -12,10 +12,11 @@ import {
 import { getBibleInfo } from './bibleInfoHelpers';
 import { appApiFetch } from '../networkHelpers';
 import { tarExtract } from '../../server/appHelpers';
-import { DownloadOptionsType, writeStreamToFile } from './downloadHelpers';
+import type { DownloadOptionsType } from './downloadHelpers';
+import { writeStreamToFile } from './downloadHelpers';
 import { getBibleXMLCacheInfoList } from '../../setting/bible-setting/bibleXMLHelpers';
 import { bibleDataReader } from './BibleDataReader';
-import { LocaleType } from '../../lang/langHelpers';
+import type { LocaleType } from '../../lang/langHelpers';
 import CacheManager from '../../others/CacheManager';
 
 export const BIBLE_DOWNLOAD_TOAST_TITLE = 'Bible Download';

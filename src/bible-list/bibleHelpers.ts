@@ -1,7 +1,7 @@
 import { createContext, use, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import BibleItem from './BibleItem';
+import type BibleItem from './BibleItem';
 import {
     checkIsBookAvailable,
     getVerses,
@@ -18,11 +18,9 @@ import DirSource from '../helper/DirSource';
 import FileSource from '../helper/FileSource';
 import { addExtension } from '../server/fileHelpers';
 import appProvider from '../server/appProvider';
-import { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';

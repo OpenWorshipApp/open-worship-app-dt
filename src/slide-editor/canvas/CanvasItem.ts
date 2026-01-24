@@ -1,20 +1,20 @@
-import { CSSProperties, createContext, use, useOptimistic } from 'react';
+import type { CSSProperties } from 'react';
+import { createContext, use, useOptimistic } from 'react';
 
 import { cloneJson } from '../../helper/helpers';
-import { AppColorType } from '../../others/color/colorHelpers';
+import type { AppColorType } from '../../others/color/colorHelpers';
+import type { ToolingBoxType, CanvasItemKindType } from './canvasHelpers';
 import {
-    ToolingBoxType,
     tooling2BoxProps,
     canvasItemList,
     genTextDefaultBoxStyle,
-    CanvasItemKindType,
     cleanupProps,
 } from './canvasHelpers';
 import EventHandler from '../../event/EventHandler';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { useProgressBarComp } from '../../progress-bar/ProgressBarComp';
-import { ClipboardInf } from '../../server/appHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { ClipboardInf } from '../../server/appHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
 export type CanvasItemPropsType = {
     id: number;

@@ -1,6 +1,6 @@
 import { createContext, use } from 'react';
 import { getRotationDeg, removePX } from '../helper/helpers';
-import { OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 
 type ResizeType = {
     left: boolean;

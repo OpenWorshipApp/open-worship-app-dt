@@ -1,15 +1,17 @@
 import { cloneJson, isValidJson } from '../helper/helpers';
 import { ItemBase } from '../helper/ItemBase';
 import { setSetting, getSetting } from '../helper/settingHelpers';
-import DragInf, { DragTypeEnum } from '../helper/DragInf';
+import type DragInf from '../helper/DragInf';
+import { DragTypeEnum } from '../helper/DragInf';
 import { handleError } from '../helper/errorHelpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
-import { BibleTargetType, bibleRenderHelper } from './bibleRenderHelpers';
-import { BibleItemType } from './bibleItemHelpers';
+import type { BibleTargetType } from './bibleRenderHelpers';
+import { bibleRenderHelper } from './bibleRenderHelpers';
+import type { BibleItemType } from './bibleItemHelpers';
 import { copyToClipboard } from '../server/appHelpers';
-import { ItemSourceInfBasic } from '../others/ItemSourceInf';
-import DocumentInf from '../others/DocumentInf';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
+import type DocumentInf from '../others/DocumentInf';
+import type { AnyObjectType } from '../helper/typeHelpers';
 import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
 import {
     fromVerseKey,

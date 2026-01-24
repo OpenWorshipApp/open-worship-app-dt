@@ -1,8 +1,9 @@
-import { useState, CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
+import { useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
-import ScreenEffectManager from './managers/ScreenEffectManager';
-import { StyleAnimType, PTFEventType } from './screenTypeHelpers';
+import type ScreenEffectManager from './managers/ScreenEffectManager';
+import type { StyleAnimType, PTFEventType } from './screenTypeHelpers';
 
 const ZOOM_CONTAINER_CLASS = 'zoom-container';
 export const ANIM_END_DELAY_MILLISECOND = 500;

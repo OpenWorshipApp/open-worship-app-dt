@@ -1,4 +1,4 @@
-import { CSSProperties, MouseEvent } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 
 import { setSetting } from '../../helper/settingHelpers';
 import {
@@ -12,9 +12,9 @@ import {
 import { getForegroundDataListOnScreenSetting } from '../screenHelpers';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
-import ScreenManagerBase from './ScreenManagerBase';
+import type ScreenManagerBase from './ScreenManagerBase';
 import { unlocking } from '../../server/unlockingHelpers';
-import {
+import type {
     ForegroundDataType,
     BasicScreenMessageType,
     ScreenMessageType,
@@ -30,8 +30,8 @@ import {
     checkAreObjectsEqual,
     checkIsItemInArray,
 } from '../../server/comparisonHelpers';
-import { OptionalPromise } from '../../helper/typeHelpers';
-import ScreenEffectManager from './ScreenEffectManager';
+import type { OptionalPromise } from '../../helper/typeHelpers';
+import type ScreenEffectManager from './ScreenEffectManager';
 import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
 
 export type ScreenForegroundEventType = 'update';

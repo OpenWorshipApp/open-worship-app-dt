@@ -7,7 +7,7 @@ import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsVi
 import { genVerseList } from '../bible-list/bibleHelpers';
 import { useMemo } from 'react';
 import { getVersesCount } from '../helper/bible-helpers/bibleLogicHelpers2';
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 
 export default function RenderVerseOptionsComp({
     bibleItem,

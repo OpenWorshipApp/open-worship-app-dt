@@ -1,4 +1,4 @@
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 
 let mouseDownInd: number | null = null;
 export function mouseUp() {

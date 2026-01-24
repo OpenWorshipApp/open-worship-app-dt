@@ -1,11 +1,12 @@
-import { MouseEvent, use } from 'react';
+import type { MouseEvent } from 'react';
+import { use } from 'react';
 
-import Slide from '../../app-document-list/Slide';
+import type Slide from '../../app-document-list/Slide';
 import SlideRendererHtmlComp from './SlideRendererHtmlComp';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { SelectedEditingSlideContext } from '../../app-document-list/appDocumentHelpers';
 import SlideItemRenderComp from './SlideItemRenderComp';
-import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 
 export default function SlideRenderComp({
     slide,

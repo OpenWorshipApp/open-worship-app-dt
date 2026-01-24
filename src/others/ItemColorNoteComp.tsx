@@ -2,13 +2,11 @@ import { useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import colorList from './color-list.json';
-import ColorNoteInf from '../helper/ColorNoteInf';
+import type ColorNoteInf from '../helper/ColorNoteInf';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { freezeObject } from '../helper/helpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 
 freezeObject(colorList);
 

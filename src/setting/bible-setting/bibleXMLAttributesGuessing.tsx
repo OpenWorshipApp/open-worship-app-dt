@@ -1,12 +1,7 @@
 import { useState } from 'react';
 
-import {
-    getLangDataAsync,
-    getLangCode,
-    LanguageDataType,
-    LocaleType,
-    tran,
-} from '../../lang/langHelpers';
+import type { LanguageDataType, LocaleType } from '../../lang/langHelpers';
+import { getLangDataAsync, getLangCode, tran } from '../../lang/langHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
 import { Uri } from 'monaco-editor';

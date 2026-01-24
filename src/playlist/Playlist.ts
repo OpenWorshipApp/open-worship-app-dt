@@ -1,8 +1,8 @@
 import { cloneJson, isValidJson } from '../helper/helpers';
-import AppEditableDocumentSourceAbs, {
-    AppDocumentMetadataType,
-} from '../helper/AppEditableDocumentSourceAbs';
-import PlaylistItem, { PlaylistItemType } from './PlaylistItem';
+import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
+import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
+import type { PlaylistItemType } from './PlaylistItem';
+import PlaylistItem from './PlaylistItem';
 import { showSimpleToast } from '../toast/toastHelpers';
 
 export type PlaylistType = {

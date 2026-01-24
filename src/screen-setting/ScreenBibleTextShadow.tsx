@@ -1,9 +1,11 @@
 import './ScreenBibleTextShadow.scss';
 
-import { CSSProperties, useMemo } from 'react';
+import type { CSSProperties } from 'react';
+import { useMemo } from 'react';
 
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
-import { AppColorType, toHexColorString } from '../others/color/colorHelpers';
+import type { AppColorType } from '../others/color/colorHelpers';
+import { toHexColorString } from '../others/color/colorHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useStylingColor } from '../_screen/preview/stylingHelpers';

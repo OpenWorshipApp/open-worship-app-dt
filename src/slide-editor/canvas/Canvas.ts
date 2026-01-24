@@ -1,10 +1,11 @@
 import { toMaxId } from '../../helper/helpers';
-import CanvasItem, { CanvasItemError } from './CanvasItem';
+import type CanvasItem from './CanvasItem';
+import { CanvasItemError } from './CanvasItem';
 import CanvasItemBibleItem from './CanvasItemBibleItem';
 import CanvasItemImage from './CanvasItemImage';
 import CanvasItemText from './CanvasItemText';
 import CanvasItemVideo from './CanvasItemVideo';
-import Slide from '../../app-document-list/Slide';
+import type Slide from '../../app-document-list/Slide';
 
 export default class Canvas {
     slide: Slide;

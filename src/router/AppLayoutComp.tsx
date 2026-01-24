@@ -1,4 +1,5 @@
-import { useMemo, useState, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useMemo, useState } from 'react';
 
 import {
     BibleLookupButtonComp,

@@ -1,7 +1,7 @@
 import { createContext, use, useMemo } from 'react';
 
+import type { EventMapper } from '../event/KeyboardEventListener';
 import {
-    EventMapper,
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';

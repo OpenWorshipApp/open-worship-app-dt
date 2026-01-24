@@ -2,16 +2,14 @@ import { getChapterData, toVerseFullKeyFormat } from './bibleInfoHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import CacheManager from '../../others/CacheManager';
 import { unlocking } from '../../server/unlockingHelpers';
-import {
+import type {
     ContentTitleType,
     CustomTitlesVerseType,
     CustomVerseContentType,
 } from './BibleDataReader';
 import appProvider from '../../server/appProvider';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import type LookupBibleItemController from '../../bible-reader/LookupBibleItemController';
 import type BibleItemsViewController from '../../bible-reader/BibleItemsViewController';
 import { copyToClipboard } from '../../server/appHelpers';

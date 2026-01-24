@@ -1,8 +1,8 @@
-import { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { useAttachedBackgroundData } from '../../helper/dragHelpers';
-import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import { useScale } from './slideItemRenderHelpers';
 
 export default function SlideScaleContainerComp({

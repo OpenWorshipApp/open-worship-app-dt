@@ -1,7 +1,9 @@
-import { CSSProperties, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { useState } from 'react';
 
 import { useAppEffect } from '../../../helper/debuggerHelpers';
-import CanvasItemText, { CanvasItemTextPropsType } from '../CanvasItemText';
+import type { CanvasItemTextPropsType } from '../CanvasItemText';
+import CanvasItemText from '../CanvasItemText';
 
 function calcAlignmentStyle(props: CanvasItemTextPropsType) {
     let height = 0;

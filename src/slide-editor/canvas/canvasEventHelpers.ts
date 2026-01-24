@@ -1,11 +1,9 @@
 import { useState } from 'react';
 
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import {
-    CanvasItemEventDataType,
-    useCanvasControllerContext,
-} from './CanvasController';
-import { CanvasControllerEventType } from './canvasHelpers';
+import type { CanvasItemEventDataType } from './CanvasController';
+import { useCanvasControllerContext } from './CanvasController';
+import type { CanvasControllerEventType } from './canvasHelpers';
 
 export function useCanvasControllerEvents(
     eventTypes: CanvasControllerEventType[],

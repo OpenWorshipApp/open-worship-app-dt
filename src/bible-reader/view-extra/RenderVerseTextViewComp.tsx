@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 
-import { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import AudioPlayerComp from './AudioPlayerComp';
 import { HoverMotionHandler } from '../../helper/domHelpers';

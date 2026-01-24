@@ -1,8 +1,8 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
-import { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
+import type { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
 import BibleViewTitleEditorComp from '../BibleViewTitleEditorComp';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import BibleViewTitleWrapperComp from './BibleViewTitleWrapperComp';
 
 export function BibleViewTitleEditingComp({

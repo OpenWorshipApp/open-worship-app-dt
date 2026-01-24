@@ -1,20 +1,18 @@
-import Slide, { SlideType } from './Slide';
-import AppEditableDocumentSourceAbs, {
-    AppDocumentMetadataType,
-} from '../helper/AppEditableDocumentSourceAbs';
+import type { SlideType } from './Slide';
+import Slide from './Slide';
+import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
+import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
 import { tran } from '../lang/langHelpers';
 import { gemSlideContextMenuItems } from './appDocumentHelpers';
 import { checkIsSameValues, toMaxId } from '../helper/helpers';
-import { MimetypeNameType } from '../server/fileHelpers';
+import type { MimetypeNameType } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
-import ItemSourceInf from '../others/ItemSourceInf';
-import { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
-import { DisplayType } from '../_screen/screenTypeHelpers';
+import type ItemSourceInf from '../others/ItemSourceInf';
+import type { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import type { DisplayType } from '../_screen/screenTypeHelpers';
 import {
     checkIsImagesInClipboard,
     readImagesFromClipboard,

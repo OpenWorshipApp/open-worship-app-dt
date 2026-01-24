@@ -1,14 +1,14 @@
 import AppDocument from '../app-document-list/AppDocument';
 import type Slide from '../app-document-list/Slide';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
-import { getMimetypeExtensions, MimetypeNameType } from '../server/fileHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { MimetypeNameType } from '../server/fileHelpers';
+import { getMimetypeExtensions } from '../server/fileHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
-import LyricSlide, { CanvasItemPropsTypeWithText } from './LyricSlide';
+import type { CanvasItemPropsTypeWithText } from './LyricSlide';
+import LyricSlide from './LyricSlide';
 import FileSource from '../helper/FileSource';
 import Lyric from './Lyric';
 import {

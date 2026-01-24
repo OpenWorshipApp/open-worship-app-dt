@@ -1,4 +1,4 @@
-import Lyric from './Lyric';
+import type Lyric from './Lyric';
 import { handleError } from '../helper/errorHelpers';
 import CacheManager from '../others/CacheManager';
 import appProvider from '../server/appProvider';

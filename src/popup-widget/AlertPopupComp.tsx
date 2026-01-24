@@ -2,7 +2,8 @@ import './AlertPopupComp.scss';
 
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
-import { PopupAlertDataType, closeAlert } from './popupWidgetHelpers';
+import type { PopupAlertDataType } from './popupWidgetHelpers';
+import { closeAlert } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 
 export default function AlertPopupComp({

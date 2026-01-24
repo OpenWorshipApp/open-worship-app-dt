@@ -18,14 +18,15 @@ import { isValidJson } from './helpers';
 import { pathToFileURL } from '../server/calcHelpers';
 import EventHandler from '../event/EventHandler';
 import appProvider from '../server/appProvider';
-import DragInf, { DragTypeEnum } from './DragInf';
+import type DragInf from './DragInf';
+import { DragTypeEnum } from './DragInf';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from './errorHelpers';
 import FileSourceMetaManager from './FileSourceMetaManager';
-import ColorNoteInf from './ColorNoteInf';
+import type ColorNoteInf from './ColorNoteInf';
 import { electronSendAsync } from '../server/appHelpers';
 import { unlocking } from '../server/unlockingHelpers';
-import { AnyObjectType } from './typeHelpers';
+import type { AnyObjectType } from './typeHelpers';
 
 export type SrcData = `data:${string}`;
 

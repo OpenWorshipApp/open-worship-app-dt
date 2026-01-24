@@ -2,7 +2,7 @@ import './SlideEditorPopupComp.scss';
 
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import SlideEditorPopupHeaderComp from './SlideEditorPopupHeaderComp';
-import Slide from '../app-document-list/Slide';
+import type Slide from '../app-document-list/Slide';
 import SlideEditorComp from './SlideEditorComp';
 import { closeSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerComp';
 import { ModalComp } from '../app-modal/ModalComp';

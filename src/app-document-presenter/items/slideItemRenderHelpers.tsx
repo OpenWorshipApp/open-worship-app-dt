@@ -1,12 +1,13 @@
 import { useState, useMemo, useCallback } from 'react';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
-import { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderBackgroundWebIframeComp from '../../background/RenderBackgroundWebIframeComp';
 import RenderCameraVideoComp from '../../background/RenderCameraVideoComp';
-import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import { DroppedDataType, DragTypeEnum } from '../../helper/DragInf';
+import type { DroppedDataType } from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
 import {
     getColorNoteFilePathSetting,
     setColorNoteFilePathSetting,

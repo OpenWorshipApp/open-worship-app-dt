@@ -1,9 +1,10 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
-import CanvasItemText, {
+import type {
     CanvasItemTextHtmlPropsType,
     CanvasItemTextPropsType,
 } from '../CanvasItemText';
+import CanvasItemText from '../CanvasItemText';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';

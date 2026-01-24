@@ -1,5 +1,5 @@
 import { fsCheckDirExist, fsDeleteDir } from '../../server/fileHelpers';
-import { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
+import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     hideProgressBar,

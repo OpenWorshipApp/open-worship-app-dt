@@ -17,9 +17,9 @@ import {
 import { useMemo, useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
-import { BackgroundSrcType } from '../_screen/screenTypeHelpers';
+import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { handleError } from '../helper/errorHelpers';
 import {
     showProgressBar,
@@ -29,10 +29,8 @@ import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import { genDownloadContextMenuItems } from './downloadHelper';
 import { downloadVideoOrAudio } from '../server/appHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 
 function RendBodyComp({
     filePath,

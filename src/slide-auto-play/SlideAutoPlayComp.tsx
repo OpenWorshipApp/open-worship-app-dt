@@ -1,6 +1,6 @@
 import './SlideAutoPlayComp.scss';
 
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 import {
     useStateSettingBoolean,

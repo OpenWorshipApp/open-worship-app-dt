@@ -5,7 +5,7 @@ import {
     getScreenManagerByKey,
     getScreenManagerByScreenId,
 } from '../_screen/managers/screenManagerHelpers';
-import {
+import type {
     ForegroundDataType,
     ForegroundSrcListType,
 } from '../_screen/screenTypeHelpers';

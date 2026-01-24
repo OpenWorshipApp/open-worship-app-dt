@@ -1,4 +1,4 @@
-import { AppColorType } from '../others/color/colorHelpers';
+import type { AppColorType } from '../others/color/colorHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import AppRangeComp from '../others/AppRangeComp';
 import {

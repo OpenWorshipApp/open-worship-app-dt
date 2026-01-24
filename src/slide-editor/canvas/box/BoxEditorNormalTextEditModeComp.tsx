@@ -1,4 +1,5 @@
-import { CSSProperties, useMemo } from 'react';
+import type { CSSProperties } from 'react';
+import { useMemo } from 'react';
 
 import { useCanvasControllerContext } from '../CanvasController';
 import BoxEditorTextAreaComp from './BoxEditorTextAreaComp';
@@ -7,7 +8,7 @@ import {
     useCanvasItemPropsContext,
     useSetEditingCanvasItem,
 } from '../CanvasItem';
-import { CanvasItemTextPropsType } from '../CanvasItemText';
+import type { CanvasItemTextPropsType } from '../CanvasItemText';
 import { genTimeoutAttempt } from '../../../helper/helpers';
 
 export default function BoxEditorNormalTextEditModeComp({

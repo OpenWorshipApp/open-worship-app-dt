@@ -1,20 +1,18 @@
-import { DragEvent, MouseEvent } from 'react';
+import type { DragEvent, MouseEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
+import type { MimetypeNameType } from '../server/fileHelpers';
 import {
     fsCopyFilePathToPath,
     isSupportedExt,
-    MimetypeNameType,
     selectFiles,
 } from '../server/fileHelpers';
-import DirSource from '../helper/DirSource';
+import type DirSource from '../helper/DirSource';
 import { showSimpleToast } from '../toast/toastHelpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { changeDragEventStyle } from '../helper/helpers';
-import { OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 
 export function genOnDragOver(dirSource: DirSource) {
     return (event: DragEvent) => {

@@ -14,7 +14,7 @@ import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
-import { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
+import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../others/LoadingComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 

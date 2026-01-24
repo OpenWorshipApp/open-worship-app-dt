@@ -1,9 +1,9 @@
 import { createContext } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { closeCurrentEditingBibleItem } from './readBibleHelpers';
-import { EventMapper } from '../event/KeyboardEventListener';
+import type { EventMapper } from '../event/KeyboardEventListener';
 import {
     elementDivider,
     genContextMenuItemIcon,
@@ -18,16 +18,12 @@ import BibleItemsViewController, {
 } from './BibleItemsViewController';
 import { setBibleLookupInputFocus } from '../bible-lookup/selectionHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import {
-    EditingResultType,
-    extractBibleTitle,
-} from '../helper/bible-helpers/bibleLogicHelpers2';
-import {
-    bibleRenderHelper,
-    BibleTargetType,
-} from '../bible-list/bibleRenderHelpers';
+import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
+import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import CacheManager from '../others/CacheManager';
-import { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { genFoundBibleItemContextMenu } from '../bible-lookup/bibleActionHelpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';

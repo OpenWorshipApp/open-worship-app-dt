@@ -1,13 +1,12 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
-import CanvasItemBibleItem, {
-    CanvasItemBiblePropsType,
-} from '../CanvasItemBibleItem';
+import type { CanvasItemBiblePropsType } from '../CanvasItemBibleItem';
+import CanvasItemBibleItem from '../CanvasItemBibleItem';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
-import { CanvasItemTextPropsType } from '../CanvasItemText';
+import type { CanvasItemTextPropsType } from '../CanvasItemText';
 
 export default function BoxEditorNormalViewBibleModeComp({
     style,

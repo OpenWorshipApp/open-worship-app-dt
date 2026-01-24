@@ -7,7 +7,7 @@ import BibleItemsViewController, {
 } from '../bible-reader/BibleItemsViewController';
 import SlideEditHandlerComp from '../app-document-presenter/SlideEditHandlerComp';
 import BibleViewComp from '../bible-reader/BibleViewComp';
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewTitleEditingComp';
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
 

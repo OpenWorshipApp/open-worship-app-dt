@@ -4,10 +4,8 @@ import { tran } from '../../lang/langHelpers';
 import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
 import DisplayControl from './DisplayControl';
 import ScreenEffectControlComp from './ScreenEffectControlComp';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 
 function getNewStageNumber(
     event: any,

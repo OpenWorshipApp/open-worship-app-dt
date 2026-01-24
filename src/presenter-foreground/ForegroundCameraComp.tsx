@@ -1,4 +1,5 @@
-import { CSSProperties, useRef } from 'react';
+import type { CSSProperties } from 'react';
+import { useRef } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
@@ -13,11 +14,11 @@ import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
+import type { CameraInfoType } from '../helper/cameraHelpers';
 import {
-    CameraInfoType,
     getCameraAndShowMedia,
     useCameraInfoList,
 } from '../helper/cameraHelpers';

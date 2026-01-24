@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
+import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import {
-    BibleMinimalInfoType,
     getDownloadedBibleInfoList,
     getOnlineBibleInfoList,
 } from '../../helper/bible-helpers/bibleDownloadHelpers';

@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
 import AppDocument from '../app-document-list/AppDocument';
-import Slide from '../app-document-list/Slide';
+import type Slide from '../app-document-list/Slide';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import {
@@ -12,9 +12,10 @@ import {
     setSelectedEditingSlide,
 } from '../app-document-list/appDocumentHelpers';
 import { getSelectedLyric, setSelectedLyric } from '../lyric-list/lyricHelpers';
-import Lyric from '../lyric-list/Lyric';
-import { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
-import { TabOptionType, toTitleExternal } from './routeHelpers';
+import type Lyric from '../lyric-list/Lyric';
+import type { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
+import type { TabOptionType } from './routeHelpers';
+import { toTitleExternal } from './routeHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 
 export function genLayoutTabs() {

@@ -1,5 +1,6 @@
 import { useAppEffect } from '../helper/debuggerHelpers';
-import EventHandler, { ListenerType } from './EventHandler';
+import type { ListenerType } from './EventHandler';
+import EventHandler from './EventHandler';
 
 export default class ProgressBarEventListener extends EventHandler<string> {
     static readonly eventNamePrefix: string = 'progress-bar';

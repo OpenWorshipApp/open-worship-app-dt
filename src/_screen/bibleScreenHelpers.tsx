@@ -4,12 +4,12 @@ import {
     getBibleLocale,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
-import BibleItem from '../bible-list/BibleItem';
-import {
+import type BibleItem from '../bible-list/BibleItem';
+import type {
     BibleItemRenderingType,
-    BibleBibleTable,
     BibleRenderVerseType,
 } from './bibleScreenComps';
+import { BibleBibleTable } from './bibleScreenComps';
 import { getHTMLChild } from '../helper/helpers';
 import appProvider from '../server/appProvider';
 import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';

@@ -8,7 +8,7 @@ import {
     trashAllMaterialFiles,
 } from '../server/appHelpers';
 import FileSource from '../helper/FileSource';
-import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import appProvider from '../server/appProvider';
 import { useFileSourceRefreshEvents } from '../helper/dirSourceHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
@@ -17,10 +17,8 @@ import {
     menuTitleRevealFile,
     RECEIVING_DROP_CLASSNAME,
 } from '../helper/helpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';
 import RenderRenamingComp from './RenderRenamingComp';
 

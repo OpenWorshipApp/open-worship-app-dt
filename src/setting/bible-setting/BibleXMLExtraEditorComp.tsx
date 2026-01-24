@@ -1,4 +1,5 @@
-import { compileSchema, SchemaNode } from 'json-schema-library';
+import type { SchemaNode } from 'json-schema-library';
+import { compileSchema } from 'json-schema-library';
 import { Uri } from 'monaco-editor';
 
 import LoadingComp from '../../others/LoadingComp';
@@ -9,11 +10,11 @@ import {
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
 import { useMemo } from 'react';
-import { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
+import type { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
 import bibleNewLinesSchemaJson from './schemas/bibleExtraSchema.json';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
 
 export const schemaHandler: SchemaNode = compileSchema(bibleNewLinesSchemaJson);

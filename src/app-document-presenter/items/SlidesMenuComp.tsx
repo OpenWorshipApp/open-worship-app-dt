@@ -3,9 +3,8 @@ import {
     useSlideWrongDimension,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
-import AppDocument, {
-    WrongDimensionType,
-} from '../../app-document-list/AppDocument';
+import type { WrongDimensionType } from '../../app-document-list/AppDocument';
+import AppDocument from '../../app-document-list/AppDocument';
 import { FileEditingMenuComp } from '../../editing-manager/editingHelpers';
 import { useMemo } from 'react';
 

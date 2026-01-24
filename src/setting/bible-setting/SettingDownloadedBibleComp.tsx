@@ -1,8 +1,8 @@
 import DownloadedBibleItemComp from './DownloadedBibleItemComp';
-import { BibleListType } from './bibleSettingHelpers';
+import type { BibleListType } from './bibleSettingHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
 import LoadingComp from '../../others/LoadingComp';
-import { LocaleType } from '../../lang/langHelpers';
+import type { LocaleType } from '../../lang/langHelpers';
 
 type DownloadingBibleInfoType = {
     isUpdatable: boolean;

@@ -1,5 +1,7 @@
-import { createContext, RefObject, use, useState } from 'react';
-import { compileSchema, SchemaNode } from 'json-schema-library';
+import type { RefObject } from 'react';
+import { createContext, use, useState } from 'react';
+import type { SchemaNode } from 'json-schema-library';
+import { compileSchema } from 'json-schema-library';
 
 import {
     fsCheckDirExist,
@@ -15,7 +17,8 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
 import { useAppEffect, useAppEffectAsync } from '../debuggerHelpers';
-import { bibleCrossRefSchemaJson, RefreshingRefType } from './aiHelpers';
+import type { RefreshingRefType } from './aiHelpers';
+import { bibleCrossRefSchemaJson } from './aiHelpers';
 import { handleError } from '../errorHelpers';
 import { getModelKeyBookMap } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';

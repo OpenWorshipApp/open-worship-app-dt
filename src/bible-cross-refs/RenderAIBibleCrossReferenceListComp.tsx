@@ -1,4 +1,4 @@
-import { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
+import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import RenderAIBibleCrossReferenceComp from './RenderAIBibleCrossReferenceComp';
 
 export default function RenderAIBibleCrossReferenceListComp({

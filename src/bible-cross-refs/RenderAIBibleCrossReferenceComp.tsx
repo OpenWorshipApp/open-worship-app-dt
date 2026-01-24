@@ -1,7 +1,5 @@
-import {
-    CrossReferenceType,
-    useBibleKeyContext,
-} from '../helper/ai/bibleCrossRefHelpers';
+import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
+import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';

@@ -1,11 +1,7 @@
 import { useState } from 'react';
 
-import {
-    DataInputType,
-    FlexSizeType,
-    getFlexSizeSetting,
-    setFlexSizeSetting,
-} from './flexSizeHelpers';
+import type { DataInputType, FlexSizeType } from './flexSizeHelpers';
+import { getFlexSizeSetting, setFlexSizeSetting } from './flexSizeHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import RenderResizeActorItemComp from './RenderResizeActorItemComp';
 import { freezeObject } from '../helper/helpers';

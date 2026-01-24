@@ -1,6 +1,6 @@
 import { lazy, use } from 'react';
 
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import BibleViewComp from '../bible-reader/BibleViewComp';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import {

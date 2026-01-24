@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { editor, KeyMod, KeyCode, Uri } from 'monaco-editor';
+import type { Uri } from 'monaco-editor';
+import { editor, KeyMod, KeyCode } from 'monaco-editor';
 
 import { tran } from '../lang/langHelpers';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';

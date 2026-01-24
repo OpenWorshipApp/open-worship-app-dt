@@ -1,9 +1,7 @@
 import { useState } from 'react';
 
-import {
-    AppColorType,
-    toHexColorString,
-} from '../../others/color/colorHelpers';
+import type { AppColorType } from '../../others/color/colorHelpers';
+import { toHexColorString } from '../../others/color/colorHelpers';
 import { useScreenBibleManagerEvents } from '../managers/screenEventHelpers';
 import ScreenBibleManager from '../managers/ScreenBibleManager';
 

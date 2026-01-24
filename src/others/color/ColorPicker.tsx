@@ -3,19 +3,14 @@ import './ColorPicker.scss';
 import { useState } from 'react';
 
 import colorList from '../color-list.json';
-import {
-    AppColorType,
-    transparentColor,
-    colorToTransparent,
-} from './colorHelpers';
+import type { AppColorType } from './colorHelpers';
+import { transparentColor, colorToTransparent } from './colorHelpers';
 import OpacitySlider from './OpacitySlider';
 import RenderColors from './RenderColors';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { freezeObject } from '../../helper/helpers';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
 
 freezeObject(colorList);

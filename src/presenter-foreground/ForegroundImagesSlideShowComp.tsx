@@ -1,6 +1,7 @@
 import '../background/BackgroundImagesComp.scss';
 
-import { CSSProperties, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
@@ -15,11 +16,11 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import { FilePathLoadedContext } from '../others/RenderListComp';
 import ScreenManagerBase from '../_screen/managers/ScreenManagerBase';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import {
+import type {
     BackgroundSrcType,
     ImageScaleType,
-    scaleTypeList,
 } from '../_screen/screenTypeHelpers';
+import { scaleTypeList } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import RenderBackgroundScreenIds from '../background/RenderBackgroundScreenIds';
 

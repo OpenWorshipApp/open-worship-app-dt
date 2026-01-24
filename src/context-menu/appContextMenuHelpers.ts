@@ -1,6 +1,7 @@
 import './AppContextMenuComp.scss';
 
-import { ReactElement, useState, ReactNode, CSSProperties } from 'react';
+import type { ReactElement, ReactNode, CSSProperties } from 'react';
+import { useState } from 'react';
 
 import KeyboardEventListener, {
     useKeyboardRegistering,
@@ -8,7 +9,7 @@ import KeyboardEventListener, {
 import { getWindowDim } from '../helper/helpers';
 import WindowEventListener from '../event/WindowEventListener';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import { OptionalPromise } from '../helper/typeHelpers';
+import type { OptionalPromise } from '../helper/typeHelpers';
 import { genSelectedTextContextMenus } from '../helper/textSelectionHelpers';
 
 export type ContextMenuEventType = MouseEvent;

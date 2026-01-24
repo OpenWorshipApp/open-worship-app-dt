@@ -3,7 +3,7 @@ import { use, useState } from 'react';
 import Lyric from './Lyric';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
-import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -15,7 +15,7 @@ import { getIsShowingLyricPreviewer } from '../app-document-presenter/PresenterC
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
 import { checkIsVaryAppDocumentOnScreen } from '../app-document-list/appDocumentHelpers';
 import LyricAppDocument from './LyricAppDocument';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 
 function genContextMenuItems(

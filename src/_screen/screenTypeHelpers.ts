@@ -1,7 +1,7 @@
-import { DOMAttributes, CSSProperties } from 'react';
+import type { DOMAttributes, CSSProperties } from 'react';
 
-import { BibleItemType } from '../bible-list/bibleItemHelpers';
-import { BibleItemRenderingType } from './bibleScreenComps';
+import type { BibleItemType } from '../bible-list/bibleItemHelpers';
+import type { BibleItemRenderingType } from './bibleScreenComps';
 
 export type CustomEvents<K extends string> = {
     [key in K]: (event: CustomEvent) => void;

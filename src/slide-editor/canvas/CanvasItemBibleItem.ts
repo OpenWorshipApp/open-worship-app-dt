@@ -1,10 +1,11 @@
 import BibleItem from '../../bible-list/BibleItem';
-import CanvasItemText, { CanvasItemTextPropsType } from './CanvasItemText';
+import type { CanvasItemTextPropsType } from './CanvasItemText';
+import CanvasItemText from './CanvasItemText';
 import { cloneJson } from '../../helper/helpers';
 import { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
-import { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
 export type CanvasItemBiblePropsType = CanvasItemTextPropsType & {
     bibleKeys: string[];

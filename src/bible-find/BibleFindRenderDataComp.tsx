@@ -1,4 +1,4 @@
-import { FindDataType } from './bibleFindHelpers';
+import type { FindDataType } from './bibleFindHelpers';
 import BibleFindRenderPerPageComp from './BibleFindRenderPerPageComp';
 import { useBibleFindController } from './BibleFindController';
 import { ShowFindingComp } from './ShowFindingComp';

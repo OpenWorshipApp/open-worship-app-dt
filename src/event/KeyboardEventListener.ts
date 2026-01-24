@@ -1,8 +1,8 @@
-import { DependencyList } from 'react';
+import type { DependencyList } from 'react';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
 import EventHandler from './EventHandler';
-import { AppWidgetType } from './WindowEventListener';
+import type { AppWidgetType } from './WindowEventListener';
 
 function getLastItem<T>(arr: T[]) {
     return arr.at(-1) ?? null;

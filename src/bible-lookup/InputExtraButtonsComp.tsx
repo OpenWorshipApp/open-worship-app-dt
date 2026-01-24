@@ -1,4 +1,5 @@
-import { CSSProperties, createRef, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
+import { createRef, useMemo, useState } from 'react';
 
 import {
     checkIsBibleLookupInputFocused,
@@ -6,11 +7,10 @@ import {
     setBibleLookupInputFocus,
 } from './selectionHelpers';
 import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
-import LookupBibleItemController, {
-    useLookupBibleItemControllerContext,
-} from '../bible-reader/LookupBibleItemController';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
+import type { EventMapper as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import {
-    EventMapper as KeyboardEventMapper,
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';

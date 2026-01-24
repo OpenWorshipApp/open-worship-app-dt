@@ -1,27 +1,23 @@
-import { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 import * as loggerHelpers from '../helper/loggerHelpers';
 import BibleItem from '../bible-list/BibleItem';
+import type { BibleItemType } from '../bible-list/bibleItemHelpers';
+import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
+import type { LocaleType } from '../lang/langHelpers';
 import {
-    BibleItemType,
-    genBibleItemCopyingContextMenu,
-} from '../bible-list/bibleItemHelpers';
-import {
-    LocaleType,
     sanitizeFindingText,
     sanitizePreviewText,
     tran,
 } from '../lang/langHelpers';
-import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
-import {
-    ContextMenuItemType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
-import BibleFindController from './BibleFindController';
+import type BibleFindController from './BibleFindController';
 import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleInfoHelpers';
 import { setSetting } from '../helper/settingHelpers';
 

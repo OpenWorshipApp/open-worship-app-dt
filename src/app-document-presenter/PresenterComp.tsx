@@ -23,7 +23,8 @@ import { getSelectedLyric } from '../lyric-list/lyricHelpers';
 import { tran } from '../lang/langHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
-import BibleItemsViewController, {
+import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
+import {
     useBibleItemsViewControllerContext,
     useBibleItemViewControllerUpdateEvent,
 } from '../bible-reader/BibleItemsViewController';

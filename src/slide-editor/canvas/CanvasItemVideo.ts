@@ -1,13 +1,11 @@
 import { getVideoDim } from '../../helper/helpers';
 import FileSource from '../../helper/FileSource';
-import {
-    CanvasItemMediaPropsType,
-    genTextDefaultBoxStyle,
-    validateMediaProps,
-} from './canvasHelpers';
-import CanvasItem, { CanvasItemError, CanvasItemPropsType } from './CanvasItem';
+import type { CanvasItemMediaPropsType } from './canvasHelpers';
+import { genTextDefaultBoxStyle, validateMediaProps } from './canvasHelpers';
+import type { CanvasItemPropsType } from './CanvasItem';
+import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
 export type CanvasItemVideoPropsType = CanvasItemPropsType &
     CanvasItemMediaPropsType;

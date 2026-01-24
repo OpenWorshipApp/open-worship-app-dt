@@ -5,7 +5,8 @@ import {
     openInBibleLookup,
 } from '../bible-find/bibleFindHelpers';
 import { handleDragStart } from '../helper/dragHelpers';
-import { BibleCrossRefType, breakItem } from './bibleCrossRefsHelpers';
+import type { BibleCrossRefType } from './bibleCrossRefsHelpers';
+import { breakItem } from './bibleCrossRefsHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';

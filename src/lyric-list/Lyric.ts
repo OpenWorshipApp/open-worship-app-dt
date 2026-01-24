@@ -1,8 +1,7 @@
-import { MimetypeNameType } from '../server/fileHelpers';
-import AppEditableDocumentSourceAbs, {
-    AppDocumentMetadataType,
-} from '../helper/AppEditableDocumentSourceAbs';
-import { AnyObjectType } from '../helper/typeHelpers';
+import type { MimetypeNameType } from '../server/fileHelpers';
+import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
+import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
+import type { AnyObjectType } from '../helper/typeHelpers';
 
 const DEFAULT_CONTENT = `
 ---

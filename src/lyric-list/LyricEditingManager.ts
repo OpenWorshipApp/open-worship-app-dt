@@ -1,8 +1,6 @@
 import { createContext, use } from 'react';
-import {
-    defaultLyricEditingProps,
-    LyricEditingPropsType,
-} from './LyricAppDocument';
+import type { LyricEditingPropsType } from './LyricAppDocument';
+import { defaultLyricEditingProps } from './LyricAppDocument';
 import { handleError } from '../helper/errorHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import FileSource from '../helper/FileSource';

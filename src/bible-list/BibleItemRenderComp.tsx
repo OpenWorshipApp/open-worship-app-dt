@@ -1,8 +1,8 @@
-import { MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import Bible from './Bible';
-import BibleItem from './BibleItem';
+import type BibleItem from './BibleItem';
 import ItemReadErrorComp from '../others/ItemReadErrorComp';
 import { useFileSourceRefreshEvents } from '../helper/dirSourceHelpers';
 import {
@@ -18,12 +18,11 @@ import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
 import { DragTypeEnum } from '../helper/DragInf';
 import { changeDragEventStyle, stopDraggingState } from '../helper/helpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
-import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
-import BibleItemsViewController, {
-    useBibleItemsViewControllerContext,
-} from '../bible-reader/BibleItemsViewController';
+import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
 import { openBibleItemContextMenu, useIsOnScreen } from './bibleHelpers';

@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -11,7 +11,7 @@ import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import { genTimeoutAttempt } from '../helper/helpers';
-import { ForegroundStopwatchDataType } from '../_screen/screenTypeHelpers';
+import type { ForegroundStopwatchDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
 

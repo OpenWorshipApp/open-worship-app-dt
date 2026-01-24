@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import DirSource from '../helper/DirSource';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import { readTextFromClipboard } from '../server/appHelpers';

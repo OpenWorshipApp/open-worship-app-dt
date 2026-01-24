@@ -2,7 +2,8 @@ import './InputPopupComp.scss';
 
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
-import { closeAlert, InputDataType } from './popupWidgetHelpers';
+import type { InputDataType } from './popupWidgetHelpers';
+import { closeAlert } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 
 export default function ConfirmPopupComp({

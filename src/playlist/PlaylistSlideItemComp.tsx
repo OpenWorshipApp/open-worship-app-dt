@@ -1,5 +1,5 @@
 import FileReadErrorComp from '../others/FileReadErrorComp';
-import PlaylistItem from './PlaylistItem';
+import type PlaylistItem from './PlaylistItem';
 import SlideRendererHtmlComp from '../app-document-presenter/items/SlideRendererHtmlComp';
 import AppDocumentListEventListener from '../event/VaryAppDocumentEventListener';
 

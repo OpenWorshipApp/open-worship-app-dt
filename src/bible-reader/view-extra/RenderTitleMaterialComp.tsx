@@ -1,10 +1,10 @@
 import { tran } from '../../lang/langHelpers';
 import { BibleSelectionMiniComp } from '../../bible-lookup/BibleSelectionComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
-import ColorNoteInf from '../../helper/ColorNoteInf';
+import type ColorNoteInf from '../../helper/ColorNoteInf';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import { AudioAIEnablingComp } from '../AudioAIEnablingComp';
-import { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { useBibleViewTitleMaterialContext } from './viewExtraHelpers';
 
 export function RenderTitleMaterialComp({

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { FontListType } from '../server/appProvider';
+import type { FontListType } from '../server/appProvider';
 import { useFontList } from '../server/fontHelpers';
 
 export default function FontFamilyControlComp({

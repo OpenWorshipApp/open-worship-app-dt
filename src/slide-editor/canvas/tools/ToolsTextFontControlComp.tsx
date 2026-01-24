@@ -1,5 +1,5 @@
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
-import { CanvasItemTextPropsType } from '../CanvasItemText';
+import type { CanvasItemTextPropsType } from '../CanvasItemText';
 import { useCanvasItemPropsSetterContext } from '../CanvasItem';
 import FontFamilyControlComp from '../../../others/FontFamilyControlComp';
 import FontSizeControlComp from '../../../others/FontSizeControlComp';

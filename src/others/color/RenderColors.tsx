@@ -1,8 +1,9 @@
-import { AppColorType, compareColor } from './colorHelpers';
+import type { AppColorType } from './colorHelpers';
+import { compareColor } from './colorHelpers';
 import SelectCustomColor from './SelectCustomColor';
 import RenderColor from './RenderColor';
 import RenderNoColor from './RenderNoColor';
-import { AnyObjectType } from '../../helper/typeHelpers';
+import type { AnyObjectType } from '../../helper/typeHelpers';
 
 export default function RenderColors({
     colors,

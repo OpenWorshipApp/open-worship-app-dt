@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';

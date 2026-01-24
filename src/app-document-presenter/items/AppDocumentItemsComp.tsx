@@ -1,6 +1,6 @@
+import type { KeyboardType } from '../../event/KeyboardEventListener';
 import {
     allArrows,
-    KeyboardType,
     useKeyboardRegistering,
 } from '../../event/KeyboardEventListener';
 import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
@@ -23,10 +23,8 @@ import {
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import SlideAutoPlayComp from '../../slide-auto-play/SlideAutoPlayComp';
-import {
-    VaryAppDocumentItemType,
-    DEFAULT_THUMBNAIL_SIZE_FACTOR,
-} from '../../app-document-list/appDocumentTypeHelpers';
+import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../../app-document-list/appDocumentTypeHelpers';
 
 const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};

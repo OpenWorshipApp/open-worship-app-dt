@@ -14,9 +14,9 @@ import { unlocking } from '../../server/unlockingHelpers';
 
 import { useState } from 'react';
 import { useAppEffectAsync, useAppStateAsync } from '../debuggerHelpers';
-import BibleItem from '../../bible-list/BibleItem';
+import type BibleItem from '../../bible-list/BibleItem';
 import { getLangDataFromBibleKey } from '../bible-helpers/bibleLogicHelpers2';
-import { LocaleType } from '../../lang/langHelpers';
+import type { LocaleType } from '../../lang/langHelpers';
 import {
     checkIsAvailable,
     DATA_DIR_NAME,

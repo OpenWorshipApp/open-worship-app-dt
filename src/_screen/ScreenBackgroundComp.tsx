@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import ScreenBackgroundColorComp from './ScreenBackgroundColorComp';
 import ScreenBackgroundImageComp from './ScreenBackgroundImageComp';
 import ScreenBackgroundVideoComp from './ScreenBackgroundVideoComp';
-import { AppColorType } from '../others/color/colorHelpers';
+import type { AppColorType } from '../others/color/colorHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getScreenManagerBase } from './managers/screenManagerBaseHelpers';
 import {
@@ -12,7 +12,7 @@ import {
     ScreenManagerBaseContext,
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
-import { BackgroundSrcType } from './screenTypeHelpers';
+import type { BackgroundSrcType } from './screenTypeHelpers';
 import { getCameraStream } from '../helper/cameraHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';

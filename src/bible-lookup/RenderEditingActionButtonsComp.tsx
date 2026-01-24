@@ -5,7 +5,7 @@ import {
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
-import BibleItem from '../bible-list/BibleItem';
+import type BibleItem from '../bible-list/BibleItem';
 import appProvider from '../server/appProvider';
 import {
     ctrlShiftMetaKeys,

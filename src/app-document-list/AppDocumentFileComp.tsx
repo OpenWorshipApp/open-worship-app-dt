@@ -7,7 +7,7 @@ import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { goToPath } from '../router/routeHelpers';
 import { previewPdf } from '../server/appHelpers';
 import { removePdfImagesPreview } from '../helper/pdfHelpers';
@@ -18,9 +18,9 @@ import {
     checkIsVaryAppDocumentOnScreen,
 } from './appDocumentHelpers';
 import PdfAppDocument from './PdfAppDocument';
-import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
+import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
-import {
+import type {
     VaryAppDocumentDynamicType,
     VaryAppDocumentType,
 } from './appDocumentTypeHelpers';

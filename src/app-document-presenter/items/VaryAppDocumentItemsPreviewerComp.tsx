@@ -1,4 +1,4 @@
-import { DragEvent } from 'react';
+import type { DragEvent } from 'react';
 
 import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import AppDocumentItemsComp from './AppDocumentItemsComp';
@@ -9,7 +9,7 @@ import SlidesMenuComp from './SlidesMenuComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
-import { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
 import { changeDragEventStyle } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
 import { readDroppedFiles } from '../../others/droppingFileHelpers';

@@ -1,5 +1,5 @@
-import { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import DirSource from '../helper/DirSource';
+import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import type DirSource from '../helper/DirSource';
 import { openPopupEditorWindow } from '../helper/domHelpers';
 import FileSource from '../helper/FileSource';
 import { tran } from '../lang/langHelpers';

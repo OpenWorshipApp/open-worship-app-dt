@@ -1,8 +1,10 @@
-import { DependencyList, useState } from 'react';
+import type { DependencyList } from 'react';
+import { useState } from 'react';
 
 import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
 import DirSource from './DirSource';
-import FileSource, { FileSourceEventType } from './FileSource';
+import type { FileSourceEventType } from './FileSource';
+import FileSource from './FileSource';
 
 export function useGenDirSource(settingName: string) {
     const [dirSource, setDirSource] = useState<DirSource | null>(null);

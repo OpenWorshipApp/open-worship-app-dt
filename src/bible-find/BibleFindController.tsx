@@ -3,14 +3,15 @@ import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { handleError } from '../helper/errorHelpers';
 import FileSource from '../helper/FileSource';
 import { appApiFetch } from '../helper/networkHelpers';
+import type { LocaleType } from '../lang/langHelpers';
 import {
     checkIsStopWord,
-    LocaleType,
     quickEndWord,
     quickTrimText,
     sanitizeFindingText,
 } from '../lang/langHelpers';
-import appProvider, { SQLiteDatabaseType } from '../server/appProvider';
+import type { SQLiteDatabaseType } from '../server/appProvider';
+import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
     fsDeleteFile,
@@ -25,19 +26,16 @@ import {
     getAllXMLFileKeys,
     xmlTextToJson,
 } from '../setting/bible-setting/bibleXMLJsonDataHelpers';
-import {
+import type {
     APIDataMapType,
     APIDataType,
     BibleFindForType,
     BibleFindResultType,
-    calcPerPage,
-    findOnline,
     SelectedBookKeyType,
 } from './bibleFindHelpers';
-import {
-    AppContextMenuControlType,
-    showAppContextMenu,
-} from '../context-menu/appContextMenuHelpers';
+import { calcPerPage, findOnline } from './bibleFindHelpers';
+import type { AppContextMenuControlType } from '../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { cumulativeOffset } from '../helper/helpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';

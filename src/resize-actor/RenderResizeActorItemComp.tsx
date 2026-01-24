@@ -2,15 +2,17 @@ import { Fragment } from 'react';
 
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import FlexResizeActorComp from './FlexResizeActorComp';
-import {
+import type {
     DisabledType,
+    DataInputType,
+    FlexSizeType,
+} from './flexSizeHelpers';
+import {
     keyToDataFlexSizeKey,
     setDisablingSetting,
     genFlexSizeSetting,
     checkIsThereNotHiddenWidget,
     calcShowingHiddenWidget,
-    DataInputType,
-    FlexSizeType,
 } from './flexSizeHelpers';
 import RenderHiddenWidgetTitleComp from './RenderHiddenWidgetTitleComp';
 

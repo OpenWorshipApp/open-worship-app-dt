@@ -1,4 +1,5 @@
-import { useState, useTransition, FormEvent } from 'react';
+import type { FormEvent } from 'react';
+import { useState, useTransition } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';

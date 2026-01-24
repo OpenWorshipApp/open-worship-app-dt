@@ -1,10 +1,7 @@
 import { useState } from 'react';
 
-import {
-    doFinding,
-    FindDataType,
-    SelectedBookKeyType,
-} from './bibleFindHelpers';
+import type { FindDataType, SelectedBookKeyType } from './bibleFindHelpers';
+import { doFinding } from './bibleFindHelpers';
 import BibleFindRenderDataComp from './BibleFindRenderDataComp';
 import BibleSelectionComp from '../bible-lookup/BibleSelectionComp';
 import BibleFindHeaderComp from './BibleFindHeaderComp';
