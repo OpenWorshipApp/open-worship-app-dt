@@ -21,7 +21,7 @@
         "pack:win": "npm run build && electron-builder build --win",
         "pack:win:32": "cross-env FORCE_ARCH_32=true npm run build && electron-builder build --win --ia32",
         "vite:dev": "vite",
-        "vite:build": "vite build",
+        "vite:build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
         "lint:pre": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\" \"electron/**/*.ts\"",
         "lint:all:error": "tsc --noEmit --skipLibCheck",
         "lint:es": "eslint src/**/*.ts* electron/**/*.ts",
