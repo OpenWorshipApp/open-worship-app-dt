@@ -89,9 +89,7 @@ class InitDBOpeningQueue {
     }
 }
 
-export abstract class IndexedDbController
-    implements DatabaseControllerInterface
-{
+export abstract class IndexedDbController implements DatabaseControllerInterface {
     static instance: IndexedDbController | null = null;
 
     abstract get storeName(): string;

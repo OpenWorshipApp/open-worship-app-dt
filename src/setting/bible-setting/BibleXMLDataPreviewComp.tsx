@@ -1,4 +1,4 @@
-import { languages } from 'monaco-editor';
+import { json } from 'monaco-editor';
 
 import BibleXMLInfoEditorComp, {
     schemaHandler as infoEditorSchemaHandler,
@@ -14,7 +14,7 @@ import BibleXMLBookChapterEditorComp, {
 } from './BibleXMLBookChapterEditorComp';
 import { useStateSettingString } from '../../helper/settingHelpers';
 
-languages.json.jsonDefaults.setDiagnosticsOptions({
+json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
     allowComments: false,
     trailingCommas: 'error',
