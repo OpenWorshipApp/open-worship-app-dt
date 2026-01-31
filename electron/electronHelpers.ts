@@ -6,7 +6,6 @@ import {
     BrowserWindow,
     WebPreferences,
 } from 'electron';
-import { x as tarX } from 'tar';
 
 import appInfo from '../package.json';
 
@@ -19,8 +18,9 @@ export const isSecured = false; // TODO: make it secure
 export const is64System = process.arch === 'x64';
 export const isArm64 = process.arch === 'arm64';
 
-export function tarExtract(filePath: string, outputDir: string) {
-    return (tarX as any)({ file: filePath, cwd: outputDir });
+export async function tarExtract(filePath: string, outputDir: string) {
+    const { x: tarX } = await import('tar');
+    return await (tarX as any)({ file: filePath, cwd: outputDir });
 }
 
 interface ClosableInt {
@@ -220,5 +220,26 @@ export function guardBrowsing(
         }
         shell.openExternal(options.url);
         return { action: 'deny' };
+    });
+}
+
+export function printHTMLContent(htmlText: string) {
+    const printWin = new BrowserWindow({
+        show: false,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+        },
+    });
+    printWin.loadURL(
+        `data:text/html;charset=utf-8,${encodeURIComponent(htmlText)}`,
+    );
+    printWin.webContents.on('did-finish-load', () => {
+        printWin.webContents.print({}, (success, errorType) => {
+            if (!success) {
+                console.log('Print failed:', errorType);
+            }
+            attemptClosing(printWin);
+        });
     });
 }

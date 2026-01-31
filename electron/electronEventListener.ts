@@ -1,16 +1,17 @@
 import electron, {
     FileFilter,
+    IpcMain,
     nativeTheme,
     shell,
     systemPreferences,
 } from 'electron';
-import fontList from 'font-list';
 
 import ElectronAppController from './ElectronAppController';
 import {
     attemptClosing,
     goDownload,
     isMac,
+    printHTMLContent,
     tarExtract,
 } from './electronHelpers';
 import ElectronScreenController from './ElectronScreenController';
@@ -34,7 +35,6 @@ export type ScreenMessageType = {
 type ShowScreenDataType = {
     screenId: number;
     displayId: number;
-    replyEventName: string;
 };
 
 export const channels = {
@@ -80,10 +80,22 @@ export function initEventListenerApp(appController: ElectronAppController) {
     );
 }
 
+function onAsync<T1, T2>(
+    ipc: IpcMain,
+    eventName: string,
+    callee: (data: T1) => Promise<T2>,
+): void {
+    ipc.on(eventName, async (event, data: T1) => {
+        const replyEventName = (data as any).replyEventName;
+        if (!replyEventName) {
+            throw new Error('replyEventName is required');
+        }
+        const result = await callee(data);
+        event.sender.send(replyEventName, result);
+    });
+}
+
 export function initEventScreen(appController: ElectronAppController) {
-    const sendDataToMain = appController.mainController.sendData.bind(
-        appController.mainController,
-    );
     ipcMain.on('main:app:get-displays', (event) => {
         event.returnValue = {
             primaryDisplay: appController.settingManager.primaryDisplay,
@@ -96,26 +108,29 @@ export function initEventScreen(appController: ElectronAppController) {
     });
 
     // TODO: use shareProps.mainWin.on or shareProps.screenWin.on
-    ipcMain.on('main:app:show-screen', (event, data: ShowScreenDataType) => {
-        const screenController = ElectronScreenController.createInstance(
-            data.screenId,
-        );
-        const display = appController.settingManager.getDisplayById(
-            data.displayId,
-        );
-        if (display !== undefined) {
-            screenController.listenLoading().then(() => {
-                sendDataToMain(data.replyEventName);
+    onAsync(
+        ipcMain,
+        'main:app:show-screen',
+        async (data: ShowScreenDataType) => {
+            const screenController = ElectronScreenController.createInstance(
+                data.screenId,
+            );
+            const display = appController.settingManager.getDisplayById(
+                data.displayId,
+            );
+            if (display !== undefined) {
+                await screenController.listenLoading();
+                screenController.setDisplay(display);
+                appController.mainWin.focus();
+            }
+            screenController.win.on('close', () => {
+                screenController.destroyInstance();
+                appController.mainController.sendNotifyInvisibility(
+                    data.screenId,
+                );
             });
-            screenController.setDisplay(display);
-            appController.mainWin.focus();
-        }
-        screenController.win.on('close', () => {
-            screenController.destroyInstance();
-            appController.mainController.sendNotifyInvisibility(data.screenId);
-        });
-        event.returnValue = Promise.resolve('hello');
-    });
+        },
+    );
 
     ipcMain.on('app:hide-screen', (_, screenId: number) => {
         const screenController = ElectronScreenController.getInstance(screenId);
@@ -229,25 +244,11 @@ export function initEventFinder(appController: ElectronAppController) {
 }
 
 export function initEventOther(appController: ElectronAppController) {
-    const sendDataToMain = appController.mainController.sendData.bind(
-        appController.mainController,
-    );
-    ipcMain.on(
+    onAsync(
+        ipcMain,
         'main:app:tar-extract',
-        async (
-            _,
-            {
-                replyEventName,
-                filePath,
-                outputDir,
-            }: {
-                replyEventName: string;
-                filePath: string;
-                outputDir: string;
-            },
-        ) => {
-            await tarExtract(filePath, outputDir);
-            sendDataToMain(replyEventName);
+        (data: { filePath: string; outputDir: string }) => {
+            return tarExtract(data.filePath, data.outputDir);
         },
     );
 
@@ -256,6 +257,7 @@ export function initEventOther(appController: ElectronAppController) {
             event.returnValue = cache.fontsMap;
         }
         try {
+            const fontList = await import('font-list');
             const fonts = await fontList.getFonts({ disableQuoting: true });
             const fontsMap = Object.fromEntries(
                 fonts.map((fontName) => {
@@ -274,81 +276,34 @@ export function initEventOther(appController: ElectronAppController) {
         shell.showItemInFolder(path);
     });
 
-    ipcMain.on(
-        'main:app:trash-path',
-        async (
-            _,
-            data: {
-                path: string;
-                replyEventName: string;
-            },
-        ) => {
-            await shell.trashItem(data.path);
-            sendDataToMain(data.replyEventName);
-        },
-    );
+    onAsync(ipcMain, 'main:app:trash-path', (data: { path: string }) => {
+        return shell.trashItem(data.path);
+    });
 
     ipcMain.on('main:app:preview-pdf', (_, pdfFilePath: string) => {
         appController.mainController.previewPdf(pdfFilePath);
     });
-    ipcMain.on(
+    onAsync(
+        ipcMain,
         'main:app:convert-to-pdf',
-        async (
-            _event,
-            {
-                replyEventName,
-                officeFilePath,
-                pdfFilePath,
-            }: {
-                replyEventName: string;
-                officeFilePath: string;
-                pdfFilePath: string;
-            },
-        ) => {
-            const error = await officeFileToPdf(officeFilePath, pdfFilePath);
-            if (error === null) {
-                sendDataToMain(replyEventName);
-            } else {
-                sendDataToMain(replyEventName, error);
-            }
+        (data: { officeFilePath: string; pdfFilePath: string }) => {
+            return officeFileToPdf(data.officeFilePath, data.pdfFilePath);
         },
     );
 
-    ipcMain.on(
+    onAsync(
+        ipcMain,
         'main:app:pdf-to-images',
-        async (
-            _event,
-            {
-                replyEventName,
-                filePath,
-                outDir,
-                isForce,
-            }: {
-                replyEventName: string;
-                filePath: string;
-                outDir: string;
-                isForce: boolean;
-            },
-        ) => {
-            const data = await pdfToImages(filePath, outDir, isForce);
-            sendDataToMain(replyEventName, data);
+        (data: { filePath: string; outDir: string; isForce: boolean }) => {
+            return pdfToImages(data.filePath, data.outDir, data.isForce);
         },
     );
 
-    ipcMain.on(
+    onAsync(
+        ipcMain,
         'main:app:pdf-pages-count',
-        async (
-            _event,
-            {
-                replyEventName,
-                filePath,
-            }: {
-                replyEventName: string;
-                filePath: string;
-            },
-        ) => {
-            const data = await getPagesCount(filePath);
-            sendDataToMain(replyEventName, data);
+        (data: { filePath: string }) => {
+            return getPagesCount(data.filePath);
         },
     );
 
@@ -373,26 +328,25 @@ export function initEventOther(appController: ElectronAppController) {
         event.returnValue = nativeTheme.themeSource;
     });
 
-    ipcMain.on(
-        'main:app:ask-camera-access',
-        async (_event, { replyEventName }) => {
-            if (!isMac) {
-                sendDataToMain(replyEventName, true);
-                return;
-            }
-            try {
-                const access =
-                    await systemPreferences.askForMediaAccess('camera');
-                console.log('Camera access:', access);
-                sendDataToMain(replyEventName, access);
-            } catch (error) {
-                console.error('Camera access error:', error);
-            }
-            sendDataToMain(replyEventName, false);
-        },
-    );
+    onAsync(ipcMain, 'main:app:ask-camera-access', async () => {
+        if (!isMac) {
+            return true;
+        }
+        try {
+            const access = await systemPreferences.askForMediaAccess('camera');
+            console.log('Camera access:', access);
+            return access;
+        } catch (error) {
+            console.error('Camera access error:', error);
+        }
+        return false;
+    });
 
     ipcMain.on('all:app:force-reload', () => {
         appController.reloadAll();
+    });
+
+    ipcMain.on('all:app:print', (_event, htmlText: string) => {
+        printHTMLContent(htmlText);
     });
 }

@@ -9,7 +9,7 @@ import fontUtils from './fontUtils';
 import appUtils from './appUtils';
 import databaseUtils from './databaseUtils';
 
-import { powerPointUtils } from './powerPointUtils';
+import { msUtils } from './msUtils';
 import { ytUtils } from './ytUtils';
 import appInfo from './appInfo';
 
@@ -30,6 +30,6 @@ export const provider = {
     },
     appUtils,
     databaseUtils,
-    powerPointUtils,
+    msUtils,
     ytUtils,
 };

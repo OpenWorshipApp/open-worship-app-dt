@@ -76,11 +76,12 @@ export function genTrashContextMenu(
             onSelect: async () => {
                 const fileSource = FileSource.getInstance(filePath);
                 const isOk = await showAppConfirm(
-                    'Moving File to Trash',
-                    'Are you sure you want to move ' +
-                        `"${fileSource.fullName}" to trash?`,
+                    tran('Moving File to Trash'),
+                    tran('Are you sure you want to move') +
+                        ` "${fileSource.fullName}" ` +
+                        tran('to trash?'),
                     {
-                        confirmButtonLabel: 'Yes',
+                        confirmButtonLabel: tran('Yes'),
                     },
                 );
                 if (isOk) {

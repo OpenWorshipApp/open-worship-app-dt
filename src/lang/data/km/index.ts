@@ -233,6 +233,12 @@ const dictionary = {
     'Canvas Items': 'ធាតុផ្ទាំង',
     'Please change bible key here': 'សូមផ្លាស់ប្តូរកូនសោរព្រះគម្ពីរនៅទីនេះ',
     'Not available': 'មិនមាន',
+    'Moving File to Trash': 'កំពុងផ្លាស់ទីឯកសារទៅធុងសំរាម',
+    'Are you sure you want to move': 'តើអ្នកពិតជាចង់ផ្លាស់ទី',
+    'to trash?': 'ទៅធុងសំរាម?',
+    Yes: 'យល់ព្រម',
+    No: 'ទេ',
+    'will be converted to PDF into': 'នឹងត្រូវបានបម្លែងទៅជា PDF ទៅក្នុង',
 };
 const fontFamily = 'km-font-family';
 const lang: LanguageDataType = {

@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import { toUnpackedPath, unlocking } from '../electronHelpers';
 
 let timeOutId: NodeJS.Timeout | null = null;
-let powerPoint: any = null;
+let helperInstance: any = null;
 function scheduleRelease() {
     if (timeOutId !== null) {
         clearTimeout(timeOutId);
@@ -12,15 +12,15 @@ function scheduleRelease() {
             return;
         }
         timeOutId = null;
-        powerPoint = null;
+        helperInstance = null;
     }, 10e3); // 10 seconds timeout
 }
-async function getPowerPointHelper(dotNetRoot?: string) {
-    return unlocking('getPowerPointHelper' + dotNetRoot, async () => {
+async function getMSHelper(dotNetRoot?: string) {
+    return unlocking('getMSHelper' + dotNetRoot, async () => {
         try {
             scheduleRelease();
-            if (powerPoint !== null) {
-                return powerPoint.Helper;
+            if (helperInstance !== null) {
+                return helperInstance.Helper;
             }
             if (dotNetRoot) {
                 process.env.DOTNET_ROOT = dotNetRoot;
@@ -34,15 +34,15 @@ async function getPowerPointHelper(dotNetRoot?: string) {
             );
             const dotnet = require(modulePath);
             const binaryPath = toUnpackedPath(
-                resolve(__dirname, '../../bin-helper/net8.0/PowerPoint'),
+                resolve(__dirname, '../../bin-helper/net8.0/Helper'),
             );
-            powerPoint = dotnet.require(binaryPath);
-            return powerPoint.Helper;
+            helperInstance = dotnet.require(binaryPath);
+            return helperInstance.Helper;
         } catch (error) {
-            console.error('Error in getSlidesCount:', error);
+            console.error('Error in getMSHelper:', error);
         }
         return null;
     });
 }
 
-export const powerPointUtils = { getPowerPointHelper };
+export const msUtils = { getMSHelper };

@@ -57,6 +57,7 @@ import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPrev
 
 import libOfficeLogo from './liboffice-logo.png';
 import FileSource from '../helper/FileSource';
+import { log } from '../helper/loggerHelpers';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -212,19 +213,22 @@ function showConfirmPdfConvert(dirPath: string, file: DroppedFileType) {
     const confirmMessage = renderToStaticMarkup(
         <div>
             <b>"{fileFullName}"</b>
-            {' will be converted to PDF into '}
+            {tran(' will be converted to PDF into ')}
             <b>{dirPath}</b>
         </div>,
     );
     return showAppConfirm(WIDGET_TITLE, confirmMessage);
 }
 
-async function getTempFilePath() {
+async function getTempFilePath(dotExt: string | null) {
     const tempDir = getTempPath();
     let tempFilePath: string | null = null;
     let i = 0;
     while (tempFilePath === null || (await fsCheckFileExist(tempFilePath))) {
-        tempFilePath = appProvider.pathUtils.join(tempDir, `temp-to-pdf-${i}`);
+        tempFilePath = appProvider.pathUtils.join(
+            tempDir,
+            `temp-to-pdf-${i}${dotExt ?? ''}`,
+        );
         i++;
     }
     return tempFilePath;
@@ -252,7 +256,13 @@ async function startConvertingOfficeFile(
     file: DroppedFileType,
     dirSource: DirSource,
 ) {
-    const tempFilePath = await getTempFilePath();
+    const droppedFileFullName = (file as any).name ?? null;
+    const dotExt =
+        droppedFileFullName === null
+            ? null
+            : getFileDotExtension(droppedFileFullName);
+    const tempFilePath = await getTempFilePath(dotExt);
+    log('Temp file path for converting:', tempFilePath);
     const fileFullName = getFileFullName(file);
     const targetPdfFilePath = await getPdfFilePath(
         dirSource.dirPath,
@@ -267,16 +277,23 @@ async function startConvertingOfficeFile(
         try {
             slidesCount = await getSlidesCount(tempFilePath);
         } catch {}
-        const slideMessage =
-            slidesCount === null
-                ? 'unknown slides count'
-                : slidesCount + ' slides';
+        const slideMessage = slidesCount
+            ? slidesCount + ' slides'
+            : 'unknown slides count';
         showSimpleToast(
             WIDGET_TITLE,
             `Document with ${slideMessage} is being converted. ` +
                 'Do not close application',
         );
-        await convertToPdf(tempFilePath, targetPdfFilePath);
+        const error = await convertToPdf(tempFilePath, targetPdfFilePath);
+        if (error !== null) {
+            showSimpleToast(
+                WIDGET_TITLE,
+                `Failed to convert ${toHtmlBold(fileFullName)} to PDF. ` +
+                    `Error: ${error.message}`,
+            );
+            return;
+        }
         const pdfPagesCount = await getSlidesCount(targetPdfFilePath);
         if (slidesCount != null && pdfPagesCount !== slidesCount) {
             showSimpleToast(

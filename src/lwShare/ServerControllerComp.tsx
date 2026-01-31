@@ -40,7 +40,7 @@ function genStatusMessage({ status, message, data }: StatusDataType) {
 }
 
 const statusViewMap: { [key in StatusType]: { btn: string; text: string } } = {
-    stopped: { btn: 'danger', text: 'Start Server' },
+    stopped: { btn: 'warning', text: 'Start Server' },
     starting: { btn: 'info', text: 'Starting Server...' },
     running: { btn: 'success', text: 'Stop Server' },
     error: { btn: 'warning', text: 'Restart Server' },
@@ -69,11 +69,11 @@ function CustomPortInputComp({
     port,
     setPort,
 }: Readonly<{
-    port: number | undefined;
-    setPort: (port: number | undefined) => void;
+    port: number;
+    setPort: (port: number) => void;
 }>) {
     return (
-        <div>
+        <div className="d-flex align-items-center p-2">
             <label htmlFor="port-input">Custom Port:</label>
             <input
                 id="port-input"
@@ -81,25 +81,33 @@ function CustomPortInputComp({
                 style={{
                     width: '80px',
                 }}
-                type="text"
-                placeholder="Random"
-                value={port ?? ''}
+                type="number"
+                min={0}
+                max={65535}
+                placeholder="8080"
+                value={port}
                 onChange={(event) => {
                     const newPort = Number(event.target.value);
-                    if (Number.isNaN(newPort) || newPort <= 0) {
-                        setPort(undefined);
-                        return;
-                    }
                     setPort(newPort);
                 }}
             />
             <button
                 className="btn btn-sm btn-primary"
                 onClick={() => {
+                    setPort(
+                        Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024,
+                    );
+                }}
+            >
+                Gen Randomly
+            </button>
+            <button
+                className="btn btn-sm btn-primary"
+                onClick={() => {
                     setPort(8080);
                 }}
             >
-                User 8080
+                Use 8080
             </button>
         </div>
     );
@@ -110,7 +118,7 @@ export default function ServerControllerComp() {
         status: 'stopped',
     });
     const [status, setStatus] = useState<StatusType>('stopped');
-    const [port, setPort] = useState<number | undefined>(undefined);
+    const [port, setPort] = useState<number>(8080);
     const [serverData, setServerData] = useAppStateAsync(async () => {
         return genNewServerData(port, setStatus, setStatusData);
     });
@@ -187,7 +195,9 @@ export default function ServerControllerComp() {
                             className="spinner-border spinner-border-sm ms-2"
                             role="status"
                             aria-hidden="true"
-                        ></span>
+                        >
+                            Unknown
+                        </span>
                     )}
                 </button>
             </div>

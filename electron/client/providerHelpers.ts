@@ -16,8 +16,15 @@ function freezeObject(obj: any) {
     }
 }
 
-export function initProvider(provider: { [key: string]: any }) {
+export async function initProvider(provider: { [key: string]: any }) {
     const pathName = globalThis.location.pathname;
+    if (!pathName?.length) {
+        console.log('Waiting for pathName to be ready...');
+        await new Promise((resolve) => {
+            setTimeout(resolve, 100);
+        });
+        return initProvider(provider);
+    }
     for (const [name, htmlFileFullName] of Object.entries(htmlFiles)) {
         provider[`${name}HomePage`] = `/${htmlFileFullName}`;
         const isCurrentPage = pathName.startsWith(`/${htmlFileFullName}`);

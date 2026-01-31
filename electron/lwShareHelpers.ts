@@ -1,11 +1,5 @@
-import {
-    init as initApp,
-    httpServer,
-    getRandomPort,
-    getAddressesWithQR,
-    AddressWithQR,
-} from 'lw-share';
 import lwSharePackage from 'lw-share/package.json';
+import type { AddressWithQR } from 'lw-share';
 
 export type StatusType = 'stopped' | 'starting' | 'running' | 'error';
 export type StatusDataType = {
@@ -23,6 +17,12 @@ export async function initServer({
     targetDir,
     onStatus,
 }: StartServerParamsType) {
+    const {
+        init: initApp,
+        httpServer,
+        getRandomPort,
+        getAddressesWithQR,
+    } = await import('lw-share');
     console.log('Starting lw-share...');
     if (port === undefined) {
         console.log('No port specified, using default port 3000');

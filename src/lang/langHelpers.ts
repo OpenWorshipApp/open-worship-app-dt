@@ -531,6 +531,7 @@ export async function getAllLangsAsync() {
     return allLangData.filter((data) => data !== null);
 }
 
+const regex = /^([ \n]*)([^ \n].+[^ \n])([ \n]*)$/;
 export function tran(...args: any[]): string {
     const text = args[0];
     if (Array.isArray(text)) {
@@ -559,8 +560,7 @@ export function tran(...args: any[]): string {
         return text;
     }
     const dictionary = langData.dictionary;
-    const translated = dictionary[text];
-    if (translated === undefined) {
+    if (dictionary[text.trim()] === undefined) {
         if (appProvider.systemUtils.isDev) {
             throw new Error(
                 `Translation for text "${text}" not found in ` +
@@ -569,6 +569,12 @@ export function tran(...args: any[]): string {
         }
         return text;
     }
+    const translated = text.replace(
+        regex,
+        (_match: string, p1: string, matchText: string, p2: string) => {
+            return `${p1}${dictionary[matchText.trim()]}${p2}`;
+        },
+    );
     return translated;
 }
 

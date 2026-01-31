@@ -130,8 +130,9 @@ export type SQLiteDatabaseType = {
     close: () => void;
 };
 
-type PowerPointHelperType = {
+type MSHelperType = {
     countSlides: (filePath: string) => number | null;
+    exportBibleMSWord: (filePath: string, title: string, body: string) => void;
 };
 type YTHelper = {
     on: (event: string, listener: (...args: any[]) => void) => YTHelper;
@@ -179,10 +180,8 @@ export type AppProviderType = Readonly<
         presenterHomePage: string;
         readerHomePage: string;
         currentHomePage: string;
-        powerPointUtils: {
-            getPowerPointHelper: (
-                dotNetRoot?: string,
-            ) => Promise<PowerPointHelperType | null>;
+        msUtils: {
+            getMSHelper: (dotNetRoot?: string) => Promise<MSHelperType | null>;
         };
         ytUtils: {
             getYTHelper: () => Promise<YTHelper>;

@@ -50,7 +50,7 @@ export function previewPdf(src: string) {
 }
 
 export function convertToPdf(officeFilePath: string, pdfFilePath: string) {
-    return electronSendAsync<void>('main:app:convert-to-pdf', {
+    return electronSendAsync<Error | null>('main:app:convert-to-pdf', {
         officeFilePath,
         pdfFilePath,
     });
@@ -272,17 +272,13 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     );
 }
 
-export async function getSlidesCount(
-    powerPointFilePath: string,
-    dotNetRootDir?: string,
-) {
-    const powerPointHelper =
-        await appProvider.powerPointUtils.getPowerPointHelper(dotNetRootDir);
-    if (powerPointHelper === null) {
-        log('PowerPoint helper is not available');
+export async function getSlidesCount(filePath: string, dotNetRootDir?: string) {
+    const msHelper = await appProvider.msUtils.getMSHelper(dotNetRootDir);
+    if (msHelper === null) {
+        log('MS helper is not available');
         return null;
     }
-    return powerPointHelper.countSlides(powerPointFilePath);
+    return msHelper.countSlides(filePath);
 }
 
 async function getPageTitle(url: string) {
