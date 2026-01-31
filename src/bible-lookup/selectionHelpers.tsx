@@ -5,26 +5,61 @@ import { bringDomToBottomView } from '../helper/helpers';
 export const INPUT_TEXT_CLASS = 'bible-lookup-input-text';
 export const RENDER_FOUND_CLASS = 'bible-lookup-render-found';
 
-function indexing(listLength: number, index: number, isNext: boolean) {
-    return (index + (isNext ? 1 : -1) + listLength) % listLength;
-}
-
 function getElements(optionClass: string) {
     return Array.from(
-        document.querySelectorAll<HTMLDivElement>(`.${optionClass}`),
+        document.querySelectorAll<HTMLButtonElement>(`.${optionClass}`),
     );
 }
 
-function calculateIndexer(optionClass: string, selectedClass: string) {
-    const elements = getElements(optionClass);
-    if (!elements.length) {
-        return { elements, indexer: [], rotatedIndexer: [], preIndex: -1 };
-    }
-    const preIndex = elements.findIndex((element) => {
-        return element.classList.contains(selectedClass);
+type IndexerType = {
+    elements: HTMLButtonElement[]; // All HTML elements
+    // 2D array indexer representing rows and columns
+    // ---------------------
+    // | o | o | o | o |  --> row 0
+    // ---------------------
+    // | o | o | o | o |  --> row 1
+    // ---------------------
+    // | o | o |          --> row 2 missing 2 elements in this row
+    // ---------------------
+    // Each 'o' represents an element existing in that position but we don't
+    // store the element itself just a null placeholder.
+    indexer: null[][];
+    // Rotated version of the indexer for easier vertical navigation
+    // indexer = [
+    //  [o, o, o, o],
+    //  [o, o, o, o],
+    //  [o, o]
+    // ]
+    // then
+    // rotatedIndexer = [
+    //  [o, o, o],
+    //  [o, o, o],
+    //  [o, o],
+    //  [o, o]
+    // ]
+    rotatedIndexer: null[][];
+    // current highlighted index in the elements array
+    preIndex: number;
+};
+function calculateIndexer(
+    optionClass: string,
+    selectedClass: string,
+    currentIndex: number | null = null,
+): IndexerType {
+    const optionElements = getElements(optionClass);
+    const areAllDisabled = optionElements.every((element) => {
+        return element.hasAttribute('disabled');
     });
-    const cordList = elements.map((element: any) => {
-        const rect = (element as HTMLDivElement).getBoundingClientRect();
+    if (areAllDisabled || !optionElements.length) {
+        return { elements: [], indexer: [], rotatedIndexer: [], preIndex: -1 };
+    }
+    const preIndex =
+        currentIndex ??
+        optionElements.findIndex((element) => {
+            return element.classList.contains(selectedClass);
+        });
+    const cordList = optionElements.map((element: any) => {
+        const rect = element.getBoundingClientRect();
         return {
             x: rect.x,
             y: rect.y,
@@ -58,7 +93,12 @@ function calculateIndexer(optionClass: string, selectedClass: string) {
             }),
         );
     }
-    return { elements, indexer, rotatedIndexer, preIndex };
+    return {
+        elements: optionElements,
+        indexer,
+        rotatedIndexer,
+        preIndex,
+    };
 }
 
 function indexToCord(hLength: number, index: number) {
@@ -71,14 +111,19 @@ function cordToIndex(hLength: number, x: number, y: number) {
     return x + y * hLength;
 }
 
+function toNextIndex(listLength: number, index: number, isNext: boolean) {
+    return (index + (isNext ? 1 : -1) + listLength) % listLength;
+}
 function genIndex(
     optionClass: string,
     selectedClass: string,
     key: KeyboardType,
+    currentIndex: number | null = null,
 ) {
     const { elements, indexer, rotatedIndexer, preIndex } = calculateIndexer(
         optionClass,
         selectedClass,
+        currentIndex,
     );
     if (!indexer.length) {
         return { index: -1, elements: [] };
@@ -86,20 +131,24 @@ function genIndex(
     if (preIndex === -1) {
         return { index: 0, elements };
     }
-    const hLength = indexer[0].length;
-    let { x, y } = indexToCord(hLength, preIndex);
+    const maxHorizontalLength = indexer[0].length;
+    let { x, y } = indexToCord(maxHorizontalLength, preIndex);
     const horizontalLength = indexer[y].length;
     const verticalLength = rotatedIndexer[x].length;
     if (key === 'ArrowLeft') {
-        x = indexing(horizontalLength, x, false);
+        x = toNextIndex(horizontalLength, x, false);
     } else if (key === 'ArrowRight') {
-        x = indexing(horizontalLength, x, true);
+        x = toNextIndex(horizontalLength, x, true);
     } else if (key === 'ArrowUp') {
-        y = indexing(verticalLength, y, false);
+        y = toNextIndex(verticalLength, y, false);
     } else if (key === 'ArrowDown') {
-        y = indexing(verticalLength, y, true);
+        y = toNextIndex(verticalLength, y, true);
     }
-    return { index: cordToIndex(hLength, x, y), elements };
+    const nextIndex = cordToIndex(maxHorizontalLength, x, y);
+    if (elements[nextIndex]?.hasAttribute('disabled')) {
+        return genIndex(optionClass, selectedClass, key, nextIndex);
+    }
+    return { index: nextIndex, elements };
 }
 
 export function getSelectedElement(optionClass: string, selectedClass: string) {

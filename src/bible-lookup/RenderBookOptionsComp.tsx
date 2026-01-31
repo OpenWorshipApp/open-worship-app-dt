@@ -91,24 +91,18 @@ export default function RenderBookOptionsComp({
     const [matchedBooks] = useAppStateAsync(() => {
         return genBookMatches(bibleKey, guessingBook);
     }, [bibleKey, guessingBook]);
-    const useKeyEvent = (key: KeyboardType) => {
-        useKeyboardRegistering(
-            [{ key }],
-            (event: KeyboardEvent) => {
-                processSelection(
-                    OPTION_CLASS,
-                    OPTION_SELECTED_CLASS,
-                    event.key as KeyboardType,
-                    event,
-                );
-            },
-            [],
+    const handleOnArrow = (event: KeyboardEvent) => {
+        processSelection(
+            OPTION_CLASS,
+            OPTION_SELECTED_CLASS,
+            event.key as KeyboardType,
+            event,
         );
     };
-    useKeyEvent('ArrowLeft');
-    useKeyEvent('ArrowRight');
-    useKeyEvent('ArrowUp');
-    useKeyEvent('ArrowDown');
+    useKeyboardRegistering([{ key: 'ArrowLeft' }], handleOnArrow, []);
+    useKeyboardRegistering([{ key: 'ArrowRight' }], handleOnArrow, []);
+    useKeyboardRegistering([{ key: 'ArrowUp' }], handleOnArrow, []);
+    useKeyboardRegistering([{ key: 'ArrowDown' }], handleOnArrow, []);
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
 
     if (!matchedBooks) {
