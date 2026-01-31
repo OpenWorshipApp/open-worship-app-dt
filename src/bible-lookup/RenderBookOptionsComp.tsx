@@ -75,7 +75,7 @@ function genBookOption({
     );
 }
 
-function BookOptionsComp({
+export default function RenderBookOptionsComp({
     onSelect,
     guessingBook,
 }: Readonly<{
@@ -129,25 +129,5 @@ function BookOptionsComp({
                 },
             )}
         </>
-    );
-}
-
-export default function RenderBookOptionsComp({
-    onSelect,
-    bookKey,
-    guessingBook,
-}: Readonly<{
-    onSelect: SelectBookType;
-    bookKey: string | null;
-    guessingBook: string | null;
-}>) {
-    if (bookKey !== null) {
-        return null;
-    }
-    return (
-        <BookOptionsComp
-            onSelect={onSelect}
-            guessingBook={guessingBook ?? ''}
-        />
     );
 }

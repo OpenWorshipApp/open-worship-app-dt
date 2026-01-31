@@ -1,5 +1,4 @@
 import { tran } from '../lang/langHelpers';
-import RenderBookOptionsComp from './RenderBookOptionsComp';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
 import { BibleSelectionMiniComp } from './BibleSelectionComp';
 import { RENDER_FOUND_CLASS } from './selectionHelpers';
@@ -11,6 +10,7 @@ import RenderVerseOptionsComp from './RenderVerseOptionsComp';
 import { use } from 'react';
 import { openBibleSetting } from '../setting/settingHelpers';
 import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
+import RenderBookOptionsComp from './RenderBookOptionsComp';
 
 export default function RenderLookupSuggestionComp({
     applyChapterSelection,
@@ -58,17 +58,19 @@ export default function RenderLookupSuggestionComp({
                     'justify-content-start'
                 }
             >
-                <RenderBookOptionsComp
-                    bookKey={bookKey}
-                    guessingBook={guessingBook}
-                    onSelect={applyBookSelection}
-                />
-                <RenderChapterOptionsComp
-                    bookKey={bookKey}
-                    chapter={chapter}
-                    guessingChapter={guessingChapter}
-                    onSelect={applyChapterSelection}
-                />
+                {bookKey === null ? (
+                    <RenderBookOptionsComp
+                        onSelect={applyBookSelection}
+                        guessingBook={guessingBook ?? ''}
+                    />
+                ) : null}
+                {bookKey === null || chapter !== null ? null : (
+                    <RenderChapterOptionsComp
+                        bookKey={bookKey}
+                        guessingChapter={guessingChapter}
+                        onSelect={applyChapterSelection}
+                    />
+                )}
             </div>
         </div>
     );

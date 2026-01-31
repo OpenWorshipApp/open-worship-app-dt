@@ -13,29 +13,6 @@ import { useState } from 'react';
 const OPTION_CLASS = 'bible-lookup-chapter-option';
 const OPTION_SELECTED_CLASS = 'active';
 
-export default function RenderChapterOptionsComp({
-    bookKey,
-    chapter,
-    guessingChapter,
-    onSelect,
-}: Readonly<{
-    bookKey: string | null;
-    chapter: number | null;
-    guessingChapter: string | null;
-    onSelect: (chapter: number) => void;
-}>) {
-    if (bookKey === null || chapter !== null) {
-        return null;
-    }
-    return (
-        <ChapterOptions
-            bookKey={bookKey}
-            guessingChapter={guessingChapter}
-            onSelect={onSelect}
-        />
-    );
-}
-
 function RenderChapterZeroContentComp({
     bibleKey,
     bookKey,
@@ -96,7 +73,7 @@ function RenderChapterZeroComp({
     );
 }
 
-function ChapterOptions({
+export default function RenderChapterOptionsComp({
     bookKey,
     guessingChapter,
     onSelect,
