@@ -1,0 +1,18 @@
+.book-option {
+  margin: 2px;
+  button {
+    width: 240px;
+    .book-option-index {
+      content: attr(data-book-index);
+      clear: both;
+      display: inline-block;
+      opacity: 0.2;
+      margin-right: 3px;
+      font-size: 0.8em;
+    }
+    .book-option-text {
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+  }
+}

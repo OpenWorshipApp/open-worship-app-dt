@@ -103,7 +103,7 @@ export function BibleNotAvailableComp({
                     <span data-bible-key={bibleKey}>"{bibleKey}"</span>
                     {' is not available!'}
                 </h2>
-                Please change bible key here:{' '}
+                {tran('Please change bible key here')}:{' '}
                 <BibleSelectionMiniComp
                     bibleKey={bibleKey}
                     onBibleKeyChange={handleBibleKeyChanging}

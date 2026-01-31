@@ -231,6 +231,8 @@ const dictionary = {
     'Keep popup modal open when adding a bible item, useful in presenter mode':
         'រក្សាទុកផ្ទាំងបង្ហាញពហុមុខងារឱ្យបើកនៅពេលបន្ថែមធាតុព្រះគម្ពីរ មានប្រយោជន៍នៅក្នុងរបៀបកម្មវិធីបង្ហាញ',
     'Canvas Items': 'ធាតុផ្ទាំង',
+    'Please change bible key here': 'សូមផ្លាស់ប្តូរកូនសោរព្រះគម្ពីរនៅទីនេះ',
+    'Not available': 'មិនមាន',
 };
 const fontFamily = 'km-font-family';
 const lang: LanguageDataType = {

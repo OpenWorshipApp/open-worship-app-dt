@@ -1,3 +1,5 @@
+import './RenderBookOptionsComp.scss';
+
 import { Fragment } from 'react';
 
 import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
@@ -11,6 +13,7 @@ import {
     checkIsApocrypha,
     checkIsOldTestament,
 } from '../helper/bible-helpers/bibleInfoHelpers';
+import { tran } from '../lang/langHelpers';
 
 const OPTION_CLASS = 'bible-lookup-book-option';
 const OPTION_SELECTED_CLASS = 'active';
@@ -44,21 +47,20 @@ function genBookOption({
     }
     return (
         <div
-            title={isAvailable ? undefined : 'Not available'}
+            className="book-option"
+            title={isAvailable ? undefined : tran('Not available')}
             style={{
-                margin: '2px',
                 cursor: isAvailable ? undefined : 'not-allowed',
             }}
         >
             <button
+                data-book-index={index + 1}
                 className={
-                    'text-nowrap btn-sm btn btn-outline-success' +
+                    'd-flex text-nowrap btn-sm btn btn-outline-success' +
                     ` ${OPTION_CLASS} ${activeClass}`
                 }
                 disabled={!isAvailable}
                 style={{
-                    width: '240px',
-                    overflowX: 'auto',
                     borderColor,
                 }}
                 type="button"
@@ -66,10 +68,13 @@ function genBookOption({
                     onSelect(bookKey, book);
                 }}
             >
-                <span data-bible-key={bibleKey}>{book}</span>
-                {book === modelBook ? null : (
-                    <small className="px-1">({modelBook})</small>
-                )}
+                <div className="book-option-index">{index + 1}</div>
+                <div className="flex-fill" data-bible-key={bibleKey}>
+                    {book}
+                    {book === modelBook ? null : (
+                        <small className="px-1">({modelBook})</small>
+                    )}
+                </div>
             </button>
         </div>
     );
@@ -109,25 +114,20 @@ export default function RenderBookOptionsComp({
     if (!matchedBooks) {
         return <div>No book options available</div>;
     }
-    return (
-        <>
-            {matchedBooks.map(
-                ({ bibleKey, bookKey, book, modelBook, isAvailable }, i) => {
-                    return (
-                        <Fragment key={bookKey}>
-                            {genBookOption({
-                                bibleKey,
-                                bookKey,
-                                book,
-                                modelBook,
-                                onSelect,
-                                index: i,
-                                isAvailable,
-                            })}
-                        </Fragment>
-                    );
-                },
-            )}
-        </>
-    );
+    return matchedBooks.map((matchBook, i) => {
+        const { bibleKey, bookKey, book, modelBook, isAvailable } = matchBook;
+        return (
+            <Fragment key={bookKey}>
+                {genBookOption({
+                    bibleKey,
+                    bookKey,
+                    book,
+                    modelBook,
+                    onSelect,
+                    index: i,
+                    isAvailable,
+                })}
+            </Fragment>
+        );
+    });
 }
