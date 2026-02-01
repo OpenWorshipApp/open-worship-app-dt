@@ -33,29 +33,19 @@ const LazyAskingNewNameComp = lazy(() => {
     return import('./AskingNewNameComp');
 });
 
-async function handleFileChanging(
-    dirSource: DirSource,
-    eventType: string,
-    fileFullName: string | null,
-) {
-    if (fileFullName === null) {
-        return;
-    }
-    if (eventType !== 'rename') {
-        return;
-    }
+async function handleFileChanging(dirSource: DirSource) {
     try {
-        for (const mimetypeName of Object.keys(
+        const mimetypeNames = Object.keys(
             dirSource.filePathsMap,
-        ) as MimetypeNameType[]) {
+        ) as MimetypeNameType[];
+        if (mimetypeNames.length === 0) {
+            dirSource.fireReloadEvent();
+        }
+        for (const mimetypeName of mimetypeNames) {
+            const oldFilePaths = dirSource.filePathsMap[mimetypeName];
             const newFilePaths =
                 await dirSource.getFilePathsQuick(mimetypeName);
-            if (
-                !checkAreArraysEqual(
-                    dirSource.filePathsMap[mimetypeName],
-                    newFilePaths,
-                )
-            ) {
+            if (!checkAreArraysEqual(oldFilePaths, newFilePaths)) {
                 dirSource.fireReloadEvent();
             }
         }

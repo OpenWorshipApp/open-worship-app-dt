@@ -82,6 +82,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     fireReloadEvent() {
+        this.filePathsMap = {};
         this.addPropEvent('reload');
     }
 
