@@ -13,7 +13,6 @@ import SlideAutoPlayComp from '../slide-auto-play/SlideAutoPlayComp';
 import { getScreenManagerByScreenId } from '../_screen/managers/screenManagerHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import { FilePathLoadedContext } from '../others/RenderListComp';
 import ScreenManagerBase from '../_screen/managers/ScreenManagerBase';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import type {
@@ -23,6 +22,7 @@ import type {
 import { scaleTypeList } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import RenderBackgroundScreenIds from '../background/RenderBackgroundScreenIds';
+import { FilePathLoadedContext } from '../helper/dirSourceHelpers';
 
 const DIR_SOURCE_SETTING_NAME = 'images-slide-show';
 const extraStyle: CSSProperties = {

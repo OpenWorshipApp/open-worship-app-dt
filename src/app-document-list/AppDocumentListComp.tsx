@@ -10,7 +10,7 @@ import {
     mimetypePdf,
 } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
-import { useGenDirSource } from '../helper/dirSourceHelpers';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -75,7 +75,7 @@ async function checkIsOnScreen(filePaths: string[]) {
 }
 
 export default function AppDocumentListComp() {
-    const dirSource = useGenDirSource(dirSourceSettingNames.APP_DOCUMENT);
+    const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
     if (dirSource === null) {
         return null;
     }

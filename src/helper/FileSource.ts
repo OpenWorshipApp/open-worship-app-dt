@@ -90,7 +90,7 @@ export default class FileSource
 
     async setColorNote(color: string | null) {
         FileSourceMetaManager.setColorNote(this.filePath, color);
-        this.dirSource?.fireReloadEvent();
+        this.dirSource?.fireRefreshEvent();
     }
 
     get metadata() {

@@ -1,12 +1,62 @@
 import type { DependencyList } from 'react';
-import { useState } from 'react';
+import { createContext, use, useState } from 'react';
 
 import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
 import DirSource from './DirSource';
 import type { FileSourceEventType } from './FileSource';
 import FileSource from './FileSource';
+import { MimetypeNameType } from '../server/fileHelpers';
+import { checkAreArraysEqual } from '../server/comparisonHelpers';
 
-export function useGenDirSource(settingName: string) {
+export const FilePathLoadedContext = createContext<{
+    onLoaded?: (filePaths: string[] | null) => void;
+} | null>(null);
+
+export function useFilePaths(
+    dirSource: DirSource,
+    mimetypeName: MimetypeNameType,
+) {
+    const filePathLoadedCtx = use(FilePathLoadedContext);
+    const [filePaths, setFilePaths] = useState<string[] | null | undefined>(
+        undefined,
+    );
+    const refresh = async () => {
+        const newFilePaths = await dirSource.getFilePaths(mimetypeName);
+        if (newFilePaths !== null) {
+            const promises = newFilePaths.map(async (filePath) => {
+                const fileSource = FileSource.getInstance(filePath);
+                const color = await fileSource.getColorNote();
+                fileSource.colorNote = color;
+            });
+            await Promise.all(promises);
+        }
+        if (checkAreArraysEqual(filePaths, newFilePaths)) {
+            return;
+        }
+        setFilePaths(newFilePaths);
+        filePathLoadedCtx?.onLoaded?.(newFilePaths);
+    };
+    useAppEffect(() => {
+        setFilePaths(undefined);
+        const registeredEvent = dirSource.registerEventListener(
+            ['refresh'],
+            refresh,
+        );
+        return () => {
+            dirSource.unregisterEventListener(registeredEvent);
+        };
+    }, [dirSource, mimetypeName]);
+    useAppEffect(() => {
+        if (filePaths !== undefined) {
+            return;
+        }
+        refresh();
+    }, [filePaths]);
+
+    return filePaths;
+}
+
+export function useGenDirSourceReload(settingName: string) {
     const [dirSource, setDirSource] = useState<DirSource | null>(null);
     useAppEffectAsync(
         async (methodContext) => {

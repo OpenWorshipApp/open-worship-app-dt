@@ -20,7 +20,7 @@ import {
     SELECTED_PARENT_DIR_SETTING_NAME,
 } from './appLocalStorage';
 import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
-import { useGenDirSource } from '../../helper/dirSourceHelpers';
+import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
 import type { OptionalPromise } from '../../helper/typeHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
@@ -52,7 +52,7 @@ function RenderPathElementComp({
     settingName: string;
     defaultFolderName: string;
 }>) {
-    const dirSource = useGenDirSource(settingName);
+    const dirSource = useGenDirSourceReload(settingName);
     const [isValidDirPath] = useAppStateAsync(() => {
         return fsCheckDirExist(dirSource?.dirPath ?? '');
     }, [dirSource]);

@@ -3,7 +3,7 @@ import './BibleListComp.scss';
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import Bible from './Bible';
 import BibleFileComp from './BibleFileComp';
-import { useGenDirSource } from '../helper/dirSourceHelpers';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import { getSettingPrefix } from '../helper/settingHelpers';
 import { defaultDataDirNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
@@ -24,7 +24,7 @@ async function checkIsOnScreen(filePaths: string[]) {
 
 export default function BibleListComp() {
     const dirSourceSettingName = Bible.getDirSourceSettingName();
-    const dirSource = useGenDirSource(dirSourceSettingName);
+    const dirSource = useGenDirSourceReload(dirSourceSettingName);
     const handleBodyRendering = (filePaths: string[]) => {
         return filePaths.map((filePath, i) => {
             return (

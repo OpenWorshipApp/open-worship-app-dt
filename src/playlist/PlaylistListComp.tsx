@@ -3,7 +3,7 @@ import './PlaylistListComp.scss';
 import PlaylistFileComp from './PlaylistFileComp';
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import Playlist from './Playlist';
-import { useGenDirSource } from '../helper/dirSourceHelpers';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -11,7 +11,7 @@ import {
 import { tran } from '../lang/langHelpers';
 
 export default function PlaylistListComp() {
-    const dirSource = useGenDirSource(dirSourceSettingNames.PLAYLIST);
+    const dirSource = useGenDirSourceReload(dirSourceSettingNames.PLAYLIST);
     const handleBodyRendering = (filePaths: string[]) => {
         return (
             <>

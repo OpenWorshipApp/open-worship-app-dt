@@ -9,7 +9,7 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { useGenDirSource } from '../helper/dirSourceHelpers';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import FileListHandlerComp from '../others/FileListHandlerComp';
@@ -265,7 +265,9 @@ function renderChildren(filePaths: string[]) {
 }
 
 export default function ForegroundWebComp() {
-    const dirSource = useGenDirSource(dirSourceSettingNames.BACKGROUND_WEB);
+    const dirSource = useGenDirSourceReload(
+        dirSourceSettingNames.BACKGROUND_WEB,
+    );
     useScreenForegroundManagerEvents(['update']);
     if (dirSource === null) {
         return null;

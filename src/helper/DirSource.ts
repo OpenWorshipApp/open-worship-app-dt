@@ -14,7 +14,7 @@ import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
 import { getSetting, setSetting } from './settingHelpers';
 
-export type DirSourceEventType = 'reload';
+export type DirSourceEventType = 'refresh' | 'reload';
 
 const fileCacheKeys: string[] = [];
 const cache = new Map<string, DirSource>();
@@ -60,7 +60,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
 
     set dirPath(newDirPath: string) {
         setSetting(this.settingName, newDirPath);
-        this.fireReloadEvent();
+        this.fireRefreshEvent();
     }
 
     static toCacheKey(settingName: string) {
@@ -81,8 +81,12 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return FileSource.getInstance(this.dirPath, fileFullName);
     }
 
-    fireReloadEvent() {
+    fireRefreshEvent() {
         this.filePathsMap = {};
+        this.addPropEvent('refresh');
+    }
+
+    fireReloadEvent() {
         this.addPropEvent('reload');
     }
 
@@ -155,7 +159,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return filePaths;
     }
 
-    async getFilePaths(mimetypeName: MimetypeNameType) {
+    getFilePaths(mimetypeName: MimetypeNameType) {
         if (!this.dirPath) {
             return [];
         }
@@ -167,8 +171,9 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
                     return filePathsInMap;
                 }
                 try {
-                    this.filePathsMap[mimetypeName] =
+                    const newFilePaths =
                         await this.getFilePathsQuick(mimetypeName);
+                    this.filePathsMap[mimetypeName] = newFilePaths;
                 } catch (error) {
                     handleError(error);
                     showSimpleToast(

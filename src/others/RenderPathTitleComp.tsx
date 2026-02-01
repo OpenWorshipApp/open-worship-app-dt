@@ -24,7 +24,7 @@ export default function RenderPathTitleComp({
             >
                 <i className="bi bi-arrow-clockwise" />
             </div>
-            {addItems !== undefined ? (
+            {addItems === undefined ? null : (
                 <div
                     className="app-add-items-button px-1"
                     title="Add items"
@@ -35,7 +35,7 @@ export default function RenderPathTitleComp({
                 >
                     <i className="bi bi-plus-lg" />
                 </div>
-            ) : null}
+            )}
         </>
     );
 }

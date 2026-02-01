@@ -7,7 +7,7 @@ import {
     mimetypePdf,
 } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
-import { useGenDirSource } from '../helper/dirSourceHelpers';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -51,7 +51,7 @@ async function checkIsOnScreen(filePaths: string[]) {
 }
 
 export default function LyricListComp() {
-    const dirSource = useGenDirSource(dirSourceSettingNames.LYRIC);
+    const dirSource = useGenDirSourceReload(dirSourceSettingNames.LYRIC);
     if (dirSource === null) {
         return null;
     }

@@ -4,7 +4,7 @@ import FileListHandlerComp from '../others/FileListHandlerComp';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import type FileSource from '../helper/FileSource';
 import type { DragTypeEnum } from '../helper/DragInf';
-import { useGenDirSource } from '../helper/dirSourceHelpers';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
@@ -103,7 +103,7 @@ const handleBodyRendering = (
 export default function BackgroundMediaComp(props: Readonly<PropsType>) {
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
     const backgroundType = backgroundTypeMapper[props.dragType];
-    const dirSource = useGenDirSource(props.dirSourceSettingName);
+    const dirSource = useGenDirSourceReload(props.dirSourceSettingName);
 
     useScreenBackgroundManagerEvents(['update']);
     if (dirSource === null) {

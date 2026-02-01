@@ -39,18 +39,18 @@ async function handleFileChanging(dirSource: DirSource) {
             dirSource.filePathsMap,
         ) as MimetypeNameType[];
         if (mimetypeNames.length === 0) {
-            dirSource.fireReloadEvent();
+            dirSource.fireRefreshEvent();
         }
         for (const mimetypeName of mimetypeNames) {
             const oldFilePaths = dirSource.filePathsMap[mimetypeName];
             const newFilePaths =
                 await dirSource.getFilePathsQuick(mimetypeName);
             if (!checkAreArraysEqual(oldFilePaths, newFilePaths)) {
-                dirSource.fireReloadEvent();
+                dirSource.fireRefreshEvent();
             }
         }
     } catch (_error) {
-        dirSource.fireReloadEvent();
+        dirSource.fireRefreshEvent();
     }
 }
 async function watchDir(dirSource: DirSource, signal: AbortSignal) {
@@ -75,23 +75,47 @@ export const DirSourceContext = createContext<DirSource | null>(null);
 
 export type FileListType = FileSource[] | null | undefined;
 
-export default function FileListHandlerComp({
-    className,
-    mimetypeName,
-    dirSource,
+function RenderHeaderComp({
+    isOnScreen,
     header,
-    bodyHandler,
-    contextMenuItems,
-    genContextMenuItems,
     onNewFile,
-    checkExtraFile,
-    takeDroppedFile,
-    userClassName,
-    defaultFolderName,
-    fileSelectionOption,
-    checkIsOnScreen,
-    onItemsAdding,
+    dirSource,
+    setIsCreatingNew,
 }: Readonly<{
+    isOnScreen: boolean;
+    header: any;
+    onNewFile?: (dirPath: string, newName: string) => Promise<boolean>;
+    dirSource: DirSource;
+    setIsCreatingNew: (isCreating: boolean) => void;
+}>) {
+    return (
+        <div
+            className="card-header"
+            style={{
+                maxHeight: '30px',
+            }}
+        >
+            <strong className={isOnScreen ? 'app-on-screen' : ''}>
+                {header}
+            </strong>
+            {onNewFile && dirSource.dirPath ? (
+                <div
+                    className="float-end app-caught-hover-pointer"
+                    title={tran('New File')}
+                    onClick={() => setIsCreatingNew(true)}
+                    style={{
+                        color: 'var(--bs-info-text-emphasis)',
+                        fontSize: '20px',
+                    }}
+                >
+                    <i className="bi bi-file-earmark-plus" />
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
+type PropsType = {
     className: string;
     mimetypeName: MimetypeNameType;
     dirSource: DirSource;
@@ -114,7 +138,25 @@ export default function FileListHandlerComp({
         event: any,
         defaultContextMenuItems: ContextMenuItemType[],
     ) => void;
-}>) {
+};
+
+export default function FileListHandlerComp({
+    className,
+    mimetypeName,
+    dirSource,
+    header,
+    bodyHandler,
+    contextMenuItems,
+    genContextMenuItems,
+    onNewFile,
+    checkExtraFile,
+    takeDroppedFile,
+    userClassName,
+    defaultFolderName,
+    fileSelectionOption,
+    checkIsOnScreen,
+    onItemsAdding,
+}: Readonly<PropsType>) {
     const [isOnScreen, setIsOnScreen] = useState(false);
     const handleNameApplying = async (name: string | null) => {
         if (name === null) {
@@ -139,6 +181,13 @@ export default function FileListHandlerComp({
             : () => {
                   handleFilesSelectionMenuItem(fileSelectionOption);
               };
+    const handleItemAdding =
+        onItemsAdding === undefined
+            ? handleItemsAdding
+            : onItemsAdding.bind(
+                  null,
+                  genItemsAddingContextMenuItems(handleItemsAdding),
+              );
     return (
         <DirSourceContext value={dirSource}>
             <div
@@ -157,29 +206,13 @@ export default function FileListHandlerComp({
                 })}
             >
                 {header ? (
-                    <div
-                        className="card-header"
-                        style={{
-                            maxHeight: '30px',
-                        }}
-                    >
-                        <strong className={isOnScreen ? 'app-on-screen' : ''}>
-                            {header}
-                        </strong>
-                        {onNewFile && dirSource.dirPath ? (
-                            <div
-                                className="float-end app-caught-hover-pointer"
-                                title={tran('New File')}
-                                onClick={() => setIsCreatingNew(true)}
-                                style={{
-                                    color: 'var(--bs-info-text-emphasis)',
-                                    fontSize: '20px',
-                                }}
-                            >
-                                <i className="bi bi-file-earmark-plus" />
-                            </div>
-                        ) : null}
-                    </div>
+                    <RenderHeaderComp
+                        isOnScreen={isOnScreen}
+                        header={header}
+                        onNewFile={onNewFile}
+                        dirSource={dirSource}
+                        setIsCreatingNew={setIsCreatingNew}
+                    />
                 ) : null}
                 <div
                     className="card-body d-flex flex-column pb-5 app-inner-shadow"
@@ -198,16 +231,7 @@ export default function FileListHandlerComp({
                     <PathSelectorComp
                         prefix={`path-${className}`}
                         dirSource={dirSource}
-                        addItems={
-                            onItemsAdding === undefined
-                                ? handleItemsAdding
-                                : onItemsAdding.bind(
-                                      null,
-                                      genItemsAddingContextMenuItems(
-                                          handleItemsAdding,
-                                      ),
-                                  )
-                        }
+                        addItems={handleItemAdding}
                     />
                     {!dirSource.dirPath && defaultFolderName ? (
                         <NoDirSelectedComp
