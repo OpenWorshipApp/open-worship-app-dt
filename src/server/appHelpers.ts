@@ -14,6 +14,7 @@ import {
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { log, error as logError } from '../helper/loggerHelpers';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${Date.now()}`;
@@ -497,3 +498,35 @@ export function removeOpacityFromHexColor(hexColor: string) {
     }
     return hexColor;
 }
+
+export function printHtmlText() {
+    appProvider.messageUtils.sendData('all:app:print');
+}
+(globalThis as any).printHtmlText = printHtmlText;
+console.log('printHtmlText');
+
+export async function exportBibleMSWord(title: string, body: string) {
+    const msHelper = await appProvider.msUtils.getMSHelper();
+    if (msHelper === null) {
+        log('MS helper is not available');
+        return null;
+    }
+
+    const selectedParentDir =
+        await appLocalStorage.getSelectedParentDirectory();
+    if (selectedParentDir === null) {
+        showSimpleToast(
+            'No Parent Directory Selected',
+            'There is no parent directory selected',
+        );
+        return;
+    }
+    const filePath = pathJoin(
+        selectedParentDir,
+        `${title || 'bible-export'}-${Date.now()}.docx`,
+    );
+    console.log(filePath);
+    msHelper.exportBibleMSWord(filePath, title, body);
+}
+(globalThis as any).exportBibleMSWord = exportBibleMSWord;
+console.log('exportBibleMSWord');
