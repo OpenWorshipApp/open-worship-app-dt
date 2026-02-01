@@ -54,6 +54,15 @@ function useAppEffect1(
     const toKey = useMemo(() => {
         return key ?? effect.toString();
     }, []);
+    for (const dep of deps) {
+        if (Array.isArray(dep)) {
+            warn(
+                '[useAppEffect] Detected object in dependency list. ' +
+                    'This may cause unnecessary re-renders.',
+                dep,
+            );
+        }
+    }
     useEffect(() => {
         checkStore(toKey);
         return effect();

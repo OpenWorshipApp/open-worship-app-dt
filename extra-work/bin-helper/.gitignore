@@ -6,3 +6,4 @@ dotnet-runtime*.tar.gz
 ffmpeg-*.zip
 ffmpeg-*.tar.xz
 yt-dlp*
+.vs/

@@ -246,10 +246,13 @@ export function useFileSourceIsOnScreen(
     onUpdate?: (isOnScreen: boolean) => void,
 ) {
     const [isOnScreen, setIsOnScreen] = useAppStateAsync(async () => {
+        if (filePaths.length === 0) {
+            return false;
+        }
         const isOnScreen = await checkIsOnScreen(filePaths);
         onUpdate?.(isOnScreen);
         return isOnScreen;
-    }, [filePaths]);
+    }, [filePaths.join('|')]);
     useScreenUpdateEvents(undefined, async () => {
         const isOnScreen = await checkIsOnScreen(filePaths);
         onUpdate?.(isOnScreen);

@@ -54,7 +54,7 @@ export default class PdfAppDocument
             if (imageFileInfoList === null) {
                 return [];
             }
-            return imageFileInfoList.map(
+            const dataList = imageFileInfoList.map(
                 ({ src, pageNumber, width, height }) => {
                     return new PdfSlide(this.filePath, {
                         id: pageNumber,
@@ -64,6 +64,7 @@ export default class PdfAppDocument
                     });
                 },
             );
+            return dataList;
         } catch (error) {
             handleError(error);
         }

@@ -27,11 +27,42 @@ import NoDirSelectedComp from './NoDirSelectedComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import type { OptionalPromise } from '../helper/typeHelpers';
+import { checkAreArraysEqual } from '../server/comparisonHelpers';
 
 const LazyAskingNewNameComp = lazy(() => {
     return import('./AskingNewNameComp');
 });
 
+async function handleFileChanging(
+    dirSource: DirSource,
+    eventType: string,
+    fileFullName: string | null,
+) {
+    if (fileFullName === null) {
+        return;
+    }
+    if (eventType !== 'rename') {
+        return;
+    }
+    try {
+        for (const mimetypeName of Object.keys(
+            dirSource.filePathsMap,
+        ) as MimetypeNameType[]) {
+            const newFilePaths =
+                await dirSource.getFilePathsQuick(mimetypeName);
+            if (
+                !checkAreArraysEqual(
+                    dirSource.filePathsMap[mimetypeName],
+                    newFilePaths,
+                )
+            ) {
+                dirSource.fireReloadEvent();
+            }
+        }
+    } catch (_error) {
+        dirSource.fireReloadEvent();
+    }
+}
 async function watchDir(dirSource: DirSource, signal: AbortSignal) {
     const isDirExist = await fsCheckDirExist(dirSource.dirPath);
     if (!isDirExist) {
@@ -43,14 +74,7 @@ async function watchDir(dirSource: DirSource, signal: AbortSignal) {
             {
                 signal,
             },
-            (eventType, fileFullName) => {
-                if (fileFullName === null) {
-                    return;
-                }
-                if (eventType === 'rename') {
-                    dirSource.fireReloadEvent();
-                }
-            },
+            handleFileChanging.bind(null, dirSource),
         );
     } catch (error) {
         handleError(error);

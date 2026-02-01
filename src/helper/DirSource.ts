@@ -8,6 +8,7 @@ import {
     pathResolve,
     fsCheckFileExist,
 } from '../server/fileHelpers';
+import { unlocking } from '../server/unlockingHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
@@ -22,6 +23,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     static readonly eventNamePrefix: string = 'dir-source';
     checkExtraFile: ((fName: string) => FileMetadataType | null) | null = null;
     private _isDirPathValid: boolean | null = null;
+    filePathsMap: Record<string, string[]> = {};
 
     constructor(settingName: string) {
         super();
@@ -122,45 +124,60 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return files;
     }
 
+    async getFilePathsQuick(mimetypeName: MimetypeNameType) {
+        const mimetypeList = getAppMimetype(mimetypeName);
+        const fileFullNames = await this.getAllFileFullNames();
+        const matchedFileFullNames = fileFullNames
+            .filter((fileFullName) => {
+                // MacOS creates hidden files that start with '._'
+                return !fileFullName.startsWith('._');
+            })
+            .map((fileFullName) => {
+                const fileMetadata = getFileMetaData(
+                    fileFullName,
+                    mimetypeList,
+                );
+                if (fileMetadata === null && this.checkExtraFile) {
+                    return this.checkExtraFile(fileFullName);
+                }
+                return fileMetadata;
+            })
+            .filter((fileMetadata) => {
+                return fileMetadata !== null;
+            });
+        const filePaths = matchedFileFullNames.map((fileMetadata) => {
+            const fileSource = this.getFileSourceInstance(
+                fileMetadata.fileFullName,
+            );
+            return fileSource.filePath;
+        });
+        return filePaths;
+    }
+
     async getFilePaths(mimetypeName: MimetypeNameType) {
         if (!this.dirPath) {
             return [];
         }
-        try {
-            const mimetypeList = getAppMimetype(mimetypeName);
-            const fileFullNames = await this.getAllFileFullNames();
-            const matchedFileFullNames = fileFullNames
-                .filter((fileFullName) => {
-                    // MacOS creates hidden files that start with '._'
-                    return !fileFullName.startsWith('._');
-                })
-                .map((fileFullName) => {
-                    const fileMetadata = getFileMetaData(
-                        fileFullName,
-                        mimetypeList,
+        return unlocking(
+            `getFilePaths-${mimetypeName}-${this.dirPath}`,
+            async () => {
+                const filePathsInMap = this.filePathsMap[mimetypeName];
+                if (filePathsInMap?.length) {
+                    return filePathsInMap;
+                }
+                try {
+                    this.filePathsMap[mimetypeName] =
+                        await this.getFilePathsQuick(mimetypeName);
+                } catch (error) {
+                    handleError(error);
+                    showSimpleToast(
+                        'Getting File List',
+                        'Error occurred during listing file',
                     );
-                    if (fileMetadata === null && this.checkExtraFile) {
-                        return this.checkExtraFile(fileFullName);
-                    }
-                    return fileMetadata;
-                })
-                .filter((fileMetadata) => {
-                    return fileMetadata !== null;
-                });
-            const filePaths = matchedFileFullNames.map((fileMetadata) => {
-                const fileSource = this.getFileSourceInstance(
-                    fileMetadata.fileFullName,
-                );
-                return fileSource.filePath;
-            });
-            return filePaths;
-        } catch (error) {
-            handleError(error);
-            showSimpleToast(
-                'Getting File List',
-                'Error occurred during listing file',
-            );
-        }
+                }
+                return this.filePathsMap[mimetypeName] ?? null;
+            },
+        );
     }
 
     static async getInstance(settingName: string) {

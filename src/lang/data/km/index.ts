@@ -9,6 +9,8 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Fail To Get File List': 'បរាជ័យក្នុងការទទួលបានបញ្ជីឯកសារ',
+    'No Files Found': 'មិនមានឯកសារទេ',
     General: 'ទូទៅ',
     Bible: 'ព្រះគម្ពីរ',
     About: 'អារម្មណ៏កថា',

@@ -52,7 +52,7 @@ async function getImageSize(src: string) {
 }
 async function genPdfImagePreviewInfo(
     filePath: string,
-): Promise<PdfItemViewInfoType> {
+): Promise<PdfItemViewInfoType | null> {
     const fileSource = FileSource.getInstance(filePath);
     const pageNumber = Number.parseInt(fileSource.name.split('-')[1]);
     const { width, height } = await getImageSize(fileSource.src);
@@ -97,7 +97,12 @@ export async function genPdfImagesPreview(
             const imageFileInfoList = await Promise.all(
                 fileList.map(genPdfImagePreviewInfo),
             );
-            return sortPdfImagePreviewInfo(imageFileInfoList);
+            if (imageFileInfoList.includes(null)) {
+                return null;
+            }
+            return sortPdfImagePreviewInfo(
+                imageFileInfoList as PdfItemViewInfoType[],
+            );
         }
     }
     await fsDeleteDir(outDir);
@@ -117,8 +122,8 @@ export async function genPdfImagesPreview(
     const imageFileInfoList = await Promise.all(
         previewData.filePaths.map(genPdfImagePreviewInfo),
     );
-    if (imageFileInfoList.some((imageFileInfo) => imageFileInfo === null)) {
+    if (imageFileInfoList.includes(null)) {
         return null;
     }
-    return sortPdfImagePreviewInfo(imageFileInfoList);
+    return sortPdfImagePreviewInfo(imageFileInfoList as PdfItemViewInfoType[]);
 }

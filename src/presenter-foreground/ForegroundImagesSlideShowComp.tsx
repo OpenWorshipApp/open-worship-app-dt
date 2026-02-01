@@ -155,10 +155,10 @@ function HeaderElements({
     );
 }
 
-function useAnyItemSelected(filePaths: string[] | undefined) {
+function useAnyItemSelected(filePaths: string[] | null) {
     const [isAnyItemSelected, setIsAnyItemSelected] = useState(false);
     const refresh = () => {
-        if (filePaths === undefined || filePaths.length === 0) {
+        if (filePaths === null || filePaths.length === 0) {
             setIsAnyItemSelected(false);
             return;
         }
@@ -181,7 +181,7 @@ function useAnyItemSelected(filePaths: string[] | undefined) {
 }
 
 export default function ForegroundImagesSlideShowComp() {
-    const [filePaths, setFilePaths] = useState<string[] | undefined>();
+    const [filePaths, setFilePaths] = useState<string[] | null>(null);
     const isAnyItemSelected = useAnyItemSelected(filePaths);
     const [scaleType, setScaleType] = useStateSettingString<ImageScaleType>(
         'images-slide-show-scale-type',
@@ -239,10 +239,7 @@ export default function ForegroundImagesSlideShowComp() {
                     <SlideAutoPlayComp
                         prefix="images"
                         onNext={(data) => {
-                            if (
-                                filePaths === undefined ||
-                                filePaths.length === 0
-                            ) {
+                            if (filePaths === null || filePaths.length === 0) {
                                 return;
                             }
                             handleNextItemSelecting({

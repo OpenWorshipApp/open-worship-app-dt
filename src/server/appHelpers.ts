@@ -280,6 +280,18 @@ export async function getSlidesCount(filePath: string, dotNetRootDir?: string) {
     }
     return msHelper.countSlides(filePath);
 }
+export async function removeSlideBackground(
+    filePath: string,
+    dotNetRootDir?: string,
+) {
+    // TODO: this function should not work yet, need to be fixed in the future
+    const msHelper = await appProvider.msUtils.getMSHelper(dotNetRootDir);
+    if (msHelper === null) {
+        log('MS helper is not available');
+        return null;
+    }
+    return msHelper.removeSlideBackground(filePath);
+}
 
 async function getPageTitle(url: string) {
     const rawHtml = await fetch(url)

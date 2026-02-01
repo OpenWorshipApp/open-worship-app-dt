@@ -132,6 +132,7 @@ export type SQLiteDatabaseType = {
 
 type MSHelperType = {
     countSlides: (filePath: string) => number | null;
+    removeSlideBackground: (filePath: string) => boolean;
     exportBibleMSWord: (filePath: string, title: string, body: string) => void;
 };
 type YTHelper = {
