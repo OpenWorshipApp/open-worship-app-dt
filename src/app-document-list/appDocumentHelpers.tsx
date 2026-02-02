@@ -32,11 +32,7 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
-import {
-    convertToPdf,
-    getSlidesCount,
-    removeSlideBackground,
-} from '../server/appHelpers';
+import { convertToPdf, getSlidesCount } from '../server/appHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
@@ -277,8 +273,6 @@ async function startConvertingOfficeFile(
         if (!(await fsCopyFilePathToPath(file, tempFilePath, ''))) {
             throw new Error('Fail to copy file');
         }
-        log('Removing slide backgrounds:', tempFilePath);
-        await removeSlideBackground(tempFilePath);
         let slidesCount: number | null = null;
         try {
             slidesCount = await getSlidesCount(tempFilePath);

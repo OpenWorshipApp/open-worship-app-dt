@@ -293,6 +293,8 @@ export async function removeSlideBackground(
     }
     return msHelper.removeSlideBackground(filePath);
 }
+(globalThis as any).removeSlideBackground = removeSlideBackground;
+console.log('removeSlideBackground');
 
 async function getPageTitle(url: string) {
     const rawHtml = await fetch(url)
