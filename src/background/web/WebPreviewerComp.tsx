@@ -20,7 +20,7 @@ export default function WebPreviewerComp() {
             <iframe
                 sandbox="allow-scripts"
                 src={src}
-                title={filePath}
+                title={fileSource.fullName}
                 className="w-100 h-100 app-zero-border-radius"
                 style={{
                     colorScheme: 'normal',

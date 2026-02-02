@@ -40,7 +40,7 @@ function RenderChildComp({
     return (
         <div
             className="card-body app-blank-bg"
-            title={filePath}
+            title={fileSource.fullName}
             style={{
                 height: `${height}px`,
                 overflow: 'hidden',

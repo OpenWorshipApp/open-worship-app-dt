@@ -185,7 +185,7 @@ export default function FileItemHandlerComp({
             }
             onClick={handleClicking}
             data-index={index + 1}
-            title={filePath}
+            title={fileSource.fullName}
             onContextMenu={(event) => {
                 showAppContextMenu(event as any, [
                     ...(contextMenuItems ?? []),
