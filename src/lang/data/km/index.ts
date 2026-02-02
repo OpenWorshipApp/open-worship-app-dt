@@ -9,6 +9,9 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    Exiting: 'កំពុងបំលែង',
+    'Exporting to Word document': 'កំពុងនាំចេញទៅឯកសារ Word',
+    'Export to Word document': 'នាំចេញទៅឯកសារ Word',
     'Fail To Get File List': 'បរាជ័យក្នុងការទទួលបានបញ្ជីឯកសារ',
     'No Files Found': 'មិនមានឯកសារទេ',
     General: 'ទូទៅ',

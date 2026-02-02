@@ -8,7 +8,11 @@ import * as loggerHelpers from '../helper/loggerHelpers';
 import type { BibleTargetType } from './bibleRenderHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
 import type { BibleItemType } from './bibleItemHelpers';
-import { copyToClipboard } from '../server/appHelpers';
+import {
+    copyToClipboard,
+    exportBibleMSWord,
+    showExplorer,
+} from '../server/appHelpers';
 import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import type DocumentInf from '../others/DocumentInf';
 import type { AnyObjectType } from '../helper/typeHelpers';
@@ -18,6 +22,8 @@ import {
     toChapterFullKeyFormat,
     toVerseFullKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
+import { tran } from '../lang/langHelpers';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
 
@@ -258,6 +264,10 @@ export default class BibleItem
     toTitle() {
         return bibleRenderHelper.toTitle(this.bibleKey, this.target);
     }
+    async toTitleWithBibleKey() {
+        const title = await this.toTitle();
+        return `${this.getCopyingBibleKey()} ${title}`;
+    }
     toText() {
         return bibleRenderHelper.toText(this.bibleKey, this.target, true);
     }
@@ -278,16 +288,29 @@ export default class BibleItem
         return `(${this.bibleKey})`;
     }
     async copyTitleToClipboard() {
-        const title = await this.toTitle();
-        copyToClipboard(`${this.getCopyingBibleKey()} ${title}`);
+        const fullTitle = await this.toTitleWithBibleKey();
+        copyToClipboard(fullTitle);
     }
     async copyTextToClipboard() {
         const text = await this.toText();
         copyToClipboard(text);
     }
     async copyToClipboard() {
-        const { title, text } = await this.toTitleText();
-        copyToClipboard(`${this.getCopyingBibleKey()} ${title}\n${text}`);
+        const text = await this.toText();
+        const fullTitle = await this.toTitleWithBibleKey();
+        copyToClipboard(`${fullTitle}\n${text}`);
+    }
+    async exportToWordDocument() {
+        const text = await this.toText();
+        const fullTitle = await this.toTitleWithBibleKey();
+        showSimpleToast(
+            tran('Exiting'),
+            tran('Exporting to Word document') + '...',
+        );
+        const filePath = await exportBibleMSWord([[fullTitle, text]]);
+        if (filePath) {
+            showExplorer(filePath);
+        }
     }
     copyVerseFullKeyToClipboard() {
         copyToClipboard(this.toVerseFullKey());

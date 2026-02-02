@@ -98,6 +98,16 @@ export default function RenderEditingActionButtonsComp({
                     <i className="bi bi-cast" />
                 </button>
             ) : null}
+            <button
+                className="btn btn-sm btn-info"
+                type="button"
+                title={tran('Export to Word document')}
+                onClick={() => {
+                    bibleItem.exportToWordDocument();
+                }}
+            >
+                <i className="bi bi-file-earmark-word" />
+            </button>
         </div>
     );
 }

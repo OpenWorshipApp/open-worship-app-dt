@@ -507,7 +507,8 @@ export function printHtmlText() {
 (globalThis as any).printHtmlText = printHtmlText;
 console.log('printHtmlText');
 
-export async function exportBibleMSWord(title: string, body: string) {
+// data: [title, body][]
+export async function exportBibleMSWord(data: [string, string][]) {
     const msHelper = await appProvider.msUtils.getMSHelper();
     if (msHelper === null) {
         log('MS helper is not available');
@@ -525,10 +526,11 @@ export async function exportBibleMSWord(title: string, body: string) {
     }
     const filePath = pathJoin(
         selectedParentDir,
-        `${title || 'bible-export'}-${Date.now()}.docx`,
+        `bible-export-${Date.now()}.docx`,
     );
     console.log(filePath);
-    msHelper.exportBibleMSWord(filePath, title, body);
+    msHelper.exportBibleMSWord(filePath, data);
+    return filePath;
 }
 (globalThis as any).exportBibleMSWord = exportBibleMSWord;
 console.log('exportBibleMSWord');

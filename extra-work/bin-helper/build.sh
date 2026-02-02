@@ -24,9 +24,9 @@ else
     echo "Release build mode enabled."
 fi
 if [ "$is_debug" = true ]; then
-    dotnet build -c Debug
+    dotnet build -c Debug Helper.csproj
 else
-    dotnet build -c Release
+    dotnet build -c Release Helper.csproj
 fi
 if [ $? -ne 0 ]; then
     echo "Build failed. Please check the output for errors."
