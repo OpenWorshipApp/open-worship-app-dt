@@ -301,6 +301,9 @@ export default class BibleItem
         copyToClipboard(`${fullTitle}\n${text}`);
     }
     async exportToWordDocument() {
+        // TODO: move to a static method that can export multiple BibleItems at once
+        // Group by verseKey, order by language in group
+        // Sort group by verseKey
         const text = await this.toText();
         const fullTitle = await this.toTitleWithBibleKey();
         showSimpleToast(
