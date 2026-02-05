@@ -1,6 +1,7 @@
 import { createContext, use, useState } from 'react';
 
-import { tran } from '../lang/langHelpers';
+import type { LanguageDataType } from '../lang/langHelpers';
+import { getLangDataAsync, tran } from '../lang/langHelpers';
 import type BibleItem from './BibleItem';
 import {
     checkIsBookAvailable,
@@ -9,6 +10,7 @@ import {
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     extractBibleTitle,
+    getBibleLocale,
     toInputText,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
@@ -16,7 +18,13 @@ import Bible from './Bible';
 import { showSimpleToast } from '../toast/toastHelpers';
 import DirSource from '../helper/DirSource';
 import FileSource from '../helper/FileSource';
-import { addExtension } from '../server/fileHelpers';
+import {
+    addExtension,
+    fsCheckFileExist,
+    getFileBase64,
+    pathJoin,
+    writeFileFromBase64Sync,
+} from '../server/fileHelpers';
 import appProvider from '../server/appProvider';
 import type { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -30,6 +38,8 @@ import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
+import { exportBibleMSWord, showExplorer } from '../server/appHelpers';
+import { handleError } from '../helper/errorHelpers';
 
 export const SelectedBibleKeyContext = createContext<string>('KJV');
 export function useBibleKeyContext() {
@@ -140,7 +150,8 @@ export async function moveBibleItemTo(
                     const bibleFileSource = FileSource.getInstance(
                         bible.filePath,
                     );
-                    const { basePath, dotExtension } = bibleFileSource;
+                    const { baseDirPath: basePath, dotExtension } =
+                        bibleFileSource;
                     const fileSource = FileSource.getInstance(
                         basePath,
                         addExtension(name, dotExtension),
@@ -294,4 +305,56 @@ export function useIsOnScreen(items: BibleItem[]) {
         setIsOnScreen(await checkIsBibleItemOnScreen(items));
     });
     return isOnScreen;
+}
+
+async function exportFontFiles(fontFile: string, baseDirPath: string) {
+    try {
+        const base64Data = await getFileBase64(fontFile);
+        const fileFullName = fontFile.split('/').pop() as string;
+        const filePath = pathJoin(baseDirPath, fileFullName);
+        if (await fsCheckFileExist(filePath)) {
+            return;
+        }
+        writeFileFromBase64Sync(filePath, base64Data);
+    } catch (error) {
+        handleError(error);
+    }
+}
+export async function exportToWordDocument(bibleItems: BibleItem[]) {
+    const bibleKeys = Array.from(
+        new Set(bibleItems.map((bibleItem) => bibleItem.bibleKey)),
+    );
+    const langDataMap: Record<string, LanguageDataType | null> = {};
+    for (const bibleKey of bibleKeys) {
+        const locale = await getBibleLocale(bibleKey);
+        const langData = await getLangDataAsync(locale);
+        langDataMap[bibleKey] = langData;
+    }
+    const bibleData = await Promise.all(
+        bibleItems.map(async (bibleItem) => {
+            const text = await bibleItem.toText();
+            const title = await bibleItem.toTitleWithBibleKey();
+            const langData = langDataMap[bibleItem.bibleKey];
+            const fontFamily = langData?.fontFamilyName ?? null;
+            return { title, body: text, fontFamily };
+        }),
+    );
+    showSimpleToast(
+        tran('Exporting'),
+        tran('Exporting to Word document') + '...',
+    );
+    const filePath = await exportBibleMSWord(bibleData);
+    if (filePath) {
+        const fileSource = FileSource.getInstance(filePath);
+        console.log(fileSource.baseDirPath);
+        for (const bibleKey of bibleKeys) {
+            const langData = langDataMap[bibleKey];
+            if (langData?.getFontFamilyFiles) {
+                for (const fontFile of langData.getFontFamilyFiles()) {
+                    exportFontFiles(fontFile, fileSource.baseDirPath);
+                }
+            }
+        }
+        showExplorer(filePath);
+    }
 }

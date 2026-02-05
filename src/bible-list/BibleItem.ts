@@ -8,11 +8,7 @@ import * as loggerHelpers from '../helper/loggerHelpers';
 import type { BibleTargetType } from './bibleRenderHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
 import type { BibleItemType } from './bibleItemHelpers';
-import {
-    copyToClipboard,
-    exportBibleMSWord,
-    showExplorer,
-} from '../server/appHelpers';
+import { copyToClipboard } from '../server/appHelpers';
 import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import type DocumentInf from '../others/DocumentInf';
 import type { AnyObjectType } from '../helper/typeHelpers';
@@ -22,8 +18,6 @@ import {
     toChapterFullKeyFormat,
     toVerseFullKeyFormat,
 } from '../helper/bible-helpers/bibleInfoHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
-import { tran } from '../lang/langHelpers';
 
 const BIBLE_PRESENT_SETTING_NAME = 'bible-presenter';
 
@@ -299,21 +293,6 @@ export default class BibleItem
         const text = await this.toText();
         const fullTitle = await this.toTitleWithBibleKey();
         copyToClipboard(`${fullTitle}\n${text}`);
-    }
-    async exportToWordDocument() {
-        // TODO: move to a static method that can export multiple BibleItems at once
-        // Group by verseKey, order by language in group
-        // Sort group by verseKey
-        const text = await this.toText();
-        const fullTitle = await this.toTitleWithBibleKey();
-        showSimpleToast(
-            tran('Exiting'),
-            tran('Exporting to Word document') + '...',
-        );
-        const filePath = await exportBibleMSWord([[fullTitle, text]]);
-        if (filePath) {
-            showExplorer(filePath);
-        }
     }
     copyVerseFullKeyToClipboard() {
         copyToClipboard(this.toVerseFullKey());

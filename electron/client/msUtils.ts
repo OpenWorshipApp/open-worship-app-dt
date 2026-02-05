@@ -17,31 +17,26 @@ function scheduleRelease() {
 }
 async function getMSHelper(dotNetRoot?: string) {
     return unlocking('getMSHelper' + dotNetRoot, async () => {
-        try {
-            scheduleRelease();
-            if (helperInstance !== null) {
-                return helperInstance.Helper;
-            }
-            if (dotNetRoot) {
-                process.env.DOTNET_ROOT = dotNetRoot;
-            } else {
-                process.env.DOTNET_ROOT = toUnpackedPath(
-                    resolve(__dirname, '../../bin-helper/bin'),
-                );
-            }
-            const modulePath = toUnpackedPath(
-                resolve(__dirname, '../../bin-helper/node-api-dotnet/net8.0'),
-            );
-            const dotnet = require(modulePath);
-            const binaryPath = toUnpackedPath(
-                resolve(__dirname, '../../bin-helper/net8.0/Helper'),
-            );
-            helperInstance = dotnet.require(binaryPath);
+        scheduleRelease();
+        if (helperInstance !== null) {
             return helperInstance.Helper;
-        } catch (error) {
-            console.error('Error in getMSHelper:', error);
         }
-        return null;
+        if (dotNetRoot) {
+            process.env.DOTNET_ROOT = dotNetRoot;
+        } else {
+            process.env.DOTNET_ROOT = toUnpackedPath(
+                resolve(__dirname, '../../bin-helper/bin'),
+            );
+        }
+        const modulePath = toUnpackedPath(
+            resolve(__dirname, '../../bin-helper/node-api-dotnet/net8.0'),
+        );
+        const dotnet = require(modulePath);
+        const binaryPath = toUnpackedPath(
+            resolve(__dirname, '../../bin-helper/net8.0/Helper'),
+        );
+        helperInstance = dotnet.require(binaryPath);
+        return helperInstance.Helper;
     });
 }
 

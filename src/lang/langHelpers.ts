@@ -438,6 +438,8 @@ export type LocaleType = keyof typeof allLocalesMap;
 export type LanguageDataType = {
     locale: LocaleType;
     langCode: string;
+    fontFamilyName?: string;
+    getFontFamilyFiles?: () => string[];
     genCss: () => string;
     fontFamily?: string;
     numList: string[];

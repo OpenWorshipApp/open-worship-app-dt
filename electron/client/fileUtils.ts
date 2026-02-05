@@ -18,8 +18,8 @@ const fileUtils = {
     mkdirSync: fs.mkdirSync,
     copyFile: fs.copyFile,
     watch: fs.watch,
-    writeFileFromBase64: (filePath: string, base64: string) => {
-        if (base64.indexOf(',') >= 0) {
+    writeFileFromBase64Sync: (filePath: string, base64: string) => {
+        if (base64.includes(',')) {
             base64 = base64.split(',')[1];
         }
         const decoded = Buffer.from(base64, 'base64');

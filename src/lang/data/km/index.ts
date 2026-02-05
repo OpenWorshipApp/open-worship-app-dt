@@ -9,7 +9,10 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
-    Exiting: 'កំពុងបំលែង',
+    'Reload is needed': 'ត្រូវការការផ្ទុកឡើងវិញ',
+    'We were sorry, Internal process error, you to refresh the app':
+        'យើងខ្ញុំសូមអភ័យទោស កំហុសក្នុងដំណើរការ ខ្ញុំសូមអញ្ជើញអ្នកធ្វើការផ្ទុកឡើងវិញនៃកម្មវិធី',
+    Exporting: 'កំពុងបំលែង',
     'Exporting to Word document': 'កំពុងនាំចេញទៅឯកសារ Word',
     'Export to Word document': 'នាំចេញទៅឯកសារ Word',
     'Fail To Get File List': 'បរាជ័យក្នុងការទទួលបានបញ្ជីឯកសារ',
@@ -249,6 +252,10 @@ const fontFamily = 'km-font-family';
 const lang: LanguageDataType = {
     locale: 'km-KH',
     langCode: 'km',
+    fontFamilyName: 'Battambang',
+    getFontFamilyFiles: () => {
+        return [btbRegular, btbBold, btbLight, btbThin, btbBlack];
+    },
     genCss: () => {
         return `
         @font-face {

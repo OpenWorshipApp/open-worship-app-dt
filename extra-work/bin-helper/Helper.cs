@@ -1,5 +1,15 @@
-﻿using DocumentFormat.OpenXml.Packaging;
+﻿// https://microsoft.github.io/node-api-dotnet/scenarios/
+// https://www.nuget.org/packages/DocumentFormat.OpenXml
+// https://learn.microsoft.com/en-us/office/open-xml/open-xml-sdk
+using DocumentFormat.OpenXml.Packaging;
 using Microsoft.JavaScript.NodeApi;
+
+public class BibleData
+{
+    public string title { get; set; }
+    public string body { get; set; }
+    public string fontFamily { get; set; }
+}
 
 [JSExport]
 public class Helper
@@ -53,11 +63,26 @@ public class Helper
         }
     }
 
+    private static void SetRunFontFamily(
+        DocumentFormat.OpenXml.Wordprocessing.RunProperties runProperties,
+        string fontFamily
+    )
+    {
+        runProperties.RunFonts = new DocumentFormat.OpenXml.Wordprocessing.RunFonts()
+        {
+            Ascii = fontFamily,
+            HighAnsi = fontFamily,
+            EastAsia = fontFamily,
+            ComplexScript = fontFamily
+        };
+    }
+
 
     private static void AppendBibleEntryToWordBody(
         DocumentFormat.OpenXml.Wordprocessing.Body bodyElement,
         string title,
-        string body
+        string body,
+        string? fontFamily = null
     )
     {
         var titleParagraph = bodyElement.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
@@ -65,7 +90,7 @@ public class Helper
         titleRun.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text(title));
         titleRun.RunProperties = new DocumentFormat.OpenXml.Wordprocessing.RunProperties();
         titleRun.RunProperties.Bold = new DocumentFormat.OpenXml.Wordprocessing.Bold();
-        titleRun.RunProperties.FontSize = new DocumentFormat.OpenXml.Wordprocessing.FontSize() { Val = "32" }; // 16 * 2
+        titleRun.RunProperties.FontSize = new DocumentFormat.OpenXml.Wordprocessing.FontSize() { Val = "28" }; // 14 * 2
 
         var bodyParagraph = bodyElement.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
         var bodyRun = bodyParagraph.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
@@ -73,13 +98,18 @@ public class Helper
         bodyRun.RunProperties = new DocumentFormat.OpenXml.Wordprocessing.RunProperties();
         bodyRun.RunProperties.FontSize = new DocumentFormat.OpenXml.Wordprocessing.FontSize() { Val = "24" }; // 12 * 2
 
+        if(fontFamily != null)
+        {
+            SetRunFontFamily(titleRun.RunProperties, fontFamily);
+            SetRunFontFamily(bodyRun.RunProperties, fontFamily);
+        }
+
         bodyElement.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
         bodyElement.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph()); 
     }
 
-
     [JSExport]
-    public static void ExportBibleMSWord(string filePath, List<(string title, string body)> data)
+    public static void ExportBibleMSWord(string filePath, List<Dictionary<string, string>> data)
     {
         using (WordprocessingDocument wordDocument = WordprocessingDocument.Create(
             filePath, DocumentFormat.OpenXml.WordprocessingDocumentType.Document))
@@ -90,7 +120,8 @@ public class Helper
 
             foreach (var entry in data)
             {
-                AppendBibleEntryToWordBody(bodyElement, entry.title, entry.body);
+                var fontFamily = entry.ContainsKey("fontFamily") ? entry["fontFamily"] : null;
+                AppendBibleEntryToWordBody(bodyElement, entry["title"], entry["body"], fontFamily);
             }
         }
     }

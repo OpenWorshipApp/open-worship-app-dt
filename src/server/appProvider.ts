@@ -44,7 +44,7 @@ export type FileUtilsType = {
         callback: fs.NoParamCallback,
     ) => void;
     watch: typeof fs.watch;
-    writeFileFromBase64: (filePath: string, base64: string) => void;
+    writeFileFromBase64Sync: (filePath: string, base64: string) => void;
 };
 
 export type PathUtilsType = {
@@ -130,10 +130,13 @@ export type SQLiteDatabaseType = {
     close: () => void;
 };
 
-type MSHelperType = {
+export type MSHelperType = {
     countSlides: (filePath: string) => number | null;
     removeSlideBackground: (filePath: string) => boolean;
-    exportBibleMSWord: (filePath: string, data: [string, string][]) => void;
+    exportBibleMSWord: (
+        filePath: string,
+        data: Map<string, string | null>[],
+    ) => void;
 };
 type YTHelper = {
     on: (event: string, listener: (...args: any[]) => void) => YTHelper;
@@ -182,7 +185,7 @@ export type AppProviderType = Readonly<
         readerHomePage: string;
         currentHomePage: string;
         msUtils: {
-            getMSHelper: (dotNetRoot?: string) => Promise<MSHelperType | null>;
+            getMSHelper: (dotNetRoot?: string) => Promise<MSHelperType>;
         };
         ytUtils: {
             getYTHelper: () => Promise<YTHelper>;

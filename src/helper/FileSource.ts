@@ -12,7 +12,7 @@ import {
     pathJoin,
     pathSeparator,
     getFileName,
-    writeFileFromBase64,
+    writeFileFromBase64Sync,
 } from '../server/fileHelpers';
 import { isValidJson } from './helpers';
 import { pathToFileURL } from '../server/calcHelpers';
@@ -38,18 +38,18 @@ export default class FileSource
     implements DragInf<string>, ColorNoteInf
 {
     static readonly eventNamePrefix: string = 'file-source';
-    basePath: string;
+    baseDirPath: string;
     fullName: string;
     colorNote: string | null = null;
 
-    constructor(baseFullPath: string, fileFullName: string) {
+    constructor(baseDirFullPath: string, fileFullName: string) {
         super();
-        this.basePath = baseFullPath;
+        this.baseDirPath = baseDirFullPath;
         this.fullName = fileFullName;
     }
 
     get filePath() {
-        return pathJoin(this.basePath, this.fullName);
+        return pathJoin(this.baseDirPath, this.fullName);
     }
 
     get src() {
@@ -113,7 +113,7 @@ export default class FileSource
     }
 
     get dirSource() {
-        return DirSource.getInstanceByDirPath(this.basePath);
+        return DirSource.getInstanceByDirPath(this.baseDirPath);
     }
 
     static toRWLockingKey(filePath: string) {
@@ -166,9 +166,9 @@ export default class FileSource
         );
     }
 
-    async writeFileBase64Data(srcData: SrcData) {
+    writeFileBase64DataSync(srcData: SrcData) {
         try {
-            writeFileFromBase64(this.filePath, srcData);
+            writeFileFromBase64Sync(this.filePath, srcData);
             return true;
         } catch (error) {
             handleError(error);
@@ -183,7 +183,7 @@ export default class FileSource
 
     static async writeFileBase64Data(filePath: string, base64Data: SrcData) {
         const fileSource = this.getInstance(filePath);
-        return await fileSource.writeFileBase64Data(base64Data);
+        return fileSource.writeFileBase64DataSync(base64Data);
     }
 
     async readFileJsonData() {
@@ -241,12 +241,12 @@ export default class FileSource
         }
         try {
             await fsRenameFile(
-                this.basePath,
+                this.baseDirPath,
                 this.fullName,
                 newName + this.dotExtension,
             );
             const newFilePath = pathJoin(
-                this.basePath,
+                this.baseDirPath,
                 newName + this.dotExtension,
             );
             return FileSource.getInstance(newFilePath);
@@ -264,13 +264,16 @@ export default class FileSource
         let i = 1;
         let newName = this.name + ' (Copy)';
         while (
-            await fsCheckFileExist(this.basePath, newName + this.dotExtension)
+            await fsCheckFileExist(
+                this.baseDirPath,
+                newName + this.dotExtension,
+            )
         ) {
             newName = this.name + ' (Copy ' + i + ')';
             i++;
         }
         const newFilePath = pathJoin(
-            this.basePath,
+            this.baseDirPath,
             newName + this.dotExtension,
         );
         const data = await this.readFileJsonData();

@@ -314,7 +314,7 @@ function _fsUnlink(filePath: string) {
     return fsFilePromise<void>(appProvider.fileUtils.unlink, filePath);
 }
 
-export function fsCloneFile(file: File | string, dest: string) {
+export function fsCloneFile(file: File | Blob | string, dest: string) {
     if (file instanceof File) {
         return new Promise<void>((resolve, reject) => {
             const writeStream = fsCreateWriteStream(dest);
@@ -544,13 +544,15 @@ export function fsReadSync(filePath: string) {
 }
 
 export async function fsCopyFilePathToPath(
-    file: File | string,
+    file: File | Blob | string,
     destinationPath: string,
     fileFullName?: string,
 ) {
     const progressKey = 'Copying File';
     showProgressBar(progressKey);
-    fileFullName = fileFullName ?? getFileFullName(file);
+    fileFullName =
+        fileFullName ??
+        (file instanceof File ? getFileFullName(file) : Date.now().toString());
     const targetPath = pathJoin(destinationPath, fileFullName);
     try {
         const isFileExist = await fsCheckFileExist(targetPath);
@@ -621,8 +623,8 @@ export function getTempPath(): string {
     return appProvider.messageUtils.sendDataSync('main:app:get-temp-path');
 }
 
-export function writeFileFromBase64(filePath: string, base64: string) {
-    return appProvider.fileUtils.writeFileFromBase64(filePath, base64);
+export function writeFileFromBase64Sync(filePath: string, base64: string) {
+    return appProvider.fileUtils.writeFileFromBase64Sync(filePath, base64);
 }
 
 export function getDotExtensionFromBase64Data(base64Data: string) {
@@ -668,3 +670,23 @@ export function getFileMD5(filePath: string) {
 }
 
 export const KEY_SEPARATOR = '<id>';
+
+export function getFileBase64(src: string) {
+    return new Promise<string>((resolve, reject) => {
+        fetch(src)
+            .then((response) => response.blob())
+            .then((blob) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    resolve(reader.result as string);
+                };
+                reader.onerror = (error: any) => {
+                    reject(new Error('Error reading blob as base64: ' + error));
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+}

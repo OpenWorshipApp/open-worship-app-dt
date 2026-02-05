@@ -142,7 +142,7 @@ export class BaseDirFileSource {
                 this.initBaseDir !== null &&
                 DirSource.checkIsSameDirPath(
                     this.initBaseDir,
-                    this.intFileSource.basePath,
+                    this.intFileSource.baseDirPath,
                 )
             ) {
                 return this.intFileSource.fullName;

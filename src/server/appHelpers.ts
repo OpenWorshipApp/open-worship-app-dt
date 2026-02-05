@@ -242,7 +242,7 @@ export async function renameAllMaterialFiles(
     await Promise.all(
         FILE_EXTENSIONS.map(async (ext) => {
             const currentPath = pathJoin(
-                oldFileSource.basePath,
+                oldFileSource.baseDirPath,
                 `${oldFileSource.fullName}${ext}`,
             );
             if (!(await fsCheckFileExist(currentPath))) {
@@ -261,7 +261,7 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     await Promise.all(
         FILE_EXTENSIONS.map(async (ext) => {
             const currentPath = pathJoin(
-                fileSource.basePath,
+                fileSource.baseDirPath,
                 `${fileSource.fullName}${ext}`,
             );
             if (!(await fsCheckFileExist(currentPath))) {
@@ -273,20 +273,18 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     );
 }
 
-export async function getSlidesCount(filePath: string, dotNetRootDir?: string) {
-    const msHelper = await appProvider.msUtils.getMSHelper(dotNetRootDir);
-    if (msHelper === null) {
-        log('MS helper is not available');
-        return null;
+export async function getSlidesCount(filePath: string) {
+    try {
+        const msHelper = await appProvider.msUtils.getMSHelper();
+        return msHelper.countSlides(filePath);
+    } catch (error) {
+        handleError(error);
     }
-    return msHelper.countSlides(filePath);
+    return null;
 }
-export async function removeSlideBackground(
-    filePath: string,
-    dotNetRootDir?: string,
-) {
+export async function removeSlideBackground(filePath: string) {
     // TODO: this function should not work yet, need to be fixed in the future
-    const msHelper = await appProvider.msUtils.getMSHelper(dotNetRootDir);
+    const msHelper = await appProvider.msUtils.getMSHelper();
     if (msHelper === null) {
         log('MS helper is not available');
         return null;
@@ -338,7 +336,7 @@ export function downloadImage(targetUrl: string, outputDir: string) {
                         `${Date.now()}${dotExt}`,
                     );
                     const fileSource = FileSource.getInstance(filePath);
-                    if (await fileSource.writeFileBase64Data(srcData)) {
+                    if (fileSource.writeFileBase64DataSync(srcData)) {
                         resolve({
                             filePath,
                             fileFullName: fileSource.fullName,
@@ -507,13 +505,10 @@ export function printHtmlText() {
 (globalThis as any).printHtmlText = printHtmlText;
 console.log('printHtmlText');
 
-// data: [title, body][]
-export async function exportBibleMSWord(data: [string, string][]) {
+export async function exportBibleMSWord(
+    data: { title: string; body: string; fontFamily: string | null }[],
+) {
     const msHelper = await appProvider.msUtils.getMSHelper();
-    if (msHelper === null) {
-        log('MS helper is not available');
-        return null;
-    }
 
     const selectedParentDir =
         await appLocalStorage.getSelectedParentDirectory();
@@ -528,9 +523,13 @@ export async function exportBibleMSWord(data: [string, string][]) {
         selectedParentDir,
         `bible-export-${Date.now()}.docx`,
     );
-    console.log(filePath);
-    msHelper.exportBibleMSWord(filePath, data);
+    const dataMap = data.map((item) => {
+        const entry: Map<string, string | null> = new Map();
+        entry.set('title', item.title);
+        entry.set('body', item.body);
+        entry.set('fontFamily', item.fontFamily);
+        return entry;
+    });
+    msHelper.exportBibleMSWord(filePath, dataMap);
     return filePath;
 }
-(globalThis as any).exportBibleMSWord = exportBibleMSWord;
-console.log('exportBibleMSWord');

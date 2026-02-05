@@ -12,7 +12,7 @@ import FileSource from './FileSource';
 function toPdfImagesPreviewDirPath(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
     return appProvider.pathUtils.resolve(
-        fileSource.basePath,
+        fileSource.baseDirPath,
         `${fileSource.fullName}-images`,
     );
 }

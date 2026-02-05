@@ -115,11 +115,15 @@ export async function unlocking<T>(
     key: string,
     callback: () => Promise<T> | T,
 ) {
-    if (lockSet.has(key)) {
+    let i = 0;
+    while (lockSet.has(key)) {
         await new Promise((resolve) => {
             setTimeout(resolve, 100);
         });
-        return unlocking(key, callback);
+        i++;
+        if (i >= 600) {
+            throw new Error(`Timeout waiting for unlock: ${key}`);
+        }
     }
     lockSet.add(key);
     const data = await callback();

@@ -4,7 +4,10 @@ import {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
-import { saveBibleItem } from '../bible-list/bibleHelpers';
+import {
+    exportToWordDocument,
+    saveBibleItem,
+} from '../bible-list/bibleHelpers';
 import type BibleItem from '../bible-list/BibleItem';
 import appProvider from '../server/appProvider';
 import {
@@ -103,7 +106,7 @@ export default function RenderEditingActionButtonsComp({
                 type="button"
                 title={tran('Export to Word document')}
                 onClick={() => {
-                    bibleItem.exportToWordDocument();
+                    exportToWordDocument([bibleItem]);
                 }}
             >
                 <i className="bi bi-file-earmark-word" />
