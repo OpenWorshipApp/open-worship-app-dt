@@ -56,7 +56,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
                 );
             }
         }
-        applyStore.pendingApply();
+        appProvider.reload();
     } catch (error: any) {
         if (!error.message.includes('file already exists')) {
             handleError(error);

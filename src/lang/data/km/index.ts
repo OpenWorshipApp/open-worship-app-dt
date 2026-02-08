@@ -105,6 +105,7 @@ const dictionary = {
     'Generated using Google Translate.': 'បង្កើតដោយប្រើ Google Translate',
     'Go Back to Presenter': 'ត្រឡប់ទៅកម្មវិធីបង្ហាញ',
     'Go to Bible Setting': 'ទៅកាន់ការកំណត់ព្រះគម្ពីរ',
+    'Or add bible ': 'ឬបន្ថែមព្រះគម្ពីរ',
     'Go to Settings': 'ទៅកាន់ការកំណត់',
     'Hide Camera': 'លាក់កាមេរ៉ា',
     'Hide Countdown': 'លាក់ការរាប់ថយក្រោយ',

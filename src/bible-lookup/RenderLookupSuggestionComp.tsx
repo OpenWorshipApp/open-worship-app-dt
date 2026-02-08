@@ -103,13 +103,23 @@ export function BibleNotAvailableComp({
                     <span data-bible-key={bibleKey}>"{bibleKey}"</span>
                     {' is not available!'}
                 </h2>
-                {tran('Please change bible key here')}:{' '}
-                <BibleSelectionMiniComp
-                    bibleKey={bibleKey}
-                    onBibleKeyChange={handleBibleKeyChanging}
-                />
-                ??
+                <div className="d-flex">
+                    <h4
+                        style={{
+                            color: 'var(--bs-warning-text-emphasis)',
+                        }}
+                    >
+                        {tran('Please change bible key here')} 👉
+                    </h4>
+                    <div>
+                        <BibleSelectionMiniComp
+                            bibleKey={bibleKey}
+                            onBibleKeyChange={handleBibleKeyChanging}
+                        />
+                    </div>
+                </div>
                 <hr />
+                {tran('Or add bible ')}
                 <button
                     className="btn btn-primary"
                     onClick={() => {
