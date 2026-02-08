@@ -160,7 +160,8 @@ export function toVerseFullKeyFormat(
     return `${toChapterFullKeyFormat(bookKey, chapter)}:${verseStart}${verseEnd}`;
 }
 
-const regex = /^([A-Z]{3}) (\d+):(\d+)(-(\d+))?$/;
+// JHN 18:33- or JHN 18:33-35, 2SA 1:1, 2SA 1:1-2, 2SA 1:1-
+const regex = /^([A-Z123][A-Z]{2}) (\d+):(\d+)(-(\d+))?$/;
 export async function fromVerseKey(
     bibleKey: string,
     // JHN 18:33-

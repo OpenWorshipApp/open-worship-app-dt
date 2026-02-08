@@ -7,6 +7,7 @@ import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { AIConfigComp } from '../bible-reader/AIConfigComp';
 import RenderOpenWikiDictionaryComp from './RenderOpenWikiDictionaryComp';
+import RenderExportWordComp from './RenderExportWordComp';
 
 export default function RenderBibleLookupHeaderComp({
     isLookupOnline,
@@ -56,6 +57,7 @@ export default function RenderBibleLookupHeaderComp({
                     (appProvider.isPageReader ? '' : ' pe-5')
                 }
             >
+                <RenderExportWordComp />
                 <RenderOpenWikiDictionaryComp />
                 <div className="float-start">
                     <RenderExtraButtonsRightComp

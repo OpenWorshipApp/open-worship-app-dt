@@ -93,14 +93,19 @@ export default function RenderActionButtonsComp({
                 </>
             ) : null}
             <button
-                className="btn btn-sm btn-info"
+                className="btn btn-sm btn-secondary"
                 type="button"
                 title={tran('Export to Word document')}
                 onClick={() => {
                     exportToWordDocument([bibleItem]);
                 }}
             >
-                <i className="bi bi-file-earmark-word" />
+                <i
+                    className="bi bi-file-earmark-word"
+                    style={{
+                        color: 'blue',
+                    }}
+                />
             </button>
         </div>
     );

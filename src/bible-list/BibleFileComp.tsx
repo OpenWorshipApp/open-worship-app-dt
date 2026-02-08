@@ -8,7 +8,11 @@ import AppSuspenseComp from '../others/AppSuspenseComp';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
-import { moveBibleItemTo, useIsOnScreen } from './bibleHelpers';
+import {
+    exportToWordDocument,
+    moveBibleItemTo,
+    useIsOnScreen,
+} from './bibleHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -22,6 +26,7 @@ import { DragTypeEnum } from '../helper/DragInf';
 import { stopDraggingState } from '../helper/helpers';
 import type BibleItem from './BibleItem';
 import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
+import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 
 const LazyRenderBibleItemsComp = lazy(() => {
     return import('./RenderBibleItemsComp');
@@ -39,6 +44,16 @@ function genContextMenu(
         return [];
     }
     return [
+        {
+            menuElement: tran('Export MS Word'),
+            childBefore: genContextMenuItemIcon('file-earmark-word', {
+                color: 'blue',
+            }),
+            onSelect: () => {
+                const bibleItems = bible.items;
+                exportToWordDocument(bibleItems);
+            },
+        },
         {
             menuElement: tran('Empty'),
             onSelect: () => {

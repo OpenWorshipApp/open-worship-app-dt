@@ -527,7 +527,7 @@ export async function exportBibleMSWord(
         const entry: Map<string, string | null> = new Map();
         entry.set('title', item.title);
         entry.set('body', item.body);
-        entry.set('fontFamily', item.fontFamily);
+        entry.set('fontFamily', item.fontFamily ?? '');
         return entry;
     });
     msHelper.exportBibleMSWord(filePath, dataMap);

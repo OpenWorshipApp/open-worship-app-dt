@@ -82,7 +82,7 @@ public class Helper
         DocumentFormat.OpenXml.Wordprocessing.Body bodyElement,
         string title,
         string body,
-        string? fontFamily = null
+        string fontFamily
     )
     {
         var titleParagraph = bodyElement.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
@@ -98,7 +98,7 @@ public class Helper
         bodyRun.RunProperties = new DocumentFormat.OpenXml.Wordprocessing.RunProperties();
         bodyRun.RunProperties.FontSize = new DocumentFormat.OpenXml.Wordprocessing.FontSize() { Val = "24" }; // 12 * 2
 
-        if(fontFamily != null)
+        if(fontFamily != "")
         {
             SetRunFontFamily(titleRun.RunProperties, fontFamily);
             SetRunFontFamily(bodyRun.RunProperties, fontFamily);
@@ -120,8 +120,7 @@ public class Helper
 
             foreach (var entry in data)
             {
-                var fontFamily = entry.ContainsKey("fontFamily") ? entry["fontFamily"] : null;
-                AppendBibleEntryToWordBody(bodyElement, entry["title"], entry["body"], fontFamily);
+                AppendBibleEntryToWordBody(bodyElement, entry["title"], entry["body"], entry["fontFamily"]);
             }
         }
     }

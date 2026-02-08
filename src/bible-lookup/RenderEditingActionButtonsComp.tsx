@@ -109,7 +109,12 @@ export default function RenderEditingActionButtonsComp({
                     exportToWordDocument([bibleItem]);
                 }}
             >
-                <i className="bi bi-file-earmark-word" />
+                <i
+                    className="bi bi-file-earmark-word"
+                    style={{
+                        color: 'blue',
+                    }}
+                />
             </button>
         </div>
     );
