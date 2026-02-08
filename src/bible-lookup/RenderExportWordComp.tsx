@@ -18,7 +18,7 @@ export default function RenderExportWordComp() {
     return (
         <button
             className="btn btn-sm btn-secondary"
-            title={tran('Exporting to Word document')}
+            title={tran('Export to MS Word')}
             onClick={handleWordExporting.bind(null, bibleItemsViewController)}
         >
             <i

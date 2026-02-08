@@ -95,7 +95,7 @@ export default function RenderActionButtonsComp({
             <button
                 className="btn btn-sm btn-secondary"
                 type="button"
-                title={tran('Export to Word document')}
+                title={tran('Export to MS Word')}
                 onClick={() => {
                     exportToWordDocument([bibleItem]);
                 }}

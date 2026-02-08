@@ -341,7 +341,7 @@ export async function exportToWordDocument(bibleItems: BibleItem[]) {
     );
     showSimpleToast(
         tran('Exporting'),
-        tran('Exporting to Word document') + '...',
+        tran('Export to MS Word') + '...',
     );
     const filePath = await exportBibleMSWord(bibleData);
     if (filePath) {

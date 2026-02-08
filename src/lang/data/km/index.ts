@@ -13,8 +13,7 @@ const dictionary = {
     'We were sorry, Internal process error, you to refresh the app':
         'យើងខ្ញុំសូមអភ័យទោស កំហុសក្នុងដំណើរការ ខ្ញុំសូមអញ្ជើញអ្នកធ្វើការផ្ទុកឡើងវិញនៃកម្មវិធី',
     Exporting: 'កំពុងបំលែង',
-    'Exporting to Word document': 'កំពុងនាំចេញទៅឯកសារ Word',
-    'Export to Word document': 'នាំចេញទៅឯកសារ Word',
+    'Export to MS Word': 'បំលែងទៅឯកសារ MS Word',
     'Fail To Get File List': 'បរាជ័យក្នុងការទទួលបានបញ្ជីឯកសារ',
     'No Files Found': 'មិនមានឯកសារទេ',
     General: 'ទូទៅ',
