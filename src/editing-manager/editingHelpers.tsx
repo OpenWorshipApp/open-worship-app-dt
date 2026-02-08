@@ -13,6 +13,16 @@ import {
 } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 
+function removeLastEditingDate(jsonText: string | null) {
+    if (jsonText === null) {
+        return null;
+    }
+    // e.g. "lastEditDate": "2026-02-08T16:13:41.284Z"
+    return jsonText.replaceAll(
+        /"lastEditDate":\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"/g,
+        '"lastEditDate": ""',
+    );
+}
 export function useEditingHistoryStatus(filePath: string) {
     const [status, setStatus] = useState({
         canUndo: false,
@@ -25,7 +35,12 @@ export function useEditingHistoryStatus(filePath: string) {
         const canRedo = await editingHistoryManager.checkCanRedo();
         const historyText = await editingHistoryManager.getCurrentHistory();
         const text = await editingHistoryManager.getOriginalData();
-        const canSave = historyText !== null && historyText !== text;
+        const canSave =
+            historyText !== null &&
+            removeLastEditingDate(historyText) !== removeLastEditingDate(text);
+        if (filePath.toLocaleLowerCase().includes('peaching') && canSave) {
+            console.log(historyText, text);
+        }
         setStatus({ canUndo, canRedo, canSave });
     };
     useFileSourceEvents(['update'], update, [], filePath);
