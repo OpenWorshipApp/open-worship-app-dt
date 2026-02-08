@@ -45,7 +45,7 @@ function genContextMenu(
     }
     return [
         {
-            menuElement: tran('Export MS Word'),
+            menuElement: tran('Exporting to Word document'),
             childBefore: genContextMenuItemIcon('file-earmark-word', {
                 color: 'blue',
             }),
