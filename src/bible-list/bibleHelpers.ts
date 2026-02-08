@@ -2,7 +2,7 @@ import { createContext, use, useState } from 'react';
 
 import type { LanguageDataType } from '../lang/langHelpers';
 import { getLangDataAsync, tran } from '../lang/langHelpers';
-import type BibleItem from './BibleItem';
+import BibleItem from './BibleItem';
 import {
     checkIsBookAvailable,
     getVerses,
@@ -339,10 +339,7 @@ export async function exportToWordDocument(bibleItems: BibleItem[]) {
             return { title, body: text, fontFamily };
         }),
     );
-    showSimpleToast(
-        tran('Exporting'),
-        tran('Export to MS Word') + '...',
-    );
+    showSimpleToast(tran('Exporting'), tran('Export to MS Word') + '...');
     const filePath = await exportBibleMSWord(bibleData);
     if (filePath) {
         const fileSource = FileSource.getInstance(filePath);
@@ -357,4 +354,32 @@ export async function exportToWordDocument(bibleItems: BibleItem[]) {
         }
         showExplorer(filePath);
     }
+}
+
+export function improveBibleItemTitleOnHover<T extends HTMLElement>(
+    element: T | null,
+) {
+    if (element === null) {
+        return;
+    }
+    element.addEventListener('mouseover', async () => {
+        if (element.title) {
+            return;
+        }
+        const bibleKey = element.dataset.bibleKey;
+        if (!bibleKey) {
+            return;
+        }
+        const verseFullKey = element.dataset.verseFullKey;
+        if (!verseFullKey) {
+            return;
+        }
+        const bibleItem = await BibleItem.fromVerseKey(bibleKey, verseFullKey);
+        if (bibleItem === null) {
+            return;
+        }
+        let text = await bibleItem.toText();
+        text = text.substring(0, 1000);
+        element.title = text;
+    });
 }

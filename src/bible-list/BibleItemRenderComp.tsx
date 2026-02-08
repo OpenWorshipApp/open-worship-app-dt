@@ -25,7 +25,11 @@ import type BibleItemsViewController from '../bible-reader/BibleItemsViewControl
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
-import { openBibleItemContextMenu, useIsOnScreen } from './bibleHelpers';
+import {
+    improveBibleItemTitleOnHover,
+    openBibleItemContextMenu,
+    useIsOnScreen,
+} from './bibleHelpers';
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -150,7 +154,9 @@ export default function BibleItemRenderComp({
     return (
         <li
             className="list-group-item item app-caught-hover-pointer px-3"
-            title="Double click to view"
+            ref={improveBibleItemTitleOnHover}
+            data-bible-key={bibleItem.bibleKey}
+            data-verse-full-key={bibleItem.toVerseFullKey()}
             data-index={index + 1}
             draggable
             onDragStart={(event) => {
