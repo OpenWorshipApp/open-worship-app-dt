@@ -274,25 +274,43 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
 }
 
 export async function getSlidesCount(filePath: string) {
-    try {
-        const msHelper = await appProvider.msUtils.getMSHelper();
-        return msHelper.countSlides(filePath);
-    } catch (error) {
-        handleError(error);
-    }
-    return null;
+    const count = await electronSendAsync<number | null>(
+        'main:app:ms-pp-slides-count',
+        { filePath },
+    );
+    return count;
 }
 export async function removeSlideBackground(filePath: string) {
     // TODO: this function should not work yet, need to be fixed in the future
-    const msHelper = await appProvider.msUtils.getMSHelper();
-    if (msHelper === null) {
-        log('MS helper is not available');
-        return null;
-    }
-    return msHelper.removeSlideBackground(filePath);
+    const isSuccess = await electronSendAsync<boolean>(
+        'main:app:ms-pp-remove-slides-bg',
+        { filePath },
+    );
+    return isSuccess;
 }
-(globalThis as any).removeSlideBackground = removeSlideBackground;
-console.log('removeSlideBackground');
+
+export async function exportBibleMSWord(
+    data: { title: string; body: string; fontFamily: string | null }[],
+) {
+    const selectedParentDir =
+        await appLocalStorage.getSelectedParentDirectory();
+    if (selectedParentDir === null) {
+        showSimpleToast(
+            'No Parent Directory Selected',
+            'There is no parent directory selected',
+        );
+        return;
+    }
+    const filePath = pathJoin(
+        selectedParentDir,
+        `bible-export-${Date.now()}.docx`,
+    );
+    await electronSendAsync<boolean>('main:app:ms-word-export-bible', {
+        filePath,
+        data,
+    });
+    return filePath;
+}
 
 async function getPageTitle(url: string) {
     const rawHtml = await fetch(url)
@@ -504,32 +522,3 @@ export function printHtmlText() {
 }
 (globalThis as any).printHtmlText = printHtmlText;
 console.log('printHtmlText');
-
-export async function exportBibleMSWord(
-    data: { title: string; body: string; fontFamily: string | null }[],
-) {
-    const msHelper = await appProvider.msUtils.getMSHelper();
-
-    const selectedParentDir =
-        await appLocalStorage.getSelectedParentDirectory();
-    if (selectedParentDir === null) {
-        showSimpleToast(
-            'No Parent Directory Selected',
-            'There is no parent directory selected',
-        );
-        return;
-    }
-    const filePath = pathJoin(
-        selectedParentDir,
-        `bible-export-${Date.now()}.docx`,
-    );
-    const dataMap = data.map((item) => {
-        const entry: Map<string, string | null> = new Map();
-        entry.set('title', item.title);
-        entry.set('body', item.body);
-        entry.set('fontFamily', item.fontFamily ?? '');
-        return entry;
-    });
-    msHelper.exportBibleMSWord(filePath, dataMap);
-    return filePath;
-}

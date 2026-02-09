@@ -130,14 +130,6 @@ export type SQLiteDatabaseType = {
     close: () => void;
 };
 
-export type MSHelperType = {
-    countSlides: (filePath: string) => number | null;
-    removeSlideBackground: (filePath: string) => boolean;
-    exportBibleMSWord: (
-        filePath: string,
-        data: Map<string, string | null>[],
-    ) => void;
-};
 type YTHelper = {
     on: (event: string, listener: (...args: any[]) => void) => YTHelper;
     off: (event: string, listener: (...args: any[]) => void) => YTHelper;
@@ -184,9 +176,6 @@ export type AppProviderType = Readonly<
         presenterHomePage: string;
         readerHomePage: string;
         currentHomePage: string;
-        msUtils: {
-            getMSHelper: (dotNetRoot?: string) => Promise<MSHelperType>;
-        };
         ytUtils: {
             getYTHelper: () => Promise<YTHelper>;
             ffmpegBinPath: string;

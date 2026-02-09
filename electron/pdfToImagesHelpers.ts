@@ -1,8 +1,5 @@
-import { fork } from 'node:child_process';
-import { resolve as fsResolve } from 'node:path';
-import { app } from 'electron';
-
-import { isDev, unlocking } from './electronHelpers';
+import { unlocking } from './electronHelpers';
+import { execute } from './processHelpers';
 
 type PdfImagePreviewDataType = {
     isSuccessful: boolean;
@@ -33,23 +30,6 @@ export function pdfToImages(
         const data = await genImage(filePath, outDir);
         dataMap.set(filePath, data);
         return data;
-    });
-}
-
-export function execute<T>(scriptFullName: string, data: any) {
-    return new Promise<T>((resolve) => {
-        const scriptPath = fsResolve(
-            app.getAppPath(),
-            isDev ? 'public' : 'dist',
-            'js',
-            scriptFullName,
-        );
-        const forkedProcess = fork(scriptPath);
-        forkedProcess.on('message', (data: any) => {
-            forkedProcess.kill();
-            resolve(data);
-        });
-        forkedProcess.send(data);
     });
 }
 

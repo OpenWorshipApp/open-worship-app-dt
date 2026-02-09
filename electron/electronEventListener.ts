@@ -17,6 +17,11 @@ import {
 import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
+import {
+    countSlides,
+    exportBibleMSWord,
+    removeSlideBackground,
+} from './msHelpers';
 
 const { dialog, ipcMain, app } = electron;
 const cache: { [key: string]: any } = {
@@ -349,4 +354,26 @@ export function initEventOther(appController: ElectronAppController) {
     ipcMain.on('all:app:print', (_event, htmlText: string) => {
         printHTMLContent(htmlText);
     });
+
+    onAsync(
+        ipcMain,
+        'main:app:ms-pp-slides-count',
+        (data: { filePath: string; dotNetRoot?: string }) => {
+            return countSlides(data.filePath, data.dotNetRoot);
+        },
+    );
+    onAsync(
+        ipcMain,
+        'main:app:ms-pp-remove-slides-bg',
+        (data: { filePath: string; dotNetRoot?: string }) => {
+            return removeSlideBackground(data.filePath, data.dotNetRoot);
+        },
+    );
+    onAsync(
+        ipcMain,
+        'main:app:ms-word-export-bible',
+        (data: { filePath: string; data: object[]; dotNetRoot?: string }) => {
+            return exportBibleMSWord(data.filePath, data.data, data.dotNetRoot);
+        },
+    );
 }
