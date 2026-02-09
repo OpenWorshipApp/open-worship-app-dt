@@ -366,6 +366,7 @@ export function improveBibleItemTitleOnHover<T extends HTMLElement>(
         if (element.title) {
             return;
         }
+        element.title = tran('Loading') + '...';
         const bibleKey = element.dataset.bibleKey;
         if (!bibleKey) {
             return;
