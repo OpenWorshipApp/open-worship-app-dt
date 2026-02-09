@@ -9,6 +9,7 @@ import {
 import { use } from 'react';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { RenderTitleMaterialComp } from '../bible-reader/view-extra/RenderTitleMaterialComp';
+import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
 
 export default function RenderBibleEditingHeader() {
     const viewController = useLookupBibleItemControllerContext();
@@ -19,6 +20,7 @@ export default function RenderBibleEditingHeader() {
             className={
                 'bg-transparent app-top-hover-motion-1 app-border-bottom-white-round'
             }
+            title={BIBLE_VERSE_TEXT_TITLE}
         >
             <div className="d-flex w-100 h-100">
                 <RenderTitleMaterialComp

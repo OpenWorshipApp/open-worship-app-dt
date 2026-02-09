@@ -22,7 +22,8 @@ export const RECEIVING_DROP_CLASSNAME = 'receiving-data-drop';
 export const HIGHLIGHT_SELECTED_CLASSNAME = 'app-highlight-selected';
 
 export const BIBLE_VERSE_TEXT_TITLE =
-    'Click to highlight, double click or ' + 'Alt + click to bring to view';
+    'Click on verse to highlight, double click or Alt + click ' +
+    'on verse to bring to view';
 
 export function getRandomUUID() {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);

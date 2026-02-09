@@ -1,5 +1,4 @@
 import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
-import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
 
 export type BibleRenderVerseType = {
     num: string;
@@ -36,7 +35,6 @@ function VerseTextElementComp({
     return (
         <span
             className="highlight"
-            title={BIBLE_VERSE_TEXT_TITLE}
             data-bible-key={bibleKey}
             data-kjv-verse-key={verseInfo.kjvVerseKey}
             data-verse-key={verseInfo.verseKey}

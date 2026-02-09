@@ -2,7 +2,6 @@ import { useRef, useState } from 'react';
 
 import { VERSE_TEXT_CLASS } from '../../helper/bibleViewHelpers';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
-import { BIBLE_VERSE_TEXT_TITLE } from '../../helper/helpers';
 import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { getSelectedText } from '../../helper/textSelectionHelpers';
@@ -105,7 +104,6 @@ export default function RenderVerseTextDetailComp({
             data-verse-key={verseInfo.bibleVersesKey}
             data-is-first={verseInfo.isFirst ? '1' : '0'}
             data-is-last={verseInfo.isLast ? '1' : '0'}
-            title={BIBLE_VERSE_TEXT_TITLE}
             onClick={handleVerseClicking}
             onDoubleClick={handleVerseDBClicking}
         >
