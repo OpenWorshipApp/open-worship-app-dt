@@ -15,24 +15,6 @@ import { genTimeoutAttempt } from './helpers';
 import { checkIsDarkMode } from '../others/initHelpers';
 import { error as logError } from './loggerHelpers';
 
-globalThis.MonacoEnvironment = {
-    getWorker(_, label) {
-        if (label === 'json') {
-            return new jsonWorker();
-        }
-        if (label === 'css' || label === 'scss' || label === 'less') {
-            return new cssWorker();
-        }
-        if (label === 'html' || label === 'handlebars' || label === 'razor') {
-            return new htmlWorker();
-        }
-        if (label === 'typescript' || label === 'javascript') {
-            return new tsWorker();
-        }
-        return new editorWorker();
-    },
-};
-
 async function getCopiedText() {
     try {
         if (navigator.clipboard?.readText) {
@@ -70,6 +52,7 @@ function getModel(value: string, uri: Uri, language: string) {
     modelsMap[key] = model;
     return model;
 }
+let workerInitialized = false;
 function createEditor({
     options,
     language,
@@ -83,6 +66,31 @@ function createEditor({
     onInit?: (editor: editor.IStandaloneCodeEditor) => void;
     onStore?: (editorStore: EditorStoreType) => void;
 }) {
+    if (workerInitialized === false) {
+        workerInitialized = true;
+        globalThis.MonacoEnvironment = {
+            getWorker(_, label) {
+                if (label === 'json') {
+                    return new jsonWorker();
+                }
+                if (label === 'css' || label === 'scss' || label === 'less') {
+                    return new cssWorker();
+                }
+                if (
+                    label === 'html' ||
+                    label === 'handlebars' ||
+                    label === 'razor'
+                ) {
+                    return new htmlWorker();
+                }
+                if (label === 'typescript' || label === 'javascript') {
+                    return new tsWorker();
+                }
+                return new editorWorker();
+            },
+        };
+    }
+
     const div = document.createElement('div');
     Object.assign(div.style, {
         width: '100%',
