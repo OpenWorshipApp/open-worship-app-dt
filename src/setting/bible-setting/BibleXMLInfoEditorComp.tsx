@@ -7,10 +7,8 @@ import BibleXMLEditorComp, {
 import type { AnyObjectType } from '../../helper/typeHelpers';
 
 import { forceReloadAppWindows } from '../settingHelpers';
-import {
-    bibleInfoUri,
-    infoEditorSchemaHandler,
-} from './schemas/bibleEditorSchemaHelpers';
+import { infoEditorSchemaHandler } from './schemas/bibleSchemaHelpers';
+import { bibleInfoUri } from './schemas/bibleEditorUriHelpers';
 
 async function handleSaving(
     oldBibleInfo: BibleJsonInfoType,

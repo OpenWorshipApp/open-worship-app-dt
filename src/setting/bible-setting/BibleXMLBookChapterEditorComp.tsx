@@ -17,10 +17,8 @@ import {
 } from './bibleXMLHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
-import {
-    bookChapterEditorSchemaHandler,
-    bibleBookChapterUri,
-} from './schemas/bibleEditorSchemaHelpers';
+import { bookChapterEditorSchemaHandler } from './schemas/bibleSchemaHelpers';
+import { bibleBookChapterUri } from './schemas/bibleEditorUriHelpers';
 
 function RenderBookOptionsComp({
     bibleKey,

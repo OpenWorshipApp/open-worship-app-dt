@@ -12,10 +12,8 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
-import {
-    bibleExtraUri,
-    extraEditorSchemaHandler,
-} from './schemas/bibleEditorSchemaHelpers';
+import { extraEditorSchemaHandler } from './schemas/bibleSchemaHelpers';
+import { bibleExtraUri } from './schemas/bibleEditorUriHelpers';
 
 type DataType = BibleXMLExtraType & {
     bibleKey: string;

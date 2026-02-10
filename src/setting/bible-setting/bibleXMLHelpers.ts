@@ -50,7 +50,7 @@ import {
 import {
     infoEditorSchemaHandler,
     bookChapterEditorSchemaHandler,
-} from './schemas/bibleEditorSchemaHelpers';
+} from './schemas/bibleSchemaHelpers';
 import { getBibleModelInfoSetting } from '../../helper/bible-helpers/bibleModelHelpers';
 
 type MessageCallbackType = (message: string | null) => void;

@@ -3,15 +3,17 @@ import { json } from 'monaco-editor';
 import BibleXMLInfoEditorComp from './BibleXMLInfoEditorComp';
 import { useStateSettingString } from '../../helper/settingHelpers';
 import {
-    bibleBookChapterUri,
-    bibleExtraUri,
-    bibleInfoUri,
     bookChapterEditorSchemaHandler,
     extraEditorSchemaHandler,
     infoEditorSchemaHandler,
-} from './schemas/bibleEditorSchemaHelpers';
+} from './schemas/bibleSchemaHelpers';
 import BibleXMLBookChapterEditorComp from './BibleXMLBookChapterEditorComp';
 import BibleXMLExtraEditorComp from './BibleXMLExtraEditorComp';
+import {
+    bibleBookChapterUri,
+    bibleExtraUri,
+    bibleInfoUri,
+} from './schemas/bibleEditorUriHelpers';
 
 json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
