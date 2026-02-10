@@ -11,18 +11,10 @@ import {
     getFileMD5,
     pathJoin,
 } from '../../server/fileHelpers';
-import { allLocalesMap, languageNameMap, tran } from '../../lang/langHelpers';
-import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
-import {
-    genBibleBooksMapXMLInput,
-    genBibleNumbersMapXMLInput,
-} from './bibleXMLAttributesGuessing';
+import { tran } from '../../lang/langHelpers';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import {
-    createMouseEvent,
-    showAppContextMenu,
-} from '../../context-menu/appContextMenuHelpers';
+import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { useState, useTransition } from 'react';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import {
@@ -54,10 +46,10 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../../progress-bar/progressBarHelpers';
-import type { EditorStoreType } from '../../helper/monacoEditorHelpers';
-import type { AnyObjectType } from '../../helper/typeHelpers';
-import { schemaHandler as infoEditorSchemaHandler } from './BibleXMLInfoEditorComp';
-import { schemaHandler as bookChapterEditorSchemaHandler } from './BibleXMLBookChapterEditorComp';
+import {
+    infoEditorSchemaHandler,
+    bookChapterEditorSchemaHandler,
+} from './schemas/bibleEditorSchemaHelpers';
 import { getBibleModelInfoSetting } from '../../helper/bible-helpers/bibleModelHelpers';
 
 type MessageCallbackType = (message: string | null) => void;
@@ -268,107 +260,6 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
         },
     ];
     showAppContextMenu(event, contextMenuItems);
-}
-
-export function addMonacoBibleInfoActions(
-    editorStore: EditorStoreType,
-    getBibleInfo: () => BibleJsonInfoType,
-    setPartialBibleInfo: (partialBibleInfo: AnyObjectType) => void,
-) {
-    const { editorInstance } = editorStore;
-    const genMouseEvent = () => {
-        return createMouseEvent(
-            editorStore.lastMouseClickPos.x,
-            editorStore.lastMouseClickPos.y,
-        );
-    };
-    editorInstance.addAction({
-        id: 'edit-numbers-map',
-        label: '#️⃣ `Edit Numbers Map',
-        contextMenuGroupId: 'navigation',
-        run: async () => {
-            const bibleInfo = getBibleInfo();
-            let numbers = Object.values(bibleInfo.numbersMap);
-            const isConfirmInput = await showAppInput(
-                tran('Numbers map'),
-                genBibleNumbersMapXMLInput(
-                    numbers,
-                    bibleInfo.locale,
-                    (newNumbers) => {
-                        numbers = newNumbers;
-                    },
-                ),
-                {
-                    escToCancel: false,
-                    enterToOk: false,
-                },
-            );
-            if (isConfirmInput) {
-                setPartialBibleInfo({
-                    numbersMap: Object.fromEntries(
-                        numbers.map((value, index) => [
-                            index.toString(),
-                            value,
-                        ]),
-                    ),
-                });
-            }
-        },
-    });
-    editorInstance.addAction({
-        id: 'choose-locale',
-        label: '🌎 `Choose Locale',
-        contextMenuGroupId: 'navigation',
-        run: async () => {
-            showAppContextMenu(
-                genMouseEvent(),
-                Object.entries(allLocalesMap).map(([locale, langCode]) => {
-                    const menuElement = `${locale} (${languageNameMap[langCode] ?? 'Unknown'})`;
-                    return {
-                        menuElement,
-                        onSelect: () => {
-                            setPartialBibleInfo({
-                                locale,
-                            });
-                        },
-                    };
-                }),
-            );
-        },
-    });
-    editorInstance.addAction({
-        id: 'edit-books-map',
-        label: '📚 `Edit Books Map',
-        contextMenuGroupId: 'navigation',
-        run: async () => {
-            const bibleInfo = getBibleInfo();
-            let keyBookMap = Object.values(bibleInfo.keyBookMap);
-            const isConfirmInput = await showAppInput(
-                'Books map',
-                genBibleBooksMapXMLInput(
-                    keyBookMap,
-                    bibleInfo.locale,
-                    (newNumbers) => {
-                        keyBookMap = newNumbers;
-                    },
-                ),
-                {
-                    escToCancel: false,
-                    enterToOk: false,
-                },
-            );
-            if (isConfirmInput) {
-                setPartialBibleInfo({
-                    ...bibleInfo,
-                    keyBookMap: Object.fromEntries(
-                        Object.keys(bibleInfo.keyBookMap).map(
-                            (value, index) => [value, keyBookMap[index]],
-                        ),
-                    ),
-                });
-            }
-        },
-    });
 }
 
 export const BIBLE_XML_CACHE_DURATION_SEC = 60; // 1 minute

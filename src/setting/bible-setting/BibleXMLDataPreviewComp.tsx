@@ -1,18 +1,17 @@
 import { json } from 'monaco-editor';
 
-import BibleXMLInfoEditorComp, {
-    schemaHandler as infoEditorSchemaHandler,
-    uri as bibleInfoUri,
-} from './BibleXMLInfoEditorComp';
-import BibleXMLExtraEditorComp, {
-    schemaHandler as extraEditorSchemaHandler,
-    uri as bibleExtraUri,
-} from './BibleXMLExtraEditorComp';
-import BibleXMLBookChapterEditorComp, {
-    schemaHandler as bookChapterEditorSchemaHandler,
-    uri as bibleBookChapterUri,
-} from './BibleXMLBookChapterEditorComp';
+import BibleXMLInfoEditorComp from './BibleXMLInfoEditorComp';
 import { useStateSettingString } from '../../helper/settingHelpers';
+import {
+    bibleBookChapterUri,
+    bibleExtraUri,
+    bibleInfoUri,
+    bookChapterEditorSchemaHandler,
+    extraEditorSchemaHandler,
+    infoEditorSchemaHandler,
+} from './schemas/bibleEditorSchemaHelpers';
+import BibleXMLBookChapterEditorComp from './BibleXMLBookChapterEditorComp';
+import BibleXMLExtraEditorComp from './BibleXMLExtraEditorComp';
 
 json.jsonDefaults.setDiagnosticsOptions({
     validate: true,

@@ -1,7 +1,4 @@
 import { useMemo, useState } from 'react';
-import type { SchemaNode } from 'json-schema-library';
-import { compileSchema } from 'json-schema-library';
-import { Uri } from 'monaco-editor';
 
 import { useAppEffect, useAppStateAsync } from '../../helper/debuggerHelpers';
 import {
@@ -11,7 +8,6 @@ import {
 import LoadingComp from '../../others/LoadingComp';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 
-import bookChapterSchemaJson from './schemas/bibleBookChapterSchema.json';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getChapterData } from '../../helper/bible-helpers/bibleInfoHelpers';
 import type { BibleChapterType } from '../../helper/bible-helpers/BibleDataReader';
@@ -21,9 +17,10 @@ import {
 } from './bibleXMLHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
-
-export const schemaHandler: SchemaNode = compileSchema(bookChapterSchemaJson);
-export const uri = Uri.parse('book-chapter');
+import {
+    bookChapterEditorSchemaHandler,
+    bibleBookChapterUri,
+} from './schemas/bibleEditorSchemaHelpers';
 
 function RenderBookOptionsComp({
     bibleKey,
@@ -231,7 +228,7 @@ function EditorComp({
             id={bibleKey}
             jsonData={jsonData}
             onStore={() => {}}
-            jsonDataSchema={schemaHandler}
+            jsonDataSchema={bookChapterEditorSchemaHandler}
             save={(newJsonData: DataType) => {
                 if (newJsonData.bibleKey !== bibleKey) {
                     showSimpleToast(
@@ -256,7 +253,7 @@ function EditorComp({
                 }
                 handleSaving(bibleKey, bookKey, chapter, newJsonData);
             }}
-            editorUri={uri}
+            editorUri={bibleBookChapterUri}
         />
     );
 }

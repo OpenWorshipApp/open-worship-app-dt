@@ -1,6 +1,4 @@
-import type { SchemaNode } from 'json-schema-library';
-import { compileSchema } from 'json-schema-library';
-import { Uri } from 'monaco-editor';
+import { useMemo } from 'react';
 
 import LoadingComp from '../../others/LoadingComp';
 import {
@@ -9,16 +7,15 @@ import {
 } from './bibleXMLHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
-import { useMemo } from 'react';
 import type { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
-import bibleNewLinesSchemaJson from './schemas/bibleExtraSchema.json';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
-
-export const schemaHandler: SchemaNode = compileSchema(bibleNewLinesSchemaJson);
-export const uri = Uri.parse('bible-extra');
+import {
+    bibleExtraUri,
+    extraEditorSchemaHandler,
+} from './schemas/bibleEditorSchemaHelpers';
 
 type DataType = BibleXMLExtraType & {
     bibleKey: string;
@@ -75,7 +72,7 @@ export default function BibleXMLExtraEditorComp({
             id={bibleKey}
             jsonData={jsonData}
             onStore={() => {}}
-            jsonDataSchema={schemaHandler}
+            jsonDataSchema={extraEditorSchemaHandler}
             save={(newJsonData: DataType) => {
                 if (newJsonData.bibleKey !== bibleKey) {
                     showSimpleToast(
@@ -86,7 +83,7 @@ export default function BibleXMLExtraEditorComp({
                 }
                 handleSaving(bibleKey, newJsonData);
             }}
-            editorUri={uri}
+            editorUri={bibleExtraUri}
         />
     );
 }

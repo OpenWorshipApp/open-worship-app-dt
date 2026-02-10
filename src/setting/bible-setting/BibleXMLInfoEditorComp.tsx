@@ -1,22 +1,16 @@
-import type { SchemaNode } from 'json-schema-library';
-import { compileSchema } from 'json-schema-library';
-import { Uri } from 'monaco-editor';
-
 import LoadingComp from '../../others/LoadingComp';
-import {
-    addMonacoBibleInfoActions,
-    updateBibleXMLInfo,
-    useBibleXMLInfo,
-} from './bibleXMLHelpers';
+import { updateBibleXMLInfo, useBibleXMLInfo } from './bibleXMLHelpers';
 import type { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
-import BibleXMLEditorComp from './BibleXMLEditorComp';
+import BibleXMLEditorComp, {
+    addMonacoBibleInfoActions,
+} from './BibleXMLEditorComp';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 
-import bibleInfoSchemaJson from './schemas/bibleInfoSchema.json';
 import { forceReloadAppWindows } from '../settingHelpers';
-
-export const schemaHandler: SchemaNode = compileSchema(bibleInfoSchemaJson);
-export const uri = Uri.parse('bible-info');
+import {
+    bibleInfoUri,
+    infoEditorSchemaHandler,
+} from './schemas/bibleEditorSchemaHelpers';
 
 async function handleSaving(
     oldBibleInfo: BibleJsonInfoType,
@@ -72,11 +66,11 @@ export default function BibleXMLInfoEditorComp({
                     },
                 );
             }}
-            jsonDataSchema={schemaHandler}
+            jsonDataSchema={infoEditorSchemaHandler}
             save={(newBibleInfo: BibleJsonInfoType) => {
                 handleSaving(bibleInfo, newBibleInfo);
             }}
-            editorUri={uri}
+            editorUri={bibleInfoUri}
         />
     );
 }
