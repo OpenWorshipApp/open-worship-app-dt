@@ -1,3 +1,5 @@
+import { use } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
 import { BibleSelectionMiniComp } from './BibleSelectionComp';
@@ -7,7 +9,6 @@ import {
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
 import RenderVerseOptionsComp from './RenderVerseOptionsComp';
-import { use } from 'react';
 import { openBibleSetting } from '../setting/settingHelpers';
 import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
 import RenderBookOptionsComp from './RenderBookOptionsComp';

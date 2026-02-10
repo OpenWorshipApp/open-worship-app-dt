@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import BibleCrossRefRendererComp from '../bible-cross-refs/BibleCrossRefRendererComp';
 import BibleItem from '../bible-list/BibleItem';
 import { useAppEffect } from '../helper/debuggerHelpers';

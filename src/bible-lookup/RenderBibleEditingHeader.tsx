@@ -1,3 +1,5 @@
+import { use } from 'react';
+
 import RenderEditingActionButtonsComp from './RenderEditingActionButtonsComp';
 import { closeCurrentEditingBibleItem } from '../bible-reader/readBibleHelpers';
 import { toShortcutKey } from '../event/KeyboardEventListener';
@@ -6,7 +8,6 @@ import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
-import { use } from 'react';
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { RenderTitleMaterialComp } from '../bible-reader/view-extra/RenderTitleMaterialComp';
 import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';

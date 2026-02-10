@@ -1,5 +1,7 @@
 import './BackgroundAudiosComp.scss';
 
+import { useMemo, useState } from 'react';
+
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -14,7 +16,6 @@ import {
     getAudioRepeatSettingName,
     showAudioPlayingToast,
 } from './audioBackgroundHelpers';
-import { useMemo, useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';

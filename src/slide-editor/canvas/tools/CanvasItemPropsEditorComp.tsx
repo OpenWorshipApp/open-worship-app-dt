@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+
 import SlideEditorToolsTextComp from './SlideEditorToolsTextComp';
 import SlideEditorToolsBoxComp from './SlideEditorToolsBoxComp';
 import type CanvasItem from '../CanvasItem';
@@ -8,7 +10,6 @@ import {
 } from '../CanvasItem';
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import { useCanvasControllerContext } from '../CanvasController';
-import { useMemo, useState } from 'react';
 import { cloneJson, genTimeoutAttempt } from '../../../helper/helpers';
 
 export default function CanvasItemPropsEditorComp({

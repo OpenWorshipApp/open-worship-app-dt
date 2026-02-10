@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import type { KeyboardType } from '../event/KeyboardEventListener';
 import {
     allArrows,
@@ -8,7 +10,6 @@ import { useChapterMatch } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { getChapterData } from '../helper/bible-helpers/bibleInfoHelpers';
-import { useState } from 'react';
 
 const OPTION_CLASS = 'bible-lookup-chapter-option';
 const OPTION_SELECTED_CLASS = 'active';

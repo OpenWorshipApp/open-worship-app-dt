@@ -1,11 +1,12 @@
 import './RenderVersesOptionComp.scss';
 
+import { useMemo } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import RenderVerseNumOptionComp, { mouseUp } from './RenderVerseNumOptionComp';
 import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { genVerseList } from '../bible-list/bibleHelpers';
-import { useMemo } from 'react';
 import { getVersesCount } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type BibleItem from '../bible-list/BibleItem';
 

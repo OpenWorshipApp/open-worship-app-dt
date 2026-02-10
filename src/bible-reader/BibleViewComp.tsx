@@ -1,5 +1,7 @@
 import './BibleViewComp.scss';
 
+import { use } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import type BibleItemsViewController from './BibleItemsViewController';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
@@ -12,7 +14,6 @@ import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import RenderBibleEditingHeader from '../bible-lookup/RenderBibleEditingHeader';
 import RenderBibleLookupBodyComp from '../bible-lookup/RenderBibleLookupBodyComp';
-import { use } from 'react';
 import type LookupBibleItemController from './LookupBibleItemController';
 import { EditingResultContext } from './LookupBibleItemController';
 import { useBibleViewFontSizeContext } from '../helper/bibleViewHelpers';

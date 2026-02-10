@@ -1,4 +1,5 @@
 import { createContext, use } from 'react';
+
 import type { LyricEditingPropsType } from './LyricAppDocument';
 import { defaultLyricEditingProps } from './LyricAppDocument';
 import { handleError } from '../helper/errorHelpers';

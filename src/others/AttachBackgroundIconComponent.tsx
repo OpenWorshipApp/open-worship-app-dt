@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useAttachedBackgroundData } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';

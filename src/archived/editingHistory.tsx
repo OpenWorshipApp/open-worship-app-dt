@@ -1,3 +1,5 @@
+import { useCallback, useMemo, useState } from 'react';
+
 import {
     fsCheckFileExist,
     fsReadFile,
@@ -5,7 +7,6 @@ import {
     pathJoin,
 } from '../server/fileHelpers';
 import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
-import { useCallback, useMemo, useState } from 'react';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';

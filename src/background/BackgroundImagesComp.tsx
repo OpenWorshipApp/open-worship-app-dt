@@ -1,5 +1,7 @@
 import './BackgroundImagesComp.scss';
 
+import type { ReactElement } from 'react';
+
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
@@ -31,7 +33,6 @@ import {
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { handleError } from '../helper/errorHelpers';
-import type { ReactElement } from 'react';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 
 function rendChild(

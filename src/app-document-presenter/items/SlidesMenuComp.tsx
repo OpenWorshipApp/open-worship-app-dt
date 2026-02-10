@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { getDefaultScreenDisplay } from '../../_screen/managers/screenHelpers';
 import {
     useSlideWrongDimension,
@@ -6,7 +8,6 @@ import {
 import type { WrongDimensionType } from '../../app-document-list/AppDocument';
 import AppDocument from '../../app-document-list/AppDocument';
 import { FileEditingMenuComp } from '../../editing-manager/editingHelpers';
-import { useMemo } from 'react';
 
 function CheckingDimensionComp({
     wrongDimension,

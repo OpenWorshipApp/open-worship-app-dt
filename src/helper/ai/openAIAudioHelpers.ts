@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { handleError } from '../errorHelpers';
 import {
     fsCheckDirExist,
@@ -12,7 +14,6 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { getBibleInfo } from '../bible-helpers/bibleInfoHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
-import { useState } from 'react';
 import { useAppEffectAsync, useAppStateAsync } from '../debuggerHelpers';
 import type BibleItem from '../../bible-list/BibleItem';
 import { getLangDataFromBibleKey } from '../bible-helpers/bibleLogicHelpers2';
