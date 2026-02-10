@@ -27,10 +27,10 @@
         "lint:es": "eslint src/**/*.ts* electron/**/*.ts",
         "lint": "npm run lint:all:error && npm run lint:pre && npm run lint:es && npm run build",
         "dc:err": "depcruise src --include-only \"^src\" --output-type err-html > dc-dependency-graph/errors.html",
+        "release:version": "node extra-work/setTodayVersion.mjs && npm install",
         "release:tag": "bash extra-work/release-tag.sh",
         "release": "bash extra-work/release.sh",
-        "install": "bash extra-work/bin-helper/build.sh",
-        "apply:version": "node extra-work/setTodayVersion.mjs && npm install"
+        "install": "bash extra-work/bin-helper/build.sh"
     },
     "browserslist": {
         "production": [
