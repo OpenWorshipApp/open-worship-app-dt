@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import electron, { BrowserWindow } from 'electron';
+import electron, { BrowserWindow, nativeTheme } from 'electron';
 
 import { htmlFiles } from './fsServe';
 
@@ -22,6 +22,7 @@ export default class ElectronSettingManager {
             this.settingObject.appScreenDisplayId = json.appScreenDisplayId;
             this.settingObject.mainHtmlPath =
                 json.mainHtmlPath ?? this.settingObject.mainHtmlPath;
+            nativeTheme.themeSource = json.themeSource ?? 'system';
         } catch (error: any) {
             if (error.code === 'ENOENT') {
                 this.save();
@@ -32,8 +33,8 @@ export default class ElectronSettingManager {
     }
 
     get fileSettingPath() {
-        const useDataPath = electron.app.getPath('userData');
-        return path.join(useDataPath, 'setting.json');
+        const userDataPath = electron.app.getPath('userData');
+        return path.join(userDataPath, 'setting.json');
     }
 
     get isWinMaximized() {
@@ -51,6 +52,15 @@ export default class ElectronSettingManager {
 
     set mainWinBounds(bounds) {
         this.settingObject.mainWinBounds = bounds;
+        this.save();
+    }
+
+    get themeSource() {
+        return nativeTheme.themeSource;
+    }
+
+    set themeSource(themeSource: 'light' | 'dark' | 'system') {
+        nativeTheme.themeSource = themeSource;
         this.save();
     }
 
@@ -91,11 +101,11 @@ export default class ElectronSettingManager {
     }
 
     save() {
-        fs.writeFileSync(
-            this.fileSettingPath,
-            JSON.stringify(this.settingObject),
-            'utf8',
-        );
+        const data = {
+            ...this.settingObject,
+            themeSource: nativeTheme.themeSource,
+        };
+        fs.writeFileSync(this.fileSettingPath, JSON.stringify(data), 'utf8');
     }
 
     syncMainWindow(win: BrowserWindow) {

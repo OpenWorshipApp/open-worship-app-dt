@@ -325,12 +325,12 @@ export function initEventOther(appController: ElectronAppController) {
             ) {
                 return;
             }
-            nativeTheme.themeSource = theme;
+            appController.settingManager.themeSource = theme;
             appController.resetThemeBackgroundColor();
         },
     );
     ipcMain.on('main:app:get-theme', (event) => {
-        event.returnValue = nativeTheme.themeSource;
+        event.returnValue = appController.settingManager.themeSource;
     });
 
     onAsync(ipcMain, 'main:app:ask-camera-access', async () => {
