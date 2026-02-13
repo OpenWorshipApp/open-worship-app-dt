@@ -30,6 +30,19 @@ export default class ElectronAboutController {
             parent: mainWin,
             autoHideMenuBar: true,
         });
+        win.webContents.on('did-finish-load', () => {
+            const currentZoomFactor = win.webContents.getZoomFactor();
+            const newWidth = Math.round(width * currentZoomFactor);
+            const newHeight = Math.round(height * currentZoomFactor);
+            const offsetX = Math.round((newWidth - width) / 2);
+            const offsetY = Math.round((newHeight - height) / 2);
+            win.setBounds({
+                x: x - offsetX,
+                y: y - offsetY,
+                width: newWidth,
+                height: newHeight,
+            });
+        });
         guardBrowsing(win, webPreferences);
         routeProps.loadURL(win);
         return win;

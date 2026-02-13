@@ -4,7 +4,6 @@ import { lazy } from 'react';
 
 import { useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
-import { QuitCurrentPageComp } from '../others/commonButtons';
 import { SETTING_SETTING_NAME } from './settingHelpers';
 import SettingApplyComp from './SettingApplyComp';
 import { tran } from '../lang/langHelpers';
@@ -55,7 +54,6 @@ export default function SettingComp() {
                     }}
                 >
                     <SettingApplyComp />
-                    <QuitCurrentPageComp title="Quit Setting" />
                 </div>
             </div>
             <div
