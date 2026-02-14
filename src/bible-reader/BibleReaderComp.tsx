@@ -40,15 +40,16 @@ export default function BibleReaderComp({
     flexSizeName: string;
     onLookupSaveBibleItem?: () => void;
 }>) {
-    const targetViewController = useMemo(() => {
-        const newViewController = new LookupBibleItemController();
+    const lookupBibleItemController = useMemo(() => {
+        const newLookupBibleItemController = new LookupBibleItemController();
         if (onLookupSaveBibleItem !== undefined) {
-            newViewController.onLookupSaveBibleItem = onLookupSaveBibleItem;
+            newLookupBibleItemController.onLookupSaveBibleItem =
+                onLookupSaveBibleItem;
         }
-        return newViewController;
+        return newLookupBibleItemController;
     }, [onLookupSaveBibleItem]);
     return (
-        <BibleItemsViewControllerContext value={targetViewController}>
+        <BibleItemsViewControllerContext value={lookupBibleItemController}>
             <ResizeActorComp
                 flexSizeName={flexSizeName}
                 isHorizontal

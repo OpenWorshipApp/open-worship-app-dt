@@ -17,7 +17,7 @@ import Slide from '../app-document-list/Slide';
 import { cameraDragDeserialize } from '../background/backgroundHelpers';
 
 export const dragStore: {
-    onDropped?: ((event: any) => void) | null;
+    onDropped?: ((event: any) => void) | ((event: any) => Promise<void>) | null;
 } = {};
 
 export function handleDragStart(
