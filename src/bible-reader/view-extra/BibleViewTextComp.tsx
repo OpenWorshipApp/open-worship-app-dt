@@ -13,6 +13,7 @@ import { getBibleInfoIsRtl } from '../../helper/bible-helpers/bibleInfoHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderRestVerseNumListComp from './RenderRestVerseNumListComp';
 import RenderVerseTextComp from './RenderVerseTextComp';
+import { tran } from '../../lang/langHelpers';
 
 function RenderVerseTitleComp({
     bibleItem,
@@ -63,7 +64,7 @@ function RenderVerseListDetailComp({
         return (
             <div className={`${BIBLE_VIEW_TEXT_CLASS} p-1`}>
                 <span className="text-danger">
-                    `No verses found for this Bible item.
+                    {tran('No verses found for this Bible item')}
                 </span>
             </div>
         );

@@ -17,7 +17,7 @@ export function SelectDefaultDirButton({
                 selectDefaultDataDirName(dirSource, defaultFolderName);
             }}
         >
-            `Select Default "{defaultFolderName}"
+            {tran('Select Default')} "{defaultFolderName}"
         </button>
     );
 }

@@ -171,7 +171,7 @@ function TimeInSetComp({
                             dragStore.onDropped = handleByDropped;
                         }}
                     >
-                        `Show Time
+                        {tran('Show Time')}
                     </button>
                 </div>
             </div>

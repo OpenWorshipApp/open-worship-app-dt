@@ -119,7 +119,7 @@ export default function ForegroundStopwatchComp() {
                                 dragStore.onDropped = handleByDropped;
                             }}
                         >
-                            `Start Stopwatch
+                            {tran('Start Stopwatch')}
                         </button>
                     </div>
                 </div>

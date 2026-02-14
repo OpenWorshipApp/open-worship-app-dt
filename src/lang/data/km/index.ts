@@ -9,6 +9,19 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Fading at the End': 'បន្ថយនៅចុងបញ្ចប់',
+    'Data not available for': 'ទិន្នន័យមិនអាចใช้ได้สำหรับ',
+    'No data available': 'មិនមានទិន្នន័យ',
+    'No verses found for this Bible item':
+        'មិនមានខគម្ពីរណាមួយសម្រាប់ធាតុព្រះគម្ពីរនេះទេ',
+    'Select Default': 'ជ្រើសរើសលំនាំដើម',
+    Reset: 'កំណត់ឡើងវិញ',
+    'Start Countdown to DateTime': 'ចាប់ផ្តើមរាប់ថយក្រោយទៅកាន់ថ្ងៃម៉ោង',
+    'Start Countdown': 'ចាប់ផ្តើមរាប់ថយក្រោយ',
+    'Show Marquee': 'បង្ហាញអក្សររត់',
+    'Show Quick Text': 'បង្ហាញអក្សរយ៉ាងឆាប់រហ័ស',
+    'Start Stopwatch': 'ចាប់ផ្តើមម៉ោងចាប់ពេល',
+    'Show Time': 'បង្ហាញម៉ោង',
     Loading: 'កំពុងផ្ទុក',
     'Reload is needed': 'ត្រូវការការផ្ទុកឡើងវិញ',
     'We were sorry, Internal process error, you to refresh the app':
@@ -172,7 +185,6 @@ const dictionary = {
     'Reset Rotate': 'កំណត់ការបង្វិលឡើងវិញ',
     'Reset to default display dimension': 'កំណត់ទៅវិមាត្របង្ហាញលំនាំដើម',
     'Reset Widgets Size': 'កំណត់ទំហំ Widgets ឡើងវិញ',
-    Reset: 'កំណត់ឡើងវិញ',
     'Round (%)': 'មូល (%)',
     'Round Size %:': 'ទំហំមូល %:',
     'Round Size Pixel:': 'ទំហំមូល Pixel:',

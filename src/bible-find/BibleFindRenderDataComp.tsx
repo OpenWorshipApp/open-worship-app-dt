@@ -3,6 +3,7 @@ import BibleFindRenderPerPageComp from './BibleFindRenderPerPageComp';
 import { useBibleFindController } from './BibleFindController';
 import { ShowFindingComp } from './ShowFindingComp';
 import RenderPageNumberComp from './RenderPageNumberComp';
+import { tran } from '../lang/langHelpers';
 
 function RenderFooterComp({
     data,
@@ -79,7 +80,7 @@ export default function BibleFindRenderDataComp({
                 className="w-100 my-2"
                 style={{ margin: 'auto', textAlign: 'center' }}
             >
-                `No data available
+                {tran('No data available')}
             </div>
         );
     }

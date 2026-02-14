@@ -198,7 +198,7 @@ export default function ForegroundQuickTextComp() {
                             dragStore.onDropped = handleByDropped;
                         }}
                     >
-                        `Show Quick Text
+                        {tran('Show Quick Text')}
                     </button>
                 </div>
             </div>

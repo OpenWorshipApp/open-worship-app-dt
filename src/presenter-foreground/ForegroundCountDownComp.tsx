@@ -90,7 +90,7 @@ function CountDownOnDatetimeComp({
                     className="btn btn-outline-warning"
                     onClick={handleResetting}
                 >
-                    `Reset
+                    {tran('Reset')}
                 </button>
             </div>
             <div>
@@ -129,7 +129,7 @@ function CountDownOnDatetimeComp({
                         );
                     }}
                 >
-                    `Start Countdown to DateTime
+                    {tran('Start Countdown to DateTime')}
                 </button>
             </div>
         </div>
@@ -221,7 +221,7 @@ function CountDownInSetComp({
                         );
                     }}
                 >
-                    `Start Countdown
+                    {tran('Start Countdown')}
                 </button>
             </div>
         </div>

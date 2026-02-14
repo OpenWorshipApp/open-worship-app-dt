@@ -1,5 +1,6 @@
 import { BACKGROUND_VIDEO_FADING_SETTING_NAME } from '../_screen/managers/ScreenBackgroundManager';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
+import { tran } from '../lang/langHelpers';
 
 export default function VideoHeaderSettingComp() {
     const [isFadingAtEnd, setIsFadingAtEnd] = useStateSettingBoolean(
@@ -8,7 +9,7 @@ export default function VideoHeaderSettingComp() {
     );
     return (
         <div className="input-group-text app-inner-shadow p-0">
-            `Fading at the End:{' '}
+            {tran('Fading at the End')}:{' '}
             <input
                 className="form-check-input mt-0"
                 type="checkbox"

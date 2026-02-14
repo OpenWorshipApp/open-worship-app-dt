@@ -5,6 +5,7 @@ import { useGettingBibleCrossRefAI } from './bibleCrossRefsHelpers';
 import type { RefreshingRefType } from '../helper/ai/aiHelpers';
 import { useGenRefreshRef } from '../helper/ai/bibleCrossRefHelpers';
 import RenderAIBibleCrossReferenceListComp from './RenderAIBibleCrossReferenceListComp';
+import { tran } from '../lang/langHelpers';
 
 export default function BibleCrossRefAIItemRendererBodyComp({
     ref,
@@ -37,7 +38,7 @@ export default function BibleCrossRefAIItemRendererBodyComp({
     if (bibleCrossRef === null) {
         return (
             <div>
-                `Data not available for "{bookKey} {chapter}:{verse}"
+                {tran('Data not available for')} "{bookKey} {chapter}:{verse}"
             </div>
         );
     }

@@ -114,7 +114,7 @@ export default function ForegroundMarqueeComp() {
                         dragStore.onDropped = null;
                     }}
                 >
-                    `Show Marquee
+                    {tran('Show Marquee')}
                 </button>
             </div>
             {genHidingElement(false)}
