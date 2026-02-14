@@ -103,7 +103,7 @@ function isDomException(error: any) {
     return error instanceof DOMException;
 }
 
-async function init() {
+async function initMain() {
     globalThis.onunhandledrejection = (promiseError) => {
         const reason = promiseError.reason;
         if (reason.name === 'Canceled') {
@@ -171,7 +171,7 @@ export function RenderApp({
 }
 
 export async function run(children: ReactNode) {
-    await init();
+    await initMain();
     const hoverMotionHandler = new HoverMotionHandler();
     addDomChangeEventListener(
         hoverMotionHandler.listenForHoverMotion.bind(hoverMotionHandler),
@@ -200,8 +200,8 @@ export async function run(children: ReactNode) {
     if (fontFamily != undefined) {
         document.body.style.fontFamily = fontFamily;
     }
-    const root = getReactRoot();
 
+    const root = getReactRoot();
     root.render(<RenderApp>{children}</RenderApp>);
 
     setTimeout(checkForUpdateSilently, 6e4);
