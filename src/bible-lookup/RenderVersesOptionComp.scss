@@ -1,3 +1,4 @@
+$border-radius: 10px;
 .render-found {
   .verse-select {
     .item {
@@ -26,14 +27,14 @@
       }
 
       &.selected-start::before {
-        border-top-left-radius: 50%;
-        border-bottom-left-radius: 50%;
+        border-top-left-radius: $border-radius;
+        border-bottom-left-radius: $border-radius;
         background-color: green;
       }
 
       &.selected-end::before {
-        border-top-right-radius: 50%;
-        border-bottom-right-radius: 50%;
+        border-top-right-radius: $border-radius;
+        border-bottom-right-radius: $border-radius;
         background-color: green;
       }
     }
