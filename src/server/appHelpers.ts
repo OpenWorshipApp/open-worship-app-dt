@@ -399,6 +399,8 @@ export function downloadVideoOrAudio(
                     '--no-playlist',
                     '--ffmpeg-location',
                     `${ytUtils.ffmpegBinPath}`,
+                    '--js-runtimes',
+                    `deno:${ytUtils.denoBinPath}`,
                 );
                 if (!isVideo) {
                     args.push(

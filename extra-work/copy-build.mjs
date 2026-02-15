@@ -116,14 +116,15 @@ copyAllChildren(
 );
 console.log('PowerPoint bin files are copied');
 
-const { sourceFileName, destFileName } = genBinFileName('yt-dlp');
+const { sourceFileName: ytSourceFileName, destFileName: ytDestFileName } =
+  genBinFileName('yt-dlp');
 copyFile(
   {
     source: resolve(binHelperSourceRootDir, 'yt'),
     destination: resolve(binHelperDestRootDir, 'yt'),
   },
-  sourceFileName,
-  destFileName,
+  ytSourceFileName,
+  ytDestFileName,
 );
 console.log('yt-dlp file is copied');
 
@@ -138,7 +139,7 @@ if (systemUtils.isMac) {
   copyAllChildren(
     resolve(
       './extra-work/ffmpeg/mac' +
-      (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
+        (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
     ),
     resolve(binHelperDestRootDir, 'ffmpeg', 'bin'),
   );
@@ -150,11 +151,24 @@ if (systemUtils.isMac) {
 }
 console.log('ffmpeg file is copied');
 
-// package-lock.json
 copyFile(
   {
     source: resolve('.'),
     destination: resolve('./electron-build'),
   },
-  'package-lock.json', 'package-lock.json'
+  'package-lock.json',
+  'package-lock.json',
 );
+console.log('package-lock.json file is copied');
+
+const { sourceFileName: denoSourceFileName, destFileName: denoDestFileName } =
+  genBinFileName('deno');
+copyFile(
+  {
+    source: resolve(binHelperSourceRootDir, 'deno'),
+    destination: resolve(binHelperDestRootDir, 'deno'),
+  },
+  denoSourceFileName,
+  denoDestFileName,
+);
+console.log('deno file is copied');

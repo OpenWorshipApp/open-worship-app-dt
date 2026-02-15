@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 
 let timeOutId: NodeJS.Timeout | null = null;
 let ytDlpWrap: any = null;
+const binHelperPath = resolve(__dirname, './../bin-helper/');
 function scheduleRelease() {
     if (timeOutId !== null) {
         clearTimeout(timeOutId);
@@ -25,7 +26,8 @@ async function getYTHelper() {
         const binaryPath = toUnpackedPath(
             resolve(
                 __dirname,
-                '../../bin-helper/yt/yt-dlp' + (isWindows ? '.exe' : ''),
+                binHelperPath,
+                'yt/yt-dlp' + (isWindows ? '.exe' : ''),
             ),
         );
         ytDlpWrap = new YTDlpWrap(binaryPath);
@@ -33,11 +35,15 @@ async function getYTHelper() {
     });
 }
 const ffmpegBinPath = toUnpackedPath(
-    resolve(__dirname, '../../bin-helper/ffmpeg/bin'),
+    resolve(__dirname, binHelperPath, 'ffmpeg/bin'),
+);
+const denoBinPath = toUnpackedPath(
+    resolve(__dirname, binHelperPath, 'deno/deno' + (isWindows ? '.exe' : '')),
 );
 
 export const ytUtils = {
     getYTHelper,
     ffmpegBinPath,
+    denoBinPath,
     jsRuntimeBinPath: null,
 };

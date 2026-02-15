@@ -139,6 +139,28 @@ download_dotnet(){
     fi
 }
 
+deno_version="v2.6.9"
+deno_prefix_url="https://github.com/denoland/deno/releases/download/$deno_version/"
+download_deno(){
+    local url="$deno_prefix_url$1"
+    local output_dir="$dist_dir/deno$2"
+    local file_name=$(basename "$url")
+    mkdir -p "$output_dir"
+    if [ ! -f "$file_name" ]; then
+        echo "Downloading $url to $output_dir"
+        curl -L "$url" -o "$file_name"
+        if [ $? -ne 0 ]; then
+            echo "Failed to download $url"
+            exit 1
+        fi
+    else
+        echo "$file_name already exists, skipping download."
+    fi
+    ls $output_dir
+    unzip "$file_name" -d "$output_dir"
+    chmod +x "$output_dir/deno"
+}
+
 ffmpeg_build_version="n8.0-latest"
 ffmpeg_version="8.0"
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
@@ -158,9 +180,11 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     if [[ "$(uname -m)" == "arm64" ]]; then
         download_yt_dlp yt-dlp_macos
         download_dotnet osx-arm64.tar.gz
+        download_deno deno-aarch64-apple-darwin.zip
     fi
     download_yt_dlp yt-dlp_macos "-int"
     download_dotnet osx-x64.tar.gz "-int"
+    download_deno deno-aarch64-apple-darwin.zip "-int"
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then
     if [[ "$(uname -m)" == "aarch64" ]]; then
         download_yt_dlp yt-dlp_linux_aarch64 "-arm64"
