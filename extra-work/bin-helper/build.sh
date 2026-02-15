@@ -168,12 +168,14 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; t
     if [[ "$process" == "arm64" ]]; then
         download_yt_dlp yt-dlp.exe "-arm64.exe"
         download_dotnet win-arm64.zip "-arm64"
+        download_deno deno-aarch64-pc-windows-msvc.zip "-arm64"
         download_ffmpeg ffmpeg-$ffmpeg_build_version-winarm64-gpl-$ffmpeg_version.zip
     else
         download_yt_dlp yt-dlp.exe ".exe"
         download_yt_dlp yt-dlp_x86.exe "-i386.exe"
         download_dotnet win-x64.zip
         download_dotnet win-x86.zip "-i386"
+        download_deno deno-x86_64-pc-windows-msvc.zip
         download_ffmpeg ffmpeg-$ffmpeg_build_version-win64-gpl-$ffmpeg_version.zip
     fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
@@ -189,10 +191,12 @@ elif [[ "$OSTYPE" == "linux-gnu" ]]; then
     if [[ "$(uname -m)" == "aarch64" ]]; then
         download_yt_dlp yt-dlp_linux_aarch64 "-arm64"
         download_dotnet linux-arm64.tar.gz "-arm64"
+        download_deno deno-aarch64-unknown-linux-gnu.zip "-arm64"
         download_ffmpeg ffmpeg-$ffmpeg_build_version-linuxarm64-gpl-$ffmpeg_version.tar.xz
     else
         download_yt_dlp yt-dlp_linux
         download_dotnet linux-x64.tar.gz
+        download_deno deno-x86_64-unknown-linux-gnu.zip
         download_ffmpeg ffmpeg-$ffmpeg_build_version-linux64-gpl-$ffmpeg_version.tar.xz
     fi
 fi
