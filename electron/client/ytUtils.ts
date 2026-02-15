@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 let timeOutId: NodeJS.Timeout | null = null;
 let ytDlpWrap: any = null;
-const binHelperPath = resolve(__dirname, './../bin-helper/');
+const binHelperPath = resolve(__dirname, '../../bin-helper/');
 function scheduleRelease() {
     if (timeOutId !== null) {
         clearTimeout(timeOutId);
