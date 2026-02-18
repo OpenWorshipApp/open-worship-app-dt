@@ -21,7 +21,8 @@ function genMenuItem(
         ),
         disabled:
             !isAvailable ||
-            selectedBooks.some((book) => book.bookKey === bookKey),
+            (selectedBooks.length === 1 &&
+                selectedBooks[0].bookKey === bookKey),
         onSelect: (event: any) => {
             if (event.shiftKey) {
                 setSelectedBooks([...selectedBooks, { bookKey, book }]);
