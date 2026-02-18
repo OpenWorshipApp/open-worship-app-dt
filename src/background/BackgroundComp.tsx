@@ -147,7 +147,7 @@ export default function BackgroundComp() {
                     />
                 ) : null}
             </div>
-            <div className="body flex-fill d-flex">
+            <div className="body flex-fill d-flex overflow-hidden">
                 {appProvider.isPagePresenter && isAudioTabActive ? (
                     <ResizeActorComp
                         flexSizeName={'flex-size-background'}
