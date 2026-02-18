@@ -16,6 +16,7 @@ import type DocumentInf from '../others/DocumentInf';
 import { handleError } from '../helper/errorHelpers';
 import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import type { AnyObjectType } from '../helper/typeHelpers';
+import { notifyNewElementAdded } from '../helper/domHelpers';
 
 export type BibleType = {
     items: BibleItemType[];
@@ -162,6 +163,7 @@ export default class Bible
         const bibleItems = this.items;
         bibleItems.push(newBibleItem);
         this.items = bibleItems;
+        this.notifyNewBibleItemAdded(newBibleItem.id);
     }
 
     swapItems(fromIndex: number, toIndex: number) {
@@ -314,6 +316,14 @@ export default class Bible
         const jsonData = this.toJson();
         const jsonString = JSON.stringify(jsonData);
         return await this.fileSource.writeFileData(jsonString);
+    }
+
+    notifyNewBibleItemAdded(bibleItemId: number) {
+        notifyNewElementAdded(() => {
+            return document.querySelector(
+                `[data-bible-item-id="${this.fileSource.name}-${bibleItemId}"]`,
+            );
+        });
     }
 
     static async fromFilePath(filePath: string) {

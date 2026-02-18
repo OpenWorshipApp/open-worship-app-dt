@@ -327,14 +327,13 @@ export async function notifyNewElementAdded(
         });
         await notifyNewElementAdded(elementGetter, searchingCount + 1);
     } else {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.scrollIntoView({ behavior: 'instant', block: 'center' });
         element.classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
         setTimeout(() => {
             element.classList.add(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
-        }, 2000);
+        }, 100);
         setTimeout(() => {
             element.classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
-        }, 4e3 + 100);
+        }, 2e3 + 200);
     }
 }
-(globalThis as any).notifyNewElementAdded = notifyNewElementAdded;

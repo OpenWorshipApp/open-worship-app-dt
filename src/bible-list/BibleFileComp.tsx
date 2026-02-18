@@ -180,10 +180,10 @@ export default function BibleFileComp({
         if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
             stopDraggingState(event);
             const bibleItem = droppedData.item as BibleItem;
-            if (bibleItem.filePath !== undefined) {
-                data?.moveItemFrom(bibleItem.filePath, bibleItem);
-            } else {
+            if (bibleItem.filePath === undefined) {
                 data?.saveBibleItem(droppedData.item);
+            } else {
+                data?.moveItemFrom(bibleItem.filePath, bibleItem);
             }
         } else {
             handleAttachBackgroundDrop(event, {

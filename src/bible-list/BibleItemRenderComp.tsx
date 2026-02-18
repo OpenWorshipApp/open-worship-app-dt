@@ -30,6 +30,7 @@ import {
     openBibleItemContextMenu,
     useIsOnScreen,
 } from './bibleHelpers';
+import FileSource from '../helper/FileSource';
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -151,10 +152,12 @@ export default function BibleItemRenderComp({
             });
         }
     };
+    const fileSource = FileSource.getInstance(filePath);
     return (
         <li
             className="list-group-item item app-caught-hover-pointer px-3"
             ref={improveBibleItemTitleOnHover}
+            data-bible-item-id={`${fileSource.name}-${bibleItem.id}`}
             data-bible-key={bibleItem.bibleKey}
             data-verse-full-key={bibleItem.toVerseFullKey()}
             data-index={index + 1}

@@ -35,6 +35,7 @@ export default function BibleListComp() {
     if (dirSource === null) {
         return null;
     }
+    // Make sure the default bible file is created
     Bible.getDefault();
     const settingPrefix = getSettingPrefix();
     const defaultDataDirName = appProvider.isPageReader
