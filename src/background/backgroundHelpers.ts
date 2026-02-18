@@ -5,6 +5,7 @@ import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import type { CameraInfoType } from '../helper/cameraHelpers';
+import { notifyNewElementAdded } from '../helper/domHelpers';
 
 export type RenderChildType = (
     filePath: string,
@@ -66,4 +67,13 @@ export function cameraDragDeserialize(data: string) {
     return {
         src: data,
     };
+}
+
+export function notifyBackgroundMediaAdded(bgType: string, fileName: string) {
+    notifyNewElementAdded(() => {
+        return (
+            document.querySelector(`[data-${bgType}-file-name="${fileName}"]`)
+                ?.parentElement ?? null
+        );
+    });
 }

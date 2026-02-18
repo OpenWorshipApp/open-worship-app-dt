@@ -32,6 +32,7 @@ import { genDownloadContextMenuItems } from './downloadHelper';
 import { downloadVideoOrAudio } from '../server/appHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { notifyBackgroundMediaAdded } from './backgroundHelpers';
 
 function RendBodyComp({
     filePath,
@@ -48,7 +49,11 @@ function RendBodyComp({
         false,
     );
     return (
-        <div className="w-100" data-file-path={filePath}>
+        <div
+            className="w-100"
+            data-file-path={filePath}
+            data-audio-file-name={fileSource.name}
+        >
             <div className="d-flex align-items-center w-100 my-2">
                 <audio
                     className="flex-fill"
@@ -87,8 +92,13 @@ function rendChild(
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
 ) {
     if (!activeMap[filePath]) {
+        const fileSource = FileSource.getInstance(filePath);
         return (
-            <div data-file-path={filePath} style={{ display: 'none' }}></div>
+            <div
+                data-file-path={filePath}
+                style={{ display: 'none' }}
+                data-audio-file-name={fileSource.name}
+            />
         );
     }
     return (
@@ -118,17 +128,19 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
                 dirSource.dirPath,
                 fileFullName,
             );
-            if (await fsCheckFileExist(destFileSource.filePath)) {
-                await fsDeleteFile(destFileSource.filePath);
+            const downloadedFilePath = destFileSource.filePath;
+            if (await fsCheckFileExist(downloadedFilePath)) {
+                await fsDeleteFile(downloadedFilePath);
             }
-            await fsMove(filePath, destFileSource.filePath);
+            await fsMove(filePath, downloadedFilePath);
             showSimpleToast(
                 title,
-                `Audio downloaded successfully, file path: "${destFileSource.filePath}"`,
+                `Audio downloaded successfully, file path: "${downloadedFilePath}"`,
             );
+            notifyBackgroundMediaAdded('audio', destFileSource.name);
         } catch (error) {
             handleError(error);
-            showSimpleToast(title, 'Error occurred during downloading video');
+            showSimpleToast(title, 'Error occurred during downloading audio');
         } finally {
             hideProgressBar(audioUrl);
         }

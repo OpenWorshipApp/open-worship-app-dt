@@ -353,6 +353,23 @@ body {
   .nav-item .btn {
     border-radius: 0 !important;
   }
+
+  .app-new-element-highlight {
+    border-width: 2px;
+    border-style: solid;
+    animation: app-new-element-highlight 2s ease-out;
+  }
+}
+
+@keyframes app-new-element-highlight {
+  0% {
+    background-color: green;
+    border-color: green;
+  }
+  100% {
+    background-color: transparent;
+    border-color: transparent;
+  }
 }
 
 @keyframes app-highlight-selected-in {

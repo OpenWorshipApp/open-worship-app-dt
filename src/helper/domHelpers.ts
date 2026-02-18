@@ -311,3 +311,30 @@ export function getParamFileFullName() {
     );
     return fileFullName;
 }
+
+const APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME = 'app-new-element-highlight';
+export async function notifyNewElementAdded(
+    elementGetter: () => HTMLElement | null,
+    searchingCount = 0,
+) {
+    if (searchingCount > 5) {
+        return;
+    }
+    const element = elementGetter();
+    if (element === null) {
+        await new Promise((resolve) => {
+            setTimeout(resolve, 1e3);
+        });
+        await notifyNewElementAdded(elementGetter, searchingCount + 1);
+    } else {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+        setTimeout(() => {
+            element.classList.add(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+        }, 2000);
+        setTimeout(() => {
+            element.classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+        }, 4e3 + 100);
+    }
+}
+(globalThis as any).notifyNewElementAdded = notifyNewElementAdded;
