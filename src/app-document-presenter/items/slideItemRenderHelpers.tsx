@@ -141,15 +141,15 @@ export function toClassNameHighlight(
 
 export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
     const [targetDiv, setTargetDiv] = useState<HTMLDivElement | null>(null);
-    const [parentWidth, setParentWidth] = useState(0);
+    const [width, setWidth] = useState(0);
 
     useAppEffect(() => {
-        setParentWidth(targetDiv?.clientWidth ?? 0);
+        setWidth(targetDiv?.clientWidth ?? 0);
     }, [targetDiv, thumbnailSize]);
 
     const scale = useMemo(() => {
-        return parentWidth / item.width;
-    }, [parentWidth, item]);
+        return width / item.width;
+    }, [width, item]);
 
     const resizeAttemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
@@ -160,7 +160,8 @@ export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
             if (parentDiv !== null) {
                 const resizeObserver = new ResizeObserver(() => {
                     resizeAttemptTimeout(() => {
-                        setParentWidth(targetDiv?.clientWidth ?? 0);
+                        const newWidth = targetDiv?.clientWidth ?? 0;
+                        setWidth(newWidth);
                     });
                 });
                 resizeObserver.observe(parentDiv);
@@ -193,7 +194,7 @@ export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
     );
 
     return {
-        parentWidth,
+        width,
         scale,
         setTargetDiv: handleSetTargetDiv,
         setParentDiv: handleSetParentDiv,

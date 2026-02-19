@@ -60,7 +60,7 @@ export default function PdfSlideRenderComp({
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
 }>) {
-    const { scale, parentWidth, setParentDiv } = useScale(slide, width);
+    const { scale, width: actualWidth, setParentDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);
     const pdfPreviewSrc = slide.pdfPreviewSrc;
     return (
@@ -83,7 +83,7 @@ export default function PdfSlideRenderComp({
                 ref={setParentDiv}
                 style={{
                     position: 'absolute',
-                    width: `${parentWidth}px`,
+                    width: `${actualWidth}px`,
                     height: `${Math.round(slide.height * scale)}px`,
                 }}
             >

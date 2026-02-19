@@ -16,7 +16,7 @@ export default function SlideScaleContainerComp({
     children?: ReactNode;
     extraStyle?: CSSProperties;
 }>) {
-    const { scale, parentWidth, setParentDiv } = useScale(slide, width);
+    const { scale, width: actualWidth, setParentDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);
     const attachedBackgroundData = useAttachedBackgroundData(
         slide.filePath,
@@ -26,7 +26,7 @@ export default function SlideScaleContainerComp({
         <div
             ref={setParentDiv}
             style={{
-                width: `${parentWidth}px`,
+                width: `${actualWidth}px`,
                 height: `${Math.round(slide.height * scale)}px`,
                 transform: `scale(${scale},${scale}) translate(50%, 50%)`,
                 ...extraStyle,
