@@ -25,6 +25,7 @@ import {
 import SlideAutoPlayComp from '../../slide-auto-play/SlideAutoPlayComp';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../../app-document-list/appDocumentTypeHelpers';
+import { useMemo } from 'react';
 
 const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};
@@ -90,8 +91,9 @@ function useAppDocumentItems() {
 export default function AppDocumentItemsComp() {
     const [thumbSizeScale] = useAppDocumentItemThumbnailSizeScale();
     const { varyAppDocumentItems, startLoading } = useAppDocumentItems();
-    const appDocumentItemThumbnailSize =
-        thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
+    const appDocumentItemThumbnailSize = useMemo(() => {
+        return thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
+    }, [thumbSizeScale]);
     const isAnyItemSelected = useAnyItemSelected(varyAppDocumentItems);
     if (varyAppDocumentItems === undefined) {
         return <LoadingComp />;
