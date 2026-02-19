@@ -10,7 +10,7 @@ import {
     checkIsZoomed,
     removeDomTitle,
 } from './helper/domHelpers';
-import { log } from './helper/loggerHelpers';
+import { appLog } from './helper/loggerHelpers';
 
 function main() {
     const container = document.getElementById('root');
@@ -40,7 +40,7 @@ function main() {
 
     document.body.style.backgroundColor = 'transparent';
 
-    log('Is zoom', checkIsZoomed());
+    appLog('Is zoom', checkIsZoomed());
     window.addEventListener('resize', () => {
         appProvider.reload();
     });

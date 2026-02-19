@@ -5,7 +5,7 @@ import { useAppEffect } from './debuggerHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
 import type { AppDocumentSourceAbs } from './AppEditableDocumentSourceAbs';
-import { trace } from './loggerHelpers';
+import { appTrace } from './loggerHelpers';
 import appProvider from '../server/appProvider';
 import {
     pathJoin,
@@ -184,7 +184,7 @@ export function isValidJson(json: any, isSilent: boolean = false) {
     } catch (error) {
         handleError(error);
         if (!isSilent && json === '') {
-            trace('Invalid Json:', json);
+            appTrace('Invalid Json:', json);
         }
         return false;
     }

@@ -349,7 +349,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             if (isValidJson(str, true)) {
                 const style = JSON.parse(str);
                 if (typeof style !== 'object') {
-                    loggerHelpers.error(style);
+                    loggerHelpers.appError(style);
                     throw new Error('Invalid style data');
                 }
                 return style;
@@ -508,7 +508,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                 droppedData.item.filePath,
             );
         } else {
-            loggerHelpers.log(droppedData);
+            loggerHelpers.appLog(droppedData);
         }
     }
 

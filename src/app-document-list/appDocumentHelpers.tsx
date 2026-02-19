@@ -57,7 +57,7 @@ import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPrev
 
 import libOfficeLogo from './liboffice-logo.png';
 import FileSource from '../helper/FileSource';
-import { log } from '../helper/loggerHelpers';
+import { appLog } from '../helper/loggerHelpers';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -262,7 +262,7 @@ async function startConvertingOfficeFile(
             ? null
             : getFileDotExtension(droppedFileFullName);
     const tempFilePath = await getTempFilePath(dotExt);
-    log('Temp file path for converting:', tempFilePath);
+    appLog('Temp file path for converting:', tempFilePath);
     const fileFullName = getFileFullName(file);
     const targetPdfFilePath = await getPdfFilePath(
         dirSource.dirPath,

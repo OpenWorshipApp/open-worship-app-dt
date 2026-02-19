@@ -13,7 +13,7 @@ import { useStateSettingBoolean } from './settingHelpers';
 import { useAppEffect } from './debuggerHelpers';
 import { genTimeoutAttempt } from './helpers';
 import { checkIsDarkMode } from '../others/initHelpers';
-import { error as logError } from './loggerHelpers';
+import { appError as logError } from './loggerHelpers';
 
 async function getCopiedText() {
     try {

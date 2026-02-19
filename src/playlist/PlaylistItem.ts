@@ -75,7 +75,7 @@ export default class PlaylistItem {
             (json.path && typeof json.path !== 'string') ||
             (json.type === 'bible-item' && typeof json.id !== 'number')
         ) {
-            loggerHelpers.error(json);
+            loggerHelpers.appError(json);
             throw new Error('Invalid playlist item data');
         }
     }

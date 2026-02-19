@@ -68,7 +68,7 @@ export function calMediaSizes(
             offsetV: (parentHeight - newHeight) / 2,
         };
     }
-    loggerHelpers.log(scaleType);
+    loggerHelpers.appLog(scaleType);
     const scale = Math.max(parentWidth / width, parentHeight / height);
     const newWidth = Math.round(width * scale);
     const newHeight = Math.round(height * scale);
@@ -184,7 +184,7 @@ export function getBibleListOnScreenSetting(): BibleListType {
                 ((item as any).type === 'bible-item' &&
                     validateBible((item as any).bibleItemData))
             ) {
-                loggerHelpers.error(item);
+                loggerHelpers.appError(item);
                 throw new Error('Invalid bible-screen-view data');
             }
         }

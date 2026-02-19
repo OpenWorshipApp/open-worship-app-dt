@@ -26,7 +26,7 @@ import type { BibleMinimalInfoType } from './bibleDownloadHelpers';
 import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
-import { log } from '../loggerHelpers';
+import { appLog } from '../loggerHelpers';
 import { getBibleModelInfo, modelNewLinerInfo } from './bibleModelHelpers';
 
 export async function toInputText(
@@ -649,7 +649,7 @@ async function genExtraBibleItems(
             `${book} ${chapterNum}:`,
         );
         if (newBibleItem === null) {
-            log(
+            appLog(
                 'Failed to generate extra bible item for',
                 `${book} ${chapterNum}:`,
             );

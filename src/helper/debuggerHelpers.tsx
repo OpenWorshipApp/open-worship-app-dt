@@ -1,7 +1,7 @@
 import type { DependencyList, EffectCallback } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { warn } from './loggerHelpers';
+import { appWarning } from './loggerHelpers';
 import type { OptionalPromise } from './typeHelpers';
 import appProvider from '../server/appProvider';
 
@@ -31,7 +31,7 @@ function restore(toKey: string) {
 }
 
 function warningMethod(key: string) {
-    warn(`[useAppEffect] ${key} is called after unmounting`);
+    appWarning(`[useAppEffect] ${key} is called after unmounting`);
 }
 
 const storeMapper = new Map<string, StoreType>();
@@ -39,7 +39,7 @@ function checkStore(toKey: string) {
     const store = restore(toKey);
     storeMapper.set(toKey, store);
     if (store.count > THRESHOLD) {
-        warn(
+        appWarning(
             `[useAppEffect] ${toKey} is called more than ` +
                 `${THRESHOLD} times in ${MILLIE_SECOND}ms`,
         );
@@ -56,7 +56,7 @@ function useAppEffect1(
     }, []);
     for (const dep of deps) {
         if (Array.isArray(dep)) {
-            warn(
+            appWarning(
                 '[useAppEffect] Detected object in dependency list. ' +
                     'This may cause unnecessary re-renders.',
                 dep,

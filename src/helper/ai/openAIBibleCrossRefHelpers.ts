@@ -7,7 +7,7 @@ import { bibleCrossRefSchemaJson } from './aiHelpers';
 import type { CrossReferenceType } from './bibleCrossRefHelpers';
 import { useGetBibleCrossRef } from './bibleCrossRefHelpers';
 import { cloneJson } from '../helpers';
-import { error as logError } from '../loggerHelpers';
+import { appError as logError } from '../loggerHelpers';
 
 function genPrompt(bibleTitle: string, additionalData?: CrossReferenceType[]) {
     const extraContext =

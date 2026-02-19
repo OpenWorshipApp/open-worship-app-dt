@@ -24,7 +24,7 @@ import { getModelKeyBookMap } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';
 import { toVerseFullKeyFormat } from '../bible-helpers/bibleInfoHelpers';
 import { getBibleModelInfoSetting } from '../bible-helpers/bibleModelHelpers';
-import { error as logError } from '../loggerHelpers';
+import { appError as logError } from '../loggerHelpers';
 
 type GetBibleCrossRefParamsType = {
     bookKey: string;

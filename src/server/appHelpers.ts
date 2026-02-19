@@ -13,7 +13,7 @@ import {
 } from './fileHelpers';
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
-import { log, error as logError } from '../helper/loggerHelpers';
+import { appLog, appError as logError } from '../helper/loggerHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 
 export function genReturningEventName(eventName: string) {
@@ -166,7 +166,7 @@ export async function checkForUpdateSilently() {
     }
     try {
         const version = updateData.version as string;
-        log(
+        appLog(
             `Current version: ${appProvider.appInfo.version}, ` +
                 `Latest version: ${version}`,
         );

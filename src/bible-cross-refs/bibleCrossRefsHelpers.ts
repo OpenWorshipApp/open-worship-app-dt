@@ -14,7 +14,7 @@ import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import { validateCrossReference } from '../helper/ai/bibleCrossRefHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
-import { error as logError } from '../helper/loggerHelpers';
+import { appError as logError } from '../helper/loggerHelpers';
 
 export type RawBibleCrossRefListType = string[][];
 export type BibleCrossRefType = {

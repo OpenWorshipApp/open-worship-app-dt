@@ -187,7 +187,7 @@ export async function findOnline(
             });
             return result as BibleFindResultType;
         }
-        loggerHelpers.error(`Invalid bible find ${result}`);
+        loggerHelpers.appError(`Invalid bible find ${result}`);
     } catch (error) {
         showSimpleToast(
             'Fetching Bible Finding Online',

@@ -16,18 +16,18 @@ function callConsole(method: string, ...args: any[]) {
     callable?.call(console, ...args);
 }
 
-export function log(...args: any[]) {
+export function appLog(...args: any[]) {
     callConsole('log', ...args);
 }
 
-export function error(...args: any[]) {
+export function appError(...args: any[]) {
     callConsole('error', ...args);
 }
 
-export function warn(...args: any[]) {
+export function appWarning(...args: any[]) {
     callConsole('warn', ...args);
 }
 
-export function trace(...args: any[]) {
+export function appTrace(...args: any[]) {
     callConsole('trace', ...args);
 }

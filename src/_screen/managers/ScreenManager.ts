@@ -1,6 +1,6 @@
 import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
-import { log } from '../../helper/loggerHelpers';
+import { appLog } from '../../helper/loggerHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
 import ScreenBibleManager from './ScreenBibleManager';
@@ -168,7 +168,7 @@ export default class ScreenManager extends ScreenManagerBase {
         ) {
             this.screenBibleManager.receiveScreenDropped(droppedData);
         } else {
-            log(droppedData);
+            appLog(droppedData);
         }
     }
 
@@ -209,7 +209,7 @@ export default class ScreenManager extends ScreenManagerBase {
         } else if (type === 'bible-screen-view-text-style') {
             ScreenBibleManager.receiveSyncTextStyle(message);
         } else {
-            log(message);
+            appLog(message);
         }
     }
 

@@ -186,7 +186,7 @@ export default class BibleItem
             typeof json.target.verseStart !== 'number' ||
             typeof json.target.verseEnd !== 'number'
         ) {
-            loggerHelpers.error(json);
+            loggerHelpers.appError(json);
             throw new Error('Invalid bible item data');
         }
     }
