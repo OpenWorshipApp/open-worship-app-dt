@@ -139,7 +139,8 @@ export default function SlideEditorCanvasComp() {
     return (
         <div className="card w-100 h-100">
             <div
-                className="card-body editor-container"
+                className="card-body editor-container app-focusable"
+                tabIndex={0}
                 onWheel={(event) => {
                     event.stopPropagation();
                     handleCtrlWheel({
