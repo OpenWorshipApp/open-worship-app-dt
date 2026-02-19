@@ -115,6 +115,7 @@ export default function BackgroundWebComp() {
             genExtraItemContextMenuItems={
                 genBackgroundWebExtraItemContextMenuItems
             }
+            itemFillingClassname="web-thumbnail"
         />
     );
 }

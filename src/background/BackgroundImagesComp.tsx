@@ -196,6 +196,7 @@ export default function BackgroundImagesComp() {
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_IMAGE}
             genContextMenuItems={genContextMenuItems}
             onItemsAdding={handleItemsAdding}
+            itemFillingClassname="image-thumbnail"
         />
     );
 }

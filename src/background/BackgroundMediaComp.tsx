@@ -14,6 +14,7 @@ import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
 import BackgroundMediaItemComp from './BackgroundMediaItemComp';
 import type { RenderChildType } from './backgroundHelpers';
 import { backgroundTypeMapper } from './backgroundHelpers';
+import FillingFlexCenterComp from '../others/FillingFlexCenterComp';
 
 export const defaultRangeSize = {
     size: 100,
@@ -52,6 +53,7 @@ type PropsType = {
         event: any,
     ) => void;
     genExtraItemContextMenuItems?: (filePath: string) => ContextMenuItemType[];
+    itemFillingClassname?: string;
 };
 
 const handleBodyRendering = (
@@ -74,9 +76,9 @@ const handleBodyRendering = (
     const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
     const newFilePaths = sortFilePaths(filePaths);
     return (
-        <div>
+        <div className="w-100">
             {extraHeaderChild ? <>{extraHeaderChild}</> : null}
-            <div className="d-flex justify-content-start flex-wrap">
+            <div className="d-flex justify-content-center flex-wrap">
                 {newFilePaths.map((filePath) => {
                     return (
                         <BackgroundMediaItemComp
@@ -95,6 +97,10 @@ const handleBodyRendering = (
                         />
                     );
                 })}
+                <FillingFlexCenterComp
+                    width={thumbnailWidth}
+                    className={props.itemFillingClassname}
+                />
             </div>
         </div>
     );

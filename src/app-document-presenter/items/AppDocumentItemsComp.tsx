@@ -26,6 +26,7 @@ import SlideAutoPlayComp from '../../slide-auto-play/SlideAutoPlayComp';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../../app-document-list/appDocumentTypeHelpers';
 import { useMemo } from 'react';
+import FillingFlexCenterComp from '../../others/FillingFlexCenterComp';
 
 const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};
@@ -109,7 +110,7 @@ export default function AppDocumentItemsComp() {
         );
     }
     return (
-        <div className="d-flex flex-wrap">
+        <div className="d-flex flex-wrap justify-content-center">
             {varyAppDocumentItems.map((varyAppDocumentItem, i) => {
                 return (
                     <VaryAppDocumentItemRenderWrapperComp
@@ -120,6 +121,10 @@ export default function AppDocumentItemsComp() {
                     />
                 );
             })}
+            <FillingFlexCenterComp
+                width={appDocumentItemThumbnailSize}
+                className="data-vary-app-document-item"
+            />
             {isAnyItemSelected ? (
                 <SlideAutoPlayComp
                     prefix="vary-app-document"

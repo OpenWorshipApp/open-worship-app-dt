@@ -234,6 +234,7 @@ export default function BackgroundVideosComp() {
             genContextMenuItems={genVideoDownloadContextMenuItems}
             onItemsAdding={handleItemsAdding}
             genExtraItemContextMenuItems={genExtraItemContextMenuItems}
+            itemFillingClassname="video-thumbnail"
         />
     );
 }

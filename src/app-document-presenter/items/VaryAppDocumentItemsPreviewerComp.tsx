@@ -55,7 +55,7 @@ export default function VaryAppDocumentItemsPreviewerComp() {
         <div
             className={
                 `${SLIDE_ITEMS_CONTAINER_CLASS_NAME}` +
-                ' app-focusable w-100 h-100 pb-5'
+                ' app-focusable w-100 h-100 pb-2'
             }
             tabIndex={0}
             onBlur={(event) => {
