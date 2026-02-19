@@ -15,10 +15,11 @@ export default class ElectronFinderController {
     mainWin: BrowserWindow | null = null;
     createWindow(mainWin: BrowserWindow) {
         const webPreferences = genWebPreferences(routeProps.preloadFilePath);
+        const mainBounds = mainWin.getBounds();
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
-            x: 0,
-            y: 0,
+            x: mainBounds.x,
+            y: mainBounds.y,
             width: 270,
             height: 80,
             webPreferences,

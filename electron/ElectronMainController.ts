@@ -35,8 +35,6 @@ export default class ElectronMainController {
         const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
-            x: 0,
-            y: 0,
             webPreferences,
         });
         guardBrowsing(win, webPreferences);
