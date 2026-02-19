@@ -7,7 +7,10 @@ import { handleCtrlWheel } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
-import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
+import {
+    useSlideItemsControlEventContext,
+    useVaryAppDocumentContext,
+} from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
 import type { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
 import { changeDragEventStyle } from '../../helper/helpers';
@@ -45,12 +48,25 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
 
 export default function VaryAppDocumentItemsPreviewerComp() {
     const varyAppDocument = useVaryAppDocumentContext();
+    const onEvent = useSlideItemsControlEventContext();
     const [thumbSizeScale, setThumbnailSizeScale] =
         useAppDocumentItemThumbnailSizeScale();
     return (
         <div
-            className={`${SLIDE_ITEMS_CONTAINER_CLASS_NAME} app-focusable w-100 h-100 pb-5`}
+            className={
+                `${SLIDE_ITEMS_CONTAINER_CLASS_NAME}` +
+                ' app-focusable w-100 h-100 pb-5'
+            }
             tabIndex={0}
+            onBlur={(event) => {
+                onEvent(event);
+            }}
+            onKeyUp={(event) => {
+                if (document.activeElement !== event.currentTarget) {
+                    return;
+                }
+                onEvent(event);
+            }}
             style={{ overflow: 'auto' }}
             onWheel={(event) => {
                 handleCtrlWheel({

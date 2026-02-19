@@ -245,6 +245,19 @@ export default class AppDocument
         await this.setSlides(newSlides);
     }
 
+    async deleteSlides(slidesToDelete: Slide[]) {
+        if(slidesToDelete.length === 0) {
+            return;
+        }
+        const slides = await this.getSlides();
+        const newSlides = slides.filter((slide) => {
+            return !slidesToDelete.some((slideToDelete) =>
+                slide.checkIsSame(slideToDelete),
+            );
+        });
+        await this.setSlides(newSlides);
+    }
+
     static toWrongDimensionString({ slide, display }: WrongDimensionType) {
         return (
             `⚠️ slide:${slide.width}x${slide.height} ` +

@@ -116,7 +116,8 @@ export function genAttachBackgroundComponent(
 
 export function toClassNameHighlight(
     varyAppDocumentItem: VaryAppDocumentItemType,
-    selectedVaryAppDocumentItem?: VaryAppDocumentItemType | null,
+    selectedVaryAppDocumentItem: VaryAppDocumentItemType | null,
+    holdingVaryAppDocumentItems: VaryAppDocumentItemType[],
 ) {
     const activeClassname =
         appProvider.isPageAppDocumentEditor &&
@@ -129,6 +130,18 @@ export function toClassNameHighlight(
         appProvider.isPageAppDocumentEditor || !isOnScreen
             ? ''
             : `${HIGHLIGHT_SELECTED_CLASSNAME} animation`;
+    let holdingClassname = '';
+    if (
+        !(
+            selectedVaryAppDocumentItem !== null &&
+            varyAppDocumentItem.checkIsSame(selectedVaryAppDocumentItem)
+        ) &&
+        holdingVaryAppDocumentItems.some((holdingItem) =>
+            varyAppDocumentItem.checkIsSame(holdingItem),
+        )
+    ) {
+        holdingClassname = 'holding';
+    }
     return {
         selectedList: ScreenVaryAppDocumentManager.getDataList(
             varyAppDocumentItem.filePath,
@@ -136,6 +149,7 @@ export function toClassNameHighlight(
         ),
         activeCN: activeClassname,
         presenterCN: presenterClassname,
+        holdingCN: holdingClassname,
     };
 }
 

@@ -36,7 +36,11 @@ function RenderScreenInfoComp({
     if (!appProvider.isPagePresenter) {
         return null;
     }
-    const { selectedList } = toClassNameHighlight(varyAppDocumentItem);
+    const { selectedList } = toClassNameHighlight(
+        varyAppDocumentItem,
+        null,
+        [],
+    );
     if (selectedList.length === 0) {
         return null;
     }
@@ -112,6 +116,7 @@ export default function SlideItemRenderComp({
     onContextMenu,
     onCopy,
     selectedItem,
+    holdingItems,
     children,
 }: Readonly<{
     slide: VaryAppDocumentItemType;
@@ -121,12 +126,16 @@ export default function SlideItemRenderComp({
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
     onCopy?: () => void;
     selectedItem?: VaryAppDocumentItemType | null;
+    holdingItems?: VaryAppDocumentItemType[];
     children: ReactNode;
 }>) {
     const { scale, setTargetDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);
-    const { activeCN: activeClassName, presenterCN: presenterClassName } =
-        toClassNameHighlight(slide, selectedItem);
+    const {
+        activeCN: activeClassName,
+        presenterCN: presenterClassName,
+        holdingCN: holdingClassName,
+    } = toClassNameHighlight(slide, selectedItem ?? null, holdingItems ?? []);
     const attachedBackgroundData = useAttachedBackgroundData(
         slide.filePath,
         slide.id,
@@ -168,9 +177,9 @@ export default function SlideItemRenderComp({
     return (
         <div
             className={
-                'data-vary-app-document-item card' +
-                ` app-caught-hover-pointer ${activeClassName} ` +
-                `${presenterClassName} app-overflow-hidden`
+                'data-vary-app-document-item card app-caught-hover-pointer' +
+                ' app-overflow-hidden' +
+                ` ${presenterClassName} ${activeClassName} ${holdingClassName}`
             }
             ref={setTargetDiv}
             style={{ width: `${width}px` }}

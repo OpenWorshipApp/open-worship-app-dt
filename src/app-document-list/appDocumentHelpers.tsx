@@ -54,6 +54,7 @@ import type {
     VaryAppDocumentItemType,
 } from './appDocumentTypeHelpers';
 import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
+import { AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
 
 import libOfficeLogo from './liboffice-logo.png';
 import FileSource from '../helper/FileSource';
@@ -396,7 +397,12 @@ export function useSelectedAppDocumentSetterContext() {
 
 export const SelectedEditingSlideContext = createContext<{
     selectedSlide: Slide | null;
-    setSelectedDocument: (newSlide: Slide | null) => void;
+    holdingSlides: Slide[];
+    setSelectedDocument: (
+        newSlide: Slide | null,
+        controlType?: KeyboardControlType,
+    ) => void;
+    onEvent: (event: any) => void;
 } | null>(null);
 
 function useContextItem() {
@@ -424,6 +430,11 @@ export function useSelectedEditingSlideContext() {
 export function useSelectedEditingSlideSetterContext() {
     const context = useContextItem();
     return context.setSelectedDocument;
+}
+
+export function useSlideItemsControlEventContext() {
+    const context = useContextItem();
+    return context.onEvent;
 }
 
 export function useSlideWrongDimension(

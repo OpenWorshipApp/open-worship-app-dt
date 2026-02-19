@@ -8,6 +8,16 @@ import { SelectedEditingSlideContext } from '../../app-document-list/appDocument
 import SlideItemRenderComp from './SlideItemRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 
+function useData() {
+    const selectedSlideContext = use(SelectedEditingSlideContext);
+    const selectedSlide = selectedSlideContext?.selectedSlide ?? null;
+    const holdingSlides = selectedSlideContext?.holdingSlides ?? [];
+    return {
+        selectedSlide,
+        holdingSlides,
+    };
+}
+
 export default function SlideRenderComp({
     slide,
     width,
@@ -23,13 +33,13 @@ export default function SlideRenderComp({
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
     onCopy: () => void;
 }>) {
-    const selectedSlide =
-        use(SelectedEditingSlideContext)?.selectedSlide ?? null;
+    const { selectedSlide, holdingSlides } = useData();
     useScreenVaryAppDocumentManagerEvents(['update']);
     return (
         <SlideItemRenderComp
             slide={slide}
             selectedItem={selectedSlide}
+            holdingItems={holdingSlides}
             width={width}
             index={index}
             onContextMenu={onContextMenu}

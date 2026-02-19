@@ -95,6 +95,9 @@ $resizer-color: rgb(73, 103, 123);
     &.active {
       border: 1px solid var(--bs-gray-300);
     }
+    &.holding {
+      border: 1px dashed var(--bs-gray-300);
+    }
 
     .vary-app-document-item-header {
       background-color: var(--bs-gray-800);

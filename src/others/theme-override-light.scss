@@ -100,6 +100,9 @@ $resizer-color: rgb(123, 173, 205);
     &.active {
       border: 1px solid var(--bs-gray-700);
     }
+    &.holding {
+      border: 1px dashed var(--bs-gray-700);
+    }
 
     .vary-app-document-item-header {
       background-color: var(--bs-gray-200);

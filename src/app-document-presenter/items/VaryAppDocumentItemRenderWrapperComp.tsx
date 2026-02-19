@@ -1,3 +1,5 @@
+import { MouseEvent } from 'react';
+
 import SlideRenderComp from './SlideRenderComp';
 import PdfSlideRenderComp from './PdfSlideRenderComp';
 import { handleAppDocumentItemSelecting } from './varyAppDocumentHelpers';
@@ -10,6 +12,7 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import Slide from '../../app-document-list/Slide';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import { AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
 
 export default function VaryAppDocumentItemRenderWrapperComp({
     thumbSize,
@@ -22,7 +25,7 @@ export default function VaryAppDocumentItemRenderWrapperComp({
 }>) {
     const selectedAppDocument = useVaryAppDocumentContext();
     const setSelectedAppDocumentItem = useSelectedEditingSlideSetterContext();
-    const handleClicking = (event: any) => {
+    const handleClicking = (event: MouseEvent) => {
         event.stopPropagation();
         setTimeout(() => {
             handleAppDocumentItemSelecting(
@@ -30,17 +33,39 @@ export default function VaryAppDocumentItemRenderWrapperComp({
                 index + 1,
                 varyAppDocumentItem,
                 (selectedVaryAppDocumentItem) => {
-                    if (selectedVaryAppDocumentItem instanceof Slide) {
-                        setSelectedAppDocumentItem(selectedVaryAppDocumentItem);
+                    if (
+                        selectedVaryAppDocumentItem instanceof Slide ===
+                        false
+                    ) {
+                        return;
                     }
+                    let controlType: KeyboardControlType | undefined =
+                        undefined;
+                    if (event.ctrlKey) {
+                        controlType = 'Ctrl';
+                    } else if (event.shiftKey) {
+                        controlType = 'Shift';
+                    }
+                    setSelectedAppDocumentItem(
+                        selectedVaryAppDocumentItem,
+                        controlType,
+                    );
                 },
             );
         }, 0);
     };
     const handleContextMenuOpening = (
-        event: any,
+        event: MouseEvent,
         extraMenuItems: ContextMenuItemType[],
     ) => {
+        if (event.ctrlKey) {
+            // Ctrl + left click to open context should not open context menu
+            // but trigger clicking (selecting) instead
+            event.preventDefault();
+            event.stopPropagation();
+            handleClicking(event);
+            return;
+        }
         selectedAppDocument.showSlideContextMenu(
             event,
             varyAppDocumentItem as any,

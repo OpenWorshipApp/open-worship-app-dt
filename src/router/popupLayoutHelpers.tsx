@@ -17,6 +17,7 @@ import type { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHe
 import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
+import { AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
@@ -79,6 +80,42 @@ export function genTabs() {
     return newTabs;
 }
 
+async function calculateNewHoldingSlides(
+    controlType: KeyboardControlType,
+    appDocument: AppDocument,
+    currentSlide: Slide | null,
+    newSlide: Slide,
+    currentHoldingSlides: Slide[],
+) {
+    if (controlType === 'Ctrl') {
+        if (
+            currentHoldingSlides.some((slide) => {
+                return slide.checkIsSame(newSlide);
+            })
+        ) {
+            return currentHoldingSlides.filter((slide) => {
+                return !slide.checkIsSame(newSlide);
+            });
+        }
+        return [...currentHoldingSlides, newSlide];
+    }
+    if (currentSlide === null) {
+        return [newSlide];
+    }
+    const index = await appDocument.getSlideIndex(newSlide);
+    if (index === -1) {
+        return currentHoldingSlides;
+    }
+    const currentIndex = await appDocument.getSlideIndex(currentSlide);
+    if (currentIndex === -1) {
+        return currentHoldingSlides;
+    }
+    const slides = await appDocument.getSlides();
+    return slides.slice(
+        Math.min(index, currentIndex),
+        Math.max(index, currentIndex) + 1,
+    );
+}
 export function useAppDocumentContextValues() {
     const [varyAppDocument, setVaryAppDocument] =
         useState<VaryAppDocumentType | null>(null);
@@ -91,10 +128,12 @@ export function useAppDocumentContextValues() {
         [],
     );
 
+    const [holdingSlides, setHoldingSlides] = useState<Slide[]>([]);
     const [slide, setSlide] = useState<Slide | null>(null);
 
     const setSlide1 = useCallback((newSlide: Slide | null) => {
         setSlide(newSlide);
+        setHoldingSlides([]);
         setSelectedEditingSlide(newSlide);
     }, []);
 
@@ -136,11 +175,49 @@ export function useAppDocumentContextValues() {
     const editingSlideContextValue = useMemo(() => {
         return {
             selectedSlide: slide,
-            setSelectedDocument: (newSelectedSlide: Slide) => {
+            holdingSlides,
+            setSelectedDocument: async (
+                newSelectedSlide: Slide,
+                controlType?: KeyboardControlType,
+            ) => {
+                if (controlType !== undefined) {
+                    if (!AppDocument.checkIsThisType(varyAppDocument)) {
+                        return;
+                    }
+                    const newHoldingSlides = await calculateNewHoldingSlides(
+                        controlType,
+                        varyAppDocument,
+                        slide,
+                        newSelectedSlide,
+                        holdingSlides,
+                    );
+                    setHoldingSlides(newHoldingSlides);
+                    return;
+                }
                 setSlide1(newSelectedSlide);
             },
+            onEvent: async (event: any) => {
+                if (event.type === 'blur') {
+                    setHoldingSlides([]);
+                } else if (event.type === 'keyup') {
+                    const key = event.key;
+                    if (key === 'Escape') {
+                        setHoldingSlides([]);
+                    } else if (key === 'Delete') {
+                        if (
+                            holdingSlides.length === 0 ||
+                            !AppDocument.checkIsThisType(varyAppDocument)
+                        ) {
+                            return;
+                        }
+                        await varyAppDocument.deleteSlides(holdingSlides);
+                    }
+                }
+                // TODO: on copy
+                // TODO: on paste
+            },
         };
-    }, [slide, setSlide1]);
+    }, [slide, varyAppDocument, holdingSlides, setSlide1]);
 
     const handleFileUpdate = useCallback(async () => {
         if (
