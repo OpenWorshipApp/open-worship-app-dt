@@ -246,7 +246,7 @@ export default class AppDocument
     }
 
     async deleteSlides(slidesToDelete: Slide[]) {
-        if(slidesToDelete.length === 0) {
+        if (slidesToDelete.length === 0) {
             return;
         }
         const slides = await this.getSlides();

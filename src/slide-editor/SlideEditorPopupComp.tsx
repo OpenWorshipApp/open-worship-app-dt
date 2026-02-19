@@ -22,7 +22,9 @@ export default function SlideEditorPopupComp({
                     <SelectedEditingSlideContext
                         value={{
                             selectedSlide: slide,
+                            holdingSlides: [],
                             setSelectedDocument: () => {},
+                            onEvent: () => {},
                         }}
                     >
                         <SlideEditorComp />
