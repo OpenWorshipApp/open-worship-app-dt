@@ -38,9 +38,6 @@ export function useEditingHistoryStatus(filePath: string) {
         const canSave =
             historyText !== null &&
             removeLastEditingDate(historyText) !== removeLastEditingDate(text);
-        if (filePath.toLocaleLowerCase().includes('peaching') && canSave) {
-            console.log(historyText, text);
-        }
         setStatus({ canUndo, canRedo, canSave });
     };
     useFileSourceEvents(['update'], update, [], filePath);

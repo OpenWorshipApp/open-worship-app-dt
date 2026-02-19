@@ -343,7 +343,6 @@ export async function exportToWordDocument(bibleItems: BibleItem[]) {
     const filePath = await exportBibleMSWord(bibleData);
     if (filePath) {
         const fileSource = FileSource.getInstance(filePath);
-        console.log(fileSource.baseDirPath);
         for (const bibleKey of bibleKeys) {
             const langData = langDataMap[bibleKey];
             if (langData?.getFontFamilyFiles) {
