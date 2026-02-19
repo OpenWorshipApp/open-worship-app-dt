@@ -98,7 +98,7 @@ $resizer-color: rgb(123, 173, 205);
     box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);
 
     &.active {
-      border: 2px solid var(--bs-gray-700);
+      border: 1px solid var(--bs-gray-700);
     }
 
     .vary-app-document-item-header {
@@ -115,10 +115,6 @@ $resizer-color: rgb(123, 173, 205);
       .index {
         background-color: rgba(0, 53, 53, 0.513);
       }
-    }
-
-    &:not(.app-highlight-selected):not(.active):hover {
-      border: 1px dotted var(--bs-gray-500);
     }
 
     .index {
