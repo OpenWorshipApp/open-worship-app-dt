@@ -140,11 +140,16 @@ export function toClassNameHighlight(
 }
 
 export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
-    const [targetDiv, setTargetDiv] = useState<HTMLDivElement | null>(null);
+    const [targetDiv, setTargetDiv] = useState<HTMLElement | null>(null);
     const [width, setWidth] = useState(0);
 
+    const applyWidth = () => {
+        const newWidth = targetDiv?.clientWidth ?? 0;
+        setWidth(newWidth);
+    };
+
     useAppEffect(() => {
-        setWidth(targetDiv?.clientWidth ?? 0);
+        applyWidth();
     }, [targetDiv, thumbnailSize]);
 
     const scale = useMemo(() => {
@@ -156,39 +161,35 @@ export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
     }, []);
 
     const listenParentSizing = useCallback(
-        (parentDiv: HTMLElement | null) => {
-            if (parentDiv !== null) {
-                const resizeObserver = new ResizeObserver(() => {
-                    resizeAttemptTimeout(() => {
-                        const newWidth = targetDiv?.clientWidth ?? 0;
-                        setWidth(newWidth);
-                    });
-                });
-                resizeObserver.observe(parentDiv);
-                return () => {
-                    resizeObserver.disconnect();
-                };
+        (element: HTMLElement | null) => {
+            if (element === null) {
+                return;
             }
+            const resizeObserver = new ResizeObserver(() => {
+                resizeAttemptTimeout(() => {
+                    applyWidth();
+                });
+            });
+            resizeObserver.observe(element);
+            return () => {
+                resizeObserver.disconnect();
+            };
         },
-        [resizeAttemptTimeout, targetDiv],
+        [resizeAttemptTimeout, applyWidth],
     );
 
     const handleSetTargetDiv = useCallback(
-        (div: HTMLDivElement | null) => {
-            setTargetDiv(div);
-            return listenParentSizing(div?.parentElement ?? null);
+        (currentElement: HTMLElement | null) => {
+            setTargetDiv(currentElement);
+            return listenParentSizing(currentElement?.parentElement ?? null);
         },
         [listenParentSizing],
     );
 
     const handleSetParentDiv = useCallback(
-        (parentDiv: HTMLDivElement | null) => {
-            if (parentDiv === null) {
-                setTargetDiv(null);
-            } else {
-                setTargetDiv(parentDiv.parentElement as HTMLDivElement);
-            }
-            return listenParentSizing(parentDiv);
+        (currentElement: HTMLElement | null) => {
+            setTargetDiv(currentElement?.parentElement ?? null);
+            return listenParentSizing(currentElement);
         },
         [listenParentSizing],
     );
