@@ -22,7 +22,7 @@ import LayoutTabRenderComp from './LayoutTabRenderComp';
 import {
     useAppDocumentContextValues,
     useLyricContextValues,
-} from './popupLayoutHelpers';
+} from './layoutHelpers';
 
 export default function AppLayoutComp({
     children,

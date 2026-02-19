@@ -2,7 +2,7 @@ import { useMemo, useCallback } from 'react';
 
 import type { TabOptionType } from './routeHelpers';
 import { goToPath } from './routeHelpers';
-import { genTabs } from './popupLayoutHelpers';
+import { genTabs } from './layoutHelpers';
 
 export default function LayoutTabRenderComp() {
     const tabs = useMemo(genTabs, []);

@@ -24,7 +24,7 @@ import type {
     VaryAppDocumentDynamicType,
     VaryAppDocumentType,
 } from './appDocumentTypeHelpers';
-import { genLayoutTabs } from '../router/popupLayoutHelpers';
+import { genLayoutTabs } from '../router/layoutHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
