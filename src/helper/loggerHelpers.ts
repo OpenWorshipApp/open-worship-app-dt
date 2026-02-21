@@ -1,3 +1,5 @@
+import appProvider from '../server/appProvider';
+
 const logLevelMapper = {
     verbose: ['error', 'warn', 'log', 'trace'],
     minimal: ['error', 'warn'],
@@ -14,6 +16,12 @@ function callConsole(method: string, ...args: any[]) {
         | ((...args: any) => void)
         | undefined;
     callable?.call(console, ...args);
+    if (!appProvider.isPagePresenter) {
+        appProvider.messageUtils.sendData('all:app:log', [
+            `:${appProvider.currentHomePage}:`,
+            ...args,
+        ]);
+    }
 }
 
 export function appLog(...args: any[]) {

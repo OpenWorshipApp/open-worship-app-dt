@@ -355,6 +355,10 @@ export function initEventOther(appController: ElectronAppController) {
         printHTMLContent(htmlText);
     });
 
+    ipcMain.on('all:app:log', (_event, messages: any[]) => {
+        console.log(...messages);
+    });
+
     onAsync(
         ipcMain,
         'main:app:ms-pp-slides-count',

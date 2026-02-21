@@ -32,5 +32,5 @@ export async function initProvider(provider: { [key: string]: any }) {
         provider['currentHomePage'] = pathName;
     }
     freezeObject(provider);
-    (globalThis as any).provider = (globalThis as any).provider = provider;
+    (globalThis as any).provider = provider;
 }
