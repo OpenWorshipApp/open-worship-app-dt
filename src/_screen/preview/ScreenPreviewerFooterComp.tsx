@@ -1,11 +1,15 @@
 import { useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
-import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
+import {
+    useScreenManagerBaseContext,
+    useVideoSources,
+} from '../managers/screenManagerHooks';
 import DisplayControl from './DisplayControl';
 import ScreenEffectControlComp from './ScreenEffectControlComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import MiniScreenAudioHandlersComp from './MiniScreenAudioHandlersComp';
 
 function getNewStageNumber(
     event: any,
@@ -43,6 +47,7 @@ function getNewStageNumber(
 }
 
 export default function ScreenPreviewerFooterComp() {
+    const videoSources = useVideoSources();
     const screenManagerBase = useScreenManagerBaseContext();
     const [stageNumber, setStageNumber] = useState(
         screenManagerBase.stageNumber,
@@ -56,12 +61,16 @@ export default function ScreenPreviewerFooterComp() {
             className="card-footer w-100"
             style={{
                 overflowX: 'auto',
-                overflowY: 'hidden',
-                height: '25px',
                 padding: '1px',
             }}
         >
-            <div className="d-flex w-100 h-100">
+            <div
+                className="d-flex w-100 "
+                style={{
+                    height: '25px',
+                    overflowY: 'hidden',
+                }}
+            >
                 <div className="d-flex justify-content-start">
                     <DisplayControl />
                     <ScreenEffectControlComp />
@@ -82,6 +91,14 @@ export default function ScreenPreviewerFooterComp() {
                         <div className="px-1 text-muted">{stageNumber}</div>
                     </div>
                 </div>
+            </div>
+            <div className="w-100">
+                {videoSources.map((videoSource) => (
+                    <MiniScreenAudioHandlersComp
+                        key={videoSource}
+                        src={videoSource}
+                    />
+                ))}
             </div>
         </div>
     );

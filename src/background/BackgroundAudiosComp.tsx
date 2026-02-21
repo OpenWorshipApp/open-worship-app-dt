@@ -13,9 +13,8 @@ import {
     handleAudioPlaying,
     handleAudioPausing,
     handleAudioEnding,
-    getAudioRepeatSettingName,
     showAudioPlayingToast,
-} from './audioBackgroundHelpers';
+} from '../helper/audioControlHelpers';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
@@ -33,6 +32,14 @@ import { downloadVideoOrAudio } from '../server/appHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { notifyBackgroundMediaAdded } from './backgroundHelpers';
+import appProvider from '../server/appProvider';
+
+function getAudioRepeatSettingName(src: string) {
+    const md5 = appProvider.systemUtils.generateMD5(src);
+    const settingName =
+        dirSourceSettingNames.BACKGROUND_AUDIO + '-repeat-' + md5;
+    return settingName;
+}
 
 function RendBodyComp({
     filePath,
@@ -57,11 +64,12 @@ function RendBodyComp({
             <div className="d-flex align-items-center w-100 my-2">
                 <audio
                     className="flex-fill"
+                    data-is-background-audio="true"
                     data-repeat-setting-name={settingName}
                     controls
                     onPlay={handleAudioPlaying}
                     onPause={handleAudioPausing}
-                    onEnded={handleAudioEnding}
+                    onEnded={handleAudioEnding.bind(null, isRepeating)}
                 >
                     <source src={fileSource.src} />
                     <track kind="captions" />

@@ -13,15 +13,16 @@ import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import {
-    audioEvent,
+    AUDIO_PLAYING_CHANGE_EVENT,
     checkAudioPlaying,
     showAudioPlayingToast,
-} from './audioBackgroundHelpers';
+} from '../helper/audioControlHelpers';
 import type {
     BackgroundSrcListType,
     BackgroundType,
 } from '../_screen/screenTypeHelpers';
 import appProvider from '../server/appProvider';
+import EventHandler from '../event/EventHandler';
 
 const LazyBackgroundColorsComp = lazy(() => {
     return import('./BackgroundColorsComp');
@@ -51,9 +52,22 @@ function RenderAudiosTabComp({
 }>) {
     const [isPlaying, setIsPlaying] = useState(false);
     useAppEffect(() => {
-        audioEvent.onChange = setIsPlaying;
+        const registerEvent = EventHandler.registerEventListener(
+            [AUDIO_PLAYING_CHANGE_EVENT],
+            (audio: HTMLAudioElement | null) => {
+                if (
+                    audio !== null &&
+                    audio.dataset.isBackgroundAudio === 'true' &&
+                    !audio.paused
+                ) {
+                    setIsPlaying(true);
+                    return;
+                }
+                setIsPlaying(false);
+            },
+        );
         return () => {
-            audioEvent.onChange = () => {};
+            EventHandler.unregisterEventListener(registerEvent);
         };
     }, []);
     return (

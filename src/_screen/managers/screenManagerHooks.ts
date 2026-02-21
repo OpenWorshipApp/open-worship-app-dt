@@ -1,4 +1,4 @@
-import { createContext, use } from 'react';
+import { createContext, use, useState } from 'react';
 
 import ScreenManager from './ScreenManager';
 import type { ScreenManagerEventType } from './ScreenManagerBase';
@@ -61,4 +61,24 @@ export function useScreenUpdateEvents(
     useScreenVaryAppDocumentManagerEvents(['update'], undefined, callback);
     useScreenBibleManagerEvents(['update'], undefined, callback);
     useScreenForegroundManagerEvents(['update'], undefined, callback);
+}
+
+function getVideoSources(screenManager: ScreenManager) {
+    const backgroundSrc = screenManager.screenBackgroundManager.backgroundSrc;
+    if (backgroundSrc?.type !== 'video' || !backgroundSrc.src) {
+        return [];
+    }
+    return [backgroundSrc.src];
+}
+export function useVideoSources() {
+    const screenManager = useScreenManagerContext();
+    const [videoSources, setVideoSources] = useState<string[]>(
+        getVideoSources(screenManager),
+    );
+    const update = () => {
+        const newVideoSources = getVideoSources(screenManager);
+        setVideoSources(newVideoSources);
+    };
+    useScreenBackgroundManagerEvents(['update'], undefined, update);
+    return videoSources;
 }

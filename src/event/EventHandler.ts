@@ -102,7 +102,7 @@ export default class EventHandler<
     T extends string,
 > extends BasicEventHandler<T> {
     static readonly eventNamePrefix: string = 'event';
-    static eventHandler: EventHandler<any> | null = null;
+    private static eventHandler: EventHandler<any> | null = null;
 
     static async checkShouldNext(_data: any) {
         return true;

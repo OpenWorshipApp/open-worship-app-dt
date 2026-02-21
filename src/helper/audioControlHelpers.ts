@@ -1,9 +1,9 @@
-import { dirSourceSettingNames } from '../helper/constants';
-import { genTimeoutAttempt } from '../helper/helpers';
-import { getSetting } from '../helper/settingHelpers';
+import { genTimeoutAttempt } from './helpers';
 import { tran } from '../lang/langHelpers';
-import appProvider from '../server/appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
+import EventHandler from '../event/EventHandler';
+
+export const AUDIO_PLAYING_CHANGE_EVENT = 'audio-playing-change';
 
 export function showAudioPlayingToast() {
     showSimpleToast(
@@ -35,10 +35,6 @@ export function checkAudioPlaying() {
     );
 }
 
-export const audioEvent = {
-    onChange: (_isPlay: boolean) => {},
-};
-
 export function handleAudioPlaying(event: any) {
     const audioElement = event.target;
     const audioElements = document.querySelectorAll('audio');
@@ -49,7 +45,7 @@ export function handleAudioPlaying(event: any) {
         }
     }
     window.addEventListener('beforeunload', blockUnload);
-    audioEvent.onChange(checkAudioPlaying());
+    EventHandler.addPropEvent(AUDIO_PLAYING_CHANGE_EVENT, audioElement);
 }
 
 export function handleAudioPausing(_event: any) {
@@ -57,21 +53,12 @@ export function handleAudioPausing(_event: any) {
     if (!isPlaying) {
         window.removeEventListener('beforeunload', blockUnload);
     }
-    audioEvent.onChange(isPlaying);
+    EventHandler.addPropEvent(AUDIO_PLAYING_CHANGE_EVENT, null);
 }
 
-export function getAudioRepeatSettingName(src: string) {
-    const md5 = appProvider.systemUtils.generateMD5(src);
-    const settingName =
-        dirSourceSettingNames.BACKGROUND_AUDIO + '-repeat-' + md5;
-    return settingName;
-}
-
-export function handleAudioEnding(event: any) {
+export function handleAudioEnding(isRepeating: boolean, event: any) {
     const audioElement = event.target;
     audioElement.currentTime = 0;
-    const isRepeating =
-        getSetting(audioElement.dataset.repeatSettingName) === 'true';
     if (isRepeating) {
         audioElement.play();
         return;
@@ -80,5 +67,5 @@ export function handleAudioEnding(event: any) {
     if (!isPlaying) {
         window.removeEventListener('beforeunload', blockUnload);
     }
-    audioEvent.onChange(isPlaying);
+    EventHandler.addPropEvent(AUDIO_PLAYING_CHANGE_EVENT, null);
 }
