@@ -10,6 +10,7 @@ import {
     useScreenBibleManagerEvents,
     useScreenForegroundManagerEvents,
 } from './screenEventHelpers';
+import { genVideoIDFromSrc } from '../screenHelpers';
 
 export const ScreenManagerBaseContext = createContext<ScreenManagerBase | null>(
     null,
@@ -63,16 +64,17 @@ export function useScreenUpdateEvents(
     useScreenForegroundManagerEvents(['update'], undefined, callback);
 }
 
-function getVideoSources(screenManager: ScreenManager) {
+function getVideoSources(screenManager: ScreenManager): [string, string][] {
     const backgroundSrc = screenManager.screenBackgroundManager.backgroundSrc;
     if (backgroundSrc?.type !== 'video' || !backgroundSrc.src) {
         return [];
     }
-    return [backgroundSrc.src];
+    const newVideoID = genVideoIDFromSrc(backgroundSrc.src);
+    return [[backgroundSrc.src, newVideoID]] as const;
 }
-export function useVideoSources() {
+export function useScreenVideoSources() {
     const screenManager = useScreenManagerContext();
-    const [videoSources, setVideoSources] = useState<string[]>(
+    const [videoSources, setVideoSources] = useState<[string, string][]>(
         getVideoSources(screenManager),
     );
     const update = () => {

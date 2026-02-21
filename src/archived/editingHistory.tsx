@@ -11,7 +11,7 @@ import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
-import { getReactRoot } from '../others/initHelpers';
+import { getReactRoot } from '../others/rootHelpers';
 
 const root = getReactRoot();
 
@@ -29,11 +29,11 @@ function HistoryAppComp() {
             await fsWriteFile(filePath, '');
         }
         const lastHistory = await historyManager.getCurrentHistory();
-        if (lastHistory !== null) {
-            setText(lastHistory);
-        } else {
+        if (lastHistory === null) {
             const text = await fsReadFile(filePath);
             setText(text);
+        } else {
+            setText(lastHistory);
         }
     }, [setText, historyManager]);
     useFileSourceEvents(

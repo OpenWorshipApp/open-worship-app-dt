@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { SyntheticEvent, useMemo, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
@@ -6,13 +6,34 @@ import {
     handleAudioPausing,
     handleAudioEnding,
 } from '../../helper/audioControlHelpers';
+import { useScreenManagerContext } from '../managers/screenManagerHooks';
+import type ScreenBackgroundManager from '../managers/ScreenBackgroundManager';
+
+function handleAudioTimeUpdating(
+    videoID: string,
+    screenBackgroundManager: ScreenBackgroundManager,
+    event: SyntheticEvent<HTMLAudioElement>,
+) {
+    const audioElement = event.currentTarget;
+    const currentTime = audioElement.currentTime;
+    screenBackgroundManager.sendSyncVideoTime(videoID, audioElement, true);
+    screenBackgroundManager.setVideoCurrentTime({
+        videoID,
+        videoTime: currentTime,
+        timestamp: Date.now(),
+        isFromAudio: true,
+    });
+}
 
 export default function MiniScreenAudioHandlersComp({
     src,
+    videoID,
 }: Readonly<{
     src: string;
+    videoID: string;
 }>) {
-    const [isRepeating, setIsRepeating] = useState(false);
+    const screenManager = useScreenManagerContext();
+    const [isRepeating, setIsRepeating] = useState(true);
     const fileFullName = useMemo(() => {
         const decodeSrc = decodeURIComponent(src);
         return decodeSrc.split('/').pop() || decodeSrc;
@@ -26,10 +47,16 @@ export default function MiniScreenAudioHandlersComp({
             <div className="d-flex align-items-center w-100 my-2">
                 <audio
                     className="flex-fill"
+                    data-video-id={videoID}
                     controls
                     onPlay={handleAudioPlaying}
                     onPause={handleAudioPausing}
                     onEnded={handleAudioEnding.bind(null, isRepeating)}
+                    onTimeUpdate={handleAudioTimeUpdating.bind(
+                        null,
+                        videoID,
+                        screenManager.screenBackgroundManager,
+                    )}
                 >
                     <source src={src} />
                     <track kind="captions" />

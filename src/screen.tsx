@@ -2,7 +2,6 @@ import './_screen/screen.scss';
 
 import { StrictMode } from 'react';
 
-import { createRoot } from 'react-dom/client';
 import ScreenAppComp from './_screen/ScreenAppComp';
 import appProvider from './server/appProvider';
 import {
@@ -11,14 +10,11 @@ import {
     removeDomTitle,
 } from './helper/domHelpers';
 import { appLog } from './helper/loggerHelpers';
+import { getReactRoot } from './others/rootHelpers';
 
 function main() {
-    const container = document.getElementById('root');
-    if (container === null) {
-        throw new Error('Root container not found');
-    }
+    const root = getReactRoot();
     addDomChangeEventListener(removeDomTitle);
-    const root = createRoot(container);
     root.render(
         <StrictMode>
             <ScreenAppComp />

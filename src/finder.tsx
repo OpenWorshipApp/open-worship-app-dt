@@ -1,9 +1,9 @@
 import { StrictMode } from 'react';
 
 import appProvider from './server/appProvider';
-import { getReactRoot } from './others/initHelpers';
 import { init } from './boot';
 import FinderAppComp from './find/FinderAppComp';
+import { getReactRoot } from './others/rootHelpers';
 
 await init();
 const root = getReactRoot();

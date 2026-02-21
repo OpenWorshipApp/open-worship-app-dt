@@ -260,3 +260,8 @@ export function useFileSourceIsOnScreen(
     });
     return isOnScreen ?? false;
 }
+
+export function genVideoIDFromSrc(src: string) {
+    const md5 = appProvider.systemUtils.generateMD5(src);
+    return `video-${md5}`;
+}

@@ -113,28 +113,66 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         this.backgroundSrc = message.data;
     }
 
-    sendSyncVideoTime(videoElement: HTMLVideoElement) {
-        const videoTime = videoElement.currentTime;
-        // First few seconds of the video may be inaccurate due to loading,
-        // so we skip sending sync message if the video time is less than 3
-        // seconds.
-        if (videoTime < 3) {
-            return;
-        }
+    sendSyncVideoTime(
+        videoID: string,
+        element: HTMLVideoElement | HTMLAudioElement,
+        isFromAudio = false,
+    ) {
         setTimeout(() => {
             this.screenManagerBase.sendScreenMessage(
                 {
                     screenId: this.screenId,
                     type: 'background-video-time',
                     data: {
-                        videoID: videoElement.id,
-                        videoTime: videoTime,
+                        videoID,
+                        videoTime: element.currentTime,
                         timestamp: Date.now(),
+                        isFromAudio,
                     },
                 },
                 true,
             );
         }, 0);
+    }
+
+    setVideoCurrentTime(data: {
+        videoID: string;
+        videoTime: number;
+        timestamp: number;
+        isFromAudio: boolean;
+    }) {
+        const rootContainer = this.rootContainer;
+        if (rootContainer === null) {
+            return;
+        }
+        const { videoID, videoTime, timestamp, isFromAudio } = data;
+        const videoElements = rootContainer.querySelectorAll<HTMLVideoElement>(
+            `video#${videoID}`,
+        );
+        for (const videoElement of videoElements) {
+            // Disable syncing when the video is in transition mode
+            if (
+                videoElement.currentTime < FADING_DURATION_SECOND ||
+                videoElement.duration - videoElement.currentTime <
+                    FADING_DURATION_SECOND
+            ) {
+                continue;
+            }
+            const latency = (Date.now() - timestamp) / 1000;
+            const exactVideoTime = videoTime + latency;
+            const timeDiff = videoElement.currentTime - exactVideoTime;
+            // 24 fps, 1000/24 = 0.04166..., for 0.15 second threshold, it can be 3
+            // frames, which is good enough for syncing video.
+            if (Math.abs(timeDiff) > 0.15) {
+                appLog(
+                    'Syncing video time',
+                    isFromAudio ? '(from audio)' : '',
+                    timeDiff,
+                    exactVideoTime,
+                );
+                videoElement.currentTime = exactVideoTime;
+            }
+        }
     }
 
     receiveSyncVideoTime(message: ScreenMessageType) {
@@ -150,23 +188,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         ) {
             return;
         }
-        const rootContainer = this.rootContainer;
-        if (rootContainer === null) {
-            return;
-        }
-        const video = rootContainer.querySelector(`video#${videoID}`);
-        if (video instanceof HTMLVideoElement === false) {
-            return;
-        }
-        const latency = (Date.now() - timestamp) / 1000;
-        const exactVideoTime = videoTime + latency;
-        const timeDiff = video.currentTime - exactVideoTime;
-        // 24 fps, 1000/24 = 0.04166..., for 0.15 second threshold, it can be 3
-        // frames, which is good enough for syncing video.
-        if (Math.abs(timeDiff) > 0.15) {
-            appLog('Syncing video time');
-            video.currentTime = exactVideoTime;
-        }
+        this.setVideoCurrentTime(data);
     }
 
     static receiveSyncVideoTime(message: ScreenMessageType) {
@@ -293,25 +315,42 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         });
     }
 
+    _checkIsVideoAudioPlaying(videoID: string) {
+        const audioElements = document.querySelectorAll<HTMLAudioElement>(
+            `audio[data-video-id="${videoID}"]`,
+        );
+        for (const audioElement of audioElements) {
+            if (!audioElement.paused) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     _handleBackgroundVideo(container: HTMLDivElement) {
-        const video = container.querySelector('video[id^="video-"]');
-        if (video instanceof HTMLVideoElement === false) {
+        const videoElement = container.querySelector('video[id^="video-"]');
+        if (videoElement instanceof HTMLVideoElement === false) {
             return;
         }
         const fadeOutListener = async () => {
-            this.sendSyncVideoTime(video);
-            const duration = video.duration;
-            const isFadingAtTheEnd = getIsFadingAtTheEndSetting(video.src);
+            if (!this._checkIsVideoAudioPlaying(videoElement.id)) {
+                this.sendSyncVideoTime(videoElement.id, videoElement);
+            }
+            const duration = videoElement.duration;
+            const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
+                videoElement.src,
+            );
             if (
                 !isFadingAtTheEnd ||
                 !(
                     !(Number.isNaN(duration) || duration === Infinity) &&
-                    duration - video.currentTime <= FADING_DURATION_SECOND
+                    duration - videoElement.currentTime <=
+                        FADING_DURATION_SECOND
                 )
             ) {
                 return;
             }
-            video.removeEventListener('timeupdate', fadeOutListener);
+            videoElement.removeEventListener('timeupdate', fadeOutListener);
             this.render({
                 ...this.effectManager.styleAnimList.fade,
                 animOut: async () => {
@@ -325,7 +364,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
                 duration: FADING_DURATION_MILLISECOND,
             });
         };
-        video.addEventListener('timeupdate', fadeOutListener);
+        videoElement.addEventListener('timeupdate', fadeOutListener);
     }
 
     render(overrideAnimData?: StyleAnimType) {

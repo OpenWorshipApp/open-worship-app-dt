@@ -1,7 +1,6 @@
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'bootstrap/dist/css/bootstrap.css';
 
-import { createRoot } from 'react-dom/client';
 import appProvider from '../server/appProvider';
 
 export const darkModeHook = {
@@ -52,14 +51,3 @@ export function getColorParts() {
 }
 
 getSystemDarkMatcher()?.addEventListener('change', applyDarkModeToApp);
-
-export function getReactRoot() {
-    const container = document.getElementById('root');
-    if (container === null) {
-        const message = 'Root element not found';
-        globalThis.alert(message);
-        throw new Error(message);
-    }
-    const root = createRoot(container);
-    return root;
-}

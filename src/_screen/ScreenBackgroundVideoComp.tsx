@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 import { useScreenBackgroundManagerEvents } from './managers/screenEventHelpers';
 import { useScreenManagerContext } from './managers/screenManagerHooks';
-import { calMediaSizes } from './screenHelpers';
+import { calMediaSizes, genVideoIDFromSrc } from './screenHelpers';
 import type { BackgroundSrcType } from './screenTypeHelpers';
-import appProvider from '../server/appProvider';
 
 export default function ScreenBackgroundVideoComp({
     backgroundSrc,
@@ -21,8 +20,8 @@ export default function ScreenBackgroundVideoComp({
         backgroundSrc,
     );
     const videoId = useMemo(() => {
-        const md5 = appProvider.systemUtils.generateMD5(backgroundSrc.src);
-        return `video-${md5}`;
+        const newVideoID = genVideoIDFromSrc(backgroundSrc.src);
+        return newVideoID;
     }, [backgroundSrc.src]);
     return (
         <video

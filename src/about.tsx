@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 
 import { init } from './boot';
-import { getReactRoot } from './others/initHelpers';
 import AboutComp from './others/AboutComp';
+import { getReactRoot } from './others/rootHelpers';
 
 await init();
 const root = getReactRoot();

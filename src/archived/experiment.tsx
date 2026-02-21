@@ -1,14 +1,7 @@
-import { createRoot } from 'react-dom/client';
-
 import LexicalEditorComp from './LexicalEditorComp';
+import { getReactRoot } from '../others/rootHelpers';
 
-const container = document.getElementById('root');
-if (container === null) {
-    const message = 'Root element not found';
-    globalThis.alert(message);
-    throw new Error(message);
-}
-const root = createRoot(container);
+const root = getReactRoot();
 
 root.render(
     <div

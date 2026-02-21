@@ -36,7 +36,8 @@ import {
 } from '../server/appHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
-import { applyDarkModeToApp, getReactRoot } from './initHelpers';
+import { applyDarkModeToApp } from './initHelpers';
+import { getReactRoot } from './rootHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;

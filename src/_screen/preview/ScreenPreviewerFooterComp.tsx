@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { tran } from '../../lang/langHelpers';
 import {
     useScreenManagerBaseContext,
-    useVideoSources,
+    useScreenVideoSources,
 } from '../managers/screenManagerHooks';
 import DisplayControl from './DisplayControl';
 import ScreenEffectControlComp from './ScreenEffectControlComp';
@@ -47,7 +47,7 @@ function getNewStageNumber(
 }
 
 export default function ScreenPreviewerFooterComp() {
-    const videoSources = useVideoSources();
+    const videoSources = useScreenVideoSources();
     const screenManagerBase = useScreenManagerBaseContext();
     const [stageNumber, setStageNumber] = useState(
         screenManagerBase.stageNumber,
@@ -93,10 +93,11 @@ export default function ScreenPreviewerFooterComp() {
                 </div>
             </div>
             <div className="w-100">
-                {videoSources.map((videoSource) => (
+                {videoSources.map(([videoSource, videoID]) => (
                     <MiniScreenAudioHandlersComp
                         key={videoSource}
                         src={videoSource}
+                        videoID={videoID}
                     />
                 ))}
             </div>
