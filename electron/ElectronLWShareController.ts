@@ -8,7 +8,6 @@ import {
     getAppThemeBackgroundColor,
     getCenterScreenPosition,
     guardBrowsing,
-    isSecured,
 } from './electronHelpers';
 import { join } from 'node:path';
 
@@ -30,12 +29,7 @@ export default class ElectronLWShareController {
             y,
             width,
             height,
-            webPreferences: {
-                webSecurity: isSecured,
-                nodeIntegration: true,
-                contextIsolation: false,
-                preload: join(__dirname, 'client', 'lwShare.preload.js'),
-            },
+            webPreferences,
             parent: mainWin,
             autoHideMenuBar: true,
         });
