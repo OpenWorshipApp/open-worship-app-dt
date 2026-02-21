@@ -81,50 +81,54 @@ export default class KeyboardEventListener extends EventHandler<string> {
     static removeLayer(layer: AppWidgetType) {
         this._layers.splice(this._layers.indexOf(layer), 1);
     }
-    static fireEvent(event: KeyboardEvent) {
-        const option = {
+    static genEventKeyFromFiredEvent(event: KeyboardEvent) {
+        const eventMapper = {
             key: event.key,
         };
-        this.addControlKey(option, event);
-        const eventName = KeyboardEventListener.toEventMapperKey(option);
-        this.addPropEvent(eventName, event);
+        this.addControlKey(eventMapper, event);
+        const eventKey = this.toEventMapperKey(eventMapper);
+        return eventKey;
     }
-    static addControlKey(option: EventMapper, event: KeyboardEvent) {
+    static fireEvent(event: KeyboardEvent) {
+        const eventKey = this.genEventKeyFromFiredEvent(event);
+        this.addPropEvent(eventKey, event);
+    }
+    static addControlKey(eventMapper: EventMapper, event: KeyboardEvent) {
         if (appProvider.systemUtils.isWindows) {
-            option.wControlKey = [];
+            eventMapper.wControlKey = [];
             if (event.ctrlKey) {
-                option.wControlKey.push('Ctrl');
+                eventMapper.wControlKey.push('Ctrl');
             }
             if (event.altKey) {
-                option.wControlKey.push('Alt');
+                eventMapper.wControlKey.push('Alt');
             }
             if (event.shiftKey) {
-                option.wControlKey.push('Shift');
+                eventMapper.wControlKey.push('Shift');
             }
         } else if (appProvider.systemUtils.isMac) {
-            option.mControlKey = [];
+            eventMapper.mControlKey = [];
             if (event.ctrlKey) {
-                option.mControlKey.push('Ctrl');
+                eventMapper.mControlKey.push('Ctrl');
             }
             if (event.altKey) {
-                option.mControlKey.push('Option');
+                eventMapper.mControlKey.push('Option');
             }
             if (event.shiftKey) {
-                option.mControlKey.push('Shift');
+                eventMapper.mControlKey.push('Shift');
             }
             if (event.metaKey) {
-                option.mControlKey.push('Meta');
+                eventMapper.mControlKey.push('Meta');
             }
         } else if (appProvider.systemUtils.isLinux) {
-            option.lControlKey = [];
+            eventMapper.lControlKey = [];
             if (event.ctrlKey) {
-                option.lControlKey.push('Ctrl');
+                eventMapper.lControlKey.push('Ctrl');
             }
             if (event.altKey) {
-                option.lControlKey.push('Alt');
+                eventMapper.lControlKey.push('Alt');
             }
             if (event.shiftKey) {
-                option.lControlKey.push('Shift');
+                eventMapper.lControlKey.push('Shift');
             }
         }
     }
@@ -163,6 +167,25 @@ export default class KeyboardEventListener extends EventHandler<string> {
     }
 }
 
+export function checkIsControlKeys(event: KeyboardEvent) {
+    return ['Meta', 'Alt', 'Control', 'Shift'].includes(event.key);
+}
+
+export function checkIsKeyboardEventMatch(
+    eventMappers: EventMapper[],
+    event: KeyboardEvent,
+) {
+    for (const eventMapper of eventMappers) {
+        const expectEventKey =
+            KeyboardEventListener.toEventMapperKey(eventMapper);
+        const actualEventKey =
+            KeyboardEventListener.genEventKeyFromFiredEvent(event);
+        if (expectEventKey === actualEventKey) {
+            return true;
+        }
+    }
+    return false;
+}
 export function useKeyboardRegistering(
     eventMappers: EventMapper[],
     listener: ListenerType,
@@ -201,7 +224,7 @@ export function useKeyboardRegistering(
 }
 
 document.onkeydown = function (event) {
-    if (['Meta', 'Alt', 'Control', 'Shift'].includes(event.key)) {
+    if (checkIsControlKeys(event)) {
         return;
     }
     KeyboardEventListener.fireEvent(event);

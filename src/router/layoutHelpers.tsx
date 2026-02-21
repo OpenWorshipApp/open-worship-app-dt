@@ -18,6 +18,7 @@ import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
+import { onSlideItemsKeyboardEvent } from '../slide-editor/keyboardEventHelpers';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
@@ -196,26 +197,11 @@ export function useAppDocumentContextValues() {
                 }
                 setSlide1(newSelectedSlide);
             },
-            onEvent: async (event: any) => {
-                if (event.type === 'blur') {
-                    setHoldingSlides([]);
-                } else if (event.type === 'keyup') {
-                    const key = event.key;
-                    if (key === 'Escape') {
-                        setHoldingSlides([]);
-                    } else if (key === 'Delete') {
-                        if (
-                            holdingSlides.length === 0 ||
-                            !AppDocument.checkIsThisType(varyAppDocument)
-                        ) {
-                            return;
-                        }
-                        await varyAppDocument.deleteSlides(holdingSlides);
-                    }
-                }
-                // TODO: on copy
-                // TODO: on paste
-            },
+            onSlideItemsKeyboardEvent: onSlideItemsKeyboardEvent.bind(null, {
+                holdingSlides,
+                setHoldingSlides,
+                varyAppDocument,
+            }),
         };
     }, [slide, varyAppDocument, holdingSlides, setSlide1]);
 

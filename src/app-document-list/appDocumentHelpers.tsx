@@ -402,7 +402,7 @@ export const SelectedEditingSlideContext = createContext<{
         newSlide: Slide | null,
         controlType?: KeyboardControlType,
     ) => void;
-    onEvent: (event: any) => void;
+    onSlideItemsKeyboardEvent: (event: any) => void;
 } | null>(null);
 
 function useContextItem() {
@@ -434,7 +434,7 @@ export function useSelectedEditingSlideSetterContext() {
 
 export function useSlideItemsControlEventContext() {
     const context = useContextItem();
-    return context.onEvent;
+    return context.onSlideItemsKeyboardEvent;
 }
 
 export function useSlideWrongDimension(

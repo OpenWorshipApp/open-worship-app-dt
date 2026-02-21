@@ -48,7 +48,7 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
 
 export default function VaryAppDocumentItemsPreviewerComp() {
     const varyAppDocument = useVaryAppDocumentContext();
-    const onEvent = useSlideItemsControlEventContext();
+    const onSlideItemsKeyboardEvent = useSlideItemsControlEventContext();
     const [thumbSizeScale, setThumbnailSizeScale] =
         useAppDocumentItemThumbnailSizeScale();
     return (
@@ -59,13 +59,13 @@ export default function VaryAppDocumentItemsPreviewerComp() {
             }
             tabIndex={0}
             onBlur={(event) => {
-                onEvent(event);
+                onSlideItemsKeyboardEvent(event);
             }}
-            onKeyUp={(event) => {
+            onKeyDown={(event) => {
                 if (document.activeElement !== event.currentTarget) {
                     return;
                 }
-                onEvent(event);
+                onSlideItemsKeyboardEvent(event);
             }}
             style={{ overflow: 'auto' }}
             onWheel={(event) => {
