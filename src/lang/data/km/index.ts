@@ -9,6 +9,11 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Enable Background Audio Handlers':
+        'បើក/បិទ អ្នកគ្រប់គ្រងសំលេងផ្ទៃខាងក្រោយ',
+    'Audio is Playing': 'កំពុងលេងសំលេង',
+    'Please pause all background audios before disabling audio handlers':
+        'សូមបញ្ឈប់សំលេងផ្ទៃខាងក្រោយទាំងអស់មុនពេលបិទអ្នកគ្រប់គ្រងសំលេង',
     'Fading at the End': 'បន្ថយនៅចុងបញ្ចប់',
     'Data not available for': 'ទិន្នន័យមិនអាចใช้ได้สำหรับ',
     'No data available': 'មិនមានទិន្នន័យ',

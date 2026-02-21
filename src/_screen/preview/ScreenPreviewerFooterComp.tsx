@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
@@ -9,7 +9,12 @@ import DisplayControl from './DisplayControl';
 import ScreenEffectControlComp from './ScreenEffectControlComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
-import MiniScreenAudioHandlersComp from './MiniScreenAudioHandlersComp';
+import AppSuspenseComp from '../../others/AppSuspenseComp';
+import { showSimpleToast } from '../../toast/toastHelpers';
+
+const LazyMiniScreenAudioHandlersComp = lazy(() => {
+    return import('./MiniScreenAudioHandlersComp');
+});
 
 function getNewStageNumber(
     event: any,
@@ -46,7 +51,42 @@ function getNewStageNumber(
     showAppContextMenu(event, items);
 }
 
+function BackgroundAudioSwitchComp({
+    isAudioHandlersVisible,
+    setIsAudioHandlersVisible,
+}: Readonly<{
+    isAudioHandlersVisible: boolean;
+    setIsAudioHandlersVisible: (isVisible: boolean) => void;
+}>) {
+    return (
+        <button
+            className={`btn btn-sm btn-${isAudioHandlersVisible ? 'primary' : 'outline-secondary'}`}
+            onClick={() => {
+                const isPlaying = Array.from(
+                    document.querySelectorAll<HTMLAudioElement>(
+                        'audio[data-video-id]',
+                    ),
+                );
+                if (isPlaying.some((audio) => !audio.paused)) {
+                    showSimpleToast(
+                        tran('Audio is Playing'),
+                        tran(
+                            'Please pause all background audios before disabling audio handlers',
+                        ),
+                    );
+                    return;
+                }
+                setIsAudioHandlersVisible(!isAudioHandlersVisible);
+            }}
+            title={tran('Enable Background Audio Handlers')}
+        >
+            <i className="bi bi-soundwave" />
+        </button>
+    );
+}
+
 export default function ScreenPreviewerFooterComp() {
+    const [isAudioHandlersVisible, setIsAudioHandlersVisible] = useState(false);
     const videoSources = useScreenVideoSources();
     const screenManagerBase = useScreenManagerBaseContext();
     const [stageNumber, setStageNumber] = useState(
@@ -74,6 +114,14 @@ export default function ScreenPreviewerFooterComp() {
                 <div className="d-flex justify-content-start">
                     <DisplayControl />
                     <ScreenEffectControlComp />
+                    {videoSources.length > 0 ? (
+                        <BackgroundAudioSwitchComp
+                            isAudioHandlersVisible={isAudioHandlersVisible}
+                            setIsAudioHandlersVisible={
+                                setIsAudioHandlersVisible
+                            }
+                        />
+                    ) : null}
                 </div>
                 <div className="flex-grow-1 d-flex justify-content-end">
                     <div
@@ -92,15 +140,19 @@ export default function ScreenPreviewerFooterComp() {
                     </div>
                 </div>
             </div>
-            <div className="w-100">
-                {videoSources.map(([videoSource, videoID]) => (
-                    <MiniScreenAudioHandlersComp
-                        key={videoSource}
-                        src={videoSource}
-                        videoID={videoID}
-                    />
-                ))}
-            </div>
+            {videoSources.length > 0 && isAudioHandlersVisible ? (
+                <AppSuspenseComp>
+                    <div className="w-100">
+                        {videoSources.map(([videoSource, videoID]) => (
+                            <LazyMiniScreenAudioHandlersComp
+                                key={videoSource}
+                                src={videoSource}
+                                videoID={videoID}
+                            />
+                        ))}
+                    </div>
+                </AppSuspenseComp>
+            ) : null}
         </div>
     );
 }
