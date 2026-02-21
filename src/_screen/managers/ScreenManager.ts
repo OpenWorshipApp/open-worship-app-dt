@@ -189,7 +189,8 @@ export default class ScreenManager extends ScreenManagerBase {
     static applyScreenManagerSyncScreen(message: ScreenMessageType) {
         const ScreenHandler = this.getSyncGroupScreenEventHandler(message);
         if (ScreenHandler !== null) {
-            return ScreenHandler.receiveSyncScreen(message);
+            ScreenHandler.receiveSyncScreen(message);
+            return;
         }
         const { type, data, screenId } = message;
         const screenManagerBase = getScreenManagerBase(screenId);
@@ -208,6 +209,8 @@ export default class ScreenManager extends ScreenManagerBase {
             ScreenBibleManager.receiveSyncSelectedIndex(message);
         } else if (type === 'bible-screen-view-text-style') {
             ScreenBibleManager.receiveSyncTextStyle(message);
+        } else if (type === 'background-video-time') {
+            ScreenBackgroundManager.receiveSyncVideoTime(message);
         } else {
             appLog(message);
         }

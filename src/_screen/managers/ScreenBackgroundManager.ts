@@ -27,6 +27,7 @@ import type {
 } from '../screenTypeHelpers';
 import { ANIM_END_DELAY_MILLISECOND } from '../transitionEffectHelpers';
 import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
+import { appLog } from '../../helper/loggerHelpers';
 
 export type ScreenBackgroundManagerEventType = 'update';
 
@@ -55,6 +56,9 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         if (appProvider.isPagePresenter) {
             const allBackgroundSrcList = getBackgroundSrcListOnScreenSetting();
             this._backgroundSrc = allBackgroundSrcList[this.key] ?? null;
+        }
+        if (!appProvider.isPagePresenter) {
+            this.sendSyncVideoTime = () => {};
         }
     }
 
@@ -107,6 +111,71 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
 
     receiveSyncScreen(message: ScreenMessageType) {
         this.backgroundSrc = message.data;
+    }
+
+    sendSyncVideoTime(videoElement: HTMLVideoElement) {
+        const videoTime = videoElement.currentTime;
+        // First few seconds of the video may be inaccurate due to loading,
+        // so we skip sending sync message if the video time is less than 3
+        // seconds.
+        if (videoTime < 3) {
+            return;
+        }
+        setTimeout(() => {
+            this.screenManagerBase.sendScreenMessage(
+                {
+                    screenId: this.screenId,
+                    type: 'background-video-time',
+                    data: {
+                        videoID: videoElement.id,
+                        videoTime: videoTime,
+                        timestamp: Date.now(),
+                    },
+                },
+                true,
+            );
+        }, 0);
+    }
+
+    receiveSyncVideoTime(message: ScreenMessageType) {
+        if (message.screenId !== this.screenId) {
+            return;
+        }
+        const { data } = message;
+        const { videoID, videoTime, timestamp } = data;
+        if (
+            !videoID ||
+            typeof videoTime !== 'number' ||
+            typeof timestamp !== 'number'
+        ) {
+            return;
+        }
+        const rootContainer = this.rootContainer;
+        if (rootContainer === null) {
+            return;
+        }
+        const video = rootContainer.querySelector(`video#${videoID}`);
+        if (video instanceof HTMLVideoElement === false) {
+            return;
+        }
+        const latency = (Date.now() - timestamp) / 1000;
+        const exactVideoTime = videoTime + latency;
+        const timeDiff = video.currentTime - exactVideoTime;
+        // 24 fps, 1000/24 = 0.04166..., for 0.15 second threshold, it can be 3
+        // frames, which is good enough for syncing video.
+        if (Math.abs(timeDiff) > 0.15) {
+            appLog('Syncing video time');
+            video.currentTime = exactVideoTime;
+        }
+    }
+
+    static receiveSyncVideoTime(message: ScreenMessageType) {
+        const { screenId } = message;
+        const screenBackgroundManager = this.getInstance(screenId);
+        if (screenBackgroundManager === null) {
+            return;
+        }
+        screenBackgroundManager.receiveSyncVideoTime(message);
     }
 
     fireUpdateEvent() {
@@ -224,38 +293,39 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         });
     }
 
-    _checkVideoFadingAtEnd(container: HTMLDivElement) {
-        const video = container.querySelector('video');
-        if (video !== null) {
-            const fadeOutListener = async () => {
-                const duration = video.duration;
-                if (
+    _handleBackgroundVideo(container: HTMLDivElement) {
+        const video = container.querySelector('video[id^="video-"]');
+        if (video instanceof HTMLVideoElement === false) {
+            return;
+        }
+        const fadeOutListener = async () => {
+            this.sendSyncVideoTime(video);
+            const duration = video.duration;
+            const isFadingAtTheEnd = getIsFadingAtTheEndSetting(video.src);
+            if (
+                !isFadingAtTheEnd ||
+                !(
                     !(Number.isNaN(duration) || duration === Infinity) &&
                     duration - video.currentTime <= FADING_DURATION_SECOND
-                ) {
-                    const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
-                        video.src,
-                    );
-                    if (!isFadingAtTheEnd) {
-                        return;
-                    }
-                    video.removeEventListener('timeupdate', fadeOutListener);
-                    this.render({
-                        ...this.effectManager.styleAnimList.fade,
-                        animOut: async () => {
-                            const duration =
-                                FADING_DURATION_MILLISECOND +
-                                ANIM_END_DELAY_MILLISECOND;
-                            await new Promise<void>((resolve) => {
-                                setTimeout(resolve, duration);
-                            });
-                        },
-                        duration: FADING_DURATION_MILLISECOND,
+                )
+            ) {
+                return;
+            }
+            video.removeEventListener('timeupdate', fadeOutListener);
+            this.render({
+                ...this.effectManager.styleAnimList.fade,
+                animOut: async () => {
+                    const duration =
+                        FADING_DURATION_MILLISECOND +
+                        ANIM_END_DELAY_MILLISECOND;
+                    await new Promise<void>((resolve) => {
+                        setTimeout(resolve, duration);
                     });
-                }
-            };
-            video.addEventListener('timeupdate', fadeOutListener);
-        }
+                },
+                duration: FADING_DURATION_MILLISECOND,
+            });
+        };
+        video.addEventListener('timeupdate', fadeOutListener);
     }
 
     render(overrideAnimData?: StyleAnimType) {
@@ -275,7 +345,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
                 },
             );
             promise.then((clearTracks) => {
-                this._checkVideoFadingAtEnd(newDiv);
+                this._handleBackgroundVideo(newDiv);
                 aminData.animIn(newDiv, rootContainer);
                 this.removeOldElements(aminData, childList, this.clearTracks);
                 this.clearTracks = clearTracks;

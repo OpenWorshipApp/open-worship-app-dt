@@ -18,7 +18,7 @@ import {
     showProgressBar,
     hideProgressBar,
 } from '../progress-bar/progressBarHelpers';
-import { downloadVideoOrAudio } from '../server/appHelpers';
+import { downloadVideoOrAudio, timeToTimeString } from '../server/appHelpers';
 import { fsCheckFileExist, fsMove } from '../server/fileHelpers';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -80,8 +80,20 @@ function RendBodyComp({
                 overflow: 'hidden',
                 borderRadius: '5px 5px 0px 0px',
             }}
-            onMouseEnter={() => {
-                vRef.current?.play();
+            onMouseEnter={(event) => {
+                if (vRef.current === null) {
+                    return;
+                }
+                vRef.current.play();
+                const currentTarget = event.currentTarget as HTMLDivElement;
+                if (
+                    typeof vRef.current.duration === 'number' &&
+                    !currentTarget.title
+                ) {
+                    currentTarget.title =
+                        `${fileSource.fullName}\n` +
+                        `(${timeToTimeString(vRef.current.duration)})`;
+                }
             }}
             onMouseLeave={() => {
                 vRef.current?.pause();

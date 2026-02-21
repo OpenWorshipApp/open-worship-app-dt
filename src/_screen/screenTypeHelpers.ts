@@ -157,6 +157,7 @@ export const screenTypeList = [
     'visible',
     'init',
     'effect',
+    'background-video-time',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {

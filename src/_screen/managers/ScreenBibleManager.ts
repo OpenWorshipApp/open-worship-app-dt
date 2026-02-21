@@ -214,7 +214,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         this._divScrollListenerBind = null;
     }
 
-    async sendSyncScroll() {
+    sendSyncScroll() {
         setTimeout(() => {
             this.screenManagerBase.sendScreenMessage(
                 {
@@ -250,7 +250,11 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             reRegisterScrollListener,
             3e3,
         );
-        screenBibleManager.scroll = data.scroll;
+        const { scroll } = data;
+        if (typeof scroll !== 'number') {
+            return;
+        }
+        screenBibleManager.scroll = scroll;
         screenBibleManager.renderScroll();
     }
 
