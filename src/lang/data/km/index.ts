@@ -9,6 +9,14 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Items are copied': 'ធាតុត្រូវបានចម្លង',
+    'Only image and video files are supported':
+        'គ្រាន់តែឯកសាររូបភាព និងវីដេអូត្រូវបានគាំទ្រ',
+    'Insert Medias': 'បញ្ចូលរូបភាព ឬវីដេអូ',
+    New: 'ថ្មី',
+    'Slides are copied': 'ស្លាយត្រូវបានចម្លង',
+    Copied: 'បានចម្លង',
+    'Canvas item copied': 'ធាតុផ្ទាំងបានចម្លង',
     'Enable Background Audio Handlers':
         'បើក/បិទ អ្នកគ្រប់គ្រងសំលេងផ្ទៃខាងក្រោយ',
     'Audio is Playing': 'កំពុងលេងសំលេង',

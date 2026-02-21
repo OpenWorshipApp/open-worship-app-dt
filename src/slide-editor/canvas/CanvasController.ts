@@ -85,48 +85,39 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         });
     }
 
-    async cloneItem(canvasItem: CanvasItem<any>) {
-        const newCanvasItem = canvasItem.clone();
-        newCanvasItem.props.top += 20;
-        newCanvasItem.props.left += 20;
-        newCanvasItem.props.id = this.canvas.maxItemId + 1;
-        return newCanvasItem;
-    }
-
-    async duplicate(canvasItem: CanvasItem<any>) {
+    duplicateItems(canvasItems: CanvasItem<any>[]) {
         const newCanvasItems = this.canvas.canvasItems;
-        const newCanvasItem = await this.cloneItem(canvasItem);
-        if (newCanvasItem === null) {
-            return;
+        for (const canvasItem of canvasItems) {
+            canvasItem.props.id = this.canvas.maxItemId + 1;
+            canvasItem.props.top += 20;
+            canvasItem.props.left += 20;
+            newCanvasItems.push(canvasItem);
         }
-        const index = this.canvas.canvasItems.indexOf(canvasItem);
-        newCanvasItems.splice(index + 1, 0, newCanvasItem);
         this.setCanvasItems(newCanvasItems);
     }
 
-    deleteItem(canvasItem: CanvasItem<any>) {
+    deleteItems(targetCanvasItems: CanvasItem<any>[]) {
         const canvasItems = this.canvas.canvasItems;
-        const index = canvasItems.findIndex((item) => {
-            return item.checkIsSame(canvasItem);
+        const newCanvasItems = canvasItems.filter((item) => {
+            return !targetCanvasItems.some((targetItem) => {
+                return item.checkIsSame(targetItem);
+            });
         });
-        if (index === -1) {
-            showSimpleToast('Delete Canvas Item', 'Canvas item not found');
-            return;
-        }
-        canvasItems.splice(index, 1);
-        this.setCanvasItems(canvasItems);
-    }
-
-    addNewItem(canvasItem: CanvasItem<any>) {
-        const newCanvasItems = this.canvas.canvasItems;
-        canvasItem.props.id = this.canvas.maxItemId + 1;
-        newCanvasItems.push(canvasItem);
         this.setCanvasItems(newCanvasItems);
     }
 
-    async addNewTextItem() {
+    addNewItems(canvasItems: CanvasItem<any>[]) {
+        const newCanvasItems = this.canvas.canvasItems;
+        for (const canvasItem of canvasItems) {
+            canvasItem.props.id = this.canvas.maxItemId + 1;
+            newCanvasItems.push(canvasItem);
+        }
+        this.setCanvasItems(newCanvasItems);
+    }
+
+    addNewTextItem() {
         const newItem = CanvasItemText.genDefaultItem();
-        this.addNewItem(newItem);
+        this.addNewItems([newItem]);
     }
 
     getMousePosition(event: any) {
@@ -173,7 +164,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     async addNewBibleItem(bibleItem: BibleItem) {
         const id = this.canvas.maxItemId + 1;
         const newItem = await CanvasItemBibleItem.fromBibleItem(id, bibleItem);
-        this.addNewItem(newItem);
+        this.addNewItems([newItem]);
     }
 
     applyOrderingData(canvasItem: CanvasItem<any>, isBack: boolean) {

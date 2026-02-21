@@ -12,23 +12,12 @@ import {
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
-import type { VaryAppDocumentType } from '../../app-document-list/appDocumentTypeHelpers';
 import { changeDragEventStyle } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
 import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from '../../slide-editor/canvas/canvasHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { createNewSlidesFromDroppedData } from './appDocumentHelpers';
-
-const handlePasting = async (varyAppDocument: VaryAppDocumentType) => {
-    if (!AppDocument.checkIsThisType(varyAppDocument)) {
-        return;
-    }
-    const copiedSlides = await AppDocument.getCopiedSlides();
-    for (const copiedSlide of copiedSlides) {
-        varyAppDocument.addSlides([copiedSlide]);
-    }
-};
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     changeDragEventStyle(event, 'opacity', '1');
@@ -79,11 +68,6 @@ export default function VaryAppDocumentItemsPreviewerComp() {
             onContextMenu={(event) => {
                 varyAppDocument.showContextMenu(event);
             }}
-            onPaste={
-                varyAppDocument.isEditable
-                    ? handlePasting.bind(null, varyAppDocument)
-                    : undefined
-            }
             onDragOver={(event) => {
                 event.preventDefault();
                 changeDragEventStyle(event, 'opacity', '0.5');

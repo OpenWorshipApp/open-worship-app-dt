@@ -18,7 +18,7 @@ import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
-import { onSlideItemsKeyboardEvent } from '../slide-editor/keyboardEventHelpers';
+import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingBeyboardEventHelpers';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
@@ -201,6 +201,7 @@ export function useAppDocumentContextValues() {
                 holdingSlides,
                 setHoldingSlides,
                 varyAppDocument,
+                selectedSlide: slide,
             }),
         };
     }, [slide, varyAppDocument, holdingSlides, setSlide1]);

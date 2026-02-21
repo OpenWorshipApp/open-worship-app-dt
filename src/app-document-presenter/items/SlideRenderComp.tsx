@@ -24,14 +24,12 @@ export default function SlideRenderComp({
     index,
     onClick,
     onContextMenu,
-    onCopy,
 }: Readonly<{
     slide: Slide;
     width: number;
     index: number;
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
-    onCopy: () => void;
 }>) {
     const { selectedSlide, holdingSlides } = useData();
     useScreenVaryAppDocumentManagerEvents(['update']);
@@ -44,7 +42,6 @@ export default function SlideRenderComp({
             index={index}
             onContextMenu={onContextMenu}
             onClick={onClick}
-            onCopy={onCopy}
         >
             <SlideRendererHtmlComp slide={slide} width={width} />
         </SlideItemRenderComp>

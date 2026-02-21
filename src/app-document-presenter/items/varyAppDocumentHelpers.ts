@@ -4,6 +4,7 @@ import { getScreenManagerByScreenId } from '../../_screen/managers/screenManager
 import { slidePreviewerMethods } from './AppDocumentPreviewerFooterComp';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
+import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 
 export function handleAppDocumentItemSelecting(
     event: any,
@@ -33,11 +34,11 @@ export function genSlideIds(varyAppDocumentItems: VaryAppDocumentItemType[]) {
 }
 
 export const SLIDE_ITEMS_CONTAINER_CLASS_NAME = 'app-slide-items-container';
-export const DATA_QUERY_KEY = 'data-vary-app-document-item-id';
+export const DATA_QUERY_KEY = APP_DOCUMENT_ITEM_CLASS + '-id';
 
 export function showVaryAppDocumentItemInViewport(id: number) {
     setTimeout(() => {
-        const querySelector = `[data-vary-app-document-item-id="${id}"]`;
+        const querySelector = `[${DATA_QUERY_KEY}="${id}"]`;
         const element = document.querySelector(querySelector);
         if (element === null) {
             return;

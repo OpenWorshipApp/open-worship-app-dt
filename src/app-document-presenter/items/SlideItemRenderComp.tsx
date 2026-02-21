@@ -29,6 +29,7 @@ import {
     toClassNameHighlight,
     useScale,
 } from './slideItemRenderHelpers';
+import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -177,7 +178,7 @@ export default function SlideItemRenderComp({
     return (
         <div
             className={
-                'data-vary-app-document-item card app-caught-hover-pointer' +
+                `${APP_DOCUMENT_ITEM_CLASS} card app-caught-hover-pointer` +
                 ' app-overflow-hidden' +
                 ` ${presenterClassName} ${activeClassName} ${holdingClassName}`
             }

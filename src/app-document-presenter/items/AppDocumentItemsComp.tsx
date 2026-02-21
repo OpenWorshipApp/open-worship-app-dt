@@ -27,6 +27,7 @@ import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumen
 import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../../app-document-list/appDocumentTypeHelpers';
 import { useMemo } from 'react';
 import FillingFlexCenterComp from '../../others/FillingFlexCenterComp';
+import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 
 const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};
@@ -123,7 +124,7 @@ export default function AppDocumentItemsComp() {
             })}
             <FillingFlexCenterComp
                 width={appDocumentItemThumbnailSize}
-                className="data-vary-app-document-item"
+                className={APP_DOCUMENT_ITEM_CLASS}
             />
             {isAnyItemSelected ? (
                 <SlideAutoPlayComp

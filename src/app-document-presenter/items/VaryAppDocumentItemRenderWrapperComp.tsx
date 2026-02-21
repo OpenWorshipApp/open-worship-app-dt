@@ -8,7 +8,6 @@ import {
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
-import { showSimpleToast } from '../../toast/toastHelpers';
 import Slide from '../../app-document-list/Slide';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
@@ -72,17 +71,6 @@ export default function VaryAppDocumentItemRenderWrapperComp({
             extraMenuItems,
         );
     };
-    const handleCopying = async () => {
-        const text = await varyAppDocumentItem.clipboardSerialize();
-        if (text === null) {
-            showSimpleToast(
-                'Cannot copy this item.',
-                'Unable to serialize this item for clipboard.',
-            );
-            return;
-        }
-        navigator.clipboard.writeText(text);
-    };
     if (PdfSlide.checkIsThisType(varyAppDocumentItem)) {
         return (
             <PdfSlideRenderComp
@@ -103,7 +91,6 @@ export default function VaryAppDocumentItemRenderWrapperComp({
                 width={thumbSize}
                 onClick={handleClicking}
                 onContextMenu={handleContextMenuOpening}
-                onCopy={handleCopying}
             />
         );
     }
@@ -114,7 +101,6 @@ export default function VaryAppDocumentItemRenderWrapperComp({
             width={thumbSize}
             onClick={handleClicking}
             onContextMenu={handleContextMenuOpening}
-            onCopy={handleCopying}
         />
     );
 }

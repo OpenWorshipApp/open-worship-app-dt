@@ -17,9 +17,13 @@ import {
     checkIsImagesInClipboard,
     readImagesFromClipboard,
 } from '../server/appHelpers';
-import { createNewSlidesFromDroppedData } from '../app-document-presenter/items/appDocumentHelpers';
+import {
+    APP_DOCUMENT_ITEM_CLASS,
+    createNewSlidesFromDroppedData,
+} from '../app-document-presenter/items/appDocumentHelpers';
 import { fixMissingFontFamilies } from '../server/fontHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
+import { notifyNewElementAdded } from '../helper/domHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -147,16 +151,39 @@ export default class AppDocument
         return 0;
     }
 
-    async duplicateSlide(slide: Slide) {
-        const index = await this.getSlideIndex(slide);
+    notifyNewSlidesAdded(slideIDs: number[]) {
+        for (const slideID of slideIDs) {
+            const key =
+                `.${APP_DOCUMENT_ITEM_CLASS}` +
+                `[data-vary-app-document-item-id="${slideID}"]`;
+            notifyNewElementAdded(() => {
+                return document.querySelector(key);
+            });
+        }
+    }
+
+    async duplicateSlides(targetSlides: Slide[]) {
+        if (targetSlides.length === 0) {
+            return;
+        }
+        const index = await this.getSlideIndex(targetSlides.at(-1) as Slide);
         if (index === -1) {
             return;
         }
-        const newSlide = slide.clone();
         const maxSlideId = await this.getMaxSlideId();
-        newSlide.id = maxSlideId + 1;
+        const newSlides = targetSlides.map((slide, i) => {
+            const newSlide = slide.clone(true);
+            newSlide.id = maxSlideId + i + 1;
+            newSlide.filePath = this.filePath;
+            return newSlide;
+        });
+        this.notifyNewSlidesAdded(
+            newSlides.map((slide) => {
+                return slide.id;
+            }),
+        );
         const slides = await this.getSlides();
-        slides.splice(index + 1, 0, newSlide);
+        slides.splice(index + 1, 0, ...newSlides);
         await this.setSlides(slides);
     }
 
@@ -169,17 +196,22 @@ export default class AppDocument
         if (fromIndex === -1 || fromIndex === toIndex) {
             return;
         }
+        this.notifyNewSlidesAdded([slide.id]);
         const [item] = slides.splice(fromIndex, 1);
         slides.splice(toIndex, 0, item);
         await this.setSlides(slides);
     }
 
     async addSlides(newSlides: Slide[]) {
+        if (newSlides.length === 0) {
+            return;
+        }
         const slides = await this.getSlides();
         for (let i = 0; i < newSlides.length; i++) {
             const newSlide = newSlides[i];
             const maxSlideId = (await this.getMaxSlideId()) + i;
             newSlide.id = maxSlideId + 1;
+            this.notifyNewSlidesAdded([newSlide.id]);
             newSlide.filePath = this.filePath;
             slides.push(newSlide);
         }
@@ -194,6 +226,7 @@ export default class AppDocument
         if (toIndex < 0 || toIndex >= slides.length) {
             return;
         }
+        this.notifyNewSlidesAdded([slides[fromIndex].id, slides[toIndex].id]);
         const fromSlide = slides[fromIndex];
         const toSlide = slides[toIndex];
         slides[fromIndex] = toSlide;
@@ -206,6 +239,7 @@ export default class AppDocument
         if (index === -1) {
             return;
         }
+        this.notifyNewSlidesAdded([slide.id]);
         const slides = await this.getSlides();
         let toIndex = 0;
         if (isForward) {
@@ -355,7 +389,7 @@ export default class AppDocument
         const copiedSlides = await AppDocument.getCopiedSlides();
         showAppContextMenu(event, [
             {
-                menuElement: 'New Slide',
+                menuElement: tran('New Slide'),
                 onSelect: () => {
                     this.addNewSlide();
                 },
@@ -363,7 +397,7 @@ export default class AppDocument
             ...(copiedSlides.length > 0
                 ? [
                       {
-                          menuElement: 'Paste',
+                          menuElement: tran('Paste'),
                           onSelect: () => {
                               for (const copiedSlide of copiedSlides) {
                                   this.addSlides([copiedSlide]);
@@ -403,14 +437,26 @@ export default class AppDocument
         for (const clipboardSlide of clipboardSlides) {
             if (clipboardSlide.types.includes(textPlainType)) {
                 const blob = await clipboardSlide.getType(textPlainType);
-                const json = await blob.text();
-                const copiedSlideSlide = Slide.clipboardDeserialize(json);
-                if (copiedSlideSlide !== null) {
-                    copiedSlides.push(copiedSlideSlide);
+                const text = await blob.text();
+                const texts = text.split('\n');
+                for (const text of texts) {
+                    const copiedSlideSlide = Slide.clipboardDeserialize(text);
+                    if (copiedSlideSlide !== null) {
+                        copiedSlides.push(copiedSlideSlide);
+                    }
                 }
             }
         }
         return copiedSlides;
+    }
+
+    static setCopiedSlides(slides: Slide[]) {
+        const data = slides
+            .map((slide) => {
+                return slide.clipboardSerialize();
+            })
+            .join('\n');
+        navigator.clipboard.writeText(data);
     }
 
     static getInstance(filePath: string) {

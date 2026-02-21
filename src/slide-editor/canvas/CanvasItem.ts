@@ -338,9 +338,9 @@ export function useCanvasItemPropsSetterContext<
 
 export function useIsCanvasItemSelected() {
     const canvasItem = useCanvasItemContext();
-    const { canvasItems: selectedCasItems } =
+    const { canvasItems: selectedCanvasItems } =
         useSelectedCanvasItemsAndSetterContext();
-    return checkCanvasItemsIncludes(selectedCasItems, canvasItem);
+    return checkCanvasItemsIncludes(selectedCanvasItems, canvasItem);
 }
 
 export function useStopAllModes() {

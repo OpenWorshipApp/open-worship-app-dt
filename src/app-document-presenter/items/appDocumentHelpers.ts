@@ -3,6 +3,8 @@ import Slide from '../../app-document-list/Slide';
 import CanvasController from '../../slide-editor/canvas/CanvasController';
 import CanvasItemImage from '../../slide-editor/canvas/CanvasItemImage';
 
+export const APP_DOCUMENT_ITEM_CLASS = 'data-vary-app-document-item';
+
 export async function createNewSlidesFromDroppedData(
     appDocument: AppDocument,
     files: File[] | Blob[],

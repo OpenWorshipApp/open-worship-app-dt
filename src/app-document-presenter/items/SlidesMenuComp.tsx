@@ -55,9 +55,9 @@ export default function SlidesMenuComp() {
         <FileEditingMenuComp
             editableDocument={selectedVaryAppDocument}
             extraChildren={
-                wrongDimension !== null ? (
+                wrongDimension === null ? null : (
                     <CheckingDimensionComp wrongDimension={wrongDimension} />
-                ) : null
+                )
             }
         />
     );

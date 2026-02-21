@@ -1,7 +1,7 @@
 import { tran } from '../../lang/langHelpers';
 import { getMimetypeExtensions, selectFiles } from '../../server/fileHelpers';
 import type CanvasItem from './CanvasItem';
-import type CanvasController from './CanvasController';
+import CanvasController from './CanvasController';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import Canvas from './Canvas';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
@@ -18,7 +18,7 @@ export async function showCanvasContextMenu(
     const copiedCanvasItems = await Canvas.getCopiedCanvasItems();
     showAppContextMenu(event, [
         {
-            menuElement: 'New',
+            menuElement: tran('New'),
             onSelect: () => {
                 canvasController.addNewTextItem();
             },
@@ -26,23 +26,23 @@ export async function showCanvasContextMenu(
         ...(copiedCanvasItems.length > 0
             ? [
                   {
-                      menuElement: 'Paste',
+                      menuElement: tran('Paste'),
                       onSelect: () => {
                           for (const copiedCanvasItem of copiedCanvasItems) {
-                              canvasController.addNewItem(copiedCanvasItem);
+                              canvasController.addNewItems([copiedCanvasItem]);
                           }
                       },
                   },
               ]
             : []),
         {
-            menuElement: 'Insert Medias',
+            menuElement: tran('Insert Medias'),
             onSelect: () => {
                 const imageExtensions = getMimetypeExtensions('image');
                 const videoExtension = getMimetypeExtensions('video');
                 const filePaths = selectFiles([
                     {
-                        name: 'All Files',
+                        name: tran('All Files'),
                         extensions: [...imageExtensions, ...videoExtension],
                     },
                 ]);
@@ -51,7 +51,7 @@ export async function showCanvasContextMenu(
                         .genNewMediaItemFromFilePath(filePath, event)
                         .then((newCanvasItem) => {
                             if (newCanvasItem) {
-                                canvasController.addNewItem(newCanvasItem);
+                                canvasController.addNewItems([newCanvasItem]);
                             }
                         });
                 }
@@ -71,7 +71,7 @@ export async function showCanvasContextMenu(
                               if (!newCanvasItem) {
                                   return;
                               }
-                              canvasController.addNewItem(newCanvasItem);
+                              canvasController.addNewItems([newCanvasItem]);
                           }
                       },
                   },
@@ -88,28 +88,28 @@ export function showCanvasItemContextMenu(
 ) {
     showAppContextMenu(event, [
         {
-            menuElement: 'Copy',
+            menuElement: tran('Copy'),
             onSelect: () => {
-                navigator.clipboard.writeText(canvasItem.clipboardSerialize());
-                showSimpleToast('Copied', 'Canvas item copied');
+                Canvas.setCopiedItems([canvasItem]);
+                showSimpleToast(tran('Copied'), tran('Canvas item copied'));
             },
         },
         {
-            menuElement: 'Duplicate',
+            menuElement: tran('Duplicate'),
             onSelect: () => {
-                canvasController.duplicate(canvasItem);
+                canvasController.duplicateItems([canvasItem]);
             },
         },
         {
-            menuElement: 'Edit',
+            menuElement: tran('Edit'),
             onSelect: () => {
                 handleCanvasItemEditing();
             },
         },
         {
-            menuElement: 'Delete',
+            menuElement: tran('Delete'),
             onSelect: () => {
-                canvasController.deleteItem(canvasItem);
+                canvasController.deleteItems([canvasItem]);
             },
         },
     ]);

@@ -43,9 +43,7 @@ export function useSlideCanvasScale() {
 export function useCanvasControllerRefreshEvents(
     eventTypes?: CanvasControllerEventType[],
 ) {
-    if (eventTypes === undefined) {
-        eventTypes = ['update', 'scale'];
-    }
+    eventTypes ??= ['update', 'scale'];
     const [n, setN] = useState(0);
     useCanvasControllerEvents(eventTypes, () => {
         setN((n) => n + 1);

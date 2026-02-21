@@ -32,6 +32,7 @@ export default function BoxEditorNormalTextEditModeComp({
     return (
         <div
             className="app-box-editor app-caught-hover-pointer editable"
+            data-app-box-editor-id={canvasItem.id}
             style={style}
             onClick={(event) => {
                 event.stopPropagation();

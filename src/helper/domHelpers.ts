@@ -317,13 +317,13 @@ export async function notifyNewElementAdded(
     elementGetter: () => HTMLElement | null,
     searchingCount = 0,
 ) {
-    if (searchingCount > 5) {
+    if (searchingCount > 10) {
         return;
     }
     const element = elementGetter();
     if (element === null) {
         await new Promise((resolve) => {
-            setTimeout(resolve, 1e3);
+            setTimeout(resolve, 500);
         });
         await notifyNewElementAdded(elementGetter, searchingCount + 1);
     } else {

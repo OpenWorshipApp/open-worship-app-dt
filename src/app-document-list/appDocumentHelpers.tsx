@@ -93,14 +93,14 @@ export function gemSlideContextMenuItems(
         {
             menuElement: tran('Copy'),
             onSelect: async () => {
-                navigator.clipboard.writeText(slide.clipboardSerialize());
+                AppDocument.setCopiedSlides([slide]);
                 showSimpleToast('Copied', 'Slide is copied');
             },
         },
         {
             menuElement: tran('Duplicate'),
             onSelect: () => {
-                appDocument.duplicateSlide(slide);
+                appDocument.duplicateSlides([slide]);
             },
         },
         {

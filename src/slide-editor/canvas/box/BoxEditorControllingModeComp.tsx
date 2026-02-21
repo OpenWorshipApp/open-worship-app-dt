@@ -14,7 +14,6 @@ import { BoxEditorNormalBibleRender } from './BoxEditorNormalViewBibleModeComp';
 import { useCanvasControllerContext } from '../CanvasController';
 import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
-import { useKeyboardRegistering } from '../../../event/KeyboardEventListener';
 import { useBoxEditorControllerContext } from '../../BoxEditorController';
 
 function BoxEditorCanvasItemRender() {
@@ -41,13 +40,6 @@ export default function BoxEditorControllingModeComp() {
     const canvasItem = useCanvasItemContext();
     const boxEditorController = useBoxEditorControllerContext();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
-    useKeyboardRegistering(
-        [{ key: 'Delete' }],
-        () => {
-            canvasController.deleteItem(canvasItem);
-        },
-        [canvasController, canvasItem],
-    );
     const props = useCanvasItemPropsContext();
     return (
         <div
@@ -77,7 +69,8 @@ export default function BoxEditorControllingModeComp() {
             }}
         >
             <div
-                className={'app-box-editor controllable'}
+                className="app-box-editor controllable"
+                data-app-box-editor-id={canvasItem.id}
                 onClick={(event) => {
                     event.stopPropagation();
                 }}

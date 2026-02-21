@@ -16,7 +16,7 @@ export default function BoxEditorNormalViewErrorComp() {
                     {
                         menuElement: 'Delete',
                         onSelect: () => {
-                            canvasController.deleteItem(canvasItem);
+                            canvasController.deleteItems([canvasItem]);
                         },
                     },
                     {

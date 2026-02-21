@@ -82,20 +82,28 @@ export default class Canvas {
         const copiedCanvasItems: CanvasItem<any>[] = [];
         const textPlainType = 'text/plain';
         for (const clipboardItem of clipboardItems) {
-            if (
-                clipboardItem.types.some((type) => {
-                    return type === textPlainType;
-                })
-            ) {
+            if (clipboardItem.types.includes(textPlainType)) {
                 const blob = await clipboardItem.getType(textPlainType);
-                const json = await blob.text();
-                const copiedCanvasItem =
-                    this.clipboardDeserializeCanvasItem(json);
-                if (copiedCanvasItem !== null) {
-                    copiedCanvasItems.push(copiedCanvasItem);
+                const text = await blob.text();
+                const texts = text.split('\n');
+                for (const text of texts) {
+                    const copiedCanvasItem =
+                        this.clipboardDeserializeCanvasItem(text);
+                    if (copiedCanvasItem !== null) {
+                        copiedCanvasItems.push(copiedCanvasItem);
+                    }
                 }
             }
         }
         return copiedCanvasItems;
+    }
+
+    static setCopiedItems(items: CanvasItem<any>[]) {
+        const data = items
+            .map((item) => {
+                return item.clipboardSerialize();
+            })
+            .join('\n');
+        navigator.clipboard.writeText(data);
     }
 }

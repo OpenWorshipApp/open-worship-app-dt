@@ -1,7 +1,6 @@
 import type { DragEvent } from 'react';
 
 import { BoxEditorComp } from './box/BoxEditorComp';
-import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 import { showCanvasContextMenu } from './canvasContextMenuHelpers';
 import type CanvasController from './CanvasController';
 import {
@@ -13,6 +12,7 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     CanvasItemContext,
     useCanvasItemsContext,
+    useSelectedCanvasItemsAndSetterContext,
     useStopAllModes,
 } from './CanvasItem';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
@@ -20,6 +20,8 @@ import { handleCtrlWheel } from '../../others/AppRangeComp';
 import { changeDragEventStyle } from '../../helper/helpers';
 import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from './canvasHelpers';
+import { onCanvasKeyboardEvent } from '../slideEditingBeyboardEventHelpers';
+import { tran } from '../../lang/langHelpers';
 
 function dragOverHandling(event: any) {
     event.preventDefault();
@@ -46,10 +48,13 @@ async function handleDropping(
                     if (!newCanvasItem) {
                         return;
                     }
-                    canvasController.addNewItem(newCanvasItem);
+                    canvasController.addNewItems([newCanvasItem]);
                 });
         } else {
-            showSimpleToast('Insert Image or Video', 'Unsupported file type!');
+            showSimpleToast(
+                tran('Insert Image or Video'),
+                tran('Unsupported file type!'),
+            );
         }
     }
 }
@@ -132,10 +137,11 @@ function BodyRendererComp() {
 
 export default function SlideEditorCanvasComp() {
     const canvasController = useCanvasControllerContext();
+    const { canvasItems: selectedCanvasItems } =
+        useSelectedCanvasItemsAndSetterContext();
     const stopAllModes = useStopAllModes();
     const { canvas } = canvasController;
     const scale = useSlideCanvasScale();
-    useKeyboardRegistering([{ key: 'Escape' }], stopAllModes, []);
     return (
         <div className="card w-100 h-100">
             <div
@@ -151,6 +157,19 @@ export default function SlideEditorCanvasComp() {
                         },
                         defaultSize: defaultRangeSize,
                     });
+                }}
+                onKeyDown={(event) => {
+                    if (document.activeElement !== event.currentTarget) {
+                        return;
+                    }
+                    onCanvasKeyboardEvent(
+                        {
+                            stopAllModes,
+                            canvasController,
+                            selectedCanvasItems,
+                        },
+                        event,
+                    );
                 }}
             >
                 <div
