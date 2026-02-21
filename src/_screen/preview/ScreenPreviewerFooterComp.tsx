@@ -62,19 +62,21 @@ function BackgroundAudioSwitchComp({
         <button
             className={`btn btn-sm btn-${isAudioHandlersVisible ? 'primary' : 'outline-secondary'}`}
             onClick={() => {
-                const isPlaying = Array.from(
-                    document.querySelectorAll<HTMLAudioElement>(
-                        'audio[data-video-id]',
-                    ),
-                );
-                if (isPlaying.some((audio) => !audio.paused)) {
-                    showSimpleToast(
-                        tran('Audio is Playing'),
-                        tran(
-                            'Please pause all background audios before disabling audio handlers',
+                if (isAudioHandlersVisible) {
+                    const isPlaying = Array.from(
+                        document.querySelectorAll<HTMLAudioElement>(
+                            'audio[data-video-id]',
                         ),
                     );
-                    return;
+                    if (isPlaying.some((audio) => !audio.paused)) {
+                        showSimpleToast(
+                            tran('Audio is Playing'),
+                            tran(
+                                'Please pause all background audios before disabling audio handlers',
+                            ),
+                        );
+                        return;
+                    }
                 }
                 setIsAudioHandlersVisible(!isAudioHandlersVisible);
             }}

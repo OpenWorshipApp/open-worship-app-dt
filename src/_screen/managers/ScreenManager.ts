@@ -224,21 +224,23 @@ export default class ScreenManager extends ScreenManagerBase {
         });
     }
 
-    static async getAllScreenManagersByColorNote(
-        colorNote: string | null,
-        excludeScreenIds: number[] = [],
+    static async getGroupScreenManagers(
+        targetScreenManager: ScreenManagerBase,
     ): Promise<ScreenManagerBase[]> {
-        if (colorNote === null) {
+        const targetScreenManagerId = targetScreenManager.screenId;
+        const targetColorNote = await targetScreenManager.getColorNote();
+        if (targetColorNote === null) {
             return [];
         }
-        const allScreenManagers = getAllScreenManagerBases();
+        const screenManagers = getAllScreenManagerBases().filter(
+            (screenManager) => {
+                return screenManager.screenId !== targetScreenManagerId;
+            },
+        );
         const instances: ScreenManagerBase[] = [];
-        for (const screenManager of allScreenManagers) {
-            if (excludeScreenIds.includes(screenManager.screenId)) {
-                continue;
-            }
-            const note = await screenManager.getColorNote();
-            if (note === colorNote) {
+        for (const screenManager of screenManagers) {
+            const colorNote = await screenManager.getColorNote();
+            if (colorNote === targetColorNote) {
                 instances.push(screenManager);
             }
         }
@@ -250,12 +252,9 @@ export default class ScreenManager extends ScreenManagerBase {
         if (currentScreenManager === null || currentScreenManager.isDeleted) {
             return;
         }
-        const colorNote = await currentScreenManager.getColorNote();
-        const screenManagers = await this.getAllScreenManagersByColorNote(
-            colorNote,
-            [currentScreenManager.screenId],
-        );
-        for (const screenManagerBase of screenManagers) {
+        const groupScreenManagers =
+            await this.getGroupScreenManagers(currentScreenManager);
+        for (const screenManagerBase of groupScreenManagers) {
             const newMessage: ScreenMessageType = {
                 ...message,
                 screenId: screenManagerBase.screenId,

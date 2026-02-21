@@ -7,21 +7,29 @@ import {
     handleAudioEnding,
 } from '../../helper/audioControlHelpers';
 import { useScreenManagerContext } from '../managers/screenManagerHooks';
+import ScreenManager from '../managers/ScreenManager';
 import type ScreenBackgroundManager from '../managers/ScreenBackgroundManager';
 
-function handleAudioTimeUpdating(
+async function handleAudioTimeUpdating(
     videoID: string,
-    screenBackgroundManager: ScreenBackgroundManager,
+    screenManager: ScreenManager,
     event: SyntheticEvent<HTMLAudioElement>,
 ) {
     const audioElement = event.currentTarget;
     const currentTime = audioElement.currentTime;
-    screenBackgroundManager.sendSyncVideoTime(videoID, audioElement, true);
-    screenBackgroundManager.setVideoCurrentTime({
-        videoID,
-        videoTime: currentTime,
-        timestamp: Date.now(),
-        isFromAudio: true,
+    const groupScreenManagers =
+        await ScreenManager.getGroupScreenManagers(screenManager);
+    groupScreenManagers.push(screenManager);
+    groupScreenManagers.forEach((screenManager: any) => {
+        const screenBackgroundManager =
+            screenManager.screenBackgroundManager as ScreenBackgroundManager;
+        screenBackgroundManager.sendSyncVideoTime(videoID, audioElement, true);
+        screenBackgroundManager.setVideoCurrentTime({
+            videoID,
+            videoTime: currentTime,
+            timestamp: Date.now(),
+            isFromAudio: true,
+        });
     });
 }
 
@@ -55,7 +63,7 @@ export default function MiniScreenAudioHandlersComp({
                     onTimeUpdate={handleAudioTimeUpdating.bind(
                         null,
                         videoID,
-                        screenManager.screenBackgroundManager,
+                        screenManager,
                     )}
                 >
                     <source src={src} />
