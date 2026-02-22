@@ -107,12 +107,12 @@ const binHelperDestRootDir = resolve('./electron-build/bin-helper');
 
 copyAllChildren(
   resolve(binHelperSourceRootDir, 'net8.0'),
-  resolve(binHelperDestRootDir, 'net8.0'),
+  resolve(binHelperDestRootDir, 'ms-helpers'),
 );
 console.log('PowerPoint lib files are copied');
 copyAllChildren(
   resolve(binHelperSourceRootDir, `bin${getFileSuffix()}`),
-  resolve(binHelperDestRootDir, 'bin'),
+  resolve(binHelperDestRootDir, 'dotnet-bin'),
 );
 console.log('PowerPoint bin files are copied');
 

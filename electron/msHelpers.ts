@@ -4,9 +4,9 @@ import { execute } from './processHelpers';
 
 function getBinaryPath(dotNetRoot?: string) {
     const basePath = toUnpackedPath(resolve(__dirname, '../bin-helper'));
-    const dotnetPath = dotNetRoot ?? resolve(basePath, 'bin');
+    const dotnetPath = dotNetRoot ?? resolve(basePath, 'dotnet-bin');
     const modulePath = resolve(basePath, 'node-api-dotnet', 'net8.0');
-    const binaryPath = resolve(basePath, 'net8.0', 'Helper');
+    const binaryPath = resolve(basePath, 'ms-helpers', 'Helper');
     return { modulePath, binaryPath, dotnetPath };
 }
 
