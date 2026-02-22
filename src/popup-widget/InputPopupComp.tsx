@@ -5,6 +5,7 @@ import HeaderAlertPopupComp from './HeaderAlertPopupComp';
 import type { InputDataType } from './popupWidgetHelpers';
 import { closeAlert } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { tran } from '../lang/langHelpers';
 
 export default function ConfirmPopupComp({
     inputData,
@@ -71,14 +72,14 @@ export default function ConfirmPopupComp({
                         type="button"
                         onClick={handleClosing}
                     >
-                        Cancel
+                        {tran('Cancel')}
                     </button>
                     <button
                         className="btn btn-sm btn-info"
                         type="button"
                         onClick={handleOkClicking}
                     >
-                        Ok
+                        {tran('OK')}
                     </button>
                 </div>
             </div>

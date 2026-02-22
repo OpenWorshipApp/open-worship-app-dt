@@ -9,10 +9,6 @@ import { StrictMode } from 'react';
 
 import { getCurrentLocale, getLangData, tran } from '../lang/langHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
-import {
-    PlatformEnum,
-    useKeyboardRegistering,
-} from '../event/KeyboardEventListener';
 import { handleError } from '../helper/errorHelpers';
 import FileSourceMetaManager from '../helper/FileSourceMetaManager';
 import appProvider from '../server/appProvider';
@@ -38,6 +34,7 @@ import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
 import { applyDarkModeToApp } from './initHelpers';
 import { getReactRoot } from './rootHelpers';
+import KeyboardEventListener from '../event/KeyboardEventListener';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
@@ -130,39 +127,11 @@ async function initMain() {
     await Promise.all(promises);
 }
 
-export function useQuickExitBlock() {
-    useKeyboardRegistering(
-        [
-            {
-                key: 'q',
-                mControlKey: ['Meta'],
-                platforms: [PlatformEnum.Mac],
-            },
-        ],
-        async (event) => {
-            event.preventDefault();
-            await showAppConfirm(
-                'Quick Exit',
-                'Are you sure you want to quit the app?',
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            ).then((isOk) => {
-                if (isOk) {
-                    window.close();
-                }
-            });
-        },
-        [],
-    );
-}
-
 export function RenderApp({
     children,
 }: Readonly<{
     children: ReactNode;
 }>) {
-    useQuickExitBlock();
     useCheckSetting();
     return (
         <div id="app" ref={applyDarkModeToApp}>
@@ -173,6 +142,19 @@ export function RenderApp({
 
 export async function run(children: ReactNode) {
     await initMain();
+    KeyboardEventListener.onMacQuitting = () => {
+        showAppConfirm(
+            tran('Quick Exit'),
+            tran('Are you sure you want to quit the app?'),
+            {
+                confirmButtonLabel: tran('Yes'),
+            },
+        ).then((isOk) => {
+            if (isOk) {
+                window.close();
+            }
+        });
+    };
     const hoverMotionHandler = new HoverMotionHandler();
     addDomChangeEventListener(
         hoverMotionHandler.listenForHoverMotion.bind(hoverMotionHandler),

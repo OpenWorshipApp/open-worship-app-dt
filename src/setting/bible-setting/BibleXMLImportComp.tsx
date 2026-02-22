@@ -85,7 +85,7 @@ export default function BibleXMLImportComp({
                     <i className="bi bi-question-lg" />
                 </button>
             </h3>
-            {!isShowingExample ? null : (
+            {isShowingExample ? (
                 <div>
                     <textarea
                         className="form-control"
@@ -97,7 +97,7 @@ export default function BibleXMLImportComp({
                         readOnly
                     />
                 </div>
-            )}
+            ) : null}
             <form onSubmit={handleFormSubmitting}>
                 <div className="p-1">
                     <div
@@ -119,7 +119,7 @@ export default function BibleXMLImportComp({
                             <button
                                 className="btn btn-sm btn-danger"
                                 type="button"
-                                title="Cancel selection"
+                                title={tran('Cancel selection')}
                                 onClick={(event) => {
                                     const form = event.currentTarget.form;
                                     handleFileCanceling(form);

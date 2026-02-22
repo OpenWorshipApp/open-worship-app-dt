@@ -9,6 +9,12 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    Cancel: 'បោះបង់',
+    Ok: 'យល់ព្រម',
+    'Cancel selection': 'បោះបង់ការជ្រើសរើស',
+    'Quick Exit': 'ចាកចេញយ៉ាងឆាប់រហ័ស',
+    'Are you sure you want to quit the app?':
+        'តើអ្នកពិតជាចង់ចាកចេញពីកម្មវិធីឬ?',
     'Items are copied': 'ធាតុត្រូវបានចម្លង',
     'Only image and video files are supported':
         'គ្រាន់តែឯកសាររូបភាព និងវីដេអូត្រូវបានគាំទ្រ',

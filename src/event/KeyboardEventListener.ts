@@ -61,6 +61,7 @@ const keyNameMap: { [key: string]: string } = {
 export default class KeyboardEventListener extends EventHandler<string> {
     static readonly eventNamePrefix: string = 'keyboard';
     static readonly _layers: AppWidgetType[] = ['root'];
+    public static onMacQuitting: (() => void) | null = null;
 
     static async checkShouldNext(event: KeyboardEvent) {
         if (event.defaultPrevented) {
@@ -225,6 +226,23 @@ export function useKeyboardRegistering(
 
 document.onkeydown = function (event) {
     if (checkIsControlKeys(event)) {
+        return;
+    }
+    if (
+        KeyboardEventListener.onMacQuitting !== null &&
+        checkIsKeyboardEventMatch(
+            [
+                {
+                    key: 'q',
+                    mControlKey: ['Meta'],
+                    platforms: [PlatformEnum.Mac],
+                },
+            ],
+            event,
+        )
+    ) {
+        event.preventDefault();
+        KeyboardEventListener.onMacQuitting();
         return;
     }
     KeyboardEventListener.fireEvent(event);

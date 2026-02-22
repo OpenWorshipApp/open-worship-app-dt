@@ -90,11 +90,11 @@ export default function AppLayoutComp({
                 </div>
             </div>
             <div id="app-body">{children}</div>
+            <AppPopupBibleLookupComp />
             <TopProgressBarComp />
             <ToastComp />
             <AppContextMenuComp />
             <HandleAlertComp />
-            <AppPopupBibleLookupComp />
         </MultiContextRender>
     );
 }
