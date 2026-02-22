@@ -98,24 +98,22 @@ export function useToggleBibleLookupPopupContext(isShowing = true) {
     return context.setIsShowing.bind(null, isShowing);
 }
 
+const shortcutKey = openBibleEventMaps
+    .map((eventMapper) => {
+        return toShortcutKey(eventMapper);
+    })
+    .join(' | ');
 export function BibleLookupButtonComp() {
     const { setIsShowing: setIsBibleLookupShowing } =
         useIsBibleLookupShowingContext();
     useKeyboardRegistering(openBibleEventMaps, () => {
         setIsBibleLookupShowing(true);
-    }, []);
-    const shortcutKey = useMemo(() => {
-        return openBibleEventMaps
-            .map((eventMapper) => {
-                return toShortcutKey(eventMapper);
-            })
-            .join(' | ');
-    }, []);
+    }, [setIsBibleLookupShowing]);
     return (
         <button
             className="btn btn-sm btn-labeled btn-primary app-zero-border-radius"
             style={{ width: '220px' }}
-            title={`Bible lookup [${shortcutKey}]`}
+            title={tran('Open bible lookup popup') + ` [${shortcutKey}]`}
             type="button"
             onClick={async () => {
                 setIsBibleLookupShowing(true);

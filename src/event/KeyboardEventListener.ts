@@ -1,4 +1,4 @@
-import type { DependencyList } from 'react';
+import { useMemo, type DependencyList } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
@@ -193,33 +193,40 @@ export function checkIsKeyboardEventMatch(
     }
     return false;
 }
+
+function genEventNames(eventMappers: EventMapper[]) {
+    const eventNames = eventMappers
+        .filter((eventMapper) => {
+            const { platforms } = eventMapper;
+            if (platforms) {
+                if (
+                    (platforms.includes(PlatformEnum.Windows) &&
+                        appProvider.systemUtils.isWindows) ||
+                    (platforms.includes(PlatformEnum.Mac) &&
+                        appProvider.systemUtils.isMac) ||
+                    (platforms.includes(PlatformEnum.Linux) &&
+                        appProvider.systemUtils.isLinux)
+                ) {
+                    return true;
+                }
+                return false;
+            }
+            return true;
+        })
+        .map((eventMapper) => {
+            return KeyboardEventListener.toEventMapperKey(eventMapper);
+        });
+    return eventNames;
+}
 export function useKeyboardRegistering(
     eventMappers: EventMapper[],
     listener: ListenerType,
     deps: DependencyList,
 ) {
+    const eventNames = useMemo(() => {
+        return genEventNames(eventMappers);
+    }, [eventMappers]);
     useAppEffect(() => {
-        const eventNames = eventMappers
-            .filter((eventMapper) => {
-                const { platforms } = eventMapper;
-                if (platforms) {
-                    if (
-                        (platforms.includes(PlatformEnum.Windows) &&
-                            appProvider.systemUtils.isWindows) ||
-                        (platforms.includes(PlatformEnum.Mac) &&
-                            appProvider.systemUtils.isMac) ||
-                        (platforms.includes(PlatformEnum.Linux) &&
-                            appProvider.systemUtils.isLinux)
-                    ) {
-                        return true;
-                    }
-                    return false;
-                }
-                return true;
-            })
-            .map((eventMapper) => {
-                return KeyboardEventListener.toEventMapperKey(eventMapper);
-            });
         const registeredEvents = KeyboardEventListener.registerEventListener(
             eventNames,
             listener,
@@ -227,7 +234,7 @@ export function useKeyboardRegistering(
         return () => {
             KeyboardEventListener.unregisterEventListener(registeredEvents);
         };
-    }, [listener, ...deps]);
+    }, [listener, ...deps, eventNames]);
 }
 
 document.onkeydown = function (event) {
