@@ -8,7 +8,7 @@ import type Playlist from './Playlist';
 import BibleItemRenderComp from '../bible-list/BibleItemRenderComp';
 import type PlaylistItem from './PlaylistItem';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
 import FileSource from '../helper/FileSource';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 
@@ -141,11 +141,14 @@ function PlaylistBibleItem({
     playlistItem: PlaylistItem;
 }>) {
     const [bibleItem, setBibleItem] = useState<BibleItem | null>(null);
-    useAppEffect(() => {
-        playlistItem.getBibleItem().then((newBibleItem) => {
-            setBibleItem(newBibleItem);
-        });
-    }, [bibleItem]);
+    useAppEffectAsync(
+        async (contextMethods) => {
+            const newBibleItem = await playlistItem.getBibleItem();
+            contextMethods.setBibleItem(newBibleItem);
+        },
+        [playlistItem],
+        { setBibleItem },
+    );
     if (bibleItem === null) {
         return null;
     }

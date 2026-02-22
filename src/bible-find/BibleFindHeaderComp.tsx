@@ -68,6 +68,7 @@ export default function BibleFindHeaderComp({
             }, true);
         }
     };
+    // empty deps is intentional to only trigger finding on the first render
     useAppEffect(() => {
         handleFinding(text);
     }, []);

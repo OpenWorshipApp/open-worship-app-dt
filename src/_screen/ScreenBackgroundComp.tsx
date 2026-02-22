@@ -29,7 +29,7 @@ export default function ScreenBackgroundComp() {
         if (div.current) {
             screenBackgroundManager.rootContainer = div.current;
         }
-    }, [div.current]);
+    }, [screenBackgroundManager, div.current]);
     return (
         <div
             id="background"

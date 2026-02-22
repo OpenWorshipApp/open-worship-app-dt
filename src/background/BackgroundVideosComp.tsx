@@ -63,7 +63,7 @@ function RendBodyComp({
         return () => {
             delete onToggledFadingAtTheEnd[fileSource.src];
         };
-    }, []);
+    }, [fileSource]);
     useAppEffect(() => {
         methodMapIsFadingAtTheEnd[filePath] = setIsFadingAtTheEnd;
         return () => {
