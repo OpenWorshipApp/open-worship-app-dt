@@ -17,6 +17,7 @@ import GarbageCollectableCacher from '../others/GarbageCollectableCacher';
 import FileSource from '../helper/FileSource';
 import { unlocking } from '../server/unlockingHelpers';
 
+type HistoryMovementType = 'undo' | 'redo';
 const CURRENT_FILE_SIGN = '-head';
 export class FileLineHandler {
     filePath: string;
@@ -258,9 +259,12 @@ export default class EditingHistoryManager {
         this.fileLineHandler = new FileLineHandler(this.filePath, dirPath);
     }
 
-    fireEvent() {
+    fireEvent(eventType?: HistoryMovementType) {
         EditingHistoryManager.garbageCacher.delete(this.filePath);
-        this.fileLineHandler.fileSource.fireUpdateEvent();
+        this.fileLineHandler.fileSource.fireUpdateEvent({
+            isHistoryEditing: true,
+            eventType,
+        });
     }
 
     async checkCanUndo() {
@@ -274,7 +278,10 @@ export default class EditingHistoryManager {
         return nextFilePath !== null;
     }
 
-    private async moveHistory(filePath: string | null) {
+    private async moveHistory(
+        filePath: string | null,
+        eventType: HistoryMovementType,
+    ) {
         if (filePath === null) {
             return false;
         }
@@ -283,18 +290,18 @@ export default class EditingHistoryManager {
             return false;
         }
         await this.fileLineHandler.changeCurrent(filePath);
-        this.fireEvent();
+        this.fireEvent(eventType);
         return true;
     }
 
     async undo() {
         const filePath = await this.fileLineHandler.getPreviousFileFullPath();
-        return await this.moveHistory(filePath);
+        return await this.moveHistory(filePath, 'undo');
     }
 
     async redo() {
         const filePath = await this.fileLineHandler.getNextFileFullPath();
-        return await this.moveHistory(filePath);
+        return await this.moveHistory(filePath, 'redo');
     }
 
     async addHistory(dataText: string) {

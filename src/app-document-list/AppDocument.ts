@@ -112,6 +112,7 @@ export default class AppDocument
         return slides[index] ?? null;
     }
 
+    // Required by ItemSourceInf but not used in AppDocument
     async getItemById(id: number) {
         const slides = await this.getSlides();
         return (
@@ -121,6 +122,7 @@ export default class AppDocument
         );
     }
 
+    // Required by ItemSourceInf but not used in AppDocument, so just throw error
     setItemById(_id: number, _slide: Slide): OptionalPromise<void> {
         throw new Error('Method not implemented.');
     }

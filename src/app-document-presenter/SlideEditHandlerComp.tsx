@@ -6,6 +6,9 @@ import WindowEventListener, {
 } from '../event/WindowEventListener';
 import type Slide from '../app-document-list/Slide';
 import AppSuspenseComp from '../others/AppSuspenseComp';
+import { useAppEffect } from '../helper/debuggerHelpers';
+import FileSource from '../helper/FileSource';
+import AppDocument from '../app-document-list/AppDocument';
 
 const LazySlideEditorPopupComp = lazy(() => {
     return import('../slide-editor/SlideEditorPopupComp');
@@ -28,8 +31,32 @@ export function closeSlideQuickEdit() {
 
 export default function SlideEditHandlerComp() {
     const [slide, setSlide] = useState<Slide | null>(null);
-    useWindowEvent(openItemSlideEditEvent, (item: Slide | null) => {
-        return setSlide(item);
+    useAppEffect(() => {
+        if (slide === null) {
+            return;
+        }
+        const callback = async (data: any) => {
+            if (!['undo', 'redo'].includes(data?.eventType)) {
+                return;
+            }
+            const appDocument = AppDocument.getInstance(slide.filePath);
+            const newSlide = await appDocument.getItemById(slide.id);
+            if (newSlide === null) {
+                return;
+            }
+            setSlide(newSlide);
+        };
+        const staticEvents = FileSource.registerFileSourceEventListener(
+            ['update'],
+            callback,
+            slide.filePath,
+        );
+        return () => {
+            FileSource.unregisterEventListener(staticEvents);
+        };
+    }, [slide]);
+    useWindowEvent(openItemSlideEditEvent, (newSlide: Slide | null) => {
+        return setSlide(newSlide);
     });
     useWindowEvent(closeItemSlideEditEvent, () => {
         setSlide(null);
