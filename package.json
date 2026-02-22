@@ -110,8 +110,8 @@
     },
     "devDependencies": {
         "@anthropic-ai/sdk": "^0.71.2",
-        "@aws-sdk/client-cloudfront": "^3.975.0",
-        "@aws-sdk/client-s3": "^3.975.0",
+        "@aws-sdk/client-cloudfront": "^3.995.0",
+        "@aws-sdk/client-s3": "^3.995.0",
         "@lexical/dragon": "^0.39.0",
         "@lexical/history": "^0.39.0",
         "@lexical/rich-text": "^0.39.0",
