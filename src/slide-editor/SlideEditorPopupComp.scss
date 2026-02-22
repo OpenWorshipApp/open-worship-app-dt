@@ -1,14 +1,13 @@
 @use '../others/variables.scss' as *;
 
 #slide-editor-popup {
-  width: calc(100vw - 10px);
-  height: calc(100vh - 10px);
+  width: calc(100vw - 20px);
+  height: calc(100vh - 20px);
 
   .header {
     height: $header-height;
   }
-
   .body {
-    padding: 5px;
+    height: calc(100% - #{$header-height});
   }
 }

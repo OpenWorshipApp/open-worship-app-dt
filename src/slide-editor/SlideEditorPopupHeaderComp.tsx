@@ -4,7 +4,7 @@ import { closeSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerC
 
 export default function SlideEditorPopupHeaderComp() {
     return (
-        <div className="card-header text-center w-100">
+        <div className="card-header text-center w-100 app-overflow-hidden">
             <span>
                 <i className="bi bi-pencil-square" />
                 {tran('edit-item-thumb')}

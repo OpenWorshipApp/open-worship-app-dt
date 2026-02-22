@@ -16,7 +16,10 @@ export default function SlideEditorPopupComp({
     useKeyboardRegistering([{ key: 'Escape' }], closeSlideQuickEdit, []);
     return (
         <ModalComp>
-            <div id="slide-editor-popup" className="shadow card">
+            <div
+                id="slide-editor-popup"
+                className="shadow card app-overflow-hidden"
+            >
                 <SlideEditorPopupHeaderComp />
                 <div className="body card-body w-100 app-overflow-hidden">
                     <SelectedEditingSlideContext
