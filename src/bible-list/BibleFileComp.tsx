@@ -101,9 +101,12 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
     const isOnScreen = useIsOnScreen(bible.items);
     return (
-        <div className="w-100 accordion accordion-flush py-1 ms-2 pointer">
+        <div className="w-100 accordion accordion-flush py-1 ms-2">
             <div
-                className={`accordion-header d-flex ${isOnScreen ? 'app-on-screen' : ''}`}
+                className={
+                    'accordion-header d-flex app-caught-hover-pointer' +
+                    ` ${isOnScreen ? 'app-on-screen' : ''}`
+                }
                 onClick={() => {
                     bible.setIsOpened(!bible.isOpened);
                 }}
