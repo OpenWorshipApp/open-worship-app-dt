@@ -68,10 +68,16 @@ export const BibleLookupTogglePopupContext = createContext<{
     isShowing: boolean;
     setIsShowing: (isShowing: boolean) => void;
 } | null>(null);
-const openBibleEventMap: EventMapper = {
-    allControlKey: ['Ctrl'],
-    key: 'b',
-};
+const openBibleEventMaps: EventMapper[] = [
+    {
+        allControlKey: ['Ctrl'],
+        key: 'b',
+    },
+    {
+        mControlKey: ['Meta'],
+        key: 'b',
+    },
+];
 
 export function useIsBibleLookupShowingContext() {
     const context = use(BibleLookupTogglePopupContext);
@@ -95,18 +101,21 @@ export function useToggleBibleLookupPopupContext(isShowing = true) {
 export function BibleLookupButtonComp() {
     const { setIsShowing: setIsBibleLookupShowing } =
         useIsBibleLookupShowingContext();
-    useKeyboardRegistering(
-        [openBibleEventMap],
-        () => {
-            setIsBibleLookupShowing(true);
-        },
-        [],
-    );
+    useKeyboardRegistering(openBibleEventMaps, () => {
+        setIsBibleLookupShowing(true);
+    }, []);
+    const shortcutKey = useMemo(() => {
+        return openBibleEventMaps
+            .map((eventMapper) => {
+                return toShortcutKey(eventMapper);
+            })
+            .join(' | ');
+    }, []);
     return (
         <button
             className="btn btn-sm btn-labeled btn-primary app-zero-border-radius"
             style={{ width: '220px' }}
-            title={`Bible lookup [${toShortcutKey(openBibleEventMap)}]`}
+            title={`Bible lookup [${shortcutKey}]`}
             type="button"
             onClick={async () => {
                 setIsBibleLookupShowing(true);

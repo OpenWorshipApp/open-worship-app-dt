@@ -4,6 +4,7 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
 import EventHandler from './EventHandler';
 import type { AppWidgetType } from './WindowEventListener';
+import { cloneJson } from '../helper/helpers';
 
 function getLastItem<T>(arr: T[]) {
     return arr.at(-1) ?? null;
@@ -83,10 +84,12 @@ export default class KeyboardEventListener extends EventHandler<string> {
         this._layers.splice(this._layers.indexOf(layer), 1);
     }
     static genEventKeyFromFiredEvent(event: KeyboardEvent) {
-        const eventMapper = {
-            key: event.key,
-        };
-        this.addControlKey(eventMapper, event);
+        const eventMapper = this.addControlKey(
+            {
+                key: event.key,
+            },
+            event,
+        );
         const eventKey = this.toEventMapperKey(eventMapper);
         return eventKey;
     }
@@ -95,46 +98,49 @@ export default class KeyboardEventListener extends EventHandler<string> {
         this.addPropEvent(eventKey, event);
     }
     static addControlKey(eventMapper: EventMapper, event: KeyboardEvent) {
+        const clonedEventMapper = cloneJson(eventMapper);
         if (appProvider.systemUtils.isWindows) {
-            eventMapper.wControlKey = [];
+            clonedEventMapper.wControlKey = [];
             if (event.ctrlKey) {
-                eventMapper.wControlKey.push('Ctrl');
+                clonedEventMapper.wControlKey.push('Ctrl');
             }
             if (event.altKey) {
-                eventMapper.wControlKey.push('Alt');
+                clonedEventMapper.wControlKey.push('Alt');
             }
             if (event.shiftKey) {
-                eventMapper.wControlKey.push('Shift');
+                clonedEventMapper.wControlKey.push('Shift');
             }
         } else if (appProvider.systemUtils.isMac) {
-            eventMapper.mControlKey = [];
+            clonedEventMapper.mControlKey = [];
             if (event.ctrlKey) {
-                eventMapper.mControlKey.push('Ctrl');
+                clonedEventMapper.mControlKey.push('Ctrl');
             }
             if (event.altKey) {
-                eventMapper.mControlKey.push('Option');
+                clonedEventMapper.mControlKey.push('Option');
             }
             if (event.shiftKey) {
-                eventMapper.mControlKey.push('Shift');
+                clonedEventMapper.mControlKey.push('Shift');
             }
             if (event.metaKey) {
-                eventMapper.mControlKey.push('Meta');
+                clonedEventMapper.mControlKey.push('Meta');
             }
         } else if (appProvider.systemUtils.isLinux) {
-            eventMapper.lControlKey = [];
+            clonedEventMapper.lControlKey = [];
             if (event.ctrlKey) {
-                eventMapper.lControlKey.push('Ctrl');
+                clonedEventMapper.lControlKey.push('Ctrl');
             }
             if (event.altKey) {
-                eventMapper.lControlKey.push('Alt');
+                clonedEventMapper.lControlKey.push('Alt');
             }
             if (event.shiftKey) {
-                eventMapper.lControlKey.push('Shift');
+                clonedEventMapper.lControlKey.push('Shift');
             }
         }
+        return clonedEventMapper;
     }
     static toShortcutKey(eventMapper: EventMapper) {
-        let key = eventMapper.key;
+        const clonedEventMapper = cloneJson(eventMapper);
+        let key = clonedEventMapper.key;
         if (!key) {
             return '';
         }
@@ -142,7 +148,7 @@ export default class KeyboardEventListener extends EventHandler<string> {
             key = key.toUpperCase();
         }
         const { wControlKey, mControlKey, lControlKey, allControlKey } =
-            eventMapper;
+            clonedEventMapper;
         const allControls: string[] = allControlKey ?? [];
         if (appProvider.systemUtils.isWindows) {
             allControls.push(...(wControlKey ?? []));
