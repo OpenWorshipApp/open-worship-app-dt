@@ -82,7 +82,7 @@ export default function RenderBibleLookupComp() {
             viewController.setInputText = (_: string) => {};
             viewController.reloadEditingResult = (_: string) => {};
         };
-    }, []);
+    }, [viewController]);
     if (!isValidBibleKey) {
         return (
             <div className="card w-100 h-100">
