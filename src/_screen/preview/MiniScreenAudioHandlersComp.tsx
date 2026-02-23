@@ -36,9 +36,11 @@ export default function MiniScreenAudioHandlersComp({
                     onPause={handleAudioPausing}
                     onEnded={handleAudioEnding.bind(null, isRepeating)}
                     onTimeUpdate={(event) => {
-                        screenManager.handleAudioTimeUpdating(
+                        const { screenBackgroundManager } = screenManager;
+                        screenBackgroundManager.setBackgroundVideoCurrentTimeForce(
                             videoID,
                             event.currentTarget.currentTime,
+                            false,
                         );
                     }}
                 >

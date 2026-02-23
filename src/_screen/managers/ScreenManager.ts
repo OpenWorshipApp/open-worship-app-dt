@@ -41,10 +41,35 @@ export default class ScreenManager extends ScreenManagerBase {
             this,
             'foreground',
         );
-        this.screenBackgroundManager = new ScreenBackgroundManager(
-            this,
-            this.backgroundEffectManager,
-        );
+
+        const screenBackgroundManager = (this.screenBackgroundManager =
+            new ScreenBackgroundManager(this, this.backgroundEffectManager));
+        screenBackgroundManager.getMemberInstances = async () => {
+            const groupScreenManagers =
+                await ScreenManager.getGroupScreenManagers(this);
+            const instances: ScreenBackgroundManager[] = [];
+            for (const screenManager of groupScreenManagers) {
+                if (screenManager instanceof ScreenManager === false) {
+                    continue;
+                }
+                instances.push(screenManager.screenBackgroundManager);
+            }
+            return instances;
+        };
+        screenBackgroundManager.getMemberIds = async () => {
+            const instances =
+                await screenBackgroundManager.getMemberInstances();
+            return instances.map((instance) => {
+                return instance.screenId;
+            });
+        };
+        screenBackgroundManager.checkIsMainInstance = async () => {
+            const memberIds = await screenBackgroundManager.getMemberIds();
+            memberIds.push(screenBackgroundManager.screenId);
+            const minId = Math.min(...memberIds);
+            return screenBackgroundManager.screenId === minId;
+        };
+
         this.screenVaryAppDocumentManager = new ScreenVaryAppDocumentManager(
             this,
             this.varyAppDocumentEffectManager,
@@ -305,20 +330,5 @@ export default class ScreenManager extends ScreenManagerBase {
             return this.createScreenManagerBaseGhost(screenId);
         }
         return screenManagerBase;
-    }
-
-    async handleAudioTimeUpdating(videoID: string, videoTime: number) {
-        const groupScreenManagers =
-            await ScreenManager.getGroupScreenManagers(this);
-        groupScreenManagers.push(this);
-        for (const screenManager of groupScreenManagers) {
-            if (screenManager instanceof ScreenManager === false) {
-                continue;
-            }
-            screenManager.screenBackgroundManager.setVideoCurrentTimeForce(
-                videoID,
-                videoTime,
-            );
-        }
     }
 }

@@ -128,3 +128,9 @@ export default abstract class ScreenEventHandler<
         });
     }
 }
+
+export interface GroupMembershipInf {
+    getMemberInstances(): Promise<ScreenEventHandler<any>[]>;
+    getMemberIds(): Promise<number[]>;
+    checkIsMainInstance(): Promise<boolean>;
+}
