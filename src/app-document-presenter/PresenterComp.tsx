@@ -91,7 +91,8 @@ async function checkIsOnScreen<T>(
         const titleList = await getOnScreenBibleItems();
         const bibleItems = viewController.straightBibleItems;
         for (const bibleItem of bibleItems) {
-            if (titleList.includes(await bibleItem.toTitle())) {
+            const title = await bibleItem.toTitle();
+            if (titleList.includes(title)) {
                 return true;
             }
         }

@@ -136,7 +136,7 @@ export async function checkIsAIAudioAvailableForBible(bibleItem: BibleItem) {
         return false;
     }
     const langData = await getLangDataFromBibleKey(bibleItem.bibleKey);
-    if (langData === null || !langData.bibleAudioAvailable) {
+    if (!langData?.bibleAudioAvailable) {
         return false;
     }
     return bibleItem.isAudioEnabled;
@@ -145,7 +145,7 @@ export async function checkIsAIAudioAvailableForBible(bibleItem: BibleItem) {
 export function useIsAudioAIEnabled(bibleItem: BibleItem) {
     const [isAvailable] = useAppStateAsync(async () => {
         const langData = await getLangDataFromBibleKey(bibleItem.bibleKey);
-        if (langData === null || !langData.bibleAudioAvailable) {
+        if (!langData?.bibleAudioAvailable) {
             return false;
         }
         return true;

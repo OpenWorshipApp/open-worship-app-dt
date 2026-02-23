@@ -306,4 +306,19 @@ export default class ScreenManager extends ScreenManagerBase {
         }
         return screenManagerBase;
     }
+
+    async handleAudioTimeUpdating(videoID: string, videoTime: number) {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(this);
+        groupScreenManagers.push(this);
+        for (const screenManager of groupScreenManagers) {
+            if (screenManager instanceof ScreenManager === false) {
+                continue;
+            }
+            screenManager.screenBackgroundManager.setVideoCurrentTimeForce(
+                videoID,
+                videoTime,
+            );
+        }
+    }
 }

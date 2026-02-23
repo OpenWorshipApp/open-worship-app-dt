@@ -20,7 +20,7 @@ export default function BibleViewRendererComp({
     nestedBibleItems: NestedBibleItemsType;
 }>) {
     const viewController = useBibleItemsViewControllerContext();
-    if (!(nestedBibleItems instanceof Array)) {
+    if (!Array.isArray(nestedBibleItems)) {
         return viewController.finalRenderer(nestedBibleItems);
     }
     if (nestedBibleItems.length === 0) {

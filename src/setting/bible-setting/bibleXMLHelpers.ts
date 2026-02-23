@@ -214,7 +214,7 @@ export async function getBibleXMLInfo(bibleKey: string) {
         return null;
     }
     const xmlElementBible = xmlTextToBibleElement(xmlText);
-    if (!xmlElementBible) {
+    if (xmlElementBible === null) {
         return null;
     }
     return await getBibleInfoJson(xmlElementBible);

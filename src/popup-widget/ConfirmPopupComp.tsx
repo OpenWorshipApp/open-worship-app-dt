@@ -79,7 +79,7 @@ export default function ConfirmPopupComp({
                             type="button"
                             onClick={handleOkClicking}
                         >
-                            {confirmData.confirmButtonLabel ?? tran('OK')}
+                            {confirmData.confirmButtonLabel ?? tran('Ok')}
                         </button>
                     </div>
                 </div>

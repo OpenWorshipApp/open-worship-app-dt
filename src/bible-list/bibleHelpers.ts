@@ -289,7 +289,8 @@ export async function getOnScreenBibleItems() {
 export async function checkIsBibleItemOnScreen(items: BibleItem[]) {
     const titleList = await getOnScreenBibleItems();
     for (const bibleItem of items) {
-        if (titleList.includes(await bibleItem.toTitle())) {
+        const title = await bibleItem.toTitle();
+        if (titleList.includes(title)) {
             return true;
         }
     }

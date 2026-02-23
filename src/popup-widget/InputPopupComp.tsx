@@ -79,7 +79,7 @@ export default function ConfirmPopupComp({
                         type="button"
                         onClick={handleOkClicking}
                     >
-                        {tran('OK')}
+                        {tran('Ok')}
                     </button>
                 </div>
             </div>

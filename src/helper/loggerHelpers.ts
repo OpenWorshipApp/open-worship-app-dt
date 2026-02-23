@@ -16,7 +16,14 @@ function callConsole(method: string, ...args: any[]) {
         | ((...args: any) => void)
         | undefined;
     callable?.call(console, ...args);
-    if (!appProvider.isPagePresenter) {
+    if (
+        !(
+            appProvider.isPagePresenter ||
+            appProvider.isPageAppDocumentEditor ||
+            appProvider.isPageReader ||
+            appProvider.isPageExperiment
+        )
+    ) {
         appProvider.messageUtils.sendData('all:app:log', [
             `:${appProvider.currentHomePage}:`,
             ...args,

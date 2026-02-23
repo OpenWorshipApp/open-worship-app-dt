@@ -1,4 +1,4 @@
-import { SyntheticEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
@@ -7,31 +7,6 @@ import {
     handleAudioEnding,
 } from '../../helper/audioControlHelpers';
 import { useScreenManagerContext } from '../managers/screenManagerHooks';
-import ScreenManager from '../managers/ScreenManager';
-import type ScreenBackgroundManager from '../managers/ScreenBackgroundManager';
-
-async function handleAudioTimeUpdating(
-    videoID: string,
-    screenManager: ScreenManager,
-    event: SyntheticEvent<HTMLAudioElement>,
-) {
-    const audioElement = event.currentTarget;
-    const currentTime = audioElement.currentTime;
-    const groupScreenManagers =
-        await ScreenManager.getGroupScreenManagers(screenManager);
-    groupScreenManagers.push(screenManager);
-    groupScreenManagers.forEach((screenManager: any) => {
-        const screenBackgroundManager =
-            screenManager.screenBackgroundManager as ScreenBackgroundManager;
-        screenBackgroundManager.sendSyncVideoTime(videoID, audioElement, true);
-        screenBackgroundManager.setVideoCurrentTime({
-            videoID,
-            videoTime: currentTime,
-            timestamp: Date.now(),
-            isFromAudio: true,
-        });
-    });
-}
 
 export default function MiniScreenAudioHandlersComp({
     src,
@@ -60,11 +35,12 @@ export default function MiniScreenAudioHandlersComp({
                     onPlay={handleAudioPlaying}
                     onPause={handleAudioPausing}
                     onEnded={handleAudioEnding.bind(null, isRepeating)}
-                    onTimeUpdate={handleAudioTimeUpdating.bind(
-                        null,
-                        videoID,
-                        screenManager,
-                    )}
+                    onTimeUpdate={(event) => {
+                        screenManager.handleAudioTimeUpdating(
+                            videoID,
+                            event.currentTarget.currentTime,
+                        );
+                    }}
                 >
                     <source src={src} />
                     <track kind="captions" />

@@ -219,9 +219,9 @@ function BibleBooksMapXMLInputComp({
         markupString: string,
         lang: LanguageDataType | null,
     ) => {
-        const parser = new DOMParser();
         markupString = markupString.replaceAll('</', '@newline</');
-        const doc = parser.parseFromString(markupString, 'text/html');
+        const domParser = new DOMParser();
+        const doc = domParser.parseFromString(markupString, 'text/html');
         let innerText = doc.body.innerText;
         innerText = innerText.replaceAll('@newline', '\n');
         innerText = innerText.replaceAll(/ +/g, ' ');

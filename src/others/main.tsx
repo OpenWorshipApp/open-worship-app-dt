@@ -85,8 +85,10 @@ async function confirmReloading() {
         }
         setSetting(ERROR_DATETIME_SETTING_NAME, Date.now().toString());
         const isOk = await showAppConfirm(
-            'Reload is needed',
-            'We were sorry, Internal process error, you to refresh the app',
+            tran('Reload is needed'),
+            tran(
+                'We were sorry, Internal process error, you to refresh the app',
+            ),
         );
         if (isOk) {
             appProvider.reload();

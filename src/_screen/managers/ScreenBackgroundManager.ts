@@ -57,9 +57,6 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
             const allBackgroundSrcList = getBackgroundSrcListOnScreenSetting();
             this._backgroundSrc = allBackgroundSrcList[this.key] ?? null;
         }
-        if (!appProvider.isPagePresenter) {
-            this.sendSyncVideoTime = () => {};
-        }
     }
 
     get isShowing() {
@@ -113,11 +110,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         this.backgroundSrc = message.data;
     }
 
-    sendSyncVideoTime(
-        videoID: string,
-        element: HTMLVideoElement | HTMLAudioElement,
-        isFromAudio = false,
-    ) {
+    sendSyncVideoTime(videoID: string, videoTime: number, isFromAudio = false) {
         setTimeout(() => {
             this.screenManagerBase.sendScreenMessage(
                 {
@@ -125,7 +118,7 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
                     type: 'background-video-time',
                     data: {
                         videoID,
-                        videoTime: element.currentTime,
+                        videoTime,
                         timestamp: Date.now(),
                         isFromAudio,
                     },
@@ -141,6 +134,11 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         timestamp: number;
         isFromAudio: boolean;
     }) {
+        // If audio is playing for the video, it means the video time is
+        // controlled by the audio.
+        if (this._checkIsVideoAudioPlaying(data.videoID) && !data.isFromAudio) {
+            return;
+        }
         const rootContainer = this.rootContainer;
         if (rootContainer === null) {
             return;
@@ -149,12 +147,12 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
         const videoElements = rootContainer.querySelectorAll<HTMLVideoElement>(
             `video#${videoID}`,
         );
+        const timeThreshold = FADING_DURATION_SECOND + 0.1;
         for (const videoElement of videoElements) {
             // Disable syncing when the video is in transition mode
             if (
-                videoElement.currentTime < FADING_DURATION_SECOND ||
-                videoElement.duration - videoElement.currentTime <
-                    FADING_DURATION_SECOND
+                videoElement.currentTime < timeThreshold ||
+                videoElement.duration - videoElement.currentTime < timeThreshold
             ) {
                 continue;
             }
@@ -167,12 +165,23 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
                 appLog(
                     'Syncing video time',
                     isFromAudio ? '(from audio)' : '',
-                    timeDiff,
-                    exactVideoTime,
+                    `Screen ID: ${this.screenId}`,
+                    timeDiff.toFixed(4),
+                    exactVideoTime.toFixed(4),
                 );
                 videoElement.currentTime = exactVideoTime;
             }
         }
+    }
+
+    setVideoCurrentTimeForce(videoID: string, videoTime: number) {
+        this.sendSyncVideoTime(videoID, videoTime, true);
+        this.setVideoCurrentTime({
+            videoID,
+            videoTime,
+            timestamp: Date.now(),
+            isFromAudio: true,
+        });
     }
 
     receiveSyncVideoTime(message: ScreenMessageType) {
@@ -333,8 +342,12 @@ class ScreenBackgroundManager extends ScreenEventHandler<ScreenBackgroundManager
             return;
         }
         const fadeOutListener = async () => {
-            if (!this._checkIsVideoAudioPlaying(videoElement.id)) {
-                this.sendSyncVideoTime(videoElement.id, videoElement);
+            // Should sync from screen to main to audience glitching on user's side.
+            if (appProvider.isPageScreen) {
+                this.sendSyncVideoTime(
+                    videoElement.id,
+                    videoElement.currentTime,
+                );
             }
             const duration = videoElement.duration;
             const isFadingAtTheEnd = getIsFadingAtTheEndSetting(
