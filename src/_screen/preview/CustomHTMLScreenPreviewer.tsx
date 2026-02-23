@@ -8,6 +8,7 @@ import { DetailedHTMLProps, HTMLAttributes } from 'react';
 const HTML_TAG_NAME = 'mini-screen-previewer-custom-html';
 
 declare module 'react/jsx-runtime' {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace JSX {
         interface IntrinsicElements {
             [HTML_TAG_NAME]: DetailedHTMLProps<
