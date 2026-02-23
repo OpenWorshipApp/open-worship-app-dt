@@ -90,8 +90,6 @@ export default function ScreenPreviewerItemComp({
                     event.currentTarget.scrollTop = 0;
                 }}
             >
-                {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-                {/* @ts-ignore */}
                 <mini-screen-previewer-custom-html
                     screenId={screenManager.screenId}
                 />

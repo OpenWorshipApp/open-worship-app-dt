@@ -3,16 +3,18 @@ import MiniScreenAppComp from './MiniScreenAppComp';
 import { getScreenManagerBase } from '../managers/screenManagerBaseHelpers';
 import { genTimeoutAttempt } from '../../helper/helpers';
 import type ScreenManagerBase from '../managers/ScreenManagerBase';
-import type { CustomElement } from '../screenTypeHelpers';
+import { DetailedHTMLProps, HTMLAttributes } from 'react';
 
 const HTML_TAG_NAME = 'mini-screen-previewer-custom-html';
 
-declare module 'react' {
-    interface IntrinsicElements {
-        [HTML_TAG_NAME]: CustomElement<
-            CustomHTMLScreenPreviewer,
-            'BibleScroll' | 'VerseHover' | 'VerseSelect'
-        >;
+declare module 'react/jsx-runtime' {
+    namespace JSX {
+        interface IntrinsicElements {
+            [HTML_TAG_NAME]: DetailedHTMLProps<
+                HTMLAttributes<HTMLElement> & { screenId: number },
+                HTMLElement
+            >;
+        }
     }
 }
 
@@ -63,4 +65,6 @@ export default class CustomHTMLScreenPreviewer extends HTMLElement {
     }
 }
 
-customElements.define(HTML_TAG_NAME, CustomHTMLScreenPreviewer);
+if (customElements.get(HTML_TAG_NAME) === undefined) {
+    customElements.define(HTML_TAG_NAME, CustomHTMLScreenPreviewer);
+}
