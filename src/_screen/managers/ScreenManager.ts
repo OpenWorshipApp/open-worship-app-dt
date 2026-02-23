@@ -16,6 +16,41 @@ import ScreenManagerBase from './ScreenManagerBase';
 import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
 import type { ScreenMessageType } from '../screenTypeHelpers';
+import ScreenEventHandler, { GroupMembershipInf } from './ScreenEventHandler';
+
+function setGroupMembershipInf(
+    screenManagerBase: ScreenManagerBase,
+    targetInstance: GroupMembershipInf,
+    screenId: number,
+    getPropertyInstance: (
+        screenManagerBase: ScreenManagerBase,
+    ) => ScreenEventHandler<any>,
+) {
+    targetInstance.getMemberInstances = async () => {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(screenManagerBase);
+        const instances = [];
+        for (const screenManager of groupScreenManagers) {
+            if (screenManager instanceof ScreenManager === false) {
+                continue;
+            }
+            instances.push(getPropertyInstance(screenManager));
+        }
+        return instances;
+    };
+    targetInstance.getMemberIds = async () => {
+        const instances = await targetInstance.getMemberInstances();
+        return instances.map((instance) => {
+            return instance.screenId;
+        });
+    };
+    targetInstance.checkIsMainInstance = async () => {
+        const memberIds = await targetInstance.getMemberIds();
+        memberIds.push(screenId);
+        const minId = Math.min(...memberIds);
+        return screenId === minId;
+    };
+}
 
 export default class ScreenManager extends ScreenManagerBase {
     readonly screenBackgroundManager: ScreenBackgroundManager;
@@ -42,33 +77,19 @@ export default class ScreenManager extends ScreenManagerBase {
             'foreground',
         );
 
-        const screenBackgroundManager = (this.screenBackgroundManager =
-            new ScreenBackgroundManager(this, this.backgroundEffectManager));
-        screenBackgroundManager.getMemberInstances = async () => {
-            const groupScreenManagers =
-                await ScreenManager.getGroupScreenManagers(this);
-            const instances: ScreenBackgroundManager[] = [];
-            for (const screenManager of groupScreenManagers) {
-                if (screenManager instanceof ScreenManager === false) {
-                    continue;
-                }
-                instances.push(screenManager.screenBackgroundManager);
-            }
-            return instances;
-        };
-        screenBackgroundManager.getMemberIds = async () => {
-            const instances =
-                await screenBackgroundManager.getMemberInstances();
-            return instances.map((instance) => {
-                return instance.screenId;
-            });
-        };
-        screenBackgroundManager.checkIsMainInstance = async () => {
-            const memberIds = await screenBackgroundManager.getMemberIds();
-            memberIds.push(screenBackgroundManager.screenId);
-            const minId = Math.min(...memberIds);
-            return screenBackgroundManager.screenId === minId;
-        };
+        this.screenBackgroundManager = new ScreenBackgroundManager(
+            this,
+            this.backgroundEffectManager,
+        );
+        setGroupMembershipInf(
+            this,
+            this.screenBackgroundManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager)
+                    .screenBackgroundManager;
+            },
+        );
 
         this.screenVaryAppDocumentManager = new ScreenVaryAppDocumentManager(
             this,
