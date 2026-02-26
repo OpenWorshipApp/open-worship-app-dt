@@ -22,6 +22,7 @@ import { useEditingCanvasContextValue } from '../canvasEditingHelpers';
 import ShadowingFillParentWidthComp from '../../others/ShadowingFillParentWidthComp';
 import { getSlideItemShadowingStyle } from '../../app-document-presenter/items/slideItemRenderHelpers';
 import { genBoxEditorStyle } from './box/boxEditorHelpers';
+import { useThemeSource } from '../../others/initHelpers';
 
 function dragOverHandling(event: any) {
     event.preventDefault();
@@ -75,9 +76,11 @@ function BodyRendererComp({
     const canvasController = useCanvasControllerContext();
     const { canvas } = canvasController;
     const canvasItems = useCanvasItemsContext();
+    const { theme } = useThemeSource();
     return (
         <div
-            className="slide-canvas-editor shadow-blank-bg app-border-white-round"
+            className="slide-canvas-editor shadow-blank-bg"
+            data-shadow-theme={theme}
             style={{
                 width: `${canvas.width}px`,
                 height: `${canvas.height}px`,

@@ -1,5 +1,5 @@
-import { applyDarkModeToApp } from '../others/initHelpers';
 import appProvider from '../server/appProvider';
+import { useThemeSource } from './initHelpers';
 
 const { appInfo } = appProvider;
 const GITHUB_URL = appInfo.gitRepository;
@@ -21,10 +21,11 @@ const handleForkingOnGithub = () => {
 };
 // need width: '700px', height: '410px'
 export default function AboutComp() {
+    const { theme } = useThemeSource();
     return (
         <div
             id="app"
-            ref={applyDarkModeToApp}
+            data-bs-theme={theme}
             className="d-flex flex-wrap justify-content-center p-1 app-selectable-text"
         >
             <RenderVerseComp />

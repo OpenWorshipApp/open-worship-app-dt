@@ -91,7 +91,7 @@ function genNewCanvasController(
         if (oldSlide !== slide) {
             oldCanvasController.canvas.slide = slide;
             oldCanvasController.fireUpdateEvent();
-            if(oldSlide.id !== slide.id) {
+            if (oldSlide.id !== slide.id) {
                 oldCanvasController.fireReloadEvent();
             }
         }

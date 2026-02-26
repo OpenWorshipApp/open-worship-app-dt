@@ -48,9 +48,7 @@ export default function RenderTransitionEffectComp({
             }}
         >
             {title}
-            <i
-                className={`${selected[0]} ps-1 ${HIGHLIGHT_SELECTED_CLASSNAME}`}
-            />
+            <i className={`${selected[0]} ps-1`} />
         </button>
     );
 }

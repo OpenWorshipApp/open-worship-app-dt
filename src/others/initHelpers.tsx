@@ -2,20 +2,9 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'bootstrap/dist/css/bootstrap.css';
 
 import appProvider from '../server/appProvider';
-
-export const darkModeHook = {
-    check: () => {},
-};
-export function applyDarkModeToApp() {
-    const isDarkMode = checkIsDarkMode();
-    const theme = isDarkMode ? 'dark' : 'light';
-    for (const element of document.querySelectorAll('#app')) {
-        if (element instanceof HTMLElement) {
-            element.dataset.bsTheme = theme;
-        }
-    }
-    darkModeHook.check();
-}
+import EventHandler from '../event/EventHandler';
+import { useAppEffect } from '../helper/debuggerHelpers';
+import { useState } from 'react';
 
 export const themeOptions = ['light', 'dark', 'system'] as const;
 export type ThemeOptionType = (typeof themeOptions)[number];
@@ -24,10 +13,6 @@ export function getThemeSourceSetting(): ThemeOptionType {
         appProvider.messageUtils.sendDataSync('main:app:get-theme');
     return themeSource;
 }
-export function setThemeSourceSetting(themeSource: ThemeOptionType) {
-    appProvider.messageUtils.sendData('main:app:set-theme', themeSource);
-    applyDarkModeToApp();
-}
 
 function getSystemDarkMatcher() {
     if (!globalThis.matchMedia) {
@@ -35,8 +20,8 @@ function getSystemDarkMatcher() {
     }
     return globalThis.matchMedia('(prefers-color-scheme: dark)');
 }
-export function checkIsDarkMode() {
-    const themeSource = getThemeSourceSetting();
+export function checkIsDarkMode(themeSource?: ThemeOptionType) {
+    themeSource ??= getThemeSourceSetting();
     if (themeSource === 'system' && getSystemDarkMatcher()?.matches) {
         return true;
     }
@@ -48,6 +33,41 @@ export function getColorParts() {
     const colorPart = isDarkMode ? '000000' : 'ffffff';
     const invertColorPart = isDarkMode ? 'ffffff' : '000000';
     return { colorPart, invertColorPart };
+}
+
+const THEME_CHANGE_EVENT = 'app:theme-changed';
+function applyDarkModeToApp() {
+    const isDarkMode = checkIsDarkMode();
+    const themeSource = isDarkMode ? 'dark' : 'light';
+    EventHandler.addPropEvent(THEME_CHANGE_EVENT, themeSource);
+}
+export function useThemeSource() {
+    const [themeSource, setThemeSource] = useState<ThemeOptionType>(
+        getThemeSourceSetting(),
+    );
+    const setThemeSource1 = (newThemeSource: ThemeOptionType) => {
+        setThemeSource(newThemeSource);
+        EventHandler.addPropEvent(THEME_CHANGE_EVENT, newThemeSource);
+        appProvider.messageUtils.sendData('main:app:set-theme', newThemeSource);
+    };
+    useAppEffect(() => {
+        const handler = (newTheme: ThemeOptionType) => {
+            setThemeSource(newTheme);
+        };
+        const registeredEvent = EventHandler.registerEventListener(
+            [THEME_CHANGE_EVENT],
+            handler,
+        );
+        return () => {
+            EventHandler.unregisterEventListener(registeredEvent);
+        };
+    }, []);
+    const isDarkMode = checkIsDarkMode(themeSource);
+    return {
+        theme: isDarkMode ? 'dark' : 'light',
+        themeSource,
+        setThemeSource: setThemeSource1,
+    };
 }
 
 getSystemDarkMatcher()?.addEventListener('change', applyDarkModeToApp);

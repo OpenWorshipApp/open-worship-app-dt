@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import type { LookupOptions } from './finderHelpers';
 import { findString } from './finderHelpers';
-import { applyDarkModeToApp } from '../others/initHelpers';
+import { useThemeSource } from '../others/initHelpers';
 
 export default function FinderAppComp({
     onClose,
@@ -85,12 +85,13 @@ export default function FinderAppComp({
         [lookupText, setLookupText1],
     );
 
+    const { theme } = useThemeSource();
+
     return (
         <div
             id="app"
-            ref={applyDarkModeToApp}
             className="finder-container card w-100 h-100"
-            data-bs-theme="dark"
+            data-bs-theme={theme}
         >
             <div className="card-body p-0">
                 <div className="finder input-group">

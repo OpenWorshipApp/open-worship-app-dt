@@ -34,6 +34,7 @@ import ShadowingFillParentWidthComp, {
     useShadowingParentWidth,
 } from '../../others/ShadowingFillParentWidthComp';
 import VaryAppDocumentScaleContainerComp from './VaryAppDocumentScaleContainerComp';
+import { useThemeSource } from '../../others/initHelpers';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -149,6 +150,7 @@ function VaryAppDocumentItemBodyRenderComp({
             height: `${height}px`,
         };
     }, [actualParentWidth, slide.width, slide.height]);
+    const { theme } = useThemeSource();
     return (
         <div
             style={{
@@ -164,6 +166,7 @@ function VaryAppDocumentItemBodyRenderComp({
                 >
                     <div
                         className="shadow-blank-bg"
+                        data-shadow-theme={theme}
                         style={{
                             width: `${slide.width}px`,
                             height: `${slide.height}px`,

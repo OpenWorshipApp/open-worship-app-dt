@@ -32,7 +32,7 @@ import {
 } from '../server/appHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
-import { applyDarkModeToApp } from './initHelpers';
+import { useThemeSource } from './initHelpers';
 import { getReactRoot } from './rootHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
 
@@ -135,8 +135,9 @@ export function RenderApp({
     children: ReactNode;
 }>) {
     useCheckSetting();
+    const { theme } = useThemeSource();
     return (
-        <div id="app" ref={applyDarkModeToApp}>
+        <div id="app" data-bs-theme={theme}>
             <StrictMode>{children}</StrictMode>
         </div>
     );

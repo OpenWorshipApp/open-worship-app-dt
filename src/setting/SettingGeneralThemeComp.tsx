@@ -1,45 +1,9 @@
-import type { ChangeEvent } from 'react';
-import { useState, useCallback } from 'react';
-
 import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
 import type { ThemeOptionType } from '../others/initHelpers';
-import {
-    applyDarkModeToApp,
-    darkModeHook,
-    getThemeSourceSetting,
-    setThemeSourceSetting,
-} from '../others/initHelpers';
+import { useThemeSource } from '../others/initHelpers';
 
 export default function SettingGeneralThemeComp() {
-    const [themeSource, setThemeSource] = useState<ThemeOptionType>(
-        getThemeSourceSetting(),
-    );
-
-    const setMode1 = useCallback((newThemeSource: ThemeOptionType) => {
-        setThemeSource(newThemeSource);
-        setThemeSourceSetting(newThemeSource);
-        applyDarkModeToApp();
-    }, []);
-
-    const handleChange = useCallback(
-        (event: ChangeEvent<HTMLSelectElement>) => {
-            const value = event.target.value;
-            setMode1(value as ThemeOptionType);
-        },
-        [setMode1],
-    );
-
-    useAppEffect(() => {
-        darkModeHook.check = () => {
-            const themeSourceSetting = getThemeSourceSetting();
-            setThemeSource(themeSourceSetting);
-        };
-        darkModeHook.check();
-        return () => {
-            darkModeHook.check = () => {};
-        };
-    }, []);
+    const { themeSource, setThemeSource } = useThemeSource();
 
     return (
         <div className="card m-1">
@@ -49,7 +13,11 @@ export default function SettingGeneralThemeComp() {
                     className="form-select"
                     aria-label="Default select example"
                     value={themeSource}
-                    onChange={handleChange}
+                    onChange={(event) => {
+                        const value = event.target.value;
+                        console.log(value);
+                        setThemeSource(value as ThemeOptionType);
+                    }}
                 >
                     <option value="light">{tran('Light')}</option>
                     <option value="dark">{tran('Dark')}</option>

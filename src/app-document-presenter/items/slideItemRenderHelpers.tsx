@@ -15,7 +15,6 @@ import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 import { chooseColorNote } from '../../others/ItemColorNoteComp';
 import appProvider from '../../server/appProvider';
 import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
-import { checkIsDarkMode } from '../../others/initHelpers';
 
 const CAMERA_BACKGROUND_SRC = '/assets/background-camera.png';
 const WEB_BACKGROUND_SRC = '/assets/background-web.png';
@@ -183,46 +182,25 @@ export function genChooseColorNoteOption(
     ];
 }
 
-const shadowingStyle = (
-    <style>
-        {`
-        .shadow-blank-bg {
-            background-size: 30px 30px;
-            background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
+const shadowingStyleText = `
+.shadow-blank-bg[data-shadow-theme='dark'] {
+    --color1: #495057;
+    --color2: #343a40;
+}
+.shadow-blank-bg[data-shadow-theme='light'] {
+    --color1: #dee2e6;
+    --color2: #ced4da;
+}
+.shadow-blank-bg {
+    background-size: 30px 30px;
+    background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
 
-            background-image:
-            linear-gradient(45deg, var(--color1) 25%, var(--color2) 25%),
-            linear-gradient(-45deg, var(--color1) 25%, var(--color2) 25%),
-            linear-gradient(45deg, var(--color2) 75%, var(--color1) 75%),
-            linear-gradient(-45deg, var(--color2) 75%, var(--color1) 75%);
-        }
-        `}
-    </style>
-);
-const shadowingStyleDark = (
-    <style>
-        {`
-        .shadow-blank-bg {
-            --color1: #343a40;
-            --color2: #495057;
-        }`}
-    </style>
-);
-const shadowingStyleLight = (
-    <style>
-        {`
-        .shadow-blank-bg {
-            --color1: #dee2e6;
-            --color2: #ced4da;
-        }`}
-    </style>
-);
+    background-image:
+    linear-gradient(45deg, var(--color1) 25%, var(--color2) 25%),
+    linear-gradient(-45deg, var(--color1) 25%, var(--color2) 25%),
+    linear-gradient(45deg, var(--color2) 75%, var(--color1) 75%),
+    linear-gradient(-45deg, var(--color2) 75%, var(--color1) 75%);
+}`;
 export function getSlideItemShadowingStyle() {
-    const isDarkMode = checkIsDarkMode();
-    return (
-        <>
-            {shadowingStyle}
-            {isDarkMode ? shadowingStyleDark : shadowingStyleLight}
-        </>
-    );
+    return <style>{shadowingStyleText}</style>;
 }
