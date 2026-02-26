@@ -15,12 +15,36 @@ import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 import { chooseColorNote } from '../../others/ItemColorNoteComp';
 import appProvider from '../../server/appProvider';
 import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
+import FileSource from '../../helper/FileSource';
+import { useWebCapturing } from '../../helper/domHelpers';
 
 const CAMERA_BACKGROUND_SRC = '/assets/background-camera.png';
 const WEB_BACKGROUND_SRC = '/assets/background-web.png';
 const BROKEN_IMAGE_SRC = '/assets/broken-image.png';
 const BROKEN_VIDEO_SRC = '/assets/broken-video.mp4';
 
+function RenderBackgroundWebComp({
+    fileSource,
+}: Readonly<{
+    fileSource: FileSource;
+}>) {
+    const imageData = useWebCapturing(fileSource);
+    return (
+        <BackgroundRenderOnHoverComp
+            src={imageData ?? WEB_BACKGROUND_SRC}
+            opacity={1}
+            genChildren={({ width, height }) => {
+                return (
+                    <RenderBackgroundWebIframeComp
+                        fileSource={fileSource}
+                        width={width}
+                        height={height}
+                    />
+                );
+            }}
+        />
+    );
+}
 const fillingParentStyle: CSSProperties = {
     width: '100%',
     height: '100%',
@@ -57,20 +81,7 @@ export function genAttachBackgroundComponent(
         );
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_WEB) {
-        return (
-            <BackgroundRenderOnHoverComp
-                src={WEB_BACKGROUND_SRC}
-                genChildren={({ width, height }) => {
-                    return (
-                        <RenderBackgroundWebIframeComp
-                            fileSource={droppedData.item}
-                            width={width}
-                            height={height}
-                        />
-                    );
-                }}
-            />
-        );
+        return <RenderBackgroundWebComp fileSource={droppedData.item} />;
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_IMAGE) {
         const src = droppedData.item.src;

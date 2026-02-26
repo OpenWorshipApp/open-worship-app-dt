@@ -4,8 +4,10 @@ import { useState } from 'react';
 export default function BackgroundRenderOnHoverComp({
     genChildren,
     src,
+    opacity = 0.3,
 }: Readonly<{
     src: string;
+    opacity?: number;
     genChildren: (dim: { width: number; height: number }) => ReactNode;
 }>) {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -29,7 +31,7 @@ export default function BackgroundRenderOnHoverComp({
             style={{
                 width: '100%',
                 height: '100%',
-                opacity: isPlaying ? 1 : 0.3,
+                opacity: isPlaying ? 1 : opacity,
                 backgroundImage: `url(${src})`,
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',
