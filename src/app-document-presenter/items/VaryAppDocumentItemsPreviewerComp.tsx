@@ -56,7 +56,8 @@ export default function VaryAppDocumentItemsPreviewerComp() {
                 }
                 onSlideItemsKeyboardEvent(event);
             }}
-            style={{ overflow: 'auto' }}
+            // keep vertical to avoid conflict with item resizing effect scroll bar
+            style={{ overflowX: 'hidden', overflowY: 'scroll' }}
             onWheel={(event) => {
                 handleCtrlWheel({
                     event,
@@ -84,9 +85,15 @@ export default function VaryAppDocumentItemsPreviewerComp() {
                 handleDataDropping(varyAppDocument, event);
             }}
         >
-            {varyAppDocument.isEditable ? <SlidesMenuComp /> : null}
-            <AppDocumentItemsComp />
+            <div
+                style={{
+                    marginTop: varyAppDocument.isEditable ? '30px' : undefined,
+                }}
+            >
+                <AppDocumentItemsComp />
+            </div>
             <ScrollingHandlerComp />
+            {varyAppDocument.isEditable ? <SlidesMenuComp /> : null}
         </div>
     );
 }

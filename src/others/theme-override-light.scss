@@ -53,8 +53,10 @@ $resizer-color: rgb(123, 173, 205);
 
   // End: Bootstrap
 
-  .toast-body {
-    word-wrap: break-word;
+  .toast {
+    .toast-body {
+      word-wrap: break-word;
+    }
   }
 
   .active .text-muted,

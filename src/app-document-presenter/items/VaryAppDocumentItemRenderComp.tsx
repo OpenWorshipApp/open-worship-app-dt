@@ -26,10 +26,14 @@ import { getColorNoteFilePathSetting } from '../../helper/FileSourceMetaManager'
 import {
     genAttachBackgroundComponent,
     genChooseColorNoteOption,
+    getSlideItemShadowingStyle,
     toClassNameHighlight,
-    useScale,
 } from './slideItemRenderHelpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
+import ShadowingFillParentWidthComp, {
+    useShadowingParentWidth,
+} from '../../others/ShadowingFillParentWidthComp';
+import VaryAppDocumentScaleContainerComp from './VaryAppDocumentScaleContainerComp';
 
 function RenderScreenInfoComp({
     varyAppDocumentItem,
@@ -55,7 +59,7 @@ function RenderScreenInfoComp({
     );
 }
 
-function RenderItemHeaderComp({
+function VaryAppDocumentItemHeaderComp({
     varyAppDocumentItem,
     viewIndex,
     name,
@@ -109,7 +113,82 @@ function RenderItemHeaderComp({
     );
 }
 
-export default function SlideItemRenderComp({
+const style: CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    margin: 0,
+    padding: 0,
+    overflow: 'hidden',
+    border: 'none',
+};
+function VaryAppDocumentItemBodyRenderComp({
+    slide,
+    children,
+}: Readonly<{
+    slide: VaryAppDocumentItemType;
+    children: ReactNode;
+}>) {
+    const parentWidth = useShadowingParentWidth();
+    const actualParentWidth = useMemo(() => {
+        return parentWidth ?? slide.width;
+    }, [parentWidth, slide.width]);
+    const attachedBackgroundData = useAttachedBackgroundData(
+        slide.filePath,
+        slide.id,
+    );
+    const attachedBackgroundElement = useMemo(() => {
+        return genAttachBackgroundComponent(attachedBackgroundData);
+    }, [attachedBackgroundData]);
+    const actualStyle = useMemo(() => {
+        const scale = actualParentWidth / slide.width;
+        const height = slide.height * scale;
+        return {
+            ...style,
+            width: `${actualParentWidth}px`,
+            height: `${height}px`,
+        };
+    }, [actualParentWidth, slide.width, slide.height]);
+    return (
+        <div
+            style={{
+                width: '100%',
+                height: actualStyle.height,
+                position: 'relative',
+            }}
+        >
+            <div style={actualStyle}>
+                <VaryAppDocumentScaleContainerComp
+                    slide={slide}
+                    width={actualParentWidth}
+                >
+                    <div
+                        className="shadow-blank-bg"
+                        style={{
+                            width: `${slide.width}px`,
+                            height: `${slide.height}px`,
+                            margin: 0,
+                            padding: 0,
+                            border: 'none',
+                        }}
+                    >
+                        {attachedBackgroundElement}
+                    </div>
+                </VaryAppDocumentScaleContainerComp>
+            </div>
+            <div style={{ ...actualStyle, pointerEvents: 'none' }}>
+                <VaryAppDocumentScaleContainerComp
+                    slide={slide}
+                    width={actualParentWidth}
+                >
+                    {children}
+                </VaryAppDocumentScaleContainerComp>
+            </div>
+        </div>
+    );
+}
+
+export default function VaryAppDocumentItemRenderComp({
     slide,
     width,
     index,
@@ -130,7 +209,6 @@ export default function SlideItemRenderComp({
     holdingItems?: VaryAppDocumentItemType[];
     children: ReactNode;
 }>) {
-    const { scale, setTargetDiv } = useScale(slide, width);
     useScreenVaryAppDocumentManagerEvents(['update']);
     const {
         activeCN: activeClassName,
@@ -141,21 +219,14 @@ export default function SlideItemRenderComp({
         slide.filePath,
         slide.id,
     );
-    const attachedBackgroundElement = useMemo(() => {
-        return genAttachBackgroundComponent(attachedBackgroundData);
-    }, [attachedBackgroundData]);
-    const style: CSSProperties = useMemo(() => {
-        return {
-            padding: 0,
-            margin: 0,
-            height: `${Math.round(slide.height * scale)}px`,
-        };
-    }, [slide.height, scale]);
     const handleDataDropping = async (event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
         const droppedData = extractDropData(event);
         if (droppedData?.type === DragTypeEnum.SLIDE) {
-            if (droppedData.item.filePath !== slide.filePath) {
+            if (
+                !Slide.checkIsThisType(slide) ||
+                droppedData.item.filePath !== slide.filePath
+            ) {
                 return;
             }
             const appDocument = AppDocument.getInstance(slide.filePath);
@@ -182,7 +253,6 @@ export default function SlideItemRenderComp({
                 ' app-overflow-hidden' +
                 ` ${presenterClassName} ${activeClassName} ${holdingClassName}`
             }
-            ref={setTargetDiv}
             style={{ width: `${width}px` }}
             data-vary-app-document-item-id={slide.id}
             data-scroll-container-selector={`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`}
@@ -207,33 +277,18 @@ export default function SlideItemRenderComp({
             onContextMenu={handleContextMenuOpening}
             onCopy={onCopy ?? (() => {})}
         >
-            <RenderItemHeaderComp
+            <VaryAppDocumentItemHeaderComp
                 varyAppDocumentItem={slide}
                 viewIndex={index + 1}
                 name={slide.name}
             />
-            <div className="card-body app-overflow-hidden w-100" style={style}>
-                {attachedBackgroundElement && (
-                    <div
-                        className="w-100"
-                        style={{
-                            ...style,
-                            position: 'absolute',
-                        }}
-                    >
-                        {attachedBackgroundElement}
-                    </div>
-                )}
-                <div
-                    className="w-100 overflow-hidden"
-                    style={{
-                        ...style,
-                        position: 'absolute',
-                        pointerEvents: 'none',
-                    }}
-                >
-                    {children}
-                </div>
+            <div className="card-body app-overflow-hidden w-100 p-0 m-0">
+                <ShadowingFillParentWidthComp width={width}>
+                    <VaryAppDocumentItemBodyRenderComp slide={slide}>
+                        {getSlideItemShadowingStyle()}
+                        {children}
+                    </VaryAppDocumentItemBodyRenderComp>
+                </ShadowingFillParentWidthComp>
             </div>
         </div>
     );

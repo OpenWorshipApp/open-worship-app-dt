@@ -18,7 +18,6 @@ import { handleError } from '../../helper/errorHelpers';
 import { createContext, use } from 'react';
 import { showCanvasItemContextMenu } from './canvasContextMenuHelpers';
 import AppDocument from '../../app-document-list/AppDocument';
-import type Slide from '../../app-document-list/Slide';
 
 const EDITOR_SCALE_SETTING_NAME = 'canvas-editor-scale';
 export const defaultRangeSize = {
@@ -81,6 +80,12 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     fireUpdateEvent() {
         this.addPropEvent('update', {
+            canvasItems: this.canvas.canvasItems,
+        });
+    }
+
+    fireReloadEvent() {
+        this.addPropEvent('reload', {
             canvasItems: this.canvas.canvasItems,
         });
     }
@@ -310,11 +315,6 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             eventNames,
             listener,
         );
-    }
-
-    static initInstance(slide: Slide) {
-        const appDocument = AppDocument.getInstance(slide.filePath);
-        return new this(appDocument, new Canvas(slide));
     }
 }
 

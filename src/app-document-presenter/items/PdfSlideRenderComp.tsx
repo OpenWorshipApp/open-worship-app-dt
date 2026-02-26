@@ -1,13 +1,12 @@
-import type { MouseEvent } from 'react';
+import { useMemo, type MouseEvent } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { getHTMLChild } from '../../helper/helpers';
 import type PdfSlide from '../../app-document-list/PdfSlide';
-import SlideItemRenderComp from './SlideItemRenderComp';
+import VaryAppDocumentItemRenderComp from './VaryAppDocumentItemRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import SlideScaleContainerComp from './SlideScaleContainerComp';
-import { useScale } from './slideItemRenderHelpers';
+import { tran } from '../../lang/langHelpers';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,
@@ -16,23 +15,19 @@ function PdfSlideRenderContentComp({
     pdfImageSrc: string;
     isFullWidth?: boolean;
 }>) {
-    return (
-        <img
-            alt="pdf-image"
-            style={
-                isFullWidth
-                    ? {
-                          width: '100%',
-                      }
-                    : {
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                      }
-            }
-            src={pdfImageSrc}
-        />
-    );
+    const actualStyle = useMemo(() => {
+        if (isFullWidth) {
+            return {
+                width: '100%',
+            };
+        }
+        return {
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain' as const,
+        };
+    }, [isFullWidth]);
+    return <img alt="pdf-image" style={actualStyle} src={pdfImageSrc} />;
 }
 
 export function genPdfSlide(pdfImageSrc: string, isFullWidth = false) {
@@ -60,41 +55,21 @@ export default function PdfSlideRenderComp({
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
 }>) {
-    const { scale, width: actualWidth, setParentDiv } = useScale(slide, width);
-    useScreenVaryAppDocumentManagerEvents(['update']);
     const pdfPreviewSrc = slide.pdfPreviewSrc;
+    useScreenVaryAppDocumentManagerEvents(['update']);
     return (
-        <SlideItemRenderComp
+        <VaryAppDocumentItemRenderComp
             slide={slide}
             width={width}
             index={index}
             onContextMenu={onContextMenu}
             onClick={onClick}
         >
-            <SlideScaleContainerComp
-                slide={slide}
-                width={width}
-                extraStyle={{
-                    position: 'absolute',
-                }}
-            />
-            <div
-                className="overflow-hidden"
-                ref={setParentDiv}
-                style={{
-                    position: 'absolute',
-                    width: `${actualWidth}px`,
-                    height: `${Math.round(slide.height * scale)}px`,
-                }}
-            >
-                {pdfPreviewSrc === null ? (
-                    <div className="alert alert-danger">
-                        Unable to preview right now
-                    </div>
-                ) : (
-                    <PdfSlideRenderContentComp pdfImageSrc={pdfPreviewSrc} />
-                )}
-            </div>
-        </SlideItemRenderComp>
+            {pdfPreviewSrc === null ? (
+                <h3>{tran('Unable to preview right now')}</h3>
+            ) : (
+                <PdfSlideRenderContentComp pdfImageSrc={pdfPreviewSrc} />
+            )}
+        </VaryAppDocumentItemRenderComp>
     );
 }

@@ -9,6 +9,7 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Unable to preview right now': 'មិនអាចបង្ហាញ 미្ដងនេះទេ',
     'Open bible lookup popup': 'បើកផ្ទាំងស្វែងរកព្រះគម្ពីរ',
     Cancel: 'បោះបង់',
     Ok: 'យល់ព្រម',

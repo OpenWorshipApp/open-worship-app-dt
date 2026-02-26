@@ -1,11 +1,10 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useMemo, type CSSProperties, type ReactNode } from 'react';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
-import { useAttachedBackgroundData } from '../../helper/dragHelpers';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
-import { useScale } from './slideItemRenderHelpers';
+import { useShadowingParentWidth } from '../../others/ShadowingFillParentWidthComp';
 
-export default function SlideScaleContainerComp({
+export default function VaryAppDocumentScaleContainerComp({
     slide,
     width,
     children,
@@ -16,26 +15,25 @@ export default function SlideScaleContainerComp({
     children?: ReactNode;
     extraStyle?: CSSProperties;
 }>) {
-    const { scale, width: actualWidth, setParentDiv } = useScale(slide, width);
+    const parentWidth = useShadowingParentWidth();
+    const { scale, actualParentWidth, actualHeight } = useMemo(() => {
+        const actualParentWidth = parentWidth ?? width;
+        const scale = actualParentWidth / slide.width;
+        const actualHeight = slide.height * scale;
+        return { scale, actualParentWidth, actualHeight };
+    }, [parentWidth, width, slide.width, slide.height]);
     useScreenVaryAppDocumentManagerEvents(['update']);
-    const attachedBackgroundData = useAttachedBackgroundData(
-        slide.filePath,
-        slide.id,
-    );
     return (
         <div
-            ref={setParentDiv}
             style={{
-                width: `${actualWidth}px`,
-                height: `${Math.round(slide.height * scale)}px`,
+                width: `${actualParentWidth}px`,
+                height: `${actualHeight}px`,
                 transform: `scale(${scale},${scale}) translate(50%, 50%)`,
                 ...extraStyle,
             }}
         >
             <div
-                className={attachedBackgroundData ? '' : 'app-blank-bg'}
                 style={{
-                    pointerEvents: 'none',
                     width: `${slide.width}px`,
                     height: `${slide.height}px`,
                     transform: 'translate(-50%, -50%)',

@@ -42,8 +42,8 @@ export default function ToastComp() {
     }
     return (
         <SimpleToastComp
-            onMouseEnter={handleMouseEntering}
-            onMouseLeave={handleMouseLeaving}
+            onMouseOver={handleMouseEntering}
+            onMouseOut={handleMouseLeaving}
             onClose={handleClosing}
             toast={simpleToast}
         />

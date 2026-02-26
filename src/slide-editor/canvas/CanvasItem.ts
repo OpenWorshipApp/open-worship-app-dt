@@ -342,14 +342,3 @@ export function useIsCanvasItemSelected() {
         useSelectedCanvasItemsAndSetterContext();
     return checkCanvasItemsIncludes(selectedCanvasItems, canvasItem);
 }
-
-export function useStopAllModes() {
-    const { setCanvasItem: setEditingCanvasItem } =
-        useEditingCanvasItemAndSetterContext();
-    const { setCanvasItems: setSelectedCanvasItems } =
-        useSelectedCanvasItemsAndSetterContext();
-    return () => {
-        setEditingCanvasItem(null);
-        setSelectedCanvasItems([]);
-    };
-}

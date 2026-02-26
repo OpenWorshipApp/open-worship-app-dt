@@ -3,7 +3,7 @@ import type { AppColorType } from '../../others/color/colorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { isSupportedMimetype } from '../../server/fileHelpers';
 
-export type CanvasControllerEventType = 'update' | 'scale';
+export type CanvasControllerEventType = 'update' | 'scale' | 'reload';
 
 export type CanvasItemMediaPropsType = {
     srcData: SrcData;

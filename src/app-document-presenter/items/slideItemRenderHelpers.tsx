@@ -1,31 +1,31 @@
-import { useState, useMemo, useCallback } from 'react';
-
+import { CSSProperties } from 'react';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderBackgroundWebIframeComp from '../../background/RenderBackgroundWebIframeComp';
 import RenderCameraVideoComp from '../../background/RenderCameraVideoComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
 import {
     getColorNoteFilePathSetting,
     setColorNoteFilePathSetting,
 } from '../../helper/FileSourceMetaManager';
-import {
-    HIGHLIGHT_SELECTED_CLASSNAME,
-    genTimeoutAttempt,
-} from '../../helper/helpers';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 import { chooseColorNote } from '../../others/ItemColorNoteComp';
 import appProvider from '../../server/appProvider';
 import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
+import { checkIsDarkMode } from '../../others/initHelpers';
 
 const CAMERA_BACKGROUND_SRC = '/assets/background-camera.png';
 const WEB_BACKGROUND_SRC = '/assets/background-web.png';
 const BROKEN_IMAGE_SRC = '/assets/broken-image.png';
 const BROKEN_VIDEO_SRC = '/assets/broken-video.mp4';
 
+const fillingParentStyle: CSSProperties = {
+    width: '100%',
+    height: '100%',
+};
 export function genAttachBackgroundComponent(
     droppedData: DroppedDataType | null | undefined,
 ) {
@@ -35,8 +35,10 @@ export function genAttachBackgroundComponent(
     if (droppedData.type === DragTypeEnum.BACKGROUND_COLOR) {
         return (
             <div
-                className="w-100 h-100"
-                style={{ backgroundColor: droppedData.item }}
+                style={{
+                    ...fillingParentStyle,
+                    backgroundColor: droppedData.item,
+                }}
             />
         );
     }
@@ -75,7 +77,7 @@ export function genAttachBackgroundComponent(
         const src = droppedData.item.src;
         return (
             <img
-                className="w-100 h-100"
+                style={fillingParentStyle}
                 alt={src}
                 src={src}
                 onError={(event) => {
@@ -89,15 +91,15 @@ export function genAttachBackgroundComponent(
     if (droppedData.type === DragTypeEnum.BACKGROUND_VIDEO) {
         return (
             <video
-                className="w-100 h-100"
                 style={{
+                    ...fillingParentStyle,
                     objectFit: 'cover',
                     objectPosition: 'center center',
                 }}
-                onMouseEnter={(event) => {
+                onMouseOver={(event) => {
                     event.currentTarget.play();
                 }}
-                onMouseLeave={(event) => {
+                onMouseOut={(event) => {
                     event.currentTarget.pause();
                 }}
                 loop
@@ -153,69 +155,6 @@ export function toClassNameHighlight(
     };
 }
 
-export function useScale(item: VaryAppDocumentItemType, thumbnailSize: number) {
-    const [targetDiv, setTargetDiv] = useState<HTMLElement | null>(null);
-    const [width, setWidth] = useState(0);
-
-    const applyWidth = () => {
-        const newWidth = targetDiv?.clientWidth ?? 0;
-        setWidth(newWidth);
-    };
-
-    useAppEffect(() => {
-        applyWidth();
-    }, [targetDiv, thumbnailSize]);
-
-    const scale = useMemo(() => {
-        return width / item.width;
-    }, [width, item]);
-
-    const resizeAttemptTimeout = useMemo(() => {
-        return genTimeoutAttempt(500);
-    }, []);
-
-    const listenParentSizing = useCallback(
-        (element: HTMLElement | null) => {
-            if (element === null) {
-                return;
-            }
-            const resizeObserver = new ResizeObserver(() => {
-                resizeAttemptTimeout(() => {
-                    applyWidth();
-                });
-            });
-            resizeObserver.observe(element);
-            return () => {
-                resizeObserver.disconnect();
-            };
-        },
-        [resizeAttemptTimeout, applyWidth],
-    );
-
-    const handleSetTargetDiv = useCallback(
-        (currentElement: HTMLElement | null) => {
-            setTargetDiv(currentElement);
-            return listenParentSizing(currentElement?.parentElement ?? null);
-        },
-        [listenParentSizing],
-    );
-
-    const handleSetParentDiv = useCallback(
-        (currentElement: HTMLElement | null) => {
-            setTargetDiv(currentElement?.parentElement ?? null);
-            return listenParentSizing(currentElement);
-        },
-        [listenParentSizing],
-    );
-
-    return {
-        width,
-        scale,
-        setTargetDiv: handleSetTargetDiv,
-        setParentDiv: handleSetParentDiv,
-    };
-}
-
 export function genChooseColorNoteOption(
     filePath: string,
     id: number,
@@ -242,4 +181,48 @@ export function genChooseColorNoteOption(
             },
         },
     ];
+}
+
+const shadowingStyle = (
+    <style>
+        {`
+        .shadow-blank-bg {
+            background-size: 30px 30px;
+            background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
+
+            background-image:
+            linear-gradient(45deg, var(--color1) 25%, var(--color2) 25%),
+            linear-gradient(-45deg, var(--color1) 25%, var(--color2) 25%),
+            linear-gradient(45deg, var(--color2) 75%, var(--color1) 75%),
+            linear-gradient(-45deg, var(--color2) 75%, var(--color1) 75%);
+        }
+        `}
+    </style>
+);
+const shadowingStyleDark = (
+    <style>
+        {`
+        .shadow-blank-bg {
+            --color1: #343a40;
+            --color2: #495057;
+        }`}
+    </style>
+);
+const shadowingStyleLight = (
+    <style>
+        {`
+        .shadow-blank-bg {
+            --color1: #dee2e6;
+            --color2: #ced4da;
+        }`}
+    </style>
+);
+export function getSlideItemShadowingStyle() {
+    const isDarkMode = checkIsDarkMode();
+    return (
+        <>
+            {shadowingStyle}
+            {isDarkMode ? shadowingStyleDark : shadowingStyleLight}
+        </>
+    );
 }

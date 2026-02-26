@@ -47,10 +47,10 @@ function RenderChildComp({
                 overflow: 'hidden',
                 borderRadius: '5px 5px 0px 0px',
             }}
-            onMouseEnter={() => {
+            onMouseOver={() => {
                 setIsPlaying(true);
             }}
-            onMouseLeave={() => {
+            onMouseOut={() => {
                 setIsPlaying(false);
             }}
         >

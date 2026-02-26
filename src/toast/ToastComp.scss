@@ -3,7 +3,7 @@
 .toast {
   position: fixed;
   right: 10px;
-  bottom: 10px;
+  top: 10px;
   z-index: $z-index-toast;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   border: 1px solid $hight-light-color;

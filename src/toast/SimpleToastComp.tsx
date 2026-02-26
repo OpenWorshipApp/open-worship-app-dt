@@ -7,19 +7,19 @@ export type SimpleToastType = {
 export default function SimpleToastComp({
     onClose,
     toast,
-    onMouseEnter,
-    onMouseLeave,
+    onMouseOver,
+    onMouseOut,
 }: Readonly<{
     onClose: () => void;
     toast: SimpleToastType;
-    onMouseEnter: () => void;
-    onMouseLeave: () => void;
+    onMouseOver: () => void;
+    onMouseOut: () => void;
 }>) {
     return (
         <div
             className="toast show fade"
-            onMouseEnter={() => onMouseEnter()}
-            onMouseLeave={() => onMouseLeave()}
+            onMouseOver={onMouseOver}
+            onMouseOut={onMouseOut}
             role="alert"
             aria-live="assertive"
             aria-atomic="true"

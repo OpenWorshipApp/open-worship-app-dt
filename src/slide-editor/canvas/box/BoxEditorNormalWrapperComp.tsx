@@ -24,7 +24,7 @@ export default function BoxEditorNormalWrapperComp({
     const handleCanvasItemEditing = useSetEditingCanvasItem();
     return (
         <div
-            className="app-box-editor app-caught-hover-pointer"
+            className="app-box-editor shadow-caught-hover-pointer"
             data-app-box-editor-id={canvasItem.id}
             style={style}
             onContextMenu={

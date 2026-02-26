@@ -83,17 +83,6 @@ export default function VaryAppDocumentItemRenderWrapperComp({
             />
         );
     }
-    if (!selectedAppDocument.isEditable) {
-        return (
-            <SlideRenderComp
-                index={index}
-                slide={varyAppDocumentItem}
-                width={thumbSize}
-                onClick={handleClicking}
-                onContextMenu={handleContextMenuOpening}
-            />
-        );
-    }
     return (
         <SlideRenderComp
             index={index}

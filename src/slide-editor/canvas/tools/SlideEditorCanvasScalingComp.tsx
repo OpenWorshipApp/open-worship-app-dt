@@ -7,7 +7,7 @@ import AppRangeComp from '../../../others/AppRangeComp';
 
 export default function SlideEditorCanvasScalingComp() {
     const canvasController = useCanvasControllerContext();
-    const scale = useSlideCanvasScale();
+    const scale = useSlideCanvasScale(canvasController);
     const actualScale = scale * 10;
     return (
         <div className={'align-self-end flex-fill d-flex justify-content-end'}>

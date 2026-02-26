@@ -2,11 +2,11 @@ import type { MouseEvent } from 'react';
 import { use } from 'react';
 
 import type Slide from '../../app-document-list/Slide';
-import SlideRendererHtmlComp from './SlideRendererHtmlComp';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { SelectedEditingSlideContext } from '../../app-document-list/appDocumentHelpers';
-import SlideItemRenderComp from './SlideItemRenderComp';
+import VaryAppDocumentItemRenderComp from './VaryAppDocumentItemRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import SlideRendererComp from './SlideRendererComp';
 
 function useData() {
     const selectedSlideContext = use(SelectedEditingSlideContext);
@@ -34,7 +34,7 @@ export default function SlideRenderComp({
     const { selectedSlide, holdingSlides } = useData();
     useScreenVaryAppDocumentManagerEvents(['update']);
     return (
-        <SlideItemRenderComp
+        <VaryAppDocumentItemRenderComp
             slide={slide}
             selectedItem={selectedSlide}
             holdingItems={holdingSlides}
@@ -43,7 +43,11 @@ export default function SlideRenderComp({
             onContextMenu={onContextMenu}
             onClick={onClick}
         >
-            <SlideRendererHtmlComp slide={slide} width={width} />
-        </SlideItemRenderComp>
+            <SlideRendererComp
+                canvasItemsJson={slide.canvasItemsJson}
+                width={`${slide.width}px`}
+                height={`${slide.height}px`}
+            />
+        </VaryAppDocumentItemRenderComp>
     );
 }

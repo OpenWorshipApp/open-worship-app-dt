@@ -1,4 +1,4 @@
-import type { DragEvent } from 'react';
+import { useMemo, type DragEvent } from 'react';
 
 import { BoxEditorComp } from './box/BoxEditorComp';
 import { showCanvasContextMenu } from './canvasContextMenuHelpers';
@@ -9,12 +9,7 @@ import {
 } from './CanvasController';
 import { useSlideCanvasScale } from './canvasEventHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
-import {
-    CanvasItemContext,
-    useCanvasItemsContext,
-    useSelectedCanvasItemsAndSetterContext,
-    useStopAllModes,
-} from './CanvasItem';
+import { CanvasItemContext, useCanvasItemsContext } from './CanvasItem';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
 import { changeDragEventStyle } from '../../helper/helpers';
@@ -22,6 +17,11 @@ import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from './canvasHelpers';
 import { onCanvasKeyboardEvent } from '../slideEditingBeyboardEventHelpers';
 import { tran } from '../../lang/langHelpers';
+import { MultiContextRender } from '../../helper/MultiContextRender';
+import { useEditingCanvasContextValue } from '../canvasEditingHelpers';
+import ShadowingFillParentWidthComp from '../../others/ShadowingFillParentWidthComp';
+import { getSlideItemShadowingStyle } from '../../app-document-presenter/items/slideItemRenderHelpers';
+import { genBoxEditorStyle } from './box/boxEditorHelpers';
 
 function dragOverHandling(event: any) {
     event.preventDefault();
@@ -69,14 +69,15 @@ async function handleContextMenuOpening(
     showCanvasContextMenu(event, canvasController);
 }
 
-function BodyRendererComp() {
+function BodyRendererComp({
+    stopAllModes,
+}: Readonly<{ stopAllModes: () => void }>) {
     const canvasController = useCanvasControllerContext();
     const { canvas } = canvasController;
     const canvasItems = useCanvasItemsContext();
-    const stopAllModes = useStopAllModes();
     return (
         <div
-            className="editor app-blank-bg app-border-white-round"
+            className="slide-canvas-editor shadow-blank-bg app-border-white-round"
             style={{
                 width: `${canvas.width}px`,
                 height: `${canvas.height}px`,
@@ -135,13 +136,23 @@ function BodyRendererComp() {
     );
 }
 
-export default function SlideEditorCanvasComp() {
-    const canvasController = useCanvasControllerContext();
-    const { canvasItems: selectedCanvasItems } =
-        useSelectedCanvasItemsAndSetterContext();
-    const stopAllModes = useStopAllModes();
+export default function SlideEditorCanvasComp({
+    contextData,
+}: Readonly<{ contextData: ReturnType<typeof useEditingCanvasContextValue> }>) {
+    const {
+        contextValue: allCanvasContextValue,
+        selectedCanvasItems,
+        canvasController,
+        stopAllModes,
+    } = contextData;
+    const scale = useSlideCanvasScale(canvasController);
     const { canvas } = canvasController;
-    const scale = useSlideCanvasScale();
+    const { actualWidth, actualHeight, scaleStr } = useMemo(() => {
+        const actualWidth = Math.round(canvas.width * scale + 20);
+        const actualHeight = Math.round(canvas.height * scale + 20);
+        const scaleStr = scale.toFixed(2);
+        return { actualWidth, actualHeight, scaleStr };
+    }, [canvas.width, canvas.height, scale]);
     return (
         <div className="card w-100 h-100">
             <div
@@ -173,26 +184,35 @@ export default function SlideEditorCanvasComp() {
                 }}
             >
                 <div
-                    className="app-overflow-hidden"
                     style={{
-                        width: `${Math.round(canvas.width * scale + 20)}px`,
-                        height: `${Math.round(canvas.height * scale + 20)}px`,
+                        width: `${actualWidth}px`,
+                        height: `${actualHeight}px`,
                     }}
                 >
                     <div
-                        className="w-100 h-100"
                         style={{
+                            width: `${actualWidth}px`,
+                            height: `${actualHeight}px`,
                             transform:
-                                `scale(${scale.toFixed(2)}) ` +
-                                'translate(50%, 50%)',
+                                `scale(${scaleStr}) ` + 'translate(50%, 50%)',
                         }}
                     >
-                        <BodyRendererComp />
+                        <ShadowingFillParentWidthComp>
+                            <MultiContextRender
+                                contexts={allCanvasContextValue}
+                            >
+                                {genBoxEditorStyle()}
+                                {getSlideItemShadowingStyle()}
+                                <BodyRendererComp stopAllModes={stopAllModes} />
+                            </MultiContextRender>
+                        </ShadowingFillParentWidthComp>
                     </div>
                 </div>
             </div>
             <div className="card-footer">
-                <SlideEditorCanvasScalingComp />
+                <MultiContextRender contexts={allCanvasContextValue}>
+                    <SlideEditorCanvasScalingComp />
+                </MultiContextRender>
             </div>
         </div>
     );

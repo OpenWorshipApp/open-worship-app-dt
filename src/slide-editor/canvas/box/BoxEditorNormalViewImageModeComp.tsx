@@ -47,10 +47,10 @@ export function BoxEditorNormalImageRender() {
         >
             <img
                 alt=""
-                className="align-self-center"
                 width={width}
                 style={{
                     pointerEvents: 'none',
+                    alignSelf: 'center',
                 }}
                 src={props.srcData || img404}
             />

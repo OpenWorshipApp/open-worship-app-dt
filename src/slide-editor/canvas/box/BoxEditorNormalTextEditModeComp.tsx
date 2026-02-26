@@ -31,7 +31,7 @@ export default function BoxEditorNormalTextEditModeComp({
     const handleCanvasItemEditing = useSetEditingCanvasItem();
     return (
         <div
-            className="app-box-editor app-caught-hover-pointer editable"
+            className="app-box-editor shadow-caught-hover-pointer editable"
             data-app-box-editor-id={canvasItem.id}
             style={style}
             onClick={(event) => {

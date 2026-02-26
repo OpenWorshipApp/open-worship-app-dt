@@ -111,7 +111,7 @@ export default function AppDocumentItemsComp() {
         );
     }
     return (
-        <div className="d-flex flex-wrap justify-content-center">
+        <div className="d-flex flex-wrap justify-content-center pb-5">
             {varyAppDocumentItems.map((varyAppDocumentItem, i) => {
                 return (
                     <VaryAppDocumentItemRenderWrapperComp

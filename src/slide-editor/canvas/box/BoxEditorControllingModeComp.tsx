@@ -1,5 +1,3 @@
-import './BoxEditorControllingModeComp.scss';
-
 import CanvasItem, {
     useCanvasItemContext,
     useCanvasItemPropsContext,
@@ -95,8 +93,13 @@ export default function BoxEditorControllingModeComp() {
                     />
                     <div className="rotate-link" />
                     {Object.keys(boxEditorController.resizeActorList).map(
-                        (cn) => {
-                            return <div key={cn} className={`object ${cn}`} />;
+                        (className) => {
+                            return (
+                                <div
+                                    key={className}
+                                    className={`object ${className}`}
+                                />
+                            );
                         },
                     )}
                 </div>

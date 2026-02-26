@@ -132,14 +132,8 @@ export function FileEditingMenuComp({
         return null;
     }
     return (
-        <div
-            style={{
-                borderBottom: '1px solid #00000024',
-                backgroundColor: '#00000020',
-                minHeight: '35px',
-            }}
-        >
-            <div className="btn-group control d-flex justify-content-center">
+        <div className="editing-menu w-100 app-outer-shadow">
+            <div className="editing-menu-body btn-group control d-flex justify-content-center">
                 <button
                     className="btn btn-sm btn-info"
                     type="button"

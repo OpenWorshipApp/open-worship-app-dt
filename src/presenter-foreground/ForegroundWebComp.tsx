@@ -184,10 +184,10 @@ function RenderWebInfoComp({
                 onDragStart={() => {
                     dragStore.onDropped = handleByDropped;
                 }}
-                onMouseEnter={() => {
+                onMouseOver={() => {
                     setIsPlaying(true);
                 }}
-                onMouseLeave={() => {
+                onMouseOut={() => {
                     setIsPlaying(false);
                 }}
             >

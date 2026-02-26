@@ -15,18 +15,20 @@ export default function BackgroundRenderOnHoverComp({
     });
     return (
         <div
-            className="w-100 h-100"
-            onMouseEnter={(event) => {
+            onMouseOver={(event) => {
                 setIsPlaying(true);
+                const { clientWidth, clientHeight } = event.currentTarget;
                 setDim({
-                    width: event.currentTarget.clientWidth,
-                    height: event.currentTarget.clientHeight,
+                    width: clientWidth,
+                    height: clientHeight,
                 });
             }}
-            onMouseLeave={() => {
+            onMouseOut={() => {
                 setIsPlaying(false);
             }}
             style={{
+                width: '100%',
+                height: '100%',
                 opacity: isPlaying ? 1 : 0.3,
                 backgroundImage: `url(${src})`,
                 backgroundSize: 'cover',
