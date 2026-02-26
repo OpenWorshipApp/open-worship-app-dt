@@ -1,4 +1,5 @@
 import { useState, useTransition } from 'react';
+import type { SchemaNode } from 'json-schema-library';
 
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { handleError } from '../../helper/errorHelpers';
@@ -263,6 +264,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
     showAppContextMenu(event, contextMenuItems);
 }
 
+const ALL_DATA_FILE_NAME = 'all';
 export const BIBLE_XML_CACHE_DURATION_SEC = 60; // 1 minute
 const bibleJSONCacheManager = new CacheManager<BibleXMLJsonType>(
     BIBLE_XML_CACHE_DURATION_SEC,
@@ -273,14 +275,25 @@ export async function getBibleXMLDataFromKeyCaching(bibleKey: string) {
         if (jsonData !== null) {
             return jsonData;
         }
-        const title = `Loading Bible Data`;
+        const title = tran('Loading Bible Data');
         showProgressBar(title);
+        const backupData = await getBackupBibleXMLData(
+            bibleKey,
+            ALL_DATA_FILE_NAME,
+        );
+        if (backupData !== null) {
+            hideProgressBar(title);
+            await bibleJSONCacheManager.set(bibleKey, backupData);
+            return backupData as BibleXMLJsonType;
+        }
         jsonData = await getBibleXMLDataFromKey(bibleKey);
         hideProgressBar(title);
         if (jsonData !== null) {
+            setBackupBibleXMLData(bibleKey, ALL_DATA_FILE_NAME, jsonData);
             await bibleJSONCacheManager.set(bibleKey, jsonData);
+            return jsonData;
         }
-        return jsonData;
+        return null;
     });
 }
 
@@ -314,28 +327,11 @@ async function invalidateBibleXMLCachedFolder(bibleKey: string) {
     await fileSource.writeFileData(Date.now().toString());
 }
 
-async function backupBibleXMLData<T>(
+async function getBackupBibleXMLData(
     bibleKey: string,
     fileName: string,
-    data: T,
+    validateData: SchemaNode | null = null,
 ) {
-    const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
-    if (basePath !== null) {
-        const filePath = pathJoin(basePath, fileName);
-        const fileSource = FileSource.getInstance(filePath);
-        const bibleModel = getBibleModelInfoSetting();
-        await fileSource.writeFileData(
-            JSON.stringify({
-                _cachingTime: Date.now(),
-                _bibleModel: bibleModel,
-                value: data,
-            }),
-        );
-    }
-    return data;
-}
-
-async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
     const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
     if (basePath === null) {
         return null;
@@ -359,19 +355,38 @@ async function getBackupBibleXMLData(bibleKey: string, fileName: string) {
                 return null;
             }
             const backData = data.value;
-            const validatedData = (
-                fileName === '_info'
-                    ? infoEditorSchemaHandler
-                    : bookChapterEditorSchemaHandler
-            ).validate(backData);
-            if (!validatedData.valid) {
-                handleError(validatedData.errors);
-                return null;
+            if (validateData !== null) {
+                const validatedData = validateData.validate(backData);
+                if (!validatedData.valid) {
+                    handleError(validatedData.errors);
+                    return null;
+                }
             }
             return backData;
         } catch (_error) {}
     }
     return null;
+}
+
+async function setBackupBibleXMLData<T>(
+    bibleKey: string,
+    fileName: string,
+    data: T,
+) {
+    const basePath = await ensureBibleXMLCachedBasePath(bibleKey);
+    if (basePath !== null) {
+        const filePath = pathJoin(basePath, fileName);
+        const fileSource = FileSource.getInstance(filePath);
+        const bibleModel = getBibleModelInfoSetting();
+        await fileSource.writeFileData(
+            JSON.stringify({
+                _cachingTime: Date.now(),
+                _bibleModel: bibleModel,
+                value: data,
+            }),
+        );
+    }
+    return data;
 }
 
 function checkIsMatchBookChapterKey(verseKey: string, bookChapterKey: string) {
@@ -381,7 +396,15 @@ export async function readBibleXMLData(
     bibleKey: string,
     fileName: string,
 ): Promise<BibleInfoType | BibleChapterType | null> {
-    const backupData = await getBackupBibleXMLData(bibleKey, fileName);
+    const validateData =
+        fileName === '_info'
+            ? infoEditorSchemaHandler
+            : bookChapterEditorSchemaHandler;
+    const backupData = await getBackupBibleXMLData(
+        bibleKey,
+        fileName,
+        validateData,
+    );
     if (backupData !== null) {
         return backupData;
     }
@@ -391,7 +414,11 @@ export async function readBibleXMLData(
     }
     const bibleInfo = jsonData.info;
     if (fileName === '_info') {
-        return backupBibleXMLData<BibleInfoType>(bibleKey, fileName, bibleInfo);
+        return setBackupBibleXMLData<BibleInfoType>(
+            bibleKey,
+            fileName,
+            bibleInfo,
+        );
     }
     const fileNameData = fromBibleFileName(fileName);
     if (fileNameData === null) {
@@ -422,7 +449,7 @@ export async function readBibleXMLData(
             customVersesMap[verseKey] = jsonData.customVersesMap[verseKey];
         }
     }
-    return backupBibleXMLData<BibleChapterType>(bibleKey, fileName, {
+    return setBackupBibleXMLData<BibleChapterType>(bibleKey, fileName, {
         title: `${bibleInfo.keyBookMap[bookKey]} ${chapterNum}`,
         verses: chapterData,
         newLines,

@@ -5,12 +5,13 @@ type StoreType<T> = { value: T; timestamp: number };
 export default class CacheManager<T> {
     private readonly cache: Map<string, StoreType<T>>;
     private readonly expirationSecond: number | null;
+    private intervalId: NodeJS.Timeout | null = null;
 
     constructor(expirationSecond: number | null = null) {
         this.cache = new Map();
         this.expirationSecond = expirationSecond;
         const cleanupSeconds = 5 * 1000; // 5 seconds
-        setInterval(this.cleanup.bind(this), cleanupSeconds);
+        this.intervalId = setInterval(this.cleanup.bind(this), cleanupSeconds);
     }
 
     unlocking<P>(key: string, callback: () => Promise<P>): Promise<P> {
@@ -94,5 +95,12 @@ export default class CacheManager<T> {
 
     clear(): void {
         this.cache.clear();
+    }
+
+    stopCleanup(): void {
+        if (this.intervalId !== null) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
     }
 }
