@@ -6,7 +6,7 @@ import { fsCheckFileExist } from '../../server/fileHelpers';
 import CacheManager from '../../others/CacheManager';
 import { freezeObject } from '../helpers';
 import { checkIsRtl } from '../../lang/langHelpers';
-import { getVersesCount } from './bibleLogicHelpers2';
+import { fromLocaleNumBible, getVersesCount } from './bibleLogicHelpers2';
 import type { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
 import { getBibleModelInfo } from './bibleModelHelpers';
 
@@ -37,7 +37,7 @@ export async function getBookVKList(bibleKey: string) {
     if (bibleVKList === null) {
         return null;
     }
-    return Object.fromEntries([
+    const vkMap = Object.fromEntries([
         ...Object.entries(bibleVKList).map(([k, v]) => {
             return [v, k];
         }),
@@ -45,6 +45,24 @@ export async function getBookVKList(bibleKey: string) {
             return [v.toLocaleLowerCase(), k];
         }),
     ]);
+    // ៣ John => 3 John, so string like "2 ធីម៉ូថេ" will be found as "2 Timothy"
+    for (const [k, v] of Object.entries(vkMap)) {
+        const arr = k.split(' ');
+        if (arr.length < 2) {
+            continue;
+        }
+        const localeNumber = arr[0];
+        if (localeNumber === undefined) {
+            continue;
+        }
+        const number = await fromLocaleNumBible(bibleKey, localeNumber);
+        if (number === null) {
+            continue;
+        }
+        const newKey = k.replace(localeNumber, number.toString());
+        vkMap[newKey] = v;
+    }
+    return vkMap;
 }
 export async function bookToKey(bibleKey: string, book: string) {
     const bookVKList = await getBookVKList(bibleKey);
