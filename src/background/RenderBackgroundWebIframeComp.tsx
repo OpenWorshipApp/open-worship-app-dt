@@ -6,8 +6,8 @@ import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 export function BackgroundWebPlaceHolderComp({
     height,
     imageData,
-}: Readonly<{ height: number; imageData: string | null }>) {
-    if (imageData !== null) {
+}: Readonly<{ height: number; imageData?: string | null }>) {
+    if (imageData) {
         return (
             <img
                 src={imageData}

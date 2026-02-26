@@ -37,6 +37,7 @@ import {
     genCommonMenu,
     genShowOnScreensContextMenu,
 } from '../others/FileItemHandlerComp';
+import { useWebCapturing } from '../helper/domHelpers';
 
 function getAllShowingScreenIdDataList() {
     const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
@@ -155,6 +156,7 @@ function RenderWebInfoComp({
             extraStyle: genStyle(),
         });
     };
+    const imageData = useWebCapturing(fileSource);
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
             <div
@@ -198,7 +200,10 @@ function RenderWebInfoComp({
                         height={height}
                     />
                 ) : (
-                    <BackgroundWebPlaceHolderComp height={height} />
+                    <BackgroundWebPlaceHolderComp
+                        height={height}
+                        imageData={imageData}
+                    />
                 )}
             </div>
         </div>

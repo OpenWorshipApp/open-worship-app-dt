@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -14,7 +13,7 @@ import {
     bringDomToCenterView,
     checkIsVerticalAtBottom,
 } from './helpers';
-import { useAppEffectAsync } from './debuggerHelpers';
+import { useAppStateAsync } from './debuggerHelpers';
 import FileSource from './FileSource';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 
@@ -366,28 +365,14 @@ export async function captureScreenShot(
     return imageData;
 }
 export function useWebCapturing(fileSource: FileSource) {
-    const [imageData, setImageData] = useState<string | null>(null);
-    useAppEffectAsync(
-        async (contextMethods) => {
-            const intervalId = setInterval(
-                async () => {
-                    const screenDisplay = getDefaultScreenDisplay();
-                    const imageData = await captureScreenShot(fileSource.src, {
-                        width: screenDisplay.bounds.width,
-                        height: screenDisplay.bounds.height,
-                        delay: 3000,
-                    });
-                    contextMethods.setImageData(imageData);
-                },
-                3000, // delay between captures in milliseconds (e.g., 3000ms = 3 seconds)
-                30000, // total duration to keep capturing (e.g., 30000ms = 30 seconds)
-            );
-            return () => {
-                clearInterval(intervalId);
-            };
-        },
-        [fileSource.src],
-        { setImageData },
-    );
-    return imageData;
+    const [imageDat] = useAppStateAsync(async () => {
+        const screenDisplay = getDefaultScreenDisplay();
+        const imageData = await captureScreenShot(fileSource.src, {
+            width: screenDisplay.bounds.width,
+            height: screenDisplay.bounds.height,
+            delay: 3000,
+        });
+        return imageData;
+    }, [fileSource.src]);
+    return imageDat;
 }
