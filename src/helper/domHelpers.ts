@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
-import { pasteTextToInput } from '../server/appHelpers';
+import { electronSendAsync, pasteTextToInput } from '../server/appHelpers';
 import type { MutationType } from './helpers';
 import {
     APP_FULL_VIEW_CLASSNAME,
@@ -13,6 +14,9 @@ import {
     bringDomToCenterView,
     checkIsVerticalAtBottom,
 } from './helpers';
+import { useAppEffectAsync } from './debuggerHelpers';
+import FileSource from './FileSource';
+import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 
 const callBackListeners = new Set<
     (element: Node, type: MutationType) => void
@@ -336,4 +340,54 @@ export async function notifyNewElementAdded(
             element.classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
         }, 2e3 + 200);
     }
+}
+
+export async function captureScreenShot(
+    url: string,
+    {
+        width,
+        height,
+        delay = 1000,
+    }: {
+        width: number;
+        height: number;
+        delay?: number;
+    },
+) {
+    const imageData = await electronSendAsync<string>(
+        'main:app:capture-web-screen-shot',
+        {
+            url,
+            width,
+            height,
+            delay,
+        },
+    );
+    return imageData;
+}
+export function useWebCapturing(fileSource: FileSource) {
+    const [imageData, setImageData] = useState<string | null>(null);
+    useAppEffectAsync(
+        async (contextMethods) => {
+            const intervalId = setInterval(
+                async () => {
+                    const screenDisplay = getDefaultScreenDisplay();
+                    const imageData = await captureScreenShot(fileSource.src, {
+                        width: screenDisplay.bounds.width,
+                        height: screenDisplay.bounds.height,
+                        delay: 3000,
+                    });
+                    contextMethods.setImageData(imageData);
+                },
+                3000, // delay between captures in milliseconds (e.g., 3000ms = 3 seconds)
+                30000, // total duration to keep capturing (e.g., 30000ms = 30 seconds)
+            );
+            return () => {
+                clearInterval(intervalId);
+            };
+        },
+        [fileSource.src],
+        { setImageData },
+    );
+    return imageData;
 }

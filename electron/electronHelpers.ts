@@ -246,3 +246,44 @@ export function printHTMLContent(htmlText: string) {
         });
     });
 }
+
+export async function captureScreenShot(
+    url: string,
+    {
+        width,
+        height,
+        delay = 1000,
+    }: {
+        width: number;
+        height: number;
+        delay?: number;
+    },
+) {
+    console.log('Capturing image', url.substring(0, 100), {
+        width,
+        height,
+        delay,
+    });
+    const captureWin = new BrowserWindow({
+        show: false,
+        width,
+        height,
+        webPreferences: {
+            webSecurity: false,
+            nodeIntegration: true,
+            contextIsolation: false,
+        },
+    });
+    console.log('Loading page for capture');
+    await captureWin.loadURL(url);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    console.log('Capturing page content');
+    const image = await captureWin.webContents.capturePage({
+        x: 0,
+        y: 0,
+        width,
+        height,
+    });
+    attemptClosing(captureWin);
+    return image.toDataURL();
+}

@@ -5,7 +5,21 @@ import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 
 export function BackgroundWebPlaceHolderComp({
     height,
-}: Readonly<{ height: number }>) {
+    imageData,
+}: Readonly<{ height: number; imageData: string | null }>) {
+    if (imageData !== null) {
+        return (
+            <img
+                src={imageData}
+                alt="web preview"
+                style={{
+                    width: '100%',
+                    height: `${height}px`,
+                    objectFit: 'cover',
+                }}
+            />
+        );
+    }
     return (
         <div className="w-100 h-100 d-flex justify-content-center align-items-center">
             <i

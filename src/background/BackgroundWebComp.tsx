@@ -22,6 +22,7 @@ import {
     genBackgroundWebContextMenuItems,
     genBackgroundWebExtraItemContextMenuItems,
 } from './backgroundWebHelpers';
+import { useWebCapturing } from '../helper/domHelpers';
 
 function RenderChildComp({
     filePath,
@@ -38,6 +39,7 @@ function RenderChildComp({
 }>) {
     const [isPlaying, setIsPlaying] = useState(false);
     const fileSource = FileSource.getInstance(filePath);
+    const imageData = useWebCapturing(fileSource);
     return (
         <div
             className="card-body app-blank-bg"
@@ -71,7 +73,10 @@ function RenderChildComp({
                     height={height}
                 />
             ) : (
-                <BackgroundWebPlaceHolderComp height={height} />
+                <BackgroundWebPlaceHolderComp
+                    height={height}
+                    imageData={imageData}
+                />
             )}
             {extraChild}
         </div>

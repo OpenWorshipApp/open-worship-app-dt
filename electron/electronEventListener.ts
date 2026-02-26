@@ -9,6 +9,7 @@ import electron, {
 import ElectronAppController from './ElectronAppController';
 import {
     attemptClosing,
+    captureScreenShot,
     goDownload,
     isMac,
     printHTMLContent,
@@ -378,6 +379,18 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:ms-word-export-bible',
         (data: { filePath: string; data: object[]; dotNetRoot?: string }) => {
             return exportBibleMSWord(data.filePath, data.data, data.dotNetRoot);
+        },
+    );
+    onAsync(
+        ipcMain,
+        'main:app:capture-web-screen-shot',
+        (data: {
+            url: string;
+            width: number;
+            height: number;
+            delay?: number;
+        }) => {
+            return captureScreenShot(data.url, data);
         },
     );
 }
