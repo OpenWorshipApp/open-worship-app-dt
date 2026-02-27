@@ -1,4 +1,4 @@
-import { useMemo, type DragEvent } from 'react';
+import { useMemo, useRef, type DragEvent } from 'react';
 
 import { BoxEditorComp } from './box/BoxEditorComp';
 import { showCanvasContextMenu } from './canvasContextMenuHelpers';
@@ -19,10 +19,15 @@ import { onCanvasKeyboardEvent } from '../slideEditingBeyboardEventHelpers';
 import { tran } from '../../lang/langHelpers';
 import { MultiContextRender } from '../../helper/MultiContextRender';
 import { useEditingCanvasContextValue } from '../canvasEditingHelpers';
-import ShadowingFillParentWidthComp from '../../others/ShadowingFillParentWidthComp';
+import ShadowingFillParentWidthComp, {
+    useShadowingParentWidth,
+} from '../../others/ShadowingFillParentWidthComp';
 import { getSlideItemShadowingStyle } from '../../app-document-presenter/items/slideItemRenderHelpers';
 import { genBoxEditorStyle } from './box/boxEditorHelpers';
 import { useThemeSource } from '../../others/initHelpers';
+import { useAppEffect } from '../../helper/debuggerHelpers';
+import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
+import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 
 function dragOverHandling(event: any) {
     event.preventDefault();
@@ -73,8 +78,12 @@ async function handleContextMenuOpening(
 function BodyRendererComp({
     stopAllModes,
 }: Readonly<{ stopAllModes: () => void }>) {
+    const parentWidth = useShadowingParentWidth();
     const canvasController = useCanvasControllerContext();
     const { canvas } = canvasController;
+    const scale = useMemo(() => {
+        return (parentWidth ?? 0) / canvas.width;
+    }, [parentWidth, canvas.width]);
     const canvasItems = useCanvasItemsContext();
     const { theme } = useThemeSource();
     return (
@@ -84,7 +93,8 @@ function BodyRendererComp({
             style={{
                 width: `${canvas.width}px`,
                 height: `${canvas.height}px`,
-                transform: 'translate(-50%, -50%)',
+                transform: `scale(${scale})`,
+                transformOrigin: 'top left',
             }}
             onDragOver={dragOverHandling}
             onDragLeave={(event) => {
@@ -99,7 +109,7 @@ function BodyRendererComp({
                 event.preventDefault();
                 handleContextMenuOpening(canvasController, event, stopAllModes);
             }}
-            // import onclick by mouse down/up
+            // export onclick by mouse down/up
             onMouseDown={(event) => {
                 event.stopPropagation();
                 (event.target as HTMLDivElement).dataset.mouseDown =
@@ -139,83 +149,128 @@ function BodyRendererComp({
     );
 }
 
+// TODO: have button somewhere to reset the scroll to center,
+// in case user lost in the canvas after zooming or something
+function scrollToCenter(
+    parentElement: HTMLDivElement,
+    actualWidth: number,
+    actualHeight: number,
+) {
+    parentElement.scrollTop =
+        (actualHeight * 5 - parentElement.clientHeight) / 2;
+    parentElement.scrollLeft =
+        (actualWidth * 5 - parentElement.clientWidth) / 2;
+}
+
 export default function SlideEditorCanvasComp({
     contextData,
 }: Readonly<{ contextData: ReturnType<typeof useEditingCanvasContextValue> }>) {
+    const containerRef = useRef<HTMLDivElement>(null);
     const {
         contextValue: allCanvasContextValue,
         selectedCanvasItems,
+        setSelectedCanvasItems,
         canvasController,
         stopAllModes,
     } = contextData;
     const scale = useSlideCanvasScale(canvasController);
     const { canvas } = canvasController;
-    const { actualWidth, actualHeight, scaleStr } = useMemo(() => {
-        const actualWidth = Math.round(canvas.width * scale + 20);
-        const actualHeight = Math.round(canvas.height * scale + 20);
-        const scaleStr = scale.toFixed(2);
-        return { actualWidth, actualHeight, scaleStr };
+    const { actualWidth, actualHeight } = useMemo(() => {
+        const actualWidth = Math.round(canvas.width * scale);
+        const actualHeight = Math.round(canvas.height * scale);
+        return { actualWidth, actualHeight };
     }, [canvas.width, canvas.height, scale]);
+
+    useAppEffect(() => {
+        canvasController.toCenterView = () => {
+            const container = containerRef.current;
+            const parentElement = container?.parentElement ?? null;
+            if (
+                container === null ||
+                parentElement instanceof HTMLDivElement === false
+            ) {
+                return;
+            }
+            scrollToCenter(
+                parentElement,
+                container.clientWidth,
+                container.clientHeight,
+            );
+        };
+        return () => {
+            canvasController.toCenterView = () => {};
+        };
+    }, [canvasController]);
+    useAppEffect(() => {
+        canvasController.toCenterView();
+    }, [containerRef.current, actualWidth, actualHeight]);
+
+    const handleScrollEvent = (event: any) => {
+        event.stopPropagation();
+        handleCtrlWheel({
+            event,
+            value: canvasController.scale * 10,
+            setValue: (scale) => {
+                canvasController.scale = scale / 10;
+            },
+            defaultSize: defaultRangeSize,
+        });
+    };
+    const handleKeyDownEvent = (event: any) => {
+        if (document.activeElement !== event.currentTarget) {
+            return;
+        }
+        onCanvasKeyboardEvent(
+            {
+                stopAllModes,
+                canvasController,
+                selectedCanvasItems,
+                setSelectedCanvasItems,
+            },
+            event,
+        );
+    };
     return (
-        <div className="card w-100 h-100">
+        <div className="card w-100 h-100 app-overflow-hidden">
             <div
-                className="card-body editor-container app-focusable"
+                className={
+                    'card-body w-100 m-0 p-0 editor-container app-focusable'
+                }
+                style={{ overflow: 'auto' }}
                 tabIndex={0}
-                onWheel={(event) => {
-                    event.stopPropagation();
-                    handleCtrlWheel({
-                        event,
-                        value: canvasController.scale * 10,
-                        setValue: (scale) => {
-                            canvasController.scale = scale / 10;
-                        },
-                        defaultSize: defaultRangeSize,
-                    });
-                }}
-                onKeyDown={(event) => {
-                    if (document.activeElement !== event.currentTarget) {
-                        return;
-                    }
-                    onCanvasKeyboardEvent(
-                        {
-                            stopAllModes,
-                            canvasController,
-                            selectedCanvasItems,
-                        },
-                        event,
-                    );
-                }}
+                onWheel={handleScrollEvent}
+                onKeyDown={handleKeyDownEvent}
             >
                 <div
+                    ref={containerRef}
                     style={{
-                        width: `${actualWidth}px`,
-                        height: `${actualHeight}px`,
+                        width: actualWidth,
+                        height: actualHeight,
+                        margin: `${actualHeight * 2}px ${actualWidth * 2}px`,
+                        backgroundColor: '#fff',
+                        position: 'relative',
                     }}
                 >
-                    <div
-                        style={{
-                            width: `${actualWidth}px`,
-                            height: `${actualHeight}px`,
-                            transform:
-                                `scale(${scaleStr}) ` + 'translate(50%, 50%)',
-                        }}
-                    >
-                        <ShadowingFillParentWidthComp>
-                            <MultiContextRender
-                                contexts={allCanvasContextValue}
-                            >
-                                {genBoxEditorStyle()}
-                                {getSlideItemShadowingStyle()}
-                                <BodyRendererComp stopAllModes={stopAllModes} />
-                            </MultiContextRender>
-                        </ShadowingFillParentWidthComp>
-                    </div>
+                    <ShadowingFillParentWidthComp width={actualWidth}>
+                        <MultiContextRender contexts={allCanvasContextValue}>
+                            {genBoxEditorStyle()}
+                            {getSlideItemShadowingStyle()}
+                            <BodyRendererComp stopAllModes={stopAllModes} />
+                        </MultiContextRender>
+                    </ShadowingFillParentWidthComp>
                 </div>
             </div>
-            <div className="card-footer">
-                <MultiContextRender contexts={allCanvasContextValue}>
-                    <SlideEditorCanvasScalingComp />
-                </MultiContextRender>
+            <div className="card-footer w-100 m-0 p-0">
+                <div className="w-100 d-flex">
+                    <VaryAppDocumentContext
+                        value={canvasController.appDocument}
+                    >
+                        <SlidesMenuComp />
+                    </VaryAppDocumentContext>
+                    <MultiContextRender contexts={allCanvasContextValue}>
+                        <SlideEditorCanvasScalingComp />
+                    </MultiContextRender>
+                </div>
             </div>
         </div>
     );

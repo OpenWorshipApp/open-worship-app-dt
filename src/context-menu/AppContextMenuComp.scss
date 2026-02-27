@@ -24,6 +24,35 @@
         cursor: not-allowed !important;
       }
 
+      &:hover {
+        .context-menu-shortcut-key {
+          opacity: 0.8;
+          span {
+            font-size: 9px;
+          }
+        }
+      }
+
+      .context-menu-shortcut-key {
+        position: absolute;
+        right: 0;
+        background: #00000059;
+        padding: 0;
+        margin: 0;
+        border-radius: 4px;
+        transform: translateY(-5px);
+        opacity: 0.3;
+        &:hover {
+          opacity: 1;
+        }
+        span {
+          transition: font-size 0.2s;
+          padding: 0 2px;
+          margin: 0;
+          font-size: 8px;
+        }
+      }
+
       font-size: 14px;
       text-decoration: none;
       padding: 10px 5px;

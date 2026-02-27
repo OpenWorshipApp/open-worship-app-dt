@@ -9,20 +9,4 @@
       padding-right: 3px;
     }
   }
-
-  .editing-menu {
-    overflow-x: auto;
-    overflow-y: hidden;
-    position: absolute;
-    top: 0;
-    left: 0;
-    .editing-menu-body {
-      width: 200px;
-      padding: 2px;
-      .btn {
-        padding-top: 2 !important;
-        padding-bottom: 0 !important;
-      }
-    }
-  }
 }

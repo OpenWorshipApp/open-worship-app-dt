@@ -695,7 +695,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                 id: splitHorizontalId,
             },
             {
-                menuElement: 'Split Horizontal to',
+                menuElement: tran('Split Horizontal to'),
                 onSelect: (event1: any) => {
                     showBibleOption(event1, (newBibleKey: string) => {
                         const newBibleItem = ReadIdOnlyBibleItem.fromJson(
@@ -708,14 +708,14 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             },
             {
                 childBefore: genContextMenuItemIcon('hr'),
-                menuElement: 'Split Vertical',
+                menuElement: tran('Split Vertical'),
                 onSelect: () => {
                     this.addBibleItemBottom(bibleItem, bibleItem);
                 },
                 id: splitVerticalId,
             },
             {
-                menuElement: 'Split Vertical to',
+                menuElement: tran('Split Vertical to'),
                 onSelect: (event2: any) => {
                     showBibleOption(event2, (newBibleKey: string) => {
                         const newBibleItem = ReadIdOnlyBibleItem.fromJson(
@@ -731,7 +731,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                 : []),
             {
                 childBefore: genContextMenuItemIcon('arrows-fullscreen'),
-                menuElement: 'Toggle Widget Full View',
+                menuElement: tran('Toggle Widget Full View'),
                 onSelect: () => {
                     document
                         .querySelector(`#uuid-${uuid}`)

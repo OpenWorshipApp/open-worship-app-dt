@@ -114,7 +114,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             parentWidth: number;
             parentHeight: number;
         },
-        boxData: ToolingBoxType,
+        boxData: ToolingBoxType = {},
     ) {
         const boxProps = tooling2BoxProps(
             { ...this.props, ...boxData },

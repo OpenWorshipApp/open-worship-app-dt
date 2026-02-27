@@ -18,6 +18,7 @@ import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from '../../slide-editor/canvas/canvasHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { createNewSlidesFromDroppedData } from './appDocumentHelpers';
+import appProvider from '../../server/appProvider';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     changeDragEventStyle(event, 'opacity', '1');
@@ -40,6 +41,8 @@ export default function VaryAppDocumentItemsPreviewerComp() {
     const onSlideItemsKeyboardEvent = useSlideItemsControlEventContext();
     const [thumbSizeScale, setThumbnailSizeScale] =
         useAppDocumentItemThumbnailSizeScale();
+    const isDisplayingEditingMenu =
+        appProvider.isPagePresenter && varyAppDocument.isEditable;
     return (
         <div
             className={
@@ -87,13 +90,26 @@ export default function VaryAppDocumentItemsPreviewerComp() {
         >
             <div
                 style={{
-                    marginTop: varyAppDocument.isEditable ? '30px' : undefined,
+                    marginTop: isDisplayingEditingMenu ? '30px' : undefined,
                 }}
             >
                 <AppDocumentItemsComp />
             </div>
             <ScrollingHandlerComp />
-            {varyAppDocument.isEditable ? <SlidesMenuComp /> : null}
+            {isDisplayingEditingMenu ? (
+                <div
+                    className="w-100 app-outer-shadow"
+                    style={{
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                    }}
+                >
+                    <SlidesMenuComp />
+                </div>
+            ) : null}
         </div>
     );
 }

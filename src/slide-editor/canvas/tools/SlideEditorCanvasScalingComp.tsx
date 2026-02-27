@@ -11,6 +11,14 @@ export default function SlideEditorCanvasScalingComp() {
     const actualScale = scale * 10;
     return (
         <div className={'align-self-end flex-fill d-flex justify-content-end'}>
+            <div className="px-2">
+                <i
+                    className="bi bi-border-middle app-caught-hover-pointer"
+                    onClick={() => {
+                        canvasController.toCenterView();
+                    }}
+                />
+            </div>
             <div className="canvas-board-size-container d-flex ps-1">
                 <span>{actualScale.toFixed(1)}x</span>
                 <div style={{ maxWidth: '200px' }}>

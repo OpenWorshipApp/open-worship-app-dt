@@ -201,10 +201,14 @@ export async function onCanvasKeyboardEvent(
         stopAllModes,
         canvasController,
         selectedCanvasItems,
+        setSelectedCanvasItems,
     }: {
         stopAllModes: () => void;
         canvasController: CanvasController;
         selectedCanvasItems: CanvasItem<any>[];
+        setSelectedCanvasItems: (
+            selectedCanvasItems: CanvasItem<any>[],
+        ) => void;
     },
     event: any,
 ) {
@@ -214,6 +218,30 @@ export async function onCanvasKeyboardEvent(
     let isHandled = false;
     if (checkIsKeyboardEventMatch([{ key: 'Escape' }], event)) {
         stopAllModes();
+        isHandled = true;
+    } else if (
+        checkIsKeyboardEventMatch(
+            [{ key: 'Tab' }, { key: 'Tab', allControlKey: ['Shift'] }],
+            event,
+        )
+    ) {
+        const sortedItems = Array.from(
+            canvasController.canvas.canvasItems,
+        ).sort((a, b) => {
+            return a.id - b.id;
+        });
+        const firstIndex = sortedItems.findIndex((canvasItem) => {
+            return selectedCanvasItems.some((selectedCanvasItem) => {
+                return selectedCanvasItem.props.id === canvasItem.props.id;
+            });
+        });
+        const nextIndex =
+            (firstIndex + (event.shiftKey ? -1 : 1) + sortedItems.length) %
+            sortedItems.length;
+        const nextItem = sortedItems[nextIndex];
+        if (nextItem !== undefined) {
+            setSelectedCanvasItems([nextItem]);
+        }
         isHandled = true;
     } else if (
         checkIsKeyboardEventMatch(
@@ -277,6 +305,8 @@ export async function onCanvasKeyboardEvent(
         canvasController.duplicateItems(selectedCanvasItems);
         isHandled = true;
     } else if (handleHistory(canvasController.appDocument, event)) {
+        isHandled = true;
+    } else if (canvasController.matchEvent(event)) {
         isHandled = true;
     }
     if (isHandled) {

@@ -357,6 +357,7 @@ export function stopDraggingState(event: any) {
     changeDragEventStyle(event, 'opacity', '1');
 }
 
+// TODO: move to domHelpers
 export function bringDomToView(dom: Element, block: ScrollLogicalPosition) {
     dom.scrollIntoView({
         behavior: 'smooth',

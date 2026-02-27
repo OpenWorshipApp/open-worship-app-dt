@@ -129,7 +129,7 @@ const dictionary = {
     'Edit Parent Path': 'កែសម្រួលផ្លូវមេ',
     'Edit this web file': 'កែសម្រួលឯកសារគេហទំព័រនេះ',
     Edit: 'កែសម្រួល',
-    'edit-item-thumb': 'edit-item-thumb',
+    'Slide Quick Edit': 'កែសម្រួលស្លាយរហ័ស',
     Editor: 'កម្មវិធីកែសម្រួល',
     Empty: 'ទទេ',
     'Exit Full': 'ចាកចេញពីពេញ',

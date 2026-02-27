@@ -59,6 +59,13 @@ const keyNameMap: { [key: string]: string } = {
     Meta: 'Command',
 };
 
+const macKeyMap: { [key: string]: string } = {
+    ctrl: '⌃',
+    alt: '⌥',
+    meta: '⌘',
+    shift: '⇧',
+};
+
 export default class KeyboardEventListener extends EventHandler<string> {
     static readonly eventNamePrefix: string = 'keyboard';
     static readonly _layers: AppWidgetType[] = ['root'];
@@ -161,11 +168,21 @@ export default class KeyboardEventListener extends EventHandler<string> {
             const allControlKeys = allControls.map((key) => {
                 return keyNameMap[key] ?? key;
             });
-            const sorted = [...allControlKeys].sort((a, b) => {
+            let sorted = [...allControlKeys].sort((a, b) => {
                 return a.localeCompare(b);
             });
-            key = `${sorted.join(' + ')} + ${key}`;
+            if (appProvider.systemUtils.isMac) {
+                // Meta+C -> ⌘ C
+                sorted = sorted.map((key) => {
+                    return macKeyMap[key.toLocaleLowerCase()] ?? key;
+                });
+                key = `${sorted.join('')} ${key}`;
+            } else {
+                key = `${sorted.join('+')}+${key}`;
+            }
         }
+        // TODO: return {key, title} for tooltip and menu.
+        // e.g. Mac Meta+C show as "⌘ C"
         return key;
     }
     static toEventMapperKey(eventMapper: EventMapper) {

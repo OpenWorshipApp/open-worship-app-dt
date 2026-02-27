@@ -62,6 +62,27 @@ function useCanvasItemsData(canvasController: CanvasController) {
         };
     }, [canvasController]);
 
+    useAppEffect(() => {
+        canvasController.onArrowing = (event) => {
+            for (const selectedItem of selectedCanvasItems) {
+                canvasController.moveCanvasItem(
+                    selectedItem,
+                    canvasController.MOVING_OFFSET,
+                    canvasController.MOVING_OFFSET,
+                    {
+                        arrowing: event.key as any,
+                        isCtrlKey: event.ctrlKey,
+                        isShiftKey: event.shiftKey,
+                    },
+                );
+                canvasController.applyEditItem(selectedItem);
+            }
+        };
+        return () => {
+            canvasController.onArrowing = () => {};
+        };
+    }, [canvasController, selectedCanvasItems]);
+
     return {
         canvasItems,
         selectedCanvasItems,

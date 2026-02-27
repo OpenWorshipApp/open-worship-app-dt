@@ -129,7 +129,7 @@ export function genBoxEditorStyle() {
     const isDarkMode = checkIsDarkMode();
     return (
         <>
-            <style>{editorStyle}</style>;
+            <style>{editorStyle}</style>
             <style>{isDarkMode ? editorStyleDark : editorStyleLight}</style>
         </>
     );

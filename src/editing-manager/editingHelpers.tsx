@@ -1,3 +1,5 @@
+import './editingHelpers.scss';
+
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
@@ -7,10 +9,7 @@ import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import EditingHistoryManager from './EditingHistoryManager';
 import type AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
 import type { EventMapper as KeyboardEventMapper } from '../event/KeyboardEventListener';
-import {
-    useKeyboardRegistering,
-    toShortcutKey,
-} from '../event/KeyboardEventListener';
+import { toShortcutKey } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 
 function removeLastEditingDate(jsonText: string | null) {
@@ -120,51 +119,42 @@ export function FileEditingMenuComp({
     const { canUndo, canRedo, canSave } = useEditingHistoryStatus(
         editableDocument.filePath,
     );
-    useKeyboardRegistering(
-        [savingEventMapper],
-        () => {
-            editableDocument.save();
-        },
-        [editableDocument],
-    );
     const isShowingTools = canUndo || canRedo || canSave;
     if (!(isShowingTools || extraChildren)) {
         return null;
     }
     return (
-        <div className="editing-menu w-100 app-outer-shadow">
-            <div className="editing-menu-body btn-group control d-flex justify-content-center">
-                <button
-                    className="btn btn-sm btn-info"
-                    type="button"
-                    title="Undo"
-                    disabled={!canUndo}
-                    style={genDisabledStyle(!canUndo)}
-                    onClick={() => {
-                        editableDocument.editingHistoryManager.undo();
-                    }}
-                >
-                    <i className="bi bi-arrow-90deg-left" />
-                </button>
-                <button
-                    className="btn btn-sm btn-info"
-                    type="button"
-                    title="Redo"
-                    disabled={!canRedo}
-                    style={genDisabledStyle(!canRedo)}
-                    onClick={() => {
-                        editableDocument.editingHistoryManager.redo();
-                    }}
-                >
-                    <i className="bi bi-arrow-90deg-right" />
-                </button>
-                <MenuIsModifying
-                    editableDocument={editableDocument}
-                    caDiscard={isShowingTools}
-                    canSave={canSave}
-                />
-                {extraChildren}
-            </div>
+        <div className="editing-menu-body btn-group control d-flex justify-content-center">
+            <button
+                className="btn btn-sm btn-info"
+                type="button"
+                title="Undo"
+                disabled={!canUndo}
+                style={genDisabledStyle(!canUndo)}
+                onClick={() => {
+                    editableDocument.editingHistoryManager.undo();
+                }}
+            >
+                <i className="bi bi-arrow-90deg-left" />
+            </button>
+            <button
+                className="btn btn-sm btn-info"
+                type="button"
+                title="Redo"
+                disabled={!canRedo}
+                style={genDisabledStyle(!canRedo)}
+                onClick={() => {
+                    editableDocument.editingHistoryManager.redo();
+                }}
+            >
+                <i className="bi bi-arrow-90deg-right" />
+            </button>
+            <MenuIsModifying
+                editableDocument={editableDocument}
+                caDiscard={isShowingTools}
+                canSave={canSave}
+            />
+            {extraChildren}
         </div>
     );
 }

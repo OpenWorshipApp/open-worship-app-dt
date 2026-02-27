@@ -326,7 +326,7 @@ export async function notifyNewElementAdded(
     const element = elementGetter();
     if (element === null) {
         await new Promise((resolve) => {
-            setTimeout(resolve, 500);
+            setTimeout(resolve, 100);
         });
         await notifyNewElementAdded(elementGetter, searchingCount + 1);
     } else {

@@ -18,6 +18,7 @@ import { handleError } from '../../helper/errorHelpers';
 import { createContext, use } from 'react';
 import { showCanvasItemContextMenu } from './canvasContextMenuHelpers';
 import AppDocument from '../../app-document-list/AppDocument';
+import { allArrows } from '../../event/KeyboardEventListener';
 
 const EDITOR_SCALE_SETTING_NAME = 'canvas-editor-scale';
 export const defaultRangeSize = {
@@ -30,10 +31,13 @@ export const defaultRangeSize = {
 export type CanvasItemEventDataType = { canvasItems: CanvasItem<any>[] };
 
 class CanvasController extends EventHandler<CanvasControllerEventType> {
+    readonly MOVING_OFFSET = 20;
     static readonly eventNamePrefix: string = 'canvas-c';
     private _scale: number = 1;
     readonly appDocument: AppDocument;
     readonly canvas: Canvas;
+    public toCenterView: () => void = () => {};
+    public onArrowing: (event: KeyboardEvent) => void = () => {};
 
     constructor(appDocument: AppDocument, canvas: Canvas) {
         super();
@@ -94,8 +98,8 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         const newCanvasItems = this.canvas.canvasItems;
         for (const canvasItem of canvasItems) {
             canvasItem.props.id = this.canvas.maxItemId + 1;
-            canvasItem.props.top += 20;
-            canvasItem.props.left += 20;
+            canvasItem.props.top += this.MOVING_OFFSET;
+            canvasItem.props.left += this.MOVING_OFFSET;
             newCanvasItems.push(canvasItem);
         }
         this.setCanvasItems(newCanvasItems);
@@ -206,15 +210,58 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     ) {
         const scale = Math.min(targetWidth / width, targetHeight / height);
         const props = canvasItem.props as CanvasItemPropsType;
+        const oldWidth = props.width;
+        const oldHeight = props.height;
         props.width = Math.round(width * scale);
         props.height = Math.round(height * scale);
+        const offsetX = Math.round((oldWidth - props.width) / 2);
+        const offsetY = Math.round((oldHeight - props.height) / 2);
+        props.left += offsetX;
+        props.top += offsetY;
         const targetDimension = {
             parentWidth: targetWidth,
             parentHeight: targetHeight,
         };
-        canvasItem.applyBoxData(targetDimension, {
-            horizontalAlignment: 'center',
-            verticalAlignment: 'center',
+        canvasItem.applyBoxData(targetDimension);
+    }
+
+    moveCanvasItem(
+        canvasItem: CanvasItem<any>,
+        offsetX: number,
+        offsetY: number,
+        {
+            arrowing,
+            isCtrlKey,
+            isShiftKey,
+        }: {
+            arrowing: (typeof allArrows)[number];
+            isCtrlKey: boolean;
+            isShiftKey: boolean;
+        },
+    ) {
+        let actualOffsetX = 0;
+        let actualOffsetY = 0;
+        if (arrowing === 'ArrowUp') {
+            actualOffsetY = -offsetY;
+        } else if (arrowing === 'ArrowDown') {
+            actualOffsetY = offsetY;
+        } else if (arrowing === 'ArrowLeft') {
+            actualOffsetX = -offsetX;
+        } else if (arrowing === 'ArrowRight') {
+            actualOffsetX = offsetX;
+        }
+        const props = canvasItem.props as CanvasItemPropsType;
+        let factor = 1;
+        if (isCtrlKey) {
+            factor = 0.1;
+        } else if (isShiftKey) {
+            factor = 10;
+        }
+        const left = props.left + actualOffsetX * factor;
+        const top = props.top + actualOffsetY * factor;
+        canvasItem.applyProps({
+            left,
+            top,
         });
     }
 
@@ -315,6 +362,14 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             eventNames,
             listener,
         );
+    }
+
+    matchEvent(event: KeyboardEvent) {
+        if (allArrows.includes(event.key as any)) {
+            this.onArrowing(event);
+            return true;
+        }
+        return false;
     }
 }
 
