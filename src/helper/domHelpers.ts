@@ -115,10 +115,7 @@ export function handleActiveSelectedElementScrolling(target: Node) {
     bringDomToNearestView(target);
 }
 
-export function handleAutoHide(
-    targetDom: HTMLDivElement,
-    isLeftAligned = true,
-) {
+export function handleAutoHide(targetDom: HTMLDivElement) {
     const parentElement = targetDom.parentElement;
     if (parentElement === null) {
         return;
@@ -131,13 +128,14 @@ export function handleAutoHide(
     clearButton.className =
         'auto-hide-button bi bi-three-dots' +
         ' app-caught-hover-pointer app-round-icon';
-    if (isLeftAligned) {
-        clearButton.style.left = '5px';
-    } else {
-        clearButton.style.right = '5px';
-    }
-    clearButton.style.bottom = '5px';
-    clearButton.style.position = 'absolute';
+    clearButton.style.left = '7px';
+    Object.assign(clearButton.style, {
+        bottom: '7px',
+        position: 'absolute',
+        width: '25px',
+        textAlign: 'center',
+        padding: '0px',
+    });
     clearButton.title = tran('Show');
     let timeoutId: any = null;
     const mouseEnterListener = () => {

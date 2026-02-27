@@ -43,7 +43,7 @@ function InputUrlComp({
 export async function askForURL(title: string, subTitle: string) {
     let url = '';
     const clipboardText = await readTextFromClipboard();
-    if (clipboardText !== null && clipboardText.trim().startsWith('http')) {
+    if (clipboardText?.trim().startsWith('http')) {
         url = clipboardText.trim();
     }
     const isConfirmInput = await showAppInput(

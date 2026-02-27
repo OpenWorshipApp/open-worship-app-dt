@@ -17,10 +17,10 @@ export default function MiniScreenFooterComp({
 }>) {
     return (
         <div
-            className={'card-footer w-100 app-auto-hide-bottom'}
+            className={'card-footer w-100 p-0 app-auto-hide-bottom'}
             ref={(element) => {
                 if (element !== null) {
-                    handleAutoHide(element, false);
+                    handleAutoHide(element);
                 }
             }}
         >

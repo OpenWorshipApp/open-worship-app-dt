@@ -10,18 +10,12 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import type { OptionalPromise } from '../helper/typeHelpers';
 import type DirSource from '../helper/DirSource';
 import { useStateSettingNumber } from '../helper/settingHelpers';
-import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
+import { handleCtrlWheel } from '../others/AppRangeComp';
 import BackgroundMediaItemComp from './BackgroundMediaItemComp';
 import type { RenderChildType } from './backgroundHelpers';
 import { backgroundTypeMapper } from './backgroundHelpers';
 import FillingFlexCenterComp from '../others/FillingFlexCenterComp';
-
-export const defaultRangeSize = {
-    size: 100,
-    min: 50,
-    max: 500,
-    step: 10,
-};
+import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
 
 export function useThumbnailWidthSetting() {
     const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
@@ -158,17 +152,10 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
                 />
             </div>
             {props.shouldHideFooter ? null : (
-                <div className="card-footer d-flex p-0">
-                    <div className="flex-fill" />
-                    <div>
-                        <AppRangeComp
-                            value={thumbnailWidth}
-                            title="Thumbnail Size"
-                            setValue={setThumbnailWidth}
-                            defaultSize={defaultRangeSize}
-                        />
-                    </div>
-                </div>
+                <BackgroundFooterComp
+                    thumbnailWidth={thumbnailWidth}
+                    setThumbnailWidth={setThumbnailWidth}
+                />
             )}
         </div>
     );

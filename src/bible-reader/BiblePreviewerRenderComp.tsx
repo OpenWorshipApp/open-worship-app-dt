@@ -78,7 +78,7 @@ export default function BiblePreviewerRenderComp() {
                 </BibleViewFontSizeContext>
             </div>
             <div
-                className={'app-auto-hide-bottom'}
+                className={'app-auto-hide-bottom p-1 card-footer w-100'}
                 ref={(element) => {
                     if (element !== null) {
                         handleAutoHide(element);

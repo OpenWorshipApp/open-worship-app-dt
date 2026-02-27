@@ -1,12 +1,10 @@
 import { useMemo } from 'react';
 
 import { useCameraInfoList } from '../helper/cameraHelpers';
-import {
-    defaultRangeSize,
-    useThumbnailWidthSetting,
-} from './BackgroundMediaComp';
-import AppRangeComp, { handleCtrlWheel } from '../others/AppRangeComp';
+import { useThumbnailWidthSetting } from './BackgroundMediaComp';
+import { handleCtrlWheel } from '../others/AppRangeComp';
 import BackgroundCameraItemComp from './BackgroundCameraItemComp';
+import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
 
 export default function BackgroundCamerasComp() {
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
@@ -39,17 +37,10 @@ export default function BackgroundCamerasComp() {
                     );
                 })}
             </div>
-            <div className="card-footer d-flex p-0">
-                <div className="flex-fill" />
-                <div>
-                    <AppRangeComp
-                        value={thumbnailWidth}
-                        title="Thumbnail Size"
-                        setValue={setThumbnailWidth}
-                        defaultSize={defaultRangeSize}
-                    />
-                </div>
-            </div>
+            <BackgroundFooterComp
+                thumbnailWidth={thumbnailWidth}
+                setThumbnailWidth={setThumbnailWidth}
+            />
         </div>
     );
 }
