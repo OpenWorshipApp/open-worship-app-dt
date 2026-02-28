@@ -240,7 +240,7 @@ const dictionary = {
     'Split horizontal': 'បំបែកផ្ដេក',
     'Split Horizontal': 'បំបែកផ្ដេក',
     'Split vertical': 'បំបែកបញ្ឈរ',
-    'Stage:': 'ដំណាក់កាល:',
+    Stage: 'ស្ទែជ',
     Stopwatch: 'នាឡិកាបញ្ឈប់',
     Strip: 'ដកចេញ',
     System: 'ប្រព័ន្ធ',

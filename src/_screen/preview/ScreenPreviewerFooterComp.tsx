@@ -125,10 +125,13 @@ export default function ScreenPreviewerFooterComp() {
                         />
                     ) : null}
                 </div>
-                <div className="flex-grow-1 d-flex justify-content-end">
+                <div
+                    className="flex-grow-1 d-flex justify-content-end"
+                    title={tran('Stage')}
+                >
                     <div
                         className="d-flex app-caught-hover-pointer"
-                        title={tran('Click to change Stage Number')}
+                        title={`${tran('Stage')}: ${tran('Click to change Stage Number')}`}
                         onClick={(event) => {
                             getNewStageNumber(
                                 event,
@@ -137,7 +140,7 @@ export default function ScreenPreviewerFooterComp() {
                             );
                         }}
                     >
-                        <small>{tran('Stage:')}</small>
+                        <small>St:</small>
                         <div className="px-1 text-muted">{stageNumber}</div>
                     </div>
                 </div>

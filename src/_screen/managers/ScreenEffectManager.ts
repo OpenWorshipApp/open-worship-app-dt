@@ -63,14 +63,17 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
     }
 
     sendSyncScreen() {
-        this.screenManagerBase.sendScreenMessage({
-            screenId: this.screenId,
-            type: 'effect',
-            data: {
-                target: this.target,
-                effect: this.effectType,
+        this.screenManagerBase.sendScreenMessage(
+            {
+                screenId: this.screenId,
+                type: 'effect',
+                data: {
+                    target: this.target,
+                    effect: this.effectType,
+                },
             },
-        }, false);
+            false,
+        );
     }
 
     static receiveSyncScreen(message: ScreenMessageType) {

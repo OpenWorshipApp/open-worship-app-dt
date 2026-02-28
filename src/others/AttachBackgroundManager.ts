@@ -129,6 +129,15 @@ export default class AttachBackgroundManager {
         return `attached-background-${filePath}`;
     }
 
+    public getAttachedBackgroundSync(filePath: string, id?: string | number) {
+        const cachedData = cached.getSync(filePath);
+        if (cachedData !== null) {
+            const data = cachedData;
+            const attachedData = data[this.toKey(id)] ?? null;
+            return attachedData;
+        }
+    }
+
     public async getAttachedBackground(
         filePath: string,
         id?: string | number,

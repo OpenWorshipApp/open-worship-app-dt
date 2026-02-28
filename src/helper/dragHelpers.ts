@@ -5,11 +5,11 @@ import type DragInf from './DragInf';
 import { DragTypeEnum } from './DragInf';
 import FileSource from './FileSource';
 import PdfSlide from '../app-document-list/PdfSlide';
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import AttachBackgroundManager, {
     attachBackgroundManager,
 } from '../others/AttachBackgroundManager';
-import { useAppEffectAsync } from './debuggerHelpers';
+import { useAppStateAsync } from './debuggerHelpers';
 import { useFileSourceEvents } from './dirSourceHelpers';
 import { stopDraggingState } from './helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -99,22 +99,15 @@ export function useAttachedBackgroundData(
     filePath: string,
     id?: string | number,
 ) {
-    const [droppedData, setDroppedData] = useState<
+    const [droppedData, setDroppedData] = useAppStateAsync<
         DroppedDataType | null | undefined
-    >(undefined);
-
-    useAppEffectAsync(
-        async (contextMethods) => {
-            const data = await attachBackgroundManager.getAttachedBackground(
-                filePath,
-                id,
-            );
-            contextMethods.setDroppedData(data);
+    >(
+        () => {
+            return attachBackgroundManager.getAttachedBackground(filePath, id);
         },
         [filePath, id],
-        { setDroppedData },
+        attachBackgroundManager.getAttachedBackgroundSync(filePath, id),
     );
-
     const handleFileUpdate = useCallback(() => {
         attachBackgroundManager
             .getAttachedBackground(filePath, id)

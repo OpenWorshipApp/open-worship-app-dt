@@ -381,13 +381,16 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     static sendSynTextStyle() {
         for (const screenManagerBase of getAllScreenManagerBases()) {
-            screenManagerBase.sendScreenMessage({
-                screenId: screenManagerBase.screenId,
-                type: 'bible-screen-view-text-style',
-                data: {
-                    textStyle: this.textStyle,
+            screenManagerBase.sendScreenMessage(
+                {
+                    screenId: screenManagerBase.screenId,
+                    type: 'bible-screen-view-text-style',
+                    data: {
+                        textStyle: this.textStyle,
+                    },
                 },
-            }, true);
+                true,
+            );
         }
     }
 

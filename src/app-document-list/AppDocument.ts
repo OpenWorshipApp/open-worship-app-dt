@@ -24,6 +24,7 @@ import {
 import { fixMissingFontFamilies } from '../server/fontHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
 import { notifyNewElementAdded } from '../helper/domHelpers';
+import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -75,6 +76,14 @@ export default class AppDocument
             return acc;
         }, new Set<string>());
         fixMissingFontFamilies(unavailableFontFamiliesSet, this.filePath);
+        await Promise.all(
+            slides.map((slide) => {
+                return attachBackgroundManager.getAttachedBackground(
+                    slide.filePath,
+                    slide.id,
+                );
+            }),
+        );
         return slides;
     }
 

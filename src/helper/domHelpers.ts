@@ -16,6 +16,9 @@ import {
 import { useAppStateAsync } from './debuggerHelpers';
 import FileSource from './FileSource';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
+import CacheManager from '../others/CacheManager';
+import appProvider from '../server/appProvider';
+import { unlocking } from '../server/unlockingHelpers';
 
 const callBackListeners = new Set<
     (element: Node, type: MutationType) => void
@@ -339,7 +342,8 @@ export async function notifyNewElementAdded(
     }
 }
 
-export async function captureScreenShot(
+const webScreenshotCacheManager = new CacheManager<string>(60 /* 1 minute */);
+export async function captureWebScreenShot(
     url: string,
     {
         width,
@@ -351,21 +355,29 @@ export async function captureScreenShot(
         delay?: number;
     },
 ) {
-    const imageData = await electronSendAsync<string>(
-        'main:app:capture-web-screen-shot',
-        {
-            url,
-            width,
-            height,
-            delay,
-        },
-    );
-    return imageData;
+    const md5 = appProvider.systemUtils.generateMD5(url + width + height);
+    return unlocking(`web-screenshot-${md5}`, async () => {
+        const cachedData = await webScreenshotCacheManager.get(md5);
+        if (cachedData !== null) {
+            return cachedData;
+        }
+        const imageData = await electronSendAsync<string>(
+            'main:app:capture-web-screen-shot',
+            {
+                url,
+                width,
+                height,
+                delay,
+            },
+        );
+        await webScreenshotCacheManager.set(md5, imageData);
+        return imageData;
+    });
 }
 export function useWebCapturing(fileSource: FileSource) {
     const [imageDat] = useAppStateAsync(async () => {
         const screenDisplay = getDefaultScreenDisplay();
-        const imageData = await captureScreenShot(fileSource.src, {
+        const imageData = await captureWebScreenShot(fileSource.src, {
             width: screenDisplay.bounds.width,
             height: screenDisplay.bounds.height,
             delay: 3000,
