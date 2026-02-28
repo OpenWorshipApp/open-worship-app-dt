@@ -70,7 +70,7 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
                 target: this.target,
                 effect: this.effectType,
             },
-        });
+        }, false);
     }
 
     static receiveSyncScreen(message: ScreenMessageType) {

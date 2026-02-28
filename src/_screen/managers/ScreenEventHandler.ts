@@ -47,7 +47,7 @@ export default abstract class ScreenEventHandler<
         this.screenManagerBase.sendScreenMessage({
             screenId: this.screenId,
             ...this.toSyncMessage(),
-        });
+        }, false);
     }
 
     abstract receiveSyncScreen(message: ScreenMessageType): void;

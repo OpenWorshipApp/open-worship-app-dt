@@ -369,7 +369,6 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             `${SCREEN_BIBLE_SETTING_PREFIX}-style-text`,
             JSON.stringify(style),
         );
-        this.sendSynTextStyle();
         this.addPropEvent('text-style');
     }
 
@@ -377,6 +376,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         const textStyle = this.textStyle;
         Object.assign(textStyle, style);
         this.textStyle = textStyle;
+        this.sendSynTextStyle();
     }
 
     static sendSynTextStyle() {
@@ -387,7 +387,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                 data: {
                     textStyle: this.textStyle,
                 },
-            });
+            }, true);
         }
     }
 

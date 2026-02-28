@@ -238,7 +238,7 @@ export default class ScreenManagerBase
         throw new Error('receiveScreenDropped is not implemented.');
     }
 
-    sendScreenMessage(_message: ScreenMessageType, _isForce?: boolean) {
+    sendScreenMessage(_message: ScreenMessageType, _isForce: boolean) {
         throw new Error('sendScreenMessage is not implemented.');
     }
 

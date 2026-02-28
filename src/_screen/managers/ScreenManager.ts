@@ -322,7 +322,7 @@ export default class ScreenManager extends ScreenManagerBase {
         }
     }
 
-    sendScreenMessage(message: ScreenMessageType, isForce?: boolean) {
+    sendScreenMessage(message: ScreenMessageType, isForce: boolean) {
         if (appProvider.isPageScreen && !isForce) {
             return;
         }
