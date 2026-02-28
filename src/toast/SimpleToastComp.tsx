@@ -1,3 +1,5 @@
+import { tran } from '../lang/langHelpers';
+
 export type SimpleToastType = {
     title: string;
     message: string;
@@ -30,7 +32,7 @@ export default function SimpleToastComp({
                     type="button"
                     className="btn-close"
                     data-bs-dismiss="toast"
-                    aria-label="Close"
+                    aria-label={tran('Close')}
                     onClick={onClose}
                 />
             </div>

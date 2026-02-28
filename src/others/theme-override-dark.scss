@@ -366,4 +366,11 @@ $resizer-color: rgb(73, 103, 123);
   .editing-menu {
     background-color: var(--bs-gray-900);
   }
+
+  .context-menu-shortcut-key {
+    span {
+      background: #00000059;
+      border-radius: 4px;
+    }
+  }
 }

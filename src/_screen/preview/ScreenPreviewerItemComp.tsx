@@ -77,6 +77,14 @@ export default function ScreenPreviewerItemComp({
                 }
                 screenManager.receiveScreenDropped(droppedData);
             }}
+            onWheel={(event) => {
+                if (
+                    event.ctrlKey &&
+                    screenManager.screenBibleManager.isShowing
+                ) {
+                    event.stopPropagation();
+                }
+            }}
         >
             <ScreenPreviewerHeaderComp />
             <div

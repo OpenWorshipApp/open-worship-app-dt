@@ -76,7 +76,7 @@ function TimeInSetComp({
     const [timezoneMinuteOffset, setTimezoneMinuteOffset] =
         useStateSettingNumber(
             `foreground-timezone-minute-offset-setting-${id}`,
-            getSystemTimezoneMinuteOffset(),
+            getSystemTimezoneMinuteOffset,
         );
     const handleShowing = (event: any, isForceChoosing = false) => {
         ScreenForegroundManager.addTimeData(

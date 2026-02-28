@@ -149,8 +149,6 @@ function BodyRendererComp({
     );
 }
 
-// TODO: have button somewhere to reset the scroll to center,
-// in case user lost in the canvas after zooming or something
 function scrollToCenter(
     parentElement: HTMLDivElement,
     actualWidth: number,

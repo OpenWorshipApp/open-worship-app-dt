@@ -1,4 +1,4 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, useMemo } from 'react';
 
 export default function FillingFlexCenterComp({
     width,
@@ -9,9 +9,12 @@ export default function FillingFlexCenterComp({
     className?: string;
     style?: CSSProperties;
 }>) {
-    return Array.from({
-        length: Math.floor(document.body.clientWidth / width),
-    }).map((_, i) => {
+    const list = useMemo(() => {
+        const bodyWidth = document.body.clientWidth;
+        const length = Math.floor(bodyWidth / (width || bodyWidth)) + 1;
+        return Array.from({ length });
+    }, [width]);
+    return list.map((_, i) => {
         return (
             <div
                 key={i}

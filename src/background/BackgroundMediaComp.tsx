@@ -20,7 +20,7 @@ import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
 export function useThumbnailWidthSetting() {
     const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
         'bg-thumbnail-width',
-        100,
+        defaultRangeSize.min,
     );
     return [thumbnailWidth, setThumbnailWidth] as const;
 }

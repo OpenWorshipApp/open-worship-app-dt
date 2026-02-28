@@ -63,6 +63,7 @@ const macKeyMap: { [key: string]: string } = {
     ctrl: '⌃',
     alt: '⌥',
     meta: '⌘',
+    command: '⌘',
     shift: '⇧',
 };
 
@@ -251,7 +252,7 @@ export function useKeyboardRegistering(
         return () => {
             KeyboardEventListener.unregisterEventListener(registeredEvents);
         };
-    }, [listener, ...deps, eventNames]);
+    }, [listener, ...deps, ...eventNames]);
 }
 
 document.onkeydown = function (event) {

@@ -4,6 +4,7 @@ import type { PropsWithChildren, ReactNode } from 'react';
 
 import type { EventMapper } from '../event/KeyboardEventListener';
 import { toShortcutKey } from '../event/KeyboardEventListener';
+import { tran } from '../lang/langHelpers';
 
 interface MyProps {
     children?: ReactNode;
@@ -30,7 +31,7 @@ export function ModalCloseButton({ close }: Readonly<{ close: () => void }>) {
                     height: '38px',
                 }}
                 onClick={close}
-                title={`Close [${toShortcutKey(quittingEventMap)}]`}
+                title={`${tran('Close')} [${toShortcutKey(quittingEventMap)}]`}
             >
                 <i className="bi bi-x-lg" />
             </button>

@@ -239,7 +239,7 @@ export default function FileListHandlerComp({
                             defaultFolderName={defaultFolderName}
                         />
                     ) : (
-                        <ul className="list-group flex-fill d-flex app-inner-shadow">
+                        <ul className="list-group flex-fill d-flex">
                             {onNewFile !== undefined && isCreatingNew ? (
                                 <LazyAskingNewNameComp
                                     applyName={handleNameApplying}

@@ -9,10 +9,20 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'The application is started first time':
+        'កម្មវិធីត្រូវបានចាប់ផ្តើមជាលើកដំបូង',
+    'This will set the home page to "📖 Bible Reader🔎"?':
+        'នេះនឹងកំណត់ទំព័រដើមទៅ "📖 អានព្រះគម្ពីរ🔎"?',
+    Close: 'បិទ',
+    'Toggle Widget Full View': 'បិទ/បើក ទិដ្ឋភាពពេញលេញរបស់វីដេអូ',
+    'Split Vertical to': 'បំបែកបញ្ឈរទៅ',
+    'Split Vertical': 'បំបែកបញ្ឈរ',
+    'Split Horizontal to': 'បំបែកផ្ដេកទៅ',
+    'plit Horizontal to': 'បំបែកផ្ដេកទៅ',
     'Loading Bible Data': 'កំពុងផ្ទុកទិន្នន័យព្រះគម្ពីរ',
     'Unable to preview right now': 'មិនអាចបង្ហាញ 미្ដងនេះទេ',
     'Open bible lookup popup': 'បើកផ្ទាំងស្វែងរកព្រះគម្ពីរ',
-    Cancel: 'បោះបង់',
+    Cancel: 'បដិសេធ',
     Ok: 'យល់ព្រម',
     'Cancel selection': 'បោះបង់ការជ្រើសរើស',
     'Quick Exit': 'ចាកចេញយ៉ាងឆាប់រហ័ស',

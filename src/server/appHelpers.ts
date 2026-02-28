@@ -15,6 +15,7 @@ import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appLog, appError as logError } from '../helper/loggerHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import { tran } from '../lang/langHelpers';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${Date.now()}`;
@@ -210,10 +211,10 @@ export async function checkDecidedBibleReaderHomePage() {
         return;
     }
     const isOk = await showAppConfirm(
-        'The application is started first time',
-        'This will set the home page to "📖 Bible Reader🔎"?',
+        tran('The application is started first time'),
+        tran('This will set the home page to "📖 Bible Reader🔎"?'),
         {
-            confirmButtonLabel: 'Yes',
+            confirmButtonLabel: tran('Yes'),
         },
     );
     setDecided();

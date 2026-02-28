@@ -20,8 +20,8 @@ export default function AppPresenterLeftComp() {
             flexSizeName={resizeSettingNames.appPresenterLeft}
             isHorizontal={false}
             flexSizeDefault={{
-                v1: ['1'],
-                v2: ['1'],
+                v1: ['3'],
+                v2: ['2'],
                 ...(appProvider.systemUtils.isDev ? { v3: ['1'] } : {}),
             }}
             dataInput={[

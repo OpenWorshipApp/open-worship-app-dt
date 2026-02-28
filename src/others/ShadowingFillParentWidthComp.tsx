@@ -25,6 +25,12 @@ declare module 'react/jsx-runtime' {
     }
 }
 
+const defaultStyle = `
+* {
+    transition: transform 0.1s ease-in-out;
+}
+`;
+
 const ShadowingParentWidthContext = createContext<number | undefined>(
     undefined,
 );
@@ -66,6 +72,7 @@ class ShadowingParentWidthCustomHTMLTag extends HTMLElement {
     connectedCallback() {
         this.root.render(
             <ShadowingParentWidthContext value={this.parentWidth}>
+                <style>{defaultStyle}</style>
                 {this.myContent}
             </ShadowingParentWidthContext>,
         );

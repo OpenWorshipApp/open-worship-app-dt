@@ -59,12 +59,17 @@ export function useStateSettingString<T extends string>(
 }
 export function useStateSettingNumber(
     settingName: string,
-    defaultNumber: number,
+    defaultNumber: number | (() => number),
 ): [number, Dispatch<SetStateAction<number>>] {
-    const defaultData = Number.parseInt(getSetting(settingName) ?? '', 10);
-    const [data, setData] = useState(
-        Number.isNaN(defaultData) ? defaultNumber : defaultData,
-    );
+    let defaultData = Number.parseInt(getSetting(settingName) ?? '', 10);
+    if (Number.isNaN(defaultData)) {
+        const resolvedDefault =
+            typeof defaultNumber === 'function'
+                ? defaultNumber()
+                : defaultNumber;
+        defaultData = resolvedDefault;
+    }
+    const [data, setData] = useState(defaultData);
     const setDataSetting = useCallback(
         (num: number | ((prev: number) => number)) => {
             const newValue = typeof num === 'function' ? num(data) : num;

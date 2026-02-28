@@ -96,7 +96,7 @@ export default function AppRangeComp({
     }
     return (
         <div
-            className="form form-inline d-flex mx-2"
+            className="form form-inline d-flex mx-2 px-1 py-0"
             title={title}
             style={{ minWidth: '100px' }}
         >

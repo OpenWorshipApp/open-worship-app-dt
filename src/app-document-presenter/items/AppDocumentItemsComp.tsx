@@ -24,7 +24,10 @@ import {
 } from '../../app-document-list/appDocumentHelpers';
 import SlideAutoPlayComp from '../../slide-auto-play/SlideAutoPlayComp';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
-import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../../app-document-list/appDocumentTypeHelpers';
+import {
+    DEFAULT_THUMBNAIL_SIZE_FACTOR,
+    MIN_THUMBNAIL_SCALE,
+} from '../../app-document-list/appDocumentTypeHelpers';
 import { useMemo } from 'react';
 import FillingFlexCenterComp from '../../others/FillingFlexCenterComp';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
@@ -91,7 +94,9 @@ function useAppDocumentItems() {
 }
 
 export default function AppDocumentItemsComp() {
-    const [thumbSizeScale] = useAppDocumentItemThumbnailSizeScale();
+    const [thumbSizeScale] = useAppDocumentItemThumbnailSizeScale({
+        defaultSize: MIN_THUMBNAIL_SCALE + 10,
+    });
     const { varyAppDocumentItems, startLoading } = useAppDocumentItems();
     const appDocumentItemThumbnailSize = useMemo(() => {
         return thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;

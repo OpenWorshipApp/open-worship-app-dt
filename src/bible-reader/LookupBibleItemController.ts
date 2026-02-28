@@ -28,6 +28,7 @@ import { unlocking } from '../server/unlockingHelpers';
 import { genFoundBibleItemContextMenu } from '../bible-lookup/bibleActionHelpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import { setBibleSearchingTabType } from '../bible-find/bibleFindHelpers';
+import { tran } from '../lang/langHelpers';
 
 export const closeEventMapper: EventMapper = {
     wControlKey: ['Ctrl'],
@@ -413,8 +414,8 @@ class LookupBibleItemController extends BibleItemsViewController {
             }
         } else {
             menus2.push({
-                menuElement: 'Edit',
-                title: 'Double click on header to edit',
+                menuElement: tran('Edit'),
+                title: tran('Double click on header to edit'),
                 onSelect: () => {
                     this.editBibleItem(bibleItem);
                 },
@@ -430,7 +431,7 @@ class LookupBibleItemController extends BibleItemsViewController {
                       childBefore: genContextMenuItemIcon('x-lg', {
                           color: 'var(--bs-danger-text-emphasis)',
                       }),
-                      menuElement: 'Close',
+                      menuElement: tran('Close'),
                       childAfter: isBibleItemSelected
                           ? genContextMenuItemShortcutKey(closeEventMapper)
                           : undefined,

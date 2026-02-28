@@ -15,7 +15,6 @@ export default function SettingGeneralThemeComp() {
                     value={themeSource}
                     onChange={(event) => {
                         const value = event.target.value;
-                        console.log(value);
                         setThemeSource(value as ThemeOptionType);
                     }}
                 >

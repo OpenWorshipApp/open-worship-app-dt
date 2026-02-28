@@ -11,6 +11,7 @@ import {
 import { HoverMotionHandler } from '../helper/domHelpers';
 import { RenderTitleMaterialComp } from '../bible-reader/view-extra/RenderTitleMaterialComp';
 import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
+import { tran } from '../lang/langHelpers';
 
 export default function RenderBibleEditingHeader() {
     const viewController = useLookupBibleItemControllerContext();
@@ -63,7 +64,7 @@ export default function RenderBibleEditingHeader() {
                     {viewController.isAlone ? null : (
                         <i
                             className="bi bi-x-lg app-caught-hover-pointer"
-                            title={`Close [${toShortcutKey(closeEventMapper)}]`}
+                            title={`${tran('Close')} [${toShortcutKey(closeEventMapper)}]`}
                             style={{
                                 color: 'var(--bs-danger-text-emphasis)',
                             }}
