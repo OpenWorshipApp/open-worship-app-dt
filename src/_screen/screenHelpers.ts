@@ -28,7 +28,6 @@ import type {
     SetDisplayType,
 } from './screenTypeHelpers';
 import { bibleDataTypeList } from './screenTypeHelpers';
-import { checkIsDarkMode } from '../others/initHelpers';
 
 const messageUtils = appProvider.messageUtils;
 
@@ -198,6 +197,60 @@ export function getBibleListOnScreenSetting(): BibleListType {
     return {};
 }
 
+function genCircleUpSVG(width = 16) {
+    return `
+<svg
+    width="${width}"
+    height="${width}"
+    fill="currentColor"
+    class="bi bi-arrow-up-circle"
+    viewBox="0 0 16 16"
+    version="1.1"
+    id="svg1"
+    sodipodi:docname="arrow-up-circle.svg"
+    inkscape:export-filename="arrow-up-circle.png"
+    inkscape:export-xdpi="450"
+    inkscape:export-ydpi="450"
+    inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:svg="http://www.w3.org/2000/svg">
+<defs
+    id="defs1" />
+<sodipodi:namedview
+    id="namedview1"
+    pagecolor="#999999"
+    bordercolor="#666666"
+    borderopacity="1.0"
+    inkscape:showpageshadow="2"
+    inkscape:pageopacity="0.0"
+    inkscape:pagecheckerboard="0"
+    inkscape:deskcolor="#d1d1d1"
+    inkscape:zoom="36.681164"
+    inkscape:cx="5.1525082"
+    inkscape:cy="8.2058464"
+    inkscape:window-width="1920"
+    inkscape:window-height="979"
+    inkscape:window-x="1920"
+    inkscape:window-y="25"
+    inkscape:window-maximized="1"
+    inkscape:current-layer="svg1" />
+<path
+    fill-rule="evenodd"
+    d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8m15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-7.5 3.5a.5.5 0 0 1-1 0V5.707L5.354 7.854a.5.5 0 1 1-.708-.708l3-3a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 5.707z"
+    id="path1"
+    style="fill:#ffffff" />
+<circle
+    cx="8"
+    cy="8"
+    r="7"
+    id="circle2"
+    style="fill:none;stroke:#77777777;stroke-width:1" />
+</svg>
+    `;
+}
+
 export function addToTheTop(div: HTMLDivElement) {
     const oldIcon = div.querySelector(`.${TO_THE_TOP_CLASSNAME}`);
     if (oldIcon !== null) {
@@ -213,12 +266,67 @@ export function addToTheTop(div: HTMLDivElement) {
     const target = document.createElement('img');
     target.className = TO_THE_TOP_CLASSNAME;
     target.title = 'Scroll to the top';
-    const isDarkMode = checkIsDarkMode();
-    target.src = `assets/arrow-up-circle${isDarkMode ? '-dark' : '-light'}.png`;
+    const svgString = genCircleUpSVG(70);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(svgBlob);
+    target.src = url;
     target.style.position = 'fixed';
     target.style.bottom = '80px';
     div.appendChild(target);
     applyToTheTop(target);
+}
+
+function genChevronDoubleDownSVG(width = 16) {
+    return `
+<svg
+   width="${width}"
+   height="${width}"
+   fill="currentColor"
+   class="bi bi-chevron-double-down"
+   viewBox="0 0 16 16"
+   version="1.1"
+   id="svg2"
+   sodipodi:docname="chevron-double-down.svg"
+   inkscape:export-filename="chevron-double-down.png"
+   inkscape:export-xdpi="450"
+   inkscape:export-ydpi="450"
+   inkscape:version="1.4 (e7c3feb1, 2024-10-09)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="namedview2"
+     pagecolor="#888888"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="51.875"
+     inkscape:cx="8.0096386"
+     inkscape:cy="8"
+     inkscape:window-width="1920"
+     inkscape:window-height="979"
+     inkscape:window-x="1920"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <path
+     fill-rule="evenodd"
+     d="M1.646 6.646a.5.5 0 0 1 .708 0L8 12.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"
+     id="path1"
+     style="fill:#777777" />
+  <path
+     fill-rule="evenodd"
+     d="M1.646 2.646a.5.5 0 0 1 .708 0L8 8.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"
+     id="path2"
+     style="fill:#999999" />
+</svg>
+    `;
 }
 
 export function addPlayToBottom(div: HTMLDivElement) {
@@ -232,8 +340,10 @@ export function addPlayToBottom(div: HTMLDivElement) {
     const target = document.createElement('img');
     target.className = PLAY_TO_BOTTOM_CLASSNAME;
     target.title = 'Play to bottom';
-    const isDarkMode = checkIsDarkMode();
-    target.src = `assets/chevron-double-down${isDarkMode ? '-dark' : '-light'}.png`;
+    const svgString = genChevronDoubleDownSVG(70);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(svgBlob);
+    target.src = url;
     target.style.position = 'fixed';
     target.style.bottom = '0px';
     div.appendChild(target);

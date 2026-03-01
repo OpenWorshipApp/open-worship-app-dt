@@ -70,9 +70,15 @@ export function BibleBibleTable({
                 className="header"
                 style={{
                     fontFamily: langData.fontFamily,
+                    height: '118px',
+                    overflow: 'hidden',
                 }}
             >
-                <div style={{ display: 'flex' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                    }}
+                >
                     <div
                         className="bible highlight bible-name bible-key"
                         data-index={i}

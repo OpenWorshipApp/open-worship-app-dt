@@ -51,10 +51,14 @@ export default class CustomHTMLScreenPreviewer extends HTMLElement {
         }).appendChild(div);
 
         const root = createRoot(div);
+
         const screenManagerBase = getScreenManagerBase(this.screenId);
         if (screenManagerBase === null) {
             return;
         }
+        screenManagerBase.getElementsByDomSelector = (domSelector: string) => {
+            return Array.from(div.querySelectorAll(domSelector));
+        };
         screenManagerBase.registerEventListener(['refresh'], () => {
             this.setMountPointScale(screenManagerBase);
             this.attemptTimeout(() => {

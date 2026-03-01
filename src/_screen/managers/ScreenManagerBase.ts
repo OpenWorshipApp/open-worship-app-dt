@@ -45,6 +45,8 @@ export default class ScreenManagerBase
     colorNote: string | null = null;
     private _isShowing: boolean;
     noSyncGroupMap: Map<string, boolean>;
+    getElementsByDomSelector: (_domSelector: string) => HTMLElement[] =
+        () => [];
 
     constructor(screenId: number) {
         super();
@@ -52,9 +54,7 @@ export default class ScreenManagerBase
         this.isDeleted = false;
         this.noSyncGroupMap = new Map();
         const ids = getAllShowingScreenIds();
-        this._isShowing = ids.some((id) => {
-            return id === screenId;
-        });
+        this._isShowing = ids.includes(screenId);
         this.updateDim();
     }
     get key() {
@@ -106,6 +106,24 @@ export default class ScreenManagerBase
 
     get isShowing() {
         return this._isShowing;
+    }
+
+    syncScrollPercentage(data: {
+        domSelector: string;
+        scroll: { x: number; y: number };
+    }) {
+        const { domSelector, scroll } = data;
+        const htmlElements = this.getElementsByDomSelector(domSelector);
+        for (const element of htmlElements) {
+            const scrollLeft =
+                scroll.x * (element.scrollWidth - element.clientWidth);
+            const scrollTop =
+                scroll.y * (element.scrollHeight - element.clientHeight);
+            element.scrollTo({
+                left: scrollLeft,
+                top: scrollTop,
+            });
+        }
     }
 
     checkIsLockedWithMessage() {

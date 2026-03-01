@@ -26,6 +26,7 @@ import type {
     ScreenMessageType,
 } from '../screenTypeHelpers';
 import type { VaryAppDocumentItemScreenDataType } from '../screenAppDocumentTypeHelpers';
+import { registerScrollingSyncEvent } from './screenEventHelpers';
 
 export type ScreenVaryAppDocumentManagerEventType = 'update';
 
@@ -262,7 +263,12 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         }
         const divContainer = document.createElement('div');
         const divHaftScale = document.createElement('div');
+        divHaftScale.classList.add('half-scale-container');
         divContainer.appendChild(divHaftScale);
+        registerScrollingSyncEvent(divHaftScale, (scroll) => {
+            this.sendSyncScrollPercentage('.half-scale-container', scroll);
+        });
+
         const { itemJson, isPdfFullWidth } = this.varyAppDocumentItemData;
 
         const target = PdfSlide.tryValidate(itemJson)

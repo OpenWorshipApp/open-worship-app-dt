@@ -56,8 +56,10 @@ function getStyleText() {
 #bible-screen-view th {
     border-radius: 0.1em;
     ${isZoomed ? '' : 'position: sticky; top: 0;'}
+}
+#bible-screen-view th > div {
+    backdrop-filter: blur(5px);
     background-color: #${colorPart}53;
-    transition: font-size 1s ease, background-color 1s ease;
 }
 
 #bible-screen-view th,

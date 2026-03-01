@@ -21,6 +21,9 @@ function getSystemDarkMatcher() {
     return globalThis.matchMedia('(prefers-color-scheme: dark)');
 }
 export function checkIsDarkMode(themeSource?: ThemeOptionType) {
+    if (appProvider.isPageScreen) {
+        return true;
+    }
     themeSource ??= getThemeSourceSetting();
     if (themeSource === 'system' && getSystemDarkMatcher()?.matches) {
         return true;
@@ -28,8 +31,16 @@ export function checkIsDarkMode(themeSource?: ThemeOptionType) {
     return themeSource === 'dark';
 }
 
-export function getColorParts() {
-    const isDarkMode = checkIsDarkMode();
+export function getColorParts(backgroundColor?: string) {
+    let isDarkMode = checkIsDarkMode();
+    if (backgroundColor !== undefined) {
+        const r = Number.parseInt(backgroundColor.slice(1, 3), 16);
+        const g = Number.parseInt(backgroundColor.slice(3, 5), 16);
+        const b = Number.parseInt(backgroundColor.slice(5, 7), 16);
+        // https://www.w3.org/TR/AERT/#color-contrast
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        isDarkMode = brightness < 128;
+    }
     const colorPart = isDarkMode ? '000000' : 'ffffff';
     const invertColorPart = isDarkMode ? 'ffffff' : '000000';
     return { colorPart, invertColorPart };
@@ -65,7 +76,7 @@ export function useThemeSource() {
     const isDarkMode = checkIsDarkMode(themeSource);
     return {
         theme: isDarkMode ? 'dark' : 'light',
-        themeSource,
+        themeSource: appProvider.isPageScreen ? 'dark' : themeSource,
         setThemeSource: setThemeSource1,
     };
 }

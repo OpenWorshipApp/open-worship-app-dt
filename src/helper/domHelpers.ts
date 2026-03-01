@@ -298,7 +298,10 @@ export async function removeDomTitle(element: Node, eventType: MutationType) {
 }
 
 export function checkIsZoomed() {
-    return window.outerWidth / window.innerWidth !== 1;
+    const zoomFactor = appProvider.messageUtils.sendDataSync(
+        'all:app:get-zoom-factor',
+    );
+    return zoomFactor !== 1;
 }
 
 const WINDOW_FEATURES =

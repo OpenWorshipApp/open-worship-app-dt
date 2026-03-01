@@ -149,7 +149,6 @@ export const screenTypeList = [
     'background',
     'vary-app-document',
     'bible-screen-view',
-    'bible-screen-view-scroll',
     'bible-screen-view-text-style',
     'foreground',
     'bible-screen-view-selected-index',
@@ -158,6 +157,7 @@ export const screenTypeList = [
     'init',
     'effect',
     'background-video-time',
+    'sync-scroll-percentage',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {

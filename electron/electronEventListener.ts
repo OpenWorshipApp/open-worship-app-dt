@@ -360,6 +360,10 @@ export function initEventOther(appController: ElectronAppController) {
         console.log(...messages);
     });
 
+    ipcMain.on('all:app:get-zoom-factor', (event) => {
+        event.returnValue = appController.mainWin.webContents.getZoomFactor();
+    });
+
     onAsync(
         ipcMain,
         'main:app:ms-pp-slides-count',

@@ -10,6 +10,7 @@ import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
 import type EventHandler from '../../event/EventHandler';
 import type { ScreenForegroundEventType } from './ScreenForegroundManager';
 import ScreenForegroundManager from './ScreenForegroundManager';
+import appProvider from '../../server/appProvider';
 
 export function useScreenEvents<T extends string>(
     events: T[],
@@ -89,4 +90,29 @@ export function useScreenForegroundManagerEvents(
         screenForegroundManager,
         callback,
     );
+}
+
+export function registerScrollingSyncEvent(
+    divHaftScale: HTMLElement,
+    callback: (scroll: { x: number; y: number }) => void,
+) {
+    divHaftScale.addEventListener('wheel', (event) => {
+        if (
+            !appProvider.getIsMouseOverApp() ||
+            !appProvider.getIsWindowFocused()
+        ) {
+            event.preventDefault();
+        }
+    });
+    divHaftScale.addEventListener('scroll', (event) => {
+        event.preventDefault();
+        callback({
+            x:
+                divHaftScale.scrollLeft /
+                (divHaftScale.scrollWidth - divHaftScale.clientWidth),
+            y:
+                divHaftScale.scrollTop /
+                (divHaftScale.scrollHeight - divHaftScale.clientHeight),
+        });
+    });
 }

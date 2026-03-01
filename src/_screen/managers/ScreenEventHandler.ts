@@ -53,6 +53,31 @@ export default abstract class ScreenEventHandler<
         );
     }
 
+    sendSyncScrollPercentage(
+        domSelector: string,
+        scroll: { x: number; y: number },
+    ) {
+        if (
+            !appProvider.getIsMouseOverApp() &&
+            !appProvider.getIsWindowFocused()
+        ) {
+            return;
+        }
+        setTimeout(() => {
+            this.screenManagerBase.sendScreenMessage(
+                {
+                    screenId: this.screenId,
+                    type: 'sync-scroll-percentage',
+                    data: {
+                        domSelector,
+                        scroll,
+                    },
+                },
+                true,
+            );
+        }, 0);
+    }
+
     abstract receiveSyncScreen(message: ScreenMessageType): void;
 
     static receiveSyncScreen(_message: ScreenMessageType) {

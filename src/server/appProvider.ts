@@ -110,6 +110,8 @@ export type PagePropsType = {
     lyricEditorHomePage: string;
     webEditorHomePage: string;
     experimentHomePage: string;
+    getIsMouseOverApp: () => boolean;
+    getIsWindowFocused: () => boolean;
 };
 
 interface SQLite3DatabaseType {
@@ -186,9 +188,26 @@ export type AppProviderType = Readonly<
     }
 >;
 
+let isMouseOverApp = false;
+document.addEventListener('mouseenter', () => {
+    isMouseOverApp = true;
+});
+document.addEventListener('mouseleave', () => {
+    isMouseOverApp = false;
+});
+
 const appProvider = {
     ...(globalThis as any).provider,
     windowTitle: document.title,
+    getIsMouseOverApp: () => {
+        return isMouseOverApp;
+    },
+    getIsWindowFocused: () => {
+        return document.hasFocus();
+    },
 } as AppProviderType;
+
+// for security reason, appProvider should not be accessible globally
+delete (globalThis as any).provider;
 
 export default appProvider;

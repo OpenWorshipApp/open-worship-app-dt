@@ -193,8 +193,9 @@ export async function renderScreenBibleManager(
         child.remove();
     }
     div.appendChild(divContainer);
-    screenBibleManager.renderScroll(true);
     screenBibleManager.renderSelectedIndex();
+    div.scrollTop =
+        screenBibleManager.scroll * (div.scrollHeight - div.clientHeight);
     addToTheTop(div);
     addPlayToBottom(div);
 }

@@ -41,15 +41,12 @@ import type {
     BibleItemDataType,
     ScreenMessageType,
 } from '../screenTypeHelpers';
-import { getColorParts } from '../../others/initHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
 
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
     private _screenViewData: BibleItemDataType | null = null;
     private _div: HTMLDivElement | null = null;
-    private _syncScrollTimeout: any = null;
-    private _divScrollListenerBind: (() => void) | null = null;
     public isToTop = false;
     applyBibleViewData = (_bibleData: BibleItemDataType | null) => {};
     handleBibleViewVersesHighlighting = (
@@ -70,24 +67,18 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     applyHeaderEffectOnScroll(div: HTMLDivElement) {
-        const { colorPart } = getColorParts();
-        for (const th of div.querySelectorAll('th.header')) {
-            if (th instanceof HTMLElement) {
-                th.style.fontSize = this.scroll > 0 ? '0.5em' : '1em';
-                th.style.backgroundColor =
-                    this.scroll > 0 ? `#${colorPart}da` : `#${colorPart}53`;
-            }
-        }
-    }
-
-    private _divScrollListener() {
-        if (this.div === null) {
+        const thElement = div.querySelector('th.header');
+        if (thElement instanceof HTMLElement === false) {
             return;
         }
-        this.scroll = this.div.scrollTop / this.div.scrollHeight;
-        this.applyHeaderEffectOnScroll(this.div);
+        const percentage = Math.min(div.scrollTop, 118) / 118;
+        thElement.style.fontSize = `${1 - 0.5 * percentage}em`;
 
-        this.sendSyncScroll();
+        const hexAlpha = Math.round(83 + 100 * percentage).toString(16);
+        const firstChild = thElement.children[0];
+        if (firstChild instanceof HTMLElement) {
+            firstChild.style.backgroundColor = `#999999${hexAlpha}`;
+        }
     }
 
     get isLineSync() {
@@ -112,14 +103,29 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     set div(div: HTMLDivElement | null) {
         this._div = div;
-        this._div?.addEventListener('wheel', (event) => {
-            if (event.ctrlKey) {
+        if (div !== null) {
+            div.addEventListener('wheel', (event) => {
+                if (!event.ctrlKey) {
+                    return;
+                }
                 event.preventDefault();
                 const isUp = event.deltaY < 0;
                 ScreenBibleManager.changeTextStyleTextFontSize(isUp);
-            }
-        });
-        this.registerScrollListener();
+            });
+            div.addEventListener('scroll', () => {
+                this.scroll =
+                    div.scrollTop / (div.scrollHeight - div.clientHeight);
+                this.applyHeaderEffectOnScroll(div);
+            });
+            div.classList.add('screen-bible-container-scroll');
+            registerScrollingSyncEvent(div, (scroll) => {
+                this.sendSyncScrollPercentage(
+                    '.screen-bible-container-scroll',
+                    scroll,
+                );
+            });
+        }
+
         this.render();
     }
 

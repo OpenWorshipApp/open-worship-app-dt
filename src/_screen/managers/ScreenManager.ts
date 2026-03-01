@@ -246,17 +246,17 @@ export default class ScreenManager extends ScreenManagerBase {
         if (type === 'init') {
             screenManagerBase.sendSyncScreen();
         } else if (type === 'visible') {
-            screenManagerBase.isShowing = data?.isShowing;
+            screenManagerBase.isShowing = data.isShowing;
         } else if (type === 'effect') {
             ScreenEffectManager.receiveSyncScreen(message);
-        } else if (type === 'bible-screen-view-scroll') {
-            ScreenBibleManager.receiveSyncScroll(message);
         } else if (type === 'bible-screen-view-selected-index') {
             ScreenBibleManager.receiveSyncSelectedIndex(message);
         } else if (type === 'bible-screen-view-text-style') {
             ScreenBibleManager.receiveSyncTextStyle(message);
         } else if (type === 'background-video-time') {
             ScreenBackgroundManager.receiveSyncVideoTime(message);
+        } else if (type === 'sync-scroll-percentage') {
+            screenManagerBase.syncScrollPercentage(data);
         } else {
             appLog(message);
         }
@@ -326,7 +326,7 @@ export default class ScreenManager extends ScreenManagerBase {
         if (appProvider.isPageScreen && !isForce) {
             return;
         }
-        const messageUtils = appProvider.messageUtils;
+        const { messageUtils } = appProvider;
         const channel = messageUtils.channels.screenMessageChannel;
         const isSent = messageUtils.sendDataSync(channel, {
             ...message,
