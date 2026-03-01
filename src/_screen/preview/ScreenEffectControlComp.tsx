@@ -5,8 +5,8 @@ import RenderTransitionEffectComp from '../RenderTransitionEffectComp';
 export default function ScreenEffectControlComp() {
     const screenManager = useScreenManagerContext();
     return (
-        <>
-            <small>{tran('Transition:')}</small>
+        <div className='mx-1' title={tran('Transition')}>
+            <small>Tr</small>
             <RenderTransitionEffectComp
                 title={tran('Slide') + ':'}
                 domTitle={tran('Slide transition')}
@@ -17,6 +17,6 @@ export default function ScreenEffectControlComp() {
                 domTitle={tran('Background transition')}
                 screenEffectManager={screenManager.backgroundEffectManager}
             />
-        </>
+        </div>
     );
 }

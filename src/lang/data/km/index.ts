@@ -272,7 +272,7 @@ const dictionary = {
     'Toggle is video should fade at the end':
         'បិទ/បើក ថាតើវីដេអូគួរតែបន្ថយនៅចុងបញ្ចប់',
     'Toggle Wrap Text': 'បិទ/បើក រុំអត្ថបទ',
-    'Transition:': 'ការផ្លាស់ប្តូរ:',
+    Transition: 'ការផ្លាស់ប្តូរ',
     'Unsupported file type!': 'ប្រភេទឯកសារមិនត្រូវបានគាំទ្រ!',
     'Web Show': 'ការបង្ហាញគេហទំព័រ',
     'Width (%)': 'ទទឹង (%)',

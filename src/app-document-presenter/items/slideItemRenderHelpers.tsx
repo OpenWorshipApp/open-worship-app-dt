@@ -1,4 +1,5 @@
-import { CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
+
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
