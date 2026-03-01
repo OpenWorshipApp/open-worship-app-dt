@@ -3,7 +3,10 @@ import './ModalComp.scss';
 import type { PropsWithChildren, ReactNode } from 'react';
 
 import type { EventMapper } from '../event/KeyboardEventListener';
-import { toShortcutKey } from '../event/KeyboardEventListener';
+import {
+    toShortcutKey,
+    useKeyboardRegistering,
+} from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 
 interface MyProps {
@@ -16,6 +19,7 @@ const quittingEventMap: EventMapper = {
 };
 
 export function ModalCloseButton({ close }: Readonly<{ close: () => void }>) {
+    useKeyboardRegistering([quittingEventMap], close, []);
     return (
         <div
             style={{
