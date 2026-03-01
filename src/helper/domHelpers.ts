@@ -358,10 +358,10 @@ export async function captureWebScreenShot(
         delay?: number;
     },
 ) {
-    const md5 = appProvider.systemUtils.generateMD5(url + width + height);
-    return unlocking(`web-screenshot-${md5}`, async () => {
-        const cachedData = await webScreenshotCacheManager.get(md5);
-        if (cachedData !== null) {
+    const key = `${url}-${width}-${height}-${delay}`;
+    return await unlocking(key, async () => {
+        if (await webScreenshotCacheManager.has(key)) {
+            const cachedData = await webScreenshotCacheManager.get(key);
             return cachedData;
         }
         const imageData = await electronSendAsync<string>(
@@ -373,19 +373,22 @@ export async function captureWebScreenShot(
                 delay,
             },
         );
-        await webScreenshotCacheManager.set(md5, imageData);
+        await webScreenshotCacheManager.set(key, imageData);
         return imageData;
     });
 }
-export function useWebCapturing(fileSource: FileSource) {
+export function useWebCapturing(
+    fileSource: FileSource,
+    { width, height }: { width?: number; height?: number } = {},
+) {
     const [imageDat] = useAppStateAsync(async () => {
         const screenDisplay = getDefaultScreenDisplay();
         const imageData = await captureWebScreenShot(fileSource.src, {
-            width: screenDisplay.bounds.width,
-            height: screenDisplay.bounds.height,
+            width: width ?? screenDisplay.bounds.width,
+            height: height ?? screenDisplay.bounds.height,
             delay: 3000,
         });
         return imageData;
-    }, [fileSource.src]);
+    }, [fileSource, width, height]);
     return imageDat;
 }

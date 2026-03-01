@@ -156,7 +156,7 @@ function RenderWebInfoComp({
             extraStyle: genStyle(),
         });
     };
-    const imageData = useWebCapturing(fileSource);
+    const imageData = useWebCapturing(fileSource, { width, height });
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
             <div

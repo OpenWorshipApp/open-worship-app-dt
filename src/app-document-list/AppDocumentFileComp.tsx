@@ -25,6 +25,7 @@ import type {
     VaryAppDocumentType,
 } from './appDocumentTypeHelpers';
 import { genLayoutTabs } from '../router/layoutHelpers';
+import { tran } from '../lang/langHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
@@ -33,13 +34,13 @@ function genContextMenuItems(
     if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
         return [
             {
-                menuElement: 'Preview PDF',
+                menuElement: tran('Preview PDF'),
                 onSelect: () => {
                     previewPdf(varyAppDocument.fileSource.src);
                 },
             },
             {
-                menuElement: 'Refresh PDF Images',
+                menuElement: tran('Refresh PDF Images'),
                 onSelect: async () => {
                     await removePdfImagesPreview(varyAppDocument.filePath);
                     varyAppDocument.fileSource.fireUpdateEvent();
@@ -50,7 +51,7 @@ function genContextMenuItems(
     const { editorTab } = genLayoutTabs();
     return [
         {
-            menuElement: 'Edit',
+            menuElement: tran('Edit'),
             onSelect: () => {
                 if (varyAppDocument) {
                     setSelectedDocument(varyAppDocument);

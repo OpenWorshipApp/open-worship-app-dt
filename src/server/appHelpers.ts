@@ -18,7 +18,7 @@ import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { tran } from '../lang/langHelpers';
 
 export function genReturningEventName(eventName: string) {
-    return `${eventName}-return-${Date.now()}`;
+    return `${eventName}-return-${crypto.randomUUID()}`;
 }
 
 export function electronSendAsync<T>(
@@ -29,11 +29,11 @@ export function electronSendAsync<T>(
         const replyEventName = genReturningEventName(eventName);
         appProvider.messageUtils.listenOnceForData(
             replyEventName,
-            (_event, data: T) => {
-                if (data instanceof Error) {
-                    return reject(data);
+            (_event, imageData: T) => {
+                if (imageData instanceof Error) {
+                    return reject(imageData);
                 }
-                resolve(data);
+                resolve(imageData);
             },
         );
         appProvider.messageUtils.sendData(eventName, {
@@ -484,11 +484,15 @@ function checkClipboardHasImage(clipboardItem: ClipboardItem) {
 }
 
 export async function checkIsImagesInClipboard() {
-    const clipboardItems = await navigator.clipboard.read();
-    const isPastingImage = clipboardItems.some((clipboardItem) => {
-        return checkClipboardHasImage(clipboardItem);
-    });
-    return isPastingImage;
+    try {
+        const clipboardItems = await navigator.clipboard.read();
+        const isPastingImage = clipboardItems.some((clipboardItem) => {
+            return checkClipboardHasImage(clipboardItem);
+        });
+        return isPastingImage;
+    } catch (_error) {
+        return false;
+    }
 }
 
 export async function* readImagesFromClipboard() {

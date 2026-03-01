@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useAttachedBackgroundData } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
-import { menuTitleRevealFile } from '../helper/helpers';
+import { getMenuTitleRevealFile } from '../helper/helpers';
 import { showExplorer } from '../server/appHelpers';
 import type FileSource from '../helper/FileSource';
 
@@ -12,7 +12,7 @@ function showMediaContextMenu(event: any, filePath: string) {
     event.preventDefault();
     showAppContextMenu(event, [
         {
-            menuElement: menuTitleRevealFile,
+            menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
                 showExplorer(filePath);
             },

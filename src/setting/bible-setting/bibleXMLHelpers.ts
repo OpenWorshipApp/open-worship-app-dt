@@ -40,7 +40,7 @@ import type {
     BibleInfoType,
 } from '../../helper/bible-helpers/BibleDataReader';
 import FileSource from '../../helper/FileSource';
-import { menuTitleRevealFile } from '../../helper/helpers';
+import { getMenuTitleRevealFile } from '../../helper/helpers';
 import { appLocalStorage } from '../directory-setting/appLocalStorage';
 import { unlocking } from '../../server/unlockingHelpers';
 import CacheManager from '../../others/CacheManager';
@@ -245,7 +245,7 @@ export async function saveXMLText(bibleKey: string, xmlText: string) {
 export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
     const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: menuTitleRevealFile,
+            menuElement: getMenuTitleRevealFile(),
             onSelect: async () => {
                 const filePath = await bibleKeyToXMLFilePath(bibleKey);
                 if (filePath === null) {

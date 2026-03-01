@@ -3,11 +3,13 @@ import { unlocking } from '../server/unlockingHelpers';
 
 type StoreType<T> = { value: T; timestamp: number };
 export default class CacheManager<T> {
+    private readonly uuid: string;
     private readonly cache: Map<string, StoreType<T>>;
     private readonly expirationSecond: number | null;
     private intervalId: NodeJS.Timeout | null = null;
 
     constructor(expirationSecond: number | null = null) {
+        this.uuid = crypto.randomUUID();
         this.cache = new Map();
         this.expirationSecond = expirationSecond;
         const cleanupSeconds = 5 * 1000; // 5 seconds
@@ -15,7 +17,7 @@ export default class CacheManager<T> {
     }
 
     unlocking<P>(key: string, callback: () => Promise<P>): Promise<P> {
-        return unlocking<P>(`caching-${key}`, async () => {
+        return unlocking<P>(`caching-${this.uuid}-${key}`, async () => {
             return await callback();
         });
     }

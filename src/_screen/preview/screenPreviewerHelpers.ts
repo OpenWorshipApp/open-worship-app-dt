@@ -13,6 +13,7 @@ import {
 import { getAllScreenManagers } from '../managers/screenManagerHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
 import type { AppDocumentListType } from '../screenAppDocumentTypeHelpers';
+import { tran } from '../../lang/langHelpers';
 
 export function openContextMenu(event: any, screenManager: ScreenManager) {
     const screenManagers = getAllScreenManagers();
@@ -33,7 +34,9 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
     const extraMenuItems: ContextMenuItemType[] = isShowingBible
         ? [
               {
-                  menuElement: `${isLineSync ? 'Unset' : 'Set'} Line Sync`,
+                  menuElement: tran(
+                      `${isLineSync ? 'Unset' : 'Set'} Line Sync`,
+                  ),
                   onSelect() {
                       screenBibleManager.isLineSync = !isLineSync;
                   },
@@ -45,7 +48,7 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
             ? []
             : [
                   {
-                      menuElement: 'Solo',
+                      menuElement: tran('Solo'),
                       onSelect() {
                           const screenManagerBases =
                               getSelectedScreenManagerBases();
@@ -61,14 +64,14 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
             : [
                   {
                       menuElement: screenManager.isSelected
-                          ? 'Deselect'
-                          : 'Select',
+                          ? tran('Deselect')
+                          : tran('Select'),
                       onSelect() {
                           screenManager.isSelected = !screenManager.isSelected;
                       },
                   },
                   {
-                      menuElement: 'Delete',
+                      menuElement: tran('Delete'),
                       onSelect: () => {
                           screenManager.delete();
                       },
@@ -76,7 +79,7 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
               ]),
         ...extraMenuItems,
         {
-            menuElement: 'Refresh Preview',
+            menuElement: tran('Refresh Preview'),
             onSelect() {
                 for (const screenManager of getAllScreenManagers()) {
                     screenManager.fireRefreshEvent();

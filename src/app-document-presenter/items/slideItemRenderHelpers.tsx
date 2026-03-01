@@ -17,6 +17,7 @@ import appProvider from '../../server/appProvider';
 import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
 import FileSource from '../../helper/FileSource';
 import { useWebCapturing } from '../../helper/domHelpers';
+import { tran } from '../../lang/langHelpers';
 
 const CAMERA_BACKGROUND_SRC = '/assets/background-camera.png';
 const WEB_BACKGROUND_SRC = '/assets/background-web.png';
@@ -172,7 +173,7 @@ export function genChooseColorNoteOption(
     const colorCode = getColorNoteFilePathSetting(filePath, id);
     return [
         {
-            menuElement: 'Choose Color',
+            menuElement: tran('Choose Color'),
             childBefore: (
                 <i
                     className="bi bi-record-circle px-1"

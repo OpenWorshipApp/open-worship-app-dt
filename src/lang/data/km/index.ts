@@ -9,6 +9,25 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Remove Background': 'លុបផ្ទៃខាងក្រោយ',
+    'Timezone Minute Offset': 'ការបន្ថែម/បញ្ចូលនាទីតំបន់ពេលវេលា',
+    'Choose Color': 'ជ្រើសរើសពណ៌',
+    'Choose City': 'ជ្រើសរើសទីក្រុង',
+    'New Slide': 'ស្លាយថ្មី',
+    'Show on Screens': 'បង្ហាញនៅលើអេក្រង់',
+    Rename: 'កែឈ្មោះ',
+    Reload: 'ផ្ទុកឡើងវិញ',
+    'Set Line Sync': 'កំណត់ការសម្របសម្រួលបន្ទាត់',
+    'Unset Line Sync': 'បោះបង់ការសម្របសម្រួលបន្ទាត់',
+    Solo: 'តែមួយ',
+    Select: 'ជ្រើសរើស',
+    Deselect: 'បោះបង់ជ្រើសរើស',
+    'Copy Path to Clipboard': 'ចម្លងផ្លូវទៅកាន់ក្តារចុច',
+    'Reveal in Finder': 'បង្ហាញនៅក្នុង Finder',
+    'Preview PDF': 'មើល PDF',
+    'Refresh PDF Images': 'ផ្ទុករូបភាព PDF ជាថ្មី',
+    'Add New Screen': 'បន្ថែមអេក្រង់ថ្មី',
+    'Refresh Preview': 'ផ្ទុកមើលជាមុន',
     'The application is started first time':
         'កម្មវិធីត្រូវបានចាប់ផ្តើមជាលើកដំបូង',
     'This will set the home page to "📖 Bible Reader🔎"?':
@@ -16,9 +35,7 @@ const dictionary = {
     Close: 'បិទ',
     'Toggle Widget Full View': 'បិទ/បើក ទិដ្ឋភាពពេញលេញរបស់វីដេអូ',
     'Split Vertical to': 'បំបែកបញ្ឈរទៅ',
-    'Split Vertical': 'បំបែកបញ្ឈរ',
     'Split Horizontal to': 'បំបែកផ្ដេកទៅ',
-    'plit Horizontal to': 'បំបែកផ្ដេកទៅ',
     'Loading Bible Data': 'កំពុងផ្ទុកទិន្នន័យព្រះគម្ពីរ',
     'Unable to preview right now': 'មិនអាចបង្ហាញ 미្ដងនេះទេ',
     'Open bible lookup popup': 'បើកផ្ទាំងស្វែងរកព្រះគម្ពីរ',
@@ -238,7 +255,6 @@ const dictionary = {
     'Show Editor': 'បង្ហាញកម្មវិធីកែសម្រួល',
     Show: 'បង្ហាញ',
     'Split horizontal': 'បំបែកផ្ដេក',
-    'Split Horizontal': 'បំបែកផ្ដេក',
     'Split vertical': 'បំបែកបញ្ឈរ',
     Stage: 'ស្ទែជ',
     Stopwatch: 'នាឡិកាបញ្ឈប់',
@@ -293,6 +309,31 @@ const dictionary = {
     No: 'ទេ',
     'will be converted to PDF into': 'នឹងត្រូវបានបម្លែងទៅជា PDF ទៅក្នុង',
 };
+function sanitizeTranKey(key: string) {
+    return key.trim().toLowerCase();
+}
+const duplicateKeys = Object.entries(dictionary)
+    .filter(([key], index, self) => {
+        const sanitizedKey = sanitizeTranKey(key);
+        return (
+            self.findIndex(([k]) => sanitizeTranKey(k) === sanitizedKey) !==
+            index
+        );
+    })
+    .map(([key]) => key);
+if (duplicateKeys.length > 0) {
+    throw new Error(
+        'Duplicate translation keys found after sanitization: ' +
+            duplicateKeys.join(', '),
+    );
+}
+
+const sanitizedDictionary = Object.fromEntries(
+    Object.entries(dictionary).map(([key, value]) => [
+        sanitizeTranKey(key),
+        value,
+    ]),
+);
 const fontFamily = 'km-font-family';
 const lang: LanguageDataType = {
     locale: 'km-KH',
@@ -331,7 +372,7 @@ const lang: LanguageDataType = {
     },
     fontFamily,
     numList,
-    dictionary,
+    dictionary: sanitizedDictionary,
     name: 'Khmer',
     flagSVG: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" id="flag-icons-kh" viewBox="0 0 640 480">
     <path fill="#032ea1" d="M0 0h640v480H0z"/>
@@ -538,6 +579,7 @@ const lang: LanguageDataType = {
         return [];
     },
     bibleAudioAvailable: false,
+    sanitizeTranKey,
 };
 
 export default lang;

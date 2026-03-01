@@ -16,17 +16,18 @@ import BibleItem from '../../bible-list/BibleItem';
 import { previewingEventListener } from '../../event/PreviewingEventListener';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import type { BibleItemDataType } from '../screenTypeHelpers';
+import { tran } from '../../lang/langHelpers';
 
 function openContextMenu(event: any) {
     showAppContextMenu(event, [
         {
-            menuElement: 'Add New Screen',
+            menuElement: tran('Add New Screen'),
             onSelect() {
                 genNewScreenManagerBase();
             },
         },
         {
-            menuElement: 'Refresh Preview',
+            menuElement: tran('Refresh Preview'),
             onSelect() {
                 for (const screenManager of getAllScreenManagers()) {
                     screenManager.fireRefreshEvent();

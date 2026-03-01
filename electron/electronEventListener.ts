@@ -9,7 +9,7 @@ import electron, {
 import ElectronAppController from './ElectronAppController';
 import {
     attemptClosing,
-    captureScreenShot,
+    captureWebScreenShot,
     goDownload,
     isMac,
     printHTMLContent,
@@ -394,7 +394,7 @@ export function initEventOther(appController: ElectronAppController) {
             height: number;
             delay?: number;
         }) => {
-            return captureScreenShot(data.url, data);
+            return captureWebScreenShot(data.url, data);
         },
     );
 }

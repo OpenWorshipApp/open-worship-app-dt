@@ -7,7 +7,7 @@ import type DirSource from '../helper/DirSource';
 import AppSuspenseComp from './AppSuspenseComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { menuTitleRevealFile } from '../helper/helpers';
+import { getMenuTitleRevealFile } from '../helper/helpers';
 import { copyToClipboard, showExplorer } from '../server/appHelpers';
 import appProvider from '../server/appProvider';
 import { openGeneralSetting } from '../setting/settingHelpers';
@@ -31,7 +31,7 @@ function openContextMenu(dirPath: string, event: any) {
             },
         },
         {
-            menuElement: menuTitleRevealFile,
+            menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
                 showExplorer(dirPath);
             },

@@ -14,7 +14,7 @@ import { useFileSourceRefreshEvents } from '../helper/dirSourceHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import ItemColorNoteComp from './ItemColorNoteComp';
 import {
-    menuTitleRevealFile,
+    getMenuTitleRevealFile,
     RECEIVING_DROP_CLASSNAME,
 } from '../helper/helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -25,13 +25,13 @@ import RenderRenamingComp from './RenderRenamingComp';
 export const genCommonMenu = (filePath: string): ContextMenuItemType[] => {
     return [
         {
-            menuElement: 'Copy Path to Clipboard',
+            menuElement: tran('Copy Path to Clipboard'),
             onSelect: () => {
                 copyToClipboard(filePath);
             },
         },
         {
-            menuElement: menuTitleRevealFile,
+            menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
                 showExplorer(filePath);
             },
@@ -46,19 +46,19 @@ function genContextMenu(
 ): ContextMenuItemType[] {
     return [
         {
-            menuElement: 'Duplicate',
+            menuElement: tran('Duplicate'),
             onSelect: () => {
                 FileSource.getInstance(filePath).duplicate();
             },
         },
         {
-            menuElement: 'Rename',
+            menuElement: tran('Rename'),
             onSelect: () => {
                 setIsRenaming(true);
             },
         },
         {
-            menuElement: 'Reload',
+            menuElement: tran('Reload'),
             onSelect: () => {
                 reload();
             },
@@ -103,7 +103,7 @@ export function genShowOnScreensContextMenu(
     }
     return [
         {
-            menuElement: 'Show on Screens',
+            menuElement: tran('Show on Screens'),
             onSelect: onClick,
         },
     ];

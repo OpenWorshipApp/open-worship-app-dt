@@ -398,40 +398,37 @@ export default class AppDocument
     async showContextMenu(event: any) {
         const isClipboardHasImage = await checkIsImagesInClipboard();
         const copiedSlides = await AppDocument.getCopiedSlides();
-        showAppContextMenu(event, [
+        const contextMenuItems: ContextMenuItemType[] = [
             {
                 menuElement: tran('New Slide'),
                 onSelect: () => {
                     this.addNewSlide();
                 },
             },
-            ...(copiedSlides.length > 0
-                ? [
-                      {
-                          menuElement: tran('Paste'),
-                          onSelect: () => {
-                              for (const copiedSlide of copiedSlides) {
-                                  this.addSlides([copiedSlide]);
-                              }
-                          },
-                      },
-                  ]
-                : []),
-            ...(isClipboardHasImage
-                ? [
-                      {
-                          menuElement: tran('Paste Image'),
-                          onSelect: async () => {
-                              const blobs: Blob[] = [];
-                              for await (const blob of readImagesFromClipboard()) {
-                                  blobs.push(blob);
-                              }
-                              await createNewSlidesFromDroppedData(this, blobs);
-                          },
-                      },
-                  ]
-                : []),
-        ]);
+        ];
+        if (copiedSlides.length > 0) {
+            contextMenuItems.unshift({
+                menuElement: tran('Paste'),
+                onSelect: () => {
+                    for (const copiedSlide of copiedSlides) {
+                        this.addSlides([copiedSlide]);
+                    }
+                },
+            });
+        }
+        if (isClipboardHasImage) {
+            contextMenuItems.push({
+                menuElement: tran('Paste Image'),
+                onSelect: async () => {
+                    const blobs: Blob[] = [];
+                    for await (const blob of readImagesFromClipboard()) {
+                        blobs.push(blob);
+                    }
+                    await createNewSlidesFromDroppedData(this, blobs);
+                },
+            });
+        }
+        showAppContextMenu(event, contextMenuItems);
     }
 
     static async create(dir: string, name: string) {

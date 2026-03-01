@@ -15,6 +15,7 @@ import { stopDraggingState } from './helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import Slide from '../app-document-list/Slide';
 import { cameraDragDeserialize } from '../background/backgroundHelpers';
+import { tran } from '../lang/langHelpers';
 
 export const dragStore: {
     onDropped?: ((event: any) => void) | ((event: any) => Promise<void>) | null;
@@ -132,7 +133,7 @@ export function genRemovingAttachedBackgroundMenu(
 ): ContextMenuItemType[] {
     return [
         {
-            menuElement: 'Remove background',
+            menuElement: tran('Remove background'),
             onSelect: () => {
                 attachBackgroundManager.detachBackground(filePath, id);
             },

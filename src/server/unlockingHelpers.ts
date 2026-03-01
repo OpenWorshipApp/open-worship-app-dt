@@ -1,17 +1,25 @@
 import { genTimeoutAttempt } from '../helper/helpers';
+import { appWarning } from '../helper/loggerHelpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import type CacheManager from '../others/CacheManager';
 
 const lockSet = new Set<string>();
 export async function unlocking<T>(
     key: string,
-    callback: () => OptionalPromise<T>,
+    callback: () => Promise<T> | T,
 ) {
-    if (lockSet.has(key)) {
+    let i = 0;
+    while (lockSet.has(key) && i < 600) {
         await new Promise((resolve) => {
-            setTimeout(resolve, 1);
+            setTimeout(resolve, 100);
         });
-        return unlocking(key, callback);
+        i++;
+        if (i === 500) {
+            // 600 x 100ms = 60s
+            appWarning(
+                `Unlocking key "${key}" is still locked after 50 attempts (5s).`,
+            );
+        }
     }
     lockSet.add(key);
     const data = await callback();

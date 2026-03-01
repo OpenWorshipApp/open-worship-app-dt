@@ -70,6 +70,9 @@ const lang: LanguageDataType = {
         return [];
     },
     bibleAudioAvailable: true,
+    sanitizeTranKey(key: string) {
+        return key;
+    },
 };
 
 export default lang;

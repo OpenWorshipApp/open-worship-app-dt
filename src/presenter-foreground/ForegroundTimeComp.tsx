@@ -130,7 +130,7 @@ function TimeInSetComp({
                         setTimezoneMinuteOffset(result[1]);
                     }}
                 >
-                    Choose City
+                    {tran('Choose City')}
                 </button>
             </div>
             <hr />
@@ -148,7 +148,7 @@ function TimeInSetComp({
                 </div>
                 <div className="input-group" style={{ width: '270px' }}>
                     <div className="input-group-text">
-                        Timezone Minute Offset:
+                        {tran('Timezone Minute Offset')}:
                     </div>
                     <input
                         className="form-control form-control-sm"

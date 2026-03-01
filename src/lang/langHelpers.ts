@@ -457,6 +457,7 @@ export type LanguageDataType = {
         appProvider: AppProviderType,
     ) => any[];
     bibleAudioAvailable: boolean;
+    sanitizeTranKey: (key: string) => string;
 };
 
 export function checkIsValidLangCode(text: string) {
@@ -562,7 +563,8 @@ export function tran(...args: any[]): string {
         return text;
     }
     const dictionary = langData.dictionary;
-    if (dictionary[text.trim()] === undefined) {
+    const sanitizedKey = langData.sanitizeTranKey(text);
+    if (dictionary[sanitizedKey] === undefined) {
         if (appProvider.systemUtils.isDev) {
             throw new Error(
                 `Translation for text "${text}" not found in ` +
@@ -574,7 +576,8 @@ export function tran(...args: any[]): string {
     const translated = text.replace(
         regex,
         (_match: string, p1: string, matchText: string, p2: string) => {
-            return `${p1}${dictionary[matchText.trim()]}${p2}`;
+            const sanitizedMatchText = langData.sanitizeTranKey(matchText);
+            return `${p1}${dictionary[sanitizedMatchText]}${p2}`;
         },
     );
     return translated;

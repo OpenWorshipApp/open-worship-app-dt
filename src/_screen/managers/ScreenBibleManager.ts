@@ -67,17 +67,18 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     applyHeaderEffectOnScroll(div: HTMLDivElement) {
-        const thElement = div.querySelector('th.header');
-        if (thElement instanceof HTMLElement === false) {
-            return;
-        }
-        const percentage = Math.min(div.scrollTop, 118) / 118;
-        thElement.style.fontSize = `${1 - 0.5 * percentage}em`;
+        // multiple bibles view wil have multiple header,
+        // so apply effect on all headers
+        const thElements = div.querySelectorAll<HTMLElement>('th.header');
+        for (const thElement of thElements) {
+            const percentage = Math.min(div.scrollTop, 118) / 118;
+            thElement.style.fontSize = `${1 - 0.5 * percentage}em`;
 
-        const hexAlpha = Math.round(83 + 100 * percentage).toString(16);
-        const firstChild = thElement.children[0];
-        if (firstChild instanceof HTMLElement) {
-            firstChild.style.backgroundColor = `#999999${hexAlpha}`;
+            const hexAlpha = Math.round(83 + 100 * percentage).toString(16);
+            const firstChild = thElement.children[0];
+            if (firstChild instanceof HTMLElement) {
+                firstChild.style.backgroundColor = `#999999${hexAlpha}`;
+            }
         }
     }
 

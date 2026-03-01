@@ -4,7 +4,7 @@ import { tran } from '../lang/langHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { fsCheckDirExist, pathBasename } from '../server/fileHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { menuTitleRevealFile } from '../helper/helpers';
+import { getMenuTitleRevealFile } from '../helper/helpers';
 import { showExplorer } from '../server/appHelpers';
 
 // TODO: check direction rtl error with /*
@@ -50,7 +50,7 @@ export function PathPreviewerComp({
             }
             showAppContextMenu(event, [
                 {
-                    menuElement: menuTitleRevealFile,
+                    menuElement: getMenuTitleRevealFile(),
                     onSelect: () => {
                         showExplorer(dirPath);
                     },

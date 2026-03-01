@@ -13,6 +13,7 @@ import {
     fsDeleteFile,
     fsCopyFilePathToPath,
 } from '../server/fileHelpers';
+import { tran } from '../lang/langHelpers';
 
 export type MutationType = 'added' | 'attr-modified' | 'removed';
 
@@ -269,9 +270,12 @@ export function checkIsSameValues(value1: any, value2: any) {
     return value1 === value2;
 }
 
-export const menuTitleRevealFile = `Reveal in ${
-    appProvider.systemUtils.isMac ? 'Finder' : 'File Explorer'
-}`;
+// the slowness of getting lang data, need to call as a function
+export function getMenuTitleRevealFile() {
+    return tran(
+        `Reveal in ${appProvider.systemUtils.isMac ? 'Finder' : 'File Explorer'}`,
+    );
+}
 
 export function genTimeoutAttempt(
     timeMilliseconds: number = 1e3,

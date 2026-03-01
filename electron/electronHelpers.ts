@@ -247,7 +247,7 @@ export function printHTMLContent(htmlText: string) {
     });
 }
 
-export async function captureScreenShot(
+export async function captureWebScreenShot(
     url: string,
     {
         width,
@@ -285,5 +285,6 @@ export async function captureScreenShot(
         height,
     });
     attemptClosing(captureWin);
-    return image.toDataURL();
+    const imageDataUrl = image.toDataURL();
+    return imageDataUrl;
 }

@@ -10,6 +10,7 @@ import { showPdfDocumentContextMenu } from './appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
+import { appLog } from '../helper/loggerHelpers';
 
 export default class PdfAppDocument
     extends AppDocumentSourceAbs
@@ -41,7 +42,7 @@ export default class PdfAppDocument
     }
 
     async showContextMenu(_event: any) {
-        throw new Error('Method not implemented.');
+        appLog('Method not implemented.');
     }
 
     async getMetadata() {
