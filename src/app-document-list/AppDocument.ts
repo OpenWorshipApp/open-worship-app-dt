@@ -76,14 +76,16 @@ export default class AppDocument
             return acc;
         }, new Set<string>());
         fixMissingFontFamilies(unavailableFontFamiliesSet, this.filePath);
-        await Promise.all(
-            slides.map((slide) => {
-                return attachBackgroundManager.getAttachedBackground(
+        for (const slide of slides) {
+            // start preloading parallel without awaiting, so that the
+            // attached background can be loaded when the slide is opened
+            setTimeout(() => {
+                attachBackgroundManager.getAttachedBackground(
                     slide.filePath,
                     slide.id,
                 );
-            }),
-        );
+            }, 0);
+        }
         return slides;
     }
 
