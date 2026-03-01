@@ -95,6 +95,9 @@ async function calculateNewHoldingSlides(
                 return slide.checkIsSame(newSlide);
             })
         ) {
+            if (currentSlide?.checkIsSame(newSlide)) {
+                return currentHoldingSlides;
+            }
             return currentHoldingSlides.filter((slide) => {
                 return !slide.checkIsSame(newSlide);
             });
@@ -180,29 +183,30 @@ export function useAppDocumentContextValues() {
     }, [varyAppDocument, setVaryAppDocument1, setSlide1]);
 
     const editingSlideContextValue = useMemo(() => {
+        const setSelectedSlide = async (
+            newSelectedSlide: Slide,
+            controlType?: KeyboardControlType,
+        ) => {
+            if (controlType === undefined) {
+                setSlide1(newSelectedSlide);
+                return;
+            }
+            if (!AppDocument.checkIsThisType(varyAppDocument)) {
+                return;
+            }
+            const newHoldingSlides = await calculateNewHoldingSlides(
+                controlType,
+                varyAppDocument,
+                slide,
+                newSelectedSlide,
+                holdingSlides,
+            );
+            setHoldingSlides(newHoldingSlides);
+        };
         return {
             selectedSlide: slide,
             holdingSlides,
-            setSelectedSlide: async (
-                newSelectedSlide: Slide,
-                controlType?: KeyboardControlType,
-            ) => {
-                if (controlType !== undefined) {
-                    if (!AppDocument.checkIsThisType(varyAppDocument)) {
-                        return;
-                    }
-                    const newHoldingSlides = await calculateNewHoldingSlides(
-                        controlType,
-                        varyAppDocument,
-                        slide,
-                        newSelectedSlide,
-                        holdingSlides,
-                    );
-                    setHoldingSlides(newHoldingSlides);
-                    return;
-                }
-                setSlide1(newSelectedSlide);
-            },
+            setSelectedSlide,
             onSlideItemsKeyboardEvent: onSlideItemsKeyboardEvent.bind(null, {
                 holdingSlides,
                 setHoldingSlides,

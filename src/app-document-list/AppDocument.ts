@@ -3,7 +3,10 @@ import Slide from './Slide';
 import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
 import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
 import { tran } from '../lang/langHelpers';
-import { gemSlideContextMenuItems } from './appDocumentHelpers';
+import {
+    genSelectedSlidesContextMenuItems,
+    genSlideContextMenuItems,
+} from './appDocumentHelpers';
 import { checkIsSameValues, toMaxId } from '../helper/helpers';
 import type { MimetypeNameType } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -273,14 +276,6 @@ export default class AppDocument
         await this.addSlides([newSlide]);
     }
 
-    async deleteSlide(slide: Slide) {
-        const slides = await this.getSlides();
-        const newSlides = slides.filter((newSlide) => {
-            return newSlide.id !== slide.id;
-        });
-        await this.setSlides(newSlides);
-    }
-
     async deleteSlides(slidesToDelete: Slide[]) {
         if (slidesToDelete.length === 0) {
             return;
@@ -378,12 +373,24 @@ export default class AppDocument
         slide: Slide,
         extraMenuItems: ContextMenuItemType[] = [],
     ) {
-        const contextMenuItems = gemSlideContextMenuItems(
+        const contextMenuItems = genSlideContextMenuItems(this, slide);
+        showAppContextMenu(event, [...contextMenuItems, ...extraMenuItems], {
+            style: {
+                minWidth: '70px',
+            },
+        });
+    }
+
+    showHoldingSlidesContextMenu(event: any, slides: Slide[]) {
+        const contextMenuItems = genSelectedSlidesContextMenuItems(
             this,
-            slide,
-            extraMenuItems,
+            slides,
         );
-        showAppContextMenu(event, contextMenuItems);
+        showAppContextMenu(event, contextMenuItems, {
+            style: {
+                minWidth: '70px',
+            },
+        });
     }
 
     async showContextMenu(event: any) {

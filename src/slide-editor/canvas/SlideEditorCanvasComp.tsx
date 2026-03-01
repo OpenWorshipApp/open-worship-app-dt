@@ -28,6 +28,7 @@ import { useThemeSource } from '../../others/initHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
+import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 
 function dragOverHandling(event: any) {
     event.preventDefault();
@@ -200,6 +201,25 @@ export default function SlideEditorCanvasComp({
     useAppEffect(() => {
         canvasController.toCenterView();
     }, [containerRef.current, actualWidth, actualHeight]);
+
+    useKeyboardRegistering(
+        [
+            {
+                allControlKey: ['Ctrl'],
+                key: 'Enter',
+            },
+        ],
+        () => {
+            const containerParent = containerRef.current?.parentElement ?? null;
+            if (containerParent === null) {
+                return;
+            }
+            if (document.activeElement === document.body) {
+                containerParent.focus();
+            }
+        },
+        [containerRef.current],
+    );
 
     const handleScrollEvent = (event: any) => {
         event.stopPropagation();

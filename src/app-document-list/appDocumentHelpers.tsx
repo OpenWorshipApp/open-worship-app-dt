@@ -60,6 +60,7 @@ import libOfficeLogo from './liboffice-logo.png';
 import FileSource from '../helper/FileSource';
 import { appLog } from '../helper/loggerHelpers';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
+import { genContextMenuItemShortcutKey } from '../context-menu/AppContextMenuComp';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -77,29 +78,38 @@ export function showPdfDocumentContextMenu(
     showAppContextMenu(event, [...menuItemOnScreens, ...extraMenuItems]);
 }
 
-export function gemSlideContextMenuItems(
+const copyShortcutKey = genContextMenuItemShortcutKey({
+    wControlKey: ['Ctrl'],
+    lControlKey: ['Ctrl'],
+    mControlKey: ['Meta'],
+    key: 'c',
+});
+const duplicateShortcutKey = genContextMenuItemShortcutKey({
+    wControlKey: ['Ctrl', 'Shift'],
+    lControlKey: ['Ctrl', 'Shift'],
+    mControlKey: ['Meta', 'Shift'],
+    key: 'c',
+});
+const deleteShortcutKey = genContextMenuItemShortcutKey({
+    key: 'Delete',
+});
+
+export function genSlideContextMenuItems(
     appDocument: AppDocument,
     slide: Slide,
-    extraMenuItems: ContextMenuItemType[],
 ) {
-    const menuItemOnScreens = genShowOnScreensContextMenu((event) => {
-        ScreenVaryAppDocumentManager.handleSlideSelecting(
-            event,
-            slide.filePath,
-            slide.toJson(),
-            true,
-        );
-    });
     const menuItems: ContextMenuItemType[] = [
         {
             menuElement: tran('Copy'),
+            childAfter: copyShortcutKey,
             onSelect: async () => {
                 AppDocument.setCopiedSlides([slide]);
-                showSimpleToast('Copied', 'Slide is copied');
+                showSimpleToast(tran('Copied'), tran('Slide is copied'));
             },
         },
         {
             menuElement: tran('Duplicate'),
+            childAfter: duplicateShortcutKey,
             onSelect: () => {
                 appDocument.duplicateSlides([slide]);
             },
@@ -116,31 +126,68 @@ export function gemSlideContextMenuItems(
                 appDocument.moveSlide(slide, false);
             },
         },
-        ...(appProvider.isPagePresenter
-            ? [
-                  {
-                      menuElement: tran('Quick Edit'),
-                      onSelect: () => {
-                          if (appProvider.isPageAppDocumentEditor) {
-                              AppDocumentListEventListener.selectAppDocumentItem(
-                                  slide,
-                              );
-                          } else {
-                              openSlideQuickEdit(slide);
-                          }
-                      },
-                  },
-              ]
-            : []),
-        ...menuItemOnScreens,
+    ];
+    if (appProvider.isPagePresenter) {
+        menuItems.push({
+            menuElement: tran('Quick Edit'),
+            onSelect: () => {
+                if (appProvider.isPageAppDocumentEditor) {
+                    AppDocumentListEventListener.selectAppDocumentItem(slide);
+                } else {
+                    openSlideQuickEdit(slide);
+                }
+            },
+        });
+    }
+    const menuItemOnScreens = genShowOnScreensContextMenu((event) => {
+        ScreenVaryAppDocumentManager.handleSlideSelecting(
+            event,
+            slide.filePath,
+            slide.toJson(),
+            true,
+        );
+    });
+    menuItems.push(...menuItemOnScreens, {
+        menuElement: tran('Delete'),
+        childAfter: deleteShortcutKey,
+        onSelect: () => {
+            appDocument.deleteSlides([slide]);
+        },
+    });
+    return menuItems;
+}
+
+export function genSelectedSlidesContextMenuItems(
+    appDocument: AppDocument,
+    slides: Slide[],
+) {
+    const menuItems: ContextMenuItemType[] = [
+        {
+            menuElement: tran('Copy'),
+            childAfter: copyShortcutKey,
+            onSelect: async () => {
+                console.log(slides);
+
+                AppDocument.setCopiedSlides(slides);
+                showSimpleToast(tran('Copied'), tran('Slides are copied'));
+            },
+        },
+        {
+            menuElement: tran('Duplicate'),
+            childAfter: duplicateShortcutKey,
+            onSelect: () => {
+                appDocument.duplicateSlides(slides);
+            },
+        },
         {
             menuElement: tran('Delete'),
+            childAfter: deleteShortcutKey,
             onSelect: () => {
-                appDocument.deleteSlide(slide);
+                appDocument.deleteSlides(slides);
             },
         },
     ];
-    return [...menuItems, ...extraMenuItems];
+    return menuItems;
 }
 
 export function checkIsPdf(ext: string) {

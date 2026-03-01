@@ -7,6 +7,8 @@ import type PdfSlide from '../../app-document-list/PdfSlide';
 import VaryAppDocumentItemRenderComp from './VaryAppDocumentItemRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { tran } from '../../lang/langHelpers';
+import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
+import PdfAppDocument from '../../app-document-list/PdfAppDocument';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,
@@ -43,26 +45,31 @@ export function genPdfSlide(pdfImageSrc: string, isFullWidth = false) {
 }
 
 export default function PdfSlideRenderComp({
-    slide,
+    pdfSlide,
     width,
     index,
     onClick,
-    onContextMenu,
 }: Readonly<{
-    slide: PdfSlide;
+    pdfSlide: PdfSlide;
     width: number;
     index: number;
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
-    onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
 }>) {
-    const pdfPreviewSrc = slide.pdfPreviewSrc;
+    const pdfAppDocument = useVaryAppDocumentContext() as PdfAppDocument;
+    const pdfPreviewSrc = pdfSlide.pdfPreviewSrc;
     useScreenVaryAppDocumentManagerEvents(['update']);
+    const handleContextMenuOpening = (
+        event: MouseEvent,
+        extraMenuItems: ContextMenuItemType[],
+    ) => {
+        pdfAppDocument.showSlideContextMenu(event, pdfSlide, extraMenuItems);
+    };
     return (
         <VaryAppDocumentItemRenderComp
-            slide={slide}
+            slide={pdfSlide}
             width={width}
             index={index}
-            onContextMenu={onContextMenu}
+            onContextMenu={handleContextMenuOpening}
             onClick={onClick}
         >
             {pdfPreviewSrc === null ? (
