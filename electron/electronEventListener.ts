@@ -301,7 +301,13 @@ export function initEventOther(appController: ElectronAppController) {
         ipcMain,
         'main:app:pdf-to-images',
         (data: { filePath: string; outDir: string; isForce: boolean }) => {
-            return pdfToImages(data.filePath, data.outDir, data.isForce);
+            const mainDisplay = appController.settingManager.primaryDisplay;
+            return pdfToImages(
+                data.filePath,
+                data.outDir,
+                mainDisplay.size.width,
+                data.isForce,
+            );
         },
     );
 

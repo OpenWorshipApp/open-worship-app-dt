@@ -8,6 +8,7 @@ import {
     fsListFiles,
 } from '../server/fileHelpers';
 import FileSource from './FileSource';
+import { appError } from './loggerHelpers';
 
 function toPdfImagesPreviewDirPath(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
@@ -117,6 +118,7 @@ export async function genPdfImagesPreview(
         isForce: true,
     });
     if (!previewData.isSuccessful || !previewData.filePaths) {
+        appError('Failed to generate PDF images preview:', previewData.message);
         return null;
     }
     const imageFileInfoList = await Promise.all(

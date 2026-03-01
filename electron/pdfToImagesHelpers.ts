@@ -7,10 +7,11 @@ type PdfImagePreviewDataType = {
     filePaths?: string[];
 };
 
-function genImage(filePath: string, outDir: string) {
+function genImage(filePath: string, outDir: string, width: number) {
     return execute<PdfImagePreviewDataType>('pdf-to-images.mjs', {
         filePath,
         outDir,
+        width,
     });
 }
 
@@ -18,6 +19,7 @@ const dataMap = new Map<string, PdfImagePreviewDataType>();
 export function pdfToImages(
     filePath: string,
     outDir: string,
+    width: number,
     isForce: boolean,
 ) {
     return unlocking<PdfImagePreviewDataType>(filePath, async () => {
@@ -27,7 +29,7 @@ export function pdfToImages(
         if (dataMap.has(filePath)) {
             return dataMap.get(filePath)!;
         }
-        const data = await genImage(filePath, outDir);
+        const data = await genImage(filePath, outDir, width);
         dataMap.set(filePath, data);
         return data;
     });
