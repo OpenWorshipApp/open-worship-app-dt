@@ -42,6 +42,7 @@ import type {
     ScreenMessageType,
 } from '../screenTypeHelpers';
 import { getColorParts } from '../../others/initHelpers';
+import { registerScrollingSyncEvent } from './screenEventHelpers';
 
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
@@ -199,65 +200,6 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     set scroll(scroll: number) {
         this._setMetadata('scroll', scroll);
     }
-
-    registerScrollListener() {
-        this.unregisterScrollListener();
-        this._divScrollListenerBind = this._divScrollListener.bind(this);
-        this.div?.addEventListener('scroll', this._divScrollListenerBind);
-    }
-
-    unregisterScrollListener() {
-        if (this._divScrollListenerBind === null) {
-            return;
-        }
-        this.div?.removeEventListener('scroll', this._divScrollListenerBind);
-        this._divScrollListenerBind = null;
-    }
-
-    sendSyncScroll() {
-        setTimeout(() => {
-            this.screenManagerBase.sendScreenMessage(
-                {
-                    screenId: this.screenId,
-                    type: 'bible-screen-view-scroll',
-                    data: {
-                        scroll: this.scroll,
-                    },
-                },
-                true,
-            );
-        }, 100);
-    }
-
-    static receiveSyncScroll(message: ScreenMessageType) {
-        const { data, screenId } = message;
-        const screenBibleManager = this.getInstance(screenId);
-        if (screenBibleManager === null) {
-            return;
-        }
-        if (screenBibleManager._syncScrollTimeout !== null) {
-            clearTimeout(screenBibleManager._syncScrollTimeout);
-        }
-        screenBibleManager.unregisterScrollListener();
-        const reRegisterScrollListener = () => {
-            if (screenBibleManager._syncScrollTimeout !== null) {
-                clearTimeout(screenBibleManager._syncScrollTimeout);
-            }
-            screenBibleManager._syncScrollTimeout = null;
-            screenBibleManager.registerScrollListener();
-        };
-        screenBibleManager._syncScrollTimeout = setTimeout(
-            reRegisterScrollListener,
-            3e3,
-        );
-        const { scroll } = data;
-        if (typeof scroll !== 'number') {
-            return;
-        }
-        screenBibleManager.scroll = scroll;
-        screenBibleManager.renderScroll();
-    }
-
     sendSyncSelectedIndex() {
         this.screenManagerBase.sendScreenMessage(
             {
@@ -447,22 +389,6 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     render() {
         renderScreenBibleManager(this);
-    }
-
-    renderScroll(isImmediate = false) {
-        if (this.div === null) {
-            return;
-        }
-        const scrollTop = this.scroll * this.div.scrollHeight;
-        if (isImmediate) {
-            this.div.scrollTop = scrollTop;
-        }
-        this.div.scroll({
-            behavior: 'smooth',
-            top: scrollTop,
-            left: 0,
-        });
-        this.applyHeaderEffectOnScroll(this.div);
     }
 
     handleScreenVersesHighlighting(kjvVerseKey: string, isToTop: boolean) {
