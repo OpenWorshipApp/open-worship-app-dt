@@ -47,6 +47,7 @@ export default function ToolCanvasItemsComp() {
                         onContextMenu={canvasController.genHandleContextMenuOpening(
                             canvasItem,
                             handleCanvasItemEditing.bind(null, canvasItem),
+                            false,
                         )}
                     >
                         <div className="card-header">

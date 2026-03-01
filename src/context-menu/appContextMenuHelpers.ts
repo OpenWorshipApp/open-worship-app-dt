@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode, CSSProperties } from 'react';
 import { useState } from 'react';
 
 import KeyboardEventListener, {
+    EventMapper,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { getWindowDim } from '../helper/helpers';
@@ -24,6 +25,7 @@ export type ContextMenuItemType = {
     disabled?: boolean;
     childBefore?: ReactElement;
     childAfter?: ReactElement;
+    keyboardShortcut?: EventMapper;
     style?: CSSProperties;
 };
 export type OptionsType = {

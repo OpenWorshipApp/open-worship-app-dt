@@ -346,6 +346,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     genHandleContextMenuOpening(
         canvasItem: CanvasItem<any>,
         handleCanvasItemEditing: () => void,
+        isSelected: boolean,
     ) {
         return (event: any) => {
             event.stopPropagation();
@@ -354,6 +355,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
                 this,
                 canvasItem,
                 handleCanvasItemEditing,
+                isSelected,
             );
         };
     }

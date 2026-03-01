@@ -128,9 +128,9 @@ export async function onSlideItemsKeyboardEvent(
                 [
                     {
                         mControlKey: ['Meta'],
-                        key: 'a',
                         wControlKey: ['Ctrl'],
                         lControlKey: ['Ctrl'],
+                        key: 'a',
                     },
                 ],
                 event,
@@ -144,9 +144,9 @@ export async function onSlideItemsKeyboardEvent(
                 [
                     {
                         mControlKey: ['Meta'],
-                        key: 'c',
                         wControlKey: ['Ctrl'],
                         lControlKey: ['Ctrl'],
+                        key: 'c',
                     },
                 ],
                 event,
@@ -176,9 +176,9 @@ export async function onSlideItemsKeyboardEvent(
                 [
                     {
                         mControlKey: ['Meta', 'Shift'],
-                        key: 'd',
                         wControlKey: ['Ctrl', 'Shift'],
                         lControlKey: ['Ctrl', 'Shift'],
+                        key: 'd',
                     },
                 ],
                 event,
@@ -262,9 +262,9 @@ export async function onCanvasKeyboardEvent(
             [
                 {
                     mControlKey: ['Meta'],
-                    key: 'c',
                     wControlKey: ['Ctrl'],
                     lControlKey: ['Ctrl'],
+                    key: 'c',
                 },
             ],
             event,
@@ -278,9 +278,9 @@ export async function onCanvasKeyboardEvent(
             [
                 {
                     mControlKey: ['Meta'],
-                    key: 'v',
                     wControlKey: ['Ctrl'],
                     lControlKey: ['Ctrl'],
+                    key: 'v',
                 },
             ],
             event,
@@ -294,9 +294,9 @@ export async function onCanvasKeyboardEvent(
             [
                 {
                     mControlKey: ['Meta', 'Shift'],
-                    key: 'd',
                     wControlKey: ['Ctrl', 'Shift'],
                     lControlKey: ['Ctrl', 'Shift'],
+                    key: 'd',
                 },
             ],
             event,

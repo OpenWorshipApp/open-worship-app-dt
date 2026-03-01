@@ -54,7 +54,13 @@ export default function SlideRenderComp({
         if (isOnHoldingSlide) {
             appDocument.showHoldingSlidesContextMenu(event, holdingSlides);
         } else {
-            appDocument.showSlideContextMenu(event, slide, extraMenuItems);
+            const isSelected = selectedSlide?.checkIsSame(slide);
+            appDocument.showSlideContextMenu(
+                event,
+                slide,
+                extraMenuItems,
+                isSelected,
+            );
         }
     };
     return (

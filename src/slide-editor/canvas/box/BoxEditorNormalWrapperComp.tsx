@@ -32,6 +32,7 @@ export default function BoxEditorNormalWrapperComp({
                 canvasController.genHandleContextMenuOpening(
                     canvasItem,
                     handleCanvasItemEditing.bind(null, canvasItem),
+                    false,
                 )
             }
             onClick={(event) => {

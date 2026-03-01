@@ -54,13 +54,15 @@ import type {
     VaryAppDocumentItemType,
 } from './appDocumentTypeHelpers';
 import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
-import { AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
+import {
+    EventMapper,
+    AllControlType as KeyboardControlType,
+} from '../event/KeyboardEventListener';
 
 import libOfficeLogo from './liboffice-logo.png';
 import FileSource from '../helper/FileSource';
 import { appLog } from '../helper/loggerHelpers';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
-import { genContextMenuItemShortcutKey } from '../context-menu/AppContextMenuComp';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -78,30 +80,31 @@ export function showPdfDocumentContextMenu(
     showAppContextMenu(event, [...menuItemOnScreens, ...extraMenuItems]);
 }
 
-const copyShortcutKey = genContextMenuItemShortcutKey({
+const copyShortcutMapper: EventMapper = {
     wControlKey: ['Ctrl'],
     lControlKey: ['Ctrl'],
     mControlKey: ['Meta'],
     key: 'c',
-});
-const duplicateShortcutKey = genContextMenuItemShortcutKey({
+};
+const duplicateShortcutMapper: EventMapper = {
     wControlKey: ['Ctrl', 'Shift'],
     lControlKey: ['Ctrl', 'Shift'],
     mControlKey: ['Meta', 'Shift'],
-    key: 'c',
-});
-const deleteShortcutKey = genContextMenuItemShortcutKey({
+    key: 'd',
+};
+const deleteShortcutMapper: EventMapper = {
     key: 'Delete',
-});
+};
 
 export function genSlideContextMenuItems(
     appDocument: AppDocument,
     slide: Slide,
+    isSelected: boolean,
 ) {
     const menuItems: ContextMenuItemType[] = [
         {
             menuElement: tran('Copy'),
-            childAfter: copyShortcutKey,
+            keyboardShortcut: isSelected ? copyShortcutMapper : undefined,
             onSelect: async () => {
                 AppDocument.setCopiedSlides([slide]);
                 showSimpleToast(tran('Copied'), tran('Slide is copied'));
@@ -109,7 +112,7 @@ export function genSlideContextMenuItems(
         },
         {
             menuElement: tran('Duplicate'),
-            childAfter: duplicateShortcutKey,
+            keyboardShortcut: isSelected ? duplicateShortcutMapper : undefined,
             onSelect: () => {
                 appDocument.duplicateSlides([slide]);
             },
@@ -149,7 +152,7 @@ export function genSlideContextMenuItems(
     });
     menuItems.push(...menuItemOnScreens, {
         menuElement: tran('Delete'),
-        childAfter: deleteShortcutKey,
+        keyboardShortcut: isSelected ? deleteShortcutMapper : undefined,
         onSelect: () => {
             appDocument.deleteSlides([slide]);
         },
@@ -164,7 +167,7 @@ export function genSelectedSlidesContextMenuItems(
     const menuItems: ContextMenuItemType[] = [
         {
             menuElement: tran('Copy'),
-            childAfter: copyShortcutKey,
+            keyboardShortcut: copyShortcutMapper,
             onSelect: async () => {
                 console.log(slides);
 
@@ -174,14 +177,14 @@ export function genSelectedSlidesContextMenuItems(
         },
         {
             menuElement: tran('Duplicate'),
-            childAfter: duplicateShortcutKey,
+            keyboardShortcut: duplicateShortcutMapper,
             onSelect: () => {
                 appDocument.duplicateSlides(slides);
             },
         },
         {
             menuElement: tran('Delete'),
-            childAfter: deleteShortcutKey,
+            keyboardShortcut: deleteShortcutMapper,
             onSelect: () => {
                 appDocument.deleteSlides(slides);
             },

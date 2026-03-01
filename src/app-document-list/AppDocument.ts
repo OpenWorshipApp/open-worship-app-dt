@@ -372,8 +372,13 @@ export default class AppDocument
         event: any,
         slide: Slide,
         extraMenuItems: ContextMenuItemType[] = [],
+        isSelected = false,
     ) {
-        const contextMenuItems = genSlideContextMenuItems(this, slide);
+        const contextMenuItems = genSlideContextMenuItems(
+            this,
+            slide,
+            isSelected,
+        );
         showAppContextMenu(event, [...contextMenuItems, ...extraMenuItems], {
             style: {
                 minWidth: '70px',

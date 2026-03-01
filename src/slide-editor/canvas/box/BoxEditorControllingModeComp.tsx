@@ -75,6 +75,7 @@ export default function BoxEditorControllingModeComp() {
                 onContextMenu={canvasController.genHandleContextMenuOpening(
                     canvasItem,
                     handleCanvasItemEditing.bind(null, canvasItem),
+                    true,
                 )}
                 onDoubleClick={(event) => {
                     event.stopPropagation();

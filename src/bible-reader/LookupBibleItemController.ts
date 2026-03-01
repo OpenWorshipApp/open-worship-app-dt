@@ -432,8 +432,8 @@ class LookupBibleItemController extends BibleItemsViewController {
                           color: 'var(--bs-danger-text-emphasis)',
                       }),
                       menuElement: tran('Close'),
-                      childAfter: isBibleItemSelected
-                          ? genContextMenuItemShortcutKey(closeEventMapper)
+                      keyboardShortcut: isBibleItemSelected
+                          ? closeEventMapper
                           : undefined,
                       onSelect: () => {
                           if (this.checkIsBibleItemSelected(bibleItem)) {

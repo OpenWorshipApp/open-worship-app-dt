@@ -10,7 +10,6 @@ import appProvider from '../server/appProvider';
 import {
     elementDivider,
     genContextMenuItemIcon,
-    genContextMenuItemShortcutKey,
 } from '../context-menu/AppContextMenuComp';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
@@ -96,8 +95,8 @@ export function genFoundBibleItemContextMenu(
         {
             childBefore: genContextMenuItemIcon('floppy'),
             menuElement: tran('Save bible item'),
-            childAfter: isKeyboardShortcut
-                ? genContextMenuItemShortcutKey(addListEventMapper)
+            keyboardShortcut: isKeyboardShortcut
+                ? addListEventMapper
                 : undefined,
             onSelect: async () => {
                 const addedBibleItem = await saveBibleItem(bibleItem, onDone);
@@ -133,8 +132,8 @@ export function genFoundBibleItemContextMenu(
                       },
                   },
                   {
-                      childAfter: isKeyboardShortcut
-                          ? genContextMenuItemShortcutKey(presenterEventMapper)
+                      keyboardShortcut: isKeyboardShortcut
+                          ? presenterEventMapper
                           : undefined,
                       menuElement: tran('Save bible item and show on screen'),
                       onSelect: async (event: any) => {

@@ -4,7 +4,10 @@ import type CanvasItem from './CanvasItem';
 import CanvasController from './CanvasController';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import Canvas from './Canvas';
-import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../../context-menu/appContextMenuHelpers';
 import {
     checkIsImagesInClipboard,
     readImagesFromClipboard,
@@ -85,10 +88,20 @@ export function showCanvasItemContextMenu(
     canvasController: CanvasController,
     canvasItem: CanvasItem<any>,
     handleCanvasItemEditing: () => void,
+    isSelected: boolean,
 ) {
-    showAppContextMenu(event, [
+    const isEditable = ['text', 'html'].includes(canvasItem.type);
+    const menuItems: ContextMenuItemType[] = [
         {
             menuElement: tran('Copy'),
+            keyboardShortcut: isSelected
+                ? {
+                      mControlKey: ['Meta'],
+                      wControlKey: ['Ctrl'],
+                      lControlKey: ['Ctrl'],
+                      key: 'c',
+                  }
+                : undefined,
             onSelect: () => {
                 Canvas.setCopiedItems([canvasItem]);
                 showSimpleToast(tran('Copied'), tran('Canvas item copied'));
@@ -96,21 +109,43 @@ export function showCanvasItemContextMenu(
         },
         {
             menuElement: tran('Duplicate'),
+            keyboardShortcut: isSelected
+                ? {
+                      mControlKey: ['Meta', 'Shift'],
+                      wControlKey: ['Ctrl', 'Shift'],
+                      lControlKey: ['Ctrl', 'Shift'],
+                      key: 'd',
+                  }
+                : undefined,
             onSelect: () => {
                 canvasController.duplicateItems([canvasItem]);
             },
         },
-        {
-            menuElement: tran('Edit'),
-            onSelect: () => {
-                handleCanvasItemEditing();
-            },
-        },
+        ...(isEditable
+            ? [
+                  {
+                      menuElement: tran('Edit'),
+                      onSelect: () => {
+                          handleCanvasItemEditing();
+                      },
+                  },
+              ]
+            : []),
         {
             menuElement: tran('Delete'),
+            keyboardShortcut: isSelected
+                ? {
+                      key: 'Delete',
+                  }
+                : undefined,
             onSelect: () => {
                 canvasController.deleteItems([canvasItem]);
             },
         },
-    ]);
+    ];
+    showAppContextMenu(event, menuItems, {
+        style: {
+            minWidth: '70px',
+        },
+    });
 }
