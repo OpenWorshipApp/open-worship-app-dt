@@ -166,6 +166,7 @@ export function useAppDocumentContextValues() {
                 ) {
                     const varyAppDocumentItems =
                         await newVaryAppDocument.getSlides();
+                    AppDocument.preloadAttachedBackground(varyAppDocumentItems);
                     selectedSlide = varyAppDocumentItems[0] ?? null;
                 }
                 setSlide1(selectedSlide);

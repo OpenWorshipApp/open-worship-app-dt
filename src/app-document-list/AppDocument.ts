@@ -76,9 +76,11 @@ export default class AppDocument
             return acc;
         }, new Set<string>());
         fixMissingFontFamilies(unavailableFontFamiliesSet, this.filePath);
+        return slides;
+    }
+
+    static preloadAttachedBackground(slides: Slide[]) {
         for (const slide of slides) {
-            // start preloading parallel without awaiting, so that the
-            // attached background can be loaded when the slide is opened
             setTimeout(() => {
                 attachBackgroundManager.getAttachedBackground(
                     slide.filePath,
@@ -86,7 +88,6 @@ export default class AppDocument
                 );
             }, 0);
         }
-        return slides;
     }
 
     async setSlides(newSlides: Slide[]) {
