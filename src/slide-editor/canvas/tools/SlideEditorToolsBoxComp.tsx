@@ -19,6 +19,7 @@ function SizingComp() {
                 title="Fit to canvas"
                 onClick={() => {
                     canvasController.applyCanvasItemFully(canvasItem);
+                    canvasController.applyEditItem(canvasItem);
                 }}
             >
                 {tran('Full')}
@@ -28,6 +29,7 @@ function SizingComp() {
                 title="Set to original size"
                 onClick={() => {
                     canvasController.applyCanvasItemOriginal(canvasItem);
+                    canvasController.applyEditItem(canvasItem);
                 }}
             >
                 {tran('Original Size')}
@@ -37,6 +39,7 @@ function SizingComp() {
                     className="btn btn-sm btn-secondary"
                     onClick={() => {
                         canvasController.applyCanvasItemMediaStrip(canvasItem);
+                        canvasController.applyEditItem(canvasItem);
                     }}
                 >
                     {tran('Strip')}

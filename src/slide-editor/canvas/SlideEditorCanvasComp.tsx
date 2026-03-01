@@ -48,14 +48,11 @@ async function handleDropping(
     changeDragEventStyle(event, 'opacity', '1');
     for await (const file of readDroppedFiles(event)) {
         if (checkIsSupportMediaType(file.type)) {
-            canvasController
-                .genNewImageItemFromFile(file, event)
-                .then((newCanvasItem) => {
-                    if (!newCanvasItem) {
-                        return;
-                    }
-                    canvasController.addNewItems([newCanvasItem]);
-                });
+            const newCanvasItem =
+                await canvasController.genNewImageItemFromFile(file, event);
+            if (newCanvasItem) {
+                canvasController.addNewItems([newCanvasItem]);
+            }
         } else {
             showSimpleToast(
                 tran('Insert Image or Video'),
@@ -82,7 +79,8 @@ function BodyRendererComp({
     const canvasController = useCanvasControllerContext();
     const { canvas } = canvasController;
     const scale = useMemo(() => {
-        return (parentWidth ?? 0) / canvas.width;
+        const scale = (parentWidth ?? 0) / canvas.width;
+        return scale;
     }, [parentWidth, canvas.width]);
     const canvasItems = useCanvasItemsContext();
     const { theme } = useThemeSource();
@@ -245,7 +243,6 @@ export default function SlideEditorCanvasComp({
                         width: actualWidth,
                         height: actualHeight,
                         margin: `${actualHeight * 2}px ${actualWidth * 2}px`,
-                        backgroundColor: '#fff',
                         position: 'relative',
                     }}
                 >

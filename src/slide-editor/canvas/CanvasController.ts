@@ -279,7 +279,6 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             width,
             height,
         );
-        this.applyEditItem(canvasItem);
     }
 
     applyCanvasItemFully(canvasItem: CanvasItem<any>) {
@@ -300,6 +299,11 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             width,
             height,
         );
+        // move to center
+        canvasItem.applyProps({
+            left: (this.canvas.width - props.width) / 2,
+            top: (this.canvas.height - props.height) / 2,
+        });
     }
 
     applyCanvasItemOriginal(canvasItem: CanvasItem<any>) {

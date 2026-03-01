@@ -3,7 +3,6 @@ import {
     use,
     useEffect,
     useRef,
-    useState,
     type DetailedHTMLProps,
     type HTMLAttributes,
     type JSX,
@@ -41,7 +40,6 @@ export function useShadowingParentWidth() {
 
 class ShadowingParentWidthCustomHTMLTag extends HTMLElement {
     myContent: JSX.Element;
-    _parentWidth?: number;
     root: ReturnType<typeof createRoot>;
     constructor() {
         super();
@@ -60,18 +58,22 @@ class ShadowingParentWidthCustomHTMLTag extends HTMLElement {
         this.root = createRoot(div);
     }
 
-    get parentWidth() {
-        return this._parentWidth;
-    }
-
-    set parentWidth(value: number | undefined) {
-        this._parentWidth = value;
+    setParentWidth(width: number) {
+        this.setAttribute('parentWidth', width.toString());
         this.connectedCallback();
     }
 
     connectedCallback() {
+        const parentWidthAttr = this.getAttribute('parentWidth');
+        let parentWidth =
+            parentWidthAttr === null
+                ? undefined
+                : Number.parseFloat(parentWidthAttr);
+        if (Number.isNaN(parentWidth)) {
+            parentWidth = undefined;
+        }
         this.root.render(
-            <ShadowingParentWidthContext value={this.parentWidth}>
+            <ShadowingParentWidthContext value={parentWidth}>
                 <style>{defaultStyle}</style>
                 {this.myContent}
             </ShadowingParentWidthContext>,
@@ -94,11 +96,6 @@ export default function ShadowingFillParentWidthComp({
     width?: number;
 }>) {
     const myRef = useRef<ShadowingParentWidthCustomHTMLTag>(null);
-    const [parentWidth, setParentWidth] = useState<number | undefined>(width);
-
-    useEffect(() => {
-        setParentWidth(width);
-    }, [width]);
 
     useEffect(() => {
         if (myRef.current) {
@@ -107,25 +104,29 @@ export default function ShadowingFillParentWidthComp({
     }, [myRef, children]);
 
     useEffect(() => {
-        const targetElement = myRef.current?.parentElement;
+        const current = myRef.current;
+        if (current === null) {
+            return;
+        }
+        const targetElement = current.parentElement;
         if (targetElement instanceof HTMLElement === false) {
             return;
         }
-        setParentWidth(targetElement.clientWidth);
+        current.setParentWidth(targetElement.clientWidth);
         const resizeObserver = new ResizeObserver(() => {
-            setParentWidth(targetElement.clientWidth);
+            current.setParentWidth(targetElement.clientWidth);
         });
         resizeObserver.observe(targetElement);
         return () => {
             resizeObserver.disconnect();
         };
-    }, [myRef]);
+    }, [myRef.current, width]);
 
     return (
         <shadowing-parent-width-tag
             ref={myRef}
             myContent={children}
-            parentWidth={parentWidth}
+            parentWidth={width}
         />
     );
 }

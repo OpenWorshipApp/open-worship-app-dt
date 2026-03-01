@@ -23,6 +23,10 @@ export async function createNewSlidesFromDroppedData(
                 canvasItem.props.mediaWidth,
                 canvasItem.props.mediaHeight,
             );
+            canvasItem.applyProps({
+                left: (slide.width - canvasItem.props.width) / 2,
+                top: (slide.height - canvasItem.props.height) / 2,
+            });
             const canvasItemsJson = slide.canvasItemsJson;
             canvasItemsJson.push(canvasItem.toJson());
             slide.canvasItemsJson = canvasItemsJson;
