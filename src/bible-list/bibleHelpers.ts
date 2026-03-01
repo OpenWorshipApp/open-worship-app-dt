@@ -322,6 +322,9 @@ async function exportFontFiles(fontFile: string, baseDirPath: string) {
     }
 }
 export async function exportToWordDocument(bibleItems: BibleItem[]) {
+    if (bibleItems.length === 0) {
+        return;
+    }
     const bibleKeys = Array.from(
         new Set(bibleItems.map((bibleItem) => bibleItem.bibleKey)),
     );
@@ -342,18 +345,16 @@ export async function exportToWordDocument(bibleItems: BibleItem[]) {
     );
     showSimpleToast(tran('Exporting'), tran('Export to MS Word') + '...');
     const filePath = await exportBibleMSWord(bibleData);
-    if (filePath) {
-        const fileSource = FileSource.getInstance(filePath);
-        for (const bibleKey of bibleKeys) {
-            const langData = langDataMap[bibleKey];
-            if (langData?.getFontFamilyFiles) {
-                for (const fontFile of langData.getFontFamilyFiles()) {
-                    exportFontFiles(fontFile, fileSource.baseDirPath);
-                }
+    const fileSource = FileSource.getInstance(filePath);
+    for (const bibleKey of bibleKeys) {
+        const langData = langDataMap[bibleKey];
+        if (langData?.getFontFamilyFiles) {
+            for (const fontFile of langData.getFontFamilyFiles()) {
+                exportFontFiles(fontFile, fileSource.baseDirPath);
             }
         }
-        showExplorer(filePath);
     }
+    showExplorer(filePath);
 }
 
 export function improveBibleItemTitleOnHover<T extends HTMLElement>(

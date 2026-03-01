@@ -616,11 +616,22 @@ export function getUserWritablePath(): string {
 }
 
 export function getDesktopPath(): string {
-    return appProvider.messageUtils.sendDataSync('main:app:get-desktop-path');
+    return appProvider.messageUtils.sendDataSync(
+        'main:app:get-special-path',
+        'desktop',
+    );
 }
-
+export function getDownloadPath(): string {
+    return appProvider.messageUtils.sendDataSync(
+        'main:app:get-special-path',
+        'downloads',
+    );
+}
 export function getTempPath(): string {
-    return appProvider.messageUtils.sendDataSync('main:app:get-temp-path');
+    return appProvider.messageUtils.sendDataSync(
+        'main:app:get-special-path',
+        'temp',
+    );
 }
 
 export function writeFileFromBase64Sync(filePath: string, base64: string) {

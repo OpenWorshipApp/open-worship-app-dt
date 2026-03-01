@@ -59,9 +59,32 @@ export function initEventListenerApp(appController: ElectronAppController) {
         event.returnValue = app.getPath('userData');
     });
 
-    ipcMain.on('main:app:get-desktop-path', (event) => {
-        event.returnValue = app.getPath('desktop');
-    });
+    ipcMain.on(
+        'main:app:get-special-path',
+        (
+            event,
+            name:
+                | 'desktop'
+                | 'downloads'
+                | 'home'
+                | 'appData'
+                | 'assets'
+                | 'userData'
+                | 'sessionData'
+                | 'temp'
+                | 'exe'
+                | 'module'
+                | 'documents'
+                | 'music'
+                | 'pictures'
+                | 'videos'
+                | 'recent'
+                | 'logs'
+                | 'crashDumps',
+        ) => {
+            event.returnValue = app.getPath(name);
+        },
+    );
 
     ipcMain.on('main:app:get-temp-path', (event) => {
         event.returnValue = app.getPath('temp');

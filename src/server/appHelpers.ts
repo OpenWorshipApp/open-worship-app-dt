@@ -7,6 +7,7 @@ import { goToPath } from '../router/routeHelpers';
 import {
     fsCheckFileExist,
     getDotExtensionFromBase64Data,
+    getDownloadPath,
     isSupportedMimetype,
     pathJoin,
     pathResolve,
@@ -14,7 +15,6 @@ import {
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appLog, appError as logError } from '../helper/loggerHelpers';
-import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { tran } from '../lang/langHelpers';
 
 export function genReturningEventName(eventName: string) {
@@ -293,20 +293,14 @@ export async function removeSlideBackground(filePath: string) {
 export async function exportBibleMSWord(
     data: { title: string; body: string; fontFamily: string | null }[],
 ) {
-    const selectedParentDir =
-        await appLocalStorage.getSelectedParentDirectory();
-    if (selectedParentDir === null) {
-        showSimpleToast(
-            'No Parent Directory Selected',
-            'There is no parent directory selected',
-        );
-        return;
-    }
+    const selectedParentDir = getDownloadPath();
+    const date = new Date();
+    const dateStr = date.toISOString().split('T')[0];
     const filePath = pathJoin(
         selectedParentDir,
-        `bible-export-${Date.now()}.docx`,
+        `bible-export-${dateStr}.docx`,
     );
-    await electronSendAsync<boolean>('main:app:ms-word-export-bible', {
+    await electronSendAsync('main:app:ms-word-export-bible', {
         filePath,
         data,
     });
