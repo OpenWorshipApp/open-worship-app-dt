@@ -86,7 +86,7 @@ export default function AppDocumentPreviewerFooterComp({
     isDisableChanging?: boolean;
 }>) {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
-    const setSelectedDocument = useSelectedAppDocumentSetterContext();
+    const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
     const [thumbnailSizeScale, setThumbnailSizeScale] =
         useAppDocumentItemThumbnailSizeScale();
     const handleSlideChoosing = async (event: any) => {
@@ -100,7 +100,7 @@ export default function AppDocumentPreviewerFooterComp({
                 'No other slide found in the slide directory',
             );
         } else {
-            setSelectedDocument(slide);
+            setSelectedAppDocument(slide);
         }
     };
     return (

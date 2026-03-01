@@ -59,6 +59,7 @@ import { AllControlType as KeyboardControlType } from '../event/KeyboardEventLis
 import libOfficeLogo from './liboffice-logo.png';
 import FileSource from '../helper/FileSource';
 import { appLog } from '../helper/loggerHelpers';
+import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -398,7 +399,7 @@ export function useSelectedAppDocumentSetterContext() {
 export const SelectedEditingSlideContext = createContext<{
     selectedSlide: Slide | null;
     holdingSlides: Slide[];
-    setSelectedDocument: (
+    setSelectedSlide: (
         newSlide: Slide | null,
         controlType?: KeyboardControlType,
     ) => void;
@@ -429,7 +430,7 @@ export function useSelectedEditingSlideContext() {
 
 export function useSelectedEditingSlideSetterContext() {
     const context = useContextItem();
-    return context.setSelectedDocument;
+    return context.setSelectedSlide;
 }
 
 export function useSlideItemsControlEventContext() {
@@ -631,4 +632,19 @@ export async function checkIsVaryAppDocumentOnScreen(
         }
     }
     return false;
+}
+
+export async function preloadAttachedBackground(
+    varyAppDocument: VaryAppDocumentType,
+    items?: { id: number; filePath: string }[],
+) {
+    items ??= await varyAppDocument.getSlides();
+    for (const item of items) {
+        setTimeout(() => {
+            attachBackgroundManager.getAttachedBackground(
+                item.filePath,
+                item.id,
+            );
+        }, 0);
+    }
 }

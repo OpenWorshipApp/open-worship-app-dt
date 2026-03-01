@@ -29,7 +29,7 @@ import { tran } from '../lang/langHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
-    setSelectedDocument: (value: VaryAppDocumentType | null) => void,
+    setSelectedAppDocument: (value: VaryAppDocumentType | null) => void,
 ): ContextMenuItemType[] {
     if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
         return [
@@ -54,7 +54,7 @@ function genContextMenuItems(
             menuElement: tran('Edit'),
             onSelect: () => {
                 if (varyAppDocument) {
-                    setSelectedDocument(varyAppDocument);
+                    setSelectedAppDocument(varyAppDocument);
                     goToPath(editorTab.routePath);
                 }
             },

@@ -26,7 +26,7 @@ export default function SlideEditorPopupComp({
                         value={{
                             selectedSlide: slide,
                             holdingSlides: [],
-                            setSelectedDocument: () => {},
+                            setSelectedSlide: () => {},
                             onSlideItemsKeyboardEvent: () => {},
                         }}
                     >

@@ -13,12 +13,13 @@ import {
     bringDomToCenterView,
     checkIsVerticalAtBottom,
 } from './helpers';
-import { useAppStateAsync } from './debuggerHelpers';
+import { useAppEffectAsync } from './debuggerHelpers';
 import FileSource from './FileSource';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import CacheManager from '../others/CacheManager';
 import appProvider from '../server/appProvider';
 import { unlocking } from '../server/unlockingHelpers';
+import { useState } from 'react';
 
 const callBackListeners = new Set<
     (element: Node, type: MutationType) => void
@@ -381,14 +382,20 @@ export function useWebCapturing(
     fileSource: FileSource,
     { width, height }: { width?: number; height?: number } = {},
 ) {
-    const [imageDat] = useAppStateAsync(async () => {
-        const screenDisplay = getDefaultScreenDisplay();
-        const imageData = await captureWebScreenShot(fileSource.src, {
-            width: width ?? screenDisplay.bounds.width,
-            height: height ?? screenDisplay.bounds.height,
-            delay: 3000,
-        });
-        return imageData;
-    }, [fileSource, width, height]);
-    return imageDat;
+    const [imageData, setImageData] = useState<string | null | undefined>();
+    useAppEffectAsync(
+        async (contextMethods) => {
+            contextMethods.setImageData(undefined);
+            const screenDisplay = getDefaultScreenDisplay();
+            const imageData = await captureWebScreenShot(fileSource.src, {
+                width: width ?? screenDisplay.bounds.width,
+                height: height ?? screenDisplay.bounds.height,
+                delay: 3000,
+            });
+            contextMethods.setImageData(imageData);
+        },
+        [fileSource, width, height],
+        { setImageData },
+    );
+    return imageData;
 }

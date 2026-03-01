@@ -10,6 +10,7 @@ import {
     getSelectedEditingSlide,
     setSelectedVaryAppDocument,
     setSelectedEditingSlide,
+    preloadAttachedBackground,
 } from '../app-document-list/appDocumentHelpers';
 import { getSelectedLyric, setSelectedLyric } from '../lyric-list/lyricHelpers';
 import type Lyric from '../lyric-list/Lyric';
@@ -141,6 +142,9 @@ export function useAppDocumentContextValues() {
     useAppEffectAsync(
         async (methodContext) => {
             const varyAppDocument = await getSelectedVaryAppDocument();
+            if (varyAppDocument !== null) {
+                preloadAttachedBackground(varyAppDocument);
+            }
             methodContext.setVaryAppDocument(varyAppDocument);
             const varyAppDocumentItem = await getSelectedEditingSlide();
             methodContext.setSlide(varyAppDocumentItem);
@@ -153,24 +157,25 @@ export function useAppDocumentContextValues() {
     );
 
     const varyAppDocumentContextValue = useMemo(() => {
+        const setSelectedVaryAppDocument = async (
+            newVaryAppDocument: VaryAppDocumentType | null,
+        ) => {
+            setVaryAppDocument1(newVaryAppDocument);
+            let selectedSlide: Slide | null = null;
+            if (newVaryAppDocument !== null) {
+                if (AppDocument.checkIsThisType(newVaryAppDocument)) {
+                    const slides = await newVaryAppDocument.getSlides();
+                    preloadAttachedBackground(newVaryAppDocument, slides);
+                    selectedSlide = slides[0] ?? null;
+                } else {
+                    preloadAttachedBackground(newVaryAppDocument);
+                }
+            }
+            setSlide1(selectedSlide);
+        };
         return {
             selectedVaryAppDocument: varyAppDocument,
-            setSelectedVaryAppDocument: async (
-                newVaryAppDocument: VaryAppDocumentType | null,
-            ) => {
-                setVaryAppDocument1(newVaryAppDocument);
-                let selectedSlide: Slide | null = null;
-                if (
-                    newVaryAppDocument !== null &&
-                    AppDocument.checkIsThisType(newVaryAppDocument)
-                ) {
-                    const varyAppDocumentItems =
-                        await newVaryAppDocument.getSlides();
-                    AppDocument.preloadAttachedBackground(varyAppDocumentItems);
-                    selectedSlide = varyAppDocumentItems[0] ?? null;
-                }
-                setSlide1(selectedSlide);
-            },
+            setSelectedVaryAppDocument,
         };
     }, [varyAppDocument, setVaryAppDocument1, setSlide1]);
 
@@ -178,7 +183,7 @@ export function useAppDocumentContextValues() {
         return {
             selectedSlide: slide,
             holdingSlides,
-            setSelectedDocument: async (
+            setSelectedSlide: async (
                 newSelectedSlide: Slide,
                 controlType?: KeyboardControlType,
             ) => {

@@ -5,11 +5,11 @@ import type DragInf from './DragInf';
 import { DragTypeEnum } from './DragInf';
 import FileSource from './FileSource';
 import PdfSlide from '../app-document-list/PdfSlide';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import AttachBackgroundManager, {
     attachBackgroundManager,
 } from '../others/AttachBackgroundManager';
-import { useAppStateAsync } from './debuggerHelpers';
+import { useAppEffectAsync } from './debuggerHelpers';
 import { useFileSourceEvents } from './dirSourceHelpers';
 import { stopDraggingState } from './helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -100,20 +100,26 @@ export function useAttachedBackgroundData(
     filePath: string,
     id?: string | number,
 ) {
-    const [droppedData, setDroppedData] = useAppStateAsync<
+    const [backgroundData, setBackgroundData] = useState<
         DroppedDataType | null | undefined
-    >(
-        () => {
-            return attachBackgroundManager.getAttachedBackground(filePath, id);
+    >();
+    useAppEffectAsync(
+        async (contextMethods) => {
+            contextMethods.setBackgroundData(undefined);
+            const data = await attachBackgroundManager.getAttachedBackground(
+                filePath,
+                id,
+            );
+            contextMethods.setBackgroundData(data);
         },
         [filePath, id],
-        attachBackgroundManager.getAttachedBackgroundSync(filePath, id),
+        { setBackgroundData },
     );
     const handleFileUpdate = useCallback(() => {
         attachBackgroundManager
             .getAttachedBackground(filePath, id)
             .then((data) => {
-                setDroppedData(data);
+                setBackgroundData(data);
             });
     }, [filePath, id]);
 
@@ -124,7 +130,7 @@ export function useAttachedBackgroundData(
         AttachBackgroundManager.genMetaDataFilePath(filePath),
     );
 
-    return droppedData;
+    return backgroundData;
 }
 
 export function genRemovingAttachedBackgroundMenu(
