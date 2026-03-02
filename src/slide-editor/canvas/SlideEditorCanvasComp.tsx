@@ -6,7 +6,7 @@ import { MultiContextRender } from '../../helper/MultiContextRender';
 import { useEditingCanvasContextValue } from '../canvasEditingHelpers';
 import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
-import NoteContainerHandlerComp from '../note/NoteContainerHandlerComp';
+import CanvasNoteContainerHandlerComp from '../note/CanvasNoteContainerHandlerComp';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
 import appProvider from '../../server/appProvider';
 import CanvasContainerComp from './CanvasContainerComp';
@@ -56,7 +56,7 @@ function EditorComp({
                                 );
                             }
                             return (
-                                <NoteContainerHandlerComp
+                                <CanvasNoteContainerHandlerComp
                                     appDocument={appDocument}
                                     slide={slide}
                                 />

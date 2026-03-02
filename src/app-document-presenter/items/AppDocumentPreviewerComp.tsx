@@ -7,10 +7,58 @@ import VaryAppDocumentItemsPreviewerComp from './VaryAppDocumentItemsPreviewerCo
 import AppDocumentPreviewerFooterComp from './AppDocumentPreviewerFooterComp';
 import {
     SelectedVaryAppDocumentContext,
+    useVaryAppDocumentContext,
     VaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import PdfAppearanceSettingComp from '../../screen-setting/PdfAppearanceSettingComp';
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
+import ResizeActorComp from '../../resize-actor/ResizeActorComp';
+import appProvider from '../../server/appProvider';
+import PresenterNoteContainerHandlerComp from '../../slide-editor/note/PresenterNoteContainerHandlerComp';
+
+function EditorComp() {
+    const varyAppDocument = useVaryAppDocumentContext();
+    const fileSource = varyAppDocument.fileSource;
+    if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
+        return <VaryAppDocumentItemsPreviewerComp />;
+    }
+    return (
+        <ResizeActorComp
+            flexSizeName={fileSource.fullName}
+            isHorizontal={false}
+            flexSizeDefault={{
+                v1: ['6'],
+                v2: ['1'],
+            }}
+            dataInput={[
+                {
+                    children: {
+                        render: () => {
+                            return <VaryAppDocumentItemsPreviewerComp />;
+                        },
+                    },
+                    key: 'v1',
+                    widgetName: 'Document List',
+                    className: 'flex-item',
+                },
+                {
+                    children: {
+                        render: () => {
+                            return (
+                                <PresenterNoteContainerHandlerComp
+                                    appDocument={varyAppDocument}
+                                />
+                            );
+                        },
+                    },
+                    key: 'v2',
+                    widgetName: 'Note',
+                    className: 'flex-item',
+                },
+            ]}
+        />
+    );
+}
 
 export default function AppDocumentPreviewerComp() {
     const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
@@ -42,7 +90,11 @@ export default function AppDocumentPreviewerComp() {
                         position: 'relative',
                     }}
                 >
-                    <VaryAppDocumentItemsPreviewerComp />
+                    {appProvider.isPagePresenter ? (
+                        <EditorComp />
+                    ) : (
+                        <VaryAppDocumentItemsPreviewerComp />
+                    )}
                 </div>
                 <AppDocumentPreviewerFooterComp />
                 {isPDF ? <PdfAppearanceSettingComp /> : null}

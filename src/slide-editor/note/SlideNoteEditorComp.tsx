@@ -26,7 +26,8 @@ class SlideNoteStore implements DocumentNoteStoreType {
 export default function SlideNoteEditorComp({
     appDocument,
     slide,
-}: Readonly<{ appDocument: AppDocument; slide: Slide }>) {
+    title = 'Slide Note',
+}: Readonly<{ appDocument: AppDocument; slide: Slide; title?: string }>) {
     const [store, setStore] = useState<DocumentNoteStoreType>(
         new SlideNoteStore(appDocument, slide),
     );
@@ -38,5 +39,5 @@ export default function SlideNoteEditorComp({
             store.save();
         };
     }, [store]);
-    return <NoteEditorRenderComp store={store} title="Slide Note" />;
+    return <NoteEditorRenderComp store={store} title={title} />;
 }

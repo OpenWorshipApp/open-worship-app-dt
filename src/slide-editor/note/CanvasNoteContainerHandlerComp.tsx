@@ -4,7 +4,7 @@ import AppDocument from '../../app-document-list/AppDocument';
 import AppDocumentNoteEditorComp from './AppDocumentNoteEditorComp';
 import SlideNoteEditorComp from './SlideNoteEditorComp';
 
-export default function NoteContainerHandlerComp({
+export default function CanvasNoteContainerHandlerComp({
     appDocument,
     slide,
 }: Readonly<{ appDocument: AppDocument; slide: Slide }>) {
@@ -29,7 +29,7 @@ export default function NoteContainerHandlerComp({
                         },
                     },
                     key: 'h1',
-                    widgetName: slide.name ?? slide.id.toString(),
+                    widgetName: fileFullName,
                     className: 'flex-item',
                 },
                 {
@@ -44,7 +44,7 @@ export default function NoteContainerHandlerComp({
                         },
                     },
                     key: 'h2',
-                    widgetName: fileFullName,
+                    widgetName: slide.name || slide.id.toString(),
                     className: 'flex-item',
                 },
             ]}
