@@ -333,19 +333,17 @@ export default class AppDocument
     ) {
         const slides = await this.getSlides();
         const newSlides = await Promise.all(
-            slides.map((slide) => {
-                return (async () => {
-                    const json = slide.toJson();
-                    if (
-                        targetSlide === undefined ||
-                        (slide.checkIsSame(targetSlide) &&
-                            slide.checkIsWrongDimension(dim))
-                    ) {
-                        json.metadata.width = dim.width;
-                        json.metadata.height = dim.height;
-                    }
-                    return Slide.fromJson(json, this.filePath);
-                })();
+            slides.map(async (slide) => {
+                const json = slide.toJson();
+                if (
+                    targetSlide === undefined ||
+                    (slide.checkIsSame(targetSlide) &&
+                        slide.checkIsWrongDimension(dim))
+                ) {
+                    json.metadata.width = dim.width;
+                    json.metadata.height = dim.height;
+                }
+                return Slide.fromJson(json, this.filePath);
             }),
         );
         await this.setSlides(newSlides);
@@ -353,18 +351,14 @@ export default class AppDocument
 
     async fixSlidesDimensionForDisplay(display: DisplayType) {
         const slides = await this.getSlides();
-        const newSlides = await Promise.all(
-            slides.map((slide) => {
-                return (async () => {
-                    const json = slide.toJson();
-                    if (slide.checkIsWrongDimension(display.bounds)) {
-                        json.metadata.width = display.bounds.width;
-                        json.metadata.height = display.bounds.height;
-                    }
-                    return Slide.fromJson(json, this.filePath);
-                })();
-            }),
-        );
+        const newSlides = slides.map((slide) => {
+            const json = slide.toJson();
+            if (slide.checkIsWrongDimension(display.bounds)) {
+                json.metadata.width = display.bounds.width;
+                json.metadata.height = display.bounds.height;
+            }
+            return Slide.fromJson(json, this.filePath);
+        });
         await this.setSlides(newSlides);
     }
 

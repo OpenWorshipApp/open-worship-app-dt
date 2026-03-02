@@ -15,6 +15,7 @@ export type AppDocumentMetadataType = {
     initDate: string;
     lastEditDate?: string;
     renderProps?: AnyObjectType;
+    note?: string;
 };
 
 function validateAppMeta(metadata: any) {
@@ -152,6 +153,20 @@ export default abstract class AppEditableDocumentSourceAbs<
             return;
         }
         jsonData.metadata = metadata;
+        await this.setJsonData(jsonData);
+    }
+
+    async getNote() {
+        const jsonData = await this.getJsonData();
+        return jsonData?.metadata?.note ?? '';
+    }
+
+    async setNote(note: string) {
+        const jsonData = await this.getJsonData();
+        if (jsonData === null) {
+            return;
+        }
+        jsonData.metadata.note = note;
         await this.setJsonData(jsonData);
     }
 

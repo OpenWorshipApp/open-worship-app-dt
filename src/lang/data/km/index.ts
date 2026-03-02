@@ -9,6 +9,10 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Saving note': 'កំពុងរក្សាទុកកំណត់សម្គាល់',
+    'Please wait while the note is being saved.':
+        'សូមរង់ចាំ ខណៈដែលកំណត់សម្គាល់កំពុងត្រូវបានរក្សាទុក',
+    'Enter your note here': 'បញ្ចូលកំណត់សម្គាល់របស់អ្នកនៅទីនេះ',
     'Slide is copied': 'ស្លាយត្រូវបានចម្លង',
     'Remove Background': 'លុបផ្ទៃខាងក្រោយ',
     'Timezone Minute Offset': 'ការបន្ថែម/បញ្ចូលនាទីតំបន់ពេលវេលា',

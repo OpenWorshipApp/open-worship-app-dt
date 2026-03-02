@@ -1,244 +1,225 @@
-import { useMemo, useRef, type DragEvent } from 'react';
+import { useState } from 'react';
 
-import { BoxEditorComp } from './box/BoxEditorComp';
-import { showCanvasContextMenu } from './canvasContextMenuHelpers';
-import type CanvasController from './CanvasController';
-import {
-    defaultRangeSize,
-    useCanvasControllerContext,
-} from './CanvasController';
-import { useSlideCanvasScale } from './canvasEventHelpers';
-import { showSimpleToast } from '../../toast/toastHelpers';
-import { CanvasItemContext, useCanvasItemsContext } from './CanvasItem';
+import { defaultRangeSize } from './CanvasController';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
-import { changeDragEventStyle } from '../../helper/helpers';
-import { readDroppedFiles } from '../../others/droppingFileHelpers';
-import { checkIsSupportMediaType } from './canvasHelpers';
-import { onCanvasKeyboardEvent } from '../slideEditingBeyboardEventHelpers';
-import { tran } from '../../lang/langHelpers';
+import { onCanvasKeyboardEvent } from '../slideEditingKeyboardEventHelpers';
 import { MultiContextRender } from '../../helper/MultiContextRender';
 import { useEditingCanvasContextValue } from '../canvasEditingHelpers';
-import ShadowingFillParentWidthComp, {
-    useShadowingParentWidth,
-} from '../../others/ShadowingFillParentWidthComp';
-import { getSlideItemShadowingStyle } from '../../app-document-presenter/items/slideItemRenderHelpers';
-import { genBoxEditorStyle } from './box/boxEditorHelpers';
-import { useThemeSource } from '../../others/initHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
 import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
-import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
+import ResizeActorComp from '../../resize-actor/ResizeActorComp';
+import CanvasContainerComp from './CanvasContainerComp';
+import Slide from '../../app-document-list/Slide';
+import { tran } from '../../lang/langHelpers';
+import AppDocument from '../../app-document-list/AppDocument';
+import DocumentNoteEditorComp, {
+    DocumentNoteStoreType,
+} from './DocumentNoteEditorComp';
+import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
+import appProvider from '../../server/appProvider';
 
-function dragOverHandling(event: any) {
-    event.preventDefault();
-    const items: DataTransferItemList = event.dataTransfer.items;
-    if (
-        Array.from(items).every((item) => {
-            return checkIsSupportMediaType(item.type);
-        })
-    ) {
-        event.currentTarget.style.opacity = '0.5';
-    }
-}
-
-async function handleDropping(
-    canvasController: CanvasController,
-    event: DragEvent,
-) {
-    changeDragEventStyle(event, 'opacity', '1');
-    for await (const file of readDroppedFiles(event)) {
-        if (checkIsSupportMediaType(file.type)) {
-            const newCanvasItem =
-                await canvasController.genNewImageItemFromFile(file, event);
-            if (newCanvasItem) {
-                canvasController.addNewItems([newCanvasItem]);
-            }
-        } else {
-            showSimpleToast(
-                tran('Insert Image or Video'),
-                tran('Unsupported file type!'),
-            );
-        }
-    }
-}
-
-async function handleContextMenuOpening(
-    canvasController: CanvasController,
-    event: any,
-    stopAllModes: () => void,
-) {
-    (event.target as HTMLDivElement).focus();
-    stopAllModes();
-    showCanvasContextMenu(event, canvasController);
-}
-
-function BodyRendererComp({
-    stopAllModes,
-}: Readonly<{ stopAllModes: () => void }>) {
-    const parentWidth = useShadowingParentWidth();
-    const canvasController = useCanvasControllerContext();
-    const { canvas } = canvasController;
-    const scale = useMemo(() => {
-        const scale = (parentWidth ?? 0) / canvas.width;
-        return scale;
-    }, [parentWidth, canvas.width]);
-    const canvasItems = useCanvasItemsContext();
-    const { theme } = useThemeSource();
+function EditorRenderComp({
+    store,
+    title,
+}: Readonly<{ store: DocumentNoteStoreType; title: string }>) {
     return (
-        <div
-            className="slide-canvas-editor shadow-blank-bg"
-            data-shadow-theme={theme}
-            style={{
-                width: `${canvas.width}px`,
-                height: `${canvas.height}px`,
-                transform: `scale(${scale})`,
-                transformOrigin: 'top left',
-            }}
-            onDragOver={dragOverHandling}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                event.currentTarget.style.opacity = '1';
-            }}
-            onDrop={(event) => {
-                event.preventDefault();
-                handleDropping(canvasController, event);
-            }}
-            onContextMenu={(event) => {
-                event.preventDefault();
-                handleContextMenuOpening(canvasController, event, stopAllModes);
-            }}
-            // export onclick by mouse down/up
-            onMouseDown={(event) => {
-                event.stopPropagation();
-                (event.target as HTMLDivElement).dataset.mouseDown =
-                    JSON.stringify({
-                        time: Date.now(),
-                        x: event.clientX,
-                        y: event.clientY,
-                    });
-            }}
-            onMouseUp={(event) => {
-                if (event.target instanceof HTMLTextAreaElement) {
-                    return;
-                }
-                const dataset = (event.target as HTMLDivElement).dataset;
-                if (dataset.mouseDown) {
-                    const mouseDown = JSON.parse(dataset.mouseDown);
-                    const timeDiff = Date.now() - mouseDown.time;
-                    const distance = Math.sqrt(
-                        Math.pow(event.clientX - mouseDown.x, 2) +
-                            Math.pow(event.clientY - mouseDown.y, 2),
-                    );
-                    if (timeDiff < 500 && distance < 10) {
-                        stopAllModes();
-                    }
-                }
-                dataset.mouseDown = '';
-            }}
-        >
-            {canvasItems.map((canvasItem) => {
-                return (
-                    <CanvasItemContext key={canvasItem.id} value={canvasItem}>
-                        <BoxEditorComp />
-                    </CanvasItemContext>
-                );
-            })}
-        </div>
-    );
-}
-
-function scrollToCenter(
-    parentElement: HTMLDivElement,
-    actualWidth: number,
-    actualHeight: number,
-) {
-    parentElement.scrollTop =
-        (actualHeight * 5 - parentElement.clientHeight) / 2;
-    parentElement.scrollLeft =
-        (actualWidth * 5 - parentElement.clientWidth) / 2;
-}
-
-function CanvasContainerComp({
-    contextData,
-}: Readonly<{ contextData: ReturnType<typeof useEditingCanvasContextValue> }>) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const {
-        contextValue: allCanvasContextValue,
-        canvasController,
-        stopAllModes,
-    } = contextData;
-    const scale = useSlideCanvasScale(canvasController);
-    const { canvas } = canvasController;
-    const { actualWidth, actualHeight } = useMemo(() => {
-        const actualWidth = Math.round(canvas.width * scale);
-        const actualHeight = Math.round(canvas.height * scale);
-        return { actualWidth, actualHeight };
-    }, [canvas.width, canvas.height, scale]);
-
-    useAppEffect(() => {
-        canvasController.toCenterView = () => {
-            const container = containerRef.current;
-            const parentElement = container?.parentElement ?? null;
-            if (
-                container === null ||
-                parentElement instanceof HTMLDivElement === false
-            ) {
-                return;
-            }
-            scrollToCenter(
-                parentElement,
-                container.clientWidth,
-                container.clientHeight,
-            );
-        };
-        return () => {
-            canvasController.toCenterView = () => {};
-        };
-    }, [canvasController]);
-    useAppEffect(() => {
-        canvasController.toCenterView();
-    }, [containerRef.current, actualWidth, actualHeight]);
-
-    useKeyboardRegistering(
-        [
-            {
-                allControlKey: ['Ctrl'],
-                key: 'Enter',
-            },
-        ],
-        () => {
-            const containerParent = containerRef.current?.parentElement ?? null;
-            if (containerParent === null) {
-                return;
-            }
-            if (document.activeElement === document.body) {
-                containerParent.focus();
-            }
-        },
-        [containerRef.current],
-    );
-
-    return (
-        <div className="w-100 h-100" style={{ overflow: 'auto' }}>
+        <div className="w-100 h-100 app-overflow-hidden">
             <div
-                ref={containerRef}
+                className="w-100 px-1 py-0 m-0 muted app-ellipsis"
                 style={{
-                    width: actualWidth,
-                    height: actualHeight,
-                    margin: `${actualHeight * 2}px ${actualWidth * 2}px`,
-                    position: 'relative',
+                    textAlign: 'center',
+                    fontSize: '0.5rem',
                 }}
             >
-                <ShadowingFillParentWidthComp width={actualWidth}>
-                    <MultiContextRender contexts={allCanvasContextValue}>
-                        {genBoxEditorStyle()}
-                        {getSlideItemShadowingStyle()}
-                        <BodyRendererComp stopAllModes={stopAllModes} />
-                    </MultiContextRender>
-                </ShadowingFillParentWidthComp>
+                {title}
             </div>
+            <DocumentNoteEditorComp
+                store={store}
+                placeholder={tran('Enter your note here') + '...'}
+            />
         </div>
+    );
+}
+
+class SlideNoteStore implements DocumentNoteStoreType {
+    readonly defaultText: string;
+    currentText: string;
+    save: () => Promise<void>;
+    constructor(appDocument: AppDocument, slide: Slide) {
+        this.defaultText = slide.note;
+        this.currentText = slide.note;
+        this.save = async () => {
+            if (this.currentText === this.defaultText) {
+                return;
+            }
+            slide.note = this.currentText;
+            return appDocument.updateSlide(slide);
+        };
+    }
+}
+
+function SlideEditorComp({
+    appDocument,
+    slide,
+}: Readonly<{ appDocument: AppDocument; slide: Slide }>) {
+    const [store, setStore] = useState<DocumentNoteStoreType>(
+        new SlideNoteStore(appDocument, slide),
+    );
+    useAppEffect(() => {
+        setStore(new SlideNoteStore(appDocument, slide));
+    }, [appDocument, slide]);
+    useAppEffect(() => {
+        return () => {
+            store.save();
+        };
+    }, [store]);
+    return <EditorRenderComp store={store} title="Slide Note" />;
+}
+
+class AppDocumentNoteStore implements DocumentNoteStoreType {
+    readonly defaultText: string;
+    currentText: string;
+    save: () => Promise<void>;
+    appDocument: AppDocument;
+    constructor(appDocument: AppDocument, note: string) {
+        this.defaultText = note;
+        this.currentText = note;
+        this.save = async () => {};
+        this.appDocument = appDocument;
+    }
+}
+
+function AppDocumentEditorComp({
+    appDocument,
+}: Readonly<{ appDocument: AppDocument }>) {
+    const [store, setStore] = useState<DocumentNoteStoreType>(
+        new AppDocumentNoteStore(appDocument, ''),
+    );
+    useAppEffectAsync(async () => {
+        const note = await appDocument.getNote();
+        const newStore = new AppDocumentNoteStore(appDocument, note);
+        newStore.save = async () => {
+            if (newStore.currentText === newStore.defaultText) {
+                return;
+            }
+            await appDocument.setNote(newStore.currentText);
+        };
+        setStore(newStore);
+    }, [appDocument]);
+    useAppEffect(() => {
+        return () => {
+            store.save();
+        };
+    }, [store]);
+    return <EditorRenderComp store={store} title="Document Note" />;
+}
+
+function EditorComp({
+    appDocument,
+    slide,
+}: Readonly<{ appDocument: AppDocument; slide: Slide }>) {
+    const fileFullName = appDocument.fileSource.fullName;
+    return (
+        <ResizeActorComp
+            flexSizeName={fileFullName}
+            isHorizontal
+            flexSizeDefault={{
+                h1: ['1'],
+                h2: ['1'],
+            }}
+            dataInput={[
+                {
+                    children: {
+                        render: () => {
+                            return (
+                                <AppDocumentEditorComp
+                                    appDocument={appDocument}
+                                />
+                            );
+                        },
+                    },
+                    key: 'h1',
+                    widgetName: slide.name ?? slide.id.toString(),
+                    className: 'flex-item',
+                },
+                {
+                    children: {
+                        render: () => {
+                            return (
+                                <SlideEditorComp
+                                    appDocument={appDocument}
+                                    slide={slide}
+                                />
+                            );
+                        },
+                    },
+                    key: 'h2',
+                    widgetName: fileFullName,
+                    className: 'flex-item',
+                },
+            ]}
+        />
+    );
+}
+
+function NoteHandlerComp({
+    contextData,
+}: Readonly<{
+    contextData: ReturnType<typeof useEditingCanvasContextValue>;
+}>) {
+    const { canvasController } = contextData;
+    const { appDocument, canvas } = canvasController;
+    const fileSource = appDocument.fileSource;
+    const { slide } = canvas;
+    return (
+        <ResizeActorComp
+            flexSizeName={fileSource.fullName}
+            isHorizontal={false}
+            flexSizeDefault={{
+                v1: ['6'],
+                v2: ['1'],
+            }}
+            dataInput={[
+                {
+                    children: {
+                        render: () => {
+                            return (
+                                <CanvasContainerComp
+                                    contextData={contextData}
+                                />
+                            );
+                        },
+                    },
+                    key: 'v1',
+                    widgetName: 'Document List',
+                    className: 'flex-item',
+                },
+                {
+                    children: {
+                        render: () => {
+                            if (appProvider.isPagePresenter) {
+                                return (
+                                    <SlideEditorComp
+                                        appDocument={appDocument}
+                                        slide={slide}
+                                    />
+                                );
+                            }
+                            return (
+                                <EditorComp
+                                    appDocument={appDocument}
+                                    slide={slide}
+                                />
+                            );
+                        },
+                    },
+                    key: 'v2',
+                    widgetName: 'Note',
+                    className: 'flex-item',
+                },
+            ]}
+        />
     );
 }
 
@@ -289,7 +270,7 @@ export default function SlideEditorCanvasComp({
                 onWheel={handleScrollEvent}
                 onKeyDown={handleKeyDownEvent}
             >
-                <CanvasContainerComp contextData={contextData} />
+                <NoteHandlerComp contextData={contextData} />
             </div>
             <div className="card-footer w-100 m-0 p-0">
                 <div className="w-100 d-flex">

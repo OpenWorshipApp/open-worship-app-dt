@@ -15,14 +15,16 @@ import { getFontFamilies } from '../server/fontHelpers';
 import slideSchemaJson from './SlideSchema.json';
 const slideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
+type MetadataType = {
+    width: number;
+    height: number;
+    note?: string;
+};
 export type SlideType = {
     id: number;
     name?: string;
     canvasItems: CanvasItemPropsType[];
-    metadata: {
-        width: number;
-        height: number;
-    };
+    metadata: MetadataType;
 };
 
 export default class Slide
@@ -76,7 +78,7 @@ export default class Slide
         return this.originalJson.metadata;
     }
 
-    set metadata(metadata: { width: number; height: number }) {
+    set metadata(metadata: MetadataType) {
         const json = this.cloneOriginalJson;
         json.metadata = metadata;
         this.originalJson = json;
@@ -109,6 +111,16 @@ export default class Slide
     set height(height: number) {
         const metadata = this.metadata;
         metadata.height = height;
+        this.metadata = metadata;
+    }
+
+    get note() {
+        return this.originalJson.metadata.note ?? '';
+    }
+
+    set note(note: string) {
+        const metadata = this.metadata;
+        metadata.note = note;
         this.metadata = metadata;
     }
 
