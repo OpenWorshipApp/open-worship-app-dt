@@ -1,0 +1,44 @@
+import { useState } from 'react';
+
+import AppDocument from '../../app-document-list/AppDocument';
+import { DocumentNoteStoreType } from '../canvas/DocumentNoteEditorComp';
+import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
+import NoteEditorRenderComp from './NoteEditorRenderComp';
+
+class AppDocumentNoteStore implements DocumentNoteStoreType {
+    readonly defaultText: string;
+    currentText: string;
+    save: () => Promise<void>;
+    appDocument: AppDocument;
+    constructor(appDocument: AppDocument, note: string) {
+        this.defaultText = note;
+        this.currentText = note;
+        this.save = async () => {};
+        this.appDocument = appDocument;
+    }
+}
+
+export default function AppDocumentNoteEditorComp({
+    appDocument,
+}: Readonly<{ appDocument: AppDocument }>) {
+    const [store, setStore] = useState<DocumentNoteStoreType>(
+        new AppDocumentNoteStore(appDocument, ''),
+    );
+    useAppEffectAsync(async () => {
+        const note = await appDocument.getNote();
+        const newStore = new AppDocumentNoteStore(appDocument, note);
+        newStore.save = async () => {
+            if (newStore.currentText === newStore.defaultText) {
+                return;
+            }
+            await appDocument.setNote(newStore.currentText);
+        };
+        setStore(newStore);
+    }, [appDocument]);
+    useAppEffect(() => {
+        return () => {
+            store.save();
+        };
+    }, [store]);
+    return <NoteEditorRenderComp store={store} title="Document Note" />;
+}

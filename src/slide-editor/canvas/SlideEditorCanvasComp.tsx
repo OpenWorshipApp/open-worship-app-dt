@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 import { defaultRangeSize } from './CanvasController';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
@@ -8,162 +6,13 @@ import { MultiContextRender } from '../../helper/MultiContextRender';
 import { useEditingCanvasContextValue } from '../canvasEditingHelpers';
 import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
+import NoteContainerHandlerComp from '../note/NoteContainerHandlerComp';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
-import CanvasContainerComp from './CanvasContainerComp';
-import Slide from '../../app-document-list/Slide';
-import { tran } from '../../lang/langHelpers';
-import AppDocument from '../../app-document-list/AppDocument';
-import DocumentNoteEditorComp, {
-    DocumentNoteStoreType,
-} from './DocumentNoteEditorComp';
-import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import appProvider from '../../server/appProvider';
-
-function EditorRenderComp({
-    store,
-    title,
-}: Readonly<{ store: DocumentNoteStoreType; title: string }>) {
-    return (
-        <div className="w-100 h-100 app-overflow-hidden">
-            <div
-                className="w-100 px-1 py-0 m-0 muted app-ellipsis"
-                style={{
-                    textAlign: 'center',
-                    fontSize: '0.5rem',
-                }}
-            >
-                {title}
-            </div>
-            <DocumentNoteEditorComp
-                store={store}
-                placeholder={tran('Enter your note here') + '...'}
-            />
-        </div>
-    );
-}
-
-class SlideNoteStore implements DocumentNoteStoreType {
-    readonly defaultText: string;
-    currentText: string;
-    save: () => Promise<void>;
-    constructor(appDocument: AppDocument, slide: Slide) {
-        this.defaultText = slide.note;
-        this.currentText = slide.note;
-        this.save = async () => {
-            if (this.currentText === this.defaultText) {
-                return;
-            }
-            slide.note = this.currentText;
-            return appDocument.updateSlide(slide);
-        };
-    }
-}
-
-function SlideEditorComp({
-    appDocument,
-    slide,
-}: Readonly<{ appDocument: AppDocument; slide: Slide }>) {
-    const [store, setStore] = useState<DocumentNoteStoreType>(
-        new SlideNoteStore(appDocument, slide),
-    );
-    useAppEffect(() => {
-        setStore(new SlideNoteStore(appDocument, slide));
-    }, [appDocument, slide]);
-    useAppEffect(() => {
-        return () => {
-            store.save();
-        };
-    }, [store]);
-    return <EditorRenderComp store={store} title="Slide Note" />;
-}
-
-class AppDocumentNoteStore implements DocumentNoteStoreType {
-    readonly defaultText: string;
-    currentText: string;
-    save: () => Promise<void>;
-    appDocument: AppDocument;
-    constructor(appDocument: AppDocument, note: string) {
-        this.defaultText = note;
-        this.currentText = note;
-        this.save = async () => {};
-        this.appDocument = appDocument;
-    }
-}
-
-function AppDocumentEditorComp({
-    appDocument,
-}: Readonly<{ appDocument: AppDocument }>) {
-    const [store, setStore] = useState<DocumentNoteStoreType>(
-        new AppDocumentNoteStore(appDocument, ''),
-    );
-    useAppEffectAsync(async () => {
-        const note = await appDocument.getNote();
-        const newStore = new AppDocumentNoteStore(appDocument, note);
-        newStore.save = async () => {
-            if (newStore.currentText === newStore.defaultText) {
-                return;
-            }
-            await appDocument.setNote(newStore.currentText);
-        };
-        setStore(newStore);
-    }, [appDocument]);
-    useAppEffect(() => {
-        return () => {
-            store.save();
-        };
-    }, [store]);
-    return <EditorRenderComp store={store} title="Document Note" />;
-}
+import CanvasContainerComp from './CanvasContainerComp';
+import SlideNoteEditorComp from '../note/SlideNoteEditorComp';
 
 function EditorComp({
-    appDocument,
-    slide,
-}: Readonly<{ appDocument: AppDocument; slide: Slide }>) {
-    const fileFullName = appDocument.fileSource.fullName;
-    return (
-        <ResizeActorComp
-            flexSizeName={fileFullName}
-            isHorizontal
-            flexSizeDefault={{
-                h1: ['1'],
-                h2: ['1'],
-            }}
-            dataInput={[
-                {
-                    children: {
-                        render: () => {
-                            return (
-                                <AppDocumentEditorComp
-                                    appDocument={appDocument}
-                                />
-                            );
-                        },
-                    },
-                    key: 'h1',
-                    widgetName: slide.name ?? slide.id.toString(),
-                    className: 'flex-item',
-                },
-                {
-                    children: {
-                        render: () => {
-                            return (
-                                <SlideEditorComp
-                                    appDocument={appDocument}
-                                    slide={slide}
-                                />
-                            );
-                        },
-                    },
-                    key: 'h2',
-                    widgetName: fileFullName,
-                    className: 'flex-item',
-                },
-            ]}
-        />
-    );
-}
-
-function NoteHandlerComp({
     contextData,
 }: Readonly<{
     contextData: ReturnType<typeof useEditingCanvasContextValue>;
@@ -200,14 +49,14 @@ function NoteHandlerComp({
                         render: () => {
                             if (appProvider.isPagePresenter) {
                                 return (
-                                    <SlideEditorComp
+                                    <SlideNoteEditorComp
                                         appDocument={appDocument}
                                         slide={slide}
                                     />
                                 );
                             }
                             return (
-                                <EditorComp
+                                <NoteContainerHandlerComp
                                     appDocument={appDocument}
                                     slide={slide}
                                 />
@@ -270,7 +119,7 @@ export default function SlideEditorCanvasComp({
                 onWheel={handleScrollEvent}
                 onKeyDown={handleKeyDownEvent}
             >
-                <NoteHandlerComp contextData={contextData} />
+                <EditorComp contextData={contextData} />
             </div>
             <div className="card-footer w-100 m-0 p-0">
                 <div className="w-100 d-flex">
