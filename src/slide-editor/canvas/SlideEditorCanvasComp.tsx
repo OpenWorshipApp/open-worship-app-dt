@@ -159,14 +159,12 @@ function scrollToCenter(
         (actualWidth * 5 - parentElement.clientWidth) / 2;
 }
 
-export default function SlideEditorCanvasComp({
+function CanvasContainerComp({
     contextData,
 }: Readonly<{ contextData: ReturnType<typeof useEditingCanvasContextValue> }>) {
     const containerRef = useRef<HTMLDivElement>(null);
     const {
         contextValue: allCanvasContextValue,
-        selectedCanvasItems,
-        setSelectedCanvasItems,
         canvasController,
         stopAllModes,
     } = contextData;
@@ -221,6 +219,40 @@ export default function SlideEditorCanvasComp({
         [containerRef.current],
     );
 
+    return (
+        <div className="w-100 h-100" style={{ overflow: 'auto' }}>
+            <div
+                ref={containerRef}
+                style={{
+                    width: actualWidth,
+                    height: actualHeight,
+                    margin: `${actualHeight * 2}px ${actualWidth * 2}px`,
+                    position: 'relative',
+                }}
+            >
+                <ShadowingFillParentWidthComp width={actualWidth}>
+                    <MultiContextRender contexts={allCanvasContextValue}>
+                        {genBoxEditorStyle()}
+                        {getSlideItemShadowingStyle()}
+                        <BodyRendererComp stopAllModes={stopAllModes} />
+                    </MultiContextRender>
+                </ShadowingFillParentWidthComp>
+            </div>
+        </div>
+    );
+}
+
+export default function SlideEditorCanvasComp({
+    contextData,
+}: Readonly<{ contextData: ReturnType<typeof useEditingCanvasContextValue> }>) {
+    const {
+        contextValue: allCanvasContextValue,
+        selectedCanvasItems,
+        setSelectedCanvasItems,
+        canvasController,
+        stopAllModes,
+    } = contextData;
+
     const handleScrollEvent = (event: any) => {
         event.stopPropagation();
         handleCtrlWheel({
@@ -250,30 +282,14 @@ export default function SlideEditorCanvasComp({
         <div className="card w-100 h-100 app-overflow-hidden">
             <div
                 className={
-                    'card-body w-100 m-0 p-0 editor-container app-focusable'
+                    'card-body w-100 m-0 p-0 editor-container app-focusable ' +
+                    'app-overflow-hidden'
                 }
-                style={{ overflow: 'auto' }}
                 tabIndex={0}
                 onWheel={handleScrollEvent}
                 onKeyDown={handleKeyDownEvent}
             >
-                <div
-                    ref={containerRef}
-                    style={{
-                        width: actualWidth,
-                        height: actualHeight,
-                        margin: `${actualHeight * 2}px ${actualWidth * 2}px`,
-                        position: 'relative',
-                    }}
-                >
-                    <ShadowingFillParentWidthComp width={actualWidth}>
-                        <MultiContextRender contexts={allCanvasContextValue}>
-                            {genBoxEditorStyle()}
-                            {getSlideItemShadowingStyle()}
-                            <BodyRendererComp stopAllModes={stopAllModes} />
-                        </MultiContextRender>
-                    </ShadowingFillParentWidthComp>
-                </div>
+                <CanvasContainerComp contextData={contextData} />
             </div>
             <div className="card-footer w-100 m-0 p-0">
                 <div className="w-100 d-flex">

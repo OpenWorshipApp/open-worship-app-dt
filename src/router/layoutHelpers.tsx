@@ -19,7 +19,7 @@ import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
-import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingBeyboardEventHelpers';
+import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardEventHelpers';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
