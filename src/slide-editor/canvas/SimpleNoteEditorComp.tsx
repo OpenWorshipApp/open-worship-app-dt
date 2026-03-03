@@ -17,7 +17,7 @@ export interface DocumentNoteStoreType {
     currentText: string;
     save: () => Promise<void>;
 }
-export default function DocumentNoteEditorComp({
+export default function SimpleNoteEditorComp({
     store,
     placeholder,
     isResizable,
@@ -80,30 +80,28 @@ export default function DocumentNoteEditorComp({
         [store],
     );
     return (
-        <div className="w-100 h-100 app-overflow-hidden">
-            <textarea
-                className="w-100 h-100 m-0"
-                placeholder={placeholder}
-                style={{
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    padding: '0.5rem',
-                    resize: isResizable ? 'both' : 'none',
-                    border: isSaved
-                        ? '1px solid transparent'
-                        : '1px solid #007bff44',
-                }}
-                onKeyDown={handleKeyDown}
-                value={text}
-                onChange={(event) => {
-                    const value = event.target.value;
-                    setCurrentText1(value);
-                }}
-                onBlur={async () => {
-                    await store.save();
-                    setIsSaved(true);
-                }}
-            />
-        </div>
+        <textarea
+            className="w-100 h-100 m-0"
+            placeholder={placeholder}
+            style={{
+                outline: 'none',
+                boxSizing: 'border-box',
+                padding: '0.5rem',
+                resize: isResizable ? 'both' : 'none',
+                border: isSaved
+                    ? '1px solid transparent'
+                    : '1px solid #007bff44',
+            }}
+            onKeyDown={handleKeyDown}
+            value={text}
+            onChange={(event) => {
+                const value = event.target.value;
+                setCurrentText1(value);
+            }}
+            onBlur={async () => {
+                await store.save();
+                setIsSaved(true);
+            }}
+        />
     );
 }

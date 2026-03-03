@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import AppDocument from '../../app-document-list/AppDocument';
-import { DocumentNoteStoreType } from '../canvas/DocumentNoteEditorComp';
+import { DocumentNoteStoreType } from '../canvas/SimpleNoteEditorComp';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import NoteEditorRenderComp from './NoteEditorRenderComp';
+import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 
 class SlideNoteStore implements DocumentNoteStoreType {
     readonly defaultText: string;
@@ -42,5 +43,21 @@ export default function SlideNoteEditorComp({
     const uuid = useMemo(() => {
         return `slide-note-editor-${slide.uuid}`;
     }, [slide]);
+
+    useFileSourceEvents(
+        ['update'],
+        async () => {
+            const newSlide = await appDocument.getItemById(slide.id);
+            if (newSlide === null) {
+                return;
+            }
+            if (newSlide.note !== store.currentText) {
+                setStore(new SlideNoteStore(appDocument, newSlide));
+            }
+        },
+        [appDocument, slide],
+        appDocument.filePath,
+    );
+
     return <NoteEditorRenderComp store={store} title={title} uuid={uuid} />;
 }

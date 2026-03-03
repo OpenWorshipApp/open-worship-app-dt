@@ -1,7 +1,7 @@
 import { tran } from '../../lang/langHelpers';
-import DocumentNoteEditorComp, {
+import SimpleNoteEditorComp, {
     DocumentNoteStoreType,
-} from '../canvas/DocumentNoteEditorComp';
+} from '../canvas/SimpleNoteEditorComp';
 
 export default function NoteEditorRenderComp({
     store,
@@ -17,15 +17,24 @@ export default function NoteEditorRenderComp({
                 className="w-100 px-1 py-0 m-0 muted app-ellipsis"
                 style={{
                     textAlign: 'center',
+                    verticalAlign: 'middle',
                     fontSize: '0.5rem',
+                    height: '15px',
                 }}
             >
                 {title}
             </div>
-            <DocumentNoteEditorComp
-                store={store}
-                placeholder={tran('Enter your note here') + '...'}
-            />
+            <div
+                className="w-100 app-overflow-hidden"
+                style={{
+                    height: 'calc(100% - 15px)',
+                }}
+            >
+                <SimpleNoteEditorComp
+                    store={store}
+                    placeholder={tran('Enter your note here') + '...'}
+                />
+            </div>
         </div>
     );
 }

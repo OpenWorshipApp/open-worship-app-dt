@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
 import AppDocument from '../../app-document-list/AppDocument';
-import { DocumentNoteStoreType } from '../canvas/DocumentNoteEditorComp';
+import { DocumentNoteStoreType } from '../canvas/SimpleNoteEditorComp';
 import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import NoteEditorRenderComp from './NoteEditorRenderComp';
+import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 
 class AppDocumentNoteStore implements DocumentNoteStoreType {
     readonly defaultText: string;
@@ -40,5 +41,18 @@ export default function AppDocumentNoteEditorComp({
             store.save();
         };
     }, [store]);
+
+    useFileSourceEvents(
+        ['update'],
+        async () => {
+            const newNote = await appDocument.getNote();
+            if (newNote !== store.currentText) {
+                setStore(new AppDocumentNoteStore(appDocument, newNote));
+            }
+        },
+        [appDocument],
+        appDocument.filePath,
+    );
+
     return <NoteEditorRenderComp store={store} title="Document Note" />;
 }

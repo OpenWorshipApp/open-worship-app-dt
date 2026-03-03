@@ -8,9 +8,7 @@ import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import CanvasNoteContainerHandlerComp from '../note/CanvasNoteContainerHandlerComp';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
-import appProvider from '../../server/appProvider';
 import CanvasContainerComp from './CanvasContainerComp';
-import SlideNoteEditorComp from '../note/SlideNoteEditorComp';
 
 function EditorComp({
     contextData,
@@ -47,14 +45,6 @@ function EditorComp({
                 {
                     children: {
                         render: () => {
-                            if (appProvider.isPagePresenter) {
-                                return (
-                                    <SlideNoteEditorComp
-                                        appDocument={appDocument}
-                                        slide={slide}
-                                    />
-                                );
-                            }
                             return (
                                 <CanvasNoteContainerHandlerComp
                                     appDocument={appDocument}
