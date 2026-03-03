@@ -4,14 +4,14 @@ import { getMimetypeExtensions } from '../server/fileHelpers';
 import Lyric from './Lyric';
 import { dirSourceSettingNames } from '../helper/constants';
 import {
-    getSelectedFilePath,
+    getSelectedFilePathWithEnsure,
     setSelectedFilePath,
 } from '../others/selectedHelpers';
 
 const SELECTED_LYRIC_SETTING_NAME = 'selected-lyric';
 
 export async function getSelectedLyricFilePath() {
-    return await getSelectedFilePath(
+    return await getSelectedFilePathWithEnsure(
         SELECTED_LYRIC_SETTING_NAME,
         dirSourceSettingNames.LYRIC,
     );

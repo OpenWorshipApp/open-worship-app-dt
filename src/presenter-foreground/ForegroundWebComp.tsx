@@ -22,7 +22,6 @@ import {
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
-import { genTimeoutAttempt } from '../helper/helpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import RenderBackgroundWebIframeComp, {
     BackgroundWebPlaceHolderComp,
@@ -38,6 +37,7 @@ import {
     genShowOnScreensContextMenu,
 } from '../others/FileItemHandlerComp';
 import { useWebCapturing } from '../helper/domHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function getAllShowingScreenIdDataList() {
     const showingScreenIdDataList = getForegroundShowingScreenIdDataList(

@@ -4,8 +4,8 @@ import { tran } from '../../lang/langHelpers';
 import { createMouseEvent } from '../../context-menu/appContextMenuHelpers';
 import type { AppColorType } from './colorHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import { genTimeoutAttempt } from '../../helper/helpers';
 import { removeOpacityFromHexColor } from '../../server/appHelpers';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 
 export default function SelectCustomColor({
     color,

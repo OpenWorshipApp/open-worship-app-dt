@@ -1,5 +1,5 @@
-import { genTimeoutAttempt } from '../helper/helpers';
 import { appWarning } from '../helper/loggerHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import type CacheManager from '../others/CacheManager';
 

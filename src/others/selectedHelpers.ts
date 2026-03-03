@@ -18,7 +18,7 @@ export async function checkSelectedFilePathExist(
     return true;
 }
 
-export async function getSelectedFilePath(
+export function getSelectedFilePath(
     settingName: string,
     baseDirSettingName: string,
 ) {
@@ -31,6 +31,17 @@ export async function getSelectedFilePath(
         selectedFilePath =
             baseDirFileSource.fileSource?.filePath ?? selectedFilePath;
     }
+    return selectedFilePath;
+}
+
+export async function getSelectedFilePathWithEnsure(
+    settingName: string,
+    baseDirSettingName: string,
+) {
+    const selectedFilePath = getSelectedFilePath(
+        settingName,
+        baseDirSettingName,
+    );
     const isValid = await checkSelectedFilePathExist(
         settingName,
         baseDirSettingName,

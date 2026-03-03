@@ -6,7 +6,6 @@ import { useSelectedLyricContext } from './lyricHelpers';
 import type { HTMLDataType } from './markdownHelpers';
 import { renderLyricSlide } from './markdownHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
 import LoadingComp from '../others/LoadingComp';
 import type LyricEditingManager from './LyricEditingManager';
 import { useLyricEditingManagerContext } from './LyricEditingManager';
@@ -16,6 +15,7 @@ import { checkIsDarkMode } from '../others/initHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import appProvider from '../server/appProvider';
 import { forceReloadAppWindows } from '../setting/settingHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function genOptions(lyricEditingManager: LyricEditingManager) {
     const isDarkMode = checkIsDarkMode();

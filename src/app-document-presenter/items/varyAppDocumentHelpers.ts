@@ -3,8 +3,13 @@ import appProvider from '../../server/appProvider';
 import { getScreenManagerByScreenId } from '../../_screen/managers/screenManagerHelpers';
 import { slidePreviewerMethods } from './AppDocumentPreviewerFooterComp';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
-import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
+import {
+    bringDomToTopView,
+    HIGHLIGHT_SELECTED_CLASSNAME,
+} from '../../helper/helpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
+import { notifyNewElementAdded } from '../../helper/domHelpers';
+import Slide from '../../app-document-list/Slide';
 
 export function handleAppDocumentItemSelecting(
     event: any,
@@ -24,6 +29,18 @@ export function handleAppDocumentItemSelecting(
             varyAppDocumentItem.filePath,
             varyAppDocumentItem.toJson(),
         );
+        if (Slide.checkIsThisType(varyAppDocumentItem)) {
+            const slide = varyAppDocumentItem as Slide;
+            const uuid = `slide-note-editor-${slide.uuid}`;
+            const query = `div[data-note-editor-uuid="${uuid}"]`;
+            const elementGetter = () => {
+                return document.querySelector(query);
+            };
+            notifyNewElementAdded(elementGetter, {
+                moveToView: bringDomToTopView,
+                shouldSkipHighlighting: true,
+            });
+        }
     }
 }
 

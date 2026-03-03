@@ -4,7 +4,6 @@ import type { RefObject } from 'react';
 import { Component, createRef } from 'react';
 
 import type { DisabledType } from './flexSizeHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
 
 export const HIDDEN_WIDGET_CLASS = 'app-hidden-widget';
 export const ACTIVE_HIDDEN_WIDGET_CLASS = `active-${HIDDEN_WIDGET_CLASS}`;
@@ -16,6 +15,7 @@ import imageUp from './images/up.png';
 import imageDown from './images/down.png';
 import imageLeft from './images/left.png';
 import imageRight from './images/right.png';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 const ICON_MAP = {
     h: [

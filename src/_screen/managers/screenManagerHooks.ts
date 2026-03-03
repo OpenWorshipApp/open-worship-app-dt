@@ -50,7 +50,9 @@ export function useScreenManagerEvents(
 
 export function useScreenUpdateEvents(
     screenManagerBase?: ScreenManagerBase,
-    callback?: () => void,
+    callback?: (
+        eventType: 'background' | 'varyAppDocument' | 'bible' | 'foreground',
+    ) => void,
 ) {
     useScreenEvents(
         ['update'],
@@ -58,10 +60,26 @@ export function useScreenUpdateEvents(
         screenManagerBase,
         callback,
     );
-    useScreenBackgroundManagerEvents(['update'], undefined, callback);
-    useScreenVaryAppDocumentManagerEvents(['update'], undefined, callback);
-    useScreenBibleManagerEvents(['update'], undefined, callback);
-    useScreenForegroundManagerEvents(['update'], undefined, callback);
+    useScreenBackgroundManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'background'),
+    );
+    useScreenVaryAppDocumentManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'varyAppDocument'),
+    );
+    useScreenBibleManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'bible'),
+    );
+    useScreenForegroundManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'foreground'),
+    );
 }
 
 function getVideoSources(screenManager: ScreenManager): [string, string][] {

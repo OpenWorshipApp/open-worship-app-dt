@@ -9,7 +9,7 @@ import {
     useSetEditingCanvasItem,
 } from '../CanvasItem';
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
-import { genTimeoutAttempt } from '../../../helper/helpers';
+import { genTimeoutAttempt } from '../../../helper/timeoutHelpers';
 
 export default function BoxEditorNormalTextEditModeComp({
     style,

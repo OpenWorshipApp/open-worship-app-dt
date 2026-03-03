@@ -10,7 +10,8 @@ import {
 } from '../CanvasItem';
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import { useCanvasControllerContext } from '../CanvasController';
-import { cloneJson, genTimeoutAttempt } from '../../../helper/helpers';
+import { cloneJson } from '../../../helper/helpers';
+import { genTimeoutAttempt } from '../../../helper/timeoutHelpers';
 
 export default function CanvasItemPropsEditorComp({
     canvasItem,

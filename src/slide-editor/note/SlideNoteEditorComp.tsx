@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import AppDocument from '../../app-document-list/AppDocument';
@@ -39,5 +39,8 @@ export default function SlideNoteEditorComp({
             store.save();
         };
     }, [store]);
-    return <NoteEditorRenderComp store={store} title={title} />;
+    const uuid = useMemo(() => {
+        return `slide-note-editor-${slide.uuid}`;
+    }, [slide]);
+    return <NoteEditorRenderComp store={store} title={title} uuid={uuid} />;
 }

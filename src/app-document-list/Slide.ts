@@ -13,6 +13,7 @@ import type { AnyObjectType } from '../helper/typeHelpers';
 import { getFontFamilies } from '../server/fontHelpers';
 
 import slideSchemaJson from './SlideSchema.json';
+import FileSource from '../helper/FileSource';
 const slideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
 type MetadataType = {
@@ -39,6 +40,11 @@ export default class Slide
         super();
         this._originalJson = cloneJson(json);
         this.filePath = filePath;
+    }
+
+    get uuid() {
+        const fileSource = FileSource.getInstance(this.filePath);
+        return `${fileSource.fullName}-${this.id}`;
     }
 
     get cloneOriginalJson() {

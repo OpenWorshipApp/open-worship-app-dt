@@ -1,7 +1,7 @@
-import { genTimeoutAttempt } from './helpers';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import EventHandler from '../event/EventHandler';
+import { genTimeoutAttempt } from './timeoutHelpers';
 
 export const AUDIO_PLAYING_CHANGE_EVENT = 'audio-playing-change';
 

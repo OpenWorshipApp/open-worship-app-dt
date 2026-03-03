@@ -43,11 +43,7 @@ import type PdfSlide from './PdfSlide';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import {
-    checkSelectedFilePathExist,
-    getSelectedFilePath,
-    setSelectedFilePath,
-} from '../others/selectedHelpers';
+import { checkSelectedFilePathExist } from '../others/selectedHelpers';
 import type { DisplayType } from '../_screen/screenTypeHelpers';
 import type {
     VaryAppDocumentType,
@@ -63,6 +59,11 @@ import libOfficeLogo from './liboffice-logo.png';
 import FileSource from '../helper/FileSource';
 import { appLog } from '../helper/loggerHelpers';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
+import {
+    SELECTED_APP_DOCUMENT_SETTING_NAME,
+    getSelectedVaryAppDocumentFilePathWithEnsure,
+    setSelectedVaryAppDocumentFilePath,
+} from './selectedVaryAppDocumentHelpers';
 
 export function showPdfDocumentContextMenu(
     event: any,
@@ -540,28 +541,12 @@ export async function appDocumentItemFromKey(key: string) {
     return await varyAppDocument.getItemById(id);
 }
 
-const SELECTED_APP_DOCUMENT_SETTING_NAME = 'selected-vary-app-document';
 const SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME =
     SELECTED_APP_DOCUMENT_SETTING_NAME + '-item';
 
-export async function getSelectedVaryAppDocumentFilePath() {
-    return await getSelectedFilePath(
-        SELECTED_APP_DOCUMENT_SETTING_NAME,
-        dirSourceSettingNames.APP_DOCUMENT,
-    );
-}
-
-export function setSelectedVaryAppDocumentFilePath(filePath: string | null) {
-    setSelectedFilePath(
-        SELECTED_APP_DOCUMENT_SETTING_NAME,
-        dirSourceSettingNames.APP_DOCUMENT,
-        filePath,
-    );
-}
-
 export async function getSelectedVaryAppDocument() {
     const selectedAppDocumentFilePath =
-        await getSelectedVaryAppDocumentFilePath();
+        await getSelectedVaryAppDocumentFilePathWithEnsure();
     if (selectedAppDocumentFilePath === null) {
         return null;
     }

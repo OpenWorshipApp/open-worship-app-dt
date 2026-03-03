@@ -18,13 +18,13 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
 import type { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { dragStore } from '../helper/dragHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function getSystemTimezoneMinuteOffset() {
     const date = new Date();

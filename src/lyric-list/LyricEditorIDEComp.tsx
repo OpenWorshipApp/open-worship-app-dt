@@ -6,10 +6,10 @@ import { useSelectedLyricContext } from './lyricHelpers';
 import type Lyric from './Lyric';
 import LyricMenuComp from './LyricMenuComp';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
 import { useInitMonacoEditor } from '../helper/monacoEditorHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 async function loadLyricContent(lyric: Lyric, editorInstance: any) {
     const lyricContent = await lyric.getContent();

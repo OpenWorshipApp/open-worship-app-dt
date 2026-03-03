@@ -4,8 +4,8 @@ import { useMemo, useRef } from 'react';
 import { useBibleFindController } from './BibleFindController';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { setSetting, useStateSettingString } from '../helper/settingHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
 import { pasteTextToInput } from '../server/appHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 const BIBLE_FIND_RECENT_SEARCH_SETTING_NAME = 'bible-find-recent-search';
 let setFindText: (text: string) => void = () => {};

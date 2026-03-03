@@ -11,9 +11,9 @@ import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 
 import { useStateSettingBoolean } from './settingHelpers';
 import { useAppEffect } from './debuggerHelpers';
-import { genTimeoutAttempt } from './helpers';
 import { checkIsDarkMode } from '../others/initHelpers';
 import { appError as logError } from './loggerHelpers';
+import { genTimeoutAttempt } from './timeoutHelpers';
 
 async function getCopiedText() {
     try {

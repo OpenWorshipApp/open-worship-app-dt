@@ -322,28 +322,40 @@ export function getParamFileFullName() {
 
 const APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME = 'app-new-element-highlight';
 export async function notifyNewElementAdded(
-    elementGetter: () => HTMLElement | null,
-    searchingCount = 0,
+    elementGetter: () => Element | null,
+    {
+        moveToView,
+        shouldSkipHighlighting = false,
+    }: {
+        moveToView?: (element: Element) => void;
+        shouldSkipHighlighting?: boolean;
+    } = {},
 ) {
-    if (searchingCount > 10) {
-        return;
-    }
-    const element = elementGetter();
-    if (element === null) {
+    let element = elementGetter();
+    let i = 0;
+    while (element === null) {
+        element = elementGetter();
         await new Promise((resolve) => {
             setTimeout(resolve, 100);
         });
-        await notifyNewElementAdded(elementGetter, searchingCount + 1);
-    } else {
-        element.scrollIntoView({ behavior: 'instant', block: 'center' });
-        element.classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
-        setTimeout(() => {
-            element.classList.add(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
-        }, 100);
-        setTimeout(() => {
-            element.classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
-        }, 2e3 + 200);
+        if (i > 10) {
+            return;
+        }
+        i++;
     }
+    moveToView ??= bringDomToNearestView;
+    moveToView(element);
+    if (shouldSkipHighlighting) {
+        return;
+    }
+    const classList = element.classList;
+    classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+    setTimeout(() => {
+        classList.add(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+    }, 100);
+    setTimeout(() => {
+        classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+    }, 2e3 + 200);
 }
 
 const webScreenshotCacheManager = new CacheManager<string>(60 /* 1 minute */);

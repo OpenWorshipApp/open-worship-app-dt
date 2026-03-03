@@ -27,12 +27,14 @@ import type ColorNoteInf from './ColorNoteInf';
 import { electronSendAsync } from '../server/appHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import type { AnyObjectType } from './typeHelpers';
+import CacheManager from '../others/CacheManager';
 
 export type SrcData = `data:${string}`;
 
 export type FileSourceEventType = 'select' | 'update' | 'delete';
 
-const cache = new Map<string, FileSource>();
+const fileDataCacheManager = new CacheManager<string | null>(2);
+const instantCache = new Map<string, FileSource>();
 export default class FileSource
     extends EventHandler<FileSourceEventType>
     implements DragInf<string>, ColorNoteInf
@@ -121,9 +123,15 @@ export default class FileSource
     }
 
     static async readFileData(filePath: string, isSilent?: boolean) {
-        return await unlocking(this.toRWLockingKey(filePath), async () => {
+        const key = `file-data-${filePath}`;
+        return await unlocking(key, async () => {
+            const cachedData = await fileDataCacheManager.get(key);
+            if (cachedData !== null) {
+                return cachedData;
+            }
             try {
                 const dataText = await fsReadFile(filePath);
+                await fileDataCacheManager.set(key, dataText);
                 return dataText;
             } catch (error: any) {
                 if (!isSilent) {
@@ -215,12 +223,12 @@ export default class FileSource
     ) {
         const fileSource = this.getInstanceNoCache(filePath, fileFullName);
         if (refreshCache) {
-            cache.delete(fileSource.filePath);
+            instantCache.delete(fileSource.filePath);
         }
-        if (cache.has(fileSource.filePath)) {
-            return cache.get(fileSource.filePath) as FileSource;
+        if (instantCache.has(fileSource.filePath)) {
+            return instantCache.get(fileSource.filePath) as FileSource;
         }
-        cache.set(fileSource.filePath, fileSource);
+        instantCache.set(fileSource.filePath, fileSource);
         return fileSource;
     }
 

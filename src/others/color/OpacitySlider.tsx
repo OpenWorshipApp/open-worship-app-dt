@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import AppRangeComp from '../AppRangeComp';
-import { genTimeoutAttempt } from '../../helper/helpers';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 
 export default function OpacitySlider({
     value,

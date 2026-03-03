@@ -14,11 +14,11 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
 import type { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { renderMarkdown } from '../lyric-list/markdownHelpers';
 import { dragStore } from '../helper/dragHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllQuickText(

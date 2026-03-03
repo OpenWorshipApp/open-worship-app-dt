@@ -16,7 +16,6 @@ import {
     bringDomToCenterView,
     bringDomToNearestView,
     bringDomToTopView,
-    genTimeoutAttempt,
 } from '../helper/helpers';
 import {
     BIBLE_VIEW_TEXT_CLASS,
@@ -38,6 +37,7 @@ import {
     checkIsVersePartialInvisible,
 } from './readBibleScrollHelpers';
 import BibleItem from '../bible-list/BibleItem';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';

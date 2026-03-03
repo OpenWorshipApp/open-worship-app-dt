@@ -1,6 +1,6 @@
 import ProgressBarEventListener from '../event/ProgressBarEventListener';
-import { genTimeoutAttempt } from '../helper/helpers';
 import { appLog } from '../helper/loggerHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 export function showProgressBar(progressKey: string) {
     ProgressBarEventListener.showProgressBar(progressKey);

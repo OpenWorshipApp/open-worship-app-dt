@@ -12,7 +12,6 @@ import {
 } from './foregroundHelpers';
 import ScreensRendererComp from './ScreensRendererComp';
 import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { genTimeoutAttempt } from '../helper/helpers';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import type { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
@@ -22,6 +21,7 @@ import {
     getCameraAndShowMedia,
     useCameraInfoList,
 } from '../helper/cameraHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function RenderCameraInfoComp({
     cameraInfo,

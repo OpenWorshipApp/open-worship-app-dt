@@ -1,4 +1,4 @@
-import type { Stats } from 'node:fs';
+import { type Stats } from 'node:fs';
 
 import appProvider from './appProvider';
 import FileSource from '../helper/FileSource';
@@ -285,15 +285,22 @@ function _fsReaddir(dirPath: string) {
     return fsFilePromise<string[]>(appProvider.fileUtils.readdir, dirPath);
 }
 
+// const rwState: { [key: string]: { r: number; w: number } } = {};
+// for debugging read/write operation count, not used for logic
+// (globalThis as any).rwState = rwState;
 function _fsReadFile(filePath: string, options?: any) {
+    // rwState[filePath] = rwState[filePath] ?? { r: 0, w: 0 };
+    // rwState[filePath].r++;
+    // console.log('read-file', filePath);
     return fsFilePromise<string>(
         appProvider.fileUtils.readFile,
         filePath,
         options,
     );
 }
-
 function _fsWriteFile(filePath: string, data: string | Buffer, options?: any) {
+    // rwState[filePath] = rwState[filePath] ?? { r: 0, w: 0 };
+    // rwState[filePath].w++;
     return fsFilePromise<void>(
         appProvider.fileUtils.writeFile,
         filePath,
