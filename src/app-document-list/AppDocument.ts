@@ -10,7 +10,6 @@ import {
 import { checkIsSameValues, toMaxId } from '../helper/helpers';
 import type { MimetypeNameType } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
-import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
 import type ItemSourceInf from '../others/ItemSourceInf';
 import type { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -51,11 +50,29 @@ export default class AppDocument
     static readonly mimetypeName: MimetypeNameType = 'appDocument';
     isEditable = true;
 
+    static genNewExtraJsonData() {
+        const newCanvasItem = CanvasItemText.genDefaultItem();
+        const appDocumentJson = Slide.defaultSlideData(0);
+        appDocumentJson.canvasItems.push(newCanvasItem.toJson());
+        const jsonData = {
+            items: [appDocumentJson],
+        };
+        return jsonData;
+    }
+
+    async getJsonData(isOriginal = false) {
+        let jsonData = await super.getJsonData(isOriginal);
+        if (jsonData === null) {
+            await this.historyDiscard();
+            const extraJsonData = AppDocument.genNewExtraJsonData();
+            jsonData =
+                AppDocument.genNewJsonData<AppDocumentType>(extraJsonData);
+        }
+        return jsonData;
+    }
+
     async getSlides() {
         let jsonData = await this.getJsonData();
-        if (jsonData === null) {
-            return [];
-        }
         const slides = jsonData.items.map((json: any) => {
             try {
                 return Slide.fromJson(json, this.filePath);
@@ -65,10 +82,8 @@ export default class AppDocument
             return Slide.fromJsonError(json, this.filePath);
         });
         jsonData = await this.getJsonData(true);
-        if (jsonData !== null) {
-            for (const [index, slide] of slides.entries()) {
-                this.checkSlideIsChanged(index, slide, jsonData.items);
-            }
+        for (const [index, slide] of slides.entries()) {
+            this.checkSlideIsChanged(index, slide, jsonData.items);
         }
         const unavailableFontFamiliesSet = slides.reduce((acc, slide) => {
             const unavailableFonts = slide.getUnavailableFontFamilies();
@@ -83,9 +98,6 @@ export default class AppDocument
 
     async setSlides(newSlides: Slide[]) {
         const jsonData = await this.getJsonData();
-        if (jsonData === null) {
-            return;
-        }
         jsonData.items = newSlides.map((slide) => {
             return slide.toJson();
         });
@@ -128,10 +140,6 @@ export default class AppDocument
     // Required by ItemSourceInf but not used in AppDocument, so just throw error
     setItemById(_id: number, _slide: Slide): OptionalPromise<void> {
         throw new Error('Method not implemented.');
-    }
-
-    get editingHistoryManager() {
-        return EditingHistoryManager.getInstance(this.filePath);
     }
 
     async checkSlideIsChanged(
@@ -429,10 +437,8 @@ export default class AppDocument
     }
 
     static async create(dir: string, name: string) {
-        const newCanvasItem = CanvasItemText.genDefaultItem();
-        const appDocumentJson = Slide.defaultSlideData(0);
-        appDocumentJson.canvasItems.push(newCanvasItem.toJson());
-        return super.create(dir, name, { items: [appDocumentJson] });
+        const jsonData = this.genNewExtraJsonData();
+        return super.create(dir, name, jsonData);
     }
 
     static async getCopiedSlides() {
@@ -446,9 +452,10 @@ export default class AppDocument
                 const texts = text.split('\n');
                 for (const text of texts) {
                     const copiedSlideSlide = Slide.clipboardDeserialize(text);
-                    if (copiedSlideSlide !== null) {
-                        copiedSlides.push(copiedSlideSlide);
+                    if (copiedSlideSlide === null) {
+                        continue;
                     }
+                    copiedSlides.push(copiedSlideSlide);
                 }
             }
         }

@@ -122,8 +122,12 @@ export default class FileSource
         return `rw-${filePath}`;
     }
 
+    static toDataCacheKey(filePath: string) {
+        return `file-data-${filePath}`;
+    }
+
     static async readFileData(filePath: string, isSilent?: boolean) {
-        const key = `file-data-${filePath}`;
+        const key = this.toDataCacheKey(filePath);
         return await unlocking(key, async () => {
             const cachedData = await fileDataCacheManager.get(key);
             if (cachedData !== null) {
@@ -154,6 +158,8 @@ export default class FileSource
     }
 
     async writeFileData(data: string) {
+        const key = FileSource.toDataCacheKey(this.filePath);
+        await fileDataCacheManager.delete(key);
         return await unlocking(
             FileSource.toRWLockingKey(this.filePath),
             async () => {

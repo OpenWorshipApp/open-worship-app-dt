@@ -88,6 +88,20 @@ export default function AppDocumentListComp() {
         }
         return null;
     };
+    const fileSelectionOption = {
+        windowTitle: 'Select slide files',
+        dirPath: dirSource.dirPath,
+        extensions: Array.from(
+            new Set([
+                ...getMimetypeExtensions('appDocument'),
+                ...getMimetypeExtensions('pdf'),
+                ...supportOfficeFileExtensions.map((ext) => {
+                    return ext.slice(1);
+                }),
+            ]),
+        ),
+        takeSelectedFile: handleFileTaking.bind(null, dirSource),
+    };
 
     return (
         <FileListHandlerComp
@@ -101,20 +115,7 @@ export default function AppDocumentListComp() {
             header={<span>{tran('Documents')}</span>}
             bodyHandler={handleBodyRendering}
             checkIsOnScreen={checkIsOnScreen}
-            fileSelectionOption={{
-                windowTitle: 'Select slide files',
-                dirPath: dirSource.dirPath,
-                extensions: Array.from(
-                    new Set([
-                        ...getMimetypeExtensions('appDocument'),
-                        ...getMimetypeExtensions('pdf'),
-                        ...supportOfficeFileExtensions.map((ext) => {
-                            return ext.slice(1);
-                        }),
-                    ]),
-                ),
-                takeSelectedFile: handleFileTaking.bind(null, dirSource),
-            }}
+            fileSelectionOption={fileSelectionOption}
         />
     );
 }

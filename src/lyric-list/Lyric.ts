@@ -61,7 +61,7 @@ export default class Lyric extends AppEditableDocumentSourceAbs<LyricType> {
     }
 
     async save(): Promise<boolean> {
-        return await this.editingHistoryManager.save((dataText) => {
+        return await this.historySave((dataText) => {
             return dataText;
         });
     }

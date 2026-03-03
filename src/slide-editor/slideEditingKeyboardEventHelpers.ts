@@ -25,7 +25,7 @@ function handleHistory(appDocument: AppDocument, event: any) {
             event,
         )
     ) {
-        appDocument.editingHistoryManager.undo();
+        appDocument.historyUndo();
         return true;
     }
     if (
@@ -46,7 +46,7 @@ function handleHistory(appDocument: AppDocument, event: any) {
             event,
         )
     ) {
-        appDocument.editingHistoryManager.redo();
+        appDocument.historyRedo();
         return true;
     }
     if (
@@ -62,7 +62,7 @@ function handleHistory(appDocument: AppDocument, event: any) {
             event,
         )
     ) {
-        appDocument.editingHistoryManager.save();
+        appDocument.historySave();
         return true;
     }
 }

@@ -330,10 +330,11 @@ export default class EditingHistoryManager {
                 }
                 const currentFilePath =
                     await this.fileLineHandler.getCurrentFileFullPath();
-                dataText =
-                    currentFilePath !== null
-                        ? await FileSource.readFileData(currentFilePath)
-                        : await this.getOriginalData();
+                if (currentFilePath === null) {
+                    dataText = await this.getOriginalData();
+                } else {
+                    dataText = await FileSource.readFileData(currentFilePath);
+                }
                 if (dataText === null) {
                     return null;
                 }

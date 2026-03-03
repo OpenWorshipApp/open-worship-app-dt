@@ -29,7 +29,8 @@ export function useEditingHistoryStatus(filePath: string) {
         canSave: false,
     });
     const update = async () => {
-        const editingHistoryManager = new EditingHistoryManager(filePath);
+        const editingHistoryManager =
+            EditingHistoryManager.getInstance(filePath);
         const canUndo = await editingHistoryManager.checkCanUndo();
         const canRedo = await editingHistoryManager.checkCanRedo();
         const historyText = await editingHistoryManager.getCurrentHistory();
@@ -88,7 +89,7 @@ function MenuIsModifying({
                     if (!isOk) {
                         return;
                     }
-                    editableDocument.editingHistoryManager.discard();
+                    editableDocument.historyDiscard();
                 }}
             >
                 <i className="bi bi-x-octagon" />
@@ -132,7 +133,7 @@ export function FileEditingMenuComp({
                 disabled={!canUndo}
                 style={genDisabledStyle(!canUndo)}
                 onClick={() => {
-                    editableDocument.editingHistoryManager.undo();
+                    editableDocument.historyUndo();
                 }}
             >
                 <i className="bi bi-arrow-90deg-left" />
@@ -144,7 +145,7 @@ export function FileEditingMenuComp({
                 disabled={!canRedo}
                 style={genDisabledStyle(!canRedo)}
                 onClick={() => {
-                    editableDocument.editingHistoryManager.redo();
+                    editableDocument.historyRedo();
                 }}
             >
                 <i className="bi bi-arrow-90deg-right" />

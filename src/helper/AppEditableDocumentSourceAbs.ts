@@ -1,4 +1,3 @@
-import { getSelectedVaryAppDocumentFilePath } from '../app-document-list/selectedVaryAppDocumentHelpers';
 import EditingHistoryManager from '../editing-manager/EditingHistoryManager';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
 import type { MimetypeNameType } from '../server/fileHelpers';
@@ -41,7 +40,6 @@ const cache = new Map<string, AppDocumentSourceAbs>();
 export abstract class AppDocumentSourceAbs {
     protected static mimetypeName: MimetypeNameType = 'other';
     filePath: string;
-    _shouldCacheData = false;
 
     constructor(filePath: string) {
         this.filePath = filePath;
@@ -100,17 +98,11 @@ export abstract class AppDocumentSourceAbs {
 export default abstract class AppEditableDocumentSourceAbs<
     T extends { metadata: AppDocumentMetadataType },
 > extends AppDocumentSourceAbs {
-    private _cachedJsonData: T | null = null;
-    private _cachedOriginJsonData: T | null = null;
-
-    get shouldCacheData() {
-        const selectedFilePath = getSelectedVaryAppDocumentFilePath();
-        const shouldCache = selectedFilePath === this.filePath;
-        return shouldCache;
-    }
-
-    get editingHistoryManager() {
-        return EditingHistoryManager.getInstance(this.filePath);
+    private get editingHistoryManager() {
+        const editingHistoryManager = EditingHistoryManager.getInstance(
+            this.filePath,
+        );
+        return editingHistoryManager;
     }
 
     static fromDataText<
@@ -129,13 +121,6 @@ export default abstract class AppEditableDocumentSourceAbs<
     }
 
     async getJsonData(isOriginal = false): Promise<T | null> {
-        if (this.shouldCacheData) {
-            if (isOriginal && this._cachedOriginJsonData !== null) {
-                return this._cachedOriginJsonData;
-            } else if (!isOriginal && this._cachedJsonData !== null) {
-                return this._cachedJsonData;
-            }
-        }
         let jsonText = null;
         if (isOriginal) {
             jsonText = await this.editingHistoryManager.getOriginalData();
@@ -150,13 +135,6 @@ export default abstract class AppEditableDocumentSourceAbs<
         if (jsonData === null) {
             return null;
         }
-        if (this.shouldCacheData) {
-            if (isOriginal) {
-                this._cachedOriginJsonData = jsonData;
-            } else {
-                this._cachedJsonData = jsonData;
-            }
-        }
         return jsonData;
     }
 
@@ -165,9 +143,6 @@ export default abstract class AppEditableDocumentSourceAbs<
     }
 
     async setJsonData(jsonData: T) {
-        if (this.shouldCacheData) {
-            this._cachedJsonData = jsonData;
-        }
         const Class = this.constructor as typeof AppEditableDocumentSourceAbs;
         const jsonString = Class.toJsonString(jsonData);
         this.editingHistoryManager.addHistory(jsonString);
@@ -226,21 +201,27 @@ export default abstract class AppEditableDocumentSourceAbs<
         const isSuccess = await this.editingHistoryManager.save(
             this._sanitizeDataText.bind(this),
         );
-        if (isSuccess) {
-            this.clearCacheData();
-        }
         return isSuccess;
     }
 
-    static async create(dir: string, name: string, extraData: AnyObjectType) {
-        const data = JSON.stringify({
+    static genNewJsonData<
+        T extends {
+            metadata: AppDocumentMetadataType;
+        },
+    >(extraData: AnyObjectType = {}): T {
+        const jsonData = JSON.stringify({
             metadata: super.genMetadata(),
             ...extraData,
         });
+        return jsonData as unknown as T;
+    }
+
+    static async create(dir: string, name: string, extraData: AnyObjectType) {
+        const jsonData = JSON.stringify(this.genNewJsonData(extraData));
         const filePath = await createNewFileDetail(
             dir,
             name,
-            data,
+            jsonData,
             this.mimetypeName,
         );
         if (filePath !== null) {
@@ -254,9 +235,16 @@ export default abstract class AppEditableDocumentSourceAbs<
         this.editingHistoryManager.discard();
     }
 
-    clearCacheData() {
-        // TODO: call this method by file watcher instead of calling in save
-        // method
-        this._cachedJsonData = null;
+    historyUndo() {
+        return this.editingHistoryManager.undo();
+    }
+    historyRedo() {
+        return this.editingHistoryManager.redo();
+    }
+    historyDiscard() {
+        return this.editingHistoryManager.discard();
+    }
+    historySave(sanitizeData?: (data: string) => string | null) {
+        return this.editingHistoryManager.save(sanitizeData);
     }
 }
