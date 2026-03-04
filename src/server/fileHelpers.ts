@@ -20,6 +20,7 @@ import {
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { cloneJson, freezeObject } from '../helper/helpers';
+import { electronSendAsync } from './appHelpers';
 
 for (const ml of [
     mimeBibleList,
@@ -601,21 +602,25 @@ export function getFileFullName(file: File | string) {
     return fileFullName;
 }
 
-export function selectDirs() {
-    return appProvider.messageUtils.sendDataSync(
-        'main:app:select-dirs',
-    ) as string[];
+export async function selectDirs() {
+    showProgressBar('Selecting Directory');
+    const dirs = await electronSendAsync<string[]>('main:app:select-dirs');
+    hideProgressBar('Selecting Directory');
+    return dirs;
 }
-export function selectFiles(
+export async function selectFiles(
     filters: {
         name: string;
         extensions: string[];
     }[],
 ) {
-    return appProvider.messageUtils.sendDataSync(
+    showProgressBar('Selecting File');
+    const filePaths = await electronSendAsync<string[]>(
         'main:app:select-files',
-        filters,
-    ) as string[];
+        { filters },
+    );
+    hideProgressBar('Selecting File');
+    return filePaths;
 }
 
 export function getUserWritablePath(): string {

@@ -1,33 +1,33 @@
 import { useState } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { FontListType } from './appProvider';
 import appProvider from './appProvider';
 import CacheManager from '../others/CacheManager';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import FileSource from '../helper/FileSource';
+import { electronSendAsync } from './appHelpers';
+import { unlocking } from './unlockingHelpers';
 
-function showLoadingFontFail() {
-    showSimpleToast('Loading Fonts', 'Fail to load font list');
+const cacheManager = new CacheManager<FontListType | null>(60 * 10); // 10 minutes
+export async function getFontFamilyMapByNodeFont() {
+    return await unlocking('getFontFamilyMapByNodeFont', async () => {
+        const cachedFontList = await cacheManager.get('fontList');
+        if (cachedFontList !== null) {
+            return cachedFontList;
+        }
+        appProvider.messageUtils.sendData('main:app:get-font-list');
+        const result = await electronSendAsync<FontListType | null>(
+            'main:app:get-font-list',
+        );
+        await cacheManager.set('fontList', result);
+        return result;
+    });
 }
 
-const cache = new CacheManager<FontListType | null>(60 * 10); // 10 minutes
-export function getFontFamilyMapByNodeFont() {
-    const cached = cache.getSync('fontList');
-    if (cached !== null) {
-        return cached;
-    }
-    appProvider.messageUtils.sendData('main:app:get-font-list');
-    const result = appProvider.messageUtils.sendDataSync(
-        'main:app:get-font-list',
-    ) as FontListType | null;
-    cache.set('fontList', result);
-    return result;
-}
-
-export function getFontFamilies() {
-    const fontMap = getFontFamilyMapByNodeFont();
+export async function getFontFamilies() {
+    const fontMap = await getFontFamilyMapByNodeFont();
     if (fontMap === null) {
         return [];
     }
@@ -37,17 +37,20 @@ export function getFontFamilies() {
 }
 
 export function useFontList() {
-    const [fontList, setFontList] = useState<FontListType | null>(null);
-    useAppEffect(() => {
-        if (fontList === null) {
-            const fonts = getFontFamilyMapByNodeFont();
-            if (fonts === null) {
-                showLoadingFontFail();
-            } else {
-                setFontList(fonts);
+    const [fontList, setFontList] = useState<FontListType | null | undefined>(
+        undefined,
+    );
+    useAppEffectAsync(
+        async (contextMethods) => {
+            if (fontList !== undefined) {
+                return;
             }
-        }
-    }, [fontList]);
+            const fonts = await getFontFamilyMapByNodeFont();
+            contextMethods.setFontList(fonts);
+        },
+        [fontList],
+        { setFontList },
+    );
     return fontList;
 }
 

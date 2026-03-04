@@ -146,7 +146,7 @@ export async function handleFilesSelectionMenuItem(
         onFileSelected,
         takeSelectedFile,
     } = fileSelectionOption;
-    const filePaths = selectFiles([{ name: windowTitle, extensions }]);
+    const filePaths = await selectFiles([{ name: windowTitle, extensions }]);
     onFileSelected?.(filePaths);
     const promises = [];
     for (const filePath of filePaths) {

@@ -19,6 +19,13 @@ export default function PathEditorComp({
     } else if (!dirSource.isDirPathValid) {
         dirValidClassname = 'is-invalid';
     }
+    const handleDirSelecting = async () => {
+        const dirs = await selectDirs();
+        if (dirs.length === 0) {
+            return;
+        }
+        setPath1(dirs[0]);
+    };
     return (
         <div className="input-group mb-3">
             {dirSource.dirPath ? (
@@ -43,12 +50,7 @@ export default function PathEditorComp({
             <button
                 className="btn btn-secondary"
                 type="button"
-                onClick={() => {
-                    const dirs = selectDirs();
-                    if (dirs.length) {
-                        setPath1(dirs[0]);
-                    }
-                }}
+                onClick={handleDirSelecting}
             >
                 <i className="bi bi-folder2-open" />
             </button>

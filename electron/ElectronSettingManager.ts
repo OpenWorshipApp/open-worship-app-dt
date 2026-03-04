@@ -3,8 +3,10 @@ import path from 'node:path';
 import electron, { BrowserWindow, nativeTheme } from 'electron';
 
 import { htmlFiles } from './fsServe';
+import { genTimeoutAttempt } from './electronHelpers';
 
 export default class ElectronSettingManager {
+    timeoutAttempt = genTimeoutAttempt();
     settingObject: {
         mainWinBounds: Electron.Rectangle | null;
         appScreenDisplayId: number | null;
@@ -96,7 +98,7 @@ export default class ElectronSettingManager {
 
     getDisplayById(displayId: number) {
         return this.allDisplays.find((display) => {
-            return display.id == displayId;
+            return display.id === displayId;
         });
     }
 
@@ -105,7 +107,18 @@ export default class ElectronSettingManager {
             ...this.settingObject,
             themeSource: nativeTheme.themeSource,
         };
-        fs.writeFileSync(this.fileSettingPath, JSON.stringify(data), 'utf8');
+        this.timeoutAttempt(() => {
+            try {
+                fs.writeFileSync(
+                    this.fileSettingPath,
+                    JSON.stringify(data),
+                    'utf8',
+                );
+                console.log('Setting saved');
+            } catch (error) {
+                console.log('Error saving setting', error);
+            }
+        });
     }
 
     syncMainWindow(win: BrowserWindow) {

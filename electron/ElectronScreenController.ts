@@ -62,7 +62,7 @@ export default class ElectronScreenController {
     setDisplay(display: Electron.Display) {
         const bounds = display.bounds;
         this.win.setBounds(bounds);
-        this.win.webContents.executeJavaScript('window.location.reload();');
+        this.win.webContents.reload();
     }
 
     sendData(channel: string, data: any) {

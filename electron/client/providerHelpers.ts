@@ -1,7 +1,7 @@
 import { htmlFiles, toTitleCase } from '../fsServe';
 
 function freezeObject(obj: any) {
-    if (!['object', 'array'].includes(typeof obj)) {
+    if (typeof obj !== 'object' || obj === null) {
         return;
     }
     Object.freeze(obj);
@@ -16,20 +16,26 @@ function freezeObject(obj: any) {
     }
 }
 
-export async function initProvider(provider: { [key: string]: any }) {
+export async function initProvider(
+    provider: { [key: string]: any },
+    calledCount = 0,
+) {
     const pathName = globalThis.location.pathname;
+    provider['currentHomePage'] = pathName;
     if (!pathName?.length) {
+        if (calledCount >= 20) {
+            throw new Error('Path name is not ready after multiple attempts');
+        }
         console.log('Waiting for pathName to be ready...');
         await new Promise((resolve) => {
             setTimeout(resolve, 100);
         });
-        return initProvider(provider);
+        return initProvider(provider, calledCount + 1);
     }
     for (const [name, htmlFileFullName] of Object.entries(htmlFiles)) {
         provider[`${name}HomePage`] = `/${htmlFileFullName}`;
         const isCurrentPage = pathName.startsWith(`/${htmlFileFullName}`);
         provider[`isPage${toTitleCase(name)}`] = isCurrentPage;
-        provider['currentHomePage'] = pathName;
     }
     freezeObject(provider);
     (globalThis as any).provider = provider;

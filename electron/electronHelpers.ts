@@ -182,21 +182,29 @@ export function genCenterSubDisplay({
     height: number;
 }) {
     const offsetWidth = width * (1 - displayPercent);
+    // intend to keep the aspect ratio, so use the same offset for height
+    const offsetHeight = offsetWidth;
     return {
         x: Math.floor(x + offsetWidth / 2),
-        y: Math.floor(y + offsetWidth / 2),
+        y: Math.floor(y + offsetHeight / 2),
         width: Math.floor(width - offsetWidth),
-        height: Math.floor(height - offsetWidth),
+        height: Math.floor(height - offsetHeight),
     };
 }
 
-export function genWebPreferences(preloadPath: string): WebPreferences {
-    return {
+export function genWebPreferences(preloadPath: string) {
+    // TODO: fix security issues with nodeIntegration and contextIsolation
+    // All windows expose full Node.js APIs to renderers.
+    // Any XSS vulnerability escalates to full system compromise.
+    // Electron strongly recommends contextIsolation:
+    //  true with a preload bridge.
+    const webPreferences: WebPreferences = {
         webSecurity: isSecured,
         nodeIntegration: true,
         contextIsolation: false,
         preload: preloadPath,
     };
+    return webPreferences;
 }
 
 export function guardBrowsing(
@@ -287,4 +295,30 @@ export async function captureWebScreenShot(
     attemptClosing(captureWin);
     const imageDataUrl = image.toDataURL();
     return imageDataUrl;
+}
+
+export function genTimeoutAttempt(
+    timeMilliseconds: number = 1e3,
+    shouldWait = true,
+) {
+    let timeoutId: any = null;
+    let lastSchedule = Date.now() - timeMilliseconds - 1;
+    return function (func: () => void, isImmediate: boolean = false) {
+        if (!shouldWait && Date.now() - lastSchedule > timeMilliseconds) {
+            isImmediate = true;
+        }
+        lastSchedule = Date.now();
+        if (timeoutId !== null) {
+            clearTimeout(timeoutId);
+            timeoutId = null;
+        }
+        if (isImmediate) {
+            func();
+            return;
+        }
+        timeoutId = setTimeout(() => {
+            timeoutId = null;
+            func();
+        }, timeMilliseconds);
+    };
 }

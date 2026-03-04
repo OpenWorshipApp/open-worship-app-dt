@@ -143,8 +143,8 @@ export default class Slide
         return fontFamilies;
     }
 
-    getUnavailableFontFamilies() {
-        const availableFontFamilies = getFontFamilies();
+    async getUnavailableFontFamilies() {
+        const availableFontFamilies = await getFontFamilies();
         if (availableFontFamilies === null) {
             return [];
         }

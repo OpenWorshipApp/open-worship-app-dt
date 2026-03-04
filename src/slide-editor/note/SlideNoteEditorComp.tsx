@@ -48,14 +48,12 @@ export default function SlideNoteEditorComp({
         ['update'],
         async () => {
             const newSlide = await appDocument.getItemById(slide.id);
-            if (newSlide === null) {
+            if (newSlide === null || newSlide.note === store.currentText) {
                 return;
             }
-            if (newSlide.note !== store.currentText) {
-                setStore(new SlideNoteStore(appDocument, newSlide));
-            }
+            setStore(new SlideNoteStore(appDocument, newSlide));
         },
-        [appDocument, slide],
+        [appDocument, slide, store],
         appDocument.filePath,
     );
 

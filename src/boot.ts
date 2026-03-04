@@ -9,7 +9,7 @@ export async function init(callback: () => void = () => {}) {
         style.id = id;
         document.head.appendChild(style);
     }
-    const fontFamily = getAppFontFamily();
+    const fontFamily = await getAppFontFamily();
     if (fontFamily !== null) {
         style.innerHTML = `
         * {
@@ -17,7 +17,7 @@ export async function init(callback: () => void = () => {}) {
         }
     `;
     }
-    const fontWeight = getAppFontWeight();
+    const fontWeight = await getAppFontWeight();
     if (fontWeight !== null) {
         style.innerHTML += `
         * {

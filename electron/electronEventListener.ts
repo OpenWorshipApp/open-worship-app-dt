@@ -25,9 +25,6 @@ import {
 } from './msHelpers';
 
 const { dialog, ipcMain, app } = electron;
-const cache: { [key: string]: any } = {
-    fontsMap: null,
-};
 
 export type AnyObjectType = {
     [key: string]: any;
@@ -90,21 +87,22 @@ export function initEventListenerApp(appController: ElectronAppController) {
         event.returnValue = app.getPath('temp');
     });
 
-    ipcMain.on('main:app:select-dirs', async (event) => {
+    onAsync(ipcMain, 'main:app:select-dirs', async () => {
         const result = await dialog.showOpenDialog(appController.mainWin, {
             properties: ['openDirectory'],
         });
-        event.returnValue = result.filePaths;
+        return result.filePaths;
     });
 
-    ipcMain.on(
+    onAsync(
+        ipcMain,
         'main:app:select-files',
-        async (event, filters?: FileFilter[]) => {
+        async ({ filters }: { filters?: FileFilter[] }) => {
             const result = await dialog.showOpenDialog(appController.mainWin, {
                 properties: ['openFile', 'multiSelections'],
                 filters,
             });
-            event.returnValue = result.filePaths;
+            return result.filePaths;
         },
     );
 }
@@ -281,10 +279,7 @@ export function initEventOther(appController: ElectronAppController) {
         },
     );
 
-    ipcMain.on('main:app:get-font-list', async (event) => {
-        if (cache.fontsMap !== null) {
-            event.returnValue = cache.fontsMap;
-        }
+    onAsync(ipcMain, 'main:app:get-font-list', async () => {
         try {
             const fontList = await import('font-list');
             const fonts = await fontList.getFonts({ disableQuoting: true });
@@ -293,12 +288,11 @@ export function initEventOther(appController: ElectronAppController) {
                     return [fontName, []];
                 }),
             );
-            event.returnValue = fontsMap;
-            cache.fontsMap = fontsMap;
+            return fontsMap;
         } catch (error) {
             console.log(error);
-            event.returnValue = null;
         }
+        return null;
     });
 
     ipcMain.on('main:app:reveal-path', (_, path: string) => {

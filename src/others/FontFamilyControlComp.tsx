@@ -18,7 +18,7 @@ export default function FontFamilyControlComp({
 }>) {
     const fontList = useFontList();
     const fontFamilies = useMemo(() => {
-        if (fontList === null) {
+        if (!fontList) {
             return [];
         }
         const newFontFamilies = Object.keys(fontList).map((key) => [key, key]);
@@ -28,8 +28,11 @@ export default function FontFamilyControlComp({
         newFontFamilies.unshift(['--', '--']);
         return newFontFamilies;
     }, [fontList, fontFamily]);
-    if (fontList === null) {
+    if (fontList === undefined) {
         return <div>Loading Font ...</div>;
+    }
+    if (fontList === null) {
+        return <div>Fail to load font list</div>;
     }
     return (
         <div className="pb-2">

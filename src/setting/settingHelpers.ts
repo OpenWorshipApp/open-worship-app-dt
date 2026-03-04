@@ -22,8 +22,8 @@ export function openBibleSetting() {
 export const APP_FONT_FAMILY_SETTING_NAME = 'app-font-family';
 export const APP_FONT_WEIGHT_SETTING_NAME = 'app-font-weight';
 
-export function getAppFontFamily() {
-    const fonts = getFontFamilyMapByNodeFont();
+export async function getAppFontFamily() {
+    const fonts = await getFontFamilyMapByNodeFont();
     const fontFamily = getSetting(APP_FONT_FAMILY_SETTING_NAME);
     if (!fontFamily || !fonts?.[fontFamily]) {
         return null;
@@ -31,10 +31,10 @@ export function getAppFontFamily() {
     return fontFamily;
 }
 
-export function getAppFontWeight() {
-    const fonts = getFontFamilyMapByNodeFont();
+export async function getAppFontWeight() {
+    const fonts = await getFontFamilyMapByNodeFont();
     const fontWeight = getSetting(APP_FONT_WEIGHT_SETTING_NAME);
-    const fontFamily = getAppFontFamily();
+    const fontFamily = await getAppFontFamily();
     if (
         !fontWeight ||
         !fontFamily ||

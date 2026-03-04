@@ -46,11 +46,12 @@ export default function AppDocumentNoteEditorComp({
         ['update'],
         async () => {
             const newNote = await appDocument.getNote();
-            if (newNote !== store.currentText) {
-                setStore(new AppDocumentNoteStore(appDocument, newNote));
+            if (newNote === store.currentText) {
+                return;
             }
+            setStore(new AppDocumentNoteStore(appDocument, newNote));
         },
-        [appDocument],
+        [appDocument, store],
         appDocument.filePath,
     );
 

@@ -26,6 +26,7 @@ import {
 import { fixMissingFontFamilies } from '../server/fontHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
 import { notifyNewElementAdded } from '../helper/domHelpers';
+import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -60,15 +61,29 @@ export default class AppDocument
         return jsonData;
     }
 
-    async getJsonData(isOriginal = false) {
+    async getJsonData(isOriginal = false): Promise<AppDocumentType> {
         let jsonData = await super.getJsonData(isOriginal);
-        if (jsonData === null) {
-            await this.historyDiscard();
-            const extraJsonData = AppDocument.genNewExtraJsonData();
-            jsonData =
-                AppDocument.genNewJsonData<AppDocumentType>(extraJsonData);
+        if (jsonData !== null) {
+            return jsonData;
         }
-        return jsonData;
+        await this.historyDiscard();
+        if (!isOriginal) {
+            jsonData = await this.getJsonData(true);
+            if (jsonData !== null) {
+                await showAppAlert(
+                    'Corrupted Document',
+                    'Document data will be reset to the last saved state.',
+                );
+                return jsonData;
+            }
+        }
+        await showAppAlert(
+            'Corrupted Document',
+            'The document data is corrupted and cannot be loaded. ' +
+                'We will reset the document data to a new state.',
+        );
+        const extraJsonData = AppDocument.genNewExtraJsonData();
+        return AppDocument.genNewJsonData<AppDocumentType>(extraJsonData);
     }
 
     async getSlides() {
@@ -85,14 +100,19 @@ export default class AppDocument
         for (const [index, slide] of slides.entries()) {
             this.checkSlideIsChanged(index, slide, jsonData.items);
         }
-        const unavailableFontFamiliesSet = slides.reduce((acc, slide) => {
-            const unavailableFonts = slide.getUnavailableFontFamilies();
+        const unavailableFontFamiliesSet = new Set<string>();
+        for (const slide of slides) {
+            const unavailableFonts = await slide.getUnavailableFontFamilies();
             for (const font of unavailableFonts) {
-                acc.add(font);
+                unavailableFontFamiliesSet.add(font);
             }
-            return acc;
-        }, new Set<string>());
-        fixMissingFontFamilies(unavailableFontFamiliesSet, this.filePath);
+        }
+        if (unavailableFontFamiliesSet.size > 0) {
+            await fixMissingFontFamilies(
+                unavailableFontFamiliesSet,
+                this.filePath,
+            );
+        }
         return slides;
     }
 
