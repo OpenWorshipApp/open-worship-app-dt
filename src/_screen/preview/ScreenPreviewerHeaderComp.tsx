@@ -32,7 +32,7 @@ export default function ScreenPreviewerHeaderComp() {
                     <div className="ms-2">
                         <ItemColorNoteComp item={screenManagerBase} />
                     </div>
-                    <div className="ms-2" title="TODO: implement this feature">
+                    <div className="ms-2">
                         <i
                             className={
                                 `bi bi-${isLocked ? 'lock-fill' : 'unlock'}` +

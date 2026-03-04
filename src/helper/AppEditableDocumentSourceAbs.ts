@@ -71,9 +71,9 @@ export abstract class AppDocumentSourceAbs {
             const instance = createInstance();
             cache.set(filePath, instance as any);
         }
-        const instance = cache.get(filePath) as any as T;
+        const instance = cache.get(filePath) as T;
         if (instance instanceof this === false) {
-            throw new Error('Invalid Instance');
+            throw new TypeError('Invalid Instance');
         }
         return instance;
     }

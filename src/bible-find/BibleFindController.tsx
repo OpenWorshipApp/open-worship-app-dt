@@ -193,10 +193,11 @@ class DatabaseFindingHandler {
             .filter((part) => quickTrimText(locale, part))
             .filter((part) => part.length > 0)
             .map((part) => `%${part}%`)
-            .join('');
+            .join('')
+            .replaceAll("'", "");
         const sqlFrom = `FROM verses WHERE sText LIKE '%${wildCardText}%'${sqlBookKey}`;
         let sql = `SELECT text ${sqlFrom}`;
-        if (fromLineNumber == undefined || toLineNumber == undefined) {
+        if (fromLineNumber === undefined || toLineNumber === undefined) {
             fromLineNumber = 0;
             toLineNumber = DEFAULT_ROW_LIMIT - 1;
         }

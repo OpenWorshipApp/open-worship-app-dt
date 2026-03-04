@@ -42,7 +42,7 @@ const dictionary = {
     'Split Vertical to': 'បំបែកបញ្ឈរទៅ',
     'Split Horizontal to': 'បំបែកផ្ដេកទៅ',
     'Loading Bible Data': 'កំពុងផ្ទុកទិន្នន័យព្រះគម្ពីរ',
-    'Unable to preview right now': 'មិនអាចបង្ហាញ 미្ដងនេះទេ',
+    'Unable to preview right now': 'មិនអាចបង្ហាញបាននៅពេលនេះទេ',
     'Open bible lookup popup': 'បើកផ្ទាំងស្វែងរកព្រះគម្ពីរ',
     Cancel: 'បដិសេធ',
     Ok: 'យល់ព្រម',
@@ -64,7 +64,7 @@ const dictionary = {
     'Please pause all background audios before disabling audio handlers':
         'សូមបញ្ឈប់សំលេងផ្ទៃខាងក្រោយទាំងអស់មុនពេលបិទអ្នកគ្រប់គ្រងសំលេង',
     'Fading at the End': 'បន្ថយនៅចុងបញ្ចប់',
-    'Data not available for': 'ទិន្នន័យមិនអាចใช้ได้สำหรับ',
+    'Data not available for': 'ទិន្នន័យមិនអាចប្រើប្រាស់បាន',
     'No data available': 'មិនមានទិន្នន័យ',
     'No verses found for this Bible item':
         'មិនមានខគម្ពីរណាមួយសម្រាប់ធាតុព្រះគម្ពីរនេះទេ',
@@ -287,7 +287,7 @@ const dictionary = {
     'Bible Reader': 'អានព្រះគម្ពីរ',
     'Add Bible Item': 'បន្ថែមខព្រះគម្ពីរ',
     'Font Size': 'ទំហំតួអក្សរ',
-    'Keep Open': 'កុំបិត',
+    'Keep Open': 'កុំបិទ',
     'Should New Lines': 'គួរតែបង្កើតបន្ទាត់ថ្មី',
     'Use Model New Lines': 'ប្រើបន្ទាត់ថ្មីគំរូ',
     'Break lines following model formatting': 'បំបែកបន្ទាត់តាមរចនាប័ទ្មគំរូ',
@@ -329,7 +329,7 @@ const duplicateKeys = Object.entries(dictionary)
 if (duplicateKeys.length > 0) {
     throw new Error(
         'Duplicate translation keys found after sanitization: ' +
-            duplicateKeys.join(', '),
+        duplicateKeys.join(', '),
     );
 }
 
@@ -572,7 +572,6 @@ const lang: LanguageDataType = {
         'បាន',
         'នេះ',
         'មាន',
-        'ជា',
     ],
     trimText: (text: string) => {
         return text.trim().replaceAll(/(^(\u200B)+|(\u200B)+$)/g, '');

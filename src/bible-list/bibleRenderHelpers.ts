@@ -175,7 +175,7 @@ class BibleRenderHelper {
             };
         }
         const isNewLine =
-            verse == 1 ||
+            verse === 1 ||
             (await checkShouldNewLine(bibleKey, bookKey, chapter, verse));
         const isModelNewLine = await checkShouldNewLineModel(
             bibleKey,

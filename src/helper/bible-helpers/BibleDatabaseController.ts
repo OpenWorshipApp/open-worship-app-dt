@@ -29,6 +29,6 @@ export default class BibleDatabaseController extends IndexedDbController {
 
     static async getInstance() {
         const instance = await super.getInstance();
-        return instance as any as BibleDatabaseController;
+        return instance as BibleDatabaseController;
     }
 }
