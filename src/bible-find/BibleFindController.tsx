@@ -194,7 +194,7 @@ class DatabaseFindingHandler {
             .filter((part) => part.length > 0)
             .map((part) => `%${part}%`)
             .join('')
-            .replaceAll("'", "");
+            .replaceAll("'", '');
         const sqlFrom = `FROM verses WHERE sText LIKE '%${wildCardText}%'${sqlBookKey}`;
         let sql = `SELECT text ${sqlFrom}`;
         if (fromLineNumber === undefined || toLineNumber === undefined) {
