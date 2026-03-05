@@ -40,10 +40,10 @@ export async function showCanvasContextMenu(
             : []),
         {
             menuElement: tran('Insert Medias'),
-            onSelect: () => {
+            onSelect: async () => {
                 const imageExtensions = getMimetypeExtensions('image');
                 const videoExtension = getMimetypeExtensions('video');
-                const filePaths = selectFiles([
+                const filePaths = await selectFiles([
                     {
                         name: tran('All Files'),
                         extensions: [...imageExtensions, ...videoExtension],
