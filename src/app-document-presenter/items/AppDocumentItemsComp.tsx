@@ -127,10 +127,12 @@ export default function AppDocumentItemsComp() {
                     />
                 );
             })}
-            <FillingFlexCenterComp
-                width={appDocumentItemThumbnailSize}
-                className={APP_DOCUMENT_ITEM_CLASS}
-            />
+            {varyAppDocumentItems.length > 2 ? (
+                <FillingFlexCenterComp
+                    width={appDocumentItemThumbnailSize}
+                    className={APP_DOCUMENT_ITEM_CLASS}
+                />
+            ) : null}
             {isAnyItemSelected ? (
                 <SlideAutoPlayComp
                     prefix="vary-app-document"
