@@ -3,12 +3,13 @@ import { compileSchema } from 'json-schema-library';
 
 import { ItemBase } from '../helper/ItemBase';
 import { cloneJson } from '../helper/helpers';
-import type DragInf from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
+import type DragInf from '../helper/DragInf';
 import type { ClipboardInf } from '../server/appHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 
 import slideSchemaJson from './PDFSlideSchema.json';
+import FileSource from '../helper/FileSource';
 const pdfSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
 export type PdfSlideType = {
@@ -51,6 +52,16 @@ export default class PdfSlide
 
     get pdfPreviewSrc() {
         return this.originalJson.imagePreviewSrc ?? null;
+    }
+
+    async getImageFilePath() {
+        const fileSource = await FileSource.getInstanceBySrc(
+            this.pdfPreviewSrc,
+        );
+        if (fileSource === null) {
+            return null;
+        }
+        return fileSource.filePath;
     }
 
     get originalJson() {

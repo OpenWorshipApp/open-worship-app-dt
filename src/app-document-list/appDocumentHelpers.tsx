@@ -32,7 +32,11 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
-import { convertToPdf, getSlidesCount } from '../server/appHelpers';
+import {
+    convertToPdf,
+    getSlidesCount,
+    showExplorer,
+} from '../server/appHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
@@ -65,7 +69,7 @@ import {
     setSelectedVaryAppDocumentFilePath,
 } from './selectedVaryAppDocumentHelpers';
 
-export function showPdfDocumentContextMenu(
+export async function showPdfSlideContextMenu(
     event: any,
     pdfSlide: PdfSlide,
     extraMenuItems: ContextMenuItemType[],
@@ -78,7 +82,21 @@ export function showPdfDocumentContextMenu(
             true,
         );
     });
-    showAppContextMenu(event, [...menuItemOnScreens, ...extraMenuItems]);
+    const imageFilePath = await pdfSlide.getImageFilePath();
+    showAppContextMenu(event, [
+        ...menuItemOnScreens,
+        ...(imageFilePath === null
+            ? []
+            : [
+                  {
+                      menuElement: tran('Reveal in File Explorer'),
+                      onSelect: () => {
+                          showExplorer(imageFilePath);
+                      },
+                  },
+              ]),
+        ...extraMenuItems,
+    ]);
 }
 
 const copyShortcutMapper: EventMapper = {

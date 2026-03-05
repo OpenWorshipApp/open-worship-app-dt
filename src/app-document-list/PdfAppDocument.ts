@@ -6,7 +6,7 @@ import {
     removePdfImagesPreview,
 } from '../helper/pdfHelpers';
 import PdfSlide from './PdfSlide';
-import { showPdfDocumentContextMenu } from './appDocumentHelpers';
+import { showPdfSlideContextMenu } from './appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
@@ -38,7 +38,7 @@ export default class PdfAppDocument
         item: PdfSlide,
         extraMenuItems: ContextMenuItemType[] = [],
     ) {
-        showPdfDocumentContextMenu(event, item, extraMenuItems);
+        return showPdfSlideContextMenu(event, item, extraMenuItems);
     }
 
     async showContextMenu(_event: any) {

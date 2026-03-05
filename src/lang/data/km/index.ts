@@ -9,6 +9,7 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Reveal in File Explorer': 'បើកក្នុងកម្មវិធីរុករកឯកសារ',
     'Saving note': 'កំពុងរក្សាទុកកំណត់សម្គាល់',
     'Please wait while the note is being saved.':
         'សូមរង់ចាំ ខណៈដែលកំណត់សម្គាល់កំពុងត្រូវបានរក្សាទុក',
@@ -329,7 +330,7 @@ const duplicateKeys = Object.entries(dictionary)
 if (duplicateKeys.length > 0) {
     throw new Error(
         'Duplicate translation keys found after sanitization: ' +
-        duplicateKeys.join(', '),
+            duplicateKeys.join(', '),
     );
 }
 

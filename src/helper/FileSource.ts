@@ -238,6 +238,19 @@ export default class FileSource
         return fileSource;
     }
 
+    static async getInstanceBySrc(src: string) {
+        const pathname = new URL(src).pathname;
+        let filePath = decodeURIComponent(pathname);
+        if (appProvider.systemUtils.isWindows) {
+            filePath = filePath.substring(1);
+            filePath = filePath.replaceAll('/', pathSeparator);
+        }
+        if ((await fsCheckFileExist(filePath)) === false) {
+            return null;
+        }
+        return this.getInstance(filePath);
+    }
+
     dragSerialize(type?: DragTypeEnum) {
         return {
             type: type ?? DragTypeEnum.UNKNOWN,
