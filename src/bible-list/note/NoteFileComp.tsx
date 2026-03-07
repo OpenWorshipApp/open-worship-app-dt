@@ -88,6 +88,18 @@ function genContextMenu(
                   },
               ]
             : []),
+        {
+            menuElement: tran('New Note Item'),
+            onSelect: () => {
+                const newId = note.maxItemId + 1;
+                const newNoteItem = new NoteItem(newId, {
+                    id: newId,
+                    content: '',
+                    metadata: {},
+                });
+                note.saveNoteItem(newNoteItem);
+            },
+        },
         ...(isAttachedBackgroundElement
             ? genRemovingAttachedBackgroundMenu(note.filePath)
             : []),

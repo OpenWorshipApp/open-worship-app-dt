@@ -30,36 +30,26 @@ export async function moveNoteItemTo(
         showSimpleToast('Move Note Item', 'No other notes found');
         return;
     }
-    showAppContextMenu(
-        event,
-        targetNames.map((name) => {
-            return {
-                menuElement: name,
-                onSelect: async () => {
-                    const noteFileSource = FileSource.getInstance(
-                        note.filePath,
-                    );
-                    const { baseDirPath: basePath, dotExtension } =
-                        noteFileSource;
-                    const fileSource = FileSource.getInstance(
-                        basePath,
-                        addExtension(name, dotExtension),
-                    );
-                    const targetNote = await Note.fromFilePath(
-                        fileSource.filePath,
-                    );
-                    if (!targetNote) {
-                        showSimpleToast(
-                            'Move Note Item',
-                            'Target note not found',
-                        );
-                        return;
-                    }
-                    targetNote.moveItemFrom(note.filePath, noteItem);
-                },
-            };
-        }),
-    );
+    const menuItems: ContextMenuItemType[] = targetNames.map((name) => {
+        return {
+            menuElement: name,
+            onSelect: async () => {
+                const noteFileSource = FileSource.getInstance(note.filePath);
+                const { baseDirPath: basePath, dotExtension } = noteFileSource;
+                const fileSource = FileSource.getInstance(
+                    basePath,
+                    addExtension(name, dotExtension),
+                );
+                const targetNote = await Note.fromFilePath(fileSource.filePath);
+                if (!targetNote) {
+                    showSimpleToast('Move Note Item', 'Target note not found');
+                    return;
+                }
+                targetNote.moveItemFrom(note.filePath, noteItem);
+            },
+        };
+    });
+    showAppContextMenu(event, menuItems);
 }
 
 export async function openNoteItemContextMenu(
