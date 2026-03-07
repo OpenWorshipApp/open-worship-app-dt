@@ -241,7 +241,6 @@ class LookupBibleItemController extends BibleItemsViewController {
     async setLookupContentFromBibleItem(bibleItem: ReadIdOnlyBibleItem) {
         applyBibleItemHistoryPendingText();
         this.applyTargetOrBibleKey(this.selectedBibleItem, bibleItem);
-        this.inputText = await bibleItem.toTitle();
     }
 
     private syncFoundBibleItem(editingResult: EditingResultType) {
