@@ -207,10 +207,10 @@ export default function SettingGeneralDirectoryPathComp() {
         const dirSource = new ParentDirSource(selectedParentDir ?? '');
         return dirSource;
     });
-    if (!dirSource) {
-        return null;
-    }
     useAppEffect(() => {
+        if (!dirSource) {
+            return;
+        }
         dirSource.setDirPath = async (dirPath: string) => {
             await appLocalStorage.setSelectedParentDirectory(dirPath);
             await selectPathForChildDir(dirPath);
@@ -220,6 +220,9 @@ export default function SettingGeneralDirectoryPathComp() {
         return () => {
             dirSource.setDirPath = () => {};
         };
-    }, []);
+    }, [dirSource]);
+    if (!dirSource) {
+        return null;
+    }
     return <RenderBodyComp dirSource={dirSource} />;
 }
