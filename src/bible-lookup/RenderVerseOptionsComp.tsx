@@ -1,6 +1,6 @@
 import './RenderVersesOptionComp.scss';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import RenderVerseNumOptionComp, { mouseUp } from './RenderVerseNumOptionComp';
@@ -12,6 +12,7 @@ import {
     useBibleFontFamily,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type BibleItem from '../bible-list/BibleItem';
+import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
 
 export default function RenderVerseOptionsComp({
     bibleItem,
@@ -27,27 +28,61 @@ export default function RenderVerseOptionsComp({
             chapter: target.chapter,
         });
     }, [bibleKey, target.bookKey, target.chapter]);
+    const [selectedTarget, setSelectedTarget] = useState({
+        verseStart: 1,
+        verseEnd: 1,
+    });
+    useAppEffect(() => {
+        setSelectedTarget({
+            verseStart: target.verseStart,
+            verseEnd: target.verseEnd,
+        });
+    }, [target.bookKey, target.chapter]);
+    const { verseStart, verseEnd } = selectedTarget;
     const viewController = useBibleItemsViewControllerContext();
     const [verseCount] = useAppStateAsync(() => {
         return getVersesCount(bibleKey, target.bookKey, target.chapter);
     }, [bibleKey, target.bookKey, target.chapter]);
     const isFull = useMemo(() => {
-        return (
-            target.verseStart === 1 &&
-            verseCount &&
-            target.verseEnd === verseCount
-        );
-    }, [verseCount, target.verseStart, target.verseEnd]);
+        return verseStart === 1 && verseCount && verseEnd === verseCount;
+    }, [verseCount, verseStart, verseEnd]);
     useAppEffect(() => {
         document.body.addEventListener('mouseup', mouseUp);
         return () => {
             document.body.removeEventListener('mouseup', mouseUp);
         };
     }, []);
-    if (!verseList) {
-        return null;
-    }
-    const handleFullVersesClick = () => {
+    const handleVerseChange = useCallback(
+        (newVerseStart: number, newVerseEnd?: number) => {
+            const newSelectedTarget = {
+                verseStart: newVerseStart,
+                verseEnd: newVerseEnd ?? newVerseStart,
+            };
+            setSelectedTarget(newSelectedTarget);
+        },
+        [],
+    );
+    const handleApplying = useCallback(
+        (newVerseStart: number, newVerseEnd?: number) => {
+            const newSelectedTarget = {
+                verseStart: newVerseStart,
+                verseEnd: newVerseEnd ?? newVerseStart,
+            };
+            setSelectedTarget(newSelectedTarget);
+            const newTarget: BibleTargetType = {
+                ...target,
+                ...newSelectedTarget,
+            };
+            viewController.applyTargetOrBibleKey(bibleItem, {
+                target: newTarget,
+            });
+        },
+        [target],
+    );
+    const handleFullVersesClick = useCallback(() => {
+        if (!verseList) {
+            return;
+        }
         viewController.applyTargetOrBibleKey(bibleItem, {
             target: {
                 ...target,
@@ -55,7 +90,10 @@ export default function RenderVerseOptionsComp({
                 verseEnd: verseList.length,
             },
         });
-    };
+    }, [verseList]);
+    if (!verseList) {
+        return null;
+    }
     return (
         <div className="render-found full-view-hide" style={{ fontFamily }}>
             <div
@@ -65,26 +103,16 @@ export default function RenderVerseOptionsComp({
                 }
             >
                 {verseList.map(([verseNum, verseNumStr], i) => {
-                    const handleVerseChange = (
-                        newVerseStart: number,
-                        newVerseEnd?: number,
-                    ) => {
-                        viewController.applyTargetOrBibleKey(bibleItem, {
-                            target: {
-                                ...target,
-                                verseStart: newVerseStart,
-                                verseEnd: newVerseEnd ?? newVerseStart,
-                            },
-                        });
-                    };
                     return (
                         <RenderVerseNumOptionComp
                             key={verseNumStr}
-                            bibleItem={bibleItem}
                             index={i}
                             verseNum={verseNum}
                             verseNumText={verseNumStr}
+                            verseStart={verseStart}
+                            verseEnd={verseEnd}
                             onVerseChange={handleVerseChange}
+                            onApply={handleApplying}
                         />
                     );
                 })}
