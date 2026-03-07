@@ -5,7 +5,6 @@ import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { previewingEventListener } from '../event/PreviewingEventListener';
-import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import {
     SelectedLyricContext,
@@ -68,23 +67,16 @@ export default function LyricFileComp({
         selectedContext !== null &&
         selectedContext.selectedLyric?.filePath === filePath;
     const setSelectedLyric = useSelectedLyricSetterContext();
-    const [lyric, setLyric] = useState<Lyric | null | undefined>(null);
+    const [lyric, setLyric] = useState<Lyric | null | undefined>(undefined);
     useAppEffect(() => {
-        if (lyric === null) {
-            const data = Lyric.getInstance(filePath);
-            setLyric(data);
+        if (lyric !== undefined) {
+            return;
         }
+        const data = Lyric.getInstance(filePath);
+        setLyric(data);
     }, [lyric]);
-    useFileSourceEvents(
-        ['update'],
-        () => {
-            setLyric(null);
-        },
-        [lyric],
-        filePath,
-    );
     const handleReloading = () => {
-        setLyric(null);
+        setLyric(undefined);
     };
     const handleClicking = () => {
         if (!lyric) {

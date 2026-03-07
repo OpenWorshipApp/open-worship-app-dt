@@ -4,13 +4,20 @@ import { useStateSettingBoolean } from '../helper/settingHelpers';
 import type BibleItem from '../bible-list/BibleItem';
 import PlaylistSlideItemComp from './PlaylistSlideItemComp';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
-import type Playlist from './Playlist';
+import Playlist from './Playlist';
 import BibleItemRenderComp from '../bible-list/BibleItemRenderComp';
 import type PlaylistItem from './PlaylistItem';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
-import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
+import {
+    useAppEffect,
+    useAppEffectAsync,
+    useAppStateAsync,
+} from '../helper/debuggerHelpers';
 import FileSource from '../helper/FileSource';
 import AppSuspenseComp from '../others/AppSuspenseComp';
+import { tran } from '../lang/langHelpers';
+import LoadingComp from '../others/LoadingComp';
+import FileReadErrorComp from '../others/FileReadErrorComp';
 
 export default function PlaylistFileComp({
     index,
@@ -19,21 +26,21 @@ export default function PlaylistFileComp({
     index: number;
     filePath: string;
 }>) {
-    const [data, setData] = useState<Playlist | null | undefined>(null);
+    const [playlist, setPlaylist] = useState<Playlist | null | undefined>(
+        undefined,
+    );
     const settingName = `opened-${filePath}`;
     const [isOpened, setIsOpened] = useStateSettingBoolean(settingName);
     const handleReloading = () => {
-        setData(null);
+        setPlaylist(undefined);
     };
     const handleClicking = () => {
         setIsOpened(!isOpened);
     };
     const handleDropping = async (event: any) => {
-        if (data) {
+        if (playlist) {
             const receivedData = event.dataTransfer.getData('text');
-            if (data.addFromData(receivedData)) {
-                // data.save();
-            }
+            await playlist.addFromData(receivedData);
         }
     };
     const handleChildRendering = (playlist: AppDocumentSourceAbs) => {
@@ -46,14 +53,16 @@ export default function PlaylistFileComp({
         );
     };
     useAppEffect(() => {
-        if (data === null) {
-            // Playlist.readFileToData(filePath).then(setData);
+        if (playlist !== undefined) {
+            return;
         }
-    }, [data]);
+        const newPlaylist = Playlist.getInstance(filePath);
+        setPlaylist(newPlaylist);
+    }, [playlist, filePath]);
     return (
         <FileItemHandlerComp
             index={index}
-            data={data}
+            data={playlist}
             reload={handleReloading}
             filePath={filePath}
             className="playlist-file"
@@ -75,6 +84,15 @@ function PlaylistPreview({
     playlist: Playlist;
 }>) {
     const fileSource = FileSource.getInstance(playlist.filePath);
+    const [items] = useAppStateAsync(() => {
+        return playlist.getItems();
+    }, [playlist]);
+    if (items === undefined) {
+        return <LoadingComp />;
+    }
+    if (items === null) {
+        return <FileReadErrorComp />;
+    }
     return (
         <div className="card app-caught-hover-pointer mt-1 ps-2">
             <div
@@ -92,7 +110,7 @@ function PlaylistPreview({
             </div>
             {isOpened && playlist && (
                 <div className="card-body d-flex flex-column">
-                    {playlist.items.map((playlistItem, i) => {
+                    {items.map((playlistItem, i) => {
                         return (
                             <RenderPlaylistItem
                                 key={fileSource.fullName}
@@ -128,7 +146,7 @@ function RenderPlaylistItem({
             </AppSuspenseComp>
         );
     } else if (playlistItem.isLyric) {
-        return <div>Not Supported Item Type</div>;
+        return <div>{tran('Not Supported Item Type')}</div>;
     }
     return null;
 }

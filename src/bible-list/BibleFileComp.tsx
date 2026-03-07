@@ -160,33 +160,42 @@ export default function BibleFileComp({
     filePath: string;
 }>) {
     const attachedBackgroundData = useAttachedBackgroundData(filePath);
-    const [data, setData] = useState<Bible | null | undefined>(null);
+    const [bible, setBible] = useState<Bible | null | undefined>(undefined);
     useAppEffectAsync(
         async (methodContext) => {
-            if (data === null) {
-                const bible = await Bible.fromFilePath(filePath);
-                methodContext.setData(bible);
+            if (bible !== undefined) {
+                return;
             }
+            const newBible = await Bible.fromFilePath(filePath);
+            methodContext.setData(newBible);
         },
-        [data],
-        { setData },
+        [bible],
+        { setData: setBible },
     );
     const handlerChildRendering = (bible: AppDocumentSourceAbs) => {
         return <BiblePreview bible={bible as Bible} />;
     };
     const handleReloading = () => {
-        setData(null);
+        setBible(undefined);
     };
-    useFileSourceEvents(['update'], handleReloading, [data], filePath);
+    useFileSourceEvents(
+        ['update'],
+        async () => {
+            const newBible = await Bible.fromFilePath(filePath);
+            setBible(newBible);
+        },
+        [bible],
+        filePath,
+    );
     const handleDataDropping = (event: any) => {
         const droppedData = extractDropData(event);
         if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
             stopDraggingState(event);
             const bibleItem = droppedData.item as BibleItem;
             if (bibleItem.filePath === undefined) {
-                data?.saveBibleItem(droppedData.item);
+                bible?.saveBibleItem(droppedData.item);
             } else {
-                data?.moveItemFrom(bibleItem.filePath, bibleItem);
+                bible?.moveItemFrom(bibleItem.filePath, bibleItem);
             }
         } else {
             handleAttachBackgroundDrop(event, {
@@ -197,17 +206,17 @@ export default function BibleFileComp({
     return (
         <FileItemHandlerComp
             index={index}
-            data={data}
+            data={bible}
             reload={handleReloading}
             filePath={filePath}
             className="bible-file"
             renderChild={handlerChildRendering}
             isDisabledColorNote
-            userClassName={`p-0 ${data?.isOpened ? 'flex-fill' : ''}`}
-            contextMenuItems={genContextMenu(data, {
+            userClassName={`p-0 ${bible?.isOpened ? 'flex-fill' : ''}`}
+            contextMenuItems={genContextMenu(bible, {
                 isAttachedBackgroundElement: !!attachedBackgroundData,
             })}
-            isSelected={!!data?.isOpened}
+            isSelected={!!bible?.isOpened}
             onDrop={handleDataDropping}
         />
     );

@@ -5,7 +5,6 @@ import FileSource from '../helper/FileSource';
 import AppDocument from './AppDocument';
 import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/PresenterComp';
 import { previewingEventListener } from '../event/PreviewingEventListener';
-import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { goToPath } from '../router/routeHelpers';
@@ -107,24 +106,16 @@ export default function AppDocumentFileComp({
         selectedContext.selectedVaryAppDocument?.filePath === filePath;
     const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
     const [varyAppDocument, setVaryAppDocument] =
-        useState<VaryAppDocumentDynamicType>(null);
+        useState<VaryAppDocumentDynamicType>(undefined);
     useAppEffect(() => {
-        if (varyAppDocument !== null) {
+        if (varyAppDocument !== undefined) {
             return;
         }
         const newVaryAppDocument = varyAppDocumentFromFilePath(filePath);
         setVaryAppDocument(newVaryAppDocument);
     }, [varyAppDocument]);
-    useFileSourceEvents(
-        ['update'],
-        () => {
-            setVaryAppDocument(null);
-        },
-        [varyAppDocument],
-        filePath,
-    );
     const handleReloading = () => {
-        setVaryAppDocument(null);
+        setVaryAppDocument(undefined);
     };
     const handleClicking = () => {
         if (!varyAppDocument) {

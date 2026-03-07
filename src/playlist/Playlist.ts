@@ -11,20 +11,25 @@ export type PlaylistType = {
 };
 
 export default class Playlist extends AppEditableDocumentSourceAbs<PlaylistType> {
-    private readonly _originalJson: PlaylistType;
-    constructor(filePath: string, json: PlaylistType) {
+    constructor(filePath: string) {
         super(filePath);
-        this._originalJson = cloneJson(json);
     }
-    static fromJson(filePath: string, json: PlaylistType) {
-        this.validate(json);
-        return new Playlist(filePath, json);
+
+    async getOriginalJson() {
+        return {} as any as PlaylistType;
     }
-    get metadata() {
-        return this._originalJson.metadata;
+
+    async setOriginalJson(_jsonData: PlaylistType) {
+        return true;
     }
-    get items() {
-        return this._originalJson.items.map((json) => {
+
+    async getMetadata() {
+        const originalJson = await this.getOriginalJson();
+        return originalJson.metadata;
+    }
+    async getItems() {
+        const originalJson = await this.getOriginalJson();
+        return originalJson.items.map((json) => {
             try {
                 return PlaylistItem.fromJson(this.filePath, json);
             } catch (error: any) {
@@ -39,23 +44,23 @@ export default class Playlist extends AppEditableDocumentSourceAbs<PlaylistType>
     static async create(dir: string, name: string) {
         return super.create(dir, name, []);
     }
-    addFromData(str: string) {
+
+    async addFromData(str: string) {
         try {
             if (isValidJson(str)) {
                 const json = JSON.parse(str);
                 const item = PlaylistItem.fromJson(this.filePath, json);
-                this._originalJson.items.push(item.toJson());
-                return true;
+                const originalJson = await this.getOriginalJson();
+                originalJson.items.push(item.toJson());
+                return await this.setJsonData(cloneJson(originalJson));
             }
         } catch (error: any) {
             showSimpleToast('Adding Playlist Item', error.message);
         }
         return false;
     }
-    toJson(): PlaylistType {
-        return this._originalJson;
-    }
-    clone() {
-        return Playlist.fromJson(this.filePath, this.toJson());
+
+    static getInstance(filePath: string) {
+        return new this(filePath);
     }
 }

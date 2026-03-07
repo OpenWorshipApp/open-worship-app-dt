@@ -9,6 +9,8 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Not Supported Item Type': 'ប្រភេទធាតុដែលមិនគាំទ្រ',
+    'Fail to read file data': 'មិនអាចទទួលបានទិន្នន័យពីឯកសារ',
     'No book options available': 'មិនមានជម្រើសសៀវភៅទេ',
     'Fail to get data': 'មិនអាចទទួលបានទិន្នន័យ',
     'All Books': 'សៀវភៅទាំងអស់',

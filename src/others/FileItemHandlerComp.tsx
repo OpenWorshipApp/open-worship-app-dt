@@ -21,6 +21,7 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';
 import RenderRenamingComp from './RenderRenamingComp';
+import LoadingComp from './LoadingComp';
 
 export const genCommonMenu = (filePath: string): ContextMenuItemType[] => {
     return [
@@ -154,12 +155,15 @@ export default function FileItemHandlerComp({
     const [isRenaming, setIsRenaming] = useState(false);
     useFileSourceRefreshEvents(['select']);
 
+    if (data === undefined) {
+        return <LoadingComp />;
+    }
     if (data === null) {
-        return null;
+        return <FileReadErrorComp reload={reload} />;
     }
     const selfContextMenu = genContextMenu(filePath, setIsRenaming, reload);
     const preDelete1 = () => {
-        data?.preDelete();
+        data.preDelete();
         preDelete?.();
     };
     selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
