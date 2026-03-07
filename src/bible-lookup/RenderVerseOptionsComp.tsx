@@ -37,7 +37,7 @@ export default function RenderVerseOptionsComp({
             verseStart: target.verseStart,
             verseEnd: target.verseEnd,
         });
-    }, [target.bookKey, target.chapter]);
+    }, [target.verseStart, target.verseEnd]);
     const { verseStart, verseEnd } = selectedTarget;
     const viewController = useBibleItemsViewControllerContext();
     const [verseCount] = useAppStateAsync(() => {
