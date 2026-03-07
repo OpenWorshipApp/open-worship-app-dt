@@ -51,7 +51,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
             } else {
                 await showAppConfirm(
                     'Creating Default Folder',
-                    `Fail to create folder "${dirPath}"`,
+                    `${tran('Fail to create folder')} "${dirPath}"`,
                 );
             }
         }
@@ -62,7 +62,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
         }
         showSimpleToast(
             'Creating Default Folder',
-            `Fail to create folder "${parentDirPath}"`,
+            `${tran('Fail to create folder')} "${parentDirPath}"`,
         );
         return;
     }
@@ -110,7 +110,7 @@ export async function selectDefaultDataDirName(
         }
         showSimpleToast(
             tran('Creating Default Folder'),
-            `Fail to create folder "${dirPath}"`,
+            `${tran('Fail to create folder')} "${dirPath}"`,
         );
         return;
     }

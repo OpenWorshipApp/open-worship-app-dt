@@ -9,6 +9,7 @@ export const dirSourceSettingNames = {
     BACKGROUND_AUDIO: `${SELECT_DIR}-audio-bg`,
     BIBLE_PRESENT: `${SELECT_DIR}-bible-presenter`,
     BIBLE_READ: `${SELECT_DIR}-bible-read`,
+    NOTES: `${SELECT_DIR}-note`,
 };
 export const defaultDataDirNames = {
     APP_DOCUMENT: 'documents',

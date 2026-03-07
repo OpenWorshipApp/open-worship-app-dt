@@ -23,9 +23,11 @@ import {
 import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
+import { OptionalPromise } from '../../helper/typeHelpers';
 
 class ParentDirSource extends DirSource {
     _dirPath: string;
+    setParentDirPath: (newFilePath: string) => OptionalPromise<void> = () => {};
     constructor(dirPath: string) {
         super(SELECTED_PARENT_DIR_SETTING_NAME);
         this._dirPath = dirPath;
@@ -37,6 +39,7 @@ class ParentDirSource extends DirSource {
 
     set dirPath(dirPath: string) {
         this.setDirPath(dirPath);
+        this.setParentDirPath(dirPath);
     }
 }
 
@@ -211,14 +214,14 @@ export default function SettingGeneralDirectoryPathComp() {
         if (!dirSource) {
             return;
         }
-        dirSource.setDirPath = async (dirPath: string) => {
+        dirSource.setParentDirPath = async (dirPath: string) => {
             await appLocalStorage.setSelectedParentDirectory(dirPath);
             await selectPathForChildDir(dirPath);
             const newDirSource = new ParentDirSource(dirPath);
             setDirSource(newDirSource);
         };
         return () => {
-            dirSource.setDirPath = () => {};
+            dirSource.setParentDirPath = () => {};
         };
     }, [dirSource]);
     if (!dirSource) {

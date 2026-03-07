@@ -9,6 +9,7 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Fail to create folder': 'មិនអាចបង្កើតថតបាន',
     'New Note Item': 'បង្កើតកំណត់ត្រាថ្មី',
     'This will select': 'នេះនឹងជ្រើសរើស',
     'will create if not exist': 'នឹងបង្កើតឡើងប្រសិនបើមិនមាន',
