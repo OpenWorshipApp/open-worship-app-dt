@@ -106,3 +106,6 @@ export default class CacheManager<T> {
         }
     }
 }
+
+// CacheManager instance with 1 minute expiration
+export const globalCacheManager1M = new CacheManager<any>(60);

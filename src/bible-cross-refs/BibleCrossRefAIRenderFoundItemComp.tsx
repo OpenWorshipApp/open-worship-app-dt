@@ -10,6 +10,22 @@ import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
 
+function RenderVerseTextComp({
+    bibleKey,
+    bibleText,
+    htmlText,
+}: Readonly<{ bibleKey: string; bibleText: string; htmlText: string }>) {
+    return (
+        <span
+            title={bibleText}
+            data-bible-key={bibleKey}
+            dangerouslySetInnerHTML={{
+                __html: htmlText,
+            }}
+        />
+    );
+}
+
 export default function BibleCrossRefAIRenderFoundItemComp({
     bibleVersesKey,
 }: Readonly<{
@@ -53,12 +69,10 @@ export default function BibleCrossRefAIRenderFoundItemComp({
             }}
         >
             <BibleDirectViewTitleComp bibleItem={bibleItem} />
-            <span
-                title={bibleText}
-                data-bible-key={bibleItem.bibleKey}
-                dangerouslySetInnerHTML={{
-                    __html: htmlText,
-                }}
+            <RenderVerseTextComp
+                bibleKey={bibleItem.bibleKey}
+                bibleText={bibleText}
+                htmlText={htmlText}
             />
         </div>
     );

@@ -1,6 +1,9 @@
 import type { AppProviderType } from '../server/appProvider';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
+import { unlocking } from '../server/unlockingHelpers';
+import { globalCacheManager1M } from '../others/CacheManager';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -674,11 +677,25 @@ export function quickEndWord(locale: LocaleType, text: string) {
 }
 
 export async function getFontFamilyByLocale(locale: LocaleType) {
-    const langData = await getLangDataAsync(locale);
-    if (langData === null) {
-        return undefined;
-    }
-    return langData.fontFamily;
+    const key = `FontFamilyLocale:${locale}`;
+    return await unlocking(key, async () => {
+        const cachedFontFamily = await globalCacheManager1M.get(key);
+        if (cachedFontFamily) {
+            return cachedFontFamily;
+        }
+        const langData = await getLangDataAsync(locale);
+        if (langData === null) {
+            return undefined;
+        }
+        await globalCacheManager1M.set(key, langData.fontFamily);
+        return langData.fontFamily;
+    });
+}
+export function useFontFamilyByLocale(locale: LocaleType): string | undefined {
+    const [fontFamily] = useAppStateAsync(() => {
+        return getFontFamilyByLocale(locale);
+    }, [locale]);
+    return fontFamily ?? undefined;
 }
 
 export function checkIsRtl(locale: LocaleType) {

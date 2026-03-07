@@ -18,10 +18,10 @@ import {
     toLocaleNum,
     toStringNum,
 } from '../../lang/langHelpers';
-import { useAppEffect } from '../debuggerHelpers';
+import { useAppEffect, useAppStateAsync } from '../debuggerHelpers';
 import BibleItem from '../../bible-list/BibleItem';
 import { getModelChapterCount } from './bibleLogicHelpers1';
-import CacheManager from '../../others/CacheManager';
+import CacheManager, { globalCacheManager1M } from '../../others/CacheManager';
 import type { BibleMinimalInfoType } from './bibleDownloadHelpers';
 import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
@@ -82,10 +82,24 @@ export async function getLangDataFromBibleKey(bibleKey: string) {
     return langData;
 }
 
-export async function getBibleFontFamily(bibleKey: string) {
-    const locale = await getBibleLocale(bibleKey);
-    const fontFamily = getFontFamilyByLocale(locale);
-    return fontFamily;
+export async function getBibleFontFamily(bibleKey: string): Promise<string> {
+    const key = `FontFamilyBibleKey:${bibleKey}`;
+    return await unlocking(key, async () => {
+        const cachedFontFamily = await globalCacheManager1M.get(key);
+        if (cachedFontFamily) {
+            return cachedFontFamily;
+        }
+        const locale = await getBibleLocale(bibleKey);
+        const fontFamily = getFontFamilyByLocale(locale);
+        await globalCacheManager1M.set(key, fontFamily);
+        return fontFamily;
+    });
+}
+export function useBibleFontFamily(bibleKey: string): string | undefined {
+    const [fontFamily] = useAppStateAsync(() => {
+        return getBibleFontFamily(bibleKey);
+    }, [bibleKey]);
+    return fontFamily ?? undefined;
 }
 
 const toLocaleNumCache = new CacheManager<string>(60); // 1 minute
