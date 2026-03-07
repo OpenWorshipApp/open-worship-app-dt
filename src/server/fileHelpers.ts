@@ -6,6 +6,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
 
 import mimeBibleList from './mime/bible-types.json';
+import mimeNoteList from './mime/note-types.json';
 import mimeLyricList from './mime/lyric-types.json';
 import mimeMarkdownList from './mime/markdown-types.json';
 import mimeAppDocumentList from './mime/app-document-types.json';
@@ -63,6 +64,7 @@ const appExtensions = _mimeTypes.reduce((acc: string[], cur) => {
 
 const mimeTypesMapper = {
     bible: mimeBibleList,
+    note: mimeNoteList,
     lyric: mimeLyricList,
     markdown: mimeMarkdownList,
     appDocument: mimeAppDocumentList,
@@ -152,6 +154,7 @@ export const mimetypeNameTypeList = [
     'lyric',
     'markdown',
     'bible',
+    'note',
     'audio',
     'web',
     'other',

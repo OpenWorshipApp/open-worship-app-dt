@@ -36,6 +36,7 @@ export const resizeSettingNames = {
     bibleReader: 'bible-reader',
     bibleLookupPopup: 'bible-lookup-popup',
     presenterBiblePreviewer: 'presenter-bible-previewer',
+    bibleReadingLeft: 'bible-reading-left',
 };
 
 export function clearWidgetSizeSetting() {

@@ -3,6 +3,7 @@ export enum DragTypeEnum {
     PDF_SLIDE = 'pdfSlide',
     SLIDE = 'slide',
     BIBLE_ITEM = 'bibleItem',
+    NOTE_ITEM = 'noteItem',
     LYRIC_ITEM = 'lyricItem',
     BACKGROUND_VIDEO = 'bg-video',
     BACKGROUND_CAMERA = 'bg-camera',

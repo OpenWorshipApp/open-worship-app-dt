@@ -20,6 +20,7 @@ export const defaultDataDirNames = {
     BACKGROUND_AUDIO: 'audios',
     BIBLE_PRESENT: 'bibles',
     BIBLE_READ: 'bibles-read',
+    NOTES: 'notes',
 };
 
 export const fontSizeSettingNames = {
