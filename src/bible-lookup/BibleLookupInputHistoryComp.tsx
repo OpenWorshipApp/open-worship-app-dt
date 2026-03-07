@@ -3,7 +3,10 @@ import { useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    extractBibleTitle,
+    useBibleFontFamily,
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { bibleHistoryStore } from '../bible-reader/BibleItemsViewController';
@@ -142,6 +145,61 @@ function openContextMenu(
     showAppContextMenu(event, contextMenuItems);
 }
 
+function RendHistoryItemComp({
+    historyText,
+    extracted,
+    historyTextList,
+    setHistoryTextList,
+    handleContextMenuOpening,
+    handleDoubleClicking,
+}: Readonly<{
+    historyText: string;
+    extracted: { bibleKey: string; bibleTitle: string } | null;
+    historyTextList: string[];
+    setHistoryTextList: (newHistoryTextList: string[]) => void;
+    handleContextMenuOpening: (historyText: string, event: any) => void;
+    handleDoubleClicking: (historyText: string, event: any) => void;
+}>) {
+    const fontFamily = useBibleFontFamily(extracted?.bibleKey ?? '');
+    return (
+        <button
+            className={'btn btn-sm d-flex app-border-white-round mx-1 p-0'}
+            key={historyText}
+            title={
+                'Double click to put back, shift double click to ' +
+                'put back split'
+            }
+            style={{ height: '27px', fontFamily }}
+            draggable
+            onDragStart={async (event: any) => {
+                const bibleItem =
+                    await getBibleItemFromHistoryText(historyText);
+                if (bibleItem === null) {
+                    return;
+                }
+                handleDragStart(event, bibleItem);
+            }}
+            onContextMenu={handleContextMenuOpening.bind(null, historyText)}
+            onDoubleClick={handleDoubleClicking.bind(null, historyText)}
+        >
+            <small
+                title={tran('Remove')}
+                style={{ color: 'red' }}
+                onClick={() => {
+                    removeHistory(
+                        historyTextList,
+                        historyText,
+                        setHistoryTextList,
+                    );
+                }}
+            >
+                <i className="bi bi-x" />
+            </small>
+            <small className="flex-fill app-ellipsis">{historyText}</small>
+        </button>
+    );
+}
+
 export default function BibleLookupInputHistoryComp({
     maxHistoryCount = 20,
 }: Readonly<{
@@ -183,52 +241,15 @@ export default function BibleLookupInputHistoryComp({
             {historyTextList.map((historyText) => {
                 const extracted = extractHistoryText(historyText);
                 return (
-                    <button
-                        className={
-                            'btn btn-sm d-flex app-border-white-round mx-1 p-0'
-                        }
+                    <RendHistoryItemComp
                         key={historyText}
-                        data-bible-key={extracted?.bibleKey ?? ''}
-                        title={
-                            'Double click to put back, shift double click to ' +
-                            'put back split'
-                        }
-                        style={{ height: '27px' }}
-                        draggable
-                        onDragStart={async (event: any) => {
-                            const bibleItem =
-                                await getBibleItemFromHistoryText(historyText);
-                            if (bibleItem === null) {
-                                return;
-                            }
-                            handleDragStart(event, bibleItem);
-                        }}
-                        onContextMenu={handleContextMenuOpening.bind(
-                            null,
-                            historyText,
-                        )}
-                        onDoubleClick={handleDoubleClicking.bind(
-                            null,
-                            historyText,
-                        )}
-                    >
-                        <small
-                            title={tran('Remove')}
-                            style={{ color: 'red' }}
-                            onClick={() => {
-                                removeHistory(
-                                    historyTextList,
-                                    historyText,
-                                    setHistoryTextList,
-                                );
-                            }}
-                        >
-                            <i className="bi bi-x" />
-                        </small>
-                        <small className="flex-fill app-ellipsis">
-                            {historyText}
-                        </small>
-                    </button>
+                        historyText={historyText}
+                        extracted={extracted}
+                        historyTextList={historyTextList}
+                        setHistoryTextList={setHistoryTextList}
+                        handleContextMenuOpening={handleContextMenuOpening}
+                        handleDoubleClicking={handleDoubleClicking}
+                    />
                 );
             })}
         </div>

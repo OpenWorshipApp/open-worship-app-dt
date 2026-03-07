@@ -10,6 +10,7 @@ import { useChapterMatch } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { getChapterData } from '../helper/bible-helpers/bibleInfoHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 const OPTION_CLASS = 'bible-lookup-chapter-option';
 const OPTION_SELECTED_CLASS = 'active';
@@ -18,6 +19,7 @@ function RenderChapterZeroContentComp({
     bibleKey,
     bookKey,
 }: Readonly<{ bibleKey: string; bookKey: string }>) {
+    const fontFamily = useBibleFontFamily(bibleKey);
     const [chapterData] = useAppStateAsync(async () => {
         const localChapterData = await getChapterData(bibleKey, bookKey, 0);
         return localChapterData;
@@ -28,8 +30,8 @@ function RenderChapterZeroContentComp({
                 {Object.values(chapterData?.verses ?? {}).map((verse, i) => {
                     return (
                         <p
-                            data-bible-key={bibleKey}
                             key={i}
+                            style={{ fontFamily }}
                             dangerouslySetInnerHTML={{
                                 __html: verse,
                             }}
@@ -84,6 +86,7 @@ export default function RenderChapterOptionsComp({
     onSelect: (chapter: number) => void;
 }>) {
     const bibleKey = useBibleKeyContext();
+    const fontFamily = useBibleFontFamily(bibleKey);
     const matchedChapters = useChapterMatch(bibleKey, bookKey, guessingChapter);
     const arrowListener = (event: KeyboardEvent) => {
         processSelection(
@@ -135,7 +138,7 @@ export default function RenderChapterOptionsComp({
                             }}
                         >
                             <span>
-                                <span data-bible-key={bibleKey}>
+                                <span style={{ fontFamily }}>
                                     {chapterLocaleString}
                                 </span>
                                 {isDiff ? (

@@ -59,7 +59,7 @@ function RenderBookOptionsComp({
                 <select
                     className="form-select"
                     value={selectedBookKey}
-                    data-bible-key={bibleKey}
+                    data-bible-key-ff={bibleKey}
                     onChange={(e) => {
                         setSelectedBookKey(e.target.value);
                     }}
@@ -70,7 +70,7 @@ function RenderBookOptionsComp({
                                 key={bookKey}
                                 value={bookKey}
                                 disabled={!isAvailable}
-                                data-bible-key={bibleKey}
+                                data-bible-key-ff={bibleKey}
                             >
                                 {book}
                                 {book === bookKey ? '' : ` (${bookKey})`}
@@ -104,7 +104,7 @@ function RenderChapterOptionsComp({
                 <select
                     className="form-select"
                     value={selectedChapter}
-                    data-bible-key={bibleKey}
+                    data-bible-key-ff={bibleKey}
                     onChange={(e) => {
                         setSelectedChapter(Number(e.target.value));
                     }}
@@ -114,7 +114,7 @@ function RenderChapterOptionsComp({
                             <option
                                 key={chapter}
                                 value={chapter}
-                                data-bible-key={bibleKey}
+                                data-bible-key-ff={bibleKey}
                             >
                                 {chapterLocaleString}
                                 {chapterLocaleString === `${chapter}`

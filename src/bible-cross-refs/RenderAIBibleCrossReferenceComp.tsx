@@ -1,5 +1,6 @@
 import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
@@ -32,12 +33,13 @@ export default function RenderAIBibleCrossReferenceComp({
     crossReference: CrossReferenceType;
 }>) {
     const bibleKey = useBibleKeyContext();
+    const fontFamily = useBibleFontFamily(bibleKey);
     const { title, titleEn, verses } = crossReference;
     return (
         <div>
             <strong
                 className="app-selectable-text app-found-highlight"
-                data-bible-key={bibleKey}
+                style={{ fontFamily }}
                 title={titleEn}
             >
                 {genGoogleTranslated()}

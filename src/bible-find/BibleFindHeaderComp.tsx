@@ -6,6 +6,7 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 const BIBLE_FIND_RECENT_SEARCH_SETTING_NAME = 'bible-find-recent-search';
 let setFindText: (text: string) => void = () => {};
@@ -39,6 +40,8 @@ export default function BibleFindHeaderComp({
         });
     };
     const bibleFindController = useBibleFindController();
+    const { bibleKey } = bibleFindController;
+    const fontFamily = useBibleFontFamily(bibleKey);
     useAppEffect(() => {
         setFindText = (newText: string) => {
             if (inputRef.current === null) {
@@ -77,10 +80,10 @@ export default function BibleFindHeaderComp({
             <input
                 className="form-control form-control-sm"
                 ref={inputRef}
-                data-bible-key={bibleFindController.bibleKey}
                 type="text"
                 value={text}
                 onKeyUp={keyUpHandling}
+                style={{ fontFamily }}
                 onChange={(event) => {
                     bibleFindController.handleNewValue(event);
                     setText1(event.target.value);

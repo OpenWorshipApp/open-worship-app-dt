@@ -14,26 +14,27 @@ import {
     checkIsOldTestament,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import { tran } from '../lang/langHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 const OPTION_CLASS = 'bible-lookup-book-option';
 const OPTION_SELECTED_CLASS = 'active';
 
 function genBookOption({
-    bibleKey,
     onSelect,
     index,
     bookKey,
     book,
     modelBook,
     isAvailable,
+    fontFamily,
 }: {
-    bibleKey: string;
     onSelect: SelectBookType;
     index: number;
     bookKey: string;
     book: string;
     modelBook: string;
     isAvailable: boolean;
+    fontFamily?: string;
 }) {
     const activeClass = index === 0 && isAvailable ? OPTION_SELECTED_CLASS : '';
     const isOldTestament = checkIsOldTestament(bookKey);
@@ -69,7 +70,7 @@ function genBookOption({
                 }}
             >
                 <div className="book-option-index">{index + 1}</div>
-                <div className="flex-fill" data-bible-key={bibleKey}>
+                <div className="flex-fill" style={{ fontFamily }}>
                     {book}
                     {book === modelBook ? null : (
                         <small className="px-1">({modelBook})</small>
@@ -88,6 +89,7 @@ export default function RenderBookOptionsComp({
     guessingBook: string;
 }>) {
     const bibleKey = useBibleKeyContext();
+    const fontFamily = useBibleFontFamily(bibleKey);
     const [matchedBooks] = useAppStateAsync(() => {
         return genBookMatches(bibleKey, guessingBook);
     }, [bibleKey, guessingBook]);
@@ -109,17 +111,17 @@ export default function RenderBookOptionsComp({
         return <div>No book options available</div>;
     }
     return matchedBooks.map((matchBook, i) => {
-        const { bibleKey, bookKey, book, modelBook, isAvailable } = matchBook;
+        const { bookKey, book, modelBook, isAvailable } = matchBook;
         return (
             <Fragment key={bookKey}>
                 {genBookOption({
-                    bibleKey,
                     bookKey,
                     book,
                     modelBook,
                     onSelect,
                     index: i,
                     isAvailable,
+                    fontFamily,
                 })}
             </Fragment>
         );

@@ -19,6 +19,7 @@ import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 function RenderVerseTextComp({
     bibleItem,
@@ -26,12 +27,14 @@ function RenderVerseTextComp({
     const [text] = useAppStateAsync(() => {
         return bibleItem.toText();
     }, [bibleItem]);
+    const { bibleKey } = bibleItem;
+    const fontFamily = useBibleFontFamily(bibleKey);
     return (
         <div
-            data-bible-key={bibleItem.bibleKey}
             style={{
                 maxHeight: '75px',
                 overflow: 'auto',
+                fontFamily,
             }}
         >
             {text}
@@ -82,6 +85,7 @@ export default function BibleCrossRefRendererComp({
         }
     };
     const bibleKey = bibleItem.bibleKey;
+    const fontFamily = useBibleFontFamily(bibleKey);
     return (
         <BibleKeyContext.Provider value={bibleKey}>
             {verses.map((verse, i) => {
@@ -92,7 +96,9 @@ export default function BibleCrossRefRendererComp({
                     <Fragment key={verse}>
                         <div
                             className="m-1 p-1"
-                            data-bible-key={cloneBibleItem.bibleKey}
+                            style={{
+                                fontFamily,
+                            }}
                         >
                             <div
                                 className="alert alert-info p-0 px-1 m-0"

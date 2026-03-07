@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 
 import loading from '../assets/loading.gif';
+import { tran } from '../lang/langHelpers';
 
 export default function LoadingComp({
     message,
@@ -20,7 +21,11 @@ export default function LoadingComp({
                         padding: '5px',
                     }}
                 >
-                    <img width={'80%'} src={loading} alt="Loading..." />
+                    <img
+                        width={'80%'}
+                        src={loading}
+                        alt={`${tran('Loading')}...`}
+                    />
                 </div>
                 {message ? (
                     <div

@@ -8,9 +8,9 @@ import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { SelectedBookKeyType } from './bibleFindHelpers';
 import { tran } from '../lang/langHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 function genMenuItem(
-    bibleKey: string,
     selectedBooks: SelectedBookKeyType[],
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
     { bookKey, book, modelBook, isAvailable }: BookMatchDataType,
@@ -18,7 +18,7 @@ function genMenuItem(
     const extraName = book === modelBook ? '' : ` (${modelBook})`;
     return {
         menuElement: (
-            <span data-bible-key={bibleKey}>{`${book}${extraName}`}</span>
+            <span data-bible-key-ff={bookKey}>{`${book}${extraName}`}</span>
         ),
         disabled:
             !isAvailable ||
@@ -80,7 +80,7 @@ async function selectBookKeys(
             },
         },
         ...oldBookList.map((book) => {
-            return genMenuItem(bibleKey, selectedBooks, setSelectedBooks, book);
+            return genMenuItem(selectedBooks, setSelectedBooks, book);
         }),
         {
             menuElement: (
@@ -98,7 +98,7 @@ async function selectBookKeys(
             },
         },
         ...newBookList.map((book) => {
-            return genMenuItem(bibleKey, selectedBooks, setSelectedBooks, book);
+            return genMenuItem(selectedBooks, setSelectedBooks, book);
         }),
     ];
     showAppContextMenu(event, contextMenuItems);
@@ -113,6 +113,7 @@ export default function RenderFindingInfoHeaderComp({
     selectedBooks: SelectedBookKeyType[];
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void;
 }>) {
+    const fontFamily = useBibleFontFamily(bibleKey);
     const text = useMemo(() => {
         return selectedBooks.length === 0
             ? tran('All Books')
@@ -138,7 +139,7 @@ export default function RenderFindingInfoHeaderComp({
                         );
                     }}
                 >
-                    <span data-bible-key={bibleKey}>{text}</span>
+                    <span style={{ fontFamily }}>{text}</span>
                 </button>
             </div>
         </div>

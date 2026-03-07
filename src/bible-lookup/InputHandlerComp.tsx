@@ -8,7 +8,10 @@ import {
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
-import { toInputText } from '../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    toInputText,
+    useBibleFontFamily,
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
 import InputExtraButtonsComp from './InputExtraButtonsComp';
@@ -50,6 +53,7 @@ export default function InputHandlerComp({
     }, [inputText]);
     const viewController = useLookupBibleItemControllerContext();
     const bibleKey = useBibleKeyContext();
+    const fontFamily = useBibleFontFamily(bibleKey);
     useAppEffect(() => {
         // keep bible data in cache
         const intervalId = setInterval(
@@ -79,10 +83,10 @@ export default function InputHandlerComp({
                 id={BIBLE_LOOKUP_INPUT_ID}
                 className={`form-control form-control-sm ${INPUT_TEXT_CLASS}`}
                 ref={inputRef}
-                data-bible-key={bibleKey}
                 type="text"
                 autoFocus
                 placeholder={placeholder ?? ''}
+                style={{ fontFamily }}
                 onKeyUp={(event) => {
                     if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
                         event.stopPropagation();

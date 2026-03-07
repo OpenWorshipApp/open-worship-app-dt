@@ -83,6 +83,9 @@ export async function getLangDataFromBibleKey(bibleKey: string) {
 }
 
 export async function getBibleFontFamily(bibleKey: string): Promise<string> {
+    if (!bibleKey) {
+        return await getFontFamilyByLocale(DEFAULT_LOCALE);
+    }
     const key = `FontFamilyBibleKey:${bibleKey}`;
     return await unlocking(key, async () => {
         const cachedFontFamily = await globalCacheManager1M.get(key);

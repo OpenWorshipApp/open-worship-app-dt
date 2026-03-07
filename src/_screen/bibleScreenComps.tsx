@@ -24,18 +24,15 @@ export type LyricRenderedType = {
 };
 
 function VerseTextElementComp({
-    bibleKey,
     langData,
     verseInfo,
 }: Readonly<{
-    bibleKey: string;
     langData: LanguageDataType;
     verseInfo: BibleRenderVerseType;
 }>) {
     return (
         <span
             className="highlight"
-            data-bible-key={bibleKey}
             data-kjv-verse-key={verseInfo.kjvVerseKey}
             data-verse-key={verseInfo.verseKey}
             style={{
@@ -95,11 +92,10 @@ export function BibleBibleTable({
     const renderTrBody = (_: any, i: number) => {
         return (
             <tr key={i}>
-                {bibleRenderingList.map(({ langData, verses, bibleKey }, j) => {
+                {bibleRenderingList.map(({ langData, verses }, j) => {
                     return (
                         <td key={j}>
                             <VerseTextElementComp
-                                bibleKey={bibleKey}
                                 langData={langData}
                                 verseInfo={verses[i]}
                             />
@@ -110,7 +106,7 @@ export function BibleBibleTable({
         );
     };
     const renderTdBody = (
-        { langData, verses, bibleKey }: BibleItemRenderingLangType,
+        { langData, verses }: BibleItemRenderingLangType,
         i: number,
     ) => {
         return (
@@ -119,7 +115,6 @@ export function BibleBibleTable({
                     return (
                         <VerseTextElementComp
                             key={j}
-                            bibleKey={bibleKey}
                             langData={langData}
                             verseInfo={verseInfo}
                         />

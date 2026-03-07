@@ -10,6 +10,7 @@ import { breakItem } from './bibleCrossRefsHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 export default function BibleCrossRefRenderFoundItemComp({
     bibleVersesKey,
@@ -20,11 +21,12 @@ export default function BibleCrossRefRenderFoundItemComp({
 }>) {
     const viewController = useLookupBibleItemControllerContext();
     const bibleKey = useBibleKeyContext();
+    const fontFamily = useBibleFontFamily(bibleKey);
     const [data] = useAppStateAsync(() => {
         return breakItem(bibleKey, bibleVersesKey);
     }, [bibleKey, bibleVersesKey]);
     if (data === undefined) {
-        return <div>Loading...</div>;
+        return <div>{tran('Loading')}...</div>;
     }
     if (data === null) {
         return (
@@ -32,7 +34,7 @@ export default function BibleCrossRefRenderFoundItemComp({
                 className="w-100 app-border-white-round my-1 p-1 app-caught-hover-pointer"
                 style={{ color: 'red' }}
             >
-                Fail to get data for "{bibleVersesKey}"
+                {tran('Fail to get data for')} "{bibleVersesKey}"
             </div>
         );
     }
@@ -74,7 +76,7 @@ export default function BibleCrossRefRenderFoundItemComp({
             </span>
             <span
                 title={bibleText}
-                data-bible-key={bibleItem.bibleKey}
+                style={{ fontFamily }}
                 dangerouslySetInnerHTML={{
                     __html: htmlText,
                 }}

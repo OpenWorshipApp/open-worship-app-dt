@@ -51,7 +51,7 @@ export default function BibleXMLInfoComp({
             onContextMenu={handBibleKeyContextMenuOpening.bind(null, bibleKey)}
         >
             <div className="d-flex w-100">
-                <div className="flex-fill d-flex" data-bible-key={bibleKey}>
+                <div className="flex-fill d-flex" data-bible-key-ff={bibleKey}>
                     <div
                         className="badge bg-secondary mx-1"
                         style={{

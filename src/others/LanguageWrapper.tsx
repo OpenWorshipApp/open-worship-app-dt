@@ -7,9 +7,9 @@ export async function applyFontFamily(element: Node, type: MutationType) {
     if (!(element instanceof HTMLElement)) {
         return;
     }
-    let locale = element.dataset.locale;
+    let locale = element.dataset.localeFF;
     if (!locale) {
-        const bibleKey = element.dataset.bibleKey;
+        const bibleKey = element.dataset.dataBibleKeyFf;
         if (bibleKey) {
             locale = await getBibleLocale(bibleKey);
         }

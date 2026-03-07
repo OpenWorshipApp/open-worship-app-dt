@@ -31,6 +31,7 @@ import {
     useIsOnScreen,
 } from './bibleHelpers';
 import FileSource from '../helper/FileSource';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -84,6 +85,8 @@ export default function BibleItemRenderComp({
     warningMessage?: string;
     filePath: string;
 }>) {
+    const { bibleKey } = bibleItem;
+    const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useBibleItemsViewControllerContext();
     const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     useFileSourceRefreshEvents(['select'], filePath);
@@ -199,7 +202,9 @@ export default function BibleItemRenderComp({
                     </div>
                     <span
                         className="app-ellipsis"
-                        data-bible-key={bibleItem.bibleKey}
+                        style={{
+                            fontFamily,
+                        }}
                     >
                         <BibleViewTitleEditorComp
                             bibleItem={bibleItem}

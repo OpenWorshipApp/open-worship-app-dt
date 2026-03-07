@@ -11,6 +11,7 @@ import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import type { CSSProperties } from 'react';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,
@@ -52,14 +53,14 @@ export async function genContextMenuBibleKeys(
                   ]
                 : []),
             {
-                menuElement: <span data-locale={locale}>{langTitle}</span>,
+                menuElement: <span data-locale-ff={locale}>{langTitle}</span>,
                 disabled: true,
             },
             ...bibleInfoList.map((bibleInfo) => {
                 return {
                     menuElement: (
                         <span
-                            data-locale={bibleInfo.locale}
+                            data-locale-ff={bibleInfo.locale}
                         >{`(${bibleInfo.key}) ${bibleInfo.title}`}</span>
                     ),
                     title: bibleInfo.title,
@@ -209,8 +210,9 @@ function BibleKeyWithTileComp({ bibleKey }: Readonly<{ bibleKey: string }>) {
     const [bibleInfo] = useAppStateAsync(() => {
         return getBibleInfo(bibleKey);
     }, [bibleKey]);
+    const fontFamily = useBibleFontFamily(bibleKey);
     return (
-        <span title={bibleInfo?.title} data-bible-key={bibleKey}>
+        <span title={bibleInfo?.title} style={{ fontFamily }}>
             {bibleKey}
         </span>
     );

@@ -7,7 +7,10 @@ import {
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
-import { getVersesCount } from '../../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    getVersesCount,
+    useBibleFontFamily,
+} from '../../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../../others/LoadingComp';
 import { getBibleInfoIsRtl } from '../../helper/bible-helpers/bibleInfoHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
@@ -18,13 +21,14 @@ import { tran } from '../../lang/langHelpers';
 function RenderVerseTitleComp({
     bibleItem,
 }: Readonly<{ bibleItem: ReadIdOnlyBibleItem }>) {
+    const fontFamily = useBibleFontFamily(bibleItem.bibleKey);
     const [title] = useAppStateAsync(() => {
         return bibleItem.toTitle();
     }, [bibleItem]);
     return (
         <>
             <hr />
-            <span className="text-muted " data-bible-key={bibleItem.bibleKey}>
+            <span className="text-muted " style={{ fontFamily }}>
                 {title}
             </span>
         </>

@@ -50,7 +50,6 @@ export default function RenderVerseTextViewComp({
             {isExtraVerses ? (
                 <div
                     className="text d-flex"
-                    data-bible-key={bibleKey}
                     data-dict-locale={verseInfo.locale}
                     style={style}
                 >
@@ -76,11 +75,7 @@ export default function RenderVerseTextViewComp({
                     </div>
                 </div>
             ) : (
-                <span
-                    data-bible-key={bibleKey}
-                    style={style}
-                    data-dict-locale={verseInfo.locale}
-                >
+                <span style={style} data-dict-locale={verseInfo.locale}>
                     {textElement}
                 </span>
             )}

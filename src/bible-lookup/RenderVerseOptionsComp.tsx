@@ -7,7 +7,10 @@ import RenderVerseNumOptionComp, { mouseUp } from './RenderVerseNumOptionComp';
 import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { genVerseList } from '../bible-list/bibleHelpers';
-import { getVersesCount } from '../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    getVersesCount,
+    useBibleFontFamily,
+} from '../helper/bible-helpers/bibleLogicHelpers2';
 import type BibleItem from '../bible-list/BibleItem';
 
 export default function RenderVerseOptionsComp({
@@ -16,6 +19,7 @@ export default function RenderVerseOptionsComp({
     bibleItem: BibleItem;
 }>) {
     const { bibleKey, target } = bibleItem;
+    const fontFamily = useBibleFontFamily(bibleKey);
     const [verseList] = useAppStateAsync(() => {
         return genVerseList({
             bibleKey: bibleKey,
@@ -53,7 +57,7 @@ export default function RenderVerseOptionsComp({
         });
     };
     return (
-        <div className="render-found full-view-hide" data-bible-key={bibleKey}>
+        <div className="render-found full-view-hide" style={{ fontFamily }}>
             <div
                 className={
                     'verse-select w-100 d-flex p-1 align-content-start ' +

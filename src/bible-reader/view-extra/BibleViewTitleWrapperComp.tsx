@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 
 export default function BibleViewTitleWrapperComp({
     children,
@@ -9,12 +10,12 @@ export default function BibleViewTitleWrapperComp({
     children: ReactNode;
     bibleKey: string;
 }>) {
+    const fontFamily = useBibleFontFamily(bibleKey);
     const fontSize = useBibleViewFontSizeContext();
     return (
         <span
             className="title full-view-reset-font-size"
-            data-bible-key={bibleKey}
-            style={{ fontSize }}
+            style={{ fontSize, fontFamily }}
         >
             {children}
         </span>

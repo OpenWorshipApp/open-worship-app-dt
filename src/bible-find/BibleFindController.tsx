@@ -480,7 +480,9 @@ export default class BibleFindController {
             event,
             suggestWords.map((text) => {
                 return {
-                    menuElement: <span data-locale={this.locale}>{text}</span>,
+                    menuElement: (
+                        <span data-locale-ff={this.locale}>{text}</span>
+                    ),
                     onSelect: () => {
                         let newText = quickEndWord(this.locale, oldValue);
                         const trimText = quickTrimText(this.locale, text);

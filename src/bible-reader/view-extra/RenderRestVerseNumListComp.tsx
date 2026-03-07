@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 
 import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
-import { toLocaleNumBible } from '../../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    toLocaleNumBible,
+    useBibleFontFamily,
+} from '../../helper/bible-helpers/bibleLogicHelpers2';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 
@@ -21,6 +24,7 @@ export default function RenderRestVerseNumListComp({
     onSelect: (verse: number) => void;
     toTitle: (verse: number) => string;
 }>) {
+    const fontFamily = useBibleFontFamily(bibleItem.bibleKey);
     const fontSize = useBibleViewFontSizeContext();
     const actualFrom = from ?? 1;
     const actualTo = to ?? verseCount;
@@ -58,8 +62,8 @@ export default function RenderRestVerseNumListComp({
                             className="verse-number-rest app-not-selectable-text"
                             style={{
                                 fontSize: `${fontSize * 0.7}px`,
+                                fontFamily,
                             }}
-                            data-bible-key={bibleItem.bibleKey}
                         >
                             {localeVerseList[i]}
                         </div>

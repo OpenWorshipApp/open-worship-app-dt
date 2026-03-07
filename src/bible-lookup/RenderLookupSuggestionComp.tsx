@@ -12,6 +12,7 @@ import RenderVerseOptionsComp from './RenderVerseOptionsComp';
 import { openBibleSetting } from '../setting/settingHelpers';
 import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
 import RenderBookOptionsComp from './RenderBookOptionsComp';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 export default function RenderLookupSuggestionComp({
     applyChapterSelection,
@@ -22,7 +23,7 @@ export default function RenderLookupSuggestionComp({
 }>) {
     const editingResult = use(EditingResultContext);
     if (editingResult === null) {
-        return <div>Loading...</div>;
+        return <div>{tran('Loading')}...</div>;
     }
     const {
         bookKey,
@@ -82,6 +83,7 @@ export function BibleNotAvailableComp({
 }: Readonly<{
     bibleKey: string;
 }>) {
+    const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useLookupBibleItemControllerContext();
     const handleBibleKeyChanging = (
         _isContextMenu: boolean,
@@ -101,7 +103,7 @@ export function BibleNotAvailableComp({
             <div className="body card-body w-100 p-3">
                 <h2>
                     {tran('Bible key ')}
-                    <span data-bible-key={bibleKey}>"{bibleKey}"</span>
+                    <span style={{ fontFamily }}>"{bibleKey}"</span>
                     {' is not available!'}
                 </h2>
                 <div className="d-flex">

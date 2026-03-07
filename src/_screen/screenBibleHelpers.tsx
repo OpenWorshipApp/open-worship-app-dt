@@ -87,7 +87,7 @@ async function onBibleSelect(
                       menuElement: (
                           <span
                               style={{ color: 'red' }}
-                              data-bible-key={
+                              data-bible-key-ff={
                                   bibleRenderingList[index].bibleKey
                               }
                           >

@@ -108,7 +108,7 @@ function genContextMenuItems(
         },
         {
             childBefore: <i className="bi bi-eye" />,
-            menuElement: <span data-bible-key={bibleKey}>{title}</span>,
+            menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
             title: `Open "${title}"`,
             onSelect:
                 onSelect ??
@@ -121,7 +121,7 @@ function genContextMenuItems(
         },
         {
             childBefore: <i className="bi bi-copy" />,
-            menuElement: <span data-bible-key={bibleKey}>{title}</span>,
+            menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
             title: `Copy "${title}" to clipboard`,
             onSelect: () => {
                 copyToClipboard(`${bibleItem.getCopyingBibleKey()} ${title}`);
@@ -232,7 +232,7 @@ async function genTitleHtml(
     }
     const compiledTitle = await compileVerseTitle(bibleKey, title.content);
     const locale = await getBibleLocale(bibleKey);
-    return `<div data-bible-key="${bibleKey}" data-dict-locale="${locale}"
+    return `<div data-dict-locale="${locale}"
             style="${style}">
             ${compiledTitle}
         </div>`;

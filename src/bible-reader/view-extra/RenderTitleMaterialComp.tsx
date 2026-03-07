@@ -6,6 +6,40 @@ import { useBibleItemsViewControllerContext } from '../BibleItemsViewController'
 import { AudioAIEnablingComp } from '../AudioAIEnablingComp';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { useBibleViewTitleMaterialContext } from './viewExtraHelpers';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
+
+function RenderBibleKeyComp({
+    bibleKey,
+    bibleItem,
+}: Readonly<{ bibleKey: string; bibleItem: ReadIdOnlyBibleItem }>) {
+    const fontFamily = useBibleFontFamily(bibleKey);
+    const viewController = useBibleItemsViewControllerContext();
+    const handleClicking = () => {
+        viewController.applyTargetOrBibleKey(bibleItem, {
+            extraBibleKeys: bibleItem.extraBibleKeys.filter(
+                (key) => key !== bibleKey,
+            ),
+        });
+    };
+    return (
+        <span
+            className="bible-extra-key bg-primary small app-caught-hover-pointer"
+            title={`Click to remove extra Bible ${bibleKey}`}
+            key={bibleKey}
+            style={{
+                borderRadius: '8px',
+                fontSize: '10px',
+                padding: '2px',
+                margin: 'auto 1px',
+                fontFamily,
+            }}
+            onClick={handleClicking}
+        >
+            <i className="bi bi-x" style={{ color: 'red' }} />
+            {bibleKey}
+        </span>
+    );
+}
 
 export function RenderTitleMaterialComp({
     bibleItem,
@@ -53,32 +87,11 @@ export function RenderTitleMaterialComp({
                         />
                     </div>
                     {bibleItem.extraBibleKeys.map((extraBibleKey) => (
-                        <span
-                            className="bible-extra-key bg-primary small app-caught-hover-pointer"
-                            title={`Click to remove extra Bible ${extraBibleKey}`}
-                            data-bible-key={extraBibleKey}
+                        <RenderBibleKeyComp
                             key={extraBibleKey}
-                            style={{
-                                borderRadius: '8px',
-                                fontSize: '10px',
-                                padding: '2px',
-                                margin: 'auto 1px',
-                            }}
-                            onClick={() => {
-                                viewController.applyTargetOrBibleKey(
-                                    bibleItem,
-                                    {
-                                        extraBibleKeys:
-                                            bibleItem.extraBibleKeys.filter(
-                                                (key) => key !== extraBibleKey,
-                                            ),
-                                    },
-                                );
-                            }}
-                        >
-                            <i className="bi bi-x" style={{ color: 'red' }} />
-                            {extraBibleKey}
-                        </span>
+                            bibleKey={extraBibleKey}
+                            bibleItem={bibleItem}
+                        />
                     ))}
                 </div>
                 <div className="flex-item">{materialContext.titleElement}</div>

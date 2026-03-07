@@ -4,6 +4,7 @@ import { tran } from '../lang/langHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 export default function BibleCrossRefWrapperComp({
     title,
@@ -17,6 +18,7 @@ export default function BibleCrossRefWrapperComp({
     onRefresh: () => void;
 }>) {
     const bibleKey = useBibleKeyContext();
+    const fontFamily = useBibleFontFamily(bibleKey);
     const [isShowing, setIsShowing] = useStateSettingBoolean(settingName, true);
     const handleContextMenuOpening = (event: any) => {
         if (!isShowing) {
@@ -50,7 +52,7 @@ export default function BibleCrossRefWrapperComp({
                 <i
                     className={`bi bi-chevron-${isShowing ? 'down' : 'right'}`}
                 />
-                {title} (<span data-bible-key={bibleKey}>{bibleKey}</span>)
+                {title} (<span style={{ fontFamily }}>{bibleKey}</span>)
             </div>
             {isShowing ? (
                 <div className="card-body app-inner-shadow px-1">
