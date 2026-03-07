@@ -28,35 +28,37 @@ export default function RenderVerseNumOptionComp({
     let select = `${started ? 'selected-start' : ''}`;
     select += ` ${inside ? 'selected' : ''}`;
     select += ` ${ended ? 'selected-end' : ''}`;
+    const handleMouseDown = (event: any) => {
+        if (event.shiftKey) {
+            const arr = [ind, verseStart, verseEnd].sort((a, b) => {
+                return a - b;
+            });
+            const verse = arr.shift();
+            if (verse === undefined) {
+                return;
+            }
+            onVerseChange(verse, arr.pop());
+        } else {
+            onVerseChange(ind);
+            mouseDownInd = ind;
+        }
+    };
+    const handleMouseUp = () => {
+        if (mouseDownInd !== null) {
+            onVerseChange(
+                Math.min(mouseDownInd, ind),
+                Math.max(mouseDownInd, ind),
+            );
+        }
+    };
     return (
         <div
             className={`item alert app-caught-hover-pointer text-center ${select}`}
             title={
                 `${verseNum}` === verseNumText ? undefined : `Verse ${verseNum}`
             }
-            onMouseDown={(event) => {
-                if (event.shiftKey) {
-                    const arr = [ind, verseStart, verseEnd].sort((a, b) => {
-                        return a - b;
-                    });
-                    const verse = arr.shift();
-                    if (verse === undefined) {
-                        return;
-                    }
-                    onVerseChange(verse, arr.pop());
-                } else {
-                    onVerseChange(ind);
-                    mouseDownInd = ind;
-                }
-            }}
-            onMouseEnter={() => {
-                if (mouseDownInd !== null) {
-                    onVerseChange(
-                        Math.min(mouseDownInd, ind),
-                        Math.max(mouseDownInd, ind),
-                    );
-                }
-            }}
+            onMouseDown={handleMouseDown}
+            onMouseEnter={handleMouseUp}
         >
             <span>{verseNumText}</span>
         </div>

@@ -43,6 +43,15 @@ export default function RenderVerseOptionsComp({
     if (!verseList) {
         return null;
     }
+    const handleFullVersesClick = () => {
+        viewController.applyTargetOrBibleKey(bibleItem, {
+            target: {
+                ...target,
+                verseStart: 1,
+                verseEnd: verseList.length,
+            },
+        });
+    };
     return (
         <div className="render-found full-view-hide" data-bible-key={bibleKey}>
             <div
@@ -52,6 +61,18 @@ export default function RenderVerseOptionsComp({
                 }
             >
                 {verseList.map(([verseNum, verseNumStr], i) => {
+                    const handleVerseChange = (
+                        newVerseStart: number,
+                        newVerseEnd?: number,
+                    ) => {
+                        viewController.applyTargetOrBibleKey(bibleItem, {
+                            target: {
+                                ...target,
+                                verseStart: newVerseStart,
+                                verseEnd: newVerseEnd ?? newVerseStart,
+                            },
+                        });
+                    };
                     return (
                         <RenderVerseNumOptionComp
                             key={verseNumStr}
@@ -59,19 +80,7 @@ export default function RenderVerseOptionsComp({
                             index={i}
                             verseNum={verseNum}
                             verseNumText={verseNumStr}
-                            onVerseChange={(newVerseStart, newVerseEnd) => {
-                                viewController.applyTargetOrBibleKey(
-                                    bibleItem,
-                                    {
-                                        target: {
-                                            ...target,
-                                            verseStart: newVerseStart,
-                                            verseEnd:
-                                                newVerseEnd ?? newVerseStart,
-                                        },
-                                    },
-                                );
-                            }}
+                            onVerseChange={handleVerseChange}
                         />
                     );
                 })}
@@ -82,15 +91,7 @@ export default function RenderVerseOptionsComp({
                         style={{
                             color: 'var(--bs-info-text-emphasis)',
                         }}
-                        onClick={() => {
-                            viewController.applyTargetOrBibleKey(bibleItem, {
-                                target: {
-                                    ...target,
-                                    verseStart: 1,
-                                    verseEnd: verseList.length,
-                                },
-                            });
-                        }}
+                        onClick={handleFullVersesClick}
                     >
                         <span>
                             <i className="bi bi-arrows-expand-vertical" />
