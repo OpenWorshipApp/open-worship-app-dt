@@ -4,6 +4,7 @@ import { tran } from '../../lang/langHelpers';
 import FileListHandlerComp from '../../others/FileListHandlerComp';
 import Note from './Note';
 import NoteFileComp from './NoteFileComp';
+import { sortNoteFilePaths } from './noteHelpers';
 
 export default function NoteListComp() {
     const dirSource = useGenDirSourceReload(defaultDataDirNames.NOTES);
@@ -31,6 +32,7 @@ export default function NoteListComp() {
             header={<span>{tran('Notes')}</span>}
             bodyHandler={handleBodyRendering}
             userClassName="p-0"
+            sortFilePaths={sortNoteFilePaths}
         />
     );
 }

@@ -1,6 +1,7 @@
 import { tran } from '../../lang/langHelpers';
 import PathSelectorComp from '../../others/PathSelectorComp';
 import {
+    useAppEffect,
     useAppEffectAsync,
     useAppStateAsync,
 } from '../../helper/debuggerHelpers';
@@ -21,14 +22,10 @@ import {
 } from './appLocalStorage';
 import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
-import type { OptionalPromise } from '../../helper/typeHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
 class ParentDirSource extends DirSource {
     _dirPath: string;
-    setDirPath: (dirPath: string) => OptionalPromise<void> = (
-        _dirPath: string,
-    ) => {};
     constructor(dirPath: string) {
         super(SELECTED_PARENT_DIR_SETTING_NAME);
         this._dirPath = dirPath;
@@ -213,11 +210,16 @@ export default function SettingGeneralDirectoryPathComp() {
     if (!dirSource) {
         return null;
     }
-    dirSource.setDirPath = async (dirPath: string) => {
-        await appLocalStorage.setSelectedParentDirectory(dirPath);
-        await selectPathForChildDir(dirPath);
-        const newDirSource = new ParentDirSource(dirPath);
-        setDirSource(newDirSource);
-    };
+    useAppEffect(() => {
+        dirSource.setDirPath = async (dirPath: string) => {
+            await appLocalStorage.setSelectedParentDirectory(dirPath);
+            await selectPathForChildDir(dirPath);
+            const newDirSource = new ParentDirSource(dirPath);
+            setDirSource(newDirSource);
+        };
+        return () => {
+            dirSource.setDirPath = () => {};
+        };
+    }, []);
     return <RenderBodyComp dirSource={dirSource} />;
 }

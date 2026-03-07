@@ -1,30 +1,41 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type DirSource from '../helper/DirSource';
 import { selectDirs } from '../server/fileHelpers';
+import { useAppEffect } from '../helper/debuggerHelpers';
 
 export default function PathEditorComp({
     dirSource,
 }: Readonly<{
     dirSource: DirSource;
 }>) {
-    const [path, setPath] = useState(dirSource.dirPath);
-    const setPath1 = (newPath: string) => {
-        setPath(newPath);
-        dirSource.dirPath = newPath;
-    };
-    let dirValidClassname = 'is-valid';
-    if (dirSource.isDirPathValid === null) {
-        dirValidClassname = '';
-    } else if (!dirSource.isDirPathValid) {
-        dirValidClassname = 'is-invalid';
-    }
+    const [dirPath, setDirPath] = useState(dirSource.dirPath);
+
+    useAppEffect(() => {
+        dirSource.setDirPath = (newDirPath: string) => {
+            setDirPath(newDirPath);
+        };
+        return () => {
+            dirSource.setDirPath = () => {};
+        };
+    }, [dirSource]);
+
+    const dirValidClassname = useMemo(() => {
+        let dirValidClassname = 'is-valid';
+        if (dirSource.isDirPathValid === null) {
+            dirValidClassname = '';
+        } else if (!dirSource.isDirPathValid) {
+            dirValidClassname = 'is-invalid';
+        }
+        return dirValidClassname;
+    }, [dirSource.isDirPathValid]);
+
     const handleDirSelecting = async () => {
         const dirs = await selectDirs();
         if (dirs.length === 0) {
             return;
         }
-        setPath1(dirs[0]);
+        dirSource.dirPath = dirs[0];
     };
     return (
         <div className="input-group mb-3">
@@ -42,9 +53,9 @@ export default function PathEditorComp({
             <input
                 className={`form-control form-control-sm ${dirValidClassname}`}
                 type="text"
-                value={path}
+                value={dirPath}
                 onChange={(event) => {
-                    setPath1(event.target.value);
+                    dirSource.dirPath = event.target.value;
                 }}
             />
             <button

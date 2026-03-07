@@ -189,8 +189,9 @@ export async function openBibleItemContextMenu(
     }
     const menuItem: ContextMenuItemType[] = [
         ...genBibleItemCopyingContextMenu(bibleItem),
-        ...(openBibleLookup !== null
-            ? [
+        ...(openBibleLookup === null
+            ? []
+            : [
                   {
                       menuElement: tran('Lookup'),
                       onSelect: async () => {
@@ -208,8 +209,7 @@ export async function openBibleItemContextMenu(
                           openBibleLookup();
                       },
                   },
-              ]
-            : []),
+              ]),
         {
             menuElement: tran('Duplicate'),
             onSelect: () => {
@@ -378,4 +378,21 @@ export function improveBibleItemTitleOnHover<T extends HTMLElement>(
         text = text.substring(0, 1000);
         element.title = text;
     });
+}
+
+export function sortBibleFilePaths(filePaths: string[]) {
+    // move default file to the top
+    const newFilePath = [...filePaths];
+    newFilePath.sort((a, b) => {
+        const aIsDefault = Bible.checkIsDefault(a);
+        const bIsDefault = Bible.checkIsDefault(b);
+        if (aIsDefault && !bIsDefault) {
+            return -1;
+        }
+        if (!aIsDefault && bIsDefault) {
+            return 1;
+        }
+        return 0;
+    });
+    return newFilePath;
 }

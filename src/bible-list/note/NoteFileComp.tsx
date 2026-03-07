@@ -39,50 +39,55 @@ function genContextMenu(
     if (!note) {
         return [];
     }
+    const hasItems = !!note?.items.length;
     return [
-        {
-            menuElement: tran('Export to MS Word'),
-            childBefore: genContextMenuItemIcon('file-earmark-word', {
-                color: 'blue',
-            }),
-            onSelect: () => {
-                const noteItems = note.items;
-                console.log('Exporting note items', noteItems);
-            },
-        },
-        {
-            menuElement: tran('Empty'),
-            onSelect: () => {
-                showAppConfirm(
-                    'Empty Note List',
-                    'Are you sure to empty this note list?',
-                    {
-                        confirmButtonLabel: 'Yes',
-                    },
-                ).then((isOk) => {
-                    if (!isOk) {
-                        return;
-                    }
-                    note.empty();
-                    note.save();
-                });
-            },
-        },
-        {
-            menuElement: tran('Copy All Items'),
-            onSelect: async () => {
-                const contentList = note.items.map((item) => {
-                    return item.content;
-                });
-                copyToClipboard(contentList.join('\n\n'));
-            },
-        },
-        {
-            menuElement: tran('Move All Items To'),
-            onSelect: (event: any) => {
-                moveNoteItemTo(event, note);
-            },
-        },
+        ...(hasItems
+            ? [
+                  {
+                      menuElement: tran('Export to MS Word'),
+                      childBefore: genContextMenuItemIcon('file-earmark-word', {
+                          color: 'blue',
+                      }),
+                      onSelect: () => {
+                          const noteItems = note.items;
+                          console.log('Exporting note items', noteItems);
+                      },
+                  },
+                  {
+                      menuElement: tran('Empty'),
+                      onSelect: () => {
+                          showAppConfirm(
+                              'Empty Note List',
+                              'Are you sure to empty this note list?',
+                              {
+                                  confirmButtonLabel: 'Yes',
+                              },
+                          ).then((isOk) => {
+                              if (!isOk) {
+                                  return;
+                              }
+                              note.empty();
+                              note.save();
+                          });
+                      },
+                  },
+                  {
+                      menuElement: tran('Copy All Items'),
+                      onSelect: async () => {
+                          const contentList = note.items.map((item) => {
+                              return item.content;
+                          });
+                          copyToClipboard(contentList.join('\n\n'));
+                      },
+                  },
+                  {
+                      menuElement: tran('Move All Items To'),
+                      onSelect: (event: any) => {
+                          moveNoteItemTo(event, note);
+                      },
+                  },
+              ]
+            : []),
         ...(isAttachedBackgroundElement
             ? genRemovingAttachedBackgroundMenu(note.filePath)
             : []),

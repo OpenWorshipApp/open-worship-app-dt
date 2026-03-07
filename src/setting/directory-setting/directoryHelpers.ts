@@ -96,7 +96,8 @@ export async function selectDefaultDataDirName(
     const dirPath = appProvider.pathUtils.join(selectedParentDir, dirName);
     const isOk = await showAppConfirm(
         tran('Select Default Folder'),
-        `This will select "${dirPath}" (will create if not exist)`,
+        `${tran('This will select')} "${dirPath}" ` +
+            `(${tran('will create if not exist')})`,
     );
     if (!isOk) {
         return;

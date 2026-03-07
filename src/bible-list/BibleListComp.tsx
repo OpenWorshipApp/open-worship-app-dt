@@ -8,7 +8,7 @@ import { getSettingPrefix } from '../helper/settingHelpers';
 import { defaultDataDirNames } from '../helper/constants';
 import appProvider from '../server/appProvider';
 import type BibleItem from './BibleItem';
-import { checkIsBibleItemOnScreen } from './bibleHelpers';
+import { checkIsBibleItemOnScreen, sortBibleFilePaths } from './bibleHelpers';
 import { tran } from '../lang/langHelpers';
 
 async function checkIsOnScreen(filePaths: string[]) {
@@ -54,6 +54,7 @@ export default function BibleListComp() {
             bodyHandler={handleBodyRendering}
             userClassName="p-0"
             checkIsOnScreen={checkIsOnScreen}
+            sortFilePaths={sortBibleFilePaths}
         />
     );
 }

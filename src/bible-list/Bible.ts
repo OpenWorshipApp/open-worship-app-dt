@@ -226,11 +226,11 @@ export default class Bible
             const backupBibleItems = fromBible.items;
             let targetBibleItems: BibleItem[] = backupBibleItems;
             const index =
-                bibleItem !== undefined
-                    ? fromBible.items.findIndex((item) => {
+                bibleItem === undefined
+                    ? undefined
+                    : fromBible.items.findIndex((item) => {
                           return item.id === bibleItem.id;
-                      })
-                    : undefined;
+                      });
             if (index !== undefined) {
                 if (!backupBibleItems[index]) {
                     showSimpleToast(

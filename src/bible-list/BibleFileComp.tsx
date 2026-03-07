@@ -43,54 +43,59 @@ function genContextMenu(
     if (!bible) {
         return [];
     }
+    const hasItems = !!bible?.items.length;
     return [
-        {
-            menuElement: tran('Export to MS Word'),
-            childBefore: genContextMenuItemIcon('file-earmark-word', {
-                color: 'blue',
-            }),
-            onSelect: () => {
-                const bibleItems = bible.items;
-                exportToWordDocument(bibleItems);
-            },
-        },
-        {
-            menuElement: tran('Empty'),
-            onSelect: () => {
-                showAppConfirm(
-                    'Empty Bible List',
-                    'Are you sure to empty this bible list?',
-                    {
-                        confirmButtonLabel: 'Yes',
-                    },
-                ).then((isOk) => {
-                    if (!isOk) {
-                        return;
-                    }
-                    bible.empty();
-                    bible.save();
-                });
-            },
-        },
-        {
-            menuElement: tran('Copy All Items'),
-            onSelect: async () => {
-                const promises = bible.items.map((item) => {
-                    return item.toTitleText();
-                });
-                const renderedItems = await Promise.all(promises);
-                const text = renderedItems.map(({ title, text }) => {
-                    return `${title}\n${text}`;
-                });
-                copyToClipboard(text.join('\n\n'));
-            },
-        },
-        {
-            menuElement: tran('Move All Items To'),
-            onSelect: (event: any) => {
-                moveBibleItemTo(event, bible);
-            },
-        },
+        ...(hasItems
+            ? [
+                  {
+                      menuElement: tran('Export to MS Word'),
+                      childBefore: genContextMenuItemIcon('file-earmark-word', {
+                          color: 'blue',
+                      }),
+                      onSelect: () => {
+                          const bibleItems = bible.items;
+                          exportToWordDocument(bibleItems);
+                      },
+                  },
+                  {
+                      menuElement: tran('Empty'),
+                      onSelect: () => {
+                          showAppConfirm(
+                              'Empty Bible List',
+                              'Are you sure to empty this bible list?',
+                              {
+                                  confirmButtonLabel: 'Yes',
+                              },
+                          ).then((isOk) => {
+                              if (!isOk) {
+                                  return;
+                              }
+                              bible.empty();
+                              bible.save();
+                          });
+                      },
+                  },
+                  {
+                      menuElement: tran('Copy All Items'),
+                      onSelect: async () => {
+                          const promises = bible.items.map((item) => {
+                              return item.toTitleText();
+                          });
+                          const renderedItems = await Promise.all(promises);
+                          const text = renderedItems.map(({ title, text }) => {
+                              return `${title}\n${text}`;
+                          });
+                          copyToClipboard(text.join('\n\n'));
+                      },
+                  },
+                  {
+                      menuElement: tran('Move All Items To'),
+                      onSelect: (event: any) => {
+                          moveBibleItemTo(event, bible);
+                      },
+                  },
+              ]
+            : []),
         ...(isAttachedBackgroundElement
             ? genRemovingAttachedBackgroundMenu(bible.filePath)
             : []),

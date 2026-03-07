@@ -116,3 +116,20 @@ export async function openNoteItemContextMenu(
     }
     showAppContextMenu(event, [...extraMenuItems, ...menuItem]);
 }
+
+export function sortNoteFilePaths(filePaths: string[]) {
+    // move default file to the top
+    const newFilePath = [...filePaths];
+    newFilePath.sort((a, b) => {
+        const aIsDefault = Note.checkIsDefault(a);
+        const bIsDefault = Note.checkIsDefault(b);
+        if (aIsDefault && !bIsDefault) {
+            return -1;
+        }
+        if (!aIsDefault && bIsDefault) {
+            return 1;
+        }
+        return 0;
+    });
+    return newFilePath;
+}

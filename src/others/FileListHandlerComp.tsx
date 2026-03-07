@@ -138,6 +138,7 @@ type PropsType = {
         event: any,
         defaultContextMenuItems: ContextMenuItemType[],
     ) => void;
+    sortFilePaths?: (filePaths: string[]) => string[];
 };
 
 export default function FileListHandlerComp({
@@ -156,6 +157,7 @@ export default function FileListHandlerComp({
     fileSelectionOption,
     checkIsOnScreen,
     onItemsAdding,
+    sortFilePaths,
 }: Readonly<PropsType>) {
     const [isOnScreen, setIsOnScreen] = useState(false);
     const handleNameApplying = async (name: string | null) => {
@@ -251,6 +253,7 @@ export default function FileListHandlerComp({
                                 mimetypeName={mimetypeName}
                                 setIsOnScreen={setIsOnScreen}
                                 checkIsOnScreen={checkIsOnScreen}
+                                sortFilePaths={sortFilePaths}
                             />
                         </ul>
                     )}

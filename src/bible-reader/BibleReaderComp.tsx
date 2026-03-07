@@ -10,8 +10,8 @@ import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import LookupBibleItemController from './LookupBibleItemController';
 import { BibleItemsViewControllerContext } from './BibleItemsViewController';
 
-const LazyBibleListComp = lazy(() => {
-    return import('../bible-list/BibleListComp');
+const LazyBibleReadingLeftCom = lazy(() => {
+    return import('../bible-list/BibleReadingLeftCom');
 });
 const LazyRenderBibleLookupComp = lazy(() => {
     return import('../bible-lookup/RenderBibleLookupComp');
@@ -23,9 +23,9 @@ const flexSizeDefault: FlexSizeType = {
 };
 const dataInput: DataInputType[] = [
     {
-        children: LazyBibleListComp,
+        children: LazyBibleReadingLeftCom,
         key: 'h1',
-        widgetName: 'Bibles',
+        widgetName: 'Bible and Note',
     },
     {
         children: LazyRenderBibleLookupComp,

@@ -47,7 +47,7 @@ export default function NoDirSelectedComp({
 }>) {
     return (
         <div className="card p-1 w-100 app-overflow-hidden">
-            <div className="card-body">
+            <div className="card-body w-100">
                 <div
                     className="ms-2"
                     style={{
@@ -55,16 +55,16 @@ export default function NoDirSelectedComp({
                     }}
                 >
                     <i className="bi bi-info-circle" />
-                    <span>No directory selected</span>
+                    <span>{tran('No directory selected')}</span>
                 </div>
-                <div className="d-flex flex-column">
-                    <div className="m-2">
+                <div className="w-100 d-flex flex-column align-items-center justify-content-center">
+                    <div className="m-1">
                         <SelectDefaultDirButton
                             dirSource={dirSource}
                             defaultFolderName={defaultFolderName}
                         />
                     </div>
-                    <div className="m-2">
+                    <div>
                         <GotoSettingDirectoryPathComp />
                     </div>
                 </div>

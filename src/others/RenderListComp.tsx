@@ -14,9 +14,11 @@ const UNKNOWN_COLOR_NOTE = 'unknown';
 function RenderFileItemsWithColorNote({
     filePaths,
     bodyHandler,
+    sortFilePaths,
 }: {
     filePaths: string[];
     bodyHandler: (filePaths: string[]) => any;
+    sortFilePaths?: (filePaths: string[]) => string[];
 }) {
     const filePathColorMap = useMemo(() => {
         const newFilePathColorMap: { [key: string]: string[] } = {
@@ -42,10 +44,17 @@ function RenderFileItemsWithColorNote({
     }, [filePathColorMap]);
 
     if (Object.keys(filePathColorMap).length === 1) {
-        return bodyHandler(filePaths);
+        let newFilePaths = filePaths;
+        if (sortFilePaths !== undefined) {
+            newFilePaths = sortFilePaths(newFilePaths);
+        }
+        return bodyHandler(newFilePaths);
     }
     return colorNotes.map((colorNote) => {
-        const subFilePaths = filePathColorMap[colorNote];
+        let subFilePaths = filePathColorMap[colorNote];
+        if (sortFilePaths !== undefined) {
+            subFilePaths = sortFilePaths(subFilePaths);
+        }
         return (
             <Fragment key={colorNote}>
                 <hr
@@ -90,12 +99,14 @@ export default function RenderListComp({
     bodyHandler,
     setIsOnScreen,
     checkIsOnScreen,
+    sortFilePaths,
 }: Readonly<{
     dirSource: DirSource;
     mimetypeName: MimetypeNameType;
     bodyHandler: (filePaths: string[]) => any;
     setIsOnScreen: (isOnScreen: boolean) => void;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
+    sortFilePaths?: (filePaths: string[]) => string[];
 }>) {
     const filePaths = useFilePaths(dirSource, mimetypeName);
     useFileSourceIsOnScreen(
@@ -118,6 +129,7 @@ export default function RenderListComp({
         <RenderFileItemsWithColorNote
             filePaths={filePaths}
             bodyHandler={bodyHandler}
+            sortFilePaths={sortFilePaths}
         />
     );
 }

@@ -13,6 +13,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
 import { getSetting, setSetting } from './settingHelpers';
+import { OptionalPromise } from './typeHelpers';
 
 export type DirSourceEventType = 'refresh' | 'reload';
 
@@ -24,6 +25,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     checkExtraFile: ((fName: string) => FileMetadataType | null) | null = null;
     private _isDirPathValid: boolean | null = null;
     filePathsMap: Record<string, string[]> = {};
+    setDirPath: (newFilePath: string) => OptionalPromise<void> = () => {};
 
     constructor(settingName: string) {
         super();
@@ -59,8 +61,9 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     set dirPath(newDirPath: string) {
+        this.setDirPath(newDirPath);
         setSetting(this.settingName, newDirPath);
-        this.fireRefreshEvent();
+        this.fireReloadEvent();
     }
 
     static toCacheKey(settingName: string) {

@@ -60,19 +60,20 @@ export function useGenDirSourceReload(settingName: string) {
     const [dirSource, setDirSource] = useState<DirSource | null>(null);
     useAppEffectAsync(
         async (methodContext) => {
-            if (dirSource !== null) {
-                const registeredEvent = dirSource.registerEventListener(
-                    ['reload'],
-                    () => {
-                        methodContext.setDirSource(null);
-                    },
-                );
-                return () => {
-                    dirSource.unregisterEventListener(registeredEvent);
-                };
+            if (dirSource === null) {
+                const newDirSource = await DirSource.getInstance(settingName);
+                methodContext.setDirSource(newDirSource);
+                return;
             }
-            const newDirSource = await DirSource.getInstance(settingName);
-            methodContext.setDirSource(newDirSource);
+            const registeredEvent = dirSource.registerEventListener(
+                ['reload'],
+                () => {
+                    methodContext.setDirSource(null);
+                },
+            );
+            return () => {
+                dirSource.unregisterEventListener(registeredEvent);
+            };
         },
         [dirSource],
         { setDirSource },
