@@ -51,6 +51,7 @@ export default function RenderVerseTextViewComp({
                 <div
                     className="text d-flex"
                     data-bible-key={bibleKey}
+                    data-dict-locale={verseInfo.locale}
                     style={style}
                 >
                     <div
@@ -61,7 +62,10 @@ export default function RenderVerseTextViewComp({
                     >
                         {textElement}
                         <span
-                            className={`text-muted px-1 ${HoverMotionHandler.lowVisibleClassname}-10`}
+                            className={
+                                `text-muted px-1 ` +
+                                `${HoverMotionHandler.lowVisibleClassname}-10`
+                            }
                             style={{
                                 fontSize: '0.8em',
                                 opacity: '0.6',
@@ -72,7 +76,11 @@ export default function RenderVerseTextViewComp({
                     </div>
                 </div>
             ) : (
-                <span data-bible-key={bibleKey} style={style}>
+                <span
+                    data-bible-key={bibleKey}
+                    style={style}
+                    data-dict-locale={verseInfo.locale}
+                >
                     {textElement}
                 </span>
             )}

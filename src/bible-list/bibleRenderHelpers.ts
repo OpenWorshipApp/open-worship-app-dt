@@ -24,6 +24,7 @@ import {
     getNewLineTitlesHtmlText,
 } from '../helper/bible-helpers/bibleLogicHelpers3';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
+import { LocaleType } from '../lang/langHelpers';
 
 export type BibleTargetType = {
     bookKey: string;
@@ -49,6 +50,7 @@ export type CompiledVerseType = {
     isLast: boolean;
     isRtl: boolean;
     style: CSSProperties;
+    locale: LocaleType;
 };
 
 const titleCache = new CacheManager<string>(60); // 1 minute
@@ -248,6 +250,11 @@ class BibleRenderHelper {
                 );
                 const isFirst = i === verseStart;
                 const isLast = i === verseEnd;
+                const style =
+                    langData === null
+                        ? {}
+                        : { fontFamily: langData.fontFamily };
+                const locale: LocaleType = langData?.locale ?? 'en-US';
                 compiledVersesList.push({
                     verse: i,
                     localeVerse: localNum ?? iString,
@@ -260,11 +267,9 @@ class BibleRenderHelper {
                     isFirst,
                     isLast,
                     isRtl,
-                    style:
-                        langData === null
-                            ? {}
-                            : { fontFamily: langData.fontFamily },
+                    style,
                     ...extra,
+                    locale,
                 });
             }
             await compiledVerseListCache.set(

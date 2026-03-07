@@ -5,9 +5,7 @@ import {
     elementDivider,
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
-import { getBibleLocale } from './bible-helpers/bibleLogicHelpers2';
-import { getLangCode, tran } from '../lang/langHelpers';
-import { showSimpleToast } from '../toast/toastHelpers';
+import { getLangCode, LocaleType, tran } from '../lang/langHelpers';
 
 function getSelectedTextElement() {
     const selection = globalThis.getSelection();
@@ -22,40 +20,34 @@ function getSelectedTextElement() {
     return selectedElement as HTMLElement;
 }
 
-async function getSelectedTextLanguageCode() {
+function getSelectedTextLanguageCode() {
     const selectedElement = getSelectedTextElement();
-    const bibleKeys = Array.from(
+    if (selectedElement === null) {
+        return [];
+    }
+    const locales = Array.from(
         new Set(
-            selectedElement
-                ? (Array.from(
-                      selectedElement.querySelectorAll('[data-bible-key]'),
-                  )
-                      .concat([selectedElement])
-                      .map((element) => {
-                          if (element instanceof HTMLElement === false) {
-                              return null;
-                          }
-                          const bibleKey = element.dataset.bibleKey;
-                          return bibleKey ? bibleKey.trim() : null;
-                      })
-                      .filter((bibleKey) => {
-                          return bibleKey !== null && bibleKey !== '';
-                      }) as string[])
-                : [],
+            Array.from(selectedElement.querySelectorAll('[data-dict-locale]'))
+                .concat([selectedElement])
+                .map((element) => {
+                    if (element instanceof HTMLElement === false) {
+                        return null;
+                    }
+                    const dictLocale = element.dataset.dictLocale?.trim();
+                    return dictLocale ?? null;
+                })
+                .filter((dictLocale) => {
+                    return dictLocale !== null;
+                }) as LocaleType[],
         ),
-    );
-    const locales = await Promise.all(
-        bibleKeys.map((bibleKey) => {
-            return getBibleLocale(bibleKey);
-        }),
     );
     const langCodes = locales
         .map((locale) => {
-            return getLangCode(locale);
+            return getLangCode(locale) ?? null;
         })
         .filter((langCode) => {
-            return langCode !== null && langCode !== '';
-        }) as string[];
+            return langCode !== null;
+        });
     return langCodes;
 }
 
@@ -69,12 +61,13 @@ export function getSelectedText() {
 
 export function genSelectedTextContextMenus(
     extraContextMenuItems: ContextMenuItemType[] = [],
-): ContextMenuItemType[] {
+) {
     const selectedText = getSelectedText();
     if (!selectedText) {
         return [];
     }
-    return [
+    const selectedTextLangCodes = getSelectedTextLanguageCode();
+    const menuItems: ContextMenuItemType[] = [
         {
             childBefore: genContextMenuItemIcon('copy'),
             menuElement: tran('Copy Selected Text'),
@@ -91,29 +84,26 @@ export function genSelectedTextContextMenus(
                 appProvider.browserUtils.openExternalURL(url.toString());
             },
         },
-        {
-            childBefore: genContextMenuItemIcon('journal-arrow-up'),
-            menuElement: tran('Dictionary for Selected Text'),
-            onSelect: async () => {
-                const langCodes = await getSelectedTextLanguageCode();
-                if (langCodes.length === 0) {
-                    showSimpleToast(
-                        'Cannot Open Dictionary',
-                        'No language code found for the selected text.',
-                    );
-                    return;
-                }
-                for (const langCode of langCodes) {
-                    const url = new URL(
-                        `https://${langCode}.wiktionary.org/wiki/${selectedText}`,
-                    );
-                    appProvider.browserUtils.openExternalURL(url.toString());
-                }
-            },
-        },
+        ...(selectedTextLangCodes.length > 0
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon('journal-arrow-up'),
+                      menuElement: tran('Dictionary for Selected Text'),
+                      onSelect: () => {
+                          for (const langCode of selectedTextLangCodes) {
+                              const url =
+                                  `https://${langCode}.wiktionary.org/` +
+                                  `wiki/${selectedText}`;
+                              appProvider.browserUtils.openExternalURL(url);
+                          }
+                      },
+                  },
+              ]
+            : []),
         ...extraContextMenuItems,
         {
             menuElement: elementDivider,
         },
     ];
+    return menuItems;
 }
