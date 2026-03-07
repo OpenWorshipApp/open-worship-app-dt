@@ -7,6 +7,7 @@ import type { BookMatchDataType } from '../helper/bible-helpers/bibleLogicHelper
 import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { SelectedBookKeyType } from './bibleFindHelpers';
+import { tran } from '../lang/langHelpers';
 
 function genMenuItem(
     bibleKey: string,
@@ -51,7 +52,7 @@ async function selectBookKeys(
     });
     const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: 'All Books',
+            menuElement: tran('All Books'),
             onSelect: () => {
                 setSelectedBooks([]);
             },
@@ -59,7 +60,7 @@ async function selectBookKeys(
         ...(selectedBooks.length > 0
             ? [
                   {
-                      menuElement: 'Shift + Click to select multiple',
+                      menuElement: tran('Shift + Click to select multiple'),
                   },
               ]
             : []),
@@ -71,7 +72,7 @@ async function selectBookKeys(
                         borderBottom: '1px dotted gray',
                     }}
                 >
-                    Old Testament
+                    {tran('Old Testament')}
                 </span>
             ),
             onSelect: () => {
@@ -89,7 +90,7 @@ async function selectBookKeys(
                         borderBottom: '1px dotted gray',
                     }}
                 >
-                    New Testament
+                    {tran('New Testament')}
                 </span>
             ),
             onSelect: () => {
@@ -114,7 +115,7 @@ export default function RenderFindingInfoHeaderComp({
 }>) {
     const text = useMemo(() => {
         return selectedBooks.length === 0
-            ? 'All Books'
+            ? tran('All Books')
             : `${selectedBooks
                   .map(({ book }) => {
                       return book;

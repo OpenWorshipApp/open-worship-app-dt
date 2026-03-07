@@ -128,7 +128,7 @@ export default function BibleCrossRefRendererComp({
                                 title={
                                     <>
                                         {genAiVigilant()}
-                                        AI Cross References
+                                        AI {tran('Cross References')}
                                     </>
                                 }
                                 settingName="show-standard-bible-ref"

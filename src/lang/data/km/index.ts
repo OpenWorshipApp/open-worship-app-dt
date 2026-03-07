@@ -9,6 +9,13 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'All Books': 'សៀវភៅទាំងអស់',
+    'Shift + Click to select multiple': 'Shift + ចុច ដើម្បីជ្រើសរើសច្រើន',
+    'Old Testament': 'សញ្ញាចាស់',
+    'New Testament': 'សញ្ញាថ្មី',
+    Find: 'ស្វែងរក',
+    'Cross Reference': 'ខគម្ពីរយោង',
+    'Cross References': 'ខគម្ពីរយោង',
     'Reveal in File Explorer': 'បើកក្នុងកម្មវិធីរុករកឯកសារ',
     'Saving note': 'កំពុងរក្សាទុកកំណត់សម្គាល់',
     'Please wait while the note is being saved.':
