@@ -99,7 +99,7 @@ export default function LyricFileComp({
     return (
         <FileItemHandlerComp
             index={index}
-            data={lyric}
+            fileData={lyric}
             reload={handleReloading}
             filePath={filePath}
             onClick={handleClicking}

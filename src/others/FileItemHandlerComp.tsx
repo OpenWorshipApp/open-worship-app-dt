@@ -111,7 +111,7 @@ export function genShowOnScreensContextMenu(
 }
 
 export default function FileItemHandlerComp({
-    data,
+    fileData,
     reload,
     index,
     filePath,
@@ -127,7 +127,7 @@ export default function FileItemHandlerComp({
     renamedCallback,
     checkIsOnScreen,
 }: Readonly<{
-    data: AppDocumentSourceAbs | null | undefined;
+    fileData: AppDocumentSourceAbs | null | undefined;
     reload: () => void;
     index: number;
     filePath: string;
@@ -155,24 +155,15 @@ export default function FileItemHandlerComp({
     const [isRenaming, setIsRenaming] = useState(false);
     useFileSourceRefreshEvents(['select']);
 
-    if (data === undefined) {
-        return <LoadingComp />;
-    }
-    if (data === null) {
+    if (fileData === null) {
         return <FileReadErrorComp reload={reload} />;
     }
     const selfContextMenu = genContextMenu(filePath, setIsRenaming, reload);
     const preDelete1 = () => {
-        data.preDelete();
+        fileData?.preDelete();
         preDelete?.();
     };
     selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
-    if (data === undefined) {
-        const handleContextMenuOpening = (event: any) => {
-            showAppContextMenu(event, selfContextMenu);
-        };
-        return <FileReadErrorComp onContextMenu={handleContextMenuOpening} />;
-    }
     const handleClicking = () => {
         FileSource.getInstance(filePath).fireSelectEvent();
         onClick?.();
@@ -233,7 +224,16 @@ export default function FileItemHandlerComp({
                             'd-flex ' + (isOnScreen ? 'app-on-screen' : '')
                         }
                     >
-                        {renderChild(data)}
+                        {fileData === undefined ? (
+                            <div
+                                className="w-100 app-overflow-hidden p-1"
+                                style={{ maxHeight: '45px' }}
+                            >
+                                <LoadingComp />
+                            </div>
+                        ) : (
+                            renderChild(fileData)
+                        )}
                     </div>
                     {isDisabledColorNote ? null : (
                         <div className="color-note-container">

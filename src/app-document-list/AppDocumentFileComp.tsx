@@ -155,7 +155,7 @@ export default function AppDocumentFileComp({
     return (
         <FileItemHandlerComp
             index={index}
-            data={varyAppDocument}
+            fileData={varyAppDocument}
             reload={handleReloading}
             filePath={filePath}
             onClick={handleClicking}

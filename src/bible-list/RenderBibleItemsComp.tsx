@@ -3,6 +3,7 @@ import BibleItemRenderComp from './BibleItemRenderComp';
 import { genDuplicatedMessage } from './bibleItemHelpers';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { tran } from '../lang/langHelpers';
+import { useMemo } from 'react';
 
 export default function RenderBibleItemsComp({
     bible,
@@ -11,6 +12,9 @@ export default function RenderBibleItemsComp({
 }>) {
     const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const items = bible.items;
+    const shouldAddBibleItem = useMemo(() => {
+        return bible.isDefault && showBibleLookupPopup !== null;
+    }, [bible.isDefault, showBibleLookupPopup]);
     return (
         <ul
             className="list-group"
@@ -34,7 +38,7 @@ export default function RenderBibleItemsComp({
                     />
                 );
             })}
-            {bible.isDefault && showBibleLookupPopup !== null && (
+            {shouldAddBibleItem && (
                 <button
                     type="button"
                     className={
@@ -46,7 +50,7 @@ export default function RenderBibleItemsComp({
                         fontSize: '0.8rem',
                     }}
                     onClick={() => {
-                        showBibleLookupPopup();
+                        showBibleLookupPopup!();
                     }}
                 >
                     <i className="bi bi-book px-1" />

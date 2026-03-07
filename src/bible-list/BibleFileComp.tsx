@@ -206,7 +206,7 @@ export default function BibleFileComp({
     return (
         <FileItemHandlerComp
             index={index}
-            data={bible}
+            fileData={bible}
             reload={handleReloading}
             filePath={filePath}
             className="bible-file"

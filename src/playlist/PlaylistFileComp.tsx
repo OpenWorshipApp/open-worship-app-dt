@@ -62,7 +62,7 @@ export default function PlaylistFileComp({
     return (
         <FileItemHandlerComp
             index={index}
-            data={playlist}
+            fileData={playlist}
             reload={handleReloading}
             filePath={filePath}
             className="playlist-file"

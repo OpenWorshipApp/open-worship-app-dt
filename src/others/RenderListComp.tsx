@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 
 import type DirSource from '../helper/DirSource';
 import FileSource from '../helper/FileSource';
@@ -11,28 +11,39 @@ import { useFilePaths } from '../helper/dirSourceHelpers';
 
 const UNKNOWN_COLOR_NOTE = 'unknown';
 
-function calColorNoteFromFilePath(
-    filePaths: string[],
-    bodyHandler: (filePaths: string[]) => any,
-) {
-    const filePathColorMap: { [key: string]: string[] } = {
-        [UNKNOWN_COLOR_NOTE]: [],
-    };
-    for (const filePath of filePaths) {
-        const fileSource = FileSource.getInstance(filePath);
-        const colorNote = fileSource.colorNote ?? UNKNOWN_COLOR_NOTE;
-        filePathColorMap[colorNote] = filePathColorMap[colorNote] ?? [];
-        filePathColorMap[colorNote].push(filePath);
-    }
+function RenderFileItemsWithColorNote({
+    filePaths,
+    bodyHandler,
+}: {
+    filePaths: string[];
+    bodyHandler: (filePaths: string[]) => any;
+}) {
+    const filePathColorMap = useMemo(() => {
+        const newFilePathColorMap: { [key: string]: string[] } = {
+            [UNKNOWN_COLOR_NOTE]: [],
+        };
+        for (const filePath of filePaths) {
+            const fileSource = FileSource.getInstance(filePath);
+            const colorNote = fileSource.colorNote ?? UNKNOWN_COLOR_NOTE;
+            newFilePathColorMap[colorNote] =
+                newFilePathColorMap[colorNote] ?? [];
+            newFilePathColorMap[colorNote].push(filePath);
+        }
+        return newFilePathColorMap;
+    }, [filePaths]);
+    const colorNotes = useMemo(() => {
+        const newColorNotes = Object.keys(filePathColorMap)
+            .filter((key) => {
+                return key !== UNKNOWN_COLOR_NOTE;
+            })
+            .sort((a, b) => a.localeCompare(b));
+        newColorNotes.push(UNKNOWN_COLOR_NOTE);
+        return newColorNotes;
+    }, [filePathColorMap]);
+
     if (Object.keys(filePathColorMap).length === 1) {
         return bodyHandler(filePaths);
     }
-    const colorNotes = Object.keys(filePathColorMap)
-        .filter((key) => {
-            return key !== UNKNOWN_COLOR_NOTE;
-        })
-        .sort((a, b) => a.localeCompare(b));
-    colorNotes.push(UNKNOWN_COLOR_NOTE);
     return colorNotes.map((colorNote) => {
         const subFilePaths = filePathColorMap[colorNote];
         return (
@@ -103,5 +114,10 @@ export default function RenderListComp({
     if (filePaths === null) {
         return <RenderFailListComp dirSource={dirSource} />;
     }
-    return calColorNoteFromFilePath(filePaths, bodyHandler);
+    return (
+        <RenderFileItemsWithColorNote
+            filePaths={filePaths}
+            bodyHandler={bodyHandler}
+        />
+    );
 }

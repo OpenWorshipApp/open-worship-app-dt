@@ -11,33 +11,28 @@ export default function LoadingComp({
     style?: CSSProperties;
 }>) {
     return (
-        <div className="d-flex flex-wrap w-100 h-100" style={style}>
-            <div style={{ margin: 'auto' }}>
+        <div
+            className="d-flex flex-wrap w-100 h-100 justify-content-center align-items-center"
+            style={style}
+        >
+            <img
+                width={'80%'}
+                src={loading}
+                alt={`${tran('Loading')}...`}
+                style={{
+                    maxWidth: '30px',
+                }}
+            />
+            {message ? (
                 <div
                     style={{
-                        maxWidth: '70px',
-                        overflow: 'hidden',
-                        margin: 'auto',
+                        textAlign: 'center',
                         padding: '5px',
                     }}
                 >
-                    <img
-                        width={'80%'}
-                        src={loading}
-                        alt={`${tran('Loading')}...`}
-                    />
+                    {message}
                 </div>
-                {message ? (
-                    <div
-                        style={{
-                            textAlign: 'center',
-                            padding: '5px',
-                        }}
-                    >
-                        {message}
-                    </div>
-                ) : null}
-            </div>
+            ) : null}
         </div>
     );
 }
