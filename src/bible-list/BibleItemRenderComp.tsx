@@ -156,10 +156,12 @@ export default function BibleItemRenderComp({
     return (
         <li
             className="list-group-item item app-caught-hover-pointer px-3"
-            ref={improveBibleItemTitleOnHover}
+            ref={improveBibleItemTitleOnHover.bind(
+                null,
+                bibleItem.bibleKey,
+                bibleItem.toVerseFullKey(),
+            )}
             data-bible-item-id={`${fileSource.name}-${bibleItem.id}`}
-            data-bible-key={bibleItem.bibleKey}
-            data-verse-full-key={bibleItem.toVerseFullKey()}
             data-index={index + 1}
             draggable
             onDragStart={(event) => {

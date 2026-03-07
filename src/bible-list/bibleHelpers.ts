@@ -358,6 +358,8 @@ export async function exportToWordDocument(bibleItems: BibleItem[]) {
 }
 
 export function improveBibleItemTitleOnHover<T extends HTMLElement>(
+    bibleKey: string,
+    verseFullKey: string,
     element: T | null,
 ) {
     if (element === null) {
@@ -368,14 +370,6 @@ export function improveBibleItemTitleOnHover<T extends HTMLElement>(
             return;
         }
         element.title = tran('Loading') + '...';
-        const bibleKey = element.dataset.bibleKey;
-        if (!bibleKey) {
-            return;
-        }
-        const verseFullKey = element.dataset.verseFullKey;
-        if (!verseFullKey) {
-            return;
-        }
         const bibleItem = await BibleItem.fromVerseKey(bibleKey, verseFullKey);
         if (bibleItem === null) {
             return;
