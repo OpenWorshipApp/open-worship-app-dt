@@ -108,7 +108,7 @@ export default function RenderBookOptionsComp({
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
 
     if (!matchedBooks) {
-        return <div>No book options available</div>;
+        return <div>{tran('No book options available')}</div>;
     }
     return matchedBooks.map((matchBook, i) => {
         const { bookKey, book, modelBook, isAvailable } = matchBook;
