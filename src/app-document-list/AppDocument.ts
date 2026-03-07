@@ -184,11 +184,11 @@ export default class AppDocument
         return 0;
     }
 
-    notifyNewSlidesAdded(slideIDs: number[]) {
-        for (const slideID of slideIDs) {
+    notifyNewSlidesAdded(slideIds: number[]) {
+        for (const slideId of slideIds) {
             const key =
                 `.${APP_DOCUMENT_ITEM_CLASS}` +
-                `[data-vary-app-document-item-id="${slideID}"]`;
+                `[data-vary-app-document-item-id="${slideId}"]`;
             notifyNewElementAdded(() => {
                 return document.querySelector(key);
             });

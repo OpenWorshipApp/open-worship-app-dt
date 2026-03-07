@@ -10,10 +10,10 @@ import { useScreenManagerContext } from '../managers/screenManagerHooks';
 
 export default function MiniScreenAudioHandlersComp({
     src,
-    videoID,
+    videoId,
 }: Readonly<{
     src: string;
-    videoID: string;
+    videoId: string;
 }>) {
     const screenManager = useScreenManagerContext();
     const [isRepeating, setIsRepeating] = useState(true);
@@ -30,7 +30,7 @@ export default function MiniScreenAudioHandlersComp({
             <div className="d-flex align-items-center w-100 my-2">
                 <audio
                     className="flex-fill"
-                    data-video-id={videoID}
+                    data-video-id={videoId}
                     controls
                     onPlay={handleAudioPlaying}
                     onPause={handleAudioPausing}
@@ -38,7 +38,7 @@ export default function MiniScreenAudioHandlersComp({
                     onTimeUpdate={(event) => {
                         const { screenBackgroundManager } = screenManager;
                         screenBackgroundManager.setBackgroundVideoCurrentTimeForce(
-                            videoID,
+                            videoId,
                             event.currentTarget.currentTime,
                             false,
                         );

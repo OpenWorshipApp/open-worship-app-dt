@@ -148,11 +148,11 @@ export default function ScreenPreviewerFooterComp() {
             {videoSources.length > 0 && isAudioHandlersVisible ? (
                 <AppSuspenseComp>
                     <div className="w-100">
-                        {videoSources.map(([videoSource, videoID]) => (
+                        {videoSources.map(([videoSource, videoId]) => (
                             <LazyMiniScreenAudioHandlersComp
                                 key={videoSource}
                                 src={videoSource}
-                                videoID={videoID}
+                                videoId={videoId}
                             />
                         ))}
                     </div>

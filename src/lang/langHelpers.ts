@@ -491,11 +491,11 @@ export function getLangData(langCodeOrLocale: string) {
 }
 
 function initLangCss(langData: LanguageDataType) {
-    const elementID = `lang-${langData.langCode}`;
-    let styleElement = document.querySelector(`style#${elementID}`);
+    const elementId = `lang-${langData.langCode}`;
+    let styleElement = document.querySelector(`style#${elementId}`);
     if (styleElement === null) {
         styleElement = document.createElement('style');
-        styleElement.id = elementID;
+        styleElement.id = elementId;
         document.head.appendChild(styleElement);
     }
     styleElement.innerHTML = langData.genCss();

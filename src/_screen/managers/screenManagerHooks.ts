@@ -87,8 +87,8 @@ function getVideoSources(screenManager: ScreenManager): [string, string][] {
     if (backgroundSrc?.type !== 'video' || !backgroundSrc.src) {
         return [];
     }
-    const newVideoID = genVideoIDFromSrc(backgroundSrc.src);
-    return [[backgroundSrc.src, newVideoID]] as const;
+    const newVideoId = genVideoIDFromSrc(backgroundSrc.src);
+    return [[backgroundSrc.src, newVideoId]] as const;
 }
 export function useScreenVideoSources() {
     const screenManager = useScreenManagerContext();

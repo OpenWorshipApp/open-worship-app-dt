@@ -124,7 +124,7 @@ class ScreenBackgroundManager
     }
 
     sendSyncVideoTime(
-        videoID: string,
+        videoId: string,
         videoTime: number,
         isFromScreen: boolean,
     ) {
@@ -134,7 +134,7 @@ class ScreenBackgroundManager
                     screenId: this.screenId,
                     type: 'background-video-time',
                     data: {
-                        videoID,
+                        videoId,
                         videoTime,
                         timestamp: Date.now(),
                         isFromScreen,
@@ -146,23 +146,23 @@ class ScreenBackgroundManager
     }
 
     setVideoCurrentTime(data: {
-        videoID: string;
+        videoId: string;
         videoTime: number;
         timestamp: number;
         isFromScreen: boolean;
     }) {
         // If audio is playing for the video, it means the video time is
         // controlled by the audio.
-        if (data.isFromScreen && this._checkIsVideoAudioPlaying(data.videoID)) {
+        if (data.isFromScreen && this._checkIsVideoAudioPlaying(data.videoId)) {
             return;
         }
         const rootContainer = this.rootContainer;
         if (rootContainer === null) {
             return;
         }
-        const { videoID, videoTime, timestamp, isFromScreen } = data;
+        const { videoId, videoTime, timestamp, isFromScreen } = data;
         const videoElements = rootContainer.querySelectorAll<HTMLVideoElement>(
-            `video#${videoID}`,
+            `video#${videoId}`,
         );
         const timeThreshold = FADING_DURATION_SECOND + 0.1;
         for (const videoElement of videoElements) {
@@ -191,11 +191,11 @@ class ScreenBackgroundManager
         }
     }
 
-    setVideoCurrentTimeForce(videoID: string, videoTime: number) {
+    setVideoCurrentTimeForce(videoId: string, videoTime: number) {
         // Should be from presenter to screen
-        this.sendSyncVideoTime(videoID, videoTime, false);
+        this.sendSyncVideoTime(videoId, videoTime, false);
         this.setVideoCurrentTime({
-            videoID,
+            videoId,
             videoTime,
             timestamp: Date.now(),
             isFromScreen: false,
@@ -203,7 +203,7 @@ class ScreenBackgroundManager
     }
 
     async setBackgroundVideoCurrentTimeForce(
-        videoID: string,
+        videoId: string,
         videoTime: number,
         isSyncingGroup: boolean,
     ) {
@@ -218,7 +218,7 @@ class ScreenBackgroundManager
         }
         for (const screenBackgroundManager of groupScreenManagers) {
             screenBackgroundManager.setVideoCurrentTimeForce(
-                videoID,
+                videoId,
                 videoTime,
             );
         }
@@ -229,9 +229,9 @@ class ScreenBackgroundManager
             return;
         }
         const { data } = message;
-        const { videoID, videoTime, timestamp, isFromScreen } = data;
+        const { videoId, videoTime, timestamp, isFromScreen } = data;
         if (
-            !videoID ||
+            !videoId ||
             typeof videoTime !== 'number' ||
             typeof timestamp !== 'number' ||
             typeof isFromScreen !== 'boolean'
@@ -365,9 +365,9 @@ class ScreenBackgroundManager
         });
     }
 
-    _checkIsVideoAudioPlaying(videoID: string) {
+    _checkIsVideoAudioPlaying(videoId: string) {
         const audioElements = document.querySelectorAll<HTMLAudioElement>(
-            `audio[data-video-id="${videoID}"]`,
+            `audio[data-video-id="${videoId}"]`,
         );
         for (const audioElement of audioElements) {
             if (!audioElement.paused) {

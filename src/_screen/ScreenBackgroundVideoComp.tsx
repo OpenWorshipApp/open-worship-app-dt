@@ -20,8 +20,8 @@ export default function ScreenBackgroundVideoComp({
         backgroundSrc,
     );
     const videoId = useMemo(() => {
-        const newVideoID = genVideoIDFromSrc(backgroundSrc.src);
-        return newVideoID;
+        const newVideoId = genVideoIDFromSrc(backgroundSrc.src);
+        return newVideoId;
     }, [backgroundSrc.src]);
     return (
         <video

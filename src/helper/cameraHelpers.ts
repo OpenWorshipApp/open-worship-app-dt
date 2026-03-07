@@ -51,14 +51,14 @@ export function useCameraInfoList() {
     return cameraInfoList;
 }
 
-export async function getCameraStream(cameraID: string) {
+export async function getCameraStream(cameraId: string) {
     const canAccess = await requestCameraAccess();
     if (!canAccess) {
         throw new Error('Camera access denied');
     }
     const mediaStream = await mediaDevices.getUserMedia({
         audio: false,
-        video: { deviceId: { exact: cameraID } },
+        video: { deviceId: { exact: cameraId } },
     });
     return mediaStream;
 }
