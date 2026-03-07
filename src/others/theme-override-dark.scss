@@ -18,23 +18,23 @@ $resizer-color: rgb(73, 103, 123);
   }
 
   .receiving-data-drop {
-    border: 1px solid $dragging-color-full !important;
+    border-color: $dragging-color-full !important;
   }
 
   .receiving-data-drop-left {
-    border-left: 1px dashed var(--app-yellow-green) !important;
+    border-left-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-right {
-    border-right: 1px dashed var(--app-yellow-green) !important;
+    border-right-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-top {
-    border-top: 1px dashed var(--app-yellow-green) !important;
+    border-top-color: var(--app-yellow-green) !important;
   }
 
   .receiving-data-drop-bottom {
-    border-bottom: 1px dotted var(--app-yellow-green) !important;
+    border-bottom-color: var(--app-yellow-green) !important;
   }
 
   .list-group-item {

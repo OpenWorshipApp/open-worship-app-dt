@@ -28,6 +28,10 @@ body {
     box-sizing: border-box;
   }
 
+  .receiving-data-drop {
+    box-sizing: border-box !important;
+  }
+
   .app-not-selectable-text {
     user-select: none !important;
   }
