@@ -295,11 +295,12 @@ export async function exportBibleMSWord(
 ) {
     const selectedParentDir = getDownloadPath();
     const date = new Date();
-    let dateStr = date.toISOString();
-    dateStr = dateStr.split('.')[0].replace('T', ' ').replaceAll(':', '-');
+    let dateStr = date.toISOString().split('.')[0];
+    dateStr = dateStr.replace('T', '_');
+    dateStr = dateStr.replaceAll(':', '-');
     const filePath = pathJoin(
         selectedParentDir,
-        `owa-bible-verses-${dateStr}.docx`,
+        `owa-bible-verses_${dateStr}.docx`,
     );
     await electronSendAsync('main:app:ms-word-export-bible', {
         filePath,

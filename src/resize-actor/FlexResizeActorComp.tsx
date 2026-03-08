@@ -3,7 +3,7 @@ import './FlexResizeActorComp.scss';
 import type { RefObject } from 'react';
 import { Component, createRef } from 'react';
 
-import type { DisabledType } from './flexSizeHelpers';
+import type { DisabledType, QuickMoveType } from './flexSizeHelpers';
 
 export const HIDDEN_WIDGET_CLASS = 'app-hidden-widget';
 export const ACTIVE_HIDDEN_WIDGET_CLASS = `active-${HIDDEN_WIDGET_CLASS}`;
@@ -17,7 +17,8 @@ import imageLeft from './images/left.png';
 import imageRight from './images/right.png';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
-const ICON_MAP = {
+const QuickMoveTypeListLeft: QuickMoveType[] = ['left', 'up'] as const;
+const ICON_MAP: Record<'h' | 'v', [QuickMoveType, string, string][]> = {
     h: [
         ['left', imageLeft, '0 5px 0 0'],
         ['right', imageRight, '0 0 0 5px'],
@@ -34,6 +35,7 @@ export interface Props {
     isDisableQuickResize: boolean;
     checkSize: () => void;
     disableWidget: (dataFlexSizeKey: string, target: DisabledType) => void;
+    checkShouldQuickMove: () => QuickMoveType | null;
 }
 export default class FlexResizeActorComp extends Component<Props, object> {
     myRef: RefObject<HTMLDivElement | null>;
@@ -212,18 +214,18 @@ export default class FlexResizeActorComp extends Component<Props, object> {
 
         this.setInactive();
         if (this.preNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
-            this.quicMove('left');
+            this.quickMove('left');
             return;
         }
         if (this.nextNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
-            this.quicMove('right');
+            this.quickMove('right');
             return;
         }
         this.props.checkSize();
     }
-    quicMove(type: string) {
+    quickMove(quickMoveType: QuickMoveType) {
         this.init();
-        const isFirst = ['left', 'up'].includes(type);
+        const isFirst = QuickMoveTypeListLeft.includes(quickMoveType);
         const dataFlexSizeKey = isFirst
             ? this.preNode.dataset['fs']
             : this.nextNode.dataset['fs'];
@@ -242,10 +244,9 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     }
     componentDidMount() {
         const target = this.currentNode;
-        if (target) {
-            target.addEventListener('mousedown', (md) => {
-                this.onMouseDown(md);
-            });
+        target.addEventListener('mousedown', (event) => {
+            this.onMouseDown(event);
+        });
         }
     }
     render() {
@@ -264,7 +265,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
                           style={{ margin }}
                           onClick={(event) => {
                               event.stopPropagation();
-                              this.quicMove(direction);
+                              this.quickMove(direction);
                           }}
                       />
                   );

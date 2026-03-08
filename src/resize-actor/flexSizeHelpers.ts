@@ -4,6 +4,7 @@ import { handleError } from '../helper/errorHelpers';
 import { isValidJson } from '../helper/helpers';
 import { setSetting, getSetting } from '../helper/settingHelpers';
 
+export type QuickMoveType = 'left' | 'right' | 'up' | 'down';
 export type FlexSizeType = {
     [key: string]: [string, DisabledType?];
 };
