@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { CSSProperties, useState } from 'react';
 
 import SimpleNoteEditorComp, {
     SimpleNoteEditorStoreType,
@@ -53,7 +53,7 @@ export function NoteTitleEditorComp({
             ) {
                 return;
             }
-            setStore(new NoteContentStore(note, newNoteItem));
+            setStore(new NoteTitleStore(note, newNoteItem));
         },
         [note, noteItem, store],
         note.filePath,
@@ -96,7 +96,13 @@ class NoteContentStore implements SimpleNoteEditorStoreType {
 export default function NoteEditorComp({
     note,
     noteItem,
-}: Readonly<{ note: Note; noteItem: NoteItem; title?: string }>) {
+    extraStyle,
+}: Readonly<{
+    note: Note;
+    noteItem: NoteItem;
+    title?: string;
+    extraStyle?: CSSProperties;
+}>) {
     const [store, setStore] = useState<SimpleNoteEditorStoreType>(
         new NoteContentStore(note, noteItem),
     );
@@ -131,6 +137,7 @@ export default function NoteEditorComp({
             className="w-100 app-overflow-hidden"
             style={{
                 height: '200px',
+                ...extraStyle,
             }}
         >
             <SimpleNoteEditorComp

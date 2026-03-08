@@ -34,6 +34,13 @@ export default class NoteItem
         this.originalJson.metadata.id = id;
     }
 
+    get isOpened() {
+        return this.originalJson.metadata.isOpened ?? false;
+    }
+    set isOpened(isOpened: boolean) {
+        this.originalJson.metadata.isOpened = isOpened;
+    }
+
     get title() {
         return this.originalJson.title ?? '';
     }

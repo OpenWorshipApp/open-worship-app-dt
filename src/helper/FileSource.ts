@@ -232,7 +232,7 @@ export default class FileSource
             instantCache.delete(fileSource.filePath);
         }
         if (instantCache.has(fileSource.filePath)) {
-            return instantCache.get(fileSource.filePath) as FileSource;
+            return instantCache.get(fileSource.filePath)!;
         }
         instantCache.set(fileSource.filePath, fileSource);
         return fileSource;

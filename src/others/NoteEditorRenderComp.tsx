@@ -7,7 +7,11 @@ export default function NoteEditorRenderComp({
     store,
     title,
     uuid,
-}: Readonly<{ store: SimpleNoteEditorStoreType; title: string; uuid?: string }>) {
+}: Readonly<{
+    store: SimpleNoteEditorStoreType;
+    title: string;
+    uuid?: string;
+}>) {
     return (
         <div
             className="w-100 h-100 app-overflow-hidden"

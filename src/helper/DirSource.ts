@@ -7,6 +7,7 @@ import {
     fsCheckDirExist,
     pathResolve,
     fsCheckFileExist,
+    pathJoin,
 } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -205,5 +206,19 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
             return cache.get(cacheKey) as DirSource;
         }
         return null;
+    }
+
+    // TODO: support other events: 'rename', 'unlink', 'add'
+    async alertFileChanging(fileFullName: string) {
+        const dirPath = this.dirPath;
+        if (!dirPath) {
+            return;
+        }
+        const filePath = pathJoin(dirPath, fileFullName);
+        if (!(await fsCheckFileExist(filePath))) {
+            return;
+        }
+        const fileSource = this.getFileSourceInstance(fileFullName);
+        fileSource.fireUpdateEvent();
     }
 }

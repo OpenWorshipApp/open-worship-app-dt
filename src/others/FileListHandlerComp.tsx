@@ -1,10 +1,9 @@
 import type { MouseEvent } from 'react';
-import { createContext, lazy, useState } from 'react';
+import { lazy, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import PathSelectorComp from './PathSelectorComp';
 import type { MimetypeNameType } from '../server/fileHelpers';
-import { fsCheckDirExist } from '../server/fileHelpers';
 import type FileSource from '../helper/FileSource';
 import RenderListComp from './RenderListComp';
 import type DirSource from '../helper/DirSource';
@@ -20,58 +19,18 @@ import {
     handleFilesSelectionMenuItem,
     genItemsAddingContextMenuItems,
 } from './droppingFileHelpers';
-import appProvider from '../server/appProvider';
-import { useAppEffect } from '../helper/debuggerHelpers';
-import { handleError } from '../helper/errorHelpers';
 import NoDirSelectedComp from './NoDirSelectedComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import type { OptionalPromise } from '../helper/typeHelpers';
-import { checkAreArraysEqual } from '../server/comparisonHelpers';
+import {
+    DirSourceContext,
+    useDirSourceWatching,
+} from '../helper/dirSourceHelpers';
 
 const LazyAskingNewNameComp = lazy(() => {
     return import('./AskingNewNameComp');
 });
-
-async function handleFileChanging(dirSource: DirSource) {
-    try {
-        const mimetypeNames = Object.keys(
-            dirSource.filePathsMap,
-        ) as MimetypeNameType[];
-        if (mimetypeNames.length === 0) {
-            dirSource.fireRefreshEvent();
-        }
-        for (const mimetypeName of mimetypeNames) {
-            const oldFilePaths = dirSource.filePathsMap[mimetypeName];
-            const newFilePaths =
-                await dirSource.getFilePathsQuick(mimetypeName);
-            if (!checkAreArraysEqual(oldFilePaths, newFilePaths)) {
-                dirSource.fireRefreshEvent();
-            }
-        }
-    } catch (_error) {
-        dirSource.fireRefreshEvent();
-    }
-}
-async function watchDir(dirSource: DirSource, signal: AbortSignal) {
-    const isDirExist = await fsCheckDirExist(dirSource.dirPath);
-    if (!isDirExist) {
-        return;
-    }
-    try {
-        appProvider.fileUtils.watch(
-            dirSource.dirPath,
-            {
-                signal,
-            },
-            handleFileChanging.bind(null, dirSource),
-        );
-    } catch (error) {
-        handleError(error);
-    }
-}
-
-export const DirSourceContext = createContext<DirSource | null>(null);
 
 export type FileListType = FileSource[] | null | undefined;
 
@@ -170,13 +129,7 @@ export default function FileListHandlerComp({
         });
     };
     const [isCreatingNew, setIsCreatingNew] = useState(false);
-    useAppEffect(() => {
-        const abortController = new AbortController();
-        watchDir(dirSource, abortController.signal);
-        return () => {
-            abortController.abort();
-        };
-    }, [dirSource.dirPath]);
+    useDirSourceWatching(dirSource);
     const handleItemsAdding =
         fileSelectionOption === undefined
             ? undefined

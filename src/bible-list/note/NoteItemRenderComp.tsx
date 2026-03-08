@@ -19,9 +19,16 @@ import Note from './Note';
 import { openNoteItemContextMenu } from './noteHelpers';
 import NoteEditorComp, { NoteTitleEditorComp } from './NoteEditorComp';
 import { tran } from '../../lang/langHelpers';
+import appProvider from '../../server/appProvider';
+import { openPopupEditorWindow } from '../../helper/domHelpers';
 
-function handleOpening(event: any, note: Note, noteItem: NoteItem) {
-    console.log('Opening note', noteItem);
+export function handleOpening(note: Note, noteItem: NoteItem) {
+    const fileFullName = note.fileSource.fullName;
+    const fileFullNameEncoded = encodeURIComponent(fileFullName);
+    let pathName = `${appProvider.noteItemEditorHomePage}?file=${fileFullNameEncoded}`;
+    const noteId = noteItem.id;
+    pathName += `&id=${noteId}`;
+    return openPopupEditorWindow(pathName);
 }
 
 export default function NoteItemRenderComp({
@@ -35,15 +42,20 @@ export default function NoteItemRenderComp({
     filePath: string;
     note: Note;
 }>) {
-    const [showingNote, setShowingNote] = useState(false);
+    const [showingNote, setShowingNote] = useState(noteItem.isOpened);
+    const setShowingNote1 = (isOpened: boolean) => {
+        setShowingNote(isOpened);
+        noteItem.isOpened = isOpened;
+        note.updateAndSaveNoteItem(noteItem, true);
+    };
     useFileSourceRefreshEvents(['select'], filePath);
 
     const handleContextMenuOpening = async (event: MouseEvent<any>) => {
         const menuItems: ContextMenuItemType[] = [
             {
                 menuElement: tran('Open'),
-                onSelect: (event: any) => {
-                    handleOpening(event, note, noteItem);
+                onSelect: () => {
+                    handleOpening(note, noteItem);
                 },
             },
         ];
@@ -110,8 +122,8 @@ export default function NoteItemRenderComp({
                     changeDragEventStyle(event, 'opacity', '1');
                 }}
                 onDrop={handleDataDropping}
-                onDoubleClick={(event) => {
-                    handleOpening(event, note, noteItem);
+                onDoubleClick={() => {
+                    handleOpening(note, noteItem);
                 }}
                 onContextMenu={handleContextMenuOpening}
             >
@@ -122,8 +134,9 @@ export default function NoteItemRenderComp({
                             `bi bi-journal${showingNote ? '-text' : ''} ` +
                             'mx-1 app-caught-hover-pointer'
                         }
+                        title={tran('Open note')}
                         onClick={() => {
-                            setShowingNote((prev) => !prev);
+                            setShowingNote1(!showingNote);
                         }}
                     />
                     {showingNote ? (

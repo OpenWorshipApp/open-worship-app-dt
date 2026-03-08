@@ -90,7 +90,7 @@ function RenderControlBodyComp() {
                             forceReloadAppWindows();
                         }}
                     >
-                        Apply
+                        {tran('Apply')}
                     </button>
                 </div>
             ) : (
@@ -102,7 +102,8 @@ function RenderControlBodyComp() {
                             openPopupLyricEditorWindow(selectedLyric);
                         }}
                     >
-                        Edit <i className="bi bi-box-arrow-up-right"></i>
+                        {tran('Edit')}{' '}
+                        <i className="bi bi-box-arrow-up-right"></i>
                     </button>
                 </div>
             )}

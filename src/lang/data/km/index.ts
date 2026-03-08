@@ -9,6 +9,7 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Open note': 'បើកកំណត់ត្រា',
     'No title': 'គ្មានចំណងជើង',
     'Background and Color': 'ផ្ទៃខាងក្រោយ និងពណ៌',
     'The current text color may not be visible with the new background color.':

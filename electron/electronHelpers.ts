@@ -189,6 +189,7 @@ export function genCenterSubDisplay({
         y: Math.floor(y + offsetHeight / 2),
         width: Math.floor(width - offsetWidth),
         height: Math.floor(height - offsetHeight),
+        background: 'transparent',
     };
 }
 

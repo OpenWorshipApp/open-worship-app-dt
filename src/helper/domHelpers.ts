@@ -313,6 +313,14 @@ export function openPopupEditorWindow(pathName: string) {
     return window.open(pathName, 'popup_window', WINDOW_FEATURES);
 }
 
+export function getParamIdNum() {
+    const id = new URLSearchParams(globalThis.location.search).get('id');
+    const idNum = Number.parseInt(id ?? '');
+    if (Number.isNaN(idNum)) {
+        return null;
+    }
+    return idNum;
+}
 export function getParamFileFullName() {
     const fileFullName = new URLSearchParams(globalThis.location.search).get(
         'file',

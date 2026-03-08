@@ -5,8 +5,12 @@ import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
 import DirSource from './DirSource';
 import type { FileSourceEventType } from './FileSource';
 import FileSource from './FileSource';
-import { MimetypeNameType } from '../server/fileHelpers';
+import { fsCheckDirExist, MimetypeNameType } from '../server/fileHelpers';
 import { checkAreArraysEqual } from '../server/comparisonHelpers';
+import appProvider from '../server/appProvider';
+import { handleError } from './errorHelpers';
+
+export const DirSourceContext = createContext<DirSource | null>(null);
 
 export const FilePathLoadedContext = createContext<{
     onLoaded?: (filePaths: string[] | null) => void;
@@ -117,4 +121,60 @@ export function useFileSourceEvents<T>(
             FileSource.unregisterEventListener(staticEvents);
         };
     }, [callback, filePath, ...(deps ?? [])]);
+}
+
+async function handleFileEvent(dirSource: DirSource, ...args: any[]) {
+    if (args[0] === 'change') {
+        if (typeof args[1] === 'string') {
+            dirSource.alertFileChanging(args[1]);
+        }
+    }
+    try {
+        const mimetypeNames = Object.keys(
+            dirSource.filePathsMap,
+        ) as MimetypeNameType[];
+        if (mimetypeNames.length === 0) {
+            dirSource.fireRefreshEvent();
+        }
+        for (const mimetypeName of mimetypeNames) {
+            const oldFilePaths = dirSource.filePathsMap[mimetypeName];
+            const newFilePaths =
+                await dirSource.getFilePathsQuick(mimetypeName);
+            if (!checkAreArraysEqual(oldFilePaths, newFilePaths)) {
+                dirSource.fireRefreshEvent();
+            }
+        }
+    } catch (_error) {
+        dirSource.fireRefreshEvent();
+    }
+}
+async function watchDir(dirSource: DirSource, signal: AbortSignal) {
+    const isDirExist = await fsCheckDirExist(dirSource.dirPath);
+    if (!isDirExist) {
+        return;
+    }
+    try {
+        appProvider.fileUtils.watch(
+            dirSource.dirPath,
+            {
+                signal,
+            },
+            handleFileEvent.bind(null, dirSource),
+        );
+    } catch (error) {
+        handleError(error);
+    }
+}
+
+export function useDirSourceWatching(dirSource: DirSource | null) {
+    useAppEffect(() => {
+        if (dirSource === null) {
+            return;
+        }
+        const abortController = new AbortController();
+        watchDir(dirSource, abortController.signal);
+        return () => {
+            abortController.abort();
+        };
+    }, [dirSource?.dirPath]);
 }

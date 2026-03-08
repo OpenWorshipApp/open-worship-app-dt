@@ -94,9 +94,7 @@ export default class ElectronMainController {
     }
 
     static getInstance(settingManager: ElectronSettingManager) {
-        if (instance === null) {
-            instance = new this(settingManager);
-        }
+        instance ??= new this(settingManager);
         return instance;
     }
 

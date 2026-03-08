@@ -108,6 +108,7 @@ export type PagePropsType = {
     isPageExperiment: boolean;
     isPageLyricEditor: boolean;
     lyricEditorHomePage: string;
+    noteItemEditorHomePage: string;
     webEditorHomePage: string;
     experimentHomePage: string;
     getIsMouseOverApp: () => boolean;
