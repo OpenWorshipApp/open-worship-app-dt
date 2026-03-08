@@ -17,7 +17,12 @@ import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import ItemReadErrorComp from '../../others/ItemReadErrorComp';
 import Note from './Note';
 import { openNoteItemContextMenu } from './noteHelpers';
-import NoteEditorComp from './NoteEditorComp';
+import NoteEditorComp, { NoteTitleEditorComp } from './NoteEditorComp';
+import { tran } from '../../lang/langHelpers';
+
+function handleOpening(event: any, note: Note, noteItem: NoteItem) {
+    console.log('Opening note', noteItem);
+}
 
 export default function NoteItemRenderComp({
     index,
@@ -34,7 +39,14 @@ export default function NoteItemRenderComp({
     useFileSourceRefreshEvents(['select'], filePath);
 
     const handleContextMenuOpening = async (event: MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [];
+        const menuItems: ContextMenuItemType[] = [
+            {
+                menuElement: tran('Open'),
+                onSelect: (event: any) => {
+                    handleOpening(event, note, noteItem);
+                },
+            },
+        ];
         const attachedBackgroundData =
             await attachBackgroundManager.getAttachedBackground(
                 filePath,
@@ -79,7 +91,10 @@ export default function NoteItemRenderComp({
     return (
         <>
             <li
-                className="list-group-item item app-caught-hover-pointer px-3"
+                className="list-group-item item ps-3 pe-1 py-1"
+                style={{
+                    height: 40,
+                }}
                 data-note-item-id={`${fileSource.name}-${noteItem.id}`}
                 data-index={index + 1}
                 draggable
@@ -95,16 +110,35 @@ export default function NoteItemRenderComp({
                     changeDragEventStyle(event, 'opacity', '1');
                 }}
                 onDrop={handleDataDropping}
-                onClick={() => {
-                    setShowingNote((prev) => !prev);
+                onDoubleClick={(event) => {
+                    handleOpening(event, note, noteItem);
                 }}
                 onContextMenu={handleContextMenuOpening}
             >
                 <div className="d-flex ps-1">
                     <ItemColorNoteComp item={noteItem} />
-                    <div className="d-flex flex-fill">
-                        Note id:{noteItem.id}
-                    </div>
+                    <i
+                        className={
+                            `bi bi-journal${showingNote ? '-text' : ''} ` +
+                            'mx-1 app-caught-hover-pointer'
+                        }
+                        onClick={() => {
+                            setShowingNote((prev) => !prev);
+                        }}
+                    />
+                    {showingNote ? (
+                        <NoteTitleEditorComp note={note} noteItem={noteItem} />
+                    ) : (
+                        <div className="d-flex flex-fill">
+                            {noteItem.title ? (
+                                noteItem.title
+                            ) : (
+                                <span className="fst-italic text-warning">
+                                    {tran('No title')}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </li>
             {showingNote ? (

@@ -155,7 +155,7 @@ export default class Note
         this.notifyNewNoteItemAdded(newNoteItem.id);
     }
 
-    updateNoteItem(noteItem: NoteItem) {
+    updateNoteItem(noteItem: NoteItem, isSilent = false) {
         const index = this.items.findIndex((noteItem1) => {
             return noteItem1.checkIsSame(noteItem);
         });
@@ -163,11 +163,14 @@ export default class Note
             return;
         }
         const newNoteItem = NoteItem.fromJson(noteItem.toJson(), this.filePath);
+        newNoteItem.metadata.updatedAt = new Date();
         newNoteItem.note = this;
         const noteItems = this.items;
         noteItems[index] = newNoteItem;
         this.items = noteItems;
-        this.notifyNewNoteItemAdded(newNoteItem.id);
+        if (!isSilent) {
+            this.notifyNewNoteItemAdded(newNoteItem.id);
+        }
     }
 
     swapItems(fromIndex: number, toIndex: number) {
@@ -212,8 +215,8 @@ export default class Note
         await this.save();
     }
 
-    async updateAndSaveNoteItem(noteItem: NoteItem) {
-        this.updateNoteItem(noteItem);
+    async updateAndSaveNoteItem(noteItem: NoteItem, isSilent = false) {
+        this.updateNoteItem(noteItem, isSilent);
         await this.save();
     }
 

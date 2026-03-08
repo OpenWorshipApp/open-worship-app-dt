@@ -92,11 +92,9 @@ function genContextMenu(
             menuElement: tran('New Note Item'),
             onSelect: () => {
                 const newId = note.maxItemId + 1;
-                const newNoteItem = new NoteItem(newId, {
-                    id: newId,
-                    content: '',
-                    metadata: {},
-                });
+                const noteItemJsonData = NoteItem.genNewJsonData();
+                noteItemJsonData.metadata.id = newId;
+                const newNoteItem = new NoteItem(noteItemJsonData);
                 note.addAndSaveNoteItem(newNoteItem);
             },
         },

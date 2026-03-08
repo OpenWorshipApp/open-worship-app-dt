@@ -2,12 +2,12 @@ import { useMemo, useState } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import AppDocument from '../../app-document-list/AppDocument';
-import { DocumentNoteStoreType } from '../../others/SimpleNoteEditorComp';
+import { SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import NoteEditorRenderComp from '../../others/NoteEditorRenderComp';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 
-class SlideNoteStore implements DocumentNoteStoreType {
+class SlideNoteStore implements SimpleNoteEditorStoreType {
     readonly defaultText: string;
     currentText: string;
     save: () => Promise<void>;
@@ -29,7 +29,7 @@ export default function SlideNoteEditorComp({
     slide,
     title = 'Slide Note',
 }: Readonly<{ appDocument: AppDocument; slide: Slide; title?: string }>) {
-    const [store, setStore] = useState<DocumentNoteStoreType>(
+    const [store, setStore] = useState<SimpleNoteEditorStoreType>(
         new SlideNoteStore(appDocument, slide),
     );
     useAppEffect(() => {

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 
 import AppDocument from '../../app-document-list/AppDocument';
-import { DocumentNoteStoreType } from '../../others/SimpleNoteEditorComp';
+import { SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import NoteEditorRenderComp from '../../others/NoteEditorRenderComp';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 
-class AppDocumentNoteStore implements DocumentNoteStoreType {
+class AppDocumentNoteStore implements SimpleNoteEditorStoreType {
     readonly defaultText: string;
     currentText: string;
     save: () => Promise<void>;
@@ -22,7 +22,7 @@ class AppDocumentNoteStore implements DocumentNoteStoreType {
 export default function AppDocumentNoteEditorComp({
     appDocument,
 }: Readonly<{ appDocument: AppDocument }>) {
-    const [store, setStore] = useState<DocumentNoteStoreType>(
+    const [store, setStore] = useState<SimpleNoteEditorStoreType>(
         new AppDocumentNoteStore(appDocument, ''),
     );
     useAppEffectAsync(async () => {

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+    CSSProperties,
+    useCallback,
+    useEffect,
+    useMemo,
+    useState,
+} from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import { checkIsKeyboardEventMatch } from '../event/KeyboardEventListener';
@@ -12,7 +18,7 @@ function blockUnload(event: BeforeUnloadEvent) {
     );
 }
 
-export interface DocumentNoteStoreType {
+export interface SimpleNoteEditorStoreType {
     defaultText: string;
     currentText: string;
     save: () => Promise<void>;
@@ -21,10 +27,12 @@ export default function SimpleNoteEditorComp({
     store,
     placeholder,
     isResizable,
+    isInput,
 }: Readonly<{
-    store: DocumentNoteStoreType;
+    store: SimpleNoteEditorStoreType;
     placeholder?: string;
     isResizable?: boolean;
+    isInput?: boolean;
 }>) {
     const attemptTimeout = useMemo(() => {
         return genTimeoutAttempt(5e3); // 5 seconds
@@ -79,29 +87,42 @@ export default function SimpleNoteEditorComp({
         },
         [store],
     );
+    const handleChanging = (event: any) => {
+        const value = event.target.value;
+        setCurrentText1(value);
+    };
+    const handleBlur = async () => {
+        await store.save();
+        setIsSaved(true);
+    };
+    const style: CSSProperties = {
+        outline: 'none',
+        boxSizing: 'border-box',
+        resize: isResizable ? 'both' : 'none',
+        border: isSaved ? '1px solid transparent' : '1px solid #007bff44',
+    };
+    if (isInput) {
+        return (
+            <input
+                className="w-100 h-100 m-0"
+                placeholder={placeholder}
+                style={style}
+                onKeyDown={handleKeyDown}
+                value={text}
+                onChange={handleChanging}
+                onBlur={handleBlur}
+            />
+        );
+    }
     return (
         <textarea
             className="w-100 h-100 m-0"
             placeholder={placeholder}
-            style={{
-                outline: 'none',
-                boxSizing: 'border-box',
-                padding: '0.5rem',
-                resize: isResizable ? 'both' : 'none',
-                border: isSaved
-                    ? '1px solid transparent'
-                    : '1px solid #007bff44',
-            }}
+            style={style}
             onKeyDown={handleKeyDown}
             value={text}
-            onChange={(event) => {
-                const value = event.target.value;
-                setCurrentText1(value);
-            }}
-            onBlur={async () => {
-                await store.save();
-                setIsSaved(true);
-            }}
+            onChange={handleChanging}
+            onBlur={handleBlur}
         />
     );
 }

@@ -6,36 +6,39 @@ import { appError } from '../../helper/loggerHelpers';
 import { AnyObjectType } from '../../helper/typeHelpers';
 import DocumentInf from '../../others/DocumentInf';
 import { ItemSourceInfBasic } from '../../others/ItemSourceInf';
-import { NoteItemType } from './noteItemHelpers';
+import { NoteItemMetadataType, NoteItemType } from './noteItemHelpers';
 
 export default class NoteItem
     extends ItemBase
     implements DragInf<NoteItemType>
 {
     private originalJson: NoteItemType;
-    _id: number;
     filePath?: string;
     note: (ItemSourceInfBasic<NoteItem> & DocumentInf) | null = null;
 
     constructor(
-        id: number,
         json: NoteItemType,
         filePath?: string,
         note?: (ItemSourceInfBasic<NoteItem> & DocumentInf) | null,
     ) {
         super();
-        this._id = id;
         this.filePath = filePath;
         this.originalJson = cloneJson(json);
         this.note = note ?? null;
     }
 
     get id() {
-        return this._id;
+        return this.originalJson.metadata.id;
     }
     set id(id: number) {
-        this._id = id;
-        this.originalJson.id = id;
+        this.originalJson.metadata.id = id;
+    }
+
+    get title() {
+        return this.originalJson.title ?? '';
+    }
+    set title(newTitle: string) {
+        this.originalJson.title = newTitle;
     }
 
     get content() {
@@ -48,7 +51,7 @@ export default class NoteItem
     get metadata() {
         return this.originalJson.metadata;
     }
-    set metadata(metadata: AnyObjectType) {
+    set metadata(metadata: NoteItemMetadataType) {
         this.originalJson.metadata = metadata;
     }
 
@@ -61,16 +64,19 @@ export default class NoteItem
 
     static fromJson(json: NoteItemType, filePath?: string) {
         this.validate(json);
-        return new this(json.id, json, filePath);
+        return new this(json, filePath);
     }
 
     static fromJsonError(json: NoteItemType, filePath?: string) {
         const item = new this(
-            -1,
             {
-                id: -1,
+                title: '',
                 content: '',
-                metadata: {},
+                metadata: {
+                    id: -1,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                },
             },
             filePath,
         );
@@ -83,16 +89,27 @@ export default class NoteItem
             return this.jsonError;
         }
         return {
-            id: this.id,
+            title: this.title,
             content: this.content,
             metadata: this.metadata,
         };
     }
 
     static validate(json: AnyObjectType) {
+        const { metadata, title, content } = json;
+        if (typeof metadata?.createdAt === 'string') {
+            json.metadata.createdAt = new Date(metadata.createdAt);
+        }
+        if (typeof metadata?.updatedAt === 'string') {
+            json.metadata.updatedAt = new Date(metadata.updatedAt);
+        }
         if (
-            typeof json.id !== 'number' ||
-            (json.metadata && typeof json.metadata !== 'object')
+            typeof title !== 'string' ||
+            typeof content !== 'string' ||
+            typeof metadata !== 'object' ||
+            typeof metadata.id !== 'number' ||
+            !(metadata.createdAt instanceof Date) ||
+            !(metadata.updatedAt instanceof Date)
         ) {
             appError(json);
             throw new Error('Invalid note item data');
@@ -102,7 +119,10 @@ export default class NoteItem
     clone(isKeepId = false) {
         const Class = this.constructor as typeof NoteItem;
         if (!isKeepId) {
-            return Class.fromJson({ ...this.toJson(), id: -1 }, this.filePath);
+            return Class.fromJson(
+                { ...this.toJson(), metadata: { ...this.metadata, id: -1 } },
+                this.filePath,
+            );
         }
         return Class.fromJson(this.toJson(), this.filePath);
     }
@@ -137,6 +157,7 @@ export default class NoteItem
             data,
         };
     }
+
     static dragDeserialize(data: any) {
         try {
             const NoteItem = this.fromJson(data);
@@ -148,5 +169,18 @@ export default class NoteItem
             handleError(error);
         }
         return null;
+    }
+
+    static genNewJsonData() {
+        const noteItemJsonData: NoteItemType = {
+            title: 'Unnamed',
+            content: '',
+            metadata: {
+                id: -1,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        };
+        return noteItemJsonData;
     }
 }

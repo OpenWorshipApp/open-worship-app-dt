@@ -1,13 +1,13 @@
 import { tran } from '../lang/langHelpers';
 import SimpleNoteEditorComp, {
-    DocumentNoteStoreType,
+    SimpleNoteEditorStoreType,
 } from './SimpleNoteEditorComp';
 
 export default function NoteEditorRenderComp({
     store,
     title,
     uuid,
-}: Readonly<{ store: DocumentNoteStoreType; title: string; uuid?: string }>) {
+}: Readonly<{ store: SimpleNoteEditorStoreType; title: string; uuid?: string }>) {
     return (
         <div
             className="w-100 h-100 app-overflow-hidden"
