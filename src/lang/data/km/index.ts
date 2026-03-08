@@ -269,7 +269,7 @@ const dictionary = {
     'Search in Bible Search': 'ស្វែងរកក្នុងការស្វែងរកព្រះគម្ពីរ',
     'Search Selected Text on Google': 'ស្វែងរកអត្ថបទដែលបានជ្រើសរើសនៅលើ Google',
     'Select Default Folder': 'ជ្រើសរើសថតលំនាំដើម',
-    'Set OpenAI API Key for Audio AI': 'កំណត់ OpenAI API Key សម្រាប់ Audio AI',
+    'Set AI API Key': 'កំណត់ AI API Key',
     Setting: 'ការកំណត់',
     'shift + click to append': 'shift + click ដើម្បីបន្ថែមចុងក្រោយ',
     'Shift Click to Add': 'Shift Click ដើម្បីបន្ថែម',

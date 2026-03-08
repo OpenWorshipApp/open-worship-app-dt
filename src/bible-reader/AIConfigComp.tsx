@@ -124,7 +124,7 @@ function AISettingComp() {
         <div className="ms-2">
             <i
                 className="bi bi-robot app-caught-hover-pointer"
-                title={tran('Set OpenAI API Key for Audio AI')}
+                title={tran('Set AI API Key')}
                 style={{
                     color: aiSetting.openAIAPIKey ? 'green' : '',
                     fontSize: '25px',
