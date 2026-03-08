@@ -130,7 +130,7 @@ function RendBodyComp({
                             tran(
                                 'Video will fade at the end while screen rendering.',
                             ) +
-                            ' Use *.loop.[extension] file to disable fading.'
+                            ' Use *.loop.[extension] file to force auto fading.'
                         }
                     />
                 ) : null}
