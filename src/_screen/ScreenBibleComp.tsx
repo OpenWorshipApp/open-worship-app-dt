@@ -86,6 +86,7 @@ function getStyleText() {
     color: rgba(172, 255, 47, 0.645);
     transform: scale(0.7) translateY(-0.3em);
     opacity: 0.7;
+    text-shadow: 0 0 #000000;
 }
 
 #bible-screen-view .header .bible-key {
