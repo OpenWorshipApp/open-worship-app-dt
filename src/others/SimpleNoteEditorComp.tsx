@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { showSimpleToast } from '../../toast/toastHelpers';
-import { tran } from '../../lang/langHelpers';
-import { checkIsKeyboardEventMatch } from '../../event/KeyboardEventListener';
-import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
+import { tran } from '../lang/langHelpers';
+import { checkIsKeyboardEventMatch } from '../event/KeyboardEventListener';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function blockUnload(event: BeforeUnloadEvent) {
     event.preventDefault();

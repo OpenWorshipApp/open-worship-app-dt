@@ -1,7 +1,7 @@
-import { tran } from '../../lang/langHelpers';
+import { tran } from '../lang/langHelpers';
 import SimpleNoteEditorComp, {
     DocumentNoteStoreType,
-} from '../canvas/SimpleNoteEditorComp';
+} from './SimpleNoteEditorComp';
 
 export default function NoteEditorRenderComp({
     store,

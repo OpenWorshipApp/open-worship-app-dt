@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import AppDocument from '../../app-document-list/AppDocument';
-import { DocumentNoteStoreType } from '../canvas/SimpleNoteEditorComp';
+import { DocumentNoteStoreType } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
-import NoteEditorRenderComp from './NoteEditorRenderComp';
+import NoteEditorRenderComp from '../../others/NoteEditorRenderComp';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 
 class AppDocumentNoteStore implements DocumentNoteStoreType {

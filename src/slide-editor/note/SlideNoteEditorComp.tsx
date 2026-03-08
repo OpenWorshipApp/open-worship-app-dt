@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import AppDocument from '../../app-document-list/AppDocument';
-import { DocumentNoteStoreType } from '../canvas/SimpleNoteEditorComp';
+import { DocumentNoteStoreType } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import NoteEditorRenderComp from './NoteEditorRenderComp';
+import NoteEditorRenderComp from '../../others/NoteEditorRenderComp';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 
 class SlideNoteStore implements DocumentNoteStoreType {
