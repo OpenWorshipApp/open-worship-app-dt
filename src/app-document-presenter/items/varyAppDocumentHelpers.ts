@@ -173,7 +173,10 @@ export function handleArrowing(
         return;
     }
     event.preventDefault();
-    const isLeft = ['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key);
+    let isLeft = ['ArrowLeft', 'ArrowUp', 'PageUp'].includes(event.key);
+    if (event.key === ' ' && event.shiftKey) {
+        isLeft = true;
+    }
     handleNextItemSelecting({
         container: element,
         varyAppDocumentItems,

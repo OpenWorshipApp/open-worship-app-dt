@@ -1,4 +1,7 @@
-import type { KeyboardType } from '../../event/KeyboardEventListener';
+import type {
+    EventMapper,
+    KeyboardType,
+} from '../../event/KeyboardEventListener';
 import {
     allArrows,
     useKeyboardRegistering,
@@ -35,6 +38,14 @@ import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};
 
+const arrows: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
+const eventMaps: EventMapper[] = arrows.map((key) => {
+    return { key };
+});
+eventMaps.push({
+    allControlKey: ['Shift'],
+    key: ' ',
+});
 function useAppDocumentItems() {
     const selectedAppDocument = useVaryAppDocumentContext();
     const [varyAppDocumentItems, setVaryAppDocumentItems] = useAppStateAsync<
@@ -61,11 +72,8 @@ function useAppDocumentItems() {
 
     useFileSourceEvents(['update'], refresh, [], selectedAppDocument.filePath);
 
-    const arrows: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
     useKeyboardRegistering(
-        arrows.map((key) => {
-            return { key };
-        }),
+        eventMaps,
         (event) => {
             handleArrowing(event, varyAppDocumentItems ?? []);
         },
