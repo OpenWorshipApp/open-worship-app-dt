@@ -38,7 +38,7 @@ function getLyric() {
     return Lyric.getInstance(filePath);
 }
 
-export default function LyricEditorComp() {
+export default function LyricEditorPopupComp() {
     const lyric = useMemo(() => {
         return getLyric();
     }, []);
