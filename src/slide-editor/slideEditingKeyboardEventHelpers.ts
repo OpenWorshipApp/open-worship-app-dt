@@ -102,11 +102,10 @@ export async function onSlideItemsKeyboardEvent(
         ) {
             allSelectedSlides.push(selectedSlideEditing);
         }
-        if (
-            checkIsKeyboardEventMatch([{ key: 'Escape' }], event) &&
-            holdingSlides.length > 0
-        ) {
-            setHoldingSlides([]);
+        if (checkIsKeyboardEventMatch([{ key: 'Escape' }], event)) {
+            if (holdingSlides.length > 0) {
+                setHoldingSlides([]);
+            }
             isHandled = true;
         } else if (
             checkIsKeyboardEventMatch(
@@ -118,10 +117,11 @@ export async function onSlideItemsKeyboardEvent(
                     },
                 ],
                 event,
-            ) &&
-            holdingSlides.length > 0
+            )
         ) {
-            await appDocument.deleteSlides(holdingSlides);
+            if (holdingSlides.length > 0) {
+                await appDocument.deleteSlides(holdingSlides);
+            }
             isHandled = true;
         } else if (
             checkIsKeyboardEventMatch(
@@ -152,8 +152,10 @@ export async function onSlideItemsKeyboardEvent(
                 event,
             )
         ) {
-            AppDocument.setCopiedSlides(allSelectedSlides);
-            showSimpleToast(tran('Copied'), tran('Slides are copied'));
+            if (allSelectedSlides.length > 0) {
+                AppDocument.setCopiedSlides(allSelectedSlides);
+                showSimpleToast(tran('Copied'), tran('Slides are copied'));
+            }
             isHandled = true;
         } else if (
             checkIsKeyboardEventMatch(
@@ -184,7 +186,9 @@ export async function onSlideItemsKeyboardEvent(
                 event,
             )
         ) {
-            appDocument.duplicateSlides(allSelectedSlides);
+            if (allSelectedSlides.length > 0) {
+                appDocument.duplicateSlides(allSelectedSlides);
+            }
             isHandled = true;
         } else if (handleHistory(appDocument, event)) {
             isHandled = true;
