@@ -72,12 +72,12 @@ export async function onSlideItemsKeyboardEvent(
         holdingSlides,
         setHoldingSlides,
         varyAppDocument,
-        selectedSlide,
+        selectedSlideEditing,
     }: {
         holdingSlides: Slide[];
         setHoldingSlides: (holdingSlides: Slide[]) => void;
         varyAppDocument: VaryAppDocumentType | null;
-        selectedSlide: Slide | null;
+        selectedSlideEditing: Slide | null;
     },
     event: any,
 ) {
@@ -95,12 +95,12 @@ export async function onSlideItemsKeyboardEvent(
         }
         const allSelectedSlides = holdingSlides;
         if (
-            selectedSlide !== null &&
+            selectedSlideEditing !== null &&
             holdingSlides.some((holdingSlide) => {
-                return holdingSlide.checkIsSame(selectedSlide);
+                return holdingSlide.checkIsSame(selectedSlideEditing);
             }) === false
         ) {
-            allSelectedSlides.push(selectedSlide);
+            allSelectedSlides.push(selectedSlideEditing);
         }
         if (
             checkIsKeyboardEventMatch([{ key: 'Escape' }], event) &&

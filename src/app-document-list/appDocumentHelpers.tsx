@@ -68,6 +68,7 @@ import {
     getSelectedVaryAppDocumentFilePathWithEnsure,
     setSelectedVaryAppDocumentFilePath,
 } from './selectedVaryAppDocumentHelpers';
+import { OptionalPromise } from '../helper/typeHelpers';
 
 export async function showPdfSlideContextMenu(
     event: any,
@@ -118,12 +119,14 @@ const deleteShortcutMapper: EventMapper = {
 export function genSlideContextMenuItems(
     appDocument: AppDocument,
     slide: Slide,
-    isSelected: boolean,
+    isSelectedEditing: boolean,
 ) {
     const menuItems: ContextMenuItemType[] = [
         {
             menuElement: tran('Copy'),
-            keyboardShortcut: isSelected ? copyShortcutMapper : undefined,
+            keyboardShortcut: isSelectedEditing
+                ? copyShortcutMapper
+                : undefined,
             onSelect: async () => {
                 AppDocument.setCopiedSlides([slide]);
                 showSimpleToast(tran('Copied'), tran('Slide is copied'));
@@ -131,7 +134,9 @@ export function genSlideContextMenuItems(
         },
         {
             menuElement: tran('Duplicate'),
-            keyboardShortcut: isSelected ? duplicateShortcutMapper : undefined,
+            keyboardShortcut: isSelectedEditing
+                ? duplicateShortcutMapper
+                : undefined,
             onSelect: () => {
                 appDocument.duplicateSlides([slide]);
             },
@@ -171,7 +176,7 @@ export function genSlideContextMenuItems(
     });
     menuItems.push(...menuItemOnScreens, {
         menuElement: tran('Delete'),
-        keyboardShortcut: isSelected ? deleteShortcutMapper : undefined,
+        keyboardShortcut: isSelectedEditing ? deleteShortcutMapper : undefined,
         onSelect: () => {
             appDocument.deleteSlides([slide]);
         },
@@ -433,12 +438,14 @@ export async function selectSlide(event: any, currentFilePath: string) {
     });
 }
 
-export const SelectedVaryAppDocumentContext = createContext<{
+export type SelectedAppDocumentContextType = {
     selectedVaryAppDocument: VaryAppDocumentType | null;
     setSelectedVaryAppDocument: (
         newVaryAppDocument: VaryAppDocumentType | null,
-    ) => void;
-} | null>(null);
+    ) => OptionalPromise<void>;
+};
+export const SelectedVaryAppDocumentContext =
+    createContext<SelectedAppDocumentContextType | null>(null);
 
 function useContext() {
     const context = use(SelectedVaryAppDocumentContext);
@@ -465,15 +472,17 @@ export function useSelectedAppDocumentSetterContext() {
     return context.setSelectedVaryAppDocument;
 }
 
-export const SelectedEditingSlideContext = createContext<{
-    selectedSlide: Slide | null;
+export type SelectedSlideContextType = {
+    selectedSlideEditing: Slide | null;
     holdingSlides: Slide[];
     setSelectedSlide: (
         newSlide: Slide | null,
         controlType?: KeyboardControlType,
-    ) => void;
-    onSlideItemsKeyboardEvent: (event: any) => void;
-} | null>(null);
+    ) => OptionalPromise<void>;
+    onSlideItemsKeyboardEvent: (event: any) => OptionalPromise<void>;
+};
+export const SelectedEditingSlideContext =
+    createContext<SelectedSlideContextType | null>(null);
 
 function useContextItem() {
     const context = use(SelectedEditingSlideContext);
@@ -489,12 +498,12 @@ function useContextItem() {
 export function useSelectedEditingSlideContext() {
     const context = useContextItem();
     if (
-        context.selectedSlide === null ||
-        !(context.selectedSlide instanceof Slide)
+        context.selectedSlideEditing === null ||
+        !(context.selectedSlideEditing instanceof Slide)
     ) {
         throw new Error('No selected slide');
     }
-    return context.selectedSlide;
+    return context.selectedSlideEditing;
 }
 
 export function useSelectedEditingSlideSetterContext() {

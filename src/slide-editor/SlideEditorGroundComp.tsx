@@ -7,7 +7,7 @@ import { SelectedEditingSlideContext } from '../app-document-list/appDocumentHel
 
 export default function SlideEditorGroundComp() {
     const selectedSlideContext = use(SelectedEditingSlideContext);
-    if (!selectedSlideContext?.selectedSlide) {
+    if (!selectedSlideContext?.selectedSlideEditing) {
         return <div>No slide selected</div>;
     }
     return <SlideEditorComp />;

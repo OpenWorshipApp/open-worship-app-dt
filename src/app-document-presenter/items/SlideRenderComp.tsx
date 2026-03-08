@@ -13,12 +13,14 @@ import SlideRendererComp from './SlideRendererComp';
 import AppDocument from '../../app-document-list/AppDocument';
 
 function useData() {
-    const selectedSlideContext = use(SelectedEditingSlideContext);
-    const selectedSlide = selectedSlideContext?.selectedSlide ?? null;
-    const holdingSlides = selectedSlideContext?.holdingSlides ?? [];
+    const selectedEditingSlideContext = use(SelectedEditingSlideContext);
+    const selectedEditingSlide =
+        selectedEditingSlideContext?.selectedSlideEditing ?? null;
+    const holdingEditingSlides =
+        selectedEditingSlideContext?.holdingSlides ?? [];
     return {
-        selectedSlide,
-        holdingSlides,
+        selectedEditingSlide,
+        holdingEditingSlides,
     };
 }
 
@@ -34,7 +36,7 @@ export default function SlideRenderComp({
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
 }>) {
     const appDocument = useVaryAppDocumentContext() as AppDocument;
-    const { selectedSlide, holdingSlides } = useData();
+    const { selectedEditingSlide, holdingEditingSlides } = useData();
     useScreenVaryAppDocumentManagerEvents(['update']);
     const handleContextMenuOpening = (
         event: any,
@@ -48,26 +50,30 @@ export default function SlideRenderComp({
             onClick?.(event);
             return;
         }
-        const isOnHoldingSlide = holdingSlides.some((holdingSlide) => {
+        const isOnHoldingSlide = holdingEditingSlides.some((holdingSlide) => {
             return holdingSlide.checkIsSame(slide);
         });
         if (isOnHoldingSlide) {
-            appDocument.showHoldingSlidesContextMenu(event, holdingSlides);
+            appDocument.showHoldingSlidesContextMenu(
+                event,
+                holdingEditingSlides,
+            );
         } else {
-            const isSelected = selectedSlide?.checkIsSame(slide);
+            const isSelectedEditing =
+                !!selectedEditingSlide?.checkIsSame(slide);
             appDocument.showSlideContextMenu(
                 event,
                 slide,
                 extraMenuItems,
-                isSelected,
+                isSelectedEditing,
             );
         }
     };
     return (
         <VaryAppDocumentItemRenderComp
             slide={slide}
-            selectedItem={selectedSlide}
-            holdingItems={holdingSlides}
+            selectedItemEditing={selectedEditingSlide}
+            holdingItems={holdingEditingSlides}
             width={width}
             index={index}
             onContextMenu={handleContextMenuOpening}

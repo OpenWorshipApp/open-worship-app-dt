@@ -11,6 +11,8 @@ import {
     setSelectedVaryAppDocument,
     setSelectedEditingSlide,
     preloadAttachedBackground,
+    SelectedAppDocumentContextType,
+    SelectedSlideContextType,
 } from '../app-document-list/appDocumentHelpers';
 import { getSelectedLyric, setSelectedLyric } from '../lyric-list/lyricHelpers';
 import type Lyric from '../lyric-list/Lyric';
@@ -159,60 +161,87 @@ export function useAppDocumentContextValues() {
         },
     );
 
-    const varyAppDocumentContextValue = useMemo(() => {
-        const setSelectedVaryAppDocument = async (
-            newVaryAppDocument: VaryAppDocumentType | null,
-        ) => {
-            setVaryAppDocument1(newVaryAppDocument);
-            let selectedSlide: Slide | null = null;
-            if (newVaryAppDocument !== null) {
-                if (AppDocument.checkIsThisType(newVaryAppDocument)) {
-                    const slides = await newVaryAppDocument.getSlides();
-                    preloadAttachedBackground(newVaryAppDocument, slides);
-                    selectedSlide = slides[0] ?? null;
-                } else {
-                    preloadAttachedBackground(newVaryAppDocument);
+    const varyAppDocumentContextValue =
+        useMemo((): SelectedAppDocumentContextType => {
+            const setSelectedVaryAppDocument = async (
+                newVaryAppDocument: VaryAppDocumentType | null,
+            ) => {
+                setVaryAppDocument1(newVaryAppDocument);
+                let selectedSlideEditing: Slide | null = null;
+                if (newVaryAppDocument !== null) {
+                    if (AppDocument.checkIsThisType(newVaryAppDocument)) {
+                        const slides = await newVaryAppDocument.getSlides();
+                        preloadAttachedBackground(newVaryAppDocument, slides);
+                        selectedSlideEditing = slides[0] ?? null;
+                    } else {
+                        preloadAttachedBackground(newVaryAppDocument);
+                    }
                 }
-            }
-            setSlide1(selectedSlide);
-        };
-        return {
-            selectedVaryAppDocument: varyAppDocument,
-            setSelectedVaryAppDocument,
-        };
-    }, [varyAppDocument, setVaryAppDocument1, setSlide1]);
+                setSlide1(selectedSlideEditing);
+            };
+            return {
+                selectedVaryAppDocument: varyAppDocument,
+                setSelectedVaryAppDocument,
+            };
+        }, [varyAppDocument, setVaryAppDocument1, setSlide1]);
 
-    const editingSlideContextValue = useMemo(() => {
+    const editingSlideContextValue = useMemo((): SelectedSlideContextType => {
+        if (!appProvider.isPageAppDocumentEditor) {
+            return {
+                selectedSlideEditing: null,
+                holdingSlides: [],
+                setSelectedSlide: () => {},
+                onSlideItemsKeyboardEvent: (event: any) => {
+                    onSlideItemsKeyboardEvent(
+                        {
+                            holdingSlides: [],
+                            setHoldingSlides: () => {},
+                            varyAppDocument,
+                            selectedSlideEditing: null,
+                        },
+                        event,
+                    );
+                },
+            };
+        }
         const setSelectedSlide = async (
-            newSelectedSlide: Slide,
+            newSelectedSlideEditing: Slide | null,
             controlType?: KeyboardControlType,
         ) => {
             if (controlType === undefined) {
-                setSlide1(newSelectedSlide);
+                setSlide1(newSelectedSlideEditing);
                 return;
             }
-            if (!AppDocument.checkIsThisType(varyAppDocument)) {
+            if (
+                newSelectedSlideEditing === null ||
+                !AppDocument.checkIsThisType(varyAppDocument)
+            ) {
                 return;
             }
             const newHoldingSlides = await calculateNewHoldingSlides(
                 controlType,
                 varyAppDocument,
                 slide,
-                newSelectedSlide,
+                newSelectedSlideEditing,
                 holdingSlides,
             );
             setHoldingSlides(newHoldingSlides);
         };
         return {
-            selectedSlide: slide,
+            selectedSlideEditing: slide,
             holdingSlides,
             setSelectedSlide,
-            onSlideItemsKeyboardEvent: onSlideItemsKeyboardEvent.bind(null, {
-                holdingSlides,
-                setHoldingSlides,
-                varyAppDocument,
-                selectedSlide: slide,
-            }),
+            onSlideItemsKeyboardEvent: (event: any) => {
+                onSlideItemsKeyboardEvent(
+                    {
+                        holdingSlides,
+                        setHoldingSlides,
+                        varyAppDocument,
+                        selectedSlideEditing: slide,
+                    },
+                    event,
+                );
+            },
         };
     }, [slide, varyAppDocument, holdingSlides, setSlide1]);
 

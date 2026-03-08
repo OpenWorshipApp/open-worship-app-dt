@@ -24,7 +24,7 @@ export default function SlideEditorPopupComp({
                 <div className="body card-body w-100 app-overflow-hidden">
                     <SelectedEditingSlideContext
                         value={{
-                            selectedSlide: slide,
+                            selectedSlideEditing: slide,
                             holdingSlides: [],
                             setSelectedSlide: () => {},
                             onSlideItemsKeyboardEvent: () => {},

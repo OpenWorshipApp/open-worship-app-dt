@@ -394,12 +394,12 @@ export default class AppDocument
         event: any,
         slide: Slide,
         extraMenuItems: ContextMenuItemType[] = [],
-        isSelected = false,
+        isSelectedEditing = false,
     ) {
         const contextMenuItems = genSlideContextMenuItems(
             this,
             slide,
-            isSelected,
+            isSelectedEditing,
         );
         showAppContextMenu(event, [...contextMenuItems, ...extraMenuItems], {
             style: {

@@ -64,9 +64,9 @@ function useCanvasItemsData(canvasController: CanvasController) {
 
     useAppEffect(() => {
         canvasController.onArrowing = (event) => {
-            for (const selectedItem of selectedCanvasItems) {
+            for (const selectedCanvasItem of selectedCanvasItems) {
                 canvasController.moveCanvasItem(
-                    selectedItem,
+                    selectedCanvasItem,
                     canvasController.MOVING_OFFSET,
                     canvasController.MOVING_OFFSET,
                     {
@@ -75,7 +75,7 @@ function useCanvasItemsData(canvasController: CanvasController) {
                         isShiftKey: event.shiftKey,
                     },
                 );
-                canvasController.applyEditItem(selectedItem);
+                canvasController.applyEditItem(selectedCanvasItem);
             }
         };
         return () => {

@@ -198,7 +198,7 @@ export default function VaryAppDocumentItemRenderComp({
     onClick,
     onContextMenu,
     onCopy,
-    selectedItem,
+    selectedItemEditing,
     holdingItems,
     children,
 }: Readonly<{
@@ -208,7 +208,7 @@ export default function VaryAppDocumentItemRenderComp({
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
     onCopy?: () => void;
-    selectedItem?: VaryAppDocumentItemType | null;
+    selectedItemEditing?: VaryAppDocumentItemType | null;
     holdingItems?: VaryAppDocumentItemType[];
     children: ReactNode;
 }>) {
@@ -217,7 +217,11 @@ export default function VaryAppDocumentItemRenderComp({
         activeCN: activeClassName,
         presenterCN: presenterClassName,
         holdingCN: holdingClassName,
-    } = toClassNameHighlight(slide, selectedItem ?? null, holdingItems ?? []);
+    } = toClassNameHighlight(
+        slide,
+        selectedItemEditing ?? null,
+        holdingItems ?? [],
+    );
     const attachedBackgroundData = useAttachedBackgroundData(
         slide.filePath,
         slide.id,
