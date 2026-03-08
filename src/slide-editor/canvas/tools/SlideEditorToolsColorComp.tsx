@@ -1,5 +1,8 @@
 import ColorPicker from '../../../others/color/ColorPicker';
-import type { AppColorType } from '../../../others/color/colorHelpers';
+import {
+    HEX_COLOR_WHITE,
+    type AppColorType,
+} from '../../../others/color/colorHelpers';
 
 export default function SlideEditorToolsColorComp({
     color,
@@ -19,7 +22,7 @@ export default function SlideEditorToolsColorComp({
         >
             <ColorPicker
                 color={color}
-                defaultColor="#ffffff"
+                defaultColor={HEX_COLOR_WHITE}
                 onNoColor={handleNoColoring}
                 onColorChange={handleColorChanging}
                 isCollapsable

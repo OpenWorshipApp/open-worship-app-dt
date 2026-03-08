@@ -5,6 +5,11 @@ import appProvider from '../server/appProvider';
 import EventHandler from '../event/EventHandler';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { useState } from 'react';
+import {
+    HEX_COLOR_BLACK,
+    checkIsColorDark,
+    HEX_COLOR_WHITE,
+} from './color/colorHelpers';
 
 export const themeOptions = ['light', 'dark', 'system'] as const;
 export type ThemeOptionType = (typeof themeOptions)[number];
@@ -31,18 +36,11 @@ export function checkIsDarkMode(themeSource?: ThemeOptionType) {
     return themeSource === 'dark';
 }
 
-export function getColorParts(backgroundColor?: string) {
-    let isDarkMode = checkIsDarkMode();
-    if (backgroundColor !== undefined) {
-        const r = Number.parseInt(backgroundColor.slice(1, 3), 16);
-        const g = Number.parseInt(backgroundColor.slice(3, 5), 16);
-        const b = Number.parseInt(backgroundColor.slice(5, 7), 16);
-        // https://www.w3.org/TR/AERT/#color-contrast
-        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        isDarkMode = brightness < 128;
-    }
-    const colorPart = isDarkMode ? '000000' : 'ffffff';
-    const invertColorPart = isDarkMode ? 'ffffff' : '000000';
+export function getColorParts(textColor?: string) {
+    textColor ??= HEX_COLOR_WHITE;
+    const isTextColorDark = checkIsColorDark(textColor);
+    const colorPart = isTextColorDark ? HEX_COLOR_BLACK : HEX_COLOR_WHITE;
+    const invertColorPart = isTextColorDark ? HEX_COLOR_WHITE : HEX_COLOR_BLACK;
     return { colorPart, invertColorPart };
 }
 

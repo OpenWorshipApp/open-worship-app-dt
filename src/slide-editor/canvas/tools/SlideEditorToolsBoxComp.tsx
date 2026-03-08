@@ -8,6 +8,7 @@ import {
 } from '../CanvasItem';
 import SlideEditorToolsColorComp from './SlideEditorToolsColorComp';
 import ShapePropertiesComp from './ShapePropertiesComp';
+import { HEX_COLOR_BLACK } from '../../../others/color/colorHelpers';
 
 function SizingComp() {
     const canvasController = useCanvasControllerContext();
@@ -107,7 +108,7 @@ export default function SlideEditorToolsBoxComp() {
                         color={props.backgroundColor}
                         handleNoColoring={() => {
                             setProps({
-                                backgroundColor: '#00000000',
+                                backgroundColor: `${HEX_COLOR_BLACK}00`,
                             });
                         }}
                         handleColorChanging={(newColor) => {

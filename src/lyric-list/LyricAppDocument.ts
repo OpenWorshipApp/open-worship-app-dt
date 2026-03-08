@@ -16,6 +16,7 @@ import {
     renderMarkdownMusic,
 } from './markdownHelpers';
 import { checkIsDarkMode } from '../others/initHelpers';
+import { HEX_COLOR_BLACK, HEX_COLOR_WHITE } from '../others/color/colorHelpers';
 
 export type LyricEditingPropsType = {
     fontFamily: string;
@@ -79,7 +80,7 @@ export default class LyricAppDocument extends AppDocument {
                     type: 'html',
                     text,
                     htmlText,
-                    color: '#FFFFFFFF',
+                    color: `${HEX_COLOR_WHITE}FF`,
                     fontSize: 90,
                     fontFamily: this.lyricEditingProps.fontFamily,
                     fontWeight: null,
@@ -87,7 +88,7 @@ export default class LyricAppDocument extends AppDocument {
                     textVerticalAlignment: 'center',
                     top,
                     left,
-                    backgroundColor: '#0000008B',
+                    backgroundColor: `${HEX_COLOR_BLACK}8B`,
                     backdropFilter: 5,
                     width: Math.round(display.bounds.width - left * 2),
                     height: Math.round(display.bounds.height - top * 2),

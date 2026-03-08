@@ -69,6 +69,7 @@ import {
     setSelectedVaryAppDocumentFilePath,
 } from './selectedVaryAppDocumentHelpers';
 import { OptionalPromise } from '../helper/typeHelpers';
+import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
 
 export async function showPdfSlideContextMenu(
     event: any,
@@ -272,7 +273,7 @@ function genAlertMessage() {
                             padding: '2px',
                             borderRadius: '3px',
                             margin: '0 5px',
-                            backgroundColor: '#00000074',
+                            backgroundColor: `${HEX_COLOR_BLACK}74`,
                         }}
                     />
                 </a>

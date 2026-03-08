@@ -1,7 +1,10 @@
 import { useState } from 'react';
 
 import ColorPicker from '../others/color/ColorPicker';
-import type { AppColorType } from '../others/color/colorHelpers';
+import {
+    HEX_COLOR_BLACK,
+    type AppColorType,
+} from '../others/color/colorHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -68,7 +71,7 @@ export default function BackgroundColorsComp() {
             {selectedBackgroundSrcList.length === 0 ? (
                 <ColorPicker
                     color={null}
-                    defaultColor={'#000000'}
+                    defaultColor={HEX_COLOR_BLACK}
                     onColorChange={(newColor, event: any) => {
                         ScreenBackgroundManager.handleBackgroundSelecting(
                             event,

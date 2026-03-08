@@ -43,9 +43,9 @@ import type {
 } from '../screenTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
 import {
-    BLACK_COLOR,
+    HEX_COLOR_BLACK,
     checkIsColorDark,
-    WHITE_COLOR,
+    HEX_COLOR_WHITE,
 } from '../../others/color/colorHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { tran } from '../../lang/langHelpers';
@@ -285,7 +285,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         const textStyle = this.textStyle;
         return typeof textStyle.color === 'string'
             ? textStyle.color
-            : '#ffffff';
+            : HEX_COLOR_WHITE;
     }
 
     static get textStyleTextTextShadow(): string {
@@ -469,8 +469,8 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
             return;
         }
         const contrastingColor = isBackgroundColorDark
-            ? WHITE_COLOR
-            : BLACK_COLOR;
+            ? HEX_COLOR_WHITE
+            : HEX_COLOR_BLACK;
         ScreenBibleManager.applyTextStyle({
             color: contrastingColor,
         });

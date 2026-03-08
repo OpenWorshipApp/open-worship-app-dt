@@ -5,7 +5,11 @@ import { useMemo } from 'react';
 
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import type { AppColorType } from '../others/color/colorHelpers';
-import { toHexColorString } from '../others/color/colorHelpers';
+import {
+    HEX_COLOR_BLACK,
+    toHexColorString,
+    HEX_COLOR_WHITE,
+} from '../others/color/colorHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useStylingColor } from '../_screen/preview/stylingHelpers';
@@ -108,8 +112,8 @@ function genColorHTML({
 }) {
     let htmlText = `
     <div>
-        ${renderToStaticMarkup(genShadowElement({ color: '#ffffff' }, 'Reset White'))}
-        ${renderToStaticMarkup(genShadowElement({ color: '#000000' }, 'Reset Black'))}
+        ${renderToStaticMarkup(genShadowElement({ color: HEX_COLOR_WHITE }, 'Reset White'))}
+        ${renderToStaticMarkup(genShadowElement({ color: HEX_COLOR_BLACK }, 'Reset Black'))}
     </div>
     `;
 
@@ -119,7 +123,7 @@ function genColorHTML({
             <hr/>
             <div>
                 ${genShadowGroup('G1', color, '#2d3c7d30')}
-                ${genShadowGroup('G2', color, '#00000030')}
+                ${genShadowGroup('G2', color, `${HEX_COLOR_BLACK}30`)}
             </div>
         `;
     }
@@ -127,8 +131,8 @@ function genColorHTML({
         <br/>
         <hr/>
         <div>
-            ${genShadowGroup('G3', '#ffffff', '#212c5d30')}
-            ${genShadowGroup('G4', '#ffffff', '#00000030')}
+            ${genShadowGroup('G3', HEX_COLOR_WHITE, '#212c5d30')}
+            ${genShadowGroup('G4', HEX_COLOR_WHITE, `${HEX_COLOR_BLACK}30`)}
         </div>
         <br/>
     `;
@@ -136,8 +140,8 @@ function genColorHTML({
         <br/>
         <hr/>
         <div>
-            ${genShadowGroup('G3', '#000000', '#7a90f330')}
-            ${genShadowGroup('G4', '#000000', '#ffffff30')}
+            ${genShadowGroup('G3', HEX_COLOR_BLACK, '#7a90f330')}
+            ${genShadowGroup('G4', HEX_COLOR_BLACK, `${HEX_COLOR_WHITE}30`)}
         </div>
         <br/>
     `;
@@ -166,11 +170,17 @@ export default function ScreenBibleTextShadow() {
     }, []);
     const isWhite = useMemo(() => {
         const hexColor = toHexColorString(color);
-        return hexColor.toLowerCase().startsWith('#ffffff');
+        if (hexColor === null) {
+            return false;
+        }
+        return hexColor.toLowerCase().startsWith(HEX_COLOR_WHITE.toLowerCase());
     }, [color]);
     const isBlack = useMemo(() => {
         const hexColor = toHexColorString(color);
-        return hexColor.toLowerCase().startsWith('#000000');
+        if (hexColor === null) {
+            return false;
+        }
+        return hexColor.toLowerCase().startsWith(HEX_COLOR_BLACK.toLowerCase());
     }, [color]);
     const htmlColorText = useMemo(() => {
         const htmlText = genColorHTML({ color, isWhite, isBlack });

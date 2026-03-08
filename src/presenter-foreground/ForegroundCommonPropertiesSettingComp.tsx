@@ -7,13 +7,14 @@ import {
     useStateSettingString,
 } from '../helper/settingHelpers';
 import ColorPicker from '../others/color/ColorPicker';
+import { HEX_COLOR_WHITE } from '../others/color/colorHelpers';
 
 const FONT_FAMILY_SETTING_NAME = 'foreground-common-font-family';
 const FONT_WEIGHT_SETTING_NAME = 'foreground-common-font-weight';
 const TEXT_COLOR_SETTING_NAME = 'foreground-common-color';
 const BACKGROUND_COLOR_SETTING_NAME = 'foreground-common-background-color';
 const BACKDROP_FILTER_SETTING_NAME = 'foreground-common-backdrop-filter';
-const DEFAULT_TEXT_COLOR = '#ffffff';
+const DEFAULT_TEXT_COLOR = HEX_COLOR_WHITE;
 const DEFAULT_BACKGROUND_COLOR = '#000080AA';
 const DEFAULT_BACKDROP_FILTER = 5;
 

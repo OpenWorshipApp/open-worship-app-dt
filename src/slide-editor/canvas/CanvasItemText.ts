@@ -1,7 +1,10 @@
 import type { CSSProperties } from 'react';
 
 import { handleError } from '../../helper/errorHelpers';
-import type { AppColorType } from '../../others/color/colorHelpers';
+import {
+    HEX_COLOR_WHITE,
+    type AppColorType,
+} from '../../others/color/colorHelpers';
 import appProvider from '../../server/appProvider';
 import type { HAlignmentType, VAlignmentType } from './canvasHelpers';
 import { genTextDefaultBoxStyle } from './canvasHelpers';
@@ -12,7 +15,7 @@ import type { AnyObjectType } from '../../helper/typeHelpers';
 export function genTextDefaultProps(): TextPropsType {
     return {
         text: appProvider.appInfo.titleFull,
-        color: '#ffffff',
+        color: HEX_COLOR_WHITE,
         fontSize: 60,
         fontFamily: null,
         fontWeight: null,

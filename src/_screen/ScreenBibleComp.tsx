@@ -9,9 +9,10 @@ import {
 } from './managers/screenManagerHooks';
 import { getColorParts } from '../others/initHelpers';
 import { checkIsZoomed } from '../helper/domHelpers';
+import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
 
-function getStyleText() {
-    const { colorPart, invertColorPart } = getColorParts();
+function getStyleText(textColor?: string) {
+    const { colorPart, invertColorPart } = getColorParts(textColor);
     const isZoomed = checkIsZoomed();
     // TODO: find solution for sticky header when zoomed
 
@@ -30,11 +31,11 @@ function getStyleText() {
 }
 
 #bible-screen-view::-webkit-scrollbar-track {
-    background-color: #${colorPart}42;
+    background-color: ${colorPart}42;
 }
 
 #bible-screen-view::-webkit-scrollbar-thumb {
-    background-color: white;
+    background-color: ${invertColorPart};
 }
 
 #bible-screen-view table {
@@ -59,13 +60,13 @@ function getStyleText() {
 }
 #bible-screen-view th > div {
     backdrop-filter: blur(5px);
-    background-color: #${colorPart}53;
+    background-color: ${colorPart}53;
 }
 
 #bible-screen-view th,
 #bible-screen-view td {
     -webkit-font-smoothing: antialiased;
-    border-left: 1px solid #${colorPart};
+    border-left: 1px solid ${colorPart};
     text-align: left;
     vertical-align: top;
     line-height: 1.5em;
@@ -86,7 +87,7 @@ function getStyleText() {
     color: rgba(172, 255, 47, 0.645);
     transform: scale(0.7) translateY(-0.3em);
     opacity: 0.7;
-    text-shadow: 0 0 #000000;
+    text-shadow: 0 0 ${HEX_COLOR_BLACK};
 }
 
 #bible-screen-view .header .bible-key {
@@ -104,7 +105,7 @@ function getStyleText() {
 }
 
 #bible-screen-view .header .title::-webkit-scrollbar {
-  background-color: #${colorPart}42;
+  background-color: ${colorPart}42;
 }
 
 #bible-screen-view .header .title div {
@@ -120,7 +121,7 @@ function getStyleText() {
 }
 
 #bible-screen-view .highlight.hover {
-    border-bottom-color: #${invertColorPart}1a;
+    border-bottom-color: ${invertColorPart}1a;
 }
 
 #bible-screen-view .highlight.selected {
@@ -146,7 +147,7 @@ export default function ScreenBibleComp() {
     }, [div.current]);
     return (
         <>
-            <style>{getStyleText()}</style>
+            <style>{getStyleText(ScreenBibleManager.textStyleTextColor)}</style>
             <style>
                 {`#bible-screen-view tr {
                     ${ScreenBibleManager.textStyleText}

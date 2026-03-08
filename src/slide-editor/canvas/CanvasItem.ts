@@ -2,7 +2,10 @@ import type { CSSProperties } from 'react';
 import { createContext, use, useOptimistic } from 'react';
 
 import { cloneJson } from '../../helper/helpers';
-import type { AppColorType } from '../../others/color/colorHelpers';
+import {
+    HEX_COLOR_BLACK,
+    type AppColorType,
+} from '../../others/color/colorHelpers';
 import type { ToolingBoxType, CanvasItemKindType } from './canvasHelpers';
 import {
     tooling2BoxProps,
@@ -46,7 +49,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             rotate: props.rotate ?? 0,
             width: props.width ?? 0,
             height: props.height ?? 0,
-            backgroundColor: props.backgroundColor ?? '#00000000',
+            backgroundColor: props.backgroundColor ?? `${HEX_COLOR_BLACK}00`,
             backdropFilter: props.backdropFilter ?? 0,
             roundSizePercentage: props.roundSizePercentage ?? 0,
             roundSizePixel: props.roundSizePixel ?? 0,

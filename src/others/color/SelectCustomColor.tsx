@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { createMouseEvent } from '../../context-menu/appContextMenuHelpers';
-import type { AppColorType } from './colorHelpers';
+import { HEX_COLOR_WHITE, type AppColorType } from './colorHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { removeOpacityFromHexColor } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
@@ -21,7 +21,7 @@ export default function SelectCustomColor({
     }, []);
     const inputRef = useRef<HTMLInputElement>(null);
     const [localColor, setLocalColor] = useState(
-        removeOpacityFromHexColor(color || '#ffffff') as AppColorType,
+        removeOpacityFromHexColor(color || HEX_COLOR_WHITE) as AppColorType,
     );
     const applyColor = (newColor: AppColorType) => {
         setLocalColor(newColor);
@@ -47,7 +47,7 @@ export default function SelectCustomColor({
         if (color) {
             setLocalColor(removeOpacityFromHexColor(color) as AppColorType);
         } else {
-            setLocalColor('#ffffff' as AppColorType);
+            setLocalColor(HEX_COLOR_WHITE as AppColorType);
         }
     }, [color]);
     return (
