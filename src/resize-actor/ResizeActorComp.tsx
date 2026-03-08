@@ -10,6 +10,7 @@ export default function ResizeActorComp({
     isHorizontal,
     flexSizeName,
     flexSizeDefault,
+    anotherFlexSizeDefault,
     dataInput,
     isDisableQuickResize,
     isNotSaveSetting = false,
@@ -17,6 +18,7 @@ export default function ResizeActorComp({
     isHorizontal: boolean;
     flexSizeName: string;
     flexSizeDefault: Readonly<FlexSizeType>;
+    anotherFlexSizeDefault?: Readonly<FlexSizeType>;
     dataInput: DataInputType[];
     isDisableQuickResize?: boolean;
     isNotSaveSetting?: boolean;
@@ -78,6 +80,7 @@ export default function ResizeActorComp({
                         setFlexSize={setFlexSize1}
                         restoreFlexSize={restoreFlexSize}
                         defaultFlexSize={flexSizeDefault}
+                        anotherDefaultFlexSize={anotherFlexSizeDefault}
                         flexSizeName={flexSizeName}
                         dataInput={dataInput}
                         isDisableQuickResize={!!isDisableQuickResize}

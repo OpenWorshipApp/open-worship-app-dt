@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import FlexResizeActorComp from './FlexResizeActorComp';
@@ -15,6 +15,11 @@ import {
     calcShowingHiddenWidget,
 } from './flexSizeHelpers';
 import RenderHiddenWidgetTitleComp from './RenderHiddenWidgetTitleComp';
+import { useAppEffect } from '../helper/debuggerHelpers';
+import {
+    checkShouldQuickMove,
+    reopenAnotherHiddenWidget,
+} from './dynamicFlexSizeHelpers';
 
 const renderChildren = (Children: any) => {
     if (typeof Children === 'object' && 'render' in Children) {
@@ -34,6 +39,7 @@ export default function RenderResizeActorItemComp({
     setFlexSize,
     restoreFlexSize,
     defaultFlexSize,
+    anotherDefaultFlexSize,
     flexSizeName,
     dataInput,
     isDisableQuickResize,
@@ -45,6 +51,7 @@ export default function RenderResizeActorItemComp({
     flexSize: FlexSizeType;
     restoreFlexSize: FlexSizeType;
     defaultFlexSize: FlexSizeType;
+    anotherDefaultFlexSize?: FlexSizeType;
     flexSizeName: string;
     dataInput: DataInputType[];
     isDisableQuickResize: boolean;
@@ -52,6 +59,13 @@ export default function RenderResizeActorItemComp({
     setFlexSize: (flexSize: FlexSizeType) => void;
     isOnScreen: boolean;
 }>) {
+    useAppEffect(() => {
+        checkShouldQuickMove(
+            flexSizeName,
+            defaultFlexSize,
+            anotherDefaultFlexSize,
+        );
+    }, [flexSizeName, defaultFlexSize, anotherDefaultFlexSize]);
     const handleDisabling = (
         targetDataFlexSizeKey: string,
         target: DisabledType,
@@ -71,31 +85,40 @@ export default function RenderResizeActorItemComp({
 
     const { children, key, className = '', extraStyle = {}, widgetName } = data;
     const flexSizeValue = flexSize[key] ?? restoreFlexSize[key] ?? [];
-    const onHiddenWidgetClick = flexSizeValue[1]
-        ? (event: any) => {
-              const flexSizeDisabled = flexSizeValue[1] as DisabledType;
-              const size = calcShowingHiddenWidget(
-                  event,
-                  key,
-                  flexSizeName,
-                  restoreFlexSize,
-                  flexSizeDisabled,
-              );
-              setFlexSize(size);
-          }
-        : null;
-
-    let isShowingFlexSizeActor = false;
-    if (
-        index !== 0 &&
-        onHiddenWidgetClick === null &&
-        (checkIsThereNotHiddenWidget(dataInput, flexSize, 0, index) ||
-            checkIsThereNotHiddenWidget(dataInput, flexSize, index + 1))
-    ) {
-        isShowingFlexSizeActor = true;
-    }
+    const handleReopening = useMemo(() => {
+        if (!flexSizeValue[1]) {
+            return null;
+        }
+        return (event: { currentTarget: HTMLDivElement }) => {
+            reopenAnotherHiddenWidget(
+                flexSizeName,
+                defaultFlexSize,
+                anotherDefaultFlexSize,
+            );
+            const flexSizeDisabled = flexSizeValue[1] as DisabledType;
+            const newSize = calcShowingHiddenWidget(
+                event,
+                key,
+                flexSizeName,
+                restoreFlexSize,
+                flexSizeDisabled,
+            );
+            setFlexSize(newSize);
+        };
+    }, [flexSizeValue[1], key, flexSizeName, restoreFlexSize, setFlexSize]);
+    const isShowingFlexSizeActor = useMemo(() => {
+        if (
+            index !== 0 &&
+            handleReopening === null &&
+            (checkIsThereNotHiddenWidget(dataInput, flexSize, 0, index) ||
+                checkIsThereNotHiddenWidget(dataInput, flexSize, index + 1))
+        ) {
+            return true;
+        }
+        return false;
+    }, [index, handleReopening, dataInput, flexSize]);
     const type = isHorizontal ? 'h' : 'v';
-    const isWidgetHidden = onHiddenWidgetClick !== null;
+    const isWidgetHidden = handleReopening !== null;
     return (
         <Fragment key={index}>
             {isShowingFlexSizeActor && (
@@ -103,6 +126,12 @@ export default function RenderResizeActorItemComp({
                     isDisableQuickResize={isDisableQuickResize}
                     disableWidget={handleDisabling}
                     checkSize={handleSizeChecking}
+                    checkShouldQuickMove={checkShouldQuickMove.bind(
+                        null,
+                        flexSizeName,
+                        defaultFlexSize,
+                        anotherDefaultFlexSize,
+                    )}
                     type={type}
                 />
             )}
@@ -124,7 +153,7 @@ export default function RenderResizeActorItemComp({
                 <RenderHiddenWidgetTitleComp
                     widgetName={widgetName}
                     type={type}
-                    onClick={onHiddenWidgetClick ?? (() => {})}
+                    onClick={handleReopening ?? (() => {})}
                     isOnScreen={isOnScreen}
                 />
             ) : null}

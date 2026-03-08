@@ -113,23 +113,28 @@ function doubleFlexGrow(size: string) {
     return parts.join(' ');
 }
 function sanitizeFlexSizeValue(flexSize: FlexSizeType) {
-    if (
-        Object.values(flexSize).reduce((acc, [size1, size2]) => {
-            if (size2 === undefined) {
-                // size1: '0.1 1 20%'
-                return Number(size1.split(' ')[0]) + acc;
+    const values = Object.values(flexSize);
+    const totalFlexGrow = values.reduce((acc, [size1, size2]) => {
+        if (!size2) {
+            // size1: '0.1 1 20%'
+            const flexGrowStr = size1.split(' ')[0];
+            let flexGrow = Number(flexGrowStr);
+            if (Number.isNaN(flexGrow)) {
+                flexGrow = 0;
             }
-            return acc;
-        }, 0) >= 1
-    ) {
+            return flexGrow + acc;
+        }
+        return acc;
+    }, 0);
+    if (totalFlexGrow >= 1) {
         return flexSize;
     }
     const newFlexSize: FlexSizeType = {};
     for (const [key, [size1, size2]] of Object.entries(flexSize)) {
-        if (size2 === undefined) {
-            newFlexSize[key] = [doubleFlexGrow(size1)];
-        } else {
+        if (size2) {
             newFlexSize[key] = [doubleFlexGrow(size1), size2];
+        } else {
+            newFlexSize[key] = [doubleFlexGrow(size1)];
         }
     }
     return sanitizeFlexSizeValue(newFlexSize);
@@ -141,11 +146,16 @@ export function getFlexSizeSetting(
 ): FlexSizeType {
     const settingString = toSettingString(flexSizeName);
     const str = getSetting(settingString) ?? '';
+    const defaultKeys = Object.keys(defaultSize);
+    if (defaultKeys.length === 0) {
+        throw new Error('defaultSize should have at least one key');
+    }
     try {
         if (isValidJson(str, true)) {
             const flexSize = JSON.parse(str);
             if (
-                Object.keys(defaultSize).every((k) => {
+                Object.keys(flexSize).length === defaultKeys.length &&
+                defaultKeys.every((k) => {
                     const flexSizeValue = flexSize[k];
                     // TODO: use schema validation
                     if (
@@ -198,7 +208,7 @@ export function checkIsThereNotHiddenWidget(
 }
 
 export function calcShowingHiddenWidget(
-    event: any,
+    event: { currentTarget: HTMLDivElement },
     key: string,
     flexSizeName: string,
     defaultFlexSize: FlexSizeType,

@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import type { DataInputType, FlexSizeType } from './flexSizeHelpers';
+import { type DataInputType, type FlexSizeType } from './flexSizeHelpers';
 import ResizeActorComp from './ResizeActorComp';
+import { DYN_SUFFIX } from './dynamicFlexSizeHelpers';
 
 type PerDataType = {
     flexSizeDefault: FlexSizeType;
@@ -47,8 +48,9 @@ export default function ResizeActorDynamicComp({
             {isHorizontal ? (
                 <ResizeActorComp
                     isHorizontal
-                    flexSizeName={flexSizeName + '-h'}
+                    flexSizeName={flexSizeName + `${DYN_SUFFIX}h`}
                     flexSizeDefault={horizontal.flexSizeDefault}
+                    anotherFlexSizeDefault={vertical.flexSizeDefault}
                     dataInput={horizontal.dataInput}
                     isDisableQuickResize={isDisableQuickResize}
                     isNotSaveSetting={isNotSaveSetting}
@@ -57,8 +59,9 @@ export default function ResizeActorDynamicComp({
             {isHorizontal ? null : (
                 <ResizeActorComp
                     isHorizontal={false}
-                    flexSizeName={flexSizeName + '-v'}
+                    flexSizeName={flexSizeName + `${DYN_SUFFIX}v`}
                     flexSizeDefault={vertical.flexSizeDefault}
+                    anotherFlexSizeDefault={horizontal.flexSizeDefault}
                     dataInput={vertical.dataInput}
                     isDisableQuickResize={isDisableQuickResize}
                     isNotSaveSetting={isNotSaveSetting}

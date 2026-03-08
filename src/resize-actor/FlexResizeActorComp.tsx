@@ -247,6 +247,9 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         target.addEventListener('mousedown', (event) => {
             this.onMouseDown(event);
         });
+        const quickMoveType = this.props.checkShouldQuickMove();
+        if (quickMoveType !== null) {
+            this.quickMove(quickMoveType);
         }
     }
     render() {

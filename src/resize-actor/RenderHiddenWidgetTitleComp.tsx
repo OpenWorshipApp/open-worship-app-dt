@@ -11,7 +11,7 @@ export default function RenderHiddenWidgetTitleComp({
 }: Readonly<{
     widgetName: string;
     type: string;
-    onClick?: (event: any) => void;
+    onClick?: (event: { currentTarget: HTMLDivElement }) => void;
     isOnScreen: boolean;
 }>) {
     return (
