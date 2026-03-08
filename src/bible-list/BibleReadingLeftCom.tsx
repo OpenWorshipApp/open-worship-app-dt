@@ -5,7 +5,7 @@ import {
     type DataInputType,
     type FlexSizeType,
 } from '../resize-actor/flexSizeHelpers';
-import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import ResizeActorDynamicComp from '../resize-actor/ResizeActorDynamicComp';
 
 const LazyBibleListComp = lazy(() => {
     return import('../bible-list/BibleListComp');
@@ -14,11 +14,11 @@ const LazyNoteComp = lazy(() => {
     return import('./note/NoteListComp');
 });
 
-const flexSizeDefault: FlexSizeType = {
+const hFlexSizeDefault: FlexSizeType = {
     h1: ['1'],
     h2: ['1'],
 };
-const dataInput: DataInputType[] = [
+const hDataInput: DataInputType[] = [
     {
         children: LazyBibleListComp,
         key: 'h1',
@@ -30,13 +30,37 @@ const dataInput: DataInputType[] = [
         widgetName: 'Notes',
     },
 ];
+const vFlexSizeDefault: FlexSizeType = {
+    v1: ['1'],
+    v2: ['1'],
+};
+const vDataInput: DataInputType[] = [
+    {
+        children: LazyBibleListComp,
+        key: 'v1',
+        widgetName: 'Bibles',
+    },
+    {
+        children: LazyNoteComp,
+        key: 'v2',
+        widgetName: 'Notes',
+    },
+];
 export default function BibleReadingLeftCom() {
     return (
-        <ResizeActorComp
+        <ResizeActorDynamicComp
             flexSizeName={resizeSettingNames.bibleReadingLeft}
-            isHorizontal
-            flexSizeDefault={flexSizeDefault}
-            dataInput={dataInput}
+            data={{
+                minWidth: 400,
+                horizontal: {
+                    flexSizeDefault: hFlexSizeDefault,
+                    dataInput: hDataInput,
+                },
+                vertical: {
+                    flexSizeDefault: vFlexSizeDefault,
+                    dataInput: vDataInput,
+                },
+            }}
         />
     );
 }
