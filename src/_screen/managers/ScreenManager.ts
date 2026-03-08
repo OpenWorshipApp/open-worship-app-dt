@@ -116,6 +116,17 @@ export default class ScreenManager extends ScreenManagerBase {
                 }
             }),
         );
+
+        this.initEvent();
+    }
+
+    initEvent() {
+        this.screenBackgroundManager.registerEventListener(
+            ['color-set'],
+            (color: string) => {
+                this.screenBibleManager.reflectBackgroundColor(color);
+            },
+        );
     }
 
     get isLocked() {

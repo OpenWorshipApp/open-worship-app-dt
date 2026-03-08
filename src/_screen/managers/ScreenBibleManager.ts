@@ -42,6 +42,13 @@ import type {
     ScreenMessageType,
 } from '../screenTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
+import {
+    BLACK_COLOR,
+    checkIsColorDark,
+    WHITE_COLOR,
+} from '../../others/color/colorHelpers';
+import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
+import { tran } from '../../lang/langHelpers';
 
 class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType> {
     static readonly eventNamePrefix: string = 'screen-ft-m';
@@ -125,6 +132,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                     scroll,
                 );
             });
+            this.applyHeaderEffectOnScroll(div);
         }
 
         this.render();
@@ -438,6 +446,34 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                 );
             }
         }
+    }
+
+    async reflectBackgroundColor(backgroundColor: string) {
+        const isBackgroundColorDark = checkIsColorDark(backgroundColor);
+        const isTextColorDark = checkIsColorDark(
+            ScreenBibleManager.textStyleTextColor,
+        );
+        if (isBackgroundColorDark !== isTextColorDark) {
+            return;
+        }
+        const isOk = await showAppConfirm(
+            tran('Background and Color'),
+            tran(
+                'The current text color may not be visible with the new ' +
+                    'background color.',
+            ) +
+                ' ' +
+                tran('Do you want to change the text color as well?'),
+        );
+        if (!isOk) {
+            return;
+        }
+        const contrastingColor = isBackgroundColorDark
+            ? WHITE_COLOR
+            : BLACK_COLOR;
+        ScreenBibleManager.applyTextStyle({
+            color: contrastingColor,
+        });
     }
 
     async receiveScreenDropped(droppedData: DroppedDataType) {

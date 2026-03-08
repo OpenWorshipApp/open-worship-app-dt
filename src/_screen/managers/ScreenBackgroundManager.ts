@@ -29,7 +29,7 @@ import { ANIM_END_DELAY_MILLISECOND } from '../transitionEffectHelpers';
 import { getIsFadingAtTheEndSetting } from '../../background/videoBackgroundHelpers';
 import { appLog } from '../../helper/loggerHelpers';
 
-export type ScreenBackgroundManagerEventType = 'update';
+export type ScreenBackgroundManagerEventType = 'update' | 'color-set';
 
 const FADING_DURATION_SECOND = 3;
 const FADING_DURATION_MILLISECOND = FADING_DURATION_SECOND * 1000;
@@ -87,6 +87,9 @@ class ScreenBackgroundManager
             return;
         }
         this._backgroundSrc = backgroundSrc;
+        if (backgroundSrc?.type === 'color') {
+            this.addPropEvent('color-set', backgroundSrc.src);
+        }
         this.render();
         unlocking(screenManagerSettingNames.BACKGROUND, () => {
             const allBackgroundSrcList = getBackgroundSrcListOnScreenSetting();
