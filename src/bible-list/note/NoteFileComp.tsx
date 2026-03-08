@@ -35,12 +35,12 @@ function genContextMenu(
     }: Readonly<{
         isAttachedBackgroundElement: boolean;
     }>,
-): ContextMenuItemType[] {
+) {
     if (!note) {
         return [];
     }
     const hasItems = !!note?.items.length;
-    return [
+    const contextMenus: ContextMenuItemType[] = [
         ...(hasItems
             ? [
                   {
@@ -104,6 +104,7 @@ function genContextMenu(
             ? genRemovingAttachedBackgroundMenu(note.filePath)
             : []),
     ];
+    return contextMenus;
 }
 
 function NotePreview({ note }: Readonly<{ note: Note }>) {
