@@ -29,7 +29,11 @@ export default class Playlist extends AppEditableDocumentSourceAbs<PlaylistType>
     }
     async getItems() {
         const originalJson = await this.getOriginalJson();
-        return originalJson.items.map((json) => {
+        const items = originalJson.items;
+        if (!items) {
+            return [];
+        }
+        return items.map((json) => {
             try {
                 return PlaylistItem.fromJson(this.filePath, json);
             } catch (error: any) {
