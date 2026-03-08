@@ -1,9 +1,6 @@
-import type { MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 
 import NoteItem from './NoteItem';
-import BibleItemsViewController, {
-    useBibleItemsViewControllerContext,
-} from '../../bible-reader/BibleItemsViewController';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { useFileSourceRefreshEvents } from '../../helper/dirSourceHelpers';
 import {
@@ -15,42 +12,29 @@ import {
 import { DragTypeEnum } from '../../helper/DragInf';
 import FileSource from '../../helper/FileSource';
 import { changeDragEventStyle, stopDraggingState } from '../../helper/helpers';
-import { tran } from '../../lang/langHelpers';
 import { attachBackgroundManager } from '../../others/AttachBackgroundManager';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import ItemReadErrorComp from '../../others/ItemReadErrorComp';
 import Note from './Note';
 import { openNoteItemContextMenu } from './noteHelpers';
-
-function handleOpening(
-    _event: any,
-    _viewController: BibleItemsViewController,
-    noteItem: NoteItem,
-) {
-    console.log('Opening note', noteItem);
-}
+import NoteEditorComp from './NoteEditorComp';
 
 export default function NoteItemRenderComp({
     index,
     noteItem,
     filePath,
+    note,
 }: Readonly<{
     index: number;
     noteItem: NoteItem;
     filePath: string;
+    note: Note;
 }>) {
-    const viewController = useBibleItemsViewControllerContext();
+    const [showingNote, setShowingNote] = useState(false);
     useFileSourceRefreshEvents(['select'], filePath);
 
     const handleContextMenuOpening = async (event: MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [
-            {
-                menuElement: tran('Open'),
-                onSelect: (event: any) => {
-                    handleOpening(event, viewController, noteItem);
-                },
-            },
-        ];
+        const menuItems: ContextMenuItemType[] = [];
         const attachedBackgroundData =
             await attachBackgroundManager.getAttachedBackground(
                 filePath,
@@ -93,32 +77,39 @@ export default function NoteItemRenderComp({
     };
     const fileSource = FileSource.getInstance(filePath);
     return (
-        <li
-            className="list-group-item item app-caught-hover-pointer px-3"
-            data-note-item-id={`${fileSource.name}-${noteItem.id}`}
-            data-index={index + 1}
-            draggable
-            onDragStart={(event) => {
-                handleDragStart(event, noteItem);
-            }}
-            onDragOver={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '0.5');
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '1');
-            }}
-            onDrop={handleDataDropping}
-            onDoubleClick={(event) => {
-                handleOpening(event, viewController, noteItem);
-            }}
-            onContextMenu={handleContextMenuOpening}
-        >
-            <div className="d-flex ps-1">
-                <ItemColorNoteComp item={noteItem} />
-                <div className="d-flex flex-fill">Note id:{noteItem.id}</div>
-            </div>
-        </li>
+        <>
+            <li
+                className="list-group-item item app-caught-hover-pointer px-3"
+                data-note-item-id={`${fileSource.name}-${noteItem.id}`}
+                data-index={index + 1}
+                draggable
+                onDragStart={(event) => {
+                    handleDragStart(event, noteItem);
+                }}
+                onDragOver={(event) => {
+                    event.preventDefault();
+                    changeDragEventStyle(event, 'opacity', '0.5');
+                }}
+                onDragLeave={(event) => {
+                    event.preventDefault();
+                    changeDragEventStyle(event, 'opacity', '1');
+                }}
+                onDrop={handleDataDropping}
+                onClick={() => {
+                    setShowingNote((prev) => !prev);
+                }}
+                onContextMenu={handleContextMenuOpening}
+            >
+                <div className="d-flex ps-1">
+                    <ItemColorNoteComp item={noteItem} />
+                    <div className="d-flex flex-fill">
+                        Note id:{noteItem.id}
+                    </div>
+                </div>
+            </li>
+            {showingNote ? (
+                <NoteEditorComp note={note} noteItem={noteItem} />
+            ) : null}
+        </>
     );
 }

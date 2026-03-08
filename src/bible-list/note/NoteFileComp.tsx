@@ -97,7 +97,7 @@ function genContextMenu(
                     content: '',
                     metadata: {},
                 });
-                note.saveNoteItem(newNoteItem);
+                note.addAndSaveNoteItem(newNoteItem);
             },
         },
         ...(isAttachedBackgroundElement
@@ -198,7 +198,7 @@ export default function NoteFileComp({
             stopDraggingState(event);
             const noteItem = droppedData.item as NoteItem;
             if (noteItem.filePath === undefined) {
-                note?.saveNoteItem(droppedData.item);
+                note?.addAndSaveNoteItem(droppedData.item);
             } else {
                 note?.moveItemFrom(noteItem.filePath, noteItem);
             }

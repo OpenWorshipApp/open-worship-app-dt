@@ -22,6 +22,7 @@ export default function RenderNoteItemsComp({
                         index={i1}
                         noteItem={noteItem}
                         filePath={note.filePath}
+                        note={note}
                     />
                 );
             })}

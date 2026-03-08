@@ -27,7 +27,7 @@ export default class Note
 {
     static readonly mimetypeName: MimetypeNameType = 'note';
     static readonly DEFAULT_FILE_NAME = 'Default';
-    private readonly originalJson: NoteType;
+    private originalJson: NoteType;
 
     constructor(filePath: string, json: NoteType) {
         super(filePath);
@@ -155,6 +155,21 @@ export default class Note
         this.notifyNewNoteItemAdded(newNoteItem.id);
     }
 
+    updateNoteItem(noteItem: NoteItem) {
+        const index = this.items.findIndex((noteItem1) => {
+            return noteItem1.checkIsSame(noteItem);
+        });
+        if (index === -1) {
+            return;
+        }
+        const newNoteItem = NoteItem.fromJson(noteItem.toJson(), this.filePath);
+        newNoteItem.note = this;
+        const noteItems = this.items;
+        noteItems[index] = newNoteItem;
+        this.items = noteItems;
+        this.notifyNewNoteItemAdded(newNoteItem.id);
+    }
+
     swapItems(fromIndex: number, toIndex: number) {
         const noteItems = this.items;
         if (
@@ -192,8 +207,13 @@ export default class Note
         this.items = noteItems;
     }
 
-    async saveNoteItem(noteItem: NoteItem) {
+    async addAndSaveNoteItem(noteItem: NoteItem) {
         this.addNoteItem(noteItem);
+        await this.save();
+    }
+
+    async updateAndSaveNoteItem(noteItem: NoteItem) {
+        this.updateNoteItem(noteItem);
         await this.save();
     }
 
@@ -231,7 +251,7 @@ export default class Note
                 targetNoteItems = [backupNoteItems[index]];
             }
             for (const item of targetNoteItems) {
-                await this.saveNoteItem(item);
+                await this.addAndSaveNoteItem(item);
                 await fromNote.deleteNoteItem(item);
             }
         } catch (error: any) {
@@ -325,5 +345,13 @@ export default class Note
             handleError(error);
         }
         return null;
+    }
+
+    async reload() {
+        const newNote = await Note.fromFilePath(this.filePath);
+        if (newNote === null) {
+            return;
+        }
+        this.originalJson = newNote.toJson();
     }
 }
