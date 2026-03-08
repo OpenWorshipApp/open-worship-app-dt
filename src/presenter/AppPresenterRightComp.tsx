@@ -3,8 +3,8 @@ import { lazy } from 'react';
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 
-const LazyBibleListComp = lazy(() => {
-    return import('../bible-list/BibleListComp');
+const LazyBibleReadingLeftComp = lazy(() => {
+    return import('../bible-list/BibleReadingLeftComp');
 });
 const LazyMiniScreenComp = lazy(() => {
     return import('../_screen/preview/MiniScreenComp');
@@ -21,9 +21,9 @@ export default function AppPresenterRightComp() {
             }}
             dataInput={[
                 {
-                    children: LazyBibleListComp,
+                    children: LazyBibleReadingLeftComp,
                     key: 'v1',
-                    widgetName: 'Bible List',
+                    widgetName: 'Bible and Notes',
                     className: 'flex-item',
                 },
                 {

@@ -8,7 +8,7 @@ import {
 import ResizeActorDynamicComp from '../resize-actor/ResizeActorDynamicComp';
 
 const LazyBibleListComp = lazy(() => {
-    return import('../bible-list/BibleListComp');
+    return import('./BibleListComp');
 });
 const LazyNoteComp = lazy(() => {
     return import('./note/NoteListComp');
@@ -46,7 +46,7 @@ const vDataInput: DataInputType[] = [
         widgetName: 'Notes',
     },
 ];
-export default function BibleReadingLeftCom() {
+export default function BibleReadingLeftComp() {
     return (
         <ResizeActorDynamicComp
             flexSizeName={resizeSettingNames.bibleReadingLeft}

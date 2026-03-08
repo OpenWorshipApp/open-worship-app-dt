@@ -11,7 +11,7 @@ import LookupBibleItemController from './LookupBibleItemController';
 import { BibleItemsViewControllerContext } from './BibleItemsViewController';
 
 const LazyBibleReadingLeftCom = lazy(() => {
-    return import('../bible-list/BibleReadingLeftCom');
+    return import('../bible-list/BibleReadingLeftComp');
 });
 const LazyRenderBibleLookupComp = lazy(() => {
     return import('../bible-lookup/RenderBibleLookupComp');
@@ -25,7 +25,7 @@ const dataInput: DataInputType[] = [
     {
         children: LazyBibleReadingLeftCom,
         key: 'h1',
-        widgetName: 'Bible and Note',
+        widgetName: 'Bible and Notes',
     },
     {
         children: LazyRenderBibleLookupComp,
