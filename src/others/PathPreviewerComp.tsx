@@ -33,7 +33,7 @@ export function PathPreviewerComp({
             return Promise.resolve(true);
         }
         return fsCheckDirExist(dirPath);
-    }, [shouldNotValidate, dirPath]);
+    }, [shouldNotValidate, dirPath], true);
     const cleanedDirectoryPath = cleanPath(dirPath);
     let directoryPath = cleanedDirectoryPath;
     if (isShowingNameOnly) {
