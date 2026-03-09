@@ -7,9 +7,13 @@ export async function applyFontFamily(element: Node, type: MutationType) {
     if (!(element instanceof HTMLElement)) {
         return;
     }
+    if(element.innerText == 'លូកា ៣:២៣-៣៨'){
+        console.log('match');
+        
+    }
     let locale = element.dataset.localeFf;
     if (!locale) {
-        const bibleKey = element.dataset.dataBibleKeyFf;
+        const bibleKey = element.dataset.bibleKeyFf;
         if (bibleKey) {
             locale = await getBibleLocale(bibleKey);
         }
