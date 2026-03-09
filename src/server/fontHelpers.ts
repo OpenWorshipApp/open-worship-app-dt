@@ -9,6 +9,7 @@ import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import FileSource from '../helper/FileSource';
 import { electronSendAsync } from './appHelpers';
 import { unlocking } from './unlockingHelpers';
+import { tran } from '../lang/langHelpers';
 
 const cacheManager = new CacheManager<FontListType | null>(60 * 10); // 10 minutes
 export async function getFontFamilyMapByNodeFont() {
@@ -72,14 +73,14 @@ export async function fixMissingFontFamilies(
     }
     const fileSource = FileSource.getInstance(filePath);
     const isConfirmed = await showAppConfirm(
-        `Missing Fonts in "${fileSource.name}"`,
-        `The document is using fonts that are not installed on your system:<br><br>${Array.from(
+        `${tran('Missing Fonts in')} "${fileSource.name}"`,
+        `${tran('The document is using fonts that are not installed on your system')}:<br><br>${Array.from(
             fontFamilies,
         )
             .map((font) => `"${font}"`)
             .join(
                 ', ',
-            )}<br><br>Would you like to find and install from Google Fonts?`,
+            )}<br><br>${tran('Would you like to search for the missing fonts?')}`,
         {
             confirmButtonLabel: 'Yes',
         },
@@ -88,12 +89,14 @@ export async function fixMissingFontFamilies(
         return;
     }
     showSimpleToast(
-        'Opening Google Fonts',
-        'Please install the missing fonts from the opened pages. and restart the app after installation.',
+        tran('Opening Missing Fonts Searching'),
+        tran(
+            'Please install the missing fonts from the opened pages. and ' +
+                'restart the app after installation.',
+        ),
     );
     for (const fontFamily of fontFamilies) {
-        appProvider.browserUtils.openExternalURL(
-            `https://fonts.google.com/specimen/${encodeURIComponent(fontFamily)}`,
-        );
+        const url = `https://www.google.com/search?q=font+download: "${fontFamily}"`;
+        appProvider.browserUtils.openExternalURL(url);
     }
 }
