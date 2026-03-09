@@ -39,12 +39,20 @@ export default function ResizeActorDynamicComp({
             setIsHorizontal(newIsHorizontal);
         });
         observer.observe(current);
+        setIsHorizontal(current.clientWidth >= minWidth);
+        current.style.visibility = 'visible';
         return () => {
             observer.disconnect();
         };
     }, [minWidth, containerRef.current]);
     return (
-        <div ref={containerRef} className="w-100 h-100 app-overflow-hidden">
+        <div
+            ref={containerRef}
+            className="w-100 h-100 app-overflow-hidden"
+            style={{
+                visibility: 'hidden',
+            }}
+        >
             {isHorizontal ? (
                 <ResizeActorComp
                     isHorizontal

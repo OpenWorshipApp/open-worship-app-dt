@@ -16,6 +16,11 @@ import imageDown from './images/down.png';
 import imageLeft from './images/left.png';
 import imageRight from './images/right.png';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import {
+    ContextMenuItemType,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
+import { tran } from '../lang/langHelpers';
 
 const QuickMoveTypeListLeft: QuickMoveType[] = ['left', 'up'] as const;
 const ICON_MAP: Record<'h' | 'v', [QuickMoveType, string, string][]> = {
@@ -51,6 +56,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     mouseMoveListener: (event: MouseEvent) => void;
     mouseUpListener: (event: MouseEvent) => void;
     attemptTimeout: (func: () => void, isImmediate?: boolean) => void;
+
     constructor(props: Props) {
         super(props);
         this.myRef = createRef();
@@ -62,18 +68,21 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         };
         this.attemptTimeout = genTimeoutAttempt(100);
     }
+
     private get currentNode() {
         if (this.myRef.current === null) {
             throw new Error('currentNode is null');
         }
         return this.myRef.current;
     }
+
     private getSiblingFromNode(node: HTMLDivElement, isNext: boolean) {
         if (isNext) {
             return node.nextElementSibling as HTMLDivElement;
         }
         return node.previousElementSibling as HTMLDivElement;
     }
+
     private getSibling(isNext: boolean) {
         let node = this.getSiblingFromNode(this.currentNode, isNext);
         while (checkIsActiveHiddenWidgetNode(node)) {
@@ -81,31 +90,39 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         return node;
     }
+
     get preNode() {
         return this.getSibling(false);
     }
+
     get nextNode() {
         return this.getSibling(true);
     }
+
     get isVertical() {
         return this.props.type === 'v';
     }
+
     getMousePagePos(me: MouseEvent) {
         return this.isVertical ? me.pageY : me.pageX;
     }
+
     getOffsetSize(div: HTMLDivElement) {
         return this.isVertical ? div.offsetHeight : div.offsetWidth;
     }
+
     setActive() {
         this.currentNode.classList.add('active');
         this.preNode.style.pointerEvents = 'none';
         this.nextNode.style.pointerEvents = 'none';
     }
+
     setInactive() {
         this.currentNode.classList.remove('active');
         this.preNode.style.pointerEvents = 'auto';
         this.nextNode.style.pointerEvents = 'auto';
     }
+
     init() {
         if (!this.currentNode) {
             return;
@@ -130,9 +147,11 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         this.nextGrow = Number(next.style.flexGrow);
         this.sumGrow = this.previousGrow + this.nextGrow;
     }
+
     isShouldIgnore(md: MouseEvent) {
         return (md.target as any).tagName === 'I';
     }
+
     onMouseDown(event: MouseEvent) {
         if (this.isShouldIgnore(event)) {
             return;
@@ -143,12 +162,15 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         globalThis.addEventListener('mousemove', this.mouseMoveListener);
         globalThis.addEventListener('mouseup', this.mouseUpListener);
     }
+
     get isPreReachMinSize() {
         return this.preSize <= this.previousMinSize;
     }
+
     get isNextReachMinSize() {
         return this.nextSize <= this.nextMinSize;
     }
+
     onMouseMove(event: MouseEvent) {
         if (this.isShouldIgnore(event)) {
             return;
@@ -193,15 +215,18 @@ export default class FlexResizeActorComp extends Component<Props, object> {
 
         this.lastPos = pos;
     }
+
     addHiddenWidgetClassName(divElement: HTMLDivElement) {
         if (this.props.isDisableQuickResize) {
             return;
         }
         divElement.classList.add(HIDDEN_WIDGET_CLASS);
     }
+
     removeHiddenWidgetClassname(divElement: HTMLDivElement) {
         divElement.classList.remove(HIDDEN_WIDGET_CLASS);
     }
+
     onMouseUp(event: MouseEvent) {
         if (this.isShouldIgnore(event)) {
             return;
@@ -223,6 +248,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         this.props.checkSize();
     }
+
     quickMove(quickMoveType: QuickMoveType) {
         this.init();
         const isFirst = QuickMoveTypeListLeft.includes(quickMoveType);
@@ -242,9 +268,47 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         this.setInactive();
     }
+
+    resetSize() {
+        const prevDefault = this.preNode.dataset['fsDefault'] ?? '1';
+        const nextDefault = this.nextNode.dataset['fsDefault'] ?? '1';
+        this.preNode.style.flexGrow = '';
+        this.preNode.style.flex = prevDefault;
+        this.nextNode.style.flexGrow = '';
+        this.nextNode.style.flex = nextDefault;
+        this.props.checkSize();
+    }
+
+    handleContextMenuOpening(event: any) {
+        const menuItems: ContextMenuItemType[] = [
+            {
+                menuElement: tran('Reset Size'),
+                onSelect: () => {
+                    this.resetSize();
+                },
+            },
+            {
+                menuElement: tran('Close First Widget'),
+                onSelect: () => {
+                    this.quickMove('left');
+                },
+            },
+            {
+                menuElement: tran('Close Second Widget'),
+                onSelect: () => {
+                    this.quickMove('right');
+                },
+            },
+        ];
+        showAppContextMenu(event, menuItems);
+    }
+
     componentDidMount() {
         const target = this.currentNode;
         target.addEventListener('mousedown', (event) => {
+            if (event.button === 2) {
+                return;
+            }
             this.onMouseDown(event);
         });
         const quickMoveType = this.props.checkShouldQuickMove();
@@ -252,6 +316,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             this.quickMove(quickMoveType);
         }
     }
+
     render() {
         const props = this.props;
         const type = this.props.type;
@@ -299,17 +364,8 @@ export default class FlexResizeActorComp extends Component<Props, object> {
                         mover.style.top = `${event.pageY}px`;
                     }
                 }}
-                onDoubleClick={() => {
-                    const prevDefault =
-                        this.preNode.dataset['fsDefault'] ?? '1';
-                    const nextDefault =
-                        this.nextNode.dataset['fsDefault'] ?? '1';
-                    this.preNode.style.flexGrow = '';
-                    this.preNode.style.flex = prevDefault;
-                    this.nextNode.style.flexGrow = '';
-                    this.nextNode.style.flex = nextDefault;
-                    props.checkSize();
-                }}
+                onDoubleClick={this.resetSize.bind(this)}
+                onContextMenu={this.handleContextMenuOpening.bind(this)}
                 ref={this.myRef}
             >
                 <div
