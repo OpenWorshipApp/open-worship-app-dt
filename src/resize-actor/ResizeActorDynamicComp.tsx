@@ -24,7 +24,7 @@ export default function ResizeActorDynamicComp({
     isNotSaveSetting?: boolean;
 }>) {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [isHorizontal, setIsHorizontal] = useState(true);
+    const [isHorizontal, setIsHorizontal] = useState<boolean | undefined>();
     useAppEffect(() => {
         const current = containerRef.current;
         if (!current) {
@@ -53,7 +53,7 @@ export default function ResizeActorDynamicComp({
                 visibility: 'hidden',
             }}
         >
-            {isHorizontal ? (
+            {isHorizontal === true ? (
                 <ResizeActorComp
                     isHorizontal
                     flexSizeName={flexSizeName + `${DYN_SUFFIX}h`}
@@ -64,7 +64,7 @@ export default function ResizeActorDynamicComp({
                     isNotSaveSetting={isNotSaveSetting}
                 />
             ) : null}
-            {isHorizontal ? null : (
+            {isHorizontal === false ? (
                 <ResizeActorComp
                     isHorizontal={false}
                     flexSizeName={flexSizeName + `${DYN_SUFFIX}v`}
@@ -74,7 +74,7 @@ export default function ResizeActorDynamicComp({
                     isDisableQuickResize={isDisableQuickResize}
                     isNotSaveSetting={isNotSaveSetting}
                 />
-            )}
+            ) : null}
         </div>
     );
 }
