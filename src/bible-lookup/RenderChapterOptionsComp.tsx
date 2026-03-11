@@ -1,11 +1,15 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import type { KeyboardType } from '../event/KeyboardEventListener';
 import {
     allArrows,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
-import { processSelection, userEnteringSelected } from './selectionHelpers';
+import {
+    CHAPTER_OPTION_WIDTH,
+    processSelection,
+    userEnteringSelected,
+} from './selectionHelpers';
 import { useChapterMatch } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -76,6 +80,53 @@ function RenderChapterZeroComp({
     );
 }
 
+function genChapterOption({
+    chapter,
+    chapterLocaleString,
+    i,
+    onSelect,
+    fontFamily,
+}: Readonly<{
+    chapter: number;
+    chapterLocaleString: string;
+    i: number;
+    onSelect: (chapter: number) => void;
+    fontFamily?: string;
+}>) {
+    if (chapter === 0) {
+        return null;
+    }
+    const className =
+        'app-chapter-select btn btn-outline-success w-100' +
+        ` ${OPTION_CLASS}` +
+        ` ${i === 0 ? OPTION_SELECTED_CLASS : ''}`;
+    const isDiff = `${chapter}` !== chapterLocaleString;
+    return (
+        <div
+            key={chapter}
+            title={isDiff ? `Chapter ${chapter}` : undefined}
+            style={{
+                margin: '2px',
+                width: CHAPTER_OPTION_WIDTH,
+            }}
+        >
+            <button
+                className={className}
+                onClick={() => {
+                    onSelect(chapter);
+                }}
+            >
+                <span>
+                    <span style={{ fontFamily }}>{chapterLocaleString}</span>
+                    {isDiff ? (
+                        <small className="px-1">({chapter})</small>
+                    ) : null}
+                </span>
+            </button>
+        </div>
+    );
+}
+
 export default function RenderChapterOptionsComp({
     bookKey,
     guessingChapter,
@@ -104,6 +155,10 @@ export default function RenderChapterOptionsComp({
         [],
     );
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
+    const ghostElementCount = useMemo(() => {
+        const clientWidth = document.body.clientWidth;
+        return Math.ceil(clientWidth / CHAPTER_OPTION_WIDTH);
+    }, []);
     if (matchedChapters === null) {
         return null;
     }
@@ -117,36 +172,26 @@ export default function RenderChapterOptionsComp({
                 <RenderChapterZeroComp bibleKey={bibleKey} bookKey={bookKey} />
             ) : null}
             {matchedChapters.map(({ chapter, chapterLocaleString }, i) => {
-                if (chapter === 0) {
-                    return null;
-                }
-                const className =
-                    'app-chapter-select btn btn-outline-success w-100' +
-                    ` ${OPTION_CLASS}` +
-                    ` ${i === 0 ? OPTION_SELECTED_CLASS : ''}`;
-                const isDiff = `${chapter}` !== chapterLocaleString;
+                return genChapterOption({
+                    chapter,
+                    chapterLocaleString,
+                    i,
+                    onSelect,
+                    fontFamily,
+                });
+            })}
+            {Array.from({
+                length: ghostElementCount,
+            }).map((_, i) => {
                 return (
                     <div
-                        key={chapter}
-                        title={isDiff ? `Chapter ${chapter}` : undefined}
-                        style={{ margin: '2px', minWidth: '100px' }}
-                    >
-                        <button
-                            className={className}
-                            onClick={() => {
-                                onSelect(chapter);
-                            }}
-                        >
-                            <span>
-                                <span style={{ fontFamily }}>
-                                    {chapterLocaleString}
-                                </span>
-                                {isDiff ? (
-                                    <small className="px-1">({chapter})</small>
-                                ) : null}
-                            </span>
-                        </button>
-                    </div>
+                        key={i}
+                        style={{
+                            visibility: 'hidden',
+                            margin: '2px',
+                            width: CHAPTER_OPTION_WIDTH,
+                        }}
+                    />
                 );
             })}
         </>

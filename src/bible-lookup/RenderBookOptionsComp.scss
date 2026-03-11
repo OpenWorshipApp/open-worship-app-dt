@@ -1,7 +1,6 @@
 .book-option {
   margin: 2px;
   button {
-    width: 240px;
     .book-option-index {
       content: attr(data-book-index);
       clear: both;
@@ -15,4 +14,9 @@
       overflow-y: hidden;
     }
   }
+}
+
+.book-option-ghost {
+  visibility: hidden;
+  margin: 2px;
 }

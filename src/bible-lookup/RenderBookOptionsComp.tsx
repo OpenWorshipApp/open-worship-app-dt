@@ -1,12 +1,16 @@
 import './RenderBookOptionsComp.scss';
 
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 
 import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import type { KeyboardType } from '../event/KeyboardEventListener';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import type { SelectBookType } from './selectionHelpers';
-import { processSelection, userEnteringSelected } from './selectionHelpers';
+import {
+    BOOK_OPTION_WIDTH,
+    processSelection,
+    userEnteringSelected,
+} from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import {
@@ -63,6 +67,7 @@ function genBookOption({
                 disabled={!isAvailable}
                 style={{
                     borderColor,
+                    width: BOOK_OPTION_WIDTH,
                 }}
                 type="button"
                 onClick={() => {
@@ -106,24 +111,43 @@ export default function RenderBookOptionsComp({
     useKeyboardRegistering([{ key: 'ArrowUp' }], handleOnArrow, []);
     useKeyboardRegistering([{ key: 'ArrowDown' }], handleOnArrow, []);
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
+    const ghostElementCount = useMemo(() => {
+        const clientWidth = document.body.clientWidth;
+        return Math.ceil(clientWidth / BOOK_OPTION_WIDTH);
+    }, []);
 
     if (!matchedBooks) {
         return <div>{tran('No book options available')}</div>;
     }
-    return matchedBooks.map((matchBook, i) => {
-        const { bookKey, book, modelBook, isAvailable } = matchBook;
-        return (
-            <Fragment key={bookKey}>
-                {genBookOption({
-                    bookKey,
-                    book,
-                    modelBook,
-                    onSelect,
-                    index: i,
-                    isAvailable,
-                    fontFamily,
-                })}
-            </Fragment>
-        );
-    });
+    return (
+        <>
+            {matchedBooks.map((matchBook, i) => {
+                const { bookKey, book, modelBook, isAvailable } = matchBook;
+                return (
+                    <Fragment key={bookKey}>
+                        {genBookOption({
+                            bookKey,
+                            book,
+                            modelBook,
+                            onSelect,
+                            index: i,
+                            isAvailable,
+                            fontFamily,
+                        })}
+                    </Fragment>
+                );
+            })}
+            {Array.from({
+                length: ghostElementCount,
+            }).map((_, i) => {
+                return (
+                    <div
+                        className="book-option-ghost"
+                        key={i}
+                        style={{ width: BOOK_OPTION_WIDTH }}
+                    />
+                );
+            })}
+        </>
+    );
 }

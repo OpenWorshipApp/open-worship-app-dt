@@ -56,8 +56,8 @@ export default function RenderLookupSuggestionComp({
         >
             <div
                 className={
-                    'w-100  d-flex flex-wrap align-items-start ' +
-                    'justify-content-start'
+                    'w-100  d-flex flex-wrap align-items-center ' +
+                    'justify-content-center'
                 }
             >
                 {bookKey === null ? (

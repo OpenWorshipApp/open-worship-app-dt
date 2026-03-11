@@ -4,6 +4,8 @@ import { bringDomToBottomView } from '../helper/helpers';
 
 export const INPUT_TEXT_CLASS = 'bible-lookup-input-text';
 export const RENDER_FOUND_CLASS = 'bible-lookup-render-found';
+export const BOOK_OPTION_WIDTH = 240;
+export const CHAPTER_OPTION_WIDTH = 100;
 
 function getElements(optionClass: string) {
     return Array.from(
