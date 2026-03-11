@@ -39,7 +39,7 @@ async function selectBookKeys(
     selectedBooks: SelectedBookKeyType[],
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
 ) {
-    const bookList = await genBookMatches(bibleKey, '');
+    const bookList = await genBookMatches(bibleKey);
     if (bookList === null) {
         showSimpleToast('Getting bible list', 'Fail to get bible list');
         return;

@@ -137,8 +137,12 @@ function check(v1: string, v2: string, isStartsWith = false) {
 }
 export async function genBookMatches(
     bibleKey: string,
-    guessingBook: string = '',
+    {
+        guessingBook,
+        isRotatedLastChar,
+    }: { guessingBook?: string; isRotatedLastChar?: boolean } = {},
 ): Promise<BookMatchDataType[] | null> {
+    guessingBook ??= '';
     const bibleInfo = await getBibleInfo(bibleKey);
     if (bibleInfo === null) {
         return null;
@@ -196,7 +200,20 @@ export async function genBookMatches(
             isAvailable: booksAvailable.includes(bookKey),
         };
     });
-    return mappedKeys;
+    if (mappedKeys.length > 0) {
+        return mappedKeys;
+    }
+    if (!isRotatedLastChar && guessingBook.length > 1) {
+        // ti1 => 1ti, this helpful for quick type timothy first then number
+        // later
+        const rotatedGuessingBook =
+            guessingBook.slice(-1) + guessingBook.slice(0, -1);
+        return await genBookMatches(bibleKey, {
+            isRotatedLastChar: true,
+            guessingBook: rotatedGuessingBook,
+        });
+    }
+    return [];
 }
 
 export function getModelKeyBookMap() {

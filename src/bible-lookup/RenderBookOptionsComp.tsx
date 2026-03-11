@@ -91,7 +91,7 @@ export default function RenderBookOptionsComp({
     const bibleKey = useBibleKeyContext();
     const fontFamily = useBibleFontFamily(bibleKey);
     const [matchedBooks] = useAppStateAsync(() => {
-        return genBookMatches(bibleKey, guessingBook);
+        return genBookMatches(bibleKey, { guessingBook });
     }, [bibleKey, guessingBook]);
     const handleOnArrow = (event: KeyboardEvent) => {
         processSelection(
