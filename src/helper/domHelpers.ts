@@ -310,12 +310,16 @@ const WINDOW_FEATURES =
     'toolbar=no,location=no,status=no,menubar=no';
 
 export function openPopupWindow(
-    url: string,
+    partialUrl: string,
     frameUUID: string,
     urlUUID: string,
 ) {
+    if (partialUrl.startsWith('/')) {
+        const urlObject = new URL(location.href);
+        partialUrl = `${urlObject.protocol}//${urlObject.host}${partialUrl}`;
+    }
     const target = `${appProvider.POPUP_FRAME_NAME_PREFIX}_${frameUUID}`;
-    const urlObject = new URL(url);
+    const urlObject = new URL(partialUrl);
     urlObject.searchParams.set('uuid', urlUUID);
     return window.open(urlObject.toString(), target, WINDOW_FEATURES);
 }
