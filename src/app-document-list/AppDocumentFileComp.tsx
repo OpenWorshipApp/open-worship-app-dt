@@ -8,7 +8,6 @@ import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { goToPath } from '../router/routeHelpers';
-import { previewPdf } from '../server/appHelpers';
 import { removePdfImagesPreview } from '../helper/pdfHelpers';
 import {
     varyAppDocumentFromFilePath,
@@ -25,6 +24,7 @@ import type {
 } from './appDocumentTypeHelpers';
 import { genLayoutTabs } from '../router/layoutHelpers';
 import { tran } from '../lang/langHelpers';
+import { openPopupWindow } from '../helper/domHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
@@ -35,7 +35,12 @@ function genContextMenuItems(
             {
                 menuElement: tran('Preview PDF'),
                 onSelect: () => {
-                    previewPdf(varyAppDocument.fileSource.src);
+                    const { fileSource } = varyAppDocument;
+                    openPopupWindow(
+                        fileSource.src,
+                        `pdf_preview-${fileSource.fullName}_${Date.now()}`,
+                        fileSource.fullName,
+                    );
                 },
             },
             {

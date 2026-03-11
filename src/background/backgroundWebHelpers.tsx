@@ -1,6 +1,6 @@
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import type DirSource from '../helper/DirSource';
-import { openPopupEditorWindow } from '../helper/domHelpers';
+import { openPopupWindow } from '../helper/domHelpers';
 import FileSource from '../helper/FileSource';
 import { tran } from '../lang/langHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
@@ -108,7 +108,11 @@ function openPopupWebEditorWindow(filePath: string) {
     const fileFullName = fileSource.fullName;
     const fileFullNameEncoded = encodeURIComponent(fileFullName);
     const pathName = `${appProvider.webEditorHomePage}?file=${fileFullNameEncoded}`;
-    return openPopupEditorWindow(pathName);
+    return openPopupWindow(
+        pathName,
+        `${fileFullName}_${Date.now()}`,
+        crypto.randomUUID(),
+    );
 }
 
 export function genBackgroundWebExtraItemContextMenuItems(filePath: string) {

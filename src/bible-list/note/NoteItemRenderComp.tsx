@@ -20,15 +20,21 @@ import { openNoteItemContextMenu } from './noteHelpers';
 import NoteEditorComp, { NoteTitleEditorComp } from './NoteEditorComp';
 import { tran } from '../../lang/langHelpers';
 import appProvider from '../../server/appProvider';
-import { openPopupEditorWindow } from '../../helper/domHelpers';
+import { openPopupWindow } from '../../helper/domHelpers';
 
 export function handleOpening(note: Note, noteItem: NoteItem) {
     const fileFullName = note.fileSource.fullName;
     const fileFullNameEncoded = encodeURIComponent(fileFullName);
-    let pathName = `${appProvider.noteItemEditorHomePage}?file=${fileFullNameEncoded}`;
+    const pathName =
+        `${appProvider.noteItemEditorHomePage}?` +
+        `file=${fileFullNameEncoded}`;
     const noteId = noteItem.id;
-    pathName += `&id=${noteId}`;
-    return openPopupEditorWindow(pathName);
+    const url = `${pathName}&id=${noteId}`;
+    return openPopupWindow(
+        url,
+        `${fileFullName}-${noteId}_${Date.now()}`,
+        crypto.randomUUID(),
+    );
 }
 
 export default function NoteItemRenderComp({

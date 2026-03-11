@@ -5,6 +5,8 @@ import {
     clipboard,
     BrowserWindow,
     WebPreferences,
+    WindowOpenHandlerResponse,
+    BrowserWindowConstructorOptions,
 } from 'electron';
 
 import appInfo from '../package.json';
@@ -208,30 +210,98 @@ export function genWebPreferences(preloadPath: string) {
     return webPreferences;
 }
 
+function toUrlWithSortedParams(url: string, isRemovingUuid = false) {
+    const urlObj = new URL(url);
+    if (isRemovingUuid) {
+        urlObj.searchParams.delete('uuid');
+    }
+    const sortedParams = [...urlObj.searchParams.entries()].sort(
+        ([keyA], [keyB]) => {
+            return keyA.localeCompare(keyB);
+        },
+    );
+    urlObj.search = new URLSearchParams(sortedParams).toString();
+    return urlObj.toString();
+}
+
+function getGroupWindowsByUrl(url: string) {
+    const allWindows = BrowserWindow.getAllWindows();
+
+    const sortedUrl = toUrlWithSortedParams(url, true);
+    const groupWindows = allWindows.filter((win) => {
+        const { webContents } = win;
+        const currentSortedUrl = toUrlWithSortedParams(
+            webContents.getURL(),
+            true,
+        );
+        return currentSortedUrl === sortedUrl;
+    });
+
+    const originalSortedUrl = toUrlWithSortedParams(url);
+    const selfWindows = allWindows.filter((win) => {
+        const { webContents } = win;
+        const currentSortedUrl = toUrlWithSortedParams(webContents.getURL());
+        return currentSortedUrl === originalSortedUrl;
+    });
+
+    return { groupWindows, selfWindows };
+}
+
+export const POPUP_FRAME_NAME_PREFIX = 'popup_window';
 export function guardBrowsing(
     win: BrowserWindow,
-    webPreferences: WebPreferences,
+    webPreferences?: WebPreferences,
 ) {
     win.webContents.setWindowOpenHandler((options) => {
-        if (options.frameName === 'popup_window') {
-            const bounds = win.getBounds();
-            const subDisplay = genCenterSubDisplay({
-                displayPercent: 0.9,
-                x: bounds.x,
-                y: bounds.y,
-                width: bounds.width,
-                height: bounds.height,
-            });
-            return {
-                action: 'allow',
-                overrideBrowserWindowOptions: {
-                    ...subDisplay,
-                    webPreferences,
-                },
-            };
+        const { groupWindows, selfWindows } = getGroupWindowsByUrl(options.url);
+        if (groupWindows.length > 0) {
+            setTimeout(() => {
+                for (const win of groupWindows) {
+                    if (win.isMinimized()) {
+                        win.restore();
+                    }
+                    win.focus();
+                }
+            }, 0);
         }
-        shell.openExternal(options.url);
-        return { action: 'deny' };
+        if (selfWindows.length > 0) {
+            return { action: 'deny' };
+        }
+
+        if (
+            !options.frameName.startsWith(POPUP_FRAME_NAME_PREFIX) ||
+            webPreferences === undefined
+        ) {
+            shell.openExternal(options.url);
+            return { action: 'deny' };
+        }
+
+        const bounds = win.getBounds();
+        const subDisplay = genCenterSubDisplay({
+            displayPercent: 0.9,
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
+        });
+        const content: WindowOpenHandlerResponse = {
+            action: 'allow',
+            overrideBrowserWindowOptions: {
+                ...subDisplay,
+                webPreferences,
+            },
+            createWindow: (
+                constructionOptions: BrowserWindowConstructorOptions,
+            ) => {
+                const popupWin = new BrowserWindow(constructionOptions);
+                popupWin.loadURL(options.url);
+                setTimeout(() => {
+                    popupWin.focus();
+                }, 100);
+                return popupWin.webContents;
+            },
+        };
+        return content;
     });
 }
 

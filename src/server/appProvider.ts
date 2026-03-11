@@ -186,6 +186,7 @@ export type AppProviderType = Readonly<
             jsRuntimeBinPath: string | null;
         };
         windowTitle: string;
+        POPUP_FRAME_NAME_PREFIX: string;
     }
 >;
 

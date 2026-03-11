@@ -309,8 +309,15 @@ const WINDOW_FEATURES =
     'popup,top=0,left=0,width=400,height=400,scrollbars=yes,' +
     'toolbar=no,location=no,status=no,menubar=no';
 
-export function openPopupEditorWindow(pathName: string) {
-    return window.open(pathName, 'popup_window', WINDOW_FEATURES);
+export function openPopupWindow(
+    url: string,
+    frameUUID: string,
+    urlUUID: string,
+) {
+    const target = `${appProvider.POPUP_FRAME_NAME_PREFIX}_${frameUUID}`;
+    const urlObject = new URL(url);
+    urlObject.searchParams.set('uuid', urlUUID);
+    return window.open(urlObject.toString(), target, WINDOW_FEATURES);
 }
 
 export function getParamIdNum() {

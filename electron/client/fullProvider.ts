@@ -11,6 +11,7 @@ import databaseUtils from './databaseUtils';
 
 import { ytUtils } from './ytUtils';
 import appInfo from './appInfo';
+import { POPUP_FRAME_NAME_PREFIX } from '../electronHelpers';
 
 export const provider = {
     appType: 'desktop',
@@ -30,4 +31,5 @@ export const provider = {
     appUtils,
     databaseUtils,
     ytUtils,
+    POPUP_FRAME_NAME_PREFIX,
 };
