@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, MenuItem, shell } from 'electron';
+import { BrowserWindow, Menu, MenuItem } from 'electron';
 
 import { channels, ScreenMessageType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
@@ -16,18 +16,6 @@ export default class ElectronMainController {
 
     constructor(settingManager: ElectronSettingManager) {
         this.win = this.createWindow(settingManager);
-    }
-
-    previewPdf(pdfFilePath: string) {
-        const mainWin = this.win;
-        const win = new BrowserWindow({
-            parent: mainWin,
-        });
-        win.webContents.setWindowOpenHandler((options) => {
-            shell.openExternal(options.url);
-            return { action: 'deny' };
-        });
-        win.loadURL(pdfFilePath);
     }
 
     createWindow(settingManager: ElectronSettingManager) {

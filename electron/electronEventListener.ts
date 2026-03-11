@@ -113,9 +113,9 @@ function onAsync<T1, T2>(
     callee: (data: T1) => Promise<T2>,
 ): void {
     ipc.on(eventName, async (event, data: T1) => {
-        const replyEventName = (data as any).replyEventName;
+        const replyEventName = (data as any)?.replyEventName;
         if (!replyEventName) {
-            throw new Error('replyEventName is required');
+            throw new Error(`${eventName}: replyEventName is required`);
         }
         const result = await callee(data);
         event.sender.send(replyEventName, result);
@@ -303,9 +303,6 @@ export function initEventOther(appController: ElectronAppController) {
         return shell.trashItem(data.path);
     });
 
-    ipcMain.on('main:app:preview-pdf', (_, pdfFilePath: string) => {
-        appController.mainController.previewPdf(pdfFilePath);
-    });
     onAsync(
         ipcMain,
         'main:app:convert-to-pdf',

@@ -18,7 +18,6 @@ export async function getFontFamilyMapByNodeFont() {
         if (cachedFontList !== null) {
             return cachedFontList;
         }
-        appProvider.messageUtils.sendData('main:app:get-font-list');
         const result = await electronSendAsync<FontListType | null>(
             'main:app:get-font-list',
         );

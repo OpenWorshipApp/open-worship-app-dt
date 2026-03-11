@@ -47,10 +47,6 @@ export function showExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);
 }
 
-export function previewPdf(src: string) {
-    appProvider.messageUtils.sendData('main:app:preview-pdf', src);
-}
-
 export function convertToPdf(officeFilePath: string, pdfFilePath: string) {
     return electronSendAsync<Error | null>('main:app:convert-to-pdf', {
         officeFilePath,
