@@ -194,8 +194,6 @@ export function genSelectedSlidesContextMenuItems(
             menuElement: tran('Copy'),
             keyboardShortcut: copyShortcutMapper,
             onSelect: async () => {
-                console.log(slides);
-
                 AppDocument.setCopiedSlides(slides);
                 showSimpleToast(tran('Copied'), tran('Slides are copied'));
             },

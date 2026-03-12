@@ -1,6 +1,5 @@
 import { lazy, useState } from 'react';
 
-import { genContextMenuItemIcon } from '../../context-menu/AppContextMenuComp';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
 import { useAppEffectAsync } from '../../helper/debuggerHelpers';
@@ -43,16 +42,6 @@ function genContextMenu(
     const contextMenus: ContextMenuItemType[] = [
         ...(hasItems
             ? [
-                  {
-                      menuElement: tran('Export to MS Word'),
-                      childBefore: genContextMenuItemIcon('file-earmark-word', {
-                          color: 'blue',
-                      }),
-                      onSelect: () => {
-                          const noteItems = note.items;
-                          console.log('Exporting note items', noteItems);
-                      },
-                  },
                   {
                       menuElement: tran('Empty'),
                       onSelect: () => {

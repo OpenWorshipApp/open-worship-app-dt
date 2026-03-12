@@ -49,7 +49,6 @@ export default function NoteItemEditorPopupComp() {
     const [data] = useAppStateAsync(async () => {
         try {
             const data = await getNoteAndNoteItem();
-            console.log(data);
             return data;
         } catch (error) {
             handleError(error);
