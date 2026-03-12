@@ -7,6 +7,7 @@ import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import BibleFindController, {
     BibleFindControllerContext,
 } from './BibleFindController';
+import { tran } from '../lang/langHelpers';
 
 export default function BibleFindBodyPreviewerComp() {
     const selectedBibleKey = useBibleKeyContext();
@@ -46,14 +47,15 @@ export default function BibleFindBodyPreviewerComp() {
         return (
             <div className="alert alert-warning">
                 <i className="bi bi-info-circle" />
-                <div className="ms-2">Fail to get find controller!</div>
+                <div className="ms-2">{tran('Fail to get find controller!')}</div>
+                <br />
                 <button
                     className="btn btn-info"
                     onClick={() => {
                         setBibleFindController(undefined);
                     }}
                 >
-                    Reload
+                    {tran('Reload')}
                 </button>
             </div>
         );

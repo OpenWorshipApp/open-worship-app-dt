@@ -14,8 +14,8 @@ export default function FileReadErrorComp({
         >
             <div
                 className={
-                    'card-body d-flex flex-wrap justify-content-center ' +
-                    'align-items-center p-2'
+                    'card-body d-flex justify-content-center ' +
+                    'flex-column align-items-center p-2'
                 }
             >
                 <div className="alert alert-danger p-2">

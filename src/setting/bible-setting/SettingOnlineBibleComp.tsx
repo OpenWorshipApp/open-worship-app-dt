@@ -1,3 +1,4 @@
+import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import type { BibleListType } from './bibleSettingHelpers';
 import { useBibleXMLKeys } from './bibleXMLHelpers';
@@ -32,7 +33,7 @@ export default function SettingOnlineBibleComp({
     const getRefresher = () => {
         return (
             <button className="btn btn-info" onClick={handleRefreshing}>
-                <i className="bi bi-arrow-clockwise" /> Refresh
+                <i className="bi bi-arrow-clockwise" /> {tran('Refresh')}
             </button>
         );
     };
@@ -40,7 +41,8 @@ export default function SettingOnlineBibleComp({
         return (
             <div>
                 <div>{getRefresher()}</div>
-                Unable to get online bible list
+                <br />
+                {tran('Unable to get online bible list')}
             </div>
         );
     }

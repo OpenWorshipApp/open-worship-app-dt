@@ -31,9 +31,12 @@ import {
     DEFAULT_THUMBNAIL_SIZE_FACTOR,
     MIN_THUMBNAIL_SCALE,
 } from '../../app-document-list/appDocumentTypeHelpers';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import FillingFlexCenterComp from '../../others/FillingFlexCenterComp';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
+import { tran } from '../../lang/langHelpers';
+import PdfAppDocument from '../../app-document-list/PdfAppDocument';
+import { removePdfImagesPreview } from '../../helper/pdfHelpers';
 
 const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};
@@ -92,12 +95,25 @@ function useAppDocumentItems() {
             delete varyAppDocumentItemsToView[key];
         }
     }, [varyAppDocumentItems]);
+    const isPDFAppDocument = useMemo(() => {
+        return PdfAppDocument.checkIsThisType(selectedAppDocument);
+    }, [selectedAppDocument]);
+    const refreshPDFImages = useCallback(async () => {
+        if (!isPDFAppDocument) {
+            return;
+        }
+        const pdfAppDocument = selectedAppDocument as PdfAppDocument;
+        await removePdfImagesPreview(pdfAppDocument.filePath);
+        pdfAppDocument.fileSource.fireUpdateEvent();
+    }, [selectedAppDocument, isPDFAppDocument]);
 
     return {
         varyAppDocumentItems,
         startLoading: () => {
             setVaryAppDocumentItems(undefined);
         },
+        isPDFAppDocument,
+        refreshPDFImages,
     };
 }
 
@@ -105,7 +121,12 @@ export default function AppDocumentItemsComp() {
     const [thumbSizeScale] = useAppDocumentItemThumbnailSizeScale({
         defaultSize: MIN_THUMBNAIL_SCALE + 10,
     });
-    const { varyAppDocumentItems, startLoading } = useAppDocumentItems();
+    const {
+        varyAppDocumentItems,
+        startLoading,
+        isPDFAppDocument,
+        refreshPDFImages,
+    } = useAppDocumentItems();
     const appDocumentItemThumbnailSize = useMemo(() => {
         return thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
     }, [thumbSizeScale]);
@@ -115,10 +136,35 @@ export default function AppDocumentItemsComp() {
     }
     if (varyAppDocumentItems === null) {
         return (
-            <div className="d-flex justify-content-center">
-                <p className="alert alert-warning">Fail to load slides</p>
+            <div
+                className={
+                    'w-100 h-100 d-flex justify-content-center ' +
+                    'flex-column align-items-center p-2'
+                }
+            >
+                <p className="alert alert-warning">
+                    {tran('Fail to load slides')}
+                </p>
                 <button onClick={startLoading} className="btn btn-primary">
-                    Reload
+                    {tran('Reload')}
+                </button>
+            </div>
+        );
+    }
+    if (isPDFAppDocument && varyAppDocumentItems.length === 0) {
+        return (
+            <div
+                className={
+                    'w-100 h-100 d-flex justify-content-center ' +
+                    'flex-column align-items-center p-2'
+                }
+            >
+                <p className="alert alert-warning text-center">
+                    {tran('No slides to display')}
+                </p>
+                <br />
+                <button onClick={refreshPDFImages} className="btn btn-primary">
+                    {tran('Refresh PDF Images')}
                 </button>
             </div>
         );

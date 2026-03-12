@@ -46,7 +46,10 @@ export default function BibleCrossRefAIRenderFoundItemComp({
     if (data === null) {
         return (
             <div
-                className="w-100 app-border-white-round my-1 p-1 app-caught-hover-pointer"
+                className={
+                    'w-100 app-border-white-round my-1 p-1 ' +
+                    'app-caught-hover-pointer'
+                }
                 style={{ color: 'red' }}
             >
                 {tran('Fail to get data for')} "{bibleVersesKey}"
@@ -56,7 +59,10 @@ export default function BibleCrossRefAIRenderFoundItemComp({
     const { htmlText, bibleItem, bibleText } = data;
     return (
         <div
-            className="w-100 app-border-white-round my-1 p-1 app-caught-hover-pointer"
+            className={
+                'w-100 app-border-white-round my-1 p-1 ' +
+                'app-caught-hover-pointer'
+            }
             title={tran('shift + click to append')}
             draggable
             onDragStart={(event) => {

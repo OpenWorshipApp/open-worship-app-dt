@@ -9,6 +9,10 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Unable to get online bible list': 'មិនអាចទទួលបានបញ្ជីព្រះគម្ពីរអនឡាញ',
+    'Fail to get find controller!': 'មិនអាចទទួលបានកម្មវិធីស្វែងរក!',
+    'No slides to display': 'មិនមានស្លាយដែលត្រូវបង្ហាញទេ',
+    'Fail to load slides': 'មិនអាចផ្ទុកស្លាយបាន',
     'Reset Size': 'កំណត់ទំហំឡើងវិញ',
     'Close First Widget': 'បិទផ្ទាំងទីមួយ',
     'Close Second Widget': 'បិទផ្ទាំងទីពីរ',
