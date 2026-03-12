@@ -13,12 +13,12 @@ import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 function genMenuItem(
     selectedBooks: SelectedBookKeyType[],
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
-    { bookKey, book, modelBook, isAvailable }: BookMatchDataType,
+    { bibleKey, bookKey, book, modelBook, isAvailable }: BookMatchDataType,
 ) {
     const extraName = book === modelBook ? '' : ` (${modelBook})`;
     return {
         menuElement: (
-            <span data-bible-key-ff={bookKey}>{`${book}${extraName}`}</span>
+            <span data-bible-key-ff={bibleKey}>{`${book}${extraName}`}</span>
         ),
         disabled:
             !isAvailable ||
