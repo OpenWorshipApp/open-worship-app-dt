@@ -1,4 +1,7 @@
-import { defaultDataDirNames } from '../../helper/constants';
+import {
+    defaultDataDirNames,
+    dirSourceSettingNames,
+} from '../../helper/constants';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
 import { tran } from '../../lang/langHelpers';
 import FileListHandlerComp from '../../others/FileListHandlerComp';
@@ -7,7 +10,7 @@ import NoteFileComp from './NoteFileComp';
 import { sortNoteFilePaths } from './noteHelpers';
 
 export default function NoteListComp() {
-    const dirSource = useGenDirSourceReload(defaultDataDirNames.NOTES);
+    const dirSource = useGenDirSourceReload(dirSourceSettingNames.NOTES);
     const handleBodyRendering = (filePaths: string[]) => {
         return filePaths.map((filePath, i) => {
             return (

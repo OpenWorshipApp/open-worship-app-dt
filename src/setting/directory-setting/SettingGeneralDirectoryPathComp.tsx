@@ -110,7 +110,7 @@ function RenderParentDirectoryComp({
                             await selectPathForChildDir(defaultPath);
                         }}
                     >
-                        Set Default Data ({defaultPath})
+                        {tran('Set Default Data')} ({defaultPath})
                     </button>
                 </div>
             )}
@@ -145,6 +145,7 @@ const titleSettingNames = {
         dirSourceSettingNames.BIBLE_READ,
         defaultDataDirNames.BIBLE_READ,
     ],
+    Notes: [dirSourceSettingNames.NOTES, defaultDataDirNames.NOTES],
 };
 
 function RenderChildDirectoriesComp({
@@ -168,7 +169,7 @@ function RenderChildDirectoriesComp({
                         return (
                             <RenderPathElementComp
                                 key={title}
-                                title={title}
+                                title={tran(title)}
                                 settingName={settingName}
                                 defaultFolderName={defaultFolderName}
                             />
