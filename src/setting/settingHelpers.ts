@@ -1,3 +1,4 @@
+import { openPopupWindow } from '../helper/domHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import appProvider from '../server/appProvider';
 import { getFontFamilyMapByNodeFont } from '../server/fontHelpers';
@@ -5,7 +6,11 @@ import { getFontFamilyMapByNodeFont } from '../server/fontHelpers';
 export const SETTING_SETTING_NAME = 'setting-tabs';
 
 export function openSettingPage() {
-    appProvider.messageUtils.sendData('main:app:open-setting');
+    openPopupWindow(
+        appProvider.settingHomePage,
+        `setting_${Date.now()}`,
+        'setting',
+    );
 }
 
 export function openGeneralSetting() {

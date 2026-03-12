@@ -7,14 +7,12 @@ import { getCurrent } from './fsServe';
 import ElectronAboutController from './ElectronAboutController';
 import { getAppThemeBackgroundColor } from './electronHelpers';
 import ElectronLWShareController from './ElectronLWShareController';
-import ElectronSettingController from './ElectronSettingController';
 
 let instance: ElectronAppController | null = null;
 let settingManager: ElectronSettingManager | null = null;
 let finderController: ElectronFinderController | null = null;
 let lwShareController: ElectronLWShareController | null = null;
 let aboutController: ElectronAboutController | null = null;
-let settingController: ElectronSettingController | null = null;
 export default class ElectronAppController {
     constructor() {
         this.settingManager.syncMainWindow(this.mainWin);
@@ -72,20 +70,12 @@ export default class ElectronAppController {
         return instance;
     }
 
-    get settingController() {
-        if (settingController === null) {
-            settingController = new ElectronSettingController();
-        }
-        return settingController;
-    }
-
     allWindows() {
         return [
             this.mainController.win,
             this.finderController.win,
             this.lwShareController.win,
             this.aboutController.win,
-            this.settingController.win,
         ].filter((win): win is BrowserWindow => win !== null);
     }
 

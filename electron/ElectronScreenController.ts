@@ -25,9 +25,9 @@ export default class ElectronScreenController {
         const isScreenCanFullScreen = isWin32;
         const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
-            transparent: true,
             x: 0,
             y: 0,
+            transparent: true,
             frame: false,
             webPreferences,
         });

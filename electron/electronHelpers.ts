@@ -307,6 +307,9 @@ export function guardBrowsing(
             overrideBrowserWindowOptions: {
                 ...subDisplay,
                 webPreferences,
+                // transparent: true,
+                // frame: false,
+                backgroundColor: getAppThemeBackgroundColor(),
             },
             createWindow: (
                 constructionOptions: BrowserWindowConstructorOptions,

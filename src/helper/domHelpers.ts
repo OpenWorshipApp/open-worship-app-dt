@@ -320,7 +320,9 @@ export function openPopupWindow(
     }
     const target = `${appProvider.POPUP_FRAME_NAME_PREFIX}_${frameUUID}`;
     const urlObject = new URL(partialUrl);
-    urlObject.searchParams.set('uuid', urlUUID);
+    if (urlUUID !== undefined) {
+        urlObject.searchParams.set('uuid', urlUUID);
+    }
     return window.open(urlObject.toString(), target, WINDOW_FEATURES);
 }
 

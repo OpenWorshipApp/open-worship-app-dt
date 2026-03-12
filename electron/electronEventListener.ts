@@ -234,13 +234,6 @@ export function initEventFinder(appController: ElectronAppController) {
         attemptClosing(appController.finderController);
     });
 
-    ipcMain.on('main:app:open-setting', () => {
-        appController.settingController.open(
-            appController.mainWin,
-            appController.settingManager,
-        );
-    });
-
     const mainWinWebContents = appController.mainWin.webContents;
     ipcMain.on(
         'finder:app:search-in-page',
