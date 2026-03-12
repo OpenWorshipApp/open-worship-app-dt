@@ -224,7 +224,7 @@ function toUrlWithSortedParams(url: string, isRemovingUuid = false) {
     return urlObj.toString();
 }
 
-function getGroupWindowsByUrl(url: string) {
+function getGroupWindowsByUrl(parentWin: BrowserWindow, url: string) {
     const allWindows = BrowserWindow.getAllWindows();
 
     const sortedUrl = toUrlWithSortedParams(url, true);
@@ -244,7 +244,30 @@ function getGroupWindowsByUrl(url: string) {
         return currentSortedUrl === originalSortedUrl;
     });
 
-    return { groupWindows, selfWindows };
+    const bounds = parentWin.getBounds();
+    const subDisplay = genCenterSubDisplay({
+        displayPercent: 0.9,
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+    });
+    if (groupWindows.length > 0 && selfWindows.length === 0) {
+        const maxX = Math.max(
+            ...groupWindows.map((win) => {
+                return win.getBounds().x;
+            }),
+        );
+        subDisplay.x = maxX + 20;
+        const maxY = Math.max(
+            ...groupWindows.map((win) => {
+                return win.getBounds().y;
+            }),
+        );
+        subDisplay.y = maxY + 20;
+    }
+
+    return { groupWindows, selfWindows, subDisplay };
 }
 
 export const POPUP_FRAME_NAME_PREFIX = 'popup_window';
@@ -253,7 +276,10 @@ export function guardBrowsing(
     webPreferences?: WebPreferences,
 ) {
     win.webContents.setWindowOpenHandler((options) => {
-        const { groupWindows, selfWindows } = getGroupWindowsByUrl(options.url);
+        const { groupWindows, selfWindows, subDisplay } = getGroupWindowsByUrl(
+            win,
+            options.url,
+        );
         if (groupWindows.length > 0) {
             setTimeout(() => {
                 for (const win of groupWindows) {
@@ -276,14 +302,6 @@ export function guardBrowsing(
             return { action: 'deny' };
         }
 
-        const bounds = win.getBounds();
-        const subDisplay = genCenterSubDisplay({
-            displayPercent: 0.9,
-            x: bounds.x,
-            y: bounds.y,
-            width: bounds.width,
-            height: bounds.height,
-        });
         const content: WindowOpenHandlerResponse = {
             action: 'allow',
             overrideBrowserWindowOptions: {
