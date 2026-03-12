@@ -32,9 +32,7 @@ export default class ElectronAppController {
     }
 
     get settingManager() {
-        if (settingManager === null) {
-            settingManager = new ElectronSettingManager();
-        }
+        settingManager ??= new ElectronSettingManager();
         return settingManager;
     }
 
@@ -43,30 +41,22 @@ export default class ElectronAppController {
     }
 
     get finderController() {
-        if (finderController === null) {
-            finderController = new ElectronFinderController();
-        }
+        finderController ??= new ElectronFinderController();
         return finderController;
     }
 
     get lwShareController() {
-        if (lwShareController === null) {
-            lwShareController = new ElectronLWShareController();
-        }
+        lwShareController ??= new ElectronLWShareController();
         return lwShareController;
     }
 
     get aboutController() {
-        if (aboutController === null) {
-            aboutController = new ElectronAboutController();
-        }
+        aboutController ??= new ElectronAboutController();
         return aboutController;
     }
 
     static getInstance() {
-        if (instance === null) {
-            instance = new ElectronAppController();
-        }
+        instance ??= new ElectronAppController();
         return instance;
     }
 
