@@ -10,8 +10,11 @@ import NoteEditorComp, { NoteTitleEditorComp } from './NoteEditorComp';
 import LoadingComp from '../../others/LoadingComp';
 import {
     useDirSourceWatching,
+    useFileSourceEvents,
     useGenDirSourceReload,
 } from '../../helper/dirSourceHelpers';
+import appProvider from '../../server/appProvider';
+import NoteItem from './NoteItem';
 
 async function getNoteAndNoteItem() {
     const fileFullName = getParamFileFullName();
@@ -44,17 +47,39 @@ async function getNoteAndNoteItem() {
     return { note, noteItem };
 }
 
+function updateWindowTitle(note: Note, noteItem: NoteItem) {
+    const { fullName } = note.fileSource;
+    const suffix = `(${fullName}: ${noteItem.title})`;
+    document.title = `${appProvider.windowTitle} - ${suffix}`;
+}
+function useUpdateWindowTitle(
+    data?: { note: Note; noteItem: NoteItem } | null,
+) {
+    useFileSourceEvents(
+        ['update'],
+        () => {
+            updateWindowTitle(data!.note, data!.noteItem);
+        },
+        [],
+        data?.note.filePath,
+    );
+}
+
 const HEIGHT = 40;
 export default function NoteItemEditorPopupComp() {
     const [data] = useAppStateAsync(async () => {
         try {
             const data = await getNoteAndNoteItem();
+            const { fullName } = data.note.fileSource;
+            const suffix = `(${fullName}: ${data.noteItem.title})`;
+            document.title = `${appProvider.windowTitle} - ${suffix}`;
             return data;
         } catch (error) {
             handleError(error);
         }
         return null;
     }, []);
+    useUpdateWindowTitle(data);
     const dirSource = useGenDirSourceReload(dirSourceSettingNames.NOTES);
     useDirSourceWatching(dirSource);
     if (data === undefined) {
