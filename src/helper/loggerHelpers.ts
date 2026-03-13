@@ -17,6 +17,7 @@ function callConsole(method: string, ...args: any[]) {
         | undefined;
     callable?.call(console, ...args);
     if (
+        method !== 'warn' &&
         !(
             appProvider.isPagePresenter ||
             appProvider.isPageAppDocumentEditor ||

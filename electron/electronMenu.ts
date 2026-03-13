@@ -30,9 +30,7 @@ export function initMenu(appController: ElectronAppController) {
                           {
                               label: `About ${appInfo.title}`,
                               click: () => {
-                                  appController.aboutController.open(
-                                      appController.mainWin,
-                                  );
+                                  appController.openAboutPage();
                               },
                           },
                           { type: 'separator' },
@@ -72,9 +70,7 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: `Find`,
                     click: () => {
-                        appController.finderController.open(
-                            appController.mainWin,
-                        );
+                        appController.openFindPage();
                     },
                     accelerator: findingShortcut,
                 },
@@ -199,9 +195,7 @@ export function initMenu(appController: ElectronAppController) {
                           {
                               label: `About ${appInfo.title}`,
                               click: () => {
-                                  appController.aboutController.open(
-                                      appController.mainWin,
-                                  );
+                                  appController.openAboutPage();
                               },
                           },
                       ]),

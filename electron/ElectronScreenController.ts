@@ -1,12 +1,13 @@
 import { BrowserWindow } from 'electron';
 
-import { AnyObjectType, channels } from './electronEventListener';
+import { AnyObjectType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {
     attemptClosing,
     genWebPreferences,
     guardBrowsing,
+    messageChannels,
 } from './electronHelpers';
 
 const routeProps = genRoutProps(htmlFiles.screen);
@@ -70,7 +71,7 @@ export default class ElectronScreenController {
     }
 
     sendMessage(type: string, data: AnyObjectType) {
-        this.win.webContents.send(channels.screenMessageChannel, {
+        this.win.webContents.send(messageChannels.screenMessage, {
             screenId: this.screenId,
             type,
             data,

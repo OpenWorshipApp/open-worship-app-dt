@@ -1,18 +1,14 @@
 import { app, BrowserWindow } from 'electron';
 
-import ElectronFinderController from './ElectronFinderController';
 import ElectronMainController from './ElectronMainController';
 import ElectronSettingManager from './ElectronSettingManager';
 import { getCurrent } from './fsServe';
-import ElectronAboutController from './ElectronAboutController';
 import { getAppThemeBackgroundColor } from './electronHelpers';
 import ElectronLWShareController from './ElectronLWShareController';
 
 let instance: ElectronAppController | null = null;
 let settingManager: ElectronSettingManager | null = null;
-let finderController: ElectronFinderController | null = null;
 let lwShareController: ElectronLWShareController | null = null;
-let aboutController: ElectronAboutController | null = null;
 export default class ElectronAppController {
     constructor() {
         this.settingManager.syncMainWindow(this.mainWin);
@@ -40,19 +36,17 @@ export default class ElectronAppController {
         return ElectronMainController.getInstance(this.settingManager);
     }
 
-    get finderController() {
-        finderController ??= new ElectronFinderController();
-        return finderController;
-    }
-
     get lwShareController() {
         lwShareController ??= new ElectronLWShareController();
         return lwShareController;
     }
 
-    get aboutController() {
-        aboutController ??= new ElectronAboutController();
-        return aboutController;
+    openAboutPage() {
+        this.mainController.sendMessage('main:app:open-about-page');
+    }
+
+    openFindPage() {
+        this.mainController.sendMessage('main:app:open-find-page');
     }
 
     static getInstance() {
@@ -63,9 +57,7 @@ export default class ElectronAppController {
     allWindows() {
         return [
             this.mainController.win,
-            this.finderController.win,
             this.lwShareController.win,
-            this.aboutController.win,
         ].filter((win): win is BrowserWindow => win !== null);
     }
 

@@ -1,6 +1,6 @@
 import { BrowserWindow, Menu, MenuItem } from 'electron';
 
-import { channels, ScreenMessageType } from './electronEventListener';
+import { AnyObjectType, ScreenMessageType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import ElectronSettingManager from './ElectronSettingManager';
 import {
@@ -8,6 +8,7 @@ import {
     genWebPreferences,
     getAppThemeBackgroundColor,
     guardBrowsing,
+    messageChannels,
 } from './electronHelpers';
 
 let instance: ElectronMainController | null = null;
@@ -59,8 +60,12 @@ export default class ElectronMainController {
         this.win.webContents.send(channel, data);
     }
 
-    sendMessage(message: ScreenMessageType) {
-        this.win.webContents.send(channels.screenMessageChannel, message);
+    sendMessage(channel: string, message?: AnyObjectType) {
+        this.win.webContents.send(channel, message);
+    }
+
+    sendScreenMessage(message: ScreenMessageType) {
+        this.sendMessage(messageChannels.screenMessage, message);
     }
 
     changeBible(isNext: boolean) {
@@ -72,7 +77,7 @@ export default class ElectronMainController {
     }
 
     sendNotifyInvisibility(screenId: number) {
-        this.sendMessage({
+        this.sendScreenMessage({
             screenId,
             type: 'visible',
             data: {

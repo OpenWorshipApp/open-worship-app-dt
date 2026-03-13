@@ -305,14 +305,39 @@ export function checkIsZoomed() {
     return zoomFactor !== 1;
 }
 
-const WINDOW_FEATURES =
-    'popup,top=0,left=0,width=400,height=400,scrollbars=yes,' +
-    'toolbar=no,location=no,status=no,menubar=no';
+export type PopupWindowFeaturesType = {
+    popup?: boolean;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    appFollowScale?: boolean;
+    appAlignHorizontal?: 'left' | 'center' | 'right';
+    appAlignVertical?: 'top' | 'center' | 'bottom';
+    appScale?: number;
+    appAlwaysOnTop?: boolean;
+};
+const DEFAULT_FEATURES: PopupWindowFeaturesType = {
+    popup: true,
+};
+
+function toFeatureString(features: PopupWindowFeaturesType) {
+    const featureString = Object.entries(features)
+        .map(([key, value]) => {
+            if (value === true) {
+                return key;
+            }
+            return `${key}=${value}`;
+        })
+        .join(',');
+    return featureString;
+}
 
 export function openPopupWindow(
     partialUrl: string,
     frameUUID: string,
     urlUUID: string,
+    features?: PopupWindowFeaturesType,
 ) {
     if (partialUrl.startsWith('/')) {
         const urlObject = new URL(location.href);
@@ -321,8 +346,53 @@ export function openPopupWindow(
     const target = `${appProvider.POPUP_FRAME_NAME_PREFIX}_${frameUUID}`;
     const urlObject = new URL(partialUrl);
     urlObject.searchParams.set('uuid', urlUUID);
-    return window.open(urlObject.toString(), target, WINDOW_FEATURES);
+    return window.open(
+        urlObject.toString(),
+        target,
+        toFeatureString({
+            ...DEFAULT_FEATURES,
+            ...features,
+        }),
+    );
 }
+
+function openAboutPage() {
+    return openPopupWindow(
+        appProvider.aboutHomePage,
+        `about_${Date.now()}`,
+        'about',
+        {
+            width: 700,
+            height: 435,
+            appAlignHorizontal: 'center',
+            appAlignVertical: 'center',
+            appFollowScale: true,
+            appAlwaysOnTop: true,
+        },
+    );
+}
+appProvider.messageUtils.listenForData('main:app:open-about-page', () => {
+    openAboutPage();
+});
+
+function openFindPage() {
+    return openPopupWindow(
+        appProvider.finderHomePage,
+        `find_${Date.now()}`,
+        'find',
+        {
+            width: 270,
+            height: 80,
+            appAlignHorizontal: 'left',
+            appAlignVertical: 'top',
+            appFollowScale: true,
+            appAlwaysOnTop: true,
+        },
+    );
+}
+appProvider.messageUtils.listenForData('main:app:open-find-page', () => {
+    openFindPage();
+});
 
 export function getParamIdNum() {
     const id = new URLSearchParams(globalThis.location.search).get('id');

@@ -11,11 +11,7 @@ import type { LookupOptions } from './finderHelpers';
 import { findString } from './finderHelpers';
 import { useThemeSource } from '../others/initHelpers';
 
-export default function FinderAppComp({
-    onClose,
-}: Readonly<{
-    onClose: () => void;
-}>) {
+export default function FinderAppComp() {
     const [lookupText, setLookupText] = useState('');
     const [isMatchCase, setIsMatchCase] = useState(false);
 
@@ -32,11 +28,11 @@ export default function FinderAppComp({
 
     const handleEscape = useCallback(() => {
         if (!lookupText) {
-            onClose();
+            globalThis.close();
             return;
         }
         setLookupText1('');
-    }, [lookupText, onClose, setLookupText1]);
+    }, [lookupText, setLookupText1]);
 
     useKeyboardRegistering([{ key: 'Escape' }], handleEscape, [handleEscape]);
 

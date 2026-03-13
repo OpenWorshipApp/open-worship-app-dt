@@ -12,6 +12,7 @@ import {
     captureWebScreenShot,
     goDownload,
     isMac,
+    messageChannels,
     printHTMLContent,
     tarExtract,
 } from './electronHelpers';
@@ -38,10 +39,6 @@ export type ScreenMessageType = {
 type ShowScreenDataType = {
     screenId: number;
     displayId: number;
-};
-
-export const channels = {
-    screenMessageChannel: 'app:screen:message',
 };
 
 export function initEventListenerApp(appController: ElectronAppController) {
@@ -194,7 +191,7 @@ export function initEventScreen(appController: ElectronAppController) {
     );
 
     ipcMain.on(
-        channels.screenMessageChannel,
+        messageChannels.screenMessage,
         async (
             event,
             {
@@ -205,7 +202,7 @@ export function initEventScreen(appController: ElectronAppController) {
             }: ScreenMessageType & { isScreen: boolean },
         ) => {
             if (isScreen) {
-                appController.mainController.sendMessage({
+                appController.mainController.sendScreenMessage({
                     screenId,
                     type,
                     data,
@@ -230,10 +227,6 @@ export function initEventScreen(appController: ElectronAppController) {
 }
 
 export function initEventFinder(appController: ElectronAppController) {
-    ipcMain.on('finder:app:close-finder', () => {
-        attemptClosing(appController.finderController);
-    });
-
     const mainWinWebContents = appController.mainWin.webContents;
     ipcMain.on(
         'finder:app:search-in-page',

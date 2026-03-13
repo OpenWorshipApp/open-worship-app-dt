@@ -7,6 +7,7 @@ import {
     WebPreferences,
     WindowOpenHandlerResponse,
     BrowserWindowConstructorOptions,
+    HandlerDetails,
 } from 'electron';
 
 import appInfo from '../package.json';
@@ -19,6 +20,11 @@ export const isLinux = process.platform === 'linux';
 export const isSecured = false; // TODO: make it secure
 export const is64System = process.arch === 'x64';
 export const isArm64 = process.arch === 'arm64';
+
+export const messageChannels = {
+    screenMessage: 'app:screen:message',
+    openAboutPage: 'main:app:open-about-page',
+};
 
 export async function tarExtract(filePath: string, outputDir: string) {
     const { x: tarX } = await import('tar');
@@ -154,7 +160,7 @@ Commit Hash: ${packageInfo.commitHash}`.trim();
     clipboard.writeText(debugAppInfo);
 }
 
-export function getCenterScreenPosition(
+export function genParentWinCenterPosition(
     mainWin: Electron.BrowserWindow,
     {
         width = 700,
@@ -167,7 +173,27 @@ export function getCenterScreenPosition(
     const mainBounds = mainWin.getBounds();
     const x = mainBounds.x + (mainBounds.width - width) / 2;
     const y = mainBounds.y + (mainBounds.height - height) / 2;
-    return { x, y, width, height };
+    return { x, y };
+}
+
+function applyZoomFactor(win: BrowserWindow) {
+    win.webContents.on('did-finish-load', () => {
+        const bounds = win.getBounds();
+        const currentZoomFactor = win.webContents.getZoomFactor();
+        if (currentZoomFactor === 1) {
+            return;
+        }
+        const newWidth = Math.round(bounds.width * currentZoomFactor);
+        const newHeight = Math.round(bounds.height * currentZoomFactor);
+        const offsetX = Math.round((newWidth - bounds.width) / 2);
+        const offsetY = Math.round((newHeight - bounds.height) / 2);
+        win.setBounds({
+            x: bounds.x - offsetX,
+            y: bounds.y - offsetY,
+            width: newWidth,
+            height: newHeight,
+        });
+    });
 }
 
 export function genCenterSubDisplay({
@@ -224,29 +250,45 @@ function toUrlWithSortedParams(url: string, isRemovingUuid = false) {
     return urlObj.toString();
 }
 
-function getGroupWindowsByUrl(parentWin: BrowserWindow, url: string) {
-    const allWindows = BrowserWindow.getAllWindows();
+export type PopupWindowFeaturesType = {
+    popup?: boolean;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    appFollowScale?: boolean;
+    appAlignHorizontal?: 'left' | 'center' | 'right';
+    appAlignVertical?: 'top' | 'center' | 'bottom';
+    appScale?: number;
+    appAlwaysOnTop?: boolean;
+};
 
-    const sortedUrl = toUrlWithSortedParams(url, true);
-    const groupWindows = allWindows.filter((win) => {
-        const { webContents } = win;
-        const currentSortedUrl = toUrlWithSortedParams(
-            webContents.getURL(),
-            true,
-        );
-        return currentSortedUrl === sortedUrl;
-    });
+// features: 'popup,width=700,height=435,appCenter,appFollowScale'
+// => { popup: true, width: 700, height: 435, appCenter: true, appFollowScale: true }
+function toFeatureRecord(featuresString: string) {
+    const featuresArray = featuresString.split(',');
+    const featuresRecord: { [key: string]: boolean | number | string } = {};
+    for (const feature of featuresArray) {
+        const [key, value] = feature.split('=');
+        if (value === undefined || value === 'true') {
+            featuresRecord[key] = true;
+        } else {
+            const numValue = Number(value);
+            featuresRecord[key] = Number.isNaN(numValue) ? value : numValue;
+        }
+    }
+    return featuresRecord as PopupWindowFeaturesType;
+}
 
-    const originalSortedUrl = toUrlWithSortedParams(url);
-    const selfWindows = allWindows.filter((win) => {
-        const { webContents } = win;
-        const currentSortedUrl = toUrlWithSortedParams(webContents.getURL());
-        return currentSortedUrl === originalSortedUrl;
-    });
-
+function genBoundsData(
+    parentWin: BrowserWindow,
+    groupWindows: BrowserWindow[],
+    selfWindows: BrowserWindow[],
+    featuresRecord: PopupWindowFeaturesType,
+) {
     const bounds = parentWin.getBounds();
     const subDisplay = genCenterSubDisplay({
-        displayPercent: 0.9,
+        displayPercent: featuresRecord.appScale ?? 0.9,
         x: bounds.x,
         y: bounds.y,
         width: bounds.width,
@@ -266,64 +308,143 @@ function getGroupWindowsByUrl(parentWin: BrowserWindow, url: string) {
         );
         subDisplay.y = maxY + 20;
     }
+    Object.assign(subDisplay, {
+        width: featuresRecord.width ?? subDisplay.width,
+        height: featuresRecord.height ?? subDisplay.height,
+        x: featuresRecord.x ?? subDisplay.x,
+        y: featuresRecord.y ?? subDisplay.y,
+    });
 
-    return { groupWindows, selfWindows, subDisplay };
+    const centerData = genParentWinCenterPosition(parentWin, {
+        width: subDisplay.width,
+        height: subDisplay.height,
+    });
+    // Horizontal alignment
+    switch (featuresRecord.appAlignHorizontal) {
+        case 'left':
+            subDisplay.x = bounds.x;
+            break;
+        case 'center':
+            subDisplay.x = centerData.x;
+            break;
+        case 'right':
+            subDisplay.x = bounds.x + bounds.width;
+            break;
+    }
+    // Vertical alignment
+    switch (featuresRecord.appAlignVertical) {
+        case 'top':
+            subDisplay.y = bounds.y;
+            break;
+        case 'center':
+            subDisplay.y = centerData.y;
+            break;
+        case 'bottom':
+            subDisplay.y = bounds.y + bounds.height;
+            break;
+    }
+
+    return subDisplay;
+}
+
+function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
+    const { url, features } = options;
+    const featuresRecord = toFeatureRecord(features);
+
+    const allWindows = BrowserWindow.getAllWindows();
+
+    const sortedUrl = toUrlWithSortedParams(url, true);
+    const groupWindows = allWindows.filter((win) => {
+        const { webContents } = win;
+        const currentSortedUrl = toUrlWithSortedParams(
+            webContents.getURL(),
+            true,
+        );
+        return currentSortedUrl === sortedUrl;
+    });
+
+    const originalSortedUrl = toUrlWithSortedParams(url);
+    const selfWindows = groupWindows.filter((win) => {
+        const { webContents } = win;
+        const currentSortedUrl = toUrlWithSortedParams(webContents.getURL());
+        return currentSortedUrl === originalSortedUrl;
+    });
+
+    const subDisplay = genBoundsData(
+        parentWin,
+        groupWindows,
+        selfWindows,
+        featuresRecord,
+    );
+
+    return { groupWindows, selfWindows, subDisplay, featuresRecord };
 }
 
 export const POPUP_FRAME_NAME_PREFIX = 'popup_window';
+function handlePopupWindowOpen(
+    win: BrowserWindow,
+    webPreferences: WebPreferences | undefined,
+    options: HandlerDetails,
+): WindowOpenHandlerResponse {
+    const { groupWindows, selfWindows, subDisplay, featuresRecord } =
+        getPopupWindowData(win, options);
+    if (groupWindows.length > 0) {
+        setTimeout(() => {
+            for (const win of groupWindows) {
+                if (win.isMinimized()) {
+                    win.restore();
+                }
+                win.focus();
+            }
+        }, 0);
+    }
+    if (selfWindows.length > 0) {
+        return { action: 'deny' };
+    }
+
+    if (
+        !options.frameName.startsWith(POPUP_FRAME_NAME_PREFIX) ||
+        webPreferences === undefined
+    ) {
+        shell.openExternal(options.url);
+        return { action: 'deny' };
+    }
+
+    const content: WindowOpenHandlerResponse = {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+            ...subDisplay,
+            webPreferences,
+            // transparent: true,
+            // frame: false,
+            backgroundColor: getAppThemeBackgroundColor(),
+        },
+        createWindow: (
+            constructionOptions: BrowserWindowConstructorOptions,
+        ) => {
+            const popupWin = new BrowserWindow(constructionOptions);
+            if (featuresRecord.appFollowScale) {
+                applyZoomFactor(popupWin);
+            }
+            if (featuresRecord.appAlwaysOnTop) {
+                popupWin.setAlwaysOnTop(true, 'screen-saver');
+            }
+            popupWin.loadURL(options.url);
+            setTimeout(() => {
+                popupWin.focus();
+            }, 100);
+            return popupWin.webContents;
+        },
+    };
+    return content;
+}
 export function guardBrowsing(
     win: BrowserWindow,
     webPreferences?: WebPreferences,
 ) {
-    win.webContents.setWindowOpenHandler((options) => {
-        const { groupWindows, selfWindows, subDisplay } = getGroupWindowsByUrl(
-            win,
-            options.url,
-        );
-        if (groupWindows.length > 0) {
-            setTimeout(() => {
-                for (const win of groupWindows) {
-                    if (win.isMinimized()) {
-                        win.restore();
-                    }
-                    win.focus();
-                }
-            }, 0);
-        }
-        if (selfWindows.length > 0) {
-            return { action: 'deny' };
-        }
-
-        if (
-            !options.frameName.startsWith(POPUP_FRAME_NAME_PREFIX) ||
-            webPreferences === undefined
-        ) {
-            shell.openExternal(options.url);
-            return { action: 'deny' };
-        }
-
-        const content: WindowOpenHandlerResponse = {
-            action: 'allow',
-            overrideBrowserWindowOptions: {
-                ...subDisplay,
-                webPreferences,
-                // transparent: true,
-                // frame: false,
-                backgroundColor: getAppThemeBackgroundColor(),
-            },
-            createWindow: (
-                constructionOptions: BrowserWindowConstructorOptions,
-            ) => {
-                const popupWin = new BrowserWindow(constructionOptions);
-                popupWin.loadURL(options.url);
-                setTimeout(() => {
-                    popupWin.focus();
-                }, 100);
-                return popupWin.webContents;
-            },
-        };
-        return content;
-    });
+    win.webContents.setWindowOpenHandler(
+        handlePopupWindowOpen.bind(null, win, webPreferences),
+    );
 }
 
 export function printHTMLContent(htmlText: string) {

@@ -1,9 +1,8 @@
 import { ipcRenderer, IpcRendererEvent } from 'electron';
-
-import { channels } from '../electronEventListener';
+import { messageChannels } from '../electronHelpers';
 
 const messageUtils = {
-    channels,
+    messageChannels,
     sendData(channel: string, ...args: any[]) {
         ipcRenderer.send(channel, ...args);
     },
