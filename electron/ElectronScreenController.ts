@@ -93,7 +93,7 @@ export default class ElectronScreenController {
         return cache.get(key) as ElectronScreenController;
     }
 
-    static getInstance(screenId: number): ElectronScreenController | null {
+    static getInstance(screenId: number) {
         const key = screenId.toString();
         if (!cache.has(key)) {
             return null;

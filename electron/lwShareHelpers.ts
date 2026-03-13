@@ -63,7 +63,7 @@ export async function initServer({
             return !!httpServer.listening;
         },
         getAddressesWithQRList: async () => {
-            return await getAddressesWithQR(port!);
+            return await getAddressesWithQR(port);
         },
     };
 }
