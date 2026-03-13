@@ -23,14 +23,18 @@ import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
 import { isDev } from './electronHelpers';
 
-if (isDev) {
-    app.commandLine.appendSwitch('ignore-certificate-errors');
-}
-await app.whenReady();
-const gotTheLock = app.requestSingleInstanceLock({
-    myKey: 'open-worship-app',
-});
-if (gotTheLock) {
+async function main() {
+    if (isDev) {
+        app.commandLine.appendSwitch('ignore-certificate-errors');
+    }
+    await app.whenReady();
+    const gotTheLock = app.requestSingleInstanceLock({
+        myKey: 'open-worship-app',
+    });
+    if (!gotTheLock) {
+        app.quit();
+        return;
+    }
     initCustomSchemeHandler();
     const appController = ElectronAppController.getInstance();
     initEventListenerApp(appController);
@@ -39,6 +43,6 @@ if (gotTheLock) {
     initEventOther(appController);
     initMenu(appController);
     initDevtools(appController);
-} else {
-    app.quit();
 }
+
+main();
