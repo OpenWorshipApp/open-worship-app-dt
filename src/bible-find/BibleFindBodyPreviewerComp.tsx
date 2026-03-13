@@ -47,7 +47,9 @@ export default function BibleFindBodyPreviewerComp() {
         return (
             <div className="alert alert-warning">
                 <i className="bi bi-info-circle" />
-                <div className="ms-2">{tran('Fail to get find controller!')}</div>
+                <div className="ms-2">
+                    {tran('Fail to get find controller!')}
+                </div>
                 <br />
                 <button
                     className="btn btn-info"

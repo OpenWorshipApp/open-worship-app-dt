@@ -55,10 +55,11 @@ export default class ElectronAppController {
     }
 
     allWindows() {
-        return [
-            this.mainController.win,
-            this.lwShareController.win,
-        ].filter((win): win is BrowserWindow => win !== null);
+        return [this.mainController.win, this.lwShareController.win].filter(
+            (win): win is BrowserWindow => {
+                return win !== null;
+            },
+        );
     }
 
     resetThemeBackgroundColor() {

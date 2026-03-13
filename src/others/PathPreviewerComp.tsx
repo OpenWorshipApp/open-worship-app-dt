@@ -28,12 +28,16 @@ export function PathPreviewerComp({
     shouldNotValidate?: boolean;
     canOpenFileExplorer?: boolean;
 }>) {
-    const [isValidPath] = useAppStateAsync(() => {
-        if (shouldNotValidate) {
-            return Promise.resolve(true);
-        }
-        return fsCheckDirExist(dirPath);
-    }, [shouldNotValidate, dirPath], true);
+    const [isValidPath] = useAppStateAsync(
+        () => {
+            if (shouldNotValidate) {
+                return Promise.resolve(true);
+            }
+            return fsCheckDirExist(dirPath);
+        },
+        [shouldNotValidate, dirPath],
+        true,
+    );
     const cleanedDirectoryPath = cleanPath(dirPath);
     let directoryPath = cleanedDirectoryPath;
     if (isShowingNameOnly) {
