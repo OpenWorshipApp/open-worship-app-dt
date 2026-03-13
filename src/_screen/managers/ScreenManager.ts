@@ -275,7 +275,7 @@ export default class ScreenManager extends ScreenManagerBase {
 
     static initReceiveScreenMessage() {
         const messageUtils = appProvider.messageUtils;
-        const channel = messageUtils.channels.screenMessageChannel;
+        const channel = messageUtils.messageChannels.screenMessage;
         messageUtils.listenForData(channel, (_, message: ScreenMessageType) => {
             this.applyScreenManagerSyncScreen(message);
         });
@@ -338,7 +338,7 @@ export default class ScreenManager extends ScreenManagerBase {
             return;
         }
         const { messageUtils } = appProvider;
-        const channel = messageUtils.channels.screenMessageChannel;
+        const channel = messageUtils.messageChannels.screenMessage;
         const isSent = messageUtils.sendDataSync(channel, {
             ...message,
             isScreen: appProvider.isPageScreen,
