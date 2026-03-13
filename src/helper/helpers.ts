@@ -1,10 +1,6 @@
 import type { DragEvent } from 'react';
-import { useState } from 'react';
 
-import { useAppEffect } from './debuggerHelpers';
 import { handleError } from './errorHelpers';
-import FileSource from './FileSource';
-import type { AppDocumentSourceAbs } from './AppEditableDocumentSourceAbs';
 import { appTrace } from './loggerHelpers';
 import appProvider from '../server/appProvider';
 import {
@@ -34,7 +30,7 @@ export function getRandomColor() {
     const letters = '0123456789ABCDEF';
     let color = '#';
     for (let i = 0; i < 6; i++) {
-        color += letters[Math.round(Math.random() * 16)];
+        color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
 }
@@ -105,7 +101,7 @@ export function genRandomString(length: number = 5) {
     const charactersLength = characters.length;
     for (let i = 0; i < length; i++) {
         result += characters.charAt(
-            Math.round(Math.random() * charactersLength),
+            Math.floor(Math.random() * charactersLength),
         );
     }
     return result;
@@ -124,21 +120,6 @@ export function getWindowDim() {
     return { width, height };
 }
 
-export function useReadFileToData<T extends AppDocumentSourceAbs>(
-    filePath: string | null,
-) {
-    const [data, setData] = useState<T | null | undefined>(null);
-    useAppEffect(() => {
-        if (filePath !== null) {
-            const fileSource = FileSource.getInstance(filePath);
-            fileSource.readFileJsonData().then((itemSource: any) => {
-                setData(itemSource);
-            });
-        }
-    }, [filePath]);
-    return data;
-}
-
 export function getImageDim(src: string) {
     return new Promise<[number, number]>((resolve, reject) => {
         const img = document.createElement('img');
@@ -155,13 +136,11 @@ export function getImageDim(src: string) {
 export function getVideoDim(src: string) {
     return new Promise<[number, number]>((resolve, reject) => {
         const video = document.createElement('video');
-        video.addEventListener(
-            'loadedmetadata',
-            () => {
-                resolve([video.videoWidth, video.videoHeight]);
-            },
-            false,
-        );
+        const loadMetadata = () => {
+            resolve([video.videoWidth, video.videoHeight]);
+            video.removeEventListener('loadedmetadata', loadMetadata, false);
+        };
+        video.addEventListener('loadedmetadata', loadMetadata, false);
         video.onerror = () => {
             reject(new Error('Fail to load video:' + src));
         };
@@ -277,30 +256,24 @@ export function getMenuTitleRevealFile() {
     );
 }
 
-export function downloadFile(
+export async function downloadFile(
     url: string,
     filename: string,
     type: string,
     destinationPath: string,
     isOverwrite = true,
 ) {
-    return new Promise<string>((resolve, reject) => {
-        fetch(url)
-            .then((response) => response.blob())
-            .then(async (blob) => {
-                const file = new File([blob], filename, { type });
-                const dllPath = pathJoin(destinationPath, filename);
-
-                if (isOverwrite && (await fsCheckFileExist(dllPath))) {
-                    await fsDeleteFile(dllPath);
-                }
-                if (!(await fsCheckFileExist(dllPath))) {
-                    await fsCopyFilePathToPath(file, destinationPath, filename);
-                }
-                resolve(dllPath);
-            })
-            .catch(reject);
-    });
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const file = new File([blob], filename, { type });
+    const dllPath = pathJoin(destinationPath, filename);
+    if (isOverwrite && (await fsCheckFileExist(dllPath))) {
+        await fsDeleteFile(dllPath);
+    }
+    if (!(await fsCheckFileExist(dllPath))) {
+        await fsCopyFilePathToPath(file, destinationPath, filename);
+    }
+    return dllPath;
 }
 
 export function cumulativeOffset(element: HTMLElement | null) {

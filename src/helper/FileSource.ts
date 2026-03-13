@@ -59,7 +59,7 @@ export default class FileSource
     }
 
     get isAppFile() {
-        return !checkIsAppFile(this.fullName);
+        return checkIsAppFile(this.fullName);
     }
 
     getSrcData() {
