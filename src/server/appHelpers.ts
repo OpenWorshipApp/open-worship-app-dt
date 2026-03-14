@@ -43,7 +43,7 @@ export function electronSendAsync<T>(
     });
 }
 
-export function showExplorer(dir: string) {
+export function showFileOrDirExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);
 }
 

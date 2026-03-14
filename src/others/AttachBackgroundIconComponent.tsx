@@ -4,7 +4,7 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useAttachedBackgroundData } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { getMenuTitleRevealFile } from '../helper/helpers';
-import { showExplorer } from '../server/appHelpers';
+import { showFileOrDirExplorer } from '../server/appHelpers';
 import type FileSource from '../helper/FileSource';
 
 function showMediaContextMenu(event: any, filePath: string) {
@@ -14,7 +14,7 @@ function showMediaContextMenu(event: any, filePath: string) {
         {
             menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
-                showExplorer(filePath);
+                showFileOrDirExplorer(filePath);
             },
         },
     ]);

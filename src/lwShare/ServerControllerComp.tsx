@@ -6,7 +6,7 @@ import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
 import { ensureDataDirectory } from '../setting/directory-setting/directoryHelpers';
 import LoadingComp from '../others/LoadingComp';
 import appProvider from '../server/appProvider';
-import { showExplorer } from '../server/appHelpers';
+import { showFileOrDirExplorer } from '../server/appHelpers';
 
 function genStatusMessage({ status, message, data }: StatusDataType) {
     if (status === 'stopped') {
@@ -162,7 +162,7 @@ export default function ServerControllerComp() {
                     }}
                     title={serverData.targetDir}
                     onClick={() => {
-                        showExplorer(serverData.targetDir);
+                        showFileOrDirExplorer(serverData.targetDir);
                     }}
                 >
                     <div

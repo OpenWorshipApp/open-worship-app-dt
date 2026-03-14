@@ -5,7 +5,7 @@ import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { fsCheckDirExist, pathBasename } from '../server/fileHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
-import { showExplorer } from '../server/appHelpers';
+import { showFileOrDirExplorer } from '../server/appHelpers';
 
 // TODO: check direction rtl error with /*
 function cleanPath(path: string) {
@@ -56,7 +56,7 @@ export function PathPreviewerComp({
                 {
                     menuElement: getMenuTitleRevealFile(),
                     onSelect: () => {
-                        showExplorer(dirPath);
+                        showFileOrDirExplorer(dirPath);
                     },
                 },
             ]);

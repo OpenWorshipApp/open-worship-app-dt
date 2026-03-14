@@ -38,7 +38,7 @@ import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
-import { exportBibleMSWord, showExplorer } from '../server/appHelpers';
+import { exportBibleMSWord, showFileOrDirExplorer } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
 
 export const SelectedBibleKeyContext = createContext<string>('KJV');
@@ -354,7 +354,7 @@ export async function exportToWordDocument(bibleItems: BibleItem[]) {
             }
         }
     }
-    showExplorer(filePath);
+    showFileOrDirExplorer(filePath);
 }
 
 export function improveBibleItemTitleOnHover<T extends HTMLElement>(

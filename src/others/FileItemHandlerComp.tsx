@@ -4,7 +4,7 @@ import { tran } from '../lang/langHelpers';
 import FileReadErrorComp from './FileReadErrorComp';
 import {
     copyToClipboard,
-    showExplorer,
+    showFileOrDirExplorer,
     trashAllMaterialFiles,
 } from '../server/appHelpers';
 import FileSource from '../helper/FileSource';
@@ -34,7 +34,7 @@ export const genCommonMenu = (filePath: string): ContextMenuItemType[] => {
         {
             menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
-                showExplorer(filePath);
+                showFileOrDirExplorer(filePath);
             },
         },
     ];
@@ -82,7 +82,7 @@ export function genTrashContextMenu(
                         ` "${fileSource.fullName}" ` +
                         tran('to trash?'),
                     {
-                        confirmButtonLabel: tran('Yes'),
+                        confirmButtonLabel: 'Yes',
                     },
                 );
                 if (isOk) {

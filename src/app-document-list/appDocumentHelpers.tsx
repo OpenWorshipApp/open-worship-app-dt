@@ -35,7 +35,7 @@ import {
 import {
     convertToPdf,
     getSlidesCount,
-    showExplorer,
+    showFileOrDirExplorer,
 } from '../server/appHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
@@ -70,6 +70,7 @@ import {
 } from './selectedVaryAppDocumentHelpers';
 import { OptionalPromise } from '../helper/typeHelpers';
 import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
+import { getMenuTitleRevealFile } from '../helper/helpers';
 
 export async function showPdfSlideContextMenu(
     event: any,
@@ -91,9 +92,9 @@ export async function showPdfSlideContextMenu(
             ? []
             : [
                   {
-                      menuElement: tran('Reveal in File Explorer'),
+                      menuElement: getMenuTitleRevealFile(),
                       onSelect: () => {
-                          showExplorer(imageFilePath);
+                          showFileOrDirExplorer(imageFilePath);
                       },
                   },
               ]),
@@ -296,12 +297,12 @@ function showConfirmPdfConvert(dirPath: string, file: DroppedFileType) {
 }
 
 async function getTempFilePath(dotExt: string | null) {
-    const tempDir = getTempPath();
+    const tempDirPath = getTempPath();
     let tempFilePath: string | null = null;
     let i = 0;
     while (tempFilePath === null || (await fsCheckFileExist(tempFilePath))) {
         tempFilePath = appProvider.pathUtils.join(
-            tempDir,
+            tempDirPath,
             `temp-to-pdf-${i}${dotExt ?? ''}`,
         );
         i++;
