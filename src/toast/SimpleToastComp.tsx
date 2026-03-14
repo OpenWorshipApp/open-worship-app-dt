@@ -1,8 +1,10 @@
+import { JSX } from 'react';
+
 import { tran } from '../lang/langHelpers';
 
 export type SimpleToastType = {
     title: string;
-    message: string;
+    message: string | JSX.Element;
     timeout?: number;
 };
 
@@ -17,6 +19,7 @@ export default function SimpleToastComp({
     onMouseOver: () => void;
     onMouseOut: () => void;
 }>) {
+    const { title, message } = toast;
     return (
         <div
             className="toast show fade"
@@ -27,7 +30,7 @@ export default function SimpleToastComp({
             aria-atomic="true"
         >
             <div className="toast-header">
-                <strong className="me-auto">{toast.title}</strong>
+                <strong className="me-auto">{title}</strong>
                 <button
                     type="button"
                     className="btn-close"
@@ -36,12 +39,16 @@ export default function SimpleToastComp({
                     onClick={onClose}
                 />
             </div>
-            <div
-                className="toast-body app-selectable-text"
-                dangerouslySetInnerHTML={{
-                    __html: toast.message,
-                }}
-            />
+            {typeof message === 'string' ? (
+                <div
+                    className="toast-body app-selectable-text"
+                    dangerouslySetInnerHTML={{
+                        __html: message,
+                    }}
+                />
+            ) : (
+                <div className="toast-body app-selectable-text">{message}</div>
+            )}
         </div>
     );
 }
