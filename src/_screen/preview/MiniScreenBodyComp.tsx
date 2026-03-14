@@ -17,6 +17,12 @@ import { previewingEventListener } from '../../event/PreviewingEventListener';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import type { BibleItemDataType } from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
+import { Fragment, useMemo } from 'react';
+import {
+    genColorBar,
+    genColorMap,
+    genColorNoteDataList,
+} from '../../helper/colorNoteHelpers';
 
 function openContextMenu(event: any) {
     showAppContextMenu(event, [
@@ -89,17 +95,66 @@ function viewControllerAndScreenManagers(
     }
 }
 
+function genScreenManagersRenderer(
+    screenManagers: ScreenManager[],
+    previewWidth: number,
+) {
+    return screenManagers.map((screenManager) => {
+        return (
+            <ScreenManagerBaseContext
+                key={screenManager.key}
+                value={screenManager}
+            >
+                <ScreenPreviewerItemComp width={previewWidth} />
+            </ScreenManagerBaseContext>
+        );
+    });
+}
+
+function RenderWithColorNoteComp({
+    screenManagers,
+    previewWidth,
+}: Readonly<{
+    previewWidth: number;
+    screenManagers: ScreenManager[];
+}>) {
+    const screenManagerColorMap = useMemo(() => {
+        return genColorMap(screenManagers);
+    }, [screenManagers]);
+    const colorNotes = useMemo(() => {
+        return genColorNoteDataList(screenManagerColorMap);
+    }, [screenManagerColorMap]);
+
+    if (Object.keys(screenManagerColorMap).length === 1) {
+        return genScreenManagersRenderer(screenManagers, previewWidth);
+    }
+
+    return colorNotes.map((colorNote) => {
+        const subScreenManagers = screenManagerColorMap[colorNote] ?? [];
+        return (
+            <Fragment key={colorNote}>
+                {genColorBar(colorNote)}
+                {genScreenManagersRenderer(subScreenManagers, previewWidth)}
+            </Fragment>
+        );
+    });
+}
+
 export default function MiniScreenBodyComp({
     previewScale,
 }: Readonly<{
     previewScale: number;
 }>) {
     useScreenManagerEvents(['instance']);
+    useScreenManagerEvents(['color-note-update']);
     const screenManagers = getScreenManagersFromSetting();
     const bibleItemViewController = useBibleItemsViewControllerContext();
     viewControllerAndScreenManagers(screenManagers, bibleItemViewController);
 
-    const previewWidth = DEFAULT_PREVIEW_SIZE * previewScale;
+    const previewWidth = useMemo(() => {
+        return DEFAULT_PREVIEW_SIZE * previewScale;
+    }, [previewScale]);
+
     return (
         <div
             className={'card-body d-flex flex-column'}
@@ -111,16 +166,10 @@ export default function MiniScreenBodyComp({
             }}
         >
             <div className="w-100 flex-fill">
-                {screenManagers.map((screenManager) => {
-                    return (
-                        <ScreenManagerBaseContext
-                            key={screenManager.key}
-                            value={screenManager}
-                        >
-                            <ScreenPreviewerItemComp width={previewWidth} />
-                        </ScreenManagerBaseContext>
-                    );
-                })}
+                <RenderWithColorNoteComp
+                    screenManagers={screenManagers}
+                    previewWidth={previewWidth}
+                />
             </div>
         </div>
     );

@@ -28,7 +28,8 @@ export type ScreenManagerEventType =
     | 'update'
     | 'visible'
     | 'display-id'
-    | 'refresh';
+    | 'refresh'
+    | 'color-note-update';
 
 export default class ScreenManagerBase
     extends EventHandler<ScreenManagerEventType>
@@ -64,7 +65,7 @@ export default class ScreenManagerBase
     static idFromKey(key: string): number {
         const id = Number.parseInt(key, 10);
         if (Number.isNaN(id)) {
-            throw new Error(`Invalid screen key: ${key}`);
+            throw new TypeError(`Invalid screen key: ${key}`);
         }
         return id;
     }
@@ -209,6 +210,11 @@ export default class ScreenManagerBase
         ScreenManagerBase.fireUpdateEvent();
     }
 
+    fireColorNoteUpdateEvent() {
+        this.addPropEvent('color-note-update');
+        ScreenManagerBase.fireColorNoteUpdateEvent();
+    }
+
     fireInstanceEvent() {
         this.addPropEvent('instance');
         ScreenManagerBase.fireInstanceEvent();
@@ -221,11 +227,15 @@ export default class ScreenManagerBase
 
     fireRefreshEvent() {
         this.addPropEvent('refresh');
-        ScreenManagerBase.fireVisibleEvent();
+        ScreenManagerBase.fireRefreshEvent();
     }
 
     static fireUpdateEvent() {
         this.addPropEvent('update');
+    }
+
+    static fireColorNoteUpdateEvent() {
+        this.addPropEvent('color-note-update');
     }
 
     static fireInstanceEvent() {

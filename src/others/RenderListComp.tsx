@@ -1,15 +1,17 @@
 import { Fragment, useMemo } from 'react';
 
 import type DirSource from '../helper/DirSource';
-import FileSource from '../helper/FileSource';
 import type { MimetypeNameType } from '../server/fileHelpers';
 import LoadingComp from './LoadingComp';
 import { GotoSettingDirectoryPathComp } from './NoDirSelectedComp';
 import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';
 import { tran } from '../lang/langHelpers';
 import { useFilePaths } from '../helper/dirSourceHelpers';
-
-const UNKNOWN_COLOR_NOTE = 'unknown';
+import {
+    genColorBar,
+    genColorNoteDataList,
+    genFilePathColorMap,
+} from '../helper/colorNoteHelpers';
 
 function RenderFileItemsWithColorNote({
     filePaths,
@@ -21,26 +23,10 @@ function RenderFileItemsWithColorNote({
     sortFilePaths?: (filePaths: string[]) => string[];
 }) {
     const filePathColorMap = useMemo(() => {
-        const newFilePathColorMap: { [key: string]: string[] } = {
-            [UNKNOWN_COLOR_NOTE]: [],
-        };
-        for (const filePath of filePaths) {
-            const fileSource = FileSource.getInstance(filePath);
-            const colorNote = fileSource.colorNote ?? UNKNOWN_COLOR_NOTE;
-            newFilePathColorMap[colorNote] =
-                newFilePathColorMap[colorNote] ?? [];
-            newFilePathColorMap[colorNote].push(filePath);
-        }
-        return newFilePathColorMap;
+        return genFilePathColorMap(filePaths);
     }, [filePaths]);
     const colorNotes = useMemo(() => {
-        const newColorNotes = Object.keys(filePathColorMap)
-            .filter((key) => {
-                return key !== UNKNOWN_COLOR_NOTE;
-            })
-            .sort((a, b) => a.localeCompare(b));
-        newColorNotes.push(UNKNOWN_COLOR_NOTE);
-        return newColorNotes;
+        return genColorNoteDataList(filePathColorMap);
     }, [filePathColorMap]);
 
     if (Object.keys(filePathColorMap).length === 1) {
@@ -57,17 +43,7 @@ function RenderFileItemsWithColorNote({
         }
         return (
             <Fragment key={colorNote}>
-                <hr
-                    style={
-                        colorNote === UNKNOWN_COLOR_NOTE
-                            ? {}
-                            : {
-                                  backgroundColor: colorNote,
-                                  height: '1px',
-                                  border: 0,
-                              }
-                    }
-                />
+                {genColorBar(colorNote)}
                 {bodyHandler(subFilePaths)}
             </Fragment>
         );

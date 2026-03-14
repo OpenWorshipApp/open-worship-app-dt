@@ -162,7 +162,7 @@ export default class ScreenManager extends ScreenManagerBase {
     async setColorNote(color: string | null) {
         await super.setColorNote(color);
         await saveScreenManagersSetting();
-        this.fireUpdateEvent();
+        this.fireColorNoteUpdateEvent();
     }
 
     sendSyncScreen() {

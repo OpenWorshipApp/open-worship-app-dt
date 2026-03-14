@@ -125,10 +125,7 @@ export default class EventHandler<
         const eventHandler = this.getEventHandler();
         return eventNames.map((eventName) => {
             const prefixedEventName = this.prefixEventName(eventName);
-            eventHandler.addOnEventListener(
-                prefixedEventName,
-                listener,
-            );
+            eventHandler.addOnEventListener(prefixedEventName, listener);
             return { eventName, listener };
         });
     }
