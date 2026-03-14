@@ -9,7 +9,33 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Search XML': 'ស្វែងរក XML',
+    'Downloading in progress': 'កំពុងទាញយក',
+    "Can't leave the page while downloading.":
+        'មិនអាចចាកចេញពីទំព័រនេះបានទេ ខណៈពេលកំពុងទាញយក។',
+    'Please wait until the download is complete.':
+        'សូមរង់ចាំរហូតដល់ការទាញយកបានបញ្ចប់។',
+    'Or attempt 3 times to force leaving.': 'ឬព្យាយាម 3 ដងដើម្បីបង្ខំចាកចេញ។',
+    'Download Completed': 'ការទាញយកបានបញ្ចប់',
+    'The update has been downloaded. Do you want to open the file location?':
+        'ការធ្វើបច្ចុប្បន្នភាពត្រូវបានទាញយក។ តើអ្នកចង់បើកទីតាំងឯកសារទេ?',
+    'Error occurred during download': 'មានបញ្ហាពេលកំពុងទាញយក',
+    Error: 'បញ្ហា',
+    'Import XML File': 'នាំចូលឯកសារ XML',
+    'XML format example': 'ឧទាហរណ៍ទ្រង់ទ្រាយ XML',
+    'Renaming File': 'កំពុងប្ដូរឈ្មោះឯកសារ',
+    'Unable to rename file': 'មិនអាចប្ដូរឈ្មោះឯកសារបាន',
+    'No Bible XML files': 'មិនមានឯកសារ XML ព្រះគម្ពីរទេ',
+    'Bibles XML': 'ព្រះគម្ពីរជា XML',
+    'Update Available': 'អាចធ្វើបច្ចុប្បន្នភាពបាន',
+    'A new version of the app is available': 'មានកំណែថ្មីនៃកម្មវិធី',
+    'Would you like to download it?': 'តើអ្នកចង់ទាញយកវាទេ?',
+    'You can go to download page.': 'អ្នកអាចទៅកាន់ទំព័រទាញយក',
+    'Go to Download Page': 'ទៅកាន់ទំព័រទាញយក',
     'Screen Manager is locked': 'កម្មវិធីគ្រប់គ្រងអេក្រង់ត្រូវបានចាក់សោ',
+    'No Update Needed': 'មិនមានការធ្វើបច្ចុប្បន្នភាពទេ',
+    'You are using the latest version of the app.':
+        'អ្នកកំពុងប្រើកំណែថ្មីបំផុតនៃកម្មវិធី',
     'Please unlock the screen manager to change the app document':
         'សូមបើកសោកម្មវិធីគ្រប់គ្រងអេក្រង់ដើម្បីផ្លាស់ប្តូរឯកសារកម្មវិធី',
     'Background Images': 'រូបភាពផ្ទៃខាងក្រោយ',
