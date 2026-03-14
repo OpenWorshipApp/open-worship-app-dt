@@ -22,6 +22,7 @@ import {
 import appProvider from '../../server/appProvider';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import type { ScreenMessageType } from '../screenTypeHelpers';
+import { tran } from '../../lang/langHelpers';
 
 export type ScreenManagerEventType =
     | 'instance'
@@ -130,8 +131,10 @@ export default class ScreenManagerBase
     checkIsLockedWithMessage() {
         if (this.isLocked) {
             showSimpleToast(
-                'Screen Manager is locked',
-                'Please unlock the screen manager to change the app document',
+                tran('Screen Manager is locked'),
+                tran(
+                    'Please unlock the screen manager to change the app document',
+                ),
             );
             return true;
         }
