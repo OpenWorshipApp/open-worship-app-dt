@@ -72,16 +72,6 @@ function copyFile(basePath, fileFullName, destFileFullName) {
   copyFileSync(join(basePath.source, fileFullName), destFilePath);
 }
 
-const basePath = {
-  source: resolve('./extra-work/db-exts'),
-  destination: resolve('./electron-build/db-exts'),
-};
-['fts5', 'spellfix1'].forEach((baseName) => {
-  const { sourceFileName, destFileName } = genLibFileName(baseName);
-  console.log('Copy:', sourceFileName, destFileName);
-  copyFile(basePath, sourceFileName, destFileName);
-});
-
 function checkIsFile(filePath) {
   const stats = existsSync(filePath) ? statSync(filePath) : null;
   return stats && stats.isFile();
@@ -102,19 +92,29 @@ function copyAllChildren(source, dest) {
   }
 }
 
+const basePath = {
+  source: resolve('./extra-work/db-exts'),
+  destination: resolve('./electron-build/db-exts'),
+};
+['fts5', 'spellfix1'].forEach((baseName) => {
+  const { sourceFileName, destFileName } = genLibFileName(baseName);
+  copyFile(basePath, sourceFileName, destFileName);
+});
+console.log('"db-exts" files are copied');
+
 const binHelperSourceRootDir = resolve('./extra-work/bin-helper/dist');
 const binHelperDestRootDir = resolve('./electron-build/bin-helper');
-
 copyAllChildren(
   resolve(binHelperSourceRootDir, 'net8.0'),
   resolve(binHelperDestRootDir, 'ms-helpers'),
 );
-console.log('PowerPoint lib files are copied');
+console.log('"MSHelpers" files are copied');
+
 copyAllChildren(
   resolve(binHelperSourceRootDir, `bin${getFileSuffix()}`),
   resolve(binHelperDestRootDir, 'dotnet-bin'),
 );
-console.log('PowerPoint bin files are copied');
+console.log('"dotnet-bin" files are copied');
 
 const { sourceFileName: ytSourceFileName, destFileName: ytDestFileName } =
   genBinFileName('yt-dlp');
@@ -126,14 +126,14 @@ copyFile(
   ytSourceFileName,
   ytDestFileName,
 );
-console.log('yt-dlp file is copied');
+console.log('"yt-dlp" files are copied');
 
 // TODO: copy only needed files
 copyAllChildren(
   resolve('./node_modules/node-api-dotnet'),
   resolve(binHelperDestRootDir, 'node-api-dotnet'),
 );
-console.log('node-api-dotnet files are copied');
+console.log('"node-api-dotnet" files are copied');
 
 if (systemUtils.isMac) {
   copyAllChildren(
@@ -149,7 +149,7 @@ if (systemUtils.isMac) {
     resolve(binHelperDestRootDir, 'ffmpeg'),
   );
 }
-console.log('ffmpeg file is copied');
+console.log('"ffmpeg" files are copied');
 
 copyFile(
   {
@@ -159,7 +159,7 @@ copyFile(
   'package-lock.json',
   'package-lock.json',
 );
-console.log('package-lock.json file is copied');
+console.log('"package-lock.json" file is copied');
 
 const { sourceFileName: denoSourceFileName, destFileName: denoDestFileName } =
   genBinFileName('deno');
@@ -171,4 +171,4 @@ copyFile(
   denoSourceFileName,
   denoDestFileName,
 );
-console.log('deno file is copied');
+console.log('"deno" files are copied');
