@@ -1,5 +1,4 @@
 import ProgressBarEventListener from '../event/ProgressBarEventListener';
-import { appLog } from '../helper/loggerHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 export function showProgressBar(progressKey: string) {
@@ -16,9 +15,6 @@ export function showProgressBarMessage(...args: any[]) {
         showProgressBarMessage('');
     });
     const message = args.join(' ').trim();
-    if (message) {
-        appLog(message);
-    }
     for (const element of document.querySelectorAll(
         '.progress-bar-content-text',
     )) {
