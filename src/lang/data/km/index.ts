@@ -9,6 +9,8 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Getting File List': 'កំពុងទទួលបានបញ្ជីឯកសារ',
+    'Error occurred during listing file': 'មានបញ្ហាពេលកំពុងទទួលបានបញ្ជីឯកសារ',
     'Unset Directory Path': 'បោះបង់ផ្លូវថត',
     'Empty Bible List': 'បញ្ជីព្រះគម្ពីរទទេ',
     'Empty Note List': 'បញ្ជីកំណត់សម្គាល់ទទេ',

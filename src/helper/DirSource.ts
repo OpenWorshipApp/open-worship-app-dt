@@ -1,4 +1,5 @@
 import EventHandler from '../event/EventHandler';
+import { tran } from '../lang/langHelpers';
 import type { FileMetadataType, MimetypeNameType } from '../server/fileHelpers';
 import {
     getFileMetaData,
@@ -181,8 +182,8 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
                 } catch (error) {
                     handleError(error);
                     showSimpleToast(
-                        'Getting File List',
-                        'Error occurred during listing file',
+                        tran('Getting File List'),
+                        tran('Error occurred during listing file'),
                     );
                 }
                 return this.filePathsMap[mimetypeName] ?? null;

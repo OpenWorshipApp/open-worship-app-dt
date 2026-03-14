@@ -22,6 +22,7 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { cloneJson, freezeObject } from '../helper/helpers';
 import { electronSendAsync } from './appHelpers';
+import { tran } from '../lang/langHelpers';
 
 for (const ml of [
     mimeBibleList,
@@ -453,8 +454,8 @@ export async function fsListFilesWithMimetype(
     } catch (error) {
         handleError(error);
         showSimpleToast(
-            'Getting File List',
-            'Error occurred during listing file',
+            tran('Getting File List'),
+            tran('Error occurred during listing file'),
         );
     }
     return null;
