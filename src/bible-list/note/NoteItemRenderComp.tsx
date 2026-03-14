@@ -34,6 +34,9 @@ export function handleOpening(note: Note, noteItem: NoteItem) {
         url,
         `${fileFullName}-${noteId}_${Date.now()}`,
         crypto.randomUUID(),
+        {
+            width: 600,
+        },
     );
 }
 
