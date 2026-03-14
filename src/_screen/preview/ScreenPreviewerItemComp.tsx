@@ -47,10 +47,10 @@ export default function ScreenPreviewerItemComp({
     return (
         <div
             key={screenManager.key}
+            className={`mini-screen card ${selectedCN}`}
             data-screen-key={screenManager.screenId}
             data-screen-manager-key={screenManager.key}
             title={`Screen: ${screenManager.screenId}`}
-            className={`mini-screen card ${selectedCN}`}
             style={{
                 overflow: 'hidden',
                 width: `${width}px`,
