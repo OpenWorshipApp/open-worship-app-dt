@@ -95,6 +95,9 @@ export default class AttachBackgroundManager {
                     ) {
                         return [key, value];
                     }
+                    if (typeof value.item !== 'string') {
+                        return [key, null];
+                    }
                     const baseDirFileSource = new BaseDirFileSource(
                         this.getBaseDirSettingName(value),
                         value.item,
