@@ -285,10 +285,10 @@ async function guessingBibleKey(xmlElementBible: Element) {
             bibleKey = newKey;
         }
         const isConfirm = await showAppConfirm(
-            'Confirm Key Value',
+            tran('Confirm Key for Bible'),
             bibleKey
-                ? `Do you want to continue with key="${bibleKey}"?`
-                : 'Are you sure you want to quite?',
+                ? `${tran('Do you want to continue with')} key="${bibleKey}"?`
+                : tran('Are you sure you want to quit?'),
             {
                 confirmButtonLabel: 'Yes',
             },
@@ -461,12 +461,9 @@ export async function getBibleInfoJson(
     xmlElementBible: Element,
 ): Promise<BibleJsonInfoType | null> {
     const xmlElementMaps = guessElement(xmlElementBible, tagNamesMap.map);
-    if (xmlElementMaps.length === 0) {
-        return null;
-    }
-    const xmlElementMap = xmlElementMaps[0];
+    const xmlElementMap = xmlElementMaps[0] ?? null;
     const numbersMap = getBibleMap(
-        xmlElementMap ?? null,
+        xmlElementMap,
         tagNamesMap.numberMap,
         Object.fromEntries(
             Array.from({ length: 10 }, (_, i) => [i.toString(), i.toString()]),
@@ -475,7 +472,7 @@ export async function getBibleInfoJson(
     const locale = (guessValue(xmlElementBible, attributesMap.locale) ??
         DEFAULT_LOCALE) as LocaleType;
     const keyBookMap = getBibleMap(
-        xmlElementMap ?? null,
+        xmlElementMap,
         tagNamesMap.bookMap,
         cloneJson(getModelKeyBookMap()),
     );
