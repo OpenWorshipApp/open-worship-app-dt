@@ -169,7 +169,7 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; t
     if [[ "$process" == "arm64" ]]; then
         download_yt_dlp yt-dlp.exe "-arm64.exe"
         download_dotnet win-arm64.zip "-arm64"
-        download_deno deno-aarch64-pc-windows-msvc.zip "-arm64"
+        download_deno deno-aarch64-pc-windows-msvc.zip "-arm64.exe"
         download_ffmpeg ffmpeg-$ffmpeg_build_version-winarm64-gpl-$ffmpeg_version.zip
     else
         download_yt_dlp yt-dlp.exe ".exe"
