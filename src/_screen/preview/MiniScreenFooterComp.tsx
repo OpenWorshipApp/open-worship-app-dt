@@ -5,7 +5,7 @@ export const DEFAULT_PREVIEW_SIZE = 50;
 export const defaultRangeSize = {
     size: 9,
     min: 1,
-    max: 20,
+    max: 30,
     step: 1,
 };
 export default function MiniScreenFooterComp({
