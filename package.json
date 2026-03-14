@@ -135,7 +135,7 @@
         "dependency-cruiser": "^17.3.7",
         "diff": "^8.0.3",
         "electron": "^39.6.1",
-        "electron-builder": "^26.4.0",
+        "electron-builder": "^25.1.8",
         "eslint": "^9.39.2",
         "json-schema-library": "^10.5.2",
         "lexical": "^0.39.0",
