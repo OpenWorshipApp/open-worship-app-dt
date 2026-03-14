@@ -17,7 +17,8 @@ const LazyPathEditorComp = lazy(() => {
     return import('./PathEditorComp');
 });
 
-function openContextMenu(dirPath: string, event: any) {
+function openContextMenu(dirSource: DirSource, event: any) {
+    const dirPath = dirSource.dirPath;
     if (!dirPath) {
         event.preventDefault();
         event.stopPropagation();
@@ -45,6 +46,12 @@ function openContextMenu(dirPath: string, event: any) {
             },
         });
     }
+    menuItems.push({
+        menuElement: tran('Clear'),
+        onSelect: () => {
+            dirSource.dirPath = '';
+        },
+    });
     showAppContextMenu(event, menuItems);
 }
 
@@ -65,7 +72,7 @@ export default function PathSelectorComp({
     return (
         <div
             className="path-selector w-100"
-            onContextMenu={openContextMenu.bind(null, dirPath)}
+            onContextMenu={openContextMenu.bind(null, dirSource)}
         >
             <div
                 className="d-flex path-previewer app-caught-hover-pointer"
