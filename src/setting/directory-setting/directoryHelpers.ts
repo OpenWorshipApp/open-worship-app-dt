@@ -21,9 +21,9 @@ import { appLocalStorage } from './appLocalStorage';
 import FileSource from '../../helper/FileSource';
 
 export function getDefaultDataDir() {
-    const desktopPath = getDesktopPath();
+    const desktopDirPath = getDesktopPath();
     const dirPath = appProvider.pathUtils.join(
-        desktopPath,
+        desktopDirPath,
         'open-worship-data',
     );
     return dirPath;
