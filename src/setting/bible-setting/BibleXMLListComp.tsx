@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import LoadingComp from '../../others/LoadingComp';
 import BibleXMLInfoComp from './BibleXMLInfoComp';
+import { tran } from '../../lang/langHelpers';
 
 export default function BibleXMLListComp({
     isPending,
@@ -33,7 +34,7 @@ export default function BibleXMLListComp({
                     loadBibleKeys();
                 }}
             >
-                <i className="bi bi-arrow-clockwise" /> Refresh
+                <i className="bi bi-arrow-clockwise" /> {tran('Refresh')}
             </button>
             <a
                 className="btn btn-secondary ms-2"
@@ -41,16 +42,16 @@ export default function BibleXMLListComp({
                 target="_blank"
             >
                 <i className="bi bi-google" />{' '}
-                <i className="bi bi-filetype-xml" /> Search XML
+                <i className="bi bi-filetype-xml" /> {tran('Search XML')}
             </a>
         </>
     );
     if (bibleKeysMap === null || Object.keys(bibleKeysMap ?? []).length === 0) {
-        return <div>No Bible XML files {buttons}</div>;
+        return <div>{tran('No Bible XML files')} {buttons}</div>;
     }
     return (
         <>
-            <h3>Bibles XML {buttons}</h3>
+            <h3>{tran('Bibles XML')} {buttons}</h3>
             <div className="w-100">
                 <ul className="list-group d-flex flex-fill">
                     {bibleKeys.map((bibleKey) => {

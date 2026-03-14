@@ -61,8 +61,8 @@ function genContextMenu(
                       menuElement: tran('Empty'),
                       onSelect: () => {
                           showAppConfirm(
-                              'Empty Bible List',
-                              'Are you sure to empty this bible list?',
+                              tran('Empty Bible List'),
+                              tran('Are you sure to empty this bible list?'),
                               {
                                   confirmButtonLabel: 'Yes',
                               },

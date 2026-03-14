@@ -28,6 +28,7 @@ import { electronSendAsync } from '../server/appHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import type { AnyObjectType } from './typeHelpers';
 import CacheManager from '../others/CacheManager';
+import { tran } from '../lang/langHelpers';
 
 export type SrcData = `data:${string}`;
 
@@ -280,8 +281,8 @@ export default class FileSource
         } catch (error: any) {
             handleError(error);
             showSimpleToast(
-                'Renaming File',
-                `Unable to rename file: ${error.message}`,
+                tran('Renaming File'),
+                `${tran('Unable to rename file')}: ${error.message}`,
             );
         }
         return null;
@@ -353,6 +354,22 @@ export default class FileSource
             this.filePath,
             this.filePath,
         );
+    }
+
+    async genNextFilePath() {
+        let i = 0;
+        let nextFilePath = pathJoin(
+            this.baseDirPath,
+            `${this.name}.${this.extension}`,
+        );
+        while (await fsCheckFileExist(nextFilePath)) {
+            i++;
+            nextFilePath = pathJoin(
+                this.baseDirPath,
+                `${this.name} (${i}).${this.extension}`,
+            );
+        }
+        return nextFilePath;
     }
 
     async trash() {

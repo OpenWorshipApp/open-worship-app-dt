@@ -8,7 +8,9 @@ export const AUDIO_PLAYING_CHANGE_EVENT = 'audio-playing-change';
 export function showAudioPlayingToast() {
     showSimpleToast(
         tran('Audio playing'),
-        tran('Please stop the audio before leaving the page.'),
+        tran('Please stop the audio before leaving the page.') +
+            ' ' +
+            tran('Or attempt 3 times to force leaving.'),
     );
 }
 

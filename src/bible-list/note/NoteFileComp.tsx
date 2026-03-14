@@ -46,8 +46,8 @@ function genContextMenu(
                       menuElement: tran('Empty'),
                       onSelect: () => {
                           showAppConfirm(
-                              'Empty Note List',
-                              'Are you sure to empty this note list?',
+                              tran('Empty Note List'),
+                              tran('Are you sure to empty this note list?'),
                               {
                                   confirmButtonLabel: 'Yes',
                               },
