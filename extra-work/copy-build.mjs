@@ -36,6 +36,7 @@ function getFileSuffix() {
   }
   return suffix;
 }
+const fileSuffix = getFileSuffix();
 function genLibFileName(baseName) {
   let ext;
   if (systemUtils.isWindows) {
@@ -45,9 +46,8 @@ function genLibFileName(baseName) {
   } else {
     ext = 'so';
   }
-  const suffix = getFileSuffix();
   return {
-    sourceFileName: `${baseName}${suffix}.${ext}`,
+    sourceFileName: `${baseName}${fileSuffix}.${ext}`,
     destFileName: `${baseName}.${ext}`,
   };
 }
@@ -56,9 +56,8 @@ function genBinFileName(baseName) {
   if (systemUtils.isWindows) {
     ext = '.exe';
   }
-  const suffix = getFileSuffix();
   return {
-    sourceFileName: `${baseName}${suffix}${ext}`,
+    sourceFileName: `${baseName}${fileSuffix}${ext}`,
     destFileName: `${baseName}${ext}`,
   };
 }
@@ -111,7 +110,7 @@ copyAllChildren(
 console.log('"MSHelpers" files are copied');
 
 copyAllChildren(
-  resolve(binHelperSourceRootDir, `bin${getFileSuffix()}`),
+  resolve(binHelperSourceRootDir, `bin${fileSuffix}`),
   resolve(binHelperDestRootDir, 'dotnet-bin'),
 );
 console.log('"dotnet-bin" files are copied');
