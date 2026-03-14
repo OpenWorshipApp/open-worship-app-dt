@@ -160,7 +160,7 @@ export default function MiniScreenBodyComp({
             className="card-body d-flex flex-column"
             style={{
                 overflow: 'auto',
-                paddingBottom: 30
+                paddingBottom: 30,
             }}
             onContextMenu={(event) => {
                 openContextMenu(event);
