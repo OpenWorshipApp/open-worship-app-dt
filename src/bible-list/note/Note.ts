@@ -1,5 +1,5 @@
 import { AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
-import { defaultDataDirNames } from '../../helper/constants';
+import { dirSourceSettingNames } from '../../helper/constants';
 import { notifyNewElementAdded } from '../../helper/domHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
@@ -263,7 +263,7 @@ export default class Note
     }
 
     static async getDefault() {
-        const dir = getSetting(defaultDataDirNames.NOTES) ?? '';
+        const dir = getSetting(dirSourceSettingNames.NOTES) ?? '';
         if (!dir) {
             return null;
         }
