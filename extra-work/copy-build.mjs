@@ -91,6 +91,9 @@ function copyAllChildren(source, dest) {
   }
 }
 
+const binHelperSourceRootDir = resolve('./extra-work/bin-helper/dist');
+const binHelperDestRootDir = resolve('./electron-build/bin-helper');
+
 const basePath = {
   source: resolve('./extra-work/db-exts'),
   destination: resolve('./electron-build/db-exts'),
@@ -101,8 +104,6 @@ const basePath = {
 });
 console.log('"db-exts" files are copied');
 
-const binHelperSourceRootDir = resolve('./extra-work/bin-helper/dist');
-const binHelperDestRootDir = resolve('./electron-build/bin-helper');
 copyAllChildren(
   resolve(binHelperSourceRootDir, 'net8.0'),
   resolve(binHelperDestRootDir, 'ms-helpers'),

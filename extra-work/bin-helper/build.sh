@@ -143,7 +143,7 @@ deno_version="v2.6.9"
 deno_prefix_url="https://github.com/denoland/deno/releases/download/$deno_version/"
 download_deno(){
     local url="$deno_prefix_url$1"
-    local output_dir="$dist_dir/deno$2"
+    local output_dir="$dist_dir/deno"
     local file_name=$(basename "$url")
     mkdir -p "$output_dir"
     if [ ! -f "$file_name" ]; then
@@ -157,8 +157,9 @@ download_deno(){
         echo "$file_name already exists, skipping download."
     fi
     ls $output_dir
-    unzip "$file_name" -d "$output_dir"
-    chmod +x "$output_dir/deno"
+    unzip "$file_name" -d "$output_dir/temp"
+    mv "$output_dir/temp/deno" "$output_dir/deno$2"
+    chmod +x "$output_dir/deno$2"
 }
 
 ffmpeg_build_version="n8.0-latest"
