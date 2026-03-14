@@ -83,6 +83,7 @@ function RenderSaveButton({
                 );
                 if (canSave) {
                     save(newJsonData);
+                    setCanSave(false);
                 }
             }}
         >
