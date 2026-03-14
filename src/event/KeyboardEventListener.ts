@@ -146,6 +146,7 @@ export default class KeyboardEventListener extends EventHandler<string> {
         }
         return clonedEventMapper;
     }
+
     static toShortcutKey(eventMapper: EventMapper) {
         const clonedEventMapper = cloneJson(eventMapper);
         let key = clonedEventMapper.key;
@@ -159,36 +160,75 @@ export default class KeyboardEventListener extends EventHandler<string> {
             clonedEventMapper;
         const allControls: string[] = allControlKey ?? [];
         if (appProvider.systemUtils.isWindows) {
-            allControls.push(...(wControlKey ?? []));
+            if (wControlKey) {
+                allControls.push(...wControlKey);
+            } else if (mControlKey || lControlKey) {
+                throw new Error(
+                    'mControlKey and lControlKey are ignored on Windows platform',
+                );
+            }
         } else if (appProvider.systemUtils.isMac) {
-            allControls.push(...(mControlKey ?? []));
+            if (mControlKey) {
+                allControls.push(...mControlKey);
+            } else if (wControlKey || lControlKey) {
+                throw new Error(
+                    'wControlKey and lControlKey are ignored on Mac platform',
+                );
+            }
         } else if (appProvider.systemUtils.isLinux) {
-            allControls.push(...(lControlKey ?? []));
-        }
-        if (allControls.length > 0) {
-            const allControlKeys = allControls.map((key) => {
-                return keyNameMap[key] ?? key;
-            });
-            let sorted = [...allControlKeys].sort((a, b) => {
-                return a.localeCompare(b);
-            });
-            if (appProvider.systemUtils.isMac) {
-                // Meta+C -> ⌘ C
-                sorted = sorted.map((key) => {
-                    return macKeyMap[key.toLocaleLowerCase()] ?? key;
-                });
-                key = `${sorted.join('')} ${key}`;
-            } else {
-                key = `${sorted.join('+')}+${key}`;
+            if (lControlKey) {
+                allControls.push(...lControlKey);
+            } else if (wControlKey || mControlKey) {
+                throw new Error(
+                    'wControlKey and mControlKey are ignored on Linux platform',
+                );
             }
         }
-        // TODO: return {key, title} for tooltip and menu.
-        // e.g. Mac Meta+C show as "⌘ C"
+        if (allControls.length === 0) {
+            return key;
+        }
+        const allControlKeys = allControls.map((key) => {
+            return keyNameMap[key] ?? key;
+        });
+        let sorted = [...allControlKeys].sort((a, b) => {
+            return a.localeCompare(b);
+        });
+        if (appProvider.systemUtils.isMac) {
+            // Meta+C -> ⌘ C
+            sorted = sorted.map((key) => {
+                return macKeyMap[key.toLocaleLowerCase()] ?? key;
+            });
+            key = `${sorted.join('')} ${key}`;
+        } else {
+            key = `${sorted.join('+')}+${key}`;
+        }
         return key;
     }
+
+    static filterEventMappersByPlatform(eventMappers: EventMapper[]) {
+        return eventMappers.filter((eventMapper) => {
+            const { platforms } = eventMapper;
+            if (!platforms) {
+                return true;
+            }
+            if (
+                (platforms.includes(PlatformEnum.Windows) &&
+                    appProvider.systemUtils.isWindows) ||
+                (platforms.includes(PlatformEnum.Mac) &&
+                    appProvider.systemUtils.isMac) ||
+                (platforms.includes(PlatformEnum.Linux) &&
+                    appProvider.systemUtils.isLinux)
+            ) {
+                return true;
+            }
+            return false;
+        });
+    }
+
     static toEventMapperKey(eventMapper: EventMapper) {
         const key = toShortcutKey(eventMapper);
-        return `${this.getLastLayer()}>${key}`;
+        const lastLayer = this.getLastLayer();
+        return `${lastLayer}>${key}`;
     }
 }
 
@@ -200,7 +240,9 @@ export function checkIsKeyboardEventMatch(
     eventMappers: EventMapper[],
     event: KeyboardEvent,
 ) {
-    for (const eventMapper of eventMappers) {
+    for (const eventMapper of KeyboardEventListener.filterEventMappersByPlatform(
+        eventMappers,
+    )) {
         const expectEventKey =
             KeyboardEventListener.toEventMapperKey(eventMapper);
         const actualEventKey =
@@ -213,27 +255,11 @@ export function checkIsKeyboardEventMatch(
 }
 
 function genEventNames(eventMappers: EventMapper[]) {
-    const eventNames = eventMappers
-        .filter((eventMapper) => {
-            const { platforms } = eventMapper;
-            if (platforms) {
-                if (
-                    (platforms.includes(PlatformEnum.Windows) &&
-                        appProvider.systemUtils.isWindows) ||
-                    (platforms.includes(PlatformEnum.Mac) &&
-                        appProvider.systemUtils.isMac) ||
-                    (platforms.includes(PlatformEnum.Linux) &&
-                        appProvider.systemUtils.isLinux)
-                ) {
-                    return true;
-                }
-                return false;
-            }
-            return true;
-        })
-        .map((eventMapper) => {
-            return KeyboardEventListener.toEventMapperKey(eventMapper);
-        });
+    const eventNames = KeyboardEventListener.filterEventMappersByPlatform(
+        eventMappers,
+    ).map((eventMapper) => {
+        return KeyboardEventListener.toEventMapperKey(eventMapper);
+    });
     return eventNames;
 }
 export function useKeyboardRegistering(
@@ -242,7 +268,8 @@ export function useKeyboardRegistering(
     deps: DependencyList,
 ) {
     const eventNames = useMemo(() => {
-        return genEventNames(eventMappers);
+        const eventNames = genEventNames(eventMappers);
+        return eventNames;
     }, [eventMappers]);
     useAppEffect(() => {
         const registeredEvents = KeyboardEventListener.registerEventListener(
@@ -264,9 +291,9 @@ document.onkeydown = function (event) {
         checkIsKeyboardEventMatch(
             [
                 {
+                    platforms: [PlatformEnum.Mac],
                     key: 'q',
                     mControlKey: ['Meta'],
-                    platforms: [PlatformEnum.Mac],
                 },
             ],
             event,

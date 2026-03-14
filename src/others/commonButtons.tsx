@@ -1,7 +1,8 @@
 import { createContext, use, useMemo } from 'react';
 
 import type { EventMapper } from '../event/KeyboardEventListener';
-import {
+import KeyboardEventListener, {
+    PlatformEnum,
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
@@ -68,16 +69,18 @@ export const BibleLookupTogglePopupContext = createContext<{
     isShowing: boolean;
     setIsShowing: (isShowing: boolean) => void;
 } | null>(null);
-const openBibleEventMaps: EventMapper[] = [
-    {
-        allControlKey: ['Ctrl'],
-        key: 'b',
-    },
-    {
-        mControlKey: ['Meta'],
-        key: 'b',
-    },
-];
+const openBibleEventMaps: EventMapper[] =
+    KeyboardEventListener.filterEventMappersByPlatform([
+        {
+            allControlKey: ['Ctrl'],
+            key: 'b',
+        },
+        {
+            platforms: [PlatformEnum.Mac],
+            mControlKey: ['Meta'],
+            key: 'b',
+        },
+    ]);
 
 export function useIsBibleLookupShowingContext() {
     const context = use(BibleLookupTogglePopupContext);

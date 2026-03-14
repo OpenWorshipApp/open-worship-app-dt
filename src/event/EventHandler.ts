@@ -124,8 +124,9 @@ export default class EventHandler<
     ): RegisteredEventType<T, F>[] {
         const eventHandler = this.getEventHandler();
         return eventNames.map((eventName) => {
+            const prefixedEventName = this.prefixEventName(eventName);
             eventHandler.addOnEventListener(
-                this.prefixEventName(eventName),
+                prefixedEventName,
                 listener,
             );
             return { eventName, listener };
@@ -134,7 +135,8 @@ export default class EventHandler<
 
     static addPropEvent<T extends string>(eventName: T, data?: any) {
         const eventHandler = this.getEventHandler();
-        eventHandler.addPropEvent(this.prefixEventName(eventName), data);
+        const prefixedEventName = this.prefixEventName(eventName);
+        eventHandler.addPropEvent(prefixedEventName, data);
     }
 
     static unregisterEventListener<T extends string, F>(
