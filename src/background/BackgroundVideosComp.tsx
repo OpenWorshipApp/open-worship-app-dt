@@ -19,7 +19,7 @@ import {
     hideProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { downloadVideoOrAudio, timeToTimeString } from '../server/appHelpers';
-import { fsCheckFileExist, fsMove } from '../server/fileHelpers';
+import { fsMove } from '../server/fileHelpers';
 import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
@@ -176,12 +176,7 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 dirSource.dirPath,
                 fileFullName,
             );
-            let i = 0;
-            const downloadedFilePath = destFileSource.filePath;
-            while (await fsCheckFileExist(downloadedFilePath)) {
-                i++;
-                destFileSource.name = destFileSource.name + ` (${i})`;
-            }
+            const downloadedFilePath = await destFileSource.genNextFilePath();
             await fsMove(filePath, downloadedFilePath);
             showSimpleToast(
                 title,
