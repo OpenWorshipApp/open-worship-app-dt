@@ -248,7 +248,7 @@ export async function checkForAppUpdate(isSilent = true) {
     if (isSilent && isSilentlyChecked) {
         return;
     }
-    isSilentlyChecked = isSilent;
+    isSilentlyChecked = true;
     const url = await getDownloadTargetUrl();
     if (url === null) {
         return;
