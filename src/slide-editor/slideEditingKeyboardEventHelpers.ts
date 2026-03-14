@@ -4,6 +4,7 @@ import Slide from '../app-document-list/Slide';
 import {
     checkIsControlKeys,
     checkIsKeyboardEventMatch,
+    PlatformEnum,
 } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -17,9 +18,9 @@ function handleHistory(appDocument: AppDocument, event: any) {
             [
                 {
                     mControlKey: ['Meta'],
-                    key: 'z',
                     wControlKey: ['Ctrl'],
                     lControlKey: ['Ctrl'],
+                    key: 'z',
                 },
             ],
             event,
@@ -33,14 +34,15 @@ function handleHistory(appDocument: AppDocument, event: any) {
             [
                 {
                     mControlKey: ['Meta', 'Shift'],
-                    key: 'z',
                     wControlKey: ['Ctrl', 'Shift'],
                     lControlKey: ['Ctrl', 'Shift'],
+                    key: 'z',
                 },
                 {
-                    key: 'y',
+                    platforms: [PlatformEnum.Windows, PlatformEnum.Linux],
                     wControlKey: ['Ctrl'],
                     lControlKey: ['Ctrl'],
+                    key: 'y',
                 },
             ],
             event,
@@ -54,9 +56,9 @@ function handleHistory(appDocument: AppDocument, event: any) {
             [
                 {
                     mControlKey: ['Meta'],
-                    key: 's',
                     wControlKey: ['Ctrl'],
                     lControlKey: ['Ctrl'],
+                    key: 's',
                 },
             ],
             event,
