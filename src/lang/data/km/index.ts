@@ -9,6 +9,15 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Empty Bible List': 'បញ្ជីព្រះគម្ពីរទទេ',
+    'Empty Note List': 'បញ្ជីកំណត់សម្គាល់ទទេ',
+    'Are you sure to empty this note list?':
+        'តើអ្នកពិតជាចង់ទទេបញ្ជីកំណត់សម្គាល់នេះឬ?',
+    'Are you sure to empty this bible list?':
+        'តើអ្នកពិតជាចង់ទទេបញ្ជីព្រះគម្ពីរនេះឬ?',
+    'Confirm Key for Bible': 'បញ្ជាក់កូនសោរព្រះគម្ពីរ',
+    'Are you sure you want to quit?': 'តើអ្នកពិតជាចង់ចាកចេញឬ?',
+    'Do you want to continue with': 'តើអ្នកចង់បន្តជាមួយ',
     'Search XML': 'ស្វែងរក XML',
     'Downloading in progress': 'កំពុងទាញយក',
     "Can't leave the page while downloading.":
