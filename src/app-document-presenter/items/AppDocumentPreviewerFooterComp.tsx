@@ -111,7 +111,7 @@ export default function AppDocumentPreviewerFooterComp({
             }}
         >
             <div className="d-flex w-100 h-100">
-                <div className="flex-item">
+                <div className="app-flex-item">
                     <AppRangeComp
                         value={thumbnailSizeScale}
                         title="Slide Thumbnail Size Scale"
@@ -129,7 +129,7 @@ export default function AppDocumentPreviewerFooterComp({
                     />
                 </div>
                 {appProvider.isPagePresenter ? (
-                    <div className="flex-item">
+                    <div className="app-flex-item">
                         <HistoryPreviewerFooterComp />
                     </div>
                 ) : null}

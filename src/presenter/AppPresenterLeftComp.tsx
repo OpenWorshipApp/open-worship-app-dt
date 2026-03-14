@@ -29,13 +29,13 @@ export default function AppPresenterLeftComp() {
                     children: LazyAppDocumentListComp,
                     key: 'v1',
                     widgetName: 'Document List',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
                 {
                     children: LazyLyricListComp,
                     key: 'v2',
                     widgetName: 'Lyric List',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
                 ...(appProvider.systemUtils.isDev
                     ? [
@@ -43,7 +43,7 @@ export default function AppPresenterLeftComp() {
                               children: LazyPlaylistListComp,
                               key: 'v3',
                               widgetName: 'Playlist List',
-                              className: 'flex-item',
+                              className: 'app-flex-item',
                           },
                       ]
                     : []),

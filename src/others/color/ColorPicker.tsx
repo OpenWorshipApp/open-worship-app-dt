@@ -90,7 +90,7 @@ export default function ColorPicker({
     if (isCollapsable && !isOpened) {
         return (
             <div
-                className="flex-item color-picker app-caught-hover-pointer "
+                className="app-flex-item color-picker app-caught-hover-pointer "
                 onContextMenu={handleContextMenuOpening}
                 onClick={() => {
                     setIsOpened(true);
@@ -111,7 +111,7 @@ export default function ColorPicker({
     }
     return (
         <div
-            className="flex-item color-picker"
+            className="app-flex-item color-picker"
             onContextMenu={handleContextMenuOpening}
         >
             {isCollapsable ? (

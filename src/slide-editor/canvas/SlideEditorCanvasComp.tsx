@@ -40,7 +40,7 @@ function EditorComp({
                     },
                     key: 'v1',
                     widgetName: 'Document List',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
                 {
                     children: {
@@ -55,7 +55,7 @@ function EditorComp({
                     },
                     key: 'v2',
                     widgetName: 'Note',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
             ]}
         />

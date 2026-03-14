@@ -30,7 +30,7 @@ export default function CanvasNoteContainerHandlerComp({
                     },
                     key: 'h1',
                     widgetName: fileFullName,
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
                 {
                     children: {
@@ -45,7 +45,7 @@ export default function CanvasNoteContainerHandlerComp({
                     },
                     key: 'h2',
                     widgetName: slide.name || slide.id.toString(),
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
             ]}
         />

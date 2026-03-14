@@ -34,7 +34,7 @@ export default function SlideEditorComp() {
                         },
                         key: 'h1',
                         widgetName: 'Slide Editor Canvas',
-                        className: 'flex-item',
+                        className: 'app-flex-item',
                     },
                     {
                         children: {
@@ -50,7 +50,7 @@ export default function SlideEditorComp() {
                         },
                         key: 'h2',
                         widgetName: 'Tools',
-                        className: 'flex-item',
+                        className: 'app-flex-item',
                     },
                 ]}
             />

@@ -67,7 +67,7 @@ export default function PresenterNoteContainerHandlerComp({
                     },
                     key: 'h1',
                     widgetName: fileFullName,
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
                 {
                     children: {
@@ -82,7 +82,7 @@ export default function PresenterNoteContainerHandlerComp({
                     },
                     key: 'h2',
                     widgetName: 'Slides',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
             ]}
         />

@@ -24,13 +24,13 @@ export default function AppPresenterMiddleComp() {
                     children: LazyPresenterComp,
                     key: 'v1',
                     widgetName: 'Presenter',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
                 {
                     children: LazyBackgroundComp,
                     key: 'v2',
                     widgetName: 'Background',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
             ]}
         />

@@ -94,7 +94,7 @@ export function RenderTitleMaterialComp({
                         />
                     ))}
                 </div>
-                <div className="flex-item">{materialContext.titleElement}</div>
+                <div className="app-flex-item">{materialContext.titleElement}</div>
             </div>
         </div>
     );

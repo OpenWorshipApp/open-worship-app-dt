@@ -24,13 +24,13 @@ export default function AppPresenterRightComp() {
                     children: LazyBibleReadingLeftComp,
                     key: 'v1',
                     widgetName: 'Bible and Notes',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
                 {
                     children: LazyMiniScreenComp,
                     key: 'v2',
                     widgetName: 'Mini Screen',
-                    className: 'flex-item',
+                    className: 'app-flex-item',
                 },
             ]}
         />

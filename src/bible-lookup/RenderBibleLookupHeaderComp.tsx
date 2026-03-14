@@ -35,7 +35,7 @@ export default function RenderBibleLookupHeaderComp({
             }}
         >
             <div
-                className="flex-item h-100 overflow-hidden d-flex align-items-center"
+                className="app-flex-item h-100 overflow-hidden d-flex align-items-center"
                 style={{
                     width: 'calc(50% - 175px)',
                 }}
@@ -43,7 +43,7 @@ export default function RenderBibleLookupHeaderComp({
                 <BibleLookupInputHistoryComp />
             </div>
             <div
-                className="flex-item input-group app-input-group-header"
+                className="app-flex-item input-group app-input-group-header"
                 style={{ width: 350 }}
             >
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
@@ -53,7 +53,7 @@ export default function RenderBibleLookupHeaderComp({
             </div>
             <div
                 className={
-                    'flex-item flex-fill justify-content-end' +
+                    'app-flex-item flex-fill justify-content-end' +
                     (appProvider.isPageReader ? '' : ' pe-5')
                 }
             >
