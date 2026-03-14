@@ -26,15 +26,13 @@ import {
 } from '../helper/domHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { unlocking } from '../server/unlockingHelpers';
-import {
-    checkDecidedBibleReaderHomePage,
-    checkForUpdateSilently,
-} from '../server/appHelpers';
+import { checkDecidedBibleReaderHomePage } from '../server/appHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
 import { useThemeSource } from './initHelpers';
 import { getReactRoot } from './rootHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
+import { checkForAppUpdate } from '../server/updatingAppHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
@@ -150,7 +148,7 @@ export async function run(children: ReactNode) {
             tran('Quick Exit'),
             tran('Are you sure you want to quit the app?'),
             {
-                confirmButtonLabel: tran('Yes'),
+                confirmButtonLabel: 'Yes',
             },
         ).then((isOk) => {
             if (isOk) {
@@ -190,5 +188,5 @@ export async function run(children: ReactNode) {
     const root = getReactRoot();
     root.render(<RenderApp>{children}</RenderApp>);
 
-    setTimeout(checkForUpdateSilently, 6e4);
+    setTimeout(checkForAppUpdate, 6e4);
 }

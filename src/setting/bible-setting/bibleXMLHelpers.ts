@@ -4,8 +4,12 @@ import type { SchemaNode } from 'json-schema-library';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import appProvider from '../../server/appProvider';
-import { writeStreamToFile } from '../../helper/bible-helpers/downloadHelpers';
-import { showExplorer } from '../../server/appHelpers';
+import {
+    initHttpRequest,
+    MessageCallbackType,
+    writeStreamToFile,
+} from '../../helper/bible-helpers/downloadHelpers';
+import { showFileOrDirExplorer } from '../../server/appHelpers';
 import {
     ensureDirectory,
     fsCheckFileExist,
@@ -54,8 +58,6 @@ import {
 } from './schemas/bibleSchemaHelpers';
 import { getBibleModelInfoSetting } from '../../helper/bible-helpers/bibleModelHelpers';
 
-type MessageCallbackType = (message: string | null) => void;
-
 export function getInputByName(form: HTMLFormElement, name: string) {
     const inputFile = form.querySelector(`input[name="${name}"]`);
     if (inputFile === null || !(inputFile instanceof HTMLInputElement)) {
@@ -92,32 +94,6 @@ export function readFromFile(
             reject(new Error('Error during reading file'));
         };
         reader.readAsText(file);
-    });
-}
-
-function initHttpRequest(url: URL) {
-    return new Promise<any>((resolve, reject) => {
-        const request = appProvider.httpUtils.request(
-            {
-                port: 443,
-                path: url.pathname + url.search,
-                method: 'GET',
-                hostname: url.hostname,
-            },
-            (response) => {
-                if (response.statusCode === 302 && response.headers.location) {
-                    initHttpRequest(new URL(response.headers.location)).then(
-                        resolve,
-                    );
-                    return;
-                }
-                resolve(response);
-            },
-        );
-        request.on('error', (event: Error) => {
-            reject(event);
-        });
-        request.end();
     });
 }
 
@@ -251,7 +227,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
                 if (filePath === null) {
                     return;
                 }
-                showExplorer(filePath);
+                showFileOrDirExplorer(filePath);
             },
         },
         {

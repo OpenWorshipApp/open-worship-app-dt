@@ -1,3 +1,5 @@
+import type { IncomingMessage } from 'node:http';
+
 import { handleError } from '../errorHelpers';
 import {
     fsCheckFileExist,
@@ -11,6 +13,34 @@ import appProvider from '../../server/appProvider';
 import type { OptionalPromise } from '../typeHelpers';
 
 export const BIBLE_DOWNLOAD_TOAST_TITLE = 'Bible Download';
+
+export type MessageCallbackType = (message: string | null) => void;
+
+export function initHttpRequest(url: URL) {
+    return new Promise<IncomingMessage>((resolve, reject) => {
+        const request = appProvider.httpUtils.request(
+            {
+                port: 443,
+                path: url.pathname + url.search,
+                method: 'GET',
+                hostname: url.hostname,
+            },
+            (response) => {
+                if (response.statusCode === 302 && response.headers.location) {
+                    initHttpRequest(new URL(response.headers.location)).then(
+                        resolve,
+                    );
+                    return;
+                }
+                resolve(response);
+            },
+        );
+        request.on('error', (event: Error) => {
+            reject(event);
+        });
+        request.end();
+    });
+}
 
 export type DownloadOptionsType = {
     onStart: (fileSize: number) => OptionalPromise<void>;

@@ -14,7 +14,7 @@ import {
 } from './fileHelpers';
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
-import { appLog, appError as logError } from '../helper/loggerHelpers';
+import { appError as logError } from '../helper/loggerHelpers';
 import { tran } from '../lang/langHelpers';
 
 export function genReturningEventName(eventName: string) {
@@ -71,121 +71,6 @@ export interface ClipboardInf {
     clipboardSerialize(): OptionalPromise<string | null>;
 }
 
-function checkIsVersionOutdated(
-    // 2025.06.25 vs 2025.06.26
-    currentVersion: string,
-    latestVersion: string,
-) {
-    const currentParts = currentVersion.split('.').map(Number);
-    const latestParts = latestVersion.split('.').map(Number);
-
-    for (
-        let i = 0;
-        i < Math.max(currentParts.length, latestParts.length);
-        i++
-    ) {
-        const currentPart = currentParts[i] || 0;
-        const latestPart = latestParts[i] || 0;
-
-        if (currentPart < latestPart) {
-            return true;
-        } else if (currentPart > latestPart) {
-            return false;
-        }
-    }
-    return false; // Versions are equal
-}
-
-async function getDownloadTargetUrl() {
-    const downloadInfo = await fetch(
-        `${appProvider.appInfo.homepage}/download/info.json`,
-        {
-            method: 'GET',
-            cache: 'no-cache',
-        },
-    )
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(
-                    `Failed to fetch update download info: ${response.statusText}`,
-                );
-            }
-            return response.json();
-        })
-        .catch((error) => {
-            logError('Error fetching update download info:', error);
-            return null;
-        });
-    if (downloadInfo === null) {
-        return null;
-    }
-    const { systemUtils } = appProvider;
-    const targetInfo =
-        Object.entries(downloadInfo).find(([_key, item]: [string, any]) => {
-            return (
-                (systemUtils.isWindows && item.isWindows) ||
-                (systemUtils.isMac &&
-                    item.isMac &&
-                    ((systemUtils.isArm64 && item.isArm64) ||
-                        (!systemUtils.is64System && !item.isArm64))) ||
-                (systemUtils.isLinux && item.isLinux)
-            );
-        }) ?? null;
-    if (targetInfo === null) {
-        return null;
-    }
-    return `${appProvider.appInfo.homepage}/download/${targetInfo[0]}/info.json`;
-}
-
-export async function checkForUpdateSilently() {
-    const url = await getDownloadTargetUrl();
-    if (url === null) {
-        return;
-    }
-    const updateData = await fetch(url, {
-        method: 'GET',
-        cache: 'no-cache',
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(
-                    `Failed to fetch update info: ${response.statusText}`,
-                );
-            }
-            return response.json();
-        })
-        .catch((error) => {
-            logError('Error fetching update info:', error);
-            return null;
-        });
-    if (updateData === null) {
-        return;
-    }
-    try {
-        const version = updateData.version as string;
-        appLog(
-            `Current version: ${appProvider.appInfo.version}, ` +
-                `Latest version: ${version}`,
-        );
-
-        if (checkIsVersionOutdated(appProvider.appInfo.version, version)) {
-            const isOk = await showAppConfirm(
-                'Update Available',
-                `A new version of the app is available: "${version}". ` +
-                    'Would you like to check for update?',
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            );
-            if (isOk) {
-                appProvider.messageUtils.sendData('main:app:go-download');
-            }
-        }
-    } catch (error) {
-        handleError(error);
-    }
-}
-
 const DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME = 'decided-reader-home-page';
 function setDecided() {
     globalThis.localStorage.setItem(
@@ -210,7 +95,7 @@ export async function checkDecidedBibleReaderHomePage() {
         tran('The application is started first time'),
         tran('This will set the home page to "📖 Bible Reader🔎"?'),
         {
-            confirmButtonLabel: tran('Yes'),
+            confirmButtonLabel: 'Yes',
         },
     );
     setDecided();
@@ -289,13 +174,13 @@ export async function removeSlideBackground(filePath: string) {
 export async function exportBibleMSWord(
     data: { title: string; body: string; fontFamily: string | null }[],
 ) {
-    const selectedParentDir = getDownloadPath();
+    const downloadDirPath = getDownloadPath();
     const date = new Date();
     let dateStr = date.toISOString().split('.')[0];
     dateStr = dateStr.replace('T', '_');
     dateStr = dateStr.replaceAll(':', '-');
     const filePath = pathJoin(
-        selectedParentDir,
+        downloadDirPath,
         `owa-bible-verses_${dateStr}.docx`,
     );
     await electronSendAsync('main:app:ms-word-export-bible', {
