@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import type { SyntheticEvent } from 'react';
 import { useState, useTransition } from 'react';
 
 import { tran } from '../../lang/langHelpers';
@@ -34,7 +34,7 @@ export default function BibleXMLImportComp({
         }
         setIsFileSelected(false);
     };
-    const handleFormSubmitting = async (event: FormEvent<HTMLFormElement>) => {
+    const handleFormSubmitting = async (event: SyntheticEvent<HTMLFormElement>) => {
         event.preventDefault();
         startTransition(async () => {
             try {
@@ -71,9 +71,9 @@ export default function BibleXMLImportComp({
     return (
         <div className="app-border-white-round p-1" style={{ margin: 'auto' }}>
             <h3>
-                Import XML File{' '}
+                {tran('Import XML File')}{' '}
                 <button
-                    title="XML format example"
+                    title={tran('XML format example')}
                     className={
                         'btn btn-sm ms-2' +
                         ` btn${isShowingExample ? '' : '-outline'}-info`
