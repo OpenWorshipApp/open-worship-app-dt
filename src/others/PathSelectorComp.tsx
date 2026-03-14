@@ -47,7 +47,7 @@ function openContextMenu(dirSource: DirSource, event: any) {
         });
     }
     menuItems.push({
-        menuElement: tran('Clear'),
+        menuElement: tran('Unset Directory Path'),
         onSelect: () => {
             dirSource.dirPath = '';
         },
