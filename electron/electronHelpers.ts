@@ -11,6 +11,7 @@ import {
 } from 'electron';
 
 import appInfo from '../package.json';
+import { htmlFiles } from './fsServe';
 
 export const isDev = process.env.NODE_ENV === 'development';
 
@@ -386,6 +387,14 @@ function handlePopupWindowOpen(
     webPreferences: WebPreferences | undefined,
     options: HandlerDetails,
 ): WindowOpenHandlerResponse {
+    if (
+        !options.frameName.startsWith(POPUP_FRAME_NAME_PREFIX) ||
+        webPreferences === undefined
+    ) {
+        shell.openExternal(options.url);
+        return { action: 'deny' };
+    }
+
     const { groupWindows, selfWindows, subDisplay, featuresRecord } =
         getPopupWindowData(win, options);
     if (groupWindows.length > 0) {
@@ -402,14 +411,6 @@ function handlePopupWindowOpen(
         return { action: 'deny' };
     }
 
-    if (
-        !options.frameName.startsWith(POPUP_FRAME_NAME_PREFIX) ||
-        webPreferences === undefined
-    ) {
-        shell.openExternal(options.url);
-        return { action: 'deny' };
-    }
-
     const content: WindowOpenHandlerResponse = {
         action: 'allow',
         overrideBrowserWindowOptions: {
@@ -423,6 +424,7 @@ function handlePopupWindowOpen(
             constructionOptions: BrowserWindowConstructorOptions,
         ) => {
             const popupWin = new BrowserWindow(constructionOptions);
+            guardBrowsing(popupWin, webPreferences);
             if (featuresRecord.appFollowScale) {
                 applyZoomFactor(popupWin);
             }
@@ -534,4 +536,12 @@ export function genTimeoutAttempt(
             func();
         }, timeMilliseconds);
     };
+}
+
+export function getAllNoneFinderWindows() {
+    const allWindows = BrowserWindow.getAllWindows();
+    return allWindows.filter((win) => {
+        const url = win.webContents.getURL();
+        return !url.includes(htmlFiles.finder);
+    });
 }

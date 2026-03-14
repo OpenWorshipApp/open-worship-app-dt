@@ -16,6 +16,7 @@ const {
     getPagesCount,
     countSlides,
     exportBibleMSWord,
+    getAllNoneFinderWindows,
     removeSlideBackground,
     screenInstance,
 } = vi.hoisted(() => ({
@@ -29,6 +30,7 @@ const {
     getPagesCount: vi.fn(),
     countSlides: vi.fn(),
     exportBibleMSWord: vi.fn(),
+    getAllNoneFinderWindows: vi.fn(() => []),
     removeSlideBackground: vi.fn(),
     screenInstance: {
         win: {
@@ -45,6 +47,7 @@ vi.mock('./electronHelpers', () => ({
     attemptClosing,
     captureWebScreenShot,
     goDownload,
+    getAllNoneFinderWindows,
     isMac: true,
     messageChannels: {
         screenMessage: 'app:screen:message',
@@ -73,10 +76,10 @@ vi.mock('./ElectronScreenController', () => ({
 }));
 
 import {
-    initEventFinder,
     initEventListenerApp,
     initEventOther,
     initEventScreen,
+    initFinderEvent,
 } from './electronEventListener';
 import { electronMockState } from './testElectronModule';
 
@@ -167,13 +170,18 @@ describe('electronEventListener', () => {
     });
 
     test('registers finder and theme-related handlers', () => {
-        const webContents = {
-            findInPage: vi.fn(() => 11),
-            stopFindInPage: vi.fn(),
+        const mainWebContents = {
             getZoomFactor: vi.fn(() => 1.25),
         };
+        const searchWebContents = {
+            findInPage: vi.fn(() => 11),
+            stopFindInPage: vi.fn(),
+        };
+        getAllNoneFinderWindows.mockReturnValue([
+            { webContents: searchWebContents },
+        ] as any);
         const appController = {
-            mainWin: { webContents },
+            mainWin: { webContents: mainWebContents },
             mainController: {
                 sendScreenMessage: vi.fn(),
                 changeBible: vi.fn(),
@@ -187,7 +195,7 @@ describe('electronEventListener', () => {
             reloadAll: vi.fn(),
         };
 
-        initEventFinder(appController as any);
+        initFinderEvent();
         initEventOther(appController as any);
 
         const searchHandler = electronMockState.ipcMain.on.mock.calls.find(
@@ -202,7 +210,9 @@ describe('electronEventListener', () => {
 
         const event = { returnValue: undefined as unknown };
         searchHandler(event, 'grace', { forward: true });
-        expect(event.returnValue).toBe(11);
+        expect(searchWebContents.findInPage).toHaveBeenCalledWith('grace', {
+            forward: true,
+        });
 
         const themeEvent = { returnValue: undefined as unknown };
         getThemeHandler(themeEvent);

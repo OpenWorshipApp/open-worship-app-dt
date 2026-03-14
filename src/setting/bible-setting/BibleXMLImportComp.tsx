@@ -34,7 +34,9 @@ export default function BibleXMLImportComp({
         }
         setIsFileSelected(false);
     };
-    const handleFormSubmitting = async (event: SyntheticEvent<HTMLFormElement>) => {
+    const handleFormSubmitting = async (
+        event: SyntheticEvent<HTMLFormElement>,
+    ) => {
         event.preventDefault();
         startTransition(async () => {
             try {

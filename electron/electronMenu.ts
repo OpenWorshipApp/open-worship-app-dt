@@ -185,6 +185,14 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: 'Check for Updates',
                     click: () => {
+                        appController.mainController.sendMessage(
+                            'main:app:check-update',
+                        );
+                    },
+                },
+                {
+                    label: 'Check for Updates Online',
+                    click: () => {
                         goDownload();
                     },
                 },

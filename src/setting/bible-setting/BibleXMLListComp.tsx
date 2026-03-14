@@ -47,11 +47,17 @@ export default function BibleXMLListComp({
         </>
     );
     if (bibleKeysMap === null || Object.keys(bibleKeysMap ?? []).length === 0) {
-        return <div>{tran('No Bible XML files')} {buttons}</div>;
+        return (
+            <div>
+                {tran('No Bible XML files')} {buttons}
+            </div>
+        );
     }
     return (
         <>
-            <h3>{tran('Bibles XML')} {buttons}</h3>
+            <h3>
+                {tran('Bibles XML')} {buttons}
+            </h3>
             <div className="w-100">
                 <ul className="list-group d-flex flex-fill">
                     {bibleKeys.map((bibleKey) => {

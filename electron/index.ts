@@ -14,7 +14,7 @@ protocol.registerSchemesAsPrivileged([
 
 import ElectronAppController from './ElectronAppController';
 import {
-    initEventFinder,
+    initFinderEvent,
     initEventListenerApp,
     initEventOther,
     initEventScreen,
@@ -39,7 +39,7 @@ async function main() {
     const appController = ElectronAppController.getInstance();
     initEventListenerApp(appController);
     initEventScreen(appController);
-    initEventFinder(appController);
+    initFinderEvent();
     initEventOther(appController);
     initMenu(appController);
     initDevtools(appController);

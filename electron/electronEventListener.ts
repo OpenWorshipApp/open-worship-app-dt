@@ -10,6 +10,7 @@ import ElectronAppController from './ElectronAppController';
 import {
     attemptClosing,
     captureWebScreenShot,
+    getAllNoneFinderWindows,
     goDownload,
     isMac,
     messageChannels,
@@ -226,8 +227,7 @@ export function initEventScreen(appController: ElectronAppController) {
     });
 }
 
-export function initEventFinder(appController: ElectronAppController) {
-    const mainWinWebContents = appController.mainWin.webContents;
+export function initFinderEvent() {
     ipcMain.on(
         'finder:app:search-in-page',
         (
@@ -239,10 +239,9 @@ export function initEventFinder(appController: ElectronAppController) {
                 matchCase?: boolean;
             } = {},
         ) => {
-            event.returnValue = mainWinWebContents.findInPage(
-                searchText,
-                options,
-            );
+            getAllNoneFinderWindows().forEach((win) => {
+                win.webContents.findInPage(searchText, options);
+            });
         },
     );
     ipcMain.on(
@@ -251,7 +250,9 @@ export function initEventFinder(appController: ElectronAppController) {
             _,
             action: 'clearSelection' | 'keepSelection' | 'activateSelection',
         ) => {
-            mainWinWebContents.stopFindInPage(action);
+            getAllNoneFinderWindows().forEach((win) => {
+                win.webContents.stopFindInPage(action);
+            });
         },
     );
 }

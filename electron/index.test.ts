@@ -6,7 +6,7 @@ vi.mock('electron', async () => {
 });
 
 const initCustomSchemeHandler = vi.fn();
-const initEventFinder = vi.fn();
+const initFinderEvent = vi.fn();
 const initEventListenerApp = vi.fn();
 const initEventOther = vi.fn();
 const initEventScreen = vi.fn();
@@ -21,7 +21,7 @@ vi.mock('./fsServe', () => ({
 }));
 
 vi.mock('./electronEventListener', () => ({
-    initEventFinder,
+    initFinderEvent,
     initEventListenerApp,
     initEventOther,
     initEventScreen,
@@ -39,7 +39,7 @@ describe('electron index', () => {
     beforeEach(() => {
         vi.resetModules();
         initCustomSchemeHandler.mockClear();
-        initEventFinder.mockClear();
+        initFinderEvent.mockClear();
         initEventListenerApp.mockClear();
         initEventOther.mockClear();
         initEventScreen.mockClear();
