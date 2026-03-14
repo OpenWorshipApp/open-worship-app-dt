@@ -290,6 +290,12 @@ export default class Note
             return null;
         }
         await defaultNote.setIsOpened(true);
+        if (defaultNote.items.length === 0) {
+            const noteItemJsonData = NoteItem.genNewJsonData();
+            noteItemJsonData.metadata.id = 0;
+            const newNoteItem = new NoteItem(noteItemJsonData);
+            await defaultNote.addAndSaveNoteItem(newNoteItem);
+        }
         return defaultNote;
     }
 
