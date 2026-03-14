@@ -14,7 +14,7 @@ export function findString(text: string, options: LookupOptions = {}) {
         );
         return;
     }
-    appProvider.messageUtils.sendDataSync(
+    appProvider.messageUtils.sendData(
         'finder:app:search-in-page',
         text,
         options,
