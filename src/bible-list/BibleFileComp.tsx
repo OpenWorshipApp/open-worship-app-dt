@@ -1,4 +1,4 @@
-import { lazy, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
@@ -177,12 +177,12 @@ export default function BibleFileComp({
         [bible],
         { setData: setBible },
     );
-    const handlerChildRendering = (bible: AppDocumentSourceAbs) => {
+    const handlerChildRendering = useCallback((bible: AppDocumentSourceAbs) => {
         return <BiblePreview bible={bible as Bible} />;
-    };
-    const handleReloading = () => {
+    }, []);
+    const handleReloading = useCallback(() => {
         setBible(undefined);
-    };
+    }, []);
     useFileSourceEvents(
         ['update'],
         async () => {
@@ -192,22 +192,25 @@ export default function BibleFileComp({
         [bible],
         filePath,
     );
-    const handleDataDropping = (event: any) => {
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
-            stopDraggingState(event);
-            const bibleItem = droppedData.item as BibleItem;
-            if (bibleItem.filePath === undefined) {
-                bible?.saveBibleItem(droppedData.item);
+    const handleDataDropping = useCallback(
+        (event: any) => {
+            const droppedData = extractDropData(event);
+            if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
+                stopDraggingState(event);
+                const bibleItem = droppedData.item as BibleItem;
+                if (bibleItem.filePath === undefined) {
+                    bible?.saveBibleItem(droppedData.item);
+                } else {
+                    bible?.moveItemFrom(bibleItem.filePath, bibleItem);
+                }
             } else {
-                bible?.moveItemFrom(bibleItem.filePath, bibleItem);
+                handleAttachBackgroundDrop(event, {
+                    filePath,
+                });
             }
-        } else {
-            handleAttachBackgroundDrop(event, {
-                filePath,
-            });
-        }
-    };
+        },
+        [bible, filePath],
+    );
     return (
         <FileItemHandlerComp
             index={index}

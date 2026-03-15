@@ -1,4 +1,4 @@
-import { use, useState } from 'react';
+import { use, useCallback, useState } from 'react';
 
 import Lyric from './Lyric';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
@@ -75,10 +75,10 @@ export default function LyricFileComp({
         const data = Lyric.getInstance(filePath);
         setLyric(data);
     }, [lyric]);
-    const handleReloading = () => {
+    const handleReloading = useCallback(() => {
         setLyric(undefined);
-    };
-    const handleClicking = () => {
+    }, []);
+    const handleClicking = useCallback(() => {
         if (!lyric) {
             return;
         }
@@ -86,16 +86,19 @@ export default function LyricFileComp({
         if (!getIsShowingLyricPreviewer()) {
             previewingEventListener.showLyric(lyric);
         }
-    };
-    const handleChildRendering = (lyric: AppDocumentSourceAbs) => {
+    }, [lyric]);
+    const handleChildRendering = useCallback((lyric: AppDocumentSourceAbs) => {
         return <LyricFilePreview lyric={lyric as Lyric} />;
-    };
-    const handleRenaming = async (newFileSource: FileSource) => {
-        if (isSelected) {
-            const newLyric = Lyric.getInstance(newFileSource.filePath);
-            setSelectedLyric(newLyric);
-        }
-    };
+    }, []);
+    const handleRenaming = useCallback(
+        async (newFileSource: FileSource) => {
+            if (isSelected) {
+                const newLyric = Lyric.getInstance(newFileSource.filePath);
+                setSelectedLyric(newLyric);
+            }
+        },
+        [isSelected],
+    );
     return (
         <FileItemHandlerComp
             index={index}

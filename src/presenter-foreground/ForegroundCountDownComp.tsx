@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
@@ -64,24 +65,30 @@ function CountDownOnDatetimeComp({
 }>) {
     const { date, setDate, time, setTime, nowString, todayString } =
         useTiming();
-    const getTargetDateTime = () => {
+    const getTargetDateTime = useCallback(() => {
         return new Date(date + ' ' + time);
-    };
-    const handleDateTimeShowing = (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.setCountdown(
-            event,
-            getTargetDateTime(),
-            genStyle(),
-            isForceChoosing,
-        );
-    };
-    const handleResetting = () => {
+    }, [date, time]);
+    const handleDateTimeShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.setCountdown(
+                event,
+                getTargetDateTime(),
+                genStyle(),
+                isForceChoosing,
+            );
+        },
+        [getTargetDateTime, genStyle],
+    );
+    const handleResetting = useCallback(() => {
         setDate(todayString());
         setTime(nowString());
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleDateTimeShowing(event, true);
-    };
+    }, [setDate, setTime, todayString, nowString]);
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            handleDateTimeShowing(event, true);
+        },
+        [handleDateTimeShowing],
+    );
     return (
         <div className="d-flex">
             <div>

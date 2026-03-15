@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import { useCallback } from 'react';
 
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
@@ -79,13 +80,13 @@ export default function RenderVerseTextDetailListComp({
     const { isAudioEnabled } = useIsAudioAIEnabled(bibleItem);
     const bibleItemViewController = useBibleItemsViewControllerContext();
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
-    const handleAudioStarting = () => {
+    const handleAudioStarting = useCallback(() => {
         if (nextVerseInfo === null) {
             return;
         }
         bibleTextToSpeech(nextVerseInfo);
-    };
-    const handleAudioEnding = () => {
+    }, [nextVerseInfo]);
+    const handleAudioEnding = useCallback(() => {
         if (verseTextRef.current === null) {
             return;
         }
@@ -102,7 +103,7 @@ export default function RenderVerseTextDetailListComp({
             verseTextRef.current,
             nextVerseInfo.kjvBibleVersesKey,
         );
-    };
+    }, [verseTextRef, verseInfo, bibleItemViewController, nextVerseInfo]);
     return verseInfoList.map((verseInfo) => {
         return (
             <RenderVerseTextViewComp

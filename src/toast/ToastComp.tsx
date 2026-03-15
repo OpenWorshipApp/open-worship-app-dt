@@ -1,6 +1,6 @@
 import './ToastComp.scss';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useToastSimpleShowing } from '../event/ToastEventListener';
 import type { SimpleToastType } from './SimpleToastComp';
@@ -8,31 +8,34 @@ import SimpleToastComp from './SimpleToastComp';
 
 let timeoutId: any = null;
 export default function ToastComp() {
-    const handleMouseEntering = () => {
-        clearTimer();
-    };
-    const handleMouseLeaving = () => {
-        initTimeout(2e3);
-    };
-    const handleClosing = () => {
-        setSimpleToast(null);
-    };
     const [simpleToast, setSimpleToast] = useState<SimpleToastType | null>(
         null,
     );
-    const clearTimer = () => {
+    const clearTimer = useCallback(() => {
         if (timeoutId !== null) {
             clearTimeout(timeoutId);
             timeoutId = null;
         }
-    };
-    const initTimeout = (timer: number) => {
+    }, []);
+    const initTimeout = useCallback(
+        (timer: number) => {
+            clearTimer();
+            timeoutId = setTimeout(() => {
+                timeoutId = null;
+                setSimpleToast(null);
+            }, timer);
+        },
+        [clearTimer],
+    );
+    const handleMouseEntering = useCallback(() => {
         clearTimer();
-        timeoutId = setTimeout(() => {
-            timeoutId = null;
-            setSimpleToast(null);
-        }, timer);
-    };
+    }, [clearTimer]);
+    const handleMouseLeaving = useCallback(() => {
+        initTimeout(2e3);
+    }, [initTimeout]);
+    const handleClosing = useCallback(() => {
+        setSimpleToast(null);
+    }, []);
     useToastSimpleShowing((toast: SimpleToastType) => {
         setSimpleToast(toast);
         initTimeout(toast.timeout ?? 4e3);

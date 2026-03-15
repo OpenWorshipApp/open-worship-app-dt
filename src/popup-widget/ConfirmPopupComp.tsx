@@ -1,5 +1,6 @@
 import './ConfirmPopupComp.scss';
 
+import { useCallback } from 'react';
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
 import type { ConfirmDataType } from './popupWidgetHelpers';
@@ -12,14 +13,14 @@ export default function ConfirmPopupComp({
 }: Readonly<{
     confirmData: ConfirmDataType;
 }>) {
-    const handleClosing = () => {
+    const handleClosing = useCallback(() => {
         confirmData.onConfirm(false);
         closeAlert();
-    };
-    const handleOkClicking = () => {
+    }, [confirmData]);
+    const handleOkClicking = useCallback(() => {
         confirmData.onConfirm(true);
         closeAlert();
-    };
+    }, [confirmData]);
     useKeyboardRegistering(
         [{ key: 'Escape' }],
         (event) => {

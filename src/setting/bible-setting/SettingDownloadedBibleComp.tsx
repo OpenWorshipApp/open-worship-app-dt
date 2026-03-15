@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import DownloadedBibleItemComp from './DownloadedBibleItemComp';
 import type { BibleListType } from './bibleSettingHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
@@ -94,16 +95,16 @@ function RenderItem({
     index: number;
     setDownloadedBibleInfoList: (bbList: BibleListType) => void;
 }>) {
-    const handleDownloadedEvent = () => {
+    const handleDownloadedEvent = useCallback(() => {
         setDownloadedBibleInfoList(null);
-    };
-    const handleDeleting = () => {
+    }, [setDownloadedBibleInfoList]);
+    const handleDeleting = useCallback(() => {
         setDownloadedBibleInfoList(null);
-    };
-    const handleUpdating = () => {
+    }, [setDownloadedBibleInfoList]);
+    const handleUpdating = useCallback(() => {
         bibleInfo.isDownloading = true;
         setDownloadedBibleInfoList([...bibleInfoList]);
-    };
+    }, [bibleInfo, bibleInfoList, setDownloadedBibleInfoList]);
     if (bibleInfo.isDownloading) {
         return (
             <OnlineBibleItemComp

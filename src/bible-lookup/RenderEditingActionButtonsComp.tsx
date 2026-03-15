@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import {
     toShortcutKey,
@@ -32,9 +32,9 @@ export default function RenderEditingActionButtonsComp({
         });
     }, []);
     const viewController = useLookupBibleItemControllerContext();
-    const onDone = () => {
+    const onDone = useCallback(() => {
         viewController.onLookupSaveBibleItem();
-    };
+    }, [viewController]);
     useFoundActionKeyboard(bibleItem);
     useKeyboardRegistering(
         eventMaps,
