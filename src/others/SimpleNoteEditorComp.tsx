@@ -16,6 +16,7 @@ function blockUnload(event: BeforeUnloadEvent) {
 export interface SimpleNoteEditorStoreType {
     defaultText: string;
     currentText: string;
+    checkCanSave: () => boolean;
     save: () => Promise<void>;
 }
 export default function SimpleNoteEditorComp({
