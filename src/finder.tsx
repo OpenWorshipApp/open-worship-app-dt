@@ -9,7 +9,8 @@ globalThis.addEventListener('beforeunload', () => {
     findString('');
 });
 
-await init();
+// called as async to make quickly load
+init();
 const root = getReactRoot();
 root.render(
     <StrictMode>
