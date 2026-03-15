@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
@@ -29,6 +29,20 @@ export default function SettingOnlineBibleComp({
         setOnlineBibleInfoList(null);
         loadBibleXMLKeys();
     }, [setOnlineBibleInfoList, loadBibleXMLKeys]);
+    const bibleInfoList = useMemo(() => {
+        if (!onlineBibleInfoList) {
+            return [];
+        }
+        return onlineBibleInfoList.filter((bibleInfo) => {
+            return (
+                bibleInfo.filePath &&
+                (!downloadedBibleInfoList ||
+                    downloadedBibleInfoList.every((bible1) => {
+                        return bible1.key !== bibleInfo.key;
+                    }))
+            );
+        });
+    }, [onlineBibleInfoList, downloadedBibleInfoList]);
     if (onlineBibleInfoList === null || isPendingBibleXMLKeys) {
         return <LoadingComp />;
     }
@@ -48,15 +62,6 @@ export default function SettingOnlineBibleComp({
             </div>
         );
     }
-    const bibleInfoList = onlineBibleInfoList.filter((bibleInfo) => {
-        return (
-            bibleInfo.filePath &&
-            (!downloadedBibleInfoList ||
-                downloadedBibleInfoList.every((bible1) => {
-                    return bible1.key !== bibleInfo.key;
-                }))
-        );
-    });
 
     return (
         <div className="w-100">

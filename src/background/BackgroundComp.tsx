@@ -1,6 +1,6 @@
 import './BackgroundComp.scss';
 
-import { lazy, useCallback, useState } from 'react';
+import { lazy, useCallback, useMemo, useState } from 'react';
 
 import {
     useStateSettingBoolean,
@@ -131,27 +131,29 @@ export default function BackgroundComp() {
     );
     useScreenBackgroundManagerEvents(['update']);
 
-    const normalBackgroundChild = tabTypeList.map(([type, _, target]) => {
-        return genTabBody<TabKeyType>(tabKey, [type, target]);
-    });
+    const normalBackgroundChild = useMemo(() => {
+        return tabTypeList.map(([type, _, target]) => {
+            return genTabBody<TabKeyType>(tabKey, [type, target]);
+        });
+    }, [tabKey]);
+    const tabs = useMemo(() => {
+        return tabTypeList.map(([key, name]) => {
+            return {
+                key,
+                title: name,
+                checkIsOnScreen: (targeKey: TabKeyType) => {
+                    const backgroundSrcList =
+                        getBackgroundSrcListOnScreenSetting();
+                    return genIsSelected(backgroundSrcList, targeKey);
+                },
+            };
+        });
+    }, []);
     return (
         <div className="background w-100 h-100 d-flex flex-column">
             <div className="header d-flex">
                 <TabRenderComp<TabKeyType>
-                    tabs={tabTypeList.map(([key, name]) => {
-                        return {
-                            key,
-                            title: name,
-                            checkIsOnScreen: (targeKey) => {
-                                const backgroundSrcList =
-                                    getBackgroundSrcListOnScreenSetting();
-                                return genIsSelected(
-                                    backgroundSrcList,
-                                    targeKey,
-                                );
-                            },
-                        };
-                    })}
+                    tabs={tabs}
                     activeTab={tabKey}
                     setActiveTab={setTabKey}
                 />

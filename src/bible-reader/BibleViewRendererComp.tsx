@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import type { NestedBibleItemsType } from './BibleItemsViewController';
 import {
     RESIZE_SETTING_NAME,
@@ -20,32 +22,37 @@ export default function BibleViewRendererComp({
     nestedBibleItems: NestedBibleItemsType;
 }>) {
     const viewController = useBibleItemsViewControllerContext();
+    const typeText = isHorizontal ? 'h' : 'v';
+    const fullClassPrefix = classPrefix + typeText;
+    const flexSizeDefault = useMemo(() => {
+        if (!Array.isArray(nestedBibleItems) || nestedBibleItems.length <= 1) {
+            return {} as FlexSizeType;
+        }
+        return Object.fromEntries(
+            nestedBibleItems.map((_, i) => {
+                return [`${typeText}${i + 1}`, ['1']];
+            }),
+        ) as FlexSizeType;
+    }, [nestedBibleItems, typeText]);
     if (!Array.isArray(nestedBibleItems)) {
         return viewController.finalRenderer(nestedBibleItems);
     }
     if (nestedBibleItems.length === 0) {
         return <NoBibleViewAvailableComp />;
     }
-    const typeText = isHorizontal ? 'h' : 'v';
-    classPrefix += typeText;
     if (nestedBibleItems.length === 1) {
         return (
             <BibleViewRendererComp
                 nestedBibleItems={nestedBibleItems[0]}
                 isHorizontal={!isHorizontal}
-                classPrefix={classPrefix}
+                classPrefix={fullClassPrefix}
             />
         );
     }
-    const flexSizeDefault = Object.fromEntries(
-        nestedBibleItems.map((_, i) => {
-            return [`${typeText}${i + 1}`, ['1']];
-        }),
-    ) as FlexSizeType;
     return (
         <ResizeActorComp
             flexSizeName={viewController.toSettingName(
-                `${RESIZE_SETTING_NAME}-${classPrefix}`,
+                `${RESIZE_SETTING_NAME}-${fullClassPrefix}`,
             )}
             isHorizontal={isHorizontal}
             isNotSaveSetting
@@ -59,7 +66,7 @@ export default function BibleViewRendererComp({
                                 <BibleViewRendererComp
                                     nestedBibleItems={item}
                                     isHorizontal={!isHorizontal}
-                                    classPrefix={classPrefix}
+                                    classPrefix={fullClassPrefix}
                                 />
                             );
                         },

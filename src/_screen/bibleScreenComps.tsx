@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
 
 export type BibleRenderVerseType = {
@@ -54,9 +56,11 @@ export function BibleBibleTable({
     isLineSync: boolean;
     versesCount: number;
 }>) {
-    const fontFaceList = bibleRenderingList.map(({ langData }) => {
-        return langData.genCss();
-    });
+    const fontFaceList = useMemo(() => {
+        return bibleRenderingList.map(({ langData }) => {
+            return langData.genCss();
+        });
+    }, [bibleRenderingList]);
     const rendTableHeader = (
         { langData, bibleKey, title }: BibleItemRenderingLangType,
         i: number,
