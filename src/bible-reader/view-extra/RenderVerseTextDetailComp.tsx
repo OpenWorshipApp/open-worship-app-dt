@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { VERSE_TEXT_CLASS } from '../../helper/bibleViewHelpers';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
@@ -64,36 +64,42 @@ export default function RenderVerseTextDetailComp({
         }
         setAudioSrcMap1(bibleVersesKey, FileSource.getInstance(speechFile).src);
     };
-    const handleVerseClicking = (event: any) => {
-        if (getSelectedText()) {
-            return;
-        }
-        viewController.handleVersesSelecting(
-            event.currentTarget,
-            event.altKey,
-            false,
-            bibleItem,
-        );
-        loadAudio();
-    };
-    const handleVerseDBClicking = (event: any) => {
-        event.stopPropagation();
-        event.preventDefault();
-        const selection = globalThis.getSelection();
-        if (selection !== null && selection.rangeCount > 0) {
-            selection.removeAllRanges();
-        }
-        viewController.handleVersesSelecting(
-            event.currentTarget,
-            true,
-            false,
-            bibleItem,
-        );
-        loadAudio();
-    };
-    const handleAudioRefreshing = () => {
+    const handleVerseClicking = useCallback(
+        (event: any) => {
+            if (getSelectedText()) {
+                return;
+            }
+            viewController.handleVersesSelecting(
+                event.currentTarget,
+                event.altKey,
+                false,
+                bibleItem,
+            );
+            loadAudio();
+        },
+        [viewController, bibleItem, loadAudio],
+    );
+    const handleVerseDBClicking = useCallback(
+        (event: any) => {
+            event.stopPropagation();
+            event.preventDefault();
+            const selection = globalThis.getSelection();
+            if (selection !== null && selection.rangeCount > 0) {
+                selection.removeAllRanges();
+            }
+            viewController.handleVersesSelecting(
+                event.currentTarget,
+                true,
+                false,
+                bibleItem,
+            );
+            loadAudio();
+        },
+        [viewController, bibleItem, loadAudio],
+    );
+    const handleAudioRefreshing = useCallback(() => {
         loadAudio(true);
-    };
+    }, [loadAudio]);
     return (
         <div
             ref={verseTextRef}

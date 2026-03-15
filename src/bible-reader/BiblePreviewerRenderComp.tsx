@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import BibleViewSettingComp, { defaultRangeSize } from './BibleViewSettingComp';
@@ -46,17 +46,23 @@ export default function BiblePreviewerRenderComp() {
         fontSizeSettingName,
         DEFAULT_BIBLE_TEXT_FONT_SIZE,
     );
-    const handleFullScreenToggling = async (isToFullScreen: boolean) => {
-        try {
-            if (isToFullScreen) {
-                await document.documentElement.requestFullscreen();
-            } else {
-                await document.exitFullscreen();
+    const handleFullScreenToggling = useCallback(
+        async (isToFullScreen: boolean) => {
+            try {
+                if (isToFullScreen) {
+                    await document.documentElement.requestFullscreen();
+                } else {
+                    await document.exitFullscreen();
+                }
+            } catch (error) {
+                showSimpleToast(
+                    'Toggle full screen failed',
+                    `Error: ${error}`,
+                );
             }
-        } catch (error) {
-            showSimpleToast('Toggle full screen failed', `Error: ${error}`);
-        }
-    };
+        },
+        [],
+    );
     return (
         <div
             className={

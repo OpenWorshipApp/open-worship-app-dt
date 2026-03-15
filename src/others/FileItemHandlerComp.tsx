@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import FileReadErrorComp from './FileReadErrorComp';
@@ -154,6 +154,10 @@ export default function FileItemHandlerComp({
     );
     const [isRenaming, setIsRenaming] = useState(false);
     useFileSourceRefreshEvents(['select']);
+    const handleClicking = useCallback(() => {
+        FileSource.getInstance(filePath).fireSelectEvent();
+        onClick?.();
+    }, [filePath, onClick]);
 
     if (fileData === null) {
         return <FileReadErrorComp reload={reload} />;
@@ -164,10 +168,6 @@ export default function FileItemHandlerComp({
         preDelete?.();
     };
     selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
-    const handleClicking = () => {
-        FileSource.getInstance(filePath).fireSelectEvent();
-        onClick?.();
-    };
     const moreClassName =
         `${isSelected ? 'active' : ''} ` + `${className ?? ''}`;
     const fileSource = FileSource.getInstance(filePath);

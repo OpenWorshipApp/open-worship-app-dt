@@ -1,4 +1,4 @@
-import { Fragment, useMemo } from 'react';
+import { Fragment, useCallback, useMemo } from 'react';
 
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import FlexResizeActorComp from './FlexResizeActorComp';
@@ -66,22 +66,25 @@ export default function RenderResizeActorItemComp({
             anotherDefaultFlexSize,
         );
     }, [flexSizeName, defaultFlexSize, anotherDefaultFlexSize]);
-    const handleDisabling = (
-        targetDataFlexSizeKey: string,
-        target: DisabledType,
-    ) => {
-        const size = setDisablingSetting(
-            flexSizeName,
-            restoreFlexSize,
-            targetDataFlexSizeKey,
-            target,
-        );
-        setFlexSize(size);
-    };
-    const handleSizeChecking = () => {
+    const handleDisabling = useCallback(
+        (
+            targetDataFlexSizeKey: string,
+            target: DisabledType,
+        ) => {
+            const size = setDisablingSetting(
+                flexSizeName,
+                restoreFlexSize,
+                targetDataFlexSizeKey,
+                target,
+            );
+            setFlexSize(size);
+        },
+        [flexSizeName, restoreFlexSize, setFlexSize],
+    );
+    const handleSizeChecking = useCallback(() => {
         const size = genFlexSizeSetting(flexSizeName, restoreFlexSize);
         setFlexSize(size);
-    };
+    }, [flexSizeName, restoreFlexSize, setFlexSize]);
 
     const { children, key, className = '', extraStyle = {}, widgetName } = data;
     const flexSizeValue = flexSize[key] ?? restoreFlexSize[key] ?? [];

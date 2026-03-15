@@ -6,27 +6,39 @@ import {
     EditingResultContext,
     useLookupBibleItemControllerContext,
 } from '../bible-reader/LookupBibleItemController';
-import { use } from 'react';
+import { use, useCallback } from 'react';
 
 export default function RenderBibleLookupBodyComp() {
     const viewController = useLookupBibleItemControllerContext();
     const bibleKey = useBibleKeyContext();
     const editingResult = use(EditingResultContext);
-    const handleBookSelecting = async (_: string, newBook: string) => {
-        const newText = await toInputText(bibleKey, newBook);
-        viewController.inputText = newText;
-    };
-    const handleChapterSelecting = async (newChapter: number) => {
-        if (editingResult === null) {
-            return;
-        }
-        if (bibleKey === null || editingResult.result.bookKey === null) {
-            return;
-        }
-        const book = await keyToBook(bibleKey, editingResult.result.bookKey);
-        const newText = await toInputText(bibleKey, book, newChapter);
-        viewController.inputText = `${newText}:`;
-    };
+    const handleBookSelecting = useCallback(
+        async (_: string, newBook: string) => {
+            const newText = await toInputText(bibleKey, newBook);
+            viewController.inputText = newText;
+        },
+        [bibleKey, viewController],
+    );
+    const handleChapterSelecting = useCallback(
+        async (newChapter: number) => {
+            if (editingResult === null) {
+                return;
+            }
+            if (
+                bibleKey === null ||
+                editingResult.result.bookKey === null
+            ) {
+                return;
+            }
+            const book = await keyToBook(
+                bibleKey,
+                editingResult.result.bookKey,
+            );
+            const newText = await toInputText(bibleKey, book, newChapter);
+            viewController.inputText = `${newText}:`;
+        },
+        [editingResult, bibleKey, viewController],
+    );
     return (
         <RenderLookupSuggestionComp
             applyChapterSelection={handleChapterSelecting}

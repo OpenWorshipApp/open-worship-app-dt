@@ -1,6 +1,6 @@
 import './BackgroundImagesComp.scss';
 
-import type { ReactElement } from 'react';
+import { useCallback, type ReactElement } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -177,17 +177,20 @@ async function genContextMenuItems(dirSource: DirSource) {
 }
 
 export default function BackgroundImagesComp() {
-    const handleItemsAdding = async (
-        dirSource: DirSource,
-        defaultContextMenuItems: ContextMenuItemType[],
-        event: any,
-    ) => {
-        const contextMenuItems = await genContextMenuItems(dirSource);
-        showAppContextMenu(event, [
-            ...defaultContextMenuItems,
-            ...contextMenuItems,
-        ]);
-    };
+    const handleItemsAdding = useCallback(
+        async (
+            dirSource: DirSource,
+            defaultContextMenuItems: ContextMenuItemType[],
+            event: any,
+        ) => {
+            const contextMenuItems = await genContextMenuItems(dirSource);
+            showAppContextMenu(event, [
+                ...defaultContextMenuItems,
+                ...contextMenuItems,
+            ]);
+        },
+        [],
+    );
     return (
         <BackgroundMediaComp
             defaultFolderName={defaultDataDirNames.BACKGROUND_IMAGE}

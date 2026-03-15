@@ -1,6 +1,6 @@
 import './BackgroundVideosComp.scss';
 
-import type { ReactElement } from 'react';
+import { useCallback, type ReactElement } from 'react';
 import { createRef, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
@@ -220,18 +220,21 @@ function genExtraItemContextMenuItems(filePath: string) {
 }
 
 export default function BackgroundVideosComp() {
-    const handleItemsAdding = async (
-        dirSource: DirSource,
-        defaultContextMenuItems: ContextMenuItemType[],
-        event: any,
-    ) => {
-        const contextMenuItems =
-            await genVideoDownloadContextMenuItems(dirSource);
-        showAppContextMenu(event, [
-            ...defaultContextMenuItems,
-            ...contextMenuItems,
-        ]);
-    };
+    const handleItemsAdding = useCallback(
+        async (
+            dirSource: DirSource,
+            defaultContextMenuItems: ContextMenuItemType[],
+            event: any,
+        ) => {
+            const contextMenuItems =
+                await genVideoDownloadContextMenuItems(dirSource);
+            showAppContextMenu(event, [
+                ...defaultContextMenuItems,
+                ...contextMenuItems,
+            ]);
+        },
+        [],
+    );
     return (
         <BackgroundMediaComp
             defaultFolderName={defaultDataDirNames.BACKGROUND_VIDEO}

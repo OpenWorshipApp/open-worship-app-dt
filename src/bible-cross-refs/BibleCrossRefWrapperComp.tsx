@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, type ReactNode } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -20,17 +20,20 @@ export default function BibleCrossRefWrapperComp({
     const bibleKey = useBibleKeyContext();
     const fontFamily = useBibleFontFamily(bibleKey);
     const [isShowing, setIsShowing] = useStateSettingBoolean(settingName, true);
-    const handleContextMenuOpening = (event: any) => {
-        if (!isShowing) {
-            return;
-        }
-        showAppContextMenu(event, [
-            {
-                menuElement: tran('Refresh'),
-                onSelect: onRefresh,
-            },
-        ]);
-    };
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            if (!isShowing) {
+                return;
+            }
+            showAppContextMenu(event, [
+                {
+                    menuElement: tran('Refresh'),
+                    onSelect: onRefresh,
+                },
+            ]);
+        },
+        [isShowing, onRefresh],
+    );
     return (
         <div
             className="card w-100 my-1"

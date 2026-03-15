@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';
@@ -182,11 +182,11 @@ function RenderNameEditorComp() {
     const hasChanged = useMemo(() => {
         return name !== slide.name;
     }, [name, slide]);
-    const handleNameChanging = () => {
+    const handleNameChanging = useCallback(() => {
         const appDocument = AppDocument.getInstance(slide.filePath);
         slide.name = name;
         appDocument.updateSlide(slide);
-    };
+    }, [slide, name]);
     return (
         <div className="m-1 p-1 d-flex align-items-center">
             Name:{' '}

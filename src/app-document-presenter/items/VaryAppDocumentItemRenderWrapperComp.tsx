@@ -1,4 +1,4 @@
-import { MouseEvent } from 'react';
+import { MouseEvent, useCallback } from 'react';
 
 import SlideRenderComp from './SlideRenderComp';
 import PdfSlideRenderComp from './PdfSlideRenderComp';
@@ -59,11 +59,19 @@ export default function VaryAppDocumentItemRenderWrapperComp({
     index: number;
 }>) {
     const setSelectedAppDocumentItem = useSelectedEditingSlideSetterContext();
-    const handleClicking = selectVaryAppDocumentItem.bind(null, {
-        index,
-        varyAppDocumentItem,
-        setSelectedAppDocumentItem,
-    });
+    const handleClicking = useCallback(
+        (event: MouseEvent<HTMLDivElement>) => {
+            selectVaryAppDocumentItem(
+                {
+                    index,
+                    varyAppDocumentItem,
+                    setSelectedAppDocumentItem,
+                },
+                event,
+            );
+        },
+        [index, varyAppDocumentItem, setSelectedAppDocumentItem],
+    );
     if (PdfSlide.checkIsThisType(varyAppDocumentItem)) {
         return (
             <PdfSlideRenderComp

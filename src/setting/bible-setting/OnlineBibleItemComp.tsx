@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useDownloadBible } from './bibleDownloadingHelpers';
@@ -18,7 +20,7 @@ export default function OnlineBibleItemComp({
         bibleInfo,
         onDownloaded,
     );
-    const handleDownloadStarting = async () => {
+    const handleDownloadStarting = useCallback(async () => {
         const keysMap = await getAllXMLFileKeys();
         if (keysMap[bibleInfo.key]) {
             showSimpleToast('Already in XML', 'This bible is already in XML');
@@ -26,7 +28,7 @@ export default function OnlineBibleItemComp({
             return;
         }
         startDownloadBible();
-    };
+    }, [bibleInfo, startDownloadBible, refresh]);
     const isBibleXMLExist = !!bibleXMLKeysMap[bibleInfo.key];
     return (
         <li className="list-group-item">

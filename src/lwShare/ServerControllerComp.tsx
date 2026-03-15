@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import type { StatusDataType, StatusType } from './lwShareHelpers';
 import { controller } from './lwShareHelpers';
@@ -133,21 +133,21 @@ export default function ServerControllerComp() {
             },
         );
     }, [port]);
+    const handleServer = useCallback(async () => {
+        if (status === 'starting') {
+            return;
+        } else if (status === 'running') {
+            serverData?.stop();
+        } else {
+            serverData?.restart();
+        }
+    }, [status, serverData]);
     if (serverData === undefined) {
         return <LoadingComp />;
     }
     if (serverData === null) {
         return <p>Fail to start server.</p>;
     }
-    const handleServer = async () => {
-        if (status === 'starting') {
-            return;
-        } else if (status === 'running') {
-            serverData.stop();
-        } else {
-            serverData.restart();
-        }
-    };
     const statusView = statusViewMap[status];
     return (
         <div className="w-100 h-100 d-flex flex-column overflow-hidden">

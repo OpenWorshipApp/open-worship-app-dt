@@ -1,4 +1,4 @@
-import type { MouseEvent } from 'react';
+import { useCallback, type MouseEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import Bible from './Bible';
@@ -100,61 +100,70 @@ export default function BibleItemRenderComp({
     };
     const isOnScreen = useIsOnScreen([bibleItem]);
 
-    const handleContextMenuOpening = async (event: MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [
-            {
-                menuElement: tran('Open'),
-                onSelect: (event) => {
-                    handleOpening(event, viewController, bibleItem);
+    const handleContextMenuOpening = useCallback(
+        async (event: MouseEvent<any>) => {
+            const menuItems: ContextMenuItemType[] = [
+                {
+                    menuElement: tran('Open'),
+                    onSelect: (event) => {
+                        handleOpening(event, viewController, bibleItem);
+                    },
                 },
-            },
-        ];
-        const attachedBackgroundData =
-            await attachBackgroundManager.getAttachedBackground(
-                filePath,
-                bibleItem.id,
+            ];
+            const attachedBackgroundData =
+                await attachBackgroundManager.getAttachedBackground(
+                    filePath,
+                    bibleItem.id,
+                );
+            if (attachedBackgroundData !== null) {
+                menuItems.push(
+                    ...genRemovingAttachedBackgroundMenu(
+                        filePath,
+                        bibleItem.id,
+                    ),
+                );
+            }
+            openBibleItemContextMenu(
+                event,
+                bibleItem,
+                index,
+                showBibleLookupPopup,
+                menuItems,
             );
-        if (attachedBackgroundData !== null) {
-            menuItems.push(
-                ...genRemovingAttachedBackgroundMenu(filePath, bibleItem.id),
-            );
-        }
-        openBibleItemContextMenu(
-            event,
-            bibleItem,
-            index,
-            showBibleLookupPopup,
-            menuItems,
-        );
-    };
+        },
+        [bibleItem, viewController, showBibleLookupPopup, filePath, index],
+    );
+    const handleDataDropping = useCallback(
+        async (event: any) => {
+            changeDragEventStyle(event, 'opacity', '1');
+            const droppedData = extractDropData(event);
+            if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
+                const bible = await Bible.fromFilePath(filePath);
+                if (bible === null) {
+                    return;
+                }
+                const droppedBibleItem = droppedData.item as BibleItem;
+                if (droppedBibleItem.filePath !== undefined) {
+                    if (droppedBibleItem.filePath === bibleItem.filePath) {
+                        const toIndex = bible.getItemIndex(bibleItem);
+                        bible.moveItemToIndex(droppedBibleItem, toIndex);
+                        stopDraggingState(event);
+                        bible.save();
+                    }
+                }
+            } else {
+                handleAttachBackgroundDrop(event, {
+                    filePath,
+                    id: bibleItem.id,
+                });
+            }
+        },
+        [bibleItem, filePath],
+    );
 
     if (bibleItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
     }
-    const handleDataDropping = async (event: any) => {
-        changeDragEventStyle(event, 'opacity', '1');
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
-            const bible = await Bible.fromFilePath(filePath);
-            if (bible === null) {
-                return;
-            }
-            const droppedBibleItem = droppedData.item as BibleItem;
-            if (droppedBibleItem.filePath !== undefined) {
-                if (droppedBibleItem.filePath === bibleItem.filePath) {
-                    const toIndex = bible.getItemIndex(bibleItem);
-                    bible.moveItemToIndex(droppedBibleItem, toIndex);
-                    stopDraggingState(event);
-                    bible.save();
-                }
-            }
-        } else {
-            handleAttachBackgroundDrop(event, {
-                filePath,
-                id: bibleItem.id,
-            });
-        }
-    };
     const fileSource = FileSource.getInstance(filePath);
     return (
         <li

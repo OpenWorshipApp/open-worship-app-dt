@@ -18,11 +18,16 @@ function RenderColorPickerPerScreenComp({
     screenId: number;
     backgroundSrc: BackgroundSrcType;
 }>) {
-    const handleColorChanging = async (newColor: AppColorType | null) => {
-        const screenBackgroundManager =
-            ScreenBackgroundManager.getInstance(screenId);
-        screenBackgroundManager.applyBackgroundSrc('color', { src: newColor });
-    };
+    const handleColorChanging = useCallback(
+        async (newColor: AppColorType | null) => {
+            const screenBackgroundManager =
+                ScreenBackgroundManager.getInstance(screenId);
+            screenBackgroundManager.applyBackgroundSrc('color', {
+                src: newColor,
+            });
+        },
+        [screenId],
+    );
     return (
         <div className="p-1 m-1 app-border-white-round">
             <ShowingScreenIcon screenId={screenId} />

@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { tran } from '../../lang/langHelpers';
 import { BibleSelectionMiniComp } from '../../bible-lookup/BibleSelectionComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
@@ -14,13 +16,13 @@ function RenderBibleKeyComp({
 }: Readonly<{ bibleKey: string; bibleItem: ReadIdOnlyBibleItem }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useBibleItemsViewControllerContext();
-    const handleClicking = () => {
+    const handleClicking = useCallback(() => {
         viewController.applyTargetOrBibleKey(bibleItem, {
             extraBibleKeys: bibleItem.extraBibleKeys.filter(
                 (key) => key !== bibleKey,
             ),
         });
-    };
+    }, [viewController, bibleItem, bibleKey]);
     return (
         <span
             className="bible-extra-key bg-primary small app-caught-hover-pointer"

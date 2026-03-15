@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { lazy, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import PathSelectorComp from './PathSelectorComp';
@@ -119,15 +119,18 @@ export default function FileListHandlerComp({
     sortFilePaths,
 }: Readonly<PropsType>) {
     const [isOnScreen, setIsOnScreen] = useState(false);
-    const handleNameApplying = async (name: string | null) => {
-        if (name === null) {
-            setIsCreatingNew(false);
-            return;
-        }
-        onNewFile?.(dirSource.dirPath, name).then((isSuccess) => {
-            setIsCreatingNew(isSuccess);
-        });
-    };
+    const handleNameApplying = useCallback(
+        async (name: string | null) => {
+            if (name === null) {
+                setIsCreatingNew(false);
+                return;
+            }
+            onNewFile?.(dirSource.dirPath, name).then((isSuccess) => {
+                setIsCreatingNew(isSuccess);
+            });
+        },
+        [onNewFile, dirSource],
+    );
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     useDirSourceWatching(dirSource);
     const handleItemsAdding =
@@ -136,13 +139,17 @@ export default function FileListHandlerComp({
             : () => {
                   handleFilesSelectionMenuItem(fileSelectionOption);
               };
-    const handleItemAdding =
+    const handleItemAdding = useCallback(
         onItemsAdding === undefined
-            ? handleItemsAdding
-            : onItemsAdding.bind(
-                  null,
-                  genItemsAddingContextMenuItems(handleItemsAdding),
-              );
+            ? handleItemsAdding ?? (() => {})
+            : (event: any) => {
+                  onItemsAdding(
+                      genItemsAddingContextMenuItems(handleItemsAdding),
+                      event,
+                  );
+              },
+        [onItemsAdding, handleItemsAdding],
+    );
     return (
         <DirSourceContext value={dirSource}>
             <div

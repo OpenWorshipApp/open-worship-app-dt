@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useCallback, type CSSProperties } from 'react';
 import { useState } from 'react';
 import { tz } from 'moment-timezone';
 
@@ -78,34 +78,43 @@ function TimeInSetComp({
             `foreground-timezone-minute-offset-setting-${id}`,
             getSystemTimezoneMinuteOffset,
         );
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.addTimeData(
-            event,
-            {
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.addTimeData(
+                event,
+                {
+                    id,
+                    timezoneMinuteOffset,
+                    title: cityName || null,
+                    extraStyle: genStyle(),
+                },
+                isForceChoosing,
+            );
+        },
+        [id, timezoneMinuteOffset, cityName, genStyle],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            handleShowing(event, true);
+        },
+        [handleShowing],
+    );
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.addTimeData({
                 id,
                 timezoneMinuteOffset,
                 title: cityName || null,
                 extraStyle: genStyle(),
-            },
-            isForceChoosing,
-        );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        screenForegroundManager.addTimeData({
-            id,
-            timezoneMinuteOffset,
-            title: cityName || null,
-            extraStyle: genStyle(),
-        });
-    };
+            });
+        },
+        [id, timezoneMinuteOffset, cityName, genStyle],
+    );
     return (
         <div className="d-flex flex-column">
             <div className="btn-group">

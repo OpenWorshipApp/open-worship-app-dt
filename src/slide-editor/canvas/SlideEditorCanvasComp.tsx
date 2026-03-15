@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { defaultRangeSize } from './CanvasController';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
@@ -73,31 +75,42 @@ export default function SlideEditorCanvasComp({
         stopAllModes,
     } = contextData;
 
-    const handleScrollEvent = (event: any) => {
-        event.stopPropagation();
-        handleCtrlWheel({
-            event,
-            value: canvasController.scale * 10,
-            setValue: (scale) => {
-                canvasController.scale = scale / 10;
-            },
-            defaultSize: defaultRangeSize,
-        });
-    };
-    const handleKeyDownEvent = (event: any) => {
-        if (document.activeElement !== event.currentTarget) {
-            return;
-        }
-        onCanvasKeyboardEvent(
-            {
-                stopAllModes,
-                canvasController,
-                selectedCanvasItems,
-                setSelectedCanvasItems,
-            },
-            event,
-        );
-    };
+    const handleScrollEvent = useCallback(
+        (event: any) => {
+            event.stopPropagation();
+            handleCtrlWheel({
+                event,
+                value: canvasController.scale * 10,
+                setValue: (scale) => {
+                    canvasController.scale = scale / 10;
+                },
+                defaultSize: defaultRangeSize,
+            });
+        },
+        [canvasController],
+    );
+    const handleKeyDownEvent = useCallback(
+        (event: any) => {
+            if (document.activeElement !== event.currentTarget) {
+                return;
+            }
+            onCanvasKeyboardEvent(
+                {
+                    stopAllModes,
+                    canvasController,
+                    selectedCanvasItems,
+                    setSelectedCanvasItems,
+                },
+                event,
+            );
+        },
+        [
+            stopAllModes,
+            canvasController,
+            selectedCanvasItems,
+            setSelectedCanvasItems,
+        ],
+    );
     return (
         <div className="card w-100 h-100 app-overflow-hidden">
             <div

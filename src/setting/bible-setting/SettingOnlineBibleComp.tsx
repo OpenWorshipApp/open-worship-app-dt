@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import type { BibleListType } from './bibleSettingHelpers';
@@ -20,16 +22,16 @@ export default function SettingOnlineBibleComp({
         isPending: isPendingBibleXMLKeys,
         loadBibleKeys: loadBibleXMLKeys,
     } = useBibleXMLKeys();
-    const handleDownloadedEvent = () => {
+    const handleDownloadedEvent = useCallback(() => {
         setDownloadedBibleInfoList(null);
-    };
+    }, [setDownloadedBibleInfoList]);
+    const handleRefreshing = useCallback(() => {
+        setOnlineBibleInfoList(null);
+        loadBibleXMLKeys();
+    }, [setOnlineBibleInfoList, loadBibleXMLKeys]);
     if (onlineBibleInfoList === null || isPendingBibleXMLKeys) {
         return <LoadingComp />;
     }
-    const handleRefreshing = () => {
-        setOnlineBibleInfoList(null);
-        loadBibleXMLKeys();
-    };
     const getRefresher = () => {
         return (
             <button className="btn btn-info" onClick={handleRefreshing}>

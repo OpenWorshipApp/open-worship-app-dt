@@ -1,5 +1,7 @@
 import './PlaylistListComp.scss';
 
+import { useCallback } from 'react';
+
 import PlaylistFileComp from './PlaylistFileComp';
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import Playlist from './Playlist';
@@ -12,7 +14,7 @@ import { tran } from '../lang/langHelpers';
 
 export default function PlaylistListComp() {
     const dirSource = useGenDirSourceReload(dirSourceSettingNames.PLAYLIST);
-    const handleBodyRendering = (filePaths: string[]) => {
+    const handleBodyRendering = useCallback((filePaths: string[]) => {
         return (
             <>
                 {filePaths.map((filePath, i) => {
@@ -26,7 +28,7 @@ export default function PlaylistListComp() {
                 })}
             </>
         );
-    };
+    }, []);
     if (dirSource === null) {
         return null;
     }

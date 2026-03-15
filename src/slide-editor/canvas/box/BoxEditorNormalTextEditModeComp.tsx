@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useCallback, type CSSProperties } from 'react';
 import { useMemo } from 'react';
 
 import { useCanvasControllerContext } from '../CanvasController';
@@ -21,12 +21,15 @@ export default function BoxEditorNormalTextEditModeComp({
     }, []);
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
-    const handleTextSetting = (text: string) => {
-        attemptTimeout(() => {
-            canvasItem.applyProps({ text });
-            canvasController.applyEditItem(canvasItem);
-        });
-    };
+    const handleTextSetting = useCallback(
+        (text: string) => {
+            attemptTimeout(() => {
+                canvasItem.applyProps({ text });
+                canvasController.applyEditItem(canvasItem);
+            });
+        },
+        [attemptTimeout, canvasItem, canvasController],
+    );
     const props = useCanvasItemPropsContext<CanvasItemTextPropsType>();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
     return (

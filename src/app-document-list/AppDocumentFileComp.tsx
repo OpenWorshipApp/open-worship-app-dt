@@ -1,4 +1,4 @@
-import { use, useState } from 'react';
+import { use, useCallback, useState } from 'react';
 
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
@@ -119,10 +119,10 @@ export default function AppDocumentFileComp({
         const newVaryAppDocument = varyAppDocumentFromFilePath(filePath);
         setVaryAppDocument(newVaryAppDocument);
     }, [varyAppDocument]);
-    const handleReloading = () => {
+    const handleReloading = useCallback(() => {
         setVaryAppDocument(undefined);
-    };
-    const handleClicking = () => {
+    }, []);
+    const handleClicking = useCallback(() => {
         if (!varyAppDocument) {
             return;
         }
@@ -130,32 +130,38 @@ export default function AppDocumentFileComp({
         if (!getIsShowingVaryAppDocumentPreviewer()) {
             previewingEventListener.showVaryAppDocument(varyAppDocument);
         }
-    };
-    const handleChildRendering = (varyAppDocument: AppDocumentSourceAbs) => {
-        if (AppDocument.checkIsThisType(varyAppDocument)) {
-            return (
-                <FilePreviewAppDocumentNormalComp
-                    varyAppDocument={varyAppDocument}
-                />
-            );
-        }
-        if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
-            return (
-                <FilePreviewPdfAppDocumentComp
-                    pdfAppDocument={varyAppDocument}
-                />
-            );
-        }
-        return null;
-    };
-    const handleRenaming = async (newFileSource: FileSource) => {
-        if (isSelected) {
-            const newVaryAppDocument = varyAppDocumentFromFilePath(
-                newFileSource.filePath,
-            );
-            setSelectedAppDocument(newVaryAppDocument);
-        }
-    };
+    }, [varyAppDocument, setSelectedAppDocument]);
+    const handleChildRendering = useCallback(
+        (varyAppDocument: AppDocumentSourceAbs) => {
+            if (AppDocument.checkIsThisType(varyAppDocument)) {
+                return (
+                    <FilePreviewAppDocumentNormalComp
+                        varyAppDocument={varyAppDocument}
+                    />
+                );
+            }
+            if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
+                return (
+                    <FilePreviewPdfAppDocumentComp
+                        pdfAppDocument={varyAppDocument}
+                    />
+                );
+            }
+            return null;
+        },
+        [],
+    );
+    const handleRenaming = useCallback(
+        async (newFileSource: FileSource) => {
+            if (isSelected) {
+                const newVaryAppDocument = varyAppDocumentFromFilePath(
+                    newFileSource.filePath,
+                );
+                setSelectedAppDocument(newVaryAppDocument);
+            }
+        },
+        [isSelected, setSelectedAppDocument],
+    );
 
     return (
         <FileItemHandlerComp

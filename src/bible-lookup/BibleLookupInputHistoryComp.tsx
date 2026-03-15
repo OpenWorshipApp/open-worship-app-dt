@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -208,26 +208,33 @@ export default function BibleLookupInputHistoryComp({
     const viewController = useLookupBibleItemControllerContext();
     const [historyTextList, setHistoryTextList] =
         useHistoryTextList(maxHistoryCount);
-    const handleContextMenuOpening = async (
-        historyText: string,
-        event: any,
-    ) => {
-        const bibleItem = await getBibleItemFromHistoryText(historyText);
-        openContextMenu(event, {
-            viewController,
-            bibleItem,
-            remove: () => {
-                removeHistory(historyTextList, historyText, setHistoryTextList);
-            },
-        });
-    };
-    const handleDoubleClicking = async (historyText: string, event: any) => {
-        const bibleItem = await getBibleItemFromHistoryText(historyText);
-        if (bibleItem === null) {
-            return;
-        }
-        openInBibleLookup(event, viewController, bibleItem);
-    };
+    const handleContextMenuOpening = useCallback(
+        async (historyText: string, event: any) => {
+            const bibleItem = await getBibleItemFromHistoryText(historyText);
+            openContextMenu(event, {
+                viewController,
+                bibleItem,
+                remove: () => {
+                    removeHistory(
+                        historyTextList,
+                        historyText,
+                        setHistoryTextList,
+                    );
+                },
+            });
+        },
+        [viewController, historyTextList, setHistoryTextList],
+    );
+    const handleDoubleClicking = useCallback(
+        async (historyText: string, event: any) => {
+            const bibleItem = await getBibleItemFromHistoryText(historyText);
+            if (bibleItem === null) {
+                return;
+            }
+            openInBibleLookup(event, viewController, bibleItem);
+        },
+        [viewController],
+    );
     return (
         <div
             className="h-100 d-flex rounded px-1 me-1 app-inner-shadow"

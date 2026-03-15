@@ -1,6 +1,6 @@
 import './BackgroundWebComp.scss';
 
-import type { ReactElement } from 'react';
+import { useCallback, type ReactElement } from 'react';
 import { useState } from 'react';
 
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -102,13 +102,16 @@ function rendChild(
 }
 
 export default function BackgroundWebComp() {
-    const handleItemsAdding = async (
-        _dirSource: DirSource,
-        defaultContextMenuItems: ContextMenuItemType[],
-        event: any,
-    ) => {
-        showAppContextMenu(event, [...defaultContextMenuItems]);
-    };
+    const handleItemsAdding = useCallback(
+        async (
+            _dirSource: DirSource,
+            defaultContextMenuItems: ContextMenuItemType[],
+            event: any,
+        ) => {
+            showAppContextMenu(event, [...defaultContextMenuItems]);
+        },
+        [],
+    );
     return (
         <BackgroundMediaComp
             defaultFolderName={defaultDataDirNames.BACKGROUND_WEB}

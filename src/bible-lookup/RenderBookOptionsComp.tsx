@@ -1,6 +1,6 @@
 import './RenderBookOptionsComp.scss';
 
-import { Fragment, useMemo } from 'react';
+import { Fragment, useCallback, useMemo } from 'react';
 
 import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import type { KeyboardType } from '../event/KeyboardEventListener';
@@ -98,14 +98,14 @@ export default function RenderBookOptionsComp({
     const [matchedBooks] = useAppStateAsync(() => {
         return genBookMatches(bibleKey, { guessingBook });
     }, [bibleKey, guessingBook]);
-    const handleOnArrow = (event: KeyboardEvent) => {
+    const handleOnArrow = useCallback((event: KeyboardEvent) => {
         processSelection(
             OPTION_CLASS,
             OPTION_SELECTED_CLASS,
             event.key as KeyboardType,
             event,
         );
-    };
+    }, []);
     useKeyboardRegistering([{ key: 'ArrowLeft' }], handleOnArrow, []);
     useKeyboardRegistering([{ key: 'ArrowRight' }], handleOnArrow, []);
     useKeyboardRegistering([{ key: 'ArrowUp' }], handleOnArrow, []);

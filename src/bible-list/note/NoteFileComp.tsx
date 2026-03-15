@@ -1,4 +1,4 @@
-import { lazy, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
@@ -165,12 +165,15 @@ export default function NoteFileComp({
         [note],
         { setData: setNote },
     );
-    const handlerChildRendering = (note: AppDocumentSourceAbs) => {
-        return <NotePreview note={note as Note} />;
-    };
-    const handleReloading = () => {
+    const handlerChildRendering = useCallback(
+        (note: AppDocumentSourceAbs) => {
+            return <NotePreview note={note as Note} />;
+        },
+        [],
+    );
+    const handleReloading = useCallback(() => {
         setNote(undefined);
-    };
+    }, []);
     useFileSourceEvents(
         ['update'],
         async () => {
@@ -180,22 +183,25 @@ export default function NoteFileComp({
         [note],
         filePath,
     );
-    const handleDataDropping = (event: any) => {
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
-            stopDraggingState(event);
-            const noteItem = droppedData.item as NoteItem;
-            if (noteItem.filePath === undefined) {
-                note?.addAndSaveNoteItem(droppedData.item);
+    const handleDataDropping = useCallback(
+        (event: any) => {
+            const droppedData = extractDropData(event);
+            if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
+                stopDraggingState(event);
+                const noteItem = droppedData.item as NoteItem;
+                if (noteItem.filePath === undefined) {
+                    note?.addAndSaveNoteItem(droppedData.item);
+                } else {
+                    note?.moveItemFrom(noteItem.filePath, noteItem);
+                }
             } else {
-                note?.moveItemFrom(noteItem.filePath, noteItem);
+                handleAttachBackgroundDrop(event, {
+                    filePath,
+                });
             }
-        } else {
-            handleAttachBackgroundDrop(event, {
-                filePath,
-            });
-        }
-    };
+        },
+        [note, filePath],
+    );
     return (
         <FileItemHandlerComp
             index={index}

@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { DEFAULT_LOCALE, tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -31,29 +33,38 @@ export default function ForegroundMarqueeComp() {
             return data.marqueeData !== null;
         },
     );
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        const extraStyle = getForegroundCommonProperties();
-        ScreenForegroundManager.setMarquee(
-            event,
-            text,
-            extraStyle,
-            isForceChoosing,
-        );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        screenForegroundManager.setMarqueeData({
-            text,
-            extraStyle: getForegroundCommonProperties(),
-        });
-    };
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            const extraStyle = getForegroundCommonProperties();
+            ScreenForegroundManager.setMarquee(
+                event,
+                text,
+                extraStyle,
+                isForceChoosing,
+            );
+        },
+        [text],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            handleShowing(event, true);
+        },
+        [handleShowing],
+    );
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.setMarqueeData({
+                text,
+                extraStyle: getForegroundCommonProperties(),
+            });
+        },
+        [text],
+    );
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}

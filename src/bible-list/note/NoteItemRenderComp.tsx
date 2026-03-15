@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react';
+import { useCallback, useState, type MouseEvent } from 'react';
 
 import NoteItem from './NoteItem';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
@@ -59,55 +59,64 @@ export default function NoteItemRenderComp({
     };
     useFileSourceRefreshEvents(['select'], filePath);
 
-    const handleContextMenuOpening = async (event: MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [
-            {
-                menuElement: tran('Open'),
-                onSelect: () => {
-                    handleOpening(note, noteItem);
+    const handleContextMenuOpening = useCallback(
+        async (event: MouseEvent<any>) => {
+            const menuItems: ContextMenuItemType[] = [
+                {
+                    menuElement: tran('Open'),
+                    onSelect: () => {
+                        handleOpening(note, noteItem);
+                    },
                 },
-            },
-        ];
-        const attachedBackgroundData =
-            await attachBackgroundManager.getAttachedBackground(
-                filePath,
-                noteItem.id,
-            );
-        if (attachedBackgroundData !== null) {
-            menuItems.push(
-                ...genRemovingAttachedBackgroundMenu(filePath, noteItem.id),
-            );
-        }
-        openNoteItemContextMenu(event, noteItem, index, menuItems);
-    };
+            ];
+            const attachedBackgroundData =
+                await attachBackgroundManager.getAttachedBackground(
+                    filePath,
+                    noteItem.id,
+                );
+            if (attachedBackgroundData !== null) {
+                menuItems.push(
+                    ...genRemovingAttachedBackgroundMenu(
+                        filePath,
+                        noteItem.id,
+                    ),
+                );
+            }
+            openNoteItemContextMenu(event, noteItem, index, menuItems);
+        },
+        [note, noteItem, filePath, index],
+    );
+    const handleDataDropping = useCallback(
+        async (event: any) => {
+            changeDragEventStyle(event, 'opacity', '1');
+            const droppedData = extractDropData(event);
+            if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
+                const note = await Note.fromFilePath(filePath);
+                if (note === null) {
+                    return;
+                }
+                const droppedNoteItem = droppedData.item as NoteItem;
+                if (droppedNoteItem.filePath !== undefined) {
+                    if (droppedNoteItem.filePath === noteItem.filePath) {
+                        const toIndex = note.getItemIndex(noteItem);
+                        note.moveItemToIndex(droppedNoteItem, toIndex);
+                        stopDraggingState(event);
+                        note.save();
+                    }
+                }
+            } else {
+                handleAttachBackgroundDrop(event, {
+                    filePath,
+                    id: noteItem.id,
+                });
+            }
+        },
+        [noteItem, filePath],
+    );
 
     if (noteItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
     }
-    const handleDataDropping = async (event: any) => {
-        changeDragEventStyle(event, 'opacity', '1');
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
-            const note = await Note.fromFilePath(filePath);
-            if (note === null) {
-                return;
-            }
-            const droppedNoteItem = droppedData.item as NoteItem;
-            if (droppedNoteItem.filePath !== undefined) {
-                if (droppedNoteItem.filePath === noteItem.filePath) {
-                    const toIndex = note.getItemIndex(noteItem);
-                    note.moveItemToIndex(droppedNoteItem, toIndex);
-                    stopDraggingState(event);
-                    note.save();
-                }
-            }
-        } else {
-            handleAttachBackgroundDrop(event, {
-                filePath,
-                id: noteItem.id,
-            });
-        }
-    };
     const fileSource = FileSource.getInstance(filePath);
     return (
         <>

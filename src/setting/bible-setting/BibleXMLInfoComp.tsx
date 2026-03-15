@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazy, useCallback } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
@@ -28,21 +28,24 @@ export default function BibleXMLInfoComp({
         false,
     );
     const { bibleInfo } = useBibleXMLInfo(bibleKey);
-    const handleFileTrashing = async (event: any) => {
-        event.stopPropagation();
-        const isConfirmed = await showAppConfirm(
-            'Delete Bible XML',
-            `Are you sure to delete bible XML "${bibleKey}"?`,
-            {
-                confirmButtonLabel: 'Yes',
-            },
-        );
-        if (!isConfirmed) {
-            return;
-        }
-        await deleteBibleXML(bibleKey);
-        loadBibleKeys();
-    };
+    const handleFileTrashing = useCallback(
+        async (event: any) => {
+            event.stopPropagation();
+            const isConfirmed = await showAppConfirm(
+                'Delete Bible XML',
+                `Are you sure to delete bible XML "${bibleKey}"?`,
+                {
+                    confirmButtonLabel: 'Yes',
+                },
+            );
+            if (!isConfirmed) {
+                return;
+            }
+            await deleteBibleXML(bibleKey);
+            loadBibleKeys();
+        },
+        [bibleKey, loadBibleKeys],
+    );
     const title = bibleInfo ? bibleInfo.title : null;
     return (
         <li

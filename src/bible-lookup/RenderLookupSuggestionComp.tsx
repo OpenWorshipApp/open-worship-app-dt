@@ -1,4 +1,4 @@
-import { use } from 'react';
+import { use, useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
@@ -85,15 +85,21 @@ export function BibleNotAvailableComp({
 }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useLookupBibleItemControllerContext();
-    const handleBibleKeyChanging = (
-        _isContextMenu: boolean,
-        _oldBibleKey: string,
-        newBibleKey: string,
-    ) => {
-        viewController.applyTargetOrBibleKey(viewController.selectedBibleItem, {
-            bibleKey: newBibleKey,
-        });
-    };
+    const handleBibleKeyChanging = useCallback(
+        (
+            _isContextMenu: boolean,
+            _oldBibleKey: string,
+            newBibleKey: string,
+        ) => {
+            viewController.applyTargetOrBibleKey(
+                viewController.selectedBibleItem,
+                {
+                    bibleKey: newBibleKey,
+                },
+            );
+        },
+        [viewController],
+    );
 
     return (
         <div

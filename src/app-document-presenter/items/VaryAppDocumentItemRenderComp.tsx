@@ -1,7 +1,7 @@
 import './VaryAppDocumentItem.scss';
 
 import type { CSSProperties, ReactNode, MouseEvent } from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import Slide from '../../app-document-list/Slide';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
@@ -226,33 +226,49 @@ export default function VaryAppDocumentItemRenderComp({
         slide.filePath,
         slide.id,
     );
-    const handleDataDropping = async (event: any) => {
-        changeDragEventStyle(event, 'opacity', '1');
-        const droppedData = extractDropData(event);
-        if (droppedData?.type === DragTypeEnum.SLIDE) {
-            if (
-                !Slide.checkIsThisType(slide) ||
-                droppedData.item.filePath !== slide.filePath
-            ) {
-                return;
+    const handleDataDropping = useCallback(
+        async (event: any) => {
+            changeDragEventStyle(event, 'opacity', '1');
+            const droppedData = extractDropData(event);
+            if (droppedData?.type === DragTypeEnum.SLIDE) {
+                if (
+                    !Slide.checkIsThisType(slide) ||
+                    droppedData.item.filePath !== slide.filePath
+                ) {
+                    return;
+                }
+                const appDocument = AppDocument.getInstance(slide.filePath);
+                const toIndex = await appDocument.getSlideIndex(
+                    slide as Slide,
+                );
+                appDocument.moveSlideToIndex(
+                    droppedData.item as Slide,
+                    toIndex,
+                );
+            } else {
+                handleAttachBackgroundDrop(event, slide);
             }
-            const appDocument = AppDocument.getInstance(slide.filePath);
-            const toIndex = await appDocument.getSlideIndex(slide as Slide);
-            appDocument.moveSlideToIndex(droppedData.item as Slide, toIndex);
-        } else {
-            handleAttachBackgroundDrop(event, slide);
-        }
-    };
-    const handleContextMenuOpening = (event: any) => {
-        const menuItems: ContextMenuItemType[] = [];
-        if (attachedBackgroundData) {
+        },
+        [slide],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            const menuItems: ContextMenuItemType[] = [];
+            if (attachedBackgroundData) {
+                menuItems.push(
+                    ...genRemovingAttachedBackgroundMenu(
+                        slide.filePath,
+                        slide.id,
+                    ),
+                );
+            }
             menuItems.push(
-                ...genRemovingAttachedBackgroundMenu(slide.filePath, slide.id),
+                ...genChooseColorNoteOption(slide.filePath, slide.id),
             );
-        }
-        menuItems.push(...genChooseColorNoteOption(slide.filePath, slide.id));
-        onContextMenu(event, menuItems);
-    };
+            onContextMenu(event, menuItems);
+        },
+        [attachedBackgroundData, slide, onContextMenu],
+    );
     return (
         <div
             className={

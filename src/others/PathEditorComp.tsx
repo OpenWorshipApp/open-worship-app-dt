@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type DirSource from '../helper/DirSource';
 import { selectDirs } from '../server/fileHelpers';
@@ -30,13 +30,13 @@ export default function PathEditorComp({
         return dirValidClassname;
     }, [dirSource.isDirPathValid]);
 
-    const handleDirSelecting = async () => {
+    const handleDirSelecting = useCallback(async () => {
         const dirs = await selectDirs();
         if (dirs.length === 0) {
             return;
         }
         dirSource.dirPath = dirs[0];
-    };
+    }, [dirSource]);
     return (
         <div className="input-group mb-3">
             {dirSource.dirPath ? (

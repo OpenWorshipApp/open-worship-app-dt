@@ -1,6 +1,6 @@
 import './BackgroundAudiosComp.scss';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -166,7 +166,7 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
 
 export default function BackgroundAudiosComp() {
     const [activeMap, setActiveMap] = useState<{ [key: string]: boolean }>({});
-    const handleItemClicking = (event: any) => {
+    const handleItemClicking = useCallback((event: any) => {
         const target = event.target;
         const parentElement = target.parentElement;
         // check is audio playing
@@ -189,19 +189,22 @@ export default function BackgroundAudiosComp() {
                 [filePath]: !preActiveMap[filePath],
             };
         });
-    };
-    const handleItemsAdding = async (
-        dirSource: DirSource,
-        defaultContextMenuItems: ContextMenuItemType[],
-        event: any,
-    ) => {
-        const contextMenuItems =
-            await genAudioDownloadContextMenuItems(dirSource);
-        showAppContextMenu(event, [
-            ...defaultContextMenuItems,
-            ...contextMenuItems,
-        ]);
-    };
+    }, []);
+    const handleItemsAdding = useCallback(
+        async (
+            dirSource: DirSource,
+            defaultContextMenuItems: ContextMenuItemType[],
+            event: any,
+        ) => {
+            const contextMenuItems =
+                await genAudioDownloadContextMenuItems(dirSource);
+            showAppContextMenu(event, [
+                ...defaultContextMenuItems,
+                ...contextMenuItems,
+            ]);
+        },
+        [],
+    );
     return (
         <BackgroundMediaComp
             rendChild={rendChild.bind(null, activeMap)}

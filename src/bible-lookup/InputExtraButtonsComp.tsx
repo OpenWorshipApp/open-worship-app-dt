@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { createRef, useMemo, useState } from 'react';
+import { createRef, useCallback, useMemo, useState } from 'react';
 
 import {
     checkIsBibleLookupInputFocused,
@@ -103,17 +103,20 @@ export default function InputExtraButtonsComp() {
         wrapper.style.right = `${parentRect.right - inputRect.right + 5}px`;
         wrapper.style.zIndex = '5';
     }, []);
-    const handleTabbing = async (event?: any) => {
-        const newInputText = await checkNewTabInputText(
-            viewController,
-            inputText,
-            event,
-        );
-        if (newInputText === null) {
-            return;
-        }
-        viewController.inputText = newInputText;
-    };
+    const handleTabbing = useCallback(
+        async (event?: any) => {
+            const newInputText = await checkNewTabInputText(
+                viewController,
+                inputText,
+                event,
+            );
+            if (newInputText === null) {
+                return;
+            }
+            viewController.inputText = newInputText;
+        },
+        [viewController, inputText],
+    );
     useKeyboardRegistering([tabEventMap], handleTabbing, []);
     useKeyboardRegistering(
         [escapeEventMap],

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import type { FindDataType, SelectedBookKeyType } from './bibleFindHelpers';
 import { doFinding } from './bibleFindHelpers';
@@ -49,15 +49,23 @@ export default function BibleFindBodyComp({
         });
         setSelectedBooks(newSelectedBooks);
     };
-    const handleFinding = (text: string, isFresh?: boolean) => {
-        if (text === findText) {
-            if (isFresh) {
-                doFinding(bibleFindController, findText, undefined, setData);
+    const handleFinding = useCallback(
+        (text: string, isFresh?: boolean) => {
+            if (text === findText) {
+                if (isFresh) {
+                    doFinding(
+                        bibleFindController,
+                        findText,
+                        undefined,
+                        setData,
+                    );
+                }
+                return;
             }
-            return;
-        }
-        setFindText(text);
-    };
+            setFindText(text);
+        },
+        [findText, bibleFindController],
+    );
     return (
         <div className="card app-overflow-hidden w-100 h-100">
             <div

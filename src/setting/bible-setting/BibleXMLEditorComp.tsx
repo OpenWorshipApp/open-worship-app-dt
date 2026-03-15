@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { SchemaNode } from 'json-schema-library';
 import { Uri } from 'monaco-editor';
 
@@ -216,25 +216,28 @@ function BibleBooksMapXMLInputComp({
         uri: Uri.parse('bible-books-map-editor'),
         language: 'plaintext',
     });
-    const handleMarkupStringParsing = (
-        markupString: string,
-        lang: LanguageDataType | null,
-    ) => {
-        markupString = markupString.replaceAll('</', '@newline</');
-        const domParser = new DOMParser();
-        const doc = domParser.parseFromString(markupString, 'text/html');
-        let innerText = doc.body.innerText;
-        innerText = innerText.replaceAll('@newline', '\n');
-        innerText = innerText.replaceAll(/ +/g, ' ');
-        innerText = innerText.replaceAll(/\n\s/g, '\n');
-        innerText = innerText.replaceAll(/\n+/g, '\n');
-        innerText = innerText.trim();
-        if (lang !== null) {
-            innerText = lang.sanitizeText(innerText);
-        }
-        onChange(innerText);
-        editorStore.replaceValue(innerText);
-    };
+    const handleMarkupStringParsing = useCallback(
+        (
+            markupString: string,
+            lang: LanguageDataType | null,
+        ) => {
+            markupString = markupString.replaceAll('</', '@newline</');
+            const domParser = new DOMParser();
+            const doc = domParser.parseFromString(markupString, 'text/html');
+            let innerText = doc.body.innerText;
+            innerText = innerText.replaceAll('@newline', '\n');
+            innerText = innerText.replaceAll(/ +/g, ' ');
+            innerText = innerText.replaceAll(/\n\s/g, '\n');
+            innerText = innerText.replaceAll(/\n+/g, '\n');
+            innerText = innerText.trim();
+            if (lang !== null) {
+                innerText = lang.sanitizeText(innerText);
+            }
+            onChange(innerText);
+            editorStore.replaceValue(innerText);
+        },
+        [onChange, editorStore, locale],
+    );
     const langCode = getLangCode(locale) ?? 'en';
     return (
         <div className="w-100 h-100">

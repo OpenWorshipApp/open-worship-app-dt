@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import type { AppColorType } from './colorHelpers';
 import { compareColor } from './colorHelpers';
 import SelectCustomColor from './SelectCustomColor';
@@ -16,15 +18,24 @@ export default function RenderColors({
     onColorChange: (color: AppColorType | null, event: MouseEvent) => void;
     isNoImmediate?: boolean;
 }>) {
-    const handleNoColoring = (event: any) => {
-        onColorChange(null, event);
-    };
-    const handleColorChanging = (event: any, color: AppColorType) => {
-        onColorChange(color, event);
-    };
-    const handleColorSelecting = (color: AppColorType, event: any) => {
-        onColorChange(color, event);
-    };
+    const handleNoColoring = useCallback(
+        (event: any) => {
+            onColorChange(null, event);
+        },
+        [onColorChange],
+    );
+    const handleColorChanging = useCallback(
+        (event: any, color: AppColorType) => {
+            onColorChange(color, event);
+        },
+        [onColorChange],
+    );
+    const handleColorSelecting = useCallback(
+        (color: AppColorType, event: any) => {
+            onColorChange(color, event);
+        },
+        [onColorChange],
+    );
     return (
         <div>
             <div className="d-flex flex-wrap app-border-white-round">

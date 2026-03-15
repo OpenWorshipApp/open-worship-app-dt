@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useCallback, type CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
@@ -77,28 +77,37 @@ export default function ForegroundStopwatchComp() {
             isMini={isMini}
         />
     );
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.setStopwatch(
-            event,
-            new Date(),
-            genStyle(),
-            isForceChoosing,
-        );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        screenForegroundManager.setStopwatchData({
-            dateTime: new Date(),
-            extraStyle: genStyle(),
-        });
-    };
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.setStopwatch(
+                event,
+                new Date(),
+                genStyle(),
+                isForceChoosing,
+            );
+        },
+        [genStyle],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            handleShowing(event, true);
+        },
+        [handleShowing],
+    );
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.setStopwatchData({
+                dateTime: new Date(),
+                extraStyle: genStyle(),
+            });
+        },
+        [genStyle],
+    );
     return (
         <ForegroundLayoutComp
             target="stopwatch"

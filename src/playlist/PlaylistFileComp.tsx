@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import type BibleItem from '../bible-list/BibleItem';
@@ -31,27 +31,33 @@ export default function PlaylistFileComp({
     );
     const settingName = `opened-${filePath}`;
     const [isOpened, setIsOpened] = useStateSettingBoolean(settingName);
-    const handleReloading = () => {
+    const handleReloading = useCallback(() => {
         setPlaylist(undefined);
-    };
-    const handleClicking = () => {
+    }, []);
+    const handleClicking = useCallback(() => {
         setIsOpened(!isOpened);
-    };
-    const handleDropping = async (event: any) => {
-        if (playlist) {
-            const receivedData = event.dataTransfer.getData('text');
-            await playlist.addFromData(receivedData);
-        }
-    };
-    const handleChildRendering = (playlist: AppDocumentSourceAbs) => {
-        return (
-            <PlaylistPreview
-                isOpened={isOpened}
-                setIsOpened={setIsOpened}
-                playlist={playlist as Playlist}
-            />
-        );
-    };
+    }, [isOpened, setIsOpened]);
+    const handleDropping = useCallback(
+        async (event: any) => {
+            if (playlist) {
+                const receivedData = event.dataTransfer.getData('text');
+                await playlist.addFromData(receivedData);
+            }
+        },
+        [playlist],
+    );
+    const handleChildRendering = useCallback(
+        (playlist: AppDocumentSourceAbs) => {
+            return (
+                <PlaylistPreview
+                    isOpened={isOpened}
+                    setIsOpened={setIsOpened}
+                    playlist={playlist as Playlist}
+                />
+            );
+        },
+        [isOpened, setIsOpened],
+    );
     useAppEffect(() => {
         if (playlist !== undefined) {
             return;

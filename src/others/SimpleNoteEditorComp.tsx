@@ -82,14 +82,14 @@ export default function SimpleNoteEditorComp({
         },
         [store],
     );
-    const handleChanging = (event: any) => {
+    const handleChanging = useCallback((event: any) => {
         const value = event.target.value;
         setCurrentText1(value);
-    };
-    const handleBlur = async () => {
+    }, []);
+    const handleBlur = useCallback(async () => {
         await store.save();
         setIsSaved(true);
-    };
+    }, [store]);
     const style: CSSProperties = {
         outline: 'none',
         boxSizing: 'border-box',

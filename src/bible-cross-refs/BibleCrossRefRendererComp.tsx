@@ -1,4 +1,4 @@
-import type { RefObject } from 'react';
+import { useCallback, type RefObject } from 'react';
 import { useRef } from 'react';
 import { Fragment } from 'react/jsx-runtime';
 
@@ -79,11 +79,14 @@ export default function BibleCrossRefRendererComp({
     const { bookKey: book, chapter, verseStart } = bibleItem.target;
     // TODO: support multiple verses
     const verses = [verseStart];
-    const handleRefreshing = (ref: RefObject<RefreshingRefType | null>) => {
-        if (ref.current !== null) {
-            ref.current.refresh();
-        }
-    };
+    const handleRefreshing = useCallback(
+        (ref: RefObject<RefreshingRefType | null>) => {
+            if (ref.current !== null) {
+                ref.current.refresh();
+            }
+        },
+        [],
+    );
     const bibleKey = bibleItem.bibleKey;
     const fontFamily = useBibleFontFamily(bibleKey);
     return (

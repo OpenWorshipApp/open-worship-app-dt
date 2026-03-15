@@ -196,13 +196,16 @@ export default function ForegroundImagesSlideShowComp() {
             scaleType,
         });
     };
-    const handleShowing = (event: any, fileSource: FileSource) => {
-        ScreenBackgroundManager.handleBackgroundSelecting(event, 'image', {
-            src: fileSource.src,
-            scaleType,
-            extraStyle,
-        });
-    };
+    const handleShowing = useCallback(
+        (event: any, fileSource: FileSource) => {
+            ScreenBackgroundManager.handleBackgroundSelecting(event, 'image', {
+                src: fileSource.src,
+                scaleType,
+                extraStyle,
+            });
+        },
+        [scaleType],
+    );
     const genHeaderElements = (isMini: boolean) => (
         <HeaderElements
             scaleType={scaleType}

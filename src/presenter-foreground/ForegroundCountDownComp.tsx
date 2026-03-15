@@ -166,19 +166,25 @@ function CountDownInSetComp({
         );
         return targetDatetime;
     };
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        const targetDateTime = getTargetDateTime();
-        const style = genStyle();
-        ScreenForegroundManager.setCountdown(
-            event,
-            targetDateTime,
-            style,
-            isForceChoosing,
-        );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            const targetDateTime = getTargetDateTime();
+            const style = genStyle();
+            ScreenForegroundManager.setCountdown(
+                event,
+                targetDateTime,
+                style,
+                isForceChoosing,
+            );
+        },
+        [getTargetDateTime, genStyle],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            handleShowing(event, true);
+        },
+        [handleShowing],
+    );
     return (
         <div className="d-flex">
             <div

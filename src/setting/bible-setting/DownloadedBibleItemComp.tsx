@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { fsCheckDirExist, fsDeleteDir } from '../../server/fileHelpers';
 import type { BibleMinimalInfoType } from '../../helper/bible-helpers/bibleDownloadHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -18,7 +20,7 @@ export default function DownloadedBibleItemComp({
     onUpdate: () => void;
 }>) {
     const { key, title } = bibleInfo;
-    const handleBibleDeleting = async () => {
+    const handleBibleDeleting = useCallback(async () => {
         const isOk = await showAppConfirm(
             'Delete Bible',
             `Are you sure to delete bible "${title}"?`,
@@ -45,7 +47,7 @@ export default function DownloadedBibleItemComp({
         } catch (error: any) {
             showSimpleToast('Deleting', error.message);
         }
-    };
+    }, [key, title, onDeleted]);
     return (
         <li className="list-group-item">
             <div>

@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -11,13 +13,13 @@ import { sortNoteFilePaths } from './noteHelpers';
 
 export default function NoteListComp() {
     const dirSource = useGenDirSourceReload(dirSourceSettingNames.NOTES);
-    const handleBodyRendering = (filePaths: string[]) => {
+    const handleBodyRendering = useCallback((filePaths: string[]) => {
         return filePaths.map((filePath, i) => {
             return (
                 <NoteFileComp key={filePath} index={i} filePath={filePath} />
             );
         });
-    };
+    }, []);
     if (dirSource === null) {
         return null;
     }

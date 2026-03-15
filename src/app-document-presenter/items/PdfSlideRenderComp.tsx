@@ -1,4 +1,4 @@
-import { useMemo, type MouseEvent } from 'react';
+import { useCallback, useMemo, type MouseEvent } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
@@ -58,12 +58,16 @@ export default function PdfSlideRenderComp({
     const pdfAppDocument = useVaryAppDocumentContext() as PdfAppDocument;
     const pdfPreviewSrc = pdfSlide.pdfPreviewSrc;
     useScreenVaryAppDocumentManagerEvents(['update']);
-    const handleContextMenuOpening = (
-        event: MouseEvent,
-        extraMenuItems: ContextMenuItemType[],
-    ) => {
-        pdfAppDocument.showSlideContextMenu(event, pdfSlide, extraMenuItems);
-    };
+    const handleContextMenuOpening = useCallback(
+        (event: MouseEvent, extraMenuItems: ContextMenuItemType[]) => {
+            pdfAppDocument.showSlideContextMenu(
+                event,
+                pdfSlide,
+                extraMenuItems,
+            );
+        },
+        [pdfAppDocument, pdfSlide],
+    );
     return (
         <VaryAppDocumentItemRenderComp
             slide={pdfSlide}

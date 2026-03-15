@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import AskingNewNameComp from './AskingNewNameComp';
 import FileSource from '../helper/FileSource';
 import { renameAllMaterialFiles } from '../server/appHelpers';
@@ -12,23 +14,26 @@ export default function RenderRenamingComp({
     filePath: string;
     renamedCallback?: (newFileSource: FileSource) => void;
 }>) {
-    const handleNameApplying = async (newName: string | null) => {
-        if (newName === null) {
-            setIsRenaming(false);
-            return;
-        }
-        const fileSource = FileSource.getInstance(filePath);
-        const newFileSource = await fileSource.renameTo(newName);
-        if (newFileSource !== null) {
-            await renameAllMaterialFiles(fileSource, newName);
-            await EditingHistoryManager.moveFilePath(
-                filePath,
-                newFileSource.filePath,
-            );
-            renamedCallback?.(newFileSource);
-        }
-        setIsRenaming(!newFileSource);
-    };
+    const handleNameApplying = useCallback(
+        async (newName: string | null) => {
+            if (newName === null) {
+                setIsRenaming(false);
+                return;
+            }
+            const fileSource = FileSource.getInstance(filePath);
+            const newFileSource = await fileSource.renameTo(newName);
+            if (newFileSource !== null) {
+                await renameAllMaterialFiles(fileSource, newName);
+                await EditingHistoryManager.moveFilePath(
+                    filePath,
+                    newFileSource.filePath,
+                );
+                renamedCallback?.(newFileSource);
+            }
+            setIsRenaming(!newFileSource);
+        },
+        [filePath, setIsRenaming, renamedCallback],
+    );
     const fileSource = FileSource.getInstance(filePath);
     return (
         <AskingNewNameComp

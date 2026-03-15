@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { PathPreviewerComp } from '../../others/PathPreviewerComp';
 import {
@@ -89,20 +89,23 @@ export default function AppDocumentPreviewerFooterComp({
     const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
     const [thumbnailSizeScale, setThumbnailSizeScale] =
         useAppDocumentItemThumbnailSizeScale();
-    const handleSlideChoosing = async (event: any) => {
-        const slide = await selectSlide(
-            event,
-            selectedVaryAppDocument.filePath,
-        );
-        if (slide === null) {
-            showAppAlert(
-                'No Slide Available',
-                'No other slide found in the slide directory',
+    const handleSlideChoosing = useCallback(
+        async (event: any) => {
+            const slide = await selectSlide(
+                event,
+                selectedVaryAppDocument.filePath,
             );
-        } else {
-            setSelectedAppDocument(slide);
-        }
-    };
+            if (slide === null) {
+                showAppAlert(
+                    'No Slide Available',
+                    'No other slide found in the slide directory',
+                );
+            } else {
+                setSelectedAppDocument(slide);
+            }
+        },
+        [selectedVaryAppDocument, setSelectedAppDocument],
+    );
     return (
         <div
             className="card-footer w-100 p-0"

@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useCallback, type CSSProperties } from 'react';
 import { useRef } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -43,30 +43,39 @@ function RenderCameraInfoComp({
             width,
         });
     }, [containerRef.current]);
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.addCameraData(
-            event,
-            {
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.addCameraData(
+                event,
+                {
+                    id: cameraInfo.deviceId,
+                    extraStyle: genStyle(),
+                },
+                isForceChoosing,
+            );
+        },
+        [cameraInfo, genStyle],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            handleShowing(event, true);
+        },
+        [handleShowing],
+    );
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.addCameraData({
                 id: cameraInfo.deviceId,
                 extraStyle: genStyle(),
-            },
-            isForceChoosing,
-        );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        screenForegroundManager.addCameraData({
-            id: cameraInfo.deviceId,
-            extraStyle: genStyle(),
-        });
-    };
+            });
+        },
+        [cameraInfo, genStyle],
+    );
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
             <div className="card-header app-ellipsis" title={cameraInfo.label}>

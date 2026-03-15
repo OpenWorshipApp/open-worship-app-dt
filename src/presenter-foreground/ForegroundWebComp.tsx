@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useCallback, type CSSProperties } from 'react';
 import { useMemo, useRef, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -129,33 +129,39 @@ function RenderWebInfoComp({
         return FileSource.getInstance(filePath);
     }, [filePath]);
     const containerRef = useRef<HTMLDivElement>(null);
-    const handleShowing = (event: any, isForceChoosing = false) => {
-        const { widthScale, heightScale } = genDimScale(getWidthScale);
-        ScreenForegroundManager.addWebData(
-            event,
-            {
+    const handleShowing = useCallback(
+        (event: any, isForceChoosing = false) => {
+            const { widthScale, heightScale } = genDimScale(getWidthScale);
+            ScreenForegroundManager.addWebData(
+                event,
+                {
+                    filePath,
+                    widthScale,
+                    heightScale,
+                    extraStyle: genStyle(),
+                },
+                isForceChoosing,
+            );
+        },
+        [filePath, getWidthScale, genStyle],
+    );
+    const handleByDropped = useCallback(
+        (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            const { widthScale, heightScale } = genDimScale(getWidthScale);
+            screenForegroundManager.addWebData({
                 filePath,
                 widthScale,
                 heightScale,
                 extraStyle: genStyle(),
-            },
-            isForceChoosing,
-        );
-    };
-    const handleByDropped = (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        const { widthScale, heightScale } = genDimScale(getWidthScale);
-        screenForegroundManager.addWebData({
-            filePath,
-            widthScale,
-            heightScale,
-            extraStyle: genStyle(),
-        });
-    };
+            });
+        },
+        [filePath, getWidthScale, genStyle],
+    );
     const imageData = useWebCapturing(fileSource, { width, height });
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>

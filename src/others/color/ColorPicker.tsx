@@ -1,6 +1,6 @@
 import './ColorPicker.scss';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import colorList from '../color-list.json';
 import type { AppColorType } from './colorHelpers';
@@ -56,37 +56,46 @@ export default function ColorPicker({
         setLocalColor(upperColor);
         onColorChange(upperColor, event);
     };
-    const handleColorChanging = (newColor: AppColorType | null, event: any) => {
-        if (newColor === null) {
-            onNoColor?.(defaultColor, event);
-            return;
-        }
-        const newColorStr = setOpacity(newColor as string, opacity);
-        applyNewColor(newColorStr, event);
-    };
-    const handleOpacityChanging = (value: number, event: any) => {
-        if (!localColor) {
-            return;
-        }
-        const newColor = setOpacity(localColor, value);
-        applyNewColor(newColor, event);
-    };
-    const handleContextMenuOpening = (event: any) => {
-        if (!localColor) {
-            return;
-        }
-        const contextMenuItems: ContextMenuItemType[] = [];
-        // TODO: paste color
-        if (localColor) {
-            contextMenuItems.push({
-                menuElement: 'Copy Color',
-                onSelect: () => {
-                    copyToClipboard(localColor);
-                },
-            });
-        }
-        showAppContextMenu(event, contextMenuItems);
-    };
+    const handleColorChanging = useCallback(
+        (newColor: AppColorType | null, event: any) => {
+            if (newColor === null) {
+                onNoColor?.(defaultColor, event);
+                return;
+            }
+            const newColorStr = setOpacity(newColor as string, opacity);
+            applyNewColor(newColorStr, event);
+        },
+        [onNoColor, defaultColor, opacity, applyNewColor],
+    );
+    const handleOpacityChanging = useCallback(
+        (value: number, event: any) => {
+            if (!localColor) {
+                return;
+            }
+            const newColor = setOpacity(localColor, value);
+            applyNewColor(newColor, event);
+        },
+        [localColor, applyNewColor],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            if (!localColor) {
+                return;
+            }
+            const contextMenuItems: ContextMenuItemType[] = [];
+            // TODO: paste color
+            if (localColor) {
+                contextMenuItems.push({
+                    menuElement: 'Copy Color',
+                    onSelect: () => {
+                        copyToClipboard(localColor);
+                    },
+                });
+            }
+            showAppContextMenu(event, contextMenuItems);
+        },
+        [localColor],
+    );
     if (isCollapsable && !isOpened) {
         return (
             <div

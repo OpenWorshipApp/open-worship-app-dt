@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import InputHandlerComp from './InputHandlerComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
 import BibleLookupInputHistoryComp from './BibleLookupInputHistoryComp';
@@ -19,14 +21,17 @@ export default function RenderBibleLookupHeaderComp({
     const viewController = useLookupBibleItemControllerContext();
     const hideBibleLookupPopup = useToggleBibleLookupPopupContext(false);
 
-    const handleBibleKeyChanging = async (
-        _oldBibleKey: string,
-        newBibleKey: string,
-    ) => {
-        viewController.applyTargetOrBibleKey(viewController.selectedBibleItem, {
-            bibleKey: newBibleKey,
-        });
-    };
+    const handleBibleKeyChanging = useCallback(
+        async (_oldBibleKey: string, newBibleKey: string) => {
+            viewController.applyTargetOrBibleKey(
+                viewController.selectedBibleItem,
+                {
+                    bibleKey: newBibleKey,
+                },
+            );
+        },
+        [viewController],
+    );
     return (
         <div
             className="card-header d-flex w-100 p-0 overflow-hidden align-items-center"

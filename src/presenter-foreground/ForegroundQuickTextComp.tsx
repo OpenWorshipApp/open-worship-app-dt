@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useCallback, type CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import {
@@ -91,32 +91,41 @@ export default function ForegroundQuickTextComp() {
         const htmlText = await renderMarkdown(markdownText);
         return htmlText.html;
     };
-    const handleShowing = async (event: any, isForceChoosing = false) => {
-        ScreenForegroundManager.setQuickText(
-            event,
-            await getRenderedHtml(),
-            timeSecondDelay,
-            timeSecondToLive,
-            genStyle(),
-            isForceChoosing,
-        );
-    };
-    const handleContextMenuOpening = (event: any) => {
-        handleShowing(event, true);
-    };
-    const handleByDropped = async (event: any) => {
-        const screenForegroundManager =
-            getScreenForegroundManagerByDropped(event);
-        if (screenForegroundManager === null) {
-            return;
-        }
-        screenForegroundManager.setQuickTextData({
-            htmlText: await getRenderedHtml(),
-            timeSecondDelay,
-            timeSecondToLive,
-            extraStyle: genStyle(),
-        });
-    };
+    const handleShowing = useCallback(
+        async (event: any, isForceChoosing = false) => {
+            ScreenForegroundManager.setQuickText(
+                event,
+                await getRenderedHtml(),
+                timeSecondDelay,
+                timeSecondToLive,
+                genStyle(),
+                isForceChoosing,
+            );
+        },
+        [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            handleShowing(event, true);
+        },
+        [handleShowing],
+    );
+    const handleByDropped = useCallback(
+        async (event: any) => {
+            const screenForegroundManager =
+                getScreenForegroundManagerByDropped(event);
+            if (screenForegroundManager === null) {
+                return;
+            }
+            screenForegroundManager.setQuickTextData({
+                htmlText: await getRenderedHtml(),
+                timeSecondDelay,
+                timeSecondToLive,
+                extraStyle: genStyle(),
+            });
+        },
+        [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
+    );
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}

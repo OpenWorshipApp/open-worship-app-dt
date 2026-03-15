@@ -1,5 +1,5 @@
 import type { SyntheticEvent } from 'react';
-import { useState, useTransition } from 'react';
+import { useCallback, useState, useTransition } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -25,7 +25,7 @@ export default function BibleXMLImportComp({
     const [isPending, startTransition] = useTransition();
     const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
     const isValidUrl = checkIsValidUrl(urlText);
-    const handleFileCanceling = (form: any) => {
+    const handleFileCanceling = useCallback((form: any) => {
         if (form instanceof HTMLFormElement) {
             const inputFile = getInputByName(form, 'file');
             if (inputFile instanceof HTMLInputElement) {
@@ -33,43 +33,50 @@ export default function BibleXMLImportComp({
             }
         }
         setIsFileSelected(false);
-    };
-    const handleFormSubmitting = async (
-        event: SyntheticEvent<HTMLFormElement>,
-    ) => {
-        event.preventDefault();
-        startTransition(async () => {
-            try {
-                const form = event.currentTarget;
-                if (!(form instanceof HTMLFormElement)) {
-                    return;
+    }, []);
+    const handleFormSubmitting = useCallback(
+        async (event: SyntheticEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            startTransition(async () => {
+                try {
+                    const form = event.currentTarget;
+                    if (!(form instanceof HTMLFormElement)) {
+                        return;
+                    }
+                    let dataText: string | null = null;
+                    if (isFileSelected) {
+                        dataText = await readFromFile(form, setLoadingMessage);
+                    } else if (isValidUrl) {
+                        dataText = await readFromUrl(form, setLoadingMessage);
+                    }
+                    if (dataText === null) {
+                        showSimpleToast('No Data', 'No data to process');
+                        return;
+                    }
+                    const dataJson = await xmlTextToJson(dataText);
+                    if (dataJson === null) {
+                        showSimpleToast(
+                            'Parsing XML',
+                            'Failed to parse XML data',
+                        );
+                        return;
+                    }
+                    const isSuccess = await saveJsonDataToXMLfile(dataJson);
+                    if (isSuccess) {
+                        handleFileCanceling(form);
+                        setUrlText('');
+                        loadBibleKeys();
+                    }
+                } catch (error) {
+                    showSimpleToast(
+                        'Format Submit Error',
+                        `Error: ${error}`,
+                    );
                 }
-                let dataText: string | null = null;
-                if (isFileSelected) {
-                    dataText = await readFromFile(form, setLoadingMessage);
-                } else if (isValidUrl) {
-                    dataText = await readFromUrl(form, setLoadingMessage);
-                }
-                if (dataText === null) {
-                    showSimpleToast('No Data', 'No data to process');
-                    return;
-                }
-                const dataJson = await xmlTextToJson(dataText);
-                if (dataJson === null) {
-                    showSimpleToast('Parsing XML', 'Failed to parse XML data');
-                    return;
-                }
-                const isSuccess = await saveJsonDataToXMLfile(dataJson);
-                if (isSuccess) {
-                    handleFileCanceling(form);
-                    setUrlText('');
-                    loadBibleKeys();
-                }
-            } catch (error) {
-                showSimpleToast('Format Submit Error', `Error: ${error}`);
-            }
-        });
-    };
+            });
+        },
+        [isFileSelected, isValidUrl, loadBibleKeys, handleFileCanceling],
+    );
     return (
         <div className="app-border-white-round p-1" style={{ margin: 'auto' }}>
             <h3>

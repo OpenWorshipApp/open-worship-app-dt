@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import { getAISetting } from '../../helper/ai/aiHelpers';
@@ -15,6 +17,17 @@ export default function AudioPlayerComp({
     onEnd: (audio: HTMLAudioElement) => void;
     refreshAudio: () => void;
 }>) {
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            showAppContextMenu(event, [
+                {
+                    menuElement: tran('Refresh'),
+                    onSelect: refreshAudio,
+                },
+            ]);
+        },
+        [refreshAudio],
+    );
     if (src === undefined) {
         return (
             <div
@@ -31,14 +44,6 @@ export default function AudioPlayerComp({
     if (src === null) {
         return null;
     }
-    const handleContextMenuOpening = (event: any) => {
-        showAppContextMenu(event, [
-            {
-                menuElement: tran('Refresh'),
-                onSelect: refreshAudio,
-            },
-        ]);
-    };
     return (
         <audio
             className="verse-audio"
