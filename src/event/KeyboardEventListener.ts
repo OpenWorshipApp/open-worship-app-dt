@@ -47,17 +47,17 @@ export type EventMapperType =
           key: string;
       }
     | {
-          platforms: PlatformEnum.Windows[];
+          platform: PlatformEnum.Windows;
           wControlKey: WindowsControlType[];
           key: string;
       }
     | {
-          platforms: PlatformEnum.Linux[];
+          platform: PlatformEnum.Linux;
           lControlKey: LinuxControlType[];
           key: string;
       }
     | {
-          platforms: PlatformEnum.MacOS[];
+          platform: PlatformEnum.MacOS;
           mControlKey: MacControlType[];
           key: string;
       }
@@ -228,16 +228,16 @@ export default class KeyboardEventListener extends EventHandler<string> {
 
     static filterEventMappersByPlatform(eventMappers: EventMapperType[]) {
         return eventMappers.filter((eventMapper) => {
-            const { platforms } = eventMapper as any;
-            if (!platforms) {
+            const { platform } = eventMapper as any;
+            if (!platform) {
                 return true;
             }
             if (
-                (platforms.includes(PlatformEnum.Windows) &&
+                (platform === PlatformEnum.Windows &&
                     appProvider.systemUtils.isWindows) ||
-                (platforms.includes(PlatformEnum.MacOS) &&
+                (platform === PlatformEnum.MacOS &&
                     appProvider.systemUtils.isMac) ||
-                (platforms.includes(PlatformEnum.Linux) &&
+                (platform === PlatformEnum.Linux &&
                     appProvider.systemUtils.isLinux)
             ) {
                 return true;
@@ -312,7 +312,7 @@ document.onkeydown = function (event) {
         checkIsKeyboardEventMatch(
             [
                 {
-                    platforms: [PlatformEnum.MacOS],
+                    platform: PlatformEnum.MacOS,
                     key: 'q',
                     mControlKey: ['Meta'],
                 },

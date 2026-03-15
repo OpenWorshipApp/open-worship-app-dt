@@ -39,12 +39,12 @@ function handleHistory(appDocument: AppDocument, event: any) {
                     key: 'z',
                 },
                 {
-                    platforms: [PlatformEnum.Windows],
+                    platform: PlatformEnum.Windows,
                     wControlKey: ['Ctrl'],
                     key: 'y',
                 },
                 {
-                    platforms: [PlatformEnum.Linux],
+                    platform: PlatformEnum.Linux,
                     lControlKey: ['Ctrl'],
                     key: 'y',
                 },
@@ -118,7 +118,7 @@ export async function onSlideItemsKeyboardEvent(
                 [
                     { key: 'Delete' },
                     {
-                        platforms: [PlatformEnum.MacOS],
+                        platform: PlatformEnum.MacOS,
                         mControlKey: ['Meta'],
                         key: 'Backspace',
                     },
@@ -259,7 +259,7 @@ export async function onCanvasKeyboardEvent(
             [
                 { key: 'Delete' },
                 {
-                    platforms: [PlatformEnum.MacOS],
+                    platform: PlatformEnum.MacOS,
                     mControlKey: ['Meta'],
                     key: 'Backspace',
                 },
