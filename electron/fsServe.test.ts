@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const { statSync } = vi.hoisted(() => ({
@@ -25,7 +26,6 @@ import {
     toTitleCase,
 } from './fsServe';
 import { electronMockState } from './testElectronModule';
-import { createMockWebContents } from './testUtils';
 
 describe('fsServe', () => {
     beforeEach(() => {
@@ -59,9 +59,8 @@ describe('fsServe', () => {
         const handler = electronMockState.protocol.handle.mock.calls[0][1];
         await handler({ url: `${rootUrl}/${htmlFiles.screen}` });
 
-        expect(electronMockState.net.fetch).toHaveBeenCalledWith(
-            'file:///mock-app/dist/screen.html',
-        );
+        const expectedPath = `file://${path.resolve('/mock-app', 'dist', 'screen.html')}`;
+        expect(electronMockState.net.fetch).toHaveBeenCalledWith(expectedPath);
     });
 
     test('falls back to presenter for missing local file', async () => {
@@ -74,9 +73,8 @@ describe('fsServe', () => {
         const handler = electronMockState.protocol.handle.mock.calls[0][1];
         await handler({ url: `${rootUrl}/missing.html` });
 
-        expect(electronMockState.net.fetch).toHaveBeenCalledWith(
-            'file:///mock-app/dist/presenter.html',
-        );
+        const expectedPath = `file://${path.resolve('/mock-app', 'dist', 'presenter.html')}`;
+        expect(electronMockState.net.fetch).toHaveBeenCalledWith(expectedPath);
     });
 
     test('passes through access URLs and injects CORS headers', async () => {

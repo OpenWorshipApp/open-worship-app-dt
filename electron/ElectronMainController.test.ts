@@ -87,9 +87,10 @@ describe('ElectronMainController', () => {
                 data: { isShowing: false },
             },
         );
-        expect(
-            controller.win.webContents.executeJavaScript,
-        ).toHaveBeenCalledWith('openBibleSetting();');
+        expect(controller.win.webContents.send).toHaveBeenCalledWith(
+            'app:main:go-to-setting-home',
+            undefined,
+        );
         processExit.mockRestore();
     });
 });

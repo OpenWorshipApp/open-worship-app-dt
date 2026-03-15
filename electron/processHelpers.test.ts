@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const fork = vi.fn();
@@ -31,7 +32,9 @@ describe('processHelpers', () => {
         handlers.message({ done: true });
 
         await expect(promise).resolves.toEqual({ done: true });
-        expect(fork).toHaveBeenCalledWith('/mock-app/public/js/worker.js');
+        expect(fork).toHaveBeenCalledWith(
+            path.resolve('/mock-app', 'public', 'js', 'worker.js'),
+        );
         expect(processMock.send).toHaveBeenCalledWith({ ok: true });
         expect(processMock.kill).toHaveBeenCalledTimes(1);
     });
@@ -52,6 +55,8 @@ describe('processHelpers', () => {
         handlers.exit(2);
 
         await expect(promise).rejects.toThrow('Process exited with code 2');
-        expect(fork).toHaveBeenCalledWith('/mock-app/dist/js/worker.js');
+        expect(fork).toHaveBeenCalledWith(
+            path.resolve('/mock-app', 'dist', 'js', 'worker.js'),
+        );
     });
 });

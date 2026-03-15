@@ -1,6 +1,7 @@
 import './ConfirmPopupComp.scss';
 
 import { useCallback } from 'react';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
 import type { ConfirmDataType } from './popupWidgetHelpers';
@@ -61,7 +62,7 @@ export default function ConfirmPopupComp({
                         <div
                             className="p-2 flex-fill app-selectable-text"
                             dangerouslySetInnerHTML={{
-                                __html: confirmData.body,
+                                __html: sanitizeHtml(confirmData.body),
                             }}
                         />
                     ) : (

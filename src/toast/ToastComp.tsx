@@ -6,7 +6,7 @@ import { useToastSimpleShowing } from '../event/ToastEventListener';
 import type { SimpleToastType } from './SimpleToastComp';
 import SimpleToastComp from './SimpleToastComp';
 
-let timeoutId: any = null;
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
 export default function ToastComp() {
     const [simpleToast, setSimpleToast] = useState<SimpleToastType | null>(
         null,

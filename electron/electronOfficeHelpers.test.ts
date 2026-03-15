@@ -29,6 +29,16 @@ describe('electronOfficeHelpers', () => {
 
     test('converts an Office document to PDF and writes output', async () => {
         readFileSync.mockReturnValue(Buffer.from('docx'));
+        convert.mockImplementation(
+            (
+                _buf: Buffer,
+                _ext: string,
+                _filter: any,
+                callback: (err: any, result: any) => void,
+            ) => {
+                callback(null, Buffer.from('pdf-output'));
+            },
+        );
 
         await expect(
             officeFileToPdf('/tmp/source.docx', '/tmp/out/file.pdf'),

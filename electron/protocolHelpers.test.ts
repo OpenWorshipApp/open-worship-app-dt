@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('electron', async () => {
@@ -23,7 +24,9 @@ describe('protocolHelpers', () => {
         route.loadURL(win as any, '?foo=bar');
 
         expect(
-            route.preloadFilePath.endsWith('client/preloadProvider.js'),
+            route.preloadFilePath.endsWith(
+                path.join('client', 'preloadProvider.js'),
+            ),
         ).toBe(true);
         expect(win.loadURL).toHaveBeenCalledWith(
             'https://localhost:3000/presenter.html?foo=bar',

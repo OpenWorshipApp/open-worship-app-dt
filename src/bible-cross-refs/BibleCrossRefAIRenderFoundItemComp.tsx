@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { tran } from '../lang/langHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import {
@@ -26,7 +27,7 @@ function RenderVerseTextComp({
                 fontFamily,
             }}
             dangerouslySetInnerHTML={{
-                __html: htmlText,
+                __html: sanitizeHtml(htmlText),
             }}
         />
     );

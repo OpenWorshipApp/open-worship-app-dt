@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import type { KeyboardType } from '../event/KeyboardEventListener';
 import {
     allArrows,
@@ -37,7 +38,7 @@ function RenderChapterZeroContentComp({
                             key={i}
                             style={{ fontFamily }}
                             dangerouslySetInnerHTML={{
-                                __html: verse,
+                                __html: sanitizeHtml(verse),
                             }}
                         />
                     );

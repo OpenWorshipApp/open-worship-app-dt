@@ -92,6 +92,6 @@ export default class ElectronMainController {
     }
 
     gotoSettingHomePage() {
-        this.win.webContents.executeJavaScript('openBibleSetting();');
+        this.sendData('app:main:go-to-setting-home');
     }
 }

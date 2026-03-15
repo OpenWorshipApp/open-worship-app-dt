@@ -1,5 +1,6 @@
 import './AlertPopupComp.scss';
 
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
 import type { PopupAlertDataType } from './popupWidgetHelpers';
@@ -39,7 +40,7 @@ export default function AlertPopupComp({
                     <div
                         className="p-2 flex-fill app-selectable-text"
                         dangerouslySetInnerHTML={{
-                            __html: alertData.message,
+                            __html: sanitizeHtml(alertData.message),
                         }}
                     />
                 </div>

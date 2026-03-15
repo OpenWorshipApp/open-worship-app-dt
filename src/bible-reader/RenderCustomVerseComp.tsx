@@ -1,5 +1,6 @@
 import type BibleItem from '../bible-list/BibleItem';
 import { reformCustomTitle } from '../helper/bible-helpers/bibleLogicHelpers3';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 
 export default function RenderCustomVerseComp({
@@ -16,7 +17,7 @@ export default function RenderCustomVerseComp({
                 reformCustomTitle(bibleItemViewController, bibleItem, element);
             }}
             dangerouslySetInnerHTML={{
-                __html: customHtml,
+                __html: sanitizeHtml(customHtml),
             }}
         />
     );

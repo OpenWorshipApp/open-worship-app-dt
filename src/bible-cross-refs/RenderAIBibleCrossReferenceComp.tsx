@@ -1,6 +1,7 @@
 import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';
 import BibleCrossRefAIRenderFoundItemComp from './BibleCrossRefAIRenderFoundItemComp';
@@ -43,7 +44,9 @@ export default function RenderAIBibleCrossReferenceComp({
                 title={titleEn}
             >
                 {genGoogleTranslated()}
-                <span dangerouslySetInnerHTML={{ __html: title }} />
+                <span
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(title) }}
+                />
             </strong>
             {verses.map((item, i) => {
                 return (

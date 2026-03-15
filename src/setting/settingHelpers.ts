@@ -22,7 +22,9 @@ export function openBibleSetting() {
     setSetting(SETTING_SETTING_NAME, 'b');
     openSettingPage();
 }
-(globalThis as any).openBibleSetting = openBibleSetting;
+appProvider.messageUtils.listenForData('app:main:go-to-setting-home', () => {
+    openBibleSetting();
+});
 
 export const APP_FONT_FAMILY_SETTING_NAME = 'app-font-family';
 export const APP_FONT_WEIGHT_SETTING_NAME = 'app-font-weight';

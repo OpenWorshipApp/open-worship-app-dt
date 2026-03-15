@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -68,7 +69,7 @@ export default function RenderFoundItemComp({
             <span
                 style={{ fontFamily }}
                 dangerouslySetInnerHTML={{
-                    __html: newItem,
+                    __html: sanitizeHtml(newItem),
                 }}
             />
         </div>

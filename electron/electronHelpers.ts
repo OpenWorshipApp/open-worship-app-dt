@@ -486,14 +486,26 @@ export function printHTMLContent(htmlText: string) {
     printWin.loadURL(
         `data:text/html;charset=utf-8,${encodeURIComponent(htmlText)}`,
     );
+    const timeout = setTimeout(() => {
+        attemptClosing(printWin);
+    }, 30_000);
     printWin.webContents.on('did-finish-load', () => {
         printWin.webContents.print({}, (success, errorType) => {
+            clearTimeout(timeout);
             if (!success) {
                 console.log('Print failed:', errorType);
             }
             attemptClosing(printWin);
         });
     });
+    printWin.webContents.on(
+        'did-fail-load',
+        (_event, _errorCode, errorDescription) => {
+            clearTimeout(timeout);
+            console.log('Print content failed to load:', errorDescription);
+            attemptClosing(printWin);
+        },
+    );
 }
 
 export async function captureWebScreenShot(
@@ -519,30 +531,36 @@ export async function captureWebScreenShot(
         height,
         webPreferences: {
             webSecurity: false,
-            nodeIntegration: true,
-            contextIsolation: false,
+            nodeIntegration: false,
+            contextIsolation: true,
         },
     });
-    console.log('Loading page for capture');
-    await captureWin.loadURL(url);
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    console.log('Capturing page content');
-    const image = await captureWin.webContents.capturePage({
-        x: 0,
-        y: 0,
-        width,
-        height,
-    });
-    attemptClosing(captureWin);
-    const imageDataUrl = image.toDataURL();
-    return imageDataUrl;
+    try {
+        console.log('Loading page for capture');
+        await captureWin.loadURL(url);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        console.log('Capturing page content');
+        const image = await captureWin.webContents.capturePage({
+            x: 0,
+            y: 0,
+            width,
+            height,
+        });
+        const imageDataUrl = image.toDataURL();
+        return imageDataUrl;
+    } catch (error) {
+        console.error('Failed to capture screenshot:', error);
+        throw error;
+    } finally {
+        attemptClosing(captureWin);
+    }
 }
 
 export function genTimeoutAttempt(
     timeMilliseconds: number = 1e3,
     shouldWait = true,
 ) {
-    let timeoutId: any = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     let lastSchedule = Date.now() - timeMilliseconds - 1;
     return function (func: () => void, isImmediate: boolean = false) {
         if (!shouldWait && Date.now() - lastSchedule > timeMilliseconds) {

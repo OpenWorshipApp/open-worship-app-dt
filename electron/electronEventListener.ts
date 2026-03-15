@@ -1,3 +1,4 @@
+import path from 'node:path';
 import electron, {
     FileFilter,
     IpcMain,
@@ -282,12 +283,20 @@ export function initEventOther(appController: ElectronAppController) {
         return null;
     });
 
-    ipcMain.on('main:app:reveal-path', (_, path: string) => {
-        shell.showItemInFolder(path);
+    ipcMain.on('main:app:reveal-path', (_, filePath: string) => {
+        if (typeof filePath !== 'string' || filePath.length === 0) {
+            return;
+        }
+        const resolved = path.resolve(filePath);
+        shell.showItemInFolder(resolved);
     });
 
     onAsync(ipcMain, 'main:app:trash-path', (data: { path: string }) => {
-        return shell.trashItem(data.path);
+        if (typeof data.path !== 'string' || data.path.length === 0) {
+            return Promise.resolve();
+        }
+        const resolved = path.resolve(data.path);
+        return shell.trashItem(resolved);
     });
 
     onAsync(

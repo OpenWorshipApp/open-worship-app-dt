@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import {
     openContextMenu,
@@ -92,7 +93,7 @@ export default function BibleCrossRefRenderFoundItemsComp({
                 title={bibleText}
                 style={{ fontFamily }}
                 dangerouslySetInnerHTML={{
-                    __html: htmlText,
+                    __html: sanitizeHtml(htmlText),
                 }}
             />
         </div>

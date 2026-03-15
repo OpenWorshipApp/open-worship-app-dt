@@ -1,5 +1,6 @@
 import { JSX } from 'react';
 
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { tran } from '../lang/langHelpers';
 
 export type SimpleToastType = {
@@ -43,7 +44,7 @@ export default function SimpleToastComp({
                 <div
                     className="toast-body app-selectable-text"
                     dangerouslySetInnerHTML={{
-                        __html: message,
+                        __html: sanitizeHtml(message),
                     }}
                 />
             ) : (

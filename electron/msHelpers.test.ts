@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const { execute, unlocking, toUnpackedPath } = vi.hoisted(() => ({
@@ -35,9 +36,13 @@ describe('msHelpers', () => {
         expect(execute).toHaveBeenCalledTimes(1);
         expect(execute).toHaveBeenCalledWith('count-ms-pp-slides.js', {
             filePath: '/slides/test.pptx',
-            modulePath: '/unpacked-root/node-api-dotnet/net8.0',
-            binaryPath: '/unpacked-root/ms-helpers/Helper',
-            dotnetPath: '/unpacked-root/dotnet-bin',
+            modulePath: path.resolve(
+                '/unpacked-root',
+                'node-api-dotnet',
+                'net8.0',
+            ),
+            binaryPath: path.resolve('/unpacked-root', 'ms-helpers', 'Helper'),
+            dotnetPath: path.resolve('/unpacked-root', 'dotnet-bin'),
         });
     });
 
@@ -50,9 +55,13 @@ describe('msHelpers', () => {
 
         expect(execute).toHaveBeenCalledWith('remove-ms-pp-slides-bg.js', {
             filePath: '/slides/test.pptx',
-            modulePath: '/unpacked-root/node-api-dotnet/net8.0',
-            binaryPath: '/unpacked-root/ms-helpers/Helper',
-            dotnetPath: '/unpacked-root/dotnet-bin',
+            modulePath: path.resolve(
+                '/unpacked-root',
+                'node-api-dotnet',
+                'net8.0',
+            ),
+            binaryPath: path.resolve('/unpacked-root', 'ms-helpers', 'Helper'),
+            dotnetPath: path.resolve('/unpacked-root', 'dotnet-bin'),
         });
     });
 
@@ -67,9 +76,13 @@ describe('msHelpers', () => {
         expect(execute).toHaveBeenCalledWith('export-bible-ms-word.js', {
             filePath: '/tmp/bible.docx',
             data: rows,
-            modulePath: '/unpacked-root/node-api-dotnet/net8.0',
-            binaryPath: '/unpacked-root/ms-helpers/Helper',
-            dotnetPath: '/unpacked-root/dotnet-bin',
+            modulePath: path.resolve(
+                '/unpacked-root',
+                'node-api-dotnet',
+                'net8.0',
+            ),
+            binaryPath: path.resolve('/unpacked-root', 'ms-helpers', 'Helper'),
+            dotnetPath: path.resolve('/unpacked-root', 'dotnet-bin'),
         });
     });
 });
