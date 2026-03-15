@@ -1,4 +1,4 @@
-import { use } from 'react';
+import { use, useCallback } from 'react';
 
 import RenderEditingActionButtonsComp from './RenderEditingActionButtonsComp';
 import { closeCurrentEditingBibleItem } from '../bible-reader/readBibleHelpers';
@@ -17,6 +17,26 @@ export default function RenderBibleEditingHeader() {
     const viewController = useLookupBibleItemControllerContext();
     const editingResult = use(EditingResultContext);
     const foundBibleItem = editingResult?.result.bibleItem ?? null;
+    const handleBibleKeyChange = useCallback(
+        (isContextMenu: boolean, _oldBibleKey: string, newBibleKey: string) => {
+            const bibleItem = viewController.selectedBibleItem;
+            viewController.applyTargetOrBibleKey(
+                bibleItem,
+                isContextMenu
+                    ? {
+                          extraBibleKeys: [
+                              ...bibleItem.extraBibleKeys,
+                              newBibleKey,
+                          ],
+                      }
+                    : { bibleKey: newBibleKey },
+            );
+        },
+        [viewController],
+    );
+    const handleClose = useCallback(() => {
+        closeCurrentEditingBibleItem(viewController);
+    }, [viewController]);
     return (
         <div
             className={
@@ -27,24 +47,7 @@ export default function RenderBibleEditingHeader() {
             <div className="d-flex w-100 h-100">
                 <RenderTitleMaterialComp
                     bibleItem={viewController.selectedBibleItem}
-                    onBibleKeyChange={(
-                        isContextMenu,
-                        _oldBibleKey,
-                        newBibleKey,
-                    ) => {
-                        const bibleItem = viewController.selectedBibleItem;
-                        viewController.applyTargetOrBibleKey(
-                            bibleItem,
-                            isContextMenu
-                                ? {
-                                      extraBibleKeys: [
-                                          ...bibleItem.extraBibleKeys,
-                                          newBibleKey,
-                                      ],
-                                  }
-                                : { bibleKey: newBibleKey },
-                        );
-                    }}
+                    onBibleKeyChange={handleBibleKeyChange}
                 />
                 {foundBibleItem === null ? null : (
                     <div
@@ -68,9 +71,7 @@ export default function RenderBibleEditingHeader() {
                             style={{
                                 color: 'var(--bs-danger-text-emphasis)',
                             }}
-                            onClick={() => {
-                                closeCurrentEditingBibleItem(viewController);
-                            }}
+                            onClick={handleClose}
                         />
                     )}
                 </div>

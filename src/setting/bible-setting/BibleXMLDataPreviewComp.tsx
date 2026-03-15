@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { json } from 'monaco-editor';
 
 import BibleXMLInfoEditorComp from './BibleXMLInfoEditorComp';
@@ -53,12 +55,13 @@ function RenderChoiceComp({
     targetEditingType: string;
 }>) {
     const isActive = editingType === targetEditingType;
+    const handleClick = useCallback(() => {
+        setEditingType(targetEditingType);
+    }, [setEditingType, targetEditingType]);
     return (
         <button
             className={'btn btn-sm ' + (isActive ? 'btn-light' : 'btn-primary')}
-            onClick={() => {
-                setEditingType(targetEditingType);
-            }}
+            onClick={handleClick}
         >
             {title}
         </button>

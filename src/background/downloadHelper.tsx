@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import type DirSource from '../helper/DirSource';
@@ -19,6 +19,13 @@ function InputUrlComp({
 }>) {
     const [url, setUrl] = useState(defaultUrl);
     const invalidMessage = url.trim() === '' ? 'Cannot be empty' : '';
+    const handleUrlChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setUrl(e.target.value);
+            onChange(e.target.value);
+        },
+        [onChange],
+    );
     return (
         <div className="w-100 h-100">
             <div className="input-group" title={invalidMessage}>
@@ -30,10 +37,7 @@ function InputUrlComp({
                     }
                     type="text"
                     value={url}
-                    onChange={(e) => {
-                        setUrl(e.target.value);
-                        onChange(e.target.value);
-                    }}
+                    onChange={handleUrlChange}
                 />
             </div>
         </div>

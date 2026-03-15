@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { tran } from '../../../lang/langHelpers';
 import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import SlideEditorToolAlignComp from './SlideEditorToolAlignComp';
@@ -13,35 +15,38 @@ import { HEX_COLOR_BLACK } from '../../../others/color/colorHelpers';
 function SizingComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
+    const handleFull = useCallback(() => {
+        canvasController.applyCanvasItemFully(canvasItem);
+        canvasController.applyEditItem(canvasItem);
+    }, [canvasController, canvasItem]);
+    const handleOriginal = useCallback(() => {
+        canvasController.applyCanvasItemOriginal(canvasItem);
+        canvasController.applyEditItem(canvasItem);
+    }, [canvasController, canvasItem]);
+    const handleStrip = useCallback(() => {
+        canvasController.applyCanvasItemMediaStrip(canvasItem);
+        canvasController.applyEditItem(canvasItem);
+    }, [canvasController, canvasItem]);
     return (
         <SlideEditorToolTitleComp title="Size">
             <button
                 className="btn btn-sm btn-secondary"
                 title="Fit to canvas"
-                onClick={() => {
-                    canvasController.applyCanvasItemFully(canvasItem);
-                    canvasController.applyEditItem(canvasItem);
-                }}
+                onClick={handleFull}
             >
                 {tran('Full')}
             </button>
             <button
                 className="btn btn-sm btn-secondary m-1"
                 title="Set to original size"
-                onClick={() => {
-                    canvasController.applyCanvasItemOriginal(canvasItem);
-                    canvasController.applyEditItem(canvasItem);
-                }}
+                onClick={handleOriginal}
             >
                 {tran('Original Size')}
             </button>
             {['image', 'video'].includes(canvasItem.type) ? (
                 <button
                     className="btn btn-sm btn-secondary"
-                    onClick={() => {
-                        canvasController.applyCanvasItemMediaStrip(canvasItem);
-                        canvasController.applyEditItem(canvasItem);
-                    }}
+                    onClick={handleStrip}
                 >
                     {tran('Strip')}
                 </button>
@@ -54,29 +59,28 @@ function LayerComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
     const [_, setProps] = useCanvasItemPropsSetterContext();
+    const handleLayerBackward = useCallback(() => {
+        canvasController.applyOrderingData(canvasItem, true);
+    }, [canvasController, canvasItem]);
+    const handleLayerForward = useCallback(() => {
+        canvasController.applyOrderingData(canvasItem, false);
+    }, [canvasController, canvasItem]);
+    const handleResetRotate = useCallback(() => {
+        setProps({ rotate: 0 });
+    }, [setProps]);
     return (
         <div className="ps-2">
             <div className="d-flex">
                 <SlideEditorToolTitleComp title="Box Layer">
                     <button
                         className="btn btn-sm btn-outline-info"
-                        onClick={() => {
-                            canvasController.applyOrderingData(
-                                canvasItem,
-                                true,
-                            );
-                        }}
+                        onClick={handleLayerBackward}
                     >
                         <i className="bi bi-layer-backward" />
                     </button>
                     <button
                         className="btn btn-sm btn-outline-info"
-                        onClick={() => {
-                            canvasController.applyOrderingData(
-                                canvasItem,
-                                false,
-                            );
-                        }}
+                        onClick={handleLayerForward}
                     >
                         <i className="bi bi-layer-forward" />
                     </button>
@@ -84,11 +88,7 @@ function LayerComp() {
                 <SlideEditorToolTitleComp title="Rotate">
                     <button
                         className="btn btn-sm btn-outline-info"
-                        onClick={() => {
-                            setProps({
-                                rotate: 0,
-                            });
-                        }}
+                        onClick={handleResetRotate}
                     >
                         {tran('Reset Rotate')}
                     </button>
@@ -100,22 +100,23 @@ function LayerComp() {
 
 export default function SlideEditorToolsBoxComp() {
     const [props, setProps] = useCanvasItemPropsSetterContext();
+    const handleNoColoring = useCallback(() => {
+        setProps({ backgroundColor: `${HEX_COLOR_BLACK}00` });
+    }, [setProps]);
+    const handleColorChanging = useCallback(
+        (newColor: string) => {
+            setProps({ backgroundColor: newColor });
+        },
+        [setProps],
+    );
     return (
         <div className="d-flex flex-wrap app-inner-shadow">
             <div className="p-1">
                 <SlideEditorToolTitleComp title="Background Color">
                     <SlideEditorToolsColorComp
                         color={props.backgroundColor}
-                        handleNoColoring={() => {
-                            setProps({
-                                backgroundColor: `${HEX_COLOR_BLACK}00`,
-                            });
-                        }}
-                        handleColorChanging={(newColor) => {
-                            setProps({
-                                backgroundColor: newColor,
-                            });
-                        }}
+                        handleNoColoring={handleNoColoring}
+                        handleColorChanging={handleColorChanging}
                     />
                 </SlideEditorToolTitleComp>
             </div>

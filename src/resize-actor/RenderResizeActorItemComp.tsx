@@ -67,10 +67,7 @@ export default function RenderResizeActorItemComp({
         );
     }, [flexSizeName, defaultFlexSize, anotherDefaultFlexSize]);
     const handleDisabling = useCallback(
-        (
-            targetDataFlexSizeKey: string,
-            target: DisabledType,
-        ) => {
+        (targetDataFlexSizeKey: string, target: DisabledType) => {
             const size = setDisablingSetting(
                 flexSizeName,
                 restoreFlexSize,

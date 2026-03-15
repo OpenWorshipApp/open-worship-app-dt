@@ -1,4 +1,4 @@
-import { lazy, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
@@ -58,28 +58,29 @@ function BackgroundAudioSwitchComp({
     isAudioHandlersVisible: boolean;
     setIsAudioHandlersVisible: (isVisible: boolean) => void;
 }>) {
+    const handleToggleAudioHandlers = useCallback(() => {
+        if (isAudioHandlersVisible) {
+            const isPlaying = Array.from(
+                document.querySelectorAll<HTMLAudioElement>(
+                    'audio[data-video-id]',
+                ),
+            );
+            if (isPlaying.some((audio) => !audio.paused)) {
+                showSimpleToast(
+                    tran('Audio is Playing'),
+                    tran(
+                        'Please pause all background audios before disabling audio handlers',
+                    ),
+                );
+                return;
+            }
+        }
+        setIsAudioHandlersVisible(!isAudioHandlersVisible);
+    }, [isAudioHandlersVisible, setIsAudioHandlersVisible]);
     return (
         <button
             className={`btn btn-sm btn-${isAudioHandlersVisible ? 'primary' : 'outline-secondary'}`}
-            onClick={() => {
-                if (isAudioHandlersVisible) {
-                    const isPlaying = Array.from(
-                        document.querySelectorAll<HTMLAudioElement>(
-                            'audio[data-video-id]',
-                        ),
-                    );
-                    if (isPlaying.some((audio) => !audio.paused)) {
-                        showSimpleToast(
-                            tran('Audio is Playing'),
-                            tran(
-                                'Please pause all background audios before disabling audio handlers',
-                            ),
-                        );
-                        return;
-                    }
-                }
-                setIsAudioHandlersVisible(!isAudioHandlersVisible);
-            }}
+            onClick={handleToggleAudioHandlers}
             title={tran('Enable Background Audio Handlers')}
         >
             <i className="bi bi-soundwave" />
@@ -94,10 +95,19 @@ export default function ScreenPreviewerFooterComp() {
     const [stageNumber, setStageNumber] = useState(
         screenManagerBase.stageNumber,
     );
-    const setStageNumber1 = (newStageNumber: number) => {
-        screenManagerBase.stageNumber = newStageNumber;
-        setStageNumber(newStageNumber);
-    };
+    const setStageNumber1 = useCallback(
+        (newStageNumber: number) => {
+            screenManagerBase.stageNumber = newStageNumber;
+            setStageNumber(newStageNumber);
+        },
+        [screenManagerBase],
+    );
+    const handleStageNumberChange = useCallback(
+        (event: any) => {
+            getNewStageNumber(event, stageNumber, setStageNumber1);
+        },
+        [stageNumber, setStageNumber1],
+    );
     return (
         <div
             className="card-footer w-100"
@@ -132,13 +142,7 @@ export default function ScreenPreviewerFooterComp() {
                     <div
                         className="d-flex app-caught-hover-pointer"
                         title={`${tran('Stage')}: ${tran('Click to change Stage Number')}`}
-                        onClick={(event) => {
-                            getNewStageNumber(
-                                event,
-                                stageNumber,
-                                setStageNumber1,
-                            );
-                        }}
+                        onClick={handleStageNumberChange}
                     >
                         <small>St:</small>
                         <div className="px-1 text-muted">{stageNumber}</div>

@@ -1,4 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
+import {
+    ChangeEvent,
+    useCallback,
+    useMemo,
+    useRef,
+    useState,
+    type KeyboardEvent,
+} from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { createMouseEvent } from '../../context-menu/appContextMenuHelpers';
@@ -50,6 +57,23 @@ export default function SelectCustomColor({
             setLocalColor(HEX_COLOR_WHITE as AppColorType);
         }
     }, [color]);
+    const handleChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setLocalColor1(event.target.value as any);
+        },
+        [setLocalColor1],
+    );
+    const handleKeyDown = useCallback(
+        (event: KeyboardEvent<HTMLInputElement>) => {
+            if (event.key === 'Enter') {
+                applyColor(localColor);
+            }
+        },
+        [localColor],
+    );
+    const handleBlur = useCallback(() => {
+        applyColor(localColor);
+    }, [localColor]);
     return (
         <>
             <span>{tran('Mix Color: ')}</span>
@@ -59,17 +83,9 @@ export default function SelectCustomColor({
                 className="pointer"
                 type="color"
                 value={localColor}
-                onChange={(event) => {
-                    setLocalColor1(event.target.value as any);
-                }}
-                onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                        applyColor(localColor);
-                    }
-                }}
-                onBlur={() => {
-                    applyColor(localColor);
-                }}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onBlur={handleBlur}
             />
         </>
     );

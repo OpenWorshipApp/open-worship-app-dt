@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';
@@ -51,6 +51,15 @@ function RenderDimElementComp({
     value: number;
     setValue: (value: number) => void;
 }>) {
+    const handleChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            const newValue = Number.parseInt(e.target.value, 10);
+            if (!Number.isNaN(newValue)) {
+                setValue(newValue);
+            }
+        },
+        [setValue],
+    );
     return (
         <div className="m-1 p-1 d-flex align-items-center">
             {name}:
@@ -61,12 +70,7 @@ function RenderDimElementComp({
                     maxWidth: '70px',
                 }}
                 value={value}
-                onChange={(e) => {
-                    const newValue = Number.parseInt(e.target.value, 10);
-                    if (!Number.isNaN(newValue)) {
-                        setValue(newValue);
-                    }
-                }}
+                onChange={handleChange}
             />
             px
         </div>
@@ -87,22 +91,46 @@ function RenderDimEditComp() {
         return width !== bounds.width || height !== bounds.height;
     }, [width, height, slide]);
     const isDiffOther = useIsDiffOtherSlides(slide, width, height);
-    const applyDim = async (
-        newWidth: number,
-        newHeight: number,
-        isAll = false,
-    ) => {
-        setWidth(newWidth);
-        setHeight(newHeight);
-        const appDocument = AppDocument.getInstance(slide.filePath);
-        await appDocument.changeSlidesDimension(
+    const applyDim = useCallback(
+        async (newWidth: number, newHeight: number, isAll = false) => {
+            setWidth(newWidth);
+            setHeight(newHeight);
+            const appDocument = AppDocument.getInstance(slide.filePath);
+            await appDocument.changeSlidesDimension(
+                {
+                    width: newWidth,
+                    height: newHeight,
+                },
+                isAll ? undefined : slide,
+            );
+        },
+        [slide],
+    );
+    const handleApply = useCallback(() => {
+        applyDim(width, height);
+    }, [applyDim, width, height]);
+    const handleReset = useCallback(() => {
+        const { bounds } = getDefaultScreenDisplay();
+        if (
+            bounds.width !== slide.metadata.width ||
+            bounds.height !== slide.metadata.height
+        ) {
+            applyDim(bounds.width, bounds.height);
+        }
+    }, [applyDim, slide.metadata.width, slide.metadata.height]);
+    const handleApplyAll = useCallback(async () => {
+        const isConfirmed = await showAppConfirm(
+            tran('This will change all Slides'),
+            tran('Are you sure to apply this dimension to all slides?'),
             {
-                width: newWidth,
-                height: newHeight,
+                confirmButtonLabel: 'Yes',
             },
-            isAll ? undefined : slide,
         );
-    };
+        if (!isConfirmed) {
+            return;
+        }
+        applyDim(width, height, true);
+    }, [applyDim, width, height]);
     return (
         <div className="d-flex flex-column">
             <div className="d-flex flex-wrap">
@@ -122,9 +150,7 @@ function RenderDimEditComp() {
                     <button
                         className="btn btn-primary btn-sm m-1"
                         title={tran('Apply changed dimension to this slide')}
-                        onClick={() => {
-                            applyDim(width, height);
-                        }}
+                        onClick={handleApply}
                     >
                         {tran('Apply')}
                     </button>
@@ -133,15 +159,7 @@ function RenderDimEditComp() {
                     <button
                         className="btn btn-primary btn-sm m-1"
                         title={tran('Reset to default display dimension')}
-                        onClick={() => {
-                            const { bounds } = getDefaultScreenDisplay();
-                            if (
-                                bounds.width !== slide.metadata.width ||
-                                bounds.height !== slide.metadata.height
-                            ) {
-                                applyDim(bounds.width, bounds.height);
-                            }
-                        }}
+                        onClick={handleReset}
                     >
                         {tran('Reset')}
                     </button>
@@ -152,21 +170,7 @@ function RenderDimEditComp() {
                         title={tran(
                             'Apply this dimension to all slides in this document',
                         )}
-                        onClick={async () => {
-                            const isConfirmed = await showAppConfirm(
-                                tran('This will change all Slides'),
-                                tran(
-                                    'Are you sure to apply this dimension to all slides?',
-                                ),
-                                {
-                                    confirmButtonLabel: 'Yes',
-                                },
-                            );
-                            if (!isConfirmed) {
-                                return;
-                            }
-                            applyDim(width, height, true);
-                        }}
+                        onClick={handleApplyAll}
                     >
                         {tran('Apply All Slides')}
                     </button>
@@ -187,6 +191,9 @@ function RenderNameEditorComp() {
         slide.name = name;
         appDocument.updateSlide(slide);
     }, [slide, name]);
+    const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setName(e.target.value);
+    }, []);
     return (
         <div className="m-1 p-1 d-flex align-items-center">
             Name:{' '}
@@ -198,9 +205,7 @@ function RenderNameEditorComp() {
                     maxWidth: '200px',
                 }}
                 value={name}
-                onChange={(e) => {
-                    setName(e.target.value);
-                }}
+                onChange={handleNameChange}
             />
             {hasChanged ? (
                 <button

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useCallback, MouseEvent } from 'react';
 
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
@@ -21,6 +21,19 @@ export default function RenderVerseTextComp({
     index: number;
 }>) {
     const viewController = useBibleItemsViewControllerContext();
+    const handleDoubleClick = useCallback(
+        (event: MouseEvent) => {
+            cleanupVerseNumberClicked(event);
+            viewController.applyTargetOrBibleKey(bibleItem, {
+                target: {
+                    ...bibleItem.target,
+                    verseStart: verseInfo.verse,
+                    verseEnd: verseInfo.verse,
+                },
+            });
+        },
+        [viewController, bibleItem, verseInfo.verse],
+    );
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
     const isNewLine =
@@ -50,16 +63,7 @@ export default function RenderVerseTextComp({
                     (isExtraVerses ? ' extra-verses' : '')
                 }
                 title={`Double click to select verse ${verseInfo.localeVerse}`}
-                onDoubleClick={(event) => {
-                    cleanupVerseNumberClicked(event);
-                    viewController.applyTargetOrBibleKey(bibleItem, {
-                        target: {
-                            ...bibleItem.target,
-                            verseStart: verseInfo.verse,
-                            verseEnd: verseInfo.verse,
-                        },
-                    });
-                }}
+                onDoubleClick={handleDoubleClick}
             >
                 <div>
                     {verseInfo.isNewLine ? (

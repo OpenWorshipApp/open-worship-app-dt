@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { ChangeEvent, useCallback, useMemo } from 'react';
 
 import type { FontListType } from '../server/appProvider';
 import { useFontList } from '../server/fontHelpers';
@@ -28,6 +28,16 @@ export default function FontFamilyControlComp({
         newFontFamilies.unshift(['--', '--']);
         return newFontFamilies;
     }, [fontList, fontFamily]);
+    const handleFontFamilyChange = useCallback(
+        (event: ChangeEvent<HTMLSelectElement>) => {
+            let value = event.target.value;
+            if (value === '--') {
+                value = '';
+            }
+            setFontFamily(value);
+        },
+        [setFontFamily],
+    );
     if (fontList === undefined) {
         return <div>Loading Font ...</div>;
     }
@@ -44,13 +54,7 @@ export default function FontFamilyControlComp({
                     id="text-font-family"
                     className="form-select form-select-sm"
                     value={fontFamily}
-                    onChange={(event) => {
-                        let value = event.target.value;
-                        if (value === '--') {
-                            value = '';
-                        }
-                        setFontFamily(value);
-                    }}
+                    onChange={handleFontFamilyChange}
                 >
                     {fontFamilies.map(([key, value]) => {
                         return (
@@ -87,6 +91,12 @@ function FontWeight({
     fontList: FontListType;
     isShowingLabel?: boolean;
 }>) {
+    const handleFontWeightChange = useCallback(
+        (event: ChangeEvent<HTMLSelectElement>) => {
+            setFontWeight(event.target.value);
+        },
+        [setFontWeight],
+    );
     return (
         <div>
             {isShowingLabel && (
@@ -96,9 +106,7 @@ function FontWeight({
                 id="text-font-style"
                 className="form-select form-select-sm"
                 value={fontWeight}
-                onChange={(event) => {
-                    setFontWeight(event.target.value);
-                }}
+                onChange={handleFontWeightChange}
             >
                 <option>--</option>
                 {fontList[fontFamily].map((fs) => {

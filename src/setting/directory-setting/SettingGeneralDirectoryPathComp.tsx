@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { tran } from '../../lang/langHelpers';
 import PathSelectorComp from '../../others/PathSelectorComp';
 import {
@@ -88,6 +90,11 @@ function RenderParentDirectoryComp({
     dirSource,
 }: Readonly<{ dirSource: DirSource }>) {
     const defaultPath = getDefaultDataDir();
+    const handleSetDefault = useCallback(async () => {
+        await fsCreateDir(defaultPath);
+        dirSource.dirPath = defaultPath;
+        await selectPathForChildDir(defaultPath);
+    }, [defaultPath, dirSource]);
     return (
         <div className="d-flex flex-column">
             <div className={`${HIGHLIGHT_SELECTED_CLASSNAME} p-2`}>
@@ -104,11 +111,7 @@ function RenderParentDirectoryComp({
                     <hr />
                     <button
                         className="btn btn-sm btn-info ms-2"
-                        onClick={async () => {
-                            await fsCreateDir(defaultPath);
-                            dirSource.dirPath = defaultPath;
-                            await selectPathForChildDir(defaultPath);
-                        }}
+                        onClick={handleSetDefault}
                     >
                         {tran('Set Default Data')} ({defaultPath})
                     </button>
@@ -151,14 +154,15 @@ const titleSettingNames = {
 function RenderChildDirectoriesComp({
     parentDirPath,
 }: Readonly<{ parentDirPath: string }>) {
+    const handleResetChildDirs = useCallback(() => {
+        selectPathForChildDir(parentDirPath);
+    }, [parentDirPath]);
     return (
         <>
             <div className="card-header">
                 <button
                     className="btn btn-sm btn-warning"
-                    onClick={() => {
-                        selectPathForChildDir(parentDirPath);
-                    }}
+                    onClick={handleResetChildDirs}
                 >
                     {tran('Reset All Child Directories')}
                 </button>

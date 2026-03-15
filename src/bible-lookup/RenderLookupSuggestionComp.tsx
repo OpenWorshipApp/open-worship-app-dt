@@ -1,4 +1,4 @@
-import { use, useCallback } from 'react';
+import { use, useCallback, MouseEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
@@ -22,6 +22,9 @@ export default function RenderLookupSuggestionComp({
     applyBookSelection: (newBookKey: string, newBook: string) => void;
 }>) {
     const editingResult = use(EditingResultContext);
+    const handleFocusing = useCallback((event: MouseEvent<HTMLDivElement>) => {
+        event.currentTarget.focus();
+    }, []);
     if (editingResult === null) {
         return <div>{tran('Loading')}...</div>;
     }
@@ -50,9 +53,7 @@ export default function RenderLookupSuggestionComp({
             className={`app-render-found w-100 h-100 app-focusable ${RENDER_FOUND_CLASS}`}
             style={{ overflowY: 'auto' }}
             tabIndex={0}
-            onClick={(event) => {
-                event.currentTarget.focus();
-            }}
+            onClick={handleFocusing}
         >
             <div
                 className={
@@ -100,6 +101,9 @@ export function BibleNotAvailableComp({
         },
         [viewController],
     );
+    const handleBibleSettingOpening = useCallback(() => {
+        openBibleSetting();
+    }, []);
 
     return (
         <div
@@ -131,9 +135,7 @@ export function BibleNotAvailableComp({
                 {tran('Or add bible ')}
                 <button
                     className="btn btn-primary"
-                    onClick={() => {
-                        openBibleSetting();
-                    }}
+                    onClick={handleBibleSettingOpening}
                 >
                     <span>{tran('Go to Bible Setting ')}</span>
                     <i className="bi bi-gear-wide-connected" />

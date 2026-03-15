@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 
 import type { LocaleType } from '../../lang/langHelpers';
 import { getLangCode, tran } from '../../lang/langHelpers';
@@ -16,15 +16,24 @@ function BibleKeyXMLInputComp({
 }>) {
     const [value, setValue] = useState(defaultVale);
     const [invalidMessage, setInvalidMessage] = useState<string>('');
-    const setValue1 = (value: string) => {
-        setValue(value);
-        onChange(value);
-        if (takenBibleKeys.includes(value.toLowerCase())) {
-            setInvalidMessage('Key is already taken');
-        } else {
-            setInvalidMessage('');
-        }
-    };
+    const setValue1 = useCallback(
+        (value: string) => {
+            setValue(value);
+            onChange(value);
+            if (takenBibleKeys.includes(value.toLowerCase())) {
+                setInvalidMessage('Key is already taken');
+            } else {
+                setInvalidMessage('');
+            }
+        },
+        [onChange, takenBibleKeys],
+    );
+    const handleChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setValue1(e.target.value);
+        },
+        [setValue1],
+    );
     return (
         <div className="w-100 h-100">
             <div>{tran('Define a Bible key')}</div>
@@ -37,9 +46,7 @@ function BibleKeyXMLInputComp({
                     }
                     type="text"
                     value={value}
-                    onChange={(e) => {
-                        setValue1(e.target.value);
-                    }}
+                    onChange={handleChange}
                 />
             </div>
             {guessingKeys !== undefined && guessingKeys.length > 0 ? (
@@ -101,15 +108,24 @@ function BibleNumbersMapXMLInputComp({
 }>) {
     const [value, setValue] = useState(defaultVale);
     const [invalidMessage, setInvalidMessage] = useState<string>('');
-    const setValue1 = (value: string) => {
-        setValue(value);
-        onChange(value);
-        if (value.split(' ').length === 10) {
-            setInvalidMessage('');
-        } else {
-            setInvalidMessage('Must have 10 numbers');
-        }
-    };
+    const setValue1 = useCallback(
+        (value: string) => {
+            setValue(value);
+            onChange(value);
+            if (value.split(' ').length === 10) {
+                setInvalidMessage('');
+            } else {
+                setInvalidMessage('Must have 10 numbers');
+            }
+        },
+        [onChange],
+    );
+    const handleChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setValue1(e.target.value);
+        },
+        [setValue1],
+    );
     const langCode = getLangCode(locale) ?? 'en';
     return (
         <div className="w-100 h-100">
@@ -123,9 +139,7 @@ function BibleNumbersMapXMLInputComp({
                     }
                     type="text"
                     value={value}
-                    onChange={(e) => {
-                        setValue1(e.target.value);
-                    }}
+                    onChange={handleChange}
                 />
             </div>
             <div className="w-100">

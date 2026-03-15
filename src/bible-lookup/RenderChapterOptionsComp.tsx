@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import type { KeyboardType } from '../event/KeyboardEventListener';
 import {
@@ -52,6 +52,9 @@ function RenderChapterZeroComp({
     bookKey,
 }: Readonly<{ bibleKey: string; bookKey: string }>) {
     const [expanded, setExpanded] = useState(false);
+    const handleToggleExpanded = useCallback(() => {
+        setExpanded(!expanded);
+    }, [expanded]);
     return (
         <div
             className="w-100 my-2"
@@ -62,9 +65,7 @@ function RenderChapterZeroComp({
         >
             <button
                 className="btn btn-outline-success"
-                onClick={() => {
-                    setExpanded(!expanded);
-                }}
+                onClick={handleToggleExpanded}
             >
                 <span>
                     <i className="bi bi-info-circle" />

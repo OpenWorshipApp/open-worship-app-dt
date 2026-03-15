@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -53,6 +53,12 @@ function RenderControlBodyComp() {
             lyricEditingManager.scale = scale;
         });
     };
+    const handleApply = useCallback(() => {
+        forceReloadAppWindows();
+    }, []);
+    const handleEdit = useCallback(() => {
+        openPopupLyricEditorWindow(selectedLyric);
+    }, [selectedLyric]);
     return (
         <div>
             <div className="d-flex">
@@ -86,9 +92,7 @@ function RenderControlBodyComp() {
                     <button
                         className="btn btn-sm btn-outline-warning"
                         title={tran('Editor') + ` "${selectedLyric.filePath}"`}
-                        onClick={() => {
-                            forceReloadAppWindows();
-                        }}
+                        onClick={handleApply}
                     >
                         {tran('Apply')}
                     </button>
@@ -98,9 +102,7 @@ function RenderControlBodyComp() {
                     <button
                         className="btn btn-sm btn-outline-info"
                         title={tran('Editor') + ` "${selectedLyric.filePath}"`}
-                        onClick={() => {
-                            openPopupLyricEditorWindow(selectedLyric);
-                        }}
+                        onClick={handleEdit}
                     >
                         {tran('Edit')}{' '}
                         <i className="bi bi-box-arrow-up-right"></i>

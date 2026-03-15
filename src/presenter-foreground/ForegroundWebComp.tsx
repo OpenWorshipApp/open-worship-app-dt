@@ -1,4 +1,4 @@
-import { useCallback, type CSSProperties } from 'react';
+import { useCallback, type CSSProperties, type MouseEvent } from 'react';
 import { useMemo, useRef, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -163,6 +163,27 @@ function RenderWebInfoComp({
         [filePath, getWidthScale, genStyle],
     );
     const imageData = useWebCapturing(fileSource, { width, height });
+    const handleContextMenuOpening = useCallback(
+        (event: MouseEvent) => {
+            showAppContextMenu(event as any, [
+                ...genCommonMenu(filePath),
+                ...genShowOnScreensContextMenu((event) => {
+                    handleShowing(event, true);
+                }),
+                ...genBackgroundWebExtraItemContextMenuItems(filePath),
+            ]);
+        },
+        [filePath, handleShowing],
+    );
+    const handleDragStart = useCallback(() => {
+        dragStore.onDropped = handleByDropped;
+    }, [handleByDropped]);
+    const handleMouseOver = useCallback(() => {
+        setIsPlaying(true);
+    }, []);
+    const handleMouseOut = useCallback(() => {
+        setIsPlaying(false);
+    }, []);
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
             <div
@@ -178,26 +199,12 @@ function RenderWebInfoComp({
                 }
                 style={{ height: `${height}px` }}
                 onClick={handleShowing}
-                onContextMenu={(event) => {
-                    showAppContextMenu(event as any, [
-                        ...genCommonMenu(filePath),
-                        ...genShowOnScreensContextMenu((event) => {
-                            handleShowing(event, true);
-                        }),
-                        ...genBackgroundWebExtraItemContextMenuItems(filePath),
-                    ]);
-                }}
+                onContextMenu={handleContextMenuOpening}
                 ref={containerRef}
                 draggable
-                onDragStart={() => {
-                    dragStore.onDropped = handleByDropped;
-                }}
-                onMouseOver={() => {
-                    setIsPlaying(true);
-                }}
-                onMouseOut={() => {
-                    setIsPlaying(false);
-                }}
+                onDragStart={handleDragStart}
+                onMouseOver={handleMouseOver}
+                onMouseOut={handleMouseOut}
             >
                 {isPlaying ? (
                     <RenderBackgroundWebIframeComp

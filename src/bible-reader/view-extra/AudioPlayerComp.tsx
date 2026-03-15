@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { SyntheticEvent, useCallback } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
@@ -27,6 +27,26 @@ export default function AudioPlayerComp({
             ]);
         },
         [refreshAudio],
+    );
+    const handlePlay = useCallback(
+        (event: SyntheticEvent<HTMLAudioElement>) => {
+            const el = event.currentTarget;
+            for (const el1 of document.querySelectorAll('audio')) {
+                if (el1 !== el) {
+                    el1.pause();
+                }
+            }
+        },
+        [],
+    );
+    const handleEnded = useCallback(
+        (event: SyntheticEvent<HTMLAudioElement>) => {
+            const el = event.currentTarget;
+            if (el && el.checkVisibility()) {
+                onEnd(el);
+            }
+        },
+        [onEnd],
     );
     if (src === undefined) {
         return (
@@ -60,20 +80,8 @@ export default function AudioPlayerComp({
                 }
             }}
             controls
-            onPlay={(event) => {
-                const el = event.currentTarget;
-                for (const el1 of document.querySelectorAll('audio')) {
-                    if (el1 !== el) {
-                        el1.pause();
-                    }
-                }
-            }}
-            onEnded={(event) => {
-                const el = event.currentTarget;
-                if (el && el.checkVisibility()) {
-                    onEnd(el);
-                }
-            }}
+            onPlay={handlePlay}
+            onEnded={handleEnded}
             onContextMenu={handleContextMenuOpening}
         >
             <source src={src} />

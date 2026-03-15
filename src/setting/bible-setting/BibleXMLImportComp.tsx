@@ -1,5 +1,5 @@
-import type { SyntheticEvent } from 'react';
 import { useCallback, useState, useTransition } from 'react';
+import type { SyntheticEvent, MouseEvent } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -68,15 +68,31 @@ export default function BibleXMLImportComp({
                         loadBibleKeys();
                     }
                 } catch (error) {
-                    showSimpleToast(
-                        'Format Submit Error',
-                        `Error: ${error}`,
-                    );
+                    showSimpleToast('Format Submit Error', `Error: ${error}`);
                 }
             });
         },
         [isFileSelected, isValidUrl, loadBibleKeys, handleFileCanceling],
     );
+    const handleToggleExample = useCallback(() => {
+        setIsShowingExample(!isShowingExample);
+    }, [isShowingExample]);
+    const handleFileSelected = useCallback(() => {
+        setIsFileSelected(true);
+    }, []);
+    const handleCancelSelection = useCallback(
+        (event: MouseEvent<HTMLButtonElement>) => {
+            const form = event.currentTarget.form;
+            handleFileCanceling(form);
+        },
+        [handleFileCanceling],
+    );
+    const handleUrlChange = useCallback((event: any) => {
+        setUrlText(event.target.value);
+    }, []);
+    const handleClearUrl = useCallback(() => {
+        setUrlText('');
+    }, []);
     return (
         <div className="app-border-white-round p-1" style={{ margin: 'auto' }}>
             <h3>
@@ -87,9 +103,7 @@ export default function BibleXMLImportComp({
                         'btn btn-sm ms-2' +
                         ` btn${isShowingExample ? '' : '-outline'}-info`
                     }
-                    onClick={() => {
-                        setIsShowingExample(!isShowingExample);
-                    }}
+                    onClick={handleToggleExample}
                 >
                     <i className="bi bi-question-lg" />
                 </button>
@@ -120,19 +134,14 @@ export default function BibleXMLImportComp({
                             className="form-control"
                             type="file"
                             name="file"
-                            onChange={() => {
-                                setIsFileSelected(true);
-                            }}
+                            onChange={handleFileSelected}
                         />
                         {isFileSelected ? (
                             <button
                                 className="btn btn-sm btn-danger"
                                 type="button"
                                 title={tran('Cancel selection')}
-                                onClick={(event) => {
-                                    const form = event.currentTarget.form;
-                                    handleFileCanceling(form);
-                                }}
+                                onClick={handleCancelSelection}
                             >
                                 <i className="bi bi-x-lg" />
                             </button>
@@ -159,18 +168,14 @@ export default function BibleXMLImportComp({
                                 name="url"
                                 placeholder="http://example.com/file.xml"
                                 value={urlText}
-                                onChange={(event: any) => {
-                                    setUrlText(event.target.value);
-                                }}
+                                onChange={handleUrlChange}
                             />
                             {isValidUrl ? (
                                 <button
                                     className="btn btn-sm btn-danger"
                                     type="button"
                                     title="Clear url"
-                                    onClick={() => {
-                                        setUrlText('');
-                                    }}
+                                    onClick={handleClearUrl}
                                 >
                                     <i className="bi bi-x-lg" />
                                 </button>

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import type { ReactNode, MouseEvent } from 'react';
 
 import FileListHandlerComp from '../others/FileListHandlerComp';
@@ -106,20 +107,24 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
     const dirSource = useGenDirSourceReload(props.dirSourceSettingName);
 
     useScreenBackgroundManagerEvents(['update']);
+    const handleWheel = useCallback(
+        (event: any) => {
+            handleCtrlWheel({
+                event,
+                value: thumbnailWidth,
+                setValue: setThumbnailWidth,
+                defaultSize: defaultRangeSize,
+            });
+        },
+        [thumbnailWidth, setThumbnailWidth],
+    );
     if (dirSource === null) {
         return null;
     }
     return (
         <div
             className="card w-100 h-100 app-zero-border-radius"
-            onWheel={(event) => {
-                handleCtrlWheel({
-                    event,
-                    value: thumbnailWidth,
-                    setValue: setThumbnailWidth,
-                    defaultSize: defaultRangeSize,
-                });
-            }}
+            onWheel={handleWheel}
         >
             <div className="card-body">
                 <FileListHandlerComp

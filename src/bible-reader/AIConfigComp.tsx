@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import {
     getAISetting,
@@ -137,6 +139,11 @@ function AISettingComp() {
 
 function AudioAutoPlayComp() {
     const aiSetting = useAISetting();
+    const handleToggleAutoPlay = useCallback(() => {
+        const audioAISetting = getAISetting();
+        audioAISetting.isAutoPlay = !aiSetting.isAutoPlay;
+        setAISetting(audioAISetting);
+    }, [aiSetting]);
     if (!aiSetting.openAIAPIKey) {
         return null;
     }
@@ -146,11 +153,7 @@ function AudioAutoPlayComp() {
                 className="bi bi-megaphone app-caught-hover-pointer"
                 title={tran('Auto Play Audio AI when available')}
                 style={{ color: aiSetting.isAutoPlay ? 'green' : '' }}
-                onClick={() => {
-                    const audioAISetting = getAISetting();
-                    audioAISetting.isAutoPlay = !aiSetting.isAutoPlay;
-                    setAISetting(audioAISetting);
-                }}
+                onClick={handleToggleAutoPlay}
             />
         </div>
     );

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 
@@ -83,29 +83,39 @@ export default function AppRangeComp({
     useAppEffect(() => {
         setLocalValue(roundSize(value, defaultSize, fixedSize));
     }, [value, defaultSize, fixedSize]);
-    const setLocalValue1 = (newValue: number) => {
-        newValue = roundSize(newValue, defaultSize, fixedSize);
-        setLocalValue(newValue);
-        setValue(newValue);
-    };
+    const setLocalValue1 = useCallback(
+        (newValue: number) => {
+            newValue = roundSize(newValue, defaultSize, fixedSize);
+            setLocalValue(newValue);
+            setValue(newValue);
+        },
+        [defaultSize, fixedSize, setValue],
+    );
     if (defaultSize.max <= defaultSize.min) {
         throw new Error(
             'max must be greater than min value, ' +
                 JSON.stringify(defaultSize),
         );
     }
+    const handleZoomOut = useCallback(() => {
+        setLocalValue1(localValue - defaultSize.step);
+    }, [setLocalValue1, localValue, defaultSize.step]);
+    const handleRangeChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setLocalValue1(Number.parseInt(event.target.value));
+        },
+        [setLocalValue1],
+    );
+    const handleZoomIn = useCallback(() => {
+        setLocalValue1(localValue + defaultSize.step);
+    }, [setLocalValue1, localValue, defaultSize.step]);
     return (
         <div
             className="form form-inline d-flex mx-2 px-1 py-0"
             title={title}
             style={{ minWidth: '100px' }}
         >
-            <div
-                className="pointer"
-                onClick={() => {
-                    setLocalValue1(localValue - defaultSize.step);
-                }}
-            >
+            <div className="pointer" onClick={handleZoomOut}>
                 <i className="bi bi-zoom-out" />
             </div>
             <input
@@ -117,16 +127,9 @@ export default function AppRangeComp({
                 max={defaultSize.max}
                 step={defaultSize.step}
                 value={localValue}
-                onChange={(event) => {
-                    setLocalValue1(Number.parseInt(event.target.value));
-                }}
+                onChange={handleRangeChange}
             />
-            <div
-                className="pointer"
-                onClick={() => {
-                    setLocalValue1(localValue + defaultSize.step);
-                }}
-            >
+            <div className="pointer" onClick={handleZoomIn}>
                 <i className="bi bi-zoom-in" />
             </div>
             {isShowValue ? (

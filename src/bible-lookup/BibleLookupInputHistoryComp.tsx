@@ -161,6 +161,9 @@ function RendHistoryItemComp({
     handleDoubleClicking: (historyText: string, event: any) => void;
 }>) {
     const fontFamily = useBibleFontFamily(extracted?.bibleKey ?? '');
+    const handleRemoveHistory = useCallback(() => {
+        removeHistory(historyTextList, historyText, setHistoryTextList);
+    }, [historyTextList, historyText, setHistoryTextList]);
     return (
         <button
             className={'btn btn-sm d-flex app-border-white-round mx-1 p-0'}
@@ -185,13 +188,7 @@ function RendHistoryItemComp({
             <small
                 title={tran('Remove')}
                 style={{ color: 'red' }}
-                onClick={() => {
-                    removeHistory(
-                        historyTextList,
-                        historyText,
-                        setHistoryTextList,
-                    );
-                }}
+                onClick={handleRemoveHistory}
             >
                 <i className="bi bi-x" />
             </small>

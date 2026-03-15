@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export default function BackgroundRenderOnHoverComp({
     genChildren,
@@ -15,19 +15,21 @@ export default function BackgroundRenderOnHoverComp({
         width: 0,
         height: 0,
     });
+    const handleMouseOver = useCallback((event: any) => {
+        setIsPlaying(true);
+        const { clientWidth, clientHeight } = event.currentTarget;
+        setDim({
+            width: clientWidth,
+            height: clientHeight,
+        });
+    }, []);
+    const handleMouseOut = useCallback(() => {
+        setIsPlaying(false);
+    }, []);
     return (
         <div
-            onMouseOver={(event) => {
-                setIsPlaying(true);
-                const { clientWidth, clientHeight } = event.currentTarget;
-                setDim({
-                    width: clientWidth,
-                    height: clientHeight,
-                });
-            }}
-            onMouseOut={() => {
-                setIsPlaying(false);
-            }}
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
             style={{
                 width: '100%',
                 height: '100%',

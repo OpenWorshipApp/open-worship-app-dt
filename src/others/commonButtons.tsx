@@ -1,4 +1,4 @@
-import { createContext, use, useMemo } from 'react';
+import { createContext, use, useCallback, useMemo } from 'react';
 
 import type { EventMapperType } from '../event/KeyboardEventListener';
 import KeyboardEventListener, {
@@ -18,13 +18,14 @@ export function QuitCurrentPageComp({
     title: string;
     pathname?: string;
 }>) {
+    const handleClick = useCallback(() => {
+        goToPath(pathname);
+    }, [pathname]);
     return (
         <button
             className="btn btn-sm btn-outline-warning"
             title={title}
-            onClick={() => {
-                goToPath(pathname);
-            }}
+            onClick={handleClick}
         >
             <i className="bi bi-escape" />
         </button>
@@ -32,13 +33,14 @@ export function QuitCurrentPageComp({
 }
 
 export function SettingButtonComp() {
+    const handleClick = useCallback(() => {
+        openSettingPage();
+    }, []);
     return (
         <button
             className="btn btn-outline-success rotating-hover"
             title={tran('Setting')}
-            onClick={() => {
-                openSettingPage();
-            }}
+            onClick={handleClick}
         >
             <i className="bi bi-gear-wide-connected" />
         </button>
@@ -52,13 +54,14 @@ export function HelpButtonComp() {
             .replace(/\.html$/, '');
         return `${appProvider.appInfo.homepage}/help#${helpKey}`;
     }, []);
+    const handleClick = useCallback(() => {
+        appProvider.browserUtils.openExternalURL(url);
+    }, [url]);
     return (
         <button
             className="btn btn-outline-info"
             title={url}
-            onClick={() => {
-                appProvider.browserUtils.openExternalURL(url);
-            }}
+            onClick={handleClick}
         >
             <i className="bi bi-question-circle" />
         </button>
@@ -112,15 +115,16 @@ export function BibleLookupButtonComp() {
     useKeyboardRegistering(openBibleEventMaps, () => {
         setIsBibleLookupShowing(true);
     }, [setIsBibleLookupShowing]);
+    const handleClick = useCallback(() => {
+        setIsBibleLookupShowing(true);
+    }, [setIsBibleLookupShowing]);
     return (
         <button
             className="btn btn-sm btn-labeled btn-primary app-zero-border-radius"
             style={{ width: '220px' }}
             title={tran('Open bible lookup popup') + ` [${shortcutKey}]`}
             type="button"
-            onClick={async () => {
-                setIsBibleLookupShowing(true);
-            }}
+            onClick={handleClick}
         >
             <span className="btn-label">
                 <i className="bi bi-book px-1" />

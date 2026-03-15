@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -123,6 +123,12 @@ export default function RenderFindingInfoHeaderComp({
                   })
                   .join(', ')}`;
     }, [selectedBooks]);
+    const handleSelectBookKeys = useCallback(
+        (event: any) => {
+            selectBookKeys(event, bibleKey, selectedBooks, setSelectedBooks);
+        },
+        [bibleKey, selectedBooks, setSelectedBooks],
+    );
     return (
         <div className="w-100 d-flex overflow-hidden app-inner-shadow p-1">
             <div className="w-100 overflow-hidden">
@@ -130,14 +136,7 @@ export default function RenderFindingInfoHeaderComp({
                     className="btn btn-sm btn-info app-ellipsis"
                     title={text}
                     style={{ maxWidth: '100%' }}
-                    onClick={(event) => {
-                        selectBookKeys(
-                            event,
-                            bibleKey,
-                            selectedBooks,
-                            setSelectedBooks,
-                        );
-                    }}
+                    onClick={handleSelectBookKeys}
                 >
                     <span style={{ fontFamily }}>{text}</span>
                 </button>

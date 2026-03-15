@@ -96,13 +96,14 @@ function genContextMenu(
 
 function NotePreview({ note }: Readonly<{ note: Note }>) {
     const fileSource = FileSource.getInstance(note.filePath);
+    const handleToggleOpened = useCallback(() => {
+        note.setIsOpened(!note.isOpened);
+    }, [note]);
     return (
         <div className="w-100 accordion accordion-flush py-1 ms-2">
             <div
                 className={'accordion-header d-flex app-caught-hover-pointer'}
-                onClick={() => {
-                    note.setIsOpened(!note.isOpened);
-                }}
+                onClick={handleToggleOpened}
             >
                 <div className="flex-fill">
                     <i
@@ -165,12 +166,9 @@ export default function NoteFileComp({
         [note],
         { setData: setNote },
     );
-    const handlerChildRendering = useCallback(
-        (note: AppDocumentSourceAbs) => {
-            return <NotePreview note={note as Note} />;
-        },
-        [],
-    );
+    const handlerChildRendering = useCallback((note: AppDocumentSourceAbs) => {
+        return <NotePreview note={note as Note} />;
+    }, []);
     const handleReloading = useCallback(() => {
         setNote(undefined);
     }, []);

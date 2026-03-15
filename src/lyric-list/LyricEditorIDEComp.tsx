@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { ChangeEvent, useCallback, useMemo } from 'react';
 import { Uri } from 'monaco-editor';
 
 import { tran } from '../lang/langHelpers';
@@ -64,6 +64,14 @@ export default function LyricEditorIDEComp() {
         selectedLyric.filePath,
     );
 
+    const handleWrapTextChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const checked = event.target.checked;
+            setIsWrapText(checked);
+        },
+        [setIsWrapText],
+    );
+
     return (
         <div className="w-100 h-100 d-flex flex-column">
             <div className="d-flex">
@@ -78,10 +86,7 @@ export default function LyricEditorIDEComp() {
                         className="form-check-input mt-0"
                         type="checkbox"
                         checked={isWrapText}
-                        onChange={(event) => {
-                            const checked = event.target.checked;
-                            setIsWrapText(checked);
-                        }}
+                        onChange={handleWrapTextChange}
                     />
                 </div>
                 <div className="flex-grow-1">

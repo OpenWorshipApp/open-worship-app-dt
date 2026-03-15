@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import LoadingComp from '../others/LoadingComp';
@@ -21,10 +21,10 @@ export default function BibleFindBodyPreviewerComp() {
     const [bibleFindController, setBibleFindController] = useState<
         BibleFindController | null | undefined
     >(undefined);
-    const setBibleKey1 = (_: string, newBibleKey: string) => {
+    const setBibleKey1 = useCallback((_: string, newBibleKey: string) => {
         setBibleFindController(undefined);
         setBibleKey(newBibleKey);
-    };
+    }, []);
     useAppEffectAsync(
         async (methodContext) => {
             if (bibleKey !== 'Unknown' && bibleFindController === undefined) {
@@ -40,6 +40,9 @@ export default function BibleFindBodyPreviewerComp() {
         [bibleFindController, bibleKey],
         { setBibleFindController },
     );
+    const handleReloading = useCallback(() => {
+        setBibleFindController(undefined);
+    }, []);
     if (bibleFindController === undefined) {
         return <LoadingComp />;
     }
@@ -51,12 +54,7 @@ export default function BibleFindBodyPreviewerComp() {
                     {tran('Fail to get find controller!')}
                 </div>
                 <br />
-                <button
-                    className="btn btn-info"
-                    onClick={() => {
-                        setBibleFindController(undefined);
-                    }}
-                >
+                <button className="btn btn-info" onClick={handleReloading}>
                     {tran('Reload')}
                 </button>
             </div>

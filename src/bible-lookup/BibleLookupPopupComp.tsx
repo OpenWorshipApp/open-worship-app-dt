@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { ModalComp } from '../app-modal/ModalComp';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { getIsKeepingPopup } from './RenderExtraButtonsRightComp';
@@ -6,16 +8,17 @@ import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 
 export default function BibleLookupPopupComp() {
     const hideBibleLookupPopup = useToggleBibleLookupPopupContext(false);
+    const handleLookupSaveBibleItem = useCallback(() => {
+        const isKeepingPopup = getIsKeepingPopup();
+        if (!isKeepingPopup) {
+            hideBibleLookupPopup?.();
+        }
+    }, [hideBibleLookupPopup]);
     return (
         <ModalComp>
             <BibleReaderComp
                 flexSizeName={resizeSettingNames.bibleLookupPopup}
-                onLookupSaveBibleItem={() => {
-                    const isKeepingPopup = getIsKeepingPopup();
-                    if (!isKeepingPopup) {
-                        hideBibleLookupPopup?.();
-                    }
-                }}
+                onLookupSaveBibleItem={handleLookupSaveBibleItem}
             />
         </ModalComp>
     );

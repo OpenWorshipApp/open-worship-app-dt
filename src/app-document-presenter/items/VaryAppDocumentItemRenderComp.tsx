@@ -238,9 +238,7 @@ export default function VaryAppDocumentItemRenderComp({
                     return;
                 }
                 const appDocument = AppDocument.getInstance(slide.filePath);
-                const toIndex = await appDocument.getSlideIndex(
-                    slide as Slide,
-                );
+                const toIndex = await appDocument.getSlideIndex(slide as Slide);
                 appDocument.moveSlideToIndex(
                     droppedData.item as Slide,
                     toIndex,
@@ -251,6 +249,24 @@ export default function VaryAppDocumentItemRenderComp({
         },
         [slide],
     );
+    const handleDragOver = useCallback((event: any) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '0.5');
+    }, []);
+    const handleDragLeave = useCallback((event: any) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
+    const handleDragStartEvent = useCallback(
+        (event: any) => {
+            handleDragStart(event, slide);
+            event.stopPropagation();
+        },
+        [slide],
+    );
+    const handleDragEnd = useCallback((event: any) => {
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
     const handleContextMenuOpening = useCallback(
         (event: any) => {
             const menuItems: ContextMenuItemType[] = [];
@@ -280,22 +296,11 @@ export default function VaryAppDocumentItemRenderComp({
             data-vary-app-document-item-id={slide.id}
             data-scroll-container-selector={`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`}
             draggable
-            onDragOver={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '0.5');
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '1');
-            }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
             onDrop={handleDataDropping}
-            onDragStart={(event) => {
-                handleDragStart(event, slide);
-                event.stopPropagation();
-            }}
-            onDragEnd={(event) => {
-                changeDragEventStyle(event, 'opacity', '1');
-            }}
+            onDragStart={handleDragStartEvent}
+            onDragEnd={handleDragEnd}
             onClick={onClick}
             onContextMenu={handleContextMenuOpening}
             onCopy={onCopy ?? (() => {})}

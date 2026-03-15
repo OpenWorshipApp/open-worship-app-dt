@@ -76,6 +76,9 @@ function RenderCameraInfoComp({
         },
         [cameraInfo, genStyle],
     );
+    const handleDragStart = useCallback(() => {
+        dragStore.onDropped = handleByDropped;
+    }, [handleByDropped]);
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
             <div className="card-header app-ellipsis" title={cameraInfo.label}>
@@ -91,9 +94,7 @@ function RenderCameraInfoComp({
                 onContextMenu={handleContextMenuOpening}
                 ref={containerRef}
                 draggable
-                onDragStart={() => {
-                    dragStore.onDropped = handleByDropped;
-                }}
+                onDragStart={handleDragStart}
             >
                 <LoadingComp />
             </div>

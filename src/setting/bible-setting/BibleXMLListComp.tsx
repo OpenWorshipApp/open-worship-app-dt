@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import LoadingComp from '../../others/LoadingComp';
 import BibleXMLInfoComp from './BibleXMLInfoComp';
@@ -22,6 +22,9 @@ export default function BibleXMLListComp({
         );
         return localBibleKeys;
     }, [bibleKeysMap]);
+    const handleRefresh = useCallback(() => {
+        loadBibleKeys();
+    }, [loadBibleKeys]);
     if (isPending) {
         return <LoadingComp />;
     }
@@ -30,9 +33,7 @@ export default function BibleXMLListComp({
             <button
                 title="Refresh"
                 className="btn btn-info"
-                onClick={() => {
-                    loadBibleKeys();
-                }}
+                onClick={handleRefresh}
             >
                 <i className="bi bi-arrow-clockwise" /> {tran('Refresh')}
             </button>

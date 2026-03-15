@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import LoadingComp from '../../others/LoadingComp';
 import { updateBibleXMLInfo, useBibleXMLInfo } from './bibleXMLHelpers';
 import type { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
@@ -26,6 +28,38 @@ export default function BibleXMLInfoEditorComp({
     bibleKey: string;
 }>) {
     const { bibleInfo, isPending } = useBibleXMLInfo(bibleKey);
+    const handleStore = useCallback((editorStore: any) => {
+        addMonacoBibleInfoActions(
+            editorStore,
+            // getBibleInfo
+            () => {
+                return JSON.parse(editorStore.editorInstance.getValue());
+            },
+            // setPartialBibleInfo
+            (partialBibleInfo: AnyObjectType) => {
+                const oldBibleInfo = JSON.parse(
+                    editorStore.editorInstance.getValue(),
+                );
+                if (oldBibleInfo === null) {
+                    return;
+                }
+                const newBibleInfo: BibleJsonInfoType = {
+                    ...oldBibleInfo,
+                    ...partialBibleInfo,
+                };
+                editorStore.replaceValue(JSON.stringify(newBibleInfo, null, 4));
+            },
+        );
+    }, []);
+    const handleSave = useCallback(
+        (newBibleInfo: BibleJsonInfoType) => {
+            if (bibleInfo === null) {
+                return;
+            }
+            handleSaving(bibleInfo, newBibleInfo);
+        },
+        [bibleInfo],
+    );
     if (isPending) {
         return <LoadingComp />;
     }
@@ -37,37 +71,9 @@ export default function BibleXMLInfoEditorComp({
         <BibleXMLEditorComp
             id={bibleKey}
             jsonData={{ ...bibleInfo, booksAvailable: undefined }}
-            onStore={(editorStore) => {
-                addMonacoBibleInfoActions(
-                    editorStore,
-                    // getBibleInfo
-                    () => {
-                        return JSON.parse(
-                            editorStore.editorInstance.getValue(),
-                        );
-                    },
-                    // setPartialBibleInfo
-                    (partialBibleInfo: AnyObjectType) => {
-                        const oldBibleInfo = JSON.parse(
-                            editorStore.editorInstance.getValue(),
-                        );
-                        if (oldBibleInfo === null) {
-                            return;
-                        }
-                        const newBibleInfo: BibleJsonInfoType = {
-                            ...oldBibleInfo,
-                            ...partialBibleInfo,
-                        };
-                        editorStore.replaceValue(
-                            JSON.stringify(newBibleInfo, null, 4),
-                        );
-                    },
-                );
-            }}
+            onStore={handleStore}
             jsonDataSchema={infoEditorSchemaHandler}
-            save={(newBibleInfo: BibleJsonInfoType) => {
-                handleSaving(bibleInfo, newBibleInfo);
-            }}
+            save={handleSave}
             editorUri={bibleInfoUri}
         />
     );

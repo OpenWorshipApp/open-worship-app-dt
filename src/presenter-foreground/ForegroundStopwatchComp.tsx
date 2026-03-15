@@ -108,6 +108,9 @@ export default function ForegroundStopwatchComp() {
         },
         [genStyle],
     );
+    const handleDragStart = useCallback(() => {
+        dragStore.onDropped = handleByDropped;
+    }, [handleByDropped]);
     return (
         <ForegroundLayoutComp
             target="stopwatch"
@@ -124,9 +127,7 @@ export default function ForegroundStopwatchComp() {
                             onClick={handleShowing}
                             onContextMenu={handleContextMenuOpening}
                             draggable
-                            onDragStart={() => {
-                                dragStore.onDropped = handleByDropped;
-                            }}
+                            onDragStart={handleDragStart}
                         >
                             {tran('Start Stopwatch')}
                         </button>

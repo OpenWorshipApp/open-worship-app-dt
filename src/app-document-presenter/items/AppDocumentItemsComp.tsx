@@ -131,6 +131,20 @@ export default function AppDocumentItemsComp() {
         return thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
     }, [thumbSizeScale]);
     const isAnyItemSelected = useAnyItemSelected(varyAppDocumentItems);
+    const handleNext = useCallback(
+        (data: { isNext: boolean }) => {
+            const element = getContainerDiv();
+            if (element === null || !varyAppDocumentItems) {
+                return;
+            }
+            handleNextItemSelecting({
+                container: element,
+                varyAppDocumentItems,
+                isNext: data.isNext,
+            });
+        },
+        [varyAppDocumentItems],
+    );
     if (varyAppDocumentItems === undefined) {
         return <LoadingComp />;
     }
@@ -190,17 +204,7 @@ export default function AppDocumentItemsComp() {
             {isAnyItemSelected ? (
                 <SlideAutoPlayComp
                     prefix="vary-app-document"
-                    onNext={(data) => {
-                        const element = getContainerDiv();
-                        if (element === null) {
-                            return;
-                        }
-                        handleNextItemSelecting({
-                            container: element,
-                            varyAppDocumentItems,
-                            isNext: data.isNext,
-                        });
-                    }}
+                    onNext={handleNext}
                 />
             ) : null}
         </div>

@@ -55,6 +55,9 @@ function RendBodyComp({
         settingName,
         false,
     );
+    const handleToggleRepeating = useCallback(() => {
+        setIsRepeating(!isRepeating);
+    }, [isRepeating, setIsRepeating]);
     return (
         <div
             className="w-100"
@@ -84,9 +87,7 @@ function RendBodyComp({
                             opacity: isRepeating ? 1 : 0.5,
                             color: isRepeating ? 'green' : 'inherit',
                         }}
-                        onClick={() => {
-                            setIsRepeating(!isRepeating);
-                        }}
+                        onClick={handleToggleRepeating}
                     />
                 </div>
             </div>

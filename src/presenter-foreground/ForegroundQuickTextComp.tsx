@@ -1,4 +1,4 @@
-import { useCallback, type CSSProperties } from 'react';
+import { ChangeEvent, useCallback, type CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import {
@@ -126,6 +126,27 @@ export default function ForegroundQuickTextComp() {
         },
         [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
     );
+    const handleTimeSecondDelayChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setTimeSecondDelay(Number.parseInt(e.target.value, 10));
+        },
+        [setTimeSecondDelay],
+    );
+    const handleTimeSecondToLiveChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setTimeSecondToLive(Number.parseInt(e.target.value, 10));
+        },
+        [setTimeSecondToLive],
+    );
+    const handleMarkdownTextChange = useCallback(
+        (event: ChangeEvent<HTMLTextAreaElement>) => {
+            setMarkdownText(event.target.value);
+        },
+        [setMarkdownText],
+    );
+    const handleQuickTextDragStart = useCallback(() => {
+        dragStore.onDropped = handleByDropped;
+    }, [handleByDropped]);
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}
@@ -157,11 +178,7 @@ export default function ForegroundQuickTextComp() {
                             type="number"
                             min="0"
                             value={timeSecondDelay}
-                            onChange={(e) => {
-                                setTimeSecondDelay(
-                                    Number.parseInt(e.target.value, 10),
-                                );
-                            }}
+                            onChange={handleTimeSecondDelayChange}
                         />
                     </div>
                     <div
@@ -177,11 +194,7 @@ export default function ForegroundQuickTextComp() {
                             type="number"
                             min="1"
                             value={timeSecondToLive}
-                            onChange={(e) => {
-                                setTimeSecondToLive(
-                                    Number.parseInt(e.target.value, 10),
-                                );
-                            }}
+                            onChange={handleTimeSecondToLiveChange}
                         />
                     </div>
                 </div>
@@ -192,9 +205,7 @@ export default function ForegroundQuickTextComp() {
                         cols={150}
                         rows={20}
                         value={markdownText}
-                        onChange={(event) => {
-                            setMarkdownText(event.target.value);
-                        }}
+                        onChange={handleMarkdownTextChange}
                         placeholder="Leave a markdown text here"
                     />
                     <label htmlFor="quick-text-textarea">Markdown</label>
@@ -203,9 +214,7 @@ export default function ForegroundQuickTextComp() {
                         onClick={handleShowing}
                         onContextMenu={handleContextMenuOpening}
                         draggable
-                        onDragStart={() => {
-                            dragStore.onDropped = handleByDropped;
-                        }}
+                        onDragStart={handleQuickTextDragStart}
                     >
                         {tran('Show Quick Text')}
                     </button>

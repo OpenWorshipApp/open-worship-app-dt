@@ -1,3 +1,5 @@
+import { ChangeEvent, useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import { getSetting, useStateSettingBoolean } from '../helper/settingHelpers';
 import {
@@ -27,6 +29,19 @@ export default function RenderExtraButtonsRightComp({
         CLOSE_ON_ADD_BIBLE_ITEM,
         false,
     );
+    const handleToggleKeepingPopup = useCallback(() => {
+        setIsKeepingPopup(!isKeepingPopup);
+    }, [isKeepingPopup, setIsKeepingPopup]);
+    const handleCheckboxChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const checked = event.target.checked;
+            setIsKeepingPopup(checked);
+        },
+        [setIsKeepingPopup],
+    );
+    const handleToggleLookupOnline = useCallback(() => {
+        setIsLookupOnline(!isLookupOnline);
+    }, [isLookupOnline, setIsLookupOnline]);
     return (
         <div className="d-flex">
             {appProvider.isPagePresenter ? (
@@ -35,18 +50,13 @@ export default function RenderExtraButtonsRightComp({
                     title={tran(
                         'Keep popup modal open when adding a bible item, useful in presenter mode',
                     )}
-                    onClick={() => {
-                        setIsKeepingPopup(!isKeepingPopup);
-                    }}
+                    onClick={handleToggleKeepingPopup}
                 >
                     <input
                         className="form-check-input mt-0"
                         type="checkbox"
                         checked={isKeepingPopup}
-                        onChange={(event) => {
-                            const checked = event.target.checked;
-                            setIsKeepingPopup(checked);
-                        }}
+                        onChange={handleCheckboxChange}
                     />
                     <span>{tran('Keep Open')}</span>
                 </div>
@@ -57,9 +67,7 @@ export default function RenderExtraButtonsRightComp({
                     `-${isLookupOnline ? '' : 'outline-'}info`
                 }
                 title={tran('Advance Bible Lookup')}
-                onClick={() => {
-                    setIsLookupOnline(!isLookupOnline);
-                }}
+                onClick={handleToggleLookupOnline}
             >
                 <i className="bi bi-search" />
             </button>

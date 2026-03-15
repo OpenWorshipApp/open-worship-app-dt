@@ -1,3 +1,4 @@
+import { useCallback, MouseEvent } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { useCanvasControllerContext } from '../CanvasController';
@@ -22,6 +23,13 @@ export default function BoxEditorNormalWrapperComp({
     const canvasController = useCanvasControllerContext();
     const handleCanvasItemControlling = useSetSelectedCanvasItems();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
+    const handleClick = useCallback(
+        (event: MouseEvent) => {
+            event.stopPropagation();
+            handleCanvasItemControlling(canvasItem);
+        },
+        [handleCanvasItemControlling, canvasItem],
+    );
     return (
         <div
             className="app-box-editor shadow-caught-hover-pointer"
@@ -35,10 +43,7 @@ export default function BoxEditorNormalWrapperComp({
                     false,
                 )
             }
-            onClick={(event) => {
-                event.stopPropagation();
-                handleCanvasItemControlling(canvasItem);
-            }}
+            onClick={handleClick}
             onDoubleClick={onDoubleClick}
         >
             {children}

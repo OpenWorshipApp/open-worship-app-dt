@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { APP_FOUND_PAGE_CLASS } from './BibleFindRenderPerPageComp';
 import { bringDomToTopView } from '../helper/helpers';
 
@@ -10,6 +12,18 @@ export default function RenderPageNumberComp({
     isActive: boolean;
     handleFinding: (page: string) => void;
 }>) {
+    const handlePageClick = useCallback(() => {
+        if (isActive) {
+            const dom = document.querySelector(
+                `.${APP_FOUND_PAGE_CLASS}-${pageNumber}`,
+            );
+            if (dom !== null) {
+                bringDomToTopView(dom);
+            }
+            return;
+        }
+        handleFinding(pageNumber);
+    }, [isActive, pageNumber, handleFinding]);
     return (
         <li
             key={pageNumber}
@@ -20,18 +34,7 @@ export default function RenderPageNumberComp({
                 style={{
                     border: isActive ? '1px solid var(--bs-info)' : undefined,
                 }}
-                onClick={() => {
-                    if (isActive) {
-                        const dom = document.querySelector(
-                            `.${APP_FOUND_PAGE_CLASS}-${pageNumber}`,
-                        );
-                        if (dom !== null) {
-                            bringDomToTopView(dom);
-                        }
-                        return;
-                    }
-                    handleFinding(pageNumber);
-                }}
+                onClick={handlePageClick}
             >
                 {pageNumber}
             </button>

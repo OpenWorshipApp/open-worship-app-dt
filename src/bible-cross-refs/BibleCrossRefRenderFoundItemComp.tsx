@@ -1,10 +1,12 @@
+import { useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import {
     openContextMenu,
     openInBibleLookup,
 } from '../bible-find/bibleFindHelpers';
-import { handleDragStart } from '../helper/dragHelpers';
+import { handleDragStart as handleDragStartHelper } from '../helper/dragHelpers';
 import type { BibleCrossRefType } from './bibleCrossRefsHelpers';
 import { breakItem } from './bibleCrossRefsHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
@@ -25,6 +27,27 @@ export default function BibleCrossRefRenderFoundItemComp({
     const [data] = useAppStateAsync(() => {
         return breakItem(bibleKey, bibleVersesKey);
     }, [bibleKey, bibleVersesKey]);
+    const handleDragStart = useCallback(
+        (event: any) => {
+            handleDragStartHelper(event, data!.bibleItem);
+        },
+        [data],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            openContextMenu(event, {
+                viewController,
+                bibleItem: data!.bibleItem,
+            });
+        },
+        [viewController, data],
+    );
+    const handleClicking = useCallback(
+        (event: any) => {
+            openInBibleLookup(event, viewController, data!.bibleItem, true);
+        },
+        [viewController, data],
+    );
     if (data === undefined) {
         return <div>{tran('Loading')}...</div>;
     }
@@ -44,18 +67,9 @@ export default function BibleCrossRefRenderFoundItemComp({
             className="w-100 app-border-white-round my-1 p-1 app-caught-hover-pointer"
             title={tran('shift + click to append')}
             draggable
-            onDragStart={(event) => {
-                handleDragStart(event, bibleItem);
-            }}
-            onContextMenu={(event) => {
-                openContextMenu(event, {
-                    viewController,
-                    bibleItem,
-                });
-            }}
-            onClick={(event) => {
-                openInBibleLookup(event, viewController, bibleItem, true);
-            }}
+            onDragStart={handleDragStart}
+            onContextMenu={handleContextMenuOpening}
+            onClick={handleClicking}
         >
             <BibleDirectViewTitleComp bibleItem={bibleItem} />
             {/* TODO: update title */}

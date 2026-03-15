@@ -23,6 +23,9 @@ export default function SettingDownloadedBibleComp({
     downloadedBibleInfoList: BibleListType;
     setDownloadedBibleInfoList: (bbList: BibleListType) => void;
 }>) {
+    const handleRefresh = useCallback(() => {
+        setDownloadedBibleInfoList(null);
+    }, [setDownloadedBibleInfoList]);
     if (downloadedBibleInfoList === null) {
         return <LoadingComp />;
     }
@@ -50,12 +53,7 @@ export default function SettingDownloadedBibleComp({
     return (
         <div className="w-100">
             <div>
-                <button
-                    className="btn btn-info"
-                    onClick={() => {
-                        setDownloadedBibleInfoList(null);
-                    }}
-                >
+                <button className="btn btn-info" onClick={handleRefresh}>
                     <i className="bi bi-arrow-clockwise" /> Refresh
                 </button>
             </div>

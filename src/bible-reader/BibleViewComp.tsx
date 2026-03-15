@@ -1,6 +1,6 @@
 import './BibleViewComp.scss';
 
-import { use } from 'react';
+import { use, useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import type BibleItemsViewController from './BibleItemsViewController';
@@ -131,6 +131,35 @@ export default function BibleViewComp({
     const foundBibleItem = isEditing
         ? (editingResult?.result.bibleItem ?? null)
         : bibleItem;
+    const handleDragOver = useCallback((event: any) => {
+        event.preventDefault();
+        removeDraggingClass(event);
+        const className = genDraggingClass(event);
+        event.currentTarget.classList.add(className);
+    }, []);
+    const handleDragLeave = useCallback((event: any) => {
+        event.preventDefault();
+        removeDraggingClass(event);
+    }, []);
+    const handleDrop = useCallback(
+        async (event: any) => {
+            applyDropped(event, viewController, bibleItem);
+        },
+        [viewController, bibleItem],
+    );
+    const handleContextMenu = useCallback(
+        (event: any) => {
+            if (foundBibleItem === null) {
+                return;
+            }
+            openContextMenu(event, {
+                viewController,
+                foundBibleItem,
+                uuid,
+            });
+        },
+        [foundBibleItem, viewController, uuid],
+    );
     return (
         <div
             id={id}
@@ -139,29 +168,10 @@ export default function BibleViewComp({
                 (isEditing ? ` ${HIGHLIGHT_SELECTED_CLASSNAME} ` : '')
             }
             style={{ minWidth: '30%' }}
-            onDragOver={(event) => {
-                event.preventDefault();
-                removeDraggingClass(event);
-                const className = genDraggingClass(event);
-                event.currentTarget.classList.add(className);
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                removeDraggingClass(event);
-            }}
-            onDrop={async (event) => {
-                applyDropped(event, viewController, bibleItem);
-            }}
-            onContextMenu={(event) => {
-                if (foundBibleItem === null) {
-                    return;
-                }
-                openContextMenu(event, {
-                    viewController,
-                    foundBibleItem,
-                    uuid,
-                });
-            }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onContextMenu={handleContextMenu}
         >
             {isEditing ? (
                 <RenderBibleEditingHeader />

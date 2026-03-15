@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useCameraInfoList } from '../helper/cameraHelpers';
 import { useThumbnailWidthSetting } from './BackgroundMediaComp';
@@ -13,17 +13,21 @@ export default function BackgroundCamerasComp() {
         const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
         return thumbnailHeight;
     }, [thumbnailWidth]);
+    const handleWheel = useCallback(
+        (event: any) => {
+            handleCtrlWheel({
+                event,
+                value: thumbnailWidth,
+                setValue: setThumbnailWidth,
+                defaultSize: defaultRangeSize,
+            });
+        },
+        [thumbnailWidth, setThumbnailWidth],
+    );
     return (
         <div
             className="card w-100 h-100 app-zero-border-radius"
-            onWheel={(event) => {
-                handleCtrlWheel({
-                    event,
-                    value: thumbnailWidth,
-                    setValue: setThumbnailWidth,
-                    defaultSize: defaultRangeSize,
-                });
-            }}
+            onWheel={handleWheel}
         >
             <div className="card-body d-flex flex-wrap">
                 {cameraInfoList.map((cameraInfo) => {

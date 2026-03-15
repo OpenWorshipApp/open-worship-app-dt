@@ -17,7 +17,7 @@ import { previewingEventListener } from '../../event/PreviewingEventListener';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import type { BibleItemDataType } from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
-import { Fragment, useMemo } from 'react';
+import { Fragment, useCallback, useMemo } from 'react';
 import {
     genColorBar,
     genColorMap,
@@ -155,6 +155,10 @@ export default function MiniScreenBodyComp({
         return DEFAULT_PREVIEW_SIZE * previewScale;
     }, [previewScale]);
 
+    const handleContextMenuOpening = useCallback((event: any) => {
+        openContextMenu(event);
+    }, []);
+
     return (
         <div
             className="card-body d-flex flex-column"
@@ -162,9 +166,7 @@ export default function MiniScreenBodyComp({
                 overflow: 'auto',
                 paddingBottom: 30,
             }}
-            onContextMenu={(event) => {
-                openContextMenu(event);
-            }}
+            onContextMenu={handleContextMenuOpening}
         >
             <div className="w-100 flex-fill">
                 <RenderWithColorNoteComp

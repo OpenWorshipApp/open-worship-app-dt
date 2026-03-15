@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 import { createRef, useCallback, useMemo, useState } from 'react';
 
 import {
@@ -154,6 +154,13 @@ export default function InputExtraButtonsComp() {
         viewController.inputText = '';
         setBibleLookupInputFocus();
     };
+    const handleClearInputChunk = useCallback(
+        (event: MouseEvent) => {
+            event.stopPropagation();
+            removeInputTextChunk();
+        },
+        [inputText],
+    );
     return (
         <div
             ref={extractButtonsRef}
@@ -185,10 +192,7 @@ export default function InputExtraButtonsComp() {
                     color: 'var(--bs-danger-text-emphasis)',
                     ...availableStyle,
                 }}
-                onClick={(event) => {
-                    event.stopPropagation();
-                    removeInputTextChunk();
-                }}
+                onClick={handleClearInputChunk}
             />
             <i
                 className="bi bi-arrow-bar-right app-caught-hover-pointer"
@@ -197,9 +201,7 @@ export default function InputExtraButtonsComp() {
                     color: 'var(--bs-secondary-text-emphasis)',
                     ...genAvailableStyle(!isTabAvailable),
                 }}
-                onClick={() => {
-                    handleTabbing();
-                }}
+                onClick={handleTabbing}
             />
         </div>
     );

@@ -1,6 +1,6 @@
 import './PathSelectorComp.scss';
 
-import { lazy, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import type DirSource from '../helper/DirSource';
@@ -69,6 +69,9 @@ export default function PathSelectorComp({
     const dirPath = dirSource.dirPath;
     const shouldShowingEditor =
         isForceShowEditor || !dirPath || isShowingEditor;
+    const handleToggleEditor = useCallback(() => {
+        setIsShowingEditor(!isShowingEditor);
+    }, [isShowingEditor]);
     return (
         <div
             className="path-selector w-100"
@@ -77,9 +80,7 @@ export default function PathSelectorComp({
             <div
                 className="d-flex path-previewer app-caught-hover-pointer"
                 title={(shouldShowingEditor ? 'Hide' : 'Show') + ' path editor'}
-                onClick={() => {
-                    setIsShowingEditor(!isShowingEditor);
-                }}
+                onClick={handleToggleEditor}
             >
                 <i
                     className={`bi ${

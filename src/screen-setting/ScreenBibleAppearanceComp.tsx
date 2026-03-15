@@ -1,3 +1,5 @@
+import { ChangeEvent, useCallback } from 'react';
+
 import type { AppColorType } from '../others/color/colorHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import AppRangeComp from '../others/AppRangeComp';
@@ -9,6 +11,12 @@ import {
 export default function ScreenBibleAppearanceComp() {
     const [color, setColor] = useStylingColor();
     const [fontSize, setFontSize] = useStylingFontSize();
+    const handleColorChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setColor(event.target.value as AppColorType);
+        },
+        [setColor],
+    );
     return (
         <div>
             <span className="p-">
@@ -18,9 +26,7 @@ export default function ScreenBibleAppearanceComp() {
             <input
                 className="float-end app-caught-hover-pointer"
                 type="color"
-                onChange={(event) => {
-                    setColor(event.target.value as AppColorType);
-                }}
+                onChange={handleColorChange}
                 value={color}
             />
             <div>

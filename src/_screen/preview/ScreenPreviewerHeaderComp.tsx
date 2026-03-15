@@ -2,16 +2,22 @@ import ShowHideScreen from './ShowHideScreen';
 import MiniScreenClearControlComp from './MiniScreenClearControlComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import ShowingScreenIcon from './ShowingScreenIcon';
 
 export default function ScreenPreviewerHeaderComp() {
     const screenManagerBase = useScreenManagerBaseContext();
     const [isLocked, setIsLocked] = useState(screenManagerBase.isLocked);
-    const setIsLocked1 = (newIsLocked: boolean) => {
-        screenManagerBase.isLocked = newIsLocked;
-        setIsLocked(newIsLocked);
-    };
+    const setIsLocked1 = useCallback(
+        (newIsLocked: boolean) => {
+            screenManagerBase.isLocked = newIsLocked;
+            setIsLocked(newIsLocked);
+        },
+        [screenManagerBase],
+    );
+    const handleToggleLock = useCallback(() => {
+        setIsLocked1(!isLocked);
+    }, [isLocked, setIsLocked1]);
     return (
         <div
             className="card-header w-100"
@@ -39,9 +45,7 @@ export default function ScreenPreviewerHeaderComp() {
                                 ' app-caught-hover-pointer'
                             }
                             style={{ color: isLocked ? 'red' : 'green' }}
-                            onClick={() => {
-                                setIsLocked1(!isLocked);
-                            }}
+                            onClick={handleToggleLock}
                         />
                     </div>
                 </div>

@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useCallback } from 'react';
 
 import {
     BIBLE_VIEW_TEXT_CLASS,
@@ -118,6 +118,34 @@ export default function BibleViewTextComp({
         return getBibleInfoIsRtl(bibleKey);
     }, [bibleKey]);
     const isExtraVerses = extraBibleKeys.length > 0;
+    const handleSelectVerseStart = useCallback(
+        (verse: number) => {
+            viewController.applyTargetOrBibleKey(bibleItem, {
+                target: { ...bibleItem.target, verseStart: verse },
+            });
+        },
+        [viewController, bibleItem],
+    );
+    const handleVerseStartTitle = useCallback(
+        (verse: number) => {
+            return `${verse}-${target.verseStart}`;
+        },
+        [target.verseStart],
+    );
+    const handleSelectVerseEnd = useCallback(
+        (verse: number) => {
+            viewController.applyTargetOrBibleKey(bibleItem, {
+                target: { ...bibleItem.target, verseEnd: verse },
+            });
+        },
+        [viewController, bibleItem],
+    );
+    const handleVerseEndTitle = useCallback(
+        (verse: number) => {
+            return `${target.verseStart}-${verse}`;
+        },
+        [target.verseStart],
+    );
     return (
         <div
             className={`${BIBLE_VIEW_TEXT_CLASS} app-selectable-text p-1`}
@@ -132,14 +160,8 @@ export default function BibleViewTextComp({
                 to={target.verseStart - 1}
                 bibleItem={bibleItem}
                 verseCount={verseCount ?? 0}
-                onSelect={(verse) => {
-                    viewController.applyTargetOrBibleKey(bibleItem, {
-                        target: { ...bibleItem.target, verseStart: verse },
-                    });
-                }}
-                toTitle={(verse) => {
-                    return `${verse}-${target.verseStart}`;
-                }}
+                onSelect={handleSelectVerseStart}
+                toTitle={handleVerseStartTitle}
             />
             <RenderVerseListDetailComp
                 bibleItem={bibleItem}
@@ -149,14 +171,8 @@ export default function BibleViewTextComp({
                 from={target.verseEnd + 1}
                 bibleItem={bibleItem}
                 verseCount={verseCount ?? 0}
-                onSelect={(verse) => {
-                    viewController.applyTargetOrBibleKey(bibleItem, {
-                        target: { ...bibleItem.target, verseEnd: verse },
-                    });
-                }}
-                toTitle={(verse) => {
-                    return `${target.verseStart}-${verse}`;
-                }}
+                onSelect={handleSelectVerseEnd}
+                toTitle={handleVerseEndTitle}
             />
             {extraBibleItems?.length
                 ? extraBibleItems.map((extraBibleItem, i) => {

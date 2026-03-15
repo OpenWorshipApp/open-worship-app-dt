@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react';
+import { useCallback } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useAttachedBackgroundData } from '../helper/dragHelpers';
@@ -31,16 +32,21 @@ function RendItemComp({
     iType: string;
     onContextMenu?: (event: any) => void;
 }>) {
+    const handleContextMenu = useCallback(
+        (event: MouseEvent) => {
+            if (onContextMenu) {
+                onContextMenu(event);
+            } else {
+                event.stopPropagation();
+            }
+        },
+        [onContextMenu],
+    );
     return (
         <button
             className="btn btn-secondary btn-sm p-0 mx-1"
             title={title}
-            onContextMenu={
-                onContextMenu ??
-                ((event) => {
-                    event.stopPropagation();
-                })
-            }
+            onContextMenu={handleContextMenu}
         >
             <i className={`bi bi-${iType}`} style={iStyle} />
         </button>

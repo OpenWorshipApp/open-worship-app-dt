@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from 'react';
+import { ChangeEvent, type KeyboardEvent } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 
 import { useBibleFindController } from './BibleFindController';
@@ -78,6 +78,18 @@ export default function BibleFindHeaderComp({
     useAppEffect(() => {
         handleFinding(text);
     }, []);
+    const handleInputChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            bibleFindController.handleNewValue(event);
+            setText1(event.target.value);
+        },
+        [bibleFindController, setText1],
+    );
+    const handleRefreshing = useCallback(() => {
+        attemptTimeout(() => {
+            handleFinding(text, true);
+        }, true);
+    }, [attemptTimeout, handleFinding, text]);
     return (
         <>
             <input
@@ -87,19 +99,9 @@ export default function BibleFindHeaderComp({
                 value={text}
                 onKeyUp={keyUpHandling}
                 style={{ fontFamily }}
-                onChange={(event) => {
-                    bibleFindController.handleNewValue(event);
-                    setText1(event.target.value);
-                }}
+                onChange={handleInputChange}
             />
-            <button
-                className="btn btn-sm"
-                onClick={() => {
-                    attemptTimeout(() => {
-                        handleFinding(text, true);
-                    }, true);
-                }}
-            >
+            <button className="btn btn-sm" onClick={handleRefreshing}>
                 <i className="bi bi-arrow-clockwise app-caught-hover-pointer" />
             </button>
         </>

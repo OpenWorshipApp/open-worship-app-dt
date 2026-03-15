@@ -48,6 +48,9 @@ export default function DownloadedBibleItemComp({
             showSimpleToast('Deleting', error.message);
         }
     }, [key, title, onDeleted]);
+    const handleUpdate = useCallback(() => {
+        onUpdate();
+    }, [onUpdate]);
     return (
         <li className="list-group-item">
             <div>
@@ -65,9 +68,7 @@ export default function DownloadedBibleItemComp({
                         {bibleInfo.isUpdatable && (
                             <button
                                 className="btn btn-warning"
-                                onClick={() => {
-                                    onUpdate();
-                                }}
+                                onClick={handleUpdate}
                             >
                                 Update
                             </button>

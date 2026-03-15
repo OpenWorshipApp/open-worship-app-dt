@@ -1,9 +1,10 @@
+import { useCallback, useMemo } from 'react';
+
 import type Bible from './Bible';
 import BibleItemRenderComp from './BibleItemRenderComp';
 import { genDuplicatedMessage } from './bibleItemHelpers';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { tran } from '../lang/langHelpers';
-import { useMemo } from 'react';
 
 export default function RenderBibleItemsComp({
     bible,
@@ -15,6 +16,9 @@ export default function RenderBibleItemsComp({
     const shouldAddBibleItem = useMemo(() => {
         return bible.isDefault && showBibleLookupPopup !== null;
     }, [bible.isDefault, showBibleLookupPopup]);
+    const handleAddBibleItem = useCallback(() => {
+        showBibleLookupPopup?.();
+    }, [showBibleLookupPopup]);
     return (
         <ul
             className="list-group"
@@ -49,9 +53,7 @@ export default function RenderBibleItemsComp({
                         margin: 'auto',
                         fontSize: '0.8rem',
                     }}
-                    onClick={() => {
-                        showBibleLookupPopup!();
-                    }}
+                    onClick={handleAddBibleItem}
                 >
                     <i className="bi bi-book px-1" />
                     {' ' + tran('Add Bible Item')}

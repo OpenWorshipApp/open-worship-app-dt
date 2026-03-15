@@ -1,3 +1,5 @@
+import { useCallback, type MouseEvent } from 'react';
+
 export default function RenderNoColor({
     isSelected,
     onClick,
@@ -5,6 +7,12 @@ export default function RenderNoColor({
     isSelected: boolean;
     onClick?: (event: MouseEvent) => void;
 }>) {
+    const handleClick = useCallback(
+        (event: MouseEvent) => {
+            onClick?.(event as any);
+        },
+        [onClick],
+    );
     return (
         <div
             title="No Color"
@@ -16,9 +24,7 @@ export default function RenderNoColor({
                 color: 'red',
                 border: isSelected ? '3px dashed #fff' : '',
             }}
-            onClick={(event) => {
-                onClick?.(event as any);
-            }}
+            onClick={handleClick}
         >
             x
         </div>

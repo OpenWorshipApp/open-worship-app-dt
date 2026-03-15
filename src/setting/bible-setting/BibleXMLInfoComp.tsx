@@ -28,6 +28,9 @@ export default function BibleXMLInfoComp({
         false,
     );
     const { bibleInfo } = useBibleXMLInfo(bibleKey);
+    const handleToggleShowing = useCallback(() => {
+        setIsShowing(!isShowing);
+    }, [isShowing, setIsShowing]);
     const handleFileTrashing = useCallback(
         async (event: any) => {
             event.stopPropagation();
@@ -79,9 +82,7 @@ export default function BibleXMLInfoComp({
                                     ? tran('Hide Editor')
                                     : tran('Show Editor')
                             }
-                            onClick={() => {
-                                setIsShowing(!isShowing);
-                            }}
+                            onClick={handleToggleShowing}
                         >
                             <i className="bi bi-pencil" />
                         </button>

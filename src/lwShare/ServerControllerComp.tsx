@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 
 import type { StatusDataType, StatusType } from './lwShareHelpers';
 import { controller } from './lwShareHelpers';
@@ -72,6 +72,19 @@ function CustomPortInputComp({
     port: number;
     setPort: (port: number) => void;
 }>) {
+    const handlePortChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const newPort = Number(event.target.value);
+            setPort(newPort);
+        },
+        [setPort],
+    );
+    const handleGenerateRandomPort = useCallback(() => {
+        setPort(Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024);
+    }, [setPort]);
+    const handleUseDefaultPort = useCallback(() => {
+        setPort(8080);
+    }, [setPort]);
     return (
         <div className="d-flex align-items-center p-2">
             <label htmlFor="port-input">Custom Port:</label>
@@ -86,26 +99,17 @@ function CustomPortInputComp({
                 max={65535}
                 placeholder="8080"
                 value={port}
-                onChange={(event) => {
-                    const newPort = Number(event.target.value);
-                    setPort(newPort);
-                }}
+                onChange={handlePortChange}
             />
             <button
                 className="btn btn-sm btn-primary"
-                onClick={() => {
-                    setPort(
-                        Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024,
-                    );
-                }}
+                onClick={handleGenerateRandomPort}
             >
                 Gen Randomly
             </button>
             <button
                 className="btn btn-sm btn-primary"
-                onClick={() => {
-                    setPort(8080);
-                }}
+                onClick={handleUseDefaultPort}
             >
                 Use 8080
             </button>

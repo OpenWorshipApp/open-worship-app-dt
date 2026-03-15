@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import {
     genCommonMenu,
     genShowOnScreensContextMenu,
@@ -61,6 +63,35 @@ export default function BackgroundMediaItemComp({
         fileSource.src,
         dragType,
     );
+    const handleMediaDragStart = useCallback(
+        (event: any) => {
+            handleDragStart(event, fileSource, dragType);
+        },
+        [fileSource, dragType],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            showAppContextMenu(event, [
+                ...genCommonMenu(filePath),
+                ...genShowOnScreensContextMenu((event) => {
+                    handleSelecting(event, true);
+                }),
+                ...genExtraItemContextMenuItems(filePath),
+                ...(isInScreen ? [] : genTrashContextMenu(filePath)),
+            ]);
+        },
+        [filePath, handleSelecting, genExtraItemContextMenuItems, isInScreen],
+    );
+    const handleClicking = useCallback(
+        (event: any) => {
+            if (onClick) {
+                onClick(event, fileSource);
+            } else {
+                handleSelecting(event);
+            }
+        },
+        [onClick, fileSource, handleSelecting],
+    );
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
@@ -69,26 +100,9 @@ export default function BackgroundMediaItemComp({
                 width: `${thumbnailWidth}px`,
             }}
             draggable={!noDraggable}
-            onDragStart={(event) => {
-                handleDragStart(event, fileSource, dragType);
-            }}
-            onContextMenu={(event) => {
-                showAppContextMenu(event as any, [
-                    ...genCommonMenu(filePath),
-                    ...genShowOnScreensContextMenu((event) => {
-                        handleSelecting(event, true);
-                    }),
-                    ...genExtraItemContextMenuItems(filePath),
-                    ...(isInScreen ? [] : genTrashContextMenu(filePath)),
-                ]);
-            }}
-            onClick={(event) => {
-                if (onClick) {
-                    onClick(event, fileSource);
-                } else {
-                    handleSelecting(event);
-                }
-            }}
+            onDragStart={handleMediaDragStart}
+            onContextMenu={handleContextMenuOpening}
+            onClick={handleClicking}
         >
             {isNameOnTop && (
                 <div className="app-ellipsis-left pe-4">

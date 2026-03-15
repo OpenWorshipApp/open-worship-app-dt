@@ -158,16 +158,64 @@ export default function FileItemHandlerComp({
         FileSource.getInstance(filePath).fireSelectEvent();
         onClick?.();
     }, [filePath, onClick]);
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            const selfContextMenu = genContextMenu(
+                filePath,
+                setIsRenaming,
+                reload,
+            );
+            const preDelete1 = () => {
+                fileData?.preDelete();
+                preDelete?.();
+            };
+            selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
+            showAppContextMenu(event as any, [
+                ...(contextMenuItems ?? []),
+                ...genCommonMenu(filePath),
+                ...selfContextMenu,
+            ]);
+        },
+        [
+            filePath,
+            setIsRenaming,
+            reload,
+            fileData,
+            preDelete,
+            contextMenuItems,
+        ],
+    );
+    const handleDragOver = useCallback(
+        (event: any) => {
+            if (onDrop) {
+                event.preventDefault();
+                event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
+            }
+        },
+        [onDrop],
+    );
+    const handleDragLeave = useCallback(
+        (event: any) => {
+            if (onDrop) {
+                event.preventDefault();
+                event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+            }
+        },
+        [onDrop],
+    );
+    const handleDropEvent = useCallback(
+        (event: any) => {
+            if (onDrop) {
+                event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+                onDrop(event);
+            }
+        },
+        [onDrop],
+    );
 
     if (fileData === null) {
         return <FileReadErrorComp reload={reload} />;
     }
-    const selfContextMenu = genContextMenu(filePath, setIsRenaming, reload);
-    const preDelete1 = () => {
-        fileData?.preDelete();
-        preDelete?.();
-    };
-    selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
     const moreClassName =
         `${isSelected ? 'active' : ''} ` + `${className ?? ''}`;
     const fileSource = FileSource.getInstance(filePath);
@@ -181,35 +229,10 @@ export default function FileItemHandlerComp({
             onClick={handleClicking}
             data-index={index + 1}
             title={fileSource.fullName}
-            onContextMenu={(event) => {
-                showAppContextMenu(event as any, [
-                    ...(contextMenuItems ?? []),
-                    ...genCommonMenu(filePath),
-                    ...selfContextMenu,
-                ]);
-            }}
-            onDragOver={(event) => {
-                if (onDrop) {
-                    event.preventDefault();
-                    event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
-                }
-            }}
-            onDragLeave={(event) => {
-                if (onDrop) {
-                    event.preventDefault();
-                    event.currentTarget.classList.remove(
-                        RECEIVING_DROP_CLASSNAME,
-                    );
-                }
-            }}
-            onDrop={(event) => {
-                if (onDrop) {
-                    event.currentTarget.classList.remove(
-                        RECEIVING_DROP_CLASSNAME,
-                    );
-                    onDrop(event);
-                }
-            }}
+            onContextMenu={handleContextMenuOpening}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDropEvent}
         >
             {isRenaming ? (
                 <RenderRenamingComp

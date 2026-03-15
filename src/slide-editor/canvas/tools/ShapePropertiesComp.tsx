@@ -1,3 +1,5 @@
+import { ChangeEvent, useCallback } from 'react';
+
 import { tran } from '../../../lang/langHelpers';
 import AppRangeComp from '../../../others/AppRangeComp';
 import { useCanvasItemPropsSetterContext } from '../CanvasItem';
@@ -7,6 +9,30 @@ export default function ShapePropertiesComp() {
     const roundSizePixel = props.roundSizePixel ?? 0;
     const roundSizePercentage =
         roundSizePixel > 0 ? 0 : (props.roundSizePercentage ?? 0);
+    const handleBackdropFilterChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setProps({
+                backdropFilter: Number.parseInt(e.target.value, 10),
+            });
+        },
+        [setProps],
+    );
+    const handleRoundPercentageChange = useCallback(
+        (value: number) => {
+            setProps({ roundSizePercentage: value });
+        },
+        [setProps],
+    );
+    const handleRoundPixelChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const value = Number.parseInt(event.target.value, 10) || 0;
+            setProps({
+                roundSizePixel: value,
+                roundSizePercentage: 0,
+            });
+        },
+        [setProps],
+    );
     return (
         <div>
             <div className="d-flex">
@@ -19,11 +45,7 @@ export default function ShapePropertiesComp() {
                         width: '80px',
                     }}
                     value={props.backdropFilter}
-                    onChange={(e) => {
-                        setProps({
-                            backdropFilter: Number.parseInt(e.target.value, 10),
-                        });
-                    }}
+                    onChange={handleBackdropFilterChange}
                 />
                 <span className="ps-1">px</span>
             </div>
@@ -43,9 +65,7 @@ export default function ShapePropertiesComp() {
                             ? 'Set round size pixel to 0 to use this'
                             : tran('Round (%)')
                     }
-                    setValue={(value) => {
-                        setProps({ roundSizePercentage: value });
-                    }}
+                    setValue={handleRoundPercentageChange}
                     defaultSize={{
                         size: roundSizePercentage,
                         min: 0,
@@ -67,14 +87,7 @@ export default function ShapePropertiesComp() {
                     type="number"
                     value={roundSizePixel}
                     min={0}
-                    onChange={(event) => {
-                        const value =
-                            Number.parseInt(event.target.value, 10) || 0;
-                        setProps({
-                            roundSizePixel: value,
-                            roundSizePercentage: 0,
-                        });
-                    }}
+                    onChange={handleRoundPixelChange}
                 />
                 <div className="input-group-text">px</div>
             </div>

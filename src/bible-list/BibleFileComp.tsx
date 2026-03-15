@@ -105,6 +105,9 @@ function genContextMenu(
 function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
     const isOnScreen = useIsOnScreen(bible.items);
+    const handleToggleOpened = useCallback(() => {
+        bible.setIsOpened(!bible.isOpened);
+    }, [bible]);
     return (
         <div className="w-100 accordion accordion-flush py-1 ms-2">
             <div
@@ -112,9 +115,7 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
                     'accordion-header d-flex app-caught-hover-pointer' +
                     ` ${isOnScreen ? 'app-on-screen' : ''}`
                 }
-                onClick={() => {
-                    bible.setIsOpened(!bible.isOpened);
-                }}
+                onClick={handleToggleOpened}
             >
                 <div className="flex-fill">
                     <i

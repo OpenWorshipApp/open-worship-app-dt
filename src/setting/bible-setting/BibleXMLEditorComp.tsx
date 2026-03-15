@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type MouseEvent } from 'react';
 import type { SchemaNode } from 'json-schema-library';
 import { Uri } from 'monaco-editor';
 
@@ -69,23 +69,24 @@ function RenderSaveButton({
             setCanSave1 = () => {};
         };
     }, []);
+    const handleSaving = useCallback(() => {
+        const { canSave, newJsonData } = validateCanSave(
+            jsonDataSchema,
+            editorStore.systemContent,
+            editorStore.editorInstance.getValue(),
+        );
+        if (canSave) {
+            save(newJsonData);
+            setCanSave(false);
+        }
+    }, [jsonDataSchema, editorStore, save]);
     return (
         <button
             className={
                 'btn btn-sm m-1 ' + (canSave ? 'btn-primary' : 'btn-secondary')
             }
             disabled={!canSave}
-            onClick={() => {
-                const { canSave, newJsonData } = validateCanSave(
-                    jsonDataSchema,
-                    editorStore.systemContent,
-                    editorStore.editorInstance.getValue(),
-                );
-                if (canSave) {
-                    save(newJsonData);
-                    setCanSave(false);
-                }
-            }}
+            onClick={handleSaving}
         >
             {tran('Save')}
         </button>
@@ -136,6 +137,9 @@ export default function BibleXMLEditorComp({
     useAppEffect(() => {
         applyJsonData(jsonData);
     }, [jsonData]);
+    const handleToggleFullView = useCallback(() => {
+        setIsFullView(!isFullView);
+    }, [isFullView, setIsFullView]);
     if (jsonData === null) {
         return null;
     }
@@ -161,9 +165,7 @@ export default function BibleXMLEditorComp({
                 <div className="flex-grow-1">
                     <button
                         className="btn btn-sm btn-secondary m-1"
-                        onClick={() => {
-                            setIsFullView(!isFullView);
-                        }}
+                        onClick={handleToggleFullView}
                     >
                         {isFullView ? 'Exit Full View' : 'Full View'}
                     </button>
@@ -217,10 +219,7 @@ function BibleBooksMapXMLInputComp({
         language: 'plaintext',
     });
     const handleMarkupStringParsing = useCallback(
-        (
-            markupString: string,
-            lang: LanguageDataType | null,
-        ) => {
+        (markupString: string, lang: LanguageDataType | null) => {
             markupString = markupString.replaceAll('</', '@newline</');
             const domParser = new DOMParser();
             const doc = domParser.parseFromString(markupString, 'text/html');
@@ -239,6 +238,28 @@ function BibleBooksMapXMLInputComp({
         [onChange, editorStore, locale],
     );
     const langCode = getLangCode(locale) ?? 'en';
+    const handleResetting = useCallback(
+        (event: MouseEvent) => {
+            event.stopPropagation();
+            editorStore.replaceValue(
+                Object.values(getModelKeyBookMap()).join('\n'),
+            );
+        },
+        [editorStore],
+    );
+    const handleParseMarkup = useCallback(
+        async (event: MouseEvent) => {
+            event.stopPropagation();
+            const value = editorStore.editorInstance.getValue();
+            const isHTML = value.includes('<');
+            if (!isHTML) {
+                return;
+            }
+            const lang = await getLangDataAsync(locale);
+            handleMarkupStringParsing(value, lang);
+        },
+        [editorStore, locale, handleMarkupStringParsing],
+    );
     return (
         <div className="w-100 h-100">
             <h3 className="p-2">Define books map</h3>
@@ -252,12 +273,7 @@ function BibleBooksMapXMLInputComp({
             <div className="w-100 p-1">
                 <button
                     className="btn btn-sm btn-warning ms-2"
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        editorStore.replaceValue(
-                            Object.values(getModelKeyBookMap()).join('\n'),
-                        );
-                    }}
+                    onClick={handleResetting}
                 >
                     {tran('Reset')}
                 </button>
@@ -286,16 +302,7 @@ function BibleBooksMapXMLInputComp({
                 </a>
                 <button
                     className="btn btn-sm btn-secondary ms-2"
-                    onClick={async (event) => {
-                        event.stopPropagation();
-                        const value = editorStore.editorInstance.getValue();
-                        const isHTML = value.includes('<');
-                        if (!isHTML) {
-                            return;
-                        }
-                        const lang = await getLangDataAsync(locale);
-                        handleMarkupStringParsing(value, lang);
-                    }}
+                    onClick={handleParseMarkup}
                 >
                     {tran('Parse Markup String (HTML|XML)')}
                 </button>

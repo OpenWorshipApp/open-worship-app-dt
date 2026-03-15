@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import type ScreenEffectManager from './managers/ScreenEffectManager';
@@ -38,14 +40,18 @@ export default function RenderTransitionEffectComp({
 }>) {
     useScreenEffectEvents(['update'], screenEffectManager);
     const selected = transitionEffect[screenEffectManager.effectType];
+    const handleOpenContextMenu = useCallback(
+        (event: any) => {
+            openContextMenu(event, screenEffectManager);
+        },
+        [screenEffectManager],
+    );
     return (
         <button
             className="btn btn-outline-secondary"
             type="button"
             title={domTitle}
-            onClick={(event) => {
-                openContextMenu(event, screenEffectManager);
-            }}
+            onClick={handleOpenContextMenu}
         >
             {title}
             <i className={`${selected[0]} ps-1`} />

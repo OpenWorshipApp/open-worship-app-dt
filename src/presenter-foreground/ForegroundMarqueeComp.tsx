@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { ChangeEvent, useCallback } from 'react';
 
 import { DEFAULT_LOCALE, tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
@@ -73,6 +73,28 @@ export default function ForegroundMarqueeComp() {
             isMini={isMini}
         />
     );
+    const handleDateSetting = useCallback(() => {
+        const date = new Date();
+        const formattedDate = date.toLocaleString(DEFAULT_LOCALE, {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+        setText(formattedDate);
+    }, [setText]);
+    const handleTextChange = useCallback(
+        (event: ChangeEvent<HTMLTextAreaElement>) => {
+            setText(event.target.value);
+        },
+        [setText],
+    );
+    const handleMarqueeDragStart = useCallback(() => {
+        dragStore.onDropped = handleByDropped;
+    }, [handleByDropped]);
+    const handleMarqueeDragEnd = useCallback(() => {
+        dragStore.onDropped = null;
+    }, []);
     return (
         <ForegroundLayoutComp
             target="marquee"
@@ -82,20 +104,7 @@ export default function ForegroundMarqueeComp() {
             <div>
                 <button
                     className="btn btn-sm btn-info"
-                    onClick={() => {
-                        // Sunday September 24, 2023
-                        const date = new Date();
-                        const formattedDate = date.toLocaleString(
-                            DEFAULT_LOCALE,
-                            {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                            },
-                        );
-                        setText(formattedDate);
-                    }}
+                    onClick={handleDateSetting}
                 >
                     Date
                 </button>
@@ -107,9 +116,7 @@ export default function ForegroundMarqueeComp() {
                     cols={30}
                     rows={20}
                     value={text}
-                    onChange={(event) => {
-                        setText(event.target.value);
-                    }}
+                    onChange={handleTextChange}
                     placeholder="Leave a marquee text here"
                 />
                 <label htmlFor="marquee-textarea">Marquee</label>
@@ -118,12 +125,8 @@ export default function ForegroundMarqueeComp() {
                     onClick={handleShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
-                    onDragStart={() => {
-                        dragStore.onDropped = handleByDropped;
-                    }}
-                    onDragEnd={() => {
-                        dragStore.onDropped = null;
-                    }}
+                    onDragStart={handleMarqueeDragStart}
+                    onDragEnd={handleMarqueeDragEnd}
                 >
                     {tran('Show Marquee')}
                 </button>

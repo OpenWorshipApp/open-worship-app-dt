@@ -1,4 +1,5 @@
 import type { DragEvent } from 'react';
+import { useCallback } from 'react';
 
 import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import AppDocumentItemsComp from './AppDocumentItemsComp';
@@ -43,6 +44,56 @@ export default function VaryAppDocumentItemsPreviewerComp() {
         useAppDocumentItemThumbnailSizeScale();
     const isDisplayingEditingMenu =
         appProvider.isPagePresenter && varyAppDocument.isEditable;
+    const handleContainerBlur = useCallback(
+        (event: any) => {
+            onSlideItemsKeyboardEvent(event);
+        },
+        [onSlideItemsKeyboardEvent],
+    );
+    const handleContainerKeyDown = useCallback(
+        (event: any) => {
+            if (document.activeElement !== event.currentTarget) {
+                return;
+            }
+            onSlideItemsKeyboardEvent(event);
+        },
+        [onSlideItemsKeyboardEvent],
+    );
+    const handleContainerWheel = useCallback(
+        (event: any) => {
+            handleCtrlWheel({
+                event,
+                value: thumbSizeScale,
+                setValue: setThumbnailSizeScale,
+                defaultSize: defaultRangeSize,
+            });
+        },
+        [thumbSizeScale, setThumbnailSizeScale],
+    );
+    const handleContextMenu = useCallback(
+        (event: any) => {
+            varyAppDocument.showContextMenu(event);
+        },
+        [varyAppDocument],
+    );
+    const handleDragOver = useCallback((event: any) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '0.5');
+    }, []);
+    const handleDragLeave = useCallback((event: any) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
+    const handleContainerDrop = useCallback(
+        (event: DragEvent) => {
+            event.preventDefault();
+            if (varyAppDocument instanceof AppDocument === false) {
+                return;
+            }
+            handleDataDropping(varyAppDocument, event);
+        },
+        [varyAppDocument],
+    );
     return (
         <div
             className={
@@ -50,43 +101,15 @@ export default function VaryAppDocumentItemsPreviewerComp() {
                 ' app-focusable w-100 h-100 pb-2'
             }
             tabIndex={0}
-            onBlur={(event) => {
-                onSlideItemsKeyboardEvent(event);
-            }}
-            onKeyDown={(event) => {
-                if (document.activeElement !== event.currentTarget) {
-                    return;
-                }
-                onSlideItemsKeyboardEvent(event);
-            }}
+            onBlur={handleContainerBlur}
+            onKeyDown={handleContainerKeyDown}
             // keep vertical to avoid conflict with item resizing effect scroll bar
             style={{ overflowX: 'hidden', overflowY: 'scroll' }}
-            onWheel={(event) => {
-                handleCtrlWheel({
-                    event,
-                    value: thumbSizeScale,
-                    setValue: setThumbnailSizeScale,
-                    defaultSize: defaultRangeSize,
-                });
-            }}
-            onContextMenu={(event) => {
-                varyAppDocument.showContextMenu(event);
-            }}
-            onDragOver={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '0.5');
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '1');
-            }}
-            onDrop={(event) => {
-                event.preventDefault();
-                if (varyAppDocument instanceof AppDocument === false) {
-                    return;
-                }
-                handleDataDropping(varyAppDocument, event);
-            }}
+            onWheel={handleContainerWheel}
+            onContextMenu={handleContextMenu}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleContainerDrop}
         >
             <div
                 style={{

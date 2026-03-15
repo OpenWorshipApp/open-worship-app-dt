@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { ChangeEvent, type CSSProperties } from 'react';
 import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -89,6 +89,25 @@ function CountDownOnDatetimeComp({
         },
         [handleDateTimeShowing],
     );
+    const handleDateChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setDate(event.target.value);
+        },
+        [setDate],
+    );
+    const handleTimeChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setTime(event.target.value);
+        },
+        [setTime],
+    );
+    const handleDragStart = useCallback(() => {
+        dragStore.onDropped = handleByDropped.bind(
+            null,
+            getTargetDateTime(),
+            genStyle(),
+        );
+    }, [getTargetDateTime, genStyle]);
     return (
         <div className="d-flex">
             <div>
@@ -105,9 +124,7 @@ function CountDownOnDatetimeComp({
                     type="date"
                     className="form-control"
                     value={date}
-                    onChange={(event) => {
-                        setDate(event.target.value);
-                    }}
+                    onChange={handleDateChange}
                     min={todayString()}
                 />
             </div>
@@ -116,9 +133,7 @@ function CountDownOnDatetimeComp({
                     type="time"
                     className="form-control"
                     value={time}
-                    onChange={(event) => {
-                        setTime(event.target.value);
-                    }}
+                    onChange={handleTimeChange}
                     min={nowString()}
                 />
             </div>
@@ -128,13 +143,7 @@ function CountDownOnDatetimeComp({
                     onClick={handleDateTimeShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
-                    onDragStart={() => {
-                        dragStore.onDropped = handleByDropped.bind(
-                            null,
-                            getTargetDateTime(),
-                            genStyle(),
-                        );
-                    }}
+                    onDragStart={handleDragStart}
                 >
                     {tran('Start Countdown to DateTime')}
                 </button>
@@ -185,6 +194,25 @@ function CountDownInSetComp({
         },
         [handleShowing],
     );
+    const handleHoursChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setHours(event.target.value);
+        },
+        [setHours],
+    );
+    const handleMinutesChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setMinutes(event.target.value);
+        },
+        [setMinutes],
+    );
+    const handleInSetDragStart = useCallback(() => {
+        dragStore.onDropped = handleByDropped.bind(
+            null,
+            getTargetDateTime(),
+            genStyle(),
+        );
+    }, [getTargetDateTime, genStyle]);
     return (
         <div className="d-flex">
             <div
@@ -197,9 +225,7 @@ function CountDownInSetComp({
                     className="form-control form-control-sm"
                     type="number"
                     value={hours}
-                    onChange={(event) => {
-                        setHours(event.target.value);
-                    }}
+                    onChange={handleHoursChange}
                     min="0"
                 />
             </div>
@@ -213,9 +239,7 @@ function CountDownInSetComp({
                     className="form-control form-control-sm"
                     type="number"
                     value={minutes}
-                    onChange={(event) => {
-                        setMinutes(event.target.value);
-                    }}
+                    onChange={handleMinutesChange}
                     min="0"
                     max="59"
                 />
@@ -226,13 +250,7 @@ function CountDownInSetComp({
                     onClick={handleShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
-                    onDragStart={() => {
-                        dragStore.onDropped = handleByDropped.bind(
-                            null,
-                            getTargetDateTime(),
-                            genStyle(),
-                        );
-                    }}
+                    onDragStart={handleInSetDragStart}
                 >
                     {tran('Start Countdown')}
                 </button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -18,13 +18,14 @@ export default function SettingApplyComp() {
             applyStore.pendingApply = () => {};
         };
     }, []);
+    const handleApply = useCallback(() => {
+        forceReloadAppWindows();
+    }, []);
     return (
         <button
             className={`btn btn-sm btn-outline-${isApplied ? 'success' : 'warning'} mx-2`}
             title={tran('Will reload the app to apply settings')}
-            onClick={() => {
-                forceReloadAppWindows();
-            }}
+            onClick={handleApply}
         >
             {tran('Apply Settings') + ' '}
             <i className={`bi bi-${isApplied ? 'check' : 'asterisk'}`} />

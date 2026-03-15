@@ -1,3 +1,5 @@
+import { useCallback, type DragEvent, type MouseEvent } from 'react';
+
 import { copyToClipboard } from '../../server/appHelpers';
 import type { AppColorType } from './colorHelpers';
 import { serializeForDragging } from './colorHelpers';
@@ -37,16 +39,30 @@ export default function RenderColor({
     isSelected?: boolean;
     onClick?: (event: MouseEvent, color: AppColorType) => void;
 }>) {
+    const handleDragStart = useCallback(
+        (event: DragEvent) => {
+            serializeForDragging(event, color);
+        },
+        [color],
+    );
+    const handleContextMenu = useCallback(
+        (event: MouseEvent) => {
+            showContextMenu(event, color);
+        },
+        [color],
+    );
+    const handleClick = useCallback(
+        (event: MouseEvent) => {
+            onClick?.(event as any, color);
+        },
+        [onClick, color],
+    );
     const element = (
         <div
             title={name}
             draggable
-            onDragStart={(event) => {
-                serializeForDragging(event, color);
-            }}
-            onContextMenu={(event) => {
-                showContextMenu(event, color);
-            }}
+            onDragStart={handleDragStart}
+            onContextMenu={handleContextMenu}
             className={
                 'm-1 color-item app-caught-hover-pointer' +
                 (isSelected ? ' app-border-white-round' : '')
@@ -56,9 +72,7 @@ export default function RenderColor({
                 height: '15px',
                 backgroundColor: color,
             }}
-            onClick={(event) => {
-                onClick?.(event as any, color);
-            }}
+            onClick={handleClick}
         />
     );
     if (isSelected) {

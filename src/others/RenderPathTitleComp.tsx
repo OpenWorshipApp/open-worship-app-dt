@@ -1,3 +1,5 @@
+import { useCallback, type MouseEvent } from 'react';
+
 import type DirSource from '../helper/DirSource';
 import { PathPreviewerComp } from './PathPreviewerComp';
 
@@ -6,32 +8,36 @@ export default function RenderPathTitleComp({
     addItems,
 }: Readonly<{
     dirSource: DirSource;
-    addItems?: (event: any) => void;
+    addItems?: (event: MouseEvent) => void;
 }>) {
+    const handleReload = useCallback(
+        (event: MouseEvent) => {
+            event.stopPropagation();
+            dirSource.fireReloadEvent();
+        },
+        [dirSource],
+    );
+    const handleAddItems = useCallback(
+        (event: MouseEvent) => {
+            event.stopPropagation();
+            addItems?.(event);
+        },
+        [addItems],
+    );
     if (!dirSource.dirPath) {
         return null;
     }
     return (
         <>
             <PathPreviewerComp dirPath={dirSource.dirPath} />
-            <div
-                className="ps-2"
-                title="Reload"
-                onClick={(event) => {
-                    event.stopPropagation();
-                    dirSource.fireReloadEvent();
-                }}
-            >
+            <div className="ps-2" title="Reload" onClick={handleReload}>
                 <i className="bi bi-arrow-clockwise" />
             </div>
             {addItems === undefined ? null : (
                 <div
                     className="app-add-items-button px-1"
                     title="Add items"
-                    onClick={(event) => {
-                        event.stopPropagation();
-                        addItems(event);
-                    }}
+                    onClick={handleAddItems}
                 >
                     <i className="bi bi-plus-lg" />
                 </div>

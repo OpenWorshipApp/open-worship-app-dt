@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react';
-import { useState } from 'react';
+import type { ChangeEvent, CSSProperties, FocusEvent } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useAppEffect } from '../../../helper/debuggerHelpers';
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
@@ -11,15 +11,11 @@ function calcAlignmentStyle(props: CanvasItemTextPropsType) {
         height = props.height / 2 - props.fontSize;
     }
     const style: CSSProperties = {
-        ...{
-            textAlign: props.textHorizontalAlignment,
-        },
-        ...{
-            padding: height + 'px 0',
-            overflow: 'hidden',
-        },
+        textAlign: props.textHorizontalAlignment,
+        padding: height + 'px 0',
+        overflow: 'hidden',
     };
-    return style as CSSProperties;
+    return style;
 }
 
 export default function BoxEditorTextAreaComp({
@@ -33,6 +29,21 @@ export default function BoxEditorTextAreaComp({
     useAppEffect(() => {
         setLocalText(props.text);
     }, [props.text]);
+    const handleTextAreaFocus = useCallback(
+        (event: FocusEvent<HTMLTextAreaElement>) => {
+            const target = event.target as HTMLTextAreaElement;
+            target.selectionStart = target.selectionEnd = target.value.length;
+        },
+        [],
+    );
+    const handleTextChange = useCallback(
+        (event: ChangeEvent<HTMLTextAreaElement>) => {
+            const newText = event.target.value;
+            setLocalText(newText);
+            setText(newText);
+        },
+        [setText],
+    );
     const style = CanvasItemText.genStyle(props);
     return (
         <textarea
@@ -45,16 +56,8 @@ export default function BoxEditorTextAreaComp({
             }}
             value={localText}
             autoFocus
-            onFocus={(event) => {
-                const target = event.target as HTMLTextAreaElement;
-                target.selectionStart = target.selectionEnd =
-                    target.value.length;
-            }}
-            onChange={(event) => {
-                const newText = event.target.value;
-                setLocalText(newText);
-                setText(newText);
-            }}
+            onFocus={handleTextAreaFocus}
+            onChange={handleTextChange}
         />
     );
 }

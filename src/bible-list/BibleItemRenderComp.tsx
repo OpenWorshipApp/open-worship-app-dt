@@ -1,4 +1,4 @@
-import { useCallback, type MouseEvent } from 'react';
+import { useCallback, type MouseEvent, type DragEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import Bible from './Bible';
@@ -7,7 +7,7 @@ import ItemReadErrorComp from '../others/ItemReadErrorComp';
 import { useFileSourceRefreshEvents } from '../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
-    handleDragStart,
+    handleDragStart as handleDragStartHelper,
     handleAttachBackgroundDrop,
     extractDropData,
 } from '../helper/dragHelpers';
@@ -161,6 +161,27 @@ export default function BibleItemRenderComp({
         [bibleItem, filePath],
     );
 
+    const handleDragStartEvent = useCallback(
+        (event: DragEvent<HTMLLIElement>) => {
+            handleDragStartHelper(event, bibleItem);
+        },
+        [bibleItem],
+    );
+    const handleDragOver = useCallback((event: DragEvent<HTMLLIElement>) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '0.5');
+    }, []);
+    const handleDragLeave = useCallback((event: DragEvent<HTMLLIElement>) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
+    const handleDoubleClick = useCallback(
+        (event: MouseEvent<HTMLLIElement>) => {
+            handleOpening(event, viewController, bibleItem);
+        },
+        [viewController, bibleItem],
+    );
+
     if (bibleItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
     }
@@ -176,21 +197,11 @@ export default function BibleItemRenderComp({
             data-bible-item-id={`${fileSource.name}-${bibleItem.id}`}
             data-index={index + 1}
             draggable
-            onDragStart={(event) => {
-                handleDragStart(event, bibleItem);
-            }}
-            onDragOver={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '0.5');
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                changeDragEventStyle(event, 'opacity', '1');
-            }}
+            onDragStart={handleDragStartEvent}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
             onDrop={handleDataDropping}
-            onDoubleClick={(event) => {
-                handleOpening(event, viewController, bibleItem);
-            }}
+            onDoubleClick={handleDoubleClick}
             onContextMenu={handleContextMenuOpening}
         >
             <div className={`d-flex ps-1 ${isOnScreen ? 'app-on-screen' : ''}`}>

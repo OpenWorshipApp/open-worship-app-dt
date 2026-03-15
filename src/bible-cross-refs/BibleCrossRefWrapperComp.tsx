@@ -34,6 +34,9 @@ export default function BibleCrossRefWrapperComp({
         },
         [isShowing, onRefresh],
     );
+    const handleToggleShowing = useCallback(() => {
+        setIsShowing(!isShowing);
+    }, [isShowing, setIsShowing]);
     return (
         <div
             className="card w-100 my-1"
@@ -47,9 +50,7 @@ export default function BibleCrossRefWrapperComp({
                 style={{
                     height: '2rem',
                 }}
-                onClick={() => {
-                    setIsShowing(!isShowing);
-                }}
+                onClick={handleToggleShowing}
                 onContextMenu={handleContextMenuOpening}
             >
                 <i

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type WheelEvent } from 'react';
 
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import BibleViewSettingComp, { defaultRangeSize } from './BibleViewSettingComp';
@@ -55,13 +55,21 @@ export default function BiblePreviewerRenderComp() {
                     await document.exitFullscreen();
                 }
             } catch (error) {
-                showSimpleToast(
-                    'Toggle full screen failed',
-                    `Error: ${error}`,
-                );
+                showSimpleToast('Toggle full screen failed', `Error: ${error}`);
             }
         },
         [],
+    );
+    const handleWheel = useCallback(
+        (event: WheelEvent) => {
+            handleCtrlWheel({
+                event,
+                value: fontSize,
+                setValue: setFontSize,
+                defaultSize: defaultRangeSize,
+            });
+        },
+        [fontSize, setFontSize],
     );
     return (
         <div
@@ -69,14 +77,7 @@ export default function BiblePreviewerRenderComp() {
                 'card w-100 h-100 app-zero-border-radius' +
                 ` ${isFulledScreen ? 'app-popup-full' : ''}`
             }
-            onWheel={(event) => {
-                handleCtrlWheel({
-                    event,
-                    value: fontSize,
-                    setValue: setFontSize,
-                    defaultSize: defaultRangeSize,
-                });
-            }}
+            onWheel={handleWheel}
         >
             <div className={'card-body d-flex app-overflow-hidden w-100 h-100'}>
                 <BibleViewFontSizeContext value={fontSize}>

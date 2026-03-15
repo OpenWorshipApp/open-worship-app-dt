@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import { useAppEffect, useAppStateAsync } from '../../helper/debuggerHelpers';
 import {
@@ -47,6 +47,12 @@ function RenderBookOptionsComp({
         }
         setSelectedBookKey(book.bookKey);
     }, [selectedBookKey, booksAvailable]);
+    const handleBookChange = useCallback(
+        (e: ChangeEvent<HTMLSelectElement>) => {
+            setSelectedBookKey(e.target.value);
+        },
+        [setSelectedBookKey],
+    );
     if (booksAvailable === undefined) {
         return <LoadingComp />;
     }
@@ -60,9 +66,7 @@ function RenderBookOptionsComp({
                     className="form-select"
                     value={selectedBookKey}
                     data-bible-key-ff={bibleKey}
-                    onChange={(e) => {
-                        setSelectedBookKey(e.target.value);
-                    }}
+                    onChange={handleBookChange}
                 >
                     {booksAvailable.map(({ bookKey, book, isAvailable }) => {
                         return (
@@ -95,6 +99,12 @@ function RenderChapterOptionsComp({
     setSelectedChapter: (chapter: number) => void;
 }>) {
     const chapterList = useChapterMatch(bibleKey, selectedBookKey, null);
+    const handleChapterChange = useCallback(
+        (e: ChangeEvent<HTMLSelectElement>) => {
+            setSelectedChapter(Number(e.target.value));
+        },
+        [setSelectedChapter],
+    );
     if (chapterList === null) {
         return <div>Unable to load chapter list.</div>;
     }
@@ -105,9 +115,7 @@ function RenderChapterOptionsComp({
                     className="form-select"
                     value={selectedChapter}
                     data-bible-key-ff={bibleKey}
-                    onChange={(e) => {
-                        setSelectedChapter(Number(e.target.value));
-                    }}
+                    onChange={handleChapterChange}
                 >
                     {chapterList.map(({ chapter, chapterLocaleString }) => {
                         return (

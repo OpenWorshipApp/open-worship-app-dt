@@ -1,7 +1,7 @@
 import './editingHelpers.scss';
 
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -70,6 +70,22 @@ function MenuIsModifying({
     caDiscard: boolean;
     canSave: boolean;
 }>) {
+    const handleDiscard = useCallback(async () => {
+        const isOk = await showAppConfirm(
+            tran('Discard changed'),
+            tran('Are you sure to discard all histories?'),
+            {
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (!isOk) {
+            return;
+        }
+        editableDocument.historyDiscard();
+    }, [editableDocument]);
+    const handleSave = useCallback(() => {
+        editableDocument.save();
+    }, [editableDocument]);
     return (
         <>
             <button
@@ -78,19 +94,7 @@ function MenuIsModifying({
                 disabled={!caDiscard}
                 title={tran('Discard changed')}
                 style={genDisabledStyle(!caDiscard)}
-                onClick={async () => {
-                    const isOk = await showAppConfirm(
-                        tran('Discard changed'),
-                        tran('Are you sure to discard all histories?'),
-                        {
-                            confirmButtonLabel: 'Yes',
-                        },
-                    );
-                    if (!isOk) {
-                        return;
-                    }
-                    editableDocument.historyDiscard();
-                }}
+                onClick={handleDiscard}
             >
                 <i className="bi bi-x-octagon" />
             </button>
@@ -100,9 +104,7 @@ function MenuIsModifying({
                 disabled={!canSave}
                 title={tran('Save') + ` [${toShortcutKey(savingEventMapper)}]`}
                 style={genDisabledStyle(!canSave)}
-                onClick={() => {
-                    editableDocument.save();
-                }}
+                onClick={handleSave}
             >
                 <i className="bi bi-floppy" />
             </button>
@@ -121,6 +123,12 @@ export function FileEditingMenuComp({
         editableDocument.filePath,
     );
     const isShowingTools = canUndo || canRedo || canSave;
+    const handleUndo = useCallback(() => {
+        editableDocument.historyUndo();
+    }, [editableDocument]);
+    const handleRedo = useCallback(() => {
+        editableDocument.historyRedo();
+    }, [editableDocument]);
     if (!(isShowingTools || extraChildren)) {
         return null;
     }
@@ -132,9 +140,7 @@ export function FileEditingMenuComp({
                 title="Undo"
                 disabled={!canUndo}
                 style={genDisabledStyle(!canUndo)}
-                onClick={() => {
-                    editableDocument.historyUndo();
-                }}
+                onClick={handleUndo}
             >
                 <i className="bi bi-arrow-90deg-left" />
             </button>
@@ -144,9 +150,7 @@ export function FileEditingMenuComp({
                 title="Redo"
                 disabled={!canRedo}
                 style={genDisabledStyle(!canRedo)}
-                onClick={() => {
-                    editableDocument.historyRedo();
-                }}
+                onClick={handleRedo}
             >
                 <i className="bi bi-arrow-90deg-right" />
             </button>

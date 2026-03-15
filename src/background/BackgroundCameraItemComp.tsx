@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import type { CameraInfoType } from '../helper/cameraHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
@@ -33,6 +35,37 @@ export default function BackgroundCameraItemComp({
         cameraInfo.deviceId,
         DragTypeEnum.BACKGROUND_CAMERA,
     );
+    const handleCameraDragStart = useCallback(
+        (event: any) => {
+            handleDragStart(event, {
+                dragSerialize: () => {
+                    return cameraDragSerialize(cameraInfo);
+                },
+            });
+        },
+        [cameraInfo],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            showAppContextMenu(event as any, [
+                ...genShowOnScreensContextMenu((event) => {
+                    handleSelecting(event, true);
+                }),
+            ]);
+        },
+        [handleSelecting],
+    );
+    const handleClicking = useCallback(
+        (event: any) => {
+            ScreenBackgroundManager.handleBackgroundSelecting(
+                event,
+                'camera',
+                { src: cameraInfo.deviceId },
+                false,
+            );
+        },
+        [cameraInfo],
+    );
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}
@@ -43,28 +76,9 @@ export default function BackgroundCameraItemComp({
                 margin: '2px',
             }}
             draggable
-            onDragStart={(event) => {
-                handleDragStart(event, {
-                    dragSerialize: () => {
-                        return cameraDragSerialize(cameraInfo);
-                    },
-                });
-            }}
-            onContextMenu={(event) => {
-                showAppContextMenu(event as any, [
-                    ...genShowOnScreensContextMenu((event) => {
-                        handleSelecting(event, true);
-                    }),
-                ]);
-            }}
-            onClick={(event) => {
-                ScreenBackgroundManager.handleBackgroundSelecting(
-                    event,
-                    'camera',
-                    { src: cameraInfo.deviceId },
-                    false,
-                );
-            }}
+            onDragStart={handleCameraDragStart}
+            onContextMenu={handleContextMenuOpening}
+            onClick={handleClicking}
         >
             <div
                 className="card-header w-100 app-ellipsis p-0 px-1"

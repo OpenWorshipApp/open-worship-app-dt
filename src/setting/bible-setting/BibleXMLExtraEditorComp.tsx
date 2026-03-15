@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import LoadingComp from '../../others/LoadingComp';
 import {
@@ -59,6 +59,20 @@ export default function BibleXMLExtraEditorComp({
             customVersesMap: xmlBibleData.customVersesMap,
         };
     }, [xmlBibleData]);
+    const handleStore = useCallback(() => {}, []);
+    const handleSave = useCallback(
+        (newJsonData: DataType) => {
+            if (newJsonData.bibleKey !== bibleKey) {
+                showSimpleToast(
+                    'Saving Bible Data',
+                    `Invalid Bible Key ${newJsonData.bibleKey}`,
+                );
+                return;
+            }
+            handleSaving(bibleKey, newJsonData);
+        },
+        [bibleKey],
+    );
     if (xmlBibleData === undefined) {
         return <LoadingComp />;
     }
@@ -69,18 +83,9 @@ export default function BibleXMLExtraEditorComp({
         <BibleXMLEditorComp
             id={bibleKey}
             jsonData={jsonData}
-            onStore={() => {}}
+            onStore={handleStore}
             jsonDataSchema={extraEditorSchemaHandler}
-            save={(newJsonData: DataType) => {
-                if (newJsonData.bibleKey !== bibleKey) {
-                    showSimpleToast(
-                        'Saving Bible Data',
-                        `Invalid Bible Key ${newJsonData.bibleKey}`,
-                    );
-                    return;
-                }
-                handleSaving(bibleKey, newJsonData);
-            }}
+            save={handleSave}
             editorUri={bibleExtraUri}
         />
     );

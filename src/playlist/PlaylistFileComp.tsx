@@ -93,6 +93,9 @@ function PlaylistPreview({
     const [items] = useAppStateAsync(() => {
         return playlist.getItems();
     }, [playlist]);
+    const handleToggleOpened = useCallback(() => {
+        setIsOpened(!isOpened);
+    }, [isOpened, setIsOpened]);
     if (items === undefined) {
         return <LoadingComp />;
     }
@@ -101,12 +104,7 @@ function PlaylistPreview({
     }
     return (
         <div className="card app-caught-hover-pointer mt-1 ps-2">
-            <div
-                className="card-header"
-                onClick={() => {
-                    setIsOpened(!isOpened);
-                }}
-            >
+            <div className="card-header" onClick={handleToggleOpened}>
                 <i
                     className={`bi ${
                         isOpened ? 'bi-chevron-down' : 'bi-chevron-right'

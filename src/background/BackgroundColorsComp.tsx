@@ -63,6 +63,14 @@ export default function BackgroundColorsComp() {
         undefined,
         initBackgroundSrcList,
     );
+    const handleBackgroundSelecting = useCallback(
+        (newColor: AppColorType, event: any) => {
+            ScreenBackgroundManager.handleBackgroundSelecting(event, 'color', {
+                src: newColor,
+            });
+        },
+        [],
+    );
     if (selectedBackgroundSrcList === null) {
         return null;
     }
@@ -77,13 +85,7 @@ export default function BackgroundColorsComp() {
                 <ColorPicker
                     color={null}
                     defaultColor={HEX_COLOR_BLACK}
-                    onColorChange={(newColor, event: any) => {
-                        ScreenBackgroundManager.handleBackgroundSelecting(
-                            event,
-                            'color',
-                            { src: newColor },
-                        );
-                    }}
+                    onColorChange={handleBackgroundSelecting}
                     isNoImmediate={true}
                 />
             ) : (

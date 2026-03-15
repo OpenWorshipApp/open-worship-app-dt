@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import type { BibleModelInfoEnum } from '../helper/bible-helpers/bibleModelHelpers';
 import {
@@ -32,10 +34,16 @@ function chooseModel(
 
 export default function BibleModelInfoSettingComp() {
     const model = getBibleModelInfoSetting();
-    const setModel1 = (newModel: BibleModelInfoEnum) => {
+    const setModel1 = useCallback((newModel: BibleModelInfoEnum) => {
         setBibleModelInfoSetting(newModel);
         appProvider.reload();
-    };
+    }, []);
+    const handleClick = useCallback(
+        (event: any) => {
+            chooseModel(event, model, setModel1);
+        },
+        [model, setModel1],
+    );
     return (
         <div className="d-flex mx-1" title={tran('Change Bible Model Info')}>
             <label htmlFor="change-bible-model-info" className="form-label">
@@ -44,9 +52,7 @@ export default function BibleModelInfoSettingComp() {
             <button
                 className="btn btn-sm p-1"
                 title={bibleModelInfoTitleMap[model]}
-                onClick={(event) => {
-                    chooseModel(event, model, setModel1);
-                }}
+                onClick={handleClick}
             >
                 {model}
             </button>

@@ -47,6 +47,9 @@ function RenderHeaderComp({
     dirSource: DirSource;
     setIsCreatingNew: (isCreating: boolean) => void;
 }>) {
+    const handleSetCreatingNew = useCallback(() => {
+        setIsCreatingNew(true);
+    }, []);
     return (
         <div
             className="card-header"
@@ -61,7 +64,7 @@ function RenderHeaderComp({
                 <div
                     className="float-end app-caught-hover-pointer"
                     title={tran('New File')}
-                    onClick={() => setIsCreatingNew(true)}
+                    onClick={handleSetCreatingNew}
                     style={{
                         color: 'var(--bs-info-text-emphasis)',
                         fontSize: '20px',
@@ -141,7 +144,7 @@ export default function FileListHandlerComp({
               };
     const handleItemAdding = useCallback(
         onItemsAdding === undefined
-            ? handleItemsAdding ?? (() => {})
+            ? (handleItemsAdding ?? (() => {}))
             : (event: any) => {
                   onItemsAdding(
                       genItemsAddingContextMenuItems(handleItemsAdding),

@@ -1,3 +1,5 @@
+import { useCallback, type MouseEvent } from 'react';
+
 import CanvasItem, {
     useCanvasItemContext,
     useCanvasItemPropsContext,
@@ -38,6 +40,16 @@ export default function BoxEditorControllingModeComp() {
     const canvasItem = useCanvasItemContext();
     const boxEditorController = useBoxEditorControllerContext();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
+    const handleClick = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+    }, []);
+    const handleDoubleClick = useCallback(
+        (event: MouseEvent) => {
+            event.stopPropagation();
+            handleCanvasItemEditing(canvasItem);
+        },
+        [handleCanvasItemEditing, canvasItem],
+    );
     const props = useCanvasItemPropsContext();
     return (
         <div
@@ -69,18 +81,13 @@ export default function BoxEditorControllingModeComp() {
             <div
                 className="app-box-editor controllable"
                 data-app-box-editor-id={canvasItem.id}
-                onClick={(event) => {
-                    event.stopPropagation();
-                }}
+                onClick={handleClick}
                 onContextMenu={canvasController.genHandleContextMenuOpening(
                     canvasItem,
                     handleCanvasItemEditing.bind(null, canvasItem),
                     true,
                 )}
-                onDoubleClick={(event) => {
-                    event.stopPropagation();
-                    handleCanvasItemEditing(canvasItem);
-                }}
+                onDoubleClick={handleDoubleClick}
                 style={{
                     border: '2px dashed green',
                     transform: 'translate(-50%, -50%)',

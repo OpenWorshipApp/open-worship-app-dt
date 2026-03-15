@@ -96,14 +96,18 @@ export default function ColorPicker({
         },
         [localColor],
     );
+    const handleOpen = useCallback(() => {
+        setIsOpened(true);
+    }, []);
+    const handleClose = useCallback(() => {
+        setIsOpened(false);
+    }, []);
     if (isCollapsable && !isOpened) {
         return (
             <div
                 className="app-flex-item color-picker app-caught-hover-pointer "
                 onContextMenu={handleContextMenuOpening}
-                onClick={() => {
-                    setIsOpened(true);
-                }}
+                onClick={handleOpen}
             >
                 <i className="bi bi-chevron-right" />
                 <div
@@ -126,9 +130,7 @@ export default function ColorPicker({
             {isCollapsable ? (
                 <i
                     className="app-caught-hover-pointer bi bi-chevron-down"
-                    onClick={() => {
-                        setIsOpened(false);
-                    }}
+                    onClick={handleClose}
                 />
             ) : null}
             <div className="p-1 app-overflow-hidden">

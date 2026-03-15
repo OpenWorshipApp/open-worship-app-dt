@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { useStateSettingBoolean } from '../helper/settingHelpers';
@@ -25,6 +26,9 @@ export default function ForegroundLayoutComp({
         `foreground-${target}-show-opened`,
         false,
     );
+    const handleToggleOpened = useCallback(() => {
+        setIsOpened(!isOpened);
+    }, [isOpened, setIsOpened]);
     return (
         <div className="card m-2">
             <div
@@ -33,9 +37,7 @@ export default function ForegroundLayoutComp({
             >
                 <div
                     className="d-flex app-ellipsis app-caught-hover-pointer flex-grow-1"
-                    onClick={() => {
-                        setIsOpened(!isOpened);
-                    }}
+                    onClick={handleToggleOpened}
                 >
                     <i
                         className={

@@ -1,5 +1,7 @@
 import './BibleSelectionComp.scss';
 
+import { useCallback, type MouseEvent, type CSSProperties } from 'react';
+
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import type { BibleMinimalInfoType } from '../helper/bible-helpers/bibleDownloadHelpers';
@@ -10,7 +12,6 @@ import { getLanguageTitle } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
-import type { CSSProperties } from 'react';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
 export async function genContextMenuBibleKeys(
@@ -135,13 +136,14 @@ export default function BibleSelectionComp({
     bibleKey: string;
     onBibleKeyChange: (oldBibleKey: string, newBibleKey: string) => void;
 }>) {
+    const handleClick = useCallback(
+        (event: MouseEvent<HTMLButtonElement>) => {
+            handleBibleSelectionMini(event, bibleKey, onBibleKeyChange);
+        },
+        [bibleKey, onBibleKeyChange],
+    );
     return (
-        <button
-            className="input-group-text"
-            onClick={(event) => {
-                handleBibleSelectionMini(event, bibleKey, onBibleKeyChange);
-            }}
-        >
+        <button className="input-group-text" onClick={handleClick}>
             <BibleKeyWithTileComp bibleKey={bibleKey} />
             <i className="bi bi-chevron-down" />
         </button>
@@ -166,6 +168,33 @@ export function BibleSelectionMiniComp({
     extraStyle?: CSSProperties;
 }>) {
     const isHandleClickEvent = onBibleKeyChange !== undefined;
+    const handleClickEvent = useCallback(
+        (event: MouseEvent) => {
+            if (onBibleKeyChange === undefined) {
+                return;
+            }
+            handleBibleSelectionMini(
+                event,
+                bibleKey,
+                onBibleKeyChange.bind(null, false),
+            );
+        },
+        [bibleKey, onBibleKeyChange],
+    );
+    const handleContextMenuEvent = useCallback(
+        (event: MouseEvent) => {
+            if (onBibleKeyChange === undefined) {
+                return;
+            }
+            handleBibleSelectionMini(
+                event,
+                bibleKey,
+                onBibleKeyChange.bind(null, true),
+                contextMenuTitle,
+            );
+        },
+        [bibleKey, onBibleKeyChange, contextMenuTitle],
+    );
     return (
         <span
             className={
@@ -177,28 +206,9 @@ export function BibleSelectionMiniComp({
                 paddingRight: isMinimal ? '2px' : '6px',
                 ...extraStyle,
             }}
-            onClick={
-                isHandleClickEvent
-                    ? (event) => {
-                          handleBibleSelectionMini(
-                              event,
-                              bibleKey,
-                              onBibleKeyChange.bind(null, false),
-                          );
-                      }
-                    : undefined
-            }
+            onClick={isHandleClickEvent ? handleClickEvent : undefined}
             onContextMenu={
-                isHandleClickEvent
-                    ? (event) => {
-                          handleBibleSelectionMini(
-                              event,
-                              bibleKey,
-                              onBibleKeyChange.bind(null, true),
-                              contextMenuTitle,
-                          );
-                      }
-                    : undefined
+                isHandleClickEvent ? handleContextMenuEvent : undefined
             }
         >
             <BibleKeyWithTileComp bibleKey={bibleKey} />

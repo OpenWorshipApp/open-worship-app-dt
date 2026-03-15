@@ -1,4 +1,4 @@
-import { useMemo, useRef, type DragEvent } from 'react';
+import { useCallback, useMemo, useRef, type DragEvent } from 'react';
 
 import { BoxEditorComp } from './box/BoxEditorComp';
 import { showCanvasContextMenu } from './canvasContextMenuHelpers';
@@ -55,7 +55,7 @@ async function handleDropping(
     }
 }
 
-async function handleContextMenuOpening(
+async function openCanvasContextMenu(
     canvasController: CanvasController,
     event: any,
     stopAllModes: () => void,
@@ -77,6 +77,53 @@ function BodyRendererComp({
     }, [parentWidth, canvas.width]);
     const canvasItems = useCanvasItemsContext();
     const { theme } = useThemeSource();
+    const handleDragLeave = useCallback((event: any) => {
+        event.preventDefault();
+        event.currentTarget.style.opacity = '1';
+    }, []);
+    const handleDrop = useCallback(
+        (event: DragEvent) => {
+            event.preventDefault();
+            handleDropping(canvasController, event);
+        },
+        [canvasController],
+    );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            event.preventDefault();
+            openCanvasContextMenu(canvasController, event, stopAllModes);
+        },
+        [canvasController, stopAllModes],
+    );
+    const handleMouseDown = useCallback((event: any) => {
+        event.stopPropagation();
+        (event.target as HTMLDivElement).dataset.mouseDown = JSON.stringify({
+            time: Date.now(),
+            x: event.clientX,
+            y: event.clientY,
+        });
+    }, []);
+    const handleMouseUp = useCallback(
+        (event: any) => {
+            if (event.target instanceof HTMLTextAreaElement) {
+                return;
+            }
+            const dataset = (event.target as HTMLDivElement).dataset;
+            if (dataset.mouseDown) {
+                const mouseDown = JSON.parse(dataset.mouseDown);
+                const timeDiff = Date.now() - mouseDown.time;
+                const distance = Math.sqrt(
+                    Math.pow(event.clientX - mouseDown.x, 2) +
+                        Math.pow(event.clientY - mouseDown.y, 2),
+                );
+                if (timeDiff < 500 && distance < 10) {
+                    stopAllModes();
+                }
+            }
+            dataset.mouseDown = '';
+        },
+        [stopAllModes],
+    );
     return (
         <div
             className="slide-canvas-editor shadow-blank-bg"
@@ -88,46 +135,11 @@ function BodyRendererComp({
                 transformOrigin: 'top left',
             }}
             onDragOver={dragOverHandling}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                event.currentTarget.style.opacity = '1';
-            }}
-            onDrop={(event) => {
-                event.preventDefault();
-                handleDropping(canvasController, event);
-            }}
-            onContextMenu={(event) => {
-                event.preventDefault();
-                handleContextMenuOpening(canvasController, event, stopAllModes);
-            }}
-            // export onclick by mouse down/up
-            onMouseDown={(event) => {
-                event.stopPropagation();
-                (event.target as HTMLDivElement).dataset.mouseDown =
-                    JSON.stringify({
-                        time: Date.now(),
-                        x: event.clientX,
-                        y: event.clientY,
-                    });
-            }}
-            onMouseUp={(event) => {
-                if (event.target instanceof HTMLTextAreaElement) {
-                    return;
-                }
-                const dataset = (event.target as HTMLDivElement).dataset;
-                if (dataset.mouseDown) {
-                    const mouseDown = JSON.parse(dataset.mouseDown);
-                    const timeDiff = Date.now() - mouseDown.time;
-                    const distance = Math.sqrt(
-                        Math.pow(event.clientX - mouseDown.x, 2) +
-                            Math.pow(event.clientY - mouseDown.y, 2),
-                    );
-                    if (timeDiff < 500 && distance < 10) {
-                        stopAllModes();
-                    }
-                }
-                dataset.mouseDown = '';
-            }}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onContextMenu={handleContextMenuOpening}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
         >
             {canvasItems.map((canvasItem) => {
                 return (

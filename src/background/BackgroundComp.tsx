@@ -70,6 +70,9 @@ function RenderAudiosTabComp({
             EventHandler.unregisterEventListener(registerEvent);
         };
     }, []);
+    const handleToggleActive = useCallback(() => {
+        setIsActive(!isActive);
+    }, [isActive, setIsActive]);
     return (
         <ul className={'nav nav-tabs flex-fill d-flex justify-content-end'}>
             <li className={'nav-item '}>
@@ -79,9 +82,7 @@ function RenderAudiosTabComp({
                         ` ${isActive ? 'active' : ''}` +
                         ` ${isPlaying ? ' app-on-screen' : ''}`
                     }
-                    onClick={() => {
-                        setIsActive(!isActive);
-                    }}
+                    onClick={handleToggleActive}
                 >
                     ♫{tran('Audios')}♫
                 </button>

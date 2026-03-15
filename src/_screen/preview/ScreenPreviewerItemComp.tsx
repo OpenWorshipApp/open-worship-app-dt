@@ -1,6 +1,6 @@
 import './CustomHTMLScreenPreviewer';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { dragStore, extractDropData } from '../../helper/dragHelpers';
 import { openContextMenu } from './screenPreviewerHelpers';
@@ -44,6 +44,43 @@ export default function ScreenPreviewerItemComp({
     const height = Math.round(
         width * (screenManagerDim.height / screenManagerDim.width),
     );
+    const handleContextMenuOpening = useCallback(
+        (event: any) => {
+            openContextMenu(event, screenManager);
+        },
+        [screenManager],
+    );
+    const handleDragOver = useCallback((event: any) => {
+        event.preventDefault();
+        event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
+    }, []);
+    const handleDragLeave = useCallback((event: any) => {
+        event.preventDefault();
+        event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+    }, []);
+    const handleDrop = useCallback(
+        (event: any) => {
+            event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+            const droppedData = extractDropData(event);
+            if (droppedData === null) {
+                dragStore.onDropped?.(event);
+                return;
+            }
+            screenManager.receiveScreenDropped(droppedData);
+        },
+        [screenManager],
+    );
+    const handleWheel = useCallback(
+        (event: any) => {
+            if (event.ctrlKey && screenManager.screenBibleManager.isShowing) {
+                event.stopPropagation();
+            }
+        },
+        [screenManager],
+    );
+    const handleScroll = useCallback((event: any) => {
+        event.currentTarget.scrollTop = 0;
+    }, []);
     return (
         <div
             key={screenManager.key}
@@ -57,34 +94,11 @@ export default function ScreenPreviewerItemComp({
                 display: 'inline-block',
                 verticalAlign: 'top',
             }}
-            onContextMenu={(event) => {
-                openContextMenu(event, screenManager);
-            }}
-            onDragOver={(event) => {
-                event.preventDefault();
-                event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
-            }}
-            onDragLeave={(event) => {
-                event.preventDefault();
-                event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
-            }}
-            onDrop={(event) => {
-                event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
-                const droppedData = extractDropData(event);
-                if (droppedData === null) {
-                    dragStore.onDropped?.(event);
-                    return;
-                }
-                screenManager.receiveScreenDropped(droppedData);
-            }}
-            onWheel={(event) => {
-                if (
-                    event.ctrlKey &&
-                    screenManager.screenBibleManager.isShowing
-                ) {
-                    event.stopPropagation();
-                }
-            }}
+            onContextMenu={handleContextMenuOpening}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onWheel={handleWheel}
         >
             <ScreenPreviewerHeaderComp />
             <div
@@ -92,11 +106,7 @@ export default function ScreenPreviewerItemComp({
                 style={{
                     height: `${height}px`,
                 }}
-                onScroll={(event) => {
-                    // When bible verse text scroll into view, element will be
-                    // scrolled to top. This is a workaround to prevent that.
-                    event.currentTarget.scrollTop = 0;
-                }}
+                onScroll={handleScroll}
             >
                 <mini-screen-previewer-custom-html
                     screenId={screenManager.screenId}

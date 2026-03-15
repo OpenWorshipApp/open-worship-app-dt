@@ -24,10 +24,7 @@ export default function RenderBibleLookupBodyComp() {
             if (editingResult === null) {
                 return;
             }
-            if (
-                bibleKey === null ||
-                editingResult.result.bookKey === null
-            ) {
+            if (bibleKey === null || editingResult.result.bookKey === null) {
                 return;
             }
             const book = await keyToBook(

@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import type { VAlignmentType, HAlignmentType } from '../canvasHelpers';
 
 type AlignmentDataType = {
@@ -19,13 +21,14 @@ function RendElementComp({
     onData: (data: { [key: string]: string }) => void;
 }>) {
     const isOld = data[dataKey] === value;
+    const handleClick = useCallback(() => {
+        onData({ [dataKey]: value });
+    }, [onData, dataKey, value]);
     return (
         <button
             className={`btn btn-sm btn-${isOld ? '' : 'outline-'}info`}
             disabled={isOld}
-            onClick={() => {
-                onData({ [dataKey]: value });
-            }}
+            onClick={handleClick}
         >
             <i className={'bi ' + iconClassname} />
         </button>

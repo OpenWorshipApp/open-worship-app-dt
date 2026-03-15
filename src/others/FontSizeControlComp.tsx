@@ -1,3 +1,5 @@
+import { ChangeEvent, useCallback } from 'react';
+
 export default function FontSizeControlComp({
     fontSize,
     setFontSize,
@@ -5,6 +7,12 @@ export default function FontSizeControlComp({
     fontSize: number;
     setFontSize: (fontSize: number) => void;
 }>) {
+    const handleFontSizeChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+            setFontSize(Number.parseInt(event.target.value));
+        },
+        [setFontSize],
+    );
     return (
         <div className="d-flex">
             <input
@@ -12,16 +20,12 @@ export default function FontSizeControlComp({
                 type="number"
                 style={{ maxWidth: '100px' }}
                 value={fontSize}
-                onChange={(event) => {
-                    setFontSize(Number.parseInt(event.target.value));
-                }}
+                onChange={handleFontSizeChange}
             />
             <select
                 className="form-select form-select-sm"
                 value={fontSize}
-                onChange={(event) => {
-                    setFontSize(Number.parseInt(event.target.value));
-                }}
+                onChange={handleFontSizeChange}
             >
                 <option>--</option>
                 {Array.from({ length: 20 }, (_, i) => (i + 1) * 15)

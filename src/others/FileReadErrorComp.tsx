@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
 
 export default function FileReadErrorComp({
@@ -7,6 +9,9 @@ export default function FileReadErrorComp({
     onContextMenu?: (event: any) => void;
     reload?: () => void;
 }>) {
+    const handleReload = useCallback(() => {
+        reload?.();
+    }, [reload]);
     return (
         <div
             className="card app-caught-hover-pointer"
@@ -25,9 +30,7 @@ export default function FileReadErrorComp({
                     <div>
                         <button
                             className="btn btn-sm btn-primary"
-                            onClick={() => {
-                                reload?.();
-                            }}
+                            onClick={handleReload}
                         >
                             {tran('Reload')}
                         </button>

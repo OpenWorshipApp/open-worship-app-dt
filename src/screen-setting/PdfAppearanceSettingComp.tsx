@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
@@ -9,7 +9,7 @@ import {
 
 export default function PdfAppearanceSettingComp() {
     const [isFullWidth, setIsFullWidth] = useState(checkIsPdfFullWidth());
-    const setIsFullWidth1 = (newIsFullWidth: boolean) => {
+    const setIsFullWidth1 = useCallback((newIsFullWidth: boolean) => {
         setIsPdfFullWidth(newIsFullWidth);
         for (const { screenVaryAppDocumentManager } of getAllScreenManagers()) {
             if (screenVaryAppDocumentManager.varyAppDocumentItemData === null) {
@@ -21,7 +21,13 @@ export default function PdfAppearanceSettingComp() {
             };
         }
         setIsFullWidth(newIsFullWidth);
-    };
+    }, []);
+    const handleSetNotFullWidth = useCallback(() => {
+        setIsFullWidth1(false);
+    }, [setIsFullWidth1]);
+    const handleSetFullWidth = useCallback(() => {
+        setIsFullWidth1(true);
+    }, [setIsFullWidth1]);
     return (
         <div className="d-flex">
             <small>{tran('On Screen Width:')}</small>
@@ -33,9 +39,7 @@ export default function PdfAppearanceSettingComp() {
                         name="setting-not-full-width"
                         id="setting-not-full-width"
                         checked={!isFullWidth}
-                        onChange={() => {
-                            setIsFullWidth1(false);
-                        }}
+                        onChange={handleSetNotFullWidth}
                     />
                     <label
                         className="btn btn-outline-info"
@@ -49,9 +53,7 @@ export default function PdfAppearanceSettingComp() {
                         name="setting-not-full-width"
                         id="setting-full-width"
                         checked={isFullWidth}
-                        onChange={() => {
-                            setIsFullWidth1(true);
-                        }}
+                        onChange={handleSetFullWidth}
                     />
                     <label
                         className="btn btn-outline-info"

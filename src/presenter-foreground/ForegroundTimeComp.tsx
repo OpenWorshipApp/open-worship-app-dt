@@ -1,4 +1,4 @@
-import { useCallback, type CSSProperties } from 'react';
+import { ChangeEvent, useCallback, type CSSProperties } from 'react';
 import { useState } from 'react';
 import { tz } from 'moment-timezone';
 
@@ -115,29 +115,47 @@ function TimeInSetComp({
         },
         [id, timezoneMinuteOffset, cityName, genStyle],
     );
+    const handleUseCurrentTimezone = useCallback(() => {
+        setTimezoneMinuteOffset(getSystemTimezoneMinuteOffset());
+    }, [setTimezoneMinuteOffset]);
+    const handleChooseCity = useCallback(
+        async (event: any) => {
+            const result = await getMinuteOffsetFromCity(event);
+            if (result === null) {
+                return;
+            }
+            setCityName(result[0]);
+            setTimezoneMinuteOffset(result[1]);
+        },
+        [setCityName, setTimezoneMinuteOffset],
+    );
+    const handleCityNameChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setCityName(event.target.value);
+        },
+        [setCityName],
+    );
+    const handleTimezoneOffsetChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setTimezoneMinuteOffset(Number.parseInt(event.target.value));
+        },
+        [setTimezoneMinuteOffset],
+    );
+    const handleTimeDragStart = useCallback(() => {
+        dragStore.onDropped = handleByDropped;
+    }, [handleByDropped]);
     return (
         <div className="d-flex flex-column">
             <div className="btn-group">
                 <button
                     className="btn btn-outline-secondary"
-                    onClick={() => {
-                        setTimezoneMinuteOffset(
-                            getSystemTimezoneMinuteOffset(),
-                        );
-                    }}
+                    onClick={handleUseCurrentTimezone}
                 >
                     Use Current Timezone
                 </button>
                 <button
                     className="btn btn-outline-secondary"
-                    onClick={async (event) => {
-                        const result = await getMinuteOffsetFromCity(event);
-                        if (result === null) {
-                            return;
-                        }
-                        setCityName(result[0]);
-                        setTimezoneMinuteOffset(result[1]);
-                    }}
+                    onClick={handleChooseCity}
                 >
                     {tran('Choose City')}
                 </button>
@@ -150,9 +168,7 @@ function TimeInSetComp({
                         className="form-control form-control-sm"
                         type="text"
                         value={cityName}
-                        onChange={(event) => {
-                            setCityName(event.target.value);
-                        }}
+                        onChange={handleCityNameChange}
                     />
                 </div>
                 <div className="input-group" style={{ width: '270px' }}>
@@ -163,11 +179,7 @@ function TimeInSetComp({
                         className="form-control form-control-sm"
                         type="number"
                         value={timezoneMinuteOffset}
-                        onChange={(event) => {
-                            setTimezoneMinuteOffset(
-                                Number.parseInt(event.target.value),
-                            );
-                        }}
+                        onChange={handleTimezoneOffsetChange}
                     />
                 </div>
                 <div>
@@ -176,9 +188,7 @@ function TimeInSetComp({
                         onClick={handleShowing}
                         onContextMenu={handleContextMenuOpening}
                         draggable
-                        onDragStart={() => {
-                            dragStore.onDropped = handleByDropped;
-                        }}
+                        onDragStart={handleTimeDragStart}
                     >
                         {tran('Show Time')}
                     </button>

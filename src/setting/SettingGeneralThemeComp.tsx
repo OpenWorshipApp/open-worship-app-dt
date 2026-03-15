@@ -1,9 +1,18 @@
+import { ChangeEvent, useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import type { ThemeOptionType } from '../others/initHelpers';
 import { useThemeSource } from '../others/initHelpers';
 
 export default function SettingGeneralThemeComp() {
     const { themeSource, setThemeSource } = useThemeSource();
+    const handleThemeChange = useCallback(
+        (event: ChangeEvent<HTMLSelectElement>) => {
+            const value = event.target.value;
+            setThemeSource(value as ThemeOptionType);
+        },
+        [setThemeSource],
+    );
 
     return (
         <div className="card m-1">
@@ -13,10 +22,7 @@ export default function SettingGeneralThemeComp() {
                     className="form-select"
                     aria-label="Default select example"
                     value={themeSource}
-                    onChange={(event) => {
-                        const value = event.target.value;
-                        setThemeSource(value as ThemeOptionType);
-                    }}
+                    onChange={handleThemeChange}
                 >
                     <option value="light">{tran('Light')}</option>
                     <option value="dark">{tran('Dark')}</option>

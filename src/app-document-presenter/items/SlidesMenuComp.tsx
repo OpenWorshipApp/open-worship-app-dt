@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { getDefaultScreenDisplay } from '../../_screen/managers/screenHelpers';
 import {
@@ -16,6 +16,12 @@ function CheckingDimensionComp({
 }>) {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
     const screenDisplay = getDefaultScreenDisplay();
+    const handleFixDimension = useCallback(() => {
+        if (!AppDocument.checkIsThisType(selectedVaryAppDocument)) {
+            return;
+        }
+        selectedVaryAppDocument.fixSlidesDimensionForDisplay(screenDisplay);
+    }, [selectedVaryAppDocument, screenDisplay]);
     if (!AppDocument.checkIsThisType(selectedVaryAppDocument)) {
         return null;
     }
@@ -27,11 +33,7 @@ function CheckingDimensionComp({
                 'Fix slide dimension: ' +
                 AppDocument.toWrongDimensionString(wrongDimension)
             }
-            onClick={() => {
-                selectedVaryAppDocument.fixSlidesDimensionForDisplay(
-                    screenDisplay,
-                );
-            }}
+            onClick={handleFixDimension}
         >
             <i className="bi bi-aspect-ratio" style={{ color: 'red' }} />
             <i className="bi bi-hammer" />

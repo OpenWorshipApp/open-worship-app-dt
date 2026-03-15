@@ -1,6 +1,7 @@
 import './AppContextMenuComp.scss';
 
-import type { CSSProperties } from 'react';
+import { useCallback } from 'react';
+import type { CSSProperties, MouseEvent } from 'react';
 
 import type { EventMapperType } from '../event/KeyboardEventListener';
 import { toShortcutKey } from '../event/KeyboardEventListener';
@@ -23,10 +24,25 @@ function ContextMenuItemComp({
     item: ContextMenuItemType;
     onClose: () => void;
 }>) {
+    const isDisabled = (item.disabled ?? false) || item.onSelect === undefined;
+    const handleClick = useCallback(
+        (event: MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const { onSelect } = item;
+            if (isDisabled) {
+                return;
+            }
+            setTimeout(() => {
+                onClose();
+                onSelect?.(event as any);
+            }, 0);
+        },
+        [item, isDisabled, onClose],
+    );
     if (item.menuElement === elementDivider) {
         return item.menuElement;
     }
-    const isDisabled = (item.disabled ?? false) || item.onSelect === undefined;
     return (
         <div
             className={
@@ -38,18 +54,7 @@ function ContextMenuItemComp({
                 item.title ??
                 (typeof item.menuElement === 'string' ? item.menuElement : '')
             }
-            onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                const { onSelect } = item;
-                if (isDisabled) {
-                    return;
-                }
-                setTimeout(() => {
-                    onClose();
-                    onSelect?.(event as any);
-                }, 0);
-            }}
+            onClick={handleClick}
         >
             {item.childBefore || null}
             <div className="app-ellipsis flex-fill">{item.menuElement}</div>
@@ -60,18 +65,17 @@ function ContextMenuItemComp({
 
 export default function AppContextMenuComp() {
     const data = useAppContextMenuData();
+    const handleClose = useCallback(() => {
+        data?.onClose();
+    }, [data]);
     if (data === null) {
         return null;
     }
     return (
         <div
             id={APP_CONTEXT_MENU_ID}
-            onClick={() => {
-                data.onClose();
-            }}
-            onContextMenu={() => {
-                data.onClose();
-            }}
+            onClick={handleClose}
+            onContextMenu={handleClose}
         >
             <div
                 tabIndex={0}

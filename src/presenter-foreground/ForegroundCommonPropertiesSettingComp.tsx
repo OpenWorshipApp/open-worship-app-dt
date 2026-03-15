@@ -1,3 +1,5 @@
+import { ChangeEvent, useCallback } from 'react';
+
 import { tran } from '../lang/langHelpers';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import {
@@ -55,13 +57,41 @@ export default function ForegroundCommonPropertiesSettingComp() {
         BACKDROP_FILTER_SETTING_NAME,
         DEFAULT_BACKDROP_FILTER,
     );
+    const handleOpen = useCallback(() => {
+        setIsOpened(true);
+    }, [setIsOpened]);
+    const handleClose = useCallback(() => {
+        setIsOpened(false);
+    }, [setIsOpened]);
+    const handleBackdropFilterChange = useCallback(
+        (e: ChangeEvent<HTMLInputElement>) => {
+            setBackdropFilter(Number.parseInt(e.target.value, 10));
+        },
+        [setBackdropFilter],
+    );
+    const handleTextColorReset = useCallback(() => {
+        setColor(DEFAULT_TEXT_COLOR);
+    }, [setColor]);
+    const handleTextColorChange = useCallback(
+        (newColor: string) => {
+            setColor(newColor as any);
+        },
+        [setColor],
+    );
+    const handleBgColorReset = useCallback(() => {
+        setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
+    }, [setBackgroundColor]);
+    const handleBgColorChange = useCallback(
+        (newColor: string) => {
+            setBackgroundColor(newColor as any);
+        },
+        [setBackgroundColor],
+    );
     if (!isOpened) {
         return (
             <button
                 className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                    setIsOpened(true);
-                }}
+                onClick={handleOpen}
             >
                 <i className="bi bi-chevron-right" />
                 <i className="bi bi-gear" /> {tran('Properties')}
@@ -73,9 +103,7 @@ export default function ForegroundCommonPropertiesSettingComp() {
             <div>
                 <button
                     className="btn btn-sm btn-outline-secondary"
-                    onClick={() => {
-                        setIsOpened(false);
-                    }}
+                    onClick={handleClose}
                 >
                     <i className="bi bi-chevron-down" />
                     <i className="bi bi-gear" /> {tran('Properties')}
@@ -110,11 +138,7 @@ export default function ForegroundCommonPropertiesSettingComp() {
                             type="number"
                             min="0"
                             value={backdropFilter}
-                            onChange={(e) => {
-                                setBackdropFilter(
-                                    Number.parseInt(e.target.value, 10),
-                                );
-                            }}
+                            onChange={handleBackdropFilterChange}
                         />
                     </div>
                 </div>
@@ -126,10 +150,8 @@ export default function ForegroundCommonPropertiesSettingComp() {
                     <ColorPicker
                         color={color}
                         defaultColor={DEFAULT_TEXT_COLOR}
-                        onNoColor={() => setColor(DEFAULT_TEXT_COLOR)}
-                        onColorChange={(newColor: string) => {
-                            setColor(newColor as any);
-                        }}
+                        onNoColor={handleTextColorReset}
+                        onColorChange={handleTextColorChange}
                     />
                 </div>
                 <div
@@ -140,12 +162,8 @@ export default function ForegroundCommonPropertiesSettingComp() {
                     <ColorPicker
                         color={backgroundColor}
                         defaultColor={DEFAULT_BACKGROUND_COLOR}
-                        onNoColor={() =>
-                            setBackgroundColor(DEFAULT_BACKGROUND_COLOR)
-                        }
-                        onColorChange={(newColor: string) => {
-                            setBackgroundColor(newColor as any);
-                        }}
+                        onNoColor={handleBgColorReset}
+                        onColorChange={handleBgColorChange}
                     />
                 </div>
             </div>

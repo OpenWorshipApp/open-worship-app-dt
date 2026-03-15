@@ -71,6 +71,27 @@ function RendBodyComp({
         };
     }, [filePath]);
     const vRef = createRef<HTMLVideoElement>();
+    const handleMouseOver = useCallback(
+        (event: any) => {
+            if (vRef.current === null) {
+                return;
+            }
+            vRef.current.play();
+            const currentTarget = event.currentTarget as HTMLDivElement;
+            if (
+                typeof vRef.current.duration === 'number' &&
+                !currentTarget.title
+            ) {
+                currentTarget.title =
+                    `${fileSource.fullName}\n` +
+                    `(${timeToTimeString(vRef.current.duration)})`;
+            }
+        },
+        [vRef, fileSource],
+    );
+    const handleMouseOut = useCallback(() => {
+        vRef.current?.pause();
+    }, [vRef]);
     return (
         <div
             className="card-body app-overflow-hidden app-blank-bg"
@@ -80,24 +101,8 @@ function RendBodyComp({
                 overflow: 'hidden',
                 borderRadius: '5px 5px 0px 0px',
             }}
-            onMouseOver={(event) => {
-                if (vRef.current === null) {
-                    return;
-                }
-                vRef.current.play();
-                const currentTarget = event.currentTarget as HTMLDivElement;
-                if (
-                    typeof vRef.current.duration === 'number' &&
-                    !currentTarget.title
-                ) {
-                    currentTarget.title =
-                        `${fileSource.fullName}\n` +
-                        `(${timeToTimeString(vRef.current.duration)})`;
-                }
-            }}
-            onMouseOut={() => {
-                vRef.current?.pause();
-            }}
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
         >
             <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {

@@ -1,4 +1,4 @@
-import { useCallback, useState, type MouseEvent } from 'react';
+import { useCallback, useState, type MouseEvent, DragEvent } from 'react';
 
 import NoteItem from './NoteItem';
 import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
@@ -7,7 +7,7 @@ import {
     genRemovingAttachedBackgroundMenu,
     extractDropData,
     handleAttachBackgroundDrop,
-    handleDragStart,
+    handleDragStart as handleDragStartHelper,
 } from '../../helper/dragHelpers';
 import { DragTypeEnum } from '../../helper/DragInf';
 import FileSource from '../../helper/FileSource';
@@ -76,10 +76,7 @@ export default function NoteItemRenderComp({
                 );
             if (attachedBackgroundData !== null) {
                 menuItems.push(
-                    ...genRemovingAttachedBackgroundMenu(
-                        filePath,
-                        noteItem.id,
-                    ),
+                    ...genRemovingAttachedBackgroundMenu(filePath, noteItem.id),
                 );
             }
             openNoteItemContextMenu(event, noteItem, index, menuItems);
@@ -114,6 +111,27 @@ export default function NoteItemRenderComp({
         [noteItem, filePath],
     );
 
+    const handleDragStartEvent = useCallback(
+        (event: DragEvent<HTMLLIElement>) => {
+            handleDragStartHelper(event, noteItem);
+        },
+        [noteItem],
+    );
+    const handleDragOver = useCallback((event: DragEvent<HTMLLIElement>) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '0.5');
+    }, []);
+    const handleDragLeave = useCallback((event: DragEvent<HTMLLIElement>) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+    }, []);
+    const handleDoubleClick = useCallback(() => {
+        handleOpening(note, noteItem);
+    }, [note, noteItem]);
+    const handleToggleNote = useCallback(() => {
+        setShowingNote1(!showingNote);
+    }, [showingNote]);
+
     if (noteItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
     }
@@ -128,21 +146,11 @@ export default function NoteItemRenderComp({
                 data-note-item-id={`${fileSource.name}-${noteItem.id}`}
                 data-index={index + 1}
                 draggable
-                onDragStart={(event) => {
-                    handleDragStart(event, noteItem);
-                }}
-                onDragOver={(event) => {
-                    event.preventDefault();
-                    changeDragEventStyle(event, 'opacity', '0.5');
-                }}
-                onDragLeave={(event) => {
-                    event.preventDefault();
-                    changeDragEventStyle(event, 'opacity', '1');
-                }}
+                onDragStart={handleDragStartEvent}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
                 onDrop={handleDataDropping}
-                onDoubleClick={() => {
-                    handleOpening(note, noteItem);
-                }}
+                onDoubleClick={handleDoubleClick}
                 onContextMenu={handleContextMenuOpening}
             >
                 <div className="d-flex ps-1">
@@ -153,9 +161,7 @@ export default function NoteItemRenderComp({
                             'mx-1 app-caught-hover-pointer'
                         }
                         title={tran('Open note')}
-                        onClick={() => {
-                            setShowingNote1(!showingNote);
-                        }}
+                        onClick={handleToggleNote}
                     />
                     {showingNote ? (
                         <NoteTitleEditorComp note={note} noteItem={noteItem} />

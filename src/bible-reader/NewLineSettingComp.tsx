@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 import { tran } from '../lang/langHelpers';
@@ -8,17 +8,35 @@ export default function NewLineSettingComp() {
     const [shouldNewLine, setShouldNewLine] = useState(
         viewController.shouldNewLine,
     );
-    const setShouldNewLine1 = (newValue: boolean) => {
-        setShouldNewLine(newValue);
-        viewController.shouldNewLine = newValue;
-    };
+    const setShouldNewLine1 = useCallback(
+        (newValue: boolean) => {
+            setShouldNewLine(newValue);
+            viewController.shouldNewLine = newValue;
+        },
+        [viewController],
+    );
     const [useModelNewLine, setUseModelNewLine] = useState(
         viewController.shouldModelNewLine,
     );
-    const setUseModelNewLine1 = (newValue: boolean) => {
-        setUseModelNewLine(newValue);
-        viewController.shouldModelNewLine = newValue;
-    };
+    const setUseModelNewLine1 = useCallback(
+        (newValue: boolean) => {
+            setUseModelNewLine(newValue);
+            viewController.shouldModelNewLine = newValue;
+        },
+        [viewController],
+    );
+    const handleNewLineChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setShouldNewLine1(event.target.checked);
+        },
+        [setShouldNewLine1],
+    );
+    const handleModelNewLineChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setUseModelNewLine1(event.target.checked);
+        },
+        [setUseModelNewLine1],
+    );
     return (
         <>
             <div
@@ -33,9 +51,7 @@ export default function NewLineSettingComp() {
                     type="checkbox"
                     id="new-line-setting"
                     checked={shouldNewLine}
-                    onChange={(event) => {
-                        setShouldNewLine1(event.target.checked);
-                    }}
+                    onChange={handleNewLineChange}
                 />
             </div>
             <div
@@ -57,9 +73,7 @@ export default function NewLineSettingComp() {
                     id="use-model-new-line-setting"
                     disabled={!shouldNewLine}
                     checked={useModelNewLine}
-                    onChange={(event) => {
-                        setUseModelNewLine1(event.target.checked);
-                    }}
+                    onChange={handleModelNewLineChange}
                 />
             </div>
         </>

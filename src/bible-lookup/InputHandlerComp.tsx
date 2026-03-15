@@ -1,4 +1,12 @@
-import { createContext, createRef, Fragment, use } from 'react';
+import {
+    ChangeEvent,
+    createContext,
+    createRef,
+    Fragment,
+    use,
+    useCallback,
+    type KeyboardEvent,
+} from 'react';
 
 import BibleSelectionComp from './BibleSelectionComp';
 import {
@@ -52,6 +60,30 @@ export default function InputHandlerComp({
         }
     }, [inputText]);
     const viewController = useLookupBibleItemControllerContext();
+    const handleInputKeyUp = useCallback(
+        (event: KeyboardEvent<HTMLInputElement>) => {
+            if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
+                event.stopPropagation();
+                event.preventDefault();
+                event.currentTarget.blur();
+                focusRenderFound();
+            }
+        },
+        [],
+    );
+    const handleInputChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const value = event.target.value;
+            viewController.inputText = value;
+        },
+        [viewController],
+    );
+    const handlePreviousChapter = useCallback(() => {
+        viewController.tryJumpingChapter(false);
+    }, [viewController]);
+    const handleNextChapter = useCallback(() => {
+        viewController.tryJumpingChapter(true);
+    }, [viewController]);
     const bibleKey = useBibleKeyContext();
     const fontFamily = useBibleFontFamily(bibleKey);
     useAppEffect(() => {
@@ -87,27 +119,15 @@ export default function InputHandlerComp({
                 autoFocus
                 placeholder={placeholder ?? ''}
                 style={{ fontFamily }}
-                onKeyUp={(event) => {
-                    if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        event.currentTarget.blur();
-                        focusRenderFound();
-                    }
-                }}
-                onChange={(event) => {
-                    const value = event.target.value;
-                    viewController.inputText = value;
-                }}
+                onKeyUp={handleInputKeyUp}
+                onChange={handleInputChange}
             />
             <InputExtraButtonsComp />
             <button
                 className="btn btn-sm btn-outline-secondary"
                 data-previous-chapter-button="1"
                 title="Previous"
-                onClick={() => {
-                    viewController.tryJumpingChapter(false);
-                }}
+                onClick={handlePreviousChapter}
             >
                 <i className="bi bi-caret-left" />
             </button>
@@ -115,9 +135,7 @@ export default function InputHandlerComp({
                 className="btn btn-sm btn-outline-secondary"
                 title="Next"
                 data-next-chapter-button="1"
-                onClick={() => {
-                    viewController.tryJumpingChapter(true);
-                }}
+                onClick={handleNextChapter}
             >
                 <i className="bi bi-caret-right" />
             </button>

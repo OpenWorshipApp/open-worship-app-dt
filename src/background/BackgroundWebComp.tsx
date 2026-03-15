@@ -40,6 +40,12 @@ function RenderChildComp({
     const [isPlaying, setIsPlaying] = useState(false);
     const fileSource = FileSource.getInstance(filePath);
     const imageData = useWebCapturing(fileSource);
+    const handleMouseOver = useCallback(() => {
+        setIsPlaying(true);
+    }, []);
+    const handleMouseOut = useCallback(() => {
+        setIsPlaying(false);
+    }, []);
     return (
         <div
             className="card-body app-blank-bg"
@@ -49,12 +55,8 @@ function RenderChildComp({
                 overflow: 'hidden',
                 borderRadius: '5px 5px 0px 0px',
             }}
-            onMouseOver={() => {
-                setIsPlaying(true);
-            }}
-            onMouseOut={() => {
-                setIsPlaying(false);
-            }}
+            onMouseOver={handleMouseOver}
+            onMouseOut={handleMouseOut}
         >
             <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {

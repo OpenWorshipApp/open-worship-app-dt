@@ -1,6 +1,6 @@
 import './SlideAutoPlayComp.scss';
 
-import type { CSSProperties } from 'react';
+import { ChangeEvent, useCallback, type CSSProperties } from 'react';
 
 import {
     useStateSettingBoolean,
@@ -23,6 +23,9 @@ function PlayingIconComp({
     setIsPlaying: (isPlaying: boolean) => void;
     timerSeconds: number;
 }>) {
+    const handleStopPlaying = useCallback(() => {
+        setIsPlaying(false);
+    }, [setIsPlaying]);
     useAppEffect(() => {
         if (timerSeconds <= 0) {
             return;
@@ -39,12 +42,7 @@ function PlayingIconComp({
         };
     }, [onNext, timerSeconds]);
     return (
-        <button
-            className="btn btn-sm btn-primary"
-            onClick={() => {
-                setIsPlaying(false);
-            }}
-        >
+        <button className="btn btn-sm btn-primary" onClick={handleStopPlaying}>
             <i className="bi bi-pause-circle-fill" />
         </button>
     );
@@ -63,13 +61,14 @@ function PlayerComp({
         `${prefix}-slide-auto-play-playing`,
         false,
     );
+    const handleStartPlaying = useCallback(() => {
+        setIsPlaying(true);
+    }, [setIsPlaying]);
     if (!isPlaying) {
         return (
             <button
                 className="btn btn-sm btn-outline-primary"
-                onClick={() => {
-                    setIsPlaying(true);
-                }}
+                onClick={handleStartPlaying}
             >
                 <i className="bi bi-play" />
             </button>
@@ -101,6 +100,20 @@ export default function SlideAutoPlayComp({
         `${prefix}-slide-auto-play-timer-seconds`,
         5,
     );
+    const handleShowAutoPlay = useCallback(() => {
+        setIsShowing(true);
+    }, [setIsShowing]);
+    const handleHideAutoPlay = useCallback(() => {
+        setIsShowing(false);
+    }, [setIsShowing]);
+    const handleTimerChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setTimerSeconds(
+                Math.max(0, Number.parseInt(event.target.value) || 0),
+            );
+        },
+        [setTimerSeconds],
+    );
     if (!isShowing) {
         return (
             <i
@@ -108,9 +121,7 @@ export default function SlideAutoPlayComp({
                     'slide-auto-play-icon bi bi-stopwatch-fill' +
                     ' app-caught-hover-pointer'
                 }
-                onClick={() => {
-                    setIsShowing(true);
-                }}
+                onClick={handleShowAutoPlay}
                 style={style}
             />
         );
@@ -124,9 +135,7 @@ export default function SlideAutoPlayComp({
                 <i
                     className="bi bi-x-lg app-caught-hover-pointer"
                     style={{ color: 'red' }}
-                    onClick={() => {
-                        setIsShowing(false);
-                    }}
+                    onClick={handleHideAutoPlay}
                 />
             </div>
             <div className="mx-2">
@@ -142,14 +151,7 @@ export default function SlideAutoPlayComp({
                     className="form-control form-control-sm"
                     type="number"
                     value={timerSeconds}
-                    onChange={(event) => {
-                        setTimerSeconds(
-                            Math.max(
-                                0,
-                                Number.parseInt(event.target.value) || 0,
-                            ),
-                        );
-                    }}
+                    onChange={handleTimerChange}
                     min="0"
                 />
             </div>

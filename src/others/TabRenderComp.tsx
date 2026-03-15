@@ -1,5 +1,5 @@
 import type { ReactNode, LazyExoticComponent } from 'react';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import AppSuspenseComp from './AppSuspenseComp';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -43,6 +43,9 @@ function RendTabComp<T>({
         return activeTab === tab.key ? 'active' : '';
     }, [activeTab, tab.key]);
     const isOnScreen = useIsOnScreen(tab);
+    const handleClick = useCallback(() => {
+        setActiveTab?.(tab.key);
+    }, [setActiveTab, tab.key]);
     return (
         <li key={tab.title} className={'nav-item ' + (tab.className ?? '')}>
             <button
@@ -50,9 +53,7 @@ function RendTabComp<T>({
                     `btn btn-sm btn-link nav-link ${activeClass}` +
                     (isOnScreen ? ' app-on-screen' : '')
                 }
-                onClick={() => {
-                    setActiveTab?.(tab.key);
-                }}
+                onClick={handleClick}
             >
                 {tab.title}
             </button>

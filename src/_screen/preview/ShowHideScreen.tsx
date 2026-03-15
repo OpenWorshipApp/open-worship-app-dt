@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import {
     toShortcutKey,
     useKeyboardRegistering,
@@ -19,6 +21,9 @@ export default function ShowHideScreen() {
     );
     const isShowing = screenManagerBase.isShowing;
     useScreenManagerEvents(['visible'], screenManagerBase);
+    const handleToggleShowing = useCallback(() => {
+        screenManagerBase.isShowing = !isShowing;
+    }, [screenManagerBase, isShowing]);
     return (
         <div
             className={
@@ -34,9 +39,7 @@ export default function ShowHideScreen() {
                 borderRadius: '5px',
                 border: isShowing ? '1px solid var(--bs-gray-500)' : '',
             }}
-            onClick={() => {
-                screenManagerBase.isShowing = !isShowing;
-            }}
+            onClick={handleToggleShowing}
         >
             <i
                 className={

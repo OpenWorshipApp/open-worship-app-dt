@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
@@ -21,6 +21,20 @@ export default function MiniScreenAudioHandlersComp({
         const decodeSrc = decodeURIComponent(src);
         return decodeSrc.split('/').pop() || decodeSrc;
     }, [src]);
+    const handleTimeUpdate = useCallback(
+        (event: any) => {
+            const { screenBackgroundManager } = screenManager;
+            screenBackgroundManager.setBackgroundVideoCurrentTimeForce(
+                videoId,
+                event.currentTarget.currentTime,
+                false,
+            );
+        },
+        [screenManager, videoId],
+    );
+    const handleToggleRepeating = useCallback(() => {
+        setIsRepeating(!isRepeating);
+    }, [isRepeating]);
     return (
         <div className="w-100">
             <hr className="w-100" />
@@ -35,14 +49,7 @@ export default function MiniScreenAudioHandlersComp({
                     onPlay={handleAudioPlaying}
                     onPause={handleAudioPausing}
                     onEnded={handleAudioEnding.bind(null, isRepeating)}
-                    onTimeUpdate={(event) => {
-                        const { screenBackgroundManager } = screenManager;
-                        screenBackgroundManager.setBackgroundVideoCurrentTimeForce(
-                            videoId,
-                            event.currentTarget.currentTime,
-                            false,
-                        );
-                    }}
+                    onTimeUpdate={handleTimeUpdate}
                 >
                     <source src={src} />
                     <track kind="captions" />
@@ -57,9 +64,7 @@ export default function MiniScreenAudioHandlersComp({
                             opacity: isRepeating ? 1 : 0.5,
                             color: isRepeating ? 'green' : 'inherit',
                         }}
-                        onClick={() => {
-                            setIsRepeating(!isRepeating);
-                        }}
+                        onClick={handleToggleRepeating}
                     />
                 </div>
             </div>

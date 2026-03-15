@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, MouseEvent } from 'react';
 
 import {
     toShortcutKey,
@@ -47,6 +47,24 @@ export default function RenderEditingActionButtonsComp({
         },
         [],
     );
+    const handleSplitHorizontal = useCallback(() => {
+        viewController.addBibleItemLeft(bibleItem, bibleItem);
+    }, [viewController, bibleItem]);
+    const handleSplitVertical = useCallback(() => {
+        viewController.addBibleItemBottom(bibleItem, bibleItem);
+    }, [viewController, bibleItem]);
+    const handleSaveBibleItem = useCallback(() => {
+        saveBibleItem(bibleItem, onDone);
+    }, [bibleItem, onDone]);
+    const handleSaveAndPresent = useCallback(
+        (event: MouseEvent) => {
+            addBibleItemAndPresent(event, bibleItem, onDone);
+        },
+        [bibleItem, onDone],
+    );
+    const handleExportToWord = useCallback(() => {
+        exportToWordDocument([bibleItem]);
+    }, [bibleItem]);
     return (
         <div className="btn-group mx-1">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />
@@ -57,9 +75,7 @@ export default function RenderEditingActionButtonsComp({
                     tran('Split horizontal') +
                     ` [${toShortcutKey(eventMaps[0])}]`
                 }
-                onClick={() => {
-                    viewController.addBibleItemLeft(bibleItem, bibleItem);
-                }}
+                onClick={handleSplitHorizontal}
             >
                 <i className="bi bi-vr" />
             </button>
@@ -67,9 +83,7 @@ export default function RenderEditingActionButtonsComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title={`Split vertical [${toShortcutKey(eventMaps[1])}]`}
-                onClick={() => {
-                    viewController.addBibleItemBottom(bibleItem, bibleItem);
-                }}
+                onClick={handleSplitVertical}
             >
                 <i className="bi bi-hr" />
             </button>
@@ -80,9 +94,7 @@ export default function RenderEditingActionButtonsComp({
                     tran('Save bible item') +
                     ` [${toShortcutKey(addListEventMapper)}]`
                 }
-                onClick={() => {
-                    saveBibleItem(bibleItem, onDone);
-                }}
+                onClick={handleSaveBibleItem}
             >
                 <i className="bi bi-floppy" />
             </button>
@@ -94,9 +106,7 @@ export default function RenderEditingActionButtonsComp({
                         tran('Save bible item and show on screen') +
                         ` [${toShortcutKey(presenterEventMapper)}]`
                     }
-                    onClick={(event) => {
-                        addBibleItemAndPresent(event, bibleItem, onDone);
-                    }}
+                    onClick={handleSaveAndPresent}
                 >
                     <i className="bi bi-cast" />
                 </button>
@@ -105,9 +115,7 @@ export default function RenderEditingActionButtonsComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title={tran('Export to MS Word')}
-                onClick={() => {
-                    exportToWordDocument([bibleItem]);
-                }}
+                onClick={handleExportToWord}
             >
                 <i
                     className="bi bi-file-earmark-word"

@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { ChangeEvent, useCallback, type CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import {
@@ -204,13 +204,43 @@ function PropertiesSettingComp({
         `foreground-${target}-show-properties-setting`,
         false,
     );
+    const handleOpen = useCallback(() => {
+        setIsOpened(true);
+    }, [setIsOpened]);
+    const handleClose = useCallback(() => {
+        setIsOpened(false);
+    }, [setIsOpened]);
+    const handleOffsetXChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setWidgetOffsetX(Number.parseInt(event.target.value) || 0);
+        },
+        [setWidgetOffsetX],
+    );
+    const handleOffsetYChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setWidgetOffsetY(Number.parseInt(event.target.value) || 0);
+        },
+        [setWidgetOffsetY],
+    );
+    const handleRoundSizePixelChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setRoundSizePixel(Number.parseInt(event.target.value) || 0);
+        },
+        [setRoundSizePixel],
+    );
+    const handleFontSizeChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            setFontSize(
+                Number.parseInt(event.target.value) || DEFAULT_FONT_SIZE,
+            );
+        },
+        [setFontSize],
+    );
     if (!isOpened) {
         return (
             <button
                 className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                    setIsOpened(true);
-                }}
+                onClick={handleOpen}
             >
                 <i className="bi bi-chevron-right" />
                 <i className="bi bi-gear" /> {tran('Properties')}
@@ -221,9 +251,7 @@ function PropertiesSettingComp({
         <div>
             <button
                 className="btn btn-sm btn-outline-secondary"
-                onClick={() => {
-                    setIsOpened(false);
-                }}
+                onClick={handleClose}
             >
                 <i className="bi bi-chevron-down" />
                 <i className="bi bi-gear" /> {tran('Properties')}
@@ -252,22 +280,14 @@ function PropertiesSettingComp({
                         className="form-control form-control-sm"
                         type="number"
                         value={widgetOffsetX}
-                        onChange={(event) => {
-                            setWidgetOffsetX(
-                                Number.parseInt(event.target.value) || 0,
-                            );
-                        }}
+                        onChange={handleOffsetXChange}
                     />
                     <div className="input-group-text">Offset Y:</div>
                     <input
                         className="form-control form-control-sm"
                         type="number"
                         value={widgetOffsetY}
-                        onChange={(event) => {
-                            setWidgetOffsetY(
-                                Number.parseInt(event.target.value) || 0,
-                            );
-                        }}
+                        onChange={handleOffsetYChange}
                     />
                 </div>
                 <div className="d-flex app-border-white-round m-1">
@@ -351,11 +371,7 @@ function PropertiesSettingComp({
                         type="number"
                         value={roundSizePixel}
                         min={0}
-                        onChange={(event) => {
-                            setRoundSizePixel(
-                                Number.parseInt(event.target.value) || 0,
-                            );
-                        }}
+                        onChange={handleRoundSizePixelChange}
                     />
                     <div className="input-group-text">px</div>
                 </div>
@@ -369,12 +385,7 @@ function PropertiesSettingComp({
                             className="form-control form-control-sm"
                             type="number"
                             value={fontSize}
-                            onChange={(event) => {
-                                setFontSize(
-                                    Number.parseInt(event.target.value) ||
-                                        DEFAULT_FONT_SIZE,
-                                );
-                            }}
+                            onChange={handleFontSizeChange}
                         />
                         <div className="input-group-text">px</div>
                     </div>

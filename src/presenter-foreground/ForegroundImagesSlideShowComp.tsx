@@ -128,6 +128,22 @@ function HeaderElements({
     setScaleType: (event: any, value: ImageScaleType) => void;
     isMini?: boolean;
 }>) {
+    const handleClick = useCallback(
+        (event: any) => {
+            showAppContextMenu(
+                event,
+                scaleTypeList.map((scaleType) => {
+                    return {
+                        menuElement: scaleType,
+                        onSelect: (event1) => {
+                            setScaleType(event1, scaleType);
+                        },
+                    };
+                }),
+            );
+        },
+        [setScaleType],
+    );
     return (
         <div className="d-flex">
             {isMini ? null : <div>Scale Type:</div>}
@@ -137,19 +153,7 @@ function HeaderElements({
                     width: '80px',
                     height: '30px',
                 }}
-                onClick={(event: any) => {
-                    showAppContextMenu(
-                        event,
-                        scaleTypeList.map((scaleType) => {
-                            return {
-                                menuElement: scaleType,
-                                onSelect: (event1) => {
-                                    setScaleType(event1, scaleType);
-                                },
-                            };
-                        }),
-                    );
-                }}
+                onClick={handleClick}
             >
                 {scaleType}
             </button>
