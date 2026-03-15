@@ -91,6 +91,16 @@ function copyAllChildren(source, dest) {
   }
 }
 
+copyFile(
+  {
+    source: resolve('.'),
+    destination: resolve('./electron-build'),
+  },
+  'package-lock.json',
+  'package-lock.json',
+);
+console.log('"package-lock.json" file is copied');
+
 const binHelperSourceRootDir = resolve('./extra-work/bin-helper/dist');
 const binHelperDestRootDir = resolve('./electron-build/bin-helper');
 
@@ -150,16 +160,6 @@ if (systemUtils.isMac) {
   );
 }
 console.log('"ffmpeg" files are copied');
-
-copyFile(
-  {
-    source: resolve('.'),
-    destination: resolve('./electron-build'),
-  },
-  'package-lock.json',
-  'package-lock.json',
-);
-console.log('"package-lock.json" file is copied');
 
 const { sourceFileName: denoSourceFileName, destFileName: denoDestFileName } =
   genBinFileName('deno');
