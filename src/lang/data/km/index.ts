@@ -9,6 +9,7 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Copy to Clipboard': 'ចម្លងទៅកាន់ក្តារចុច',
     'Getting File List': 'កំពុងទទួលបានបញ្ជីឯកសារ',
     'Error occurred during listing file': 'មានបញ្ហាពេលកំពុងទទួលបានបញ្ជីឯកសារ',
     'Unset Directory Path': 'បោះបង់ផ្លូវថត',

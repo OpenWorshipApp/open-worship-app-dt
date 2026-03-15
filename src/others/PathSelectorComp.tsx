@@ -26,7 +26,7 @@ function openContextMenu(dirSource: DirSource, event: any) {
     }
     const menuItems: ContextMenuItemType[] = [
         {
-            menuElement: 'Copy to Clipboard',
+            menuElement: tran('Copy to Clipboard'),
             onSelect: () => {
                 copyToClipboard(dirPath);
             },
