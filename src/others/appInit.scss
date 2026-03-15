@@ -172,7 +172,7 @@ body {
 
   .app-highlight-selected {
     border: 1px dotted $hight-light-color;
-    animation: app-highlight-selected-in 0.5s ease-in-out alternate;
+    animation: app-highlight-selected-in-anim 0.5s ease-in-out alternate;
 
     &.animation {
       animation-delay: 2s;
@@ -378,15 +378,15 @@ body {
   }
 }
 
-@keyframes app-highlight-selected-in {
+@keyframes app-highlight-selected-in-anim {
   0% {
-    border-width: 2px;
+    border-width: 1px;
   }
   50% {
-    border-width: 3px;
+    border-width: 2px;
   }
   100% {
-    border: 2px;
+    border-width: 1px;
   }
 }
 @keyframes app-highlight-selected {
