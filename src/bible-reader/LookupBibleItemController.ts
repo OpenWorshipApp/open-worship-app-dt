@@ -3,7 +3,7 @@ import { createContext } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { closeCurrentEditingBibleItem } from './readBibleHelpers';
-import type { EventMapper } from '../event/KeyboardEventListener';
+import type { EventMapperType } from '../event/KeyboardEventListener';
 import {
     elementDivider,
     genContextMenuItemIcon,
@@ -30,7 +30,7 @@ import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import { setBibleSearchingTabType } from '../bible-find/bibleFindHelpers';
 import { tran } from '../lang/langHelpers';
 
-export const closeEventMapper: EventMapper = {
+export const closeEventMapper: EventMapperType = {
     wControlKey: ['Ctrl'],
     lControlKey: ['Ctrl'],
     mControlKey: ['Meta'],

@@ -2,7 +2,7 @@ import './ModalComp.scss';
 
 import type { PropsWithChildren, ReactNode } from 'react';
 
-import type { EventMapper } from '../event/KeyboardEventListener';
+import type { EventMapperType } from '../event/KeyboardEventListener';
 import {
     toShortcutKey,
     useKeyboardRegistering,
@@ -13,7 +13,7 @@ interface MyProps {
     children?: ReactNode;
 }
 
-const quittingEventMap: EventMapper = {
+const quittingEventMap: EventMapperType = {
     allControlKey: ['Ctrl'],
     key: 'q',
 };

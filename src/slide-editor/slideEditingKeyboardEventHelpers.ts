@@ -39,8 +39,12 @@ function handleHistory(appDocument: AppDocument, event: any) {
                     key: 'z',
                 },
                 {
-                    platforms: [PlatformEnum.Windows, PlatformEnum.Linux],
+                    platforms: [PlatformEnum.Windows],
                     wControlKey: ['Ctrl'],
+                    key: 'y',
+                },
+                {
+                    platforms: [PlatformEnum.Linux],
                     lControlKey: ['Ctrl'],
                     key: 'y',
                 },

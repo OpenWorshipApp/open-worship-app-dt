@@ -1,5 +1,5 @@
 import { tran } from '../lang/langHelpers';
-import type { EventMapper as KeyboardEventMapper } from '../event/KeyboardEventListener';
+import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';

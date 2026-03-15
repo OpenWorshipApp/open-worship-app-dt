@@ -55,7 +55,7 @@ import type {
 } from './appDocumentTypeHelpers';
 import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
 import {
-    EventMapper,
+    EventMapperType,
     AllControlType as KeyboardControlType,
 } from '../event/KeyboardEventListener';
 
@@ -102,19 +102,19 @@ export async function showPdfSlideContextMenu(
     ]);
 }
 
-const copyShortcutMapper: EventMapper = {
+const copyShortcutMapper: EventMapperType = {
     wControlKey: ['Ctrl'],
     lControlKey: ['Ctrl'],
     mControlKey: ['Meta'],
     key: 'c',
 };
-const duplicateShortcutMapper: EventMapper = {
+const duplicateShortcutMapper: EventMapperType = {
     wControlKey: ['Ctrl', 'Shift'],
     lControlKey: ['Ctrl', 'Shift'],
     mControlKey: ['Meta', 'Shift'],
     key: 'd',
 };
-const deleteShortcutMapper: EventMapper = {
+const deleteShortcutMapper: EventMapperType = {
     key: 'Delete',
 };
 

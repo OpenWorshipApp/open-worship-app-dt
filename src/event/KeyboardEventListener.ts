@@ -38,20 +38,41 @@ export enum PlatformEnum {
     Linux = 'Linux',
 }
 
-export interface EventMapper {
-    wControlKey?: WindowsControlType[];
-    mControlKey?: MacControlType[];
-    lControlKey?: LinuxControlType[];
-    allControlKey?: AllControlType[];
-    platforms?: PlatformEnum[];
-    key: string;
-}
-export interface RegisteredEventMapper extends EventMapper {
+export type EventMapperType =
+    | {
+          key: string;
+      }
+    | {
+          allControlKey: AllControlType[];
+          key: string;
+      }
+    | {
+          platforms: PlatformEnum.Windows[];
+          wControlKey: WindowsControlType[];
+          key: string;
+      }
+    | {
+          platforms: PlatformEnum.Linux[];
+          lControlKey: LinuxControlType[];
+          key: string;
+      }
+    | {
+          platforms: PlatformEnum.MacOS[];
+          mControlKey: MacControlType[];
+          key: string;
+      }
+    | {
+          wControlKey: WindowsControlType[];
+          mControlKey: MacControlType[];
+          lControlKey: LinuxControlType[];
+          key: string;
+      };
+export type RegisteredEventMapperType = EventMapperType & {
     listener: ListenerType;
-}
+};
 export type ListenerType = ((event: KeyboardEvent) => void) | (() => void);
 
-export function toShortcutKey(eventMapper: EventMapper) {
+export function toShortcutKey(eventMapper: EventMapperType) {
     return KeyboardEventListener.toShortcutKey(eventMapper);
 }
 
@@ -105,8 +126,8 @@ export default class KeyboardEventListener extends EventHandler<string> {
         const eventKey = this.genEventKeyFromFiredEvent(event);
         this.addPropEvent(eventKey, event);
     }
-    static addControlKey(eventMapper: EventMapper, event: KeyboardEvent) {
-        const clonedEventMapper = cloneJson(eventMapper);
+    static addControlKey(eventMapper: EventMapperType, event: KeyboardEvent) {
+        const clonedEventMapper = cloneJson(eventMapper) as any;
         if (appProvider.systemUtils.isWindows) {
             clonedEventMapper.wControlKey = [];
             if (event.ctrlKey) {
@@ -147,7 +168,7 @@ export default class KeyboardEventListener extends EventHandler<string> {
         return clonedEventMapper;
     }
 
-    static toShortcutKey(eventMapper: EventMapper) {
+    static toShortcutKey(eventMapper: EventMapperType) {
         const clonedEventMapper = cloneJson(eventMapper);
         let key = clonedEventMapper.key;
         if (!key) {
@@ -157,7 +178,7 @@ export default class KeyboardEventListener extends EventHandler<string> {
             key = key.toUpperCase();
         }
         const { wControlKey, mControlKey, lControlKey, allControlKey } =
-            clonedEventMapper;
+            clonedEventMapper as any;
         const allControls: string[] = allControlKey ?? [];
         if (appProvider.systemUtils.isWindows) {
             if (wControlKey) {
@@ -205,9 +226,9 @@ export default class KeyboardEventListener extends EventHandler<string> {
         return key;
     }
 
-    static filterEventMappersByPlatform(eventMappers: EventMapper[]) {
+    static filterEventMappersByPlatform(eventMappers: EventMapperType[]) {
         return eventMappers.filter((eventMapper) => {
-            const { platforms } = eventMapper;
+            const { platforms } = eventMapper as any;
             if (!platforms) {
                 return true;
             }
@@ -225,7 +246,7 @@ export default class KeyboardEventListener extends EventHandler<string> {
         });
     }
 
-    static toEventMapperKey(eventMapper: EventMapper) {
+    static toEventMapperKey(eventMapper: EventMapperType) {
         const key = toShortcutKey(eventMapper);
         const lastLayer = this.getLastLayer();
         return `${lastLayer}>${key}`;
@@ -237,7 +258,7 @@ export function checkIsControlKeys(event: KeyboardEvent) {
 }
 
 export function checkIsKeyboardEventMatch(
-    eventMappers: EventMapper[],
+    eventMappers: EventMapperType[],
     event: KeyboardEvent,
 ) {
     for (const eventMapper of KeyboardEventListener.filterEventMappersByPlatform(
@@ -254,7 +275,7 @@ export function checkIsKeyboardEventMatch(
     return false;
 }
 
-function genEventNames(eventMappers: EventMapper[]) {
+function genEventNames(eventMappers: EventMapperType[]) {
     const eventNames = KeyboardEventListener.filterEventMappersByPlatform(
         eventMappers,
     ).map((eventMapper) => {
@@ -263,7 +284,7 @@ function genEventNames(eventMappers: EventMapper[]) {
     return eventNames;
 }
 export function useKeyboardRegistering(
-    eventMappers: EventMapper[],
+    eventMappers: EventMapperType[],
     listener: ListenerType,
     deps: DependencyList,
 ) {

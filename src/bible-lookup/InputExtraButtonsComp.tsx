@@ -9,7 +9,7 @@ import {
 import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
-import type { EventMapper as KeyboardEventMapper } from '../event/KeyboardEventListener';
+import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import {
     toShortcutKey,
     useKeyboardRegistering,

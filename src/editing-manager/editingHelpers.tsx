@@ -8,7 +8,7 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import EditingHistoryManager from './EditingHistoryManager';
 import type AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
-import type { EventMapper as KeyboardEventMapper } from '../event/KeyboardEventListener';
+import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import { toShortcutKey } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 

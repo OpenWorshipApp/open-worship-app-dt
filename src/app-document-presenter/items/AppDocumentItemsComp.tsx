@@ -1,5 +1,5 @@
 import type {
-    EventMapper,
+    EventMapperType,
     KeyboardType,
 } from '../../event/KeyboardEventListener';
 import {
@@ -42,7 +42,7 @@ const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
     {};
 
 const arrows: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
-const eventMaps: EventMapper[] = arrows.map((key) => {
+const eventMaps: EventMapperType[] = arrows.map((key) => {
     return { key };
 });
 eventMaps.push({

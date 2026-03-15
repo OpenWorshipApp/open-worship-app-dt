@@ -2,7 +2,7 @@ import './AppContextMenuComp.scss';
 
 import type { CSSProperties } from 'react';
 
-import type { EventMapper } from '../event/KeyboardEventListener';
+import type { EventMapperType } from '../event/KeyboardEventListener';
 import { toShortcutKey } from '../event/KeyboardEventListener';
 import type { ContextMenuItemType } from './appContextMenuHelpers';
 import {
@@ -107,7 +107,7 @@ export default function AppContextMenuComp() {
     );
 }
 
-export function genContextMenuItemShortcutKey(eventMapper: EventMapper) {
+export function genContextMenuItemShortcutKey(eventMapper: EventMapperType) {
     return (
         <div className="context-menu-shortcut-key">
             <span className="">{toShortcutKey(eventMapper)}</span>

@@ -1,6 +1,6 @@
 import { createContext, use, useMemo } from 'react';
 
-import type { EventMapper } from '../event/KeyboardEventListener';
+import type { EventMapperType } from '../event/KeyboardEventListener';
 import KeyboardEventListener, {
     PlatformEnum,
     toShortcutKey,
@@ -69,7 +69,7 @@ export const BibleLookupTogglePopupContext = createContext<{
     isShowing: boolean;
     setIsShowing: (isShowing: boolean) => void;
 } | null>(null);
-const openBibleEventMaps: EventMapper[] =
+const openBibleEventMaps: EventMapperType[] =
     KeyboardEventListener.filterEventMappersByPlatform([
         {
             allControlKey: ['Ctrl'],
