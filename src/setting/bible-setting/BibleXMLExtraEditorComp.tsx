@@ -58,7 +58,7 @@ export default function BibleXMLExtraEditorComp({
             newLinesTitleMap: xmlBibleData.newLinesTitleMap,
             customVersesMap: xmlBibleData.customVersesMap,
         };
-    }, [xmlBibleData]);
+    }, [xmlBibleData, bibleKey]);
     const handleStore = useCallback(() => {}, []);
     const handleSave = useCallback(
         (newJsonData: DataType) => {

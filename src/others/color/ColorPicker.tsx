@@ -48,14 +48,17 @@ export default function ColorPicker({
     useAppEffect(() => {
         setLocalColor(color);
     }, [color]);
-    const applyNewColor = (newColor: string, event: MouseEvent) => {
-        const upperColor = newColor.toUpperCase() as AppColorType;
-        if (!onColorChange) {
-            return;
-        }
-        setLocalColor(upperColor);
-        onColorChange(upperColor, event);
-    };
+    const applyNewColor = useCallback(
+        (newColor: string, event: MouseEvent) => {
+            const upperColor = newColor.toUpperCase() as AppColorType;
+            if (!onColorChange) {
+                return;
+            }
+            setLocalColor(upperColor);
+            onColorChange(upperColor, event);
+        },
+        [onColorChange],
+    );
     const handleColorChanging = useCallback(
         (newColor: AppColorType | null, event: any) => {
             if (newColor === null) {

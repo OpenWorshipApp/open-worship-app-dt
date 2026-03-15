@@ -87,10 +87,10 @@ export default function ForegroundQuickTextComp() {
         },
         isFontSize: true,
     });
-    const getRenderedHtml = async () => {
+    const getRenderedHtml = useCallback(async () => {
         const htmlText = await renderMarkdown(markdownText);
         return htmlText.html;
-    };
+    }, [markdownText]);
     const handleShowing = useCallback(
         async (event: any, isForceChoosing = false) => {
             ScreenForegroundManager.setQuickText(

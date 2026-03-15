@@ -75,7 +75,7 @@ export default function RenderVerseOptionsComp({
                 target: newTarget,
             });
         },
-        [target],
+        [target, viewController, bibleItem],
     );
     const handleFullVersesClick = useCallback(() => {
         if (!verseList) {
@@ -88,7 +88,7 @@ export default function RenderVerseOptionsComp({
                 verseEnd: verseList.length,
             },
         });
-    }, [verseList]);
+    }, [verseList, viewController, bibleItem, target]);
     if (!verseList) {
         return null;
     }

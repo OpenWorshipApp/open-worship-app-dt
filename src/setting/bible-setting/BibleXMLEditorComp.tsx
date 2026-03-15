@@ -235,7 +235,7 @@ function BibleBooksMapXMLInputComp({
             onChange(innerText);
             editorStore.replaceValue(innerText);
         },
-        [onChange, editorStore, locale],
+        [onChange, editorStore],
     );
     const langCode = getLangCode(locale) ?? 'en';
     const handleResetting = useCallback(

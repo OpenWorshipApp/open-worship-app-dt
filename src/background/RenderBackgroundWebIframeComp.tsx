@@ -47,13 +47,16 @@ export default function RenderBackgroundWebIframeComp({
 }>) {
     const { scale, actualWidth, actualHeight } = useMemo(() => {
         const display = getDefaultScreenDisplay();
-        targetWidth = targetWidth ?? display.bounds.width;
-        targetHeight = targetHeight ?? display.bounds.height;
-        const scale = Math.max(width / targetWidth, height / targetHeight);
+        const effectiveWidth = targetWidth ?? display.bounds.width;
+        const effectiveHeight = targetHeight ?? display.bounds.height;
+        const scale = Math.max(
+            width / effectiveWidth,
+            height / effectiveHeight,
+        );
         return {
             scale,
-            actualWidth: targetWidth,
-            actualHeight: targetHeight,
+            actualWidth: effectiveWidth,
+            actualHeight: effectiveHeight,
         };
     }, [targetWidth, width, height, targetHeight]);
     return (

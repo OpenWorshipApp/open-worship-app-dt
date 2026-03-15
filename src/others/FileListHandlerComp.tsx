@@ -49,7 +49,7 @@ function RenderHeaderComp({
 }>) {
     const handleSetCreatingNew = useCallback(() => {
         setIsCreatingNew(true);
-    }, []);
+    }, [setIsCreatingNew]);
     return (
         <div
             className="card-header"
@@ -142,7 +142,10 @@ export default function FileListHandlerComp({
             : () => {
                   handleFilesSelectionMenuItem(fileSelectionOption);
               };
-    const handleItemAdding = useCallback(
+    // Do not use `useCallback` for `handleItemsAdding`, undefined value is
+    // needed for checking whether to show the menu item in
+    // `genContextMenuItems`
+    const handleItemAdding =
         onItemsAdding === undefined
             ? (handleItemsAdding ?? (() => {}))
             : (event: any) => {
@@ -150,9 +153,7 @@ export default function FileListHandlerComp({
                       genItemsAddingContextMenuItems(handleItemsAdding),
                       event,
                   );
-              },
-        [onItemsAdding, handleItemsAdding],
-    );
+              };
     return (
         <DirSourceContext value={dirSource}>
             <div

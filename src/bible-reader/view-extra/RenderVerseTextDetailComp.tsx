@@ -50,20 +50,27 @@ export default function RenderVerseTextDetailComp({
     };
     const viewController = useBibleItemsViewControllerContext();
     const isExtraVerses = extraVerseInfoList.length > 0;
-    const loadAudio = async (isForce?: boolean) => {
-        const isAudioEnabled = await checkIsAIAudioAvailableForBible(bibleItem);
-        if (!isAudioEnabled) {
-            return;
-        }
-        const { bibleVersesKey } = verseInfo;
-        setAudioSrcMap1(bibleVersesKey, undefined);
-        const speechFile = await bibleTextToSpeech(verseInfo, isForce);
-        if (speechFile === null) {
-            setAudioSrcMap1(bibleVersesKey, null);
-            return;
-        }
-        setAudioSrcMap1(bibleVersesKey, FileSource.getInstance(speechFile).src);
-    };
+    const loadAudio = useCallback(
+        async (isForce?: boolean) => {
+            const isAudioEnabled =
+                await checkIsAIAudioAvailableForBible(bibleItem);
+            if (!isAudioEnabled) {
+                return;
+            }
+            const { bibleVersesKey } = verseInfo;
+            setAudioSrcMap1(bibleVersesKey, undefined);
+            const speechFile = await bibleTextToSpeech(verseInfo, isForce);
+            if (speechFile === null) {
+                setAudioSrcMap1(bibleVersesKey, null);
+                return;
+            }
+            setAudioSrcMap1(
+                bibleVersesKey,
+                FileSource.getInstance(speechFile).src,
+            );
+        },
+        [bibleItem, verseInfo],
+    );
     const handleVerseClicking = useCallback(
         (event: any) => {
             if (getSelectedText()) {

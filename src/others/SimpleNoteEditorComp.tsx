@@ -91,10 +91,13 @@ export default function SimpleNoteEditorComp({
         },
         [store],
     );
-    const handleChanging = useCallback((event: any) => {
-        const value = event.target.value;
-        setCurrentText1(value);
-    }, []);
+    const handleChanging = useCallback(
+        (event: any) => {
+            const value = event.target.value;
+            setCurrentText1(value);
+        },
+        [setCurrentText1],
+    );
     const handleBlur = useCallback(async () => {
         await store.save();
         setIsSaved(true);

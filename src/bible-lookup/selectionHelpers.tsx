@@ -1,3 +1,5 @@
+import { type KeyboardEvent as ReactKeyboardEvent } from 'react';
+
 import type { KeyboardType } from '../event/KeyboardEventListener';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { bringDomToBottomView } from '../helper/helpers';
@@ -202,7 +204,7 @@ export function processSelection(
     optionClass: string,
     selectedClass: string,
     key: KeyboardType,
-    event: KeyboardEvent,
+    event: KeyboardEvent | ReactKeyboardEvent<any>,
 ) {
     if (!checkIsRenderFoundFocused()) {
         return;

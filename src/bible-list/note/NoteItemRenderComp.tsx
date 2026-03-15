@@ -52,11 +52,14 @@ export default function NoteItemRenderComp({
     note: Note;
 }>) {
     const [showingNote, setShowingNote] = useState(noteItem.isOpened);
-    const setShowingNote1 = (isOpened: boolean) => {
-        setShowingNote(isOpened);
-        noteItem.isOpened = isOpened;
-        note.updateAndSaveNoteItem(noteItem, true);
-    };
+    const setShowingNote1 = useCallback(
+        (isOpened: boolean) => {
+            setShowingNote(isOpened);
+            noteItem.isOpened = isOpened;
+            note.updateAndSaveNoteItem(noteItem, true);
+        },
+        [noteItem, note],
+    );
     useFileSourceRefreshEvents(['select'], filePath);
 
     const handleContextMenuOpening = useCallback(
@@ -130,7 +133,7 @@ export default function NoteItemRenderComp({
     }, [note, noteItem]);
     const handleToggleNote = useCallback(() => {
         setShowingNote1(!showingNote);
-    }, [showingNote]);
+    }, [showingNote, setShowingNote1]);
 
     if (noteItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;

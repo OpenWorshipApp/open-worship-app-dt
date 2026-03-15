@@ -185,7 +185,7 @@ export default function ScreenBibleTextShadow() {
     const htmlColorText = useMemo(() => {
         const htmlText = genColorHTML({ color, isWhite, isBlack });
         return htmlText;
-    }, [color]);
+    }, [color, isWhite, isBlack]);
     return (
         <div className="card-body">
             <div

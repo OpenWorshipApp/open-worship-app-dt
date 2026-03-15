@@ -165,7 +165,7 @@ function CountDownInSetComp({
         'foreground-minutes-setting',
         '5',
     );
-    const getTargetDateTime = () => {
+    const getTargetDateTime = useCallback(() => {
         const targetDatetime = new Date();
         targetDatetime.setSeconds(
             targetDatetime.getSeconds() +
@@ -174,7 +174,7 @@ function CountDownInSetComp({
                 1,
         );
         return targetDatetime;
-    };
+    }, [minutes, hours]);
     const handleShowing = useCallback(
         (event: any, isForceChoosing = false) => {
             const targetDateTime = getTargetDateTime();

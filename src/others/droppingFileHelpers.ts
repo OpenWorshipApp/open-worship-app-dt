@@ -192,7 +192,7 @@ export function genDroppingFileOnContextMenu(
             dirSource: DirSource,
             event: MouseEvent<HTMLElement>,
         ) => OptionalPromise<ContextMenuItemType[]>;
-        addItems?: () => void;
+        addItems?: (event: any) => void;
         onStartNewFile?: () => void;
     },
 ) {
@@ -202,7 +202,9 @@ export function genDroppingFileOnContextMenu(
     return async (event: MouseEvent<any>) => {
         const menuItems: ContextMenuItemType[] = [...(contextMenuItems ?? [])];
         if (addItems !== undefined) {
-            menuItems.push(...genItemsAddingContextMenuItems(addItems));
+            menuItems.push(
+                ...genItemsAddingContextMenuItems(addItems.bind(null, event)),
+            );
         }
         if (onStartNewFile !== undefined) {
             menuItems.push({

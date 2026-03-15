@@ -30,26 +30,32 @@ export default function SelectCustomColor({
     const [localColor, setLocalColor] = useState(
         removeOpacityFromHexColor(color || HEX_COLOR_WHITE) as AppColorType,
     );
-    const applyColor = (newColor: AppColorType) => {
-        setLocalColor(newColor);
-        let fakeEvent = createMouseEvent(0, 0);
-        if (inputRef.current !== null) {
-            fakeEvent = createMouseEvent(
-                inputRef.current.offsetLeft,
-                inputRef.current.offsetLeft,
-            );
-        }
-        onColorSelected(newColor, fakeEvent);
-    };
-    const setLocalColor1 = (newColor: string) => {
-        if (isNoImmediate) {
-            setLocalColor(newColor as AppColorType);
-            return;
-        }
-        attemptTimeout(() => {
-            applyColor(newColor as AppColorType);
-        });
-    };
+    const applyColor = useCallback(
+        (newColor: AppColorType) => {
+            setLocalColor(newColor);
+            let fakeEvent = createMouseEvent(0, 0);
+            if (inputRef.current !== null) {
+                fakeEvent = createMouseEvent(
+                    inputRef.current.offsetLeft,
+                    inputRef.current.offsetLeft,
+                );
+            }
+            onColorSelected(newColor, fakeEvent);
+        },
+        [onColorSelected],
+    );
+    const setLocalColor1 = useCallback(
+        (newColor: string) => {
+            if (isNoImmediate) {
+                setLocalColor(newColor as AppColorType);
+                return;
+            }
+            attemptTimeout(() => {
+                applyColor(newColor as AppColorType);
+            });
+        },
+        [isNoImmediate, attemptTimeout, applyColor],
+    );
     useAppEffect(() => {
         if (color) {
             setLocalColor(removeOpacityFromHexColor(color) as AppColorType);
@@ -69,11 +75,11 @@ export default function SelectCustomColor({
                 applyColor(localColor);
             }
         },
-        [localColor],
+        [localColor, applyColor],
     );
     const handleBlur = useCallback(() => {
         applyColor(localColor);
-    }, [localColor]);
+    }, [localColor, applyColor]);
     return (
         <>
             <span>{tran('Mix Color: ')}</span>

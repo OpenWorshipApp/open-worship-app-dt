@@ -233,6 +233,7 @@ export function useInitMonacoEditor({
             });
         }
         return newEditorStore;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     useAppEffect(() => {
         editorStore.toggleIsWrapText = () => {

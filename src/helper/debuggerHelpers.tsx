@@ -56,6 +56,7 @@ function useAppEffect_private(
 ) {
     const toKey = useMemo(() => {
         return key ?? effect.toString();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     for (const dep of deps) {
         if (Array.isArray(dep)) {
@@ -69,6 +70,7 @@ function useAppEffect_private(
     useEffect(() => {
         checkStore(toKey);
         return effect();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, deps);
 }
 
@@ -85,6 +87,7 @@ export function useAppEffectAsync<T extends MethodContextType>(
 ) {
     const toKey = useMemo(() => {
         return key ?? effectMethod.toString();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const isAllUndefined = deps === undefined && methods === undefined;
     const totalDeps = isAllUndefined
