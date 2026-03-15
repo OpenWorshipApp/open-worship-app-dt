@@ -264,6 +264,7 @@ export type PopupWindowFeaturesType = {
     appScale?: number;
     appAlwaysOnTop?: boolean;
     appAutoHideMenuBar?: boolean;
+    appResize?: boolean;
 };
 
 // features: 'popup,width=700,height=435,appCenter,appFollowScale'
@@ -275,6 +276,8 @@ function toFeatureRecord(featuresString: string) {
         const [key, value] = feature.split('=');
         if (value === undefined || value === 'true') {
             featuresRecord[key] = true;
+        } else if (value === 'false') {
+            featuresRecord[key] = false;
         } else {
             const numValue = Number(value);
             featuresRecord[key] = Number.isNaN(numValue) ? value : numValue;
@@ -400,6 +403,9 @@ function createPopupWindow(
     if (featuresRecord.appAutoHideMenuBar) {
         popupWin.setMenuBarVisibility(false);
         popupWin.setAutoHideMenuBar(true);
+    }
+    if (featuresRecord.appResize === false) {
+        popupWin.setResizable(false);
     }
     popupWin.loadURL(options.url);
     setTimeout(() => {
