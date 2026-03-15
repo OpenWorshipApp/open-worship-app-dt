@@ -288,16 +288,26 @@ export function initEventOther(appController: ElectronAppController) {
         if (typeof filePath !== 'string' || filePath.length === 0) {
             return;
         }
-        const resolved = path.resolve(filePath);
-        shell.showItemInFolder(resolved);
+        const resolvedFilePath = path.resolve(filePath);
+        shell.showItemInFolder(resolvedFilePath);
     });
 
-    onAsync(ipcMain, 'main:app:trash-path', (data: { path: string }) => {
+    onAsync(ipcMain, 'main:app:trash-path', async (data: { path: string }) => {
         if (typeof data.path !== 'string' || data.path.length === 0) {
-            return Promise.resolve();
+            return false;
         }
-        const resolved = path.resolve(data.path);
-        return shell.trashItem(resolved);
+        const resolvedFilePath = path.resolve(data.path);
+        for (let i = 0; i < 5; i++) {
+            try {
+                await shell.trashItem(resolvedFilePath);
+                return true;
+            } catch (error) {
+                console.error('Error trashing item:', error);
+            }
+            console.log('Retrying trashing item:', resolvedFilePath);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        return false;
     });
 
     onAsync(

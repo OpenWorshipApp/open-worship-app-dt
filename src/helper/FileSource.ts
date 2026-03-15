@@ -29,6 +29,10 @@ import { unlocking } from '../server/unlockingHelpers';
 import type { AnyObjectType } from './typeHelpers';
 import CacheManager from '../others/CacheManager';
 import { tran } from '../lang/langHelpers';
+import {
+    hideProgressBar,
+    showProgressBar,
+} from '../progress-bar/progressBarHelpers';
 
 export type SrcData = `data:${string}`;
 
@@ -373,10 +377,24 @@ export default class FileSource
     }
 
     async trash() {
-        await electronSendAsync<void>('main:app:trash-path', {
-            path: this.filePath,
-        });
-        FileSource.getInstance(this.filePath).fireDeleteEvent();
+        const filePath = this.filePath;
+        const progressBarKey = 'trash-file-' + filePath;
+        showProgressBar(progressBarKey);
+        const isTrashed = await electronSendAsync<boolean>(
+            'main:app:trash-path',
+            {
+                path: filePath,
+            },
+        );
+        hideProgressBar(progressBarKey);
+        if (!isTrashed) {
+            showSimpleToast(
+                tran('Trashing File'),
+                tran('Unable to trash file. Please try again.'),
+            );
+            return;
+        }
+        FileSource.getInstance(filePath).fireDeleteEvent();
     }
 
     static getSrcDataFromFrom(file: File | Blob) {
