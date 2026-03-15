@@ -2,6 +2,7 @@ import { useCallback, type MouseEvent } from 'react';
 
 import type DirSource from '../helper/DirSource';
 import { PathPreviewerComp } from './PathPreviewerComp';
+import { tran } from '../lang/langHelpers';
 
 export default function RenderPathTitleComp({
     dirSource,
@@ -30,13 +31,13 @@ export default function RenderPathTitleComp({
     return (
         <>
             <PathPreviewerComp dirPath={dirSource.dirPath} />
-            <div className="ps-2" title="Reload" onClick={handleReload}>
+            <div className="ps-2" title={tran('Reload')} onClick={handleReload}>
                 <i className="bi bi-arrow-clockwise" />
             </div>
             {addItems === undefined ? null : (
                 <div
                     className="app-add-items-button px-1"
-                    title="Add items"
+                    title={tran('Add items')}
                     onClick={handleAddItems}
                 >
                     <i className="bi bi-plus-lg" />
