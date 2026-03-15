@@ -8,6 +8,7 @@ import {
     WindowOpenHandlerResponse,
     BrowserWindowConstructorOptions,
     HandlerDetails,
+    WebContents,
 } from 'electron';
 
 import appInfo from '../package.json';
@@ -262,6 +263,7 @@ export type PopupWindowFeaturesType = {
     appAlignVertical?: 'top' | 'center' | 'bottom';
     appScale?: number;
     appAlwaysOnTop?: boolean;
+    appAutoHideMenuBar?: boolean;
 };
 
 // features: 'popup,width=700,height=435,appCenter,appFollowScale'
@@ -381,6 +383,31 @@ function getPopupWindowData(parentWin: BrowserWindow, options: HandlerDetails) {
     return { groupWindows, selfWindows, subDisplay, featuresRecord };
 }
 
+function createPopupWindow(
+    options: HandlerDetails,
+    webPreferences: WebPreferences | undefined,
+    featuresRecord: PopupWindowFeaturesType,
+    constructionOptions: BrowserWindowConstructorOptions,
+): WebContents {
+    const popupWin = new BrowserWindow(constructionOptions);
+    guardBrowsing(popupWin, webPreferences);
+    if (featuresRecord.appFollowScale) {
+        applyZoomFactor(popupWin);
+    }
+    if (featuresRecord.appAlwaysOnTop) {
+        popupWin.setAlwaysOnTop(true, 'screen-saver');
+    }
+    if (featuresRecord.appAutoHideMenuBar) {
+        popupWin.setMenuBarVisibility(false);
+        popupWin.setAutoHideMenuBar(true);
+    }
+    popupWin.loadURL(options.url);
+    setTimeout(() => {
+        popupWin.focus();
+    }, 100);
+    return popupWin.webContents;
+}
+
 export const POPUP_FRAME_NAME_PREFIX = 'popup_window';
 function handlePopupWindowOpen(
     win: BrowserWindow,
@@ -423,19 +450,12 @@ function handlePopupWindowOpen(
         createWindow: (
             constructionOptions: BrowserWindowConstructorOptions,
         ) => {
-            const popupWin = new BrowserWindow(constructionOptions);
-            guardBrowsing(popupWin, webPreferences);
-            if (featuresRecord.appFollowScale) {
-                applyZoomFactor(popupWin);
-            }
-            if (featuresRecord.appAlwaysOnTop) {
-                popupWin.setAlwaysOnTop(true, 'screen-saver');
-            }
-            popupWin.loadURL(options.url);
-            setTimeout(() => {
-                popupWin.focus();
-            }, 100);
-            return popupWin.webContents;
+            return createPopupWindow(
+                options,
+                webPreferences,
+                featuresRecord,
+                constructionOptions,
+            );
         },
     };
     return content;

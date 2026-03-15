@@ -316,6 +316,7 @@ export type PopupWindowFeaturesType = {
     appAlignVertical?: 'top' | 'center' | 'bottom';
     appScale?: number;
     appAlwaysOnTop?: boolean;
+    appAutoHideMenuBar?: boolean;
 };
 const DEFAULT_FEATURES: PopupWindowFeaturesType = {
     popup: true,
@@ -387,6 +388,7 @@ function openFindPage() {
             appAlignVertical: 'top',
             appFollowScale: true,
             appAlwaysOnTop: true,
+            appAutoHideMenuBar: true,
         },
     );
 }
