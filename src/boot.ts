@@ -13,7 +13,7 @@ export async function init(callback: () => void = () => {}) {
     if (fontFamily !== null) {
         style.innerHTML = `
         * {
-            font-family: '${fontFamily}', sans-serif !important;
+            font-family: '${fontFamily}', sans-serif;
         }
     `;
     }
