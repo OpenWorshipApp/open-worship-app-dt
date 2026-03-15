@@ -1,6 +1,6 @@
 import './RenderBookOptionsComp.scss';
 
-import { Fragment, useCallback, useMemo } from 'react';
+import { Fragment, useCallback } from 'react';
 
 import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import type { KeyboardType } from '../event/KeyboardEventListener';
@@ -111,10 +111,9 @@ export default function RenderBookOptionsComp({
     useKeyboardRegistering([{ key: 'ArrowUp' }], handleOnArrow, []);
     useKeyboardRegistering([{ key: 'ArrowDown' }], handleOnArrow, []);
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
-    const ghostElementCount = useMemo(() => {
-        const clientWidth = document.body.clientWidth;
-        return Math.ceil(clientWidth / BOOK_OPTION_WIDTH);
-    }, []);
+    const ghostElementCount = Math.ceil(
+        document.body.clientWidth / BOOK_OPTION_WIDTH,
+    );
 
     if (!matchedBooks) {
         return <div>{tran('No book options available')}</div>;

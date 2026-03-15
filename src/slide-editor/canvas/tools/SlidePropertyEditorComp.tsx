@@ -1,4 +1,4 @@
-import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';
@@ -81,15 +81,11 @@ function RenderDimEditComp() {
     const slide = useSelectedEditingSlideContext();
     const [width, setWidth] = useState(slide.metadata.width);
     const [height, setHeight] = useState(slide.metadata.height);
-    const hasChanged = useMemo(() => {
-        return (
-            width !== slide.metadata.width || height !== slide.metadata.height
-        );
-    }, [width, height, slide]);
-    const isScreenDiff = useMemo(() => {
-        const { bounds } = getDefaultScreenDisplay();
-        return width !== bounds.width || height !== bounds.height;
-    }, [width, height, slide]);
+    const hasChanged =
+        width !== slide.metadata.width || height !== slide.metadata.height;
+    const { bounds: screenBounds } = getDefaultScreenDisplay();
+    const isScreenDiff =
+        width !== screenBounds.width || height !== screenBounds.height;
     const isDiffOther = useIsDiffOtherSlides(slide, width, height);
     const applyDim = useCallback(
         async (newWidth: number, newHeight: number, isAll = false) => {
@@ -183,9 +179,7 @@ function RenderDimEditComp() {
 function RenderNameEditorComp() {
     const slide = useSelectedEditingSlideContext();
     const [name, setName] = useState(slide.name);
-    const hasChanged = useMemo(() => {
-        return name !== slide.name;
-    }, [name, slide]);
+    const hasChanged = name !== slide.name;
     const handleNameChanging = useCallback(() => {
         const appDocument = AppDocument.getInstance(slide.filePath);
         slide.name = name;

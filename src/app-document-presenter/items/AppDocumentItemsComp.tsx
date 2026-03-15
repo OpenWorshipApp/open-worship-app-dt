@@ -127,9 +127,8 @@ export default function AppDocumentItemsComp() {
         isPDFAppDocument,
         refreshPDFImages,
     } = useAppDocumentItems();
-    const appDocumentItemThumbnailSize = useMemo(() => {
-        return thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
-    }, [thumbSizeScale]);
+    const appDocumentItemThumbnailSize =
+        thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
     const isAnyItemSelected = useAnyItemSelected(varyAppDocumentItems);
     const handleNext = useCallback(
         (data: { isNext: boolean }) => {

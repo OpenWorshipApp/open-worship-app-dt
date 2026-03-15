@@ -1,5 +1,5 @@
 import type { ReactNode, LazyExoticComponent } from 'react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import AppSuspenseComp from './AppSuspenseComp';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
@@ -39,9 +39,7 @@ function RendTabComp<T>({
     setActiveTab?: (key: T) => void;
     activeTab: T;
 }>) {
-    const activeClass = useMemo(() => {
-        return activeTab === tab.key ? 'active' : '';
-    }, [activeTab, tab.key]);
+    const activeClass = activeTab === tab.key ? 'active' : '';
     const isOnScreen = useIsOnScreen(tab);
     const handleClick = useCallback(() => {
         setActiveTab?.(tab.key);

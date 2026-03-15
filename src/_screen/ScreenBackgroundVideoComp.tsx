@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useScreenBackgroundManagerEvents } from './managers/screenEventHelpers';
 import { useScreenManagerContext } from './managers/screenManagerHooks';
 import { calMediaSizes, genVideoIDFromSrc } from './screenHelpers';
@@ -19,10 +18,7 @@ export default function ScreenBackgroundVideoComp({
         },
         backgroundSrc,
     );
-    const videoId = useMemo(() => {
-        const newVideoId = genVideoIDFromSrc(backgroundSrc.src);
-        return newVideoId;
-    }, [backgroundSrc.src]);
+    const videoId = genVideoIDFromSrc(backgroundSrc.src);
     return (
         <video
             id={videoId}

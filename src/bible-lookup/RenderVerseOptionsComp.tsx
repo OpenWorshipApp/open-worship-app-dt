@@ -1,6 +1,6 @@
 import './RenderVersesOptionComp.scss';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import RenderVerseNumOptionComp, { mouseUp } from './RenderVerseNumOptionComp';
@@ -43,9 +43,7 @@ export default function RenderVerseOptionsComp({
     const [verseCount] = useAppStateAsync(() => {
         return getVersesCount(bibleKey, target.bookKey, target.chapter);
     }, [bibleKey, target.bookKey, target.chapter]);
-    const isFull = useMemo(() => {
-        return verseStart === 1 && verseCount && verseEnd === verseCount;
-    }, [verseCount, verseStart, verseEnd]);
+    const isFull = verseStart === 1 && verseCount && verseEnd === verseCount;
     useAppEffect(() => {
         document.body.addEventListener('mouseup', mouseUp);
         return () => {

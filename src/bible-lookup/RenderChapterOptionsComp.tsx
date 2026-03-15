@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import type { KeyboardType } from '../event/KeyboardEventListener';
@@ -157,10 +157,9 @@ export default function RenderChapterOptionsComp({
         [],
     );
     userEnteringSelected(OPTION_CLASS, OPTION_SELECTED_CLASS);
-    const ghostElementCount = useMemo(() => {
-        const clientWidth = document.body.clientWidth;
-        return Math.ceil(clientWidth / CHAPTER_OPTION_WIDTH);
-    }, []);
+    const ghostElementCount = Math.ceil(
+        document.body.clientWidth / CHAPTER_OPTION_WIDTH,
+    );
     if (matchedChapters === null) {
         return null;
     }

@@ -1,4 +1,4 @@
-import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 
@@ -74,9 +74,7 @@ export default function AppRangeComp({
     defaultSize: AppRangeDefaultType;
     isShowValue?: boolean;
 }>) {
-    const fixedSize = useMemo(() => {
-        return (defaultSize.step.toString().split('.')[1] || '').length;
-    }, [defaultSize]);
+    const fixedSize = (defaultSize.step.toString().split('.')[1] || '').length;
     const [localValue, setLocalValue] = useState(
         roundSize(value, defaultSize, fixedSize),
     );

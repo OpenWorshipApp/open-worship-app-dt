@@ -131,9 +131,7 @@ function VaryAppDocumentItemBodyRenderComp({
     children: ReactNode;
 }>) {
     const parentWidth = useShadowingParentWidth();
-    const actualParentWidth = useMemo(() => {
-        return parentWidth ?? slide.width;
-    }, [parentWidth, slide.width]);
+    const actualParentWidth = parentWidth ?? slide.width;
     const attachedBackgroundData = useAttachedBackgroundData(
         slide.filePath,
         slide.id,

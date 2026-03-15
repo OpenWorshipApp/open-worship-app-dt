@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { useCameraInfoList } from '../helper/cameraHelpers';
 import { useThumbnailWidthSetting } from './BackgroundMediaComp';
@@ -9,10 +9,7 @@ import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
 export default function BackgroundCamerasComp() {
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
     const cameraInfoList = useCameraInfoList();
-    const thumbnailHeight = useMemo(() => {
-        const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
-        return thumbnailHeight;
-    }, [thumbnailWidth]);
+    const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
     const handleWheel = useCallback(
         (event: any) => {
             handleCtrlWheel({

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import type Bible from './Bible';
 import BibleItemRenderComp from './BibleItemRenderComp';
@@ -13,9 +13,7 @@ export default function RenderBibleItemsComp({
 }>) {
     const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const items = bible.items;
-    const shouldAddBibleItem = useMemo(() => {
-        return bible.isDefault && showBibleLookupPopup !== null;
-    }, [bible.isDefault, showBibleLookupPopup]);
+    const shouldAddBibleItem = bible.isDefault && showBibleLookupPopup !== null;
     const handleAddBibleItem = useCallback(() => {
         showBibleLookupPopup?.();
     }, [showBibleLookupPopup]);

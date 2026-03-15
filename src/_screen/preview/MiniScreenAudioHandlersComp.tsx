@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import {
@@ -17,10 +17,8 @@ export default function MiniScreenAudioHandlersComp({
 }>) {
     const screenManager = useScreenManagerContext();
     const [isRepeating, setIsRepeating] = useState(true);
-    const fileFullName = useMemo(() => {
-        const decodeSrc = decodeURIComponent(src);
-        return decodeSrc.split('/').pop() || decodeSrc;
-    }, [src]);
+    const decodeSrc = decodeURIComponent(src);
+    const fileFullName = decodeSrc.split('/').pop() || decodeSrc;
     const handleTimeUpdate = useCallback(
         (event: any) => {
             const { screenBackgroundManager } = screenManager;

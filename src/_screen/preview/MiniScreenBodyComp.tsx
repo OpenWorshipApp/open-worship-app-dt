@@ -151,9 +151,7 @@ export default function MiniScreenBodyComp({
     const bibleItemViewController = useBibleItemsViewControllerContext();
     viewControllerAndScreenManagers(screenManagers, bibleItemViewController);
 
-    const previewWidth = useMemo(() => {
-        return DEFAULT_PREVIEW_SIZE * previewScale;
-    }, [previewScale]);
+    const previewWidth = DEFAULT_PREVIEW_SIZE * previewScale;
 
     const handleContextMenuOpening = useCallback((event: any) => {
         openContextMenu(event);

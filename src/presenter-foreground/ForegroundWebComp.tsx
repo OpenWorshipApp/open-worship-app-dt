@@ -122,9 +122,7 @@ function RenderWebInfoComp({
     getWidthScale: () => number;
 }>) {
     const [isPlaying, setIsPlaying] = useState(false);
-    const height = useMemo(() => {
-        return Math.round((width * 9) / 16);
-    }, [width]);
+    const height = Math.round((width * 9) / 16);
     const fileSource = useMemo(() => {
         return FileSource.getInstance(filePath);
     }, [filePath]);

@@ -1,4 +1,4 @@
-import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 
 import type DirSource from '../helper/DirSource';
 import { selectDirs } from '../server/fileHelpers';
@@ -20,15 +20,12 @@ export default function PathEditorComp({
         };
     }, [dirSource]);
 
-    const dirValidClassname = useMemo(() => {
-        let dirValidClassname = 'is-valid';
-        if (dirSource.isDirPathValid === null) {
-            dirValidClassname = '';
-        } else if (!dirSource.isDirPathValid) {
-            dirValidClassname = 'is-invalid';
-        }
-        return dirValidClassname;
-    }, [dirSource.isDirPathValid]);
+    let dirValidClassname = 'is-valid';
+    if (dirSource.isDirPathValid === null) {
+        dirValidClassname = '';
+    } else if (!dirSource.isDirPathValid) {
+        dirValidClassname = 'is-invalid';
+    }
 
     const handleDirSelecting = useCallback(async () => {
         const dirs = await selectDirs();
