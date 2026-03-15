@@ -35,6 +35,13 @@ export default function FinderAppComp() {
     }, [lookupText, setLookupText1]);
 
     useKeyboardRegistering([{ key: 'Escape' }], handleEscape, [handleEscape]);
+    useKeyboardRegistering(
+        [{ allControlKey: ['Ctrl'], key: 'q' }],
+        () => {
+            globalThis.close();
+        },
+        [],
+    );
 
     const handleEnter = useCallback(() => {
         if (!lookupText) {
