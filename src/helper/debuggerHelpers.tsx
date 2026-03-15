@@ -36,6 +36,9 @@ function warningMethod(key: string) {
 
 const storeMapper = new Map<string, StoreType>();
 function checkStore(toKey: string) {
+    if (!appProvider.systemUtils.isDev) {
+        return;
+    }
     const store = restore(toKey);
     storeMapper.set(toKey, store);
     if (store.count > THRESHOLD) {
@@ -46,7 +49,7 @@ function checkStore(toKey: string) {
     }
 }
 
-function useAppEffect1(
+function useAppEffect_private(
     effect: EffectCallback,
     deps: DependencyList,
     key?: string,
@@ -70,7 +73,7 @@ function useAppEffect1(
 }
 
 export const useAppEffect = appProvider.systemUtils.isDev
-    ? useAppEffect1
+    ? useAppEffect_private
     : useEffect;
 
 type MethodContextType = { [key: string]: any };
