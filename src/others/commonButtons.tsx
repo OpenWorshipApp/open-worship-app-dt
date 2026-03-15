@@ -76,7 +76,7 @@ const openBibleEventMaps: EventMapper[] =
             key: 'b',
         },
         {
-            platforms: [PlatformEnum.Mac],
+            platforms: [PlatformEnum.MacOS],
             mControlKey: ['Meta'],
             key: 'b',
         },

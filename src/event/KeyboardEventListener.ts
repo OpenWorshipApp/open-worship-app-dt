@@ -34,7 +34,7 @@ export type AllControlType = 'Ctrl' | 'Shift';
 
 export enum PlatformEnum {
     Windows = 'Windows',
-    Mac = 'Mac',
+    MacOS = 'Mac',
     Linux = 'Linux',
 }
 
@@ -214,7 +214,7 @@ export default class KeyboardEventListener extends EventHandler<string> {
             if (
                 (platforms.includes(PlatformEnum.Windows) &&
                     appProvider.systemUtils.isWindows) ||
-                (platforms.includes(PlatformEnum.Mac) &&
+                (platforms.includes(PlatformEnum.MacOS) &&
                     appProvider.systemUtils.isMac) ||
                 (platforms.includes(PlatformEnum.Linux) &&
                     appProvider.systemUtils.isLinux)
@@ -291,7 +291,7 @@ document.onkeydown = function (event) {
         checkIsKeyboardEventMatch(
             [
                 {
-                    platforms: [PlatformEnum.Mac],
+                    platforms: [PlatformEnum.MacOS],
                     key: 'q',
                     mControlKey: ['Meta'],
                 },

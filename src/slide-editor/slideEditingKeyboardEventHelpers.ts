@@ -114,6 +114,7 @@ export async function onSlideItemsKeyboardEvent(
                 [
                     { key: 'Delete' },
                     {
+                        platforms: [PlatformEnum.MacOS],
                         mControlKey: ['Meta'],
                         key: 'Backspace',
                     },
@@ -164,9 +165,9 @@ export async function onSlideItemsKeyboardEvent(
                 [
                     {
                         mControlKey: ['Meta'],
-                        key: 'v',
                         wControlKey: ['Ctrl'],
                         lControlKey: ['Ctrl'],
+                        key: 'v',
                     },
                 ],
                 event,
@@ -254,6 +255,7 @@ export async function onCanvasKeyboardEvent(
             [
                 { key: 'Delete' },
                 {
+                    platforms: [PlatformEnum.MacOS],
                     mControlKey: ['Meta'],
                     key: 'Backspace',
                 },
