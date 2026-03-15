@@ -34,7 +34,7 @@ export type AllControlType = 'Ctrl' | 'Shift';
 
 export enum PlatformEnum {
     Windows = 'Windows',
-    MacOS = 'Mac',
+    MacOS = 'MacOS',
     Linux = 'Linux',
 }
 
