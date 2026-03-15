@@ -1,4 +1,8 @@
-import { useMemo, type DependencyList } from 'react';
+import {
+    useMemo,
+    type DependencyList,
+    type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import appProvider from '../server/appProvider';
@@ -70,7 +74,7 @@ export type EventMapperType =
 export type RegisteredEventMapperType = EventMapperType & {
     listener: ListenerType;
 };
-export type ListenerType = ((event: KeyboardEvent) => void) | (() => void);
+export type ListenerType = ((event: KeyboardEvent | ReactKeyboardEvent<any>) => void) | (() => void);
 
 export function toShortcutKey(eventMapper: EventMapperType) {
     return KeyboardEventListener.toShortcutKey(eventMapper);
@@ -93,13 +97,15 @@ export default class KeyboardEventListener extends EventHandler<string> {
     static readonly _layers: AppWidgetType[] = ['root'];
     public static onMacQuitting: (() => void) | null = null;
 
-    static async checkShouldNext(event: KeyboardEvent) {
+    static async checkShouldNext(
+        event: KeyboardEvent | ReactKeyboardEvent<any>,
+    ) {
         if (event.defaultPrevented) {
             return false;
         }
         return true;
     }
-    async checkShouldNext(event: KeyboardEvent) {
+    async checkShouldNext(event: KeyboardEvent | ReactKeyboardEvent<any>) {
         return await KeyboardEventListener.checkShouldNext(event);
     }
 
@@ -112,7 +118,9 @@ export default class KeyboardEventListener extends EventHandler<string> {
     static removeLayer(layer: AppWidgetType) {
         this._layers.splice(this._layers.indexOf(layer), 1);
     }
-    static genEventKeyFromFiredEvent(event: KeyboardEvent) {
+    static genEventKeyFromFiredEvent(
+        event: KeyboardEvent | ReactKeyboardEvent<any>,
+    ) {
         const eventMapper = this.addControlKey(
             {
                 key: event.key,
@@ -122,11 +130,14 @@ export default class KeyboardEventListener extends EventHandler<string> {
         const eventKey = this.toEventMapperKey(eventMapper);
         return eventKey;
     }
-    static fireEvent(event: KeyboardEvent) {
+    static fireEvent(event: KeyboardEvent | ReactKeyboardEvent<any>) {
         const eventKey = this.genEventKeyFromFiredEvent(event);
         this.addPropEvent(eventKey, event);
     }
-    static addControlKey(eventMapper: EventMapperType, event: KeyboardEvent) {
+    static addControlKey(
+        eventMapper: EventMapperType,
+        event: KeyboardEvent | ReactKeyboardEvent<any>,
+    ) {
         const clonedEventMapper = cloneJson(eventMapper) as any;
         if (appProvider.systemUtils.isWindows) {
             clonedEventMapper.wControlKey = [];
@@ -253,13 +264,15 @@ export default class KeyboardEventListener extends EventHandler<string> {
     }
 }
 
-export function checkIsControlKeys(event: KeyboardEvent) {
+export function checkIsControlKeys(
+    event: KeyboardEvent | ReactKeyboardEvent<any>,
+) {
     return ['Meta', 'Alt', 'Control', 'Shift'].includes(event.key);
 }
 
 export function checkIsKeyboardEventMatch(
     eventMappers: EventMapperType[],
-    event: KeyboardEvent,
+    event: KeyboardEvent | ReactKeyboardEvent<any>,
 ) {
     for (const eventMapper of KeyboardEventListener.filterEventMappersByPlatform(
         eventMappers,
