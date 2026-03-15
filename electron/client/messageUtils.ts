@@ -1,4 +1,4 @@
-import { ipcRenderer, IpcRendererEvent } from 'electron';
+import { ipcRenderer, type IpcRendererEvent } from 'electron';
 import { messageChannels } from '../electronHelpers';
 
 const messageUtils = {

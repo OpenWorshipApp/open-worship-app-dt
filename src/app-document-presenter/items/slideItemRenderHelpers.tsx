@@ -16,7 +16,7 @@ import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 import { chooseColorNote } from '../../others/ItemColorNoteComp';
 import appProvider from '../../server/appProvider';
 import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
-import FileSource from '../../helper/FileSource';
+import type FileSource from '../../helper/FileSource';
 import { useWebCapturing } from '../../helper/domHelpers';
 import { tran } from '../../lang/langHelpers';
 

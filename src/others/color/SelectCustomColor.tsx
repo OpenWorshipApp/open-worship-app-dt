@@ -1,5 +1,5 @@
 import {
-    ChangeEvent,
+    type ChangeEvent,
     useCallback,
     useMemo,
     useRef,

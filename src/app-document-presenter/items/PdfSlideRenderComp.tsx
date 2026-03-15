@@ -8,7 +8,7 @@ import VaryAppDocumentItemRenderComp from './VaryAppDocumentItemRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { tran } from '../../lang/langHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
-import PdfAppDocument from '../../app-document-list/PdfAppDocument';
+import type PdfAppDocument from '../../app-document-list/PdfAppDocument';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,

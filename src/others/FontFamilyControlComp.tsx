@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useMemo } from 'react';
+import { type ChangeEvent, useCallback, useMemo } from 'react';
 
 import type { FontListType } from '../server/appProvider';
 import { useFontList } from '../server/fontHelpers';

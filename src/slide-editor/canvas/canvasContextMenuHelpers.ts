@@ -1,11 +1,11 @@
 import { tran } from '../../lang/langHelpers';
 import { getMimetypeExtensions, selectFiles } from '../../server/fileHelpers';
 import type CanvasItem from './CanvasItem';
-import CanvasController from './CanvasController';
+import type CanvasController from './CanvasController';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import Canvas from './Canvas';
 import {
-    ContextMenuItemType,
+    type ContextMenuItemType,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
 import {

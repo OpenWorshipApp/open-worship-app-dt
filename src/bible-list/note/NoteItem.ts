@@ -1,12 +1,16 @@
-import DragInf, { DragTypeEnum } from '../../helper/DragInf';
+import type DragInf from '../../helper/DragInf';
+import { DragTypeEnum } from '../../helper/DragInf';
 import { handleError } from '../../helper/errorHelpers';
 import { cloneJson } from '../../helper/helpers';
 import { ItemBase } from '../../helper/ItemBase';
 import { appError } from '../../helper/loggerHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
-import DocumentInf from '../../others/DocumentInf';
-import { ItemSourceInfBasic } from '../../others/ItemSourceInf';
-import { NoteItemMetadataType, NoteItemType } from './noteItemHelpers';
+import { type AnyObjectType } from '../../helper/typeHelpers';
+import type DocumentInf from '../../others/DocumentInf';
+import { type ItemSourceInfBasic } from '../../others/ItemSourceInf';
+import {
+    type NoteItemMetadataType,
+    type NoteItemType,
+} from './noteItemHelpers';
 
 export default class NoteItem
     extends ItemBase

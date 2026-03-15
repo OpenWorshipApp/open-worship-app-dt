@@ -4,7 +4,8 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 import CanvasController, {
     CanvasControllerContext,
 } from './canvas/CanvasController';
-import CanvasItem, {
+import type CanvasItem from './canvas/CanvasItem';
+import {
     checkCanvasItemsIncludes,
     CanvasItemsContext,
     SelectedCanvasItemsAndSetterContext,
@@ -12,7 +13,7 @@ import CanvasItem, {
 } from './canvas/CanvasItem';
 import AppDocument from '../app-document-list/AppDocument';
 import Canvas from './canvas/Canvas';
-import Slide from '../app-document-list/Slide';
+import type Slide from '../app-document-list/Slide';
 
 function useCanvasItemsData(canvasController: CanvasController) {
     const [canvasItems, setCanvasItems] = useState<CanvasItem<any>[]>([]);

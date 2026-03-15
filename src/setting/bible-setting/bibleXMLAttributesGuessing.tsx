@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 
 import type { LocaleType } from '../../lang/langHelpers';
 import { getLangCode, tran } from '../../lang/langHelpers';

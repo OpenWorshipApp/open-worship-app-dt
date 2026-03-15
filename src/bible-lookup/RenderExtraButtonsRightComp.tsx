@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback } from 'react';
+import { type ChangeEvent, useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { getSetting, useStateSettingBoolean } from '../helper/settingHelpers';

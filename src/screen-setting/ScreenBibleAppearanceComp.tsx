@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback } from 'react';
+import { type ChangeEvent, useCallback } from 'react';
 
 import type { AppColorType } from '../others/color/colorHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';

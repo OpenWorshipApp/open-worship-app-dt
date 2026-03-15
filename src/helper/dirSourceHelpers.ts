@@ -5,7 +5,7 @@ import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
 import DirSource from './DirSource';
 import type { FileSourceEventType } from './FileSource';
 import FileSource from './FileSource';
-import { fsCheckDirExist, MimetypeNameType } from '../server/fileHelpers';
+import { fsCheckDirExist, type MimetypeNameType } from '../server/fileHelpers';
 import { checkAreArraysEqual } from '../server/comparisonHelpers';
 import appProvider from '../server/appProvider';
 import { handleError } from './errorHelpers';

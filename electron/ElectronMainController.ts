@@ -1,8 +1,11 @@
 import { BrowserWindow, Menu, MenuItem } from 'electron';
 
-import { AnyObjectType, ScreenMessageType } from './electronEventListener';
+import {
+    type AnyObjectType,
+    type ScreenMessageType,
+} from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
-import ElectronSettingManager from './ElectronSettingManager';
+import type ElectronSettingManager from './ElectronSettingManager';
 import {
     attemptClosing,
     genWebPreferences,

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import AppDocument from '../../app-document-list/AppDocument';
-import { SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
+import type AppDocument from '../../app-document-list/AppDocument';
+import { type SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import NoteEditorRenderComp from '../../others/NoteEditorRenderComp';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';

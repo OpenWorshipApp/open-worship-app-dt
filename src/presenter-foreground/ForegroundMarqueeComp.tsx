@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback } from 'react';
+import { type ChangeEvent, useCallback } from 'react';
 
 import { DEFAULT_LOCALE, tran } from '../lang/langHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';

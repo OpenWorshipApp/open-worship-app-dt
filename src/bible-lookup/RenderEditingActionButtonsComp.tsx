@@ -1,4 +1,4 @@
-import { useCallback, useMemo, MouseEvent } from 'react';
+import { useCallback, useMemo, type MouseEvent } from 'react';
 
 import {
     toShortcutKey,

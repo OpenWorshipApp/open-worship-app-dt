@@ -6,7 +6,7 @@ import { handleError } from '../../helper/errorHelpers';
 import appProvider from '../../server/appProvider';
 import {
     initHttpRequest,
-    MessageCallbackType,
+    type MessageCallbackType,
     writeStreamToFile,
 } from '../../helper/bible-helpers/downloadHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';

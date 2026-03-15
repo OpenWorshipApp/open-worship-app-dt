@@ -25,7 +25,7 @@ import {
 import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
-import { OptionalPromise } from '../../helper/typeHelpers';
+import { type OptionalPromise } from '../../helper/typeHelpers';
 
 class ParentDirSource extends DirSource {
     _dirPath: string;

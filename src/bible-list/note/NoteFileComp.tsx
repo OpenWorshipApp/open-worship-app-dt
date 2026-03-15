@@ -1,7 +1,7 @@
 import { lazy, useCallback, useState } from 'react';
 
-import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
-import { AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
+import { type ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { type AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
 import { useAppEffectAsync } from '../../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import {

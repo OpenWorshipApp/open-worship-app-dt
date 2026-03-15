@@ -1,4 +1,4 @@
-import { use, useCallback, MouseEvent } from 'react';
+import { use, useCallback, type MouseEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';

@@ -1,4 +1,4 @@
-import { Fragment, useCallback, MouseEvent } from 'react';
+import { Fragment, useCallback, type MouseEvent } from 'react';
 
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';

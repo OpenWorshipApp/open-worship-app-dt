@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { app, net, protocol, session, WebContents } from 'electron';
+import { app, net, protocol, session, type WebContents } from 'electron';
 
 export const htmlFiles = {
     appDocumentEditor: 'appDocumentEditor.html',

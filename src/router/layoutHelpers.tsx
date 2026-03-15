@@ -11,8 +11,8 @@ import {
     setSelectedVaryAppDocument,
     setSelectedEditingSlide,
     preloadAttachedBackground,
-    SelectedAppDocumentContextType,
-    SelectedSlideContextType,
+    type SelectedAppDocumentContextType,
+    type SelectedSlideContextType,
 } from '../app-document-list/appDocumentHelpers';
 import { getSelectedLyric, setSelectedLyric } from '../lyric-list/lyricHelpers';
 import type Lyric from '../lyric-list/Lyric';
@@ -20,7 +20,7 @@ import type { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHe
 import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
-import { AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
+import { type AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
 import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardEventHelpers';
 
 export function genLayoutTabs() {

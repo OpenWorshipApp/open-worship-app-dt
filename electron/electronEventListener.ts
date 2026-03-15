@@ -1,13 +1,13 @@
 import path from 'node:path';
 import electron, {
-    FileFilter,
-    IpcMain,
+    type FileFilter,
+    type IpcMain,
     nativeTheme,
     shell,
     systemPreferences,
 } from 'electron';
 
-import ElectronAppController from './ElectronAppController';
+import type ElectronAppController from './ElectronAppController';
 import {
     attemptClosing,
     captureWebScreenShot,

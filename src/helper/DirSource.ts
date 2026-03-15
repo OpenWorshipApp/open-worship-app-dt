@@ -15,7 +15,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from './errorHelpers';
 import FileSource from './FileSource';
 import { getSetting, setSetting } from './settingHelpers';
-import { OptionalPromise } from './typeHelpers';
+import { type OptionalPromise } from './typeHelpers';
 
 export type DirSourceEventType = 'refresh' | 'reload';
 

@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, type CSSProperties } from 'react';
+import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import {

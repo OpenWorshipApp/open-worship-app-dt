@@ -5,7 +5,7 @@ import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
 import { onCanvasKeyboardEvent } from '../slideEditingKeyboardEventHelpers';
 import { MultiContextRender } from '../../helper/MultiContextRender';
-import { useEditingCanvasContextValue } from '../canvasEditingHelpers';
+import { type useEditingCanvasContextValue } from '../canvasEditingHelpers';
 import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import CanvasNoteContainerHandlerComp from '../note/CanvasNoteContainerHandlerComp';

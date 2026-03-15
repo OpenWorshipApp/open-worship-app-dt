@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useMemo } from 'react';
+import { type ChangeEvent, useCallback, useMemo } from 'react';
 import { Uri } from 'monaco-editor';
 
 import { tran } from '../lang/langHelpers';

@@ -1,6 +1,6 @@
 import './SlideAutoPlayComp.scss';
 
-import { ChangeEvent, useCallback, type CSSProperties } from 'react';
+import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
 
 import {
     useStateSettingBoolean,

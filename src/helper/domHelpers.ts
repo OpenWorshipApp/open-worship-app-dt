@@ -14,7 +14,7 @@ import {
     checkIsVerticalAtBottom,
 } from './helpers';
 import { useAppEffectAsync } from './debuggerHelpers';
-import FileSource from './FileSource';
+import type FileSource from './FileSource';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import CacheManager from '../others/CacheManager';
 import appProvider from '../server/appProvider';

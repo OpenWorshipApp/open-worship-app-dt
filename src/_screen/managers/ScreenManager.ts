@@ -16,7 +16,8 @@ import ScreenManagerBase from './ScreenManagerBase';
 import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
 import type { ScreenMessageType } from '../screenTypeHelpers';
-import ScreenEventHandler, { GroupMembershipInf } from './ScreenEventHandler';
+import { type GroupMembershipInf } from './ScreenEventHandler';
+import type ScreenEventHandler from './ScreenEventHandler';
 
 function setGroupMembershipInf(
     screenManagerBase: ScreenManagerBase,

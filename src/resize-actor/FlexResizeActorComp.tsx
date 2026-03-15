@@ -17,7 +17,7 @@ import imageLeft from './images/left.png';
 import imageRight from './images/right.png';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import {
-    ContextMenuItemType,
+    type ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';

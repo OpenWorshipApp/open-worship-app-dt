@@ -1,4 +1,4 @@
-import Note from './Note';
+import type Note from './Note';
 import NoteItemRenderComp from './NoteItemRenderComp';
 
 export default function RenderNoteItemsComp({

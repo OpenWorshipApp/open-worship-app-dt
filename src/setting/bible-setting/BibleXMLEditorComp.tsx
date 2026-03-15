@@ -6,9 +6,9 @@ import {
     allLocalesMap,
     getLangCode,
     getLangDataAsync,
-    LanguageDataType,
+    type LanguageDataType,
     languageNameMap,
-    LocaleType,
+    type LocaleType,
     tran,
 } from '../../lang/langHelpers';
 import type { EditorStoreType } from '../../helper/monacoEditorHelpers';
@@ -20,7 +20,7 @@ import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
 import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers1';
 import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
-import { BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
+import { type BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
 import {
     createMouseEvent,
     showAppContextMenu,

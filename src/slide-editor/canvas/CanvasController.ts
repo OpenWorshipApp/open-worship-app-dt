@@ -1,5 +1,5 @@
 import EventHandler from '../../event/EventHandler';
-import Canvas from './Canvas';
+import type Canvas from './Canvas';
 import type { CanvasItemPropsType } from './CanvasItem';
 import type CanvasItem from './CanvasItem';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
@@ -17,7 +17,7 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import { createContext, use } from 'react';
 import { showCanvasItemContextMenu } from './canvasContextMenuHelpers';
-import AppDocument from '../../app-document-list/AppDocument';
+import type AppDocument from '../../app-document-list/AppDocument';
 import { allArrows } from '../../event/KeyboardEventListener';
 
 const EDITOR_SCALE_SETTING_NAME = 'canvas-editor-scale';

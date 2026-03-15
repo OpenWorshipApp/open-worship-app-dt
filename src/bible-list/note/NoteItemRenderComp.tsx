@@ -1,7 +1,7 @@
-import { useCallback, useState, type MouseEvent, DragEvent } from 'react';
+import { useCallback, useState, type MouseEvent, type DragEvent } from 'react';
 
-import NoteItem from './NoteItem';
-import { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import type NoteItem from './NoteItem';
+import { type ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { useFileSourceRefreshEvents } from '../../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,

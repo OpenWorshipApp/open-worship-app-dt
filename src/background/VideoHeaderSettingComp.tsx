@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback } from 'react';
+import { type ChangeEvent, useCallback } from 'react';
 
 import { BACKGROUND_VIDEO_FADING_SETTING_NAME } from '../_screen/managers/ScreenBackgroundManager';
 import { useStateSettingBoolean } from '../helper/settingHelpers';

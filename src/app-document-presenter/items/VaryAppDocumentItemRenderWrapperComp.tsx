@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback } from 'react';
+import { type MouseEvent, useCallback } from 'react';
 
 import SlideRenderComp from './SlideRenderComp';
 import PdfSlideRenderComp from './PdfSlideRenderComp';
@@ -7,7 +7,7 @@ import { useSelectedEditingSlideSetterContext } from '../../app-document-list/ap
 import PdfSlide from '../../app-document-list/PdfSlide';
 import Slide from '../../app-document-list/Slide';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
-import { AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
+import { type AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
 
 function selectVaryAppDocumentItem(
     {

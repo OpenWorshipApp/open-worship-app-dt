@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron';
 
-import { AnyObjectType } from './electronEventListener';
+import { type AnyObjectType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import { htmlFiles } from './fsServe';
 import {

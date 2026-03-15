@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import { useAppEffect, useAppStateAsync } from '../../helper/debuggerHelpers';
 import {

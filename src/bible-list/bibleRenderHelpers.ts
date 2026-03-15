@@ -24,7 +24,7 @@ import {
     getNewLineTitlesHtmlText,
 } from '../helper/bible-helpers/bibleLogicHelpers3';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
-import { LocaleType } from '../lang/langHelpers';
+import { type LocaleType } from '../lang/langHelpers';
 
 export type BibleTargetType = {
     bookKey: string;

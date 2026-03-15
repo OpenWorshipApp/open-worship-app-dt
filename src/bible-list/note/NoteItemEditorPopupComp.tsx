@@ -14,7 +14,7 @@ import {
     useGenDirSourceReload,
 } from '../../helper/dirSourceHelpers';
 import appProvider from '../../server/appProvider';
-import NoteItem from './NoteItem';
+import type NoteItem from './NoteItem';
 
 async function getNoteAndNoteItem() {
     const fileFullName = getParamFileFullName();

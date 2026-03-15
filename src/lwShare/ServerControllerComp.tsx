@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 
 import type { StatusDataType, StatusType } from './lwShareHelpers';
 import { controller } from './lwShareHelpers';

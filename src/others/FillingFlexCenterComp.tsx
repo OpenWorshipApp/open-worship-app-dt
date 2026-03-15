@@ -1,4 +1,4 @@
-import { CSSProperties, useMemo } from 'react';
+import { type CSSProperties, useMemo } from 'react';
 
 export default function FillingFlexCenterComp({
     width,

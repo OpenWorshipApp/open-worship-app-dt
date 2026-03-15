@@ -1,12 +1,12 @@
-import { CSSProperties, useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 
 import SimpleNoteEditorComp, {
-    SimpleNoteEditorStoreType,
+    type SimpleNoteEditorStoreType,
 } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
-import NoteItem from './NoteItem';
-import Note from './Note';
+import type NoteItem from './NoteItem';
+import type Note from './Note';
 import { tran } from '../../lang/langHelpers';
 
 class NoteTitleStore implements SimpleNoteEditorStoreType {

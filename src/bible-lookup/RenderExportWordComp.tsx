@@ -1,8 +1,7 @@
 import { tran } from '../lang/langHelpers';
 
-import BibleItemsViewController, {
-    useBibleItemsViewControllerContext,
-} from '../bible-reader/BibleItemsViewController';
+import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
+import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { exportToWordDocument } from '../bible-list/bibleHelpers';
 
 async function handleWordExporting(

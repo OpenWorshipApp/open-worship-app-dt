@@ -1,6 +1,6 @@
 import AppDocument from '../app-document-list/AppDocument';
-import { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
-import Slide from '../app-document-list/Slide';
+import { type VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
+import type Slide from '../app-document-list/Slide';
 import {
     checkIsControlKeys,
     checkIsKeyboardEventMatch,
@@ -9,8 +9,8 @@ import {
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import Canvas from './canvas/Canvas';
-import CanvasController from './canvas/CanvasController';
-import CanvasItem from './canvas/CanvasItem';
+import type CanvasController from './canvas/CanvasController';
+import type CanvasItem from './canvas/CanvasItem';
 
 function handleHistory(appDocument: AppDocument, event: any) {
     if (

@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';

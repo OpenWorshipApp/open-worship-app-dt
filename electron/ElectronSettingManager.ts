@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import electron, { BrowserWindow, nativeTheme } from 'electron';
+import electron, { type BrowserWindow, nativeTheme } from 'electron';
 
 import { htmlFiles } from './fsServe';
 import { genTimeoutAttempt } from './electronHelpers';

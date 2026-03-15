@@ -10,7 +10,7 @@ import {
 import VaryAppDocumentItemRenderComp from './VaryAppDocumentItemRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import SlideRendererComp from './SlideRendererComp';
-import AppDocument from '../../app-document-list/AppDocument';
+import type AppDocument from '../../app-document-list/AppDocument';
 
 function useData() {
     const selectedEditingSlideContext = use(SelectedEditingSlideContext);

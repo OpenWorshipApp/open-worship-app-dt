@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
 import type DirSource from '../helper/DirSource';
 import { selectDirs } from '../server/fileHelpers';

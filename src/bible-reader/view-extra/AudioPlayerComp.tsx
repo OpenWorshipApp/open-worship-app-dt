@@ -1,4 +1,4 @@
-import { SyntheticEvent, useCallback } from 'react';
+import { type SyntheticEvent, useCallback } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';

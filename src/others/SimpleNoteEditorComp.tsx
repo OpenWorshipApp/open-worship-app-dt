@@ -1,4 +1,4 @@
-import { CSSProperties, useCallback, useMemo, useState } from 'react';
+import { type CSSProperties, useCallback, useMemo, useState } from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import { checkIsKeyboardEventMatch } from '../event/KeyboardEventListener';

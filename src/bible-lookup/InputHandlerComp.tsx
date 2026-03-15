@@ -1,5 +1,5 @@
 import {
-    ChangeEvent,
+    type ChangeEvent,
     createContext,
     createRef,
     Fragment,

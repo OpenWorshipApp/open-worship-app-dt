@@ -1,6 +1,6 @@
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
-import Slide from '../../app-document-list/Slide';
-import AppDocument from '../../app-document-list/AppDocument';
+import type Slide from '../../app-document-list/Slide';
+import type AppDocument from '../../app-document-list/AppDocument';
 import AppDocumentNoteEditorComp from './AppDocumentNoteEditorComp';
 import SlideNoteEditorComp from './SlideNoteEditorComp';
 

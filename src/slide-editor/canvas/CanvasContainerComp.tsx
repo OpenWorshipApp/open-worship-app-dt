@@ -12,7 +12,7 @@ import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from './canvasHelpers';
 import { tran } from '../../lang/langHelpers';
 import { MultiContextRender } from '../../helper/MultiContextRender';
-import { useEditingCanvasContextValue } from '../canvasEditingHelpers';
+import { type useEditingCanvasContextValue } from '../canvasEditingHelpers';
 import ShadowingFillParentWidthComp, {
     useShadowingParentWidth,
 } from '../../others/ShadowingFillParentWidthComp';

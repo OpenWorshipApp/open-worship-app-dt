@@ -5,17 +5,17 @@ import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
 import { cloneJson, toMaxId } from '../../helper/helpers';
 import { getSetting } from '../../helper/settingHelpers';
-import { AnyObjectType } from '../../helper/typeHelpers';
-import DocumentInf from '../../others/DocumentInf';
-import { ItemSourceInfBasic } from '../../others/ItemSourceInf';
+import { type AnyObjectType } from '../../helper/typeHelpers';
+import type DocumentInf from '../../others/DocumentInf';
+import { type ItemSourceInfBasic } from '../../others/ItemSourceInf';
 import {
-    MimetypeNameType,
+    type MimetypeNameType,
     fsListFilesWithMimetype,
     createNewFileDetail,
 } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import NoteItem from './NoteItem';
-import { NoteItemType } from './noteItemHelpers';
+import { type NoteItemType } from './noteItemHelpers';
 
 export type NoteType = {
     items: NoteItemType[];

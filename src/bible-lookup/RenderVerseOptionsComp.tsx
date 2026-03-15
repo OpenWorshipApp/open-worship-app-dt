@@ -12,7 +12,7 @@ import {
     useBibleFontFamily,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type BibleItem from '../bible-list/BibleItem';
-import { BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import { type BibleTargetType } from '../bible-list/bibleRenderHelpers';
 
 export default function RenderVerseOptionsComp({
     bibleItem,

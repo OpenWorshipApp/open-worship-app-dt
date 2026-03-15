@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { BrowserWindow } from 'electron';
+import { type BrowserWindow } from 'electron';
 
 import { rootUrl as fsServeRootUrl } from './fsServe';
 import { isDev } from './electronHelpers';

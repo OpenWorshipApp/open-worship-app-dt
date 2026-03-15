@@ -4,11 +4,11 @@ import {
     shell,
     clipboard,
     BrowserWindow,
-    WebPreferences,
-    WindowOpenHandlerResponse,
-    BrowserWindowConstructorOptions,
-    HandlerDetails,
-    WebContents,
+    type WebPreferences,
+    type WindowOpenHandlerResponse,
+    type BrowserWindowConstructorOptions,
+    type HandlerDetails,
+    type WebContents,
 } from 'electron';
 
 import appInfo from '../package.json';

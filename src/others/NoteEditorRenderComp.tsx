@@ -1,6 +1,6 @@
 import { tran } from '../lang/langHelpers';
 import SimpleNoteEditorComp, {
-    SimpleNoteEditorStoreType,
+    type SimpleNoteEditorStoreType,
 } from './SimpleNoteEditorComp';
 
 export default function NoteEditorRenderComp({

@@ -1,5 +1,5 @@
 import {
-    ContextMenuItemType,
+    type ContextMenuItemType,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
 import { defaultDataDirNames } from '../../helper/constants';
@@ -9,7 +9,7 @@ import { tran } from '../../lang/langHelpers';
 import { addExtension } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import Note from './Note';
-import NoteItem from './NoteItem';
+import type NoteItem from './NoteItem';
 
 export async function moveNoteItemTo(
     event: any,

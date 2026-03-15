@@ -55,8 +55,8 @@ import type {
 } from './appDocumentTypeHelpers';
 import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
 import {
-    EventMapperType,
-    AllControlType as KeyboardControlType,
+    type EventMapperType,
+    type AllControlType as KeyboardControlType,
 } from '../event/KeyboardEventListener';
 
 import libOfficeLogo from './liboffice-logo.png';
@@ -68,7 +68,7 @@ import {
     getSelectedVaryAppDocumentFilePathWithEnsure,
     setSelectedVaryAppDocumentFilePath,
 } from './selectedVaryAppDocumentHelpers';
-import { OptionalPromise } from '../helper/typeHelpers';
+import { type OptionalPromise } from '../helper/typeHelpers';
 import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 

@@ -11,7 +11,9 @@ import {
     dirSourceSettingNames,
     screenManagerSettingNames,
 } from '../../helper/constants';
-import ScreenEventHandler, { GroupMembershipInf } from './ScreenEventHandler';
+import ScreenEventHandler, {
+    type GroupMembershipInf,
+} from './ScreenEventHandler';
 import type ScreenManagerBase from './ScreenManagerBase';
 import type ScreenEffectManager from './ScreenEffectManager';
 import appProvider from '../../server/appProvider';

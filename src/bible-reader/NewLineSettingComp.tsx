@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useState } from 'react';
+import { type ChangeEvent, useCallback, useState } from 'react';
 
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 import { tran } from '../lang/langHelpers';

@@ -1,4 +1,4 @@
-import { ChangeEvent, type KeyboardEvent } from 'react';
+import { type ChangeEvent, type KeyboardEvent } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 
 import { useBibleFindController } from './BibleFindController';

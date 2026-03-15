@@ -10,7 +10,7 @@ import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import { useStateSettingString } from '../helper/settingHelpers';
 import SlideAutoPlayComp, {
-    NextDataType,
+    type NextDataType,
 } from '../slide-auto-play/SlideAutoPlayComp';
 import { getScreenManagerByScreenId } from '../_screen/managers/screenManagerHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';

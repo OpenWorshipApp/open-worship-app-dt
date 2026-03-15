@@ -2,7 +2,7 @@ import { createRoot } from 'react-dom/client';
 import MiniScreenAppComp from './MiniScreenAppComp';
 import { getScreenManagerBase } from '../managers/screenManagerBaseHelpers';
 import type ScreenManagerBase from '../managers/ScreenManagerBase';
-import { DetailedHTMLProps, HTMLAttributes } from 'react';
+import { type DetailedHTMLProps, type HTMLAttributes } from 'react';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 
 const HTML_TAG_NAME = 'mini-screen-previewer-custom-html';

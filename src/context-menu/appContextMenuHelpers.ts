@@ -4,7 +4,7 @@ import type { ReactElement, ReactNode, CSSProperties } from 'react';
 import { useState } from 'react';
 
 import KeyboardEventListener, {
-    EventMapperType,
+    type EventMapperType,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
 import { getWindowDim } from '../helper/helpers';

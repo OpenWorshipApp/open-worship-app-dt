@@ -1,6 +1,6 @@
 import { app, Menu, shell } from 'electron';
 
-import ElectronAppController from './ElectronAppController';
+import type ElectronAppController from './ElectronAppController';
 import {
     copyDebugInfoToClipboard,
     goDownload,

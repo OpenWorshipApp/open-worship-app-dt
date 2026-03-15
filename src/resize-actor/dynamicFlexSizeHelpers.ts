@@ -1,8 +1,8 @@
 import {
     getFlexSizeSetting,
-    FlexSizeType,
-    QuickMoveType,
-    DisabledType,
+    type FlexSizeType,
+    type QuickMoveType,
+    type DisabledType,
     setDisablingSetting,
     keyToDataFlexSizeKey,
 } from './flexSizeHelpers';

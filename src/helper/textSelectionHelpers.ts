@@ -5,7 +5,7 @@ import {
     elementDivider,
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
-import { getLangCode, LocaleType, tran } from '../lang/langHelpers';
+import { getLangCode, type LocaleType, tran } from '../lang/langHelpers';
 
 function getSelectedTextElement() {
     const selection = globalThis.getSelection();
