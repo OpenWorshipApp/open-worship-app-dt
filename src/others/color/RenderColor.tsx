@@ -10,7 +10,7 @@ import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 function showContextMenu(event: any, color: AppColorType) {
     const menuItems: ContextMenuItemType[] = [
         {
-            menuElement: `Copy to '${color}' to clipboard`,
+            menuElement: `Copy '${color}' to clipboard`,
             onSelect: () => {
                 copyToClipboard(color);
             },
