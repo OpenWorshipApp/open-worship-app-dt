@@ -35,7 +35,7 @@ export default function BibleCrossReferencePreviewerComp() {
         return () => {
             viewController.setBibleVerseKey = (_: string) => {};
         };
-    }, []);
+    }, [viewController]);
     if (bileItem === null) {
         return (
             <div>

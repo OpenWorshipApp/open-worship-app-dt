@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import ColorPicker from '../others/color/ColorPicker';
 import {
@@ -43,16 +43,16 @@ export default function BackgroundColorsComp() {
     const [selectedBackgroundSrcList, setSelectedBackgroundSrcList] = useState<
         [string, BackgroundSrcType][] | null
     >(null);
-    const initBackgroundSrcList = async () => {
+    const initBackgroundSrcList = useCallback(async () => {
         setSelectedBackgroundSrcList(
             ScreenBackgroundManager.getBackgroundSrcListByType('color'),
         );
-    };
+    }, []);
     useAppEffect(() => {
         if (selectedBackgroundSrcList === null) {
             initBackgroundSrcList();
         }
-    }, [selectedBackgroundSrcList]);
+    }, [selectedBackgroundSrcList, initBackgroundSrcList]);
     useScreenBackgroundManagerEvents(
         ['update'],
         undefined,

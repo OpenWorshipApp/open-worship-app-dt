@@ -1,5 +1,5 @@
 import type { KeyboardEvent } from 'react';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { useBibleFindController } from './BibleFindController';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -53,24 +53,27 @@ export default function BibleFindHeaderComp({
             setFindText = () => {};
         };
     }, []);
-    const keyUpHandling = (event: KeyboardEvent<HTMLInputElement>) => {
-        if (bibleFindController.menuControllerSession !== null) {
-            if (event.key === 'Enter') {
-                bibleFindController.closeSuggestionMenu();
+    const keyUpHandling = useCallback(
+        (event: KeyboardEvent<HTMLInputElement>) => {
+            if (bibleFindController.menuControllerSession !== null) {
+                if (event.key === 'Enter') {
+                    bibleFindController.closeSuggestionMenu();
+                }
+                return;
             }
-            return;
-        }
-        if (['Enter', 'Escape'].includes(event.key)) {
-            event.preventDefault();
-            event.stopPropagation();
-            const isEnterKey = event.key === 'Enter';
-            const newText = isEnterKey ? text : '';
-            setText(newText);
-            attemptTimeout(() => {
-                handleFinding(newText, isEnterKey);
-            }, true);
-        }
-    };
+            if (['Enter', 'Escape'].includes(event.key)) {
+                event.preventDefault();
+                event.stopPropagation();
+                const isEnterKey = event.key === 'Enter';
+                const newText = isEnterKey ? text : '';
+                setText(newText);
+                attemptTimeout(() => {
+                    handleFinding(newText, isEnterKey);
+                }, true);
+            }
+        },
+        [bibleFindController, text, handleFinding, attemptTimeout],
+    );
     // empty deps is intentional to only trigger finding on the first render
     useAppEffect(() => {
         handleFinding(text);

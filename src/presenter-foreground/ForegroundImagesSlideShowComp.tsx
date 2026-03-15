@@ -1,7 +1,7 @@
 import '../background/BackgroundImagesComp.scss';
 
 import type { CSSProperties } from 'react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
@@ -9,7 +9,9 @@ import BackgroundMediaComp from '../background/BackgroundMediaComp';
 import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import { useStateSettingString } from '../helper/settingHelpers';
-import SlideAutoPlayComp from '../slide-auto-play/SlideAutoPlayComp';
+import SlideAutoPlayComp, {
+    NextDataType,
+} from '../slide-auto-play/SlideAutoPlayComp';
 import { getScreenManagerByScreenId } from '../_screen/managers/screenManagerHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -208,6 +210,22 @@ export default function ForegroundImagesSlideShowComp() {
             isMini={isMini}
         />
     );
+    const handleNext = useCallback(
+        (data: NextDataType) => {
+            if (filePaths === null || filePaths.length === 0) {
+                return;
+            }
+            handleNextItemSelecting({
+                srcList: filePaths.map((filePath) => {
+                    const fileSource = FileSource.getInstance(filePath);
+                    return fileSource.src;
+                }),
+                scaleType: scaleType,
+                isNext: data.isNext,
+            });
+        },
+        [filePaths, scaleType],
+    );
     return (
         <ForegroundLayoutComp
             target="images-slide-show"
@@ -236,23 +254,7 @@ export default function ForegroundImagesSlideShowComp() {
                     />
                 </FilePathLoadedContext>
                 {isAnyItemSelected ? (
-                    <SlideAutoPlayComp
-                        prefix="images"
-                        onNext={(data) => {
-                            if (filePaths === null || filePaths.length === 0) {
-                                return;
-                            }
-                            handleNextItemSelecting({
-                                srcList: filePaths.map((filePath) => {
-                                    const fileSource =
-                                        FileSource.getInstance(filePath);
-                                    return fileSource.src;
-                                }),
-                                scaleType: scaleType,
-                                isNext: data.isNext,
-                            });
-                        }}
-                    />
+                    <SlideAutoPlayComp prefix="images" onNext={handleNext} />
                 ) : null}
             </div>
         </ForegroundLayoutComp>

@@ -69,7 +69,7 @@ export function useAppDocumentItemThumbnailSizeScale({
         return () => {
             AppDocumentListEventListener.unregisterEventListener(event);
         };
-    }, []);
+    }, [settingName, defaultSize]);
     const applyThumbnailSizeScale = (size: number) => {
         setThumbnailSizeScale(size);
         AppDocumentListEventListener.appDocumentItemSizing();

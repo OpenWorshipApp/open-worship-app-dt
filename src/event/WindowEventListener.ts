@@ -10,14 +10,14 @@ export type AppWidgetType =
     | 'setting'
     | 'context-menu';
 export type OpenCloseType = 'open' | 'close';
-export type EventMapper = {
+export type WindowEventMapperType = {
     widget: AppWidgetType;
     state: OpenCloseType;
 };
 
 export default class WindowEventListener extends EventHandler<string> {
     static readonly eventNamePrefix: string = 'window';
-    static fireEvent(event: EventMapper, data?: any) {
+    static fireEvent(event: WindowEventMapperType, data?: any) {
         if (event.state === 'open') {
             KeyboardEventListener.addLayer(event.widget);
         } else {
@@ -26,13 +26,13 @@ export default class WindowEventListener extends EventHandler<string> {
         const eventKey = this.toEventMapperKey(event);
         this.addPropEvent(eventKey, data);
     }
-    static toEventMapperKey(event: EventMapper) {
+    static toEventMapperKey(event: WindowEventMapperType) {
         return `${event.widget}-${event.state}`;
     }
 }
 
 export function useWindowEvent(
-    eventMapper: EventMapper,
+    eventMapper: WindowEventMapperType,
     listener: ListenerType<any>,
 ) {
     useAppEffect(() => {
@@ -44,5 +44,5 @@ export function useWindowEvent(
         return () => {
             WindowEventListener.unregisterEventListener(event);
         };
-    }, [eventMapper]);
+    }, [JSON.stringify(eventMapper), listener]);
 }

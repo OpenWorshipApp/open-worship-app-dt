@@ -41,7 +41,7 @@ import { dirSourceSettingNames } from '../helper/constants';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import PdfAppDocument from './PdfAppDocument';
-import { createContext, use, useState } from 'react';
+import { createContext, use, useCallback, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import type PdfSlide from './PdfSlide';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
@@ -521,22 +521,22 @@ export function useSlideWrongDimension(
     display: DisplayType,
 ) {
     const [wrong, setWrong] = useState<WrongDimensionType | null>(null);
-    const checkWrongDimension = async () => {
+    const checkWrongDimension = useCallback(async () => {
         if (!AppDocument.checkIsThisType(varyAppDocument)) {
             return;
         }
         const wrong = await varyAppDocument.getIsWrongDimension(display);
         setWrong(wrong);
-    };
+    }, [varyAppDocument, display]);
     useFileSourceEvents(
         ['update'],
         checkWrongDimension,
-        [varyAppDocument, display],
+        [checkWrongDimension],
         varyAppDocument.filePath,
     );
     useAppEffect(() => {
         checkWrongDimension();
-    }, [varyAppDocument, display]);
+    }, [checkWrongDimension]);
     return wrong;
 }
 

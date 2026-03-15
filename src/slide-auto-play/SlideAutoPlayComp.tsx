@@ -37,7 +37,7 @@ function PlayingIconComp({
         return () => {
             clearInterval(timerId);
         };
-    }, [timerSeconds]);
+    }, [onNext, timerSeconds]);
     return (
         <button
             className="btn btn-sm btn-primary"

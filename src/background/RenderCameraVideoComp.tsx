@@ -25,7 +25,7 @@ export default function RenderCameraVideoComp({
                 borderBottomRightRadius: 'var(--bs-border-radius)',
             },
         });
-    }, [containerRef.current, width]);
+    }, [deviceId, containerRef.current, width]);
     return (
         <div className="w-100 h-100" ref={containerRef}>
             <LoadingComp />

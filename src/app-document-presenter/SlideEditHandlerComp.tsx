@@ -1,6 +1,6 @@
 import { lazy, useState } from 'react';
 
-import type { EventMapper as WEventMapper } from '../event/WindowEventListener';
+import type { WindowEventMapperType as WEventMapper } from '../event/WindowEventListener';
 import WindowEventListener, {
     useWindowEvent,
 } from '../event/WindowEventListener';

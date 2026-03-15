@@ -1,7 +1,6 @@
 import {
     CSSProperties,
     useCallback,
-    useEffect,
     useMemo,
     useState,
 } from 'react';
@@ -9,6 +8,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import { checkIsKeyboardEventMatch } from '../event/KeyboardEventListener';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppEffect } from '../helper/debuggerHelpers';
 
 function blockUnload(event: BeforeUnloadEvent) {
     event.preventDefault();
@@ -51,12 +51,12 @@ export default function SimpleNoteEditorComp({
         },
         [store, attemptTimeout],
     );
-    useEffect(() => {
+    useAppEffect(() => {
         window.removeEventListener('beforeunload', blockUnload);
         setText(store.defaultText);
         setIsSaved(true);
     }, [store]);
-    useEffect(() => {
+    useAppEffect(() => {
         if (isSaved) {
             return;
         }

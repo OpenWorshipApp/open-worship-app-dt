@@ -36,7 +36,7 @@ export default function BibleFindPreviewerComp() {
         return () => {
             viewController.openBibleSearch = setBibleSearchingTabType;
         };
-    }, []);
+    }, [viewController]);
     return (
         <div
             className={

@@ -17,7 +17,7 @@ export default function ScreenSlideComp() {
         if (div.current) {
             screenVaryAppDocumentManager.div = div.current;
         }
-    }, [div.current]);
+    }, [screenVaryAppDocumentManager, div.current]);
     return (
         <div
             id="slide"

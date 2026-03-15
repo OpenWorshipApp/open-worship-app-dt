@@ -1,13 +1,13 @@
 import {
     createContext,
     use,
-    useEffect,
     useRef,
     type DetailedHTMLProps,
     type HTMLAttributes,
     type JSX,
 } from 'react';
 import { createRoot } from 'react-dom/client';
+import { useAppEffect } from '../helper/debuggerHelpers';
 
 declare module 'react/jsx-runtime' {
     // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -97,13 +97,11 @@ export default function ShadowingFillParentWidthComp({
 }>) {
     const myRef = useRef<ShadowingParentWidthCustomHTMLTag>(null);
 
-    useEffect(() => {
-        if (myRef.current) {
-            myRef.current.connectedCallback();
-        }
+    useAppEffect(() => {
+        myRef.current?.connectedCallback();
     }, [myRef, children]);
 
-    useEffect(() => {
+    useAppEffect(() => {
         const current = myRef.current;
         if (current === null) {
             return;
