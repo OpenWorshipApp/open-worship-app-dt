@@ -18,6 +18,7 @@ import {
     printHTMLContent,
     tarExtract,
 } from './electronHelpers';
+import type { OptionalPromise } from './electronHelpers';
 import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
@@ -109,7 +110,7 @@ export function initEventListenerApp(appController: ElectronAppController) {
 function onAsync<T1, T2>(
     ipc: IpcMain,
     eventName: string,
-    callee: (data: T1) => Promise<T2>,
+    callee: (data: T1) => OptionalPromise<T2>,
 ): void {
     ipc.on(eventName, async (event, data: T1) => {
         const replyEventName = (data as any)?.replyEventName;

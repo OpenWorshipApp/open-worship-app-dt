@@ -14,6 +14,8 @@ import {
 import appInfo from '../package.json';
 import { htmlFiles } from './fsServe';
 
+export type OptionalPromise<T> = T | Promise<T>;
+
 export const isDev = process.env.NODE_ENV === 'development';
 
 export const isWindows = process.platform === 'win32';
