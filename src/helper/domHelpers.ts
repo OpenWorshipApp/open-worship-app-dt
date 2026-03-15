@@ -305,6 +305,7 @@ export function checkIsZoomed() {
     return zoomFactor !== 1;
 }
 
+// TODO: utilize native feature instead of app*
 export type PopupWindowFeaturesType = {
     popup?: boolean;
     x?: number;
@@ -317,6 +318,7 @@ export type PopupWindowFeaturesType = {
     appScale?: number;
     appAlwaysOnTop?: boolean;
     appAutoHideMenuBar?: boolean;
+    appResize?: boolean;
 };
 const DEFAULT_FEATURES: PopupWindowFeaturesType = {
     popup: true,
@@ -327,6 +329,9 @@ function toFeatureString(features: PopupWindowFeaturesType) {
         .map(([key, value]) => {
             if (value === true) {
                 return key;
+            }
+            if (value === false) {
+                return `${key}=false`;
             }
             return `${key}=${value}`;
         })
@@ -364,7 +369,7 @@ function openAboutPage() {
         'about',
         {
             width: 700,
-            height: 435,
+            height: 455,
             appAlignHorizontal: 'center',
             appAlignVertical: 'center',
             appFollowScale: true,
