@@ -7,6 +7,7 @@ import CanvasItem, {
 } from '../../slide-editor/canvas/CanvasItem';
 import { getHTMLChild } from '../../helper/helpers';
 import Canvas from '../../slide-editor/canvas/Canvas';
+import { sanitizeHtml } from '../../helper/sanitizeHelpers';
 
 export function genSlideHtml(canvasItemsJson: CanvasItemPropsType[]) {
     const htmlString = renderToStaticMarkup(
@@ -17,7 +18,7 @@ export function genSlideHtml(canvasItemsJson: CanvasItemPropsType[]) {
         />,
     );
     const div = document.createElement('div');
-    div.innerHTML = htmlString;
+    div.innerHTML = sanitizeHtml(htmlString);
     return getHTMLChild<HTMLDivElement>(div, 'div');
 }
 

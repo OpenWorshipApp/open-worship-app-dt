@@ -424,7 +424,10 @@ function handlePopupWindowOpen(
         !options.frameName.startsWith(POPUP_FRAME_NAME_PREFIX) ||
         webPreferences === undefined
     ) {
-        shell.openExternal(options.url);
+        const urlObj = new URL(options.url);
+        if (['http:', 'https:'].includes(urlObj.protocol)) {
+            shell.openExternal(options.url);
+        }
         return { action: 'deny' };
     }
 

@@ -9,6 +9,7 @@ import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpe
 import { tran } from '../../lang/langHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import type PdfAppDocument from '../../app-document-list/PdfAppDocument';
+import { sanitizeHtml } from '../../helper/sanitizeHelpers';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,
@@ -40,7 +41,7 @@ export function genPdfSlide(pdfImageSrc: string, isFullWidth = false) {
         />,
     );
     const div = document.createElement('div');
-    div.innerHTML = htmlString;
+    div.innerHTML = sanitizeHtml(htmlString);
     return getHTMLChild<HTMLDivElement>(div, 'img');
 }
 

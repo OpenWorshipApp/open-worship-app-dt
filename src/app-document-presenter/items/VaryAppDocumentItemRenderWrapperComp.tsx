@@ -8,6 +8,7 @@ import PdfSlide from '../../app-document-list/PdfSlide';
 import Slide from '../../app-document-list/Slide';
 import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
 import { type AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
+import type { OptionalPromise } from '../../helper/typeHelpers';
 
 function selectVaryAppDocumentItem(
     {
@@ -20,7 +21,7 @@ function selectVaryAppDocumentItem(
         setSelectedAppDocumentItem: (
             newSlide: Slide | null,
             controlType?: KeyboardControlType,
-        ) => void;
+        ) => OptionalPromise<void>;
     },
     event: MouseEvent,
 ) {

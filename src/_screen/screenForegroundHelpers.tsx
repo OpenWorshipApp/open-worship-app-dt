@@ -15,6 +15,7 @@ import TimingController from './managers/TimingController';
 import StopwatchController from './managers/StopwatchController';
 import FileSource from '../helper/FileSource';
 import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
+import { sanitizeHtml } from '../helper/sanitizeHelpers';
 
 export function genHtmlForegroundMarquee(
     { text, extraStyle = {} }: ForegroundMarqueDataType,
@@ -134,7 +135,10 @@ export function genHtmlForegroundQuickText(
                 margin: 0.05em !important;
             }
             `}</style>
-            <div id={uniqueId} dangerouslySetInnerHTML={{ __html: htmlText }} />
+            <div
+                id={uniqueId}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlText) }}
+            />
         </div>,
     );
     const div = document.createElement('div');

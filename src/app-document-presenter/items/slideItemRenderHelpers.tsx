@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useCallback, type CSSProperties } from 'react';
 
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
@@ -31,19 +31,24 @@ function RenderBackgroundWebComp({
     fileSource: FileSource;
 }>) {
     const imageData = useWebCapturing(fileSource);
+    const genChildrenRender = useCallback(
+        (dim: { width: number; height: number }) => {
+            const { width, height } = dim;
+            return (
+                <RenderBackgroundWebIframeComp
+                    fileSource={fileSource}
+                    width={width}
+                    height={height}
+                />
+            );
+        },
+        [fileSource],
+    );
     return (
         <BackgroundRenderOnHoverComp
             src={imageData ?? WEB_BACKGROUND_SRC}
             opacity={1}
-            genChildren={({ width, height }) => {
-                return (
-                    <RenderBackgroundWebIframeComp
-                        fileSource={fileSource}
-                        width={width}
-                        height={height}
-                    />
-                );
-            }}
+            genChildren={genChildrenRender}
         />
     );
 }
