@@ -5,8 +5,10 @@ import { useThumbnailWidthSetting } from './BackgroundMediaComp';
 import { handleCtrlWheel } from '../others/AppRangeComp';
 import BackgroundCameraItemComp from './BackgroundCameraItemComp';
 import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
+import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 
 export default function BackgroundCamerasComp() {
+    useScreenBackgroundManagerEvents(['update']);
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
     const cameraInfoList = useCameraInfoList();
     const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
