@@ -53,18 +53,22 @@ function RenderFileItemsWithColorNote({
 function RenderFailListComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
     return (
         <div className="alert alert-warning app-caught-hover-pointer">
-            {tran('Fail To Get File List')}
-            <GotoSettingDirectoryPathComp />
-            <button className="btn btn-sm">
-                {tran('Refresh')}
-                <i
-                    className="bi bi-arrow-clockwise ms-2"
-                    onClick={async (e) => {
-                        e.preventDefault();
-                        dirSource.fireRefreshEvent();
-                    }}
-                ></i>
-            </button>
+            {tran('Fail to Get File List')}
+            <div className="d-flex flex-wrap justify-content-center">
+                <GotoSettingDirectoryPathComp />
+                <div className="m-2">
+                    <button
+                        className="btn btn-sm btn-info"
+                        onClick={async (e) => {
+                            e.preventDefault();
+                            dirSource.fireRefreshEvent();
+                        }}
+                    >
+                        {tran('Refresh')}
+                        <i className="bi bi-arrow-clockwise" />
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }
