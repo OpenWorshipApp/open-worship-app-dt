@@ -1,3 +1,5 @@
+import { type KeyboardEvent as ReactKeyboardEvent } from 'react';
+
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 import appProvider from '../../server/appProvider';
 import { getScreenManagerByScreenId } from '../../_screen/managers/screenManagerHelpers';
@@ -156,7 +158,7 @@ export function getContainerDiv(): HTMLDivElement | null {
 }
 
 export function handleArrowing(
-    event: KeyboardEvent,
+    event: KeyboardEvent | ReactKeyboardEvent<any>,
     varyAppDocumentItems: VaryAppDocumentItemType[],
 ) {
     if (!appProvider.presenterHomePage) {

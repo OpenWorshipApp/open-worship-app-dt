@@ -172,6 +172,11 @@ export default function PresenterComp() {
         'd',
     );
 
+    const [isForegroundActive, setIsForegroundActive] = useStateSettingBoolean(
+        'foreground-active',
+        false,
+    );
+
     const setTabKey1 = useCallback(
         (value: TabKeyType) => {
             if (value === 'f') {
@@ -179,12 +184,7 @@ export default function PresenterComp() {
             }
             setTabKey(value);
         },
-        [setTabKey],
-    );
-
-    const [isForegroundActive, setIsForegroundActive] = useStateSettingBoolean(
-        'foreground-active',
-        false,
+        [setIsForegroundActive, setTabKey],
     );
 
     const setIsForegroundActive1 = useCallback(

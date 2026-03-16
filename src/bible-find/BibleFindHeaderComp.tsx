@@ -31,14 +31,17 @@ export default function BibleFindHeaderComp({
         BIBLE_FIND_RECENT_SEARCH_SETTING_NAME,
         '' as string,
     );
-    const setText1 = (newText: string) => {
-        setText((preText) => {
-            attemptTimeout(() => {
-                handleFinding(preText ? newText : '');
+    const setText1 = useCallback(
+        (newText: string) => {
+            setText((preText) => {
+                attemptTimeout(() => {
+                    handleFinding(preText ? newText : '');
+                });
+                return newText;
             });
-            return newText;
-        });
-    };
+        },
+        [attemptTimeout, handleFinding, setText],
+    );
     const bibleFindController = useBibleFindController();
     const { bibleKey } = bibleFindController;
     const fontFamily = useBibleFontFamily(bibleKey);
@@ -72,7 +75,7 @@ export default function BibleFindHeaderComp({
                 }, true);
             }
         },
-        [bibleFindController, text, handleFinding, attemptTimeout],
+        [bibleFindController, text, setText, attemptTimeout, handleFinding],
     );
     // empty deps is intentional to only trigger finding on the first render
     useAppEffect(() => {

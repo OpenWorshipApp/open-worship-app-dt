@@ -24,7 +24,7 @@ export default function LyricSlidesPreviewerComp() {
             instance.lyricEditingProps = lyricEditingManager.lyricEditingProps;
         }
         return instance;
-    }, [selectedLyric]);
+    }, [selectedLyric, lyricEditingManager.lyricEditingProps]);
     useFileSourceEvents(
         ['update'],
         () => {

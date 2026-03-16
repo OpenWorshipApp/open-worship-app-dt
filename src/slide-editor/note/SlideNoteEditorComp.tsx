@@ -10,12 +10,15 @@ import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 class SlideNoteStore implements SimpleNoteEditorStoreType {
     readonly defaultText: string;
     currentText: string;
+    checkCanSave() {
+        return this.currentText !== this.defaultText;
+    }
     save: () => Promise<void>;
     constructor(appDocument: AppDocument, slide: Slide) {
         this.defaultText = slide.note;
         this.currentText = slide.note;
         this.save = async () => {
-            if (this.currentText === this.defaultText) {
+            if (!this.checkCanSave()) {
                 return;
             }
             slide.note = this.currentText;

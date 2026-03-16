@@ -141,7 +141,7 @@ export default function RenderChapterOptionsComp({
     const bibleKey = useBibleKeyContext();
     const fontFamily = useBibleFontFamily(bibleKey);
     const matchedChapters = useChapterMatch(bibleKey, bookKey, guessingChapter);
-    const arrowListener = (event: KeyboardEvent) => {
+    const arrowListener = (event: any) => {
         processSelection(
             OPTION_CLASS,
             OPTION_SELECTED_CLASS,

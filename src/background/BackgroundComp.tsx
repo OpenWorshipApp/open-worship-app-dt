@@ -123,7 +123,7 @@ export default function BackgroundComp() {
             }
             setIsAudioTabActive(newValue);
         },
-        [isAudioTabActive],
+        [setIsAudioTabActive],
     );
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
         'background-tab',

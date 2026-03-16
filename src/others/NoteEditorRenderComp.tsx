@@ -14,7 +14,7 @@ export default function NoteEditorRenderComp({
 }>) {
     return (
         <div
-            className="w-100 h-100 app-overflow-hidden"
+            className="w-100 h-100 app-overflow-hidden app-inner-shadow"
             data-note-editor-uuid={uuid}
         >
             <div

@@ -9,6 +9,9 @@ import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 class AppDocumentNoteStore implements SimpleNoteEditorStoreType {
     readonly defaultText: string;
     currentText: string;
+    checkCanSave() {
+        return this.currentText !== this.defaultText;
+    }
     save: () => Promise<void>;
     appDocument: AppDocument;
     constructor(appDocument: AppDocument, note: string) {

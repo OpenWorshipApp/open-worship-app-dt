@@ -151,7 +151,7 @@ function RenderPreviewBodyComp() {
     }
     return (
         <div
-            className="w-100 h-100 p-3"
+            className="w-100 h-100 p-1 app-inner-shadow"
             dangerouslySetInnerHTML={{ __html: htmlData.html }}
         />
     );

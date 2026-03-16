@@ -86,7 +86,7 @@ export default function LyricFileComp({
         if (!getIsShowingLyricPreviewer()) {
             previewingEventListener.showLyric(lyric);
         }
-    }, [lyric]);
+    }, [lyric, setSelectedLyric]);
     const handleChildRendering = useCallback((lyric: AppDocumentSourceAbs) => {
         return <LyricFilePreview lyric={lyric as Lyric} />;
     }, []);
@@ -97,7 +97,7 @@ export default function LyricFileComp({
                 setSelectedLyric(newLyric);
             }
         },
-        [isSelected],
+        [isSelected, setSelectedLyric],
     );
     return (
         <FileItemHandlerComp

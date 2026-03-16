@@ -12,12 +12,15 @@ import { tran } from '../../lang/langHelpers';
 class NoteTitleStore implements SimpleNoteEditorStoreType {
     readonly defaultText: string;
     currentText: string;
+    checkCanSave() {
+        return this.currentText !== this.defaultText;
+    }
     save: () => Promise<void>;
     constructor(note: Note, noteItem: NoteItem) {
         this.defaultText = noteItem.title;
         this.currentText = noteItem.title;
         this.save = async () => {
-            if (this.currentText === this.defaultText) {
+            if (!this.checkCanSave()) {
                 return;
             }
             noteItem.title = this.currentText;
@@ -79,12 +82,15 @@ export function NoteTitleEditorComp({
 class NoteContentStore implements SimpleNoteEditorStoreType {
     readonly defaultText: string;
     currentText: string;
+    checkCanSave() {
+        return this.currentText !== this.defaultText;
+    }
     save: () => Promise<void>;
     constructor(note: Note, noteItem: NoteItem) {
         this.defaultText = noteItem.content;
         this.currentText = noteItem.content;
         this.save = async () => {
-            if (this.currentText === this.defaultText) {
+            if (!this.checkCanSave()) {
                 return;
             }
             noteItem.content = this.currentText;

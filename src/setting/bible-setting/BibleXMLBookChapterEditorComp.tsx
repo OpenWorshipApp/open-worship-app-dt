@@ -222,7 +222,7 @@ function EditorComp({
             newLinesTitleMap: chapterData.newLinesTitleMap ?? {},
             customVersesMap: chapterData.customVersesMap ?? {},
         };
-    }, [chapterData]);
+    }, [chapterData, bibleKey, bookKey, chapter]);
     if (chapterData === undefined) {
         return <LoadingComp />;
     }

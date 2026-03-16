@@ -1,4 +1,10 @@
-import { type CSSProperties, useCallback, useMemo, useState } from 'react';
+import {
+    type CSSProperties,
+    useCallback,
+    useMemo,
+    useState,
+    type KeyboardEvent,
+} from 'react';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import { checkIsKeyboardEventMatch } from '../event/KeyboardEventListener';
@@ -16,6 +22,7 @@ function blockUnload(event: BeforeUnloadEvent) {
 export interface SimpleNoteEditorStoreType {
     defaultText: string;
     currentText: string;
+    checkCanSave: () => boolean;
     save: () => Promise<void>;
 }
 export default function SimpleNoteEditorComp({
@@ -36,8 +43,8 @@ export default function SimpleNoteEditorComp({
     const [text, setText] = useState(store.defaultText);
     const setCurrentText1 = useCallback(
         (newText: string) => {
-            setIsSaved(false);
             store.currentText = newText;
+            setIsSaved(!store.checkCanSave());
             setText(newText);
             attemptTimeout(async () => {
                 await store.save();
@@ -61,7 +68,9 @@ export default function SimpleNoteEditorComp({
         };
     }, [isSaved]);
     const handleKeyDown = useCallback(
-        async (event: any) => {
+        async (
+            event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+        ) => {
             if (
                 checkIsKeyboardEventMatch(
                     [
@@ -82,10 +91,13 @@ export default function SimpleNoteEditorComp({
         },
         [store],
     );
-    const handleChanging = useCallback((event: any) => {
-        const value = event.target.value;
-        setCurrentText1(value);
-    }, []);
+    const handleChanging = useCallback(
+        (event: any) => {
+            const value = event.target.value;
+            setCurrentText1(value);
+        },
+        [setCurrentText1],
+    );
     const handleBlur = useCallback(async () => {
         await store.save();
         setIsSaved(true);
@@ -94,7 +106,7 @@ export default function SimpleNoteEditorComp({
         outline: 'none',
         boxSizing: 'border-box',
         resize: isResizable ? 'both' : 'none',
-        border: isSaved ? '1px solid transparent' : '1px solid #007bff44',
+        border: isSaved ? '2px solid transparent' : '2px solid #007bff44',
     };
     if (isInput) {
         return (

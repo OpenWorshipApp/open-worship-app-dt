@@ -85,8 +85,9 @@ export default function RenderResizeActorItemComp({
 
     const { children, key, className = '', extraStyle = {}, widgetName } = data;
     const flexSizeValue = flexSize[key] ?? restoreFlexSize[key] ?? [];
+    const flexSizeDisabledFlag = flexSizeValue[1];
     const handleReopening = useMemo(() => {
-        if (!flexSizeValue[1]) {
+        if (!flexSizeDisabledFlag) {
             return null;
         }
         return (event: { currentTarget: HTMLDivElement }) => {
@@ -95,7 +96,7 @@ export default function RenderResizeActorItemComp({
                 defaultFlexSize,
                 anotherDefaultFlexSize,
             );
-            const flexSizeDisabled = flexSizeValue[1] as DisabledType;
+            const flexSizeDisabled = flexSizeDisabledFlag;
             const newSize = calcShowingHiddenWidget(
                 event,
                 key,
@@ -105,7 +106,15 @@ export default function RenderResizeActorItemComp({
             );
             setFlexSize(newSize);
         };
-    }, [flexSizeValue[1], key, flexSizeName, restoreFlexSize, setFlexSize]);
+    }, [
+        flexSizeDisabledFlag,
+        key,
+        flexSizeName,
+        restoreFlexSize,
+        setFlexSize,
+        defaultFlexSize,
+        anotherDefaultFlexSize,
+    ]);
     const isShowingFlexSizeActor = useMemo(() => {
         if (
             index !== 0 &&
