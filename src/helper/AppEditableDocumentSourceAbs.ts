@@ -209,11 +209,11 @@ export default abstract class AppEditableDocumentSourceAbs<
             metadata: AppDocumentMetadataType;
         },
     >(extraData: AnyObjectType = {}): T {
-        const jsonData = JSON.stringify({
+        const jsonData = {
             metadata: super.genMetadata(),
             ...extraData,
-        });
-        return jsonData as unknown as T;
+        };
+        return jsonData as T;
     }
 
     static async create(dir: string, name: string, extraData: AnyObjectType) {

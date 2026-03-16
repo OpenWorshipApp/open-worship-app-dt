@@ -349,7 +349,11 @@ export default class EditingHistoryManager {
     }
 
     async discard() {
+        if (!((await this.checkCanRedo()) || (await this.checkCanUndo()))) {
+            return true;
+        }
         try {
+            this.checkCanRedo();
             await this.fileLineHandler.clearHistories();
             this.fireEvent();
             return true;

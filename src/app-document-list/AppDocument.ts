@@ -26,7 +26,6 @@ import {
 import { fixMissingFontFamilies } from '../server/fontHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
 import { notifyNewElementAdded } from '../helper/domHelpers';
-import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -70,20 +69,28 @@ export default class AppDocument
         if (!isOriginal) {
             jsonData = await this.getJsonData(true);
             if (jsonData !== null) {
-                await showAppAlert(
-                    'Corrupted Document',
-                    'Document data will be reset to the last saved state.',
+                showSimpleToast(
+                    tran('Corrupted Document'),
+                    tran(
+                        'Document data will be reset to the last saved state.',
+                    ),
                 );
                 return jsonData;
             }
         }
-        await showAppAlert(
-            'Corrupted Document',
-            'The document data is corrupted and cannot be loaded. ' +
-                'We will reset the document data to a new state.',
+        showSimpleToast(
+            tran('Corrupted Document'),
+            tran(
+                'The document data is corrupted and cannot be loaded. ' +
+                    'We will reset the document data to a new state.',
+            ),
         );
         const extraJsonData = AppDocument.genNewExtraJsonData();
-        return AppDocument.genNewJsonData<AppDocumentType>(extraJsonData);
+        const newJsonData =
+            AppDocument.genNewJsonData<AppDocumentType>(extraJsonData);
+        await this.setJsonData(newJsonData);
+        await this.save();
+        return newJsonData;
     }
 
     async getSlides() {
