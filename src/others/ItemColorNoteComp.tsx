@@ -88,12 +88,12 @@ export default function ItemColorNoteComp({
 
     return (
         <span
-            className={`color-note app-caught-hover-pointer ${colorNote ? 'active' : ''}`}
+            className={`color-note ${colorNote ? 'active' : ''}`}
             title={title}
-            onClick={chooseColorNote.bind(null, colorNote, setColorNote1)}
         >
             <i
-                className="bi bi-record-circle"
+                className="bi bi-record-circle app-caught-hover-pointer"
+                onClick={chooseColorNote.bind(null, colorNote, setColorNote1)}
                 style={
                     colorNote
                         ? {
