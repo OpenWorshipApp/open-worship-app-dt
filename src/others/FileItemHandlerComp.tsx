@@ -170,7 +170,7 @@ export default function FileItemHandlerComp({
                 preDelete?.();
             };
             selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
-            showAppContextMenu(event as any, [
+            showAppContextMenu(event, [
                 ...(contextMenuItems ?? []),
                 ...genCommonMenu(filePath),
                 ...selfContextMenu,
@@ -214,7 +214,12 @@ export default function FileItemHandlerComp({
     );
 
     if (fileData === null) {
-        return <FileReadErrorComp reload={reload} />;
+        return (
+            <FileReadErrorComp
+                reload={reload}
+                fileSource={FileSource.getInstance(filePath)}
+            />
+        );
     }
     const moreClassName =
         `${isSelected ? 'active' : ''} ` + `${className ?? ''}`;

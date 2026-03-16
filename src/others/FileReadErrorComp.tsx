@@ -1,17 +1,25 @@
 import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
+import type FileSource from '../helper/FileSource';
 
 export default function FileReadErrorComp({
+    fileSource,
     onContextMenu,
     reload,
 }: Readonly<{
+    fileSource?: FileSource;
     onContextMenu?: (event: any) => void;
     reload?: () => void;
 }>) {
     const handleReload = useCallback(() => {
         reload?.();
     }, [reload]);
+    const handleTrash = useCallback(() => {
+        if (fileSource) {
+            fileSource.trash();
+        }
+    }, [fileSource]);
     return (
         <div
             className="card app-caught-hover-pointer"
@@ -23,19 +31,28 @@ export default function FileReadErrorComp({
                     'flex-column align-items-center p-2'
                 }
             >
-                <div className="alert alert-danger p-2">
+                <div className="alert alert-warning p-2">
                     {tran('Fail to read file data')}
+                    {fileSource ? `: ${fileSource.fullName}` : ''}
                 </div>
-                {reload === undefined ? null : (
-                    <div>
+                <div className="d-flex flex-wrap justify-content-center">
+                    {reload === undefined ? null : (
                         <button
-                            className="btn btn-sm btn-primary"
+                            className="btn btn-sm btn-primary m-1"
                             onClick={handleReload}
                         >
                             {tran('Reload')}
                         </button>
-                    </div>
-                )}
+                    )}
+                    {fileSource === undefined ? null : (
+                        <button
+                            className="btn btn-sm btn-danger m-1"
+                            onClick={handleTrash}
+                        >
+                            {tran('Move to Trash')}
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
