@@ -34,7 +34,6 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { handleError } from '../helper/errorHelpers';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
-import { notifyBackgroundMediaAdded } from './backgroundHelpers';
 
 function rendChild(
     filePath: string,
@@ -47,7 +46,6 @@ function rendChild(
     return (
         <div
             className="card-body app-blank-bg"
-            data-image-file-name={fileSource.name}
             style={{
                 height: `${height}px`,
                 overflow: 'hidden',
@@ -159,7 +157,6 @@ async function genContextMenuItems(dirSource: DirSource) {
                         'Image downloaded successfully, ' +
                             `file path: "${downloadedFilePath}"`,
                     );
-                    notifyBackgroundMediaAdded('image', destFileSource.name);
                 } catch (error) {
                     handleError(error);
                     showSimpleToast(

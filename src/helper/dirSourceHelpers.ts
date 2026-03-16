@@ -9,12 +9,31 @@ import { fsCheckDirExist, type MimetypeNameType } from '../server/fileHelpers';
 import { checkAreArraysEqual } from '../server/comparisonHelpers';
 import appProvider from '../server/appProvider';
 import { handleError } from './errorHelpers';
+import { notifyNewElementAdded } from './domHelpers';
 
 export const DirSourceContext = createContext<DirSource | null>(null);
 
 export const FilePathLoadedContext = createContext<{
     onLoaded?: (filePaths: string[] | null) => void;
 } | null>(null);
+
+function notifyNewFilePaths(oldFilePaths: string[], newFilePaths: string[]) {
+    if (oldFilePaths.length === 0) {
+        return;
+    }
+    const diffFilePaths = newFilePaths.filter((filePath) => {
+        return !oldFilePaths.includes(filePath);
+    });
+    for (const filePath of diffFilePaths) {
+        setTimeout(() => {
+            notifyNewElementAdded(() => {
+                return document.querySelector(
+                    `[data-file-item-file-path="${filePath}"]`,
+                );
+            });
+        }, 0);
+    }
+}
 
 export function useFilePaths(
     dirSource: DirSource,
@@ -37,7 +56,13 @@ export function useFilePaths(
         if (checkAreArraysEqual(filePaths, newFilePaths)) {
             return;
         }
-        setFilePaths(newFilePaths);
+        setFilePaths((oldFilePaths) => {
+            if (!oldFilePaths) {
+                return newFilePaths;
+            }
+            notifyNewFilePaths(oldFilePaths, newFilePaths ?? []);
+            return newFilePaths;
+        });
         filePathLoadedCtx?.onLoaded?.(newFilePaths);
     };
     useAppEffect(() => {

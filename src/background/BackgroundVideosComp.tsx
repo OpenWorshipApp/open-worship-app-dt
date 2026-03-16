@@ -32,7 +32,6 @@ import {
     setIsFadingAtTheEndSetting,
 } from './videoBackgroundHelpers';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
-import { notifyBackgroundMediaAdded } from './backgroundHelpers';
 
 const onToggledFadingAtTheEnd: Record<
     string,
@@ -95,7 +94,6 @@ function RendBodyComp({
     return (
         <div
             className="card-body app-overflow-hidden app-blank-bg"
-            data-video-file-name={fileSource.name}
             style={{
                 height: `${height}px`,
                 overflow: 'hidden',
@@ -187,7 +185,6 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 title,
                 `Video downloaded successfully, file path: "${downloadedFilePath}"`,
             );
-            notifyBackgroundMediaAdded('video', destFileSource.name);
         } catch (error) {
             handleError(error);
             showSimpleToast(title, 'Error occurred during downloading video');

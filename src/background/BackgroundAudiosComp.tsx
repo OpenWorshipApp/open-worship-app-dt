@@ -1,6 +1,6 @@
 import './BackgroundAudiosComp.scss';
 
-import { useCallback, useMemo, useState } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -31,7 +31,6 @@ import { genDownloadContextMenuItems } from './downloadHelper';
 import { downloadVideoOrAudio } from '../server/appHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { notifyBackgroundMediaAdded } from './backgroundHelpers';
 import appProvider from '../server/appProvider';
 
 function getAudioRepeatSettingName(src: string) {
@@ -59,11 +58,7 @@ function RendBodyComp({
         setIsRepeating(!isRepeating);
     }, [isRepeating, setIsRepeating]);
     return (
-        <div
-            className="w-100"
-            data-file-path={filePath}
-            data-audio-file-name={fileSource.name}
-        >
+        <div className="w-100" data-file-path={filePath}>
             <div className="d-flex align-items-center w-100 my-2">
                 <audio
                     className="flex-fill"
@@ -99,22 +94,26 @@ function rendChild(
     activeMap: { [key: string]: boolean },
     filePath: string,
     selectedBackgroundSrcList: [string, BackgroundSrcType][],
+    _width: number,
+    _height: number,
+    extraChild?: ReactNode,
 ) {
     if (!activeMap[filePath]) {
-        const fileSource = FileSource.getInstance(filePath);
         return (
-            <div
-                data-file-path={filePath}
-                style={{ display: 'none' }}
-                data-audio-file-name={fileSource.name}
-            />
+            <>
+                <div data-file-path={filePath} style={{ display: 'none' }} />
+                {extraChild}
+            </>
         );
     }
     return (
-        <RendBodyComp
-            filePath={filePath}
-            selectedBackgroundSrcList={selectedBackgroundSrcList}
-        />
+        <>
+            <RendBodyComp
+                filePath={filePath}
+                selectedBackgroundSrcList={selectedBackgroundSrcList}
+            />
+            {extraChild}
+        </>
     );
 }
 
@@ -146,7 +145,6 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
                 title,
                 `Audio downloaded successfully, file path: "${downloadedFilePath}"`,
             );
-            notifyBackgroundMediaAdded('audio', destFileSource.name);
         } catch (error) {
             handleError(error);
             showSimpleToast(title, 'Error occurred during downloading audio');

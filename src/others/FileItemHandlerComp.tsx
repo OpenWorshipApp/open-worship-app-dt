@@ -233,6 +233,7 @@ export default function FileItemHandlerComp({
             }
             onClick={handleClicking}
             data-index={index + 1}
+            data-file-item-file-path={filePath}
             title={fileSource.fullName}
             onContextMenu={handleContextMenuOpening}
             onDragOver={handleDragOver}

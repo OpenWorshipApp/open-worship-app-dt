@@ -166,7 +166,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
 
     getFilePaths(mimetypeName: MimetypeNameType) {
         if (!this.dirPath) {
-            return [];
+            return [] as string[];
         }
         return unlocking(
             `getFilePaths-${mimetypeName}-${this.dirPath}`,
