@@ -15,7 +15,6 @@ import mimePlaylistList from './mime/playlist-types.json';
 import mimeVideoList from './mime/video-types.json';
 import mimeAudioList from './mime/audio-types.json';
 import mimeWebList from './mime/web-types.json';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import {
     hideProgressBar,
     showProgressBar,
@@ -560,45 +559,39 @@ export async function fsCopyFilePathToPath(
     destinationPath: string,
     fileFullName?: string,
 ) {
-    const progressKey = 'Copying File';
-    showProgressBar(progressKey);
-    fileFullName =
-        fileFullName ??
-        (file instanceof File ? getFileFullName(file) : Date.now().toString());
-    const targetPath = pathJoin(destinationPath, fileFullName);
-    try {
-        const isFileExist = await fsCheckFileExist(targetPath);
-        if (isFileExist) {
-            const isConfirm = await showAppConfirm(
-                'Copy File',
-                `File path "${targetPath}" exist, do you want to override it?`,
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            );
-            if (!isConfirm) {
-                throw new Error('Canceled by user');
-            }
+    let distFileFullName = fileFullName;
+    if (!distFileFullName) {
+        if (file instanceof File) {
+            distFileFullName = getFileFullName(file);
         }
-        await fsCloneFile(file, targetPath);
-        hideProgressBar(progressKey);
-        return targetPath;
-    } catch (error: any) {
-        if (error.message !== 'Canceled by user') {
-            handleError(error);
-            showSimpleToast('Copying File', 'Error: ' + error.message);
-            try {
-                await fsDeleteFile(targetPath);
-            } catch (error) {
-                handleError(error);
-            }
+        if (distFileFullName === undefined && typeof file === 'string') {
+            distFileFullName = FileSource.getInstance(file).fullName;
         }
     }
-    hideProgressBar(progressKey);
-    return null;
+    const progressKey = 'Copying File:' + distFileFullName;
+    showProgressBar(progressKey);
+    try {
+        if (!distFileFullName) {
+            throw new Error('Cannot get file name');
+        }
+        const targetFilePath = pathJoin(destinationPath, distFileFullName);
+        const targetFileSource = FileSource.getInstance(targetFilePath);
+        const nextFilePath = await targetFileSource.genNextFilePath();
+        await fsCloneFile(file, nextFilePath);
+        return nextFilePath;
+    } catch (error: any) {
+        handleError(error);
+        showSimpleToast(
+            progressKey,
+            tran('Error occurred during copying file') + ': ' + error.message,
+        );
+        return null;
+    } finally {
+        hideProgressBar(progressKey);
+    }
 }
 
-export function getFileFullName(file: File | string) {
+export function getFileFullName(file: File | string): string | undefined {
     if (file instanceof File) {
         return file.name;
     }

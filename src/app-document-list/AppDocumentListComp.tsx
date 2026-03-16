@@ -42,6 +42,9 @@ function handleFileTaking(
         return false;
     }
     const fileFullName = getFileFullName(file);
+    if (!fileFullName) {
+        return false;
+    }
     const dotExtension = getFileDotExtension(fileFullName).toLocaleLowerCase();
     if (supportOfficeFileExtensions.includes(dotExtension)) {
         convertOfficeFile(file, dirSource);

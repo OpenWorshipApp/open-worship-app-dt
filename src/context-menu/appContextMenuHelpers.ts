@@ -118,6 +118,7 @@ export function showAppContextMenu(
     items: ContextMenuItemType[],
     options?: OptionsType,
 ): AppContextMenuControlType {
+    event.preventDefault();
     event.stopPropagation();
     if (options?.shouldHandleSelectedText) {
         items = genSelectedTextContextMenus(

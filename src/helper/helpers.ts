@@ -3,12 +3,6 @@ import type { DragEvent } from 'react';
 import { handleError } from './errorHelpers';
 import { appTrace } from './loggerHelpers';
 import appProvider from '../server/appProvider';
-import {
-    pathJoin,
-    fsCheckFileExist,
-    fsDeleteFile,
-    fsCopyFilePathToPath,
-} from '../server/fileHelpers';
 import { tran } from '../lang/langHelpers';
 
 export type MutationType = 'added' | 'attr-modified' | 'removed';
@@ -254,26 +248,6 @@ export function getMenuTitleRevealFile() {
     return tran(
         `Reveal in ${appProvider.systemUtils.isMac ? 'Finder' : 'File Explorer'}`,
     );
-}
-
-export async function downloadFile(
-    url: string,
-    filename: string,
-    type: string,
-    destinationPath: string,
-    isOverwrite = true,
-) {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const file = new File([blob], filename, { type });
-    const dllPath = pathJoin(destinationPath, filename);
-    if (isOverwrite && (await fsCheckFileExist(dllPath))) {
-        await fsDeleteFile(dllPath);
-    }
-    if (!(await fsCheckFileExist(dllPath))) {
-        await fsCopyFilePathToPath(file, destinationPath, filename);
-    }
-    return dllPath;
 }
 
 export function cumulativeOffset(element: HTMLElement | null) {

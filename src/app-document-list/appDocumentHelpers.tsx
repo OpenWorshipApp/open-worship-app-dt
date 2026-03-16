@@ -296,14 +296,15 @@ function showConfirmPdfConvert(dirPath: string, file: DroppedFileType) {
     return showAppConfirm(WIDGET_TITLE, confirmMessage);
 }
 
-async function getTempFilePath(dotExt: string | null) {
+async function genTempFilePath(dotExt: string | null) {
+    dotExt ??= '.tmp';
     const tempDirPath = getTempPath();
     let tempFilePath: string | null = null;
     let i = 0;
     while (tempFilePath === null || (await fsCheckFileExist(tempFilePath))) {
         tempFilePath = appProvider.pathUtils.join(
             tempDirPath,
-            `temp-to-pdf-${i}${dotExt ?? ''}`,
+            `temp-to-pdf-${i}${dotExt}`,
         );
         i++;
     }
@@ -337,16 +338,25 @@ async function startConvertingOfficeFile(
         droppedFileFullName === null
             ? null
             : getFileDotExtension(droppedFileFullName);
-    const tempFilePath = await getTempFilePath(dotExt);
+    let tempFilePath: string | null = await genTempFilePath(dotExt);
     appLog('Temp file path for converting:', tempFilePath);
-    const fileFullName = getFileFullName(file);
-    const targetPdfFilePath = await getPdfFilePath(
-        dirSource.dirPath,
-        getFileName(fileFullName),
-    );
     try {
+        const fileFullName = getFileFullName(file);
+        if (!fileFullName) {
+            throw new Error('Failed to get file name');
+        }
+        const targetPdfFilePath = await getPdfFilePath(
+            dirSource.dirPath,
+            getFileName(fileFullName),
+        );
         showProgressBar(WIDGET_TITLE);
-        if (!(await fsCopyFilePathToPath(file, tempFilePath, ''))) {
+        const fileSource = FileSource.getInstance(tempFilePath);
+        tempFilePath = await fsCopyFilePathToPath(
+            file,
+            fileSource.baseDirPath,
+            fileSource.fullName,
+        );
+        if (tempFilePath === null) {
             throw new Error('Fail to copy file');
         }
         let slidesCount: number | null = null;
@@ -389,11 +399,9 @@ async function startConvertingOfficeFile(
             showAppAlert('LibreOffice is not installed', genAlertMessage());
         } else {
             handleError(error);
-            const pdfFileSource = FileSource.getInstance(targetPdfFilePath);
             showSimpleToast(
                 WIDGET_TITLE,
-                'Something wrong during converting, please check converted ' +
-                    `file "${pdfFileSource.fullName}" and try again.`,
+                tran('Something wrong during converting, please try again.'),
             );
         }
     }

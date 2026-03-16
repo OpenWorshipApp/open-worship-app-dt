@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { lazy, useCallback, useState } from 'react';
+import { lazy, useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import PathSelectorComp from './PathSelectorComp';
@@ -97,8 +97,8 @@ type PropsType = {
     fileSelectionOption?: FileSelectionOptionType;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
     onItemsAdding?: (
-        event: any,
         defaultContextMenuItems: ContextMenuItemType[],
+        event: any,
     ) => void;
     sortFilePaths?: (filePaths: string[]) => string[];
 };
@@ -136,24 +136,21 @@ export default function FileListHandlerComp({
     );
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     useDirSourceWatching(dirSource);
-    const handleItemsAdding =
-        fileSelectionOption === undefined
-            ? undefined
-            : () => {
-                  handleFilesSelectionMenuItem(fileSelectionOption);
-              };
-    // Do not use `useCallback` for `handleItemsAdding`, undefined value is
-    // needed for checking whether to show the menu item in
-    // `genContextMenuItems`
-    const handleItemAdding =
-        onItemsAdding === undefined
-            ? (handleItemsAdding ?? (() => {}))
-            : (event: any) => {
-                  onItemsAdding(
-                      genItemsAddingContextMenuItems(handleItemsAdding),
-                      event,
-                  );
-              };
+    const handleItemsAdding = useMemo(() => {
+        if (fileSelectionOption === undefined) {
+            return undefined;
+        }
+        return (event: any) => {
+            if (onItemsAdding === undefined) {
+                handleFilesSelectionMenuItem(fileSelectionOption);
+                return;
+            }
+            const menuItems = genItemsAddingContextMenuItems(() => {
+                handleFilesSelectionMenuItem(fileSelectionOption);
+            });
+            onItemsAdding(menuItems, event);
+        };
+    }, [onItemsAdding, fileSelectionOption]);
     return (
         <DirSourceContext value={dirSource}>
             <div
@@ -197,7 +194,7 @@ export default function FileListHandlerComp({
                     <PathSelectorComp
                         prefix={`path-${className}`}
                         dirSource={dirSource}
-                        addItems={handleItemAdding}
+                        addItems={handleItemsAdding}
                     />
                     {!dirSource.dirPath && defaultFolderName ? (
                         <NoDirSelectedComp

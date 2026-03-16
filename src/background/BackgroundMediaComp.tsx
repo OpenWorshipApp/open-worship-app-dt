@@ -150,9 +150,9 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
                               }
                     }
                     onItemsAdding={
-                        props.onItemsAdding
-                            ? props.onItemsAdding.bind(null, dirSource)
-                            : undefined
+                        props.onItemsAdding === undefined
+                            ? undefined
+                            : props.onItemsAdding.bind(null, dirSource)
                     }
                 />
             </div>

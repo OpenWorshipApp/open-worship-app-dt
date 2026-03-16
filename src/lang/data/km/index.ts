@@ -9,6 +9,9 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'Something wrong during converting, please try again.':
+        'មានបញ្ហាពេលកំពុងបម្លែង, សូមព្យាយាមម្តងទៀត។',
+
     'Something wrong during converting, please check converted file':
         'មានបញ្ហាពេលកំពុងបម្លែង, សូមពិនិត្យឯកសារដែលបានបម្លែង',
     'and try again.': 'ហើយព្យាយាមម្តងទៀត។',
