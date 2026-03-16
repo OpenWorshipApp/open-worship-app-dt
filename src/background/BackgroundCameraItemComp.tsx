@@ -47,7 +47,7 @@ export default function BackgroundCameraItemComp({
     );
     const handleContextMenuOpening = useCallback(
         (event: any) => {
-            showAppContextMenu(event as any, [
+            showAppContextMenu(event, [
                 ...genShowOnScreensContextMenu((event) => {
                     handleSelecting(event, true);
                 }),
