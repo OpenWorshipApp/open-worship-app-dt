@@ -11,11 +11,23 @@ import { checkIsKeyboardEventMatch } from '../event/KeyboardEventListener';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 
+const attemptTimeout = genTimeoutAttempt(3000);
+let attemptCount = 0;
 function blockUnload(event: BeforeUnloadEvent) {
+    attemptTimeout(() => {
+        attemptCount = 0;
+    });
+    attemptCount++;
+    if (attemptCount > 3) {
+        window.removeEventListener('beforeunload', blockUnload);
+        return;
+    }
     event.preventDefault();
     showSimpleToast(
         tran('Saving note'),
-        tran('Please wait while the note is being saved.'),
+        tran('Please wait while the note is being saved.') +
+            ' ' +
+            tran('Or attempt 3 times to force leaving.'),
     );
 }
 
@@ -23,7 +35,7 @@ export interface SimpleNoteEditorStoreType {
     defaultText: string;
     currentText: string;
     checkCanSave: () => boolean;
-    save: () => Promise<void>;
+    save: () => Promise<boolean>;
 }
 export default function SimpleNoteEditorComp({
     store,
@@ -47,8 +59,8 @@ export default function SimpleNoteEditorComp({
             setIsSaved(!store.checkCanSave());
             setText(newText);
             attemptTimeout(async () => {
-                await store.save();
-                setIsSaved(true);
+                const isSaved = await store.save();
+                setIsSaved(isSaved);
             });
         },
         [store, attemptTimeout],
@@ -85,8 +97,8 @@ export default function SimpleNoteEditorComp({
                 )
             ) {
                 event.preventDefault();
-                await store.save();
-                setIsSaved(true);
+                const isSaved = await store.save();
+                setIsSaved(isSaved);
             }
         },
         [store],
@@ -99,8 +111,8 @@ export default function SimpleNoteEditorComp({
         [setCurrentText1],
     );
     const handleBlur = useCallback(async () => {
-        await store.save();
-        setIsSaved(true);
+        const isSaved = await store.save();
+        setIsSaved(isSaved);
     }, [store]);
     const style: CSSProperties = {
         outline: 'none',

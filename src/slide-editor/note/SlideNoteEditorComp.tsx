@@ -13,16 +13,16 @@ class SlideNoteStore implements SimpleNoteEditorStoreType {
     checkCanSave() {
         return this.currentText !== this.defaultText;
     }
-    save: () => Promise<void>;
+    save: () => Promise<boolean>;
     constructor(appDocument: AppDocument, slide: Slide) {
         this.defaultText = slide.note;
         this.currentText = slide.note;
         this.save = async () => {
-            if (!this.checkCanSave()) {
-                return;
+            if (this.checkCanSave()) {
+                slide.note = this.currentText;
+                await appDocument.updateSlide(slide);
             }
-            slide.note = this.currentText;
-            return appDocument.updateSlide(slide);
+            return true;
         };
     }
 }

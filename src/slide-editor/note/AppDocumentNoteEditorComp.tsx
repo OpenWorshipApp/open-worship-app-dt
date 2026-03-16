@@ -12,12 +12,14 @@ class AppDocumentNoteStore implements SimpleNoteEditorStoreType {
     checkCanSave() {
         return this.currentText !== this.defaultText;
     }
-    save: () => Promise<void>;
+    save: () => Promise<boolean>;
     appDocument: AppDocument;
     constructor(appDocument: AppDocument, note: string) {
         this.defaultText = note;
         this.currentText = note;
-        this.save = async () => {};
+        this.save = async () => {
+            return true;
+        };
         this.appDocument = appDocument;
     }
 }
@@ -32,10 +34,10 @@ export default function AppDocumentNoteEditorComp({
         const note = await appDocument.getNote();
         const newStore = new AppDocumentNoteStore(appDocument, note);
         newStore.save = async () => {
-            if (newStore.currentText === newStore.defaultText) {
-                return;
+            if (newStore.checkCanSave()) {
+                await appDocument.setNote(newStore.currentText);
             }
-            await appDocument.setNote(newStore.currentText);
+            return true;
         };
         setStore(newStore);
     }, [appDocument]);

@@ -15,16 +15,16 @@ class NoteTitleStore implements SimpleNoteEditorStoreType {
     checkCanSave() {
         return this.currentText !== this.defaultText;
     }
-    save: () => Promise<void>;
+    save: () => Promise<boolean>;
     constructor(note: Note, noteItem: NoteItem) {
         this.defaultText = noteItem.title;
         this.currentText = noteItem.title;
         this.save = async () => {
             if (!this.checkCanSave()) {
-                return;
+                return true;
             }
             noteItem.title = this.currentText;
-            return note.updateAndSaveNoteItem(noteItem, true);
+            return await note.updateAndSaveNoteItem(noteItem, true);
         };
     }
 }
@@ -85,16 +85,16 @@ class NoteContentStore implements SimpleNoteEditorStoreType {
     checkCanSave() {
         return this.currentText !== this.defaultText;
     }
-    save: () => Promise<void>;
+    save: () => Promise<boolean>;
     constructor(note: Note, noteItem: NoteItem) {
         this.defaultText = noteItem.content;
         this.currentText = noteItem.content;
         this.save = async () => {
             if (!this.checkCanSave()) {
-                return;
+                return true;
             }
             noteItem.content = this.currentText;
-            return note.updateAndSaveNoteItem(noteItem, true);
+            return await note.updateAndSaveNoteItem(noteItem, true);
         };
     }
 }

@@ -107,7 +107,7 @@ export default class Note
 
     async setIsOpened(isOpened: boolean) {
         this.metadata['isOpened'] = isOpened;
-        await this.save();
+        return await this.save();
     }
 
     static async addNoteItemToDefault(noteItem: NoteItem) {
@@ -212,17 +212,17 @@ export default class Note
 
     async addAndSaveNoteItem(noteItem: NoteItem) {
         this.addNoteItem(noteItem);
-        await this.save();
+        return await this.save();
     }
 
     async updateAndSaveNoteItem(noteItem: NoteItem, isSilent = false) {
         this.updateNoteItem(noteItem, isSilent);
-        await this.save();
+        return await this.save();
     }
 
     async deleteNoteItem(noteItem: NoteItem) {
         this.deleteItem(noteItem);
-        await this.save();
+        return await this.save();
     }
 
     async moveItemFrom(filePath: string, noteItem?: NoteItem) {
