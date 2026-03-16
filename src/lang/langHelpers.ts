@@ -537,6 +537,26 @@ export async function getAllLangsAsync() {
     return allLangData.filter((data) => data !== null);
 }
 
+function getDictValue(
+    langData: LanguageDataType,
+    text: string,
+    currentLocale: LocaleType,
+) {
+    const { dictionary } = langData;
+    const sanitizedKey = langData.sanitizeTranKey(text);
+    if (dictionary[sanitizedKey] === undefined) {
+        if (appProvider.systemUtils.isDev) {
+            throw new Error(
+                `Translation for text "${text}" not found in ` +
+                    `locale ${currentLocale}.`,
+            );
+        }
+        return text;
+    }
+    return dictionary[sanitizedKey];
+}
+// e.g. " a b " => "a b", but " a  b " => "a  b ", to preserve multiple spaces
+// in the middle
 const regex = /^([ \n]*)([^ \n].+[^ \n])([ \n]*)$/;
 export function tran(...args: any[]): string {
     const text = args[0];
@@ -576,14 +596,18 @@ export function tran(...args: any[]): string {
         }
         return text;
     }
-    const translated = text.replace(
-        regex,
-        (_match: string, p1: string, matchText: string, p2: string) => {
-            const sanitizedMatchText = langData.sanitizeTranKey(matchText);
-            return `${p1}${dictionary[sanitizedMatchText]}${p2}`;
-        },
-    );
-    return translated;
+    if (regex.test(text)) {
+        const translated = text.replace(
+            regex,
+            (_match: string, p1: string, matchText: string, p2: string) => {
+                const value = getDictValue(langData, matchText, currentLocale);
+                return `${p1}${value}${p2}`;
+            },
+        );
+        return translated;
+    }
+    const value = getDictValue(langData, text, currentLocale);
+    return value;
 }
 
 export function toStringNum(numList: string[], n: number): string {
