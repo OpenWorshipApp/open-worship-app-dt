@@ -12,15 +12,17 @@ import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEv
 import { toShortcutKey } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 
-function removeLastEditingDate(jsonText: string | null) {
+function sanitizeForUpdatingComparison(jsonText: string | null) {
     if (jsonText === null) {
         return null;
     }
-    // e.g. "lastEditDate": "2026-02-08T16:13:41.284Z"
-    return jsonText.replaceAll(
-        /"lastEditDate":\s*"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"/g,
-        '"lastEditDate": ""',
-    );
+    try {
+        const jsonData = JSON.parse(jsonText);
+        jsonData.metadata ??= {};
+        jsonData.metadata.lastEditDate = '';
+        return JSON.stringify(jsonData);
+    } catch (_error) {}
+    return jsonText;
 }
 export function useEditingHistoryStatus(filePath: string) {
     const [status, setStatus] = useState({
@@ -35,9 +37,11 @@ export function useEditingHistoryStatus(filePath: string) {
         const canRedo = await editingHistoryManager.checkCanRedo();
         const historyText = await editingHistoryManager.getCurrentHistory();
         const text = await editingHistoryManager.getOriginalData();
+        const sanitizedHistoryText = sanitizeForUpdatingComparison(historyText);
+        const sanitizedText = sanitizeForUpdatingComparison(text);
         const canSave =
-            historyText !== null &&
-            removeLastEditingDate(historyText) !== removeLastEditingDate(text);
+            sanitizedHistoryText !== null &&
+            sanitizedHistoryText !== sanitizedText;
         setStatus({ canUndo, canRedo, canSave });
     };
     useFileSourceEvents(['update'], update, [], filePath);

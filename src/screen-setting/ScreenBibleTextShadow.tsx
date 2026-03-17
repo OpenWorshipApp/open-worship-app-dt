@@ -16,7 +16,7 @@ import { useStylingColor } from '../_screen/preview/stylingHelpers';
 
 function genShadowElement(style: CSSProperties, title: string) {
     return (
-        <div className="ow-outline-demo app-blank-bg px-1" style={style}>
+        <div className="app-outline-demo app-blank-bg px-1" style={style}>
             {title}
         </div>
     );
@@ -89,7 +89,7 @@ function clickListener(event: any) {
 }
 function checkRendered(container: HTMLDivElement) {
     const divList =
-        container.querySelectorAll<HTMLDivElement>('.ow-outline-demo');
+        container.querySelectorAll<HTMLDivElement>('.app-outline-demo');
     const listenList = Array.from(divList).map((child) => {
         child.addEventListener('click', clickListener);
         return { child, listener: clickListener };
@@ -151,7 +151,7 @@ export default function ScreenBibleTextShadow() {
     const [color] = useStylingColor();
     useAppEffect(() => {
         const divList =
-            document.querySelectorAll<HTMLDivElement>('.ow-outline-demo');
+            document.querySelectorAll<HTMLDivElement>('.app-outline-demo');
         const listenList = Array.from(divList).map((element) => {
             const listener = () => {
                 ScreenBibleManager.applyTextStyle({

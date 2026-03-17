@@ -99,7 +99,7 @@ export default function BackgroundMediaItemComp({
             style={{
                 width: `${thumbnailWidth}px`,
             }}
-            data-file-item-file-path={fileSource.filePath}
+            data-file-item-file-src={fileSource.src}
             draggable={!noDraggable}
             onDragStart={handleMediaDragStart}
             onContextMenu={handleContextMenuOpening}

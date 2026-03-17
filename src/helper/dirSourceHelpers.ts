@@ -26,9 +26,10 @@ function notifyNewFilePaths(oldFilePaths: string[], newFilePaths: string[]) {
     });
     for (const filePath of diffFilePaths) {
         setTimeout(() => {
+            const src = FileSource.getInstance(filePath).src;
             notifyNewElementAdded(() => {
                 return document.querySelector(
-                    `[data-file-item-file-path="${filePath}"]`,
+                    `[data-file-item-file-src="${src}"]`,
                 );
             });
         }, 0);

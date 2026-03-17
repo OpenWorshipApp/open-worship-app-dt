@@ -434,7 +434,7 @@ export async function notifyNewElementAdded(
         await new Promise((resolve) => {
             setTimeout(resolve, 100);
         });
-        if (i > 10) {
+        if (i > 30) {
             return;
         }
         i++;
