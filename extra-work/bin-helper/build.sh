@@ -23,6 +23,8 @@ if [ "$1" == "--debug" ]; then
 else
     echo "Release build mode enabled."
 fi
+
+dotnet nuget locals all --clear && dotnet restore Helper.csproj --force --no-cache
 if [ "$is_debug" = true ]; then
     dotnet build -c Debug Helper.csproj
 else
