@@ -124,7 +124,9 @@ export default function ScreenPreviewerFooterComp() {
                 }}
             >
                 <div className="d-flex justify-content-start">
-                    <DisplayControl />
+                    <div>
+                        <DisplayControl />
+                    </div>
                     <ScreenEffectControlComp />
                     {videoSources.length > 0 ? (
                         <BackgroundAudioSwitchComp
