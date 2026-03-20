@@ -44,9 +44,6 @@ type UpdateDataType = {
 };
 
 const DOWNLOAD_BASE_URL = `${appProvider.appInfo.homepage}/download`;
-function toFullUrl(suffix: string) {
-    return `${DOWNLOAD_BASE_URL}/${suffix}`;
-}
 
 const attemptTimeout = genTimeoutAttempt(3000);
 let attemptCount = 0;
@@ -113,9 +110,18 @@ function messageCallback(message: string | null) {
     showProgressBarMessage(message ?? '');
 }
 
+// Maybe in the future, url have been changed to full
+function addRootURL(rootUrl: string, endUrl: string) {
+    if (endUrl.startsWith('http://') || endUrl.startsWith('https://')) {
+        return endUrl;
+    }
+    const url = `${rootUrl}/${endUrl}`;
+    return url;
+}
+
 async function downloadUpdate(updateData: UpdateDataType) {
     const srcUrlSuffix = updateData.installer[0].publicPath;
-    const srcUrl = `${appProvider.appInfo.homepage}/${srcUrlSuffix}`;
+    const srcUrl = addRootURL(appProvider.appInfo.homepage, srcUrlSuffix);
     const fileFullName = updateData.installer[0].fileFullName;
     const downloadDirPath = getDownloadPath();
     const downloadDestFilePath = pathJoin(
@@ -180,7 +186,8 @@ function checkIsVersionOutdated(
 }
 
 async function getDownloadTargetUrl() {
-    const downloadInfo = await fetch(toFullUrl('info.json'), {
+    const jsonUrl = `${DOWNLOAD_BASE_URL}/info.json`;
+    const downloadInfo = await fetch(jsonUrl, {
         method: 'GET',
         cache: 'no-cache',
     })
@@ -214,7 +221,8 @@ async function getDownloadTargetUrl() {
     if (targetInfo === null) {
         return null;
     }
-    return toFullUrl(`${targetInfo[0]}/info.json`);
+    const url = addRootURL(DOWNLOAD_BASE_URL, `${targetInfo[0]}/info.json`);
+    return url;
 }
 
 function showDownloadableToast() {
