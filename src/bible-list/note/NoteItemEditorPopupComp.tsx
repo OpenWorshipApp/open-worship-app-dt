@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+
 import { dirSourceSettingNames } from '../../helper/constants';
 import DirSource from '../../helper/DirSource';
 import { getParamFileFullName, getParamIdNum } from '../../helper/domHelpers';
@@ -15,6 +17,8 @@ import {
 } from '../../helper/dirSourceHelpers';
 import appProvider from '../../server/appProvider';
 import type NoteItem from './NoteItem';
+import { tran } from '../../lang/langHelpers';
+import { useIsOnTop } from '../../server/appHelpers';
 
 async function getNoteAndNoteItem() {
     const fileFullName = getParamFileFullName();
@@ -67,6 +71,7 @@ function useUpdateWindowTitle(
 
 const HEIGHT = 40;
 export default function NoteItemEditorPopupComp() {
+    const [isOnTop, setIsOnTop] = useIsOnTop();
     const [data] = useAppStateAsync(async () => {
         try {
             const data = await getNoteAndNoteItem();
@@ -82,6 +87,9 @@ export default function NoteItemEditorPopupComp() {
     useUpdateWindowTitle(data);
     const dirSource = useGenDirSourceReload(dirSourceSettingNames.NOTES);
     useDirSourceWatching(dirSource);
+    const handleOnTopChange = useCallback(() => {
+        setIsOnTop((prev) => !prev);
+    }, [setIsOnTop]);
     if (data === undefined) {
         return <LoadingComp />;
     }
@@ -91,7 +99,7 @@ export default function NoteItemEditorPopupComp() {
     return (
         <div className="card w-100 h-100 app-overflow-hidden">
             <div
-                className="card-header 100"
+                className="card-header 100 d-flex"
                 style={{
                     height: HEIGHT,
                 }}
@@ -100,6 +108,17 @@ export default function NoteItemEditorPopupComp() {
                     note={data.note}
                     noteItem={data.noteItem}
                 />
+                <div
+                    className="input-group-text app-inner-shadow p-0 px-1 app-caught-hover-pointer"
+                    onClick={handleOnTopChange}
+                >
+                    {tran('On Top')}:{' '}
+                    <input
+                        className="form-check-input mt-0"
+                        type="checkbox"
+                        checked={isOnTop}
+                    />
+                </div>
             </div>
             <div
                 className="card-body w-100 app-overflow-hidden"

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
@@ -16,6 +18,7 @@ import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appError as logError } from '../helper/loggerHelpers';
 import { tran } from '../lang/langHelpers';
+import { useAppEffect } from '../helper/debuggerHelpers';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${crypto.randomUUID()}`;
@@ -412,4 +415,26 @@ export function timeToTimeString(time: number) {
     const minutes = Math.floor((time % 3600) / 60);
     const seconds = Math.floor(time % 60);
     return `${hours}:${minutes}:${seconds}`;
+}
+
+export function useIsOnTop() {
+    const [isOnTop, setIsOnTop] = useState(false);
+    const setIsOnTop1 = async (
+        newIsOnTop: boolean | ((prev: boolean) => boolean),
+    ) => {
+        appProvider.messageUtils.sendData('all:app:set-is-window-on-top', {
+            isOnTop:
+                typeof newIsOnTop === 'function'
+                    ? newIsOnTop(isOnTop)
+                    : newIsOnTop,
+        });
+        setIsOnTop(newIsOnTop);
+    };
+    useAppEffect(() => {
+        const isOnTop = appProvider.messageUtils.sendDataSync(
+            'all:app:check-is-window-on-top',
+        );
+        setIsOnTop(isOnTop === true);
+    }, []);
+    return [isOnTop, setIsOnTop1] as const;
 }

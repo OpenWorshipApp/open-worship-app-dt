@@ -1,5 +1,6 @@
 import path from 'node:path';
 import electron, {
+    BrowserWindow,
     type FileFilter,
     type IpcMain,
     nativeTheme,
@@ -10,7 +11,6 @@ import electron, {
 import type ElectronAppController from './ElectronAppController';
 import {
     attemptClosing,
-    captureWebScreenShot,
     getAllNoneFinderWindows,
     goDownload,
     isMac,
@@ -412,16 +412,23 @@ export function initEventOther(appController: ElectronAppController) {
             return exportBibleMSWord(data.filePath, data.data, data.dotNetRoot);
         },
     );
-    onAsync(
-        ipcMain,
-        'main:app:capture-web-screen-shot',
-        (data: {
-            url: string;
-            width: number;
-            height: number;
-            delay?: number;
-        }) => {
-            return captureWebScreenShot(data.url, data);
+
+    ipcMain.on('all:app:check-is-window-on-top', (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        if (win === null) {
+            return false;
+        }
+        const isOnTop = win.isAlwaysOnTop();
+        event.returnValue = isOnTop;
+    });
+    ipcMain.on(
+        'all:app:set-is-window-on-top',
+        (event, data: { isOnTop: boolean }) => {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (win === null) {
+                return false;
+            }
+            win.setAlwaysOnTop(data.isOnTop);
         },
     );
 }
