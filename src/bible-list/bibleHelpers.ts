@@ -40,6 +40,7 @@ import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
 import { exportBibleMSWord, showFileOrDirExplorer } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
+import { cloneJson } from '../helper/helpers';
 
 export const SelectedBibleKeyContext = createContext<string>('KJV');
 export function useBibleKeyContext() {
@@ -78,12 +79,12 @@ export async function saveBibleItem(bibleItem: BibleItem, onDone?: () => void) {
         return null;
     }
     const savedBibleItem = await Bible.addBibleItemToDefault(bibleItem);
-    if (savedBibleItem !== null) {
+    if (savedBibleItem === null) {
+        showSimpleToast('Adding bible', 'Fail to add bible to list');
+    } else {
         showSimpleToast('Adding bible', 'Bible item is added');
         onDone?.();
         return savedBibleItem;
-    } else {
-        showSimpleToast('Adding bible', 'Fail to add bible to list');
     }
     return null;
 }
@@ -201,10 +202,8 @@ export async function openBibleItemContextMenu(
                               viewController.selectedBibleItem,
                               {
                                   bibleKey: bibleItem.bibleKey,
+                                  target: cloneJson(bibleItem.target),
                               },
-                          );
-                          await viewController.setLookupContentFromBibleItem(
-                              bibleItem,
                           );
                           openBibleLookup();
                       },
