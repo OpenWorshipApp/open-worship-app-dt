@@ -11,6 +11,7 @@ import electron, {
 import type ElectronAppController from './ElectronAppController';
 import {
     attemptClosing,
+    captureWebScreenShot,
     getAllNoneFinderWindows,
     goDownload,
     isMac,
@@ -410,6 +411,19 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:ms-word-export-bible',
         (data: { filePath: string; data: object[]; dotNetRoot?: string }) => {
             return exportBibleMSWord(data.filePath, data.data, data.dotNetRoot);
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:capture-web-screen-shot',
+        (data: {
+            url: string;
+            width: number;
+            height: number;
+            delay?: number;
+        }) => {
+            return captureWebScreenShot(data.url, data);
         },
     );
 
