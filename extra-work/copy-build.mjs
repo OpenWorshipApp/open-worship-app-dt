@@ -163,12 +163,16 @@ console.log('"ffmpeg" files are copied');
 
 const { sourceFileName: denoSourceFileName, destFileName: denoDestFileName } =
   genBinFileName('deno');
-copyFile(
-  {
-    source: resolve(binHelperSourceRootDir, 'deno'),
-    destination: resolve(binHelperDestRootDir, 'deno'),
-  },
-  denoSourceFileName,
-  denoDestFileName,
-);
-console.log('"deno" files are copied');
+try {
+  copyFile(
+    {
+      source: resolve(binHelperSourceRootDir, 'deno'),
+      destination: resolve(binHelperDestRootDir, 'deno'),
+    },
+    denoSourceFileName,
+    denoDestFileName,
+  );
+  console.log('"deno" files are copied');
+} catch (error) {
+  console.error('Failed to copy "deno" files:', error);
+}
