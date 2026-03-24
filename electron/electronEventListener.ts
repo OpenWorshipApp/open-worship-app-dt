@@ -27,6 +27,8 @@ import {
     countSlides,
     exportBibleMSWord,
     removeSlideBackground,
+    pptxToHtmls,
+    type PptxToHtmlsResultType,
 } from './msHelpers';
 
 const { dialog, ipcMain, app } = electron;
@@ -443,6 +445,14 @@ export function initEventOther(appController: ElectronAppController) {
                 return false;
             }
             win.setAlwaysOnTop(data.isOnTop);
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:pptx-to-htmls',
+        (data: PptxToHtmlsResultType) => {
+            return pptxToHtmls(data);
         },
     );
 }

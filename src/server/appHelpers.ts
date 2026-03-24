@@ -165,6 +165,18 @@ export async function getSlidesCount(filePath: string) {
     );
     return count;
 }
+type PptxToHtmlsDataType = {
+    isSuccessful: boolean;
+    message?: string;
+};
+export async function pptxToHtmls(filePath: string, outDir: string) {
+    const result = await electronSendAsync<PptxToHtmlsDataType>(
+        'main:app:pptx-to-htmls',
+        { filePath, outDir },
+    );
+    return result;
+}
+(window as any).pptxToHtmls = pptxToHtmls;
 export async function removeSlideBackground(filePath: string) {
     // TODO: this function should not work yet, need to be fixed in the future
     const isSuccess = await electronSendAsync<boolean>(

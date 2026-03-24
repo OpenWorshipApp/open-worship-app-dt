@@ -126,7 +126,7 @@ public class Helper
     }
 
     [JSExport]
-    public static bool PptxToHtml(string pptxPath, string outputDirectory, string? eot2ttfPath = null)
+    public static bool PptxToHtmls(string pptxPath, string outputDirectory, string? eot2ttfPath = null)
     {
         try
         {

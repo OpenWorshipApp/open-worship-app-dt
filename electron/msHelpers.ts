@@ -2,12 +2,19 @@ import { resolve } from 'node:path';
 import { toUnpackedPath, unlocking } from './electronHelpers';
 import { execute } from './processHelpers';
 
-function getBinaryPath(dotNetRoot?: string) {
+export function getBinaryPath(dotNetRoot?: string) {
     const basePath = toUnpackedPath(resolve(__dirname, '../bin-helper'));
     const dotnetPath = dotNetRoot ?? resolve(basePath, 'dotnet-bin');
     const modulePath = resolve(basePath, 'node-api-dotnet', 'net8.0');
     const binaryPath = resolve(basePath, 'ms-helpers', 'Helper');
-    return { modulePath, binaryPath, dotnetPath };
+    const eot2ttfPath = resolve(
+        basePath,
+        'ms-helpers',
+        'tools',
+        'eot2ttf',
+        'eot2ttf',
+    );
+    return { modulePath, binaryPath, dotnetPath, eot2ttfPath };
 }
 
 const countMap = new Map<string, { date: number; count: number }>();
@@ -89,4 +96,34 @@ export async function exportBibleMSWord(
             return isSuccess;
         },
     );
+}
+
+type PptxToHtmlsDataType = {
+    isSuccessful: boolean;
+    message?: string;
+};
+
+export type PptxToHtmlsResultType = {
+    filePath: string;
+    outDir: string;
+    dotNetRoot?: string;
+};
+
+function genHTMLs({ filePath, outDir, dotNetRoot }: PptxToHtmlsResultType) {
+    const { modulePath, binaryPath, dotnetPath, eot2ttfPath } =
+        getBinaryPath(dotNetRoot);
+    return execute<PptxToHtmlsDataType>('pptx-to-htmls.js', {
+        filePath,
+        outputDirectory: outDir,
+        eot2ttfPath,
+        modulePath,
+        binaryPath,
+        dotnetPath,
+    });
+}
+
+export function pptxToHtmls(data: PptxToHtmlsResultType) {
+    return unlocking<PptxToHtmlsDataType>(data.filePath, async () => {
+        return genHTMLs(data);
+    });
 }
