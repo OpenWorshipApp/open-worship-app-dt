@@ -36,6 +36,18 @@ function getFileSuffix() {
   }
   return suffix;
 }
+function getOsName() {
+  if (systemUtils.isWindows) {
+    return 'win';
+  }
+  if (systemUtils.isMac) {
+    return 'mac';
+  }
+  if (systemUtils.isLinux) {
+    return 'linux';
+  }
+  throw new Error(`Unsupported platform: ${platform}`);
+}
 const fileSuffix = getFileSuffix();
 function genLibFileName(baseName) {
   let ext;
@@ -101,27 +113,51 @@ copyFile(
 );
 console.log('"package-lock.json" file is copied');
 
-const binHelperSourceRootDir = resolve('./extra-work/bin-helper/dist');
+const binHelperSourceRootDir = resolve('./extra-work/bin-helper');
+const binHelperSourceDistRootDir = resolve(`${binHelperSourceRootDir}/dist`);
 const binHelperDestRootDir = resolve('./electron-build/bin-helper');
 
-const basePath = {
-  source: resolve('./extra-work/db-exts'),
-  destination: resolve('./electron-build/db-exts'),
-};
-['fts5', 'spellfix1'].forEach((baseName) => {
-  const { sourceFileName, destFileName } = genLibFileName(baseName);
-  copyFile(basePath, sourceFileName, destFileName);
-});
-console.log('"db-exts" files are copied');
+copyFile(
+  {
+    source: binHelperSourceRootDir,
+    destination: resolve(binHelperDestRootDir, 'ms-helpers'),
+  },
+  'PptxToHtml.dll',
+  'PptxToHtml.dll',
+);
+console.log('"PptxToHtml.dll" is copied');
+
+const {
+  sourceFileName: eot2ttfSourceFileName,
+  destFileName: eot2ttfDestFileName,
+} = genBinFileName('eot2ttf');
+copyFile(
+  {
+    source: resolve(
+      binHelperSourceRootDir,
+      'tools',
+      `${getOsName()}${fileSuffix}`,
+    ),
+    destination: resolve(
+      binHelperDestRootDir,
+      'ms-helpers',
+      'tools',
+      'eot2ttf',
+    ),
+  },
+  eot2ttfSourceFileName,
+  eot2ttfDestFileName,
+);
+console.log('"eot2ttf" is copied');
 
 copyAllChildren(
-  resolve(binHelperSourceRootDir, 'net8.0'),
+  resolve(binHelperSourceDistRootDir, 'net8.0'),
   resolve(binHelperDestRootDir, 'ms-helpers'),
 );
 console.log('"MSHelpers" files are copied');
 
 copyAllChildren(
-  resolve(binHelperSourceRootDir, `bin${fileSuffix}`),
+  resolve(binHelperSourceDistRootDir, `bin${fileSuffix}`),
   resolve(binHelperDestRootDir, 'dotnet-bin'),
 );
 console.log('"dotnet-bin" files are copied');
@@ -130,7 +166,7 @@ const { sourceFileName: ytSourceFileName, destFileName: ytDestFileName } =
   genBinFileName('yt-dlp');
 copyFile(
   {
-    source: resolve(binHelperSourceRootDir, 'yt'),
+    source: resolve(binHelperSourceDistRootDir, 'yt'),
     destination: resolve(binHelperDestRootDir, 'yt'),
   },
   ytSourceFileName,
@@ -155,7 +191,7 @@ if (systemUtils.isMac) {
   );
 } else {
   copyAllChildren(
-    resolve(binHelperSourceRootDir, 'ffmpeg'),
+    resolve(binHelperSourceDistRootDir, 'ffmpeg'),
     resolve(binHelperDestRootDir, 'ffmpeg'),
   );
 }
@@ -166,7 +202,7 @@ const { sourceFileName: denoSourceFileName, destFileName: denoDestFileName } =
 try {
   copyFile(
     {
-      source: resolve(binHelperSourceRootDir, 'deno'),
+      source: resolve(binHelperSourceDistRootDir, 'deno'),
       destination: resolve(binHelperDestRootDir, 'deno'),
     },
     denoSourceFileName,
@@ -176,3 +212,13 @@ try {
 } catch (error) {
   console.error('Failed to copy "deno" files:', error);
 }
+
+const basePath = {
+  source: resolve('./extra-work/db-exts'),
+  destination: resolve('./electron-build/db-exts'),
+};
+['fts5', 'spellfix1'].forEach((baseName) => {
+  const { sourceFileName, destFileName } = genLibFileName(baseName);
+  copyFile(basePath, sourceFileName, destFileName);
+});
+console.log('"db-exts" files are copied');

@@ -1,4 +1,4 @@
-﻿// https://microsoft.github.io/node-api-dotnet/scenarios/
+// https://microsoft.github.io/node-api-dotnet/scenarios/
 // https://www.nuget.org/packages/DocumentFormat.OpenXml
 // https://learn.microsoft.com/en-us/office/open-xml/open-xml-sdk
 using DocumentFormat.OpenXml.Packaging;
@@ -6,9 +6,9 @@ using Microsoft.JavaScript.NodeApi;
 
 public class BibleData
 {
-    public string title { get; set; }
-    public string body { get; set; }
-    public string fontFamily { get; set; }
+    public string title { get; set; } = "";
+    public string body { get; set; } = "";
+    public string fontFamily { get; set; } = "";
 }
 
 [JSExport]
@@ -44,7 +44,7 @@ public class Helper
             // remove all slide backgrounds then set to white transparent 100%
             foreach (var slidePart in presentationDocument.PresentationPart.SlideParts)
             {
-                if (slidePart.Slide.CommonSlideData == null)
+                if (slidePart.Slide == null || slidePart.Slide.CommonSlideData == null)
                 {
                     continue;
                 }
@@ -123,6 +123,22 @@ public class Helper
                 AppendBibleEntryToWordBody(bodyElement, entry["title"], entry["body"], entry["fontFamily"]);
             }
         }
+    }
+
+    [JSExport]
+    public static bool PptxToHtml(string pptxPath, string outputDirectory, string? eot2ttfPath = null)
+    {
+        try
+        {
+            global::PptxToHtml.Export(pptxPath, outputDirectory, eot2ttfPath ?? "");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return false;
+        }
+
+        return true;
     }
 
 }
