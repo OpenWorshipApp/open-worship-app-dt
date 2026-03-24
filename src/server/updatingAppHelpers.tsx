@@ -166,6 +166,20 @@ function checkIsVersionOutdated(
     latestVersion: string,
 ) {
     const currentParts = currentVersion.split('.').map(Number);
+
+    // should be updated if the current version is released more than 3 months ago,
+    // even the version number is not updated
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    const currentVersionDate = new Date(
+        currentParts[0],
+        currentParts[1] - 1,
+        currentParts[2],
+    );
+    if (currentVersionDate < threeMonthsAgo) {
+        return true;
+    }
+
     const latestParts = latestVersion.split('.').map(Number);
 
     for (
