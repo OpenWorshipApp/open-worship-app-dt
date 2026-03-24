@@ -185,6 +185,76 @@ function checkIsVersionOutdated(
     return false; // Versions are equal
 }
 
+function showFail() {
+    showSimpleToast(
+        tran('No Compatible Update Found'),
+        tran('Sorry, we could not find a compatible update for your system.'),
+    );
+}
+
+type FileInfoType = {
+    fileFullName: string;
+    checksum: string;
+    publicPath: string;
+    releaseDate: string;
+};
+type DownloadInfoItemType = {
+    version: string;
+    commitID: string;
+
+    is64System?: boolean;
+    isArm64?: boolean;
+
+    isLinux?: boolean;
+    isUbuntu?: boolean;
+    isFedora?: boolean;
+
+    isMac?: boolean;
+    isUniversal?: boolean;
+
+    isWindows?: boolean;
+
+    portable: FileInfoType[];
+    installer: FileInfoType[];
+};
+function checkIsItemMatch(item: DownloadInfoItemType) {
+    const { systemUtils } = appProvider;
+    if (systemUtils.isWindows) {
+        if (!item.isWindows) {
+            return false;
+        }
+        if (systemUtils.is64System && !item.is64System) {
+            return false;
+        }
+        if (systemUtils.isArm64 && !item.isArm64) {
+            return false;
+        }
+        return true;
+    }
+    if (systemUtils.isMac) {
+        if (!item.isMac) {
+            return false;
+        }
+        if (systemUtils.isArm64 && !item.isArm64) {
+            return false;
+        }
+        return true;
+    }
+    if (systemUtils.isLinux) {
+        if (!item.isLinux) {
+            return false;
+        }
+        if (systemUtils.isUbuntu && !item.isUbuntu) {
+            return false;
+        }
+        if (systemUtils.isFedora && !item.isFedora) {
+            return false;
+        }
+        return true;
+    }
+    return false;
+}
+
 async function getDownloadTargetUrl() {
     const jsonUrl = `${DOWNLOAD_BASE_URL}/info.json`;
     const downloadInfo = await fetch(jsonUrl, {
@@ -204,21 +274,15 @@ async function getDownloadTargetUrl() {
             return null;
         });
     if (downloadInfo === null) {
+        showFail();
         return null;
     }
-    const { systemUtils } = appProvider;
     const targetInfo =
         Object.entries(downloadInfo).find(([_key, item]: [string, any]) => {
-            return (
-                (systemUtils.isWindows && item.isWindows) ||
-                (systemUtils.isMac &&
-                    item.isMac &&
-                    ((systemUtils.isArm64 && item.isArm64) ||
-                        (!systemUtils.is64System && !item.isArm64))) ||
-                (systemUtils.isLinux && item.isLinux)
-            );
+            return checkIsItemMatch(item);
         }) ?? null;
     if (targetInfo === null) {
+        showFail();
         return null;
     }
     const url = addRootURL(DOWNLOAD_BASE_URL, `${targetInfo[0]}/info.json`);
@@ -278,49 +342,67 @@ export async function checkForAppUpdate(isSilent = true) {
             return null;
         });
     if (updateData === null) {
+        showFail();
         return;
     }
     try {
-        const version = updateData.version;
+        const onlineVersion = updateData.version;
+        const version = appProvider.appInfo.version;
         appLog(
-            `Current version: ${appProvider.appInfo.version}, ` +
-                `Latest version: ${version}`,
+            `Current version: ${version}, ` +
+                `Latest version: ${onlineVersion}`,
         );
 
-        if (checkIsVersionOutdated(appProvider.appInfo.version, version)) {
-            const isOk = await showAppConfirm(
-                tran('Update Available'),
-                `${tran('A new version of the app is available')}: "${version}". ` +
-                    `${tran('Would you like to download it?')}`,
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            );
-            if (!isOk) {
-                showDownloadableToast();
-                return;
-            }
-            const downloadedFilePath = await downloadUpdate(updateData);
-            if (downloadedFilePath === null) {
-                return;
-            }
-            const isOkToOpen = await showAppConfirm(
-                tran('Download Completed'),
-                `${tran(
-                    'The update has been downloaded. ' +
-                        'Do you want to open the file location?',
-                )}`,
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            );
-            if (!isOkToOpen) {
-                return;
-            }
-            showFileOrDirExplorer(downloadedFilePath);
-        } else if (!isSilent) {
-            showNoUpdateAvailableToast();
+        const systemCommitHash = appProvider.systemUtils.commitHash;
+        console.log('Data commit id:', updateData.commitID);
+        console.log('System commit hash:', systemCommitHash);
+        let isWrongCommitHas = false;
+        if (systemCommitHash !== undefined) {
+            isWrongCommitHas = updateData.commitID !== systemCommitHash;
         }
+
+        if (
+            !(
+                checkIsVersionOutdated(version, onlineVersion) ||
+                isWrongCommitHas
+            )
+        ) {
+            if (!isSilent) {
+                showNoUpdateAvailableToast();
+            }
+            return;
+        }
+        const isOk = await showAppConfirm(
+            tran('Update Available'),
+            `${tran('A new version of the app is available')}, version:"${onlineVersion}" ` +
+                `and commit ID:"${updateData.commitID.substring(0, 7)}". ` +
+                `${tran('Would you like to download it?')}`,
+            {
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (!isOk) {
+            showDownloadableToast();
+            return;
+        }
+        const downloadedFilePath = await downloadUpdate(updateData);
+        if (downloadedFilePath === null) {
+            return;
+        }
+        const isOkToOpen = await showAppConfirm(
+            tran('Download Completed'),
+            `${tran(
+                'The update has been downloaded. ' +
+                    'Do you want to open the file location?',
+            )}`,
+            {
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (!isOkToOpen) {
+            return;
+        }
+        showFileOrDirExplorer(downloadedFilePath);
     } catch (error) {
         handleError(error);
     }

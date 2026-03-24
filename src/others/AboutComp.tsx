@@ -44,7 +44,9 @@ export default function AboutComp() {
                     <strong>
                         {appInfo.titleFull}
                         <br />
-                        {appInfo.version}
+                        version:{appInfo.version}, commit ID:
+                        {appProvider.systemUtils.commitHash?.substring(0, 7) ??
+                            'N/A'}
                     </strong>
                 </div>
                 <div className="card-body p-2">

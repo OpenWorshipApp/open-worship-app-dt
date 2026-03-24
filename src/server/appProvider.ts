@@ -57,12 +57,15 @@ export type PathUtilsType = {
 
 export type SystemUtilsType = {
     copyToClipboard: (str: string) => void;
+    commitHash?: string;
     isDev: boolean;
     isWindows: boolean;
     is64System: boolean;
     isMac: boolean;
     isArm64: boolean;
     isLinux: boolean;
+    isUbuntu: boolean;
+    isFedora: boolean;
     generateMD5: (input: string) => string;
 };
 

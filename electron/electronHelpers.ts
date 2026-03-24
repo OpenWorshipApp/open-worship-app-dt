@@ -13,17 +13,29 @@ import {
 
 import appInfo from '../package.json';
 import { htmlFiles } from './fsServe';
-
 export type OptionalPromise<T> = T | Promise<T>;
+
+function getPackInfo() {
+    try {
+        const packageInfo = require('../package-info.json');
+        return packageInfo;
+    } catch (error) {
+        return null;
+    }
+}
 
 export const isDev = process.env.NODE_ENV === 'development';
 
 export const isWindows = process.platform === 'win32';
 export const isMac = process.platform === 'darwin';
 export const isLinux = process.platform === 'linux';
+const osRelease = require('os').release().toLowerCase();
+export const isUbuntu = isLinux && osRelease.includes('ubuntu');
+export const isFedora = isLinux && osRelease.includes('fedora');
 export const isSecured = false; // TODO: make it secure
 export const is64System = process.arch === 'x64';
 export const isArm64 = process.arch === 'arm64';
+export const commitHash = getPackInfo()?.commitHash ?? undefined;
 
 export const messageChannels = {
     screenMessage: 'app:screen:message',
@@ -148,7 +160,11 @@ export function getAppThemeBackgroundColor() {
 }
 
 export function copyDebugInfoToClipboard(isFull = false) {
-    const packageInfo = require('../package-info.json');
+    const packageInfo = getPackInfo();
+    if (packageInfo === null) {
+        clipboard.writeText('No package info available');
+        return;
+    }
     let debugAppInfo = `
 App Version: ${app.getVersion()}
 Electron Version: ${process.versions.electron}
