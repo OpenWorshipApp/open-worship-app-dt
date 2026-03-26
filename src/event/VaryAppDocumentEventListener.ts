@@ -1,4 +1,4 @@
-import type { VaryAppDocumentItemType } from '../app-document-list/appDocumentTypeHelpers';
+import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
 import {
     THUMBNAIL_WIDTH_SETTING_NAME,
     DEFAULT_THUMBNAIL_SIZE_FACTOR,
@@ -14,18 +14,16 @@ export type AppDocumentListEventType =
 
 export default class AppDocumentListEventListener extends EventHandler<AppDocumentListEventType> {
     static readonly eventNamePrefix: string = 'app-document-list';
-    static selectAppDocumentItem(
-        varyAppDocumentItem: VaryAppDocumentItemType | null,
-    ) {
-        this.addPropEvent('app-document-item-select', varyAppDocumentItem);
+    static selectVarySlide(varySlide: VarySlideType | null) {
+        this.addPropEvent('app-document-item-select', varySlide);
     }
-    static appDocumentItemSizing() {
+    static fireEventVarySlideSizing() {
         this.addPropEvent('app-document-item-sizing');
     }
 }
 
-export function useAppDocumentItemSelecting(
-    listener: ListenerType<VaryAppDocumentItemType | null>,
+export function useVarySlideSelecting(
+    listener: ListenerType<VarySlideType | null>,
 ) {
     useAppEffect(() => {
         const event = AppDocumentListEventListener.registerEventListener(
@@ -38,7 +36,7 @@ export function useAppDocumentItemSelecting(
     }, [listener]);
 }
 
-export function useAppDocumentItemThumbnailSizeScale({
+export function useVarySlideThumbnailSizeScale({
     settingName = THUMBNAIL_WIDTH_SETTING_NAME,
     defaultSize = Math.fround(DEFAULT_THUMBNAIL_SIZE_FACTOR / 30),
 }: {
@@ -72,7 +70,7 @@ export function useAppDocumentItemThumbnailSizeScale({
     }, [settingName, defaultSize]);
     const applyThumbnailSizeScale = (size: number) => {
         setThumbnailSizeScale(size);
-        AppDocumentListEventListener.appDocumentItemSizing();
+        AppDocumentListEventListener.fireEventVarySlideSizing();
     };
     return [thumbnailSizeScale, applyThumbnailSizeScale];
 }

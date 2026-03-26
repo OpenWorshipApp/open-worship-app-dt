@@ -33,15 +33,13 @@ export function NoteTitleEditorComp({
     note,
     noteItem,
 }: Readonly<{ note: Note; noteItem: NoteItem; title?: string }>) {
-    const [store, setStore] = useState<SimpleNoteEditorStoreType>(
-        new NoteTitleStore(note, noteItem),
-    );
+    const [store, setStore] = useState(new NoteTitleStore(note, noteItem));
     useAppEffect(() => {
         setStore(new NoteTitleStore(note, noteItem));
     }, [note, noteItem]);
     useAppEffect(() => {
         return () => {
-            store.save();
+            store.save?.();
         };
     }, [store]);
 
@@ -109,15 +107,13 @@ export default function NoteEditorComp({
     title?: string;
     extraStyle?: CSSProperties;
 }>) {
-    const [store, setStore] = useState<SimpleNoteEditorStoreType>(
-        new NoteContentStore(note, noteItem),
-    );
+    const [store, setStore] = useState(new NoteContentStore(note, noteItem));
     useAppEffect(() => {
         setStore(new NoteContentStore(note, noteItem));
     }, [note, noteItem]);
     useAppEffect(() => {
         return () => {
-            store.save();
+            store.save?.();
         };
     }, [store]);
 

@@ -10,6 +10,7 @@ import {
     type HandlerDetails,
     type WebContents,
 } from 'electron';
+import { release } from 'node:os';
 
 import appInfo from '../package.json';
 import { htmlFiles } from './fsServe';
@@ -19,7 +20,7 @@ function getPackInfo() {
     try {
         const packageInfo = require('../package-info.json');
         return packageInfo;
-    } catch (error) {
+    } catch (_error) {
         return null;
     }
 }
@@ -29,7 +30,7 @@ export const isDev = process.env.NODE_ENV === 'development';
 export const isWindows = process.platform === 'win32';
 export const isMac = process.platform === 'darwin';
 export const isLinux = process.platform === 'linux';
-const osRelease = require('os').release().toLowerCase();
+const osRelease = release().toLowerCase();
 export const isUbuntu = isLinux && osRelease.includes('ubuntu');
 export const isFedora = isLinux && osRelease.includes('fedora');
 export const isSecured = false; // TODO: make it secure

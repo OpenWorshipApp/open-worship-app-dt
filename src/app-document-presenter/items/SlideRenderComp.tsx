@@ -7,7 +7,7 @@ import {
     SelectedEditingSlideContext,
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
-import VaryAppDocumentItemRenderComp from './VaryAppDocumentItemRenderComp';
+import VarySlideRenderComp from './VarySlideRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import SlideRendererComp from './SlideRendererComp';
 import type AppDocument from '../../app-document-list/AppDocument';
@@ -78,8 +78,8 @@ export default function SlideRenderComp({
         ],
     );
     return (
-        <VaryAppDocumentItemRenderComp
-            slide={slide}
+        <VarySlideRenderComp
+            varySlide={slide}
             selectedItemEditing={selectedEditingSlide}
             holdingItems={holdingEditingSlides}
             width={width}
@@ -92,6 +92,6 @@ export default function SlideRenderComp({
                 width={`${slide.width}px`}
                 height={`${slide.height}px`}
             />
-        </VaryAppDocumentItemRenderComp>
+        </VarySlideRenderComp>
     );
 }

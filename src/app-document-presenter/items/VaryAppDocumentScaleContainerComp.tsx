@@ -1,16 +1,16 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
-import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import { useShadowingParentWidth } from '../../others/ShadowingFillParentWidthComp';
 
 export default function VaryAppDocumentScaleContainerComp({
-    slide,
+    varySlide,
     width,
     children,
     extraStyle,
 }: Readonly<{
-    slide: VaryAppDocumentItemType;
+    varySlide: VarySlideType;
     width: number;
     children?: ReactNode;
     extraStyle?: CSSProperties;
@@ -18,10 +18,10 @@ export default function VaryAppDocumentScaleContainerComp({
     const parentWidth = useShadowingParentWidth();
     const { scale, actualParentWidth, actualHeight } = useMemo(() => {
         const actualParentWidth = parentWidth ?? width;
-        const scale = actualParentWidth / slide.width;
-        const actualHeight = slide.height * scale;
+        const scale = actualParentWidth / varySlide.width;
+        const actualHeight = varySlide.height * scale;
         return { scale, actualParentWidth, actualHeight };
-    }, [parentWidth, width, slide.width, slide.height]);
+    }, [parentWidth, width, varySlide.width, varySlide.height]);
     useScreenVaryAppDocumentManagerEvents(['update']);
     return (
         <div
@@ -34,8 +34,8 @@ export default function VaryAppDocumentScaleContainerComp({
         >
             <div
                 style={{
-                    width: `${slide.width}px`,
-                    height: `${slide.height}px`,
+                    width: `${varySlide.width}px`,
+                    height: `${varySlide.height}px`,
                     transform: 'translate(-50%, -50%)',
                 }}
             >

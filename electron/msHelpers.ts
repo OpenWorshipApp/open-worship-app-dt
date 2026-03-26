@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { toUnpackedPath, unlocking } from './electronHelpers';
+import { isWindows, toUnpackedPath, unlocking } from './electronHelpers';
 import { execute } from './processHelpers';
 
 export function getBinaryPath(dotNetRoot?: string) {
@@ -12,7 +12,7 @@ export function getBinaryPath(dotNetRoot?: string) {
         'ms-helpers',
         'tools',
         'eot2ttf',
-        'eot2ttf',
+        `eot2ttf${isWindows ? '.exe' : ''}`,
     );
     return { modulePath, binaryPath, dotnetPath, eot2ttfPath };
 }

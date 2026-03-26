@@ -6,14 +6,14 @@ import {
     allArrows,
     useKeyboardRegistering,
 } from '../../event/KeyboardEventListener';
-import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
+import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import {
     getContainerDiv,
     handleArrowing,
     handleNextItemSelecting,
-    showVaryAppDocumentItemInViewport,
+    showVarySlideInViewport,
 } from './varyAppDocumentHelpers';
-import VaryAppDocumentItemRenderWrapperComp from './VaryAppDocumentItemRenderWrapperComp';
+import VarySlideRenderWrapperComp from './VarySlideRenderWrapperComp';
 import {
     useAppEffect,
     useAppEffectAsync,
@@ -26,7 +26,7 @@ import {
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import SlideAutoPlayComp from '../../slide-auto-play/SlideAutoPlayComp';
-import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import {
     DEFAULT_THUMBNAIL_SIZE_FACTOR,
     MIN_THUMBNAIL_SCALE,
@@ -36,10 +36,11 @@ import FillingFlexCenterComp from '../../others/FillingFlexCenterComp';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { tran } from '../../lang/langHelpers';
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
+import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import { removePdfImagesPreview } from '../../helper/pdfHelpers';
+import { removePptxHtmlsPreview } from '../../server/pptxHelpers';
 
-const varyAppDocumentItemsToView: { [key: string]: VaryAppDocumentItemType } =
-    {};
+const varySlidesToView: { [key: string]: VarySlideType } = {};
 
 const arrows: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
 const eventMaps: EventMapperType[] = arrows.map((key) => {
@@ -49,28 +50,25 @@ eventMaps.push({
     allControlKey: ['Shift'],
     key: ' ',
 });
-function useAppDocumentItems() {
+function useVarySlides() {
     const selectedAppDocument = useVaryAppDocumentContext();
-    const [varyAppDocumentItems, setVaryAppDocumentItems] = useAppStateAsync<
-        VaryAppDocumentItemType[]
-    >(() => {
+    const [varySlides, setVarySlide] = useAppStateAsync<VarySlideType[]>(() => {
         return selectedAppDocument.getSlides();
     }, [selectedAppDocument]);
 
     useAppEffectAsync(
         async (context) => {
-            if (varyAppDocumentItems === undefined) {
-                const newVaryAppDocumentItems =
-                    await selectedAppDocument.getSlides();
-                context.setVaryAppDocumentItems(newVaryAppDocumentItems);
+            if (varySlides === undefined) {
+                const newVarySlides = await selectedAppDocument.getSlides();
+                context.setVarySlide(newVarySlides);
             }
         },
-        [varyAppDocumentItems],
-        { setVaryAppDocumentItems },
+        [varySlides],
+        { setVarySlide },
     );
     const refresh = async () => {
-        const newVaryAppDocumentItems = await selectedAppDocument.getSlides();
-        setVaryAppDocumentItems(newVaryAppDocumentItems);
+        const newVarySlides = await selectedAppDocument.getSlides();
+        setVarySlide(newVarySlides);
     };
 
     useFileSourceEvents(['update'], refresh, [], selectedAppDocument.filePath);
@@ -78,25 +76,28 @@ function useAppDocumentItems() {
     useKeyboardRegistering(
         eventMaps,
         (event) => {
-            handleArrowing(event, varyAppDocumentItems ?? []);
+            handleArrowing(event, varySlides ?? []);
         },
-        [varyAppDocumentItems],
+        [varySlides],
     );
 
     useAppEffect(() => {
-        const varyAppDocumentItems = Object.values(varyAppDocumentItemsToView);
-        if (varyAppDocumentItems.length === 0) {
+        const varySlides = Object.values(varySlidesToView);
+        if (varySlides.length === 0) {
             return;
         }
-        for (const varyAppDocumentItem of varyAppDocumentItems) {
-            showVaryAppDocumentItemInViewport(varyAppDocumentItem.id);
+        for (const varySlide of varySlides) {
+            showVarySlideInViewport(varySlide.id);
         }
-        for (const key of Object.keys(varyAppDocumentItemsToView)) {
-            delete varyAppDocumentItemsToView[key];
+        for (const key of Object.keys(varySlidesToView)) {
+            delete varySlidesToView[key];
         }
-    }, [varyAppDocumentItems]);
+    }, [varySlides]);
     const isPDFAppDocument = useMemo(() => {
         return PdfAppDocument.checkIsThisType(selectedAppDocument);
+    }, [selectedAppDocument]);
+    const isPptxAppDocument = useMemo(() => {
+        return PptxAppDocument.checkIsThisType(selectedAppDocument);
     }, [selectedAppDocument]);
     const refreshPDFImages = useCallback(async () => {
         if (!isPDFAppDocument) {
@@ -106,48 +107,60 @@ function useAppDocumentItems() {
         await removePdfImagesPreview(pdfAppDocument.filePath);
         pdfAppDocument.fileSource.fireUpdateEvent();
     }, [selectedAppDocument, isPDFAppDocument]);
+    const refreshPptxSlides = useCallback(async () => {
+        if (!isPptxAppDocument) {
+            return;
+        }
+        const pptxAppDocument = selectedAppDocument as PptxAppDocument;
+        await removePptxHtmlsPreview(pptxAppDocument.filePath);
+        pptxAppDocument.fileSource.fireUpdateEvent();
+    }, [selectedAppDocument, isPptxAppDocument]);
 
     return {
-        varyAppDocumentItems,
+        varySlides,
         startLoading: () => {
-            setVaryAppDocumentItems(undefined);
+            setVarySlide(undefined);
         },
         isPDFAppDocument,
+        isPptxAppDocument,
         refreshPDFImages,
+        refreshPptxSlides,
     };
 }
 
-export default function AppDocumentItemsComp() {
-    const [thumbSizeScale] = useAppDocumentItemThumbnailSizeScale({
+export default function VarySlidesComp() {
+    const [thumbSizeScale] = useVarySlideThumbnailSizeScale({
         defaultSize: MIN_THUMBNAIL_SCALE + 10,
     });
     const {
-        varyAppDocumentItems,
+        varySlides,
         startLoading,
         isPDFAppDocument,
+        isPptxAppDocument,
         refreshPDFImages,
-    } = useAppDocumentItems();
-    const appDocumentItemThumbnailSize =
+        refreshPptxSlides,
+    } = useVarySlides();
+    const varySlideThumbnailSize =
         thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
-    const isAnyItemSelected = useAnyItemSelected(varyAppDocumentItems);
+    const isAnyItemSelected = useAnyItemSelected(varySlides);
     const handleNext = useCallback(
         (data: { isNext: boolean }) => {
             const element = getContainerDiv();
-            if (element === null || !varyAppDocumentItems) {
+            if (element === null || !varySlides) {
                 return;
             }
             handleNextItemSelecting({
                 container: element,
-                varyAppDocumentItems,
+                varySlides,
                 isNext: data.isNext,
             });
         },
-        [varyAppDocumentItems],
+        [varySlides],
     );
-    if (varyAppDocumentItems === undefined) {
+    if (varySlides === undefined) {
         return <LoadingComp />;
     }
-    if (varyAppDocumentItems === null) {
+    if (varySlides === null) {
         return (
             <div
                 className={
@@ -164,7 +177,7 @@ export default function AppDocumentItemsComp() {
             </div>
         );
     }
-    if (isPDFAppDocument && varyAppDocumentItems.length === 0) {
+    if (isPDFAppDocument && varySlides.length === 0) {
         return (
             <div
                 className={
@@ -182,21 +195,39 @@ export default function AppDocumentItemsComp() {
             </div>
         );
     }
+    if (isPptxAppDocument && varySlides.length === 0) {
+        return (
+            <div
+                className={
+                    'w-100 h-100 d-flex justify-content-center ' +
+                    'flex-column align-items-center p-2'
+                }
+            >
+                <p className="alert alert-warning text-center">
+                    {tran('No slides to display')}
+                </p>
+                <br />
+                <button onClick={refreshPptxSlides} className="btn btn-primary">
+                    {tran('Refresh PPTX Slides')}
+                </button>
+            </div>
+        );
+    }
     return (
         <div className="d-flex flex-wrap justify-content-center pb-5">
-            {varyAppDocumentItems.map((varyAppDocumentItem, i) => {
+            {varySlides.map((varySlide, i) => {
                 return (
-                    <VaryAppDocumentItemRenderWrapperComp
-                        key={varyAppDocumentItem.id}
-                        thumbSize={appDocumentItemThumbnailSize}
-                        varyAppDocumentItem={varyAppDocumentItem}
+                    <VarySlideRenderWrapperComp
+                        key={varySlide.id}
+                        thumbSize={varySlideThumbnailSize}
+                        varySlide={varySlide}
                         index={i}
                     />
                 );
             })}
-            {varyAppDocumentItems.length > 2 ? (
+            {varySlides.length > 2 ? (
                 <FillingFlexCenterComp
-                    width={appDocumentItemThumbnailSize}
+                    width={varySlideThumbnailSize}
                     className={APP_DOCUMENT_ITEM_CLASS}
                 />
             ) : null}

@@ -1,22 +1,19 @@
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import type { MimetypeNameType } from '../server/fileHelpers';
 import type ItemSourceInf from '../others/ItemSourceInf';
-import {
-    genPdfImagesPreview,
-    removePdfImagesPreview,
-} from '../helper/pdfHelpers';
-import PdfSlide from './PdfSlide';
 import { showStaticSlideContextMenu } from './appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { appLog } from '../helper/loggerHelpers';
+import PptxSlide, { type PptxSlideType } from './PptxSlide';
+import { getPptxData, removePptxHtmlsPreview } from '../server/pptxHelpers';
 
-export default class PdfAppDocument
+export default class PptxAppDocument
     extends AppDocumentSourceAbs
-    implements ItemSourceInf<PdfSlide>
+    implements ItemSourceInf<PptxSlide>
 {
-    static readonly mimetypeName: MimetypeNameType = 'pdf';
+    static readonly mimetypeName: MimetypeNameType = 'pptx';
     isEditable = false;
 
     constructor(filePath: string) {
@@ -26,16 +23,16 @@ export default class PdfAppDocument
     setMetadata(_metaData: AnyObjectType): OptionalPromise<void> {
         throw new Error('Method not implemented.');
     }
-    setSlides(_items: PdfSlide[]): OptionalPromise<void> {
+    setSlides(_items: PptxSlide[]): OptionalPromise<void> {
         throw new Error('Method not implemented.');
     }
-    setItemById(_id: number, _item: PdfSlide): OptionalPromise<void> {
+    setItemById(_id: number, _item: PptxSlide): OptionalPromise<void> {
         throw new Error('Method not implemented.');
     }
 
     showSlideContextMenu(
         event: any,
-        item: PdfSlide,
+        item: PptxSlide,
         extraMenuItems: ContextMenuItemType[] = [],
     ) {
         return showStaticSlideContextMenu(event, item, extraMenuItems);
@@ -51,18 +48,20 @@ export default class PdfAppDocument
 
     async getSlides() {
         try {
-            const imageFileInfoList = await genPdfImagesPreview(this.filePath);
-            if (imageFileInfoList === null) {
+            const pptxData = await getPptxData(this.filePath);
+            if (pptxData === null) {
                 return [];
             }
-            const dataList = imageFileInfoList.map(
-                ({ src, pageNumber, width, height }) => {
-                    return new PdfSlide(this.filePath, {
-                        id: pageNumber,
-                        imagePreviewSrc: src,
-                        pdfPageNumber: pageNumber,
-                        metadata: { width, height },
-                    });
+            const dataList = pptxData.info.slides.map(
+                ({ htmlFilePath, isDisabled, note }, i) => {
+                    const json: PptxSlideType = {
+                        id: i,
+                        htmlFilePath,
+                        isDisabled,
+                        note,
+                        metadata: pptxData.info.dimensions,
+                    };
+                    return new PptxSlide(this.filePath, json);
                 },
             );
             return dataList;
@@ -93,7 +92,7 @@ export default class PdfAppDocument
     }
 
     checkIsSame(item: any) {
-        if (PdfAppDocument.checkIsThisType(item)) {
+        if (PptxAppDocument.checkIsThisType(item)) {
             return this.filePath === item.filePath;
         }
     }
@@ -104,6 +103,6 @@ export default class PdfAppDocument
 
     async preDelete() {
         super.preDelete();
-        removePdfImagesPreview(this.filePath);
+        await removePptxHtmlsPreview(this.filePath);
     }
 }

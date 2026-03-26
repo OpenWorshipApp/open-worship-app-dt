@@ -11,6 +11,7 @@ const { execute, unlocking, toUnpackedPath } = vi.hoisted(() => ({
 
 vi.mock('./processHelpers', () => ({ execute }));
 vi.mock('./electronHelpers', () => ({
+    isWindows: false,
     toUnpackedPath,
     unlocking,
 }));

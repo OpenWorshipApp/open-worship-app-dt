@@ -1,10 +1,10 @@
-import type { VaryAppDocumentItemDataType } from '../app-document-list/appDocumentTypeHelpers';
+import type { VarySlideDataType } from '../app-document-list/appDocumentTypeHelpers';
 
-export type VaryAppDocumentItemScreenDataType = {
+export type VarySlideScreenDataType = {
     filePath: string;
-    itemJson: VaryAppDocumentItemDataType;
+    itemJson: VarySlideDataType;
     isPdfFullWidth: boolean;
 };
 export type AppDocumentListType = {
-    [key: string]: VaryAppDocumentItemScreenDataType;
+    [key: string]: VarySlideScreenDataType;
 };

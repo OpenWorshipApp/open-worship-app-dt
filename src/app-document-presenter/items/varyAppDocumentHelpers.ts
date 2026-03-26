@@ -4,7 +4,7 @@ import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDo
 import appProvider from '../../server/appProvider';
 import { getScreenManagerByScreenId } from '../../_screen/managers/screenManagerHelpers';
 import { slidePreviewerMethods } from './AppDocumentPreviewerFooterComp';
-import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import {
     bringDomToTopView,
     HIGHLIGHT_SELECTED_CLASSNAME,
@@ -12,27 +12,28 @@ import {
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { notifyNewElementAdded } from '../../helper/domHelpers';
 import Slide from '../../app-document-list/Slide';
+import PptxSlide from '../../app-document-list/PptxSlide';
 
-export function handleAppDocumentItemSelecting(
+export function handleVarySlideSelecting(
     event: any,
     viewIndex: number,
-    varyAppDocumentItem: VaryAppDocumentItemType,
-    selectSelectedSlide: (varyAppDocumentItem: VaryAppDocumentItemType) => void,
+    varySlide: VarySlideType,
+    selectSelectedSlide: (varySlide: VarySlideType) => void,
 ) {
     if (appProvider.isPageAppDocumentEditor) {
-        selectSelectedSlide(varyAppDocumentItem);
+        selectSelectedSlide(varySlide);
     } else {
-        slidePreviewerMethods.handleSlideItemSelected(
-            viewIndex,
-            varyAppDocumentItem,
-        );
+        slidePreviewerMethods.handleSlideItemSelected(viewIndex, varySlide);
         ScreenVaryAppDocumentManager.handleSlideSelecting(
             event,
-            varyAppDocumentItem.filePath,
-            varyAppDocumentItem.toJson(),
+            varySlide.filePath,
+            varySlide.toJson(),
         );
-        if (Slide.checkIsThisType(varyAppDocumentItem)) {
-            const slide = varyAppDocumentItem as Slide;
+        if (
+            Slide.checkIsThisType(varySlide) ||
+            PptxSlide.checkIsThisType(varySlide)
+        ) {
+            const slide = varySlide as Slide;
             const uuid = `slide-note-editor-${slide.uuid}`;
             const query = `div[data-note-editor-uuid="${uuid}"]`;
             const elementGetter = () => {
@@ -46,8 +47,8 @@ export function handleAppDocumentItemSelecting(
     }
 }
 
-export function genSlideIds(varyAppDocumentItems: VaryAppDocumentItemType[]) {
-    return varyAppDocumentItems.map((item) => {
+export function genSlideIds(varySlides: VarySlideType[]) {
+    return varySlides.map((item) => {
         return item.id;
     });
 }
@@ -55,7 +56,7 @@ export function genSlideIds(varyAppDocumentItems: VaryAppDocumentItemType[]) {
 export const SLIDE_ITEMS_CONTAINER_CLASS_NAME = 'app-slide-items-container';
 export const DATA_QUERY_KEY = APP_DOCUMENT_ITEM_CLASS + '-id';
 
-export function showVaryAppDocumentItemInViewport(id: number) {
+export function showVarySlideInViewport(id: number) {
     setTimeout(() => {
         const querySelector = `[${DATA_QUERY_KEY}="${id}"]`;
         const element = document.querySelector(querySelector);
@@ -72,7 +73,7 @@ export function showVaryAppDocumentItemInViewport(id: number) {
 
 function findNextSlide(
     isNext: boolean,
-    items: VaryAppDocumentItemType[],
+    items: VarySlideType[],
     itemId: number,
 ) {
     let index = items.findIndex((item) => {
@@ -89,11 +90,11 @@ function findNextSlide(
 
 export function handleNextItemSelecting({
     container,
-    varyAppDocumentItems,
+    varySlides,
     isNext,
 }: {
     container: HTMLDivElement;
-    varyAppDocumentItems: VaryAppDocumentItemType[];
+    varySlides: VarySlideType[];
     isNext: boolean;
 }) {
     const divSelectedList = container.querySelectorAll(
@@ -102,7 +103,7 @@ export function handleNextItemSelecting({
     const foundList = Array.from(divSelectedList).reduce(
         (
             bucket: {
-                item: VaryAppDocumentItemType;
+                item: VarySlideType;
                 screenId: number;
             }[],
             divSelected,
@@ -117,11 +118,7 @@ export function handleNextItemSelecting({
                     element.getAttribute('data-screen-id') ?? '',
                 );
             });
-            const targetItem = findNextSlide(
-                isNext,
-                varyAppDocumentItems,
-                itemId,
-            );
+            const targetItem = findNextSlide(isNext, varySlides, itemId);
             if (targetItem === null) {
                 return bucket;
             }
@@ -144,7 +141,7 @@ export function handleNextItemSelecting({
         }
         setTimeout(() => {
             const { screenVaryAppDocumentManager } = screenManager;
-            screenVaryAppDocumentManager.varyAppDocumentItemData =
+            screenVaryAppDocumentManager.varySlideData =
                 screenVaryAppDocumentManager.toSlideData(
                     item.filePath,
                     item.toJson(),
@@ -159,7 +156,7 @@ export function getContainerDiv(): HTMLDivElement | null {
 
 export function handleArrowing(
     event: KeyboardEvent | ReactKeyboardEvent<any>,
-    varyAppDocumentItems: VaryAppDocumentItemType[],
+    varySlides: VarySlideType[],
 ) {
     if (!appProvider.presenterHomePage) {
         return;
@@ -181,7 +178,7 @@ export function handleArrowing(
     }
     handleNextItemSelecting({
         container: element,
-        varyAppDocumentItems,
+        varySlides,
         isNext: !isLeft,
     });
 }

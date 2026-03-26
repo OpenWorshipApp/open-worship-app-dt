@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import { getHTMLChild } from '../../helper/helpers';
 import type PdfSlide from '../../app-document-list/PdfSlide';
-import VaryAppDocumentItemRenderComp from './VaryAppDocumentItemRenderComp';
+import VarySlideRenderComp from './VarySlideRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { tran } from '../../lang/langHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
@@ -70,8 +70,8 @@ export default function PdfSlideRenderComp({
         [pdfAppDocument, pdfSlide],
     );
     return (
-        <VaryAppDocumentItemRenderComp
-            slide={pdfSlide}
+        <VarySlideRenderComp
+            varySlide={pdfSlide}
             width={width}
             index={index}
             onContextMenu={handleContextMenuOpening}
@@ -82,6 +82,6 @@ export default function PdfSlideRenderComp({
             ) : (
                 <PdfSlideRenderContentComp pdfImageSrc={pdfPreviewSrc} />
             )}
-        </VaryAppDocumentItemRenderComp>
+        </VarySlideRenderComp>
     );
 }

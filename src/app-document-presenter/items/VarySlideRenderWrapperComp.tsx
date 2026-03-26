@@ -2,23 +2,25 @@ import { type MouseEvent, useCallback } from 'react';
 
 import SlideRenderComp from './SlideRenderComp';
 import PdfSlideRenderComp from './PdfSlideRenderComp';
-import { handleAppDocumentItemSelecting } from './varyAppDocumentHelpers';
+import PptxSlideRenderComp from './PptxSlideRenderComp';
+import { handleVarySlideSelecting } from './varyAppDocumentHelpers';
 import { useSelectedEditingSlideSetterContext } from '../../app-document-list/appDocumentHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
+import PptxSlide from '../../app-document-list/PptxSlide';
 import Slide from '../../app-document-list/Slide';
-import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import { type AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
 import type { OptionalPromise } from '../../helper/typeHelpers';
 
-function selectVaryAppDocumentItem(
+function selectVarySlide(
     {
         index,
-        varyAppDocumentItem,
-        setSelectedAppDocumentItem,
+        varySlide,
+        setVarySlides,
     }: {
         index: number;
-        varyAppDocumentItem: VaryAppDocumentItemType;
-        setSelectedAppDocumentItem: (
+        varySlide: VarySlideType;
+        setVarySlides: (
             newSlide: Slide | null,
             controlType?: KeyboardControlType,
         ) => OptionalPromise<void>;
@@ -27,12 +29,12 @@ function selectVaryAppDocumentItem(
 ) {
     event.stopPropagation();
     setTimeout(() => {
-        handleAppDocumentItemSelecting(
+        handleVarySlideSelecting(
             event,
             index + 1,
-            varyAppDocumentItem,
-            (selectedVaryAppDocumentItem) => {
-                if (selectedVaryAppDocumentItem instanceof Slide === false) {
+            varySlide,
+            (selectedVarySlide) => {
+                if (selectedVarySlide instanceof Slide === false) {
                     return;
                 }
                 let controlType: KeyboardControlType | undefined = undefined;
@@ -41,44 +43,52 @@ function selectVaryAppDocumentItem(
                 } else if (event.shiftKey) {
                     controlType = 'Shift';
                 }
-                setSelectedAppDocumentItem(
-                    selectedVaryAppDocumentItem,
-                    controlType,
-                );
+                setVarySlides(selectedVarySlide, controlType);
             },
         );
     }, 0);
 }
 
-export default function VaryAppDocumentItemRenderWrapperComp({
+export default function VarySlideRenderWrapperComp({
     thumbSize,
-    varyAppDocumentItem,
+    varySlide,
     index,
 }: Readonly<{
     thumbSize: number;
-    varyAppDocumentItem: VaryAppDocumentItemType;
+    varySlide: VarySlideType;
     index: number;
 }>) {
-    const setSelectedAppDocumentItem = useSelectedEditingSlideSetterContext();
+    const setSelectedVarySlide = useSelectedEditingSlideSetterContext();
     const handleClicking = useCallback(
         (event: MouseEvent<HTMLDivElement>) => {
-            selectVaryAppDocumentItem(
+            selectVarySlide(
                 {
                     index,
-                    varyAppDocumentItem,
-                    setSelectedAppDocumentItem,
+                    varySlide,
+                    setVarySlides: setSelectedVarySlide,
                 },
                 event,
             );
         },
-        [index, varyAppDocumentItem, setSelectedAppDocumentItem],
+        [index, varySlide, setSelectedVarySlide],
     );
-    if (PdfSlide.checkIsThisType(varyAppDocumentItem)) {
+    if (PdfSlide.checkIsThisType(varySlide)) {
         return (
             <PdfSlideRenderComp
-                key={varyAppDocumentItem.id}
+                key={varySlide.id}
                 onClick={handleClicking}
-                pdfSlide={varyAppDocumentItem}
+                pdfSlide={varySlide}
+                width={thumbSize}
+                index={index}
+            />
+        );
+    }
+    if (PptxSlide.checkIsThisType(varySlide)) {
+        return (
+            <PptxSlideRenderComp
+                key={varySlide.id}
+                onClick={handleClicking}
+                pptxSlide={varySlide}
                 width={thumbSize}
                 index={index}
             />
@@ -87,7 +97,7 @@ export default function VaryAppDocumentItemRenderWrapperComp({
     return (
         <SlideRenderComp
             index={index}
-            slide={varyAppDocumentItem}
+            slide={varySlide}
             width={thumbSize}
             onClick={handleClicking}
         />

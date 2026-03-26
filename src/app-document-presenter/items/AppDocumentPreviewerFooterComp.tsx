@@ -8,11 +8,11 @@ import {
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import AppRangeComp from '../../others/AppRangeComp';
-import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
+import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import appProvider from '../../server/appProvider';
 import { showAppAlert } from '../../popup-widget/popupWidgetHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
-import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import {
     MIN_THUMBNAIL_SCALE,
     MAX_THUMBNAIL_SCALE,
@@ -23,7 +23,7 @@ import RenderSlideIndexComp from './RenderSlideIndexComp';
 export const slidePreviewerMethods = {
     handleSlideItemSelected: (
         _viewIndex: number,
-        _varyAppDocumentItem: VaryAppDocumentItemType,
+        _varySlide: VarySlideType,
     ) => {},
 };
 
@@ -33,17 +33,14 @@ function HistoryPreviewerFooterComp() {
     useAppEffect(() => {
         slidePreviewerMethods.handleSlideItemSelected = (
             viewIndex: number,
-            varyAppDocumentItem: VaryAppDocumentItemType,
+            varySlide: VarySlideType,
         ) => {
             setSelectedSlideItemHistories((oldHistories) => {
                 const newHistories = [
                     ...oldHistories,
                     [
                         viewIndex,
-                        toKeyByFilePath(
-                            varyAppDocumentItem.filePath,
-                            varyAppDocumentItem.id,
-                        ),
+                        toKeyByFilePath(varySlide.filePath, varySlide.id),
                     ],
                 ];
                 while (newHistories.length > 3) {
@@ -55,7 +52,7 @@ function HistoryPreviewerFooterComp() {
         return () => {
             slidePreviewerMethods.handleSlideItemSelected = (
                 _viewIndex,
-                _varyAppDocumentItem,
+                _varySlide,
             ) => {};
         };
     }, []);
@@ -88,7 +85,7 @@ export default function AppDocumentPreviewerFooterComp({
     const selectedVaryAppDocument = useVaryAppDocumentContext();
     const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
     const [thumbnailSizeScale, setThumbnailSizeScale] =
-        useAppDocumentItemThumbnailSizeScale();
+        useVarySlideThumbnailSizeScale();
     const handleSlideChoosing = useCallback(
         async (event: any) => {
             const slide = await selectSlide(

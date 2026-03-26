@@ -1,51 +1,29 @@
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
-import type AppDocument from '../../app-document-list/AppDocument';
 import AppDocumentNoteEditorComp from './AppDocumentNoteEditorComp';
-import SlideNoteEditorComp from './SlideNoteEditorComp';
 import { useAppStateAsync } from '../../helper/debuggerHelpers';
+import SlidesNoteEditorComp from './SlidesNoteEditorComp';
+import {
+    type VarySlideWithNoteType,
+    type VaryAppDocumentWithNoteType,
+} from '../../app-document-list/appDocumentTypeHelpers';
+import PptxAppDocument from '../../app-document-list/PptxAppDocument';
+import PptxSlidesNoteEditorComp from './PptxSlidesNoteEditorComp';
+import type PptxSlide from '../../app-document-list/PptxSlide';
 import type Slide from '../../app-document-list/Slide';
 
-function SlidesNoteEditorComp({
-    appDocument,
-    slides,
-}: Readonly<{ appDocument: AppDocument; slides: Slide[] }>) {
-    return (
-        <div
-            className="w-100 app-inner-shadow p-1"
-            style={{
-                overflowX: 'hidden',
-                overflowY: 'auto',
-            }}
-        >
-            {slides.map((slide) => {
-                return (
-                    <div
-                        className="w-100"
-                        key={slide.id}
-                        style={{
-                            height: '200px',
-                            borderBottom: '1px solid #ccc',
-                        }}
-                    >
-                        <SlideNoteEditorComp
-                            appDocument={appDocument}
-                            slide={slide}
-                            title={`Slide Note: ${slide.name || slide.id.toString()}`}
-                        />
-                    </div>
-                );
-            })}
-        </div>
-    );
-}
-
 export default function PresenterNoteContainerHandlerComp({
-    appDocument,
-}: Readonly<{ appDocument: AppDocument }>) {
-    const fileFullName = appDocument.fileSource.fullName;
-    const [slides] = useAppStateAsync(() => {
-        return appDocument.getSlides();
-    }, [appDocument]);
+    varyAppDocumentWithNote,
+}: Readonly<{ varyAppDocumentWithNote: VaryAppDocumentWithNoteType }>) {
+    const fileFullName = varyAppDocumentWithNote.fileSource.fullName;
+    const [varySlides] = useAppStateAsync(async () => {
+        const varySlides = await varyAppDocumentWithNote.getSlides();
+        return varySlides as VarySlideWithNoteType[];
+    }, [varyAppDocumentWithNote]);
+
+    if (PptxAppDocument.checkIsThisType(varyAppDocumentWithNote)) {
+        const pptxSlides = (varySlides ?? []) as PptxSlide[];
+        return <PptxSlidesNoteEditorComp pptxSlides={pptxSlides} />;
+    }
     return (
         <ResizeActorComp
             flexSizeName={fileFullName}
@@ -60,7 +38,7 @@ export default function PresenterNoteContainerHandlerComp({
                         render: () => {
                             return (
                                 <AppDocumentNoteEditorComp
-                                    appDocument={appDocument}
+                                    appDocument={varyAppDocumentWithNote}
                                 />
                             );
                         },
@@ -72,10 +50,11 @@ export default function PresenterNoteContainerHandlerComp({
                 {
                     children: {
                         render: () => {
+                            const slides = (varySlides ?? []) as Slide[];
                             return (
                                 <SlidesNoteEditorComp
-                                    appDocument={appDocument}
-                                    slides={slides ?? []}
+                                    appDocument={varyAppDocumentWithNote}
+                                    slides={slides}
                                 />
                             );
                         },

@@ -3,7 +3,7 @@ import './SlidePreviewer.scss';
 import { use } from 'react';
 
 import { tran } from '../../lang/langHelpers';
-import VaryAppDocumentItemsPreviewerComp from './VaryAppDocumentItemsPreviewerComp';
+import VarySlidesPreviewerComp from './VarySlidesPreviewerComp';
 import AppDocumentPreviewerFooterComp from './AppDocumentPreviewerFooterComp';
 import {
     SelectedVaryAppDocumentContext,
@@ -20,7 +20,7 @@ function EditorComp() {
     const varyAppDocument = useVaryAppDocumentContext();
     const fileSource = varyAppDocument.fileSource;
     if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
-        return <VaryAppDocumentItemsPreviewerComp />;
+        return <VarySlidesPreviewerComp />;
     }
     return (
         <ResizeActorComp
@@ -34,7 +34,7 @@ function EditorComp() {
                 {
                     children: {
                         render: () => {
-                            return <VaryAppDocumentItemsPreviewerComp />;
+                            return <VarySlidesPreviewerComp />;
                         },
                     },
                     key: 'v1',
@@ -46,7 +46,7 @@ function EditorComp() {
                         render: () => {
                             return (
                                 <PresenterNoteContainerHandlerComp
-                                    appDocument={varyAppDocument}
+                                    varyAppDocumentWithNote={varyAppDocument}
                                 />
                             );
                         },
@@ -93,7 +93,7 @@ export default function AppDocumentPreviewerComp() {
                     {appProvider.isPagePresenter ? (
                         <EditorComp />
                     ) : (
-                        <VaryAppDocumentItemsPreviewerComp />
+                        <VarySlidesPreviewerComp />
                     )}
                 </div>
                 <AppDocumentPreviewerFooterComp />
