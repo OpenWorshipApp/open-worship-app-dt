@@ -8,6 +8,7 @@ import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHe
 import type PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import FileSource from '../../helper/FileSource';
 import { renderToStaticMarkup } from 'react-dom/server';
+import appProvider from '../../server/appProvider';
 
 function PptxSlideRenderContentComp({
     htmlFilePath,
@@ -24,7 +25,7 @@ function PptxSlideRenderContentComp({
             title="pptx-slide"
             style={{
                 colorScheme: 'normal',
-                pointerEvents: 'none',
+                pointerEvents: appProvider.isPageScreen ? 'all' : 'none',
                 backgroundColor: 'transparent',
                 width,
                 height,
