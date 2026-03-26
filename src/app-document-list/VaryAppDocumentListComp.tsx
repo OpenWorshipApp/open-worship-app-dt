@@ -99,6 +99,9 @@ export default function VaryAppDocumentListComp() {
             };
         }
         if (checkIsPptx(getFileDotExtension(fileFullName))) {
+            if (fileFullName.startsWith('~$')) {
+                return null;
+            }
             return {
                 fileFullName: fileFullName,
                 appMimetype: mimetypePptx,
