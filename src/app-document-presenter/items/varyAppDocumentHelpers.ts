@@ -14,6 +14,24 @@ import { notifyNewElementAdded } from '../../helper/domHelpers';
 import Slide from '../../app-document-list/Slide';
 import PptxSlide from '../../app-document-list/PptxSlide';
 
+export function focusNoteEditor(varySlide: VarySlideType) {
+    if (
+        Slide.checkIsThisType(varySlide) ||
+        PptxSlide.checkIsThisType(varySlide)
+    ) {
+        const slide = varySlide as Slide;
+        const uuid = `slide-note-editor-${slide.uuid}`;
+        const query = `div[data-note-editor-uuid="${uuid}"]`;
+        const elementGetter = () => {
+            return document.querySelector(query);
+        };
+        notifyNewElementAdded(elementGetter, {
+            moveToView: bringDomToTopView,
+            shouldSkipHighlighting: true,
+        });
+    }
+}
+
 export function handleVarySlideSelecting(
     event: any,
     viewIndex: number,
@@ -29,21 +47,7 @@ export function handleVarySlideSelecting(
             varySlide.filePath,
             varySlide.toJson(),
         );
-        if (
-            Slide.checkIsThisType(varySlide) ||
-            PptxSlide.checkIsThisType(varySlide)
-        ) {
-            const slide = varySlide as Slide;
-            const uuid = `slide-note-editor-${slide.uuid}`;
-            const query = `div[data-note-editor-uuid="${uuid}"]`;
-            const elementGetter = () => {
-                return document.querySelector(query);
-            };
-            notifyNewElementAdded(elementGetter, {
-                moveToView: bringDomToTopView,
-                shouldSkipHighlighting: true,
-            });
-        }
+        focusNoteEditor(varySlide);
     }
 }
 
@@ -103,7 +107,7 @@ export function handleNextItemSelecting({
     const foundList = Array.from(divSelectedList).reduce(
         (
             bucket: {
-                item: VarySlideType;
+                varySlide: VarySlideType;
                 screenId: number;
             }[],
             divSelected,
@@ -124,7 +128,7 @@ export function handleNextItemSelecting({
             }
             return bucket.concat(
                 screenIds.map((screenId) => {
-                    return { item: targetItem, screenId };
+                    return { varySlide: targetItem, screenId };
                 }),
             );
         },
@@ -134,7 +138,7 @@ export function handleNextItemSelecting({
         return;
     }
     for (let i = 0; i < foundList.length; i++) {
-        const { item, screenId } = foundList[i];
+        const { varySlide, screenId } = foundList[i];
         const screenManager = getScreenManagerByScreenId(screenId);
         if (screenManager === null) {
             continue;
@@ -143,9 +147,10 @@ export function handleNextItemSelecting({
             const { screenVaryAppDocumentManager } = screenManager;
             screenVaryAppDocumentManager.varySlideData =
                 screenVaryAppDocumentManager.toSlideData(
-                    item.filePath,
-                    item.toJson(),
+                    varySlide.filePath,
+                    varySlide.toJson(),
                 );
+            focusNoteEditor(varySlide);
         }, i * 100);
     }
 }

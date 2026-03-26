@@ -42,8 +42,8 @@ import { removePptxHtmlsPreview } from '../../server/pptxHelpers';
 
 const varySlidesToView: { [key: string]: VarySlideType } = {};
 
-const arrows: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
-const eventMaps: EventMapperType[] = arrows.map((key) => {
+const movingKeys: KeyboardType[] = [...allArrows, 'PageUp', 'PageDown', ' '];
+const eventMaps: EventMapperType[] = movingKeys.map((key) => {
     return { key };
 });
 eventMaps.push({
