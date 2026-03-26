@@ -77,6 +77,7 @@ export type PptxDataType100 = {
 export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
     const key = `get-pptx-data-${filePath}`;
     return unlocking<PptxDataType100 | null>(key, async () => {
+        const fileMd5 = await appProvider.systemUtils.generateFileMD5(filePath);
         const outDir = toPptxHtmlsPreviewDirPath(filePath);
         const infoFilePath = pathJoin(outDir, 'info.json');
         const infoFileSource = FileSource.getInstance(infoFilePath);
@@ -85,7 +86,11 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
         while (i < 3) {
             infoData = await infoFileSource.readFileJsonData();
             if (infoData !== null) {
-                break;
+                if (infoData.checksum?.md5 === fileMd5) {
+                    break;
+                }
+                await removePptxHtmlsPreview(filePath);
+                infoData = null;
             }
             await pptxToHtmls(filePath, outDir);
             i += 1;
