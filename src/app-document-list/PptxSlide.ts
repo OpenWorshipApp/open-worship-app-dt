@@ -52,7 +52,7 @@ export default class PptxSlide
     }
 
     get name() {
-        return this.id.toString();
+        return '';
     }
 
     get note() {

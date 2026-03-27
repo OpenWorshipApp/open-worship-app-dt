@@ -58,14 +58,24 @@ export default class PdfAppDocument
             const dataList = imageFileInfoList.map(
                 ({ src, pageNumber, width, height }) => {
                     return new PdfSlide(this.filePath, {
-                        id: pageNumber,
+                        id: pageNumber + 1,
                         imagePreviewSrc: src,
                         pdfPageNumber: pageNumber,
                         metadata: { width, height },
                     });
                 },
             );
-            return dataList;
+            if (dataList.length === 0) {
+                return [];
+            }
+            const slide1 = dataList[0];
+            const slide0 = new PdfSlide(this.filePath, {
+                id: 0,
+                imagePreviewSrc: '/assets/blank.png',
+                pdfPageNumber: 0,
+                metadata: { width: slide1.width, height: slide1.height },
+            });
+            return [slide0, ...dataList];
         } catch (error) {
             handleError(error);
         }

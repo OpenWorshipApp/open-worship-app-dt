@@ -8,7 +8,6 @@ import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { appLog } from '../helper/loggerHelpers';
 import PptxSlide, { type PptxSlideType } from './PptxSlide';
 import { getPptxData, removePptxHtmlsPreview } from '../server/pptxHelpers';
-import appProvider from '../server/appProvider';
 
 export default class PptxAppDocument
     extends AppDocumentSourceAbs
@@ -55,7 +54,7 @@ export default class PptxAppDocument
             }
             const slide0 = new PptxSlide(this.filePath, {
                 id: 0,
-                htmlFilePath: `${appProvider.appInfo.homepage}/assets/slide0.html`,
+                htmlFilePath: '/assets/slide0.html',
                 isDisabled: false,
                 note: null,
                 metadata: pptxData.info.dimensions,
