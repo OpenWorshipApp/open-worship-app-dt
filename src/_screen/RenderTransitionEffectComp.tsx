@@ -3,9 +3,11 @@ import { useCallback } from 'react';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import type ScreenEffectManager from './managers/ScreenEffectManager';
-import type { ScreenTransitionEffectType } from './screenTypeHelpers';
-import { transitionEffect } from './screenTypeHelpers';
-import { useScreenEffectEvents } from './transitionEffectHelpers';
+import {
+    transitionEffect,
+    type TransitionEffectType,
+    useScreenEffectEvents,
+} from './transitionEffectHelpers';
 
 function openContextMenu(event: any, screenEffectManager: ScreenEffectManager) {
     const transitionEffectList = Object.entries(transitionEffect);
@@ -17,7 +19,7 @@ function openContextMenu(event: any, screenEffectManager: ScreenEffectManager) {
                 menuElement: effect,
                 onSelect: () => {
                     screenEffectManager.effectType =
-                        effect as ScreenTransitionEffectType;
+                        effect as TransitionEffectType;
                 },
                 childAfter: (
                     <i
