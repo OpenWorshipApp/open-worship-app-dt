@@ -13,6 +13,7 @@ import {
     pathSeparator,
     getFileName,
     writeFileFromBase64Sync,
+    fsCloneFile,
 } from '../server/fileHelpers';
 import { isValidJson } from './helpers';
 import { pathToFileURL } from '../server/calcHelpers';
@@ -311,10 +312,7 @@ export default class FileSource
             this.baseDirPath,
             newName + this.dotExtension,
         );
-        const data = await this.readFileJsonData();
-        if (data !== null) {
-            await fsCreateFile(newFilePath, JSON.stringify(data));
-        }
+        await fsCloneFile(this.filePath, newFilePath);
     }
 
     async duplicate() {
