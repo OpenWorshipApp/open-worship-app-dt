@@ -28,7 +28,9 @@ import {
     exportBibleMSWord,
     removeSlideBackground,
     pptxToHtmls,
-    type PptxToHtmlsResultType,
+    getPptxToHtmlsVersion,
+    type PptxToHtmlsParamsType,
+    type GetPptxToHtmlsVersionParamsType,
 } from './msHelpers';
 
 const { dialog, ipcMain, app } = electron;
@@ -451,8 +453,15 @@ export function initEventOther(appController: ElectronAppController) {
     onAsync(
         ipcMain,
         'main:app:pptx-to-htmls',
-        (data: PptxToHtmlsResultType) => {
+        (data: PptxToHtmlsParamsType) => {
             return pptxToHtmls(data);
+        },
+    );
+    onAsync(
+        ipcMain,
+        'main:app:get-pptx-to-htmls-version',
+        (data: GetPptxToHtmlsVersionParamsType) => {
+            return getPptxToHtmlsVersion(data);
         },
     );
 }

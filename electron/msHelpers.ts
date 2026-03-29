@@ -103,13 +103,13 @@ type PptxToHtmlsDataType = {
     message?: string;
 };
 
-export type PptxToHtmlsResultType = {
+export type PptxToHtmlsParamsType = {
     filePath: string;
     outDir: string;
     dotNetRoot?: string;
 };
 
-function genHTMLs({ filePath, outDir, dotNetRoot }: PptxToHtmlsResultType) {
+function genHTMLs({ filePath, outDir, dotNetRoot }: PptxToHtmlsParamsType) {
     const { modulePath, binaryPath, dotnetPath, eot2ttfPath } =
         getBinaryPath(dotNetRoot);
     return execute<PptxToHtmlsDataType>('pptx-to-htmls.js', {
@@ -122,8 +122,24 @@ function genHTMLs({ filePath, outDir, dotNetRoot }: PptxToHtmlsResultType) {
     });
 }
 
-export function pptxToHtmls(data: PptxToHtmlsResultType) {
+export function pptxToHtmls(data: PptxToHtmlsParamsType) {
     return unlocking<PptxToHtmlsDataType>(data.filePath, async () => {
         return genHTMLs(data);
+    });
+}
+
+export type GetPptxToHtmlsVersionParamsType = {
+    dotNetRoot?: string;
+};
+export function getPptxToHtmlsVersion({
+    dotNetRoot,
+}: GetPptxToHtmlsVersionParamsType) {
+    const { modulePath, binaryPath, dotnetPath, eot2ttfPath } =
+        getBinaryPath(dotNetRoot);
+    return execute<PptxToHtmlsDataType>('get-pptx-to-htmls-version.js', {
+        eot2ttfPath,
+        modulePath,
+        binaryPath,
+        dotnetPath,
     });
 }

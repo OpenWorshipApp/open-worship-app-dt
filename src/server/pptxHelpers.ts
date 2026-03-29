@@ -45,6 +45,25 @@ export async function pptxToHtmls(filePath: string, outDir: string) {
     return result;
 }
 
+let version: string | null = null;
+type PptxToHtmlsVersionDataType = {
+    version: string | null;
+    message?: string;
+};
+export function getPptxToHtmlsVersion() {
+    return unlocking('get-pptx-to-htmls-version', async () => {
+        if (version !== null) {
+            return version;
+        }
+        const result = await electronSendAsync<PptxToHtmlsVersionDataType>(
+            'main:app:get-pptx-to-htmls-version',
+        );
+        version = result.version;
+        return result.version;
+    });
+}
+getPptxToHtmlsVersion();
+
 export type PptxSlideDataType100 = {
     htmlFileName: string;
     htmlFilePath: string;
