@@ -43,7 +43,7 @@ export default function SettingComp() {
                             title: name,
                         };
                     })}
-                    activeTab={tabKey}
+                    activeTabs={[tabKey]}
                     setActiveTab={setTabKey}
                 />
                 <div

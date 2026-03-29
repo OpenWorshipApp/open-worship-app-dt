@@ -154,7 +154,7 @@ export default function BackgroundComp() {
             <div className="header d-flex">
                 <TabRenderComp<TabKeyType>
                     tabs={tabs}
-                    activeTab={tabKey}
+                    activeTabs={[tabKey]}
                     setActiveTab={setTabKey}
                 />
                 {appProvider.isPagePresenter ? (

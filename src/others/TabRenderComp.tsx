@@ -33,13 +33,13 @@ function useIsOnScreen<T>(tab: TabHeaderPropsType<T>) {
 function RendTabComp<T>({
     tab,
     setActiveTab,
-    activeTab,
+    activeTabs,
 }: Readonly<{
     tab: TabHeaderPropsType<T>;
     setActiveTab?: (key: T) => void;
-    activeTab: T;
+    activeTabs: T[];
 }>) {
-    const activeClass = activeTab === tab.key ? 'active' : '';
+    const activeClass = activeTabs.includes(tab.key) ? 'active' : '';
     const isOnScreen = useIsOnScreen(tab);
     const handleClick = useCallback(() => {
         setActiveTab?.(tab.key);
@@ -61,12 +61,12 @@ function RendTabComp<T>({
 
 export default function TabRenderComp<T extends string>({
     tabs,
-    activeTab,
+    activeTabs,
     setActiveTab,
     className,
 }: Readonly<{
     tabs: TabHeaderPropsType<T>[];
-    activeTab: T;
+    activeTabs: T[];
     setActiveTab?: (key: T) => void;
     className?: string;
 }>) {
@@ -83,7 +83,7 @@ export default function TabRenderComp<T extends string>({
                     <RendTabComp
                         key={tab.key}
                         tab={tab}
-                        activeTab={activeTab}
+                        activeTabs={activeTabs}
                         setActiveTab={setActiveTab}
                     />
                 );
