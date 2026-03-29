@@ -9,27 +9,21 @@ import {
 } from '../event/PreviewingEventListener';
 import { useVarySlideSelecting } from '../event/VaryAppDocumentEventListener';
 import {
-    getSetting,
     useStateSettingBoolean,
     useStateSettingString,
 } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
-import {
-    checkIsVaryAppDocumentOnScreen,
-    getSelectedVaryAppDocument,
-} from '../app-document-list/appDocumentHelpers';
-import LyricAppDocument from '../lyric-list/LyricAppDocument';
-import { getSelectedLyric } from '../lyric-list/lyricHelpers';
 import { tran } from '../lang/langHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
-import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
 import {
     useBibleItemsViewControllerContext,
     useBibleItemViewControllerUpdateEvent,
 } from '../bible-reader/BibleItemsViewController';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
-import { getOnScreenBibleItems } from '../bible-list/bibleHelpers';
+import {
+    checkIsOnScreen,
+    PRESENT_TAB_SETTING_NAME,
+} from './presenterRendererHelpers';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
@@ -43,62 +37,6 @@ const LazyLyricHandlerComp = lazy(() => {
 const LazyPresenterForegroundComp = lazy(() => {
     return import('../presenter-foreground/PresenterForegroundComp');
 });
-
-const PRESENT_TAB_SETTING_NAME = 'presenter-tab';
-
-export function getIsShowingVaryAppDocumentPreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'd';
-}
-export function getIsShowingLyricPreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'l';
-}
-export function getIsShowingBiblePreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'f';
-}
-
-async function checkIsOnScreen<T>(
-    targeKey: T,
-    viewController: BibleItemsViewController,
-) {
-    if (targeKey === 'd') {
-        const varyAppDocument = await getSelectedVaryAppDocument();
-        if (varyAppDocument === null) {
-            return false;
-        }
-        const isOnScreen =
-            await checkIsVaryAppDocumentOnScreen(varyAppDocument);
-        return isOnScreen;
-    } else if (targeKey === 'l') {
-        const selectedLyric = await getSelectedLyric();
-        if (selectedLyric === null) {
-            return false;
-        }
-        const lyricAppDocument = LyricAppDocument.getInstanceFromLyricFilePath(
-            selectedLyric.filePath,
-        );
-        if (lyricAppDocument === null) {
-            return false;
-        }
-        const isOnScreen =
-            await checkIsVaryAppDocumentOnScreen(lyricAppDocument);
-        return isOnScreen;
-    } else if (targeKey === 'f') {
-        const allScreenManager = getAllScreenManagers();
-        return allScreenManager.some((screenManager) => {
-            return screenManager.screenForegroundManager.isShowing;
-        });
-    } else if (targeKey === 'b') {
-        const titleList = await getOnScreenBibleItems();
-        const bibleItems = viewController.straightBibleItems;
-        for (const bibleItem of bibleItems) {
-            const title = await bibleItem.toTitle();
-            if (titleList.includes(title)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
 
 function RenderToggleFullViewComp({
     isFullWidget,

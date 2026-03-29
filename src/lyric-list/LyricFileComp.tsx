@@ -10,12 +10,12 @@ import {
     SelectedLyricContext,
     useSelectedLyricSetterContext,
 } from './lyricHelpers';
-import { getIsShowingLyricPreviewer } from '../app-document-presenter/PresenterComp';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
 import { checkIsVaryAppDocumentOnScreen } from '../app-document-list/appDocumentHelpers';
 import LyricAppDocument from './LyricAppDocument';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
+import { getIsShowingLyricPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 
 function genContextMenuItems(
     lyric: Lyric | null | undefined,

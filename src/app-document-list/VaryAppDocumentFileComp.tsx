@@ -3,7 +3,6 @@ import { use, useCallback, useState } from 'react';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
 import AppDocument from './AppDocument';
-import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/PresenterComp';
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -28,6 +27,7 @@ import { openPopupWindow } from '../helper/domHelpers';
 import PptxAppDocument from './PptxAppDocument';
 import { removePptxHtmlsPreview } from '../server/pptxHelpers';
 import appProvider from '../server/appProvider';
+import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
