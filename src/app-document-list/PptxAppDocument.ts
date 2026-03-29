@@ -7,7 +7,11 @@ import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { appLog } from '../helper/loggerHelpers';
 import PptxSlide, { type PptxSlideType } from './PptxSlide';
-import { getPptxData, removePptxHtmlsPreview } from '../server/pptxHelpers';
+import {
+    getPptxData,
+    getPptxToHtmlsVersion,
+    removePptxHtmlsPreview,
+} from '../server/pptxHelpers';
 
 export default class PptxAppDocument
     extends AppDocumentSourceAbs
@@ -49,6 +53,20 @@ export default class PptxAppDocument
     async getSlides() {
         try {
             const pptxData = await getPptxData(this.filePath);
+            const pptxToHtmlsVersion = await getPptxToHtmlsVersion();
+            if (
+                pptxToHtmlsVersion !== null &&
+                pptxData !== null &&
+                pptxToHtmlsVersion !== pptxData.info.toolVersion
+            ) {
+                await removePptxHtmlsPreview(this.filePath);
+                appLog(
+                    'Pptx version mismatch:',
+                    pptxToHtmlsVersion,
+                    pptxData?.info.toolVersion,
+                );
+                return [];
+            }
             if (pptxData === null) {
                 return [];
             }

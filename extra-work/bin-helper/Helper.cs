@@ -141,4 +141,10 @@ public class Helper
         return true;
     }
 
+    [JSExport]
+    public static string GetPptxToHtmlsVersion()
+    {
+        return global::PptxToHtml.GetVersion();
+    }
+
 }
