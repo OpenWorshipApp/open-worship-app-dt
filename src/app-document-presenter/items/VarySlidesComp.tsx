@@ -51,16 +51,16 @@ eventMaps.push({
     allControlKey: ['Shift'],
     key: ' ',
 });
-function useVarySlides() {
-    const selectedAppDocument = useVaryAppDocumentContext();
+function useVarySlidesData() {
+    const selectedVaryAppDocument = useVaryAppDocumentContext();
     const [varySlides, setVarySlide] = useAppStateAsync<VarySlideType[]>(() => {
-        return selectedAppDocument.getSlides();
-    }, [selectedAppDocument]);
+        return selectedVaryAppDocument.getSlides();
+    }, [selectedVaryAppDocument]);
 
     useAppEffectAsync(
         async (context) => {
             if (varySlides === undefined) {
-                const newVarySlides = await selectedAppDocument.getSlides();
+                const newVarySlides = await selectedVaryAppDocument.getSlides();
                 context.setVarySlide(newVarySlides);
             }
         },
@@ -68,11 +68,16 @@ function useVarySlides() {
         { setVarySlide },
     );
     const refresh = async () => {
-        const newVarySlides = await selectedAppDocument.getSlides();
+        const newVarySlides = await selectedVaryAppDocument.getSlides();
         setVarySlide(newVarySlides);
     };
 
-    useFileSourceEvents(['update'], refresh, [], selectedAppDocument.filePath);
+    useFileSourceEvents(
+        ['update'],
+        refresh,
+        [],
+        selectedVaryAppDocument.filePath,
+    );
 
     useKeyboardRegistering(
         eventMaps,
@@ -95,27 +100,27 @@ function useVarySlides() {
         }
     }, [varySlides]);
     const isPDFAppDocument = useMemo(() => {
-        return PdfAppDocument.checkIsThisType(selectedAppDocument);
-    }, [selectedAppDocument]);
+        return PdfAppDocument.checkIsThisType(selectedVaryAppDocument);
+    }, [selectedVaryAppDocument]);
     const isPptxAppDocument = useMemo(() => {
-        return PptxAppDocument.checkIsThisType(selectedAppDocument);
-    }, [selectedAppDocument]);
+        return PptxAppDocument.checkIsThisType(selectedVaryAppDocument);
+    }, [selectedVaryAppDocument]);
     const refreshPDFImages = useCallback(async () => {
         if (!isPDFAppDocument) {
             return;
         }
-        const pdfAppDocument = selectedAppDocument as PdfAppDocument;
+        const pdfAppDocument = selectedVaryAppDocument as PdfAppDocument;
         await removePdfImagesPreview(pdfAppDocument.filePath);
         pdfAppDocument.fileSource.fireUpdateEvent();
-    }, [selectedAppDocument, isPDFAppDocument]);
+    }, [selectedVaryAppDocument, isPDFAppDocument]);
     const refreshPptxSlides = useCallback(async () => {
         if (!isPptxAppDocument) {
             return;
         }
-        const pptxAppDocument = selectedAppDocument as PptxAppDocument;
+        const pptxAppDocument = selectedVaryAppDocument as PptxAppDocument;
         await removePptxHtmlsPreview(pptxAppDocument.filePath);
         pptxAppDocument.fileSource.fireUpdateEvent();
-    }, [selectedAppDocument, isPptxAppDocument]);
+    }, [selectedVaryAppDocument, isPptxAppDocument]);
 
     return {
         varySlides,
@@ -140,7 +145,7 @@ export default function VarySlidesComp() {
         isPptxAppDocument,
         refreshPDFImages,
         refreshPptxSlides,
-    } = useVarySlides();
+    } = useVarySlidesData();
     const varySlideThumbnailSize =
         thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
     const isAnyItemSelected = useAnyItemSelected(varySlides);

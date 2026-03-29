@@ -10,6 +10,7 @@ import type { AnyObjectType } from '../helper/typeHelpers';
 
 import slideSchemaJson from './PptxSlideSchema.json';
 import FileSource from '../helper/FileSource';
+import { pathJoin } from '../server/fileHelpers';
 const pptxSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
 export type PptxSlideType = {
@@ -18,6 +19,9 @@ export type PptxSlideType = {
     isDisabled: boolean;
     note: string | null;
     metadata: { width: number; height: number };
+    images: string[];
+    videos: string[];
+    audios: string[];
 };
 
 export default class PptxSlide
@@ -91,6 +95,14 @@ export default class PptxSlide
 
     get height() {
         return this.metadata.height;
+    }
+
+    get audioFilePaths() {
+        const fileSource = FileSource.getInstance(this.htmlFilePath);
+        const baseDirPath = fileSource.baseDirPath;
+        return this.originalJson.audios.map((audioPath) => {
+            return pathJoin(baseDirPath, audioPath);
+        });
     }
 
     static fromJson(json: PptxSlideType, filePath: string) {

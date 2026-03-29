@@ -76,15 +76,24 @@ export default class PptxAppDocument
                 isDisabled: false,
                 note: null,
                 metadata: pptxData.info.dimensions,
+                images: [],
+                videos: [],
+                audios: [],
             });
             const dataList = pptxData.info.slides.map(
-                ({ htmlFilePath, isDisabled, note }, i) => {
+                (
+                    { htmlFilePath, isDisabled, note, images, videos, audios },
+                    i,
+                ) => {
                     const json: PptxSlideType = {
                         id: i + 1,
                         htmlFilePath,
                         isDisabled,
                         note,
                         metadata: pptxData.info.dimensions,
+                        images,
+                        videos,
+                        audios,
                     };
                     return new PptxSlide(this.filePath, json);
                 },
@@ -94,6 +103,15 @@ export default class PptxAppDocument
             handleError(error);
         }
         return [];
+    }
+
+    async getAudioFilePaths() {
+        const slides = await this.getSlides();
+        const audioList = [];
+        for (const slide of slides) {
+            audioList.push(...slide.audioFilePaths);
+        }
+        return audioList;
     }
 
     async getSlideByIndex(index: number) {

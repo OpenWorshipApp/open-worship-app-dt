@@ -71,6 +71,9 @@ export type PptxSlideDataType100 = {
     subSlideFilePaths: string[];
     isDisabled: boolean;
     note: string | null;
+    images: string[];
+    videos: string[];
+    audios: string[];
 };
 export type PptxDataType100 = {
     info: {
