@@ -172,7 +172,7 @@ body {
 
   .app-highlight-selected {
     border-width: 2px;
-    border-style: outset;
+    border-style: solid;
     border-color: $hight-light-color;
     animation: app-highlight-selected-in-anim 0.5s ease-in-out alternate;
 
