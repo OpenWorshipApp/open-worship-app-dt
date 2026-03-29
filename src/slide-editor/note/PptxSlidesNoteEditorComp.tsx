@@ -14,7 +14,7 @@ export default function PptxSlidesNoteEditorComp({
                 overflowY: 'auto',
             }}
         >
-            {pptxSlides.map((pptxSlide) => {
+            {pptxSlides.map((pptxSlide, index) => {
                 return (
                     <div
                         className="w-100"
@@ -26,7 +26,7 @@ export default function PptxSlidesNoteEditorComp({
                     >
                         <PptxSlideNoteEditorComp
                             pptxSlide={pptxSlide}
-                            title={`PowerPoint Slide Note: ${pptxSlide.id + 1}`}
+                            title={`PowerPoint Slide Note: ${index + 1}`}
                         />
                     </div>
                 );

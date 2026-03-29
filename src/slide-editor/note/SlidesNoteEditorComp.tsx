@@ -17,7 +17,7 @@ export default function SlidesNoteEditorComp({
                 overflowY: 'auto',
             }}
         >
-            {slides.map((slide) => {
+            {slides.map((slide, index) => {
                 return (
                     <div
                         className="w-100"
@@ -30,7 +30,7 @@ export default function SlidesNoteEditorComp({
                         <SlideNoteEditorComp
                             appDocument={appDocument}
                             slide={slide}
-                            title={`Slide Note: ${slide.name || slide.id + 1}`}
+                            title={`Slide Note: ${slide.name || index + 1}`}
                         />
                     </div>
                 );
