@@ -26,7 +26,7 @@ export default function PptxSlidesNoteEditorComp({
                     >
                         <PptxSlideNoteEditorComp
                             pptxSlide={pptxSlide}
-                            title={`PowerPoint Slide: ${pptxSlide.name}`}
+                            title={`PowerPoint Slide Note: ${pptxSlide.id + 1}`}
                         />
                     </div>
                 );

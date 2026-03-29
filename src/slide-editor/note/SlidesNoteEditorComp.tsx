@@ -30,7 +30,7 @@ export default function SlidesNoteEditorComp({
                         <SlideNoteEditorComp
                             appDocument={appDocument}
                             slide={slide}
-                            title={`Slide Note: ${slide.name || (slide.id + 1).toString()}`}
+                            title={`Slide Note: ${slide.name || slide.id + 1}`}
                         />
                     </div>
                 );
