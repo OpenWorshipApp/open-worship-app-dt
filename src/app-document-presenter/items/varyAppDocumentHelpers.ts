@@ -77,19 +77,36 @@ export function showVarySlideInViewport(id: number) {
 
 function findNextSlide(
     isNext: boolean,
-    items: VarySlideType[],
+    varySlides: VarySlideType[],
     itemId: number,
 ) {
-    let index = items.findIndex((item) => {
+    const enabledIds = varySlides
+        .filter((item) => {
+            return !item.isDisabled;
+        })
+        .map((item) => {
+            return item.id;
+        });
+    if (enabledIds.length === 0) {
+        return null;
+    }
+    if (enabledIds.length === 1 && enabledIds[0] === itemId) {
+        return null;
+    }
+    let index = varySlides.findIndex((item) => {
         return item.id === itemId;
     });
     if (index === -1) {
         return null;
     }
     index += isNext ? 1 : -1;
-    index += items.length;
+    index += varySlides.length;
 
-    return items[index % items.length] ?? null;
+    const nextVarySlide = varySlides[index % varySlides.length] ?? null;
+    if (nextVarySlide?.isDisabled) {
+        return findNextSlide(isNext, varySlides, nextVarySlide.id);
+    }
+    return nextVarySlide;
 }
 
 export function handleNextItemSelecting({
