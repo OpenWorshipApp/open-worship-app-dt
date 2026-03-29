@@ -40,13 +40,16 @@ export default function NoBibleViewAvailableComp() {
     );
     return (
         <div
-            className="bible-view card flex-fill"
+            className={
+                'bible-view card flex-fill d-flex align-items-center ' +
+                'justify-content-center'
+            }
             style={{ minWidth: '30%' }}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
-            {tran('No Bible Available')}
+            <h3>{tran('No Bible Available')}</h3>
         </div>
     );
 }

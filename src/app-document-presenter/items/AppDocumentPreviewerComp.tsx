@@ -64,7 +64,15 @@ export default function AppDocumentPreviewerComp() {
     const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
     if (!selectedAppDocumentContext?.selectedVaryAppDocument) {
         return (
-            <div className="w-100 h-100 d-flex justify-content-center align-items-center">
+            <div
+                className={
+                    'slide-previewer card w-100 h-100 app-zero-border-radius ' +
+                    'd-flex align-items-center justify-content-center'
+                }
+                style={{
+                    position: 'relative',
+                }}
+            >
                 <h3 className="text-muted">
                     {tran('No App Document Selected')}
                 </h3>
