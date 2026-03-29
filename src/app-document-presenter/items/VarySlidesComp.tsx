@@ -39,6 +39,7 @@ import PdfAppDocument from '../../app-document-list/PdfAppDocument';
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import { removePdfImagesPreview } from '../../helper/pdfHelpers';
 import { removePptxHtmlsPreview } from '../../server/pptxHelpers';
+import { notifyNewElementAdded } from '../../helper/domHelpers';
 
 const varySlidesToView: { [key: string]: VarySlideType } = {};
 
@@ -157,6 +158,15 @@ export default function VarySlidesComp() {
         },
         [varySlides],
     );
+    useAppEffect(() => {
+        if (varySlides?.length) {
+            notifyNewElementAdded(() => {
+                return document.querySelector(
+                    `.${APP_DOCUMENT_ITEM_CLASS}.app-highlight-selected.animation`,
+                );
+            });
+        }
+    }, [varySlides]);
     if (varySlides === undefined) {
         return <LoadingComp />;
     }
