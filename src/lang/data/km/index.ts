@@ -211,6 +211,7 @@ const dictionary = {
     Lyric: 'ចំរៀង',
     Slide: 'ស្លាយ',
     Documents: 'ឯកសារ',
+    'Document Audios': 'សំលេងឯកសារ',
     Lyrics: 'អក្សរភ្លេង',
     Playlists: 'តារាងកម្មវិធី',
     Bibles: 'ព្រះគម្ពីរ',

@@ -30,6 +30,7 @@ type PropsType = {
     shouldHideFooter?: boolean;
     extraHeaderChild?: ReactNode;
     rendChild: RenderChildType;
+    extraBodyChild?: ReactNode;
     dragType: DragTypeEnum;
     onClick?: (event: any, fileSource: FileSource) => void;
     defaultFolderName?: string;
@@ -155,6 +156,7 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
                             : props.onItemsAdding.bind(null, dirSource)
                     }
                 />
+                {props.extraBodyChild ? <>{props.extraBodyChild}</> : null}
             </div>
             {props.shouldHideFooter ? null : (
                 <BackgroundFooterComp

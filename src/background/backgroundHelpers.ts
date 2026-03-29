@@ -1,10 +1,13 @@
-import type { ReactElement, ReactNode } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import type { CameraInfoType } from '../helper/cameraHelpers';
+import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useVaryAppDocumentDirSource } from '../app-document-list/appDocumentHelpers';
+import PptxAppDocument from '../app-document-list/PptxAppDocument';
 
 export type RenderChildType = (
     filePath: string,
@@ -66,4 +69,34 @@ export function cameraDragDeserialize(data: string) {
     return {
         src: data,
     };
+}
+
+export type VaryAppDocumentAudioDataType = {
+    [key: string]: string[];
+};
+export function useAppDocumentAudioData() {
+    const [audioData, setAudioData] =
+        useState<VaryAppDocumentAudioDataType | null>(null);
+    const dirSource = useVaryAppDocumentDirSource();
+    useAppEffectAsync(
+        async (contextMethods) => {
+            if (dirSource === null) {
+                return;
+            }
+            const filePaths = await dirSource.getFilePaths('pptx');
+            const audioDataList = await Promise.all(
+                filePaths.map(async (filePath) => {
+                    const pptxAppDocument =
+                        PptxAppDocument.getInstance(filePath);
+                    const audioData = await pptxAppDocument.getAudioFilePaths();
+                    const fileName = pptxAppDocument.fileSource.name;
+                    return [fileName, audioData];
+                }),
+            );
+            contextMethods.setAudioData(Object.fromEntries(audioDataList));
+        },
+        [dirSource],
+        { setAudioData },
+    );
+    return audioData;
 }

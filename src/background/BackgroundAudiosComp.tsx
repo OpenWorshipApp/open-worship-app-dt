@@ -1,6 +1,6 @@
 import './BackgroundAudiosComp.scss';
 
-import { type ReactNode, useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -9,16 +9,9 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import {
-    handleAudioPlaying,
-    handleAudioPausing,
-    handleAudioEnding,
-    showAudioPlayingToast,
-} from '../helper/audioControlHelpers';
+import { showAudioPlayingToast } from '../helper/audioControlHelpers';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
-import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import { useStateSettingBoolean } from '../helper/settingHelpers';
 import type DirSource from '../helper/DirSource';
 import { handleError } from '../helper/errorHelpers';
 import {
@@ -31,91 +24,8 @@ import { genDownloadContextMenuItems } from './downloadHelper';
 import { downloadVideoOrAudio } from '../server/appHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import appProvider from '../server/appProvider';
-
-function getAudioRepeatSettingName(src: string) {
-    const md5 = appProvider.systemUtils.generateMD5(src);
-    const settingName =
-        dirSourceSettingNames.BACKGROUND_AUDIO + '-repeat-' + md5;
-    return settingName;
-}
-
-function RendBodyComp({
-    filePath,
-}: Readonly<{
-    filePath: string;
-    selectedBackgroundSrcList: [string, BackgroundSrcType][];
-}>) {
-    const fileSource = FileSource.getInstance(filePath);
-    const settingName = useMemo(() => {
-        return getAudioRepeatSettingName(fileSource.src);
-    }, [fileSource.src]);
-    const [isRepeating, setIsRepeating] = useStateSettingBoolean(
-        settingName,
-        false,
-    );
-    const handleToggleRepeating = useCallback(() => {
-        setIsRepeating(!isRepeating);
-    }, [isRepeating, setIsRepeating]);
-    return (
-        <div className="w-100" data-file-path={filePath}>
-            <div className="d-flex align-items-center w-100 my-2">
-                <audio
-                    className="flex-fill"
-                    data-is-background-audio="true"
-                    data-repeat-setting-name={settingName}
-                    controls
-                    onPlay={handleAudioPlaying}
-                    onPause={handleAudioPausing}
-                    onEnded={handleAudioEnding.bind(null, isRepeating)}
-                >
-                    <source src={fileSource.src} />
-                    <track kind="captions" />
-                    Browser does not support audio.
-                </audio>
-                <div>
-                    <i
-                        className="bi bi-repeat-1 p-1"
-                        title={tran('Repeat this audio')}
-                        style={{
-                            fontSize: '1.5rem',
-                            opacity: isRepeating ? 1 : 0.5,
-                            color: isRepeating ? 'green' : 'inherit',
-                        }}
-                        onClick={handleToggleRepeating}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function rendChild(
-    activeMap: { [key: string]: boolean },
-    filePath: string,
-    selectedBackgroundSrcList: [string, BackgroundSrcType][],
-    _width: number,
-    _height: number,
-    extraChild?: ReactNode,
-) {
-    if (!activeMap[filePath]) {
-        return (
-            <>
-                <div data-file-path={filePath} style={{ display: 'none' }} />
-                {extraChild}
-            </>
-        );
-    }
-    return (
-        <>
-            <RendBodyComp
-                filePath={filePath}
-                selectedBackgroundSrcList={selectedBackgroundSrcList}
-            />
-            {extraChild}
-        </>
-    );
-}
+import VaryAppDocumentAudiosComp from './VaryAppDocumentAudiosComp';
+import { genAudioBodyChild } from './AudioBodyComp';
 
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
@@ -206,7 +116,8 @@ export default function BackgroundAudiosComp() {
     );
     return (
         <BackgroundMediaComp
-            rendChild={rendChild.bind(null, activeMap)}
+            rendChild={genAudioBodyChild.bind(null, activeMap)}
+            extraBodyChild={<VaryAppDocumentAudiosComp />}
             defaultFolderName={defaultDataDirNames.BACKGROUND_AUDIO}
             dragType={DragTypeEnum.BACKGROUND_AUDIO}
             onClick={handleItemClicking}

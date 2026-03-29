@@ -91,9 +91,9 @@ export default class PptxAppDocument
                         isDisabled,
                         note,
                         metadata: pptxData.info.dimensions,
-                        images,
-                        videos,
-                        audios,
+                        images: images ?? [],
+                        videos: videos ?? [],
+                        audios: audios ?? [],
                     };
                     return new PptxSlide(this.filePath, json);
                 },

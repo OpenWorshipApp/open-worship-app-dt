@@ -41,7 +41,10 @@ import PdfAppDocument from './PdfAppDocument';
 import PptxAppDocument from './PptxAppDocument';
 import { createContext, use, useCallback, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import { useFileSourceEvents } from '../helper/dirSourceHelpers';
+import {
+    useFileSourceEvents,
+    useGenDirSourceReload,
+} from '../helper/dirSourceHelpers';
 import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { checkSelectedFilePathExist } from '../others/selectedHelpers';
@@ -715,4 +718,30 @@ export async function preloadAttachedBackground(
             );
         }, 0);
     }
+}
+
+export function useVaryAppDocumentDirSource() {
+    const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
+    if (dirSource === null) {
+        return null;
+    }
+    dirSource.checkExtraFile = (fileFullName: string) => {
+        if (checkIsPdf(getFileDotExtension(fileFullName))) {
+            return {
+                fileFullName: fileFullName,
+                appMimetype: mimetypePdf,
+            };
+        }
+        if (checkIsPptx(getFileDotExtension(fileFullName))) {
+            if (fileFullName.startsWith('~$')) {
+                return null;
+            }
+            return {
+                fileFullName: fileFullName,
+                appMimetype: mimetypePptx,
+            };
+        }
+        return null;
+    };
+    return dirSource;
 }

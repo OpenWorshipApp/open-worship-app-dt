@@ -7,15 +7,9 @@ import {
     getFileDotExtension,
     getFileFullName,
     getMimetypeExtensions,
-    mimetypePdf,
-    mimetypePptx,
 } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
-import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
-import {
-    defaultDataDirNames,
-    dirSourceSettingNames,
-} from '../helper/constants';
+import { defaultDataDirNames } from '../helper/constants';
 import type { DroppedFileType } from '../others/droppingFileHelpers';
 import {
     checkIsPdf,
@@ -23,6 +17,7 @@ import {
     checkIsVaryAppDocumentOnScreen,
     convertOfficeFile,
     supportOfficeFileExtensions,
+    useVaryAppDocumentDirSource,
     varyAppDocumentFromFilePath,
 } from './appDocumentHelpers';
 import type DirSource from '../helper/DirSource';
@@ -87,28 +82,10 @@ async function checkIsOnScreen(filePaths: string[]) {
 }
 
 export default function VaryAppDocumentListComp() {
-    const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
+    const dirSource = useVaryAppDocumentDirSource();
     if (dirSource === null) {
         return null;
     }
-    dirSource.checkExtraFile = (fileFullName: string) => {
-        if (checkIsPdf(getFileDotExtension(fileFullName))) {
-            return {
-                fileFullName: fileFullName,
-                appMimetype: mimetypePdf,
-            };
-        }
-        if (checkIsPptx(getFileDotExtension(fileFullName))) {
-            if (fileFullName.startsWith('~$')) {
-                return null;
-            }
-            return {
-                fileFullName: fileFullName,
-                appMimetype: mimetypePptx,
-            };
-        }
-        return null;
-    };
     const fileSelectionOption = {
         windowTitle: 'Select slide files',
         dirPath: dirSource.dirPath,
