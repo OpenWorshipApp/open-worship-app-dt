@@ -1,4 +1,4 @@
-import type { ReactNode, LazyExoticComponent } from 'react';
+import type { ReactNode, LazyExoticComponent, MouseEvent } from 'react';
 import { useCallback } from 'react';
 
 import AppSuspenseComp from './AppSuspenseComp';
@@ -36,14 +36,17 @@ function RendTabComp<T>({
     activeTabs,
 }: Readonly<{
     tab: TabHeaderPropsType<T>;
-    setActiveTab?: (key: T) => void;
+    setActiveTab?: (key: T, event: MouseEvent<HTMLButtonElement>) => void;
     activeTabs: T[];
 }>) {
     const activeClass = activeTabs.includes(tab.key) ? 'active' : '';
     const isOnScreen = useIsOnScreen(tab);
-    const handleClick = useCallback(() => {
-        setActiveTab?.(tab.key);
-    }, [setActiveTab, tab.key]);
+    const handleClick = useCallback(
+        (event: MouseEvent<HTMLButtonElement>) => {
+            setActiveTab?.(tab.key, event);
+        },
+        [setActiveTab, tab.key],
+    );
     return (
         <li key={tab.title} className={'nav-item ' + (tab.className ?? '')}>
             <button
@@ -52,6 +55,7 @@ function RendTabComp<T>({
                     (isOnScreen ? ' app-on-screen' : '')
                 }
                 onClick={handleClick}
+                onContextMenu={handleClick}
             >
                 {tab.title}
             </button>
@@ -67,7 +71,7 @@ export default function TabRenderComp<T extends string>({
 }: Readonly<{
     tabs: TabHeaderPropsType<T>[];
     activeTabs: T[];
-    setActiveTab?: (key: T) => void;
+    setActiveTab?: (key: T, event: MouseEvent<HTMLButtonElement>) => void;
     className?: string;
 }>) {
     return (

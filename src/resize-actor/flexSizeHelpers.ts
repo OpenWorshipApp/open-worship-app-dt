@@ -4,6 +4,11 @@ import { handleError } from '../helper/errorHelpers';
 import { isValidJson } from '../helper/helpers';
 import { setSetting, getSetting } from '../helper/settingHelpers';
 
+export const settingPrefix = 'widget-size';
+export const disablingTargetTypeList = ['first', 'second'] as const;
+export type DisablingTargetType = (typeof disablingTargetTypeList)[number];
+export type DisabledType = [DisablingTargetType, number];
+
 export type QuickMoveType = 'left' | 'right' | 'up' | 'down';
 export type FlexSizeType = {
     [key: string]: [string, DisabledType?];
@@ -21,10 +26,6 @@ export type DataInputType = {
     isOnScreen?: boolean;
 };
 
-export const settingPrefix = 'widget-size';
-export const disablingTargetTypeList = ['first', 'second'] as const;
-export type DisablingTargetType = (typeof disablingTargetTypeList)[number];
-export type DisabledType = [DisablingTargetType, number];
 export const resizeSettingNames = {
     appEditor: 'app-editor-main',
     appEditorLeft: 'app-editor-left',
@@ -112,37 +113,41 @@ function doubleFlexGrow(size: string) {
     parts[0] = flexGrow.toString();
     return parts.join(' ');
 }
-function sanitizeFlexSizeValue(flexSize: FlexSizeType) {
-    const values = Object.values(flexSize);
-    const totalFlexGrow = values.reduce((acc, [size1, size2]) => {
-        if (!size2) {
-            // size1: '0.1 1 20%'
-            const flexGrowStr = size1.split(' ')[0];
-            let flexGrow = Number(flexGrowStr);
-            if (Number.isNaN(flexGrow)) {
-                flexGrow = 0;
-            }
-            return flexGrow + acc;
+function sanitizeFlexSizeValue(
+    flexSize: FlexSizeType,
+    dataInputKeys?: string[],
+) {
+    const entries = Object.entries(flexSize);
+    const totalFlexGrow = entries.reduce((acc, [key, [size, disabledSize]]) => {
+        if (disabledSize || !dataInputKeys?.includes(key)) {
+            return acc;
         }
-        return acc;
+        // size1: '0.1 1 20%'
+        const flexGrowStr = size.split(' ')[0];
+        let flexGrow = Number(flexGrowStr);
+        if (Number.isNaN(flexGrow)) {
+            flexGrow = 0;
+        }
+        return flexGrow + acc;
     }, 0);
-    if (totalFlexGrow >= 1) {
+    if (totalFlexGrow >= 1 || totalFlexGrow === 0) {
         return flexSize;
     }
     const newFlexSize: FlexSizeType = {};
-    for (const [key, [size1, size2]] of Object.entries(flexSize)) {
-        if (size2) {
-            newFlexSize[key] = [doubleFlexGrow(size1), size2];
+    for (const [key, [size, disabledSize]] of Object.entries(flexSize)) {
+        if (disabledSize) {
+            newFlexSize[key] = [doubleFlexGrow(size), disabledSize];
         } else {
-            newFlexSize[key] = [doubleFlexGrow(size1)];
+            newFlexSize[key] = [doubleFlexGrow(size)];
         }
     }
-    return sanitizeFlexSizeValue(newFlexSize);
+    return sanitizeFlexSizeValue(newFlexSize, dataInputKeys);
 }
 
 export function getFlexSizeSetting(
     flexSizeName: string,
     defaultSize: FlexSizeType,
+    dataInput?: DataInputType[],
 ): FlexSizeType {
     const settingString = toSettingString(flexSizeName);
     const str = getSetting(settingString) ?? '';
@@ -172,14 +177,15 @@ export function getFlexSizeSetting(
                     return true;
                 })
             ) {
-                return sanitizeFlexSizeValue(flexSize);
+                const dataInputKeys = dataInput?.map((item) => item.key);
+                return sanitizeFlexSizeValue(flexSize, dataInputKeys);
             }
         }
     } catch (error) {
         handleError(error);
     }
     setSetting(settingString, JSON.stringify(defaultSize));
-    return getFlexSizeSetting(flexSizeName, defaultSize);
+    return getFlexSizeSetting(flexSizeName, defaultSize, dataInput);
 }
 
 function checkIsHiddenWidget(
