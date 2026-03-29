@@ -1,13 +1,14 @@
 import './AppDocumentListComp.scss';
 
 import FileListHandlerComp from '../others/FileListHandlerComp';
-import AppDocumentFileComp from './AppDocumentFileComp';
+import VaryAppDocumentFileComp from './VaryAppDocumentFileComp';
 import AppDocument from './AppDocument';
 import {
     getFileDotExtension,
     getFileFullName,
     getMimetypeExtensions,
     mimetypePdf,
+    mimetypePptx,
 } from '../server/fileHelpers';
 import FileSource from '../helper/FileSource';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
@@ -18,6 +19,7 @@ import {
 import type { DroppedFileType } from '../others/droppingFileHelpers';
 import {
     checkIsPdf,
+    checkIsPptx,
     checkIsVaryAppDocumentOnScreen,
     convertOfficeFile,
     supportOfficeFileExtensions,
@@ -29,6 +31,9 @@ import { tran } from '../lang/langHelpers';
 function handleExtraFileChecking(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
     if (checkIsPdf(fileSource.dotExtension)) {
+        return true;
+    }
+    if (checkIsPptx(fileSource.dotExtension)) {
         return true;
     }
     return false;
@@ -56,7 +61,11 @@ function handleFileTaking(
 function handleBodyRendering(filePaths: string[]) {
     return filePaths.map((filePath, i) => {
         return (
-            <AppDocumentFileComp key={filePath} index={i} filePath={filePath} />
+            <VaryAppDocumentFileComp
+                key={filePath}
+                index={i}
+                filePath={filePath}
+            />
         );
     });
 }
@@ -77,7 +86,7 @@ async function checkIsOnScreen(filePaths: string[]) {
     return false;
 }
 
-export default function AppDocumentListComp() {
+export default function VaryAppDocumentListComp() {
     const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
     if (dirSource === null) {
         return null;
@@ -89,6 +98,15 @@ export default function AppDocumentListComp() {
                 appMimetype: mimetypePdf,
             };
         }
+        if (checkIsPptx(getFileDotExtension(fileFullName))) {
+            if (fileFullName.startsWith('~$')) {
+                return null;
+            }
+            return {
+                fileFullName: fileFullName,
+                appMimetype: mimetypePptx,
+            };
+        }
         return null;
     };
     const fileSelectionOption = {
@@ -98,6 +116,7 @@ export default function AppDocumentListComp() {
             new Set([
                 ...getMimetypeExtensions('appDocument'),
                 ...getMimetypeExtensions('pdf'),
+                ...getMimetypeExtensions('pptx'),
                 ...supportOfficeFileExtensions.map((ext) => {
                     return ext.slice(1);
                 }),

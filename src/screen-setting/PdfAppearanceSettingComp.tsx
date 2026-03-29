@@ -12,11 +12,11 @@ export default function PdfAppearanceSettingComp() {
     const setIsFullWidth1 = useCallback((newIsFullWidth: boolean) => {
         setIsPdfFullWidth(newIsFullWidth);
         for (const { screenVaryAppDocumentManager } of getAllScreenManagers()) {
-            if (screenVaryAppDocumentManager.varyAppDocumentItemData === null) {
+            if (screenVaryAppDocumentManager.varySlideData === null) {
                 continue;
             }
-            screenVaryAppDocumentManager.varyAppDocumentItemData = {
-                ...screenVaryAppDocumentManager.varyAppDocumentItemData,
+            screenVaryAppDocumentManager.varySlideData = {
+                ...screenVaryAppDocumentManager.varySlideData,
                 isPdfFullWidth: newIsFullWidth,
             };
         }

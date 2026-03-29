@@ -27,7 +27,7 @@ class AppDocumentNoteStore implements SimpleNoteEditorStoreType {
 export default function AppDocumentNoteEditorComp({
     appDocument,
 }: Readonly<{ appDocument: AppDocument }>) {
-    const [store, setStore] = useState<SimpleNoteEditorStoreType>(
+    const [store, setStore] = useState(
         new AppDocumentNoteStore(appDocument, ''),
     );
     useAppEffectAsync(async () => {

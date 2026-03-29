@@ -25,13 +25,16 @@ import type {
 import { genLayoutTabs } from '../router/layoutHelpers';
 import { tran } from '../lang/langHelpers';
 import { openPopupWindow } from '../helper/domHelpers';
+import PptxAppDocument from './PptxAppDocument';
+import { removePptxHtmlsPreview } from '../server/pptxHelpers';
+import appProvider from '../server/appProvider';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
     setSelectedAppDocument: (value: VaryAppDocumentType | null) => void,
 ): ContextMenuItemType[] {
     if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
-        return [
+        const menuItems: ContextMenuItemType[] = [
             {
                 menuElement: tran('Preview PDF'),
                 onSelect: () => {
@@ -51,9 +54,28 @@ function genContextMenuItems(
                 },
             },
         ];
+        return menuItems;
+    }
+    if (PptxAppDocument.checkIsThisType(varyAppDocument)) {
+        const menuItems: ContextMenuItemType[] = [
+            {
+                menuElement: tran('Open PPTX'),
+                onSelect: () => {
+                    appProvider.systemUtils.openFile(varyAppDocument.filePath);
+                },
+            },
+            {
+                menuElement: tran('Refresh PPTX Slides'),
+                onSelect: async () => {
+                    await removePptxHtmlsPreview(varyAppDocument.filePath);
+                    varyAppDocument.fileSource.fireUpdateEvent();
+                },
+            },
+        ];
+        return menuItems;
     }
     const { editorTab } = genLayoutTabs();
-    return [
+    const menuItems: ContextMenuItemType[] = [
         {
             menuElement: tran('Edit'),
             onSelect: () => {
@@ -64,6 +86,7 @@ function genContextMenuItems(
             },
         },
     ];
+    return menuItems;
 }
 
 function FilePreviewAppDocumentNormalComp({
@@ -86,7 +109,19 @@ function FilePreviewPdfAppDocumentComp({
     const fileSource = FileSource.getInstance(pdfAppDocument.filePath);
     return (
         <div className="w-100 h-100 app-ellipsis">
-            <i className="bi bi-filetype-pdf" />
+            <i className="bi bi-file-earmark-pdf" />
+            {fileSource.name}
+        </div>
+    );
+}
+
+function FilePreviewPptxAppDocumentComp({
+    pptxAppDocument,
+}: Readonly<{ pptxAppDocument: PptxAppDocument }>) {
+    const fileSource = FileSource.getInstance(pptxAppDocument.filePath);
+    return (
+        <div className="w-100 h-100 app-ellipsis">
+            <i className="bi bi-file-earmark-ppt" />
             {fileSource.name}
         </div>
     );
@@ -98,7 +133,38 @@ async function checkIsOnScreen(filePath: string) {
     return isOnScreen;
 }
 
-export default function AppDocumentFileComp({
+function handleChildRendering(varyAppDocument: AppDocumentSourceAbs) {
+    if (AppDocument.checkIsThisType(varyAppDocument)) {
+        return (
+            <FilePreviewAppDocumentNormalComp
+                varyAppDocument={varyAppDocument}
+            />
+        );
+    }
+    if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
+        return (
+            <FilePreviewPdfAppDocumentComp pdfAppDocument={varyAppDocument} />
+        );
+    }
+    if (PptxAppDocument.checkIsThisType(varyAppDocument)) {
+        return (
+            <FilePreviewPptxAppDocumentComp pptxAppDocument={varyAppDocument} />
+        );
+    }
+    return (
+        <div className="w-100 h-100 app-ellipsis">
+            <i
+                className="bi bi-question-diamond"
+                style={{
+                    color: 'yellow',
+                }}
+            />{' '}
+            {varyAppDocument.fileSource.name}
+        </div>
+    );
+}
+
+export default function VaryAppDocumentFileComp({
     index,
     filePath,
 }: Readonly<{
@@ -131,26 +197,7 @@ export default function AppDocumentFileComp({
             previewingEventListener.showVaryAppDocument(varyAppDocument);
         }
     }, [varyAppDocument, setSelectedAppDocument]);
-    const handleChildRendering = useCallback(
-        (varyAppDocument: AppDocumentSourceAbs) => {
-            if (AppDocument.checkIsThisType(varyAppDocument)) {
-                return (
-                    <FilePreviewAppDocumentNormalComp
-                        varyAppDocument={varyAppDocument}
-                    />
-                );
-            }
-            if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
-                return (
-                    <FilePreviewPdfAppDocumentComp
-                        pdfAppDocument={varyAppDocument}
-                    />
-                );
-            }
-            return null;
-        },
-        [],
-    );
+
     const handleRenaming = useCallback(
         async (newFileSource: FileSource) => {
             if (isSelected) {

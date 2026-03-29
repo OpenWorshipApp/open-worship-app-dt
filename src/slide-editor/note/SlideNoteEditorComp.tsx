@@ -31,10 +31,12 @@ export default function SlideNoteEditorComp({
     appDocument,
     slide,
     title = 'Slide Note',
-}: Readonly<{ appDocument: AppDocument; slide: Slide; title?: string }>) {
-    const [store, setStore] = useState<SimpleNoteEditorStoreType>(
-        new SlideNoteStore(appDocument, slide),
-    );
+}: Readonly<{
+    appDocument: AppDocument;
+    slide: Slide;
+    title?: string;
+}>) {
+    const [store, setStore] = useState(new SlideNoteStore(appDocument, slide));
     useAppEffect(() => {
         setStore(new SlideNoteStore(appDocument, slide));
     }, [appDocument, slide]);

@@ -43,6 +43,10 @@ type UpdateDataType = {
     ];
 };
 
+function goToDownloadPage() {
+    appProvider.messageUtils.sendData('main:app:go-download');
+}
+
 const DOWNLOAD_BASE_URL = `${appProvider.appInfo.homepage}/download`;
 
 const attemptTimeout = genTimeoutAttempt(3000);
@@ -160,15 +164,8 @@ async function downloadUpdate(updateData: UpdateDataType) {
     }
 }
 
-function checkIsVersionOutdated(
-    // 2025.06.25 vs 2025.06.26
-    currentVersion: string,
-    latestVersion: string,
-) {
-    const currentParts = currentVersion.split('.').map(Number);
-
-    // should be updated if the current version is released more than 3 months ago,
-    // even the version number is not updated
+function checkIsVersionOverdue3Months(version: string) {
+    const currentParts = version.split('.').map(Number);
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     const currentVersionDate = new Date(
@@ -176,10 +173,15 @@ function checkIsVersionOutdated(
         currentParts[1] - 1,
         currentParts[2],
     );
-    if (currentVersionDate < threeMonthsAgo) {
-        return true;
-    }
+    return currentVersionDate < threeMonthsAgo;
+}
 
+function checkIsVersionOutdated(
+    // 2025.06.25 vs 2025.06.26
+    currentVersion: string,
+    latestVersion: string,
+) {
+    const currentParts = currentVersion.split('.').map(Number);
     const latestParts = latestVersion.split('.').map(Number);
 
     for (
@@ -309,12 +311,7 @@ function showDownloadableToast() {
         <>
             {tran('You can go to download page.')}
             <br />
-            <button
-                className="btn btn-sm"
-                onClick={() => {
-                    appProvider.messageUtils.sendData('main:app:go-download');
-                }}
-            >
+            <button className="btn btn-sm" onClick={goToDownloadPage}>
                 {tran('Go to Download Page')}
             </button>
         </>,
@@ -331,6 +328,9 @@ function showNoUpdateAvailableToast() {
 let isSilentlyChecked = false;
 
 export async function checkForAppUpdate(isSilent = true) {
+    if (appProvider.systemUtils.isDev) {
+        return;
+    }
     if (isSilent && isSilentlyChecked) {
         return;
     }
@@ -366,6 +366,11 @@ export async function checkForAppUpdate(isSilent = true) {
             `Current version: ${version}, ` +
                 `Latest version: ${onlineVersion}`,
         );
+        if (checkIsVersionOverdue3Months(version)) {
+            // force to download page if the version is over 3 months old
+            goToDownloadPage();
+            return;
+        }
 
         const systemCommitHash = appProvider.systemUtils.commitHash;
         console.log('Data commit id:', updateData.commitID);

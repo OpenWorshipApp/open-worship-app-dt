@@ -1,8 +1,8 @@
 import type { DragEvent } from 'react';
 import { useCallback } from 'react';
 
-import { useAppDocumentItemThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
-import AppDocumentItemsComp from './AppDocumentItemsComp';
+import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
+import VarySlidesComp from './VarySlidesComp';
 import AppDocument from '../../app-document-list/AppDocument';
 import { handleCtrlWheel } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
@@ -37,11 +37,11 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     await createNewSlidesFromDroppedData(appDocument, files);
 }
 
-export default function VaryAppDocumentItemsPreviewerComp() {
+export default function VarySlidesPreviewerComp() {
     const varyAppDocument = useVaryAppDocumentContext();
     const onSlideItemsKeyboardEvent = useSlideItemsControlEventContext();
     const [thumbSizeScale, setThumbnailSizeScale] =
-        useAppDocumentItemThumbnailSizeScale();
+        useVarySlideThumbnailSizeScale();
     const isDisplayingEditingMenu =
         appProvider.isPagePresenter && varyAppDocument.isEditable;
     const handleContainerBlur = useCallback(
@@ -116,7 +116,7 @@ export default function VaryAppDocumentItemsPreviewerComp() {
                     marginTop: isDisplayingEditingMenu ? '30px' : undefined,
                 }}
             >
-                <AppDocumentItemsComp />
+                <VarySlidesComp />
             </div>
             <ScrollingHandlerComp />
             {isDisplayingEditingMenu ? (

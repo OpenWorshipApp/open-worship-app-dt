@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { useSelectedLyricContext } from './lyricHelpers';
 import { VaryAppDocumentContext } from '../app-document-list/appDocumentHelpers';
-import VaryAppDocumentItemsPreviewerComp from '../app-document-presenter/items/VaryAppDocumentItemsPreviewerComp';
+import VarySlidesPreviewerComp from '../app-document-presenter/items/VarySlidesPreviewerComp';
 import AppDocumentPreviewerFooterComp from '../app-document-presenter/items/AppDocumentPreviewerFooterComp';
 import LyricAppDocument from './LyricAppDocument';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
@@ -42,7 +42,7 @@ export default function LyricSlidesPreviewerComp() {
         <div className="slide-previewer card w-100 h-100">
             <VaryAppDocumentContext value={lyricAppDocument}>
                 <div className="card-body w-100 h-100 app-overflow-hidden">
-                    <VaryAppDocumentItemsPreviewerComp />
+                    <VarySlidesPreviewerComp />
                 </div>
                 <AppDocumentPreviewerFooterComp isDisableChanging />
             </VaryAppDocumentContext>

@@ -71,3 +71,8 @@ export abstract class ItemBase implements ColorNoteInf {
         throw new Error('Method not implemented.');
     }
 }
+
+export abstract class ItemBaseFilePath extends ItemBase {
+    abstract filePath: string;
+    abstract getItemFilePath(): Promise<string | null>;
+}

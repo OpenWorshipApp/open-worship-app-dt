@@ -20,6 +20,7 @@ import {
     getTempPath,
     KEY_SEPARATOR,
     mimetypePdf,
+    mimetypePptx,
     pathBasename,
 } from '../server/fileHelpers';
 import { openSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerComp';
@@ -32,18 +33,14 @@ import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
-import {
-    convertToPdf,
-    getSlidesCount,
-    showFileOrDirExplorer,
-} from '../server/appHelpers';
+import { convertToPdf, showFileOrDirExplorer } from '../server/appHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import PdfAppDocument from './PdfAppDocument';
+import PptxAppDocument from './PptxAppDocument';
 import { createContext, use, useCallback, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import type PdfSlide from './PdfSlide';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -51,7 +48,7 @@ import { checkSelectedFilePathExist } from '../others/selectedHelpers';
 import type { DisplayType } from '../_screen/screenTypeHelpers';
 import type {
     VaryAppDocumentType,
-    VaryAppDocumentItemType,
+    VarySlideType,
 } from './appDocumentTypeHelpers';
 import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
 import {
@@ -71,21 +68,23 @@ import {
 import { type OptionalPromise } from '../helper/typeHelpers';
 import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
+import { getSlidesCount } from '../server/pptxHelpers';
+import { type ItemBaseFilePath } from '../helper/ItemBase';
 
-export async function showPdfSlideContextMenu(
+export async function showStaticSlideContextMenu(
     event: any,
-    pdfSlide: PdfSlide,
+    slide: ItemBaseFilePath,
     extraMenuItems: ContextMenuItemType[],
 ) {
     const menuItemOnScreens = genShowOnScreensContextMenu((event) => {
         ScreenVaryAppDocumentManager.handleSlideSelecting(
             event,
-            pdfSlide.filePath,
-            pdfSlide.toJson(),
+            slide.filePath,
+            (slide as any).toJson(),
             true,
         );
     });
-    const imageFilePath = await pdfSlide.getImageFilePath();
+    const imageFilePath = await slide.getItemFilePath();
     showAppContextMenu(event, [
         ...menuItemOnScreens,
         ...(imageFilePath === null
@@ -161,7 +160,7 @@ export function genSlideContextMenuItems(
             menuElement: tran('Quick Edit'),
             onSelect: () => {
                 if (appProvider.isPageAppDocumentEditor) {
-                    AppDocumentListEventListener.selectAppDocumentItem(slide);
+                    AppDocumentListEventListener.selectVarySlide(slide);
                 } else {
                     openSlideQuickEdit(slide);
                 }
@@ -221,6 +220,10 @@ export function checkIsPdf(ext: string) {
     return mimetypePdf.extensions.includes(ext.toLocaleLowerCase());
 }
 
+export function checkIsPptx(ext: string) {
+    return mimetypePptx.extensions.includes(ext.toLocaleLowerCase());
+}
+
 const docFileInfo = {
     // Writer (Word Processor)
     '.odt': 'OpenDocument Text',
@@ -234,8 +237,6 @@ const docFileInfo = {
     '.otp': 'OpenDocument Presentation Template',
     '.sxi': 'OpenOffice.org 1.x Presentation',
     '.sti': 'OpenOffice.org 1.x Presentation Template',
-    '.ppt': 'Microsoft PowerPoint 97/2000/XP/2003',
-    '.pptx': 'Microsoft PowerPoint 2007/2010/2013/2016',
     // Draw (Drawing)
     '.odg': 'OpenDocument Drawing',
     '.otg': 'OpenDocument Drawing Template',
@@ -552,7 +553,7 @@ export function toKeyByFilePath(filePath: string, id: number) {
     return `${filePath}${KEY_SEPARATOR}${id}`;
 }
 
-export function appDocumentItemExtractKey(key: string) {
+export function toVarySlideExtractKey(key: string) {
     const [filePath, id] = key.split(KEY_SEPARATOR);
     if (filePath === undefined || id === undefined) {
         return null;
@@ -563,8 +564,8 @@ export function appDocumentItemExtractKey(key: string) {
     };
 }
 
-export async function appDocumentItemFromKey(key: string) {
-    const extracted = appDocumentItemExtractKey(key);
+export async function toSlideFromKey(key: string) {
+    const extracted = toVarySlideExtractKey(key);
     if (extracted === null) {
         return null;
     }
@@ -647,39 +648,36 @@ export function varyAppDocumentFromFilePath(filePath: string) {
     if (checkIsPdf(getFileDotExtension(filePath))) {
         return PdfAppDocument.getInstance(filePath);
     }
+    if (checkIsPptx(getFileDotExtension(filePath))) {
+        return PptxAppDocument.getInstance(filePath);
+    }
     return AppDocument.getInstance(filePath);
 }
 
-export function useAnyItemSelected(
-    varyAppDocumentItems?: VaryAppDocumentItemType[] | null,
-) {
+export function useAnyItemSelected(varySlides?: VarySlideType[] | null) {
     const [isAnyItemSelected, setIsAnyItemSelected] = useState(false);
     const refresh = () => {
-        if (!varyAppDocumentItems || varyAppDocumentItems.length === 0) {
+        if (!varySlides || varySlides.length === 0) {
             return;
         }
-        const isSelected = varyAppDocumentItems.some((varyAppDocumentItem) => {
+        const isSelected = varySlides.some((varySlide) => {
             const dataList = ScreenVaryAppDocumentManager.getDataList(
-                varyAppDocumentItem.filePath,
-                varyAppDocumentItem.id,
+                varySlide.filePath,
+                varySlide.id,
             );
             return dataList.length > 0;
         });
         setIsAnyItemSelected(isSelected);
     };
     useScreenVaryAppDocumentManagerEvents(['update'], undefined, refresh);
-    useAppEffect(refresh, [
-        varyAppDocumentItems?.map((item) => item.id).join('|'),
-    ]);
+    useAppEffect(refresh, [varySlides?.map((item) => item.id).join('|')]);
     return isAnyItemSelected;
 }
 
-export function checkIsAppDocumentItemOnScreen(
-    varyAppDocumentItem: VaryAppDocumentItemType,
-) {
+export function checkIsVarySlideOnScreen(varySlide: VarySlideType) {
     const data = ScreenVaryAppDocumentManager.getDataList(
-        varyAppDocumentItem.filePath,
-        varyAppDocumentItem.id,
+        varySlide.filePath,
+        varySlide.id,
     );
     return data.length > 0;
 }
@@ -691,11 +689,11 @@ export async function checkIsVaryAppDocumentOnScreen(
     if (Object.keys(dataList).length === 0) {
         return false;
     }
-    const varyAppDocumentItems = await varyAppDocument.getSlides();
-    for (const varyAppDocumentItem of varyAppDocumentItems) {
+    const varySlides = await varyAppDocument.getSlides();
+    for (const varySlide of varySlides) {
         const data = ScreenVaryAppDocumentManager.getDataList(
-            varyAppDocumentItem.filePath,
-            varyAppDocumentItem.id,
+            varySlide.filePath,
+            varySlide.id,
         );
         if (data !== null && data.length > 0) {
             return true;

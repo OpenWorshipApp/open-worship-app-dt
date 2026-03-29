@@ -7,7 +7,7 @@ import {
     useLyricSelecting,
     useVaryAppDocumentSelecting,
 } from '../event/PreviewingEventListener';
-import { useAppDocumentItemSelecting } from '../event/VaryAppDocumentEventListener';
+import { useVarySlideSelecting } from '../event/VaryAppDocumentEventListener';
 import {
     getSetting,
     useStateSettingBoolean,
@@ -206,7 +206,7 @@ export default function PresenterComp() {
     useLyricSelecting(handleLyricSelect, [handleLyricSelect]);
     useBibleItemShowing(handleBibleShow, [handleBibleShow]);
     useVaryAppDocumentSelecting(handleDocumentSelect);
-    useAppDocumentItemSelecting(handleDocumentSelect);
+    useVarySlideSelecting(handleDocumentSelect);
 
     const viewController = useBibleItemsViewControllerContext();
 

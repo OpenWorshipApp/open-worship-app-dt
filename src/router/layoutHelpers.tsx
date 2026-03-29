@@ -151,8 +151,8 @@ export function useAppDocumentContextValues() {
                 preloadAttachedBackground(varyAppDocument);
             }
             methodContext.setVaryAppDocument(varyAppDocument);
-            const varyAppDocumentItem = await getSelectedEditingSlide();
-            methodContext.setSlide(varyAppDocumentItem);
+            const slide = await getSelectedEditingSlide();
+            methodContext.setSlide(slide);
         },
         [],
         {

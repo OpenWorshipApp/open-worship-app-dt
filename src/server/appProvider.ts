@@ -66,6 +66,8 @@ export type SystemUtilsType = {
     isLinux: boolean;
     isUbuntu: boolean;
     isFedora: boolean;
+    openFile: (filePath: string) => void;
+    generateFileMD5: (filePath: string) => Promise<string>;
     generateMD5: (input: string) => string;
 };
 

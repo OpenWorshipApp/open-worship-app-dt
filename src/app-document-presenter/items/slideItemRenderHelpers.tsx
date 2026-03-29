@@ -1,8 +1,8 @@
 import { useCallback, type CSSProperties } from 'react';
 
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
-import { checkIsAppDocumentItemOnScreen } from '../../app-document-list/appDocumentHelpers';
-import type { VaryAppDocumentItemType } from '../../app-document-list/appDocumentTypeHelpers';
+import { checkIsVarySlideOnScreen } from '../../app-document-list/appDocumentHelpers';
+import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderBackgroundWebIframeComp from '../../background/RenderBackgroundWebIframeComp';
 import RenderCameraVideoComp from '../../background/RenderCameraVideoComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
@@ -134,17 +134,17 @@ export function genAttachBackgroundComponent(
 }
 
 export function toClassNameHighlight(
-    varyAppDocumentItem: VaryAppDocumentItemType,
-    selectedVaryAppDocumentItem: VaryAppDocumentItemType | null,
-    holdingVaryAppDocumentItems: VaryAppDocumentItemType[],
+    varySlide: VarySlideType,
+    selectedVarySlide: VarySlideType | null,
+    holdingVarySlides: VarySlideType[],
 ) {
     const activeClassname =
         appProvider.isPageAppDocumentEditor &&
-        selectedVaryAppDocumentItem &&
-        varyAppDocumentItem.checkIsSame(selectedVaryAppDocumentItem)
+        selectedVarySlide &&
+        varySlide.checkIsSame(selectedVarySlide)
             ? 'active'
             : '';
-    const isOnScreen = checkIsAppDocumentItemOnScreen(varyAppDocumentItem);
+    const isOnScreen = checkIsVarySlideOnScreen(varySlide);
     const presenterClassname =
         appProvider.isPageAppDocumentEditor || !isOnScreen
             ? ''
@@ -152,19 +152,19 @@ export function toClassNameHighlight(
     let holdingClassname = '';
     if (
         !(
-            selectedVaryAppDocumentItem !== null &&
-            varyAppDocumentItem.checkIsSame(selectedVaryAppDocumentItem)
+            selectedVarySlide !== null &&
+            varySlide.checkIsSame(selectedVarySlide)
         ) &&
-        holdingVaryAppDocumentItems.some((holdingItem) =>
-            varyAppDocumentItem.checkIsSame(holdingItem),
+        holdingVarySlides.some((holdingItem) =>
+            varySlide.checkIsSame(holdingItem),
         )
     ) {
         holdingClassname = 'holding';
     }
     return {
         selectedList: ScreenVaryAppDocumentManager.getDataList(
-            varyAppDocumentItem.filePath,
-            varyAppDocumentItem.id,
+            varySlide.filePath,
+            varySlide.id,
         ),
         activeCN: activeClassname,
         presenterCN: presenterClassname,

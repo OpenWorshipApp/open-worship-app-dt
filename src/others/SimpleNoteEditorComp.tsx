@@ -35,7 +35,7 @@ export interface SimpleNoteEditorStoreType {
     defaultText: string;
     currentText: string;
     checkCanSave: () => boolean;
-    save: () => Promise<boolean>;
+    save?: () => Promise<boolean>;
 }
 export default function SimpleNoteEditorComp({
     store,
@@ -55,10 +55,16 @@ export default function SimpleNoteEditorComp({
     const [text, setText] = useState(store.defaultText);
     const setCurrentText1 = useCallback(
         (newText: string) => {
+            if (store.save === undefined) {
+                return;
+            }
             store.currentText = newText;
             setIsSaved(!store.checkCanSave());
             setText(newText);
             attemptTimeout(async () => {
+                if (store.save === undefined) {
+                    return;
+                }
                 const isSaved = await store.save();
                 setIsSaved(isSaved);
             });
@@ -96,6 +102,9 @@ export default function SimpleNoteEditorComp({
                     event,
                 )
             ) {
+                if (store.save === undefined) {
+                    return;
+                }
                 event.preventDefault();
                 const isSaved = await store.save();
                 setIsSaved(isSaved);
@@ -111,6 +120,9 @@ export default function SimpleNoteEditorComp({
         [setCurrentText1],
     );
     const handleBlur = useCallback(async () => {
+        if (store.save === undefined) {
+            return;
+        }
         const isSaved = await store.save();
         setIsSaved(isSaved);
     }, [store]);
@@ -120,9 +132,11 @@ export default function SimpleNoteEditorComp({
         resize: isResizable ? 'both' : 'none',
         border: isSaved ? '2px solid transparent' : '2px solid #007bff44',
     };
+    const isReadOnly = store.save === undefined;
     if (isInput) {
         return (
             <input
+                readOnly={isReadOnly}
                 className="w-100 h-100 m-0"
                 placeholder={placeholder}
                 style={style}
@@ -135,6 +149,7 @@ export default function SimpleNoteEditorComp({
     }
     return (
         <textarea
+            readOnly={isReadOnly}
             className="w-100 h-100 m-0"
             placeholder={placeholder}
             style={style}

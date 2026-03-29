@@ -25,6 +25,9 @@ else
 fi
 
 dotnet nuget locals all --clear && dotnet restore Helper.csproj --force --no-cache
+# clear PptxToHtml.dll cache
+rm -rf ./bin ./obj
+rm -rf ./dist/net8.0
 if [ "$is_debug" = true ]; then
     dotnet build -c Debug Helper.csproj
 else

@@ -8,29 +8,34 @@ import type DragInf from '../helper/DragInf';
 import type { ClipboardInf } from '../server/appHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 
-import slideSchemaJson from './PdfSlideSchema.json';
+import slideSchemaJson from './PptxSlideSchema.json';
 import FileSource from '../helper/FileSource';
-const pdfSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
+const pptxSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
-export type PdfSlideType = {
+export type PptxSlideType = {
     id: number;
-    name?: string;
-    imagePreviewSrc: string;
-    pdfPageNumber: number;
+    htmlFilePath: string;
+    isDisabled: boolean;
+    note: string | null;
     metadata: { width: number; height: number };
 };
 
-export default class PdfSlide
+export default class PptxSlide
     extends ItemBaseFilePath
     implements DragInf<string>, ClipboardInf
 {
-    private _originalJson: PdfSlideType;
+    private _originalJson: PptxSlideType;
     filePath: string;
 
-    constructor(filePath: string, json: PdfSlideType) {
+    constructor(filePath: string, json: PptxSlideType) {
         super();
         this._originalJson = cloneJson(json);
         this.filePath = filePath;
+    }
+
+    get uuid() {
+        const fileSource = FileSource.getInstance(this.filePath);
+        return `${fileSource.fullName}-${this.id}`;
     }
 
     get id() {
@@ -42,37 +47,31 @@ export default class PdfSlide
         this.originalJson = json;
     }
 
+    get htmlFilePath() {
+        return this.originalJson.htmlFilePath;
+    }
+
     get name() {
-        return this.originalJson.name ?? '';
+        return '';
+    }
+
+    get note() {
+        return this.originalJson.note;
     }
 
     clone(): ItemBaseFilePath {
         throw new Error('Method not implemented.');
     }
 
-    get pdfPreviewSrc() {
-        return this.originalJson.imagePreviewSrc ?? null;
-    }
-
-    async getImageFilePath() {
-        const fileSource = await FileSource.getInstanceBySrc(
-            this.pdfPreviewSrc,
-        );
-        if (fileSource === null) {
-            return null;
-        }
-        return fileSource.filePath;
-    }
-
     get originalJson() {
         return this._originalJson;
     }
-    set originalJson(json: PdfSlideType) {
+    set originalJson(json: PptxSlideType) {
         this._originalJson = json;
     }
 
     checkIsSame(varySlide: any) {
-        if (PdfSlide.checkIsThisType(varySlide)) {
+        if (PptxSlide.checkIsThisType(varySlide)) {
             return this.id === varySlide.id;
         }
         return false;
@@ -90,11 +89,11 @@ export default class PdfSlide
         return this.metadata.height;
     }
 
-    static fromJson(json: PdfSlideType, filePath: string) {
+    static fromJson(json: PptxSlideType, filePath: string) {
         return new this(filePath, json);
     }
 
-    toJson(): PdfSlideType {
+    toJson(): PptxSlideType {
         return this._originalJson;
     }
 
@@ -107,41 +106,22 @@ export default class PdfSlide
     }
 
     static validate(json: AnyObjectType) {
-        if (pdfSlideSchema.validate(json).valid === false) {
+        if (pptxSlideSchema.validate(json).valid === false) {
             throw new Error('Invalid slide data');
         }
     }
 
     async clipboardSerialize() {
-        const image = new Image();
-        image.src = this.pdfPreviewSrc;
-        const imageData = await new Promise<string | null>((resolve) => {
-            image.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = image.width;
-                canvas.height = image.height;
-                const ctx = canvas.getContext('2d');
-                if (ctx === null) {
-                    resolve(null);
-                    return;
-                }
-                ctx.drawImage(image, 0, 0);
-                resolve(canvas.toDataURL());
-            };
-            image.onerror = () => {
-                resolve(null);
-            };
-        });
-        return imageData;
+        return null;
     }
 
     getItemFilePath() {
-        return this.getImageFilePath();
+        return Promise.resolve(this.htmlFilePath);
     }
 
     dragSerialize() {
         return {
-            type: DragTypeEnum.PDF_SLIDE,
+            type: DragTypeEnum.PPTX_SLIDE,
             data: JSON.stringify({
                 filePath: this.filePath,
                 data: this.toJson(),

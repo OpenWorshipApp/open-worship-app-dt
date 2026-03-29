@@ -44,6 +44,50 @@ function genCssProps(duration: number) {
     return cssProps;
 }
 
+// TODO: make none effect work without animation to prevent flash when
+// changing screen during animation
+function none(prefix: string): StyleAnimType {
+    const uniqueId = crypto.randomUUID();
+    const animationNameOut = `${prefix}-animation-fade-${uniqueId}-out`;
+    const styleText = `
+        @keyframes ${animationNameOut} {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+    `;
+    const anim: StyleAnimType = {
+        duration: 500,
+        styleText,
+        animIn: (targetElement: HTMLElement, parentElement: HTMLElement) => {
+            parentElement.appendChild(targetElement);
+            return Promise.resolve();
+        },
+        animOut: (targetElement: HTMLElement) => {
+            return new Promise((resolve) => {
+                if (checkIsZoomContainer(targetElement)) {
+                    return resolve();
+                }
+                Object.assign(targetElement.style, {
+                    ...genCssProps(anim.duration),
+                    animationName: animationNameOut,
+                    opacity: 1,
+                });
+                setTimeout(() => {
+                    Object.assign(targetElement.style, {
+                        opacity: '0',
+                    });
+                    resolve();
+                }, anim.duration + ANIM_END_DELAY_MILLISECOND);
+            });
+        },
+    };
+    return anim;
+}
+
 function fade(prefix: string) {
     const uniqueId = crypto.randomUUID();
     const animationNameIn = `${prefix}-animation-fade-${uniqueId}-in`;
@@ -290,10 +334,18 @@ function zoom(prefix: string): StyleAnimType {
 }
 
 export const styleAnimList = {
+    none,
     fade,
     move,
     zoom,
 };
+export const transitionEffect = {
+    none: ['bi bi-ban'],
+    fade: ['bi bi-shadows'],
+    move: ['bi bi-align-end'],
+    zoom: ['bi bi-arrows-fullscreen'],
+} as const;
+export type TransitionEffectType = keyof typeof transitionEffect;
 
 export function useScreenEffectEvents(
     events: PTFEventType[],

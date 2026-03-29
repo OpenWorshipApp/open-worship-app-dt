@@ -5,7 +5,7 @@ import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import appProvider from '../server/appProvider';
 
 const LazyAppDocumentListComp = lazy(() => {
-    return import('../app-document-list/AppDocumentListComp');
+    return import('../app-document-list/VaryAppDocumentListComp');
 });
 const LazyLyricListComp = lazy(() => {
     return import('../lyric-list/LyricListComp');

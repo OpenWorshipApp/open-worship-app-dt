@@ -117,16 +117,6 @@ const binHelperSourceRootDir = resolve('./extra-work/bin-helper');
 const binHelperSourceDistRootDir = resolve(`${binHelperSourceRootDir}/dist`);
 const binHelperDestRootDir = resolve('./electron-build/bin-helper');
 
-copyFile(
-  {
-    source: binHelperSourceRootDir,
-    destination: resolve(binHelperDestRootDir, 'ms-helpers'),
-  },
-  'PptxToHtml.dll',
-  'PptxToHtml.dll',
-);
-console.log('"PptxToHtml.dll" is copied');
-
 const {
   sourceFileName: eot2ttfSourceFileName,
   destFileName: eot2ttfDestFileName,

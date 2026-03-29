@@ -2,6 +2,7 @@ import type { DOMAttributes, CSSProperties } from 'react';
 
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import type { BibleItemRenderingType } from './bibleScreenComps';
+import { type TransitionEffectType } from './transitionEffectHelpers';
 
 export type CustomEvents<K extends string> = {
     [key in K]: (event: CustomEvent) => void;
@@ -23,12 +24,6 @@ export type StyleAnimType = {
     duration: number;
 };
 
-export const transitionEffect = {
-    fade: ['bi bi-shadows'],
-    move: ['bi bi-align-end'],
-    zoom: ['bi bi-arrows-fullscreen'],
-} as const;
-export type ScreenTransitionEffectType = keyof typeof transitionEffect;
 export type PTFEventType = 'update';
 
 export const bibleDataTypeList = ['bible-item', 'lyric'] as const;
@@ -180,5 +175,5 @@ export type ShowScreenDataType = {
 
 export type PTEffectDataType = {
     target: string;
-    effect: ScreenTransitionEffectType;
+    effect: TransitionEffectType;
 };

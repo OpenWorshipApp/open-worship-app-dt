@@ -158,34 +158,6 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     );
 }
 
-export async function getSlidesCount(filePath: string) {
-    const count = await electronSendAsync<number | null>(
-        'main:app:ms-pp-slides-count',
-        { filePath },
-    );
-    return count;
-}
-type PptxToHtmlsDataType = {
-    isSuccessful: boolean;
-    message?: string;
-};
-export async function pptxToHtmls(filePath: string, outDir: string) {
-    const result = await electronSendAsync<PptxToHtmlsDataType>(
-        'main:app:pptx-to-htmls',
-        { filePath, outDir },
-    );
-    return result;
-}
-(window as any).pptxToHtmls = pptxToHtmls;
-export async function removeSlideBackground(filePath: string) {
-    // TODO: this function should not work yet, need to be fixed in the future
-    const isSuccess = await electronSendAsync<boolean>(
-        'main:app:ms-pp-remove-slides-bg',
-        { filePath },
-    );
-    return isSuccess;
-}
-
 export async function exportBibleMSWord(
     data: { title: string; body: string; fontFamily: string | null }[],
 ) {

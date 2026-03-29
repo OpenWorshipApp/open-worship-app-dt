@@ -1,7 +1,7 @@
 import type { SchemaNode } from 'json-schema-library';
 import { compileSchema } from 'json-schema-library';
 
-import { ItemBase } from '../helper/ItemBase';
+import { ItemBaseFilePath } from '../helper/ItemBase';
 import { cloneJson } from '../helper/helpers';
 import type { CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
 import type DragInf from '../helper/DragInf';
@@ -29,7 +29,7 @@ export type SlideType = {
 };
 
 export default class Slide
-    extends ItemBase
+    extends ItemBaseFilePath
     implements DragInf<string>, ClipboardInf
 {
     private _originalJson: SlideType;
@@ -40,11 +40,6 @@ export default class Slide
         super();
         this._originalJson = cloneJson(json);
         this.filePath = filePath;
-    }
-
-    get uuid() {
-        const fileSource = FileSource.getInstance(this.filePath);
-        return `${fileSource.fullName}-${this.id}`;
     }
 
     get cloneOriginalJson() {
@@ -63,6 +58,11 @@ export default class Slide
 
     get id() {
         return this.originalJson.id;
+    }
+
+    get uuid() {
+        const fileSource = FileSource.getInstance(this.filePath);
+        return `${fileSource.fullName}-${this.id}`;
     }
 
     set id(id: number) {
@@ -128,6 +128,10 @@ export default class Slide
         const metadata = this.metadata;
         metadata.note = note;
         this.metadata = metadata;
+    }
+
+    getItemFilePath(): Promise<string> {
+        return Promise.resolve(this.filePath);
     }
 
     fontFamilies() {
@@ -259,11 +263,11 @@ export default class Slide
         return slide;
     }
 
-    static checkIsThisType(anyAppDocumentItem: any): boolean {
-        return anyAppDocumentItem instanceof Slide;
+    static checkIsThisType(anyVarySlide: any): boolean {
+        return anyVarySlide instanceof Slide;
     }
 
-    checkIsSame(item: ItemBase) {
+    checkIsSame(item: ItemBaseFilePath) {
         if (Slide.checkIsThisType(item)) {
             return super.checkIsSame(item);
         }

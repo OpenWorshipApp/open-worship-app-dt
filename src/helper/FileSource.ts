@@ -139,7 +139,10 @@ export default class FileSource
                 return cachedData;
             }
             try {
-                const dataText = await fsReadFile(filePath);
+                let dataText = await fsReadFile(filePath);
+                if (dataText.codePointAt(0) === 0xfeff) {
+                    dataText = dataText.substring(1);
+                }
                 await fileDataCacheManager.set(key, dataText);
                 return dataText;
             } catch (error: any) {
