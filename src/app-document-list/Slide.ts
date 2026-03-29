@@ -42,6 +42,10 @@ export default class Slide
         this.filePath = filePath;
     }
 
+    get isDisabled() {
+        return false;
+    }
+
     get cloneOriginalJson() {
         const json = cloneJson(this.originalJson);
         return json;

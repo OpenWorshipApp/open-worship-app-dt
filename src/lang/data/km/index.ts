@@ -9,6 +9,7 @@ import btbThin from './fonts/Battambang-Thin.ttf';
 const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
 
 const dictionary = {
+    'This slide is disabled': 'ស្លាយនេះត្រូវបានបិទ',
     'Double click to jump to top': 'ចុចពីរដងដើម្បីទៅកាន់ខាងលើ',
     'Refresh PPTX Slides': 'ផ្ទុកស្លាយ PPTX ជាថ្មី',
     'Open PPTX': 'បើក PPTX',

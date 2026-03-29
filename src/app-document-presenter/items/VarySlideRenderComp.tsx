@@ -35,6 +35,7 @@ import ShadowingFillParentWidthComp, {
 } from '../../others/ShadowingFillParentWidthComp';
 import VaryAppDocumentScaleContainerComp from './VaryAppDocumentScaleContainerComp';
 import { useThemeSource } from '../../others/initHelpers';
+import { tran } from '../../lang/langHelpers';
 
 function RenderScreenInfoComp({
     varySlide,
@@ -284,7 +285,17 @@ export default function VarySlideRenderComp({
                 ' app-overflow-hidden' +
                 ` ${presenterClassName} ${activeClassName} ${holdingClassName}`
             }
-            style={{ width: `${width}px` }}
+            title={
+                varySlide.isDisabled
+                    ? tran('This slide is disabled')
+                    : undefined
+            }
+            style={{
+                width: `${width}px`,
+                ...(varySlide.isDisabled
+                    ? { opacity: 0.5, pointerEvents: 'none' }
+                    : {}),
+            }}
             data-vary-app-document-item-id={varySlide.id}
             data-scroll-container-selector={`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`}
             draggable

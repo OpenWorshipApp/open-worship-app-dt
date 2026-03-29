@@ -33,6 +33,10 @@ export default class PdfSlide
         this.filePath = filePath;
     }
 
+    get isDisabled() {
+        return false;
+    }
+
     get id() {
         return this.originalJson.id;
     }

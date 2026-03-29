@@ -33,6 +33,10 @@ export default class PptxSlide
         this.filePath = filePath;
     }
 
+    get isDisabled() {
+        return this.originalJson.isDisabled;
+    }
+
     get uuid() {
         const fileSource = FileSource.getInstance(this.filePath);
         return `${fileSource.fullName}-${this.id}`;
