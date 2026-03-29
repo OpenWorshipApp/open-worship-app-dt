@@ -169,7 +169,7 @@ export default function BackgroundComp() {
                     <ResizeActorComp
                         flexSizeName={'flex-size-background'}
                         isHorizontal
-                        isDisableQuickResize={true}
+                        isDisableQuickResize
                         flexSizeDefault={{
                             h1: ['1'],
                             h2: ['1'],

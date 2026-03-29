@@ -28,8 +28,8 @@ export default function LyricHandlerComp() {
         return (
             <div
                 className={
-                    'w-100 h-100 d-flex justify-content-center' +
-                    ' align-items-center'
+                    'card w-100 h-100 app-zero-border-radius d-flex ' +
+                    'align-items-center justify-content-center'
                 }
             >
                 <h3 className="text-muted">{tran('No Lyric Selected')}</h3>

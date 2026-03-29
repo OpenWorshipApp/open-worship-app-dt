@@ -56,7 +56,7 @@ export default function BibleViewRendererComp({
             )}
             isHorizontal={isHorizontal}
             isNotSaveSetting
-            isDisableQuickResize={true}
+            isDisableQuickResize
             flexSizeDefault={flexSizeDefault}
             dataInput={nestedBibleItems.map((item, i): DataInputType => {
                 return {
