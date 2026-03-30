@@ -5,19 +5,17 @@ import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { appLog, appError as logError } from '../helper/loggerHelpers';
 import { tran } from '../lang/langHelpers';
 import { fsMove, getDownloadPath, pathJoin } from './fileHelpers';
-import {
-    initHttpRequest,
-    type MessageCallbackType,
-    writeStreamToFile,
-} from '../helper/bible-helpers/downloadHelpers';
+import { initHttpRequest } from '../helper/bible-helpers/downloadHelpers';
 import { showFileOrDirExplorer } from './appHelpers';
 import {
     hideProgressBar,
     showProgressBar,
-    showProgressBarMessage,
 } from '../progress-bar/progressBarHelpers';
 import FileSource from '../helper/FileSource';
-import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import {
+    messageCallback,
+    streamDownloadFile,
+} from '../background/downloadHelper';
 
 type UpdateDataType = {
     version: string;
@@ -49,70 +47,7 @@ function goToDownloadPage() {
 
 const DOWNLOAD_BASE_URL = `${appProvider.appInfo.homepage}/download`;
 
-const attemptTimeout = genTimeoutAttempt(3000);
-let attemptCount = 0;
-function blockUnload(event: BeforeUnloadEvent) {
-    attemptTimeout(() => {
-        attemptCount = 0;
-    });
-    attemptCount++;
-    if (attemptCount > 3) {
-        window.removeEventListener('beforeunload', blockUnload);
-        return;
-    }
-    event.preventDefault();
-    showSimpleToast(
-        tran('Downloading in progress'),
-        tran("Can't leave the page while downloading.") +
-            ' ' +
-            tran('Please wait until the download is complete.') +
-            ' ' +
-            tran('Or attempt 3 times to force leaving.'),
-    );
-}
-
-function streamDownloadFile(
-    filePath: string,
-    response: any,
-    messageCallback: MessageCallbackType,
-) {
-    return new Promise<void>((resolve, reject) => {
-        writeStreamToFile(
-            filePath,
-            {
-                onStart: (total) => {
-                    globalThis.addEventListener('beforeunload', blockUnload);
-                    const fileSize = Number.parseInt(total.toFixed(2));
-                    messageCallback(
-                        `Start downloading (File size: ${fileSize}MB)...`,
-                    );
-                },
-                onProgress: (progress) => {
-                    messageCallback(`${(progress * 100).toFixed(2)}% done`);
-                },
-                onDone: (error) => {
-                    globalThis.removeEventListener('beforeunload', blockUnload);
-                    if (error) {
-                        showSimpleToast('Download Error', `Error: ${error}`);
-                        reject(error);
-                        return;
-                    }
-                    showSimpleToast(
-                        'Download Completed',
-                        `File saved at: ${filePath}`,
-                    );
-                    resolve();
-                },
-            },
-            response,
-        );
-    });
-}
-
 const PROGRESS_BAR_EVENT_KEY = 'app-update-download';
-function messageCallback(message: string | null) {
-    showProgressBarMessage(message ?? '');
-}
 
 // Maybe in the future, url have been changed to full
 function addRootURL(rootUrl: string, endUrl: string) {

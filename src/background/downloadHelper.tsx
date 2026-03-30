@@ -7,6 +7,12 @@ import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import { readTextFromClipboard } from '../server/appHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import appProvider from '../server/appProvider';
+import {
+    type MessageCallbackType,
+    writeStreamToFile,
+} from '../helper/bible-helpers/downloadHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 
 function InputUrlComp({
     defaultUrl,
@@ -106,4 +112,68 @@ export async function genDownloadContextMenuItems(
         ...(sharedKey ? [getOpenSharedLinkMenuItem(sharedKey)] : []),
     ];
     return contextMenuItems;
+}
+
+const attemptTimeout = genTimeoutAttempt(3000);
+let attemptCount = 0;
+function blockUnload(event: BeforeUnloadEvent) {
+    attemptTimeout(() => {
+        attemptCount = 0;
+    });
+    attemptCount++;
+    if (attemptCount > 3) {
+        window.removeEventListener('beforeunload', blockUnload);
+        return;
+    }
+    event.preventDefault();
+    showSimpleToast(
+        tran('Downloading in progress'),
+        tran("Can't leave the page while downloading.") +
+            ' ' +
+            tran('Please wait until the download is complete.') +
+            ' ' +
+            tran('Or attempt 3 times to force leaving.'),
+    );
+}
+
+export function streamDownloadFile(
+    filePath: string,
+    response: any,
+    messageCallback: MessageCallbackType,
+) {
+    return new Promise<void>((resolve, reject) => {
+        writeStreamToFile(
+            filePath,
+            {
+                onStart: (total) => {
+                    globalThis.addEventListener('beforeunload', blockUnload);
+                    const fileSize = Number.parseInt(total.toFixed(2));
+                    messageCallback(
+                        `Start downloading (File size: ${fileSize}MB)...`,
+                    );
+                },
+                onProgress: (progress) => {
+                    messageCallback(`${(progress * 100).toFixed(2)}% done`);
+                },
+                onDone: (error) => {
+                    globalThis.removeEventListener('beforeunload', blockUnload);
+                    if (error) {
+                        showSimpleToast('Download Error', `Error: ${error}`);
+                        reject(error);
+                        return;
+                    }
+                    showSimpleToast(
+                        'Download Completed',
+                        `File saved at: ${filePath}`,
+                    );
+                    resolve();
+                },
+            },
+            response,
+        );
+    });
+}
+
+export function messageCallback(message: string | null) {
+    showProgressBarMessage(message ?? '');
 }
