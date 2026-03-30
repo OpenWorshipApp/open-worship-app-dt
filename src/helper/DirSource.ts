@@ -164,7 +164,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return filePaths;
     }
 
-    getFilePaths(mimetypeName: MimetypeNameType) {
+    getFilePaths(mimetypeName: MimetypeNameType, isForce = false) {
         if (!this.dirPath) {
             return [] as string[];
         }
@@ -172,7 +172,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
             `getFilePaths-${mimetypeName}-${this.dirPath}`,
             async () => {
                 const filePathsInMap = this.filePathsMap[mimetypeName];
-                if (filePathsInMap?.length) {
+                if (filePathsInMap?.length && !isForce) {
                     return filePathsInMap;
                 }
                 try {
