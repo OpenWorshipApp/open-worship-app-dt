@@ -35,6 +35,7 @@ import {
 } from '../context-menu/appContextMenuHelpers';
 import {
     askForURL,
+    getOpenSharedLinkMenuItem,
     messageCallback,
     streamDownloadFile,
 } from '../background/downloadHelper';
@@ -111,51 +112,59 @@ async function genContextMenuItems(dirSource: DirSource) {
     }
     const contextMenuItems: ContextMenuItemType[] = [];
     const title = tran('Download From URL');
-    contextMenuItems.push({
-        menuElement: title,
-        onSelect: async () => {
-            const documentUrl = await askForURL(title, 'Documents URL:');
-            if (documentUrl === null) {
-                return;
-            }
-            const downloadDirPath = getDownloadPath();
-            const downloadDestFilePath = pathJoin(
-                downloadDirPath,
-                `${crypto.randomUUID()}.owa-downloading`,
-            );
-            try {
-                showSimpleToast(
-                    title,
-                    `Downloading document from "${documentUrl}", please wait...`,
-                );
-                showProgressBar(documentUrl);
-                messageCallback('Downloading file...');
-                const response = await initHttpRequest(new URL(documentUrl));
-                await streamDownloadFile(
-                    downloadDestFilePath,
-                    response,
-                    messageCallback,
-                );
-                let fileFullName = getFileFullName(documentUrl);
-                if (!fileFullName) {
-                    fileFullName = `downloaded-document-${Date.now()}`;
+    contextMenuItems.push(
+        {
+            menuElement: title,
+            onSelect: async () => {
+                const documentUrl = await askForURL(title, 'Documents URL:');
+                if (documentUrl === null) {
+                    return;
                 }
-                const destFilePath = pathJoin(dirSource.dirPath, fileFullName);
-                const fileSource = FileSource.getInstance(destFilePath);
-                const nextDestFilePath = await fileSource.genNextFilePath();
-                await fsMove(downloadDestFilePath, nextDestFilePath);
-                showSimpleToast(title, 'Document downloaded successfully');
-            } catch (error) {
-                handleError(error);
-                showSimpleToast(
-                    title,
-                    'Error occurred during downloading document',
+                const downloadDirPath = getDownloadPath();
+                const downloadDestFilePath = pathJoin(
+                    downloadDirPath,
+                    `${crypto.randomUUID()}.owa-downloading`,
                 );
-            } finally {
-                hideProgressBar(documentUrl);
-            }
+                try {
+                    showSimpleToast(
+                        title,
+                        `Downloading document from "${documentUrl}", please wait...`,
+                    );
+                    showProgressBar(documentUrl);
+                    messageCallback('Downloading file...');
+                    const response = await initHttpRequest(
+                        new URL(documentUrl),
+                    );
+                    await streamDownloadFile(
+                        downloadDestFilePath,
+                        response,
+                        messageCallback,
+                    );
+                    let fileFullName = getFileFullName(documentUrl);
+                    if (!fileFullName) {
+                        fileFullName = `downloaded-document-${Date.now()}`;
+                    }
+                    const destFilePath = pathJoin(
+                        dirSource.dirPath,
+                        fileFullName,
+                    );
+                    const fileSource = FileSource.getInstance(destFilePath);
+                    const nextDestFilePath = await fileSource.genNextFilePath();
+                    await fsMove(downloadDestFilePath, nextDestFilePath);
+                    showSimpleToast(title, 'Document downloaded successfully');
+                } catch (error) {
+                    handleError(error);
+                    showSimpleToast(
+                        title,
+                        'Error occurred during downloading document',
+                    );
+                } finally {
+                    hideProgressBar(documentUrl);
+                }
+            },
         },
-    });
+        getOpenSharedLinkMenuItem('slides'),
+    );
     return contextMenuItems;
 }
 
