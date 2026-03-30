@@ -134,7 +134,10 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return files;
     }
 
-    async getFilePathsQuick(mimetypeName: MimetypeNameType) {
+    async getFilePathsQuick(
+        mimetypeName: MimetypeNameType,
+        isNoExtraFileCheck = false,
+    ) {
         const mimetypeList = getAppMimetype(mimetypeName);
         const fileFullNames = await this.getAllFileFullNames();
         const matchedFileFullNames = fileFullNames
@@ -147,7 +150,11 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
                     fileFullName,
                     mimetypeList,
                 );
-                if (fileMetadata === null && this.checkExtraFile) {
+                if (
+                    fileMetadata === null &&
+                    this.checkExtraFile &&
+                    !isNoExtraFileCheck
+                ) {
                     return this.checkExtraFile(fileFullName);
                 }
                 return fileMetadata;

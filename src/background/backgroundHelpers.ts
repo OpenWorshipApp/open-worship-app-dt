@@ -5,9 +5,11 @@ import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import type { CameraInfoType } from '../helper/cameraHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
-import { useVaryAppDocumentDirSource } from '../app-document-list/appDocumentHelpers';
+import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
 import PptxAppDocument from '../app-document-list/PptxAppDocument';
+import { dirSourceSettingNames } from '../helper/constants';
+import type DirSource from '../helper/DirSource';
+import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 
 export type RenderChildType = (
     filePath: string,
@@ -71,29 +73,52 @@ export function cameraDragDeserialize(data: string) {
     };
 }
 
+async function getAudioDataList(dirSource: DirSource) {
+    if (!dirSource.dirPath) {
+        return null;
+    }
+    const filePaths = await dirSource.getFilePathsQuick('pptx', true);
+    const audioDataList = await Promise.all(
+        filePaths.map(async (filePath) => {
+            const pptxAppDocument = PptxAppDocument.getInstance(filePath);
+            const audioData = await pptxAppDocument.getAudioFilePaths();
+            const fileName = pptxAppDocument.fileSource.name;
+            return [fileName, audioData];
+        }),
+    );
+    return Object.fromEntries(audioDataList);
+}
 export type VaryAppDocumentAudioDataType = {
     [key: string]: string[];
 };
 export function useAppDocumentAudioData() {
     const [audioData, setAudioData] =
         useState<VaryAppDocumentAudioDataType | null>(null);
-    const dirSource = useVaryAppDocumentDirSource();
+    const dirSource = useGenDirSourceReload(dirSourceSettingNames.APP_DOCUMENT);
+
+    useAppEffect(() => {
+        if (dirSource === null) {
+            return;
+        }
+        const registeredEvent = dirSource.registerEventListener(
+            ['refresh'],
+            async () => {
+                const audioDataObject = await getAudioDataList(dirSource);
+                setAudioData(audioDataObject);
+            },
+        );
+        return () => {
+            dirSource.unregisterEventListener(registeredEvent);
+        };
+    }, [dirSource]);
+
     useAppEffectAsync(
         async (contextMethods) => {
             if (dirSource === null) {
                 return;
             }
-            const filePaths = await dirSource.getFilePaths('pptx');
-            const audioDataList = await Promise.all(
-                filePaths.map(async (filePath) => {
-                    const pptxAppDocument =
-                        PptxAppDocument.getInstance(filePath);
-                    const audioData = await pptxAppDocument.getAudioFilePaths();
-                    const fileName = pptxAppDocument.fileSource.name;
-                    return [fileName, audioData];
-                }),
-            );
-            contextMethods.setAudioData(Object.fromEntries(audioDataList));
+            const audioDataObject = await getAudioDataList(dirSource);
+            contextMethods.setAudioData(audioDataObject);
         },
         [dirSource],
         { setAudioData },
