@@ -464,6 +464,7 @@ const lang: LanguageDataType = {
         @font-face {
             font-family: ${fontFamily};
             src: url(${btbRegular}) format("truetype");
+            font-weight: normal;
         }
         @font-face {
             font-family: ${fontFamily};
