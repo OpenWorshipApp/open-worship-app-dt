@@ -16,6 +16,7 @@ const pptxSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 export type PptxSlideType = {
     id: number;
     htmlFilePath: string;
+    subHtmlFilePaths: string[];
     isDisabled: boolean;
     note: string | null;
     metadata: { width: number; height: number };
@@ -35,6 +36,23 @@ export default class PptxSlide
         super();
         this._originalJson = cloneJson(json);
         this.filePath = filePath;
+    }
+
+    get subSlides() {
+        return this.originalJson.subHtmlFilePaths.map((htmlFilePath, index) => {
+            const json: PptxSlideType = {
+                id: this.id + 999 + index,
+                htmlFilePath,
+                subHtmlFilePaths: [],
+                isDisabled: this.isDisabled,
+                note: null,
+                metadata: cloneJson(this.metadata),
+                images: [],
+                videos: [],
+                audios: [],
+            };
+            return new PptxSlide(this.filePath, json);
+        });
     }
 
     get isDisabled() {

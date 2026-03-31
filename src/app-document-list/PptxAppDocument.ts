@@ -73,6 +73,7 @@ export default class PptxAppDocument
             const slide0 = new PptxSlide(this.filePath, {
                 id: 0,
                 htmlFilePath: '/assets/slide0.html',
+                subHtmlFilePaths: [],
                 isDisabled: false,
                 note: null,
                 metadata: pptxData.info.dimensions,
@@ -82,12 +83,21 @@ export default class PptxAppDocument
             });
             const dataList = pptxData.info.slides.map(
                 (
-                    { htmlFilePath, isDisabled, note, images, videos, audios },
+                    {
+                        htmlFilePath,
+                        subHtmlFilePaths,
+                        isDisabled,
+                        note,
+                        images,
+                        videos,
+                        audios,
+                    },
                     i,
                 ) => {
                     const json: PptxSlideType = {
                         id: i + 1,
                         htmlFilePath,
+                        subHtmlFilePaths,
                         isDisabled,
                         note,
                         metadata: pptxData.info.dimensions,

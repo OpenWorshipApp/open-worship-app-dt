@@ -60,7 +60,11 @@ export default function VarySlideRenderWrapperComp({
 }>) {
     const setSelectedVarySlide = useSelectedEditingSlideSetterContext();
     const handleClicking = useCallback(
-        (event: MouseEvent<HTMLDivElement>) => {
+        (
+            event: MouseEvent<HTMLDivElement>,
+            index: number,
+            varySlide: VarySlideType,
+        ) => {
             selectVarySlide(
                 {
                     index,
@@ -70,7 +74,7 @@ export default function VarySlideRenderWrapperComp({
                 event,
             );
         },
-        [index, varySlide, setSelectedVarySlide],
+        [setSelectedVarySlide],
     );
     if (PdfSlide.checkIsThisType(varySlide)) {
         return (

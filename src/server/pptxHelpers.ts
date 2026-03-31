@@ -67,8 +67,8 @@ getPptxToHtmlsVersion();
 export type PptxSlideDataType100 = {
     htmlFileName: string;
     htmlFilePath: string;
-    subSlideHtmlFileNames: string[];
-    subSlideFilePaths: string[];
+    subHtmlFileNames: string[];
+    subHtmlFilePaths: string[];
     isDisabled: boolean;
     note: string | null;
     images: string[];
@@ -123,8 +123,10 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
         const slides = infoData.slides as any[];
         slides.forEach((slide) => {
             slide.htmlFilePath = pathJoin(outDir, slide.htmlFileName);
-            slide.subSlideFilePaths = slide.subSlideHtmlFileNames.map(
-                (fileName: string) => pathJoin(outDir, fileName),
+            slide.subHtmlFilePaths = slide.subHtmlFileNames.map(
+                (fileName: string) => {
+                    return pathJoin(outDir, fileName);
+                },
             );
         });
         infoData.slides = slides;

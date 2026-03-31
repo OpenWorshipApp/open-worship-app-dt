@@ -10,6 +10,7 @@ import { tran } from '../../lang/langHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import type PdfAppDocument from '../../app-document-list/PdfAppDocument';
 import { sanitizeHtml } from '../../helper/sanitizeHelpers';
+import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,
@@ -54,7 +55,11 @@ export default function PdfSlideRenderComp({
     pdfSlide: PdfSlide;
     width: number;
     index: number;
-    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
+    onClick?: (
+        event: MouseEvent<HTMLDivElement>,
+        index: number,
+        varySlide: VarySlideType,
+    ) => void;
 }>) {
     const pdfAppDocument = useVaryAppDocumentContext() as PdfAppDocument;
     const pdfPreviewSrc = pdfSlide.pdfPreviewSrc;
@@ -75,7 +80,9 @@ export default function PdfSlideRenderComp({
             width={width}
             index={index}
             onContextMenu={handleContextMenuOpening}
-            onClick={onClick}
+            onClick={(event) => {
+                onClick?.(event, index, pdfSlide);
+            }}
         >
             {pdfPreviewSrc === null ? (
                 <h3>{tran('Unable to preview right now')}</h3>

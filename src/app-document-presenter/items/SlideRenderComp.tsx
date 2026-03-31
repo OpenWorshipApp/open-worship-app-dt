@@ -11,6 +11,7 @@ import VarySlideRenderComp from './VarySlideRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import SlideRendererComp from './SlideRendererComp';
 import type AppDocument from '../../app-document-list/AppDocument';
+import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 
 function useData() {
     const selectedEditingSlideContext = use(SelectedEditingSlideContext);
@@ -33,7 +34,11 @@ export default function SlideRenderComp({
     slide: Slide;
     width: number;
     index: number;
-    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
+    onClick?: (
+        event: MouseEvent<HTMLDivElement>,
+        index: number,
+        varSlide: VarySlideType,
+    ) => void;
 }>) {
     const appDocument = useVaryAppDocumentContext() as AppDocument;
     const { selectedEditingSlide, holdingEditingSlides } = useData();
@@ -45,7 +50,7 @@ export default function SlideRenderComp({
                 // but trigger clicking (selecting) instead
                 event.preventDefault();
                 event.stopPropagation();
-                onClick?.(event);
+                onClick?.(event, index, slide);
                 return;
             }
             const isOnHoldingSlide = holdingEditingSlides.some(
@@ -70,6 +75,7 @@ export default function SlideRenderComp({
             }
         },
         [
+            index,
             holdingEditingSlides,
             slide,
             appDocument,

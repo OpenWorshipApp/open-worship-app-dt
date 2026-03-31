@@ -196,7 +196,11 @@ export default function VarySlideRenderComp({
     varySlide: VarySlideType;
     width: number;
     index: number;
-    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
+    onClick?: (
+        event: MouseEvent<HTMLDivElement>,
+        index: number,
+        varySlide: VarySlideType,
+    ) => void;
     onContextMenu: (event: any, extraMenuItems: ContextMenuItemType[]) => void;
     onCopy?: () => void;
     selectedItemEditing?: VarySlideType | null;
@@ -304,7 +308,9 @@ export default function VarySlideRenderComp({
             onDrop={handleDataDropping}
             onDragStart={handleDragStartEvent}
             onDragEnd={handleDragEnd}
-            onClick={onClick}
+            onClick={(event) => {
+                onClick?.(event, index, varySlide);
+            }}
             onContextMenu={handleContextMenuOpening}
             onCopy={onCopy ?? (() => {})}
         >

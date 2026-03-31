@@ -9,6 +9,7 @@ import type PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import FileSource from '../../helper/FileSource';
 import { renderToStaticMarkup } from 'react-dom/server';
 import appProvider from '../../server/appProvider';
+import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 
 function PptxSlideRenderContentComp({
     htmlFilePath,
@@ -67,7 +68,11 @@ export default function PptxSlideRenderComp({
     pptxSlide: PptxSlide;
     width: number;
     index: number;
-    onClick?: (event: MouseEvent<HTMLDivElement>) => void;
+    onClick?: (
+        event: MouseEvent<HTMLDivElement>,
+        index: number,
+        varySlide: VarySlideType,
+    ) => void;
 }>) {
     const pptxAppDocument = useVaryAppDocumentContext() as PptxAppDocument;
     useScreenVaryAppDocumentManagerEvents(['update']);
@@ -82,18 +87,43 @@ export default function PptxSlideRenderComp({
         [pptxAppDocument, pptxSlide],
     );
     return (
-        <VarySlideRenderComp
-            varySlide={pptxSlide}
-            width={width}
-            index={index}
-            onContextMenu={handleContextMenuOpening}
-            onClick={onClick}
-        >
-            <PptxSlideRenderContentComp
-                htmlFilePath={pptxSlide.htmlFilePath}
-                width={pptxSlide.width}
-                height={pptxSlide.height}
-            />
-        </VarySlideRenderComp>
+        <>
+            <VarySlideRenderComp
+                varySlide={pptxSlide}
+                width={width}
+                index={index}
+                onContextMenu={handleContextMenuOpening}
+                onClick={(event) => {
+                    onClick?.(event, index, pptxSlide);
+                }}
+            >
+                <PptxSlideRenderContentComp
+                    htmlFilePath={pptxSlide.htmlFilePath}
+                    width={pptxSlide.width}
+                    height={pptxSlide.height}
+                />
+            </VarySlideRenderComp>
+            {pptxSlide.subSlides.map((subSlide, i) => {
+                const subIndex = index + (i + 1) * 0.01;
+                return (
+                    <VarySlideRenderComp
+                        key={subSlide.id}
+                        varySlide={subSlide}
+                        width={width}
+                        index={subIndex}
+                        onContextMenu={handleContextMenuOpening}
+                        onClick={(event) => {
+                            onClick?.(event, subIndex, subSlide);
+                        }}
+                    >
+                        <PptxSlideRenderContentComp
+                            htmlFilePath={subSlide.htmlFilePath}
+                            width={subSlide.width}
+                            height={subSlide.height}
+                        />
+                    </VarySlideRenderComp>
+                );
+            })}
+        </>
     );
 }
