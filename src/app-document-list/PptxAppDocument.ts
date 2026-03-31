@@ -107,11 +107,18 @@ export default class PptxAppDocument
 
     async getAudioFilePaths() {
         const slides = await this.getSlides();
-        const audioList = [];
-        for (const slide of slides) {
-            audioList.push(...slide.audioFilePaths);
+        const audioSlideDataList = [];
+        for (let i = 0; i < slides.length; i++) {
+            const slide = slides[i];
+            if (slide.audioFilePaths.length === 0) {
+                continue;
+            }
+            audioSlideDataList.push({
+                slideIndex: i,
+                filePaths: slide.audioFilePaths,
+            });
         }
-        return audioList;
+        return audioSlideDataList;
     }
 
     async getSlideByIndex(index: number) {

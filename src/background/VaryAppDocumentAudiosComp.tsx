@@ -1,6 +1,26 @@
 import { useAppDocumentAudioData } from './backgroundHelpers';
 import AudioBodyComp from './AudioBodyComp';
 import { tran } from '../lang/langHelpers';
+import { bringDomToNearestView } from '../helper/helpers';
+
+function AudioElementComp({
+    slideIndex,
+    filePath,
+}: Readonly<{
+    slideIndex: number;
+    filePath: string;
+}>) {
+    return (
+        <div className="d-flex">
+            <div>
+                <small className="badge rounded-pill text-bg-info align-items-center">
+                    {slideIndex + 1}
+                </small>
+            </div>
+            <AudioBodyComp key={filePath} filePath={filePath} />
+        </div>
+    );
+}
 
 export default function VaryAppDocumentAudiosComp() {
     const appDocumentAudioData = useAppDocumentAudioData();
@@ -8,25 +28,38 @@ export default function VaryAppDocumentAudiosComp() {
         return null;
     }
     return (
-        <div className="w-10 app-inner-shadow p-2 mb-3 mt-5">
+        <div
+            ref={(element) => {
+                if (element === null) {
+                    return;
+                }
+                bringDomToNearestView(element);
+            }}
+            className="w-10 app-inner-shadow p-2 mb-3 mt-5"
+        >
             <strong>{tran('Document Audios')}</strong>
             {Object.entries(appDocumentAudioData).map(
-                ([varyAppDocumentName, audioFilePaths]) => {
-                    if (audioFilePaths.length === 0) {
+                ([varyAppDocumentName, audioSlideDataList]) => {
+                    if (audioSlideDataList.length === 0) {
                         return null;
                     }
                     return (
                         <div key={varyAppDocumentName}>
                             <hr />
                             <span className="muted">{varyAppDocumentName}</span>
-                            {audioFilePaths.map((filePath) => {
-                                return (
-                                    <AudioBodyComp
-                                        key={filePath}
-                                        filePath={filePath}
-                                    />
-                                );
-                            })}
+                            {audioSlideDataList.map(
+                                ({ slideIndex, filePaths }) => {
+                                    return filePaths.map((filePath) => {
+                                        return (
+                                            <AudioElementComp
+                                                key={filePath}
+                                                slideIndex={slideIndex}
+                                                filePath={filePath}
+                                            />
+                                        );
+                                    });
+                                },
+                            )}
                         </div>
                     );
                 },

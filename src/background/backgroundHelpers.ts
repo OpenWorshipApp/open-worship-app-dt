@@ -73,6 +73,13 @@ export function cameraDragDeserialize(data: string) {
     };
 }
 
+type VarySlideAudioDataType = {
+    slideIndex: number;
+    filePaths: string[];
+};
+export type VaryAppDocumentAudioDataType = {
+    [key: string]: VarySlideAudioDataType[];
+};
 async function getAudioDataList(dirSource: DirSource) {
     if (!dirSource.dirPath) {
         return null;
@@ -81,16 +88,24 @@ async function getAudioDataList(dirSource: DirSource) {
     const audioDataList = await Promise.all(
         filePaths.map(async (filePath) => {
             const pptxAppDocument = PptxAppDocument.getInstance(filePath);
-            const audioData = await pptxAppDocument.getAudioFilePaths();
+            const audioSlideDataList =
+                await pptxAppDocument.getAudioFilePaths();
+            if (audioSlideDataList.length === 0) {
+                return null;
+            }
             const fileName = pptxAppDocument.fileSource.name;
-            return [fileName, audioData];
+            return [fileName, audioSlideDataList] as [
+                string,
+                VarySlideAudioDataType[],
+            ];
         }),
     );
-    return Object.fromEntries(audioDataList);
+    return Object.fromEntries(
+        audioDataList.filter((item) => {
+            return item !== null;
+        }),
+    );
 }
-export type VaryAppDocumentAudioDataType = {
-    [key: string]: string[];
-};
 export function useAppDocumentAudioData() {
     const [audioData, setAudioData] =
         useState<VaryAppDocumentAudioDataType | null>(null);
