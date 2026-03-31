@@ -76,7 +76,7 @@ download_yt_dlp() {
     chmod +x "$output"
 }
 
-ffmpeg_prefix_url="https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/"
+ffmpeg_prefix_url="https://github.com/BtbN/FFmpeg-Builds/releases/download/autobuild-2026-03-31-13-11/"
 download_ffmpeg(){
     local url="$ffmpeg_prefix_url$1"
     local output_dir="$dist_dir/ffmpeg/bin"
@@ -167,8 +167,8 @@ download_deno(){
     chmod +x "$output_dir/deno$2"
 }
 
-ffmpeg_build_version="n8.0-latest"
-ffmpeg_version="8.0"
+ffmpeg_build_version="n8.1-7-ga3475e2554"
+ffmpeg_version="8.1"
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
     process=$(node -p "process.arch")
     if [[ "$process" == "arm64" ]]; then

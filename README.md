@@ -101,7 +101,7 @@ Special thanks to all frameworks and tools listed in [package.json](./package.js
 ## 📋 Requirements
 
 - [Node.js v22](https://nodejs.org/en/download/) or higher
-- [dotnet 8.0](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for MS PowerPoint support
+- [dotnet 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for MS PowerPoint support
 - For Windows, [Cygwin](https://cygwin.com/) is needed. `Cygwin` through [Git](https://git-scm.com/) is recommended (by installing `Git` with `Git-bash` we will have all required commands installed)
 
 For Fedora:

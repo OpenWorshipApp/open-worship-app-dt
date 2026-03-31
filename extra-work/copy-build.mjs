@@ -63,13 +63,13 @@ function genLibFileName(baseName) {
     destFileName: `${baseName}.${ext}`,
   };
 }
-function genBinFileName(baseName) {
+function genBinFileName(baseName, isWithoutSuffix = false) {
   let ext = '';
   if (systemUtils.isWindows) {
     ext = '.exe';
   }
   return {
-    sourceFileName: `${baseName}${fileSuffix}${ext}`,
+    sourceFileName: `${baseName}${isWithoutSuffix ? '' : fileSuffix}${ext}`,
     destFileName: `${baseName}${ext}`,
   };
 }
@@ -120,7 +120,7 @@ const binHelperDestRootDir = resolve('./electron-build/bin-helper');
 const {
   sourceFileName: eot2ttfSourceFileName,
   destFileName: eot2ttfDestFileName,
-} = genBinFileName('eot2ttf');
+} = genBinFileName('eot2ttf', true);
 copyFile(
   {
     source: resolve(
