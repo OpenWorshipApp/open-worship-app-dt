@@ -118,6 +118,13 @@ export function handleNextItemSelecting({
     varySlides: VarySlideType[];
     isNext: boolean;
 }) {
+    const allVarySlides = varySlides.reduce((bucket, varySlide) => {
+        bucket.push(varySlide);
+        if (PptxSlide.checkIsThisType(varySlide)) {
+            bucket.push(...varySlide.subSlides);
+        }
+        return bucket;
+    }, [] as VarySlideType[]);
     const divSelectedList = container.querySelectorAll(
         `[${DATA_QUERY_KEY}].${HIGHLIGHT_SELECTED_CLASSNAME}`,
     );
@@ -132,14 +139,13 @@ export function handleNextItemSelecting({
             const itemId = Number.parseInt(
                 divSelected?.getAttribute(DATA_QUERY_KEY) ?? '',
             );
-            const screenIds = Array.from(
-                divSelected.querySelectorAll('[data-screen-id]'),
-            ).map((element) => {
-                return Number.parseInt(
-                    element.getAttribute('data-screen-id') ?? '',
-                );
+            const selectedElements = Array.from(
+                divSelected.querySelectorAll<HTMLElement>('[data-screen-id]'),
+            );
+            const screenIds = selectedElements.map((element) => {
+                return Number.parseInt(element.dataset.screenId ?? '');
             });
-            const targetItem = findNextSlide(isNext, varySlides, itemId);
+            const targetItem = findNextSlide(isNext, allVarySlides, itemId);
             if (targetItem === null) {
                 return bucket;
             }
