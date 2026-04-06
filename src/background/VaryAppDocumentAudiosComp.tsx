@@ -27,6 +27,14 @@ export default function VaryAppDocumentAudiosComp() {
     if (appDocumentAudioData === null) {
         return null;
     }
+    const dataEntries = Object.entries(appDocumentAudioData);
+    if (
+        dataEntries.every(
+            ([, audioSlideDataList]) => audioSlideDataList.length === 0,
+        )
+    ) {
+        return null;
+    }
     return (
         <div
             ref={(element) => {

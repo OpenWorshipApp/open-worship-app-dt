@@ -1,7 +1,7 @@
 import { type MouseEvent, useCallback } from 'react';
 
 import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
-import type PptxSlide from '../../app-document-list/PptxSlide';
+import PptxSlide from '../../app-document-list/PptxSlide';
 import VarySlideRenderComp from './VarySlideRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
@@ -104,7 +104,7 @@ export default function PptxSlideRenderComp({
                 />
             </VarySlideRenderComp>
             {pptxSlide.subSlides.map((subSlide, i) => {
-                const subIndex = index + (i + 1) * 0.01;
+                const subIndex = PptxSlide.calcIndex(index, i);
                 return (
                     <VarySlideRenderComp
                         key={subSlide.id}

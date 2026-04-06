@@ -166,4 +166,8 @@ export default class PptxSlide
     static checkIsThisType(item: any) {
         return item instanceof this;
     }
+
+    static calcIndex(i: number, j: number) {
+        return i + (j + 1) * 0.01;
+    }
 }
