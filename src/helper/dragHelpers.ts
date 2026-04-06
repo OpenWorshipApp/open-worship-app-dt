@@ -6,6 +6,7 @@ import { DragTypeEnum } from './DragInf';
 import FileSource from './FileSource';
 import PdfSlide from '../app-document-list/PdfSlide';
 import PptxSlide from '../app-document-list/PptxSlide';
+import DocxSlide from '../app-document-list/DocxSlide';
 import { useCallback, useState } from 'react';
 import AttachBackgroundManager, {
     attachBackgroundManager,
@@ -56,6 +57,11 @@ function deserializeDragData({
         const droppedData = JSON.parse(data);
         if (PptxSlide.tryValidate(droppedData.data)) {
             item = new PptxSlide(droppedData.filePath, droppedData.data);
+        }
+    } else if (type === DragTypeEnum.DOCX_SLIDE) {
+        const droppedData = JSON.parse(data);
+        if (DocxSlide.tryValidate(droppedData.data)) {
+            item = new DocxSlide(droppedData.filePath, droppedData.data);
         }
     } else if (type === DragTypeEnum.BIBLE_ITEM) {
         item = BibleItem.dragDeserialize(data);

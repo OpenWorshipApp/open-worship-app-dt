@@ -7,6 +7,9 @@ import type PdfSlide from './PdfSlide';
 import type PptxAppDocument from './PptxAppDocument';
 import type PptxSlide from './PptxSlide';
 import { type PptxSlideType } from './PptxSlide';
+import type DocxAppDocument from './DocxAppDocument';
+import type { DocxSlideType } from './DocxSlide';
+import type DocxSlide from './DocxSlide';
 
 export const MIN_THUMBNAIL_SCALE = 20;
 export const THUMBNAIL_SCALE_STEP = 1;
@@ -17,9 +20,14 @@ export const THUMBNAIL_WIDTH_SETTING_NAME = 'presenter-item-thumbnail-size';
 export type VaryAppDocumentType =
     | AppDocument
     | PdfAppDocument
-    | PptxAppDocument;
+    | PptxAppDocument
+    | DocxAppDocument;
 export type VaryAppDocumentWithNoteType = AppDocument | PptxAppDocument;
-export type VarySlideType = Slide | PdfSlide | PptxSlide;
+export type VarySlideType = Slide | PdfSlide | PptxSlide | DocxSlide;
 export type VarySlideWithNoteType = Slide | PptxSlide;
-export type VarySlideDataType = SlideType | PdfSlideType | PptxSlideType;
+export type VarySlideDataType =
+    | SlideType
+    | PdfSlideType
+    | PptxSlideType
+    | DocxSlideType;
 export type VaryAppDocumentDynamicType = VaryAppDocumentType | null | undefined;

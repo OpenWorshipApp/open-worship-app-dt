@@ -3,10 +3,12 @@ import { type MouseEvent, useCallback } from 'react';
 import SlideRenderComp from './SlideRenderComp';
 import PdfSlideRenderComp from './PdfSlideRenderComp';
 import PptxSlideRenderComp from './PptxSlideRenderComp';
+import DocxSlideRenderComp from './DocxSlideRenderComp';
 import { handleVarySlideSelecting } from './varyAppDocumentHelpers';
 import { useSelectedEditingSlideSetterContext } from '../../app-document-list/appDocumentHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
 import PptxSlide from '../../app-document-list/PptxSlide';
+import DocxSlide from '../../app-document-list/DocxSlide';
 import Slide from '../../app-document-list/Slide';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import { type AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
@@ -93,6 +95,17 @@ export default function VarySlideRenderWrapperComp({
                 key={varySlide.id}
                 onClick={handleClicking}
                 pptxSlide={varySlide}
+                width={thumbSize}
+                index={index}
+            />
+        );
+    }
+    if (DocxSlide.checkIsThisType(varySlide)) {
+        return (
+            <DocxSlideRenderComp
+                key={varySlide.id}
+                onClick={handleClicking}
+                docxSlide={varySlide}
                 width={thumbSize}
                 index={index}
             />

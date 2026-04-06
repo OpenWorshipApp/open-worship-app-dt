@@ -12,6 +12,7 @@ import {
 } from '../../app-document-list/appDocumentHelpers';
 import PdfAppearanceSettingComp from '../../screen-setting/PdfAppearanceSettingComp';
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
+import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
 import appProvider from '../../server/appProvider';
 import PresenterNoteContainerHandlerComp from '../../slide-editor/note/PresenterNoteContainerHandlerComp';
@@ -19,7 +20,10 @@ import PresenterNoteContainerHandlerComp from '../../slide-editor/note/Presenter
 function EditorComp() {
     const varyAppDocument = useVaryAppDocumentContext();
     const fileSource = varyAppDocument.fileSource;
-    if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
+    if (
+        PdfAppDocument.checkIsThisType(varyAppDocument) ||
+        DocxAppDocument.checkIsThisType(varyAppDocument)
+    ) {
         return <VarySlidesPreviewerComp />;
     }
     return (
@@ -82,6 +86,9 @@ export default function AppDocumentPreviewerComp() {
     const isPDF =
         selectedAppDocumentContext.selectedVaryAppDocument instanceof
         PdfAppDocument;
+    const isDocx =
+        selectedAppDocumentContext.selectedVaryAppDocument instanceof
+        DocxAppDocument;
     return (
         <div
             className="slide-previewer card w-100 h-100 app-zero-border-radius"
@@ -105,7 +112,7 @@ export default function AppDocumentPreviewerComp() {
                     )}
                 </div>
                 <AppDocumentPreviewerFooterComp />
-                {isPDF ? <PdfAppearanceSettingComp /> : null}
+                {isPDF || isDocx ? <PdfAppearanceSettingComp /> : null}
             </VaryAppDocumentContext>
         </div>
     );

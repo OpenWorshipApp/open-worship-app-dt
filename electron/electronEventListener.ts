@@ -25,10 +25,14 @@ import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
 import {
     countSlides,
+    docxToHtmls,
     exportBibleMSWord,
+    getDocxToHtmlsVersion,
     removeSlideBackground,
     pptxToHtmls,
     getPptxToHtmlsVersion,
+    type DocxToHtmlsParamsType,
+    type GetDocxToHtmlsVersionParamsType,
     type PptxToHtmlsParamsType,
     type GetPptxToHtmlsVersionParamsType,
 } from './msHelpers';
@@ -462,6 +466,20 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:get-pptx-to-htmls-version',
         (data: GetPptxToHtmlsVersionParamsType) => {
             return getPptxToHtmlsVersion(data);
+        },
+    );
+    onAsync(
+        ipcMain,
+        'main:app:docx-to-htmls',
+        (data: DocxToHtmlsParamsType) => {
+            return docxToHtmls(data);
+        },
+    );
+    onAsync(
+        ipcMain,
+        'main:app:get-docx-to-htmls-version',
+        (data: GetDocxToHtmlsVersionParamsType) => {
+            return getDocxToHtmlsVersion(data);
         },
     );
 }

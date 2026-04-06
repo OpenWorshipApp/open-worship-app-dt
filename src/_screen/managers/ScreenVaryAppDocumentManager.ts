@@ -5,6 +5,7 @@ import { getSetting, setSetting } from '../../helper/settingHelpers';
 import type { SlideType } from '../../app-document-list/Slide';
 import { genPdfSlide } from '../../app-document-presenter/items/PdfSlideRenderComp';
 import { genPptxSlide } from '../../app-document-presenter/items/PptxSlideRenderComp';
+import { genDocxSlide } from '../../app-document-presenter/items/DocxSlideRenderComp';
 import { genSlideHtml } from '../../app-document-presenter/items/SlideRendererComp';
 import { screenManagerSettingNames } from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
@@ -16,6 +17,8 @@ import type { PdfSlideType } from '../../app-document-list/PdfSlide';
 import PdfSlide from '../../app-document-list/PdfSlide';
 import type { PptxSlideType } from '../../app-document-list/PptxSlide';
 import PptxSlide from '../../app-document-list/PptxSlide';
+import type { DocxSlideType } from '../../app-document-list/DocxSlide';
+import DocxSlide from '../../app-document-list/DocxSlide';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
@@ -221,6 +224,40 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         return { content, scale };
     }
 
+    renderDocx(
+        divHaftScale: HTMLDivElement,
+        docxData: DocxSlideType,
+        isFullWidth: boolean,
+    ) {
+        const content = genDocxSlide(
+            docxData.htmlFilePath,
+            docxData.metadata.width,
+            docxData.metadata.height,
+            isFullWidth,
+        );
+        const { width, height } = docxData.metadata;
+        if (isFullWidth) {
+            Object.assign(divHaftScale.style, {
+                width: '100%',
+                height: '100%',
+                transform: 'translate(-50%, -50%)',
+                overflow: 'auto',
+            });
+            return { content, scale: 1 };
+        }
+        Object.assign(divHaftScale.style, {
+            width: `${width}px`,
+            height: `${height}px`,
+            transform: 'translate(-50%, -50%)',
+            overflow: 'hidden',
+        });
+        const scale = Math.min(
+            this.screenManagerBase.width / width,
+            this.screenManagerBase.height / height,
+        );
+        return { content, scale };
+    }
+
     cleanupSlideContent(content: HTMLDivElement) {
         if (!appProvider.isPageScreen) {
             return;
@@ -291,6 +328,12 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             );
         } else if (PptxSlide.tryValidate(itemJson)) {
             target = this.renderPptx(divHaftScale, itemJson as PptxSlideType);
+        } else if (DocxSlide.tryValidate(itemJson)) {
+            target = this.renderDocx(
+                divHaftScale,
+                itemJson as DocxSlideType,
+                isPdfFullWidth,
+            );
         } else {
             target = this.renderAppDocument(
                 divHaftScale,

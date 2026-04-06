@@ -9,6 +9,7 @@ import {
     getFileDotExtension,
     getFileFullName,
     getMimetypeExtensions,
+    mimetypeDocx,
     mimetypePdf,
     mimetypePptx,
     pathJoin,
@@ -20,6 +21,7 @@ import {
 } from '../helper/constants';
 import type { DroppedFileType } from '../others/droppingFileHelpers';
 import {
+    checkIsDocx,
     checkIsPdf,
     checkIsPptx,
     checkIsVaryAppDocumentOnScreen,
@@ -56,6 +58,12 @@ function handleExtraFileChecking(filePath: string) {
     if (checkIsPptx(fileSource.dotExtension)) {
         return true;
     }
+    if (
+        checkIsDocx(fileSource.dotExtension) &&
+        !fileSource.fullName.startsWith('~$')
+    ) {
+        return true;
+    }
     return false;
 }
 
@@ -71,6 +79,9 @@ function handleFileTaking(
         return false;
     }
     const dotExtension = getFileDotExtension(fileFullName).toLocaleLowerCase();
+    if (dotExtension === '.docx') {
+        return false;
+    }
     if (supportOfficeFileExtensions.includes(dotExtension)) {
         convertOfficeFile(file, dirSource);
         return true;
@@ -201,6 +212,15 @@ export default function VaryAppDocumentListComp() {
                 appMimetype: mimetypePptx,
             };
         }
+        if (checkIsDocx(getFileDotExtension(fileFullName))) {
+            if (fileFullName.startsWith('~$')) {
+                return null;
+            }
+            return {
+                fileFullName: fileFullName,
+                appMimetype: mimetypeDocx,
+            };
+        }
         return null;
     };
     const fileSelectionOption = {
@@ -211,6 +231,7 @@ export default function VaryAppDocumentListComp() {
                 ...getMimetypeExtensions('appDocument'),
                 ...getMimetypeExtensions('pdf'),
                 ...getMimetypeExtensions('pptx'),
+                ...getMimetypeExtensions('docx'),
                 ...supportOfficeFileExtensions.map((ext) => {
                     return ext.slice(1);
                 }),

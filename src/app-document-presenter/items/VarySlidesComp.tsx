@@ -37,8 +37,10 @@ import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
 import { tran } from '../../lang/langHelpers';
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
+import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { removePdfImagesPreview } from '../../helper/pdfHelpers';
 import { removePptxHtmlsPreview } from '../../server/pptxHelpers';
+import { removeDocxHtmlsPreview } from '../../server/docxHelpers';
 import { notifyNewElementAdded } from '../../helper/domHelpers';
 
 const varySlidesToView: { [key: string]: VarySlideType } = {};
@@ -105,6 +107,9 @@ function useVarySlidesData() {
     const isPptxAppDocument = useMemo(() => {
         return PptxAppDocument.checkIsThisType(selectedVaryAppDocument);
     }, [selectedVaryAppDocument]);
+    const isDocxAppDocument = useMemo(() => {
+        return DocxAppDocument.checkIsThisType(selectedVaryAppDocument);
+    }, [selectedVaryAppDocument]);
     const refreshPDFImages = useCallback(async () => {
         if (!isPDFAppDocument) {
             return;
@@ -121,6 +126,14 @@ function useVarySlidesData() {
         await removePptxHtmlsPreview(pptxAppDocument.filePath);
         pptxAppDocument.fileSource.fireUpdateEvent();
     }, [selectedVaryAppDocument, isPptxAppDocument]);
+    const refreshDocxSlides = useCallback(async () => {
+        if (!isDocxAppDocument) {
+            return;
+        }
+        const docxAppDocument = selectedVaryAppDocument as DocxAppDocument;
+        await removeDocxHtmlsPreview(docxAppDocument.filePath);
+        docxAppDocument.fileSource.fireUpdateEvent();
+    }, [selectedVaryAppDocument, isDocxAppDocument]);
 
     return {
         varySlides,
@@ -129,8 +142,10 @@ function useVarySlidesData() {
         },
         isPDFAppDocument,
         isPptxAppDocument,
+        isDocxAppDocument,
         refreshPDFImages,
         refreshPptxSlides,
+        refreshDocxSlides,
     };
 }
 
@@ -143,8 +158,10 @@ export default function VarySlidesComp() {
         startLoading,
         isPDFAppDocument,
         isPptxAppDocument,
+        isDocxAppDocument,
         refreshPDFImages,
         refreshPptxSlides,
+        refreshDocxSlides,
     } = useVarySlidesData();
     const varySlideThumbnailSize =
         thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
@@ -224,6 +241,24 @@ export default function VarySlidesComp() {
                 <br />
                 <button onClick={refreshPptxSlides} className="btn btn-primary">
                     {tran('Refresh PPTX Slides')}
+                </button>
+            </div>
+        );
+    }
+    if (isDocxAppDocument && varySlides.length === 0) {
+        return (
+            <div
+                className={
+                    'w-100 h-100 d-flex justify-content-center ' +
+                    'flex-column align-items-center p-2'
+                }
+            >
+                <p className="alert alert-warning text-center">
+                    {tran('No pages to display')}
+                </p>
+                <br />
+                <button onClick={refreshDocxSlides} className="btn btn-primary">
+                    {tran('Refresh DOCX Pages')}
                 </button>
             </div>
         );
