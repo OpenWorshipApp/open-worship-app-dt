@@ -11,6 +11,7 @@ import {
 } from './helper/domHelpers';
 import { appLog } from './helper/loggerHelpers';
 import { getReactRoot } from './others/rootHelpers';
+import { initAgentDebugBridge } from './server/agentDebugHelpers';
 
 function main() {
     const root = getReactRoot();
@@ -40,6 +41,8 @@ function main() {
     window.addEventListener('resize', () => {
         appProvider.reload();
     });
+
+    initAgentDebugBridge();
 }
 
 main();

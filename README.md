@@ -127,6 +127,36 @@ npm run dev
 
 The app will launch in development mode with hot reload enabled.
 
+### 3. Run Agent Debugging Mode
+
+```bash
+npm run dev:agent
+```
+
+This is the managed launcher. It runs `extra-work/dev-agent.mjs`, checks whether the agent debug server is already running, tries to reuse an existing Vite dev server on `https://127.0.0.1:3000`, runs `npm run electron:build`, and then launches Electron with agent debugging enabled.
+
+If you want the simpler direct path instead, use:
+
+```bash
+npm run dev:agent:direct
+```
+
+This is the direct fallback. It just sets `OPEN_WORSHIP_AGENT_DEBUG=1` and runs `npm run dev`. It does not do the preflight checks or session reuse that `dev:agent` does, but it is useful when the managed launcher is not suitable for the current shell environment.
+
+Both commands start the normal development app with an additional local debug surface for coding agents and local tooling. The debug server is bound to `127.0.0.1` only and exposes:
+
+- `/health` for readiness checks
+- `/snapshot` for app, window, DOM, storage, and registered provider data
+- `/dom` for the renderer-only snapshot
+- `/screenshot.png` for a live PNG capture of the main window
+
+Optional environment variables:
+
+- `OPEN_WORSHIP_AGENT_DEBUG_PORT` to change the port from the default `47831`
+- `OPEN_WORSHIP_AGENT_DEBUG_TOKEN` to require a bearer token or `?token=` query parameter
+
+Renderer pages can publish extra structured state to `/snapshot` through the bridge in `src/server/agentDebugHelpers.ts`, which is initialized from `src/boot.ts`.
+
 ---
 
 ## 📦 Building for Production

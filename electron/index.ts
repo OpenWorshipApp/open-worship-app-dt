@@ -19,6 +19,7 @@ import {
     initEventOther,
     initEventScreen,
 } from './electronEventListener';
+import { maybeStartAgentDebugServer } from './agentDebugServer';
 import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
 import { isDev } from './electronHelpers';
@@ -43,6 +44,7 @@ async function main() {
     initEventOther(appController);
     initMenu(appController);
     initDevtools(appController);
+    await maybeStartAgentDebugServer(appController);
 }
 
 main();

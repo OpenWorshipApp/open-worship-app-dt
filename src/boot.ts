@@ -1,6 +1,7 @@
 import { getCurrentLocale, getLangDataAsync } from './lang/langHelpers';
 import { sanitizeCssValue } from './helper/sanitizeHelpers';
 import { getAppFontFamily, getAppFontWeight } from './setting/settingHelpers';
+import { initAgentDebugBridge } from './server/agentDebugHelpers';
 
 async function initFontFamily() {
     const id = 'app-custom-style';
@@ -31,6 +32,7 @@ async function initFontFamily() {
 }
 
 export async function init(callback: () => void = () => {}) {
+    initAgentDebugBridge();
     initFontFamily();
     const currentLocale = getCurrentLocale();
     await getLangDataAsync(currentLocale);
