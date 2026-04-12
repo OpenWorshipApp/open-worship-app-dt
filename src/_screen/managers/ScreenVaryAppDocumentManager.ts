@@ -192,16 +192,13 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             return null;
         }
         const content = genPdfSlide(pdfImageData.imagePreviewSrc, isFullWidth);
-        const parentWidth = this.screenManagerBase.width;
-        const width = parentWidth;
         Object.assign(divHaftScale.style, {
             width: '100%',
             height: '100%',
             overflow: isFullWidth ? 'auto' : 'hidden',
             transform: 'translate(-50%, -50%)',
         });
-        const scale = parentWidth / width;
-        return { content, scale };
+        return { content, scale: 1 };
     }
 
     renderPptx(divHaftScale: HTMLDivElement, pptxData: PptxSlideType) {
