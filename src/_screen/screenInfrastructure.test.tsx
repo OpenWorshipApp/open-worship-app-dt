@@ -416,6 +416,47 @@ describe('screen infrastructure', () => {
         );
     });
 
+    test('clears invalid stored Bible screen data', async () => {
+        const { screenManagerSettingNames } = await import(
+            '../helper/constants'
+        );
+        const screenHelpers = await import('./screenHelpers');
+
+        getSettingMock.mockImplementation((key: string) => {
+            if (key === screenManagerSettingNames.MANAGERS) {
+                return JSON.stringify([{ screenId: 1 }]);
+            }
+            if (key === screenManagerSettingNames.FULL_TEXT) {
+                return JSON.stringify({
+                    1: {
+                        type: 'bible-item',
+                        locale: 'en-US',
+                        bibleItemData: {
+                            renderedList: [
+                                {
+                                    locale: 'en-US',
+                                    bibleKey: 'KJV',
+                                    title: 'Genesis 1:1',
+                                    verses: [{ num: 1, text: 'Invalid verse number' }],
+                                },
+                            ],
+                            bibleItem: { id: 1 },
+                        },
+                        scroll: 0,
+                        selectedKJVVerseKey: null,
+                    },
+                });
+            }
+            return undefined;
+        });
+
+        expect(screenHelpers.getBibleListOnScreenSetting()).toEqual({});
+        expect(setSettingMock).toHaveBeenCalledWith(
+            screenManagerSettingNames.FULL_TEXT,
+            '',
+        );
+    });
+
     test('syncs effect settings and routes attached backgrounds', async () => {
         const { default: ScreenEffectManager } = await import(
             './managers/ScreenEffectManager'

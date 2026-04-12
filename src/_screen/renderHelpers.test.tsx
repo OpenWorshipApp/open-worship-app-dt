@@ -305,6 +305,51 @@ describe('screen render helpers', () => {
         expect(onSelectKey).toHaveBeenCalledWith('GEN-1-2', true);
     });
 
+    test('treats alt-click verse selection as a top-promotion action', async () => {
+        const bibleScreenHelper = (await import('./bibleScreenHelpers')).default;
+        const screenView = await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
+            [
+                {
+                    locale: 'en-US' as any,
+                    bibleKey: 'KJV',
+                    title: 'Genesis 1:1-2',
+                    verses: [
+                        {
+                            num: '1',
+                            text: 'In the beginning',
+                            verseKey: 'KJV-GEN-1-1',
+                            kjvVerseKey: 'GEN-1-1',
+                        },
+                        {
+                            num: '2',
+                            text: 'Verse two',
+                            verseKey: 'KJV-GEN-1-2',
+                            kjvVerseKey: 'GEN-1-2',
+                        },
+                    ],
+                },
+            ],
+            true,
+        );
+
+        const onSelectKey = vi.fn();
+        bibleScreenHelper.registerHighlight(screenView, {
+            onSelectKey,
+            onBibleSelect: vi.fn(),
+        });
+
+        const firstVerse = screenView.querySelector(
+            'span.highlight[data-kjv-verse-key="GEN-1-1"]',
+        ) as HTMLSpanElement | null;
+        expect(firstVerse).not.toBeNull();
+
+        firstVerse?.dispatchEvent(
+            new MouseEvent('click', { bubbles: true, altKey: true }),
+        );
+
+        expect(onSelectKey).toHaveBeenCalledWith('GEN-1-1', true);
+    });
+
     test('converts Bible items into render lists with localized verses', async () => {
         const bibleScreenHelper = (await import('./bibleScreenHelpers')).default;
 

@@ -387,6 +387,28 @@ describe('screen component smoke tests', () => {
         );
     });
 
+    test('renders background video sizing and playback attributes', async () => {
+        const { default: ScreenBackgroundVideoComp } = await import(
+            './ScreenBackgroundVideoComp'
+        );
+
+        const html = renderToStaticMarkup(
+            <ScreenBackgroundVideoComp
+                backgroundSrc={{ type: 'video', src: '/background.mp4' } as any}
+            />,
+        );
+        const normalizedHtml = html.toLowerCase();
+
+        expect(html).toContain('src="/background.mp4"');
+        expect(html).toContain('width:100px');
+        expect(html).toContain('height:50px');
+        expect(html).toContain('translate(1px, 2px)');
+        expect(normalizedHtml).toContain('autoplay=""');
+        expect(normalizedHtml).toContain('loop=""');
+        expect(normalizedHtml).toContain('muted=""');
+        expect(normalizedHtml).toContain('playsinline=""');
+    });
+
     test('renders preview components and preview helpers', async () => {
         const { default: MiniScreenFooterComp } = await import(
             './preview/MiniScreenFooterComp'

@@ -319,6 +319,30 @@ describe('ScreenManager runtime orchestration', () => {
         expect(MockBibleManager.sendSynTextStyle).toHaveBeenCalled();
     });
 
+    test('logs unsupported sync messages and ignores missing screen managers', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(6);
+        baseInstances.set(6, screenManager);
+
+        expect(() => {
+            ScreenManager.applyScreenManagerSyncScreen({
+                screenId: 999,
+                type: 'visible',
+                data: { isShowing: false },
+            } as any);
+        }).not.toThrow();
+
+        const message = {
+            screenId: 6,
+            type: 'mystery-sync',
+            data: { value: 7 },
+        };
+        ScreenManager.applyScreenManagerSyncScreen(message as any);
+
+        expect(appLogMock).toHaveBeenCalledWith(message);
+    });
+
     test('sends messages, computes sync groups, and deletes cleanly', async () => {
         const { default: ScreenManager } = await import('./ScreenManager');
 

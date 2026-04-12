@@ -289,6 +289,42 @@ describe('non-Bible screen managers', () => {
         expect(screenManagerBase.sendScreenMessage).toHaveBeenCalled();
     });
 
+    test('deduplicates and removes camera overlays', async () => {
+        const { default: ScreenForegroundManager } = await import(
+            './ScreenForegroundManager'
+        );
+
+        const screenManagerBase = {
+            screenId: 24,
+            width: 1280,
+            height: 720,
+            noSyncGroupMap: new Map<string, boolean>(),
+            checkIsLockedWithMessage: vi.fn(() => false),
+            sendScreenMessage: vi.fn(),
+            createScreenManagerBaseGhost: vi.fn(),
+        } as any;
+        const effectManager = {
+            styleAnimList: {
+                fade: {},
+            },
+        } as any;
+        const manager = new ScreenForegroundManager(screenManagerBase, effectManager);
+
+        const cameraData = {
+            deviceId: 'camera-1',
+            label: 'Front camera',
+            extraStyle: {},
+        };
+
+        manager.addCameraData(cameraData as any);
+        manager.addCameraData(cameraData as any);
+        expect(manager.foregroundData.cameraDataList).toEqual([cameraData]);
+
+        manager.removeCameraData(cameraData as any);
+        expect(manager.foregroundData.cameraDataList).toEqual([]);
+        expect(screenManagerBase.sendScreenMessage).toHaveBeenCalled();
+    });
+
     test('toggles vary-app-document selection and renders slide content', async () => {
         const varyModule = await import('./ScreenVaryAppDocumentManager');
         const ScreenVaryAppDocumentManager = varyModule.default;

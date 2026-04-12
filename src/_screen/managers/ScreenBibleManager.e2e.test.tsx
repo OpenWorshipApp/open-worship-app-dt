@@ -413,4 +413,37 @@ describe('ScreenBibleManager e2e', () => {
             true,
         );
     });
+
+    test('applies synced selections and centers partially hidden verses', async () => {
+        const { renderScreenBibleManager } = await import('../screenBibleHelpers');
+        const { default: ScreenBibleManager } = await import(
+            './ScreenBibleManager'
+        );
+
+        const screenManagerBase = createScreenManagerBase(103);
+        const screenBibleManager = new ScreenBibleManager(screenManagerBase);
+        const host = createHost();
+        const highlightSpy = vi.fn();
+
+        screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
+        screenBibleManager.div = host;
+        screenBibleManager.screenViewData = createScreenViewData();
+        await renderScreenBibleManager(screenBibleManager);
+
+        mocks.checkIsVerticalPartialInvisible.mockReturnValue(true);
+        ScreenBibleManager.receiveSyncSelectedIndex({
+            screenId: 103,
+            type: 'bible-screen-view-selected-index',
+            data: {
+                selectedKJVVerseKey: 'GEN-1-2',
+            },
+        } as any);
+
+        expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-2');
+        expect(host.querySelectorAll('span.selected')).toHaveLength(2);
+        expect(mocks.bringDomToCenterView).toHaveBeenCalledTimes(2);
+        expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();
+        expect(mocks.bringDomToTopView).not.toHaveBeenCalled();
+        expect(highlightSpy).toHaveBeenCalledWith('GEN-1-2', false);
+    });
 });
