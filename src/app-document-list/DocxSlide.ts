@@ -15,6 +15,7 @@ const docxSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 export type DocxSlideType = {
     id: number;
     htmlFilePath: string;
+    html?: string;
     metadata: { width: number; height: number };
 };
 
@@ -47,6 +48,10 @@ export default class DocxSlide
 
     get htmlFilePath() {
         return this.originalJson.htmlFilePath;
+    }
+
+    get html() {
+        return this.originalJson.html;
     }
 
     get name() {
@@ -92,6 +97,12 @@ export default class DocxSlide
         return this._originalJson;
     }
 
+    private toDragJson(): DocxSlideType {
+        const json = cloneJson(this.toJson());
+        delete (json as Partial<DocxSlideType>).html;
+        return json;
+    }
+
     static tryValidate(json: AnyObjectType) {
         try {
             this.validate(json);
@@ -119,7 +130,7 @@ export default class DocxSlide
             type: DragTypeEnum.DOCX_SLIDE,
             data: JSON.stringify({
                 filePath: this.filePath,
-                data: this.toJson(),
+                data: this.toDragJson(),
             }),
         };
     }

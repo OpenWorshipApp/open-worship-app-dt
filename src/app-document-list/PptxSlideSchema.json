@@ -7,6 +7,21 @@
         "htmlFilePath": {
             "type": "string"
         },
+        "subHtmlFilePaths": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "html": {
+            "type": "string"
+        },
+        "subHtmls": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
         "isDisabled": {
             "type": "boolean"
         },

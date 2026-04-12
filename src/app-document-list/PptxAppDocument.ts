@@ -74,6 +74,8 @@ export default class PptxAppDocument
                 id: 0,
                 htmlFilePath: '/assets/slide0.html',
                 subHtmlFilePaths: [],
+                html: '',
+                subHtmls: [],
                 isDisabled: false,
                 note: null,
                 metadata: pptxData.info.dimensions,
@@ -86,6 +88,8 @@ export default class PptxAppDocument
                     {
                         htmlFilePath,
                         subHtmlFilePaths,
+                        html,
+                        subHtmls,
                         isDisabled,
                         note,
                         images,
@@ -98,6 +102,8 @@ export default class PptxAppDocument
                         id: i + 1,
                         htmlFilePath,
                         subHtmlFilePaths,
+                        html,
+                        subHtmls,
                         isDisabled,
                         note,
                         metadata: pptxData.info.dimensions,
@@ -155,6 +161,7 @@ export default class PptxAppDocument
         if (PptxAppDocument.checkIsThisType(item)) {
             return this.filePath === item.filePath;
         }
+        return false;
     }
 
     toJson(): AnyObjectType {

@@ -17,7 +17,7 @@ export default function PdfAppearanceSettingComp() {
             }
             screenVaryAppDocumentManager.varySlideData = {
                 ...screenVaryAppDocumentManager.varySlideData,
-                isPdfFullWidth: newIsFullWidth,
+                isRenderFullWidth: newIsFullWidth,
             };
         }
         setIsFullWidth(newIsFullWidth);

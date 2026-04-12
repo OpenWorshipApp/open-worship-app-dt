@@ -2,6 +2,7 @@ import { useAppDocumentAudioData } from './backgroundHelpers';
 import AudioBodyComp from './AudioBodyComp';
 import { tran } from '../lang/langHelpers';
 import { bringDomToNearestView } from '../helper/helpers';
+import { useState } from 'react';
 
 function AudioElementComp({
     slideIndex,
@@ -23,6 +24,7 @@ function AudioElementComp({
 }
 
 export default function VaryAppDocumentAudiosComp() {
+    const [isShowing, setIsShowing] = useState(false);
     const appDocumentAudioData = useAppDocumentAudioData();
     if (appDocumentAudioData === null) {
         return null;
@@ -38,6 +40,10 @@ export default function VaryAppDocumentAudiosComp() {
     return (
         <div
             ref={(element) => {
+                if (!isShowing) {
+                    return;
+                }
+
                 if (element === null) {
                     return;
                 }
@@ -45,33 +51,44 @@ export default function VaryAppDocumentAudiosComp() {
             }}
             className="w-10 app-inner-shadow p-2 mb-3 mt-5"
         >
-            <strong>{tran('Document Audios')}</strong>
-            {Object.entries(appDocumentAudioData).map(
-                ([varyAppDocumentName, audioSlideDataList]) => {
-                    if (audioSlideDataList.length === 0) {
-                        return null;
-                    }
-                    return (
-                        <div key={varyAppDocumentName}>
-                            <hr />
-                            <span className="muted">{varyAppDocumentName}</span>
-                            {audioSlideDataList.map(
-                                ({ slideIndex, filePaths }) => {
-                                    return filePaths.map((filePath) => {
-                                        return (
-                                            <AudioElementComp
-                                                key={filePath}
-                                                slideIndex={slideIndex}
-                                                filePath={filePath}
-                                            />
-                                        );
-                                    });
-                                },
-                            )}
-                        </div>
-                    );
-                },
-            )}
+            <div
+                className="app-caught-hover-pointer"
+                onClick={() => setIsShowing(!isShowing)}
+            >
+                <strong>{tran('Document Audios')}</strong>
+                <i
+                    className={`bi bi-chevron-${isShowing ? 'down' : 'right'}`}
+                />
+            </div>
+            {isShowing &&
+                Object.entries(appDocumentAudioData).map(
+                    ([varyAppDocumentName, audioSlideDataList]) => {
+                        if (audioSlideDataList.length === 0) {
+                            return null;
+                        }
+                        return (
+                            <div key={varyAppDocumentName}>
+                                <hr />
+                                <span className="muted">
+                                    {varyAppDocumentName}
+                                </span>
+                                {audioSlideDataList.map(
+                                    ({ slideIndex, filePaths }) => {
+                                        return filePaths.map((filePath) => {
+                                            return (
+                                                <AudioElementComp
+                                                    key={filePath}
+                                                    slideIndex={slideIndex}
+                                                    filePath={filePath}
+                                                />
+                                            );
+                                        });
+                                    },
+                                )}
+                            </div>
+                        );
+                    },
+                )}
         </div>
     );
 }

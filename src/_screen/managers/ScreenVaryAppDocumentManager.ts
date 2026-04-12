@@ -33,6 +33,18 @@ import type {
 } from '../screenTypeHelpers';
 import type { VarySlideScreenDataType } from '../screenAppDocumentTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
+import PptxAppDocument from '../../app-document-list/PptxAppDocument';
+import DocxAppDocument from '../../app-document-list/DocxAppDocument';
+
+function queryAllDeep(root: ParentNode, selector: string): Element[] {
+    const results = Array.from(root.querySelectorAll(selector));
+    for (const element of Array.from(root.querySelectorAll('*'))) {
+        if (element instanceof HTMLElement && element.shadowRoot !== null) {
+            results.push(...queryAllDeep(element.shadowRoot, selector));
+        }
+    }
+    return results;
+}
 
 export type ScreenVaryAppDocumentManagerEventType = 'update';
 
@@ -42,8 +54,8 @@ export function checkIsPdfFullWidth() {
     const originalSettingName = getSetting(PDF_FULL_WIDTH_SETTING_NAME);
     return originalSettingName === 'true';
 }
-export function setIsPdfFullWidth(isPdfFullWidth: boolean) {
-    setSetting(PDF_FULL_WIDTH_SETTING_NAME, `${isPdfFullWidth}`);
+export function setIsPdfFullWidth(isRenderFullWidth: boolean) {
+    setSetting(PDF_FULL_WIDTH_SETTING_NAME, `${isRenderFullWidth}`);
 }
 
 class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocumentManagerEventType> {
@@ -151,7 +163,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         filePath: string,
         itemJson: VarySlideDataType,
     ): VarySlideScreenDataType {
-        return { filePath, itemJson, isPdfFullWidth: checkIsPdfFullWidth() };
+        return { filePath, itemJson, isRenderFullWidth: checkIsPdfFullWidth() };
     }
 
     handleSlideSelecting(filePath: string, itemJson: VarySlideDataType) {
@@ -192,20 +204,18 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             return null;
         }
         const content = genPdfSlide(pdfImageData.imagePreviewSrc, isFullWidth);
-        const parentWidth = this.screenManagerBase.width;
-        const width = parentWidth;
         Object.assign(divHaftScale.style, {
             width: '100%',
             height: '100%',
             overflow: isFullWidth ? 'auto' : 'hidden',
             transform: 'translate(-50%, -50%)',
         });
-        const scale = parentWidth / width;
-        return { content, scale };
+        return { content, scale: 1 };
     }
 
     renderPptx(divHaftScale: HTMLDivElement, pptxData: PptxSlideType) {
         const content = genPptxSlide(
+            pptxData.html,
             pptxData.htmlFilePath,
             pptxData.metadata.width,
             pptxData.metadata.height,
@@ -229,10 +239,13 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         docxData: DocxSlideType,
         isFullWidth: boolean,
     ) {
+        const parentWidth = this.screenManagerBase.width;
         const content = genDocxSlide(
+            docxData.html,
             docxData.htmlFilePath,
             docxData.metadata.width,
             docxData.metadata.height,
+            parentWidth,
             isFullWidth,
         );
         const { width, height } = docxData.metadata;
@@ -262,16 +275,36 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         if (!appProvider.isPageScreen) {
             return;
         }
-        for (const child of Array.from(content.children)) {
-            for (const svg of child.querySelectorAll('svg')) {
+        for (const svg of queryAllDeep(content, 'svg')) {
+            if (svg instanceof SVGElement) {
                 svg.style.display = 'none';
             }
-            for (const video of child.querySelectorAll('video')) {
+        }
+        for (const video of queryAllDeep(content, 'video')) {
+            if (video instanceof HTMLVideoElement) {
                 video.loop = false;
                 video.muted = false;
                 video.play();
             }
         }
+    }
+
+    async getRenderableItemJson(
+        item: VarySlideType,
+    ): Promise<VarySlideDataType> {
+        if (PptxSlide.checkIsThisType(item) && item.html === undefined) {
+            const pptxSlide = await PptxAppDocument.getInstance(
+                item.filePath,
+            ).getItemById(item.id);
+            return (pptxSlide?.toJson() ?? item.toJson()) as VarySlideDataType;
+        }
+        if (DocxSlide.checkIsThisType(item) && item.html === undefined) {
+            const docxSlide = await DocxAppDocument.getInstance(
+                item.filePath,
+            ).getItemById(item.id);
+            return (docxSlide?.toJson() ?? item.toJson()) as VarySlideDataType;
+        }
+        return item.toJson() as VarySlideDataType;
     }
 
     renderAppDocument(divHaftScale: HTMLDivElement, itemJson: SlideType) {
@@ -317,14 +350,14 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             this.sendSyncScrollPercentage('.half-scale-container', scroll);
         });
 
-        const { itemJson, isPdfFullWidth } = this.varySlideData;
+        const { itemJson, isRenderFullWidth } = this.varySlideData;
 
         let target;
         if (PdfSlide.tryValidate(itemJson)) {
             target = this.renderPdf(
                 divHaftScale,
                 itemJson as PdfSlideType,
-                isPdfFullWidth,
+                isRenderFullWidth,
             );
         } else if (PptxSlide.tryValidate(itemJson)) {
             target = this.renderPptx(divHaftScale, itemJson as PptxSlideType);
@@ -332,7 +365,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             target = this.renderDocx(
                 divHaftScale,
                 itemJson as DocxSlideType,
-                isPdfFullWidth,
+                isRenderFullWidth,
             );
         } else {
             target = this.renderAppDocument(
@@ -371,10 +404,11 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
 
     async receiveScreenDropped(droppedData: DroppedDataType) {
         const item: VarySlideType = droppedData.item;
+        const itemJson = await this.getRenderableItemJson(item);
         this.varySlideData = {
             filePath: item.filePath,
-            itemJson: item.toJson(),
-            isPdfFullWidth: checkIsPdfFullWidth(),
+            itemJson,
+            isRenderFullWidth: checkIsPdfFullWidth(),
         };
     }
 

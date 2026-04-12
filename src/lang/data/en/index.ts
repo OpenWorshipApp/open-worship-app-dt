@@ -73,6 +73,9 @@ const lang: LanguageDataType = {
     sanitizeTranKey(key: string) {
         return key;
     },
+    transformBibleBookName(bookName: string) {
+        return bookName;
+    },
 };
 
 export default lang;

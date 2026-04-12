@@ -7,11 +7,34 @@ import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpe
 import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import type PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import FileSource from '../../helper/FileSource';
-import { renderToStaticMarkup } from 'react-dom/server';
-import appProvider from '../../server/appProvider';
 import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
+import HtmlSlideRenderComp, {
+    genHtmlSlideContent,
+} from './HtmlSlideRenderComp';
 
-function PptxSlideRenderContentComp({
+function genPptxIframeElement(
+    htmlFilePath: string,
+    width: number,
+    height: number,
+) {
+    const iframe = document.createElement('iframe');
+    const fileSource = FileSource.getInstance(htmlFilePath);
+    iframe.title = 'pptx-slide';
+    iframe.src = fileSource.src;
+    Object.assign(iframe.style, {
+        colorScheme: 'normal',
+        backgroundColor: 'transparent',
+        width: `${width}px`,
+        height: `${height}px`,
+        border: 'none',
+        overflow: 'hidden',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+    });
+    return iframe;
+}
+
+function PptxSlideIframeContentComp({
     htmlFilePath,
     width,
     height,
@@ -20,13 +43,11 @@ function PptxSlideRenderContentComp({
     width: number;
     height: number;
 }>) {
-    const fileSource = FileSource.getInstance(htmlFilePath);
     return (
         <iframe
             title="pptx-slide"
             style={{
                 colorScheme: 'normal',
-                pointerEvents: appProvider.isPageScreen ? 'all' : 'none',
                 backgroundColor: 'transparent',
                 width,
                 height,
@@ -35,27 +56,62 @@ function PptxSlideRenderContentComp({
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
             }}
-            src={fileSource.src}
+            src={FileSource.getInstance(htmlFilePath).src}
+        />
+    );
+}
+
+function PptxSlideRenderContentComp({
+    html,
+    htmlFilePath,
+    width,
+    height,
+}: Readonly<{
+    html?: string;
+    htmlFilePath: string;
+    width: number;
+    height: number;
+}>) {
+    if (html === undefined) {
+        return (
+            <PptxSlideIframeContentComp
+                htmlFilePath={htmlFilePath}
+                width={width}
+                height={height}
+            />
+        );
+    }
+    return (
+        <HtmlSlideRenderComp
+            html={html}
+            htmlFilePath={htmlFilePath}
+            width={width}
+            height={height}
         />
     );
 }
 
 export function genPptxSlide(
+    html: string | undefined,
     htmlFilePath: string,
     width: number,
     height: number,
 ) {
-    const htmlString = renderToStaticMarkup(
-        <PptxSlideRenderContentComp
-            htmlFilePath={htmlFilePath}
-            width={width}
-            height={height}
-        />,
-    );
     const div = document.createElement('div');
     div.style.width = '100%';
     div.style.height = '100%';
-    div.innerHTML = htmlString;
+    if (html === undefined) {
+        div.appendChild(genPptxIframeElement(htmlFilePath, width, height));
+        return div;
+    }
+    div.appendChild(
+        genHtmlSlideContent({
+            html,
+            htmlFilePath,
+            width,
+            height,
+        }),
+    );
     return div;
 }
 
@@ -98,6 +154,7 @@ export default function PptxSlideRenderComp({
                 }}
             >
                 <PptxSlideRenderContentComp
+                    html={pptxSlide.html}
                     htmlFilePath={pptxSlide.htmlFilePath}
                     width={pptxSlide.width}
                     height={pptxSlide.height}
@@ -117,6 +174,7 @@ export default function PptxSlideRenderComp({
                         }}
                     >
                         <PptxSlideRenderContentComp
+                            html={subSlide.html}
                             htmlFilePath={subSlide.htmlFilePath}
                             width={subSlide.width}
                             height={subSlide.height}

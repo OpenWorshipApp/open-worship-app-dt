@@ -6,7 +6,7 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { electronSendAsync } from './appHelpers';
 import appProvider from './appProvider';
-import { fsDeleteDir, pathJoin } from './fileHelpers';
+import { fsDeleteDir, fsReadFile, pathJoin } from './fileHelpers';
 import { unlocking } from './unlockingHelpers';
 
 function toDocxHtmlsPreviewDirPath(filePath: string) {
@@ -56,11 +56,11 @@ export function getDocxToHtmlsVersion() {
         return result.version;
     });
 }
-getDocxToHtmlsVersion();
 
 export type DocxPageDataType100 = {
     htmlFileName: string;
     htmlFilePath: string;
+    html: string;
     width: number;
     height: number;
 };
@@ -107,13 +107,16 @@ export function getDocxData(filePath: string): Promise<DocxDataType100 | null> {
         if (infoData === null) {
             return null;
         }
-        const pages = (infoData.pages as any[]).map((page) => {
+        const pages = (infoData.pages as any[]).map(async (page) => {
+            const htmlFilePath = pathJoin(outDir, page.htmlFileName);
+            const html = await fsReadFile(htmlFilePath);
             return {
                 ...page,
-                htmlFilePath: pathJoin(outDir, page.htmlFileName),
+                htmlFilePath,
+                html,
             };
         });
-        infoData.pages = pages;
+        infoData.pages = await Promise.all(pages);
         return {
             info: infoData as DocxDataType100['info'],
             baseDirPath: outDir,

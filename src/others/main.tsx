@@ -188,7 +188,7 @@ export async function run(children: ReactNode) {
     const root = getReactRoot();
     root.render(<RenderApp>{children}</RenderApp>);
 
-    if (appProvider.isPagePresenter || appProvider.readerHomePage) {
+    if (appProvider.isPagePresenter || appProvider.isPageReader) {
         setTimeout(checkForAppUpdate, 6e4);
     }
 }
