@@ -15,6 +15,7 @@ import PdfSlide from '../../app-document-list/PdfSlide';
 import type { AppDocumentListType } from '../screenAppDocumentTypeHelpers';
 import { tran } from '../../lang/langHelpers';
 import PptxSlide from '../../app-document-list/PptxSlide';
+import DocxSlide from '../../app-document-list/DocxSlide';
 
 export function openContextMenu(event: any, screenManager: ScreenManager) {
     const screenManagers = getAllScreenManagers();
@@ -104,7 +105,8 @@ export function getAppDocumentListOnScreenSetting(): AppDocumentListType {
             }
             if (
                 !PdfSlide.tryValidate((item as any).itemJson) &&
-                !PptxSlide.tryValidate((item as any).itemJson)
+                !PptxSlide.tryValidate((item as any).itemJson) &&
+                !DocxSlide.tryValidate((item as any).itemJson)
             ) {
                 Slide.validate((item as any).itemJson);
             }

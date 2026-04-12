@@ -62,7 +62,6 @@ export function getPptxToHtmlsVersion() {
         return result.version;
     });
 }
-getPptxToHtmlsVersion();
 
 export type PptxSlideDataType100 = {
     htmlFileName: string;
@@ -94,7 +93,7 @@ export type PptxDataType100 = {
         missingFontFamily: string[];
         slides: PptxSlideDataType100[];
     };
-    bashDirPath: string;
+    baseDir: string;
 };
 export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
     const key = `get-pptx-data-${filePath}`;
@@ -132,7 +131,7 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
         infoData.slides = slides;
         const data: PptxDataType100 = {
             info: infoData as PptxDataType100['info'],
-            bashDirPath: outDir,
+            baseDir: outDir,
         };
         return data;
     });

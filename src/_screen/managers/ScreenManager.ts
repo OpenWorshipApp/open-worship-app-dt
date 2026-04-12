@@ -218,6 +218,7 @@ export default class ScreenManager extends ScreenManagerBase {
                 DragTypeEnum.SLIDE,
                 DragTypeEnum.PDF_SLIDE,
                 DragTypeEnum.PPTX_SLIDE,
+                DragTypeEnum.DOCX_SLIDE,
             ].includes(droppedData.type)
         ) {
             this.screenVaryAppDocumentManager.receiveScreenDropped(droppedData);

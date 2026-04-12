@@ -9,6 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="DocxToHtml">
+      <HintPath>$(MSBuildThisFileDirectory)DocxToHtml.dll</HintPath>
+    </Reference>
     <Reference Include="PptxToHtml">
       <HintPath>$(MSBuildThisFileDirectory)PptxToHtml.dll</HintPath>
     </Reference>

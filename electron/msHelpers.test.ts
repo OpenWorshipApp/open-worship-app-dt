@@ -18,7 +18,9 @@ vi.mock('./electronHelpers', () => ({
 
 import {
     countSlides,
+    docxToHtmls,
     exportBibleMSWord,
+    getDocxToHtmlsVersion,
     removeSlideBackground,
 } from './msHelpers';
 
@@ -77,6 +79,47 @@ describe('msHelpers', () => {
         expect(execute).toHaveBeenCalledWith('export-bible-ms-word.js', {
             filePath: '/tmp/bible.docx',
             data: rows,
+            modulePath: path.resolve(
+                '/unpacked-root',
+                'node-api-dotnet',
+                'net8.0',
+            ),
+            binaryPath: path.resolve('/unpacked-root', 'ms-helpers', 'Helper'),
+            dotnetPath: path.resolve('/unpacked-root', 'dotnet-bin'),
+        });
+    });
+
+    test('converts DOCX documents through the worker script', async () => {
+        execute.mockResolvedValue({ isSuccessful: true });
+
+        await expect(
+            docxToHtmls({
+                filePath: '/docs/handout.docx',
+                outDir: '/docs/handout-docx-htmls',
+            }),
+        ).resolves.toEqual({ isSuccessful: true });
+
+        expect(execute).toHaveBeenCalledWith('docx-to-htmls.js', {
+            filePath: '/docs/handout.docx',
+            outputDirectory: '/docs/handout-docx-htmls',
+            modulePath: path.resolve(
+                '/unpacked-root',
+                'node-api-dotnet',
+                'net8.0',
+            ),
+            binaryPath: path.resolve('/unpacked-root', 'ms-helpers', 'Helper'),
+            dotnetPath: path.resolve('/unpacked-root', 'dotnet-bin'),
+        });
+    });
+
+    test('gets the DOCX converter version through the worker script', async () => {
+        execute.mockResolvedValue({ version: '1.0.0' });
+
+        await expect(getDocxToHtmlsVersion({})).resolves.toEqual({
+            version: '1.0.0',
+        });
+
+        expect(execute).toHaveBeenCalledWith('get-docx-to-htmls-version.js', {
             modulePath: path.resolve(
                 '/unpacked-root',
                 'node-api-dotnet',

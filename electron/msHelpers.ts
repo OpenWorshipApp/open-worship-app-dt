@@ -103,6 +103,11 @@ type PptxToHtmlsDataType = {
     message?: string;
 };
 
+type DocxToHtmlsDataType = {
+    isSuccessful: boolean;
+    message?: string;
+};
+
 export type PptxToHtmlsParamsType = {
     filePath: string;
     outDir: string;
@@ -142,4 +147,53 @@ export function getPptxToHtmlsVersion({
         binaryPath,
         dotnetPath,
     });
+}
+
+export type DocxToHtmlsParamsType = {
+    filePath: string;
+    outDir: string;
+    dotNetRoot?: string;
+};
+
+function genDocxHTMLs({ filePath, outDir, dotNetRoot }: DocxToHtmlsParamsType) {
+    const { modulePath, binaryPath, dotnetPath } = getBinaryPath(dotNetRoot);
+    return execute<DocxToHtmlsDataType>('docx-to-htmls.js', {
+        filePath,
+        outputDirectory: outDir,
+        modulePath,
+        binaryPath,
+        dotnetPath,
+    });
+}
+
+export function docxToHtmls(data: DocxToHtmlsParamsType) {
+    return unlocking<DocxToHtmlsDataType>(
+        `docx-to-htmls-${data.filePath}`,
+        async () => {
+            return genDocxHTMLs(data);
+        },
+    );
+}
+
+type GetDocxToHtmlsVersionDataType = {
+    version: string | null;
+    message?: string;
+};
+
+export type GetDocxToHtmlsVersionParamsType = {
+    dotNetRoot?: string;
+};
+
+export function getDocxToHtmlsVersion({
+    dotNetRoot,
+}: GetDocxToHtmlsVersionParamsType) {
+    const { modulePath, binaryPath, dotnetPath } = getBinaryPath(dotNetRoot);
+    return execute<GetDocxToHtmlsVersionDataType>(
+        'get-docx-to-htmls-version.js',
+        {
+            modulePath,
+            binaryPath,
+            dotnetPath,
+        },
+    );
 }

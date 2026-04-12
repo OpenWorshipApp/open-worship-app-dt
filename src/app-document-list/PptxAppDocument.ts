@@ -155,6 +155,7 @@ export default class PptxAppDocument
         if (PptxAppDocument.checkIsThisType(item)) {
             return this.filePath === item.filePath;
         }
+        return false;
     }
 
     toJson(): AnyObjectType {

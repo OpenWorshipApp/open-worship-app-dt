@@ -26,6 +26,8 @@ import { tran } from '../lang/langHelpers';
 import { openPopupWindow } from '../helper/domHelpers';
 import PptxAppDocument from './PptxAppDocument';
 import { removePptxHtmlsPreview } from '../server/pptxHelpers';
+import DocxAppDocument from './DocxAppDocument';
+import { removeDocxHtmlsPreview } from '../server/docxHelpers';
 import appProvider from '../server/appProvider';
 import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 
@@ -68,6 +70,24 @@ function genContextMenuItems(
                 menuElement: tran('Refresh PPTX Slides'),
                 onSelect: async () => {
                     await removePptxHtmlsPreview(varyAppDocument.filePath);
+                    varyAppDocument.fileSource.fireUpdateEvent();
+                },
+            },
+        ];
+        return menuItems;
+    }
+    if (DocxAppDocument.checkIsThisType(varyAppDocument)) {
+        const menuItems: ContextMenuItemType[] = [
+            {
+                menuElement: tran('Open DOCX'),
+                onSelect: () => {
+                    appProvider.systemUtils.openFile(varyAppDocument.filePath);
+                },
+            },
+            {
+                menuElement: tran('Refresh DOCX Pages'),
+                onSelect: async () => {
+                    await removeDocxHtmlsPreview(varyAppDocument.filePath);
                     varyAppDocument.fileSource.fireUpdateEvent();
                 },
             },
@@ -127,6 +147,18 @@ function FilePreviewPptxAppDocumentComp({
     );
 }
 
+function FilePreviewDocxAppDocumentComp({
+    docxAppDocument,
+}: Readonly<{ docxAppDocument: DocxAppDocument }>) {
+    const fileSource = FileSource.getInstance(docxAppDocument.filePath);
+    return (
+        <div className="w-100 h-100 app-ellipsis">
+            <i className="bi bi-file-earmark-word" />
+            {fileSource.name}
+        </div>
+    );
+}
+
 async function checkIsOnScreen(filePath: string) {
     const varyAppDocument = varyAppDocumentFromFilePath(filePath);
     const isOnScreen = await checkIsVaryAppDocumentOnScreen(varyAppDocument);
@@ -149,6 +181,11 @@ function handleChildRendering(varyAppDocument: AppDocumentSourceAbs) {
     if (PptxAppDocument.checkIsThisType(varyAppDocument)) {
         return (
             <FilePreviewPptxAppDocumentComp pptxAppDocument={varyAppDocument} />
+        );
+    }
+    if (DocxAppDocument.checkIsThisType(varyAppDocument)) {
+        return (
+            <FilePreviewDocxAppDocumentComp docxAppDocument={varyAppDocument} />
         );
     }
     return (

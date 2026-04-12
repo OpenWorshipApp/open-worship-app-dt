@@ -8,8 +8,12 @@ vi.mock('electron', async () => {
 const {
     attemptClosing,
     captureWebScreenShot,
+    docxToHtmls,
+    getDocxToHtmlsVersion,
     goDownload,
     printHTMLContent,
+    pptxToHtmls,
+    getPptxToHtmlsVersion,
     tarExtract,
     officeFileToPdf,
     pdfToImages,
@@ -22,8 +26,12 @@ const {
 } = vi.hoisted(() => ({
     attemptClosing: vi.fn(),
     captureWebScreenShot: vi.fn(),
+    docxToHtmls: vi.fn(),
+    getDocxToHtmlsVersion: vi.fn(),
     goDownload: vi.fn(),
     printHTMLContent: vi.fn(),
+    pptxToHtmls: vi.fn(),
+    getPptxToHtmlsVersion: vi.fn(),
     tarExtract: vi.fn(),
     officeFileToPdf: vi.fn(),
     pdfToImages: vi.fn(),
@@ -63,7 +71,11 @@ vi.mock('./pdfToImagesHelpers', () => ({
 }));
 vi.mock('./msHelpers', () => ({
     countSlides,
+    docxToHtmls,
     exportBibleMSWord,
+    getDocxToHtmlsVersion,
+    getPptxToHtmlsVersion,
+    pptxToHtmls,
     removeSlideBackground,
 }));
 vi.mock('./ElectronScreenController', () => ({
@@ -90,6 +102,10 @@ describe('electronEventListener', () => {
         officeFileToPdf.mockReset();
         pdfToImages.mockReset();
         getPagesCount.mockReset();
+        pptxToHtmls.mockReset();
+        getPptxToHtmlsVersion.mockReset();
+        docxToHtmls.mockReset();
+        getDocxToHtmlsVersion.mockReset();
         countSlides.mockReset();
         exportBibleMSWord.mockReset();
         removeSlideBackground.mockReset();
@@ -128,6 +144,63 @@ describe('electronEventListener', () => {
         );
 
         expect(sender.send).toHaveBeenCalledWith('reply:files', ['/tmp/a.txt']);
+    });
+
+    test('registers DOCX conversion IPC handlers', async () => {
+        const appController = {
+            mainWin: { webContents: { getZoomFactor: vi.fn(() => 1) } },
+            mainController: {
+                sendScreenMessage: vi.fn(),
+                changeBible: vi.fn(),
+                ctrlScrolling: vi.fn(),
+            },
+            settingManager: {
+                themeSource: 'system',
+                primaryDisplay: { size: { width: 1280 } },
+            },
+            resetThemeBackgroundColor: vi.fn(),
+            reloadAll: vi.fn(),
+        };
+        docxToHtmls.mockResolvedValue({ isSuccessful: true });
+        getDocxToHtmlsVersion.mockResolvedValue({ version: '1.0.0' });
+
+        initEventOther(appController as any);
+
+        const docxToHtmlsHandler = electronMockState.ipcMain.on.mock.calls.find(
+            ([eventName]) => eventName === 'main:app:docx-to-htmls',
+        )?.[1];
+        const docxVersionHandler = electronMockState.ipcMain.on.mock.calls.find(
+            ([eventName]) => eventName === 'main:app:get-docx-to-htmls-version',
+        )?.[1];
+        const sender = { send: vi.fn() };
+
+        await docxToHtmlsHandler(
+            { sender },
+            {
+                replyEventName: 'reply:docx-to-htmls',
+                filePath: '/tmp/notes.docx',
+                outDir: '/tmp/notes-docx-htmls',
+            },
+        );
+        await docxVersionHandler(
+            { sender },
+            { replyEventName: 'reply:docx-version' },
+        );
+
+        expect(docxToHtmls).toHaveBeenCalledWith({
+            replyEventName: 'reply:docx-to-htmls',
+            filePath: '/tmp/notes.docx',
+            outDir: '/tmp/notes-docx-htmls',
+        });
+        expect(getDocxToHtmlsVersion).toHaveBeenCalledWith({
+            replyEventName: 'reply:docx-version',
+        });
+        expect(sender.send).toHaveBeenCalledWith('reply:docx-to-htmls', {
+            isSuccessful: true,
+        });
+        expect(sender.send).toHaveBeenCalledWith('reply:docx-version', {
+            version: '1.0.0',
+        });
     });
 
     test('shows a screen on a display and notifies the main window', async () => {

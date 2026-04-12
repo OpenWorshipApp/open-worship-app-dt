@@ -19,6 +19,7 @@ import {
     getFileName,
     getTempPath,
     KEY_SEPARATOR,
+    mimetypeDocx,
     mimetypePdf,
     mimetypePptx,
     pathBasename,
@@ -39,6 +40,7 @@ import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import PdfAppDocument from './PdfAppDocument';
 import PptxAppDocument from './PptxAppDocument';
+import DocxAppDocument from './DocxAppDocument';
 import { createContext, use, useCallback, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
@@ -222,6 +224,10 @@ export function checkIsPdf(ext: string) {
 
 export function checkIsPptx(ext: string) {
     return mimetypePptx.extensions.includes(ext.toLocaleLowerCase());
+}
+
+export function checkIsDocx(ext: string) {
+    return mimetypeDocx.extensions.includes(ext.toLocaleLowerCase());
 }
 
 const docFileInfo = {
@@ -650,6 +656,9 @@ export function varyAppDocumentFromFilePath(filePath: string) {
     }
     if (checkIsPptx(getFileDotExtension(filePath))) {
         return PptxAppDocument.getInstance(filePath);
+    }
+    if (checkIsDocx(getFileDotExtension(filePath))) {
+        return DocxAppDocument.getInstance(filePath);
     }
     return AppDocument.getInstance(filePath);
 }

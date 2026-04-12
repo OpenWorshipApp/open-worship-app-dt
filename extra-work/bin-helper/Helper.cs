@@ -147,4 +147,26 @@ public class Helper
         return global::PptxToHtml.GetVersion();
     }
 
+    [JSExport]
+    public static bool DocxToHtmls(string docxPath, string outputDirectory)
+    {
+        try
+        {
+            global::DocxToHtml.Export(docxPath, outputDirectory);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine(ex.Message);
+            return false;
+        }
+
+        return true;
+    }
+
+    [JSExport]
+    public static string GetDocxToHtmlsVersion()
+    {
+        return global::DocxToHtml.GetVersion();
+    }
+
 }

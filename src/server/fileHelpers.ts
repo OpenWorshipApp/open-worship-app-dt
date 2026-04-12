@@ -54,6 +54,15 @@ export const mimetypePptx: AppMimetypeType = {
     extensions: ['.pptx'],
 };
 
+export const mimetypeDocx: AppMimetypeType = {
+    type: 'DOCX File',
+    title: 'DOCX File',
+    mimetypeSignature:
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    mimetypeName: 'other',
+    extensions: ['.docx'],
+};
+
 const appMimeTypesMapper = {
     bible: mimeBibleList,
     lyric: mimeLyricList,
@@ -79,6 +88,7 @@ const mimeTypesMapper = {
     appDocument: mimeAppDocumentList,
     pdf: [mimetypePdf],
     pptx: [mimetypePptx],
+    docx: [mimetypeDocx],
     image: mimeImageList,
     playlist: mimePlaylistList,
     video: mimeVideoList,
@@ -161,6 +171,7 @@ export const mimetypeNameTypeList = [
     'appDocument',
     'pptx',
     'pdf',
+    'docx',
     'playlist',
     'lyric',
     'markdown',
