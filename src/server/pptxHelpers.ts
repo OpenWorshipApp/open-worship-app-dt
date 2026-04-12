@@ -66,8 +66,10 @@ export function getPptxToHtmlsVersion() {
 export type PptxSlideDataType100 = {
     htmlFileName: string;
     htmlFilePath: string;
+    html: string;
     subHtmlFileNames: string[];
     subHtmlFilePaths: string[];
+    subHtmls: string[];
     isDisabled: boolean;
     note: string | null;
     images: string[];
@@ -128,12 +130,18 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
                 },
             );
         });
-        infoData.slides = Promise.all(
+        infoData.slides = await Promise.all(
             slides.map(async (slide) => {
                 const html = await fsReadFile(slide.htmlFilePath);
+                const subHtmls = await Promise.all(
+                    slide.subHtmlFilePaths.map((subHtmlFilePath: string) => {
+                        return fsReadFile(subHtmlFilePath);
+                    }),
+                );
                 return {
                     ...slide,
                     html,
+                    subHtmls,
                 };
             }),
         );
@@ -146,7 +154,7 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
 }
 
 export async function removeSlideBackground(filePath: string) {
-    // TODO: this function should not work yet, need to be fixed in the future
+    // This API is retained for future work and is not production-ready yet.
     const isSuccess = await electronSendAsync<boolean>(
         'main:app:ms-pp-remove-slides-bg',
         { filePath },

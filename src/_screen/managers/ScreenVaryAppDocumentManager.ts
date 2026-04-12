@@ -33,6 +33,18 @@ import type {
 } from '../screenTypeHelpers';
 import type { VarySlideScreenDataType } from '../screenAppDocumentTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
+import PptxAppDocument from '../../app-document-list/PptxAppDocument';
+import DocxAppDocument from '../../app-document-list/DocxAppDocument';
+
+function queryAllDeep(root: ParentNode, selector: string): Element[] {
+    const results = Array.from(root.querySelectorAll(selector));
+    for (const element of Array.from(root.querySelectorAll('*'))) {
+        if (element instanceof HTMLElement && element.shadowRoot !== null) {
+            results.push(...queryAllDeep(element.shadowRoot, selector));
+        }
+    }
+    return results;
+}
 
 export type ScreenVaryAppDocumentManagerEventType = 'update';
 
@@ -203,6 +215,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
 
     renderPptx(divHaftScale: HTMLDivElement, pptxData: PptxSlideType) {
         const content = genPptxSlide(
+            pptxData.html,
             pptxData.htmlFilePath,
             pptxData.metadata.width,
             pptxData.metadata.height,
@@ -228,6 +241,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
     ) {
         const parentWidth = this.screenManagerBase.width;
         const content = genDocxSlide(
+            docxData.html,
             docxData.htmlFilePath,
             docxData.metadata.width,
             docxData.metadata.height,
@@ -261,16 +275,36 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         if (!appProvider.isPageScreen) {
             return;
         }
-        for (const child of Array.from(content.children)) {
-            for (const svg of child.querySelectorAll('svg')) {
+        for (const svg of queryAllDeep(content, 'svg')) {
+            if (svg instanceof SVGElement) {
                 svg.style.display = 'none';
             }
-            for (const video of child.querySelectorAll('video')) {
+        }
+        for (const video of queryAllDeep(content, 'video')) {
+            if (video instanceof HTMLVideoElement) {
                 video.loop = false;
                 video.muted = false;
                 video.play();
             }
         }
+    }
+
+    async getRenderableItemJson(
+        item: VarySlideType,
+    ): Promise<VarySlideDataType> {
+        if (PptxSlide.checkIsThisType(item) && item.html === undefined) {
+            const pptxSlide = await PptxAppDocument.getInstance(
+                item.filePath,
+            ).getItemById(item.id);
+            return (pptxSlide?.toJson() ?? item.toJson()) as VarySlideDataType;
+        }
+        if (DocxSlide.checkIsThisType(item) && item.html === undefined) {
+            const docxSlide = await DocxAppDocument.getInstance(
+                item.filePath,
+            ).getItemById(item.id);
+            return (docxSlide?.toJson() ?? item.toJson()) as VarySlideDataType;
+        }
+        return item.toJson() as VarySlideDataType;
     }
 
     renderAppDocument(divHaftScale: HTMLDivElement, itemJson: SlideType) {
@@ -370,9 +404,10 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
 
     async receiveScreenDropped(droppedData: DroppedDataType) {
         const item: VarySlideType = droppedData.item;
+        const itemJson = await this.getRenderableItemJson(item);
         this.varySlideData = {
             filePath: item.filePath,
-            itemJson: item.toJson(),
+            itemJson,
             isRenderFullWidth: checkIsPdfFullWidth(),
         };
     }

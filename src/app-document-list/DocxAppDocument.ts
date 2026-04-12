@@ -73,10 +73,11 @@ export default class DocxAppDocument
                 return [];
             }
             const dataList = docxData.info.pages.map(
-                ({ htmlFilePath, width, height }, index) => {
+                ({ htmlFilePath, html, width, height }, index) => {
                     const json: DocxSlideType = {
                         id: index + 1,
                         htmlFilePath,
+                        html,
                         metadata: { width, height },
                     };
                     return new DocxSlide(this.filePath, json);
@@ -89,6 +90,7 @@ export default class DocxAppDocument
             const slide0 = new DocxSlide(this.filePath, {
                 id: 0,
                 htmlFilePath: '/assets/slide0.html',
+                html: '',
                 metadata: { width: slide1.width, height: slide1.height },
             });
             return [slide0, ...dataList];

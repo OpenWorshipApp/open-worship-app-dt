@@ -17,6 +17,8 @@ export type PptxSlideType = {
     id: number;
     htmlFilePath: string;
     subHtmlFilePaths: string[];
+    html?: string;
+    subHtmls?: string[];
     isDisabled: boolean;
     note: string | null;
     metadata: { width: number; height: number };
@@ -39,11 +41,14 @@ export default class PptxSlide
     }
 
     get subSlides() {
+        const subHtmls = this.originalJson.subHtmls ?? [];
         return this.originalJson.subHtmlFilePaths.map((htmlFilePath, index) => {
             const json: PptxSlideType = {
                 id: this.id + 999 + index,
                 htmlFilePath,
                 subHtmlFilePaths: [],
+                html: subHtmls[index],
+                subHtmls: [],
                 isDisabled: this.isDisabled,
                 note: null,
                 metadata: cloneJson(this.metadata),
@@ -75,6 +80,10 @@ export default class PptxSlide
 
     get htmlFilePath() {
         return this.originalJson.htmlFilePath;
+    }
+
+    get html() {
+        return this.originalJson.html;
     }
 
     get name() {
@@ -131,6 +140,13 @@ export default class PptxSlide
         return this._originalJson;
     }
 
+    private toDragJson(): PptxSlideType {
+        const json = cloneJson(this.toJson());
+        delete (json as Partial<PptxSlideType>).html;
+        delete (json as Partial<PptxSlideType>).subHtmls;
+        return json;
+    }
+
     static tryValidate(json: AnyObjectType) {
         try {
             this.validate(json);
@@ -158,7 +174,7 @@ export default class PptxSlide
             type: DragTypeEnum.PPTX_SLIDE,
             data: JSON.stringify({
                 filePath: this.filePath,
-                data: this.toJson(),
+                data: this.toDragJson(),
             }),
         };
     }
