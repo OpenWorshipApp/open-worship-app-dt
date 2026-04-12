@@ -6,7 +6,7 @@ import {
 } from '../progress-bar/progressBarHelpers';
 import { electronSendAsync } from './appHelpers';
 import appProvider from './appProvider';
-import { fsDeleteDir, pathJoin } from './fileHelpers';
+import { fsDeleteDir, fsReadFile, pathJoin } from './fileHelpers';
 import { unlocking } from './unlockingHelpers';
 
 function toPptxHtmlsPreviewDirPath(filePath: string) {
@@ -128,7 +128,15 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
                 },
             );
         });
-        infoData.slides = slides;
+        infoData.slides = Promise.all(
+            slides.map(async (slide) => {
+                const html = await fsReadFile(slide.htmlFilePath);
+                return {
+                    ...slide,
+                    html,
+                };
+            }),
+        );
         const data: PptxDataType100 = {
             info: infoData as PptxDataType100['info'],
             baseDir: outDir,
