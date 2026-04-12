@@ -229,10 +229,12 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         docxData: DocxSlideType,
         isFullWidth: boolean,
     ) {
+        const parentWidth = this.screenManagerBase.width;
         const content = genDocxSlide(
             docxData.htmlFilePath,
             docxData.metadata.width,
             docxData.metadata.height,
+            parentWidth,
             isFullWidth,
         );
         const { width, height } = docxData.metadata;

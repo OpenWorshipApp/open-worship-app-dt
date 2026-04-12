@@ -15,13 +15,19 @@ function DocxSlideRenderContentComp({
     htmlFilePath,
     width,
     height,
-    isFullWidth = false,
+    parentWidth,
 }: Readonly<{
     htmlFilePath: string;
     width: number;
     height: number;
-    isFullWidth?: boolean;
+    parentWidth?: number;
 }>) {
+    let transform = undefined;
+    const isFullWidth = parentWidth !== undefined;
+    if (isFullWidth) {
+        const aspectRatio = parentWidth / width;
+        transform = `scale(${aspectRatio})`;
+    }
     const fileSource = FileSource.getInstance(htmlFilePath);
     const iframe = (
         <iframe
@@ -34,9 +40,11 @@ function DocxSlideRenderContentComp({
                 overflow: 'hidden',
                 scrollbarWidth: 'none',
                 msOverflowStyle: 'none',
-                width: isFullWidth ? '100%' : width,
-                height: isFullWidth ? '100%' : height,
+                width: width,
+                height: height,
                 position: isFullWidth ? 'absolute' : undefined,
+                transform: transform,
+                transformOrigin: 'top left',
                 inset: isFullWidth ? 0 : undefined,
             }}
             src={fileSource.src}
@@ -55,15 +63,14 @@ function DocxSlideRenderContentComp({
             </div>
         );
     }
-    return (
-        iframe
-    );
+    return iframe;
 }
 
 export function genDocxSlide(
     htmlFilePath: string,
     width: number,
     height: number,
+    parentWidth: number,
     isFullWidth = false,
 ) {
     const htmlString = renderToStaticMarkup(
@@ -71,7 +78,7 @@ export function genDocxSlide(
             htmlFilePath={htmlFilePath}
             width={width}
             height={height}
-            isFullWidth={isFullWidth}
+            parentWidth={isFullWidth ? parentWidth : undefined}
         />,
     );
     const div = document.createElement('div');
