@@ -245,6 +245,10 @@ async function transformExtracted(
     if (book === null) {
         return result;
     }
+    const langData = await getLangDataFromBibleKey(bibleKey);
+    if (langData !== null) {
+        book = langData.transformBibleBookName(book);
+    }
     const bookKey = await bookToKey(bibleKey, book);
     if (bookKey === null) {
         return null;

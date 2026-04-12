@@ -461,6 +461,7 @@ export type LanguageDataType = {
     ) => any[];
     bibleAudioAvailable: boolean;
     sanitizeTranKey: (key: string) => string;
+    transformBibleBookName: (bookName: string) => string;
 };
 
 export function checkIsValidLangCode(text: string) {

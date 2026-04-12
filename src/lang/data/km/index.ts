@@ -6,7 +6,19 @@ import btbLight from './fonts/Battambang-Light.ttf';
 import btbRegular from './fonts/Battambang-Regular.ttf';
 import btbThin from './fonts/Battambang-Thin.ttf';
 
-const numList = ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'];
+const numMap = {
+    '០': '0',
+    '១': '1',
+    '២': '2',
+    '៣': '3',
+    '៤': '4',
+    '៥': '5',
+    '៦': '6',
+    '៧': '7',
+    '៨': '8',
+    '៩': '9',
+};
+const numList = Object.keys(numMap);
 
 const dictionary = {
     'This slide is disabled': 'ស្លាយនេះត្រូវបានបិទ',
@@ -697,6 +709,19 @@ const lang: LanguageDataType = {
     },
     bibleAudioAvailable: false,
     sanitizeTranKey,
+    transformBibleBookName: (bookName: string) => {
+        // ពេត្រុសទី១ => ១ ពេត្រុស
+        bookName = bookName.trim();
+        const arr = bookName.split('ទី');
+        if (
+            arr.length > 1 &&
+            numList.includes(arr[1].trim()) &&
+            arr[0].trim().length > 0
+        ) {
+            return `${arr[1].trim()} ${arr[0].trim()}`;
+        }
+        return bookName;
+    },
 };
 
 export default lang;
