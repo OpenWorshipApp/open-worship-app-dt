@@ -215,12 +215,19 @@ export default function DocxSlideRenderComp({
                 onClick?.(event, index, docxSlide);
             }}
         >
-            <DocxSlideRenderContentComp
-                html={docxSlide.html}
-                htmlFilePath={docxSlide.htmlFilePath}
-                width={docxSlide.width}
-                height={docxSlide.height}
-            />
+            <div
+                style={{
+                    width: docxSlide.width,
+                    height: docxSlide.height,
+                }}
+            >
+                <DocxSlideRenderContentComp
+                    html={docxSlide.html}
+                    htmlFilePath={docxSlide.htmlFilePath}
+                    width={docxSlide.width}
+                    height={docxSlide.height}
+                />
+            </div>
         </VarySlideRenderComp>
     );
 }

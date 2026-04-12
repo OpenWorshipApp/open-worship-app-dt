@@ -6,8 +6,15 @@ import {
     checkIsPdfFullWidth,
     setIsPdfFullWidth,
 } from '../_screen/managers/ScreenVaryAppDocumentManager';
+import VirtualBGColorSettingComp from './VirtualBGColorSettingComp';
 
-export default function PdfAppearanceSettingComp() {
+export default function PageBaseAppearanceSettingComp({
+    docxPreviewBackgroundColor = null,
+    onDocxPreviewBackgroundColorChange,
+}: Readonly<{
+    docxPreviewBackgroundColor?: string | null;
+    onDocxPreviewBackgroundColorChange?: (color: string) => void;
+}>) {
     const [isFullWidth, setIsFullWidth] = useState(checkIsPdfFullWidth());
     const setIsFullWidth1 = useCallback((newIsFullWidth: boolean) => {
         setIsPdfFullWidth(newIsFullWidth);
@@ -29,9 +36,9 @@ export default function PdfAppearanceSettingComp() {
         setIsFullWidth1(true);
     }, [setIsFullWidth1]);
     return (
-        <div className="d-flex">
-            <small>{tran('On Screen Width:')}</small>
-            <div>
+        <div className="d-flex align-items-center flex-wrap gap-2">
+            <div className="d-flex align-items-center">
+                <small className='mx-1'>{tran('On Screen Width:')}</small>
                 <fieldset className="btn-group btn-group-sm ms-2" role="group">
                     <input
                         className="btn-check"
@@ -63,6 +70,12 @@ export default function PdfAppearanceSettingComp() {
                     </label>
                 </fieldset>
             </div>
+            <VirtualBGColorSettingComp
+                docxPreviewBackgroundColor={docxPreviewBackgroundColor}
+                onDocxPreviewBackgroundColorChange={
+                    onDocxPreviewBackgroundColorChange
+                }
+            />
         </div>
     );
 }

@@ -1,6 +1,6 @@
 import './SlidePreviewer.scss';
 
-import { use } from 'react';
+import { type CSSProperties, use } from 'react';
 
 import { tran } from '../../lang/langHelpers';
 import VarySlidesPreviewerComp from './VarySlidesPreviewerComp';
@@ -10,12 +10,18 @@ import {
     useVaryAppDocumentContext,
     VaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
-import PdfAppearanceSettingComp from '../../screen-setting/PdfAppearanceSettingComp';
+import PageBaseAppearanceSettingComp from '../../screen-setting/PageBaseAppearanceSettingComp';
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
 import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
 import appProvider from '../../server/appProvider';
 import PresenterNoteContainerHandlerComp from '../../slide-editor/note/PresenterNoteContainerHandlerComp';
+import { useStateSettingString } from '../../helper/settingHelpers';
+import { DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME } from './slideItemRenderHelpers';
+
+type PreviewerBodyStyle = CSSProperties & {
+    '--app-docx-preview-background'?: string;
+};
 
 function EditorComp() {
     const varyAppDocument = useVaryAppDocumentContext();
@@ -66,6 +72,8 @@ function EditorComp() {
 
 export default function AppDocumentPreviewerComp() {
     const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
+    const [docxPreviewBackgroundColor, setDocxPreviewBackgroundColor] =
+        useStateSettingString<string>('page-base-virtual-bg-color');
     if (!selectedAppDocumentContext?.selectedVaryAppDocument) {
         return (
             <div
@@ -89,6 +97,14 @@ export default function AppDocumentPreviewerComp() {
     const isDocx =
         selectedAppDocumentContext.selectedVaryAppDocument instanceof
         DocxAppDocument;
+    const isPageBase = isPDF || isDocx;
+    const previewerBodyStyle: PreviewerBodyStyle = {
+        position: 'relative',
+    };
+    if (isPageBase && docxPreviewBackgroundColor) {
+        previewerBodyStyle[DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME] =
+            docxPreviewBackgroundColor;
+    }
     return (
         <div
             className="slide-previewer card w-100 h-100 app-zero-border-radius"
@@ -101,9 +117,7 @@ export default function AppDocumentPreviewerComp() {
             >
                 <div
                     className="card-body w-100 h-100 app-overflow-hidden"
-                    style={{
-                        position: 'relative',
-                    }}
+                    style={previewerBodyStyle}
                 >
                     {appProvider.isPagePresenter ? (
                         <EditorComp />
@@ -112,7 +126,14 @@ export default function AppDocumentPreviewerComp() {
                     )}
                 </div>
                 <AppDocumentPreviewerFooterComp />
-                {isPDF || isDocx ? <PdfAppearanceSettingComp /> : null}
+                {isPageBase ? (
+                    <PageBaseAppearanceSettingComp
+                        docxPreviewBackgroundColor={docxPreviewBackgroundColor}
+                        onDocxPreviewBackgroundColorChange={
+                            setDocxPreviewBackgroundColor
+                        }
+                    />
+                ) : null}
             </VaryAppDocumentContext>
         </div>
     );

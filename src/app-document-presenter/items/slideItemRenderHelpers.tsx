@@ -25,6 +25,9 @@ const WEB_BACKGROUND_SRC = '/assets/background-web.png';
 const BROKEN_IMAGE_SRC = '/assets/broken-image.png';
 const BROKEN_VIDEO_SRC = '/assets/broken-video.mp4';
 
+export const DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME =
+    '--app-docx-preview-background';
+
 function RenderBackgroundWebComp({
     fileSource,
 }: Readonly<{
@@ -59,8 +62,15 @@ const fillingParentStyle: CSSProperties = {
 export function genAttachBackgroundComponent(
     droppedData: DroppedDataType | null | undefined,
 ) {
-    if (droppedData === null || droppedData === undefined) {
-        return null;
+    if (!droppedData) {
+        return (
+            <div className='attached-virtual-bg-color'
+                style={{
+                    ...fillingParentStyle,
+                    backgroundColor: `var(${DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME}, transparent)`,
+                }}
+            ></div>
+        );
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_COLOR) {
         return (
