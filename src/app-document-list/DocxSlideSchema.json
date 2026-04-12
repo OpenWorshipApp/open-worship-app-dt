@@ -16,8 +16,16 @@
                 "height": {
                     "type": "number"
                 }
-            }
+            },
+            "required": [
+                "width",
+                "height"
+            ]
         }
     },
-    "required": ["id", "htmlFilePath", "metadata"]
+    "required": [
+        "id",
+        "htmlFilePath",
+        "metadata"
+    ]
 }
