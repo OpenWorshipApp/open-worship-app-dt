@@ -1,5 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
+const htmlSlideRenderCompSpy = vi.fn();
 
 vi.mock('../../_screen/managers/screenEventHelpers', () => ({
     useScreenVaryAppDocumentManagerEvents: vi.fn(),
@@ -16,7 +18,10 @@ vi.mock('./VarySlideRenderComp', () => ({
 }));
 
 vi.mock('./HtmlSlideRenderComp', () => ({
-    default: ({ html }: any) => <div data-testid="docx-html">{html}</div>,
+    default: (props: any) => {
+        htmlSlideRenderCompSpy(props);
+        return <div data-testid="docx-html">{props.html}</div>;
+    },
     genHtmlSlideContent: vi.fn(),
 }));
 
@@ -27,7 +32,11 @@ vi.mock('../../helper/FileSource', () => ({
 }));
 
 describe('DocxSlideRenderComp', () => {
-    test('renders DOCX content on top of the preview background CSS variable', async () => {
+    beforeEach(() => {
+        htmlSlideRenderCompSpy.mockClear();
+    });
+
+    test('passes DOCX HTML content and slide dimensions to HtmlSlideRenderComp', async () => {
         const { default: DocxSlideRenderComp } = await import(
             './DocxSlideRenderComp'
         );
@@ -47,9 +56,14 @@ describe('DocxSlideRenderComp', () => {
             />,
         );
 
-        expect(markup).toContain(
-            'background-color:var(--app-docx-preview-background, transparent)',
-        );
+        expect(htmlSlideRenderCompSpy).toHaveBeenCalledWith({
+            html: '<p>Page</p>',
+            htmlFilePath: '/slides/page.html',
+            width: 816,
+            height: 1056,
+        });
+        expect(markup).toContain('data-testid="docx-html"');
+        expect(markup).toContain('&lt;p&gt;Page&lt;/p&gt;');
         expect(markup).toContain('width:816px');
         expect(markup).toContain('height:1056px');
     });

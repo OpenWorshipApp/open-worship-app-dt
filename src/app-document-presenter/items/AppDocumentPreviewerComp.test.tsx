@@ -46,9 +46,26 @@ vi.mock('../../lang/langHelpers', () => ({
     tran: (value: string) => value,
 }));
 
+vi.mock('../../helper/settingHelpers', async () => {
+    const { useState } = await import('react');
+
+    return {
+        useStateSettingString: (_settingName: string, defaultString = '') =>
+            useState(defaultString),
+    };
+});
+
+vi.mock('./slideItemRenderHelpers', () => ({
+    DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME:
+        '--app-docx-preview-background',
+}));
+
 vi.mock('../../server/appProvider', () => ({
     default: {
         isPagePresenter: false,
+        systemUtils: {
+            isDev: false,
+        },
     },
 }));
 
@@ -167,7 +184,7 @@ describe('AppDocumentPreviewerComp', () => {
         ).toBe('');
     });
 
-    test('keeps the DOCX preview picker hidden for PDF previews', async () => {
+    test('shows the page-base appearance controls for PDF previews', async () => {
         const { default: AppDocumentPreviewerComp } = await import(
             './AppDocumentPreviewerComp'
         );
@@ -189,7 +206,8 @@ describe('AppDocumentPreviewerComp', () => {
             );
         });
 
-        expect(container.querySelector('.bi-record-circle')).toBeNull();
-        expect(container.querySelector('input[type="color"]')).toBeNull();
+        expect(container.querySelector('.bi-record-circle')).not.toBeNull();
+        expect(container.querySelector('input[type="color"]')).not.toBeNull();
+        expect(container.textContent).toContain('On Screen Width:');
     });
 });
