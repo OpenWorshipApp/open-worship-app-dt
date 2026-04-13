@@ -244,22 +244,31 @@ export default function BackgroundWebComp() {
             },
         };
     }, [handleUrlAdding]);
-    const handleItemsAdding = useCallback(
-        (defaultContextMenuItems: ContextMenuItemType[], event: any) => {
-            showAppContextMenu(event, [
-                ...defaultContextMenuItems,
+    const genWebContextMenuItems = useCallback(
+        (dirSource: DirSource) => {
+            return genBackgroundWebContextMenuItems(dirSource, [
                 getAddUrlContextMenuItem(),
             ]);
         },
         [getAddUrlContextMenuItem],
     );
+    const handleItemsAdding = useCallback(
+        (defaultContextMenuItems: ContextMenuItemType[], event: any) => {
+            if (dirSource === null) {
+                return;
+            }
+            showAppContextMenu(event, [
+                ...defaultContextMenuItems,
+                ...genWebContextMenuItems(dirSource),
+            ]);
+        },
+        [dirSource, genWebContextMenuItems],
+    );
     const handleContextMenuItemsGenerating = useCallback(
         async (dirSource: DirSource) => {
-            const contextMenuItems =
-                genBackgroundWebContextMenuItems(dirSource);
-            return [...contextMenuItems, getAddUrlContextMenuItem()];
+            return genWebContextMenuItems(dirSource);
         },
-        [getAddUrlContextMenuItem],
+        [genWebContextMenuItems],
     );
     if (dirSource === null) {
         return null;

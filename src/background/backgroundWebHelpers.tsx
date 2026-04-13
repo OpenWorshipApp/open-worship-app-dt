@@ -7,6 +7,7 @@ import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import appProvider from '../server/appProvider';
 import { fsWriteFile } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
+import { getOpenSharedLinkMenuItem } from './downloadHelper';
 
 export function genNewFileNameInput(
     fieName: string,
@@ -64,6 +65,7 @@ function genDefaultHtml(fileFullName: string) {
 
 export function genBackgroundWebContextMenuItems(
     dirSource: DirSource,
+    extraContextMenuItems: ContextMenuItemType[] = [],
 ): ContextMenuItemType[] {
     return [
         {
@@ -100,6 +102,8 @@ export function genBackgroundWebContextMenuItems(
                 }
             },
         },
+        ...extraContextMenuItems,
+        getOpenSharedLinkMenuItem('webs'),
     ];
 }
 
