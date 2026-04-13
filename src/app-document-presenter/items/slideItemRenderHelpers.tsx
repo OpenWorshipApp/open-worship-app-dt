@@ -29,23 +29,23 @@ export const DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME =
     '--app-docx-preview-background';
 
 function RenderBackgroundWebComp({
-    fileSource,
+    src,
 }: Readonly<{
-    fileSource: FileSource;
+    src: Pick<FileSource, 'src' | 'fullName'>;
 }>) {
-    const imageData = useWebCapturing(fileSource);
+    const imageData = useWebCapturing(src);
     const genChildrenRender = useCallback(
         (dim: { width: number; height: number }) => {
             const { width, height } = dim;
             return (
                 <RenderBackgroundWebIframeComp
-                    fileSource={fileSource}
+                    src={src}
                     width={width}
                     height={height}
                 />
             );
         },
-        [fileSource],
+        [src],
     );
     return (
         <BackgroundRenderOnHoverComp
@@ -64,7 +64,8 @@ export function genAttachBackgroundComponent(
 ) {
     if (!droppedData) {
         return (
-            <div className='attached-virtual-bg-color'
+            <div
+                className="attached-virtual-bg-color"
                 style={{
                     ...fillingParentStyle,
                     backgroundColor: `var(${DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME}, transparent)`,
@@ -98,7 +99,7 @@ export function genAttachBackgroundComponent(
         );
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_WEB) {
-        return <RenderBackgroundWebComp fileSource={droppedData.item} />;
+        return <RenderBackgroundWebComp src={droppedData.item} />;
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_IMAGE) {
         const src = droppedData.item.src;

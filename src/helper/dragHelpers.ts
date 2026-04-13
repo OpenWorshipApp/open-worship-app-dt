@@ -17,6 +17,7 @@ import { stopDraggingState } from './helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import Slide from '../app-document-list/Slide';
 import { cameraDragDeserialize } from '../background/backgroundHelpers';
+import { deserializeBackgroundWebDragItem } from '../background/backgroundWebUrlHelpers';
 import { tran } from '../lang/langHelpers';
 
 export const dragStore: {
@@ -41,6 +42,44 @@ export function extractDropData(event: any) {
     return deserializeDragData(dragData);
 }
 
+function deserializeDocumentSlideData(type: DragTypeEnum, data: any) {
+    if (type === DragTypeEnum.PDF_SLIDE) {
+        const droppedData = JSON.parse(data);
+        if (PdfSlide.tryValidate(droppedData.data)) {
+            return new PdfSlide(droppedData.filePath, droppedData.data);
+        }
+    }
+    if (type === DragTypeEnum.PPTX_SLIDE) {
+        const droppedData = JSON.parse(data);
+        if (PptxSlide.tryValidate(droppedData.data)) {
+            return new PptxSlide(droppedData.filePath, droppedData.data);
+        }
+    }
+    if (type === DragTypeEnum.DOCX_SLIDE) {
+        const droppedData = JSON.parse(data);
+        if (DocxSlide.tryValidate(droppedData.data)) {
+            return new DocxSlide(droppedData.filePath, droppedData.data);
+        }
+    }
+    return null;
+}
+
+function deserializeBackgroundData(type: DragTypeEnum, data: any) {
+    if ([DragTypeEnum.BACKGROUND_VIDEO, DragTypeEnum.BACKGROUND_IMAGE].includes(type)) {
+        return FileSource.dragDeserialize(data);
+    }
+    if (type === DragTypeEnum.BACKGROUND_WEB) {
+        return deserializeBackgroundWebDragItem(data);
+    }
+    if (type === DragTypeEnum.BACKGROUND_CAMERA) {
+        return cameraDragDeserialize(data);
+    }
+    if (type === DragTypeEnum.BACKGROUND_COLOR) {
+        return colorDeserialize(data);
+    }
+    return null;
+}
+
 function deserializeDragData({
     type,
     data,
@@ -48,35 +87,12 @@ function deserializeDragData({
     let item: any = null;
     if (type === DragTypeEnum.SLIDE) {
         item = Slide.dragDeserialize(data);
-    } else if (type === DragTypeEnum.PDF_SLIDE) {
-        const droppedData = JSON.parse(data);
-        if (PdfSlide.tryValidate(droppedData.data)) {
-            item = new PdfSlide(droppedData.filePath, droppedData.data);
-        }
-    } else if (type === DragTypeEnum.PPTX_SLIDE) {
-        const droppedData = JSON.parse(data);
-        if (PptxSlide.tryValidate(droppedData.data)) {
-            item = new PptxSlide(droppedData.filePath, droppedData.data);
-        }
-    } else if (type === DragTypeEnum.DOCX_SLIDE) {
-        const droppedData = JSON.parse(data);
-        if (DocxSlide.tryValidate(droppedData.data)) {
-            item = new DocxSlide(droppedData.filePath, droppedData.data);
-        }
     } else if (type === DragTypeEnum.BIBLE_ITEM) {
         item = BibleItem.dragDeserialize(data);
-    } else if (
-        [
-            DragTypeEnum.BACKGROUND_VIDEO,
-            DragTypeEnum.BACKGROUND_IMAGE,
-            DragTypeEnum.BACKGROUND_WEB,
-        ].includes(type)
-    ) {
-        item = FileSource.dragDeserialize(data);
-    } else if (type === DragTypeEnum.BACKGROUND_CAMERA) {
-        item = cameraDragDeserialize(data);
-    } else if (type === DragTypeEnum.BACKGROUND_COLOR) {
-        item = colorDeserialize(data);
+    } else {
+        item =
+            deserializeDocumentSlideData(type, data) ??
+            deserializeBackgroundData(type, data);
     }
     if (item === null) {
         return null;

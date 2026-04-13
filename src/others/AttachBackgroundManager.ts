@@ -3,6 +3,10 @@ import type { DroppedDataType } from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
 import FileSource from '../helper/FileSource';
 import {
+    BackgroundWebUrlSource,
+    isBackgroundWebUrlItemData,
+} from '../background/backgroundWebUrlHelpers';
+import {
     fsCheckFileExist,
     fsDeleteFile,
     fsWriteFile,
@@ -14,6 +18,13 @@ import CacheManager from './CacheManager';
 export type AttachBackgroundType = { [key: string]: DroppedDataType };
 
 const cached = new CacheManager<AttachBackgroundType | null>(5);
+
+function filterNotNullEntries<T>(
+    entry: [string, T | null],
+): entry is [string, T] {
+    return entry[1] !== null;
+}
+
 export default class AttachBackgroundManager {
     static genMetaDataFilePath(filePath: string) {
         return `${filePath}.bg.json`;
@@ -35,7 +46,7 @@ export default class AttachBackgroundManager {
             AttachBackgroundManager.genMetaDataFilePath(filePath);
         const newData = Object.fromEntries(
             Object.entries(data)
-                .map(([key, value]) => {
+                .map(([key, value]): [string, DroppedDataType | null] => {
                     if (
                         [
                             DragTypeEnum.BACKGROUND_COLOR,
@@ -43,6 +54,18 @@ export default class AttachBackgroundManager {
                         ].includes(value.type)
                     ) {
                         return [key, value];
+                    }
+                    if (
+                        value.type === DragTypeEnum.BACKGROUND_WEB &&
+                        value.item instanceof BackgroundWebUrlSource
+                    ) {
+                        return [
+                            key,
+                            {
+                                ...value,
+                                item: value.item.toData(),
+                            },
+                        ];
                     }
                     const fileSource = value.item as FileSource;
                     const baseDirSettingName =
@@ -63,9 +86,7 @@ export default class AttachBackgroundManager {
                         },
                     ];
                 })
-                .filter(([_, value]) => {
-                    return value !== null;
-                }),
+                .filter(filterNotNullEntries),
         );
         await FileSource.getInstance(metaDataFilePath).writeFileData(
             JSON.stringify(newData),
@@ -86,7 +107,7 @@ export default class AttachBackgroundManager {
         }
         const newData = Object.fromEntries(
             Object.entries(data)
-                .map(([key, value]) => {
+                .map(([key, value]): [string, DroppedDataType | null] => {
                     if (
                         [
                             DragTypeEnum.BACKGROUND_COLOR,
@@ -94,6 +115,18 @@ export default class AttachBackgroundManager {
                         ].includes(value.type)
                     ) {
                         return [key, value];
+                    }
+                    if (
+                        value.type === DragTypeEnum.BACKGROUND_WEB &&
+                        isBackgroundWebUrlItemData(value.item)
+                    ) {
+                        return [
+                            key,
+                            {
+                                ...value,
+                                item: new BackgroundWebUrlSource(value.item),
+                            },
+                        ];
                     }
                     if (typeof value.item !== 'string') {
                         return [key, null];
@@ -114,9 +147,7 @@ export default class AttachBackgroundManager {
                         },
                     ];
                 })
-                .filter(([_, value]) => {
-                    return value !== null;
-                }),
+                .filter(filterNotNullEntries),
         );
         return newData;
     }

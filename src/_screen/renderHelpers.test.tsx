@@ -70,7 +70,7 @@ vi.mock('../helper/FileSource', () => ({
 
 vi.mock('../background/RenderBackgroundWebIframeComp', () => ({
     default: ({
-        fileSource,
+        src,
         width,
         height,
         targetWidth,
@@ -78,7 +78,7 @@ vi.mock('../background/RenderBackgroundWebIframeComp', () => ({
     }: any) => {
         return (
             <iframe
-                data-file-path={fileSource.filePath}
+                data-file-path={src.filePath}
                 width={width}
                 height={height}
                 data-target-width={targetWidth}

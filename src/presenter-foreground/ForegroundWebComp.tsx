@@ -206,7 +206,7 @@ function RenderWebInfoComp({
             >
                 {isPlaying ? (
                     <RenderBackgroundWebIframeComp
-                        fileSource={fileSource}
+                        src={fileSource}
                         width={width}
                         height={height}
                     />

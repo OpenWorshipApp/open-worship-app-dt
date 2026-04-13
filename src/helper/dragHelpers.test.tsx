@@ -8,6 +8,7 @@ const {
     slideDragDeserializeMock,
     bibleDragDeserializeMock,
     fileDragDeserializeMock,
+    deserializeBackgroundWebDragItemMock,
     pdfTryValidateMock,
     pptxTryValidateMock,
     docxTryValidateMock,
@@ -24,6 +25,7 @@ const {
     slideDragDeserializeMock: vi.fn(),
     bibleDragDeserializeMock: vi.fn(),
     fileDragDeserializeMock: vi.fn(),
+    deserializeBackgroundWebDragItemMock: vi.fn(),
     pdfTryValidateMock: vi.fn(),
     pptxTryValidateMock: vi.fn(),
     docxTryValidateMock: vi.fn(),
@@ -92,6 +94,10 @@ vi.mock('../others/color/colorHelpers', () => ({
 
 vi.mock('../background/backgroundHelpers', () => ({
     cameraDragDeserialize: cameraDragDeserializeMock,
+}));
+
+vi.mock('../background/backgroundWebUrlHelpers', () => ({
+    deserializeBackgroundWebDragItem: deserializeBackgroundWebDragItemMock,
 }));
 
 vi.mock('../others/AttachBackgroundManager', () => ({
@@ -244,6 +250,48 @@ describe('dragHelpers', () => {
             type: DragTypeEnum.BACKGROUND_COLOR,
             item: { kind: 'color' },
         });
+    });
+
+    test('deserializes background web payloads through the URL helper', async () => {
+        const { DragTypeEnum } = await import('./DragInf');
+        const { extractDropData } = await import('./dragHelpers');
+
+        const filePayload = '/files/background.html';
+        const urlPayload = {
+            id: 'web-1',
+            src: 'https://example.com/page',
+            isUrl: true,
+        };
+        deserializeBackgroundWebDragItemMock
+            .mockReturnValueOnce({ kind: 'web-file' })
+            .mockReturnValueOnce({ kind: 'web-url' });
+
+        const makeEvent = (data: unknown) => ({
+            dataTransfer: {
+                getData: () =>
+                    JSON.stringify({
+                        type: DragTypeEnum.BACKGROUND_WEB,
+                        data,
+                    }),
+            },
+        });
+
+        expect(extractDropData(makeEvent(filePayload))).toEqual({
+            type: DragTypeEnum.BACKGROUND_WEB,
+            item: { kind: 'web-file' },
+        });
+        expect(extractDropData(makeEvent(urlPayload))).toEqual({
+            type: DragTypeEnum.BACKGROUND_WEB,
+            item: { kind: 'web-url' },
+        });
+        expect(deserializeBackgroundWebDragItemMock).toHaveBeenNthCalledWith(
+            1,
+            filePayload,
+        );
+        expect(deserializeBackgroundWebDragItemMock).toHaveBeenNthCalledWith(
+            2,
+            urlPayload,
+        );
     });
 
     test('creates slide instances for PDF, PPTX, and DOCX payloads', async () => {

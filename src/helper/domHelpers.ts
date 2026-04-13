@@ -487,7 +487,7 @@ export async function captureWebScreenShot(
     });
 }
 export function useWebCapturing(
-    fileSource: FileSource,
+    src: Pick<FileSource, 'src'>,
     { width, height }: { width?: number; height?: number } = {},
 ) {
     const [imageData, setImageData] = useState<string | null | undefined>();
@@ -495,14 +495,14 @@ export function useWebCapturing(
         async (contextMethods) => {
             contextMethods.setImageData(undefined);
             const screenDisplay = getDefaultScreenDisplay();
-            const imageData = await captureWebScreenShot(fileSource.src, {
+            const imageData = await captureWebScreenShot(src.src, {
                 width: width ?? screenDisplay.bounds.width,
                 height: height ?? screenDisplay.bounds.height,
                 delay: 3000,
             });
             contextMethods.setImageData(imageData);
         },
-        [fileSource, width, height],
+        [src, width, height],
         { setImageData },
     );
     return imageData;

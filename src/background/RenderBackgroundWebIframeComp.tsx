@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import type FileSource from '../helper/FileSource';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 
+type BackgroundWebIframeSourceType = Pick<FileSource, 'src' | 'fullName'>;
+
 export function BackgroundWebPlaceHolderComp({
     height,
     imageData,
@@ -33,13 +35,13 @@ export function BackgroundWebPlaceHolderComp({
 }
 
 export default function RenderBackgroundWebIframeComp({
-    fileSource,
+    src,
     width,
     height,
     targetWidth,
     targetHeight,
 }: Readonly<{
-    fileSource: FileSource;
+    src: BackgroundWebIframeSourceType;
     width: number;
     height: number;
     targetWidth?: number;
@@ -62,8 +64,8 @@ export default function RenderBackgroundWebIframeComp({
     return (
         <iframe
             sandbox="allow-scripts"
-            src={fileSource.src}
-            title={fileSource.fullName}
+            src={src.src}
+            title={src.fullName}
             style={{
                 pointerEvents: 'none',
                 colorScheme: 'normal',
