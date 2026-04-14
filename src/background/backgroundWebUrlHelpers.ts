@@ -139,6 +139,7 @@ export class BackgroundWebUrlSource
 
     async setColorNote(color: string | null) {
         this.colorNote = color;
+        // TODO: cleanup when URL is removed
         setSetting(this.colorNoteKey, color);
     }
 
