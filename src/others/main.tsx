@@ -40,7 +40,7 @@ const ERROR_DURATION = 1000 * 10; // 10 seconds;
 function useCheckSetting() {
     useAppEffectAsync(async () => {
         if (
-            !appProvider.isPageSetting &&
+            appProvider.isMainPage &&
             !(await appLocalStorage.getSelectedParentDirectory())
         ) {
             const isOk = await showAppConfirm(
@@ -125,6 +125,7 @@ async function initMain() {
     await initCrypto();
     const promises = [FileSourceMetaManager.checkAllColorNotes()];
     await Promise.all(promises);
+    await appProvider.init();
 }
 
 export function RenderApp({

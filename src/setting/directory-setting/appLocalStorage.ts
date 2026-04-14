@@ -15,7 +15,7 @@ import {
 
 export const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
 
-const FOLDER_NAME = 'local-storage';
+export const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
 const cache = new CacheManager<string>(10);
 class AppLocalStorage {
     get defaultStorage() {
@@ -39,16 +39,19 @@ class AppLocalStorage {
     }
 
     get localStorageDir() {
-        const cachedLocalStorageDir = cache.getSync(FOLDER_NAME);
+        const cachedLocalStorageDir = cache.getSync(LOCAL_STORAGE_FOLDER_NAME);
         if (cachedLocalStorageDir !== null) {
             return cachedLocalStorageDir;
         }
         const defaultStorage = this.defaultStorage;
-        const localStorageDir = pathJoin(defaultStorage, FOLDER_NAME);
+        const localStorageDir = pathJoin(
+            defaultStorage,
+            LOCAL_STORAGE_FOLDER_NAME,
+        );
         if (!fsExistSync(localStorageDir)) {
             fsMkDirSync(localStorageDir, true);
         }
-        cache.setSync(FOLDER_NAME, localStorageDir);
+        cache.setSync(LOCAL_STORAGE_FOLDER_NAME, localStorageDir);
         return localStorageDir;
     }
 

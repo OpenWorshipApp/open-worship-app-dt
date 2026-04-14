@@ -23,7 +23,15 @@ import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
 import { isDev } from './electronHelpers';
 
+function applyLaunchOverrides() {
+    const userDataPath = process.env.OWA_USER_DATA_PATH;
+    if (userDataPath) {
+        app.setPath('userData', userDataPath);
+    }
+}
+
 async function main() {
+    applyLaunchOverrides();
     if (isDev) {
         app.commandLine.appendSwitch('ignore-certificate-errors');
     }

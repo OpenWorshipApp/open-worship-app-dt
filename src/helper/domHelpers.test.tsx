@@ -25,7 +25,11 @@ const {
 } = vi.hoisted(() => ({
     genContextMenuItemIconMock: vi.fn((name: string) => `icon:${name}`),
     showAppContextMenuMock: vi.fn(),
-    keyboardRegisterMock: vi.fn(() => ['escape-listener']),
+    keyboardRegisterMock: vi.fn(
+        (_keys?: string[], _handler?: (event: any) => void) => [
+            'escape-listener',
+        ],
+    ),
     keyboardUnregisterMock: vi.fn(),
     toEventMapperKeyMock: vi.fn(() => 'escape-key'),
     electronSendAsyncMock: vi.fn(),
@@ -41,10 +45,16 @@ const {
     listenForDataMock: vi.fn((channel: string, callback: () => void) => {
         listenerRegistry[channel] = callback;
     }),
-    unlockingMock: vi.fn(async (_key: string, callback: () => Promise<unknown>) => {
-        return await callback();
-    }),
-    openCalls: [] as Array<{ url?: string | URL | undefined; target?: string; features?: string }>,
+    unlockingMock: vi.fn(
+        async (_key: string, callback: () => Promise<unknown>) => {
+            return await callback();
+        },
+    ),
+    openCalls: [] as Array<{
+        url?: string | URL | undefined;
+        target?: string;
+        features?: string;
+    }>,
     listenerRegistry: {} as Record<string, () => void>,
 }));
 
@@ -82,17 +92,19 @@ vi.mock('./helpers', () => ({
     checkIsVerticalAtBottom: checkIsVerticalAtBottomMock,
 }));
 
-vi.mock('./debuggerHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+vi.mock('./debuggerHelpers', () => {
     return {
         useAppEffectAsync: (
             effectMethod: (methods: Record<string, unknown>) => Promise<void>,
-            deps: React.DependencyList,
+            deps: readonly unknown[],
             methods?: Record<string, unknown>,
         ) => {
-            React.useEffect(() => {
-                void effectMethod({ ...(methods ?? {}) });
+            const methodContext = methods === undefined ? {} : { ...methods };
+            /* eslint-disable react-hooks/exhaustive-deps */
+            useEffect(() => {
+                void effectMethod(methodContext);
             }, deps);
+            /* eslint-enable react-hooks/exhaustive-deps */
         },
     };
 });
@@ -173,10 +185,12 @@ describe('domHelpers', () => {
         });
         Object.defineProperty(globalThis, 'open', {
             configurable: true,
-            value: vi.fn((url?: string | URL, target?: string, features?: string) => {
-                openCalls.push({ url, target, features });
-                return null;
-            }),
+            value: vi.fn(
+                (url?: string | URL, target?: string, features?: string) => {
+                    openCalls.push({ url, target, features });
+                    return null;
+                },
+            ),
         });
         class ResizeObserverMock {
             observe = vi.fn();
@@ -235,12 +249,17 @@ describe('domHelpers', () => {
         );
 
         const keyboardHandler = keyboardRegisterMock.mock.calls[0][1];
+        if (!keyboardHandler) {
+            throw new TypeError('Missing keyboard handler');
+        }
         const stopPropagation = vi.fn();
         const preventDefault = vi.fn();
         keyboardHandler({ stopPropagation, preventDefault });
         expect(stopPropagation).toHaveBeenCalledTimes(1);
         expect(preventDefault).toHaveBeenCalledTimes(1);
-        expect(keyboardUnregisterMock).toHaveBeenCalledWith(['escape-listener']);
+        expect(keyboardUnregisterMock).toHaveBeenCalledWith([
+            'escape-listener',
+        ]);
         expect(element.classList.contains('app-full-view')).toBe(false);
 
         const handle = vi.fn();
@@ -275,7 +294,9 @@ describe('domHelpers', () => {
 
         handleAutoHide(panel);
 
-        const clearButton = parent.querySelector('.auto-hide-button') as HTMLElement | null;
+        const clearButton = parent.querySelector(
+            '.auto-hide-button',
+        ) as HTMLElement | null;
         expect(oldButton.isConnected).toBe(false);
         expect(panel.classList.contains('app-auto-hide')).toBe(true);
         expect(clearButton?.title).toBe('Show');
@@ -311,13 +332,12 @@ describe('domHelpers', () => {
         inputHandler.listenForInputContextMenu(inputWrapper);
         const input = inputWrapper.querySelector('input') as HTMLInputElement;
 
-        await input.oncontextmenu?.({} as MouseEvent);
+        await input.oncontextmenu?.({} as PointerEvent);
         expect(showAppContextMenuMock).toHaveBeenCalledTimes(1);
         const menuItems = showAppContextMenuMock.mock.calls[0][1];
-        expect(menuItems.map((item: { menuElement: string }) => item.menuElement)).toEqual([
-            'Paste',
-            'Clear',
-        ]);
+        expect(
+            menuItems.map((item: { menuElement: string }) => item.menuElement),
+        ).toEqual(['Paste', 'Clear']);
         menuItems[0].onSelect();
         menuItems[1].onSelect();
         expect(pasteTextToInputMock).toHaveBeenCalledWith(input, 'copied');
@@ -359,7 +379,9 @@ describe('domHelpers', () => {
         listenerRegistry['main:app:open-about-page']?.();
         listenerRegistry['main:app:open-find-page']?.();
         expect(openCalls).toHaveLength(2);
-        expect(openCalls[0]?.url).toContain('https://app.local/about?uuid=about');
+        expect(openCalls[0]?.url).toContain(
+            'https://app.local/about?uuid=about',
+        );
         expect(openCalls[1]?.url).toContain('https://app.local/find?uuid=find');
 
         let element: HTMLDivElement | null = null;
@@ -376,9 +398,13 @@ describe('domHelpers', () => {
 
         expect(moveToView).toHaveBeenCalledWith(element);
         vi.advanceTimersByTime(100);
-        expect(element.classList.contains('app-new-element-highlight')).toBe(true);
+        expect(element.classList.contains('app-new-element-highlight')).toBe(
+            true,
+        );
         vi.advanceTimersByTime(2200);
-        expect(element.classList.contains('app-new-element-highlight')).toBe(false);
+        expect(element.classList.contains('app-new-element-highlight')).toBe(
+            false,
+        );
 
         const skipElement = document.createElement('div');
         await notifyNewElementAdded(() => skipElement, {
@@ -397,11 +423,14 @@ describe('domHelpers', () => {
             height: 360,
             delay: 250,
         });
-        const secondCapture = await captureWebScreenShot('https://example.com', {
-            width: 640,
-            height: 360,
-            delay: 250,
-        });
+        const secondCapture = await captureWebScreenShot(
+            'https://example.com',
+            {
+                width: 640,
+                height: 360,
+                delay: 250,
+            },
+        );
         expect(firstCapture).toBe('capture-image');
         expect(secondCapture).toBe('capture-image');
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);

@@ -3,6 +3,8 @@ import type fs from 'node:fs';
 import type path from 'node:path';
 import type * as nodeCrypto from 'node:crypto';
 
+import appProviderMock from './appProvider.mock';
+
 export type MessageEventType = {
     returnValue: any;
 };
@@ -116,6 +118,7 @@ export type PagePropsType = {
     isPageAbout: boolean;
     aboutHomePage: string;
     isPageLWShare: boolean;
+    isMainPage: boolean;
     lwShareHomePage: string;
     noteItemEditorHomePage: string;
     webEditorHomePage: string;
@@ -196,6 +199,7 @@ export type AppProviderType = Readonly<
         };
         windowTitle: string;
         POPUP_FRAME_NAME_PREFIX: string;
+        init: () => Promise<void>;
     }
 >;
 
@@ -207,9 +211,13 @@ document.addEventListener('mouseleave', () => {
     isMouseOverApp = false;
 });
 
+const injectedProvider = (globalThis as any).provider;
+const providerSource = injectedProvider ?? appProviderMock;
+
 const appProvider = {
-    ...(globalThis as any).provider,
+    ...providerSource,
     windowTitle: document.title,
+    isMainPage: providerSource.isPageReader || providerSource.isPagePresenter,
     getIsMouseOverApp: () => {
         return isMouseOverApp;
     },
@@ -219,6 +227,8 @@ const appProvider = {
 } as AppProviderType;
 
 // for security reason, appProvider should not be accessible globally
-delete (globalThis as any).provider;
+if (injectedProvider) {
+    delete (globalThis as any).provider;
+}
 
 export default appProvider;

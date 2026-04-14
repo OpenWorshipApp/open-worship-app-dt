@@ -53,7 +53,9 @@ describe('SettingManager', () => {
             validate: (value) => value !== 'bad',
         });
 
-        expect(() => manager.getSetting()).toThrow('Invalid setting value: bad');
+        expect(() => manager.getSetting()).toThrow(
+            'Invalid setting value: bad',
+        );
     });
 
     test('returns the default when invalid data should fall back', () => {

@@ -65,7 +65,11 @@ function deserializeDocumentSlideData(type: DragTypeEnum, data: any) {
 }
 
 function deserializeBackgroundData(type: DragTypeEnum, data: any) {
-    if ([DragTypeEnum.BACKGROUND_VIDEO, DragTypeEnum.BACKGROUND_IMAGE].includes(type)) {
+    if (
+        [DragTypeEnum.BACKGROUND_VIDEO, DragTypeEnum.BACKGROUND_IMAGE].includes(
+            type,
+        )
+    ) {
         return FileSource.dragDeserialize(data);
     }
     if (type === DragTypeEnum.BACKGROUND_WEB) {

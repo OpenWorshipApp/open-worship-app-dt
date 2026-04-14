@@ -4,9 +4,16 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const saveScreenManagersSettingMock = vi.fn();
 const getAllShowingScreenIdsMock = vi.fn(() => [5, 6]);
-const showAppContextMenuMock = vi.fn(() => ({
-    promiseDone: Promise.resolve(),
-}));
+const showAppContextMenuMock = vi.fn(
+    (
+        _event?: MouseEvent,
+        _items?: Array<{
+            onSelect?: () => void;
+        }>,
+    ) => ({
+        promiseDone: Promise.resolve(),
+    }),
+);
 const getAttachedBackgroundMock = vi.fn();
 const receiveScreenDroppedMock = vi.fn();
 
@@ -82,7 +89,10 @@ vi.mock('./screenManagerBaseHelpers', () => ({
     cache,
     setScreenManagerBaseCache: vi.fn((screenManagerBase: any) => {
         cache.set(screenManagerBase.key, screenManagerBase);
-        screenManagerBaseById.set(screenManagerBase.screenId, screenManagerBase);
+        screenManagerBaseById.set(
+            screenManagerBase.screenId,
+            screenManagerBase,
+        );
     }),
     getScreenManagerBase: vi.fn((screenId: number) => {
         return screenManagerBaseById.get(screenId) ?? null;
@@ -129,7 +139,9 @@ describe('manager helper coverage', () => {
 
         expect(screenManagerHelpers.screenManagerFromBase(null)).toBeNull();
         expect(
-            screenManagerHelpers.screenManagerFromBase(new MockScreenManagerBase(1) as any),
+            screenManagerHelpers.screenManagerFromBase(
+                new MockScreenManagerBase(1) as any,
+            ),
         ).toBeNull();
 
         instanceSettings.push({
@@ -150,9 +162,13 @@ describe('manager helper coverage', () => {
         const again = screenManagerHelpers.createScreenManager(9);
         expect(created).toBe(again);
         expect(saveScreenManagersSettingMock).toHaveBeenCalledOnce();
-        expect(screenManagerHelpers.getScreenManagerByScreenId(9)).toBe(created);
+        expect(screenManagerHelpers.getScreenManagerByScreenId(9)).toBe(
+            created,
+        );
         expect(screenManagerHelpers.getScreenManagerByKey('9')).toBe(created);
-        expect(screenManagerHelpers.getScreenManagerByKey('missing')).toBeNull();
+        expect(
+            screenManagerHelpers.getScreenManagerByKey('missing'),
+        ).toBeNull();
 
         allScreenManagerBases = [
             new MockScreenManager(0),
@@ -180,12 +196,15 @@ describe('manager helper coverage', () => {
         deleted.isDeleted = true;
         allScreenManagerBases = [new MockScreenManager(10), deleted];
         expect(
-            screenManagerHelpers.getAllScreenManagers().map(({ screenId }) => screenId),
+            screenManagerHelpers
+                .getAllScreenManagers()
+                .map(({ screenId }) => screenId),
         ).toEqual([10]);
     });
 
     test('covers screen event handler static selection and cache helpers', async () => {
-        const { default: ScreenEventHandler } = await import('./ScreenEventHandler');
+        const { default: ScreenEventHandler } =
+            await import('./ScreenEventHandler');
 
         class TestHandler extends ScreenEventHandler<'update'> {
             static readonly eventNamePrefix = 'test-handler';
@@ -232,32 +251,44 @@ describe('manager helper coverage', () => {
 
         appProviderMock.isPagePresenter = false;
         await expect(
-            TestHandler.chooseScreenIds(new MouseEvent('contextmenu') as any, false),
+            TestHandler.chooseScreenIds(
+                new MouseEvent('contextmenu') as any,
+                false,
+            ),
         ).resolves.toEqual([]);
 
         appProviderMock.isPagePresenter = true;
         selectedScreenManagerBases = [{ screenId: 7 }, { screenId: 8 }];
         await expect(
-            TestHandler.chooseScreenIds(new MouseEvent('contextmenu') as any, false),
+            TestHandler.chooseScreenIds(
+                new MouseEvent('contextmenu') as any,
+                false,
+            ),
         ).resolves.toEqual([7, 8]);
 
         selectedScreenManagerBases = [];
         allScreenManagerBases = [{ screenId: 3 }, { screenId: 4 }];
         showAppContextMenuMock.mockImplementationOnce((_event, items) => {
             queueMicrotask(() => {
-                items[1]?.onSelect();
+                items?.[1]?.onSelect?.();
             });
             return { promiseDone: Promise.resolve() };
         });
         await expect(
-            TestHandler.chooseScreenIds(new MouseEvent('contextmenu') as any, true),
+            TestHandler.chooseScreenIds(
+                new MouseEvent('contextmenu') as any,
+                true,
+            ),
         ).resolves.toEqual([4]);
 
         showAppContextMenuMock.mockImplementationOnce(() => {
             return { promiseDone: Promise.resolve() };
         });
         await expect(
-            TestHandler.chooseScreenIds(new MouseEvent('contextmenu') as any, true),
+            TestHandler.chooseScreenIds(
+                new MouseEvent('contextmenu') as any,
+                true,
+            ),
         ).resolves.toEqual([]);
 
         handler.delete();
@@ -265,7 +296,8 @@ describe('manager helper coverage', () => {
     });
 
     test('attaches dropped backgrounds using explicit and fallback lookups', async () => {
-        const { applyAttachBackground } = await import('./screenBackgroundHelpers');
+        const { applyAttachBackground } =
+            await import('./screenBackgroundHelpers');
 
         getAttachedBackgroundMock
             .mockResolvedValueOnce({ type: 'bg-color', item: '#fff' })

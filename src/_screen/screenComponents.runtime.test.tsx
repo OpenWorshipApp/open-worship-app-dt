@@ -25,7 +25,7 @@ const appProviderMock = {
 let screenManager: any;
 
 vi.mock('../helper/debuggerHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+    const React = (await vi.importActual('react')) as any;
     return {
         useAppEffect: React.useEffect,
     };
@@ -199,7 +199,9 @@ describe('screen component runtime behavior', () => {
         genStyleRenderingMock.mockImplementation((effectManager: any) => {
             return Object.entries(effectManager.styleAnimList).map(
                 ([effectType, styleAnim]: [string, any]) => {
-                    return <style key={effectType}>{styleAnim.styleText}</style>;
+                    return (
+                        <style key={effectType}>{styleAnim.styleText}</style>
+                    );
                 },
             );
         });
@@ -247,10 +249,16 @@ describe('screen component runtime behavior', () => {
         expect(container.querySelector('#foreground')).not.toBeNull();
         expect(container.querySelector('#close')).not.toBeNull();
 
-        expect(screenManager.screenBackgroundManager.render).toHaveBeenCalledOnce();
-        expect(screenManager.screenVaryAppDocumentManager.render).toHaveBeenCalledOnce();
+        expect(
+            screenManager.screenBackgroundManager.render,
+        ).toHaveBeenCalledOnce();
+        expect(
+            screenManager.screenVaryAppDocumentManager.render,
+        ).toHaveBeenCalledOnce();
         expect(screenManager.screenBibleManager.render).toHaveBeenCalledOnce();
-        expect(screenManager.screenForegroundManager.render).toHaveBeenCalledOnce();
+        expect(
+            screenManager.screenForegroundManager.render,
+        ).toHaveBeenCalledOnce();
         expect(screenManager.screenBackgroundManager.rootContainer).toBe(
             container.querySelector('#background'),
         );
@@ -271,9 +279,9 @@ describe('screen component runtime behavior', () => {
             },
             true,
         );
-        expect(screenManager.getElementsByDomSelector('.tracked-node')).toEqual([
-            tracked,
-        ]);
+        expect(screenManager.getElementsByDomSelector('.tracked-node')).toEqual(
+            [tracked],
+        );
 
         await act(async () => {
             container.querySelector('#close')?.dispatchEvent(
@@ -316,12 +324,13 @@ describe('screen component runtime behavior', () => {
     });
 
     test('renders background variants and camera streams', async () => {
-        const { RenderBackground, genHtmlBackground } = await import(
-            './ScreenBackgroundComp'
-        );
+        const { RenderBackground, genHtmlBackground } =
+            await import('./ScreenBackgroundComp');
 
         expect(
-            renderToStaticMarkup(<RenderBackground backgroundSrc={null as any} />),
+            renderToStaticMarkup(
+                <RenderBackground backgroundSrc={null as any} />,
+            ),
         ).toContain('position:absolute');
         expect(
             renderToStaticMarkup(

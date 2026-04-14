@@ -8,6 +8,17 @@ const deleteScreenManagerBaseCacheMock = vi.fn();
 const listenForDataMock = vi.fn();
 const sendDataSyncMock = vi.fn(() => true);
 
+const appProviderMock = {
+    isPageScreen: false,
+    messageUtils: {
+        messageChannels: {
+            screenMessage: 'screen-message-channel',
+        },
+        listenForData: listenForDataMock,
+        sendDataSync: sendDataSyncMock,
+    },
+};
+
 const baseInstances = new Map<number, any>();
 
 class MockScreenManagerBase {
@@ -71,11 +82,10 @@ class MockScreenManagerBase {
     fireColorNoteUpdateEvent = vi.fn();
     syncScrollPercentage = vi.fn();
     removeOnEventListener = vi.fn();
-    createScreenManagerBaseGhost = vi.fn((screenId: number) => ({ screenId }));
     checkIsSyncGroupEnabled = vi.fn(() => true);
-    setColorNote = vi.fn(async (color: string | null) => {
+    async setColorNote(color: string | null) {
         this.colorNote = color;
-    });
+    }
 }
 
 class MockEffectManager {
@@ -200,22 +210,14 @@ vi.mock('./screenManagerBaseHelpers', () => ({
 }));
 
 vi.mock('../../server/appProvider', () => ({
-    default: {
-        isPageScreen: false,
-        messageUtils: {
-            messageChannels: {
-                screenMessage: 'screen-message-channel',
-            },
-            listenForData: listenForDataMock,
-            sendDataSync: sendDataSyncMock,
-        },
-    },
+    default: appProviderMock,
 }));
 
 describe('ScreenManager runtime orchestration', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         baseInstances.clear();
+        appProviderMock.isPageScreen = false;
     });
 
     test('routes dropped content to the correct sub-manager', async () => {
@@ -228,19 +230,25 @@ describe('ScreenManager runtime orchestration', () => {
             type: DragTypeEnum.BACKGROUND_COLOR,
             item: '#fff',
         } as any);
-        expect(screenManager.screenBackgroundManager.receiveScreenDropped).toHaveBeenCalled();
+        expect(
+            screenManager.screenBackgroundManager.receiveScreenDropped,
+        ).toHaveBeenCalled();
 
         screenManager.receiveScreenDropped({
             type: DragTypeEnum.SLIDE,
             item: { id: 1 },
         } as any);
-        expect(screenManager.screenVaryAppDocumentManager.receiveScreenDropped).toHaveBeenCalled();
+        expect(
+            screenManager.screenVaryAppDocumentManager.receiveScreenDropped,
+        ).toHaveBeenCalled();
 
         screenManager.receiveScreenDropped({
             type: DragTypeEnum.BIBLE_ITEM,
             item: { id: 2 },
         } as any);
-        expect(screenManager.screenBibleManager.receiveScreenDropped).toHaveBeenCalled();
+        expect(
+            screenManager.screenBibleManager.receiveScreenDropped,
+        ).toHaveBeenCalled();
 
         screenManager.receiveScreenDropped({
             type: DragTypeEnum.UNKNOWN,
@@ -289,7 +297,12 @@ describe('ScreenManager runtime orchestration', () => {
         ScreenManager.applyScreenManagerSyncScreen({
             screenId: 2,
             type: 'background-video-time',
-            data: { videoId: 'video-1', videoTime: 2, timestamp: Date.now(), isFromScreen: false },
+            data: {
+                videoId: 'video-1',
+                videoTime: 2,
+                timestamp: Date.now(),
+                isFromScreen: false,
+            },
         } as any);
         expect(MockBackgroundManager.receiveSyncVideoTime).toHaveBeenCalled();
 
@@ -315,7 +328,9 @@ describe('ScreenManager runtime orchestration', () => {
             type: 'init',
             data: null,
         } as any);
-        expect(screenManager.backgroundEffectManager.sendSyncScreen).toHaveBeenCalled();
+        expect(
+            screenManager.backgroundEffectManager.sendSyncScreen,
+        ).toHaveBeenCalled();
         expect(MockBibleManager.sendSynTextStyle).toHaveBeenCalled();
     });
 
@@ -356,9 +371,9 @@ describe('ScreenManager runtime orchestration', () => {
         baseInstances.set(4, sibling);
         baseInstances.set(5, outsider);
 
-        expect(await ScreenManager.getGroupScreenManagers(screenManager)).toEqual([
-            sibling,
-        ]);
+        expect(
+            await ScreenManager.getGroupScreenManagers(screenManager),
+        ).toEqual([sibling]);
 
         const syncSpy = vi.spyOn(ScreenManager, 'syncScreenManagerGroup');
         screenManager.sendScreenMessage(
@@ -369,12 +384,15 @@ describe('ScreenManager runtime orchestration', () => {
             } as any,
             true,
         );
-        expect(sendDataSyncMock).toHaveBeenCalledWith('screen-message-channel', {
-            screenId: 3,
-            type: 'foreground',
-            data: { marqueeData: { text: 'hello' } },
-            isScreen: false,
-        });
+        expect(sendDataSyncMock).toHaveBeenCalledWith(
+            'screen-message-channel',
+            {
+                screenId: 3,
+                type: 'foreground',
+                data: { marqueeData: { text: 'hello' } },
+                isScreen: false,
+            },
+        );
         expect(syncSpy).toHaveBeenCalled();
 
         ScreenManager.initReceiveScreenMessage();
@@ -386,10 +404,184 @@ describe('ScreenManager runtime orchestration', () => {
         await screenManager.delete();
         expect(screenManager.hide).toHaveBeenCalled();
         expect(screenManager.screenBackgroundManager.delete).toHaveBeenCalled();
-        expect(screenManager.screenVaryAppDocumentManager.delete).toHaveBeenCalled();
+        expect(
+            screenManager.screenVaryAppDocumentManager.delete,
+        ).toHaveBeenCalled();
         expect(screenManager.screenBibleManager.delete).toHaveBeenCalled();
         expect(screenManager.screenForegroundManager.delete).toHaveBeenCalled();
         expect(deleteScreenManagerBaseCacheMock).toHaveBeenCalledWith('3');
         expect(saveScreenManagersSettingMock).toHaveBeenCalledWith(3);
+    });
+
+    test('maps sync handlers, guards screen-origin sends, and returns ghost bases', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        expect(
+            ScreenManager.getSyncGroupScreenEventHandler({
+                type: 'background',
+            } as any),
+        ).toBe(MockBackgroundManager);
+        expect(
+            ScreenManager.getSyncGroupScreenEventHandler({
+                type: 'vary-app-document',
+            } as any),
+        ).toBe(MockVaryManager);
+        expect(
+            ScreenManager.getSyncGroupScreenEventHandler({
+                type: 'bible-screen-view',
+            } as any),
+        ).toBe(MockBibleManager);
+        expect(
+            ScreenManager.getSyncGroupScreenEventHandler({
+                type: 'foreground',
+            } as any),
+        ).toBe(MockForegroundManager);
+        expect(
+            ScreenManager.getSyncGroupScreenEventHandler({
+                type: 'unknown-sync',
+            } as any),
+        ).toBeNull();
+
+        const screenManager = new ScreenManager(7);
+        const sibling = new ScreenManager(8);
+        baseInstances.set(7, screenManager);
+        baseInstances.set(8, sibling);
+
+        expect(screenManager.getScreenManagerBaseForce(8)).toBe(sibling);
+
+        const ghost = screenManager.getScreenManagerBaseForce(99);
+        expect(ghost.isDeleted).toBe(true);
+        expect(ghost.screenId).toBe(99);
+
+        appProviderMock.isPageScreen = true;
+        screenManager.sendScreenMessage(
+            {
+                screenId: 7,
+                type: 'foreground',
+                data: { quickTextData: { text: 'Hidden' } },
+            } as any,
+            false,
+        );
+        expect(sendDataSyncMock).not.toHaveBeenCalled();
+
+        screenManager.sendScreenMessage(
+            {
+                screenId: 7,
+                type: 'foreground',
+                data: { quickTextData: { text: 'Forced' } },
+            } as any,
+            true,
+        );
+        expect(sendDataSyncMock).toHaveBeenCalledWith(
+            'screen-message-channel',
+            {
+                screenId: 7,
+                type: 'foreground',
+                data: { quickTextData: { text: 'Forced' } },
+                isScreen: true,
+            },
+        );
+    });
+
+    test('persists setter state, forwards full syncs, clears sub-managers, and respects sync-group guards', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(9);
+        const sibling = new ScreenManager(10);
+        baseInstances.set(9, screenManager);
+        baseInstances.set(10, sibling);
+
+        screenManager.colorNote = 'green';
+        sibling.colorNote = 'green';
+
+        screenManager.isLocked = true;
+        screenManager.stageNumber = 4;
+        screenManager.isSelected = true;
+        await screenManager.setColorNote('green');
+        await Promise.resolve();
+
+        expect(screenManager.colorNote).toBe('green');
+        expect(saveScreenManagersSettingMock).toHaveBeenCalled();
+        expect(screenManager.fireInstanceEvent).toHaveBeenCalled();
+        expect(screenManager.fireColorNoteUpdateEvent).toHaveBeenCalled();
+
+        screenManager.sendSyncScreen();
+        expect(MockBibleManager.sendSynTextStyle).toHaveBeenCalled();
+        expect(
+            screenManager.backgroundEffectManager.sendSyncScreen,
+        ).toHaveBeenCalled();
+        expect(
+            screenManager.screenBackgroundManager.sendSyncScreen,
+        ).toHaveBeenCalled();
+        expect(
+            screenManager.screenForegroundManager.sendSyncScreen,
+        ).toHaveBeenCalled();
+        expect(
+            screenManager.screenVaryAppDocumentManager.sendSyncScreen,
+        ).toHaveBeenCalled();
+        expect(
+            screenManager.varyAppDocumentEffectManager.sendSyncScreen,
+        ).toHaveBeenCalled();
+        expect(
+            screenManager.screenBibleManager.sendSyncScreen,
+        ).toHaveBeenCalled();
+
+        const initCallback = (
+            screenManager.screenBackgroundManager.registerEventListener as any
+        ).mock.calls[0]?.[1];
+        initCallback?.('#445566');
+        expect(
+            screenManager.screenBibleManager.reflectBackgroundColor,
+        ).toHaveBeenCalledWith('#445566');
+
+        screenManager.clear();
+        expect(screenManager.screenBibleManager.clear).toHaveBeenCalled();
+        expect(
+            screenManager.screenVaryAppDocumentManager.clear,
+        ).toHaveBeenCalled();
+        expect(screenManager.screenForegroundManager.clear).toHaveBeenCalled();
+        expect(screenManager.screenBackgroundManager.clear).toHaveBeenCalled();
+        expect(screenManager.fireUpdateEvent).toHaveBeenCalled();
+
+        screenManager.isDeleted = true;
+        await ScreenManager.syncScreenManagerGroup({
+            screenId: 9,
+            type: 'foreground',
+            data: { marqueeData: { text: 'ignore' } },
+        } as any);
+        expect(MockForegroundManager.receiveSyncScreen).not.toHaveBeenCalled();
+
+        screenManager.isDeleted = false;
+        (screenManager.checkIsSyncGroupEnabled as any).mockReturnValue(false);
+        await ScreenManager.syncScreenManagerGroup({
+            screenId: 9,
+            type: 'foreground',
+            data: { marqueeData: { text: 'blocked' } },
+        } as any);
+        expect(MockForegroundManager.receiveSyncScreen).not.toHaveBeenCalled();
+
+        (screenManager.checkIsSyncGroupEnabled as any).mockReturnValue(true);
+        await ScreenManager.syncScreenManagerGroup({
+            screenId: 9,
+            type: 'foreground',
+            data: { marqueeData: { text: 'allowed' } },
+        } as any);
+        expect(MockForegroundManager.receiveSyncScreen).toHaveBeenCalledWith({
+            screenId: 10,
+            type: 'foreground',
+            data: { marqueeData: { text: 'allowed' } },
+        });
+        expect(
+            sibling.noSyncGroupMap.get(MockForegroundManager.eventNamePrefix),
+        ).toBe(true);
+
+        await ScreenManager.syncScreenManagerGroup({
+            screenId: 9,
+            type: 'visible',
+            data: { isShowing: false },
+        } as any);
+        expect(MockForegroundManager.receiveSyncScreen).toHaveBeenCalledTimes(
+            1,
+        );
     });
 });

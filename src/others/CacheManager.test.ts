@@ -4,9 +4,11 @@ const { appProviderMock, unlockingMock } = vi.hoisted(() => ({
     appProviderMock: {
         isPageScreen: false,
     },
-    unlockingMock: vi.fn(async (_key: string, callback: () => Promise<unknown>) => {
-        return await callback();
-    }),
+    unlockingMock: vi.fn(
+        async (_key: string, callback: () => Promise<unknown>) => {
+            return await callback();
+        },
+    ),
 }));
 
 vi.mock('../server/appProvider', () => ({

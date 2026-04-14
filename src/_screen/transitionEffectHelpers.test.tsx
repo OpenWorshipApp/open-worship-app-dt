@@ -11,7 +11,7 @@ vi.mock('../context-menu/appContextMenuHelpers', () => ({
 }));
 
 vi.mock('../helper/debuggerHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+    const React = (await vi.importActual('react')) as any;
     return {
         useAppEffect: React.useEffect,
     };
@@ -50,9 +50,8 @@ describe('transitionEffectHelpers', () => {
     });
 
     test('animates none, fade, move, and zoom effects', async () => {
-        const { ANIM_END_DELAY_MILLISECOND, styleAnimList } = await import(
-            './transitionEffectHelpers'
-        );
+        const { ANIM_END_DELAY_MILLISECOND, styleAnimList } =
+            await import('./transitionEffectHelpers');
 
         const none = styleAnimList.none('background');
         const noneParent = document.createElement('div');
@@ -101,9 +100,10 @@ describe('transitionEffectHelpers', () => {
 
         const move = styleAnimList.move();
         const moveParent = document.createElement('div');
-        moveParent.getBoundingClientRect = () => ({
-            width: 320,
-        }) as DOMRect;
+        moveParent.getBoundingClientRect = () =>
+            ({
+                width: 320,
+            }) as DOMRect;
         const sibling = document.createElement('div');
         moveParent.appendChild(sibling);
         const moveTarget = document.createElement('div');
@@ -155,9 +155,8 @@ describe('transitionEffectHelpers', () => {
     });
 
     test('subscribes to screen-effect updates and cleans listeners up', async () => {
-        const { useScreenEffectEvents } = await import(
-            './transitionEffectHelpers'
-        );
+        const { useScreenEffectEvents } =
+            await import('./transitionEffectHelpers');
 
         const updateCallbacks: Array<() => void> = [];
         const screenEffectManager = {
@@ -196,16 +195,15 @@ describe('transitionEffectHelpers', () => {
         await act(async () => {
             root.unmount();
         });
-        expect(screenEffectManager.unregisterEventListener).toHaveBeenCalledWith(
-            ['effect-listener'],
-        );
+        expect(
+            screenEffectManager.unregisterEventListener,
+        ).toHaveBeenCalledWith(['effect-listener']);
         root = createRoot(container);
     });
 
     test('renders the selected transition icon and opens the context menu', async () => {
-        const { default: RenderTransitionEffectComp } = await import(
-            './RenderTransitionEffectComp'
-        );
+        const { default: RenderTransitionEffectComp } =
+            await import('./RenderTransitionEffectComp');
 
         let updateCallback: (() => void) | undefined;
         const screenEffectManager = {

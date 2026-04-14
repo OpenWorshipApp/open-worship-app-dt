@@ -12,9 +12,17 @@ import {
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const showAppContextMenuMock = vi.fn(() => ({
-    promiseDone: Promise.resolve(),
-}));
+const showAppContextMenuMock = vi.fn(
+    (
+        _event?: Event,
+        _items?: Array<{
+            menuElement: string;
+            onSelect?: (...args: any[]) => void;
+        }>,
+    ) => ({
+        promiseDone: Promise.resolve(),
+    }),
+);
 const useKeyboardRegisteringMock = vi.fn();
 const showSimpleToastMock = vi.fn();
 const handleCtrlWheelMock = vi.fn();
@@ -23,9 +31,13 @@ const genNewScreenManagerBaseMock = vi.fn();
 const getAllScreenManagersMock = vi.fn();
 const getScreenManagersFromSettingMock = vi.fn();
 const getSelectedScreenManagerBasesMock = vi.fn();
-const getSettingMock = vi.fn();
+const getSettingMock = vi.fn(
+    (_key?: string) => undefined as string | undefined,
+);
 const handleErrorMock = vi.fn();
-const extractDropDataMock = vi.fn(() => null);
+const extractDropDataMock = vi.fn(
+    (_event?: Event) => null as { type: string; item: string } | null,
+);
 const dragOnDroppedMock = vi.fn();
 const useScreenManagerEventsMock = vi.fn();
 const useScreenUpdateEventsMock = vi.fn();
@@ -69,12 +81,14 @@ function createScreenManager(
         delete: vi.fn(),
         fireRefreshEvent: vi.fn(),
         receiveScreenDropped: vi.fn(),
-        registerEventListener: vi.fn((events: string[], callback: () => void) => {
-            if (events.includes('display-id')) {
-                displayListeners.push(callback);
-            }
-            return [`listener-${screenId}-${displayListeners.length}`];
-        }),
+        registerEventListener: vi.fn(
+            (events: string[], callback: () => void) => {
+                if (events.includes('display-id')) {
+                    displayListeners.push(callback);
+                }
+                return [`listener-${screenId}-${displayListeners.length}`];
+            },
+        ),
         unregisterEventListener: vi.fn(),
         emitDisplayId() {
             for (const callback of displayListeners) {
@@ -122,7 +136,10 @@ vi.mock('../../toast/toastHelpers', () => ({
 vi.mock('../../others/AppRangeComp', () => ({
     default: ({ value, title, setValue }: any) => {
         return (
-            <button data-range-title={title} onClick={() => setValue(value + 1)}>
+            <button
+                data-range-title={title}
+                onClick={() => setValue(value + 1)}
+            >
                 {title}:{value}
             </button>
         );
@@ -140,7 +157,11 @@ vi.mock('../../lang/langHelpers', () => ({
 
 vi.mock('../../others/AppSuspenseComp', () => ({
     default: ({ children }: { children: ReactNode }) => {
-        return <Suspense fallback={<div data-suspense="true" />}>{children}</Suspense>;
+        return (
+            <Suspense fallback={<div data-suspense="true" />}>
+                {children}
+            </Suspense>
+        );
     },
 }));
 
@@ -155,7 +176,9 @@ vi.mock('./ScreenEffectControlComp', () => ({
 }));
 
 vi.mock('../../others/ItemColorNoteComp', () => ({
-    default: ({ item }: any) => <div data-color-note={item.screenId}>ColorNote</div>,
+    default: ({ item }: any) => (
+        <div data-color-note={item.screenId}>ColorNote</div>
+    ),
 }));
 
 vi.mock('./ShowingScreenIcon', () => ({
@@ -240,7 +263,9 @@ vi.mock('../../helper/helpers', () => ({
 }));
 
 vi.mock('../../helper/colorNoteHelpers', () => ({
-    genColorBar: (color: string) => <div data-color-bar={color}>bar-{color}</div>,
+    genColorBar: (color: string) => (
+        <div data-color-bar={color}>bar-{color}</div>
+    ),
     genColorMap: (screenManagers: any[]) => {
         return screenManagers.reduce(
             (acc, current) => {
@@ -330,7 +355,9 @@ describe('preview runtime interactions', () => {
             stageNumber: 2,
         });
         screenManager.screenBibleManager.isShowing = true;
-        screenManager.screenBibleManager.screenViewData = { type: 'bible-item' };
+        screenManager.screenBibleManager.screenViewData = {
+            type: 'bible-item',
+        };
         otherScreenManager = createScreenManager(2, {
             isSelected: true,
             colorNote: null,
@@ -338,7 +365,9 @@ describe('preview runtime interactions', () => {
         screenManagerBase = screenManager;
         allScreenManagers = [screenManager, otherScreenManager];
         getAllScreenManagersMock.mockImplementation(() => allScreenManagers);
-        getScreenManagersFromSettingMock.mockImplementation(() => allScreenManagers);
+        getScreenManagersFromSettingMock.mockImplementation(
+            () => allScreenManagers,
+        );
         getSelectedScreenManagerBasesMock.mockImplementation(() => {
             return allScreenManagers.filter((manager) => manager.isSelected);
         });
@@ -349,7 +378,13 @@ describe('preview runtime interactions', () => {
             handleScreenBibleVersesHighlighting: vi.fn(),
         };
         handleCtrlWheelMock.mockImplementation(
-            ({ value, setValue }: { value: number; setValue: (value: number) => void }) => {
+            ({
+                value,
+                setValue,
+            }: {
+                value: number;
+                setValue: (value: number) => void;
+            }) => {
                 setValue(value + 1);
             },
         );
@@ -366,9 +401,8 @@ describe('preview runtime interactions', () => {
     test('updates display, visibility, and lock state from preview controls', async () => {
         const { default: DisplayControl } = await import('./DisplayControl');
         const { default: ShowHideScreen } = await import('./ShowHideScreen');
-        const { default: ScreenPreviewerHeaderComp } = await import(
-            './ScreenPreviewerHeaderComp'
-        );
+        const { default: ScreenPreviewerHeaderComp } =
+            await import('./ScreenPreviewerHeaderComp');
 
         await act(async () => {
             root.render(
@@ -391,17 +425,22 @@ describe('preview runtime interactions', () => {
                 new MouseEvent('click', { bubbles: true, cancelable: true }),
             );
         });
-        const displayItems = showAppContextMenuMock.mock.calls[0]?.[1] as Array<{
+        const displayItems = (showAppContextMenuMock.mock.calls[0]?.[1] ??
+            []) as Array<{
             menuElement: string;
             onSelect: () => void;
         }>;
-        expect(displayItems[1]?.menuElement).toContain('*Projector(2): 1280x720');
+        expect(displayItems[1]?.menuElement).toContain(
+            '*Projector(2): 1280x720',
+        );
         await act(async () => {
             displayItems[0]?.onSelect();
         });
         expect(screenManager.displayId).toBe(1);
 
-        const showHide = container.querySelector('.show-hide') as HTMLDivElement | null;
+        const showHide = container.querySelector(
+            '.show-hide',
+        ) as HTMLDivElement | null;
         expect(showHide?.title).toContain('[F5]');
         expect(showHide?.className).toContain('showing');
         await act(async () => {
@@ -411,7 +450,9 @@ describe('preview runtime interactions', () => {
         });
         expect(screenManager.isShowing).toBe(false);
 
-        const lockIcon = container.querySelector('.bi-lock-fill') as HTMLElement | null;
+        const lockIcon = container.querySelector(
+            '.bi-lock-fill',
+        ) as HTMLElement | null;
         await act(async () => {
             lockIcon?.dispatchEvent(
                 new MouseEvent('click', { bubbles: true, cancelable: true }),
@@ -422,9 +463,8 @@ describe('preview runtime interactions', () => {
     });
 
     test('changes stage number and toggles background audio handlers in the footer', async () => {
-        const { default: ScreenPreviewerFooterComp } = await import(
-            './ScreenPreviewerFooterComp'
-        );
+        const { default: ScreenPreviewerFooterComp } =
+            await import('./ScreenPreviewerFooterComp');
 
         videoSources = [['/media/background.mp3', 'video-1']];
 
@@ -445,7 +485,8 @@ describe('preview runtime interactions', () => {
                 new MouseEvent('click', { bubbles: true, cancelable: true }),
             );
         });
-        const stageItems = showAppContextMenuMock.mock.calls[0]?.[1] as Array<{
+        const stageItems = (showAppContextMenuMock.mock.calls[0]?.[1] ??
+            []) as Array<{
             menuElement: string;
             onSelect: () => void;
         }>;
@@ -463,7 +504,9 @@ describe('preview runtime interactions', () => {
         await act(async () => {
             await Promise.resolve();
         });
-        expect(container.querySelector('[data-audio-handler="video-1"]')).not.toBeNull();
+        expect(
+            container.querySelector('[data-audio-handler="video-1"]'),
+        ).not.toBeNull();
 
         const audio = document.createElement('audio');
         audio.dataset.videoId = 'video-1';
@@ -482,7 +525,9 @@ describe('preview runtime interactions', () => {
             'Audio is Playing',
             'Please pause all background audios before disabling audio handlers',
         );
-        expect(container.querySelector('[data-audio-handler="video-1"]')).not.toBeNull();
+        expect(
+            container.querySelector('[data-audio-handler="video-1"]'),
+        ).not.toBeNull();
 
         Object.defineProperty(audio, 'paused', {
             configurable: true,
@@ -493,15 +538,16 @@ describe('preview runtime interactions', () => {
                 new MouseEvent('click', { bubbles: true, cancelable: true }),
             );
         });
-        expect(container.querySelector('[data-audio-handler="video-1"]')).toBeNull();
+        expect(
+            container.querySelector('[data-audio-handler="video-1"]'),
+        ).toBeNull();
 
         audio.remove();
     });
 
     test('runs clear controls and refreshes preview scale changes', async () => {
-        const { default: MiniScreenClearControlComp } = await import(
-            './MiniScreenClearControlComp'
-        );
+        const { default: MiniScreenClearControlComp } =
+            await import('./MiniScreenClearControlComp');
         const { default: MiniScreenComp } = await import('./MiniScreenComp');
 
         screenManager.screenBibleManager.isShowing = false;
@@ -538,7 +584,9 @@ describe('preview runtime interactions', () => {
         });
 
         expect(screenManager.clear).toHaveBeenCalledOnce();
-        expect(screenManager.screenBackgroundManager.clear).toHaveBeenCalledOnce();
+        expect(
+            screenManager.screenBackgroundManager.clear,
+        ).toHaveBeenCalledOnce();
         expect(screenManager.screenBibleManager.clear).not.toHaveBeenCalled();
         expect(useKeyboardRegisteringMock).toHaveBeenCalled();
 
@@ -567,14 +615,15 @@ describe('preview runtime interactions', () => {
     });
 
     test('handles preview item resize, menus, drag and wheel interactions', async () => {
-        const { default: ScreenPreviewerItemComp } = await import(
-            './ScreenPreviewerItemComp'
-        );
+        const { default: ScreenPreviewerItemComp } =
+            await import('./ScreenPreviewerItemComp');
 
         screenManager.isSelected = false;
         otherScreenManager.isSelected = true;
         screenManager.screenBibleManager.isShowing = true;
-        screenManager.screenBibleManager.screenViewData = { type: 'bible-item' };
+        screenManager.screenBibleManager.screenViewData = {
+            type: 'bible-item',
+        };
 
         await act(async () => {
             root.render(
@@ -584,7 +633,9 @@ describe('preview runtime interactions', () => {
             );
         });
 
-        const card = container.querySelector('.mini-screen') as HTMLDivElement | null;
+        const card = container.querySelector(
+            '.mini-screen',
+        ) as HTMLDivElement | null;
         const previewBody = container.querySelector(
             '.w-100.app-overflow-hidden',
         ) as HTMLDivElement | null;
@@ -607,13 +658,20 @@ describe('preview runtime interactions', () => {
                 }),
             );
         });
-        const menuItems = showAppContextMenuMock.mock.calls[0]?.[1] as Array<{
+        const menuItems = (showAppContextMenuMock.mock.calls[0]?.[1] ??
+            []) as Array<{
             menuElement: string;
             onSelect: () => void;
         }>;
-        expect(menuItems.map(({ menuElement }) => menuElement)).toContain('Solo');
-        expect(menuItems.map(({ menuElement }) => menuElement)).toContain('Select');
-        expect(menuItems.map(({ menuElement }) => menuElement)).toContain('Delete');
+        expect(menuItems.map(({ menuElement }) => menuElement)).toContain(
+            'Solo',
+        );
+        expect(menuItems.map(({ menuElement }) => menuElement)).toContain(
+            'Select',
+        );
+        expect(menuItems.map(({ menuElement }) => menuElement)).toContain(
+            'Delete',
+        );
         expect(menuItems.map(({ menuElement }) => menuElement)).toContain(
             'Set Line Sync',
         );
@@ -672,7 +730,10 @@ describe('preview runtime interactions', () => {
         });
         expect(dragOnDroppedMock).toHaveBeenCalled();
 
-        extractDropDataMock.mockReturnValueOnce({ type: 'bg-color', item: '#fff' });
+        extractDropDataMock.mockReturnValueOnce({
+            type: 'bg-color',
+            item: '#fff',
+        });
         const filledDropEvent = new Event('drop', {
             bubbles: true,
             cancelable: true,
@@ -722,17 +783,24 @@ describe('preview runtime interactions', () => {
 
     test('wires body context menus, Bible controller syncing, and stored app-document parsing', async () => {
         vi.useFakeTimers();
-        const { default: MiniScreenBodyComp } = await import('./MiniScreenBodyComp');
+        const { default: MiniScreenBodyComp } =
+            await import('./MiniScreenBodyComp');
         const previewHelpers = await import('./screenPreviewerHelpers');
 
         await act(async () => {
             root.render(<MiniScreenBodyComp previewScale={2} />);
         });
 
-        expect(container.querySelector('[data-color-bar="blue"]')).not.toBeNull();
-        expect(container.querySelector('[data-color-bar="none"]')).not.toBeNull();
+        expect(
+            container.querySelector('[data-color-bar="blue"]'),
+        ).not.toBeNull();
+        expect(
+            container.querySelector('[data-color-bar="none"]'),
+        ).not.toBeNull();
 
-        const body = container.querySelector('.card-body') as HTMLDivElement | null;
+        const body = container.querySelector(
+            '.card-body',
+        ) as HTMLDivElement | null;
         showAppContextMenuMock.mockClear();
         await act(async () => {
             body?.dispatchEvent(
@@ -742,7 +810,8 @@ describe('preview runtime interactions', () => {
                 }),
             );
         });
-        const bodyMenuItems = showAppContextMenuMock.mock.calls[0]?.[1] as Array<{
+        const bodyMenuItems = (showAppContextMenuMock.mock.calls[0]?.[1] ??
+            []) as Array<{
             menuElement: string;
             onSelect: () => void;
         }>;
@@ -754,12 +823,16 @@ describe('preview runtime interactions', () => {
         expect(screenManager.fireRefreshEvent).toHaveBeenCalled();
         expect(otherScreenManager.fireRefreshEvent).toHaveBeenCalled();
 
-        bibleViewController.handleScreenBibleVersesHighlighting('GEN-1-1', true);
+        bibleViewController.handleScreenBibleVersesHighlighting(
+            'GEN-1-1',
+            true,
+        );
         expect(
             screenManager.screenBibleManager.handleScreenVersesHighlighting,
         ).toHaveBeenCalledWith('GEN-1-1', true);
         expect(
-            otherScreenManager.screenBibleManager.handleScreenVersesHighlighting,
+            otherScreenManager.screenBibleManager
+                .handleScreenVersesHighlighting,
         ).toHaveBeenCalledWith('GEN-1-1', true);
 
         screenManager.screenBibleManager.applyBibleViewData?.({
@@ -783,10 +856,9 @@ describe('preview runtime interactions', () => {
             false,
         );
         await vi.runAllTimersAsync();
-        expect(bibleViewController.handleVersesHighlighting).toHaveBeenCalledWith(
-            'GEN-1-2',
-            false,
-        );
+        expect(
+            bibleViewController.handleVersesHighlighting,
+        ).toHaveBeenCalledWith('GEN-1-2', false);
 
         getSettingMock.mockReturnValueOnce(
             JSON.stringify({

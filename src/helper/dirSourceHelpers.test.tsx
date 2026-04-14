@@ -21,31 +21,36 @@ const {
     unregisterFileSourceEventListenerMock: vi.fn(),
     fsCheckDirExistMock: vi.fn(),
     checkAreArraysEqualMock: vi.fn(
-        (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right),
+        (left: unknown, right: unknown) =>
+            JSON.stringify(left) === JSON.stringify(right),
     ),
     watchMock: vi.fn(),
     handleErrorMock: vi.fn(),
     notifyNewElementAddedMock: vi.fn(),
 }));
 
-vi.mock('./debuggerHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+vi.mock('./debuggerHelpers', () => {
     return {
-        useAppEffect: React.useEffect,
+        useAppEffect: useEffect,
         useAppEffectAsync: (
-            effectMethod: (methods: Record<string, unknown>) => Promise<void | (() => void)>,
-            deps: React.DependencyList,
+            effectMethod: (
+                methods: Record<string, unknown>,
+            ) => Promise<void | (() => void)>,
+            deps: readonly unknown[],
             methods?: Record<string, unknown>,
         ) => {
-            React.useEffect(() => {
+            const methodContext = methods === undefined ? {} : { ...methods };
+            /* eslint-disable react-hooks/exhaustive-deps */
+            useEffect(() => {
                 let cleanup: void | (() => void);
-                void effectMethod({ ...(methods ?? {}) }).then((resolved) => {
+                void effectMethod(methodContext).then((resolved) => {
                     cleanup = resolved;
                 });
                 return () => {
                     cleanup?.();
                 };
             }, deps);
+            /* eslint-enable react-hooks/exhaustive-deps */
         },
     };
 });
@@ -137,15 +142,21 @@ describe('dirSourceHelpers', () => {
         const onLoaded = vi.fn();
         const observedValues: Array<string[] | null | undefined> = [];
         const dirSource = {
-            registerEventListener: vi.fn((_events: string[], callback: () => void) => {
-                refreshCallbacks.push(callback);
-                return ['refresh-listener'];
-            }),
+            registerEventListener: vi.fn(
+                (_events: string[], callback: () => void) => {
+                    refreshCallbacks.push(callback);
+                    return ['refresh-listener'];
+                },
+            ),
             unregisterEventListener: vi.fn(),
             getFilePaths: vi
                 .fn()
                 .mockResolvedValueOnce(['/docs/a.owa', '/docs/b.owa'])
-                .mockResolvedValueOnce(['/docs/a.owa', '/docs/b.owa', '/docs/c.owa']),
+                .mockResolvedValueOnce([
+                    '/docs/a.owa',
+                    '/docs/b.owa',
+                    '/docs/c.owa',
+                ]),
         };
 
         function Probe() {
@@ -216,10 +227,12 @@ describe('dirSourceHelpers', () => {
         const reloadCallbacks: Array<() => void> = [];
         const observedValues: unknown[] = [];
         const firstDirSource = {
-            registerEventListener: vi.fn((_events: string[], callback: () => void) => {
-                reloadCallbacks.push(callback);
-                return ['reload-listener'];
-            }),
+            registerEventListener: vi.fn(
+                (_events: string[], callback: () => void) => {
+                    reloadCallbacks.push(callback);
+                    return ['reload-listener'];
+                },
+            ),
             unregisterEventListener: vi.fn(),
         };
         const secondDirSource = {
@@ -307,8 +320,12 @@ describe('dirSourceHelpers', () => {
         });
         root = null;
 
-        expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith('listener-1');
-        expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith('listener-2');
+        expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith(
+            'listener-1',
+        );
+        expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith(
+            'listener-2',
+        );
     });
 
     test('watches directory changes and refreshes when files change', async () => {
@@ -321,7 +338,11 @@ describe('dirSourceHelpers', () => {
         };
         let watchCallback: ((...args: unknown[]) => void) | undefined;
         watchMock.mockImplementation(
-            (_dirPath: string, _options: { signal: AbortSignal }, callback: (...args: unknown[]) => void) => {
+            (
+                _dirPath: string,
+                _options: { signal: AbortSignal },
+                callback: (...args: unknown[]) => void,
+            ) => {
                 watchCallback = callback;
             },
         );
@@ -352,7 +373,9 @@ describe('dirSourceHelpers', () => {
             await watchCallback?.('change', '/docs/new.owa');
         });
 
-        expect(dirSource.alertFileChanging).toHaveBeenCalledWith('/docs/new.owa');
+        expect(dirSource.alertFileChanging).toHaveBeenCalledWith(
+            '/docs/new.owa',
+        );
         expect(dirSource.fireRefreshEvent).toHaveBeenCalledTimes(1);
 
         dirSource.filePathsMap = { appDocument: ['/docs/a.owa'] };
@@ -373,7 +396,9 @@ describe('dirSourceHelpers', () => {
             fireRefreshEvent: vi.fn(),
             getFilePathsQuick: vi.fn(),
         };
-        fsCheckDirExistMock.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+        fsCheckDirExistMock
+            .mockResolvedValueOnce(false)
+            .mockResolvedValueOnce(true);
         watchMock.mockImplementationOnce(() => {
             throw new Error('watch failed');
         });
@@ -399,7 +424,9 @@ describe('dirSourceHelpers', () => {
         expect(watchMock).not.toHaveBeenCalled();
 
         await act(async () => {
-            root?.render(<Probe source={{ ...dirSource, dirPath: '/docs-2' }} />);
+            root?.render(
+                <Probe source={{ ...dirSource, dirPath: '/docs-2' }} />,
+            );
             await Promise.resolve();
         });
 

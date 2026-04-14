@@ -85,7 +85,8 @@ const backgroundWebUrlListSettingManager = new SettingManager<
             return false;
         }
     },
-    serialize: (itemList) => JSON.stringify(sanitizeBackgroundWebUrlItemList(itemList)),
+    serialize: (itemList) =>
+        JSON.stringify(sanitizeBackgroundWebUrlItemList(itemList)),
     deserialize: (jsonString) =>
         sanitizeBackgroundWebUrlItemList(JSON.parse(jsonString)),
 });

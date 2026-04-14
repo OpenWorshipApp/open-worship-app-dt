@@ -304,7 +304,9 @@ export default function ForegroundWebComp() {
                 defaultFolderName={defaultDataDirNames.BACKGROUND_WEB}
                 dirSource={dirSource}
                 bodyHandler={renderChildren}
-                genContextMenuItems={genBackgroundWebContextMenuItems}
+                genContextMenuItems={(currentDirSource) =>
+                    genBackgroundWebContextMenuItems(currentDirSource)
+                }
                 fileSelectionOption={
                     backgroundType === 'color'
                         ? undefined

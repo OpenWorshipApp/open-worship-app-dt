@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { act, lazy } from 'react';
+import { act, lazy, useEffect, useState } from 'react';
+import type { DependencyList, ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -60,32 +61,34 @@ const {
 });
 
 /* eslint-disable react-hooks/exhaustive-deps */
-vi.mock('../helper/debuggerHelpers', async () => {
-    const React = await vi.importActual('react');
+vi.mock('../helper/debuggerHelpers', () => {
     return {
-        useAppEffect: React.useEffect,
+        useAppEffect: useEffect,
         useAppEffectAsync: <T extends Record<string, unknown>>(
             effectMethod: (methods: T) => Promise<void | (() => void)>,
-            deps: React.DependencyList,
+            deps: DependencyList,
             methods?: T,
         ) => {
-            React.useEffect(() => {
+            useEffect(() => {
                 const methodContext =
                     methods === undefined
                         ? (Object.create(null) as T)
                         : { ...methods };
                 void effectMethod(methodContext);
-            }, [...deps, ...(methods === undefined ? [] : Object.values(methods))]);
+            }, [
+                ...deps,
+                ...(methods === undefined ? [] : Object.values(methods)),
+            ]);
         },
         useAppStateAsync: <T,>(
             callee: () => Promise<T> | T,
-            deps: React.DependencyList,
+            deps: DependencyList,
             defaultValue?: T | null,
         ) => {
-            const [value, setValue] = React.useState<T | null | undefined>(
+            const [value, setValue] = useState<T | null | undefined>(
                 defaultValue,
             );
-            React.useEffect(() => {
+            useEffect(() => {
                 Promise.resolve(callee()).then((resolved) => {
                     setValue(resolved);
                 });
@@ -140,7 +143,10 @@ vi.mock('../editing-manager/EditingHistoryManager', () => ({
 }));
 
 import { DragTypeEnum } from '../helper/DragInf';
-import AppRangeComp, { handleCtrlWheel, wheelToRangeValue } from './AppRangeComp';
+import AppRangeComp, {
+    handleCtrlWheel,
+    wheelToRangeValue,
+} from './AppRangeComp';
 import AppSuspenseComp from './AppSuspenseComp';
 import AskingNewNameComp from './AskingNewNameComp';
 import AttachBackgroundIconComponent from './AttachBackgroundIconComponent';
@@ -212,7 +218,7 @@ describe('others basic components', () => {
         container = null;
     });
 
-    async function render(element: JSX.Element) {
+    async function render(element: ReactElement) {
         await act(async () => {
             if (!container) {
                 throw new TypeError('Missing test container');
@@ -270,7 +276,9 @@ describe('others basic components', () => {
         expect(container?.textContent).toContain(':5');
 
         await act(async () => {
-            buttons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            buttons[0]?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
         });
         expect(onChange).toHaveBeenLastCalledWith(4);
 
@@ -285,17 +293,20 @@ describe('others basic components', () => {
         expect(onChange).toHaveBeenLastCalledWith(9);
 
         await act(async () => {
-            buttons[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            buttons[1]?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
         });
         expect(onChange).toHaveBeenLastCalledWith(10);
     });
 
     test('shows suspense fallback until lazy content resolves', async () => {
-        let resolveLazy: ((value: { default: () => JSX.Element }) => void) | null =
-            null;
+        let resolveLazy:
+            | ((value: { default: () => ReactElement }) => void)
+            | null = null;
         const LazyChild = lazy(
             () =>
-                new Promise<{ default: () => JSX.Element }>((resolve) => {
+                new Promise<{ default: () => ReactElement }>((resolve) => {
                     resolveLazy = resolve;
                 }),
         );
@@ -306,7 +317,9 @@ describe('others basic components', () => {
             </AppSuspenseComp>,
         );
 
-        expect(container?.querySelector('img')?.getAttribute('alt')).toBe('Loading...');
+        expect(container?.querySelector('img')?.getAttribute('alt')).toBe(
+            'Loading...',
+        );
 
         await act(async () => {
             resolveLazy?.({ default: () => <div>Loaded child</div> });
@@ -320,12 +333,19 @@ describe('others basic components', () => {
         const applyName = vi.fn();
 
         await render(
-            <AskingNewNameComp defaultName="song" applyName={applyName} customIcon="ok" />,
+            <AskingNewNameComp
+                defaultName="song"
+                applyName={applyName}
+                customIcon="ok"
+            />,
         );
 
         const input = container?.querySelector('input');
         const button = container?.querySelector('button');
-        if (!(input instanceof HTMLInputElement) || !(button instanceof HTMLButtonElement)) {
+        if (
+            !(input instanceof HTMLInputElement) ||
+            !(button instanceof HTMLButtonElement)
+        ) {
             throw new TypeError('Missing rename controls');
         }
 
@@ -333,12 +353,16 @@ describe('others basic components', () => {
             setInputValue(input, 'new-song');
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.dispatchEvent(new Event('change', { bubbles: true }));
-            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            input.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            );
         });
         expect(applyName).toHaveBeenCalledWith('new-song');
 
         await act(async () => {
-            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            input.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+            );
         });
         expect(applyName).toHaveBeenCalledWith(null);
 
@@ -361,18 +385,27 @@ describe('others basic components', () => {
 
         await render(
             <div>
-                <LoadingComp message="Please wait" style={{ minWidth: '20px' }} />
+                <LoadingComp
+                    message="Please wait"
+                    style={{ minWidth: '20px' }}
+                />
                 <FileReadErrorComp fileSource={fileSource} reload={reload} />
             </div>,
         );
 
         expect(container?.textContent).toContain('Please wait');
-        expect(container?.textContent).toContain('Fail to read file data: bad.txt');
+        expect(container?.textContent).toContain(
+            'Fail to read file data: bad.txt',
+        );
 
         const buttons = container?.querySelectorAll('button') ?? [];
         await act(async () => {
-            buttons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            buttons[1]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            buttons[0]?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
+            buttons[1]?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
         });
 
         expect(reload).toHaveBeenCalledTimes(1);
@@ -398,8 +431,12 @@ describe('others basic components', () => {
         });
 
         const menuItems = showAppContextMenuMock.mock.calls[0]?.[1] ?? [];
-        const noColorItem = menuItems.find((item: any) => item.menuElement === 'No Color');
-        const redItem = menuItems.find((item: any) => item.menuElement === 'red');
+        const noColorItem = menuItems.find(
+            (item: any) => item.menuElement === 'No Color',
+        );
+        const redItem = menuItems.find(
+            (item: any) => item.menuElement === 'red',
+        );
 
         await act(async () => {
             noColorItem.onSelect();
@@ -468,16 +505,28 @@ describe('others basic components', () => {
 
         await act(async () => {
             buttons[0]?.dispatchEvent(
-                new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
             );
             buttons[2]?.dispatchEvent(
-                new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
             );
             buttons[3]?.dispatchEvent(
-                new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
             );
             buttons[4]?.dispatchEvent(
-                new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
             );
         });
 
@@ -492,9 +541,15 @@ describe('others basic components', () => {
             videoMenuItems[0].onSelect();
         });
 
-        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith('/media/web.url');
-        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith('/media/image.png');
-        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith('/media/video.mp4');
+        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/media/web.url',
+        );
+        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/media/image.png',
+        );
+        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/media/video.mp4',
+        );
     });
 
     test('previews paths, validates them, and opens the file explorer menu', async () => {
@@ -519,16 +574,22 @@ describe('others basic components', () => {
             await flushPromises();
         });
 
-        const pathItems = container?.querySelectorAll('.app-ellipsis-left') ?? [];
+        const pathItems =
+            container?.querySelectorAll('.app-ellipsis-left') ?? [];
         expect(pathItems[0]?.textContent).toBe('song');
         expect(pathItems[0]?.getAttribute('title')).toBe('Invalid Path');
         expect((pathItems[0] as HTMLElement).style.color).toBe('red');
         expect(pathItems[1]?.getAttribute('title')).toBe('base/skip-check.txt');
 
         await act(async () => {
-            pathItems[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             pathItems[0]?.dispatchEvent(
-                new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+                new MouseEvent('click', { bubbles: true }),
+            );
+            pathItems[0]?.dispatchEvent(
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
             );
         });
         expect(onClick).toHaveBeenCalledTimes(1);
@@ -538,7 +599,9 @@ describe('others basic components', () => {
         await act(async () => {
             menuItems[0].onSelect();
         });
-        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith('/base/song.txt');
+        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/base/song.txt',
+        );
     });
 
     test('renames files and reports success or cancellation', async () => {
@@ -546,7 +609,9 @@ describe('others basic components', () => {
         const renamedCallback = vi.fn();
         const fileSource = getMockFileSource('/songs/original.txt');
         const newFileSource = { filePath: '/songs/renamed.txt' };
-        fileSource.renameTo.mockResolvedValueOnce(newFileSource).mockResolvedValueOnce(null);
+        fileSource.renameTo
+            .mockResolvedValueOnce(newFileSource)
+            .mockResolvedValueOnce(null);
 
         await render(
             <RenderRenamingComp
@@ -558,7 +623,10 @@ describe('others basic components', () => {
 
         const input = container?.querySelector('input');
         const button = container?.querySelector('button');
-        if (!(input instanceof HTMLInputElement) || !(button instanceof HTMLButtonElement)) {
+        if (
+            !(input instanceof HTMLInputElement) ||
+            !(button instanceof HTMLButtonElement)
+        ) {
             throw new TypeError('Missing rename form');
         }
 
@@ -566,11 +634,16 @@ describe('others basic components', () => {
             setInputValue(input, 'renamed');
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.dispatchEvent(new Event('change', { bubbles: true }));
-            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            input.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            );
             await flushPromises();
         });
 
-        expect(renameAllMaterialFilesMock).toHaveBeenCalledWith(fileSource, 'renamed');
+        expect(renameAllMaterialFilesMock).toHaveBeenCalledWith(
+            fileSource,
+            'renamed',
+        );
         expect(moveFilePathMock).toHaveBeenCalledWith(
             '/songs/original.txt',
             '/songs/renamed.txt',
@@ -579,7 +652,9 @@ describe('others basic components', () => {
         expect(setIsRenaming).toHaveBeenCalledWith(false);
 
         await act(async () => {
-            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            input.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+            );
         });
         expect(setIsRenaming).toHaveBeenCalledWith(false);
 
@@ -612,7 +687,9 @@ describe('others basic components', () => {
 
         expect(host?.getAttribute('parentWidth')).toBe('320');
         expect(getShadowWidth()).toContain('320');
-        expect(resizeObserverInstances[0]?.observe).toHaveBeenCalledWith(container);
+        expect(resizeObserverInstances[0]?.observe).toHaveBeenCalledWith(
+            container,
+        );
 
         await act(async () => {
             containerWidth = 480;

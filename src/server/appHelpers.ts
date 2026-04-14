@@ -82,7 +82,7 @@ function setDecided() {
     );
 }
 export async function checkDecidedBibleReaderHomePage() {
-    if (appProvider.isPageSetting) {
+    if (!appProvider.isMainPage) {
         return;
     }
     if (appProvider.isPageReader) {

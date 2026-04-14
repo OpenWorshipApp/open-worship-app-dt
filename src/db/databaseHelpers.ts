@@ -90,7 +90,10 @@ class InitDBOpeningQueue {
 }
 
 export abstract class IndexedDbController implements DatabaseControllerInterface {
-    static instance: IndexedDbController | null = null;
+    static readonly instances = new Map<
+        typeof IndexedDbController,
+        IndexedDbController
+    >();
 
     abstract get storeName(): string;
     private readonly initQueue: InitDBOpeningQueue = new InitDBOpeningQueue();
@@ -116,10 +119,10 @@ export abstract class IndexedDbController implements DatabaseControllerInterface
     }
 
     get db(): IDBDatabase {
-        if (!this.isDbOpened) {
+        if (this._db === null) {
             throw new Error('DB is not initialized');
         }
-        return this._db as IDBDatabase;
+        return this._db;
     }
 
     initCallback<T>(
@@ -187,7 +190,7 @@ export abstract class IndexedDbController implements DatabaseControllerInterface
         secondaryId = null,
     }: ItemParamsType) {
         const oldData = await this.getItem(id);
-        if (oldData !== undefined) {
+        if (oldData !== null) {
             if (!isForceOverride) {
                 throw new Error(`Item with id ${id} already exists`);
             }
@@ -260,10 +263,12 @@ export abstract class IndexedDbController implements DatabaseControllerInterface
     }
 
     static async getInstance() {
-        if (this.instance === null) {
-            this.instance = this.instantiate();
+        let instance = this.instances.get(this);
+        if (instance === undefined) {
+            instance = this.instantiate();
+            this.instances.set(this, instance);
         }
-        await this.instance.init();
-        return this.instance;
+        await instance.init();
+        return instance;
     }
 }

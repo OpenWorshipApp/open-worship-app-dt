@@ -49,7 +49,8 @@ export function toHexColorString(color: any): string | null {
 
 export const colorToTransparent = (fullColor: AppColorType): number => {
     const hexStr = `${fullColor[7]}${fullColor[8]}`;
-    return Number.parseInt(hexStr, 16) || 255;
+    const alpha = Number.parseInt(hexStr, 16);
+    return Number.isNaN(alpha) ? 255 : alpha;
 };
 
 export const transparentColor = (n: number): string => {

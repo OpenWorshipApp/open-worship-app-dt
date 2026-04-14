@@ -23,7 +23,7 @@ vi.mock('../helper/helpers', () => ({
 }));
 
 vi.mock('../helper/debuggerHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+    const React = (await vi.importActual('react')) as any;
     return {
         useAppEffect: React.useEffect,
     };
@@ -81,20 +81,22 @@ describe('KeyboardEventListener', () => {
         expect(
             toShortcutKey({ wControlKey: ['Shift', 'Ctrl'], key: 'a' } as any),
         ).toBe('Ctrl+Shift+A');
-        expect(toShortcutKey({ allControlKey: ['Meta'], key: 'x' } as any)).toBe(
-            'Command+X',
-        );
+        expect(
+            toShortcutKey({ allControlKey: ['Meta'], key: 'x' } as any),
+        ).toBe('Command+X');
         expect(() =>
             toShortcutKey({ mControlKey: ['Meta'], key: 'a' } as any),
-        ).toThrow('mControlKey and lControlKey are ignored on Windows platform');
+        ).toThrow(
+            'mControlKey and lControlKey are ignored on Windows platform',
+        );
 
         setPlatform('mac');
         expect(
             toShortcutKey({ mControlKey: ['Meta', 'Shift'], key: 'c' } as any),
         ).toBe('⌘⇧ C');
-        expect(toShortcutKey({ allControlKey: ['Ctrl'], key: 'x' } as any)).toBe(
-            '⌃ X',
-        );
+        expect(
+            toShortcutKey({ allControlKey: ['Ctrl'], key: 'x' } as any),
+        ).toBe('⌃ X');
         expect(() =>
             toShortcutKey({ wControlKey: ['Ctrl'], key: 'a' } as any),
         ).toThrow('wControlKey and lControlKey are ignored on Mac platform');
@@ -115,32 +117,46 @@ describe('KeyboardEventListener', () => {
 
         setPlatform('windows');
         expect(
-            KeyboardEventListener.addControlKey(eventMapper as any, {
-                key: 'b',
-                ctrlKey: true,
-                altKey: false,
-                shiftKey: true,
-                metaKey: false,
-            } as any),
+            KeyboardEventListener.addControlKey(
+                eventMapper as any,
+                {
+                    key: 'b',
+                    ctrlKey: true,
+                    altKey: false,
+                    shiftKey: true,
+                    metaKey: false,
+                } as any,
+            ),
         ).toEqual({ key: 'b', wControlKey: ['Ctrl', 'Shift'] });
         expect(eventMapper).toEqual({ key: 'b' });
 
         setPlatform('mac');
         expect(
-            KeyboardEventListener.addControlKey({ key: 'c' } as any, {
-                key: 'c',
-                ctrlKey: true,
-                altKey: true,
-                shiftKey: false,
-                metaKey: true,
-            } as any),
+            KeyboardEventListener.addControlKey(
+                { key: 'c' } as any,
+                {
+                    key: 'c',
+                    ctrlKey: true,
+                    altKey: true,
+                    shiftKey: false,
+                    metaKey: true,
+                } as any,
+            ),
         ).toEqual({ key: 'c', mControlKey: ['Ctrl', 'Option', 'Meta'] });
 
         setPlatform('windows');
         expect(
             KeyboardEventListener.filterEventMappersByPlatform([
-                { platform: PlatformEnum.Windows, wControlKey: [], key: 'a' } as any,
-                { platform: PlatformEnum.MacOS, mControlKey: [], key: 'b' } as any,
+                {
+                    platform: PlatformEnum.Windows,
+                    wControlKey: [],
+                    key: 'a',
+                } as any,
+                {
+                    platform: PlatformEnum.MacOS,
+                    mControlKey: [],
+                    key: 'b',
+                } as any,
                 { key: 'c' },
             ]),
         ).toEqual([
@@ -168,13 +184,17 @@ describe('KeyboardEventListener', () => {
         expect(KeyboardEventListener.getLastLayer()).toBe('context-menu');
         KeyboardEventListener.removeLayer('context-menu');
         expect(KeyboardEventListener.getLastLayer()).toBe('root');
-        expect(KeyboardEventListener.genEventKeyFromFiredEvent(event as any)).toBe(
-            eventKey,
-        );
+        expect(
+            KeyboardEventListener.genEventKeyFromFiredEvent(event as any),
+        ).toBe(eventKey);
         expect(checkIsControlKeys({ key: 'Control' } as any)).toBe(true);
         expect(checkIsControlKeys({ key: 'Enter' } as any)).toBe(false);
-        expect(checkIsKeyboardEventMatch([eventMapper], event as any)).toBe(true);
-        expect(checkIsKeyboardEventMatch([{ key: 'x' }], event as any)).toBe(false);
+        expect(checkIsKeyboardEventMatch([eventMapper], event as any)).toBe(
+            true,
+        );
+        expect(checkIsKeyboardEventMatch([{ key: 'x' }], event as any)).toBe(
+            false,
+        );
 
         const registered = KeyboardEventListener.registerEventListener(
             [eventKey],
@@ -190,14 +210,19 @@ describe('KeyboardEventListener', () => {
         expect(listener).toHaveBeenCalledTimes(1);
 
         await expect(
-            KeyboardEventListener.checkShouldNext({ defaultPrevented: true } as any),
+            KeyboardEventListener.checkShouldNext({
+                defaultPrevented: true,
+            } as any),
         ).resolves.toBe(false);
     });
 
     test('registers keyboard listeners from the hook and cleans them up on unmount', async () => {
         setPlatform('windows');
         const listener = vi.fn();
-        const registerSpy = vi.spyOn(KeyboardEventListener, 'registerEventListener');
+        const registerSpy = vi.spyOn(
+            KeyboardEventListener,
+            'registerEventListener',
+        );
         const unregisterSpy = vi.spyOn(
             KeyboardEventListener,
             'unregisterEventListener',
@@ -207,8 +232,16 @@ describe('KeyboardEventListener', () => {
             useKeyboardRegistering(
                 [
                     { key: 'q' },
-                    { platform: PlatformEnum.Windows, wControlKey: ['Ctrl'], key: 'w' } as any,
-                    { platform: PlatformEnum.MacOS, mControlKey: ['Meta'], key: 'm' } as any,
+                    {
+                        platform: PlatformEnum.Windows,
+                        wControlKey: ['Ctrl'],
+                        key: 'w',
+                    } as any,
+                    {
+                        platform: PlatformEnum.MacOS,
+                        mControlKey: ['Meta'],
+                        key: 'm',
+                    } as any,
                 ],
                 listener,
                 [dep],

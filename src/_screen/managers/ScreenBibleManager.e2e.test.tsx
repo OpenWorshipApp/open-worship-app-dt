@@ -33,16 +33,13 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../../helper/helpers', async () => {
-    const actual = await vi.importActual<typeof import('../../helper/helpers')>(
-        '../../helper/helpers',
-    );
+    const actual = (await vi.importActual('../../helper/helpers')) as any;
     return {
         ...actual,
         bringDomToCenterView: mocks.bringDomToCenterView,
         bringDomToNearestView: mocks.bringDomToNearestView,
         bringDomToTopView: mocks.bringDomToTopView,
-        checkIsVerticalPartialInvisible:
-            mocks.checkIsVerticalPartialInvisible,
+        checkIsVerticalPartialInvisible: mocks.checkIsVerticalPartialInvisible,
     };
 });
 
@@ -160,9 +157,7 @@ vi.mock('../../bible-lookup/BibleSelectionComp', () => ({
 }));
 
 vi.mock('../bibleScreenHelpers', async () => {
-    const actual = await vi.importActual<typeof import('../bibleScreenHelpers')>(
-        '../bibleScreenHelpers',
-    );
+    const actual = (await vi.importActual('../bibleScreenHelpers')) as any;
     return {
         default: {
             ...actual.default,
@@ -315,10 +310,10 @@ describe('ScreenBibleManager e2e', () => {
     });
 
     test('renders a scaled Bible table and syncs verse selection across columns', async () => {
-        const { renderScreenBibleManager } = await import('../screenBibleHelpers');
-        const { default: ScreenBibleManager } = await import(
-            './ScreenBibleManager'
-        );
+        const { renderScreenBibleManager } =
+            await import('../screenBibleHelpers');
+        const { default: ScreenBibleManager } =
+            await import('./ScreenBibleManager');
 
         const screenManagerBase = createScreenManagerBase(101);
         const screenBibleManager = new ScreenBibleManager(screenManagerBase);
@@ -375,10 +370,10 @@ describe('ScreenBibleManager e2e', () => {
     });
 
     test('double click promotes the selected verse to the top flow', async () => {
-        const { renderScreenBibleManager } = await import('../screenBibleHelpers');
-        const { default: ScreenBibleManager } = await import(
-            './ScreenBibleManager'
-        );
+        const { renderScreenBibleManager } =
+            await import('../screenBibleHelpers');
+        const { default: ScreenBibleManager } =
+            await import('./ScreenBibleManager');
 
         const screenManagerBase = createScreenManagerBase(102);
         const screenBibleManager = new ScreenBibleManager(screenManagerBase);
@@ -415,10 +410,10 @@ describe('ScreenBibleManager e2e', () => {
     });
 
     test('applies synced selections and centers partially hidden verses', async () => {
-        const { renderScreenBibleManager } = await import('../screenBibleHelpers');
-        const { default: ScreenBibleManager } = await import(
-            './ScreenBibleManager'
-        );
+        const { renderScreenBibleManager } =
+            await import('../screenBibleHelpers');
+        const { default: ScreenBibleManager } =
+            await import('./ScreenBibleManager');
 
         const screenManagerBase = createScreenManagerBase(103);
         const screenBibleManager = new ScreenBibleManager(screenManagerBase);

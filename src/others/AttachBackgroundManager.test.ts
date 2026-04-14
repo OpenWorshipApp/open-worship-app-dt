@@ -34,13 +34,21 @@ const {
         fsCheckFileExistMock: vi.fn(async () => true),
         fsDeleteFileMock: vi.fn(async () => {}),
         fsWriteFileMock: vi.fn(async () => {}),
-        unlockingMock: vi.fn(async (_key: string, callback: () => Promise<unknown>) => {
-            return await callback();
-        }),
+        unlockingMock: vi.fn(
+            async (_key: string, callback: () => Promise<unknown>) => {
+                return await callback();
+            },
+        ),
         fileSourceInstances,
         getMockFileSource,
-        baseDirFileFullNameOrPathMap: {} as Record<string, string | null | undefined>,
-        baseDirResolvedFilePathMap: {} as Record<string, string | null | undefined>,
+        baseDirFileFullNameOrPathMap: {} as Record<
+            string,
+            string | null | undefined
+        >,
+        baseDirResolvedFilePathMap: {} as Record<
+            string,
+            string | null | undefined
+        >,
     };
 });
 
@@ -169,7 +177,8 @@ describe('AttachBackgroundManager', () => {
         const missingVideoSource = getMockFileSource('/files/video.mp4');
         baseDirFileFullNameOrPathMap['select-dir-image-bg|/files/image.png'] =
             'image.png';
-        baseDirFileFullNameOrPathMap['select-dir-video-bg|/files/video.mp4'] = null;
+        baseDirFileFullNameOrPathMap['select-dir-video-bg|/files/video.mp4'] =
+            null;
 
         await manager.saveData(filePath, {
             color: {
@@ -222,7 +231,9 @@ describe('AttachBackgroundManager', () => {
                 },
             }),
         );
-        expect(getMockFileSource(metaPath).fireUpdateEvent).toHaveBeenCalledTimes(1);
+        expect(
+            getMockFileSource(metaPath).fireUpdateEvent,
+        ).toHaveBeenCalledTimes(1);
     });
 
     test('reads metadata, initializes missing files, and deserializes entries', async () => {
@@ -261,7 +272,10 @@ describe('AttachBackgroundManager', () => {
 
         const data = await manager.readData(filePath);
 
-        expect(fsWriteFileMock).toHaveBeenCalledWith(metaPath, JSON.stringify({}));
+        expect(fsWriteFileMock).toHaveBeenCalledWith(
+            metaPath,
+            JSON.stringify({}),
+        );
         expect(data.color).toEqual({
             type: DragTypeEnum.BACKGROUND_COLOR,
             item: '#000000',
@@ -294,10 +308,14 @@ describe('AttachBackgroundManager', () => {
         expect(saveSpy).toHaveBeenCalledWith(filePath, {
             '2': droppedData,
         });
-        expect(manager.getAttachedBackgroundSync(filePath, 2)).toEqual(droppedData);
+        expect(manager.getAttachedBackgroundSync(filePath, 2)).toEqual(
+            droppedData,
+        );
 
         readSpy.mockClear();
-        expect(await manager.getAttachedBackground(filePath, 2)).toEqual(droppedData);
+        expect(await manager.getAttachedBackground(filePath, 2)).toEqual(
+            droppedData,
+        );
         expect(readSpy).not.toHaveBeenCalled();
 
         await manager.detachBackground(filePath, 2);
@@ -323,7 +341,9 @@ describe('AttachBackgroundManager', () => {
         await manager.deleteMetaDataFile(filePath);
 
         expect(fsDeleteFileMock).toHaveBeenCalledWith(metaPath);
-        expect(getMockFileSource(metaPath).fireUpdateEvent).toHaveBeenCalledTimes(1);
+        expect(
+            getMockFileSource(metaPath).fireUpdateEvent,
+        ).toHaveBeenCalledTimes(1);
         expect(await manager.getAttachedBackground(filePath)).toBeNull();
     });
 

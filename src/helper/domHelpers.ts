@@ -415,6 +415,12 @@ export function getParamFileFullName() {
     );
     return fileFullName;
 }
+export function setParamFileFullName(fileFullName: string) {
+    const searchParams = new URLSearchParams(globalThis.location.search);
+    searchParams.set('file', fileFullName);
+    const newUrl = `${location.pathname}?${searchParams.toString()}`;
+    history.replaceState(null, '', newUrl);
+}
 
 const APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME = 'app-new-element-highlight';
 export async function notifyNewElementAdded(
