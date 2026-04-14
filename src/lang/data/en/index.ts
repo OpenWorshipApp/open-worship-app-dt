@@ -74,7 +74,7 @@ const lang: LanguageDataType = {
         return key;
     },
     transformBibleBookName(bookName: string) {
-        return bookName;
+        return [bookName];
     },
 };
 

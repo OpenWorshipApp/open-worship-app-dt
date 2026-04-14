@@ -25,6 +25,6 @@ describe('English language data', () => {
         expect(lang.trimText('  around  ')).toBe('around');
         expect(lang.endWord('word')).toBe('word ');
         expect(lang.sanitizeTranKey('Save')).toBe('Save');
-        expect(lang.transformBibleBookName('1 Peter')).toBe('1 Peter');
+        expect(lang.transformBibleBookName('1 Peter')).toEqual(['1 Peter']);
     });
 });

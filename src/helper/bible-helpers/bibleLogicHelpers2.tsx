@@ -245,13 +245,23 @@ async function transformExtracted(
     if (book === null) {
         return result;
     }
-    const langData = await getLangDataFromBibleKey(bibleKey);
-    if (langData !== null) {
-        book = langData.transformBibleBookName(book);
-    }
-    const bookKey = await bookToKey(bibleKey, book);
+    let bookKey: string | null = await bookToKey(bibleKey, book);
     if (bookKey === null) {
-        return null;
+        const langData = await getLangDataFromBibleKey(bibleKey);
+        if (langData === null) {
+            return null;
+        } else {
+            const transformedBooks = langData.transformBibleBookName(book);
+            for (const transformedBook of transformedBooks) {
+                bookKey = await bookToKey(bibleKey, transformedBook);
+                if (bookKey !== null) {
+                    break;
+                }
+            }
+            if (bookKey === null) {
+                return null;
+            }
+        }
     }
     result.bookKey = bookKey;
     result.guessingBook = null;

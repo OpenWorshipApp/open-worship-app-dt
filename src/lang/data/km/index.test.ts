@@ -26,7 +26,12 @@ describe('Khmer language data', () => {
         expect(lang.trimText(' \u200Bព្រះគម្ពីរ\u200B ')).toBe('ព្រះគម្ពីរ');
         expect(lang.endWord('ពាក្យ')).toBe('ពាក្យ\u200B');
         expect(lang.sanitizeTranKey(' Open PPTX ')).toBe('open pptx');
-        expect(lang.transformBibleBookName(' ពេត្រុសទី១ ')).toBe('១ ពេត្រុស');
-        expect(lang.transformBibleBookName('លោកុប្បត្តិ')).toBe('លោកុប្បត្តិ');
+        expect(lang.transformBibleBookName(' ពេត្រុសទី១ ')).toEqual([
+            'ពេត្រុសទី១',
+            '១ ពេត្រុស',
+        ]);
+        expect(lang.transformBibleBookName('លោកុប្បត្តិ')).toEqual([
+            'លោកុប្បត្តិ',
+        ]);
     });
 });

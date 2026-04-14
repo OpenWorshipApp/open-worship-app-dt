@@ -283,14 +283,14 @@ describe('bibleLogicHelpers2', () => {
                 return {
                     fontFamily: 'Khmer Font',
                     sanitizeText: (text: string) => text.replaceAll('.', ':'),
-                    transformBibleBookName: (text: string) => text,
+                    transformBibleBookName: (text: string) => [text],
                 };
             }
             if (locale === 'en-US') {
                 return {
                     fontFamily: 'English Font',
                     sanitizeText: (text: string) => text,
-                    transformBibleBookName: (text: string) => text,
+                    transformBibleBookName: (text: string) => [text],
                 };
             }
             return null;
@@ -370,7 +370,7 @@ describe('bibleLogicHelpers2', () => {
         mocks.getLangDataAsyncMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
             fontFamily: 'Fallback Font',
             sanitizeText: (text: string) => text,
-            transformBibleBookName: (text: string) => text,
+            transformBibleBookName: (text: string) => [text],
         });
         expect(await module.getLangDataFromBibleKey('KJV')).toEqual({
             fontFamily: 'Fallback Font',
@@ -496,6 +496,34 @@ describe('bibleLogicHelpers2', () => {
         const unknown = await module.extractBibleTitle('KJV', 'Unknown Book');
         expect(unknown.result.guessingBook).toBe('Unknown Book');
         expect(unknown.inputText).toBe('');
+    });
+
+    test('falls back to transformed bible book name candidates', async () => {
+        const module = await loadModule();
+
+        mocks.getLangDataAsyncMock.mockImplementation(async (locale: string) => {
+            if (locale === 'km-KH') {
+                return {
+                    fontFamily: 'Khmer Font',
+                    sanitizeText: (text: string) => text,
+                    transformBibleBookName: (text: string) => [text, 'John'],
+                };
+            }
+            return null;
+        });
+
+        const extracted = await module.extractBibleTitle(
+            'KJV',
+            'Translated John 3:2',
+        );
+
+        expect(extracted.result.bookKey).toBe('JHN');
+        expect(extracted.result.bibleItem?.target).toEqual({
+            bookKey: 'JHN',
+            chapter: 3,
+            verseEnd: 2,
+            verseStart: 2,
+        });
     });
 
     test('creates extra bible items for broken chapter ranges', async () => {

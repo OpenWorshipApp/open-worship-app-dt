@@ -212,7 +212,7 @@ describe('langHelpers', () => {
                 extraBibleContextMenuItems: () => [],
                 bibleAudioAvailable: false,
                 sanitizeTranKey: (key: string) => key,
-                transformBibleBookName: (bookName: string) => bookName,
+                transformBibleBookName: (bookName: string) => [bookName],
             },
         }));
 
