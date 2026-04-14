@@ -43,6 +43,7 @@ import FileListHandlerComp from '../others/FileListHandlerComp';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
 import BackgroundWebUrlItemComp from './BackgroundWebUrlItemComp';
+import { UNKNOWN_COLOR_NOTE } from '../helper/colorNoteHelpers';
 
 function RenderChildComp({
     filePath,
@@ -128,14 +129,21 @@ function basicRenderBody(
     thumbnailWidth: number,
     handleUrlRemoving: (urlSource: BackgroundWebUrlSource) => Promise<void>,
     filePaths: string[],
+    colorNote?: string,
 ) {
     const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
     const sortedFilePaths = [...filePaths].sort((a, b) => {
         return a.localeCompare(b);
     });
-    const sortedUrlSources = [...urlSources].sort((a, b) => {
-        return a.fullName.localeCompare(b.fullName);
-    });
+
+    // TODO: add support for colorNote on url
+    const sortedUrlSources =
+        colorNote === undefined || colorNote === UNKNOWN_COLOR_NOTE
+            ? [...urlSources].sort((a, b) => {
+                  return a.fullName.localeCompare(b.fullName);
+              })
+            : [];
+
     return (
         <div className="w-100">
             <div className="d-flex justify-content-center flex-wrap">

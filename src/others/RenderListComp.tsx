@@ -19,7 +19,7 @@ function RenderFileItemsWithColorNote({
     sortFilePaths,
 }: {
     filePaths: string[];
-    bodyHandler: (filePaths: string[]) => any;
+    bodyHandler: (filePaths: string[], colorNote?: string) => any;
     sortFilePaths?: (filePaths: string[]) => string[];
 }) {
     const filePathColorMap = useMemo(() => {
@@ -44,7 +44,7 @@ function RenderFileItemsWithColorNote({
         return (
             <Fragment key={colorNote}>
                 {genColorBar(colorNote)}
-                {bodyHandler(subFilePaths)}
+                {bodyHandler(subFilePaths, colorNote)}
             </Fragment>
         );
     });
@@ -83,7 +83,7 @@ export default function RenderListComp({
 }: Readonly<{
     dirSource: DirSource;
     mimetypeName: MimetypeNameType;
-    bodyHandler: (filePaths: string[]) => any;
+    bodyHandler: (filePaths: string[], colorNote?: string) => any;
     setIsOnScreen: (isOnScreen: boolean) => void;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
     sortFilePaths?: (filePaths: string[]) => string[];

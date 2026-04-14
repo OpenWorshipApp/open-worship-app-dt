@@ -82,7 +82,7 @@ type PropsType = {
     mimetypeName: MimetypeNameType;
     dirSource: DirSource;
     header?: any;
-    bodyHandler: (filePaths: string[]) => any;
+    bodyHandler: (filePaths: string[], colorNote?: string) => any;
     onNewFile?: (dirPath: string, newName: string) => Promise<boolean>;
     onFileDeleted?: (filePath: string) => void;
     contextMenuItems?: ContextMenuItemType[];
