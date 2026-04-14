@@ -417,8 +417,11 @@ describe('others basic components', () => {
             getColorNote: vi.fn(async () => '#FF00FF'),
             setColorNote: vi.fn(async (_color: string | null) => {}),
         };
+        const handleChange = vi.fn();
 
-        await render(<ItemColorNoteComp item={item} />);
+        await render(
+            <ItemColorNoteComp item={item} onChange={handleChange} />,
+        );
         await act(async () => {
             await flushPromises();
         });
@@ -445,6 +448,8 @@ describe('others basic components', () => {
 
         expect(item.setColorNote).toHaveBeenNthCalledWith(1, null);
         expect(item.setColorNote).toHaveBeenNthCalledWith(2, '#ff0000');
+        expect(handleChange).toHaveBeenNthCalledWith(1, null);
+        expect(handleChange).toHaveBeenNthCalledWith(2, '#ff0000');
         expect(wrapper?.getAttribute('title')).toBe('red');
     });
 

@@ -80,6 +80,7 @@ export default function RenderListComp({
     setIsOnScreen,
     checkIsOnScreen,
     sortFilePaths,
+    disableColorNoteGrouping,
 }: Readonly<{
     dirSource: DirSource;
     mimetypeName: MimetypeNameType;
@@ -87,6 +88,7 @@ export default function RenderListComp({
     setIsOnScreen: (isOnScreen: boolean) => void;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
     sortFilePaths?: (filePaths: string[]) => string[];
+    disableColorNoteGrouping?: boolean;
 }>) {
     const filePaths = useFilePaths(dirSource, mimetypeName);
     useFileSourceIsOnScreen(
@@ -104,6 +106,13 @@ export default function RenderListComp({
     }
     if (filePaths === null) {
         return <RenderFailListComp dirSource={dirSource} />;
+    }
+    if (disableColorNoteGrouping) {
+        let newFilePaths = filePaths;
+        if (sortFilePaths !== undefined) {
+            newFilePaths = sortFilePaths(newFilePaths);
+        }
+        return bodyHandler(newFilePaths);
     }
     return (
         <RenderFileItemsWithColorNote

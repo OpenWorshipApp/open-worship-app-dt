@@ -1,7 +1,7 @@
 import './BackgroundWebComp.scss';
 
-import { useCallback, type ReactElement } from 'react';
-import { useMemo, useState } from 'react';
+import { Fragment, useCallback, type ReactElement } from 'react';
+import { useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -43,7 +43,8 @@ import FileListHandlerComp from '../others/FileListHandlerComp';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
 import BackgroundWebUrlItemComp from './BackgroundWebUrlItemComp';
-import { UNKNOWN_COLOR_NOTE } from '../helper/colorNoteHelpers';
+import { genColorBar } from '../helper/colorNoteHelpers';
+import { genBackgroundWebColorSections } from './backgroundWebCompHelpers';
 
 function RenderChildComp({
     filePath,
@@ -128,59 +129,61 @@ function basicRenderBody(
     urlSources: BackgroundWebUrlSource[],
     thumbnailWidth: number,
     handleUrlRemoving: (urlSource: BackgroundWebUrlSource) => Promise<void>,
+    handleUrlColorNoteChange: () => void,
     filePaths: string[],
-    colorNote?: string,
 ) {
     const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
-    const sortedFilePaths = [...filePaths].sort((a, b) => {
-        return a.localeCompare(b);
-    });
-
-    // TODO: add support for colorNote on url
-    const sortedUrlSources =
-        colorNote === undefined || colorNote === UNKNOWN_COLOR_NOTE
-            ? [...urlSources].sort((a, b) => {
-                  return a.fullName.localeCompare(b.fullName);
-              })
-            : [];
+    const sections = genBackgroundWebColorSections(filePaths, urlSources);
 
     return (
         <div className="w-100">
-            <div className="d-flex justify-content-center flex-wrap">
-                {sortedFilePaths.map((filePath) => {
-                    return (
-                        <BackgroundMediaItemComp
-                            key={filePath}
-                            rendChild={rendChild}
-                            genExtraItemContextMenuItems={
-                                genBackgroundWebExtraItemContextMenuItems
-                            }
-                            dragType={DragTypeEnum.BACKGROUND_WEB}
-                            onClick={undefined}
-                            noDraggable={false}
-                            isNameOnTop={false}
-                            thumbnailWidth={thumbnailWidth}
-                            thumbnailHeight={thumbnailHeight}
-                            filePath={filePath}
-                        />
-                    );
-                })}
-                {sortedUrlSources.map((urlSource) => {
-                    return (
-                        <BackgroundWebUrlItemComp
-                            key={urlSource.id}
-                            urlSource={urlSource}
-                            thumbnailWidth={thumbnailWidth}
-                            thumbnailHeight={thumbnailHeight}
-                            onRemove={handleUrlRemoving}
-                        />
-                    );
-                })}
-                <FillingFlexCenterComp
-                    width={thumbnailWidth}
-                    className="web-thumbnail"
-                />
-            </div>
+            {sections.map((section) => {
+                return (
+                    <Fragment key={section.colorNote ?? 'default'}>
+                        {section.colorNote === undefined
+                            ? null
+                            : genColorBar(section.colorNote)}
+                        <div className="d-flex justify-content-center flex-wrap">
+                            {section.filePaths.map((filePath) => {
+                                return (
+                                    <BackgroundMediaItemComp
+                                        key={filePath}
+                                        rendChild={rendChild}
+                                        genExtraItemContextMenuItems={
+                                            genBackgroundWebExtraItemContextMenuItems
+                                        }
+                                        dragType={DragTypeEnum.BACKGROUND_WEB}
+                                        onClick={undefined}
+                                        noDraggable={false}
+                                        isNameOnTop={false}
+                                        thumbnailWidth={thumbnailWidth}
+                                        thumbnailHeight={thumbnailHeight}
+                                        filePath={filePath}
+                                    />
+                                );
+                            })}
+                            {section.urlSources.map((urlSource) => {
+                                return (
+                                    <BackgroundWebUrlItemComp
+                                        key={urlSource.id}
+                                        urlSource={urlSource}
+                                        thumbnailWidth={thumbnailWidth}
+                                        thumbnailHeight={thumbnailHeight}
+                                        onRemove={handleUrlRemoving}
+                                        onColorNoteChange={
+                                            handleUrlColorNoteChange
+                                        }
+                                    />
+                                );
+                            })}
+                            <FillingFlexCenterComp
+                                width={thumbnailWidth}
+                                className="web-thumbnail"
+                            />
+                        </div>
+                    </Fragment>
+                );
+            })}
         </div>
     );
 }
@@ -190,9 +193,7 @@ export default function BackgroundWebComp() {
     const [urlItems, setUrlItems] = useState<BackgroundWebUrlItemData[]>(() => {
         return getBackgroundWebUrlItemList();
     });
-    const urlSources = useMemo(() => {
-        return createBackgroundWebUrlSourceList(urlItems);
-    }, [urlItems]);
+    const urlSources = createBackgroundWebUrlSourceList(urlItems);
     const dirSource = useGenDirSourceReload(
         dirSourceSettingNames.BACKGROUND_WEB,
     );
@@ -244,6 +245,11 @@ export default function BackgroundWebComp() {
         },
         [],
     );
+    const handleUrlColorNoteChange = useCallback(() => {
+        setUrlItems((itemList) => {
+            return [...itemList];
+        });
+    }, []);
     const getAddUrlContextMenuItem = useCallback((): ContextMenuItemType => {
         return {
             menuElement: tran('Add URL'),
@@ -286,6 +292,7 @@ export default function BackgroundWebComp() {
         urlSources,
         thumbnailWidth,
         handleUrlRemoving,
+        handleUrlColorNoteChange,
     );
     return (
         <div
@@ -299,6 +306,7 @@ export default function BackgroundWebComp() {
                     defaultFolderName={defaultDataDirNames.BACKGROUND_WEB}
                     dirSource={dirSource}
                     bodyHandler={renderBody}
+                    disableColorNoteGrouping
                     genContextMenuItems={handleContextMenuItemsGenerating}
                     fileSelectionOption={{
                         windowTitle: 'Select web files',

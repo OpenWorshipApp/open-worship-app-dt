@@ -101,6 +101,7 @@ type PropsType = {
         event: any,
     ) => void;
     sortFilePaths?: (filePaths: string[]) => string[];
+    disableColorNoteGrouping?: boolean;
 };
 
 export default function FileListHandlerComp({
@@ -120,6 +121,7 @@ export default function FileListHandlerComp({
     checkIsOnScreen,
     onItemsAdding,
     sortFilePaths,
+    disableColorNoteGrouping,
 }: Readonly<PropsType>) {
     const [isOnScreen, setIsOnScreen] = useState(false);
     const handleNameApplying = useCallback(
@@ -215,6 +217,9 @@ export default function FileListHandlerComp({
                                 setIsOnScreen={setIsOnScreen}
                                 checkIsOnScreen={checkIsOnScreen}
                                 sortFilePaths={sortFilePaths}
+                                disableColorNoteGrouping={
+                                    disableColorNoteGrouping
+                                }
                             />
                         </ul>
                     )}

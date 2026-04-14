@@ -193,13 +193,13 @@ describe('backgroundWebUrlHelpers', () => {
     });
 
     test('supports drag serialization, color notes, and drag deserialization', async () => {
+        getColorNoteFilePathSettingMock.mockReturnValue('blue');
         const source = new BackgroundWebUrlSource({
             id: 'web-1',
             src: ' https://example.com/page ',
             isUrl: true,
         });
         fileDragDeserializeMock.mockReturnValue({ kind: 'file-source' });
-        getColorNoteFilePathSettingMock.mockReturnValue('blue');
 
         expect(source.src).toBe('https://example.com/page');
         expect(source.fullName).toBe('https://example.com/page');
@@ -213,6 +213,7 @@ describe('backgroundWebUrlHelpers', () => {
                 isUrl: true,
             },
         });
+        expect(source.colorNote).toBe('blue');
         expect(await source.getColorNote()).toBe('blue');
 
         await source.setColorNote('green');
@@ -226,6 +227,7 @@ describe('backgroundWebUrlHelpers', () => {
             null,
             'green',
         );
+        expect(source.colorNote).toBe('green');
         expect(createBackgroundWebUrlSourceList([source.toData()])).toEqual([
             expect.objectContaining({
                 id: 'web-1',
