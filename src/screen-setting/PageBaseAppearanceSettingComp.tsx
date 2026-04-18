@@ -38,7 +38,7 @@ export default function PageBaseAppearanceSettingComp({
     return (
         <div className="d-flex align-items-center flex-wrap gap-2">
             <div className="d-flex align-items-center">
-                <small className='mx-1'>{tran('On Screen Width:')}</small>
+                <small className="mx-1">{tran('On Screen Width:')}</small>
                 <fieldset className="btn-group btn-group-sm ms-2" role="group">
                     <input
                         className="btn-check"

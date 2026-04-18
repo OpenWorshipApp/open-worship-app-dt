@@ -100,7 +100,9 @@ vi.mock('../helper/domHelpers', () => ({
 }));
 
 vi.mock('../others/AppRangeComp', () => ({
-    default: ({ value, title }: any) => <div data-range-title={title}>{value}</div>,
+    default: ({ value, title }: any) => (
+        <div data-range-title={title}>{value}</div>
+    ),
     handleCtrlWheel: handleCtrlWheelMock,
 }));
 
@@ -187,13 +189,30 @@ vi.mock('../helper/timeoutHelpers', () => ({
 }));
 
 vi.mock('./screenHelpers', () => ({
-    calMediaSizes: vi.fn(() => ({ width: 100, height: 50, offsetH: 1, offsetV: 2 })),
+    calMediaSizes: vi.fn(() => ({
+        width: 100,
+        height: 50,
+        offsetH: 1,
+        offsetV: 2,
+    })),
     genVideoIDFromSrc: vi.fn(() => 'video-md5'),
     getAllDisplays: vi.fn(() => ({
-        primaryDisplay: { id: 1, bounds: { x: 0, y: 0, width: 1920, height: 1080 }, label: 'Main' },
+        primaryDisplay: {
+            id: 1,
+            bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+            label: 'Main',
+        },
         displays: [
-            { id: 1, bounds: { x: 0, y: 0, width: 1920, height: 1080 }, label: 'Main' },
-            { id: 2, bounds: { x: 0, y: 0, width: 1280, height: 720 }, label: 'Projector' },
+            {
+                id: 1,
+                bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+                label: 'Main',
+            },
+            {
+                id: 2,
+                bounds: { x: 0, y: 0, width: 1280, height: 720 },
+                label: 'Projector',
+            },
         ],
     })),
     hideScreen: hideMock,
@@ -247,9 +266,9 @@ vi.mock('./managers/screenManagerHooks', async () => {
 });
 
 vi.mock('./preview/MiniScreenAudioHandlersComp', async () => {
-    const actual = await vi.importActual<typeof import('./preview/MiniScreenAudioHandlersComp')>(
+    const actual = (await vi.importActual(
         './preview/MiniScreenAudioHandlersComp',
-    );
+    )) as any;
     return actual;
 });
 
@@ -261,19 +280,25 @@ vi.mock('../app-document-list/Slide', () => ({
 
 vi.mock('../app-document-list/PdfSlide', () => ({
     default: class PdfSlide {
-        static readonly tryValidate = vi.fn((item: any) => item?.kind === 'pdf');
+        static readonly tryValidate = vi.fn(
+            (item: any) => item?.kind === 'pdf',
+        );
     },
 }));
 
 vi.mock('../app-document-list/PptxSlide', () => ({
     default: class PptxSlide {
-        static readonly tryValidate = vi.fn((item: any) => item?.kind === 'pptx');
+        static readonly tryValidate = vi.fn(
+            (item: any) => item?.kind === 'pptx',
+        );
     },
 }));
 
 vi.mock('../app-document-list/DocxSlide', () => ({
     default: class DocxSlide {
-        static readonly tryValidate = vi.fn((item: any) => item?.kind === 'docx');
+        static readonly tryValidate = vi.fn(
+            (item: any) => item?.kind === 'docx',
+        );
     },
 }));
 
@@ -292,7 +317,12 @@ describe('screen component smoke tests', () => {
                 return JSON.stringify({
                     1: {
                         filePath: '/slides/test.slide',
-                        itemJson: { kind: 'slide', id: 7, metadata: {}, canvasItems: [] },
+                        itemJson: {
+                            kind: 'slide',
+                            id: 7,
+                            metadata: {},
+                            canvasItems: [],
+                        },
                     },
                 });
             }
@@ -301,34 +331,25 @@ describe('screen component smoke tests', () => {
     });
 
     test('renders root screen components with mocked screen manager context', async () => {
-        const { default: ScreenBackgroundColorComp } = await import(
-            './ScreenBackgroundColorComp'
-        );
-        const { default: ScreenBackgroundImageComp } = await import(
-            './ScreenBackgroundImageComp'
-        );
-        const { default: ScreenBackgroundVideoComp } = await import(
-            './ScreenBackgroundVideoComp'
-        );
-        const { default: ScreenBackgroundComp } = await import(
-            './ScreenBackgroundComp'
-        );
+        const { default: ScreenBackgroundColorComp } =
+            await import('./ScreenBackgroundColorComp');
+        const { default: ScreenBackgroundImageComp } =
+            await import('./ScreenBackgroundImageComp');
+        const { default: ScreenBackgroundVideoComp } =
+            await import('./ScreenBackgroundVideoComp');
+        const { default: ScreenBackgroundComp } =
+            await import('./ScreenBackgroundComp');
         const { default: ScreenBibleComp } = await import('./ScreenBibleComp');
-        const { default: ScreenForegroundComp } = await import(
-            './ScreenForegroundComp'
-        );
-        const { default: ScreenSlideComp } = await import(
-            './ScreenVaryAppDocumentComp'
-        );
-        const { default: ScreenCloseButtonComp } = await import(
-            './ScreenCloseButtonComp'
-        );
-        const { default: RenderTransitionEffectComp } = await import(
-            './RenderTransitionEffectComp'
-        );
-        const { default: ScreenEffectControlComp } = await import(
-            './preview/ScreenEffectControlComp'
-        );
+        const { default: ScreenForegroundComp } =
+            await import('./ScreenForegroundComp');
+        const { default: ScreenSlideComp } =
+            await import('./ScreenVaryAppDocumentComp');
+        const { default: ScreenCloseButtonComp } =
+            await import('./ScreenCloseButtonComp');
+        const { default: RenderTransitionEffectComp } =
+            await import('./RenderTransitionEffectComp');
+        const { default: ScreenEffectControlComp } =
+            await import('./preview/ScreenEffectControlComp');
         const { default: ScreenAppComp } = await import('./ScreenAppComp');
 
         expect(
@@ -388,9 +409,8 @@ describe('screen component smoke tests', () => {
     });
 
     test('renders background video sizing and playback attributes', async () => {
-        const { default: ScreenBackgroundVideoComp } = await import(
-            './ScreenBackgroundVideoComp'
-        );
+        const { default: ScreenBackgroundVideoComp } =
+            await import('./ScreenBackgroundVideoComp');
 
         const html = renderToStaticMarkup(
             <ScreenBackgroundVideoComp
@@ -410,42 +430,30 @@ describe('screen component smoke tests', () => {
     });
 
     test('renders preview components and preview helpers', async () => {
-        const { default: MiniScreenFooterComp } = await import(
-            './preview/MiniScreenFooterComp'
-        );
-        const { default: MiniScreenBodyComp } = await import(
-            './preview/MiniScreenBodyComp'
-        );
-        const { default: MiniScreenAppComp, genStyleRendering } = await import(
-            './preview/MiniScreenAppComp'
-        );
-        const { default: MiniScreenComp } = await import(
-            './preview/MiniScreenComp'
-        );
-        const { default: ScreenPreviewerHeaderComp } = await import(
-            './preview/ScreenPreviewerHeaderComp'
-        );
-        const { default: ScreenPreviewerFooterComp } = await import(
-            './preview/ScreenPreviewerFooterComp'
-        );
-        const { default: ScreenPreviewerItemComp } = await import(
-            './preview/ScreenPreviewerItemComp'
-        );
-        const { default: MiniScreenClearControlComp } = await import(
-            './preview/MiniScreenClearControlComp'
-        );
-        const { default: ShowHideScreen } = await import(
-            './preview/ShowHideScreen'
-        );
-        const { default: DisplayControl } = await import(
-            './preview/DisplayControl'
-        );
-        const { default: MiniScreenAudioHandlersComp } = await import(
-            './preview/MiniScreenAudioHandlersComp'
-        );
-        const {
-            default: ShowingScreenIcon,
-        } = await import('./preview/ShowingScreenIcon');
+        const { default: MiniScreenFooterComp } =
+            await import('./preview/MiniScreenFooterComp');
+        const { default: MiniScreenBodyComp } =
+            await import('./preview/MiniScreenBodyComp');
+        const { default: MiniScreenAppComp, genStyleRendering } =
+            await import('./preview/MiniScreenAppComp');
+        const { default: MiniScreenComp } =
+            await import('./preview/MiniScreenComp');
+        const { default: ScreenPreviewerHeaderComp } =
+            await import('./preview/ScreenPreviewerHeaderComp');
+        const { default: ScreenPreviewerFooterComp } =
+            await import('./preview/ScreenPreviewerFooterComp');
+        const { default: ScreenPreviewerItemComp } =
+            await import('./preview/ScreenPreviewerItemComp');
+        const { default: MiniScreenClearControlComp } =
+            await import('./preview/MiniScreenClearControlComp');
+        const { default: ShowHideScreen } =
+            await import('./preview/ShowHideScreen');
+        const { default: DisplayControl } =
+            await import('./preview/DisplayControl');
+        const { default: MiniScreenAudioHandlersComp } =
+            await import('./preview/MiniScreenAudioHandlersComp');
+        const { default: ShowingScreenIcon } =
+            await import('./preview/ShowingScreenIcon');
         const previewHelpers = await import('./preview/screenPreviewerHelpers');
 
         expect(
@@ -456,13 +464,15 @@ describe('screen component smoke tests', () => {
                 />,
             ),
         ).toContain('Preview Size Scale');
-        expect(renderToStaticMarkup(<MiniScreenBodyComp previewScale={2} />)).toContain(
-            'mini-screen-previewer-custom-html',
+        expect(
+            renderToStaticMarkup(<MiniScreenBodyComp previewScale={2} />),
+        ).toContain('mini-screen-previewer-custom-html');
+        expect(
+            renderToStaticMarkup(<MiniScreenAppComp screenId={1} />),
+        ).toContain('background-image');
+        expect(renderToStaticMarkup(<MiniScreenComp />)).toContain(
+            'card-footer',
         );
-        expect(renderToStaticMarkup(<MiniScreenAppComp screenId={1} />)).toContain(
-            'background-image',
-        );
-        expect(renderToStaticMarkup(<MiniScreenComp />)).toContain('card-footer');
         expect(renderToStaticMarkup(<ScreenPreviewerHeaderComp />)).toContain(
             'ColorNote',
         );
@@ -475,7 +485,9 @@ describe('screen component smoke tests', () => {
         expect(renderToStaticMarkup(<MiniScreenClearControlComp />)).toContain(
             'Clear All',
         );
-        expect(renderToStaticMarkup(<ShowHideScreen />)).toContain('Toggle showing screen');
+        expect(renderToStaticMarkup(<ShowHideScreen />)).toContain(
+            'Toggle showing screen',
+        );
         expect(renderToStaticMarkup(<DisplayControl />)).toContain('Projector');
         expect(
             renderToStaticMarkup(
@@ -485,18 +497,26 @@ describe('screen component smoke tests', () => {
                 />,
             ),
         ).toContain('audio.mp3');
-        expect(renderToStaticMarkup(<ShowingScreenIcon screenId={1} />)).toContain(
-            'Screen: 1',
-        );
+        expect(
+            renderToStaticMarkup(<ShowingScreenIcon screenId={1} />),
+        ).toContain('Screen: 1');
 
         expect(genStyleRendering(effectManagerStub as any)).toHaveLength(2);
 
-        previewHelpers.openContextMenu(new MouseEvent('contextmenu'), screenManagerMock);
+        previewHelpers.openContextMenu(
+            new MouseEvent('contextmenu'),
+            screenManagerMock,
+        );
         expect(showAppContextMenuMock).toHaveBeenCalledOnce();
         expect(previewHelpers.getAppDocumentListOnScreenSetting()).toEqual({
             1: {
                 filePath: '/slides/test.slide',
-                itemJson: { kind: 'slide', id: 7, metadata: {}, canvasItems: [] },
+                itemJson: {
+                    kind: 'slide',
+                    id: 7,
+                    metadata: {},
+                    canvasItems: [],
+                },
             },
         });
     });
@@ -513,7 +533,10 @@ describe('screen component smoke tests', () => {
 
         const element = document.createElement(
             'mini-screen-previewer-custom-html',
-        ) as CustomHTMLScreenPreviewer;
+        ) as HTMLElement & {
+            screenId?: number;
+            mountPoint?: HTMLElement;
+        };
         (element as any).screenId = 1;
         wrapper.appendChild(element);
 

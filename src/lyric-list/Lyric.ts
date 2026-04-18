@@ -56,8 +56,15 @@ export default class Lyric extends AppEditableDocumentSourceAbs<LyricType> {
         await this.setJsonData(jsonData);
     }
 
+    static getDefaultContentJsonData(): LyricType {
+        return {
+            metadata: this.genMetadata(),
+            content: DEFAULT_CONTENT,
+        };
+    }
+
     static async create(dir: string, name: string) {
-        return super.create(dir, name, { content: DEFAULT_CONTENT });
+        return super.create(dir, name, this.getDefaultContentJsonData());
     }
 
     async save(): Promise<boolean> {

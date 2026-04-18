@@ -86,16 +86,16 @@ describe('textSelectionHelpers', () => {
             '__DIVIDER__',
         ]);
 
-        menuItems[0].onSelect?.();
+        menuItems[0].onSelect?.(new MouseEvent('click'));
         expect(copyToClipboardMock).toHaveBeenCalledWith('Grace');
 
-        menuItems[1].onSelect?.();
+        menuItems[1].onSelect?.(new MouseEvent('click'));
         expect(openExternalURLMock).toHaveBeenCalledWith(
             'https://www.google.com/search?q=Grace',
         );
 
         openExternalURLMock.mockClear();
-        menuItems[2].onSelect?.();
+        menuItems[2].onSelect?.(new MouseEvent('click'));
         expect(openExternalURLMock).toHaveBeenCalledWith(
             'https://en.wiktionary.org/wiki/Grace',
         );

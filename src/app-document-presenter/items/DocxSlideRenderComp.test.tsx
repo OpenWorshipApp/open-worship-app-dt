@@ -14,7 +14,9 @@ vi.mock('../../app-document-list/appDocumentHelpers', () => ({
 }));
 
 vi.mock('./VarySlideRenderComp', () => ({
-    default: ({ children }: any) => <div data-testid="vary-slide">{children}</div>,
+    default: ({ children }: any) => (
+        <div data-testid="vary-slide">{children}</div>
+    ),
 }));
 
 vi.mock('./HtmlSlideRenderComp', () => ({
@@ -37,20 +39,21 @@ describe('DocxSlideRenderComp', () => {
     });
 
     test('passes DOCX HTML content and slide dimensions to HtmlSlideRenderComp', async () => {
-        const { default: DocxSlideRenderComp } = await import(
-            './DocxSlideRenderComp'
-        );
+        const { default: DocxSlideRenderComp } =
+            await import('./DocxSlideRenderComp');
 
         const markup = renderToStaticMarkup(
             <DocxSlideRenderComp
-                docxSlide={{
-                    id: 7,
-                    filePath: '/slides/sample.docx',
-                    html: '<p>Page</p>',
-                    htmlFilePath: '/slides/page.html',
-                    width: 816,
-                    height: 1056,
-                } as any}
+                docxSlide={
+                    {
+                        id: 7,
+                        filePath: '/slides/sample.docx',
+                        html: '<p>Page</p>',
+                        htmlFilePath: '/slides/page.html',
+                        width: 816,
+                        height: 1056,
+                    } as any
+                }
                 width={320}
                 index={0}
             />,

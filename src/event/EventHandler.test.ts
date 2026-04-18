@@ -33,9 +33,11 @@ describe('EventHandler', () => {
     test('queues prop events, respects locking, and stops after default prevention', async () => {
         const handler = new TestBasicEventHandler();
         const firstListener = vi.fn();
-        const secondListener = vi.fn((event: { defaultPrevented?: boolean }) => {
-            event.defaultPrevented = true;
-        });
+        const secondListener = vi.fn(
+            (event: { defaultPrevented?: boolean }) => {
+                event.defaultPrevented = true;
+            },
+        );
 
         handler.addOnEventListener('alpha', firstListener);
         handler.addOnEventListener('alpha', secondListener);
@@ -62,7 +64,10 @@ describe('EventHandler', () => {
             'invalid event name',
         );
 
-        const registered = handler.registerEventListener(['alpha', 'beta'], listener);
+        const registered = handler.registerEventListener(
+            ['alpha', 'beta'],
+            listener,
+        );
         handler.unregisterEventListener(registered);
         handler.addPropEvent('alpha', { defaultPrevented: false });
         await flushAsyncEvents();
@@ -89,9 +94,14 @@ describe('EventHandler', () => {
 
     test('prefixes static event names and reuses the static dispatcher', async () => {
         const listener = vi.fn();
-        const registered = TestEventHandler.registerEventListener(['open'], listener);
+        const registered = TestEventHandler.registerEventListener(
+            ['open'],
+            listener,
+        );
 
-        expect(TestEventHandler.prefixEventName('open')).toBe('test-event-open');
+        expect(TestEventHandler.prefixEventName('open')).toBe(
+            'test-event-open',
+        );
 
         TestEventHandler.addPropEvent('open', { id: 1 });
         await flushAsyncEvents();

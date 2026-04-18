@@ -50,7 +50,10 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
 vi.mock('../bible-list/bibleRenderHelpers', () => ({
     bibleRenderHelper: {
         toBibleVersesKey: vi.fn(
-            (_bibleKey: string, target: { chapter: number; verseStart: number }) => {
+            (
+                _bibleKey: string,
+                target: { chapter: number; verseStart: number },
+            ) => {
                 return `VERSE-${target.chapter}-${target.verseStart}`;
             },
         ),
@@ -69,13 +72,7 @@ vi.mock('../helper/FileSource', () => ({
 }));
 
 vi.mock('../background/RenderBackgroundWebIframeComp', () => ({
-    default: ({
-        src,
-        width,
-        height,
-        targetWidth,
-        targetHeight,
-    }: any) => {
+    default: ({ src, width, height, targetWidth, targetHeight }: any) => {
         return (
             <iframe
                 data-file-path={src.filePath}
@@ -210,50 +207,52 @@ describe('screen render helpers', () => {
     });
 
     test('builds Bible screen markup and wires verse selection handlers', async () => {
-        const bibleScreenHelper = (await import('./bibleScreenHelpers')).default;
-        const screenView = await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
-            [
-                {
-                    locale: 'en-US' as any,
-                    bibleKey: 'KJV',
-                    title: 'Genesis 1:1-2',
-                    verses: [
-                        {
-                            num: '1',
-                            text: 'In the beginning',
-                            verseKey: 'KJV-GEN-1-1',
-                            kjvVerseKey: 'GEN-1-1',
-                        },
-                        {
-                            num: '2',
-                            text: 'Verse two',
-                            verseKey: 'KJV-GEN-1-2',
-                            kjvVerseKey: 'GEN-1-2',
-                        },
-                    ],
-                },
-                {
-                    locale: 'en-US' as any,
-                    bibleKey: 'NIV',
-                    title: 'Genesis 1:1-2',
-                    verses: [
-                        {
-                            num: '1',
-                            text: 'At the start',
-                            verseKey: 'NIV-GEN-1-1',
-                            kjvVerseKey: 'GEN-1-1',
-                        },
-                        {
-                            num: '2',
-                            text: 'Verse two niv',
-                            verseKey: 'NIV-GEN-1-2',
-                            kjvVerseKey: 'GEN-1-2',
-                        },
-                    ],
-                },
-            ],
-            true,
-        );
+        const bibleScreenHelper = (await import('./bibleScreenHelpers'))
+            .default;
+        const screenView =
+            await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
+                [
+                    {
+                        locale: 'en-US' as any,
+                        bibleKey: 'KJV',
+                        title: 'Genesis 1:1-2',
+                        verses: [
+                            {
+                                num: '1',
+                                text: 'In the beginning',
+                                verseKey: 'KJV-GEN-1-1',
+                                kjvVerseKey: 'GEN-1-1',
+                            },
+                            {
+                                num: '2',
+                                text: 'Verse two',
+                                verseKey: 'KJV-GEN-1-2',
+                                kjvVerseKey: 'GEN-1-2',
+                            },
+                        ],
+                    },
+                    {
+                        locale: 'en-US' as any,
+                        bibleKey: 'NIV',
+                        title: 'Genesis 1:1-2',
+                        verses: [
+                            {
+                                num: '1',
+                                text: 'At the start',
+                                verseKey: 'NIV-GEN-1-1',
+                                kjvVerseKey: 'GEN-1-1',
+                            },
+                            {
+                                num: '2',
+                                text: 'Verse two niv',
+                                verseKey: 'NIV-GEN-1-2',
+                                kjvVerseKey: 'GEN-1-2',
+                            },
+                        ],
+                    },
+                ],
+                true,
+            );
 
         const onSelectKey = vi.fn();
         const onBibleSelect = vi.fn();
@@ -277,9 +276,13 @@ describe('screen render helpers', () => {
         ) as HTMLSpanElement | null;
         expect(firstVerse).not.toBeNull();
 
-        firstVerse?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+        firstVerse?.dispatchEvent(
+            new MouseEvent('mouseover', { bubbles: true }),
+        );
         expect(screenView.querySelectorAll('span.hover')).toHaveLength(2);
-        firstVerse?.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+        firstVerse?.dispatchEvent(
+            new MouseEvent('mouseout', { bubbles: true }),
+        );
         expect(screenView.querySelectorAll('span.hover')).toHaveLength(0);
 
         firstVerse?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -306,31 +309,33 @@ describe('screen render helpers', () => {
     });
 
     test('treats alt-click verse selection as a top-promotion action', async () => {
-        const bibleScreenHelper = (await import('./bibleScreenHelpers')).default;
-        const screenView = await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
-            [
-                {
-                    locale: 'en-US' as any,
-                    bibleKey: 'KJV',
-                    title: 'Genesis 1:1-2',
-                    verses: [
-                        {
-                            num: '1',
-                            text: 'In the beginning',
-                            verseKey: 'KJV-GEN-1-1',
-                            kjvVerseKey: 'GEN-1-1',
-                        },
-                        {
-                            num: '2',
-                            text: 'Verse two',
-                            verseKey: 'KJV-GEN-1-2',
-                            kjvVerseKey: 'GEN-1-2',
-                        },
-                    ],
-                },
-            ],
-            true,
-        );
+        const bibleScreenHelper = (await import('./bibleScreenHelpers'))
+            .default;
+        const screenView =
+            await bibleScreenHelper.genHtmlFromScreenViewBibleItem(
+                [
+                    {
+                        locale: 'en-US' as any,
+                        bibleKey: 'KJV',
+                        title: 'Genesis 1:1-2',
+                        verses: [
+                            {
+                                num: '1',
+                                text: 'In the beginning',
+                                verseKey: 'KJV-GEN-1-1',
+                                kjvVerseKey: 'GEN-1-1',
+                            },
+                            {
+                                num: '2',
+                                text: 'Verse two',
+                                verseKey: 'KJV-GEN-1-2',
+                                kjvVerseKey: 'GEN-1-2',
+                            },
+                        ],
+                    },
+                ],
+                true,
+            );
 
         const onSelectKey = vi.fn();
         bibleScreenHelper.registerHighlight(screenView, {
@@ -351,7 +356,8 @@ describe('screen render helpers', () => {
     });
 
     test('converts Bible items into render lists with localized verses', async () => {
-        const bibleScreenHelper = (await import('./bibleScreenHelpers')).default;
+        const bibleScreenHelper = (await import('./bibleScreenHelpers'))
+            .default;
 
         const rendered = await bibleScreenHelper.genBibleItemRenderList([
             {
@@ -388,10 +394,8 @@ describe('screen render helpers', () => {
     test('renders marquee and quick text foreground DOM helpers', async () => {
         vi.useFakeTimers();
 
-        const {
-            genHtmlForegroundMarquee,
-            genHtmlForegroundQuickText,
-        } = await import('./screenForegroundHelpers');
+        const { genHtmlForegroundMarquee, genHtmlForegroundQuickText } =
+            await import('./screenForegroundHelpers');
         const remove = vi.fn();
         const animData = {
             duration: 0,
@@ -495,9 +499,8 @@ describe('screen render helpers', () => {
     });
 
     test('styling helpers expose current Bible style and apply updates', async () => {
-        const { useStylingColor, useStylingFontSize } = await import(
-            './preview/stylingHelpers'
-        );
+        const { useStylingColor, useStylingFontSize } =
+            await import('./preview/stylingHelpers');
 
         let setColorToStyle: ((color: `#${string}`) => void) | undefined;
         let setFontSizeToStyle: ((size: number) => void) | undefined;
@@ -528,9 +531,8 @@ describe('screen render helpers', () => {
     });
 
     test('shows deterministic preview icon colors per screen id', async () => {
-        const { default: ShowingScreenIcon, genColorFromScreenId } = await import(
-            './preview/ShowingScreenIcon'
-        );
+        const { default: ShowingScreenIcon, genColorFromScreenId } =
+            await import('./preview/ShowingScreenIcon');
 
         const color = genColorFromScreenId(3);
         expect(genColorFromScreenId(3)).toBe(color);

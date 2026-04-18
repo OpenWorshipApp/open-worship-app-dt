@@ -4,11 +4,7 @@ import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const {
-    addLayerMock,
-    removeLayerMock,
-    settingState,
-} = vi.hoisted(() => ({
+const { addLayerMock, removeLayerMock, settingState } = vi.hoisted(() => ({
     addLayerMock: vi.fn(),
     removeLayerMock: vi.fn(),
     settingState: {
@@ -17,14 +13,14 @@ const {
 }));
 
 vi.mock('../helper/debuggerHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+    const React = (await vi.importActual('react')) as any;
     return {
         useAppEffect: React.useEffect,
     };
 });
 
 vi.mock('../helper/settingHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+    const React = (await vi.importActual('react')) as any;
     return {
         getSetting: (key: string) => {
             return settingState.values[key] ?? null;
@@ -33,7 +29,10 @@ vi.mock('../helper/settingHelpers', async () => {
             settingName: string,
             defaultNumber: number | (() => number),
         ) => {
-            let initial = Number.parseInt(settingState.values[settingName] ?? '', 10);
+            let initial = Number.parseInt(
+                settingState.values[settingName] ?? '',
+                10,
+            );
             if (Number.isNaN(initial)) {
                 initial =
                     typeof defaultNumber === 'function'
@@ -42,12 +41,11 @@ vi.mock('../helper/settingHelpers', async () => {
             }
             const [value, setValue] = React.useState(initial);
             const setValueSetting = (
-                next:
-                    | number
-                    | ((prev: number) => number),
+                next: number | ((prev: number) => number),
             ) => {
-                setValue((prev) => {
-                    const resolved = typeof next === 'function' ? next(prev) : next;
+                setValue((prev: number) => {
+                    const resolved =
+                        typeof next === 'function' ? next(prev) : next;
                     settingState.values[settingName] = `${resolved}`;
                     return resolved;
                 });
@@ -72,7 +70,9 @@ import ProgressBarEventListener, {
     useHideProgressBar,
     useShowProgressBar,
 } from './ProgressBarEventListener';
-import ToastEventListener, { useToastSimpleShowing } from './ToastEventListener';
+import ToastEventListener, {
+    useToastSimpleShowing,
+} from './ToastEventListener';
 import AppDocumentListEventListener, {
     useVarySlideSelecting,
     useVarySlideThumbnailSizeScale,
@@ -146,7 +146,10 @@ describe('event listeners', () => {
 
         ProgressBarEventListener.showProgressBar('syncing');
         ProgressBarEventListener.hideProgressBar('syncing');
-        ToastEventListener.showSimpleToast({ title: 'Saved', message: 'ok' } as any);
+        ToastEventListener.showSimpleToast({
+            title: 'Saved',
+            message: 'ok',
+        } as any);
         await flushAsyncEvents();
 
         expect(events).toEqual(['show:syncing', 'hide:syncing', 'toast:Saved']);
@@ -182,16 +185,21 @@ describe('event listeners', () => {
             root.render(<Probe />);
         });
 
-        expect(WindowEventListener.toEventMapperKey({
-            widget: 'context-menu',
-            state: 'open',
-        })).toBe('context-menu-open');
+        expect(
+            WindowEventListener.toEventMapperKey({
+                widget: 'context-menu',
+                state: 'open',
+            }),
+        ).toBe('context-menu-open');
 
         WindowEventListener.fireEvent(
             { widget: 'context-menu', state: 'open' },
             { id: 1 },
         );
-        WindowEventListener.fireEvent({ widget: 'context-menu', state: 'close' });
+        WindowEventListener.fireEvent({
+            widget: 'context-menu',
+            state: 'close',
+        });
         await flushAsyncEvents();
 
         expect(addLayerMock).toHaveBeenCalledWith('context-menu');
@@ -279,7 +287,9 @@ describe('event listeners', () => {
 
         function Probe() {
             useLyricSelecting((lyric) => {
-                events.push(`select-lyric:${lyric === null ? 'null' : 'value'}`);
+                events.push(
+                    `select-lyric:${lyric === null ? 'null' : 'value'}`,
+                );
             }, []);
             useBibleItemShowing(() => {
                 events.push('show-bible');

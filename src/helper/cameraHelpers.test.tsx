@@ -2,15 +2,27 @@
 
 import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
+import {
+    afterEach,
+    beforeAll,
+    beforeEach,
+    describe,
+    expect,
+    test,
+    vi,
+} from 'vitest';
 
-const { electronSendAsyncMock, handleErrorMock, enumerateDevicesMock, getUserMediaMock } =
-    vi.hoisted(() => ({
-        electronSendAsyncMock: vi.fn(),
-        handleErrorMock: vi.fn(),
-        enumerateDevicesMock: vi.fn(),
-        getUserMediaMock: vi.fn(),
-    }));
+const {
+    electronSendAsyncMock,
+    handleErrorMock,
+    enumerateDevicesMock,
+    getUserMediaMock,
+} = vi.hoisted(() => ({
+    electronSendAsyncMock: vi.fn(),
+    handleErrorMock: vi.fn(),
+    enumerateDevicesMock: vi.fn(),
+    getUserMediaMock: vi.fn(),
+}));
 
 vi.mock('../server/appHelpers', () => ({
     electronSendAsync: electronSendAsyncMock,
@@ -207,14 +219,18 @@ describe('cameraHelpers', () => {
             width: 320,
         } as any);
 
-        const video = parentContainer.querySelector('video') as HTMLVideoElement | null;
+        const video = parentContainer.querySelector(
+            'video',
+        ) as HTMLVideoElement | null;
         expect(video).not.toBeNull();
         expect(parentContainer.textContent).toBe('');
         expect(video?.style.width).toBe('320px');
         expect(video?.style.border).toBe('1px solid red');
 
         video?.onloadedmetadata?.(new Event('loadedmetadata'));
-    expect(globalThis.HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+        expect(
+            globalThis.HTMLMediaElement.prototype.play,
+        ).toHaveBeenCalledTimes(1);
 
         cleanup();
         expect(stopMock).toHaveBeenCalledTimes(1);

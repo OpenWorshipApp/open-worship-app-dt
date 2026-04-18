@@ -718,9 +718,9 @@ const lang: LanguageDataType = {
             numList.includes(arr[1].trim()) &&
             arr[0].trim().length > 0
         ) {
-            return `${arr[1].trim()} ${arr[0].trim()}`;
+            return [bookName, `${arr[1].trim()} ${arr[0].trim()}`];
         }
-        return bookName;
+        return [bookName];
     },
 };
 

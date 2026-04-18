@@ -78,9 +78,10 @@ describe('initHelpers', () => {
     });
 
     afterEach(async () => {
-        if (root) {
+        const currentRoot = root;
+        if (currentRoot) {
             await act(async () => {
-                root.unmount();
+                currentRoot.unmount();
             });
             root = null;
         }
@@ -145,28 +146,26 @@ describe('initHelpers', () => {
             root.render(<Probe />);
         });
 
-        expect((container?.firstElementChild as HTMLElement | null)?.dataset.theme).toBe(
-            'light',
-        );
         expect(
-            (container?.firstElementChild as HTMLElement | null)?.dataset.themeSource,
-        ).toBe(
-            'light',
-        );
+            (container?.firstElementChild as HTMLElement | null)?.dataset.theme,
+        ).toBe('light');
+        expect(
+            (container?.firstElementChild as HTMLElement | null)?.dataset
+                .themeSource,
+        ).toBe('light');
 
         await act(async () => {
             setThemeSource?.('dark');
         });
 
         expect(sendDataMock).toHaveBeenCalledWith('main:app:set-theme', 'dark');
-        expect((container?.firstElementChild as HTMLElement | null)?.dataset.theme).toBe(
-            'dark',
-        );
         expect(
-            (container?.firstElementChild as HTMLElement | null)?.dataset.themeSource,
-        ).toBe(
-            'dark',
-        );
+            (container?.firstElementChild as HTMLElement | null)?.dataset.theme,
+        ).toBe('dark');
+        expect(
+            (container?.firstElementChild as HTMLElement | null)?.dataset
+                .themeSource,
+        ).toBe('dark');
 
         await act(async () => {
             EventHandler.addPropEvent('app:theme-changed', 'light');
@@ -174,10 +173,9 @@ describe('initHelpers', () => {
         });
 
         expect(
-            (container?.firstElementChild as HTMLElement | null)?.dataset.themeSource,
-        ).toBe(
-            'light',
-        );
+            (container?.firstElementChild as HTMLElement | null)?.dataset
+                .themeSource,
+        ).toBe('light');
         expect(snapshots).toEqual(
             expect.arrayContaining([
                 { theme: 'light', themeSource: 'light' },

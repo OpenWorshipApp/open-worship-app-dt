@@ -49,7 +49,9 @@ vi.mock('../../server/comparisonHelpers', () => ({
         return JSON.stringify(a) === JSON.stringify(b);
     }),
     checkIsItemInArray: vi.fn((item: unknown, arr: unknown[]) => {
-        return arr.some((current) => JSON.stringify(current) === JSON.stringify(item));
+        return arr.some(
+            (current) => JSON.stringify(current) === JSON.stringify(item),
+        );
     }),
 }));
 
@@ -73,7 +75,8 @@ vi.mock('../ScreenBackgroundComp', () => ({
 }));
 
 vi.mock('../screenHelpers', () => ({
-    getBackgroundSrcListOnScreenSetting: getBackgroundSrcListOnScreenSettingMock,
+    getBackgroundSrcListOnScreenSetting:
+        getBackgroundSrcListOnScreenSettingMock,
     getForegroundDataListOnScreenSetting:
         getForegroundDataListOnScreenSettingMock,
 }));
@@ -99,7 +102,9 @@ vi.mock('../preview/screenPreviewerHelpers', () => ({
 }));
 
 vi.mock('../../app-document-list/appDocumentHelpers', () => ({
-    toKeyByFilePath: vi.fn((filePath: string, id: number) => `${filePath}:${id}`),
+    toKeyByFilePath: vi.fn(
+        (filePath: string, id: number) => `${filePath}:${id}`,
+    ),
 }));
 
 vi.mock('../../app-document-presenter/items/PdfSlideRenderComp', () => ({
@@ -128,21 +133,27 @@ vi.mock('./screenEventHelpers', () => ({
 
 vi.mock('../../app-document-list/PdfSlide', () => ({
     default: class PdfSlide {
-        static readonly tryValidate = vi.fn((item: any) => item?.kind === 'pdf');
+        static readonly tryValidate = vi.fn(
+            (item: any) => item?.kind === 'pdf',
+        );
         static readonly checkIsThisType = vi.fn(() => false);
     },
 }));
 
 vi.mock('../../app-document-list/PptxSlide', () => ({
     default: class PptxSlide {
-        static readonly tryValidate = vi.fn((item: any) => item?.kind === 'pptx');
+        static readonly tryValidate = vi.fn(
+            (item: any) => item?.kind === 'pptx',
+        );
         static readonly checkIsThisType = vi.fn(() => false);
     },
 }));
 
 vi.mock('../../app-document-list/DocxSlide', () => ({
     default: class DocxSlide {
-        static readonly tryValidate = vi.fn((item: any) => item?.kind === 'docx');
+        static readonly tryValidate = vi.fn(
+            (item: any) => item?.kind === 'docx',
+        );
         static readonly checkIsThisType = vi.fn(() => false);
     },
 }));
@@ -172,9 +183,8 @@ describe('non-Bible screen managers', () => {
     });
 
     test('updates and renders background state', async () => {
-        const { default: ScreenBackgroundManager } = await import(
-            './ScreenBackgroundManager'
-        );
+        const { default: ScreenBackgroundManager } =
+            await import('./ScreenBackgroundManager');
 
         const screenManagerBase = {
             screenId: 21,
@@ -198,7 +208,10 @@ describe('non-Bible screen managers', () => {
             },
         } as any;
 
-        const manager = new ScreenBackgroundManager(screenManagerBase, effectManager);
+        const manager = new ScreenBackgroundManager(
+            screenManagerBase,
+            effectManager,
+        );
         const listener = vi.fn();
         manager.registerEventListener(['color-set'], listener);
         const root = document.createElement('div');
@@ -222,16 +235,18 @@ describe('non-Bible screen managers', () => {
             type: 'bg-color',
             item: '#000000',
         } as any);
-        expect(manager.backgroundSrc).toEqual({ type: 'color', src: '#000000' });
+        expect(manager.backgroundSrc).toEqual({
+            type: 'color',
+            src: '#000000',
+        });
 
         manager.clear();
         expect(manager.backgroundSrc).toBeNull();
     });
 
     test('manages foreground overlays and sync payloads', async () => {
-        const { default: ScreenForegroundManager } = await import(
-            './ScreenForegroundManager'
-        );
+        const { default: ScreenForegroundManager } =
+            await import('./ScreenForegroundManager');
 
         const screenManagerBase = {
             screenId: 22,
@@ -247,7 +262,10 @@ describe('non-Bible screen managers', () => {
                 fade: {},
             },
         } as any;
-        const manager = new ScreenForegroundManager(screenManagerBase, effectManager);
+        const manager = new ScreenForegroundManager(
+            screenManagerBase,
+            effectManager,
+        );
         manager.div = document.createElement('div');
 
         const timeData = {
@@ -290,9 +308,8 @@ describe('non-Bible screen managers', () => {
     });
 
     test('deduplicates and removes camera overlays', async () => {
-        const { default: ScreenForegroundManager } = await import(
-            './ScreenForegroundManager'
-        );
+        const { default: ScreenForegroundManager } =
+            await import('./ScreenForegroundManager');
 
         const screenManagerBase = {
             screenId: 24,
@@ -308,7 +325,10 @@ describe('non-Bible screen managers', () => {
                 fade: {},
             },
         } as any;
-        const manager = new ScreenForegroundManager(screenManagerBase, effectManager);
+        const manager = new ScreenForegroundManager(
+            screenManagerBase,
+            effectManager,
+        );
 
         const cameraData = {
             deviceId: 'camera-1',
@@ -351,7 +371,10 @@ describe('non-Bible screen managers', () => {
                 animOut: vi.fn(async () => {}),
             },
         } as any;
-        const manager = new ScreenVaryAppDocumentManager(screenManagerBase, effectManager);
+        const manager = new ScreenVaryAppDocumentManager(
+            screenManagerBase,
+            effectManager,
+        );
         manager.div = document.createElement('div');
 
         expect(varyModule.checkIsPdfFullWidth()).toBe(true);

@@ -193,13 +193,13 @@ describe('backgroundWebUrlHelpers', () => {
     });
 
     test('supports drag serialization, color notes, and drag deserialization', async () => {
+        getColorNoteFilePathSettingMock.mockReturnValue('blue');
         const source = new BackgroundWebUrlSource({
             id: 'web-1',
             src: ' https://example.com/page ',
             isUrl: true,
         });
         fileDragDeserializeMock.mockReturnValue({ kind: 'file-source' });
-        getColorNoteFilePathSettingMock.mockReturnValue('blue');
 
         expect(source.src).toBe('https://example.com/page');
         expect(source.fullName).toBe('https://example.com/page');
@@ -213,6 +213,7 @@ describe('backgroundWebUrlHelpers', () => {
                 isUrl: true,
             },
         });
+        expect(source.colorNote).toBe('blue');
         expect(await source.getColorNote()).toBe('blue');
 
         await source.setColorNote('green');
@@ -226,6 +227,7 @@ describe('backgroundWebUrlHelpers', () => {
             null,
             'green',
         );
+        expect(source.colorNote).toBe('green');
         expect(createBackgroundWebUrlSourceList([source.toData()])).toEqual([
             expect.objectContaining({
                 id: 'web-1',
@@ -235,7 +237,9 @@ describe('backgroundWebUrlHelpers', () => {
         expect(deserializeBackgroundWebDragItem('/files/page.html')).toEqual({
             kind: 'file-source',
         });
-        expect(fileDragDeserializeMock).toHaveBeenCalledWith('/files/page.html');
+        expect(fileDragDeserializeMock).toHaveBeenCalledWith(
+            '/files/page.html',
+        );
 
         const urlDragItem = deserializeBackgroundWebDragItem({
             id: 'web-2',
@@ -263,7 +267,10 @@ describe('backgroundWebUrlHelpers', () => {
 
         askForURLMock.mockResolvedValueOnce('not-a-url');
         expect(await promptBackgroundWebUrlSource([])).toBeNull();
-        expect(showSimpleToastMock).toHaveBeenCalledWith('Add URL', 'Invalid URL');
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Add URL',
+            'Invalid URL',
+        );
 
         askForURLMock.mockResolvedValueOnce(' https://example.com/page ');
         expect(
@@ -276,7 +283,7 @@ describe('backgroundWebUrlHelpers', () => {
 
         const randomUUIDMock = vi
             .spyOn(globalThis.crypto, 'randomUUID')
-            .mockReturnValue('uuid-1');
+            .mockReturnValue('00000000-0000-4000-8000-000000000001');
         askForURLMock.mockResolvedValueOnce(' https://example.com/created ');
 
         const urlSource = await promptBackgroundWebUrlSource([
@@ -285,7 +292,7 @@ describe('backgroundWebUrlHelpers', () => {
 
         expect(urlSource).toBeInstanceOf(BackgroundWebUrlSource);
         expect(urlSource?.toData()).toEqual({
-            id: 'uuid-1',
+            id: '00000000-0000-4000-8000-000000000001',
             src: 'https://example.com/created',
             isUrl: true,
         });

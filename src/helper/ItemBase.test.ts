@@ -20,7 +20,7 @@ class TestItem extends ItemBase {
     id: number;
     filePath?: string | null;
     private _metadata: Record<string, unknown>;
-    readonly saveMock = vi.fn(async () => true);
+    readonly saveMock = vi.fn(async (_value?: unknown) => true);
 
     constructor(
         id: number,

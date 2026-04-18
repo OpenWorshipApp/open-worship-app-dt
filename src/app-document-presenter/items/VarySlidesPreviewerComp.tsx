@@ -22,7 +22,6 @@ import { createNewSlidesFromDroppedData } from './appDocumentHelpers';
 import appProvider from '../../server/appProvider';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
-    changeDragEventStyle(event, 'opacity', '1');
     const files: File[] = [];
     for await (const file of readDroppedFiles(event)) {
         if (checkIsSupportMediaType(file.type)) {
@@ -87,6 +86,7 @@ export default function VarySlidesPreviewerComp() {
     const handleContainerDrop = useCallback(
         (event: DragEvent) => {
             event.preventDefault();
+            changeDragEventStyle(event, 'opacity', '1');
             if (varyAppDocument instanceof AppDocument === false) {
                 return;
             }

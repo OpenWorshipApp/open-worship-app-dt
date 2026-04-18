@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act } from 'react';
+import { act, type ReactElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -92,7 +92,11 @@ vi.mock('../_screen/screenHelpers', () => ({
 }));
 
 vi.mock('./RenderRenamingComp', () => ({
-    default: ({ setIsRenaming }: { setIsRenaming: (value: boolean) => void }) => {
+    default: ({
+        setIsRenaming,
+    }: {
+        setIsRenaming: (value: boolean) => void;
+    }) => {
         return (
             <button
                 className="mock-renaming"
@@ -150,7 +154,7 @@ describe('FileItemHandlerComp', () => {
         container = null;
     });
 
-    async function render(element: JSX.Element) {
+    async function render(element: ReactElement) {
         await act(async () => {
             if (!container) {
                 throw new Error('Missing test container');
@@ -164,16 +168,18 @@ describe('FileItemHandlerComp', () => {
         const onShow = vi.fn();
         const commonMenu = genCommonMenu('/docs/file.txt');
 
-        commonMenu[0].onSelect();
-        commonMenu[1].onSelect();
+        commonMenu[0].onSelect?.(new MouseEvent('click'));
+        commonMenu[1].onSelect?.(new MouseEvent('click'));
 
         expect(copyToClipboardMock).toHaveBeenCalledWith('/docs/file.txt');
-        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith('/docs/file.txt');
+        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/docs/file.txt',
+        );
         expect(genShowOnScreensContextMenu(onShow)).toEqual([]);
 
         appProviderMock.isPagePresenter = true;
         const screenMenu = genShowOnScreensContextMenu(onShow);
-        screenMenu[0].onSelect();
+        screenMenu[0].onSelect?.(new MouseEvent('click'));
 
         expect(screenMenu[0].menuElement).toBe('Show on Screens');
         expect(onShow).toHaveBeenCalledTimes(1);
@@ -184,7 +190,7 @@ describe('FileItemHandlerComp', () => {
         const onTrashed = vi.fn();
         const trashMenu = genTrashContextMenu('/docs/trash.txt', onTrashed);
 
-        await trashMenu[0].onSelect?.();
+        await trashMenu[0].onSelect?.(new MouseEvent('click'));
 
         expect(showAppConfirmMock).toHaveBeenCalledWith(
             'Moving File to Trash',
@@ -196,7 +202,7 @@ describe('FileItemHandlerComp', () => {
         expect(onTrashed).toHaveBeenCalledTimes(1);
 
         showAppConfirmMock.mockResolvedValue(false);
-        await trashMenu[0].onSelect?.();
+        await trashMenu[0].onSelect?.(new MouseEvent('click'));
         expect(fileSource.trash).toHaveBeenCalledTimes(1);
     });
 
@@ -244,7 +250,10 @@ describe('FileItemHandlerComp', () => {
         await act(async () => {
             listItem?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             listItem?.dispatchEvent(
-                new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
+                new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                }),
             );
         });
 
@@ -262,11 +271,11 @@ describe('FileItemHandlerComp', () => {
             'Move to Trash',
         ]);
 
-        menuItems[3].onSelect();
+        menuItems[3].onSelect?.(new MouseEvent('click'));
         expect(fileSource.duplicate).toHaveBeenCalledTimes(1);
 
         await act(async () => {
-            menuItems[4].onSelect();
+            menuItems[4].onSelect?.(new MouseEvent('click'));
         });
         expect(container?.querySelector('.mock-renaming')).not.toBeNull();
 
@@ -277,10 +286,10 @@ describe('FileItemHandlerComp', () => {
         });
         expect(container?.querySelector('.mock-renaming')).toBeNull();
 
-        menuItems[5].onSelect();
+        menuItems[5].onSelect?.(new MouseEvent('click'));
         expect(reload).toHaveBeenCalledTimes(1);
 
-        await menuItems[6].onSelect();
+        await menuItems[6].onSelect?.(new MouseEvent('click'));
         expect(fileData.preDelete).toHaveBeenCalledTimes(1);
         expect(preDelete).toHaveBeenCalledTimes(1);
         expect(fileSource.trash).toHaveBeenCalledTimes(1);
@@ -307,7 +316,9 @@ describe('FileItemHandlerComp', () => {
         }
 
         await act(async () => {
-            listItem.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
+            listItem.dispatchEvent(
+                new Event('dragover', { bubbles: true, cancelable: true }),
+            );
         });
         expect(listItem.classList.contains('receiving-data-drop')).toBe(true);
 
@@ -319,7 +330,9 @@ describe('FileItemHandlerComp', () => {
         expect(listItem.classList.contains('receiving-data-drop')).toBe(false);
 
         await act(async () => {
-            listItem.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+            listItem.dispatchEvent(
+                new Event('drop', { bubbles: true, cancelable: true }),
+            );
         });
         expect(onDrop).toHaveBeenCalledTimes(1);
         expect(listItem.classList.contains('receiving-data-drop')).toBe(false);

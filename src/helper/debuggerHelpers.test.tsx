@@ -56,7 +56,11 @@ describe('debuggerHelpers', () => {
         const observedValues: Array<string | null | undefined> = [];
 
         function Probe() {
-            const [value] = module.useAppStateAsync(async () => 'ready', [], 'loading');
+            const [value] = module.useAppStateAsync(
+                async () => 'ready',
+                [],
+                'loading',
+            );
             observedValues.push(value);
             return <div>{value}</div>;
         }
@@ -84,10 +88,15 @@ describe('debuggerHelpers', () => {
         const cleanupMock = vi.fn();
 
         function Probe() {
-            module.useAppEffectAsync(async () => {
-                effectMock();
-                return cleanupMock;
-            }, undefined as any, undefined as any, 'async-without-deps');
+            module.useAppEffectAsync(
+                async () => {
+                    effectMock();
+                    return cleanupMock;
+                },
+                undefined as any,
+                undefined as any,
+                'async-without-deps',
+            );
             return null;
         }
 
@@ -112,11 +121,7 @@ describe('debuggerHelpers', () => {
         const module = await loadModule(true);
 
         function Probe({ dep }: { dep: number[] }) {
-            module.useAppEffect(
-                () => undefined,
-                [dep],
-                'repeat-key',
-            );
+            module.useAppEffect(() => undefined, [dep], 'repeat-key');
             return null;
         }
 
@@ -130,7 +135,9 @@ describe('debuggerHelpers', () => {
             });
         }
 
-        const warningMessages = appWarningMock.mock.calls.map((call) => call[0]);
+        const warningMessages = appWarningMock.mock.calls.map(
+            (call) => call[0],
+        );
         expect(
             warningMessages.some((message) =>
                 String(message).includes('Detected object in dependency list'),
@@ -138,7 +145,9 @@ describe('debuggerHelpers', () => {
         ).toBe(true);
         expect(
             warningMessages.some((message) =>
-                String(message).includes('repeat-key is called more than 10 times'),
+                String(message).includes(
+                    'repeat-key is called more than 10 times',
+                ),
             ),
         ).toBe(true);
     });
@@ -172,7 +181,9 @@ describe('debuggerHelpers', () => {
             vi.advanceTimersByTime(25);
         });
 
-        const button = container?.querySelector('button') as HTMLButtonElement | null;
+        const button = container?.querySelector(
+            'button',
+        ) as HTMLButtonElement | null;
         expect(button?.textContent).toBe('Stop');
 
         await act(async () => {

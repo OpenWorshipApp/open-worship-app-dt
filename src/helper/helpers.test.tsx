@@ -2,8 +2,8 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { handleErrorMock, appTraceMock, tranMock, appProviderMock } =
-    vi.hoisted(() => ({
+const { handleErrorMock, appTraceMock, tranMock, appProviderMock } = vi.hoisted(
+    () => ({
         handleErrorMock: vi.fn(),
         appTraceMock: vi.fn(),
         tranMock: vi.fn((value: string) => value),
@@ -12,7 +12,8 @@ const { handleErrorMock, appTraceMock, tranMock, appProviderMock } =
                 isMac: false,
             },
         },
-    }));
+    }),
+);
 
 vi.mock('./errorHelpers', () => ({
     handleError: handleErrorMock,
@@ -112,9 +113,9 @@ describe('helpers', () => {
 
         expect(checkIsSameArrays([{ ok: true }], [{ ok: true }])).toBe(true);
         expect(checkIsSameArrays([1], [2])).toBe(false);
-        expect(checkIsSameObjects({ a: { b: 1 } }, { a: { b: 1 }, extra: true })).toBe(
-            true,
-        );
+        expect(
+            checkIsSameObjects({ a: { b: 1 } }, { a: { b: 1 }, extra: true }),
+        ).toBe(true);
         expect(checkIsSameObjects({ a: 1 }, { a: 2 })).toBe(false);
         expect(checkIsSameValues([{ ok: true }], [{ ok: true }])).toBe(true);
         expect(checkIsSameValues('a', 'b')).toBe(false);
@@ -167,7 +168,10 @@ describe('helpers', () => {
                         videoWidth: 1920,
                         videoHeight: 1080,
                         onerror: null,
-                        addEventListener: (eventName: string, callback: (event: Event) => void) => {
+                        addEventListener: (
+                            eventName: string,
+                            callback: (event: Event) => void,
+                        ) => {
                             if (eventName === 'loadedmetadata') {
                                 videoElement.loadedMetadata = callback;
                             }
@@ -224,11 +228,15 @@ describe('helpers', () => {
             value: 50,
         });
         visibleElement.getBoundingClientRect = () =>
-            ({ top: 10, left: 10, width: 100, height: 50 } as DOMRect);
+            ({ top: 10, left: 10, width: 100, height: 50 }) as DOMRect;
 
         const computedStyleSpy = vi
             .spyOn(globalThis, 'getComputedStyle')
-            .mockReturnValue({ display: 'block', visibility: 'visible', opacity: '1' } as any);
+            .mockReturnValue({
+                display: 'block',
+                visibility: 'visible',
+                opacity: '1',
+            } as any);
         Object.defineProperty(document, 'elementFromPoint', {
             configurable: true,
             value: vi.fn(() => visibleElement),
@@ -236,7 +244,11 @@ describe('helpers', () => {
 
         expect(isVisible(visibleElement)).toBe(true);
 
-        computedStyleSpy.mockReturnValue({ display: 'none', visibility: 'visible', opacity: '1' } as any);
+        computedStyleSpy.mockReturnValue({
+            display: 'none',
+            visibility: 'visible',
+            opacity: '1',
+        } as any);
         expect(isVisible(visibleElement)).toBe(false);
 
         computedStyleSpy.mockRestore();
@@ -246,17 +258,37 @@ describe('helpers', () => {
         const parent = document.createElement('div');
         parent.innerHTML = '<span class="target"></span>';
 
-        expect(getHTMLChild<HTMLSpanElement>(parent, '.target').className).toBe('target');
+        expect(getHTMLChild<HTMLSpanElement>(parent, '.target').className).toBe(
+            'target',
+        );
         expect(() => getHTMLChild(parent, '.missing')).toThrow('Invalid child');
 
         const root = document.createElement('div');
         const child = document.createElement('div');
-        Object.defineProperty(root, 'offsetTop', { configurable: true, value: 10 });
-        Object.defineProperty(root, 'offsetLeft', { configurable: true, value: 20 });
-        Object.defineProperty(root, 'offsetParent', { configurable: true, value: null });
-        Object.defineProperty(child, 'offsetTop', { configurable: true, value: 5 });
-        Object.defineProperty(child, 'offsetLeft', { configurable: true, value: 7 });
-        Object.defineProperty(child, 'offsetParent', { configurable: true, value: root });
+        Object.defineProperty(root, 'offsetTop', {
+            configurable: true,
+            value: 10,
+        });
+        Object.defineProperty(root, 'offsetLeft', {
+            configurable: true,
+            value: 20,
+        });
+        Object.defineProperty(root, 'offsetParent', {
+            configurable: true,
+            value: null,
+        });
+        Object.defineProperty(child, 'offsetTop', {
+            configurable: true,
+            value: 5,
+        });
+        Object.defineProperty(child, 'offsetLeft', {
+            configurable: true,
+            value: 7,
+        });
+        Object.defineProperty(child, 'offsetParent', {
+            configurable: true,
+            value: root,
+        });
 
         expect(cumulativeOffset(child)).toEqual({ top: 15, left: 27 });
     });
@@ -291,16 +323,16 @@ describe('helpers', () => {
         const container = document.createElement('div');
         const target = document.createElement('div');
         container.getBoundingClientRect = () =>
-            ({ top: 0, bottom: 100 } as DOMRect);
+            ({ top: 0, bottom: 100 }) as DOMRect;
         target.getBoundingClientRect = () =>
-            ({ top: 10, bottom: 90 } as DOMRect);
+            ({ top: 10, bottom: 90 }) as DOMRect;
 
         expect(checkIsVerticalPartialInvisible(container, target)).toBe(false);
         expect(checkIsVerticalPartialVisible(container, target)).toBe(true);
         expect(checkIsVerticalAtBottom(container, target)).toBe(false);
 
         target.getBoundingClientRect = () =>
-            ({ top: -5, bottom: 120 } as DOMRect);
+            ({ top: -5, bottom: 120 }) as DOMRect;
         expect(checkIsVerticalPartialInvisible(container, target)).toBe(true);
         expect(checkIsVerticalAtBottom(container, target)).toBe(true);
     });

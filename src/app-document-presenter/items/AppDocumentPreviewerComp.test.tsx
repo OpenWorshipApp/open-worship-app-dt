@@ -22,7 +22,9 @@ vi.mock('../../app-document-list/appDocumentHelpers', () => ({
     SelectedVaryAppDocumentContext,
     VaryAppDocumentContext,
     useVaryAppDocumentContext: () => {
-        throw new Error('useVaryAppDocumentContext is not expected in this test');
+        throw new Error(
+            'useVaryAppDocumentContext is not expected in this test',
+        );
     },
 }));
 
@@ -56,8 +58,7 @@ vi.mock('../../helper/settingHelpers', async () => {
 });
 
 vi.mock('./slideItemRenderHelpers', () => ({
-    DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME:
-        '--app-docx-preview-background',
+    DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME: '--app-docx-preview-background',
 }));
 
 vi.mock('../../server/appProvider', () => ({
@@ -101,7 +102,7 @@ describe('AppDocumentPreviewerComp', () => {
     let root: Root;
 
     beforeEach(() => {
-        globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
         container = document.createElement('div');
         document.body.appendChild(container);
         root = createRoot(container);
@@ -113,19 +114,19 @@ describe('AppDocumentPreviewerComp', () => {
         await act(async () => {
             root.unmount();
         });
-        globalThis.IS_REACT_ACT_ENVIRONMENT = false;
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
         container.remove();
         vi.clearAllMocks();
     });
 
     test('shows a DOCX preview background picker and updates the preview CSS variable', async () => {
-        const { default: AppDocumentPreviewerComp } = await import(
-            './AppDocumentPreviewerComp'
+        const { default: AppDocumentPreviewerComp } =
+            await import('./AppDocumentPreviewerComp');
+        const { default: DocxAppDocument } =
+            await import('../../app-document-list/DocxAppDocument');
+        const selectedVaryAppDocument = new DocxAppDocument(
+            '/slides/sample.docx',
         );
-        const { default: DocxAppDocument } = await import(
-            '../../app-document-list/DocxAppDocument'
-        );
-        const selectedVaryAppDocument = new DocxAppDocument('/slides/sample.docx');
 
         await act(async () => {
             root.render(
@@ -144,7 +145,9 @@ describe('AppDocumentPreviewerComp', () => {
         const colorInput = container.querySelector(
             'input[type="color"]',
         ) as HTMLInputElement | null;
-        const cardBody = container.querySelector('.card-body') as HTMLDivElement | null;
+        const cardBody = container.querySelector(
+            '.card-body',
+        ) as HTMLDivElement | null;
 
         expect(colorPickerIcon).not.toBeNull();
         expect(colorInput).not.toBeNull();
@@ -157,7 +160,9 @@ describe('AppDocumentPreviewerComp', () => {
             if (colorInput) {
                 setNativeInputValue(colorInput, '#123456');
                 colorInput.dispatchEvent(new Event('input', { bubbles: true }));
-                colorInput.dispatchEvent(new Event('change', { bubbles: true }));
+                colorInput.dispatchEvent(
+                    new Event('change', { bubbles: true }),
+                );
             }
         });
 
@@ -185,13 +190,13 @@ describe('AppDocumentPreviewerComp', () => {
     });
 
     test('shows the page-base appearance controls for PDF previews', async () => {
-        const { default: AppDocumentPreviewerComp } = await import(
-            './AppDocumentPreviewerComp'
+        const { default: AppDocumentPreviewerComp } =
+            await import('./AppDocumentPreviewerComp');
+        const { default: PdfAppDocument } =
+            await import('../../app-document-list/PdfAppDocument');
+        const selectedVaryAppDocument = new PdfAppDocument(
+            '/slides/sample.pdf',
         );
-        const { default: PdfAppDocument } = await import(
-            '../../app-document-list/PdfAppDocument'
-        );
-        const selectedVaryAppDocument = new PdfAppDocument('/slides/sample.pdf');
 
         await act(async () => {
             root.render(

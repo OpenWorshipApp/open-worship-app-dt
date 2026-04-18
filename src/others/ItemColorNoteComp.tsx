@@ -56,8 +56,10 @@ export function chooseColorNote(
 
 export default function ItemColorNoteComp({
     item,
+    onChange,
 }: Readonly<{
     item: ColorNoteInf;
+    onChange?: (colorNote: string | null) => void;
 }>) {
     const [colorNote, setColorNote] = useState<string | null>(null);
     useAppEffectAsync(
@@ -71,6 +73,7 @@ export default function ItemColorNoteComp({
     const setColorNote1 = (colorNote: string | null) => {
         setColorNote(colorNote);
         item.setColorNote(colorNote);
+        onChange?.(colorNote);
     };
     const title = useMemo(() => {
         const reverseColorMap: Record<string, string> = Object.entries({
@@ -94,13 +97,14 @@ export default function ItemColorNoteComp({
             <i
                 className="bi bi-record-circle app-caught-hover-pointer"
                 onClick={chooseColorNote.bind(null, colorNote, setColorNote1)}
-                style={
-                    colorNote
+                style={{
+                    textShadow: '0 0 2px var(--bs-info-text-emphasis)',
+                    ...(colorNote
                         ? {
                               color: colorNote,
                           }
-                        : {}
-                }
+                        : {}),
+                }}
             />
         </span>
     );

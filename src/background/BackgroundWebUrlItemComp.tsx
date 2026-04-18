@@ -105,11 +105,13 @@ export default function BackgroundWebUrlItemComp({
     thumbnailWidth,
     thumbnailHeight,
     onRemove,
+    onColorNoteChange,
 }: Readonly<{
     urlSource: BackgroundWebUrlSource;
     thumbnailWidth: number;
     thumbnailHeight: number;
     onRemove: (urlSource: BackgroundWebUrlSource) => Promise<void>;
+    onColorNoteChange?: () => void;
 }>) {
     const {
         selectedCN,
@@ -188,7 +190,10 @@ export default function BackgroundWebUrlItemComp({
                             right: 0,
                         }}
                     >
-                        <ItemColorNoteComp item={urlSource} />
+                        <ItemColorNoteComp
+                            item={urlSource}
+                            onChange={onColorNoteChange}
+                        />
                     </div>
                 }
             />

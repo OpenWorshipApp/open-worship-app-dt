@@ -37,6 +37,7 @@ export async function initProvider(
         const isCurrentPage = pathName.startsWith(`/${htmlFileFullName}`);
         provider[`isPage${toTitleCase(name)}`] = isCurrentPage;
     }
+    provider.init = async () => {};
     freezeObject(provider);
     (globalThis as any).provider = provider;
 }

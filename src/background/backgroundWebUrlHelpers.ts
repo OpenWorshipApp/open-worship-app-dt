@@ -1,16 +1,14 @@
 import type ColorNoteInf from '../helper/ColorNoteInf';
 import type DragInf from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
-import {
-    getColorNoteFilePathSetting,
-    setColorNoteFilePathSetting,
-} from '../helper/FileSourceMetaManager';
+import { getColorNoteFilePathSetting } from '../helper/FileSourceMetaManager';
 import FileSource from '../helper/FileSource';
 import SettingManager from '../helper/SettingManager';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { askForURL } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
+import { getSetting, setSetting } from '../helper/settingHelpers';
 
 export type BackgroundWebUrlItemData = {
     id: string;
@@ -85,7 +83,8 @@ const backgroundWebUrlListSettingManager = new SettingManager<
             return false;
         }
     },
-    serialize: (itemList) => JSON.stringify(sanitizeBackgroundWebUrlItemList(itemList)),
+    serialize: (itemList) =>
+        JSON.stringify(sanitizeBackgroundWebUrlItemList(itemList)),
     deserialize: (jsonString) =>
         sanitizeBackgroundWebUrlItemList(JSON.parse(jsonString)),
 });
@@ -108,12 +107,14 @@ export class BackgroundWebUrlSource
     readonly fullName: string;
     readonly name: string;
     readonly isUrl = true as const;
+    colorNote: string | null;
 
     constructor(itemData: BackgroundWebUrlItemData) {
         this.id = itemData.id;
         this.src = normalizeBackgroundWebUrl(itemData.src);
         this.fullName = this.src;
         this.name = this.src;
+        this.colorNote = getSetting(this.colorNoteKey);
     }
 
     get filePath() {
@@ -121,7 +122,7 @@ export class BackgroundWebUrlSource
     }
 
     private get colorNoteKey() {
-        return `background-web-url:${this.id}`;
+        return `background-web-url_${this.id}`;
     }
 
     dragSerialize(type?: DragTypeEnum) {
@@ -132,11 +133,14 @@ export class BackgroundWebUrlSource
     }
 
     async getColorNote() {
-        return getColorNoteFilePathSetting(this.colorNoteKey, null);
+        this.colorNote = getColorNoteFilePathSetting(this.colorNoteKey, null);
+        return this.colorNote;
     }
 
     async setColorNote(color: string | null) {
-        setColorNoteFilePathSetting(this.colorNoteKey, null, color);
+        this.colorNote = color;
+        // TODO: cleanup when URL is removed
+        setSetting(this.colorNoteKey, color);
     }
 
     toData(): BackgroundWebUrlItemData {

@@ -14,7 +14,10 @@ const {
     setSettingMock: vi.fn(),
     fsCheckDirExistMock: vi.fn(async () => true),
     fsCheckFileExistMock: vi.fn(async () => true),
-    baseDirFileFullNameOrPathMap: {} as Record<string, string | null | undefined>,
+    baseDirFileFullNameOrPathMap: {} as Record<
+        string,
+        string | null | undefined
+    >,
     baseDirResolvedFilePathMap: {} as Record<string, string | null | undefined>,
 }));
 
@@ -84,7 +87,11 @@ describe('selectedHelpers', () => {
 
     test('validates existing selected file paths', async () => {
         expect(
-            await checkSelectedFilePathExist('setting', 'base-setting', '/base/file.txt'),
+            await checkSelectedFilePathExist(
+                'setting',
+                'base-setting',
+                '/base/file.txt',
+            ),
         ).toBe(true);
         expect(setSettingMock).not.toHaveBeenCalled();
     });
@@ -94,7 +101,11 @@ describe('selectedHelpers', () => {
         getDirPathBySettingNameMock.mockReturnValue(null);
 
         expect(
-            await checkSelectedFilePathExist('setting', 'base-setting', '/missing.txt'),
+            await checkSelectedFilePathExist(
+                'setting',
+                'base-setting',
+                '/missing.txt',
+            ),
         ).toBe(false);
         expect(setSettingMock).toHaveBeenCalledWith('setting', '');
     });
@@ -118,12 +129,17 @@ describe('selectedHelpers', () => {
     });
 
     test('stores relative paths and clears settings for null selections', () => {
-        baseDirFileFullNameOrPathMap['base-setting|/base/final.txt'] = 'final.txt';
+        baseDirFileFullNameOrPathMap['base-setting|/base/final.txt'] =
+            'final.txt';
 
         setSelectedFilePath('setting', 'base-setting', '/base/final.txt');
         setSelectedFilePath('setting', 'base-setting', null);
 
-        expect(setSettingMock).toHaveBeenNthCalledWith(1, 'setting', 'final.txt');
+        expect(setSettingMock).toHaveBeenNthCalledWith(
+            1,
+            'setting',
+            'final.txt',
+        );
         expect(setSettingMock).toHaveBeenNthCalledWith(2, 'setting', '');
     });
 });

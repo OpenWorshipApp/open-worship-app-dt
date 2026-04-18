@@ -121,17 +121,19 @@ vi.mock('./dirSourceHelpers', () => ({
     useFileSourceEvents: useFileSourceEventsMock,
 }));
 
-vi.mock('./debuggerHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+vi.mock('./debuggerHelpers', () => {
     return {
         useAppEffectAsync: (
             effectMethod: (methods: Record<string, unknown>) => Promise<void>,
-            deps: React.DependencyList,
+            deps: readonly unknown[],
             methods?: Record<string, unknown>,
         ) => {
-            React.useEffect(() => {
-                void effectMethod({ ...(methods ?? {}) });
+            const methodContext = methods === undefined ? {} : { ...methods };
+            /* eslint-disable react-hooks/exhaustive-deps */
+            useEffect(() => {
+                void effectMethod(methodContext);
             }, deps);
+            /* eslint-enable react-hooks/exhaustive-deps */
         },
     };
 });
@@ -177,12 +179,9 @@ describe('dragHelpers', () => {
         const { handleDragStart } = await import('./dragHelpers');
         const setData = vi.fn();
 
-        handleDragStart(
-            { dataTransfer: { setData } },
-            {
-                dragSerialize: (type?: string) => ({ type, data: { id: 1 } }),
-            } as any,
-        );
+        handleDragStart({ dataTransfer: { setData } }, {
+            dragSerialize: (type?: string) => ({ type, data: { id: 1 } }),
+        } as any);
 
         expect(setData).toHaveBeenCalledWith(
             'text',
@@ -312,19 +311,25 @@ describe('dragHelpers', () => {
         });
 
         expect(
-            extractDropData(makeEvent(DragTypeEnum.PDF_SLIDE, '/docs/pdf.json')),
+            extractDropData(
+                makeEvent(DragTypeEnum.PDF_SLIDE, '/docs/pdf.json'),
+            ),
         ).toMatchObject({
             type: DragTypeEnum.PDF_SLIDE,
             item: { filePath: '/docs/pdf.json', data: { id: 1 } },
         });
         expect(
-            extractDropData(makeEvent(DragTypeEnum.PPTX_SLIDE, '/docs/pptx.json')),
+            extractDropData(
+                makeEvent(DragTypeEnum.PPTX_SLIDE, '/docs/pptx.json'),
+            ),
         ).toMatchObject({
             type: DragTypeEnum.PPTX_SLIDE,
             item: { filePath: '/docs/pptx.json', data: { id: 1 } },
         });
         expect(
-            extractDropData(makeEvent(DragTypeEnum.DOCX_SLIDE, '/docs/docx.json')),
+            extractDropData(
+                makeEvent(DragTypeEnum.DOCX_SLIDE, '/docs/docx.json'),
+            ),
         ).toMatchObject({
             type: DragTypeEnum.DOCX_SLIDE,
             item: { filePath: '/docs/docx.json', data: { id: 1 } },
@@ -332,7 +337,9 @@ describe('dragHelpers', () => {
 
         pdfTryValidateMock.mockReturnValueOnce(false);
         expect(
-            extractDropData(makeEvent(DragTypeEnum.PDF_SLIDE, '/docs/bad.json')),
+            extractDropData(
+                makeEvent(DragTypeEnum.PDF_SLIDE, '/docs/bad.json'),
+            ),
         ).toBeNull();
     });
 
@@ -353,7 +360,10 @@ describe('dragHelpers', () => {
         } as any;
         fileDragDeserializeMock.mockReturnValue({ kind: 'bg-file' });
 
-        handleAttachBackgroundDrop(allowEvent, { filePath: '/docs/slide.owa', id: 3 });
+        handleAttachBackgroundDrop(allowEvent, {
+            filePath: '/docs/slide.owa',
+            id: 3,
+        });
 
         expect(stopDraggingStateMock).toHaveBeenCalledWith(allowEvent);
         expect(attachDroppedBackgroundMock).toHaveBeenCalledWith(
@@ -416,7 +426,8 @@ describe('dragHelpers', () => {
     });
 
     test('builds a remove-background menu item that detaches the background', async () => {
-        const { genRemovingAttachedBackgroundMenu } = await import('./dragHelpers');
+        const { genRemovingAttachedBackgroundMenu } =
+            await import('./dragHelpers');
 
         const items = genRemovingAttachedBackgroundMenu('/docs/slide.owa', 9);
         expect(items).toEqual([
@@ -426,7 +437,7 @@ describe('dragHelpers', () => {
             },
         ]);
 
-        items[0].onSelect?.();
+        items[0].onSelect?.(new MouseEvent('click'));
         expect(detachBackgroundMock).toHaveBeenCalledWith('/docs/slide.owa', 9);
     });
 });

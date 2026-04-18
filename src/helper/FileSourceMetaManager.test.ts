@@ -111,8 +111,15 @@ describe('FileSourceMetaManager', () => {
     test('returns null when the file does not exist', async () => {
         fsCheckFileExistMock.mockResolvedValue(false);
 
-        expect(await FileSourceMetaManager.getColorNote('/missing/file.txt')).toBeNull();
-        expect(await FileSourceMetaManager.setColorNote('/missing/file.txt', 'red')).toBeNull();
+        expect(
+            await FileSourceMetaManager.getColorNote('/missing/file.txt'),
+        ).toBeNull();
+        expect(
+            await FileSourceMetaManager.setColorNote(
+                '/missing/file.txt',
+                'red',
+            ),
+        ).toBeNull();
     });
 
     test('reads color notes from app documents and reports unreadable files', async () => {
@@ -127,8 +134,12 @@ describe('FileSourceMetaManager', () => {
             return filePath.includes('broken') ? badFileSource : goodFileSource;
         });
 
-        expect(await FileSourceMetaManager.getColorNote('/docs/slide.owa')).toBe('blue');
-        expect(await FileSourceMetaManager.getColorNote('/docs/broken.owa')).toBeUndefined();
+        expect(
+            await FileSourceMetaManager.getColorNote('/docs/slide.owa'),
+        ).toBe('blue');
+        expect(
+            await FileSourceMetaManager.getColorNote('/docs/broken.owa'),
+        ).toBeUndefined();
         expect(appHandleErrorMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 message: 'Unable to read data from /docs/broken.owa}',

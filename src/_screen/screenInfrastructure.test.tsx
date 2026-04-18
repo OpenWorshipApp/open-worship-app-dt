@@ -101,7 +101,10 @@ vi.mock('../bible-list/BibleItem', () => ({
 
 vi.mock('../others/AttachBackgroundManager', () => ({
     attachBackgroundManager: {
-        getAttachedBackground: vi.fn(async () => ({ type: 'bg-color', item: '#fff' })),
+        getAttachedBackground: vi.fn(async () => ({
+            type: 'bg-color',
+            item: '#fff',
+        })),
     },
 }));
 
@@ -256,15 +259,12 @@ describe('screen infrastructure', () => {
     });
 
     test('updates clock-like controllers and resets them on stop', async () => {
-        const { default: TimingController } = await import(
-            './managers/TimingController'
-        );
-        const { default: CountdownController } = await import(
-            './managers/CountdownController'
-        );
-        const { default: StopwatchController } = await import(
-            './managers/StopwatchController'
-        );
+        const { default: TimingController } =
+            await import('./managers/TimingController');
+        const { default: CountdownController } =
+            await import('./managers/CountdownController');
+        const { default: StopwatchController } =
+            await import('./managers/StopwatchController');
 
         const timing = new TimingController(createTimeContainer(), 0);
         expect(timing.hourStr).toBe('10');
@@ -297,9 +297,8 @@ describe('screen infrastructure', () => {
     });
 
     test('reads screen settings, sizes media, and decorates scroll containers', async () => {
-        const { screenManagerSettingNames } = await import(
-            '../helper/constants'
-        );
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
         const screenHelpers = await import('./screenHelpers');
 
         getSettingMock.mockImplementation((key: string) => {
@@ -380,10 +379,11 @@ describe('screen infrastructure', () => {
 
         const miniScreen = document.createElement('div');
         miniScreen.className = 'mini-screen';
-        miniScreen.getBoundingClientRect = () => ({
-            x: 12,
-            y: 24,
-        }) as DOMRect;
+        miniScreen.getBoundingClientRect = () =>
+            ({
+                x: 12,
+                y: 24,
+            }) as DOMRect;
         document.body.appendChild(miniScreen);
         expect(screenHelpers.genScreenMouseEvent()).toEqual({
             clientX: 12,
@@ -397,9 +397,9 @@ describe('screen infrastructure', () => {
         expect(screenHelpers.getBackgroundSrcListOnScreenSetting()).toEqual({
             1: { type: 'color', src: '#fff' },
         });
-        expect(Object.keys(screenHelpers.getBibleListOnScreenSetting())).toEqual([
-            '1',
-        ]);
+        expect(
+            Object.keys(screenHelpers.getBibleListOnScreenSetting()),
+        ).toEqual(['1']);
 
         const topContainer = document.createElement('div');
         screenHelpers.addToTheTop(topContainer);
@@ -417,9 +417,8 @@ describe('screen infrastructure', () => {
     });
 
     test('clears invalid stored Bible screen data', async () => {
-        const { screenManagerSettingNames } = await import(
-            '../helper/constants'
-        );
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
         const screenHelpers = await import('./screenHelpers');
 
         getSettingMock.mockImplementation((key: string) => {
@@ -437,7 +436,12 @@ describe('screen infrastructure', () => {
                                     locale: 'en-US',
                                     bibleKey: 'KJV',
                                     title: 'Genesis 1:1',
-                                    verses: [{ num: 1, text: 'Invalid verse number' }],
+                                    verses: [
+                                        {
+                                            num: 1,
+                                            text: 'Invalid verse number',
+                                        },
+                                    ],
                                 },
                             ],
                             bibleItem: { id: 1 },
@@ -458,12 +462,10 @@ describe('screen infrastructure', () => {
     });
 
     test('syncs effect settings and routes attached backgrounds', async () => {
-        const { default: ScreenEffectManager } = await import(
-            './managers/ScreenEffectManager'
-        );
-        const { applyAttachBackground } = await import(
-            './managers/screenBackgroundHelpers'
-        );
+        const { default: ScreenEffectManager } =
+            await import('./managers/ScreenEffectManager');
+        const { applyAttachBackground } =
+            await import('./managers/screenBackgroundHelpers');
 
         getSettingMock.mockImplementation((key: string) => {
             if (key === 'pt-effect-5-background') {
@@ -520,9 +522,8 @@ describe('screen infrastructure', () => {
     });
 
     test('manages cached screen-manager settings and display helpers', async () => {
-        const { screenManagerSettingNames } = await import(
-            '../helper/constants'
-        );
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
         const baseHelpers = await import('./managers/screenManagerBaseHelpers');
         const managerScreenHelpers = await import('./managers/screenHelpers');
 
@@ -589,12 +590,10 @@ describe('screen infrastructure', () => {
     });
 
     test('sends sync messages from event handlers and applies base manager behaviors', async () => {
-        const { default: ScreenEventHandler } = await import(
-            './managers/ScreenEventHandler'
-        );
-        const { default: ScreenManagerBase } = await import(
-            './managers/ScreenManagerBase'
-        );
+        const { default: ScreenEventHandler } =
+            await import('./managers/ScreenEventHandler');
+        const { default: ScreenManagerBase } =
+            await import('./managers/ScreenManagerBase');
 
         class TestScreenEventHandler extends ScreenEventHandler<'update'> {
             static readonly eventNamePrefix = 'test-handler';
@@ -681,7 +680,10 @@ describe('screen infrastructure', () => {
 
         base.isShowing = true;
         base.displayId = 2;
-        expect(setSettingMock).toHaveBeenCalledWith('screen-display--pid-3', '2');
+        expect(setSettingMock).toHaveBeenCalledWith(
+            'screen-display--pid-3',
+            '2',
+        );
 
         await base.setColorNote('green');
         expect(enableSyncGroupMocks.background).toHaveBeenCalledWith(3);
@@ -696,8 +698,10 @@ describe('screen infrastructure', () => {
 
     test('creates cached screen managers and exposes screen manager hooks', async () => {
         const baseHelpers = await import('./managers/screenManagerBaseHelpers');
-        const screenManagerHelpers = await import('./managers/screenManagerHelpers');
-        const screenManagerHooks = await import('./managers/screenManagerHooks');
+        const screenManagerHelpers =
+            await import('./managers/screenManagerHelpers');
+        const screenManagerHooks =
+            await import('./managers/screenManagerHooks');
 
         baseHelpers.cache.clear();
         getSettingMock.mockImplementation(() => JSON.stringify([]));
@@ -718,22 +722,31 @@ describe('screen infrastructure', () => {
 
         function ManagerHost() {
             const screenManager = screenManagerHooks.useScreenManagerContext();
-            screenManagerHooks.useScreenManagerEvents(['refresh'], screenManager as any);
+            screenManagerHooks.useScreenManagerEvents(
+                ['refresh'],
+                screenManager as any,
+            );
             screenManagerHooks.useScreenUpdateEvents(screenManager as any);
             const videoSources = screenManagerHooks.useScreenVideoSources();
             return <div>{videoSources.map(([_, id]) => id).join('|')}</div>;
         }
 
         const baseHtml = renderToStaticMarkup(
-            <screenManagerHooks.ScreenManagerBaseContext value={{ screenId: 9 } as any}>
+            <screenManagerHooks.ScreenManagerBaseContext
+                value={{ screenId: 9 } as any}
+            >
                 <BaseHost />
             </screenManagerHooks.ScreenManagerBaseContext>,
         );
         expect(baseHtml).toContain('9');
 
-        const managerInstance = new (await import('./managers/ScreenManager')).default(11) as any;
+        const managerInstance = new (
+            await import('./managers/ScreenManager')
+        ).default(11) as any;
         const managerHtml = renderToStaticMarkup(
-            <screenManagerHooks.ScreenManagerBaseContext value={managerInstance}>
+            <screenManagerHooks.ScreenManagerBaseContext
+                value={managerInstance}
+            >
                 <ManagerHost />
             </screenManagerHooks.ScreenManagerBaseContext>,
         );

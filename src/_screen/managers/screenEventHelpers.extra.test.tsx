@@ -19,7 +19,7 @@ const appProviderMock = {
 };
 
 vi.mock('../../helper/debuggerHelpers', async () => {
-    const React = await vi.importActual<typeof import('react')>('react');
+    const React = (await vi.importActual('react')) as any;
     return {
         useAppEffect: React.useEffect,
     };
@@ -220,7 +220,8 @@ describe('screenEventHelpers', () => {
     });
 
     test('blocks inactive wheel scrolling and reports normalized scroll positions', async () => {
-        const { registerScrollingSyncEvent } = await import('./screenEventHelpers');
+        const { registerScrollingSyncEvent } =
+            await import('./screenEventHelpers');
 
         const target = document.createElement('div');
         Object.defineProperties(target, {

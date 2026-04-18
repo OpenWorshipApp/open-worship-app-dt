@@ -1,0 +1,11 @@
+{
+    "hooks": {
+        "PostToolUse": [
+            {
+                "type": "command",
+                "command": "node .github/hooks/run-lint-on-change.mjs",
+                "timeout": 900
+            }
+        ]
+    }
+}

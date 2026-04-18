@@ -122,7 +122,11 @@ describe('pdfHelpers', () => {
     });
 
     test('reuses existing preview images when all pages are present', async () => {
-        fsListFilesMock.mockResolvedValue(['page-2.png', 'note.txt', 'page-1.png']);
+        fsListFilesMock.mockResolvedValue([
+            'page-2.png',
+            'note.txt',
+            'page-1.png',
+        ]);
         electronSendAsyncMock.mockResolvedValue(2);
 
         const result = await genPdfImagesPreview('/docs/sermon.pdf');
@@ -151,7 +155,9 @@ describe('pdfHelpers', () => {
         fsListFilesMock.mockResolvedValue(['page-1.png', 'page-2.png']);
         electronSendAsyncMock.mockResolvedValue(3);
 
-        await expect(genPdfImagesPreview('/docs/sermon.pdf')).resolves.toBeNull();
+        await expect(
+            genPdfImagesPreview('/docs/sermon.pdf'),
+        ).resolves.toBeNull();
     });
 
     test('generates preview images when no reusable cache exists', async () => {
@@ -186,7 +192,9 @@ describe('pdfHelpers', () => {
             message: 'conversion failed',
         });
 
-        await expect(genPdfImagesPreview('/docs/sermon.pdf')).resolves.toBeNull();
+        await expect(
+            genPdfImagesPreview('/docs/sermon.pdf'),
+        ).resolves.toBeNull();
         expect(appErrorMock).toHaveBeenCalledWith(
             'Failed to generate PDF images preview:',
             'conversion failed',

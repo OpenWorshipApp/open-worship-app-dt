@@ -127,7 +127,10 @@ describe('screenHelpers extra coverage', () => {
         vi.clearAllMocks();
         updateCallback = undefined;
         useScreenUpdateEventsMock.mockImplementation(
-            (_screenManagerBase: unknown, callback?: () => Promise<void> | void) => {
+            (
+                _screenManagerBase: unknown,
+                callback?: () => Promise<void> | void,
+            ) => {
                 updateCallback = callback;
             },
         );
@@ -207,14 +210,15 @@ describe('screenHelpers extra coverage', () => {
 
         screenHelpers.addPlayToBottom(bottomContainer);
 
-        expect(bottomContainer.querySelectorAll('img.play-to-bottom')).toHaveLength(
-            1,
-        );
+        expect(
+            bottomContainer.querySelectorAll('img.play-to-bottom'),
+        ).toHaveLength(1);
         expect(applyPlayToBottomMock).not.toHaveBeenCalled();
     });
 
     test('ignores invalid foreground and background settings', async () => {
-        const { screenManagerSettingNames } = await import('../helper/constants');
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
         const screenHelpers = await import('./screenHelpers');
 
         getSettingMock.mockImplementation((key: string) => {
@@ -230,7 +234,9 @@ describe('screenHelpers extra coverage', () => {
             return undefined;
         });
 
-        expect(screenHelpers.getForegroundDataListOnScreenSetting()).toEqual({});
+        expect(screenHelpers.getForegroundDataListOnScreenSetting()).toEqual(
+            {},
+        );
         expect(handleErrorMock).toHaveBeenCalledOnce();
         expect(screenHelpers.getBackgroundSrcListOnScreenSetting()).toEqual({});
     });

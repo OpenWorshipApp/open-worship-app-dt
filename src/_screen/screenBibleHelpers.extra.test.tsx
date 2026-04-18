@@ -20,7 +20,10 @@ const getBibleLocaleMock = vi.fn(async (bibleKey: string) => {
 
 let capturedHighlightHandlers:
     | {
-          onSelectKey: (selectedKJVVerseKey: string | null, isToTop: boolean) => void;
+          onSelectKey: (
+              selectedKJVVerseKey: string | null,
+              isToTop: boolean,
+          ) => void;
           onBibleSelect: (event: MouseEvent, index: number) => Promise<void>;
       }
     | undefined;
@@ -164,14 +167,19 @@ describe('screenBibleHelpers', () => {
         registerHighlightMock.mockImplementation((_div, handlers) => {
             capturedHighlightHandlers = handlers;
         });
-        genBibleItemRenderListMock.mockImplementation(async (bibleItems: any[]) => {
-            return bibleItems.map((bibleItem) => ({
-                locale: bibleItem.bibleKey === null ? 'en' : `locale-${bibleItem.bibleKey}`,
-                bibleKey: bibleItem.bibleKey,
-                title: `Title-${bibleItem.bibleKey ?? 'none'}`,
-                verses: [],
-            }));
-        });
+        genBibleItemRenderListMock.mockImplementation(
+            async (bibleItems: any[]) => {
+                return bibleItems.map((bibleItem) => ({
+                    locale:
+                        bibleItem.bibleKey === null
+                            ? 'en'
+                            : `locale-${bibleItem.bibleKey}`,
+                    bibleKey: bibleItem.bibleKey,
+                    title: `Title-${bibleItem.bibleKey ?? 'none'}`,
+                    verses: [],
+                }));
+            },
+        );
         genContextMenuBibleKeysMock.mockImplementation(
             async (
                 handleBibleKeySelection: (
@@ -212,7 +220,8 @@ describe('screenBibleHelpers', () => {
     });
 
     test('clears stale Bible DOM and renders scaled Bible content', async () => {
-        const { renderScreenBibleManager } = await import('./screenBibleHelpers');
+        const { renderScreenBibleManager } =
+            await import('./screenBibleHelpers');
         const bibleItemJson = createBibleItemJson();
         const screenViewData = {
             type: 'bible-item',
@@ -254,12 +263,15 @@ describe('screenBibleHelpers', () => {
         expect(screenBibleManager.div.style.pointerEvents).toBe('auto');
         expect(screenBibleManager.div.firstElementChild).not.toBeNull();
         expect(
-            (screenBibleManager.div.firstElementChild as HTMLDivElement).style.transform,
+            (screenBibleManager.div.firstElementChild as HTMLDivElement).style
+                .transform,
         ).toContain('scale(2,2)');
         expect(screenBibleManager.renderSelectedIndex).toHaveBeenCalledOnce();
         expect(screenBibleManager.div.scrollTop).toBe(400);
         expect(addToTheTopMock).toHaveBeenCalledWith(screenBibleManager.div);
-        expect(addPlayToBottomMock).toHaveBeenCalledWith(screenBibleManager.div);
+        expect(addPlayToBottomMock).toHaveBeenCalledWith(
+            screenBibleManager.div,
+        );
 
         capturedHighlightHandlers?.onSelectKey('GEN-1-1', true);
         expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-1');
@@ -268,7 +280,8 @@ describe('screenBibleHelpers', () => {
     });
 
     test('opens Bible menus and applies replacement and removal updates', async () => {
-        const { renderScreenBibleManager } = await import('./screenBibleHelpers');
+        const { renderScreenBibleManager } =
+            await import('./screenBibleHelpers');
         const bibleItemJson = createBibleItemJson();
         const screenViewData = {
             type: 'bible-item',
@@ -296,7 +309,10 @@ describe('screenBibleHelpers', () => {
         const screenBibleManager = createScreenBibleManager(screenViewData);
 
         await renderScreenBibleManager(screenBibleManager);
-        await capturedHighlightHandlers?.onBibleSelect(new MouseEvent('click'), 0);
+        await capturedHighlightHandlers?.onBibleSelect(
+            new MouseEvent('click'),
+            0,
+        );
 
         expect(genContextMenuBibleKeysMock).toHaveBeenCalledOnce();
         expect(showAppContextMenuMock).toHaveBeenCalledOnce();
@@ -310,7 +326,9 @@ describe('screenBibleHelpers', () => {
             });
         };
 
-        expect(renderToStaticMarkup(menuItems[0]?.menuElement)).toContain('KJV');
+        expect(renderToStaticMarkup(menuItems[0]?.menuElement)).toContain(
+            'KJV',
+        );
 
         await menuItems.at(-1)?.onSelect();
         await waitForAsyncUpdate();
@@ -330,7 +348,8 @@ describe('screenBibleHelpers', () => {
     });
 
     test('skips empty menu states and alerts when Bible item data is missing', async () => {
-        const { renderScreenBibleManager } = await import('./screenBibleHelpers');
+        const { renderScreenBibleManager } =
+            await import('./screenBibleHelpers');
         const invalidViewData = {
             type: 'bible-item',
             locale: 'en-US',
@@ -353,7 +372,10 @@ describe('screenBibleHelpers', () => {
         await renderScreenBibleManager(screenBibleManager);
 
         genContextMenuBibleKeysMock.mockResolvedValueOnce(null);
-        await capturedHighlightHandlers?.onBibleSelect(new MouseEvent('click'), 0);
+        await capturedHighlightHandlers?.onBibleSelect(
+            new MouseEvent('click'),
+            0,
+        );
         expect(showAppContextMenuMock).not.toHaveBeenCalled();
 
         genContextMenuBibleKeysMock.mockImplementationOnce(
@@ -378,8 +400,13 @@ describe('screenBibleHelpers', () => {
                 ];
             },
         );
-        await capturedHighlightHandlers?.onBibleSelect(new MouseEvent('click'), 0);
-        const menuItems = showAppContextMenuMock.mock.calls.at(-1)?.[1] as Array<{
+        await capturedHighlightHandlers?.onBibleSelect(
+            new MouseEvent('click'),
+            0,
+        );
+        const menuItems = showAppContextMenuMock.mock.calls.at(
+            -1,
+        )?.[1] as Array<{
             onSelect: () => Promise<void> | void;
         }>;
         await menuItems.at(-1)?.onSelect();
@@ -394,10 +421,8 @@ describe('screenBibleHelpers', () => {
     });
 
     test('builds screen view data from Bible items and JSON clones', async () => {
-        const {
-            bibleItemJsonToScreenViewData,
-            bibleItemToScreenViewData,
-        } = await import('./screenBibleHelpers');
+        const { bibleItemJsonToScreenViewData, bibleItemToScreenViewData } =
+            await import('./screenBibleHelpers');
 
         const withNoBibleKey = new MockBibleItem({
             ...createBibleItemJson(null as any),
@@ -417,7 +442,9 @@ describe('screenBibleHelpers', () => {
         expect(bibleKeys).toEqual(['KJV', 'NIV']);
         expect(jsonView.locale).toBe('locale-KJV');
         expect(
-            jsonView.bibleItemData?.renderedList.map(({ bibleKey }) => bibleKey),
+            jsonView.bibleItemData?.renderedList.map(
+                ({ bibleKey }) => bibleKey,
+            ),
         ).toEqual(['KJV', 'NIV']);
 
         const singleView = await bibleItemJsonToScreenViewData(
