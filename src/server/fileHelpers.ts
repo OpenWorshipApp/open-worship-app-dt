@@ -568,8 +568,11 @@ export async function fsDeleteDir(filePath: string) {
     }
 }
 
-export function fsReadFile(filePath: string) {
-    return _fsReadFile(filePath, 'utf8');
+export async function fsReadFile(filePath: string) {
+    let text= await _fsReadFile(filePath, 'utf8');
+    // remove `\uFEFF`
+    text = text.replace(/^\uFEFF/, '');
+    return text;
 }
 
 export function fsReadSync(filePath: string) {
