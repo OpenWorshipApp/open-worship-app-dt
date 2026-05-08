@@ -1,4 +1,7 @@
 import appProvider from '../server/appProvider';
+import { getDocxToHtmlsVersion } from '../server/docxHelpers';
+import { getPptxToHtmlsVersion } from '../server/pptxHelpers';
+import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useThemeSource } from './initHelpers';
 
 const { appInfo } = appProvider;
@@ -19,9 +22,19 @@ function RenderVerseComp() {
 const handleForkingOnGithub = () => {
     appProvider.browserUtils.openExternalURL(GITHUB_URL);
 };
+
+function renderVersion(version: string | null | undefined) {
+    if (version === undefined) {
+        return 'Loading...';
+    }
+    return version ?? 'N/A';
+}
+
 // need width: '700px', height: '410px'
 export default function AboutComp() {
     const { theme } = useThemeSource();
+    const [docxToHtmlsVersion] = useAppStateAsync(getDocxToHtmlsVersion);
+    const [pptxToHtmlsVersion] = useAppStateAsync(getPptxToHtmlsVersion);
     return (
         <div
             id="app"
@@ -51,6 +64,16 @@ export default function AboutComp() {
                 </div>
                 <div className="card-body p-2">
                     <div>{appInfo.description}</div>
+                    <div className="small mt-2">
+                        <div>
+                            Pptx2Html version:
+                            {renderVersion(pptxToHtmlsVersion)}
+                        </div>
+                        <div>
+                            Docx2Html version:
+                            {renderVersion(docxToHtmlsVersion)}
+                        </div>
+                    </div>
                     <div className="my-2">
                         <button
                             className="btn btn-success"

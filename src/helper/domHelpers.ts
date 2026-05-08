@@ -369,7 +369,7 @@ function openAboutPage() {
         'about',
         {
             width: 700,
-            height: 455,
+            height: 555,
             appAlignHorizontal: 'center',
             appAlignVertical: 'center',
             appFollowScale: true,
