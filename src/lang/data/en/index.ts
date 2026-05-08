@@ -1,8 +1,12 @@
 import type { LanguageDataType } from '../../langHelpers';
 
+import bibleBooks from './bibleBooks.json';
+
 const lang: LanguageDataType = {
+    version: '0.0.1',
     locale: 'en-US',
     langCode: 'en',
+    bibleBooks,
     genCss: () => {
         return '';
     },

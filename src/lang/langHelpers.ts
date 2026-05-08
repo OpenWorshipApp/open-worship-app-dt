@@ -437,10 +437,17 @@ export function getLangCode(locale: LocaleType): string | null {
     return (allLocalesMap as any)[locale] ?? null;
 }
 
+export type BibleBookType = {
+    keys: string[];
+    books: string[];
+};
+
 export type LocaleType = keyof typeof allLocalesMap;
 export type LanguageDataType = {
+    version: string;
     locale: LocaleType;
     langCode: string;
+    bibleBooks: BibleBookType[];
     fontFamilyName?: string;
     getFontFamilyFiles?: () => string[];
     genCss: () => string;

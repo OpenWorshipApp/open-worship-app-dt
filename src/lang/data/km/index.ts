@@ -6,6 +6,8 @@ import btbLight from './fonts/Battambang-Light.ttf';
 import btbRegular from './fonts/Battambang-Regular.ttf';
 import btbThin from './fonts/Battambang-Thin.ttf';
 
+import bibleBooks from './bibleBooks.json';
+
 const numMap = {
     '០': '0',
     '១': '1',
@@ -465,8 +467,10 @@ const sanitizedDictionary = Object.fromEntries(
 );
 const fontFamily = 'km-font-family';
 const lang: LanguageDataType = {
+    version: '0.0.1',
     locale: 'km-KH',
     langCode: 'km',
+    bibleBooks,
     fontFamilyName: 'Battambang',
     getFontFamilyFiles: () => {
         return [btbRegular, btbBold, btbLight, btbThin, btbBlack];
