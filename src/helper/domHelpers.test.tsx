@@ -364,14 +364,14 @@ describe('domHelpers', () => {
 
         openPopupWindow('/settings', 'frame-1', 'uuid-1', {
             width: 320,
-            appAlwaysOnTop: false,
+            appTopToMain: false,
         });
         const settingsUrl = new URL('/settings', location.href);
         settingsUrl.searchParams.set('uuid', 'uuid-1');
         expect(openCalls[0]).toEqual({
             url: settingsUrl.toString(),
             target: 'owa-frame_frame-1',
-            features: 'popup,width=320,appAlwaysOnTop=false',
+            features: 'popup,width=320,appTopToMain=false',
         });
     });
 

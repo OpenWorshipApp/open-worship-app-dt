@@ -282,6 +282,7 @@ export type PopupWindowFeaturesType = {
     appAlignVertical?: 'top' | 'center' | 'bottom';
     appScale?: number;
     appAlwaysOnTop?: boolean;
+    appTopToMain?: boolean;
     appAutoHideMenuBar?: boolean;
     appResize?: boolean;
 };
@@ -466,10 +467,16 @@ function handlePopupWindowOpen(
         return { action: 'deny' };
     }
 
+    const topToMainOptions: BrowserWindowConstructorOptions = {};
+    if (featuresRecord.appTopToMain) {
+        topToMainOptions.parent = win;
+    }
+
     const content: WindowOpenHandlerResponse = {
         action: 'allow',
         overrideBrowserWindowOptions: {
             ...subDisplay,
+            ...topToMainOptions,
             webPreferences,
             // transparent: true,
             // frame: false,

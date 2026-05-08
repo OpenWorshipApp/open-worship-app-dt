@@ -14,6 +14,7 @@ import {
     getAppThemeBackgroundColor,
     goDownload,
     guardBrowsing,
+    POPUP_FRAME_NAME_PREFIX,
     toShortcutKey,
     toUnpackedPath,
     unlocking,
@@ -142,6 +143,51 @@ describe('electronHelpers', () => {
         guardBrowsing(win as any, { preload: '/tmp/preload.js' } as any);
 
         expect(win.webContents.setWindowOpenHandler).toHaveBeenCalledTimes(1);
+    });
+
+    test('parents popup window to opener only when appTopToMain is enabled', () => {
+        const parentWin = createMockBrowserWindow();
+
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+        const responseWithParent = windowOpenHandler({
+            url: 'https://localhost:3000/about.html?uuid=about',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_about`,
+            features: 'popup,width=700,appTopToMain',
+        } as any);
+
+        expect(responseWithParent.action).toBe('allow');
+        expect(responseWithParent.overrideBrowserWindowOptions).toEqual(
+            expect.objectContaining({
+                parent: parentWin,
+            }),
+        );
+
+        const popupWin = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => popupWin);
+        responseWithParent.createWindow(
+            responseWithParent.overrideBrowserWindowOptions,
+        );
+
+        expect(electronMockState.BrowserWindowMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                parent: parentWin,
+            }),
+        );
+        expect(popupWin.setAlwaysOnTop).not.toHaveBeenCalled();
+
+        const responseWithoutParent = windowOpenHandler({
+            url: 'https://localhost:3000/find.html?uuid=find',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_find`,
+            features: 'popup,width=270,appTopToMain=false',
+        } as any);
+
+        expect(responseWithoutParent.action).toBe('allow');
+        expect(responseWithoutParent.overrideBrowserWindowOptions).not.toHaveProperty(
+            'parent',
+        );
     });
 
     test('debounces callback execution', () => {

@@ -316,7 +316,7 @@ export type PopupWindowFeaturesType = {
     appAlignHorizontal?: 'left' | 'center' | 'right';
     appAlignVertical?: 'top' | 'center' | 'bottom';
     appScale?: number;
-    appAlwaysOnTop?: boolean;
+    appTopToMain?: boolean;
     appAutoHideMenuBar?: boolean;
     appResize?: boolean;
 };
@@ -373,7 +373,7 @@ function openAboutPage() {
             appAlignHorizontal: 'center',
             appAlignVertical: 'center',
             appFollowScale: true,
-            appAlwaysOnTop: true,
+            appTopToMain: true,
         },
     );
 }
@@ -392,7 +392,7 @@ function openFindPage() {
             appAlignHorizontal: 'left',
             appAlignVertical: 'top',
             appFollowScale: true,
-            appAlwaysOnTop: true,
+            appTopToMain: true,
             appAutoHideMenuBar: true,
         },
     );
