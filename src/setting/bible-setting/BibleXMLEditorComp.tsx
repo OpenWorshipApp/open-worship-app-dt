@@ -218,6 +218,9 @@ function BibleBooksMapXMLInputComp({
         uri: Uri.parse('bible-books-map-editor'),
         language: 'plaintext',
     });
+    useAppEffect(() => {
+        editorStore.replaceValue(defaultVale);
+    }, [defaultVale, editorStore]);
     const handleMarkupStringParsing = useCallback(
         (markupString: string, lang: LanguageDataType | null) => {
             markupString = markupString.replaceAll('</', '@newline</');
