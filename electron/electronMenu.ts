@@ -147,6 +147,35 @@ export function initMenu(appController: ElectronAppController) {
                         shell.openExternal('https://fonts.google.com/');
                     },
                 },
+                {
+                    label: 'Khmer Tools',
+                    submenu: [
+                        {
+                            label: 'Eitor',
+                            click: () => {
+                                shell.openExternal(
+                                    'https://editor-km.openworship.app',
+                                );
+                            },
+                        },
+                        {
+                            label: 'Open Lyric',
+                            click: () => {
+                                shell.openExternal(
+                                    'https://lyric-km.openworship.app',
+                                );
+                            },
+                        },
+                        {
+                            label: 'BibleNote',
+                            click: () => {
+                                shell.openExternal(
+                                    'https://biblenote-km.openworship.app',
+                                );
+                            },
+                        },
+                    ],
+                },
             ],
         },
         // { role: 'windowMenu' }

@@ -74,13 +74,37 @@ describe('electronMenu', () => {
         const fontsItem = toolsMenu.submenu.find(
             (item: any) => item.label === 'Google Fonts',
         );
+        const khmerToolsMenu = toolsMenu.submenu.find(
+            (item: any) => item.label === 'Khmer Tools',
+        );
+        const editorItem = khmerToolsMenu.submenu.find(
+            (item: any) => item.label === 'Eitor',
+        );
+        const openLyricItem = khmerToolsMenu.submenu.find(
+            (item: any) => item.label === 'Open Lyric',
+        );
+        const bibleNoteItem = khmerToolsMenu.submenu.find(
+            (item: any) => item.label === 'BibleNote',
+        );
 
         copyItem.click();
         fontsItem.click();
+        editorItem.click();
+        openLyricItem.click();
+        bibleNoteItem.click();
 
         expect(copyDebugInfoToClipboard).toHaveBeenCalledTimes(1);
         expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
             'https://fonts.google.com/',
+        );
+        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            'https://editor-km.openworship.app',
+        );
+        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            'https://lyric-km.openworship.app',
+        );
+        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            'https://biblenote-km.openworship.app',
         );
     });
 });
