@@ -265,6 +265,62 @@ function BibleBooksMapXMLInputComp({
         },
         [editorStore, locale, handleMarkupStringParsing],
     );
+    const handleChoosingBibleBooks = useCallback(
+        async (event: MouseEvent) => {
+            event.stopPropagation();
+            const lang = await getLangDataAsync(locale);
+            const bibleBookOptions = lang?.bibleBooks ?? [];
+            if (bibleBookOptions.length === 0) {
+                showAppContextMenu(event as any, [
+                    {
+                        menuElement: tran('No book options available'),
+                        disabled: true,
+                    },
+                ]);
+                return;
+            }
+            const currentBibleKey = bibleKey.trim().toLowerCase();
+            const checkIsCurrentBibleKey = (keys: string[]) => {
+                return keys.some(
+                    (key) => key.trim().toLowerCase() === currentBibleKey,
+                );
+            };
+            const sortedBibleBookOptions = [...bibleBookOptions].sort(
+                (a, b) => {
+                    return (
+                        Number(checkIsCurrentBibleKey(b.keys)) -
+                        Number(checkIsCurrentBibleKey(a.keys))
+                    );
+                },
+            );
+            showAppContextMenu(
+                event as any,
+                sortedBibleBookOptions.map((bibleBookOption) => {
+                    const value = bibleBookOption.books.join('\n');
+                    const isCurrentBibleKey = checkIsCurrentBibleKey(
+                        bibleBookOption.keys,
+                    );
+                    return {
+                        menuElement: (
+                            <span data-locale-ff={locale}>
+                                {bibleBookOption.keys.join(', ')}
+                            </span>
+                        ),
+                        title: bibleBookOption.keys.join(', '),
+                        style: isCurrentBibleKey
+                            ? { fontWeight: 'bold' }
+                            : undefined,
+                        onSelect: () => {
+                            onChange(value);
+                            editorStore.replaceValue(value);
+                        },
+                    };
+                }),
+                { maxHeigh: 320 },
+            );
+        },
+        [bibleKey, editorStore, locale, onChange],
+    );
     return (
         <div className="w-100 h-100">
             <h5 className="p-2">
@@ -312,6 +368,14 @@ function BibleBooksMapXMLInputComp({
                     onClick={handleParseMarkup}
                 >
                     {tran('Parse Markup String (HTML|XML)')}
+                </button>
+                <button
+                    className="btn btn-sm btn-info ms-2"
+                    onClick={handleChoosingBibleBooks}
+                    title="Choose Bible Books"
+                    type="button"
+                >
+                    <i className="bi bi-book" /> Bible Books
                 </button>
             </div>
         </div>
