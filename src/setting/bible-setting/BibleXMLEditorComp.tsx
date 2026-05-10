@@ -199,10 +199,12 @@ function BibleBooksMapXMLInputComp({
     defaultVale,
     onChange,
     locale,
+    bibleKey,
 }: Readonly<{
     defaultVale: string;
     onChange: (newValue: string) => void;
     locale: LocaleType;
+    bibleKey: string;
 }>) {
     const { editorStore, onContainerInit } = useInitMonacoEditor({
         settingName: 'bible-xml-wrap-text',
@@ -265,7 +267,9 @@ function BibleBooksMapXMLInputComp({
     );
     return (
         <div className="w-100 h-100">
-            <h3 className="p-2">Define books map</h3>
+            <h5 className="p-2">
+                Define books map Locale: {locale}, Bible Key: {bibleKey}
+            </h5>
             <div
                 className="input-group"
                 ref={onContainerInit}
@@ -317,6 +321,7 @@ function BibleBooksMapXMLInputComp({
 export function genBibleBooksMapXMLInput(
     books: string[],
     locale: LocaleType,
+    bibleKey: string,
     onChange: (books: string[]) => void,
 ) {
     return (
@@ -326,6 +331,7 @@ export function genBibleBooksMapXMLInput(
                 onChange(newValue.split('\n'));
             }}
             locale={locale}
+            bibleKey={bibleKey}
         />
     );
 }
@@ -408,6 +414,7 @@ export function addMonacoBibleInfoActions(
                 genBibleBooksMapXMLInput(
                     keyBookMap,
                     bibleInfo.locale,
+                    bibleInfo.key,
                     (newNumbers) => {
                         keyBookMap = newNumbers;
                     },
