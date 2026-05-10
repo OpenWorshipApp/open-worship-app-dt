@@ -9,6 +9,9 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import type { SelectedBookKeyType } from './bibleFindHelpers';
 import { tran } from '../lang/langHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import BibleFindController from './BibleFindController';
+import appProvider from '../server/appProvider';
 
 function genMenuItem(
     selectedBooks: SelectedBookKeyType[],
@@ -104,6 +107,47 @@ async function selectBookKeys(
     showAppContextMenu(event, contextMenuItems);
 }
 
+function showExtraActions(
+    event: any,
+    bibleKey: string,
+    setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
+) {
+    const contextMenuItems: ContextMenuItemType[] = [
+        {
+            menuElement: tran('Reset Search Data'),
+            onSelect: async () => {
+                const isOk = await showAppConfirm(
+                    tran('Reset Search Data'),
+                    tran(
+                        'Are you sure to reset search data? This will take a ' +
+                            'moment to restore',
+                    ),
+                );
+                if (!isOk) {
+                    return;
+                }
+                const isSuccess =
+                    await BibleFindController.resetSearchingDatabase(bibleKey);
+                if (isSuccess) {
+                    appProvider.reload();
+                } else {
+                    showSimpleToast(
+                        tran('Reset Search Data'),
+                        tran('Fail to reset search data, please try again'),
+                    );
+                }
+            },
+        },
+        {
+            menuElement: tran('Reset Selected Books'),
+            onSelect: () => {
+                setSelectedBooks([]);
+            },
+        },
+    ];
+    showAppContextMenu(event, contextMenuItems);
+}
+
 export default function RenderFindingInfoHeaderComp({
     bibleKey,
     selectedBooks,
@@ -129,8 +173,23 @@ export default function RenderFindingInfoHeaderComp({
         },
         [bibleKey, selectedBooks, setSelectedBooks],
     );
+    const handleExtraActions = useCallback(
+        (event: any) => {
+            showExtraActions(event, bibleKey, setSelectedBooks);
+        },
+        [bibleKey, setSelectedBooks],
+    );
     return (
-        <div className="w-100 d-flex overflow-hidden app-inner-shadow p-1">
+        <div className="w-100 d-flex overflow-hidden app-inner-shadow p-1 align-items-center">
+            <button
+                className="btn btn-sm btn-outline-secondary flex-shrink-0 me-1 px-1 py-0"
+                type="button"
+                aria-label={tran('Reset Search Data')}
+                title={tran('Reset Search Data')}
+                onClick={handleExtraActions}
+            >
+                <i className="bi bi-three-dots-vertical" />
+            </button>
             <div className="w-100 overflow-hidden">
                 <button
                     className="btn btn-sm btn-info app-ellipsis"

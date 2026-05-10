@@ -70,7 +70,7 @@ function flushBucket(
     bucket.length = 0;
 }
 
-async function initDatabase(
+async function initSearchingDatabase(
     bibleKey: string,
     databaseFilePath: string,
     successFileSuffix: string,
@@ -167,6 +167,9 @@ class DatabaseFindingHandler {
     database: SQLiteDatabaseType;
     constructor(database: SQLiteDatabaseType) {
         this.database = database;
+    }
+    close() {
+        this.database.close();
     }
     async doFinding(
         bibleKey: string,
@@ -379,17 +382,67 @@ export default class BibleFindController {
         return databaseFilePath;
     }
 
-    static async checkDatabaseValid(filePath: string) {
+    static toSearchingDatabaseSuccessFilePath(dbFilePath: string) {
+        return dbFilePath + SUCCESS_FILE_SUFFIX;
+    }
+
+    static async checkSearchingDatabaseValid(filePath: string) {
+        const successFilePath =
+            this.toSearchingDatabaseSuccessFilePath(filePath);
         if (
             !(await fsCheckFileExist(filePath)) ||
-            !(await fsCheckFileExist(filePath + SUCCESS_FILE_SUFFIX))
+            !(await fsCheckFileExist(successFilePath))
         ) {
             try {
                 await fsDeleteFile(filePath);
-                await fsDeleteFile(filePath + SUCCESS_FILE_SUFFIX);
+                await fsDeleteFile(successFilePath);
             } catch (_error) {}
             return false;
         }
+        return true;
+    }
+
+    static async getXMLFilePath(bibleKey: string) {
+        const keysMap = await getAllXMLFileKeys();
+        if (keysMap[bibleKey] === undefined) {
+            return null;
+        }
+        return keysMap[bibleKey] ?? null;
+    }
+
+    static async getSearchingDatabaseFilePath(bibleKey: string) {
+        const xmlFilePath = await this.getXMLFilePath(bibleKey);
+        if (xmlFilePath === null) {
+            return null;
+        }
+        const databaseFilePath = await this.getDatabaseFilePath(xmlFilePath);
+        return databaseFilePath;
+    }
+
+    static async resetSearchingDatabase(bibleKey: string) {
+        const databaseFilePath =
+            await this.getSearchingDatabaseFilePath(bibleKey);
+        if (databaseFilePath === null) {
+            return false;
+        }
+        const cachedInstance = instanceCache[bibleKey];
+        try {
+            await fsDeleteFile(
+                this.toSearchingDatabaseSuccessFilePath(databaseFilePath),
+            );
+        } catch (error) {
+            handleError(error);
+            return false;
+        }
+        try {
+            cachedInstance?.databaseFindHandler?.close();
+        } catch (error) {
+            handleError(error);
+        }
+        if (cachedInstance) {
+            cachedInstance.databaseFindHandler = null;
+        }
+        delete instanceCache[bibleKey];
         return true;
     }
 
@@ -401,22 +454,24 @@ export default class BibleFindController {
         if (databaseFilePath === null) {
             return null;
         }
-        let database: SQLiteDatabaseType | null = null;
-        if (await this.checkDatabaseValid(databaseFilePath)) {
+        let searchingDatabase: SQLiteDatabaseType | null = null;
+        if (await this.checkSearchingDatabaseValid(databaseFilePath)) {
             const databaseUtils = appProvider.databaseUtils;
-            database =
+            searchingDatabase =
                 await databaseUtils.getSQLiteDatabaseInstance(databaseFilePath);
         } else {
-            database = await initDatabase(
+            searchingDatabase = await initSearchingDatabase(
                 instance.bibleKey,
                 databaseFilePath,
                 SUCCESS_FILE_SUFFIX,
             );
         }
-        if (database === null) {
+        if (searchingDatabase === null) {
             return null;
         }
-        instance.databaseFindHandler = new DatabaseFindingHandler(database);
+        instance.databaseFindHandler = new DatabaseFindingHandler(
+            searchingDatabase,
+        );
         return instance;
     }
 
@@ -430,14 +485,11 @@ export default class BibleFindController {
                 bibleKey,
                 locale,
             );
-            const keysMap = await getAllXMLFileKeys();
-            if (keysMap[bibleKey] === undefined) {
+            const xmlFilePath = await this.getXMLFilePath(bibleKey);
+            if (xmlFilePath === null) {
                 instance = await this.getOnlineInstant(instance);
             } else {
-                instance = await this.getXMLInstant(
-                    instance,
-                    keysMap[bibleKey],
-                );
+                instance = await this.getXMLInstant(instance, xmlFilePath);
             }
             instanceCache[bibleKey] = instance;
             return instance as BibleFindController;

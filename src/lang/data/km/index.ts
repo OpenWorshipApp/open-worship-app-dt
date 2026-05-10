@@ -23,6 +23,12 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Reset Selected Books': 'កំណត់សៀវភៅដែលបានជ្រើសរើសឡើងវិញ',
+    'Fail to reset search data, please try again':
+        'មិនអាចកំណត់ទិន្នន័យស្វែងរកឡើងវិញបាន, សូមព្យាយាមម្តងទៀត',
+    'Reset Search Data': 'កំណត់ទិន្នន័យស្វែងរកឡើងវិញ',
+    'Are you sure to reset search data? This will take a moment to restore':
+        'តើអ្នកពិតជាចង់កំណត់ទិន្នន័យស្វែងរកឡើងវិញឬ? នេះនឹងចំណាយពេលមួយដើម្បីស្ដារឡើងវិញ',
     'This slide is disabled': 'ស្លាយនេះត្រូវបានបិទ',
     'Double click to jump to top': 'ចុចពីរដងដើម្បីទៅកាន់ខាងលើ',
     'Refresh PPTX Slides': 'ផ្ទុកស្លាយ PPTX ជាថ្មី',
