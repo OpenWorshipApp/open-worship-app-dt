@@ -143,6 +143,7 @@ export default function NoteItemRenderComp({
         <>
             <li
                 className="list-group-item item ps-3 pe-1 py-1"
+                title={tran('Double click to open note')}
                 style={{
                     height: 40,
                 }}

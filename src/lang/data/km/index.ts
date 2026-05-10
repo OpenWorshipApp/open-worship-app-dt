@@ -23,6 +23,7 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Double click to open note': 'ចុចពីរដងដើម្បីបើកកំណត់ត្រា',
     'Reset Selected Books': 'កំណត់សៀវភៅដែលបានជ្រើសរើសឡើងវិញ',
     'Fail to reset search data, please try again':
         'មិនអាចកំណត់ទិន្នន័យស្វែងរកឡើងវិញបាន, សូមព្យាយាមម្តងទៀត',
