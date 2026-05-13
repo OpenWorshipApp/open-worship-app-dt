@@ -15,7 +15,7 @@ export default function BibleViewTitleWrapperComp({
     return (
         <span
             className="title full-view-reset-font-size"
-            style={{ fontSize, fontFamily }}
+            style={{ fontSize, fontFamily, paddingLeft: '5px' }}
         >
             {children}
         </span>
