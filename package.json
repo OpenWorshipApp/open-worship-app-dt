@@ -34,7 +34,7 @@
         "vite:build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
         "lint:pre": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\" \"electron/**/*.ts\"",
         "lint:all:error": "tsc --noEmit --skipLibCheck",
-        "lint:es": "eslint src/**/*.ts* electron/**/*.ts",
+        "lint:es": "eslint src/**/*.ts* electron/**/*.ts --ignore-pattern \"src/**/*.test.ts*\" --ignore-pattern \"src/**/*.spec.ts*\" --max-warnings 0",
         "lint": "npm run test:all && npm run lint:all:error && npm run lint:pre && npm run lint:es && npm run build",
         "dc:err": "depcruise src --include-only \"^src\" --output-type err-html > dc-dependency-graph/errors.html",
         "release:version": "node extra-work/setTodayVersion.mjs && npm install",
