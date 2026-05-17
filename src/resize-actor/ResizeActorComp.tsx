@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type CSSProperties, useState } from 'react';
 
 import type { DataInputType, FlexSizeType } from './flexSizeHelpers';
 import { getFlexSizeSetting, setFlexSizeSetting } from './flexSizeHelpers';
@@ -14,6 +14,7 @@ export default function ResizeActorComp({
     dataInput,
     isDisableQuickResize,
     isNotSaveSetting = false,
+    containerStyle,
 }: Readonly<{
     isHorizontal: boolean;
     flexSizeName: string;
@@ -22,6 +23,7 @@ export default function ResizeActorComp({
     dataInput: DataInputType[];
     isDisableQuickResize?: boolean;
     isNotSaveSetting?: boolean;
+    containerStyle?: CSSProperties;
 }>) {
     freezeObject(flexSizeDefault);
     for (const { key } of dataInput) {
@@ -68,6 +70,9 @@ export default function ResizeActorComp({
                 `w-100 h-100 flex ${isHorizontal ? 'h' : 'v'} ` +
                 'app-overflow-hidden'
             }
+            style={{
+                ...containerStyle,
+            }}
         >
             {dataInput.map((data, i) => {
                 const { key, className, isOnScreen } = data;

@@ -11,6 +11,7 @@ import type {
     FlexSizeType,
     DataInputType,
 } from '../resize-actor/flexSizeHelpers';
+import { checkIsDarkMode, useThemeSource } from '../others/initHelpers';
 
 export default function BibleViewRendererComp({
     isHorizontal = true,
@@ -21,6 +22,7 @@ export default function BibleViewRendererComp({
     classPrefix?: string;
     nestedBibleItems: NestedBibleItemsType;
 }>) {
+    const them = useThemeSource();
     const viewController = useBibleItemsViewControllerContext();
     const typeText = isHorizontal ? 'h' : 'v';
     const fullClassPrefix = classPrefix + typeText;
@@ -75,6 +77,11 @@ export default function BibleViewRendererComp({
                     widgetName: 'Bible View',
                 };
             })}
+            containerStyle={{
+                backgroundColor: checkIsDarkMode(them.themeSource)
+                    ? 'black'
+                    : 'white',
+            }}
         />
     );
 }
