@@ -3,7 +3,7 @@ import { type ChangeEvent, useCallback, useState } from 'react';
 import type { LocaleType } from '../../lang/langHelpers';
 import {
     getLangCode,
-    getLangData,
+    getLangDataAsync,
     toLocaleNum,
     tran,
 } from '../../lang/langHelpers';
@@ -104,7 +104,7 @@ export function genBibleKeyXMLInput(
 }
 
 async function toLocaleNumbers(locale: LocaleType, numbers: number[]) {
-    const langData = getLangData(locale);
+    const langData = await getLangDataAsync(locale);
     if (langData === null) {
         return null;
     }
