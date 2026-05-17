@@ -1,7 +1,13 @@
 import { type ChangeEvent, useCallback, useState } from 'react';
 
 import type { LocaleType } from '../../lang/langHelpers';
-import { getLangCode, tran } from '../../lang/langHelpers';
+import {
+    getLangCode,
+    getLangData,
+    toLocaleNum,
+    tran,
+} from '../../lang/langHelpers';
+import { useAppStateAsync } from '../../helper/debuggerHelpers';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -97,6 +103,15 @@ export function genBibleKeyXMLInput(
     );
 }
 
+async function toLocaleNumbers(locale: LocaleType, numbers: number[]) {
+    const langData = getLangData(locale);
+    if (langData === null) {
+        return null;
+    }
+    const arr = await Promise.all(numbers.map((i) => toLocaleNum(locale, i)));
+    return arr.join(' ');
+}
+
 function BibleNumbersMapXMLInputComp({
     defaultVale,
     onChange,
@@ -106,6 +121,10 @@ function BibleNumbersMapXMLInputComp({
     onChange: (key: string) => void;
     locale: LocaleType;
 }>) {
+    const [num123] = useAppStateAsync(
+        () => toLocaleNumbers(locale, [1, 2, 3]),
+        [locale],
+    );
     const [value, setValue] = useState(defaultVale);
     const [invalidMessage, setInvalidMessage] = useState<string>('');
     const setValue1 = useCallback(
@@ -129,7 +148,7 @@ function BibleNumbersMapXMLInputComp({
     const langCode = getLangCode(locale) ?? 'en';
     return (
         <div className="w-100 h-100">
-            <div>Define numbers map</div>
+            <div>Define numbers map for {langCode}</div>
             <div className="input-group" title={invalidMessage}>
                 <div className="input-group-text">Key:</div>
                 <input
@@ -137,6 +156,7 @@ function BibleNumbersMapXMLInputComp({
                         'form-control form-control-sm' +
                         (invalidMessage ? ' is-invalid' : '')
                     }
+                    placeholder='0 1 2 3 4 5 6 7 8 9'
                     type="text"
                     value={value}
                     onChange={handleChange}
@@ -144,7 +164,7 @@ function BibleNumbersMapXMLInputComp({
             </div>
             <div className="w-100">
                 <a
-                    className="btn btn-secondary ms-2"
+                    className="btn btn-sm btn-secondary ms-2"
                     href={
                         `https://translate.google.com/?sl=en&tl=${langCode}&` +
                         'text=0%201%202%203%204%205%206%207%208%209&op=translate'
@@ -153,6 +173,23 @@ function BibleNumbersMapXMLInputComp({
                 >
                     Translate ({langCode})
                 </a>
+                {num123 ? (
+                    <button
+                        className="btn btn-sm btn-secondary ms-2"
+                        onClick={async () => {
+                            const localeNumbers = await toLocaleNumbers(
+                                locale,
+                                [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                            );
+                            if (localeNumbers === null) {
+                                return;
+                            }
+                            setValue1(localeNumbers);
+                        }}
+                    >
+                        {`Use ${num123}`}
+                    </button>
+                ) : null}
             </div>
         </div>
     );
