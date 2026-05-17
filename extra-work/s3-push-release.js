@@ -222,7 +222,18 @@ async function uploadToS3(client, baseKey, body, optionalFileFullName) {
     const command = new PutObjectCommand(putData);
     const url = `s3://${bucketName}/${key}`;
     console.log(`Uploading to "${url}"`);
-    await client.send(command);
+    let retryCount = 0;
+    while (retryCount < 3) {
+        try {
+            await client.send(command);
+            break;
+        } catch (error) {
+            retryCount++;
+            if (retryCount === 3) {
+                throw error;
+            }
+        }
+    }
     console.log(`*Uploaded to "${url}"`);
 }
 
