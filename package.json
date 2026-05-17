@@ -101,6 +101,7 @@
                 "zip"
             ],
             "category": "public.app-category.productivity",
+            "minimumSystemVersion": "10.0",
             "extendInfo": {
                 "NSCameraUsageDescription": "This app requires camera access to use as background video."
             }
