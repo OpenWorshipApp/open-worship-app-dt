@@ -146,7 +146,9 @@ function getLinuxBinFilePath(prefix, systemInfo) {
         portable: filterBinFileInfo(prefix, data, '.AppImage'),
         installer: systemInfo.isUbuntu
             ? filterBinFileInfo(prefix, data, '.deb')
-            : [],
+            : systemInfo.isFedora
+              ? filterBinFileInfo(prefix, data, '.rpm')
+              : [],
     };
     const s3Key = `${BASE_KEY_PREFIX}/${prefix}`;
     return [
@@ -203,6 +205,8 @@ function addContentType(putData) {
         putData.ContentType = 'application/vnd.appimage';
     } else if (key.endsWith('.deb')) {
         putData.ContentType = 'application/vnd.debian.binary-package';
+    } else if (key.endsWith('.rpm')) {
+        putData.ContentType = 'application/x-rpm';
     } else if (key.endsWith('.tar.gz')) {
         putData.ContentType = 'application/gzip';
     } else if (key.endsWith('.tar')) {

@@ -37,7 +37,9 @@ is_linux_ubuntu() {
 
 is_linux_fedora() {
     if [[ -f /etc/os-release ]]; then
-        if grep -q 'Fedora' /etc/os-release; then
+        . /etc/os-release
+        distro_ids="${ID:-} ${ID_LIKE:-}"
+        if [[ "$distro_ids" =~ (^|[[:space:]])(fedora|rhel|centos|rocky|almalinux)($|[[:space:]]) ]]; then
             echo "true"
         fi
     fi
@@ -79,9 +81,15 @@ mac_prep() {
 
 linux_prep() {
     start_prep "$1"
-    chmod +x "$1"/*.AppImage
-    chmod +x "$1"/*.deb
-    ls "$1" | grep -E '\.deb$|\.AppImage$' | while read -r file; do
+    shopt -s nullglob
+    chmod +x "$1"/*.AppImage "$1"/*.deb "$1"/*.rpm 2>/dev/null
+    shopt -u nullglob
+    if [[ "$2" == "fedora" ]]; then
+        file_pattern='\.rpm$|\.AppImage$'
+    else
+        file_pattern='\.deb$|\.AppImage$'
+    fi
+    ls "$1" | grep -E "$file_pattern" | while read -r file; do
         checksum=$(sha512sum "$1/$file" | awk '{print $1}')
         append_file_info "$1" "$file" "$checksum" "$1/latest-linux.yml"
     done
@@ -110,9 +118,9 @@ build_release() {
     elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
         npm run pack:linux
         if [[ "$RELEASE_LINUX_IS_UBUNTU" == "true" ]]; then
-            linux_prep "$tmp_dir/linux-ubuntu"
+            linux_prep "$tmp_dir/linux-ubuntu" "ubuntu"
         elif [[ "$RELEASE_LINUX_IS_FEDORA" == "true" ]]; then
-            linux_prep "$tmp_dir/linux-fedora"
+            linux_prep "$tmp_dir/linux-fedora" "fedora"
         else
             echo "Unsupported Linux distribution"
             exit 1

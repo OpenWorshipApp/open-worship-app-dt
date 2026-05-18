@@ -151,6 +151,8 @@ npm run pack:mac:uni
 npm run pack:linux
 ```
 
+On Fedora-based systems, this also generates an RPM artifact in `release/`.
+
 ---
 
 ## 🧹 Linting and Formatting
