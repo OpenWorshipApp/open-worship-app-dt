@@ -4,15 +4,12 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const {
-    hideProgressBarMock,
-    showProgressBarMock,
-    useTransitionMock,
-} = vi.hoisted(() => ({
-    hideProgressBarMock: vi.fn(),
-    showProgressBarMock: vi.fn(),
-    useTransitionMock: vi.fn(),
-}));
+const { hideProgressBarMock, showProgressBarMock, useTransitionMock } =
+    vi.hoisted(() => ({
+        hideProgressBarMock: vi.fn(),
+        showProgressBarMock: vi.fn(),
+        useTransitionMock: vi.fn(),
+    }));
 
 vi.mock('react', async () => {
     const actual = await vi.importActual<typeof import('react')>('react');
@@ -108,21 +105,19 @@ describe('progressBar helpers and components', () => {
     test('renders progress bars with and without a title attribute', async () => {
         await render(<ProgressBarComp title="Uploading" />);
 
-        const titledBar = container?.querySelector<HTMLDivElement>(
-            '.app-progress-bar',
-        );
+        const titledBar =
+            container?.querySelector<HTMLDivElement>('.app-progress-bar');
         expect(titledBar?.getAttribute('title')).toBe('Progress: Uploading');
         expect(
-            container?.querySelector('[role="progressbar"]')?.getAttribute(
-                'aria-valuenow',
-            ),
+            container
+                ?.querySelector('[role="progressbar"]')
+                ?.getAttribute('aria-valuenow'),
         ).toBe('100');
 
         await render(<ProgressBarComp />);
 
-        const untitledBar = container?.querySelector<HTMLDivElement>(
-            '.app-progress-bar',
-        );
+        const untitledBar =
+            container?.querySelector<HTMLDivElement>('.app-progress-bar');
         expect(untitledBar?.getAttribute('title')).toBeNull();
     });
 
@@ -169,9 +164,8 @@ describe('progressBar helpers and components', () => {
 
         await render(<Host />);
 
-        const progressContainer = container?.querySelector<HTMLDivElement>(
-            '.w-100',
-        );
+        const progressContainer =
+            container?.querySelector<HTMLDivElement>('.w-100');
         expect(progressContainer?.style.height).toBe('1px');
         expect(container?.querySelector('.app-progress-bar')).not.toBeNull();
     });

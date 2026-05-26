@@ -148,16 +148,12 @@ describe('slideItemRenderHelpers', () => {
             type: DragTypeEnum.BACKGROUND_CAMERA,
             item: { src: 'camera-1' },
         } as any) as any;
-        expect(cameraElement.props.src).toBe(
-            '/assets/background-camera.png',
-        );
+        expect(cameraElement.props.src).toBe('/assets/background-camera.png');
         expect(
             renderToStaticMarkup(
                 cameraElement.props.genChildren({ width: 320, height: 180 }),
             ),
-        ).toContain(
-            'camera-1:320',
-        );
+        ).toContain('camera-1:320');
 
         let webMarkup = renderToStaticMarkup(
             genAttachBackgroundComponent({
@@ -183,9 +179,8 @@ describe('slideItemRenderHelpers', () => {
     });
 
     test('renders image and video backgrounds with runtime fallback handlers', async () => {
-        const { genAttachBackgroundComponent } = await import(
-            './slideItemRenderHelpers'
-        );
+        const { genAttachBackgroundComponent } =
+            await import('./slideItemRenderHelpers');
 
         const playMock = vi
             .spyOn(HTMLMediaElement.prototype, 'play')
@@ -233,7 +228,8 @@ describe('slideItemRenderHelpers', () => {
     });
 
     test('derives active, presenter, and holding highlight classes from selection state', async () => {
-        const { toClassNameHighlight } = await import('./slideItemRenderHelpers');
+        const { toClassNameHighlight } =
+            await import('./slideItemRenderHelpers');
         const varySlide = {
             filePath: '/docs/main.ows',
             id: 7,
@@ -251,9 +247,11 @@ describe('slideItemRenderHelpers', () => {
 
         appProviderMock.isPageAppDocumentEditor = false;
         checkIsVarySlideOnScreenMock.mockReturnValue(true);
-        result = toClassNameHighlight(varySlide, { id: 99 } as any, [
-            { id: 7 },
-        ] as any);
+        result = toClassNameHighlight(
+            varySlide,
+            { id: 99 } as any,
+            [{ id: 7 }] as any,
+        );
         expect(result.activeCN).toBe('');
         expect(result.presenterCN).toBe('app-highlight-selected animation');
         expect(result.holdingCN).toBe('holding');
@@ -264,10 +262,8 @@ describe('slideItemRenderHelpers', () => {
     });
 
     test('builds color-note menu items and emits updates after a color change', async () => {
-        const {
-            genChooseColorNoteOption,
-            getSlideItemShadowingStyle,
-        } = await import('./slideItemRenderHelpers');
+        const { genChooseColorNoteOption, getSlideItemShadowingStyle } =
+            await import('./slideItemRenderHelpers');
 
         const [option] = genChooseColorNoteOption('/docs/main.ows', 7);
         const iconMarkup = renderToStaticMarkup(option.childBefore);
@@ -297,8 +293,12 @@ describe('slideItemRenderHelpers', () => {
         expect(fireUpdateEventMock).toHaveBeenCalledTimes(1);
 
         const styleMarkup = renderToStaticMarkup(getSlideItemShadowingStyle());
-        expect(styleMarkup).toContain("shadow-blank-bg[data-shadow-theme='dark']");
+        expect(styleMarkup).toContain(
+            "shadow-blank-bg[data-shadow-theme='dark']",
+        );
         expect(styleMarkup).toContain('--color1: #495057');
-        expect(styleMarkup).toContain("shadow-blank-bg[data-shadow-theme='light']");
+        expect(styleMarkup).toContain(
+            "shadow-blank-bg[data-shadow-theme='light']",
+        );
     });
 });

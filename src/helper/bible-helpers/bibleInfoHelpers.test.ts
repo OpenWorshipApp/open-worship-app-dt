@@ -95,18 +95,22 @@ describe('bibleInfoHelpers', () => {
         mocks.getModelChapterCountMock.mockImplementation((bookKey: string) => {
             return bookKey === 'REV' ? 22 : 50;
         });
-        mocks.toBibleFileNameMock.mockImplementation((bookKey: string, chapter: number) => {
-            return `file:${bookKey}.${chapter}`;
-        });
+        mocks.toBibleFileNameMock.mockImplementation(
+            (bookKey: string, chapter: number) => {
+                return `file:${bookKey}.${chapter}`;
+            },
+        );
         mocks.bibleKeyToXMLFilePathMock.mockResolvedValue(null);
         mocks.fsCheckFileExistMock.mockResolvedValue(false);
         mocks.checkIsRtlMock.mockReturnValue(true);
-        mocks.fromLocaleNumBibleMock.mockImplementation(async (_bibleKey: string, localeNum: string) => {
-            if (localeNum === '២') {
-                return 2;
-            }
-            return null;
-        });
+        mocks.fromLocaleNumBibleMock.mockImplementation(
+            async (_bibleKey: string, localeNum: string) => {
+                if (localeNum === '២') {
+                    return 2;
+                }
+                return null;
+            },
+        );
         mocks.getVersesCountMock.mockResolvedValue(36);
         mocks.getBibleModelInfoMock.mockReturnValue({
             apocryphalBooks: ['TOB'],
@@ -157,15 +161,21 @@ describe('bibleInfoHelpers', () => {
         mocks.bibleDataReadMock.mockResolvedValue(chapterData);
 
         const module = await loadModule();
-        expect(await module.getChapterData('KJV', 'GEN', 1)).toEqual(chapterData);
+        expect(await module.getChapterData('KJV', 'GEN', 1)).toEqual(
+            chapterData,
+        );
         expect(await module.getChapterData('KJV', 'GEN', 51)).toBeNull();
-        expect(await module.getVerses('KJV', 'GEN', 1)).toEqual(chapterData.verses);
+        expect(await module.getVerses('KJV', 'GEN', 1)).toEqual(
+            chapterData.verses,
+        );
 
         mocks.bibleKeyToXMLFilePathMock.mockResolvedValueOnce('/xml/kjv.xml');
         mocks.fsCheckFileExistMock.mockResolvedValueOnce(true);
         expect(await module.checkIsBibleXML('KJV')).toBe(true);
 
-        mocks.bibleKeyToXMLFilePathMock.mockResolvedValueOnce('/xml/missing.xml');
+        mocks.bibleKeyToXMLFilePathMock.mockResolvedValueOnce(
+            '/xml/missing.xml',
+        );
         mocks.fsCheckFileExistMock.mockResolvedValueOnce(false);
         expect(await module.checkIsBibleXML('KJV')).toBe(false);
     });

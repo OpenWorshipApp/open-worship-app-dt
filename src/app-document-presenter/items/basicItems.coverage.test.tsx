@@ -180,9 +180,8 @@ describe('presenter item basic coverage', () => {
     });
 
     test('renders slide index with explicit and fallback titles', async () => {
-        const { default: RenderSlideIndexComp } = await import(
-            './RenderSlideIndexComp'
-        );
+        const { default: RenderSlideIndexComp } =
+            await import('./RenderSlideIndexComp');
 
         let element = await renderIntoRoot(
             <RenderSlideIndexComp viewIndex={4} />,
@@ -201,9 +200,8 @@ describe('presenter item basic coverage', () => {
     });
 
     test('shows hover content only while the background preview is active', async () => {
-        const { default: BackgroundRenderOnHoverComp } = await import(
-            './BackgroundRenderOnHoverComp'
-        );
+        const { default: BackgroundRenderOnHoverComp } =
+            await import('./BackgroundRenderOnHoverComp');
         const genChildren = vi.fn((dim: { width: number; height: number }) => {
             return (
                 <div data-testid="hover-child">
@@ -234,7 +232,9 @@ describe('presenter item basic coverage', () => {
         });
 
         expect(element.style.opacity).toBe('0.25');
-        expect(container.querySelector('[data-testid="hover-child"]')).toBeNull();
+        expect(
+            container.querySelector('[data-testid="hover-child"]'),
+        ).toBeNull();
 
         await act(async () => {
             element.dispatchEvent(
@@ -257,13 +257,14 @@ describe('presenter item basic coverage', () => {
         });
 
         expect(element.style.opacity).toBe('0.25');
-        expect(container.querySelector('[data-testid="hover-child"]')).toBeNull();
+        expect(
+            container.querySelector('[data-testid="hover-child"]'),
+        ).toBeNull();
     });
 
     test('scales the vary-slide container using parent width or the explicit width fallback', async () => {
-        const { default: VaryAppDocumentScaleContainerComp } = await import(
-            './VaryAppDocumentScaleContainerComp'
-        );
+        const { default: VaryAppDocumentScaleContainerComp } =
+            await import('./VaryAppDocumentScaleContainerComp');
         const varySlide = {
             width: 200,
             height: 100,
@@ -287,15 +288,16 @@ describe('presenter item basic coverage', () => {
         ]);
         expect(element?.style.width).toBe('400px');
         expect(element?.style.height).toBe('200px');
-        expect(element?.style.transform).toBe(
-            'scale(2,2) translate(50%, 50%)',
-        );
+        expect(element?.style.transform).toBe('scale(2,2) translate(50%, 50%)');
         expect(element?.style.border).toBe('1px solid red');
         expect(element?.firstElementChild?.textContent).toContain('scaled');
 
         useShadowingParentWidthMock.mockReturnValue(null);
         element = await renderIntoRoot(
-            <VaryAppDocumentScaleContainerComp varySlide={varySlide} width={300} />,
+            <VaryAppDocumentScaleContainerComp
+                varySlide={varySlide}
+                width={300}
+            />,
             root,
             container,
         );
@@ -323,15 +325,14 @@ describe('presenter item basic coverage', () => {
         expect(canvasItemFromJsonMock).toHaveBeenCalledTimes(2);
         expect(genBoxStyleMock).toHaveBeenCalledWith({ id: 'item-1' });
         expect(genBoxStyleMock).toHaveBeenCalledWith({ id: 'item-2' });
-        expect(generated?.querySelectorAll('[data-testid="canvas-item-renderer"]')).toHaveLength(
-            2,
-        );
+        expect(
+            generated?.querySelectorAll('[data-testid="canvas-item-renderer"]'),
+        ).toHaveLength(2);
     });
 
     test('creates centered slides from dropped media and skips invalid items', async () => {
-        const { createNewSlidesFromDroppedData } = await import(
-            './appDocumentHelpers'
-        );
+        const { createNewSlidesFromDroppedData } =
+            await import('./appDocumentHelpers');
 
         const validSlide = new SlideMock(1) as any;
         const invalidSlide = new SlideMock(2) as any;
@@ -377,9 +378,8 @@ describe('presenter item basic coverage', () => {
     });
 
     test('does not add slides when every dropped file resolves to a non-image item', async () => {
-        const { createNewSlidesFromDroppedData } = await import(
-            './appDocumentHelpers'
-        );
+        const { createNewSlidesFromDroppedData } =
+            await import('./appDocumentHelpers');
 
         const appDocument = {
             genNewSlide: vi.fn().mockResolvedValue(new SlideMock(3)),

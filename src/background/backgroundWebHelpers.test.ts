@@ -114,10 +114,12 @@ describe('backgroundWebHelpers', () => {
                 filePath: '/web/Welcome.html',
             }),
         };
-        showAppInputMock.mockImplementation(async (_title: string, input: any) => {
-            input.props.onChange({ target: { value: 'Welcome' } });
-            return true;
-        });
+        showAppInputMock.mockImplementation(
+            async (_title: string, input: any) => {
+                input.props.onChange({ target: { value: 'Welcome' } });
+                return true;
+            },
+        );
 
         const menuItems = genBackgroundWebContextMenuItems(dirSource as any);
 
@@ -139,10 +141,12 @@ describe('backgroundWebHelpers', () => {
             getFileSourceInstance: vi.fn(),
         };
         showAppInputMock.mockResolvedValueOnce(false);
-        showAppInputMock.mockImplementationOnce(async (_title: string, input: any) => {
-            input.props.onChange({ target: { value: '   ' } });
-            return true;
-        });
+        showAppInputMock.mockImplementationOnce(
+            async (_title: string, input: any) => {
+                input.props.onChange({ target: { value: '   ' } });
+                return true;
+            },
+        );
 
         await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect();
         await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect();
@@ -156,10 +160,12 @@ describe('backgroundWebHelpers', () => {
             getAllFileFullNames: vi.fn().mockResolvedValue(['Existing.html']),
             getFileSourceInstance: vi.fn(),
         };
-        showAppInputMock.mockImplementation(async (_title: string, input: any) => {
-            input.props.onChange({ target: { value: 'Existing' } });
-            return true;
-        });
+        showAppInputMock.mockImplementation(
+            async (_title: string, input: any) => {
+                input.props.onChange({ target: { value: 'Existing' } });
+                return true;
+            },
+        );
 
         await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect();
 
@@ -180,9 +186,8 @@ describe('backgroundWebHelpers', () => {
             fullName: 'My Page.html',
         });
 
-        const menuItem = genBackgroundWebExtraItemContextMenuItems(
-            '/web/My Page.html',
-        )[0];
+        const menuItem =
+            genBackgroundWebExtraItemContextMenuItems('/web/My Page.html')[0];
         menuItem?.onSelect();
 
         expect(openPopupWindowMock).toHaveBeenCalledWith(

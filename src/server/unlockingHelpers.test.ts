@@ -1,21 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const {
-    appWarningMock,
-    scheduledCallbacks,
-    genTimeoutAttemptMock,
-} = vi.hoisted(() => {
-    const callbacks: Array<() => unknown> = [];
-    return {
-        appWarningMock: vi.fn(),
-        scheduledCallbacks: callbacks,
-        genTimeoutAttemptMock: vi.fn(() => {
-            return (callback: () => unknown) => {
-                callbacks.push(callback);
-            };
-        }),
-    };
-});
+const { appWarningMock, scheduledCallbacks, genTimeoutAttemptMock } =
+    vi.hoisted(() => {
+        const callbacks: Array<() => unknown> = [];
+        return {
+            appWarningMock: vi.fn(),
+            scheduledCallbacks: callbacks,
+            genTimeoutAttemptMock: vi.fn(() => {
+                return (callback: () => unknown) => {
+                    callbacks.push(callback);
+                };
+            }),
+        };
+    });
 
 vi.mock('../helper/loggerHelpers', () => ({
     appWarning: appWarningMock,

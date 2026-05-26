@@ -45,9 +45,9 @@ describe('canvasHelpers', () => {
             }),
         ).not.toThrow();
 
-        expect(() => validateMediaProps({ mediaWidth: 320, mediaHeight: 180 })).toThrow(
-            'Invalid canvas item media data',
-        );
+        expect(() =>
+            validateMediaProps({ mediaWidth: 320, mediaHeight: 180 }),
+        ).toThrow('Invalid canvas item media data');
         expect(() =>
             validateMediaProps({
                 srcData: 'data:image/png;base64,image',

@@ -74,10 +74,7 @@ describe('routeHelpers', () => {
             '/editor.html',
         );
 
-        const fallback = stubNavigation(
-            'https://app.test/editor.html',
-            null,
-        );
+        const fallback = stubNavigation('https://app.test/editor.html', null);
 
         goToPath();
 

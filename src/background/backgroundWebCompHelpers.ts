@@ -41,7 +41,9 @@ export function genBackgroundWebColorSections(
             };
         })
         .filter((section) => {
-            return section.filePaths.length > 0 || section.urlSources.length > 0;
+            return (
+                section.filePaths.length > 0 || section.urlSources.length > 0
+            );
         });
 
     if (sections.length <= 1) {

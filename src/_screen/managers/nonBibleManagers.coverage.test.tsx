@@ -667,12 +667,14 @@ describe('non-Bible manager coverage', () => {
             id: 'a',
             timezoneMinuteOffset: 9,
             title: 'Tokyo',
+            is24HourFormat: true,
             extraStyle: {},
         };
         const timeB = {
             id: 'b',
             timezoneMinuteOffset: 0,
             title: 'UTC',
+            is24HourFormat: false,
             extraStyle: {},
         };
         expect(manager._getDiff(null, timeA)).toEqual({

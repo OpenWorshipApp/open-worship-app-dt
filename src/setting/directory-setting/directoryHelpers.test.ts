@@ -145,7 +145,9 @@ describe('directoryHelpers', () => {
     });
 
     test('creates child directories, persists valid ones, and warns about invalid ones', async () => {
-        fsCheckDirExistMock.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+        fsCheckDirExistMock
+            .mockResolvedValueOnce(true)
+            .mockResolvedValueOnce(false);
 
         await selectPathForChildDir('/parent');
 
@@ -291,14 +293,20 @@ describe('directoryHelpers', () => {
                 fullName: 'lyric.txt',
             });
 
-        const sameDir = new BaseDirFileSource('dir-app-document', '/base-dir/song.txt');
+        const sameDir = new BaseDirFileSource(
+            'dir-app-document',
+            '/base-dir/song.txt',
+        );
         expect(sameDir.fileFullNameOrFilePath).toBe('song.txt');
         expect(sameDir.fileSource).toEqual(
             expect.objectContaining({ filePath: '/base-dir/song.txt' }),
         );
 
         dirSourceCheckIsSameDirPathMock.mockReturnValueOnce(false);
-        const otherDir = new BaseDirFileSource('dir-app-document', '/other-dir/song.txt');
+        const otherDir = new BaseDirFileSource(
+            'dir-app-document',
+            '/other-dir/song.txt',
+        );
         expect(otherDir.fileFullNameOrFilePath).toBe('/other-dir/song.txt');
 
         const byName = new BaseDirFileSource('dir-app-document', 'lyric.txt');
@@ -308,7 +316,10 @@ describe('directoryHelpers', () => {
         );
 
         dirSourceGetDirPathBySettingNameMock.mockReturnValueOnce(null);
-        const withoutBase = new BaseDirFileSource('dir-app-document', 'orphan.txt');
+        const withoutBase = new BaseDirFileSource(
+            'dir-app-document',
+            'orphan.txt',
+        );
         expect(withoutBase.fileSource).toBeNull();
     });
 

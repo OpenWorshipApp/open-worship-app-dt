@@ -374,9 +374,7 @@ describe('appDocumentHelpers coverage', () => {
             );
         });
         fsCopyFilePathToPathMock.mockResolvedValue('/tmp/temp-to-pdf-1.docx');
-        getSlidesCountMock
-            .mockResolvedValueOnce(4)
-            .mockResolvedValueOnce(3);
+        getSlidesCountMock.mockResolvedValueOnce(4).mockResolvedValueOnce(3);
 
         await appDocumentHelpers.convertOfficeFile(
             { name: 'sermon.docx' } as any,
@@ -524,7 +522,8 @@ describe('appDocumentHelpers coverage', () => {
         function Probe({
             varySlides,
         }: Readonly<{ varySlides?: any[] | null }>) {
-            const isSelected = appDocumentHelpers.useAnyItemSelected(varySlides);
+            const isSelected =
+                appDocumentHelpers.useAnyItemSelected(varySlides);
             return <div>{`${isSelected}`}</div>;
         }
 

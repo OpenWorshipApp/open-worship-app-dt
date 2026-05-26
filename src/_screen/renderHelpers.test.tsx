@@ -479,6 +479,7 @@ describe('screen render helpers', () => {
             animData,
         );
         await timing.handleAdding(parent);
+        expect(parent.querySelector('#ampm')?.textContent).toMatch(/AM|PM/);
 
         const web = genHtmlForegroundWeb(
             {

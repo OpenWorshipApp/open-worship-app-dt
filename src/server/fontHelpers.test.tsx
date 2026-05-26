@@ -171,7 +171,13 @@ describe('fontHelpers', () => {
 
         function Harness() {
             const fontList = module.useFontList();
-            return <div>{fontList === undefined ? 'loading' : JSON.stringify(fontList)}</div>;
+            return (
+                <div>
+                    {fontList === undefined
+                        ? 'loading'
+                        : JSON.stringify(fontList)}
+                </div>
+            );
         }
 
         root = createRoot(container);
@@ -191,8 +197,14 @@ describe('fontHelpers', () => {
         showAppConfirmMock.mockResolvedValue(false);
         const module = await loadModule();
 
-        await module.fixMissingFontFamilies(new Set(['Missing Sans']), '/docs/sample.docx');
-        await module.fixMissingFontFamilies(new Set(['Missing Sans']), '/docs/sample.docx');
+        await module.fixMissingFontFamilies(
+            new Set(['Missing Sans']),
+            '/docs/sample.docx',
+        );
+        await module.fixMissingFontFamilies(
+            new Set(['Missing Sans']),
+            '/docs/sample.docx',
+        );
 
         expect(showAppConfirmMock).toHaveBeenCalledTimes(1);
         expect(showSimpleToastMock).not.toHaveBeenCalled();

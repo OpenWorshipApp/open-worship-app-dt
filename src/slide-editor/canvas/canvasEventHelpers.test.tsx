@@ -42,7 +42,8 @@ function createFakeController() {
         itemRegisterEventListener: vi.fn(
             (eventTypes: string[], listener: (data: any) => void) => {
                 return eventTypes.map((eventName) => {
-                    const eventListeners = listeners.get(eventName) ?? new Set();
+                    const eventListeners =
+                        listeners.get(eventName) ?? new Set();
                     eventListeners.add(listener);
                     listeners.set(eventName, eventListeners);
                     return { eventName, listener };
@@ -62,9 +63,7 @@ function createFakeController() {
     };
 }
 
-function EventHarness({
-    onEvent,
-}: Readonly<{ onEvent: (data: any) => void }>) {
+function EventHarness({ onEvent }: Readonly<{ onEvent: (data: any) => void }>) {
     useCanvasControllerEvents(['update', 'reload'], onEvent);
     return <div data-testid="events" />;
 }
@@ -85,9 +84,7 @@ function ScaleHarness({
     return <div data-testid="scale">{scale}</div>;
 }
 
-function RefreshHarness({
-    eventTypes,
-}: Readonly<{ eventTypes?: string[] }>) {
+function RefreshHarness({ eventTypes }: Readonly<{ eventTypes?: string[] }>) {
     const refreshCount = useCanvasControllerRefreshEvents(eventTypes as any);
     return <div data-testid="refresh">{refreshCount}</div>;
 }
@@ -187,8 +184,8 @@ describe('canvasEventHelpers', () => {
         });
 
         expect(observedScales).toEqual([1, 1.5]);
-        expect(container?.querySelector('[data-testid="refresh"]')?.textContent).toBe(
-            '2',
-        );
+        expect(
+            container?.querySelector('[data-testid="refresh"]')?.textContent,
+        ).toBe('2');
     });
 });

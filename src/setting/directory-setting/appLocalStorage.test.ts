@@ -132,7 +132,9 @@ describe('appLocalStorage', () => {
     test('stores selected parent directories only when they exist', async () => {
         const { appLocalStorage } = await loadModule();
         const localStorageMock = stubStorage();
-        fsCheckDirExistMock.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+        fsCheckDirExistMock
+            .mockResolvedValueOnce(true)
+            .mockResolvedValueOnce(false);
 
         await appLocalStorage.setSelectedParentDirectory('/parent');
 
@@ -155,7 +157,9 @@ describe('appLocalStorage', () => {
         fsExistSyncMock.mockImplementation((path: string) => {
             return !path.endsWith('/missing');
         });
-        fsReadSyncMock.mockReturnValueOnce('value-1').mockReturnValueOnce('value-2');
+        fsReadSyncMock
+            .mockReturnValueOnce('value-1')
+            .mockReturnValueOnce('value-2');
 
         expect(appLocalStorage.getItem('key.txt')).toBe('value-1');
         expect(appLocalStorage.getItem('key.txt')).toBe('value-1');

@@ -12,10 +12,9 @@ describe('comparisonHelpers', () => {
         expect(checkIsItemInArray('a', null)).toBe(false);
         expect(checkIsItemInArray('b', ['a', 'b'])).toBe(true);
         expect(
-            checkIsItemInArray(
-                { name: 'alpha', data: [1, 2] },
-                [{ name: 'alpha', data: [2, 1] }],
-            ),
+            checkIsItemInArray({ name: 'alpha', data: [1, 2] }, [
+                { name: 'alpha', data: [2, 1] },
+            ]),
         ).toBe(true);
         expect(checkIsItemInArray({ id: 2 }, [{ id: 1 }])).toBe(false);
     });

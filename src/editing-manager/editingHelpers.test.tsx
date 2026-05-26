@@ -70,9 +70,7 @@ function StatusHarness({
         onUpdate(status);
     }, [onUpdate, status]);
 
-    return (
-        <div data-testid="status">{JSON.stringify(status)}</div>
-    );
+    return <div data-testid="status">{JSON.stringify(status)}</div>;
 }
 
 describe('editingHelpers', () => {

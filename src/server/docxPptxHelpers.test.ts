@@ -75,8 +75,12 @@ async function loadPptxModule() {
 describe('docxHelpers and pptxHelpers', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        pathJoinMock.mockImplementation((...parts: string[]) => parts.join('/'));
-        resolvePathMock.mockImplementation((...parts: string[]) => parts.join('/'));
+        pathJoinMock.mockImplementation((...parts: string[]) =>
+            parts.join('/'),
+        );
+        resolvePathMock.mockImplementation((...parts: string[]) =>
+            parts.join('/'),
+        );
     });
 
     test('removes docx previews, exports HTML, and caches the tool version', async () => {
@@ -96,8 +100,12 @@ describe('docxHelpers and pptxHelpers', () => {
             .mockResolvedValueOnce({ isSuccessful: true })
             .mockResolvedValueOnce({ version: '1.2.3' });
 
-        await expect(module.removeDocxHtmlsPreview('/docs/book.docx')).resolves.toBeUndefined();
-        expect(fsDeleteDirMock).toHaveBeenCalledWith('/docs/book.docx-docx-htmls');
+        await expect(
+            module.removeDocxHtmlsPreview('/docs/book.docx'),
+        ).resolves.toBeUndefined();
+        expect(fsDeleteDirMock).toHaveBeenCalledWith(
+            '/docs/book.docx-docx-htmls',
+        );
 
         await expect(
             module.docxToHtmls('/docs/book.docx', '/docs/out'),
@@ -124,11 +132,15 @@ describe('docxHelpers and pptxHelpers', () => {
             .fn()
             .mockResolvedValueOnce({
                 checksum: { md5: 'stale-md5' },
-                pages: [{ htmlFileName: 'page-1.html', width: 100, height: 200 }],
+                pages: [
+                    { htmlFileName: 'page-1.html', width: 100, height: 200 },
+                ],
             })
             .mockResolvedValueOnce({
                 checksum: { md5: 'good-md5' },
-                pages: [{ htmlFileName: 'page-1.html', width: 100, height: 200 }],
+                pages: [
+                    { htmlFileName: 'page-1.html', width: 100, height: 200 },
+                ],
             });
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
             if (filePath === '/docs/book.docx') {
@@ -165,7 +177,9 @@ describe('docxHelpers and pptxHelpers', () => {
             baseDirPath: '/docs/book.docx-docx-htmls',
         });
 
-        expect(fsDeleteDirMock).toHaveBeenCalledWith('/docs/book.docx-docx-htmls');
+        expect(fsDeleteDirMock).toHaveBeenCalledWith(
+            '/docs/book.docx-docx-htmls',
+        );
         expect(electronSendAsyncMock).toHaveBeenCalledWith(
             'main:app:docx-to-htmls',
             {
@@ -199,7 +213,9 @@ describe('docxHelpers and pptxHelpers', () => {
         generateFileMD5Mock.mockResolvedValue('md5');
         electronSendAsyncMock.mockResolvedValue({ isSuccessful: false });
 
-        await expect(module.getDocxData('/docs/missing.docx')).resolves.toBeNull();
+        await expect(
+            module.getDocxData('/docs/missing.docx'),
+        ).resolves.toBeNull();
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(3);
     });
 
@@ -222,16 +238,22 @@ describe('docxHelpers and pptxHelpers', () => {
             .mockResolvedValueOnce({ version: '2.3.4' })
             .mockResolvedValueOnce(true);
 
-        await expect(module.removePptxHtmlsPreview('/slides/demo.pptx')).resolves.toBeUndefined();
+        await expect(
+            module.removePptxHtmlsPreview('/slides/demo.pptx'),
+        ).resolves.toBeUndefined();
         expect(fsDeleteDirMock).toHaveBeenCalledWith('/slides/demo.pptx-htmls');
 
-        await expect(module.getSlidesCount('/slides/demo.pptx')).resolves.toBe(12);
+        await expect(module.getSlidesCount('/slides/demo.pptx')).resolves.toBe(
+            12,
+        );
         await expect(
             module.pptxToHtmls('/slides/demo.pptx', '/slides/out'),
         ).resolves.toEqual({ isSuccessful: true });
         await expect(module.getPptxToHtmlsVersion()).resolves.toBe('2.3.4');
         await expect(module.getPptxToHtmlsVersion()).resolves.toBe('2.3.4');
-        await expect(module.removeSlideBackground('/slides/demo.pptx')).resolves.toBe(true);
+        await expect(
+            module.removeSlideBackground('/slides/demo.pptx'),
+        ).resolves.toBe(true);
 
         expect(showProgressBarMock).toHaveBeenCalledWith(
             'Exporting PPTX Slides "demo"',
@@ -357,7 +379,9 @@ describe('docxHelpers and pptxHelpers', () => {
         generateFileMD5Mock.mockResolvedValue('md5');
         electronSendAsyncMock.mockResolvedValue({ isSuccessful: false });
 
-        await expect(module.getPptxData('/slides/missing.pptx')).resolves.toBeNull();
+        await expect(
+            module.getPptxData('/slides/missing.pptx'),
+        ).resolves.toBeNull();
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(3);
     });
 });

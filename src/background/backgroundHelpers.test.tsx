@@ -231,10 +231,9 @@ describe('backgroundHelpers', () => {
                 },
             ),
             unregisterEventListener: vi.fn(),
-            getFilePathsQuick: vi.fn().mockResolvedValue([
-                '/slides/empty.pptx',
-                '/slides/song.pptx',
-            ]),
+            getFilePathsQuick: vi
+                .fn()
+                .mockResolvedValue(['/slides/empty.pptx', '/slides/song.pptx']),
         };
         currentDirSourceState.value = dirSource;
         pptxGetInstanceMock.mockImplementation((filePath: string) => ({

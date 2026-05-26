@@ -335,10 +335,20 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
     addTimeData(data: ForegroundTimeDataType, isNoSyncGroup = false) {
-        if (checkIsItemInArray(data, this.foregroundData.timeDataList)) {
+        const existingData = this.foregroundData.timeDataList.find((item) => {
+            return item.id === data.id;
+        });
+        if (
+            existingData !== undefined &&
+            checkAreObjectsEqual(existingData, data)
+        ) {
             return;
         }
-        const dataList = [...this.foregroundData.timeDataList, data];
+        const dataList = existingData
+            ? this.foregroundData.timeDataList.map((item) => {
+                  return item.id === data.id ? data : item;
+              })
+            : [...this.foregroundData.timeDataList, data];
         this.setTimeDataList(dataList, isNoSyncGroup);
     }
     removeTimeData(data: ForegroundTimeDataType, isNoSyncGroup = false) {

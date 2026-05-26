@@ -272,6 +272,7 @@ describe('non-Bible screen managers', () => {
             id: 'tokyo',
             timezoneMinuteOffset: 9,
             title: 'Tokyo',
+            is24HourFormat: true,
             extraStyle: {},
         };
         manager.addTimeData(timeData as any);
@@ -280,7 +281,14 @@ describe('non-Bible screen managers', () => {
         manager.addTimeData(timeData as any);
         expect(manager.foregroundData.timeDataList).toEqual([timeData]);
 
-        manager.removeTimeData(timeData as any);
+        const timeData12Hour = {
+            ...timeData,
+            is24HourFormat: false,
+        };
+        manager.addTimeData(timeData12Hour as any);
+        expect(manager.foregroundData.timeDataList).toEqual([timeData12Hour]);
+
+        manager.removeTimeData(timeData12Hour as any);
         expect(manager.foregroundData.timeDataList).toEqual([]);
 
         manager.receiveSyncScreen({

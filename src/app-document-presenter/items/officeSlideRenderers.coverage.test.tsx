@@ -138,9 +138,8 @@ describe('office slide renderer coverage', () => {
     });
 
     test('generates PDF preview images and forwards click and context-menu actions', async () => {
-        const { default: PdfSlideRenderComp, genPdfSlide } = await import(
-            './PdfSlideRenderComp'
-        );
+        const { default: PdfSlideRenderComp, genPdfSlide } =
+            await import('./PdfSlideRenderComp');
         const pdfSlide = {
             id: 1,
             filePath: '/slides/sample.pdf',
@@ -203,9 +202,8 @@ describe('office slide renderer coverage', () => {
     });
 
     test('generates DOCX iframe and HTML slides for full-width and regular rendering', async () => {
-        const { default: DocxSlideRenderComp, genDocxSlide } = await import(
-            './DocxSlideRenderComp'
-        );
+        const { default: DocxSlideRenderComp, genDocxSlide } =
+            await import('./DocxSlideRenderComp');
         const onClick = vi.fn();
         const docxSlide = {
             id: 7,
@@ -242,9 +240,9 @@ describe('office slide renderer coverage', () => {
 
         expect(iframeSlide.style.height).toBe('100%');
         expect(
-            iframeSlide.querySelector('iframe[title="docx-slide"]')?.getAttribute(
-                'src',
-            ),
+            iframeSlide
+                .querySelector('iframe[title="docx-slide"]')
+                ?.getAttribute('src'),
         ).toBe('file:///slides/page.html');
         expect(fullWidthIframeSlide.style.height).toBe('auto');
         expect(
@@ -266,7 +264,9 @@ describe('office slide renderer coverage', () => {
             await flushAsyncEvents();
         });
 
-        expect(container.querySelector('iframe[title="docx-slide"]')).not.toBeNull();
+        expect(
+            container.querySelector('iframe[title="docx-slide"]'),
+        ).not.toBeNull();
 
         await act(async () => {
             container
@@ -285,9 +285,8 @@ describe('office slide renderer coverage', () => {
     });
 
     test('generates PPTX slides and renders main and subslide entries with forwarded events', async () => {
-        const { default: PptxSlideRenderComp, genPptxSlide } = await import(
-            './PptxSlideRenderComp'
-        );
+        const { default: PptxSlideRenderComp, genPptxSlide } =
+            await import('./PptxSlideRenderComp');
         const onClick = vi.fn();
         const subSlide = {
             id: 12,
@@ -323,9 +322,9 @@ describe('office slide renderer coverage', () => {
         );
 
         expect(
-            iframeSlide.querySelector('iframe[title="pptx-slide"]')?.getAttribute(
-                'src',
-            ),
+            iframeSlide
+                .querySelector('iframe[title="pptx-slide"]')
+                ?.getAttribute('src'),
         ).toBe('file:///slides/main.html');
         expect(htmlSlide.firstElementChild).not.toBeNull();
 
@@ -342,11 +341,15 @@ describe('office slide renderer coverage', () => {
         });
 
         expect(varySlideRenderCompSpy).toHaveBeenCalledTimes(2);
-        expect(container.querySelector('[data-testid="vary-slide-wrapper-4"]')).not.toBeNull();
+        expect(
+            container.querySelector('[data-testid="vary-slide-wrapper-4"]'),
+        ).not.toBeNull();
         expect(
             container.querySelector('[data-testid="vary-slide-wrapper-41"]'),
         ).not.toBeNull();
-        expect(container.querySelector('iframe[title="pptx-slide"]')).not.toBeNull();
+        expect(
+            container.querySelector('iframe[title="pptx-slide"]'),
+        ).not.toBeNull();
 
         await act(async () => {
             container

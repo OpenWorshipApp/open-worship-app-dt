@@ -98,9 +98,11 @@ describe('bibleLogicHelpers1', () => {
                 REV: 'Revelation',
             },
         });
-        mocks.toLocaleNumBibleMock.mockImplementation(async (_bibleKey: string, chapter: number) => {
-            return ['០', '១', '២', '៣', '៤'][chapter] ?? `${chapter}`;
-        });
+        mocks.toLocaleNumBibleMock.mockImplementation(
+            async (_bibleKey: string, chapter: number) => {
+                return ['០', '១', '២', '៣', '៤'][chapter] ?? `${chapter}`;
+            },
+        );
         mocks.checkIsBookAvailableMock.mockResolvedValue(true);
         mocks.getChapterDataMock.mockResolvedValue({ verses: { 1: 'Intro' } });
         mocks.getBibleInfoMock.mockResolvedValue({
@@ -196,7 +198,10 @@ describe('bibleLogicHelpers1', () => {
             await Promise.resolve();
         });
 
-        expect(mocks.checkIsBookAvailableMock).toHaveBeenLastCalledWith('KJV', 'REV');
+        expect(mocks.checkIsBookAvailableMock).toHaveBeenLastCalledWith(
+            'KJV',
+            'REV',
+        );
         expect(updates.at(-1)).toEqual([
             {
                 chapter: 0,
@@ -209,9 +214,13 @@ describe('bibleLogicHelpers1', () => {
 
     test('matches bible books by exact, partial, and rotated guesses', async () => {
         mocks.getBibleInfoMock.mockResolvedValueOnce(null);
-        expect(await genBookMatches('KJV', { guessingBook: 'Genesis' })).toBeNull();
+        expect(
+            await genBookMatches('KJV', { guessingBook: 'Genesis' }),
+        ).toBeNull();
 
-        const exactMatches = await genBookMatches('KJV', { guessingBook: 'Gen' });
+        const exactMatches = await genBookMatches('KJV', {
+            guessingBook: 'Gen',
+        });
         expect(exactMatches?.[0]).toEqual({
             bibleKey: 'KJV',
             book: 'Genesis',
@@ -220,9 +229,15 @@ describe('bibleLogicHelpers1', () => {
             modelBook: 'Genesis',
         });
 
-        const rotatedMatches = await genBookMatches('KJV', { guessingBook: 'atthewm' });
-        expect(rotatedMatches?.some((item) => item.bookKey === 'MAT')).toBe(true);
-        expect(rotatedMatches?.every((item) => item.bookKey !== 'REV')).toBe(true);
+        const rotatedMatches = await genBookMatches('KJV', {
+            guessingBook: 'atthewm',
+        });
+        expect(rotatedMatches?.some((item) => item.bookKey === 'MAT')).toBe(
+            true,
+        );
+        expect(rotatedMatches?.every((item) => item.bookKey !== 'REV')).toBe(
+            true,
+        );
     });
 
     test('reports online bible availability status and exposes chapter and file helpers', async () => {
@@ -246,14 +261,17 @@ describe('bibleLogicHelpers1', () => {
         });
         expect(getModelChapterCount('REV')).toBe(22);
         expect(toChapterList('KJV', 'GEN')).toHaveLength(3);
-        await expect(Promise.all(toChapterList('KJV', 'GEN'))).resolves.toEqual([
-            'Genesis ១',
-            'Genesis ២',
-            'Genesis ៣',
-        ]);
+        await expect(Promise.all(toChapterList('KJV', 'GEN'))).resolves.toEqual(
+            ['Genesis ១', 'Genesis ២', 'Genesis ៣'],
+        );
         expect(toBibleFileName('GEN', 2)).toBe('0001-GEN.2');
-        expect(() => toBibleFileName('GEN', 4)).toThrow('Invalid chapter number');
-        expect(fromBibleFileName('0001-GEN.2')).toEqual({ bookKey: 'GEN', chapterNum: 2 });
+        expect(() => toBibleFileName('GEN', 4)).toThrow(
+            'Invalid chapter number',
+        );
+        expect(fromBibleFileName('0001-GEN.2')).toEqual({
+            bookKey: 'GEN',
+            chapterNum: 2,
+        });
         expect(fromBibleFileName('bad-file-name')).toBeNull();
     });
 });

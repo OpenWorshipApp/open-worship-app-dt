@@ -35,7 +35,12 @@ const mocks = vi.hoisted(() => {
 
         constructor(
             bibleKey: string,
-            target: { bookKey: string; chapter: number; verseEnd: number; verseStart: number },
+            target: {
+                bookKey: string;
+                chapter: number;
+                verseEnd: number;
+                verseStart: number;
+            },
             titleText: string,
             bodyText: string,
         ) {
@@ -98,12 +103,16 @@ const mocks = vi.hoisted(() => {
             verseKeyMap.clear();
         },
         showAppContextMenuMock: vi.fn(),
-        toVerseFullKeyFormatMock: vi.fn((bookKey: string, chapter: number, verse: number) => {
-            return `${bookKey} ${chapter}:${verse}`;
-        }),
-        unlockingMock: vi.fn(async (_key: string, callback: () => Promise<unknown>) => {
-            return callback();
-        }),
+        toVerseFullKeyFormatMock: vi.fn(
+            (bookKey: string, chapter: number, verse: number) => {
+                return `${bookKey} ${chapter}:${verse}`;
+            },
+        ),
+        unlockingMock: vi.fn(
+            async (_key: string, callback: () => Promise<unknown>) => {
+                return callback();
+            },
+        ),
         verseKeyMap,
     };
 });
@@ -175,21 +184,38 @@ describe('bibleLogicHelpers3', () => {
         mocks.reset();
 
         mocks.getBibleLocaleMock.mockResolvedValue('km-KH');
-        mocks.getLangDataFromBibleKeyMock.mockResolvedValue({ fontFamily: 'Khmer Font' });
+        mocks.getLangDataFromBibleKeyMock.mockResolvedValue({
+            fontFamily: 'Khmer Font',
+        });
         mocks.bibleRenderTitleMock.mockResolvedValue('Genesis 1:1-2:3');
         mocks.getChapterDataMock.mockResolvedValue(null);
 
         mocks.verseKeyMap.set(
             'KJV:GEN 1:1',
-            mocks.buildBibleItem('KJV', 'GEN 1:1', 'Genesis 1:1', 'In the beginning'),
+            mocks.buildBibleItem(
+                'KJV',
+                'GEN 1:1',
+                'Genesis 1:1',
+                'In the beginning',
+            ),
         );
         mocks.verseKeyMap.set(
             'KJV:GEN 1:1-',
-            mocks.buildBibleItem('KJV', 'GEN 1:1', 'Genesis 1:1', 'In the beginning'),
+            mocks.buildBibleItem(
+                'KJV',
+                'GEN 1:1',
+                'Genesis 1:1',
+                'In the beginning',
+            ),
         );
         mocks.verseKeyMap.set(
             'KJV:GEN 2:1-3',
-            mocks.buildBibleItem('KJV', 'GEN 2:1-3', 'Genesis 2:1-3', 'Thus the heavens'),
+            mocks.buildBibleItem(
+                'KJV',
+                'GEN 2:1-3',
+                'Genesis 2:1-3',
+                'Thus the heavens',
+            ),
         );
     });
 
@@ -197,7 +223,8 @@ describe('bibleLogicHelpers3', () => {
         const module = await loadModule();
         const titles = [
             {
-                content: '<span data-title-verse-key="GEN 1:1">Open verse</span>',
+                content:
+                    '<span data-title-verse-key="GEN 1:1">Open verse</span>',
                 cssStyle: 'color: red;',
             },
         ];
@@ -217,12 +244,16 @@ describe('bibleLogicHelpers3', () => {
                 'GEN 1:1': titles,
             },
         });
-        expect(await module.getNewLineTitlesHtmlText('KJV', 'GEN', 1, 1)).toContain(
-            'Open verse',
-        );
+        expect(
+            await module.getNewLineTitlesHtmlText('KJV', 'GEN', 1, 1),
+        ).toContain('Open verse');
 
-        mocks.getChapterDataMock.mockResolvedValueOnce({ newLinesTitleMap: {} });
-        expect(await module.getNewLineTitlesHtmlText('KJV', 'GEN', 1, 2)).toBeNull();
+        mocks.getChapterDataMock.mockResolvedValueOnce({
+            newLinesTitleMap: {},
+        });
+        expect(
+            await module.getNewLineTitlesHtmlText('KJV', 'GEN', 1, 2),
+        ).toBeNull();
     });
 
     test('renders custom verse content, god-word spans, and injected title blocks', async () => {
@@ -234,7 +265,12 @@ describe('bibleLogicHelpers3', () => {
                     { content: 'LORD', isGW: true },
                     {
                         isTitle: true,
-                        titles: [{ content: '<span data-title-verse-key="GEN 1:1">Heading</span>' }],
+                        titles: [
+                            {
+                                content:
+                                    '<span data-title-verse-key="GEN 1:1">Heading</span>',
+                            },
+                        ],
                     },
                     { foo: 'bar' },
                 ],
@@ -256,8 +292,11 @@ describe('bibleLogicHelpers3', () => {
     test('attaches verse click handlers and opens context menus for single verses', async () => {
         const module = await loadModule();
         const parent = document.createElement('span');
-        parent.innerHTML = '<span data-title-verse-key="GEN 1:1" data-bible-key="KJV">Verse</span>';
-        const child = parent.querySelector('span[data-title-verse-key]') as HTMLSpanElement;
+        parent.innerHTML =
+            '<span data-title-verse-key="GEN 1:1" data-bible-key="KJV">Verse</span>';
+        const child = parent.querySelector(
+            'span[data-title-verse-key]',
+        ) as HTMLSpanElement;
         const currentBibleItem = mocks.buildBibleItem(
             'KJV',
             'GEN 1:1',
@@ -269,11 +308,17 @@ describe('bibleLogicHelpers3', () => {
             isLookup: false,
         };
 
-        await module.reformCustomTitle(viewController as any, currentBibleItem as any, parent);
+        await module.reformCustomTitle(
+            viewController as any,
+            currentBibleItem as any,
+            parent,
+        );
         child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         await flushAsyncWork();
 
-        const items = mocks.showAppContextMenuMock.mock.calls.at(-1)?.[1] as Array<any>;
+        const items = mocks.showAppContextMenuMock.mock.calls.at(
+            -1,
+        )?.[1] as Array<any>;
         expect(items).toHaveLength(3);
         expect(items[0]?.menuElement).toBe('DIVIDER');
         expect(items[1]?.title).toBe('Open "Genesis 1:1"');
@@ -284,15 +329,20 @@ describe('bibleLogicHelpers3', () => {
         );
 
         items[2]?.onSelect?.();
-        expect(mocks.copyToClipboardMock).toHaveBeenCalledWith('(KJV) Genesis 1:1');
+        expect(mocks.copyToClipboardMock).toHaveBeenCalledWith(
+            '(KJV) Genesis 1:1',
+        );
     });
 
     test('handles cross-chapter title ranges for lookup controllers', async () => {
         vi.useFakeTimers();
         const module = await loadModule();
         const parent = document.createElement('span');
-        parent.innerHTML = '<span data-title-verse-key="GEN 1:1-2:3" data-bible-key="KJV">Verse range</span>';
-        const child = parent.querySelector('span[data-title-verse-key]') as HTMLSpanElement;
+        parent.innerHTML =
+            '<span data-title-verse-key="GEN 1:1-2:3" data-bible-key="KJV">Verse range</span>';
+        const child = parent.querySelector(
+            'span[data-title-verse-key]',
+        ) as HTMLSpanElement;
         const currentBibleItem = mocks.buildBibleItem(
             'KJV',
             'GEN 1:1',
@@ -305,12 +355,20 @@ describe('bibleLogicHelpers3', () => {
             isLookup: true,
         };
 
-        await module.reformCustomTitle(lookupController as any, currentBibleItem as any, parent);
+        await module.reformCustomTitle(
+            lookupController as any,
+            currentBibleItem as any,
+            parent,
+        );
         child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
         await flushAsyncWork();
 
-        const items = mocks.showAppContextMenuMock.mock.calls.at(-1)?.[1] as Array<any>;
-        const combinedOpen = items.find((item) => item.title === 'Open "Genesis 1:1-2:3"');
+        const items = mocks.showAppContextMenuMock.mock.calls.at(
+            -1,
+        )?.[1] as Array<any>;
+        const combinedOpen = items.find(
+            (item) => item.title === 'Open "Genesis 1:1-2:3"',
+        );
         expect(combinedOpen).toBeTruthy();
         combinedOpen?.onSelect?.();
         vi.runAllTimers();

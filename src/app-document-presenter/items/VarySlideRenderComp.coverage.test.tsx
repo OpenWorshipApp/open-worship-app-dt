@@ -115,14 +115,20 @@ vi.mock('./appDocumentHelpers', () => ({
 
 vi.mock('../../others/ShadowingFillParentWidthComp', () => ({
     default: ({ children, width }: any) => (
-        <div data-testid="shadowing-fill-parent">{width}{children}</div>
+        <div data-testid="shadowing-fill-parent">
+            {width}
+            {children}
+        </div>
     ),
     useShadowingParentWidth: () => null,
 }));
 
 vi.mock('./VaryAppDocumentScaleContainerComp', () => ({
     default: ({ children, width }: any) => (
-        <div data-testid="scale-container">{width}{children}</div>
+        <div data-testid="scale-container">
+            {width}
+            {children}
+        </div>
     ),
 }));
 
@@ -200,9 +206,8 @@ describe('VarySlideRenderComp', () => {
     });
 
     test('renders slide header and body details and forwards interaction events', async () => {
-        const { default: VarySlideRenderComp } = await import(
-            './VarySlideRenderComp'
-        );
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
         const onClick = vi.fn();
         const onContextMenu = vi.fn();
         const onCopy = vi.fn();
@@ -253,18 +258,24 @@ describe('VarySlideRenderComp', () => {
         expect(container.textContent).toContain('Verse 1');
         expect(container.textContent).toContain('400x200');
         expect(container.textContent).toContain('*');
-        expect(container.querySelectorAll('[data-testid="screen-icon"]')).toHaveLength(
-            2,
-        );
-        expect(container.querySelector('[data-testid="attach-icon"]')?.textContent).toContain(
-            '/docs/main.ows:5',
-        );
-        expect(container.querySelector('[data-testid="attached-background"]')).not.toBeNull();
-        expect(container.querySelector('[data-testid="slide-children"]')).not.toBeNull();
-        expect(container.querySelector('[data-testid="shadow-style"]')).not.toBeNull();
-        expect(container.querySelector('.card-header')?.getAttribute('style')).toContain(
-            'border-color: rgb(171, 205, 239);',
-        );
+        expect(
+            container.querySelectorAll('[data-testid="screen-icon"]'),
+        ).toHaveLength(2);
+        expect(
+            container.querySelector('[data-testid="attach-icon"]')?.textContent,
+        ).toContain('/docs/main.ows:5');
+        expect(
+            container.querySelector('[data-testid="attached-background"]'),
+        ).not.toBeNull();
+        expect(
+            container.querySelector('[data-testid="slide-children"]'),
+        ).not.toBeNull();
+        expect(
+            container.querySelector('[data-testid="shadow-style"]'),
+        ).not.toBeNull();
+        expect(
+            container.querySelector('.card-header')?.getAttribute('style'),
+        ).toContain('border-color: rgb(171, 205, 239);');
 
         await act(async () => {
             item?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -309,9 +320,8 @@ describe('VarySlideRenderComp', () => {
     });
 
     test('moves dropped slides within the same file and delegates background drops', async () => {
-        const { default: VarySlideRenderComp } = await import(
-            './VarySlideRenderComp'
-        );
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
         const varySlide = {
             id: 9,
             filePath: '/docs/main.ows',
@@ -357,7 +367,9 @@ describe('VarySlideRenderComp', () => {
             await flushAsyncEvents();
         });
 
-        expect(appDocumentGetInstanceMock).toHaveBeenCalledWith('/docs/main.ows');
+        expect(appDocumentGetInstanceMock).toHaveBeenCalledWith(
+            '/docs/main.ows',
+        );
         expect(getSlideIndexMock).toHaveBeenCalledWith(varySlide);
         expect(moveSlideToIndexMock).toHaveBeenCalledWith(movedSlide, 7);
 
@@ -392,9 +404,8 @@ describe('VarySlideRenderComp', () => {
     });
 
     test('renders disabled slide state and omits presenter info when no screen selection exists', async () => {
-        const { default: VarySlideRenderComp } = await import(
-            './VarySlideRenderComp'
-        );
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
         const onContextMenu = vi.fn();
         const varySlide = {
             id: 10,
@@ -437,7 +448,9 @@ describe('VarySlideRenderComp', () => {
         expect(item?.getAttribute('title')).toBe('This slide is disabled');
         expect(item?.style.opacity).toBe('0.5');
         expect(item?.style.pointerEvents).toBe('none');
-        expect(container.querySelector('[data-testid="screen-icon"]')).toBeNull();
+        expect(
+            container.querySelector('[data-testid="screen-icon"]'),
+        ).toBeNull();
 
         await act(async () => {
             item?.dispatchEvent(
@@ -455,9 +468,8 @@ describe('VarySlideRenderComp', () => {
     });
 
     test('omits screen badges entirely outside presenter mode', async () => {
-        const { default: VarySlideRenderComp } = await import(
-            './VarySlideRenderComp'
-        );
+        const { default: VarySlideRenderComp } =
+            await import('./VarySlideRenderComp');
         const varySlide = {
             id: 11,
             filePath: '/docs/main.ows',
@@ -490,6 +502,8 @@ describe('VarySlideRenderComp', () => {
             await flushAsyncEvents();
         });
 
-        expect(container.querySelector('[data-testid="screen-icon"]')).toBeNull();
+        expect(
+            container.querySelector('[data-testid="screen-icon"]'),
+        ).toBeNull();
     });
 });

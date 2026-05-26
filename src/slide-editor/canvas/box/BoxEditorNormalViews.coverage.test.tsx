@@ -240,9 +240,8 @@ describe('BoxEditor normal view components', () => {
             </BoxEditorNormalWrapperComp>,
         );
 
-        const wrapper = container?.querySelector<HTMLDivElement>(
-            '.app-box-editor',
-        );
+        const wrapper =
+            container?.querySelector<HTMLDivElement>('.app-box-editor');
 
         expect(wrapper?.dataset.appBoxEditorId).toBe('99');
         expect(wrapper?.style.border).toBe('2px solid blue');
@@ -279,18 +278,16 @@ describe('BoxEditor normal view components', () => {
             </BoxEditorNormalWrapperComp>,
         );
 
-        const wrapper = container?.querySelector<HTMLDivElement>(
-            '.app-box-editor',
-        );
+        const wrapper =
+            container?.querySelector<HTMLDivElement>('.app-box-editor');
         expect(genHandleContextMenuOpeningMock).toHaveBeenCalledWith(
             canvasItemState.value,
             expect.any(Function),
             false,
         );
 
-        const editHandler = genHandleContextMenuOpeningMock.mock.calls[0]?.[1] as
-            | (() => void)
-            | undefined;
+        const editHandler = genHandleContextMenuOpeningMock.mock
+            .calls[0]?.[1] as (() => void) | undefined;
         editHandler?.();
 
         await act(async () => {
@@ -317,9 +314,8 @@ describe('BoxEditor normal view components', () => {
 
         await render(<BoxEditorNormalViewErrorComp />);
 
-        const wrapper = container?.querySelector<HTMLDivElement>(
-            '.app-box-editor',
-        );
+        const wrapper =
+            container?.querySelector<HTMLDivElement>('.app-box-editor');
         expect(wrapper?.style.border).toBe('1px solid rgb(255, 0, 0)');
         expect(container?.textContent).toContain('Error');
 
@@ -365,15 +361,17 @@ describe('BoxEditor normal view components', () => {
             />,
         );
 
-        const wrapper = container?.querySelector<HTMLDivElement>(
-            '.app-box-editor',
-        );
-        const renderedBible = container?.querySelector<HTMLDivElement>(
-            '[title="11"]',
-        );
+        const wrapper =
+            container?.querySelector<HTMLDivElement>('.app-box-editor');
+        const renderedBible =
+            container?.querySelector<HTMLDivElement>('[title="11"]');
 
-        expect(bibleValidateMock).toHaveBeenCalledWith(canvasItemPropsState.value);
-        expect(bibleGenStyleMock).toHaveBeenCalledWith(canvasItemPropsState.value);
+        expect(bibleValidateMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
+        expect(bibleGenStyleMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
         expect(wrapper?.style.backgroundColor).toBe('lavender');
         expect(renderedBible?.style.color).toBe('navy');
         expect(container?.textContent).toContain('Genesis 1:1');
@@ -394,16 +392,22 @@ describe('BoxEditor normal view components', () => {
 
     test('renders text content with line breaks and HTML content separately', async () => {
         await render(
-            <BoxEditorNormalViewTextModeComp style={{ backgroundColor: 'beige' }} />,
+            <BoxEditorNormalViewTextModeComp
+                style={{ backgroundColor: 'beige' }}
+            />,
         );
 
-        const wrapper = container?.querySelector<HTMLDivElement>(
-            '.app-box-editor',
-        );
-        const textNode = container?.querySelector<HTMLDivElement>('[title="11"]');
+        const wrapper =
+            container?.querySelector<HTMLDivElement>('.app-box-editor');
+        const textNode =
+            container?.querySelector<HTMLDivElement>('[title="11"]');
 
-        expect(textValidateMock).toHaveBeenCalledWith(canvasItemPropsState.value);
-        expect(textGenStyleMock).toHaveBeenCalledWith(canvasItemPropsState.value);
+        expect(textValidateMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
+        expect(textGenStyleMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
         expect(wrapper?.style.backgroundColor).toBe('beige');
         expect(textNode?.innerHTML).toContain('Line 1<br');
 
@@ -414,7 +418,8 @@ describe('BoxEditor normal view components', () => {
         };
         await render(<BoxEditorNormalHtmlRender />);
 
-        const htmlNode = container?.querySelector<HTMLDivElement>('[title="12"]');
+        const htmlNode =
+            container?.querySelector<HTMLDivElement>('[title="12"]');
         expect(htmlNode?.innerHTML).toBe('<em>Inline html</em>');
     });
 
@@ -444,14 +449,17 @@ describe('BoxEditor normal view components', () => {
 
     test('renders images with scaled width and falls back to the 404 asset', async () => {
         await render(
-            <BoxEditorNormalViewImageModeComp style={{ backgroundColor: 'mintcream' }} />,
+            <BoxEditorNormalViewImageModeComp
+                style={{ backgroundColor: 'mintcream' }}
+            />,
         );
 
-        const wrapper = container?.querySelector<HTMLDivElement>(
-            '.app-box-editor',
-        );
+        const wrapper =
+            container?.querySelector<HTMLDivElement>('.app-box-editor');
         const image = container?.querySelector<HTMLImageElement>('img');
-        expect(imageValidateMock).toHaveBeenCalledWith(canvasItemPropsState.value);
+        expect(imageValidateMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
         expect(wrapper?.style.backgroundColor).toBe('mintcream');
         expect(image?.getAttribute('width')).toBe('120');
         expect(image?.getAttribute('src')).toBe('data:image/png;base64,image');
@@ -485,12 +493,13 @@ describe('BoxEditor normal view components', () => {
             />,
         );
 
-        const wrapper = container?.querySelector<HTMLDivElement>(
-            '.app-box-editor',
-        );
+        const wrapper =
+            container?.querySelector<HTMLDivElement>('.app-box-editor');
         const video = container?.querySelector<HTMLVideoElement>('video');
         const playIcon = container?.querySelector<SVGSVGElement>('svg');
-        expect(videoValidateMock).toHaveBeenCalledWith(canvasItemPropsState.value);
+        expect(videoValidateMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
         expect(wrapper?.style.backgroundColor).toBe('aliceblue');
         expect(video?.getAttribute('src')).toBe('data:image/png;base64,image');
         expect(video?.getAttribute('width')).toBe('120');
@@ -502,7 +511,8 @@ describe('BoxEditor normal view components', () => {
         };
         await render(<BoxEditorNormalVideoRender />);
 
-        const fallbackVideo = container?.querySelector<HTMLVideoElement>('video');
+        const fallbackVideo =
+            container?.querySelector<HTMLVideoElement>('video');
         expect(fallbackVideo?.getAttribute('src')).toBe('fallback-404.png');
     });
 

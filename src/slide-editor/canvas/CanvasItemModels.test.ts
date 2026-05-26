@@ -68,7 +68,7 @@ vi.mock('../../others/color/colorHelpers', () => ({
 
 vi.mock('../../helper/helpers', () => ({
     cloneJson: cloneJsonMock,
-    freezeObject: <T,>(value: T) => value,
+    freezeObject: <T>(value: T) => value,
     getImageDim: getImageDimMock,
     getVideoDim: getVideoDimMock,
 }));
@@ -187,7 +187,9 @@ describe('CanvasItem models', () => {
                 padding: '6px',
             }),
         );
-        expect(item.getStyle()).toEqual(CanvasItemText.genStyle(textJson as any));
+        expect(item.getStyle()).toEqual(
+            CanvasItemText.genStyle(textJson as any),
+        );
 
         item.applyTextData({
             text: 'Updated',

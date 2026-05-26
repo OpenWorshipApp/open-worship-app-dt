@@ -6,6 +6,7 @@ import { tran } from '../lang/langHelpers';
 import {
     getSetting,
     setSetting,
+    useStateSettingBoolean,
     useStateSettingNumber,
     useStateSettingString,
 } from '../helper/settingHelpers';
@@ -65,9 +66,11 @@ function getMinuteOffsetFromCity(event: any) {
 function TimeInSetComp({
     id,
     genStyle,
+    showingScreenIdDataList,
 }: Readonly<{
     id: string;
     genStyle: () => CSSProperties;
+    showingScreenIdDataList: [number, ForegroundTimeDataType][];
 }>) {
     const [cityName, setCityName] = useStateSettingString<string>(
         `foreground-city-name-setting-${id}`,
@@ -78,20 +81,32 @@ function TimeInSetComp({
             `foreground-timezone-minute-offset-setting-${id}`,
             getSystemTimezoneMinuteOffset,
         );
+    const [is24HourFormat, setIs24HourFormat] = useStateSettingBoolean(
+        `foreground-time-is-24-hour-format-setting-${id}`,
+        false,
+    );
+    const genTimeData = useCallback(
+        (newIs24HourFormat = is24HourFormat): ForegroundTimeDataType => {
+            return {
+                id,
+                timezoneMinuteOffset,
+                title: cityName || null,
+                is24HourFormat: newIs24HourFormat,
+                extraStyle: genStyle(),
+            };
+        },
+        [id, timezoneMinuteOffset, cityName, is24HourFormat, genStyle],
+    );
+    const isAmPmFormat = !is24HourFormat;
     const handleShowing = useCallback(
         (event: any, isForceChoosing = false) => {
             ScreenForegroundManager.addTimeData(
                 event,
-                {
-                    id,
-                    timezoneMinuteOffset,
-                    title: cityName || null,
-                    extraStyle: genStyle(),
-                },
+                genTimeData(),
                 isForceChoosing,
             );
         },
-        [id, timezoneMinuteOffset, cityName, genStyle],
+        [genTimeData],
     );
     const handleContextMenuOpening = useCallback(
         (event: any) => {
@@ -106,14 +121,9 @@ function TimeInSetComp({
             if (screenForegroundManager === null) {
                 return;
             }
-            screenForegroundManager.addTimeData({
-                id,
-                timezoneMinuteOffset,
-                title: cityName || null,
-                extraStyle: genStyle(),
-            });
+            screenForegroundManager.addTimeData(genTimeData());
         },
-        [id, timezoneMinuteOffset, cityName, genStyle],
+        [genTimeData],
     );
     const handleUseCurrentTimezone = useCallback(() => {
         setTimezoneMinuteOffset(getSystemTimezoneMinuteOffset());
@@ -140,6 +150,16 @@ function TimeInSetComp({
             setTimezoneMinuteOffset(Number.parseInt(event.target.value));
         },
         [setTimezoneMinuteOffset],
+    );
+    const handleTimeFormatChange = useCallback(
+        (event: ChangeEvent<HTMLInputElement>) => {
+            const newIs24HourFormat = !event.target.checked;
+            setIs24HourFormat(newIs24HourFormat);
+            refreshAllTimes(showingScreenIdDataList, () => {
+                return genTimeData(newIs24HourFormat);
+            });
+        },
+        [setIs24HourFormat, showingScreenIdDataList, genTimeData],
     );
     const handleTimeDragStart = useCallback(() => {
         dragStore.onDropped = handleByDropped;
@@ -182,6 +202,24 @@ function TimeInSetComp({
                         onChange={handleTimezoneOffsetChange}
                     />
                 </div>
+                <div className="input-group-text">
+                    <div className="form-check form-switch mb-0">
+                        <input
+                            className="form-check-input app-caught-hover-pointer"
+                            type="checkbox"
+                            role="switch"
+                            id={`time-format-${id}`}
+                            checked={isAmPmFormat}
+                            onChange={handleTimeFormatChange}
+                        />
+                        <label
+                            className="form-check-label"
+                            htmlFor={`time-format-${id}`}
+                        >
+                            {tran('AM/PM')}
+                        </label>
+                    </div>
+                </div>
                 <div>
                     <button
                         className="btn btn-secondary"
@@ -201,7 +239,7 @@ function TimeInSetComp({
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllTimes(
     showingScreenIdDataList: [number, ForegroundTimeDataType][],
-    extraStyle: CSSProperties,
+    getTimeData: (timeData: ForegroundTimeDataType) => ForegroundTimeDataType,
 ) {
     attemptTimeout(() => {
         for (const [screenId, timeData] of showingScreenIdDataList) {
@@ -209,10 +247,7 @@ function refreshAllTimes(
                 screenId,
                 (screenForegroundManager) => {
                     screenForegroundManager.removeTimeData(timeData);
-                    screenForegroundManager.addTimeData({
-                        ...timeData,
-                        extraStyle,
-                    });
+                    screenForegroundManager.addTimeData(getTimeData(timeData));
                 },
             );
         }
@@ -254,7 +289,12 @@ function ForegroundTimeItemComp({
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix: 'time-' + id,
         onChange: (extraStyle) => {
-            refreshAllTimes(showingScreenIdDataList, extraStyle);
+            refreshAllTimes(showingScreenIdDataList, (timeData) => {
+                return {
+                    ...timeData,
+                    extraStyle,
+                };
+            });
         },
         isFontSize: true,
     });
@@ -278,7 +318,11 @@ function ForegroundTimeItemComp({
             {propsSetting}
             <hr />
             <div>
-                <TimeInSetComp genStyle={genStyle} id={id} />
+                <TimeInSetComp
+                    genStyle={genStyle}
+                    id={id}
+                    showingScreenIdDataList={showingScreenIdDataList}
+                />
             </div>
             <div>
                 <ScreensRendererComp

@@ -9,7 +9,8 @@ const startTransactionMock = vi.fn((callback: () => void) => {
 });
 
 vi.mock('../../helper/helpers', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../helper/helpers')>();
+    const actual =
+        await importOriginal<typeof import('../../helper/helpers')>();
     return {
         ...actual,
         cloneJson: <T,>(value: T) => structuredClone(value),
@@ -198,7 +199,9 @@ describe('CanvasItem', () => {
             }),
         );
         expect(
-            CanvasItem.genShapeBoxStyle(createProps({ roundSizePercentage: 40 })),
+            CanvasItem.genShapeBoxStyle(
+                createProps({ roundSizePercentage: 40 }),
+            ),
         ).toEqual(
             expect.objectContaining({
                 borderRadius: '20%',
@@ -358,7 +361,7 @@ describe('CanvasItem', () => {
                             }}
                         />
                     </CanvasItemPropsSetterContext.Provider>
-                </>
+                </>,
             );
         });
 

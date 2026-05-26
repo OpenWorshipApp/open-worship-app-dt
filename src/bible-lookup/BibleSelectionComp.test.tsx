@@ -77,11 +77,17 @@ describe('BibleSelectionComp', () => {
             { key: 'ESV', locale: 'en-US', title: 'English Standard Version' },
             { key: 'KHM', locale: 'km-KH', title: 'Khmer Bible' },
         ]);
-        mocks.getLanguageTitleMock.mockImplementation(({ locale }: { locale: string }) => {
-            return `Language ${locale}`;
+        mocks.getLanguageTitleMock.mockImplementation(
+            ({ locale }: { locale: string }) => {
+                return `Language ${locale}`;
+            },
+        );
+        mocks.getBibleInfoMock.mockResolvedValue({
+            title: 'King James Version',
         });
-        mocks.getBibleInfoMock.mockResolvedValue({ title: 'King James Version' });
-        mocks.useAppStateAsyncMock.mockReturnValue([{ title: 'King James Version' }]);
+        mocks.useAppStateAsyncMock.mockReturnValue([
+            { title: 'King James Version' },
+        ]);
         mocks.useBibleFontFamilyMock.mockReturnValue('BibleFont');
 
         container = document.createElement('div');
@@ -105,13 +111,19 @@ describe('BibleSelectionComp', () => {
 
         expect(menuItems).toHaveLength(5);
         expect(menuItems?.[0]?.disabled).toBe(true);
-        expect(getTextProps(menuItems?.[0]?.menuElement)['data-locale-ff']).toBe('en-US');
-        expect(getTextProps(menuItems?.[0]?.menuElement).children).toBe('Language en-US');
+        expect(
+            getTextProps(menuItems?.[0]?.menuElement)['data-locale-ff'],
+        ).toBe('en-US');
+        expect(getTextProps(menuItems?.[0]?.menuElement).children).toBe(
+            'Language en-US',
+        );
         expect(menuItems?.[1]?.title).toBe('King James Version');
         menuItems?.[1]?.onSelect?.('event-1');
         expect(onSelect).toHaveBeenCalledWith('event-1', 'KJV');
         expect(menuItems?.[2]?.menuElement).toBe('DIVIDER');
-        expect(getTextProps(menuItems?.[3]?.menuElement)['data-locale-ff']).toBe('km-KH');
+        expect(
+            getTextProps(menuItems?.[3]?.menuElement)['data-locale-ff'],
+        ).toBe('km-KH');
         expect(menuItems?.[4]?.title).toBe('Khmer Bible');
     });
 
@@ -140,10 +152,13 @@ describe('BibleSelectionComp', () => {
             event,
             expect.any(Array),
         );
-        const menuItems = mocks.showAppContextMenuMock.mock.calls[0]?.[1] as MenuItemType[];
+        const menuItems = mocks.showAppContextMenuMock.mock
+            .calls[0]?.[1] as MenuItemType[];
         expect(menuItems[0]?.disabled).toBe(true);
         expect(menuItems[0]?.menuElement).toBe('Pick a Bible');
-        expect(getTextProps(menuItems[0]?.childBefore).className).toBe('bi bi-lightbulb');
+        expect(getTextProps(menuItems[0]?.childBefore).className).toBe(
+            'bi bi-lightbulb',
+        );
         expect(menuItems[1]?.menuElement).toBe('DIVIDER');
 
         menuItems[3]?.onSelect?.('event-2');
@@ -162,7 +177,7 @@ describe('BibleSelectionComp', () => {
                 <BibleSelectionComp
                     bibleKey="KJV"
                     onBibleKeyChange={onBibleKeyChange}
-                />, 
+                />,
             );
         });
 
@@ -171,14 +186,18 @@ describe('BibleSelectionComp', () => {
         expect(button).not.toBeNull();
         expect(titleSpan?.textContent).toBe('KJV');
         expect(titleSpan?.getAttribute('title')).toBe('King James Version');
-        expect((titleSpan as HTMLElement | null)?.style.fontFamily).toBe('BibleFont');
+        expect((titleSpan as HTMLElement | null)?.style.fontFamily).toBe(
+            'BibleFont',
+        );
 
         await act(async () => {
             button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             await Promise.resolve();
         });
 
-        const menuItems = mocks.showAppContextMenuMock.mock.calls.at(-1)?.[1] as MenuItemType[];
+        const menuItems = mocks.showAppContextMenuMock.mock.calls.at(
+            -1,
+        )?.[1] as MenuItemType[];
         expect(menuItems[1]?.title).toBe('English Standard Version');
         menuItems[1]?.onSelect?.('event-3');
         expect(onBibleKeyChange).toHaveBeenCalledWith('KJV', 'ESV');
@@ -199,7 +218,7 @@ describe('BibleSelectionComp', () => {
                     extraStyle={{ color: 'red' }}
                     isMinimal
                     onBibleKeyChange={onBibleKeyChange}
-                />, 
+                />,
             );
         });
 
@@ -210,21 +229,29 @@ describe('BibleSelectionComp', () => {
         expect(activeSpan?.style.color).toBe('red');
 
         await act(async () => {
-            activeSpan?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            activeSpan?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
             await Promise.resolve();
         });
 
-        let menuItems = mocks.showAppContextMenuMock.mock.calls.at(-1)?.[1] as MenuItemType[];
+        let menuItems = mocks.showAppContextMenuMock.mock.calls.at(
+            -1,
+        )?.[1] as MenuItemType[];
         expect(menuItems[0]?.menuElement.props.children).toBe('Language en-US');
         menuItems[1]?.onSelect?.('event-4');
         expect(onBibleKeyChange).toHaveBeenCalledWith(false, 'KJV', 'ESV');
 
         await act(async () => {
-            activeSpan?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
+            activeSpan?.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            );
             await Promise.resolve();
         });
 
-        menuItems = mocks.showAppContextMenuMock.mock.calls.at(-1)?.[1] as MenuItemType[];
+        menuItems = mocks.showAppContextMenuMock.mock.calls.at(
+            -1,
+        )?.[1] as MenuItemType[];
         expect(menuItems[0]?.menuElement).toBe('Choose translation');
         menuItems[3]?.onSelect?.('event-5');
         expect(onBibleKeyChange).toHaveBeenCalledWith(true, 'KJV', 'ESV');
@@ -235,13 +262,19 @@ describe('BibleSelectionComp', () => {
 
         const passiveSpan = container?.querySelector('span.bible-selector');
         expect(passiveSpan?.className).not.toContain('pointer');
-        expect(passiveSpan?.className).toContain('badge rounded-pill text-bg-info');
+        expect(passiveSpan?.className).toContain(
+            'badge rounded-pill text-bg-info',
+        );
         expect(passiveSpan?.style.paddingLeft).toBe('6px');
 
         const callCount = mocks.showAppContextMenuMock.mock.calls.length;
         await act(async () => {
-            passiveSpan?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            passiveSpan?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
+            passiveSpan?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
+            passiveSpan?.dispatchEvent(
+                new MouseEvent('contextmenu', { bubbles: true }),
+            );
             await Promise.resolve();
         });
         expect(mocks.showAppContextMenuMock).toHaveBeenCalledTimes(callCount);

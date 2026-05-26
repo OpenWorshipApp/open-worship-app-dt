@@ -49,11 +49,16 @@ const mocks = vi.hoisted(() => {
         }),
         fileInstances,
         files,
-        fsCheckFileExistMock: vi.fn(async (filePath: string) => files.has(filePath)),
+        fsCheckFileExistMock: vi.fn(async (filePath: string) =>
+            files.has(filePath),
+        ),
         fsDeleteDirMock: vi.fn(async (dirPath: string) => {
             dirs.delete(dirPath);
             for (const filePath of [...files.keys()]) {
-                if (filePath === dirPath || filePath.startsWith(`${dirPath}/`)) {
+                if (
+                    filePath === dirPath ||
+                    filePath.startsWith(`${dirPath}/`)
+                ) {
                     files.delete(filePath);
                 }
             }
@@ -75,7 +80,9 @@ const mocks = vi.hoisted(() => {
         initHttpRequestMock: vi.fn(),
         jsonToXMLTextMock: vi.fn(),
         pathJoinMock: vi.fn((...parts: string[]) => parts.join('/')),
-        readFileDataMock: vi.fn(async (filePath: string) => files.get(filePath) ?? null),
+        readFileDataMock: vi.fn(
+            async (filePath: string) => files.get(filePath) ?? null,
+        ),
         reset() {
             dirs.clear();
             fileInstances.clear();
@@ -109,7 +116,8 @@ vi.mock('../../helper/errorHelpers', () => ({
 vi.mock('../../server/appProvider', () => ({
     default: {
         pathUtils: {
-            basename: (filePath: string) => filePath.split('/').at(-1) ?? filePath,
+            basename: (filePath: string) =>
+                filePath.split('/').at(-1) ?? filePath,
             resolve: (...parts: string[]) => parts.join('/'),
         },
     },
@@ -247,7 +255,10 @@ describe('bibleXMLHelpers', () => {
         );
         mocks.getAllXMLFileKeysMock.mockResolvedValue({});
         mocks.getBibleInfoMock.mockResolvedValue(null);
-        mocks.getBibleInfoJsonMock.mockResolvedValue({ key: 'KJV', title: 'Bible' });
+        mocks.getBibleInfoJsonMock.mockResolvedValue({
+            key: 'KJV',
+            title: 'Bible',
+        });
         mocks.getFileMD5Mock.mockResolvedValue('abc123');
         mocks.getModelKeyBookMapMock.mockReturnValue({
             EXO: 'Exodus',
@@ -290,11 +301,15 @@ describe('bibleXMLHelpers', () => {
             newLines: [],
             newLinesTitleMap: {},
         });
-        mocks.xmlTextToBibleElementMock.mockReturnValue(document.createElement('bible'));
+        mocks.xmlTextToBibleElementMock.mockReturnValue(
+            document.createElement('bible'),
+        );
 
         class MockFileReader {
             onerror: ((error: unknown) => void) | null = null;
-            onload: ((event: { target?: { result: string | null } }) => void) | null = null;
+            onload:
+                | ((event: { target?: { result: string | null } }) => void)
+                | null = null;
 
             readAsText(file: any) {
                 if (file.__shouldError) {
@@ -312,7 +327,8 @@ describe('bibleXMLHelpers', () => {
     });
 
     test('reads named inputs, validates URLs, and reads uploaded files', async () => {
-        const { checkIsValidUrl, getInputByName, readFromFile } = await loadModule();
+        const { checkIsValidUrl, getInputByName, readFromFile } =
+            await loadModule();
         const { form, input } = createFormWithInput('file');
         const messages: Array<string | null> = [];
 
@@ -395,7 +411,10 @@ describe('bibleXMLHelpers', () => {
             .mockResolvedValueOnce({ key: 'KJV', title: 'Bible 1' })
             .mockResolvedValueOnce(null);
 
-        expect(await getBibleXMLInfo('KJV')).toEqual({ key: 'KJV', title: 'Bible' });
+        expect(await getBibleXMLInfo('KJV')).toEqual({
+            key: 'KJV',
+            title: 'Bible',
+        });
         mocks.xmlTextToBibleElementMock.mockReturnValueOnce(null);
         expect(await getBibleXMLInfo('KJV')).toBeNull();
 
@@ -424,7 +443,9 @@ describe('bibleXMLHelpers', () => {
         expect(items[1]?.menuElement).toBe('Clear Cache');
 
         await items[0]?.onSelect();
-        expect(mocks.showFileOrDirExplorerMock).toHaveBeenCalledWith('/bibles/KJV.xml');
+        expect(mocks.showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/bibles/KJV.xml',
+        );
 
         items[1]?.onSelect();
         await Promise.resolve();
@@ -432,7 +453,8 @@ describe('bibleXMLHelpers', () => {
     });
 
     test('uses backup and fresh cache paths when reading cached XML data and chapter data', async () => {
-        const { getBibleXMLDataFromKeyCaching, readBibleXMLData } = await loadModule();
+        const { getBibleXMLDataFromKeyCaching, readBibleXMLData } =
+            await loadModule();
         const backupData = {
             books: {},
             customVersesMap: {},
@@ -484,7 +506,9 @@ describe('bibleXMLHelpers', () => {
             },
         });
 
-        expect(await reloadedModule.getBibleXMLDataFromKeyCaching('KJV')).toEqual(
+        expect(
+            await reloadedModule.getBibleXMLDataFromKeyCaching('KJV'),
+        ).toEqual(
             expect.objectContaining({
                 books: {
                     GEN: {
@@ -496,7 +520,9 @@ describe('bibleXMLHelpers', () => {
                 },
             }),
         );
-        expect(await reloadedModule.getBibleXMLDataFromKeyCaching('KJV')).toEqual(
+        expect(
+            await reloadedModule.getBibleXMLDataFromKeyCaching('KJV'),
+        ).toEqual(
             expect.objectContaining({
                 info: { key: 'KJV', keyBookMap: { GEN: 'Genesis' } },
             }),
@@ -552,8 +578,12 @@ describe('bibleXMLHelpers', () => {
         mocks.jsonToXMLTextMock.mockReturnValue('<bible key="KJV" />');
         expect(await saveJsonDataToXMLfile(jsonData as any)).toBe(true);
         expect(mocks.files.get('/bibles/KJV.xml')).toBe('<bible key="KJV" />');
-        expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith('/bibles/KJV.xml.cache');
-        expect(mocks.ensureDirectoryMock).toHaveBeenCalledWith('/bibles/KJV.xml.cache');
+        expect(mocks.fsDeleteDirMock).toHaveBeenCalledWith(
+            '/bibles/KJV.xml.cache',
+        );
+        expect(mocks.ensureDirectoryMock).toHaveBeenCalledWith(
+            '/bibles/KJV.xml.cache',
+        );
         expect(mocks.files.has('/bibles/KJV.xml.cache/abc123')).toBe(true);
 
         mocks.files.set('/bibles/KJV.xml', '<bible key="KJV" />');

@@ -185,9 +185,9 @@ describe('electronHelpers', () => {
         } as any);
 
         expect(responseWithoutParent.action).toBe('allow');
-        expect(responseWithoutParent.overrideBrowserWindowOptions).not.toHaveProperty(
-            'parent',
-        );
+        expect(
+            responseWithoutParent.overrideBrowserWindowOptions,
+        ).not.toHaveProperty('parent');
     });
 
     test('debounces callback execution', () => {

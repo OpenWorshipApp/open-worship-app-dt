@@ -122,9 +122,9 @@ describe('langHelpers', () => {
         expect(getLangData('km-KH')).toBe(langData);
         expect(getLangData('km')).toBe(langData);
         expect(document.head.querySelectorAll('style#lang-km')).toHaveLength(1);
-        expect(document.head.querySelector('style#lang-km')?.innerHTML).toContain(
-            'km-font-family',
-        );
+        expect(
+            document.head.querySelector('style#lang-km')?.innerHTML,
+        ).toContain('km-font-family');
 
         const cachedLangData = await getLangDataAsync('km-KH');
 
@@ -236,14 +236,25 @@ describe('langHelpers', () => {
             await loadLangHelpers();
 
         expect(
-            toStringNum(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'], 907),
+            toStringNum(
+                ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
+                907,
+            ),
         ).toBe('jah');
         expect(await toLocaleNum('km-KH', 907)).toBe('៩០៧');
         expect(await toLocaleNum('fr-FR' as any, 42)).toBe('42');
         expect(
-            fromStringNum(['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'], '៩០៧'),
+            fromStringNum(
+                ['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩'],
+                '៩០៧',
+            ),
         ).toBe(907);
-        expect(fromStringNum(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], 'abc')).toBeNull();
+        expect(
+            fromStringNum(
+                ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+                'abc',
+            ),
+        ).toBeNull();
         expect(await fromLocaleNum('km-KH', '៩០៧')).toBe(907);
         expect(await fromLocaleNum('fr-FR' as any, '42')).toBeNull();
     });
@@ -262,7 +273,9 @@ describe('langHelpers', () => {
 
         expect(await sanitizePreviewText('km-KH', ' ក ខ​ ')).toBe('កខ');
         expect(await sanitizeFindingText('km-KH', 'កa ខ1')).toBe('ក ខ');
-        expect(await sanitizePreviewText('fr-FR' as any, ' A B ')).toBe(' A B ');
+        expect(await sanitizePreviewText('fr-FR' as any, ' A B ')).toBe(
+            ' A B ',
+        );
         expect(await sanitizeFindingText('fr-FR' as any, 'Hello, World!')).toBe(
             'hello world',
         );
@@ -283,7 +296,9 @@ describe('langHelpers', () => {
         const { sanitizeFindingText, sanitizePreviewText } =
             await loadLangHelpers();
 
-        expect(await sanitizePreviewText('fr-FR' as any, ' A B ')).toBe(' A B ');
+        expect(await sanitizePreviewText('fr-FR' as any, ' A B ')).toBe(
+            ' A B ',
+        );
         expect(await sanitizeFindingText('fr-FR' as any, 'Hello, World!')).toBe(
             'Hello, World!',
         );
@@ -309,10 +324,12 @@ describe('langHelpers', () => {
         expect(await getFontFamilyByLocale('fr-FR' as any)).toBeUndefined();
 
         mocks.hookState.value = 'hook-value';
-        mocks.useAppStateAsyncMock.mockImplementation((getter: () => unknown) => {
-            getter();
-            return [mocks.hookState.value];
-        });
+        mocks.useAppStateAsyncMock.mockImplementation(
+            (getter: () => unknown) => {
+                getter();
+                return [mocks.hookState.value];
+            },
+        );
         expect(useFontFamilyByLocale('km-KH')).toBe('hook-value');
         expect(mocks.useAppStateAsyncMock).toHaveBeenCalledTimes(1);
         expect(checkIsRtl('ar-SA')).toBe(true);

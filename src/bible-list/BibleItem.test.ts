@@ -19,11 +19,18 @@ const mocks = vi.hoisted(() => {
             settings.set(key, value);
         }),
         settings,
-        toChapterFullKeyFormatMock: vi.fn((bookKey: string, chapter: number) => {
-            return `${bookKey} ${chapter}`;
-        }),
+        toChapterFullKeyFormatMock: vi.fn(
+            (bookKey: string, chapter: number) => {
+                return `${bookKey} ${chapter}`;
+            },
+        ),
         toVerseFullKeyFormatMock: vi.fn(
-            (bookKey: string, chapter: number, verseStart: number | string, verseEnd?: number) => {
+            (
+                bookKey: string,
+                chapter: number,
+                verseStart: number | string,
+                verseEnd?: number,
+            ) => {
                 if (verseEnd === undefined) {
                     return `${bookKey} ${chapter}:${verseStart}`;
                 }
@@ -40,7 +47,7 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('../helper/helpers', () => ({
-    cloneJson: <T,>(value: T) => structuredClone(value),
+    cloneJson: <T>(value: T) => structuredClone(value),
     isValidJson: mocks.isValidJsonMock,
 }));
 
@@ -103,7 +110,9 @@ describe('BibleItem', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mocks.reset();
-        mocks.fileSourceGetInstanceMock.mockImplementation((filePath: string) => ({ filePath }));
+        mocks.fileSourceGetInstanceMock.mockImplementation(
+            (filePath: string) => ({ filePath }),
+        );
         mocks.isValidJsonMock.mockImplementation((value: string) => {
             try {
                 JSON.parse(value);
@@ -120,7 +129,9 @@ describe('BibleItem', () => {
         });
         mocks.bibleRenderHelperMock.toText.mockResolvedValue('Verse text');
         mocks.bibleRenderHelperMock.toTitle.mockResolvedValue('Genesis 1:1-3');
-        mocks.bibleRenderHelperMock.toVerseTextList.mockResolvedValue([{ text: 'Verse text' }]);
+        mocks.bibleRenderHelperMock.toVerseTextList.mockResolvedValue([
+            { text: 'Verse text' },
+        ]);
         mocks.fromVerseKeyMock.mockResolvedValue({
             bookKey: 'EXO',
             chapter: 2,
@@ -130,7 +141,10 @@ describe('BibleItem', () => {
     });
 
     test('constructs, validates, compares, serializes, and clones bible items', () => {
-        const bibleItem = BibleItem.fromJson(createBibleItemJson(), '/bibles/main.bible');
+        const bibleItem = BibleItem.fromJson(
+            createBibleItemJson(),
+            '/bibles/main.bible',
+        );
 
         expect(bibleItem.id).toBe(1);
         bibleItem.id = 7;
@@ -146,7 +160,9 @@ describe('BibleItem', () => {
         bibleItem.isAudioEnabled = false;
 
         expect(bibleItem.checkIsSameId(7)).toBe(true);
-        expect(bibleItem.checkIsSameId(BibleItem.fromJson(createBibleItemJson(7)))).toBe(true);
+        expect(
+            bibleItem.checkIsSameId(BibleItem.fromJson(createBibleItemJson(7))),
+        ).toBe(true);
         expect(
             bibleItem.checkIsTargetIdentical(
                 BibleItem.fromJson({
@@ -156,7 +172,9 @@ describe('BibleItem', () => {
             ),
         ).toBe(true);
         expect(
-            bibleItem.checkIsTargetIdentical(BibleItem.fromJson(createBibleItemJson(2))),
+            bibleItem.checkIsTargetIdentical(
+                BibleItem.fromJson(createBibleItemJson(2)),
+            ),
         ).toBe(false);
 
         expect(bibleItem.toJson()).toEqual({
@@ -177,13 +195,19 @@ describe('BibleItem', () => {
         expect(clone.id).toBe(-1);
         expect(bibleItem.clone(true).id).toBe(7);
 
-        const errorItem = BibleItem.fromJsonError(createBibleItemJson(9), '/bibles/error.bible');
+        const errorItem = BibleItem.fromJsonError(
+            createBibleItemJson(9),
+            '/bibles/error.bible',
+        );
         expect(errorItem.toJson()).toEqual(createBibleItemJson(9));
 
         expect(() => BibleItem.validate(createBibleItemJson())).not.toThrow();
-        expect(() => BibleItem.validate({ ...createBibleItemJson(), bibleKey: '' } as any)).toThrow(
-            'Invalid bible item data',
-        );
+        expect(() =>
+            BibleItem.validate({
+                ...createBibleItemJson(),
+                bibleKey: '',
+            } as any),
+        ).toThrow('Invalid bible item data');
         expect(mocks.appErrorMock).toHaveBeenCalled();
     });
 
@@ -194,9 +218,13 @@ describe('BibleItem', () => {
                 bibleItem: extractedItem,
             },
         });
-        mocks.extractBibleTitleMock.mockResolvedValueOnce({ result: { bibleItem: null } });
+        mocks.extractBibleTitleMock.mockResolvedValueOnce({
+            result: { bibleItem: null },
+        });
 
-        expect(await BibleItem.fromTitleText('KJV', 'Psalm 23')).toBe(extractedItem);
+        expect(await BibleItem.fromTitleText('KJV', 'Psalm 23')).toBe(
+            extractedItem,
+        );
         expect(await BibleItem.fromTitleText('KJV', 'Missing')).toBeNull();
 
         const fromVerseKey = await BibleItem.fromVerseKey('WEB', 'EXO 2:4-5');
@@ -216,7 +244,10 @@ describe('BibleItem', () => {
         mocks.fromVerseKeyMock.mockResolvedValueOnce(null);
         expect(await BibleItem.fromVerseKey('WEB', 'bad')).toBeNull();
 
-        const bibleItem = BibleItem.fromJson(createBibleItemJson(1), '/bibles/main.bible');
+        const bibleItem = BibleItem.fromJson(
+            createBibleItemJson(1),
+            '/bibles/main.bible',
+        );
         expect(await bibleItem.save(null)).toBe(false);
 
         const storedItem = BibleItem.fromJson(createBibleItemJson(1, 'KJV'));
@@ -241,13 +272,21 @@ describe('BibleItem', () => {
         };
         expect(await updatedItem.save(missingBible as any)).toBe(false);
 
-        expect(BibleItem.convertPresent(updatedItem, [storedItem])).toHaveLength(1);
-        const converted = BibleItem.convertPresent(updatedItem, [storedItem, extractedItem]);
+        expect(
+            BibleItem.convertPresent(updatedItem, [storedItem]),
+        ).toHaveLength(1);
+        const converted = BibleItem.convertPresent(updatedItem, [
+            storedItem,
+            extractedItem,
+        ]);
         expect(converted.map((item) => item.bibleKey)).toEqual(['WEB', 'KJV']);
     });
 
     test('stores presenter settings, delegates rendering helpers, and copies formatted content', async () => {
-        const bibleItem = BibleItem.fromJson(createBibleItemJson(1, 'WEB'), '/bibles/main.bible');
+        const bibleItem = BibleItem.fromJson(
+            createBibleItemJson(1, 'WEB'),
+            '/bibles/main.bible',
+        );
         BibleItem.setBiblePresenterSetting([bibleItem]);
         expect(mocks.setSettingMock).toHaveBeenCalledWith(
             'bible-presenter',
@@ -265,9 +304,13 @@ describe('BibleItem', () => {
             title: 'Genesis 1:1-3',
             text: 'Verse text',
         });
-        expect(await bibleItem.toTitleWithBibleKey()).toBe('(WEB) Genesis 1:1-3');
+        expect(await bibleItem.toTitleWithBibleKey()).toBe(
+            '(WEB) Genesis 1:1-3',
+        );
         expect(await bibleItem.toText()).toBe('Verse text');
-        expect(await bibleItem.toVerseTextList()).toEqual([{ text: 'Verse text' }]);
+        expect(await bibleItem.toVerseTextList()).toEqual([
+            { text: 'Verse text' },
+        ]);
         expect(bibleItem.toChapterFullKey()).toBe('GEN 1');
         expect(bibleItem.toVerseFullKey()).toBe('GEN 1:1-3');
         expect(bibleItem.getCopyingBibleKey()).toBe('(WEB)');
@@ -278,7 +321,9 @@ describe('BibleItem', () => {
         bibleItem.copyVerseFullKeyToClipboard();
         bibleItem.copyChapterFullKeyToClipboard();
 
-        expect(mocks.copyToClipboardMock.mock.calls.map((call) => call[0])).toEqual([
+        expect(
+            mocks.copyToClipboardMock.mock.calls.map((call) => call[0]),
+        ).toEqual([
             '(WEB) Genesis 1:1-3',
             'Verse text',
             '(WEB) Genesis 1:1-3\nVerse text',
@@ -301,7 +346,10 @@ describe('BibleItem', () => {
     });
 
     test('serializes drag and lookup data and can save bible lookups back to an existing item', async () => {
-        const bibleItem = BibleItem.fromJson(createBibleItemJson(3, 'KJV'), '/bibles/main.bible');
+        const bibleItem = BibleItem.fromJson(
+            createBibleItemJson(3, 'KJV'),
+            '/bibles/main.bible',
+        );
 
         expect(bibleItem.dragSerialize()).toEqual({
             data: {
@@ -327,7 +375,11 @@ describe('BibleItem', () => {
                 filePath: '/bibles/main.bible',
             }),
         );
-        expect(BibleItem.genBibleLookupData(BibleItem.fromJson(createBibleItemJson(5)))).toBeUndefined();
+        expect(
+            BibleItem.genBibleLookupData(
+                BibleItem.fromJson(createBibleItemJson(5)),
+            ),
+        ).toBeUndefined();
         expect(BibleItem.parseBibleLookupData()).toBeNull();
         expect(
             BibleItem.parseBibleLookupData(
@@ -351,7 +403,11 @@ describe('BibleItem', () => {
         const saveSpy = vi.spyOn(oldBibleItem, 'save').mockResolvedValue(true);
 
         expect(
-            await BibleItem.saveFromBibleLookup({} as any, oldBibleItem, newBibleItem),
+            await BibleItem.saveFromBibleLookup(
+                {} as any,
+                oldBibleItem,
+                newBibleItem,
+            ),
         ).toBe(true);
         expect(oldBibleItem.bibleKey).toBe('WEB');
         expect(oldBibleItem.target.bookKey).toBe('REV');
@@ -364,10 +420,14 @@ describe('BibleItem', () => {
                 },
             },
         });
-        mocks.extractBibleTitleMock.mockResolvedValueOnce({ result: { bibleItem: null } });
-        expect(await BibleItem.bibleTitleToKJVVerseKey('KJV', 'Revelation 22:21')).toBe(
-            'REV 22:21',
-        );
-        expect(await BibleItem.bibleTitleToKJVVerseKey('KJV', 'Missing')).toBeNull();
+        mocks.extractBibleTitleMock.mockResolvedValueOnce({
+            result: { bibleItem: null },
+        });
+        expect(
+            await BibleItem.bibleTitleToKJVVerseKey('KJV', 'Revelation 22:21'),
+        ).toBe('REV 22:21');
+        expect(
+            await BibleItem.bibleTitleToKJVVerseKey('KJV', 'Missing'),
+        ).toBeNull();
     });
 });

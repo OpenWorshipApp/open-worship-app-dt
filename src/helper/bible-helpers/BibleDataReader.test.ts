@@ -33,16 +33,20 @@ const mocks = vi.hoisted(() => {
         getKeysMock: vi.fn(),
         handleErrorMock: vi.fn(),
         hideProgressBarMock: vi.fn(),
-        pathJoinMock: vi.fn((...parts: string[]) => parts.join('/').replaceAll('//', '/')),
+        pathJoinMock: vi.fn((...parts: string[]) =>
+            parts.join('/').replaceAll('//', '/'),
+        ),
         readBibleXMLDataMock: vi.fn(),
         readFileDataMock: vi.fn(),
         reset() {
             cacheStores.length = 0;
         },
         showProgressBarMock: vi.fn(),
-        unlockingMock: vi.fn(async (_key: string, callback: () => Promise<unknown>) => {
-            return callback();
-        }),
+        unlockingMock: vi.fn(
+            async (_key: string, callback: () => Promise<unknown>) => {
+                return callback();
+            },
+        ),
     };
 });
 
@@ -172,7 +176,9 @@ describe('BibleDataReader', () => {
         const { default: BibleDataReader } = await loadModule();
         const reader = new BibleDataReader();
 
-        mocks.getItemMock.mockResolvedValueOnce({ data: '{"title":"From DB"}' });
+        mocks.getItemMock.mockResolvedValueOnce({
+            data: '{"title":"From DB"}',
+        });
         mocks.base64DecodeMock.mockReturnValueOnce('{"title":"From DB"}');
         expect(await reader.readBibleDownloadedData('WEB', '_info')).toEqual({
             title: 'From DB',
@@ -181,7 +187,9 @@ describe('BibleDataReader', () => {
 
         mocks.getItemMock.mockResolvedValueOnce(null);
         mocks.readFileDataMock.mockResolvedValueOnce(null);
-        expect(await reader.readBibleDownloadedData('WEB', '0001-GEN.1')).toBeNull();
+        expect(
+            await reader.readBibleDownloadedData('WEB', '0001-GEN.1'),
+        ).toBeNull();
 
         mocks.getItemMock.mockRejectedValueOnce({ code: 'ENOENT' });
         expect(await reader.readBibleDownloadedData('WEB', '_info')).toBeNull();
@@ -199,12 +207,18 @@ describe('BibleDataReader', () => {
             .spyOn(reader, 'readBibleDownloadedData')
             .mockResolvedValue({ from: 'download' } as any);
 
-        expect(await reader.readBibleData('KJV', '_info')).toEqual({ from: 'download' });
-        expect(await reader.readBibleData('KJV', '_info')).toEqual({ from: 'download' });
+        expect(await reader.readBibleData('KJV', '_info')).toEqual({
+            from: 'download',
+        });
+        expect(await reader.readBibleData('KJV', '_info')).toEqual({
+            from: 'download',
+        });
         expect(readBibleDownloadedDataSpy).toHaveBeenCalledTimes(1);
 
         mocks.checkIsBibleXMLMock.mockResolvedValueOnce(true);
-        expect(await reader.readBibleData('XML', '_info')).toEqual({ from: 'xml' });
+        expect(await reader.readBibleData('XML', '_info')).toEqual({
+            from: 'xml',
+        });
         expect(mocks.readBibleXMLDataMock).toHaveBeenCalledWith('XML', '_info');
     });
 
@@ -212,18 +226,30 @@ describe('BibleDataReader', () => {
         const { default: BibleDataReader } = await loadModule();
         const reader = new BibleDataReader();
 
-        expect(await reader.toBiblePath('KJV')).toBe('/storage/bibles-data/KJV');
-        expect(await reader.getWritableBiblePath()).toBe('/storage/bibles-data');
+        expect(await reader.toBiblePath('KJV')).toBe(
+            '/storage/bibles-data/KJV',
+        );
+        expect(await reader.getWritableBiblePath()).toBe(
+            '/storage/bibles-data',
+        );
         expect(mocks.fsCreateDirMock).toHaveBeenCalledTimes(1);
 
-        mocks.fsCreateDirMock.mockRejectedValueOnce(new Error('file already exists'));
+        mocks.fsCreateDirMock.mockRejectedValueOnce(
+            new Error('file already exists'),
+        );
         const nextReader = new BibleDataReader();
-        expect(await nextReader.getWritableBiblePath()).toBe('/storage/bibles-data');
+        expect(await nextReader.getWritableBiblePath()).toBe(
+            '/storage/bibles-data',
+        );
         expect(mocks.handleErrorMock).toHaveBeenCalledTimes(0);
 
-        mocks.fsCreateDirMock.mockRejectedValueOnce(new Error('permission denied'));
+        mocks.fsCreateDirMock.mockRejectedValueOnce(
+            new Error('permission denied'),
+        );
         const lastReader = new BibleDataReader();
-        expect(await lastReader.getWritableBiblePath()).toBe('/storage/bibles-data');
+        expect(await lastReader.getWritableBiblePath()).toBe(
+            '/storage/bibles-data',
+        );
         expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
 
         mocks.getKeysMock.mockResolvedValueOnce(['key-1', 'key-2']);

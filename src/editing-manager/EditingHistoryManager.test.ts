@@ -300,8 +300,6 @@ describe('EditingHistoryManager', () => {
         await EditingHistoryManager.moveFilePath(filePath, movedFilePath);
 
         expect(mocks.dirs.has(`${movedFilePath}.histories`)).toBe(true);
-        expect(mocks.files.has(`${movedFilePath}.histories/1-head`)).toBe(
-            true,
-        );
+        expect(mocks.files.has(`${movedFilePath}.histories/1-head`)).toBe(true);
     });
 });

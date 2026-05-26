@@ -167,7 +167,8 @@ export function genHtmlForegroundCountdown(
 ) {
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
-        <div className='foreground-countdown-container'
+        <div
+            className="foreground-countdown-container"
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -226,7 +227,8 @@ export function genHtmlForegroundStopwatch(
 ) {
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
-        <div className='foreground-stopwatch-container'
+        <div
+            className="foreground-stopwatch-container"
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -276,9 +278,11 @@ export function genHtmlForegroundTime(
     animData: StyleAnimType,
 ) {
     const { timezoneMinuteOffset, title } = timeData;
+    const is24HourFormat = timeData.is24HourFormat ?? false;
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
-        <div className='foreground-time-container'
+        <div
+            className="foreground-time-container"
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -314,13 +318,22 @@ export function genHtmlForegroundTime(
                 <span style={{ marginRight: '25px' }}>🕗</span>
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
+                {is24HourFormat ? null : (
+                    <div id="ampm" style={{ marginLeft: '8px' }}>
+                        AM
+                    </div>
+                )}
             </div>
         </div>,
     );
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
-    const timingHandler = TimingController.init(element, timezoneMinuteOffset);
+    const timingHandler = TimingController.init(
+        element,
+        timezoneMinuteOffset,
+        is24HourFormat,
+    );
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
             timingHandler.start();

@@ -144,7 +144,9 @@ describe('databaseHelpers', () => {
     test('initializes the database once, queues concurrent opens, and caches controller instances', async () => {
         const controller = new TestDbController();
         const createObjectStoreSpy = vi.spyOn(controller, 'createObjectStore');
-        const openMock = (globalThis.indexedDB.open as any) as ReturnType<typeof vi.fn>;
+        const openMock = globalThis.indexedDB.open as any as ReturnType<
+            typeof vi.fn
+        >;
 
         const init1 = controller.init();
         const init2 = controller.init();
@@ -167,7 +169,9 @@ describe('databaseHelpers', () => {
         const instance1 = TestDbController.getInstance();
         const instanceOpenRequest = openMock.mock.results[1]?.value;
         const { db: instanceDb } = createStoreHarness();
-        instanceOpenRequest.onupgradeneeded?.({ target: { result: instanceDb } });
+        instanceOpenRequest.onupgradeneeded?.({
+            target: { result: instanceDb },
+        });
         instanceOpenRequest.onsuccess?.({ target: { result: instanceDb } });
         const resolved1 = await instance1;
         const resolved2 = await TestDbController.getInstance();
@@ -178,7 +182,9 @@ describe('databaseHelpers', () => {
 
     test('rejects queued init requests on open failure and wires init callbacks', async () => {
         const controller = new TestDbController();
-        const openMock = (globalThis.indexedDB.open as any) as ReturnType<typeof vi.fn>;
+        const openMock = globalThis.indexedDB.open as any as ReturnType<
+            typeof vi.fn
+        >;
         const init1 = controller.init();
         const init2 = controller.init();
         const openRequest = openMock.mock.results[0]?.value;
@@ -217,14 +223,22 @@ describe('databaseHelpers', () => {
 
         controller.createObjectStore();
         expect(mocks.handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
-        expect(secondHarness.db.createObjectStore).toHaveBeenCalledWith('songs', {
-            autoIncrement: false,
-            keyPath: 'id',
-        });
-        const createdStore = secondHarness.db.createObjectStore.mock.results[0]?.value;
-        expect(createdStore.createIndex).toHaveBeenCalledWith('index1', ['secondaryId'], {
-            unique: false,
-        });
+        expect(secondHarness.db.createObjectStore).toHaveBeenCalledWith(
+            'songs',
+            {
+                autoIncrement: false,
+                keyPath: 'id',
+            },
+        );
+        const createdStore =
+            secondHarness.db.createObjectStore.mock.results[0]?.value;
+        expect(createdStore.createIndex).toHaveBeenCalledWith(
+            'index1',
+            ['secondaryId'],
+            {
+                unique: false,
+            },
+        );
 
         const missingStoreDb = createStoreHarness().db;
         missingStoreDb.objectStoreNames.contains.mockReturnValue(false);
@@ -236,7 +250,9 @@ describe('databaseHelpers', () => {
         controller.closeDb();
         expect(missingStoreDb.close).toHaveBeenCalledTimes(1);
         expect(() => controller.db).toThrow('DB is not initialized');
-        expect(() => IndexedDbController.instantiate()).toThrow('Not implemented');
+        expect(() => IndexedDbController.instantiate()).toThrow(
+            'Not implemented',
+        );
     });
 
     test('supports add get update delete count clear and secondary-key lookups', async () => {
@@ -264,8 +280,12 @@ describe('databaseHelpers', () => {
                 secondaryId: 'group-2',
             }),
         );
-        expect(harness.store.add.mock.calls[0]?.[0]?.createdAt).toBeInstanceOf(Date);
-        expect(harness.store.add.mock.calls[0]?.[0]?.updatedAt).toBeInstanceOf(Date);
+        expect(harness.store.add.mock.calls[0]?.[0]?.createdAt).toBeInstanceOf(
+            Date,
+        );
+        expect(harness.store.add.mock.calls[0]?.[0]?.updatedAt).toBeInstanceOf(
+            Date,
+        );
 
         await expect(
             controller.addItem({
@@ -291,10 +311,14 @@ describe('databaseHelpers', () => {
         expect(await controller.getItem('missing')).toBeNull();
 
         const keyRequest = await controller.getKeys('group-2');
-        expect((globalThis.IDBKeyRange.only as any)).toHaveBeenCalledWith(['group-2']);
+        expect(globalThis.IDBKeyRange.only as any).toHaveBeenCalledWith([
+            'group-2',
+        ]);
         expect(keyRequest).toEqual(['new-item']);
 
-        const updateRequest: any = await controller.updateItem('new-item', { title: 'updated' });
+        const updateRequest: any = await controller.updateItem('new-item', {
+            title: 'updated',
+        });
         expect(harness.store.put).toHaveBeenCalledWith(
             expect.objectContaining({
                 data: { title: 'updated' },

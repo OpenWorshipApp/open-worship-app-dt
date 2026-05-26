@@ -13,10 +13,23 @@ describe('Khmer language data', () => {
         expect(lang.genCss()).toContain('font-family: km-font-family');
         expect(lang.dictionary['open pptx']).toBe('បើក PPTX');
         expect(lang.dictionary['save']).toBe('រក្សាទុក');
-        expect(lang.numList).toEqual(['០', '១', '២', '៣', '៤', '៥', '៦', '៧', '៨', '៩']);
+        expect(lang.numList).toEqual([
+            '០',
+            '១',
+            '២',
+            '៣',
+            '៤',
+            '៥',
+            '៦',
+            '៧',
+            '៨',
+            '៩',
+        ]);
         expect(lang.stopWords).toContain('និង');
         expect(lang.bibleAudioAvailable).toBe(false);
-        expect(lang.extraBibleContextMenuItems(null as any, null as any)).toEqual([]);
+        expect(
+            lang.extraBibleContextMenuItems(null as any, null as any),
+        ).toEqual([]);
     });
 
     test('sanitizes search text, trims zero-width characters, and transforms bible names', () => {

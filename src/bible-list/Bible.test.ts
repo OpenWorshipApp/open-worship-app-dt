@@ -29,17 +29,21 @@ const mocks = vi.hoisted(() => {
         }
 
         static fromJsonError(json: any, filePath?: string) {
-            const item = new MockBibleItem(-1, {
-                bibleKey: '',
-                id: -1,
-                metadata: {},
-                target: {
-                    bookKey: '',
-                    chapter: 0,
-                    verseEnd: 0,
-                    verseStart: 0,
+            const item = new MockBibleItem(
+                -1,
+                {
+                    bibleKey: '',
+                    id: -1,
+                    metadata: {},
+                    target: {
+                        bookKey: '',
+                        chapter: 0,
+                        verseEnd: 0,
+                        verseStart: 0,
+                    },
                 },
-            }, filePath);
+                filePath,
+            );
             item.jsonError = structuredClone(json);
             return item;
         }
@@ -74,9 +78,15 @@ const mocks = vi.hoisted(() => {
         if (!fileSources.has(normalizedPath)) {
             const fullName = normalizedPath.split('/').at(-1) ?? normalizedPath;
             const extensionIndex = fullName.lastIndexOf('.');
-            const name = extensionIndex === -1 ? fullName : fullName.slice(0, extensionIndex);
+            const name =
+                extensionIndex === -1
+                    ? fullName
+                    : fullName.slice(0, extensionIndex);
             fileSources.set(normalizedPath, {
-                extension: extensionIndex === -1 ? '' : fullName.slice(extensionIndex + 1),
+                extension:
+                    extensionIndex === -1
+                        ? ''
+                        : fullName.slice(extensionIndex + 1),
                 filePath: normalizedPath,
                 fullName,
                 name,
@@ -124,7 +134,7 @@ vi.mock('../helper/FileSource', () => ({
 }));
 
 vi.mock('../helper/helpers', () => ({
-    cloneJson: <T,>(value: T) => structuredClone(value),
+    cloneJson: <T>(value: T) => structuredClone(value),
     toMaxId: (ids: number[]) => (ids.length === 0 ? 0 : Math.max(...ids)),
 }));
 
@@ -199,18 +209,23 @@ describe('Bible', () => {
                 return filePath;
             },
         );
-        mocks.notifyNewElementAddedMock.mockImplementation((callback: () => unknown) => callback());
+        mocks.notifyNewElementAddedMock.mockImplementation(
+            (callback: () => unknown) => callback(),
+        );
         vi.stubGlobal('document', {
             querySelector: vi.fn(() => ({ nodeName: 'DIV' })),
         });
     });
 
     test('maps item JSON, handles invalid items, and manages item collections', () => {
-        const bible = Bible.fromJson('/bibles/main.bible', createBibleJson([
-            createBibleItemJson(1),
-            { ...createBibleItemJson(2), invalid: true },
-            createBibleItemJson(3),
-        ]));
+        const bible = Bible.fromJson(
+            '/bibles/main.bible',
+            createBibleJson([
+                createBibleItemJson(1),
+                { ...createBibleItemJson(2), invalid: true },
+                createBibleItemJson(3),
+            ]),
+        );
 
         expect(bible.itemsLength).toBe(3);
         expect(bible.items[0]?.bible).toBe(bible);
@@ -222,38 +237,68 @@ describe('Bible', () => {
         expect(bible.getItemById(3)?.id).toBe(3);
         expect(bible.getItemById(999)).toBeNull();
 
-        const replacement = mocks.MockBibleItem.fromJson(createBibleItemJson(3, 'WEB'));
+        const replacement = mocks.MockBibleItem.fromJson(
+            createBibleItemJson(3, 'WEB'),
+        );
         bible.setItemById(3, replacement as any);
         expect(bible.getItemById(3)?.bibleKey).toBe('WEB');
         expect(bible.maxItemId).toBe(3);
 
         bible.duplicate(0);
-        expect(bible.toJson().items.map((item) => item.id)).toEqual([1, 4, 2, 3]);
+        expect(bible.toJson().items.map((item) => item.id)).toEqual([
+            1, 4, 2, 3,
+        ]);
 
         const removed = bible.deleteItemAtIndex(1);
         expect(removed?.id).toBe(4);
-        bible.deleteItem(mocks.MockBibleItem.fromJson(createBibleItemJson(123)) as any);
+        bible.deleteItem(
+            mocks.MockBibleItem.fromJson(createBibleItemJson(123)) as any,
+        );
         expect(bible.toJson().items.map((item) => item.id)).toEqual([1, 2, 3]);
 
-        bible.addBibleItem(mocks.MockBibleItem.fromJson(createBibleItemJson(50, 'ESV')) as any);
+        bible.addBibleItem(
+            mocks.MockBibleItem.fromJson(createBibleItemJson(50, 'ESV')) as any,
+        );
         expect(bible.toJson().items.at(-1)?.id).toBe(4);
         expect(mocks.notifyNewElementAddedMock).toHaveBeenCalledTimes(1);
-        expect((document.querySelector as any)).toHaveBeenCalledWith(
+        expect(document.querySelector as any).toHaveBeenCalledWith(
             '[data-bible-item-id="main-4"]',
         );
 
         bible.swapItems(0, 2);
-        expect(bible.toJson().items.map((item) => item.id)).toEqual([3, 2, 1, 4]);
+        expect(bible.toJson().items.map((item) => item.id)).toEqual([
+            3, 2, 1, 4,
+        ]);
         bible.swapItems(-1, 1);
         bible.swapItems(0, 99);
-        expect(bible.toJson().items.map((item) => item.id)).toEqual([3, 2, 1, 4]);
+        expect(bible.toJson().items.map((item) => item.id)).toEqual([
+            3, 2, 1, 4,
+        ]);
 
-        bible.moveItemToIndex(mocks.MockBibleItem.fromJson(createBibleItemJson(4, 'ESV')) as any, 1);
-        expect(bible.toJson().items.map((item) => item.id)).toEqual([3, 4, 2, 1]);
-        bible.moveItemToIndex(mocks.MockBibleItem.fromJson(createBibleItemJson(404)) as any, 1);
-        bible.moveItemToIndex(mocks.MockBibleItem.fromJson(createBibleItemJson(4, 'ESV')) as any, 1);
-        bible.moveItemToIndex(mocks.MockBibleItem.fromJson(createBibleItemJson(4, 'ESV')) as any, 99);
-        expect(bible.getItemIndex(mocks.MockBibleItem.fromJson(createBibleItemJson(3)) as any)).toBe(0);
+        bible.moveItemToIndex(
+            mocks.MockBibleItem.fromJson(createBibleItemJson(4, 'ESV')) as any,
+            1,
+        );
+        expect(bible.toJson().items.map((item) => item.id)).toEqual([
+            3, 4, 2, 1,
+        ]);
+        bible.moveItemToIndex(
+            mocks.MockBibleItem.fromJson(createBibleItemJson(404)) as any,
+            1,
+        );
+        bible.moveItemToIndex(
+            mocks.MockBibleItem.fromJson(createBibleItemJson(4, 'ESV')) as any,
+            1,
+        );
+        bible.moveItemToIndex(
+            mocks.MockBibleItem.fromJson(createBibleItemJson(4, 'ESV')) as any,
+            99,
+        );
+        expect(
+            bible.getItemIndex(
+                mocks.MockBibleItem.fromJson(createBibleItemJson(3)) as any,
+            ),
+        ).toBe(0);
 
         bible.empty();
         expect(bible.toJson().items).toEqual([]);
@@ -265,7 +310,10 @@ describe('Bible', () => {
         mocks.appProviderMock.isPageReader = false;
         expect(Bible.getDirSourceSettingName()).toBe('bible-present-dir');
 
-        mocks.files.set('/bibles/Default.bible', JSON.stringify(createBibleJson([createBibleItemJson(1)])));
+        mocks.files.set(
+            '/bibles/Default.bible',
+            JSON.stringify(createBibleJson([createBibleItemJson(1)])),
+        );
         const defaultBible = await Bible.fromFilePath('/bibles/Default.bible');
 
         expect(defaultBible).not.toBeNull();
@@ -275,7 +323,9 @@ describe('Bible', () => {
 
         await defaultBible?.setIsOpened(true);
         expect(defaultBible?.isOpened).toBe(true);
-        expect(mocks.files.get('/bibles/Default.bible')).toContain('"isOpened":true');
+        expect(mocks.files.get('/bibles/Default.bible')).toContain(
+            '"isOpened":true',
+        );
 
         const createdFileSource = await Bible.create('/bibles', 'Created');
         expect(createdFileSource?.filePath).toBe('/bibles/Created.bible');
@@ -289,8 +339,14 @@ describe('Bible', () => {
     });
 
     test('finds or creates the default bible and can add items into it', async () => {
-        mocks.files.set('/bibles/Other.bible', JSON.stringify(createBibleJson([createBibleItemJson(9)])));
-        mocks.files.set('/bibles/Default.bible', JSON.stringify(createBibleJson([createBibleItemJson(1)])));
+        mocks.files.set(
+            '/bibles/Other.bible',
+            JSON.stringify(createBibleJson([createBibleItemJson(9)])),
+        );
+        mocks.files.set(
+            '/bibles/Default.bible',
+            JSON.stringify(createBibleJson([createBibleItemJson(1)])),
+        );
         mocks.fsListFilesWithMimetypeMock.mockResolvedValueOnce([
             '/bibles/Other.bible',
             '/bibles/Default.bible',
@@ -304,9 +360,15 @@ describe('Bible', () => {
         expect(createdDefault?.filePath).toBe('/bibles/Default.bible');
         expect(createdDefault?.isOpened).toBe(true);
 
-        const addedItem = mocks.MockBibleItem.fromJson(createBibleItemJson(50, 'WEB'));
-        expect(await Bible.addBibleItemToDefault(addedItem as any)).toBe(addedItem);
-        expect(mocks.files.get('/bibles/Default.bible')).toContain('"bibleKey":"WEB"');
+        const addedItem = mocks.MockBibleItem.fromJson(
+            createBibleItemJson(50, 'WEB'),
+        );
+        expect(await Bible.addBibleItemToDefault(addedItem as any)).toBe(
+            addedItem,
+        );
+        expect(mocks.files.get('/bibles/Default.bible')).toContain(
+            '"bibleKey":"WEB"',
+        );
 
         mocks.getSettingMock.mockReturnValueOnce('');
         expect(await Bible.getDefault()).toBeNull();
@@ -322,11 +384,19 @@ describe('Bible', () => {
     });
 
     test('moves bible items between files and handles missing or invalid sources', async () => {
-        mocks.files.set('/bibles/target.bible', JSON.stringify(createBibleJson([createBibleItemJson(1)])));
-        mocks.files.set('/bibles/source.bible', JSON.stringify(createBibleJson([
-            createBibleItemJson(2, 'WEB'),
-            createBibleItemJson(3, 'ESV'),
-        ])));
+        mocks.files.set(
+            '/bibles/target.bible',
+            JSON.stringify(createBibleJson([createBibleItemJson(1)])),
+        );
+        mocks.files.set(
+            '/bibles/source.bible',
+            JSON.stringify(
+                createBibleJson([
+                    createBibleItemJson(2, 'WEB'),
+                    createBibleItemJson(3, 'ESV'),
+                ]),
+            ),
+        );
 
         const targetBible = await Bible.fromFilePath('/bibles/target.bible');
         expect(targetBible).not.toBeNull();
@@ -335,15 +405,14 @@ describe('Bible', () => {
         expect(targetBible?.toJson().items.map((item) => item.id)).toEqual([1]);
 
         await targetBible?.moveItemFrom('/bibles/source.bible');
-        expect(targetBible?.toJson().items.map((item) => item.bibleKey)).toEqual([
-            'KJV',
-            'WEB',
-            'ESV',
-        ]);
+        expect(
+            targetBible?.toJson().items.map((item) => item.bibleKey),
+        ).toEqual(['KJV', 'WEB', 'ESV']);
 
-        mocks.files.set('/bibles/source-single.bible', JSON.stringify(createBibleJson([
-            createBibleItemJson(10, 'AMP'),
-        ])));
+        mocks.files.set(
+            '/bibles/source-single.bible',
+            JSON.stringify(createBibleJson([createBibleItemJson(10, 'AMP')])),
+        );
         await targetBible?.moveItemFrom(
             '/bibles/source-single.bible',
             mocks.MockBibleItem.fromJson(createBibleItemJson(999)) as any,

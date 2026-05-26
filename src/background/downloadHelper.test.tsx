@@ -102,9 +102,9 @@ describe('downloadHelper', () => {
         value: string,
         promptElement?: ReactElement,
     ) {
-        const input = promptContainer?.querySelector('input') as
-            | HTMLInputElement
-            | null;
+        const input = promptContainer?.querySelector(
+            'input',
+        ) as HTMLInputElement | null;
         if (!input) {
             throw new Error('Missing prompt input');
         }
@@ -127,27 +127,26 @@ describe('downloadHelper', () => {
         showAppInputMock.mockImplementation(
             async (_title: string, element: ReactElement) => {
                 await renderPrompt(element);
-                const input = promptContainer?.querySelector('input') as
-                    | HTMLInputElement
-                    | null;
+                const input = promptContainer?.querySelector(
+                    'input',
+                ) as HTMLInputElement | null;
                 expect(input?.value).toBe('http://clipboard.example');
-                await updatePromptValue(
-                    'https://edited.example/path',
-                    element,
-                );
+                await updatePromptValue('https://edited.example/path', element);
                 await cleanupPrompt();
                 return true;
             },
         );
 
-        await expect(
-            askForURL('Download From URL', 'Web URL:'),
-        ).resolves.toBe('https://edited.example/path');
+        await expect(askForURL('Download From URL', 'Web URL:')).resolves.toBe(
+            'https://edited.example/path',
+        );
         expect(showSimpleToastMock).not.toHaveBeenCalled();
     });
 
     test('returns null when the prompt is cancelled', async () => {
-        readTextFromClipboardMock.mockResolvedValue('https://clipboard.example');
+        readTextFromClipboardMock.mockResolvedValue(
+            'https://clipboard.example',
+        );
         showAppInputMock.mockResolvedValue(false);
 
         await expect(askForURL('Download From URL', 'Web URL:')).resolves.toBe(
@@ -164,9 +163,9 @@ describe('downloadHelper', () => {
                 const inputGroup = promptContainer?.querySelector(
                     '.input-group',
                 ) as HTMLDivElement | null;
-                const input = promptContainer?.querySelector('input') as
-                    | HTMLInputElement
-                    | null;
+                const input = promptContainer?.querySelector(
+                    'input',
+                ) as HTMLInputElement | null;
                 expect(inputGroup?.title).toBe('Cannot be empty');
                 expect(input?.className).toContain('is-invalid');
                 await updatePromptValue(
@@ -289,7 +288,9 @@ describe('downloadHelper', () => {
                     window.dispatchEvent(event);
                 });
                 expect(
-                    attempts.slice(0, 3).every((event) => event.defaultPrevented),
+                    attempts
+                        .slice(0, 3)
+                        .every((event) => event.defaultPrevented),
                 ).toBe(true);
                 expect(attempts[3]?.defaultPrevented).toBe(false);
                 await options.onDone(null, filePath);

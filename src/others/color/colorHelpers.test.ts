@@ -66,7 +66,9 @@ describe('colorHelpers', () => {
 
         expect(mocks.handleDragStartMock).toHaveBeenCalledTimes(1);
         expect(mocks.handleDragStartMock.mock.calls[0]?.[0]).toBe(event);
-        expect(mocks.handleDragStartMock.mock.calls[0]?.[1]?.dragSerialize()).toEqual({
+        expect(
+            mocks.handleDragStartMock.mock.calls[0]?.[1]?.dragSerialize(),
+        ).toEqual({
             data: '#123456',
             type: DragTypeEnum.BACKGROUND_COLOR,
         });

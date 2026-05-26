@@ -195,9 +195,9 @@ function checkIsItemMatch(item: DownloadInfoItemType) {
         if (!item.isLinux) {
             return false;
         }
-    if (systemUtils.isArm64 && !item.isArm64) {
-      return false;
-    }
+        if (systemUtils.isArm64 && !item.isArm64) {
+            return false;
+        }
         if (systemUtils.isUbuntu && !item.isUbuntu) {
             return false;
         }

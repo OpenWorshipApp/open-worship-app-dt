@@ -21,7 +21,9 @@ describe('_owa-crypto', () => {
     });
 
     test('exposes the current api configuration and version flags', () => {
-        expect(get_api_url()).toBe('https://bibles-development.openworship.app');
+        expect(get_api_url()).toBe(
+            'https://bibles-development.openworship.app',
+        );
         expect(get_api_key()).toBe('InJesusChrist');
         expect(version()).toBe('0.0.0');
         expect(is_dev()).toBe(true);

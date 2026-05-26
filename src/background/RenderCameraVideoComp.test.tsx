@@ -72,7 +72,9 @@ describe('RenderCameraVideoComp', () => {
             );
         });
 
-        expect(container?.querySelector('[data-testid="loading"]')).not.toBeNull();
+        expect(
+            container?.querySelector('[data-testid="loading"]'),
+        ).not.toBeNull();
         expect(getCameraAndShowMediaMock).not.toHaveBeenCalled();
     });
 
@@ -94,7 +96,9 @@ describe('RenderCameraVideoComp', () => {
 
         const host = container?.firstElementChild as HTMLDivElement | null;
 
-        expect(container?.querySelector('[data-testid="loading"]')).not.toBeNull();
+        expect(
+            container?.querySelector('[data-testid="loading"]'),
+        ).not.toBeNull();
         expect(getCameraAndShowMediaMock).toHaveBeenCalledWith({
             id: 'camera-2',
             parentContainer: host,

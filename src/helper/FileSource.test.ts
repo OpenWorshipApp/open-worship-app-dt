@@ -27,7 +27,10 @@ const {
             base64WriteErrors: new Map<string, Error>(),
             callbackReadData: new Map<string, string>(),
             callbackReadErrors: new Map<string, Error>(),
-            dirSources: new Map<string, { fireRefreshEvent: ReturnType<typeof vi.fn> }>(),
+            dirSources: new Map<
+                string,
+                { fireRefreshEvent: ReturnType<typeof vi.fn> }
+            >(),
             isWindows: false,
         },
         showSimpleToastMock: vi.fn(),
@@ -74,9 +77,11 @@ function resetState() {
     pathToFileURLMock.mockImplementation((filePath: string) => {
         return `file-url:${filePath}`;
     });
-    unlockingMock.mockImplementation(async (_key: string, callback: () => unknown) => {
-        return await callback();
-    });
+    unlockingMock.mockImplementation(
+        async (_key: string, callback: () => unknown) => {
+            return await callback();
+        },
+    );
     dirSourceGetInstanceByDirPathMock.mockImplementation((dirPath: string) => {
         if (!state.dirSources.has(dirPath)) {
             state.dirSources.set(dirPath, {
@@ -125,21 +130,23 @@ vi.mock('../server/fileHelpers', () => ({
         }
         return state.files.get(normalizedPath) ?? '';
     }),
-    fsRenameFile: vi.fn(async (baseDirPath: string, fullName: string, newFullName: string) => {
-        const oldPath = normalizePath(baseDirPath, fullName);
-        const newPath = normalizePath(baseDirPath, newFullName);
-        const error = state.renameErrors.get(oldPath);
-        if (error) {
-            throw error;
-        }
-        const oldData = state.files.get(oldPath);
-        state.existingPaths.delete(oldPath);
-        state.files.delete(oldPath);
-        state.existingPaths.add(newPath);
-        if (oldData !== undefined) {
-            state.files.set(newPath, oldData);
-        }
-    }),
+    fsRenameFile: vi.fn(
+        async (baseDirPath: string, fullName: string, newFullName: string) => {
+            const oldPath = normalizePath(baseDirPath, fullName);
+            const newPath = normalizePath(baseDirPath, newFullName);
+            const error = state.renameErrors.get(oldPath);
+            if (error) {
+                throw error;
+            }
+            const oldData = state.files.get(oldPath);
+            state.existingPaths.delete(oldPath);
+            state.files.delete(oldPath);
+            state.existingPaths.add(newPath);
+            if (oldData !== undefined) {
+                state.files.set(newPath, oldData);
+            }
+        },
+    ),
     fsWriteFile: vi.fn(async (filePath: string, data: string) => {
         const normalizedPath = normalizePath(filePath);
         const error = state.writeErrors.get(normalizedPath);
@@ -455,16 +462,18 @@ describe('FileSource', () => {
         );
 
         expect(
-            FileSource.getInstance('/docs/base64-fail.txt').writeFileBase64DataSync(
-                'data:text/plain;base64,QQ==',
-            ),
+            FileSource.getInstance(
+                '/docs/base64-fail.txt',
+            ).writeFileBase64DataSync('data:text/plain;base64,QQ=='),
         ).toBe(false);
         expect(handleErrorMock).toHaveBeenCalledWith(
             expect.objectContaining({ message: 'bad base64' }),
         );
 
         expect(
-            await FileSource.getInstance('/docs/fail.txt').writeFileData('nope'),
+            await FileSource.getInstance('/docs/fail.txt').writeFileData(
+                'nope',
+            ),
         ).toBe(false);
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Saving File',

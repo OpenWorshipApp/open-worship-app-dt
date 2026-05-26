@@ -8,12 +8,25 @@ describe('English language data', () => {
         expect(lang.langCode).toBe('en');
         expect(lang.name).toBe('English');
         expect(lang.genCss()).toBe('');
-        expect(lang.numList).toEqual(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
+        expect(lang.numList).toEqual([
+            '0',
+            '1',
+            '2',
+            '3',
+            '4',
+            '5',
+            '6',
+            '7',
+            '8',
+            '9',
+        ]);
         expect(lang.dictionary).toEqual({});
         expect(lang.flagSVG.trim().startsWith('<svg')).toBe(true);
         expect(lang.stopWords).toContain('the');
         expect(lang.bibleAudioAvailable).toBe(true);
-        expect(lang.extraBibleContextMenuItems(null as any, null as any)).toEqual([]);
+        expect(
+            lang.extraBibleContextMenuItems(null as any, null as any),
+        ).toEqual([]);
     });
 
     test('sanitizes, trims, and transforms text with English-specific rules', () => {

@@ -94,7 +94,10 @@ describe('canvasContextMenuHelpers', () => {
 
         getCopiedCanvasItemsMock.mockResolvedValue(copiedCanvasItems);
         checkIsImagesInClipboardMock.mockResolvedValue(true);
-        selectFilesMock.mockResolvedValue(['/slides/one.png', '/slides/two.mp4']);
+        selectFilesMock.mockResolvedValue([
+            '/slides/one.png',
+            '/slides/two.mp4',
+        ]);
         readImagesFromClipboardMock.mockReturnValue(
             (async function* () {
                 yield blob1;
@@ -132,14 +135,12 @@ describe('canvasContextMenuHelpers', () => {
                 extensions: ['png', 'jpg', 'mp4'],
             },
         ]);
-        expect(canvasController.genNewMediaItemFromFilePath).toHaveBeenCalledWith(
-            '/slides/one.png',
-            event,
-        );
-        expect(canvasController.genNewMediaItemFromFilePath).toHaveBeenCalledWith(
-            '/slides/two.mp4',
-            event,
-        );
+        expect(
+            canvasController.genNewMediaItemFromFilePath,
+        ).toHaveBeenCalledWith('/slides/one.png', event);
+        expect(
+            canvasController.genNewMediaItemFromFilePath,
+        ).toHaveBeenCalledWith('/slides/two.mp4', event);
         expect(canvasController.addNewItems).toHaveBeenCalledWith([
             addedCanvasItem,
         ]);
@@ -189,9 +190,9 @@ describe('canvasContextMenuHelpers', () => {
         const selectedItemMenu = showAppContextMenuMock.mock.calls[1] ?? [];
         const selectedItemMenuItems = selectedItemMenu[1] ?? [];
 
-        expect(selectedItemMenuItems.map((item: any) => item.menuElement)).toEqual(
-            ['Copy', 'Duplicate', 'Edit', 'Delete'],
-        );
+        expect(
+            selectedItemMenuItems.map((item: any) => item.menuElement),
+        ).toEqual(['Copy', 'Duplicate', 'Edit', 'Delete']);
         expect(selectedItemMenu[2]).toEqual({
             style: {
                 minWidth: '70px',

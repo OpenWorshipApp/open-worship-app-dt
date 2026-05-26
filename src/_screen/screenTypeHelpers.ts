@@ -90,6 +90,7 @@ export type ForegroundTimeDataType = {
     id: string;
     timezoneMinuteOffset: number;
     title: string | null;
+    is24HourFormat?: boolean;
     extraStyle?: CSSProperties;
 };
 export type ForegroundMarqueDataType = {

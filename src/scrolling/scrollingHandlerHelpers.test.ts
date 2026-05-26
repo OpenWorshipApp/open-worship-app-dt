@@ -101,7 +101,9 @@ describe('scrollingHandlerHelpers', () => {
         const play = document.createElement('i');
 
         expect(TO_THE_TOP_STYLE_STRING).toContain(`.${TO_THE_TOP_CLASSNAME}`);
-        expect(TO_THE_TOP_STYLE_STRING).toContain(`.${PLAY_TO_BOTTOM_CLASSNAME}`);
+        expect(TO_THE_TOP_STYLE_STRING).toContain(
+            `.${PLAY_TO_BOTTOM_CLASSNAME}`,
+        );
 
         applyToTheTop(toTop);
         applyPlayToBottom(play);
@@ -191,9 +193,10 @@ describe('scrollingHandlerHelpers', () => {
             configurable: true,
             value: 360,
         });
-        resizeObserverEntries[0]?.callback([
-            { target: parent } as ResizeObserverEntry,
-        ], {} as ResizeObserver);
+        resizeObserverEntries[0]?.callback(
+            [{ target: parent } as ResizeObserverEntry],
+            {} as ResizeObserver,
+        );
         expect(play.style.display).toBe('block');
 
         const emptyContextEvent = createFakeEvent();
@@ -203,7 +206,10 @@ describe('scrollingHandlerHelpers', () => {
 
         const clickEvent = createFakeEvent();
         play.onclick?.(clickEvent);
-        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(0.07, 3);
+        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(
+            0.07,
+            3,
+        );
         expect(play.title).toBe('0.07');
         expect(parent.scrollTop).toBeCloseTo(0.12, 3);
         vi.runOnlyPendingTimers();
@@ -211,12 +217,18 @@ describe('scrollingHandlerHelpers', () => {
 
         const doubleClickEvent = createFakeEvent();
         play.ondblclick?.(doubleClickEvent);
-        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(0.28, 3);
+        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(
+            0.28,
+            3,
+        );
         expect(play.title).toBe('0.28');
 
         const contextEvent = createFakeEvent();
         play.oncontextmenu?.(contextEvent);
-        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(0.21, 3);
+        expect(Number.parseFloat(play.dataset.speed ?? '0')).toBeCloseTo(
+            0.21,
+            3,
+        );
         expect(play.title).toBe('0.21');
 
         const altContextEvent = createFakeEvent({ altKey: true });

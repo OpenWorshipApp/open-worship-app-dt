@@ -419,9 +419,7 @@ describe('others basic components', () => {
         };
         const handleChange = vi.fn();
 
-        await render(
-            <ItemColorNoteComp item={item} onChange={handleChange} />,
-        );
+        await render(<ItemColorNoteComp item={item} onChange={handleChange} />);
         await act(async () => {
             await flushPromises();
         });

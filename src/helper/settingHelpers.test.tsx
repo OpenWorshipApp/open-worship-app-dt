@@ -161,10 +161,7 @@ describe('helper settingHelpers', () => {
 
         getItemMock.mockReturnValue('stored-value');
         const stringProbe = await renderSettingHook(() => {
-            return useStateSettingString<string>(
-                'string-setting',
-                'fallback',
-            );
+            return useStateSettingString<string>('string-setting', 'fallback');
         });
 
         expect(stringProbe.value).toBe('stored-value');

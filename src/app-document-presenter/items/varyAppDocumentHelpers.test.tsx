@@ -138,9 +138,8 @@ describe('varyAppDocumentHelpers', () => {
     });
 
     test('handles selection differently in editor mode and presenter mode', async () => {
-        const { handleVarySlideSelecting } = await import(
-            './varyAppDocumentHelpers'
-        );
+        const { handleVarySlideSelecting } =
+            await import('./varyAppDocumentHelpers');
         const varySlide = createVarySlide(4);
         const selectSelectedSlide = vi.fn();
         const event = { type: 'click' };
@@ -175,8 +174,7 @@ describe('varyAppDocumentHelpers', () => {
         } = await import('./varyAppDocumentHelpers');
 
         expect(genSlideIds([createVarySlide(1), createVarySlide(2)])).toEqual([
-            1,
-            2,
+            1, 2,
         ]);
 
         const container = document.createElement('div');
@@ -245,9 +243,11 @@ describe('varyAppDocumentHelpers', () => {
                 })),
             },
         };
-        getScreenManagerByScreenIdMock.mockImplementation((screenId: number) => {
-            return screenId === 10 ? screenManager : null;
-        });
+        getScreenManagerByScreenIdMock.mockImplementation(
+            (screenId: number) => {
+                return screenId === 10 ? screenManager : null;
+            },
+        );
 
         const slide1 = createVarySlide(1);
         const slide2 = createVarySlide(2, { isDisabled: true });
@@ -282,7 +282,9 @@ describe('varyAppDocumentHelpers', () => {
             id: 3,
             filePath: '/docs/main.ows',
         });
-        expect(screenManager.screenVaryAppDocumentManager.varySlideData).toEqual({
+        expect(
+            screenManager.screenVaryAppDocumentManager.varySlideData,
+        ).toEqual({
             filePath: '/docs/main.ows',
             json: { id: 3, filePath: '/docs/main.ows' },
         });
@@ -320,7 +322,12 @@ describe('varyAppDocumentHelpers', () => {
             shiftKey: true,
             preventDefault: vi.fn(),
         };
-        handleArrowing(reverseEvent as any, [slide1, slide2, slide3, pptxParent]);
+        handleArrowing(reverseEvent as any, [
+            slide1,
+            slide2,
+            slide3,
+            pptxParent,
+        ]);
         vi.runAllTimers();
 
         expect(reverseEvent.preventDefault).toHaveBeenCalledTimes(1);

@@ -29,7 +29,10 @@ describe('appProvider.mock', () => {
         const { default: appProviderMock } = await loadModule();
 
         const onceMock = vi.fn();
-        appProviderMock.messageUtils.listenOnceForData('browser:once', onceMock);
+        appProviderMock.messageUtils.listenOnceForData(
+            'browser:once',
+            onceMock,
+        );
         appProviderMock.messageUtils.sendData('browser:once', 'first');
         appProviderMock.messageUtils.sendData('browser:once', 'second');
 
@@ -38,7 +41,10 @@ describe('appProvider.mock', () => {
             appProviderMock.messageUtils.sendDataSync('main:app:get-theme'),
         ).toBe('system');
         expect(
-            appProviderMock.messageUtils.sendDataSync('main:app:set-theme', 'dark'),
+            appProviderMock.messageUtils.sendDataSync(
+                'main:app:set-theme',
+                'dark',
+            ),
         ).toBe(true);
         expect(
             appProviderMock.messageUtils.sendDataSync('main:app:get-theme'),
@@ -71,11 +77,16 @@ describe('appProvider.mock', () => {
             },
         });
 
-        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const errorSpy = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
         const { default: appProviderMock } = await loadModule();
 
         appProviderMock.fileUtils.mkdirSync('/browser-data/files');
-        appProviderMock.fileUtils.writeFileSync('/browser-data/files/source.txt', 'hello');
+        appProviderMock.fileUtils.writeFileSync(
+            '/browser-data/files/source.txt',
+            'hello',
+        );
         expect(
             appProviderMock.fileUtils.readFileSync(
                 '/browser-data/files/source.txt',
@@ -83,7 +94,9 @@ describe('appProvider.mock', () => {
             ),
         ).toBe('hello');
         expect(
-            appProviderMock.fileUtils.existsSync('/browser-data/files/source.txt'),
+            appProviderMock.fileUtils.existsSync(
+                '/browser-data/files/source.txt',
+            ),
         ).toBe(true);
 
         await new Promise<void>((resolve, reject) => {
@@ -139,16 +152,18 @@ describe('appProvider.mock', () => {
         appProviderMock.appUtils.handleError(new Error('boom'));
         expect(errorSpy).toHaveBeenCalledWith(expect.any(Error));
 
-        const database = await appProviderMock.databaseUtils.getSQLiteDatabaseInstance(
-            'db',
-        );
+        const database =
+            await appProviderMock.databaseUtils.getSQLiteDatabaseInstance('db');
         expect(database.getAll('select 1')).toEqual([]);
         expect(database.database.prepare('select 1').get()).toBeNull();
 
         const ytHelper = await appProviderMock.ytUtils.getYTHelper();
-        expect(ytHelper.exec([]).on('progress', () => {}).off('progress', () => {})).toBe(
-            ytHelper,
-        );
+        expect(
+            ytHelper
+                .exec([])
+                .on('progress', () => {})
+                .off('progress', () => {}),
+        ).toBe(ytHelper);
         expect(ytHelper.ytDlpProcess.pid).toBe(0);
         errorSpy.mockRestore();
     });

@@ -32,7 +32,9 @@ const mocks = vi.hoisted(() => {
         getWritableBiblePathMock: vi.fn(),
         handleErrorMock: vi.fn(),
         pathBasenameMock: vi.fn(),
-        pathJoinMock: vi.fn((...parts: string[]) => parts.join('/').replaceAll('//', '/')),
+        pathJoinMock: vi.fn((...parts: string[]) =>
+            parts.join('/').replaceAll('//', '/'),
+        ),
         requestMock: vi.fn(),
         reset() {
             cacheStores.length = 0;
@@ -126,20 +128,24 @@ describe('bibleDownloadHelpers', () => {
         mocks.fsListDirectoriesMock.mockResolvedValue([]);
         mocks.getBibleXMLCacheInfoListMock.mockResolvedValue([]);
         mocks.getBibleInfoMock.mockResolvedValue(null);
-        mocks.requestMock.mockImplementation((options: any, callback: (response: any) => void) => {
-            const handlers: Record<string, (error: Error) => void> = {};
-            const request = {
-                end: vi.fn(),
-                on: vi.fn((event: string, handler: (error: Error) => void) => {
-                    handlers[event] = handler;
-                    return request;
-                }),
-            };
-            (request as any).__callback = callback;
-            (request as any).__handlers = handlers;
-            (request as any).__options = options;
-            return request;
-        });
+        mocks.requestMock.mockImplementation(
+            (options: any, callback: (response: any) => void) => {
+                const handlers: Record<string, (error: Error) => void> = {};
+                const request = {
+                    end: vi.fn(),
+                    on: vi.fn(
+                        (event: string, handler: (error: Error) => void) => {
+                            handlers[event] = handler;
+                            return request;
+                        },
+                    ),
+                };
+                (request as any).__callback = callback;
+                (request as any).__handlers = handlers;
+                (request as any).__options = options;
+                return request;
+            },
+        );
     });
 
     test('requests bible downloads with api headers, follows redirects, and surfaces request errors', async () => {
@@ -162,7 +168,10 @@ describe('bibleDownloadHelpers', () => {
 
         const redirectedRequest = mocks.requestMock.mock.results[1]?.value;
         redirectedRequest.__callback({ headers: {}, statusCode: 200 });
-        expect(callback).toHaveBeenCalledWith(null, { headers: {}, statusCode: 200 });
+        expect(callback).toHaveBeenCalledWith(null, {
+            headers: {},
+            statusCode: 200,
+        });
 
         httpsRequestBible('/broken', callback);
         const failedRequest = mocks.requestMock.mock.results[2]?.value;
@@ -176,7 +185,10 @@ describe('bibleDownloadHelpers', () => {
         const options = { onDone, onProgress: vi.fn() } as any;
 
         mocks.toBiblePathMock.mockResolvedValueOnce(null);
-        await startDownloadBible({ bibleFileFullName: '/missing.tar', options });
+        await startDownloadBible({
+            bibleFileFullName: '/missing.tar',
+            options,
+        });
         expect(onDone).toHaveBeenCalledWith(expect.any(Error));
 
         await startDownloadBible({ bibleFileFullName: '/KJV.tar', options });
@@ -191,7 +203,12 @@ describe('bibleDownloadHelpers', () => {
 
         const onDoneInvalid = vi.fn();
         await downloadBible({
-            bibleInfo: { key: 'KJV', locale: 'en-US', title: 'KJV', version: 1 },
+            bibleInfo: {
+                key: 'KJV',
+                locale: 'en-US',
+                title: 'KJV',
+                version: 1,
+            },
             options: { onDone: onDoneInvalid } as any,
         });
         expect(onDoneInvalid).toHaveBeenCalledWith(expect.any(Error));
@@ -212,17 +229,23 @@ describe('bibleDownloadHelpers', () => {
     });
 
     test('extracts downloaded bibles and reports extraction and cleanup failures', async () => {
-        const { BIBLE_DOWNLOAD_TOAST_TITLE, extractDownloadedBible } = await loadModule();
+        const { BIBLE_DOWNLOAD_TOAST_TITLE, extractDownloadedBible } =
+            await loadModule();
 
         expect(await extractDownloadedBible('/tmp/KJV.tar')).toBe(true);
-        expect(mocks.tarExtractMock).toHaveBeenCalledWith('/tmp/KJV.tar', '/data/bibles');
+        expect(mocks.tarExtractMock).toHaveBeenCalledWith(
+            '/tmp/KJV.tar',
+            '/data/bibles',
+        );
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
             BIBLE_DOWNLOAD_TOAST_TITLE,
             'Bible extracted',
         );
 
         mocks.tarExtractMock.mockRejectedValueOnce(new Error('extract failed'));
-        mocks.fsDeleteFileMock.mockRejectedValueOnce(new Error('delete failed'));
+        mocks.fsDeleteFileMock.mockRejectedValueOnce(
+            new Error('delete failed'),
+        );
         expect(await extractDownloadedBible('/tmp/WEB.tar')).toBe(false);
         await Promise.resolve();
         expect(mocks.handleErrorMock).toHaveBeenCalled();
@@ -272,17 +295,30 @@ describe('bibleDownloadHelpers', () => {
         expect(mocks.handleErrorMock).toHaveBeenCalled();
 
         mocks.getWritableBiblePathMock.mockResolvedValueOnce('/data/bibles');
-        mocks.fsListDirectoriesMock.mockResolvedValueOnce(['KJV', 'bad.cache', 'WEB']);
+        mocks.fsListDirectoriesMock.mockResolvedValueOnce([
+            'KJV',
+            'bad.cache',
+            'WEB',
+        ]);
         mocks.getBibleInfoMock
-            .mockResolvedValueOnce({ key: 'KJV', locale: 'en-US', title: 'KJV', version: 1 })
+            .mockResolvedValueOnce({
+                key: 'KJV',
+                locale: 'en-US',
+                title: 'KJV',
+                version: 1,
+            })
             .mockResolvedValueOnce(null);
 
         expect(await getDownloadedBibleInfoList()).toEqual([
             { key: 'KJV', locale: 'en-US', title: 'KJV', version: 1 },
         ]);
 
-        mocks.fsListDirectoriesMock.mockRejectedValueOnce(new Error('cannot list'));
-        await expect(getDownloadedBibleInfoList()).rejects.toThrow('cannot list');
+        mocks.fsListDirectoriesMock.mockRejectedValueOnce(
+            new Error('cannot list'),
+        );
+        await expect(getDownloadedBibleInfoList()).rejects.toThrow(
+            'cannot list',
+        );
 
         mocks.fsListDirectoriesMock.mockResolvedValueOnce(['KJV']);
         mocks.getBibleInfoMock.mockResolvedValueOnce({

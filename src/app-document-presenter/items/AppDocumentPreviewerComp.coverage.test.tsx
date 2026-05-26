@@ -121,9 +121,8 @@ describe('AppDocumentPreviewerComp branch coverage', () => {
     });
 
     test('renders the empty state when no app document is selected', async () => {
-        const { default: AppDocumentPreviewerComp } = await import(
-            './AppDocumentPreviewerComp'
-        );
+        const { default: AppDocumentPreviewerComp } =
+            await import('./AppDocumentPreviewerComp');
 
         await act(async () => {
             root.render(
@@ -134,16 +133,17 @@ describe('AppDocumentPreviewerComp branch coverage', () => {
         });
 
         expect(container.textContent).toContain('No App Document Selected');
-        expect(container.querySelector('[data-testid="app-document-footer"]')).toBeNull();
+        expect(
+            container.querySelector('[data-testid="app-document-footer"]'),
+        ).toBeNull();
         expect(
             container.querySelector('[data-testid="page-base-appearance"]'),
         ).toBeNull();
     });
 
     test('renders the presenter editor layout for non-page-base documents', async () => {
-        const { default: AppDocumentPreviewerComp } = await import(
-            './AppDocumentPreviewerComp'
-        );
+        const { default: AppDocumentPreviewerComp } =
+            await import('./AppDocumentPreviewerComp');
         const selectedVaryAppDocument = {
             filePath: '/slides/service.ows',
             fileSource: { fullName: 'service.ows' },
@@ -164,23 +164,28 @@ describe('AppDocumentPreviewerComp branch coverage', () => {
             );
         });
 
-        expect(container.querySelector('[data-testid="resize-actor"]')?.textContent).toContain(
-            'service.ows',
-        );
-        expect(container.querySelector('[data-testid="vary-slides-previewer"]')).not.toBeNull();
-        expect(container.querySelector('[data-testid="presenter-note"]')?.textContent).toContain(
-            'service.ows',
-        );
-        expect(container.querySelector('[data-testid="app-document-footer"]')).not.toBeNull();
+        expect(
+            container.querySelector('[data-testid="resize-actor"]')
+                ?.textContent,
+        ).toContain('service.ows');
+        expect(
+            container.querySelector('[data-testid="vary-slides-previewer"]'),
+        ).not.toBeNull();
+        expect(
+            container.querySelector('[data-testid="presenter-note"]')
+                ?.textContent,
+        ).toContain('service.ows');
+        expect(
+            container.querySelector('[data-testid="app-document-footer"]'),
+        ).not.toBeNull();
         expect(
             container.querySelector('[data-testid="page-base-appearance"]'),
         ).toBeNull();
     });
 
     test('uses the compact presenter layout for page-base documents', async () => {
-        const { default: AppDocumentPreviewerComp } = await import(
-            './AppDocumentPreviewerComp'
-        );
+        const { default: AppDocumentPreviewerComp } =
+            await import('./AppDocumentPreviewerComp');
         const selectedVaryAppDocument = new DocxAppDocumentMock(
             '/slides/sample.docx',
         );
@@ -199,9 +204,15 @@ describe('AppDocumentPreviewerComp branch coverage', () => {
             );
         });
 
-        expect(container.querySelector('[data-testid="vary-slides-previewer"]')).not.toBeNull();
-        expect(container.querySelector('[data-testid="resize-actor"]')).toBeNull();
-        expect(container.querySelector('[data-testid="presenter-note"]')).toBeNull();
+        expect(
+            container.querySelector('[data-testid="vary-slides-previewer"]'),
+        ).not.toBeNull();
+        expect(
+            container.querySelector('[data-testid="resize-actor"]'),
+        ).toBeNull();
+        expect(
+            container.querySelector('[data-testid="presenter-note"]'),
+        ).toBeNull();
         expect(
             container.querySelector('[data-testid="page-base-appearance"]'),
         ).not.toBeNull();

@@ -84,7 +84,7 @@ vi.mock('../../helper/bible-helpers/bibleDownloadHelpers', () => ({
 }));
 
 vi.mock('../../helper/helpers', () => ({
-    cloneJson: <T,>(value: T) => structuredClone(value),
+    cloneJson: <T>(value: T) => structuredClone(value),
 }));
 
 vi.mock('../../helper/bible-helpers/BibleDataReader', () => ({
@@ -147,7 +147,7 @@ describe('bibleXMLJsonDataHelpers', () => {
         mocks.getBibleModelInfoMock.mockReturnValue({
             bookKeysOrder: ['GEN', 'EXO', 'REV'],
             flippingKey: {
-                '__REV__': 'REV',
+                __REV__: 'REV',
             },
         });
         mocks.fsListFilesMock.mockResolvedValue([]);
@@ -162,10 +162,12 @@ describe('bibleXMLJsonDataHelpers', () => {
             '<?xml version="1.0"?><bible><book key="__REV__"><chapter number="1"><verse number="1">Text</verse></chapter></book></bible>',
         );
 
-        expect(bibleElement?.getElementsByTagName('book')[0]?.getAttribute('key')).toBe(
-            'REV',
-        );
-        expect(xmlTextToBibleElement('<?xml version="1.0"?><root />')).toBeNull();
+        expect(
+            bibleElement?.getElementsByTagName('book')[0]?.getAttribute('key'),
+        ).toBe('REV');
+        expect(
+            xmlTextToBibleElement('<?xml version="1.0"?><root />'),
+        ).toBeNull();
     });
 
     test('extracts bible info with defaults and supports prompting for a missing key', async () => {
@@ -174,10 +176,12 @@ describe('bibleXMLJsonDataHelpers', () => {
             '<bible locale="en-US"><book number="1"><chapter number="1"><verse number="1">One</verse></chapter></book></bible>',
         );
 
-        mocks.showAppInputMock.mockImplementationOnce(async (_title, element) => {
-            element.props.onChange('WEB');
-            return true;
-        });
+        mocks.showAppInputMock.mockImplementationOnce(
+            async (_title, element) => {
+                element.props.onChange('WEB');
+                return true;
+            },
+        );
 
         const result = await getBibleInfoJson(xmlElementBible);
 
@@ -395,7 +399,11 @@ describe('bibleXMLJsonDataHelpers', () => {
             '/bibles/web.xml',
             '<bible key="WEB"><book number="1"><chapter number="1"><verse number="1">One</verse></chapter></book></bible>',
         );
-        mocks.fsListFilesMock.mockResolvedValue(['kjv.xml', 'notes.txt', 'web.xml']);
+        mocks.fsListFilesMock.mockResolvedValue([
+            'kjv.xml',
+            'notes.txt',
+            'web.xml',
+        ]);
 
         expect(await getBibleKeyFromFile('/bibles/kjv.xml')).toBe('KJV');
         expect(await getBibleKeyFromFile('/bibles/kjv.xml')).toBe('KJV');
@@ -406,7 +414,9 @@ describe('bibleXMLJsonDataHelpers', () => {
             WEB: '/bibles/web.xml',
         });
         expect(await bibleKeyToXMLFilePath('KJV')).toBe('/bibles/kjv.xml');
-        expect(await bibleKeyToXMLFilePath('NEW', true)).toBe('/bibles/NEW.xml');
+        expect(await bibleKeyToXMLFilePath('NEW', true)).toBe(
+            '/bibles/NEW.xml',
+        );
         expect(await bibleKeyToXMLFilePath('MISSING')).toBeNull();
         expect(mocks.handleErrorMock).toHaveBeenCalledWith(
             expect.stringContaining('Unable to find file path for: "MISSING"'),

@@ -572,7 +572,7 @@ export async function fsDeleteDir(filePath: string) {
 }
 
 export async function fsReadFile(filePath: string) {
-    let text= await _fsReadFile(filePath, 'utf8');
+    let text = await _fsReadFile(filePath, 'utf8');
     // remove `\uFEFF`
     text = text.replace(/^\uFEFF/, '');
     return text;

@@ -139,7 +139,10 @@ function createCanvas(initialItems: any[] = []) {
     };
 }
 
-function createController(items: any[] = [], settingValue: string | null = null) {
+function createController(
+    items: any[] = [],
+    settingValue: string | null = null,
+) {
     const canvas = createCanvas(items);
     const appDocument = {
         fileSource: { fullName: 'sample.owa' },
@@ -212,7 +215,10 @@ describe('CanvasController', () => {
         const secondItem = createCanvasItem({ id: 2, top: 30, left: 40 });
         const duplicateItem = createCanvasItem({ id: 50, top: 5, left: 7 });
         const newItem = createCanvasItem({ id: -1, top: 0, left: 0 });
-        const { canvas, controller } = createController([firstItem, secondItem]);
+        const { canvas, controller } = createController([
+            firstItem,
+            secondItem,
+        ]);
         const onArrowing = vi.fn();
         controller.onArrowing = onArrowing;
 
@@ -225,7 +231,9 @@ describe('CanvasController', () => {
         expect(duplicateItem.props.top).toBe(25);
         expect(duplicateItem.props.left).toBe(27);
         expect(newItem.props.id).toBe(4);
-        expect(canvas.canvasItems.map((item: any) => item.props.id)).toEqual([1, 4, 3]);
+        expect(canvas.canvasItems.map((item: any) => item.props.id)).toEqual([
+            1, 4, 3,
+        ]);
 
         const arrowEvent = { key: 'ArrowLeft' } as KeyboardEvent;
         expect(controller.matchEvent(arrowEvent)).toBe(true);
@@ -252,7 +260,10 @@ describe('CanvasController', () => {
         mocks.genFromFileImageMock.mockResolvedValue(imageItem);
 
         await expect(
-            controller.genNewMediaItemFromFilePath('/assets/a.png', event as any),
+            controller.genNewMediaItemFromFilePath(
+                '/assets/a.png',
+                event as any,
+            ),
         ).resolves.toBe(imageItem);
         expect(mocks.genFromInsertionImageMock).toHaveBeenCalledWith(
             100,
@@ -264,7 +275,10 @@ describe('CanvasController', () => {
             metadata: { appMimetype: { mimetypeName: 'video' } },
         });
         await expect(
-            controller.genNewMediaItemFromFilePath('/assets/a.mp4', event as any),
+            controller.genNewMediaItemFromFilePath(
+                '/assets/a.mp4',
+                event as any,
+            ),
         ).resolves.toBe(videoItem);
         expect(mocks.genFromInsertionVideoMock).toHaveBeenCalledWith(
             100,
@@ -276,7 +290,10 @@ describe('CanvasController', () => {
             metadata: { appMimetype: { mimetypeName: 'application/pdf' } },
         });
         await expect(
-            controller.genNewMediaItemFromFilePath('/assets/a.pdf', event as any),
+            controller.genNewMediaItemFromFilePath(
+                '/assets/a.pdf',
+                event as any,
+            ),
         ).resolves.toBeUndefined();
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
             'Insert Medias',
@@ -287,7 +304,10 @@ describe('CanvasController', () => {
             throw new Error('broken path');
         });
         await expect(
-            controller.genNewMediaItemFromFilePath('/broken/file', event as any),
+            controller.genNewMediaItemFromFilePath(
+                '/broken/file',
+                event as any,
+            ),
         ).resolves.toBeUndefined();
         expect(mocks.handleErrorMock).toHaveBeenCalled();
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
@@ -296,7 +316,10 @@ describe('CanvasController', () => {
         );
 
         await expect(
-            controller.genNewImageItemFromFile(new Blob(['image']), event as any),
+            controller.genNewImageItemFromFile(
+                new Blob(['image']),
+                event as any,
+            ),
         ).resolves.toBe(imageItem);
         expect(mocks.genFromFileImageMock).toHaveBeenCalledWith(
             100,

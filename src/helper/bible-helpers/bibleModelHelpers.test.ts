@@ -28,7 +28,9 @@ describe('bibleModelHelpers', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mocks.getSettingMock.mockReturnValue(undefined);
-        mocks.freezeObjectMock.mockImplementation((value: object) => Object.freeze(value));
+        mocks.freezeObjectMock.mockImplementation((value: object) =>
+            Object.freeze(value),
+        );
     });
 
     test('exposes frozen model metadata and defaults to KJV when setting is invalid', () => {
@@ -42,7 +44,9 @@ describe('bibleModelHelpers', () => {
         expect(getBibleModelInfoSetting()).toBe(BibleModelInfoEnum.KJV);
 
         const model = getBibleModelInfo();
-        expect(model.title).toBe(bibleModelInfoTitleMap[BibleModelInfoEnum.KJV]);
+        expect(model.title).toBe(
+            bibleModelInfoTitleMap[BibleModelInfoEnum.KJV],
+        );
         expect(Object.isFrozen(model)).toBe(true);
         expect(model.books.GEN.chapterCount).toBeGreaterThan(0);
     });
@@ -57,7 +61,9 @@ describe('bibleModelHelpers', () => {
         mocks.getSettingMock.mockReturnValue(BibleModelInfoEnum.DR);
         expect(getBibleModelInfoSetting()).toBe(BibleModelInfoEnum.DR);
         const drModel = getBibleModelInfo();
-        expect(drModel.title).toBe(bibleModelInfoTitleMap[BibleModelInfoEnum.DR]);
+        expect(drModel.title).toBe(
+            bibleModelInfoTitleMap[BibleModelInfoEnum.DR],
+        );
         expect(drModel.bookKeysOrder.length).toBeGreaterThan(0);
 
         setBibleModelInfoSetting(BibleModelInfoEnum.DR);

@@ -37,10 +37,12 @@ describe('popupWidgetHelpers', () => {
     });
 
     test('returns false when no confirm or input popup opener is registered', async () => {
-        await expect(showAppConfirm('Delete', 'Continue?')).resolves.toBe(false);
-        await expect(
-            showAppInput('Rename', <div>body</div>),
-        ).resolves.toBe(false);
+        await expect(showAppConfirm('Delete', 'Continue?')).resolves.toBe(
+            false,
+        );
+        await expect(showAppInput('Rename', <div>body</div>)).resolves.toBe(
+            false,
+        );
     });
 
     test('opens confirm popups with options and resolves from the callback', async () => {
@@ -97,7 +99,9 @@ describe('popupWidgetHelpers', () => {
     });
 
     test('returns immediately when no alert opener is registered and resolves after close otherwise', async () => {
-        await expect(showAppAlert('Alert', 'Immediate')).resolves.toBeUndefined();
+        await expect(
+            showAppAlert('Alert', 'Immediate'),
+        ).resolves.toBeUndefined();
 
         let alertPayload: any;
         popupWidgetManager.openAlert = vi.fn((data) => {

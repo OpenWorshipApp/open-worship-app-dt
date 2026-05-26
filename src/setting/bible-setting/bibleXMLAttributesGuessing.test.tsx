@@ -78,7 +78,9 @@ describe('bibleXMLAttributesGuessing', () => {
         ]);
 
         await act(async () => {
-            buttons[0]?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            buttons[0]?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
         });
 
         expect(onChange).toHaveBeenLastCalledWith('ESV');
@@ -93,9 +95,9 @@ describe('bibleXMLAttributesGuessing', () => {
 
         expect(onChange).toHaveBeenLastCalledWith('KJV');
         expect(input?.className).toContain('is-invalid');
-        expect(container?.querySelector('.input-group')?.getAttribute('title')).toBe(
-            'Key is already taken',
-        );
+        expect(
+            container?.querySelector('.input-group')?.getAttribute('title'),
+        ).toBe('Key is already taken');
     });
 
     test('renders bible numbers map input with locale-aware link and validation', async () => {
@@ -120,9 +122,9 @@ describe('bibleXMLAttributesGuessing', () => {
 
         expect(input?.value).toBe('0 1 2 3 4 5 6 7 8 9');
         expect(link?.href).toContain('tl=km');
-        expect(container?.querySelector('.input-group')?.getAttribute('title')).toBe(
-            '',
-        );
+        expect(
+            container?.querySelector('.input-group')?.getAttribute('title'),
+        ).toBe('');
 
         await act(async () => {
             if (!input) {
@@ -133,9 +135,9 @@ describe('bibleXMLAttributesGuessing', () => {
 
         expect(onChange).toHaveBeenLastCalledWith(['០', '១', '២']);
         expect(input?.className).toContain('is-invalid');
-        expect(container?.querySelector('.input-group')?.getAttribute('title')).toBe(
-            'Must have 10 numbers',
-        );
+        expect(
+            container?.querySelector('.input-group')?.getAttribute('title'),
+        ).toBe('Must have 10 numbers');
 
         getLangCodeMock.mockReturnValueOnce(null);
 
@@ -149,9 +151,9 @@ describe('bibleXMLAttributesGuessing', () => {
             );
         });
 
-        expect(container?.querySelector<HTMLAnchorElement>('a')?.href).toContain(
-            'tl=en',
-        );
+        expect(
+            container?.querySelector<HTMLAnchorElement>('a')?.href,
+        ).toContain('tl=en');
         expect(xmlFormatExample).toContain('<bible');
         expect(xmlFormatExample).toContain('<custom-verses-map>');
     });

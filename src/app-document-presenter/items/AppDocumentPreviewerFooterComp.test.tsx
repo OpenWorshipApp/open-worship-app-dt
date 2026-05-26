@@ -144,10 +144,8 @@ describe('AppDocumentPreviewerFooterComp', () => {
     });
 
     test('updates thumbnail size and selects slides or shows an alert when none are available', async () => {
-        const {
-            default: AppDocumentPreviewerFooterComp,
-            defaultRangeSize,
-        } = await import('./AppDocumentPreviewerFooterComp');
+        const { default: AppDocumentPreviewerFooterComp, defaultRangeSize } =
+            await import('./AppDocumentPreviewerFooterComp');
         const selectedSlide = {
             id: 8,
             filePath: '/docs/main.ows',
@@ -213,9 +211,8 @@ describe('AppDocumentPreviewerFooterComp', () => {
     });
 
     test('disables slide changing when requested', async () => {
-        const { default: AppDocumentPreviewerFooterComp } = await import(
-            './AppDocumentPreviewerFooterComp'
-        );
+        const { default: AppDocumentPreviewerFooterComp } =
+            await import('./AppDocumentPreviewerFooterComp');
 
         await act(async () => {
             root.render(<AppDocumentPreviewerFooterComp isDisableChanging />);

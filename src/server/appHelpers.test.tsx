@@ -126,9 +126,9 @@ async function loadModule() {
 }
 
 function createYtEmitter(
-    runEvents: (handlers: Record<string, (...args: any[]) => any>) =>
-        | Promise<void>
-        | void,
+    runEvents: (
+        handlers: Record<string, (...args: any[]) => any>,
+    ) => Promise<void> | void,
 ) {
     const handlers: Record<string, (...args: any[]) => any> = {};
     let isScheduled = false;
@@ -175,7 +175,9 @@ describe('appHelpers', () => {
         appProviderMock.messageUtils.listenOnceForData.mockReset();
         appProviderMock.systemUtils.copyToClipboard.mockReset();
         appProviderMock.ytUtils.getYTHelper.mockReset();
-        pathJoinMock.mockImplementation((...parts: string[]) => parts.join('/'));
+        pathJoinMock.mockImplementation((...parts: string[]) =>
+            parts.join('/'),
+        );
         pathResolveMock.mockImplementation((value: string) => value);
         getDownloadPathMock.mockReturnValue('/downloads');
         isSupportedMimetypeMock.mockImplementation(
@@ -202,7 +204,10 @@ describe('appHelpers', () => {
     test('builds reply event names and resolves electronSendAsync replies', async () => {
         const module = await loadModule();
         appProviderMock.messageUtils.listenOnceForData.mockImplementation(
-            (_replyEventName: string, callback: (event: unknown, value: unknown) => void) => {
+            (
+                _replyEventName: string,
+                callback: (event: unknown, value: unknown) => void,
+            ) => {
                 callback({}, { ok: true });
             },
         );
@@ -222,7 +227,10 @@ describe('appHelpers', () => {
     test('rejects electronSendAsync when the reply contains an error', async () => {
         const module = await loadModule();
         appProviderMock.messageUtils.listenOnceForData.mockImplementation(
-            (_replyEventName: string, callback: (event: unknown, value: unknown) => void) => {
+            (
+                _replyEventName: string,
+                callback: (event: unknown, value: unknown) => void,
+            ) => {
                 callback({}, new Error('boom'));
             },
         );
@@ -236,28 +244,38 @@ describe('appHelpers', () => {
         const module = await loadModule();
         appProviderMock.messageUtils.listenOnceForData
             .mockImplementationOnce(
-                (_replyEventName: string, callback: (event: unknown, value: unknown) => void) => {
+                (
+                    _replyEventName: string,
+                    callback: (event: unknown, value: unknown) => void,
+                ) => {
                     callback({}, null);
                 },
             )
             .mockImplementationOnce(
-                (_replyEventName: string, callback: (event: unknown, value: unknown) => void) => {
+                (
+                    _replyEventName: string,
+                    callback: (event: unknown, value: unknown) => void,
+                ) => {
                     callback({}, undefined);
                 },
             );
 
         module.showFileOrDirExplorer('/docs');
-        await expect(module.convertToPdf('input.docx', 'output.pdf')).resolves.toBeNull();
-        await expect(module.tarExtract('archive.tar', '/output')).resolves.toBeUndefined();
+        await expect(
+            module.convertToPdf('input.docx', 'output.pdf'),
+        ).resolves.toBeNull();
+        await expect(
+            module.tarExtract('archive.tar', '/output'),
+        ).resolves.toBeUndefined();
         expect(module.copyToClipboard('lyrics')).toBe(true);
 
         expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
             'main:app:reveal-path',
             '/docs',
         );
-        expect(appProviderMock.systemUtils.copyToClipboard).toHaveBeenCalledWith(
-            'lyrics',
-        );
+        expect(
+            appProviderMock.systemUtils.copyToClipboard,
+        ).toHaveBeenCalledWith('lyrics');
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Copy',
             'Text has been copied to clip',
@@ -274,9 +292,9 @@ describe('appHelpers', () => {
         appProviderMock.isMainPage = true;
         appProviderMock.isPageReader = true;
         await module.checkDecidedBibleReaderHomePage();
-        expect(globalThis.localStorage.getItem('decided-reader-home-page')).toBe(
-            'true',
-        );
+        expect(
+            globalThis.localStorage.getItem('decided-reader-home-page'),
+        ).toBe('true');
 
         globalThis.localStorage.clear();
         appProviderMock.isPageReader = false;
@@ -350,14 +368,21 @@ describe('appHelpers', () => {
         vi.setSystemTime(new Date('2024-01-02T03:04:05.000Z'));
         const module = await loadModule();
         appProviderMock.messageUtils.listenOnceForData.mockImplementation(
-            (_replyEventName: string, callback: (event: unknown, value: unknown) => void) => {
+            (
+                _replyEventName: string,
+                callback: (event: unknown, value: unknown) => void,
+            ) => {
                 callback({}, null);
             },
         );
 
         await expect(
             module.exportBibleMSWord([
-                { title: 'Psalm 1', body: 'Blessed is the one', fontFamily: null },
+                {
+                    title: 'Psalm 1',
+                    body: 'Blessed is the one',
+                    fontFamily: null,
+                },
             ]),
         ).resolves.toBe('/downloads/owa-bible-verses_2024-01-02_03-04-05.docx');
     });
@@ -365,34 +390,43 @@ describe('appHelpers', () => {
     test('downloads images and reports each failure mode', async () => {
         const module = await loadModule();
         vi.spyOn(Date, 'now').mockReturnValue(111);
-        fileSourceGetSrcDataMock.mockResolvedValue('data:image/png;base64,AAAA');
+        fileSourceGetSrcDataMock.mockResolvedValue(
+            'data:image/png;base64,AAAA',
+        );
         getDotExtensionFromBase64DataMock.mockReturnValue('.png');
         const writeFileBase64DataSyncMock = vi.fn(() => true);
         fileSourceGetInstanceMock.mockReturnValue({
             fullName: '111.png',
             writeFileBase64DataSync: writeFileBase64DataSyncMock,
         });
-        vi.stubGlobal('fetch', vi.fn(async () => ({
-            ok: true,
-            blob: async () => new Blob(['binary'], { type: 'image/png' }),
-        })));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                ok: true,
+                blob: async () => new Blob(['binary'], { type: 'image/png' }),
+            })),
+        );
 
-        await expect(module.downloadImage('https://img', '/out')).resolves.toEqual({
+        await expect(
+            module.downloadImage('https://img', '/out'),
+        ).resolves.toEqual({
             filePath: '/out/111.png',
             fileFullName: '111.png',
         });
 
         (globalThis.fetch as any).mockResolvedValueOnce({ ok: false });
-        await expect(module.downloadImage('https://img', '/out')).rejects.toThrow(
-            'Download failed: Error: Failed to fetch image',
-        );
+        await expect(
+            module.downloadImage('https://img', '/out'),
+        ).rejects.toThrow('Download failed: Error: Failed to fetch image');
 
         (globalThis.fetch as any).mockResolvedValueOnce({
             ok: true,
             blob: async () => new Blob(['binary'], { type: 'image/png' }),
         });
         fileSourceGetSrcDataMock.mockResolvedValueOnce(null);
-        await expect(module.downloadImage('https://img', '/out')).rejects.toThrow(
+        await expect(
+            module.downloadImage('https://img', '/out'),
+        ).rejects.toThrow(
             'Download failed: Error: Failed to extract image data',
         );
 
@@ -400,9 +434,13 @@ describe('appHelpers', () => {
             ok: true,
             blob: async () => new Blob(['binary'], { type: 'image/png' }),
         });
-        fileSourceGetSrcDataMock.mockResolvedValueOnce('data:image/png;base64,AAAA');
+        fileSourceGetSrcDataMock.mockResolvedValueOnce(
+            'data:image/png;base64,AAAA',
+        );
         getDotExtensionFromBase64DataMock.mockReturnValueOnce(null);
-        await expect(module.downloadImage('https://img', '/out')).rejects.toThrow(
+        await expect(
+            module.downloadImage('https://img', '/out'),
+        ).rejects.toThrow(
             'Download failed: Error: Failed to get image file extension',
         );
 
@@ -410,12 +448,14 @@ describe('appHelpers', () => {
             ok: true,
             blob: async () => new Blob(['binary'], { type: 'image/png' }),
         });
-        fileSourceGetSrcDataMock.mockResolvedValueOnce('data:image/png;base64,AAAA');
+        fileSourceGetSrcDataMock.mockResolvedValueOnce(
+            'data:image/png;base64,AAAA',
+        );
         getDotExtensionFromBase64DataMock.mockReturnValueOnce('.png');
         writeFileBase64DataSyncMock.mockReturnValueOnce(false);
-        await expect(module.downloadImage('https://img', '/out')).rejects.toThrow(
-            'Download failed: Error: Failed to write image file',
-        );
+        await expect(
+            module.downloadImage('https://img', '/out'),
+        ).rejects.toThrow('Download failed: Error: Failed to write image file');
     });
 
     test('downloads media files through yt-dlp for video and audio flows', async () => {
@@ -442,7 +482,9 @@ describe('appHelpers', () => {
             .fn()
             .mockReturnValueOnce(first)
             .mockReturnValueOnce(second);
-        appProviderMock.ytUtils.getYTHelper.mockResolvedValue({ exec: execMock });
+        appProviderMock.ytUtils.getYTHelper.mockResolvedValue({
+            exec: execMock,
+        });
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => ({
             dotExtension: filePath.endsWith('.mp3') ? '.mp3' : '.mp4',
         }));
@@ -486,9 +528,17 @@ describe('appHelpers', () => {
         );
         expect(execMock).toHaveBeenNthCalledWith(
             2,
-            expect.arrayContaining(['https://audio', '-x', '--audio-format', 'mp3']),
+            expect.arrayContaining([
+                'https://audio',
+                '-x',
+                '--audio-format',
+                'mp3',
+            ]),
         );
-        expect(showProgressBarMessageMock).toHaveBeenCalledWith('Process id:', 77);
+        expect(showProgressBarMessageMock).toHaveBeenCalledWith(
+            'Process id:',
+            77,
+        );
         expect(showProgressBarMessageMock).toHaveBeenCalledWith('all done');
     });
 
@@ -503,17 +553,27 @@ describe('appHelpers', () => {
             handlers.close();
         });
         appProviderMock.ytUtils.getYTHelper.mockResolvedValue({
-            exec: vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(second),
+            exec: vi
+                .fn()
+                .mockReturnValueOnce(first)
+                .mockReturnValueOnce(second),
         });
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => ({
             dotExtension: filePath.endsWith('.mp4') ? '.mp4' : '.bin',
         }));
         fsCheckFileExistMock.mockResolvedValue(true);
-        vi.stubGlobal('fetch', vi.fn(() => {
-            return Promise.reject(new Error('offline'));
-        }));
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(() => {
+                return Promise.reject(new Error('offline'));
+            }),
+        );
 
-        const recoveredPromise = module.downloadVideoOrAudio('https://download', '/out', true);
+        const recoveredPromise = module.downloadVideoOrAudio(
+            'https://download',
+            '/out',
+            true,
+        );
 
         await expect(recoveredPromise).resolves.toEqual({
             filePath: '/out/temp-333.mp4',
@@ -526,9 +586,15 @@ describe('appHelpers', () => {
         expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
 
         fsCheckFileExistMock.mockResolvedValue(false);
-        const rejectedPromise = module.downloadVideoOrAudio('https://download', '/out', true);
+        const rejectedPromise = module.downloadVideoOrAudio(
+            'https://download',
+            '/out',
+            true,
+        );
 
-        await expect(rejectedPromise).rejects.toThrow('Unable to determine file path');
+        await expect(rejectedPromise).rejects.toThrow(
+            'Unable to determine file path',
+        );
     });
 
     test('reads clipboard images and text helpers', async () => {
@@ -544,7 +610,9 @@ describe('appHelpers', () => {
         };
         const textItem = {
             types: ['text/plain'],
-            getType: vi.fn(async () => new Blob(['text'], { type: 'text/plain' })),
+            getType: vi.fn(
+                async () => new Blob(['text'], { type: 'text/plain' }),
+            ),
         };
         const readMock = vi.fn(async () => [imageItem, textItem]);
         const readTextMock = vi.fn(async () => 'copied text');
@@ -562,7 +630,9 @@ describe('appHelpers', () => {
             blobs.push(blob);
         }
         expect(blobs).toEqual([imageBlob]);
-        await expect(module.readTextFromClipboard()).resolves.toBe('copied text');
+        await expect(module.readTextFromClipboard()).resolves.toBe(
+            'copied text',
+        );
 
         readMock.mockRejectedValueOnce(new Error('no access'));
         await expect(module.checkIsImagesInClipboard()).resolves.toBe(false);
@@ -577,7 +647,9 @@ describe('appHelpers', () => {
         appProviderMock.messageUtils.sendDataSync.mockReturnValue(true);
 
         expect(module.removeOpacityFromHexColor('#11223344')).toBe('#112233');
-        expect(module.removeOpacityFromHexColor('rgb(1,2,3)')).toBe('rgb(1,2,3)');
+        expect(module.removeOpacityFromHexColor('rgb(1,2,3)')).toBe(
+            'rgb(1,2,3)',
+        );
         module.printHtmlText();
         expect(appProviderMock.messageUtils.sendData).toHaveBeenCalledWith(
             'all:app:print',
@@ -590,7 +662,9 @@ describe('appHelpers', () => {
                 <div>
                     <span>{isOnTop ? 'on' : 'off'}</span>
                     <button onClick={() => setIsOnTop(false)}>off</button>
-                    <button onClick={() => setIsOnTop((prev) => !prev)}>toggle</button>
+                    <button onClick={() => setIsOnTop((prev) => !prev)}>
+                        toggle
+                    </button>
                 </div>
             );
         }

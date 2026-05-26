@@ -454,7 +454,9 @@ describe('appContextMenuHelpers', () => {
 
     test('renders shortcut and icon helpers', () => {
         const shortcutElement = genContextMenuItemShortcutKey({ key: 'k' });
-        const iconElement = genContextMenuItemIcon('copy', { marginLeft: '4px' });
+        const iconElement = genContextMenuItemIcon('copy', {
+            marginLeft: '4px',
+        });
 
         expect(shortcutElement.props.children.props.children).toBe('K');
         expect(iconElement.props.className).toBe('bi bi-copy');

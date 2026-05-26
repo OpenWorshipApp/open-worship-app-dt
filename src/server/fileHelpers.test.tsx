@@ -65,7 +65,8 @@ describe('fileHelpers', () => {
 
     test('exposes path and mimetype helpers', async () => {
         const { fileHelpers } = await loadModules();
-        const [appDocumentExt] = fileHelpers.getMimetypeExtensions('appDocument');
+        const [appDocumentExt] =
+            fileHelpers.getMimetypeExtensions('appDocument');
 
         expect(fileHelpers.checkIsAppFile(`deck.${appDocumentExt}`)).toBe(true);
         expect(fileHelpers.pathSeparator).toBe('/');
@@ -81,19 +82,26 @@ describe('fileHelpers', () => {
         expect(fileHelpers.getFileName('song.txt')).toBe('song');
         expect(fileHelpers.getFileDotExtension('song.txt')).toBe('.txt');
         expect(fileHelpers.addExtension('song', '.txt')).toBe('song.txt');
-        expect(fileHelpers.getFileMetaData(`deck.${appDocumentExt}`)?.appMimetype.mimetypeName).toBe(
-            'appDocument',
-        );
+        expect(
+            fileHelpers.getFileMetaData(`deck.${appDocumentExt}`)?.appMimetype
+                .mimetypeName,
+        ).toBe('appDocument');
         expect(fileHelpers.getAllAppMimetype().length).toBeGreaterThan(0);
         expect(fileHelpers.getAppMimetype('other')).toEqual([]);
-        expect(fileHelpers.isSupportedMimetype('image/png', 'image')).toBe(true);
+        expect(fileHelpers.isSupportedMimetype('image/png', 'image')).toBe(
+            true,
+        );
         expect(fileHelpers.isSupportedExt('cover.png', 'image')).toBe(true);
         expect(
             fileHelpers.getDotExtensionFromBase64Data(
                 'data:image/png;base64,AAAA',
             ),
         ).toBe('.png');
-        expect(fileHelpers.getDotExtensionFromBase64Data('data:text/plain;base64,QQ==')).toBeNull();
+        expect(
+            fileHelpers.getDotExtensionFromBase64Data(
+                'data:text/plain;base64,QQ==',
+            ),
+        ).toBeNull();
     });
 
     test('creates, writes, lists, renames, and deletes files in the browser mock fs', async () => {
@@ -104,8 +112,12 @@ describe('fileHelpers', () => {
         await fileHelpers.fsCreateFile(`${baseDir}/note.txt`, 'hello');
 
         expect(await fileHelpers.fsCheckDirExist(baseDir)).toBe(true);
-        expect(await fileHelpers.fsCheckFileExist(baseDir, 'note.txt')).toBe(true);
-        expect(await fileHelpers.fsReadFile(`${baseDir}/note.txt`)).toBe('hello');
+        expect(await fileHelpers.fsCheckFileExist(baseDir, 'note.txt')).toBe(
+            true,
+        );
+        expect(await fileHelpers.fsReadFile(`${baseDir}/note.txt`)).toBe(
+            'hello',
+        );
 
         await fileHelpers.fsWriteFile(`${baseDir}/note.txt`, 'world');
         expect(fileHelpers.fsReadSync(`${baseDir}/note.txt`)).toBe('world');
@@ -120,25 +132,34 @@ describe('fileHelpers', () => {
             return item.name;
         });
         expect(listedNames).toEqual(
-            expect.arrayContaining(['note.txt', 'second.txt', 'visible', '.hidden']),
+            expect.arrayContaining([
+                'note.txt',
+                'second.txt',
+                'visible',
+                '.hidden',
+            ]),
         );
         expect(await fileHelpers.fsListFiles(baseDir)).toEqual(
             expect.arrayContaining(['note.txt', 'second.txt']),
         );
-        expect(await fileHelpers.fsListDirectories(baseDir)).toEqual(['visible']);
+        expect(await fileHelpers.fsListDirectories(baseDir)).toEqual([
+            'visible',
+        ]);
 
         await fileHelpers.fsRenameFile(baseDir, 'note.txt', 'renamed.txt');
-        expect(await fileHelpers.fsCheckFileExist(`${baseDir}/renamed.txt`)).toBe(
-            true,
-        );
+        expect(
+            await fileHelpers.fsCheckFileExist(`${baseDir}/renamed.txt`),
+        ).toBe(true);
 
         await fileHelpers.fsDeleteFile(`${baseDir}/renamed.txt`);
-        expect(await fileHelpers.fsCheckFileExist(`${baseDir}/renamed.txt`)).toBe(
-            false,
-        );
+        expect(
+            await fileHelpers.fsCheckFileExist(`${baseDir}/renamed.txt`),
+        ).toBe(false);
 
         await fileHelpers.fsDeleteDir(`${baseDir}/visible`);
-        expect(await fileHelpers.fsCheckDirExist(`${baseDir}/visible`)).toBe(false);
+        expect(await fileHelpers.fsCheckDirExist(`${baseDir}/visible`)).toBe(
+            false,
+        );
     });
 
     test('creates typed files and handles duplicate and override flows', async () => {
@@ -148,16 +169,30 @@ describe('fileHelpers', () => {
 
         await fileHelpers.fsCreateDir(dirPath);
         await expect(
-            fileHelpers.createNewFileDetail(dirPath, 'setlist', '[]', 'playlist'),
+            fileHelpers.createNewFileDetail(
+                dirPath,
+                'setlist',
+                '[]',
+                'playlist',
+            ),
         ).resolves.toBe(`${dirPath}/setlist.${playlistExt}`);
         await expect(
-            fileHelpers.fsCreateFile(`${dirPath}/setlist.${playlistExt}`, 'updated', true),
+            fileHelpers.fsCreateFile(
+                `${dirPath}/setlist.${playlistExt}`,
+                'updated',
+                true,
+            ),
         ).resolves.toBe(`${dirPath}/setlist.${playlistExt}`);
-        expect(await fileHelpers.fsReadFile(`${dirPath}/setlist.${playlistExt}`)).toBe(
-            'updated',
-        );
+        expect(
+            await fileHelpers.fsReadFile(`${dirPath}/setlist.${playlistExt}`),
+        ).toBe('updated');
         await expect(
-            fileHelpers.createNewFileDetail(dirPath, 'setlist', '[]', 'playlist'),
+            fileHelpers.createNewFileDetail(
+                dirPath,
+                'setlist',
+                '[]',
+                'playlist',
+            ),
         ).resolves.toBeNull();
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Creating Playlist',
@@ -177,7 +212,10 @@ describe('fileHelpers', () => {
 
         await fileHelpers.fsCreateDir(mediaDir);
         await fileHelpers.fsCreateDir(copyDir);
-        fileHelpers.writeFileFromBase64Sync(`${mediaDir}/picture.png`, pngBase64);
+        fileHelpers.writeFileFromBase64Sync(
+            `${mediaDir}/picture.png`,
+            pngBase64,
+        );
 
         const matchedFiles = await fileHelpers.fsListFilesWithMimetype(
             mediaDir,
@@ -190,9 +228,9 @@ describe('fileHelpers', () => {
             copyDir,
         );
         expect(copiedPath).toBe(`${copyDir}/picture.png`);
-        expect(await fileHelpers.fsCheckFileExist(`${copyDir}/picture.png`)).toBe(
-            true,
-        );
+        expect(
+            await fileHelpers.fsCheckFileExist(`${copyDir}/picture.png`),
+        ).toBe(true);
 
         const uploadedFile = new File(['alpha'], 'upload.txt', {
             type: 'text/plain',
@@ -228,7 +266,8 @@ describe('fileHelpers', () => {
     });
 
     test('handles special paths, selection helpers, hashes, base64 conversion, and provider state', async () => {
-        const { fileHelpers, appProvider } = await loadModules('/presenter.html');
+        const { fileHelpers, appProvider } =
+            await loadModules('/presenter.html');
 
         appProvider.messageUtils.listenForData(
             'main:app:select-dirs',
@@ -266,10 +305,12 @@ describe('fileHelpers', () => {
 
         await fileHelpers.fsCreateFile('/browser-data/hash.txt', 'content');
         await fileHelpers.ensureDirectory('/browser-data/hash.txt');
-        await expect(fileHelpers.getFileMD5('/browser-data/hash.txt')).resolves.toMatch(
-            /^[0-9a-f]{8}$/,
-        );
-        await expect(fileHelpers.getFileMD5('/browser-data/missing.txt')).resolves.toBeNull();
+        await expect(
+            fileHelpers.getFileMD5('/browser-data/hash.txt'),
+        ).resolves.toMatch(/^[0-9a-f]{8}$/);
+        await expect(
+            fileHelpers.getFileMD5('/browser-data/missing.txt'),
+        ).resolves.toBeNull();
         expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
 
         vi.stubGlobal(
@@ -279,7 +320,7 @@ describe('fileHelpers', () => {
             })),
         );
         await expect(fileHelpers.getFileBase64('/remote')).resolves.toMatch(
-            /^data:text\/plain;base64,/, 
+            /^data:text\/plain;base64,/,
         );
 
         expect(appProvider.windowTitle).toBe('File Helpers');
