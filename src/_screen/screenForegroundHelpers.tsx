@@ -167,7 +167,7 @@ export function genHtmlForegroundCountdown(
 ) {
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
-        <div
+        <div className='foreground-countdown-container'
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -188,9 +188,17 @@ export function genHtmlForegroundCountdown(
                 .${uniqueClassname} #second {
                     text-align: left;
                 }
+                .${uniqueClassname}[data-time-diff="0"] {
+                    animation: anim-${uniqueClassname}-alerting 2s ease-in infinite;
+                }
+                @keyframes anim-${uniqueClassname}-alerting {
+                    0% { color: red; }
+                    75% { color: white; }
+                    100% { color: red; }
+                }
             `}</style>
             <div className={uniqueClassname}>
-                <span style={{ marginRight: '50px' }}>⏳</span>
+                <span style={{ marginRight: '25px' }}>⏳</span>
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
             </div>
@@ -218,7 +226,7 @@ export function genHtmlForegroundStopwatch(
 ) {
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
-        <div
+        <div className='foreground-stopwatch-container'
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -241,7 +249,7 @@ export function genHtmlForegroundStopwatch(
                 }
             `}</style>
             <div className={uniqueClassname}>
-                <span style={{ marginRight: '50px' }}>⏱️</span>
+                <span style={{ marginRight: '25px' }}>⏱️</span>
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
             </div>
@@ -270,7 +278,7 @@ export function genHtmlForegroundTime(
     const { timezoneMinuteOffset, title } = timeData;
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
     const htmlString = renderToStaticMarkup(
-        <div
+        <div className='foreground-time-container'
             style={{
                 color: 'white',
                 backgroundColor: 'rgba(0, 12, 100, 0.7)',
@@ -303,7 +311,7 @@ export function genHtmlForegroundTime(
                 <small>{title}</small>
             </div>
             <div className={uniqueClassname}>
-                <span style={{ marginRight: '50px' }}>🕗</span>
+                <span style={{ marginRight: '25px' }}>🕗</span>
                 <div id="hour">00</div>:<div id="minute">00</div>:
                 <div id="second">00</div>
             </div>
