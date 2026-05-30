@@ -115,7 +115,7 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
         note.setIsOpened(!note.isOpened);
     }, [note]);
     return (
-        <div className="w-100 accordion accordion-flush py-1 ms-2">
+        <div className="w-100 accordion accordion-flush py-1">
             <div
                 className={'accordion-header d-flex app-caught-hover-pointer'}
                 onClick={handleToggleOpened}

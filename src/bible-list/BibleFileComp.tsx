@@ -109,7 +109,7 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
         bible.setIsOpened(!bible.isOpened);
     }, [bible]);
     return (
-        <div className="w-100 accordion accordion-flush py-1 ms-2">
+        <div className="w-100 accordion accordion-flush py-1">
             <div
                 className={
                     'accordion-header d-flex app-caught-hover-pointer' +
