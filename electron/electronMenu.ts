@@ -1,4 +1,4 @@
-import { app, Menu, shell } from 'electron';
+import { app, BrowserWindow, Menu, shell } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
 import {
@@ -16,6 +16,27 @@ const findingShortcut = toShortcutKey({
     mControlKey: ['Meta'],
     key: 'f',
 });
+
+const printShortcut = toShortcutKey({
+    wControlKey: ['Ctrl'],
+    lControlKey: ['Ctrl'],
+    mControlKey: ['Meta'],
+    key: 'p',
+});
+
+function printCurrentWindow(browserWindow?: BrowserWindow | null) {
+    const win = browserWindow ?? BrowserWindow.getFocusedWindow?.();
+
+    if (!win || win.isDestroyed?.()) {
+        return;
+    }
+
+    win.webContents.print({ printBackground: true }, (success, errorType) => {
+        if (!success) {
+            console.log('Print failed:', errorType);
+        }
+    });
+}
 
 export function initMenu(appController: ElectronAppController) {
     const isMac = process.platform === 'darwin';
@@ -55,7 +76,17 @@ export function initMenu(appController: ElectronAppController) {
         // { role: 'fileMenu' }
         {
             label: 'File',
-            submenu: [isMac ? { role: 'close' } : { role: 'quit' }],
+            submenu: [
+                {
+                    label: 'Print',
+                    accelerator: printShortcut,
+                    click: (_menuItem: unknown, browserWindow?: BrowserWindow) => {
+                        printCurrentWindow(browserWindow);
+                    },
+                },
+                { type: 'separator' },
+                isMac ? { role: 'close' } : { role: 'quit' },
+            ],
         },
         // { role: 'editMenu' }
         {

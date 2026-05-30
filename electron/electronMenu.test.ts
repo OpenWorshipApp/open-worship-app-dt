@@ -27,6 +27,7 @@ vi.mock('./client/appInfo', () => ({
 
 import { initMenu } from './electronMenu';
 import { electronMockState } from './testElectronModule';
+import { createMockBrowserWindow } from './testUtils';
 
 describe('electronMenu', () => {
     beforeEach(() => {
@@ -67,6 +68,10 @@ describe('electronMenu', () => {
 
         const template =
             electronMockState.Menu.buildFromTemplate.mock.calls[0][0];
+        const fileMenu = template.find((item: any) => item.label === 'File');
+        const printItem = fileMenu.submenu.find(
+            (item: any) => item.label === 'Print',
+        );
         const toolsMenu = template.find((item: any) => item.label === 'Tools');
         const copyItem = toolsMenu.submenu.find(
             (item: any) => item.label === 'Copy Debug Info',
@@ -86,13 +91,19 @@ describe('electronMenu', () => {
         const bibleNoteItem = khmerToolsMenu.submenu.find(
             (item: any) => item.label === 'BibleNote',
         );
+        const currentWindow = createMockBrowserWindow();
 
+        printItem.click(undefined, currentWindow);
         copyItem.click();
         fontsItem.click();
         editorItem.click();
         openLyricItem.click();
         bibleNoteItem.click();
 
+        expect(currentWindow.webContents.print).toHaveBeenCalledWith(
+            { printBackground: true },
+            expect.any(Function),
+        );
         expect(copyDebugInfoToClipboard).toHaveBeenCalledTimes(1);
         expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
             'https://fonts.google.com/',
