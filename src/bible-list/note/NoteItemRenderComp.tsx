@@ -151,10 +151,10 @@ export default function NoteItemRenderComp({
     const fileSource = FileSource.getInstance(filePath);
     return (
         <li
-            className="list-group-item item ps-3 pe-1 py-1"
+            className="list-group-item item ps-2 pe-1"
             title={tran('Double click to open note')}
             style={{
-                height: 40,
+                height: 28,
             }}
             data-note-item-id={`${fileSource.name}-${noteItem.id}`}
             data-index={index + 1}
@@ -188,7 +188,7 @@ export default function NoteItemRenderComp({
                         }}
                     />
                 ) : (
-                    <div className="d-flex flex-fill">
+                    <div className="d-flex flex-fill app-ellipsis">
                         {noteItem.title ? (
                             noteItem.title
                         ) : (

@@ -131,13 +131,13 @@ export async function initBibleNote({
                 signal: abortController.signal,
             },
             async (eventType: string, ..._args: any[]) => {
-                if (bibleNote.getIsFocusing()) {
-                    return;
-                }
                 if (eventType !== 'change') {
                     return;
                 }
                 attemptTimeout(async () => {
+                    if (bibleNote.getIsFocusing()) {
+                        return;
+                    }
                     await note.reload();
                     const newNoteItem = note.getItemById(noteItem.id);
                     if (newNoteItem === null) {

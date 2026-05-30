@@ -476,7 +476,7 @@ const sanitizedDictionary = Object.fromEntries(
         value,
     ]),
 );
-const fontFamily = 'km-font-family';
+const fontFamily = 'app-Battambang';
 const stickyNoteFontFamily = 'km-font-Fasthand';
 const lang: LanguageDataType = {
     version: '0.0.1',

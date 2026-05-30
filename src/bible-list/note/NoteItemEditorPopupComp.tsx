@@ -65,7 +65,10 @@ export default function NoteItemEditorPopupComp({
                 </button>
             ),
         };
-        bibleNote.prependFooterActionButton(onTopButton);
+        // To make sure it on the most left
+        setTimeout(() => {
+            bibleNote.prependFooterActionButton(onTopButton);
+        }, 200);
     }, [bibleNote, isOnTop]);
     return <div style={{ display: 'none' }}></div>;
 }
