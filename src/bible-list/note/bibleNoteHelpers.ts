@@ -139,12 +139,17 @@ export async function initBibleNote({
                     return;
                 }
                 attemptTimeout(async () => {
-                    if (bibleNote.getIsFocusing()) {
-                        return;
+                    if (bibleNote.getIsFocusing() || document.hasFocus()) {
+                        await new Promise((resolve) => {
+                            setTimeout(resolve, 3_000);
+                        });
                     }
                     await note.reload();
                     const newNoteItem = note.getItemById(noteItem.id);
-                    if (newNoteItem === null) {
+                    if (
+                        newNoteItem === null ||
+                        newNoteItem.content === noteItem.content
+                    ) {
                         return;
                     }
                     bibleNote.content = newNoteItem.content;
