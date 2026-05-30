@@ -16,6 +16,7 @@ export type MockWebContents = {
     stopFindInPage: ReturnType<typeof vi.fn>;
     capturePage: ReturnType<typeof vi.fn>;
     print: ReturnType<typeof vi.fn>;
+    printToPDF: ReturnType<typeof vi.fn>;
 };
 
 export type MockBrowserWindow = {
@@ -29,12 +30,16 @@ export type MockBrowserWindow = {
     reload: ReturnType<typeof vi.fn>;
     setFullScreen: ReturnType<typeof vi.fn>;
     setAlwaysOnTop: ReturnType<typeof vi.fn>;
+    setMenuBarVisibility: ReturnType<typeof vi.fn>;
+    setAutoHideMenuBar: ReturnType<typeof vi.fn>;
+    setResizable: ReturnType<typeof vi.fn>;
     loadURL: ReturnType<typeof vi.fn>;
     focus: ReturnType<typeof vi.fn>;
     show: ReturnType<typeof vi.fn>;
     close: ReturnType<typeof vi.fn>;
     maximize: ReturnType<typeof vi.fn>;
     isMinimized: ReturnType<typeof vi.fn>;
+    isDestroyed: ReturnType<typeof vi.fn>;
     restore: ReturnType<typeof vi.fn>;
 };
 
@@ -57,6 +62,7 @@ export function createMockWebContents(
         stopFindInPage: vi.fn(),
         capturePage: vi.fn(),
         print: vi.fn(),
+        printToPDF: vi.fn(async () => Buffer.from('%PDF')),
         ...overrides,
     };
 }
@@ -75,12 +81,16 @@ export function createMockBrowserWindow(
         reload: vi.fn(),
         setFullScreen: vi.fn(),
         setAlwaysOnTop: vi.fn(),
+        setMenuBarVisibility: vi.fn(),
+        setAutoHideMenuBar: vi.fn(),
+        setResizable: vi.fn(),
         loadURL: vi.fn(),
         focus: vi.fn(),
         show: vi.fn(),
         close: vi.fn(),
         maximize: vi.fn(),
         isMinimized: vi.fn(() => false),
+        isDestroyed: vi.fn(() => false),
         restore: vi.fn(),
         ...overrides,
         webContents,

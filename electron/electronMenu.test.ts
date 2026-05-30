@@ -5,17 +5,25 @@ vi.mock('electron', async () => {
     return mod.createElectronModuleMock();
 });
 
-const { copyDebugInfoToClipboard, goDownload, toShortcutKey } = vi.hoisted(
-    () => ({
-        copyDebugInfoToClipboard: vi.fn(),
-        goDownload: vi.fn(),
-        toShortcutKey: vi.fn(() => 'CmdOrCtrl+F'),
-    }),
-);
+const {
+    copyDebugInfoToClipboard,
+    goDownload,
+    previewPrintCurrentWindow,
+    printCurrentWindow,
+    toShortcutKey,
+} = vi.hoisted(() => ({
+    copyDebugInfoToClipboard: vi.fn(),
+    goDownload: vi.fn(),
+    previewPrintCurrentWindow: vi.fn(async () => undefined),
+    printCurrentWindow: vi.fn(),
+    toShortcutKey: vi.fn(() => 'CmdOrCtrl+F'),
+}));
 
 vi.mock('./electronHelpers', () => ({
     copyDebugInfoToClipboard,
     goDownload,
+    previewPrintCurrentWindow,
+    printCurrentWindow,
     toShortcutKey,
 }));
 
@@ -34,6 +42,8 @@ describe('electronMenu', () => {
         electronMockState.reset();
         copyDebugInfoToClipboard.mockClear();
         goDownload.mockClear();
+        previewPrintCurrentWindow.mockClear();
+        printCurrentWindow.mockClear();
         toShortcutKey.mockClear();
         electronMockState.shell.openExternal.mockClear();
         electronMockState.Menu.buildFromTemplate.mockReturnValue({
@@ -72,6 +82,9 @@ describe('electronMenu', () => {
         const printItem = fileMenu.submenu.find(
             (item: any) => item.label === 'Print',
         );
+        const printWithoutPreviewItem = fileMenu.submenu.find(
+            (item: any) => item.label === 'Print Without Preview',
+        );
         const toolsMenu = template.find((item: any) => item.label === 'Tools');
         const copyItem = toolsMenu.submenu.find(
             (item: any) => item.label === 'Copy Debug Info',
@@ -94,16 +107,15 @@ describe('electronMenu', () => {
         const currentWindow = createMockBrowserWindow();
 
         printItem.click(undefined, currentWindow);
+        printWithoutPreviewItem.click(undefined, currentWindow);
         copyItem.click();
         fontsItem.click();
         editorItem.click();
         openLyricItem.click();
         bibleNoteItem.click();
 
-        expect(currentWindow.webContents.print).toHaveBeenCalledWith(
-            { printBackground: true },
-            expect.any(Function),
-        );
+        expect(previewPrintCurrentWindow).toHaveBeenCalledWith(currentWindow);
+        expect(printCurrentWindow).toHaveBeenCalledWith(currentWindow);
         expect(copyDebugInfoToClipboard).toHaveBeenCalledTimes(1);
         expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
             'https://fonts.google.com/',

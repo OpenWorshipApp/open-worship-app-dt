@@ -10,7 +10,10 @@ import {
     type HandlerDetails,
     type WebContents,
 } from 'electron';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { release } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import appInfo from '../package.json';
 import { htmlFiles } from './fsServe';
@@ -523,6 +526,76 @@ export function guardBrowsing(
     win.webContents.setWindowOpenHandler(
         handlePopupWindowOpen.bind(null, win, webPreferences),
     );
+}
+
+const printPreviewDirName = 'open-worship-print-preview';
+let printPreviewFileIndex = 0;
+
+function getPrintableWindow(browserWindow?: BrowserWindow | null) {
+    const win = browserWindow ?? BrowserWindow.getFocusedWindow();
+
+    if (!win || win.isDestroyed()) {
+        return null;
+    }
+
+    return win;
+}
+
+export function printCurrentWindow(browserWindow?: BrowserWindow | null) {
+    const win = getPrintableWindow(browserWindow);
+
+    if (!win) {
+        return;
+    }
+
+    win.webContents.print({ printBackground: true }, (success, errorType) => {
+        if (!success) {
+            console.log('Print failed:', errorType);
+        }
+    });
+}
+
+export async function previewPrintCurrentWindow(
+    browserWindow?: BrowserWindow | null,
+) {
+    const win = getPrintableWindow(browserWindow);
+
+    if (!win) {
+        return null;
+    }
+
+    const pdfData = await win.webContents.printToPDF({
+        printBackground: true,
+        preferCSSPageSize: true,
+    });
+    const previewDir = path.join(app.getPath('temp'), printPreviewDirName);
+    await mkdir(previewDir, { recursive: true });
+
+    printPreviewFileIndex += 1;
+    const previewFilePath = path.join(
+        previewDir,
+        `print-preview-${Date.now()}-${printPreviewFileIndex}.pdf`,
+    );
+    await writeFile(previewFilePath, pdfData);
+
+    const previewWin = new BrowserWindow({
+        width: 1000,
+        height: 800,
+        title: 'Print Preview',
+        backgroundColor: getAppThemeBackgroundColor(),
+        webPreferences: {
+            plugins: true,
+        },
+    });
+
+    previewWin.on('closed', () => {
+        rm(previewFilePath, { force: true }).catch((error) => {
+            console.log('Failed to remove print preview file:', error);
+        });
+    });
+
+    await previewWin.loadURL(pathToFileURL(previewFilePath).toString());
+    return previewWin;
 }
 
 export function printHTMLContent(htmlText: string) {

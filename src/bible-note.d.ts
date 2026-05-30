@@ -23,6 +23,7 @@ declare module 'BibleNote.js' {
         loadData: () => Promise<string | null> | string | null;
         resolveFilePath?: FilePathResolver;
         revealFile?: (filePath: string) => void;
+        print(): void;
     }
 
     interface BibleNoteRenderOptions {

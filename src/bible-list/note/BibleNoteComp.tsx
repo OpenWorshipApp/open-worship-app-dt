@@ -7,6 +7,7 @@ import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { useThemeSource } from '../../others/themeHelpers';
 import type { BibleNote } from 'BibleNote.js';
+import appProvider from '../../server/appProvider';
 
 const AppBibleNote = (globalThis as any).AppBibleNote as typeof BibleNote;
 
@@ -28,6 +29,10 @@ const storageManager = {
 
 async function resolveLocalFilePath(_file: any) {
     return null;
+}
+
+function print() {
+    appProvider.messageUtils.sendData('all:app:print');
 }
 
 function getLangCode(text: string): string {
@@ -69,6 +74,7 @@ export default function BibleNoteComp({
             storageManager: storageManager as any,
             stickyNoteExtraFontFamilies,
             resolveFilePath: resolveLocalFilePath,
+            print,
         });
     }, [note, noteItem]);
 

@@ -1,9 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+const { mkdir, rm, writeFile } = vi.hoisted(() => ({
+    mkdir: vi.fn(),
+    rm: vi.fn(),
+    writeFile: vi.fn(),
+}));
+
 vi.mock('electron', async () => {
     const mod = await import('./testElectronModule');
     return mod.createElectronModuleMock();
 });
+
+vi.mock('node:fs/promises', () => ({
+    mkdir,
+    rm,
+    writeFile,
+}));
 
 import {
     attemptClosing,
@@ -15,16 +27,24 @@ import {
     goDownload,
     guardBrowsing,
     POPUP_FRAME_NAME_PREFIX,
+    previewPrintCurrentWindow,
+    printCurrentWindow,
     toShortcutKey,
     toUnpackedPath,
     unlocking,
 } from './electronHelpers';
 import { electronMockState } from './testElectronModule';
-import { createMockBrowserWindow } from './testUtils';
+import { createMockBrowserWindow, createMockWebContents } from './testUtils';
 
 describe('electronHelpers', () => {
     beforeEach(() => {
         electronMockState.reset();
+        mkdir.mockReset();
+        mkdir.mockResolvedValue(undefined);
+        rm.mockReset();
+        rm.mockResolvedValue(undefined);
+        writeFile.mockReset();
+        writeFile.mockResolvedValue(undefined);
     });
 
     test('replaces app.asar with unpacked path', () => {
@@ -143,6 +163,66 @@ describe('electronHelpers', () => {
         guardBrowsing(win as any, { preload: '/tmp/preload.js' } as any);
 
         expect(win.webContents.setWindowOpenHandler).toHaveBeenCalledTimes(1);
+    });
+
+    test('prints current window with backgrounds', () => {
+        const win = createMockBrowserWindow();
+
+        printCurrentWindow(win as any);
+
+        expect(win.webContents.print).toHaveBeenCalledWith(
+            { printBackground: true },
+            expect.any(Function),
+        );
+    });
+
+    test('opens a PDF preview window for current window print output', async () => {
+        const pdfData = Buffer.from('%PDF');
+        const sourceWin = createMockBrowserWindow({
+            webContents: createMockWebContents({
+                printToPDF: vi.fn(async () => pdfData),
+            }),
+        });
+        const previewWin = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => previewWin);
+
+        await expect(previewPrintCurrentWindow(sourceWin as any)).resolves.toBe(
+            previewWin,
+        );
+
+        expect(sourceWin.webContents.printToPDF).toHaveBeenCalledWith({
+            printBackground: true,
+            preferCSSPageSize: true,
+        });
+        expect(mkdir).toHaveBeenCalledWith(
+            expect.stringContaining('open-worship-print-preview'),
+            { recursive: true },
+        );
+        expect(writeFile).toHaveBeenCalledTimes(1);
+        const [previewFilePath, writtenData] = writeFile.mock.calls[0];
+        expect(previewFilePath).toEqual(
+            expect.stringMatching(/print-preview-\d+-\d+\.pdf$/),
+        );
+        expect(writtenData).toBe(pdfData);
+        expect(electronMockState.BrowserWindowMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                title: 'Print Preview',
+                webPreferences: expect.objectContaining({
+                    plugins: true,
+                }),
+            }),
+        );
+        expect(previewWin.loadURL).toHaveBeenCalledWith(
+            expect.stringMatching(/^file:.*print-preview-/),
+        );
+
+        const closedHandler = previewWin.on.mock.calls.find(
+            ([event]) => event === 'closed',
+        )?.[1];
+        expect(closedHandler).toBeTypeOf('function');
+        closedHandler();
+
+        expect(rm).toHaveBeenCalledWith(previewFilePath, { force: true });
     });
 
     test('parents popup window to opener only when appTopToMain is enabled', () => {

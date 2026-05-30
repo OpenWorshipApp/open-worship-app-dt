@@ -102,6 +102,9 @@ export async function initBibleNote({
         });
         return currentLangData?.langCode ?? 'en';
     };
+    const print = () => {
+        appProvider.messageUtils.sendData('all:app:print');
+    };
 
     const AppBibleNote = await getBibleNoteConstructor();
     const bibleNote = new AppBibleNote({
@@ -121,6 +124,7 @@ export async function initBibleNote({
         stickyNoteExtraFontFamilies,
         resolveFilePath: resolveLocalFilePath,
         revealFile,
+        print,
     });
 
     const abortController = new AbortController();

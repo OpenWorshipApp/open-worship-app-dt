@@ -1,9 +1,11 @@
-import { app, BrowserWindow, Menu, shell } from 'electron';
+import { app, Menu, shell, type BrowserWindow } from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
 import {
     copyDebugInfoToClipboard,
     goDownload,
+    previewPrintCurrentWindow,
+    printCurrentWindow,
     toShortcutKey,
 } from './electronHelpers';
 
@@ -23,20 +25,6 @@ const printShortcut = toShortcutKey({
     mControlKey: ['Meta'],
     key: 'p',
 });
-
-function printCurrentWindow(browserWindow?: BrowserWindow | null) {
-    const win = browserWindow ?? BrowserWindow.getFocusedWindow?.();
-
-    if (!win || win.isDestroyed?.()) {
-        return;
-    }
-
-    win.webContents.print({ printBackground: true }, (success, errorType) => {
-        if (!success) {
-            console.log('Print failed:', errorType);
-        }
-    });
-}
 
 export function initMenu(appController: ElectronAppController) {
     const isMac = process.platform === 'darwin';
@@ -80,6 +68,16 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: 'Print',
                     accelerator: printShortcut,
+                    click: (_menuItem: unknown, browserWindow?: BrowserWindow) => {
+                        void previewPrintCurrentWindow(browserWindow).catch(
+                            (error) => {
+                                console.log('Print preview failed:', error);
+                            },
+                        );
+                    },
+                },
+                {
+                    label: 'Print Without Preview',
                     click: (_menuItem: unknown, browserWindow?: BrowserWindow) => {
                         printCurrentWindow(browserWindow);
                     },

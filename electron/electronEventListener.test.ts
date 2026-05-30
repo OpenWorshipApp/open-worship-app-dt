@@ -22,6 +22,7 @@ const {
     countSlides,
     exportBibleMSWord,
     getAllNoneFinderWindows,
+    previewPrintCurrentWindow,
     removeSlideBackground,
     screenInstance,
 } = vi.hoisted(() => ({
@@ -41,6 +42,7 @@ const {
     countSlides: vi.fn(),
     exportBibleMSWord: vi.fn(),
     getAllNoneFinderWindows: vi.fn(() => []),
+    previewPrintCurrentWindow: vi.fn(async () => undefined),
     removeSlideBackground: vi.fn(),
     screenInstance: {
         win: {
@@ -62,6 +64,7 @@ vi.mock('./electronHelpers', () => ({
     messageChannels: {
         screenMessage: 'app:screen:message',
     },
+    previewPrintCurrentWindow,
     printHTMLContent,
     tarCreate,
     tarExtract,
@@ -97,6 +100,7 @@ import {
     initFinderEvent,
 } from './electronEventListener';
 import { electronMockState } from './testElectronModule';
+import { createMockBrowserWindow } from './testUtils';
 
 describe('electronEventListener', () => {
     beforeEach(() => {
@@ -115,6 +119,7 @@ describe('electronEventListener', () => {
         removeSlideBackground.mockReset();
         captureWebScreenShot.mockReset();
         printHTMLContent.mockReset();
+        previewPrintCurrentWindow.mockReset();
         goDownload.mockReset();
         electronMockState.dialog.showOpenDialog.mockReset();
         screenInstance.listenLoading.mockClear();
@@ -228,6 +233,38 @@ describe('electronEventListener', () => {
             'reply:tar-create',
             undefined,
         );
+    });
+
+    test('prints HTML payloads or previews the sender window', () => {
+        const sourceWin = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => sourceWin);
+        electronMockState.BrowserWindowMock();
+        const appController = {
+            mainWin: { webContents: { getZoomFactor: vi.fn(() => 1) } },
+            mainController: {
+                sendScreenMessage: vi.fn(),
+                changeBible: vi.fn(),
+                ctrlScrolling: vi.fn(),
+            },
+            settingManager: {
+                themeSource: 'system',
+                primaryDisplay: { size: { width: 1280 } },
+            },
+            resetThemeBackgroundColor: vi.fn(),
+            reloadAll: vi.fn(),
+        };
+
+        initEventOther(appController as any);
+
+        const printHandler = electronMockState.ipcMain.on.mock.calls.find(
+            ([eventName]) => eventName === 'all:app:print',
+        )?.[1];
+
+        printHandler({ sender: sourceWin.webContents }, '<html>Note</html>');
+        printHandler({ sender: sourceWin.webContents });
+
+        expect(printHTMLContent).toHaveBeenCalledWith('<html>Note</html>');
+        expect(previewPrintCurrentWindow).toHaveBeenCalledWith(sourceWin);
     });
 
     test('shows a screen on a display and notifies the main window', async () => {

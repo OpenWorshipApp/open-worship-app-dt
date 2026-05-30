@@ -8,6 +8,14 @@ const browserWindows: any[] = [];
 let browserWindowFactory: BrowserWindowFactory = () =>
     createMockBrowserWindow();
 
+function getLastBrowserWindow() {
+    let lastBrowserWindow = null;
+    for (const browserWindow of browserWindows) {
+        lastBrowserWindow = browserWindow;
+    }
+    return lastBrowserWindow;
+}
+
 const BrowserWindowMock: any = vi.fn(function BrowserWindowMock(options?: any) {
     const win = browserWindowFactory();
     win.__options = options;
@@ -15,6 +23,14 @@ const BrowserWindowMock: any = vi.fn(function BrowserWindowMock(options?: any) {
     return win;
 });
 BrowserWindowMock.getAllWindows = vi.fn(() => browserWindows);
+BrowserWindowMock.getFocusedWindow = vi.fn(getLastBrowserWindow);
+BrowserWindowMock.fromWebContents = vi.fn((webContents: any) => {
+    return (
+        browserWindows.find((browserWindow) => {
+            return browserWindow.webContents === webContents;
+        }) ?? null
+    );
+});
 
 const menuBuildFromTemplate = vi.fn();
 const menuSetApplicationMenu = vi.fn();
@@ -96,6 +112,8 @@ export const electronMockState = {
         browserWindowFactory = () => createMockBrowserWindow();
         BrowserWindowMock.mockClear();
         BrowserWindowMock.getAllWindows.mockClear();
+        BrowserWindowMock.getFocusedWindow.mockClear();
+        BrowserWindowMock.fromWebContents.mockClear();
         this.app.getVersion.mockClear();
         this.app.getAppPath.mockClear();
         this.app.getPath.mockClear();

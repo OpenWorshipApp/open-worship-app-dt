@@ -16,6 +16,7 @@ import {
     goDownload,
     isMac,
     messageChannels,
+    previewPrintCurrentWindow,
     printHTMLContent,
     tarCreate,
     tarExtract,
@@ -407,8 +408,16 @@ export function initEventOther(appController: ElectronAppController) {
         appController.reloadAll();
     });
 
-    ipcMain.on('all:app:print', (_event, htmlText: string) => {
-        printHTMLContent(htmlText);
+    ipcMain.on('all:app:print', (event, htmlText?: string) => {
+        if (typeof htmlText === 'string') {
+            printHTMLContent(htmlText);
+            return;
+        }
+
+        const win = BrowserWindow.fromWebContents(event.sender);
+        void previewPrintCurrentWindow(win).catch((error) => {
+            console.error('Print preview failed:', error);
+        });
     });
 
     ipcMain.on('all:app:log', (_event, messages: any[]) => {
