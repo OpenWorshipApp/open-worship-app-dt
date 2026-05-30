@@ -111,6 +111,23 @@ describe('appLocalStorage', () => {
         );
     });
 
+    test('creates the tmp files directory under default storage', async () => {
+        const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
+            await loadModule();
+        stubStorage({
+            [SELECTED_PARENT_DIR_SETTING_NAME]: '/selected',
+        });
+        fsExistSyncMock.mockImplementation((path: string) => {
+            return path === '/selected';
+        });
+
+        expect(appLocalStorage.tmpFilesDir).toBe('/selected/tmp-files');
+        expect(fsMkDirSyncMock).toHaveBeenCalledWith(
+            '/selected/tmp-files',
+            true,
+        );
+    });
+
     test('reads and validates the selected parent directory asynchronously', async () => {
         const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
             await loadModule();

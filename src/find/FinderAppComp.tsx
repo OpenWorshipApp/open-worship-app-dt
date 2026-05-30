@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import type { LookupOptions } from './finderHelpers';
 import { findString } from './finderHelpers';
-import { useThemeSource } from '../others/initHelpers';
+import { useThemeSource } from '../others/themeHelpers';
 
 export default function FinderAppComp() {
     const [lookupText, setLookupText] = useState('');

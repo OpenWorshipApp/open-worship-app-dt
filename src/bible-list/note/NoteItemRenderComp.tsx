@@ -1,4 +1,4 @@
-import { useCallback, useState, type MouseEvent, type DragEvent } from 'react';
+import { useCallback, type MouseEvent, type DragEvent, useState } from 'react';
 
 import type NoteItem from './NoteItem';
 import { type ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
@@ -17,10 +17,11 @@ import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import ItemReadErrorComp from '../../others/ItemReadErrorComp';
 import Note from './Note';
 import { openNoteItemContextMenu } from './noteHelpers';
-import NoteEditorComp, { NoteTitleEditorComp } from './NoteEditorComp';
 import { tran } from '../../lang/langHelpers';
 import appProvider from '../../server/appProvider';
 import { openPopupWindow } from '../../helper/domHelpers';
+import { NoteTitleEditorComp } from './NoteEditorComp';
+import { exportBibleNoteItem } from './bibleNoteItemArchiveHelpers';
 
 export function handleOpening(note: Note, noteItem: NoteItem) {
     const fileFullName = note.fileSource.fullName;
@@ -35,7 +36,7 @@ export function handleOpening(note: Note, noteItem: NoteItem) {
         `${fileFullName}-${noteId}_${Date.now()}`,
         crypto.randomUUID(),
         {
-            width: 600,
+            width: 860,
         },
     );
 }
@@ -51,10 +52,10 @@ export default function NoteItemRenderComp({
     filePath: string;
     note: Note;
 }>) {
-    const [showingNote, setShowingNote] = useState(noteItem.isOpened);
-    const setShowingNote1 = useCallback(
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const setIsEditingTitle1 = useCallback(
         (isOpened: boolean) => {
-            setShowingNote(isOpened);
+            setIsEditingTitle(isOpened);
             noteItem.isOpened = isOpened;
             note.updateAndSaveNoteItem(noteItem, true);
         },
@@ -69,6 +70,12 @@ export default function NoteItemRenderComp({
                     menuElement: tran('Open'),
                     onSelect: () => {
                         handleOpening(note, noteItem);
+                    },
+                },
+                {
+                    menuElement: tran('Export'),
+                    onSelect: () => {
+                        exportBibleNoteItem(noteItem);
                     },
                 },
             ];
@@ -128,63 +135,70 @@ export default function NoteItemRenderComp({
         event.preventDefault();
         changeDragEventStyle(event, 'opacity', '1');
     }, []);
-    const handleDoubleClick = useCallback(() => {
+    const handleBibleNoteOpening = useCallback(() => {
         handleOpening(note, noteItem);
     }, [note, noteItem]);
-    const handleToggleNote = useCallback(() => {
-        setShowingNote1(!showingNote);
-    }, [showingNote, setShowingNote1]);
+    const handleStartEditingTitle = useCallback(() => {
+        if (isEditingTitle) {
+            return;
+        }
+        setIsEditingTitle1(!isEditingTitle);
+    }, [isEditingTitle, setIsEditingTitle1]);
 
     if (noteItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
     }
     const fileSource = FileSource.getInstance(filePath);
     return (
-        <>
-            <li
-                className="list-group-item item ps-3 pe-1 py-1"
-                title={tran('Double click to open note')}
-                style={{
-                    height: 40,
-                }}
-                data-note-item-id={`${fileSource.name}-${noteItem.id}`}
-                data-index={index + 1}
-                draggable
-                onDragStart={handleDragStartEvent}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDataDropping}
-                onDoubleClick={handleDoubleClick}
-                onContextMenu={handleContextMenuOpening}
-            >
-                <div className="d-flex ps-1">
-                    <ItemColorNoteComp item={noteItem} />
-                    <i
-                        className={
-                            `bi bi-journal${showingNote ? '-text' : ''} ` +
-                            'mx-1 app-caught-hover-pointer'
-                        }
-                        title={tran('Open note')}
-                        onClick={handleToggleNote}
+        <li
+            className="list-group-item item ps-3 pe-1 py-1"
+            title={tran('Double click to open note')}
+            style={{
+                height: 40,
+            }}
+            data-note-item-id={`${fileSource.name}-${noteItem.id}`}
+            data-index={index + 1}
+            draggable
+            onDragStart={handleDragStartEvent}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDataDropping}
+            onDoubleClick={handleStartEditingTitle}
+            onContextMenu={handleContextMenuOpening}
+        >
+            <div className="d-flex ps-1">
+                <ItemColorNoteComp item={noteItem} />
+                <i
+                    className={'bi bi-journal mx-1 app-caught-hover-pointer'}
+                    title={tran('Open BibleNote')}
+                    onClick={handleBibleNoteOpening}
+                />
+                {isEditingTitle ? (
+                    <NoteTitleEditorComp
+                        note={note}
+                        noteItem={noteItem}
+                        onEscape={() => {
+                            setIsEditingTitle1(false);
+                        }}
+                        onEnter={() => {
+                            setIsEditingTitle1(false);
+                        }}
+                        onBlur={() => {
+                            setIsEditingTitle1(false);
+                        }}
                     />
-                    {showingNote ? (
-                        <NoteTitleEditorComp note={note} noteItem={noteItem} />
-                    ) : (
-                        <div className="d-flex flex-fill">
-                            {noteItem.title ? (
-                                noteItem.title
-                            ) : (
-                                <span className="fst-italic text-warning">
-                                    {tran('No title')}
-                                </span>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </li>
-            {showingNote ? (
-                <NoteEditorComp note={note} noteItem={noteItem} />
-            ) : null}
-        </>
+                ) : (
+                    <div className="d-flex flex-fill">
+                        {noteItem.title ? (
+                            noteItem.title
+                        ) : (
+                            <span className="fst-italic text-warning">
+                                {tran('No title')}
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
+        </li>
     );
 }

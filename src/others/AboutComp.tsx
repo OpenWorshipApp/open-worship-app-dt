@@ -2,7 +2,7 @@ import appProvider from '../server/appProvider';
 import { getDocxToHtmlsVersion } from '../server/docxHelpers';
 import { getPptxToHtmlsVersion } from '../server/pptxHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
-import { useThemeSource } from './initHelpers';
+import { useThemeSource } from './themeHelpers';
 
 const { appInfo } = appProvider;
 const GITHUB_URL = appInfo.gitRepository;
@@ -82,6 +82,15 @@ export default function AboutComp() {
                         >
                             <i className="bi bi-github" /> Fork me on GitHub
                         </button>
+                        <a
+                            href={appInfo.homepage}
+                            className="ms-3"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            {appInfo.homepage}
+                            <i className="bi bi-box-arrow-up-right ms-1" />
+                        </a>
                     </div>
                 </div>
             </div>

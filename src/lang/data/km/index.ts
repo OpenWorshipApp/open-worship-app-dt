@@ -1,10 +1,11 @@
 import type { LanguageDataType } from '../../langHelpers';
 
-import btbBlack from './fonts/Battambang-Black.ttf';
-import btbBold from './fonts/Battambang-Bold.ttf';
-import btbLight from './fonts/Battambang-Light.ttf';
-import btbRegular from './fonts/Battambang-Regular.ttf';
-import btbThin from './fonts/Battambang-Thin.ttf';
+import btbBlack from './fonts/Battambang/Battambang-Black.ttf';
+import btbBold from './fonts/Battambang/Battambang-Bold.ttf';
+import btbLight from './fonts/Battambang/Battambang-Light.ttf';
+import btbRegular from './fonts/Battambang/Battambang-Regular.ttf';
+import btbThin from './fonts/Battambang/Battambang-Thin.ttf';
+import fhRegular from './fonts/Fasthand/Fasthand-Regular.ttf';
 
 import bibleBooks from './bibleBooks.json';
 
@@ -23,6 +24,9 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Delete Note Item': 'លុបធាតុកំណត់សម្គាល់',
+    'Are you sure to delete this note item?':
+        'តើអ្នកពិតជាចង់លុបធាតុកំណត់សម្គាល់នេះឬ?',
     'Double click to open note': 'ចុចពីរដងដើម្បីបើកកំណត់ត្រា',
     'Reset Selected Books': 'កំណត់សៀវភៅដែលបានជ្រើសរើសឡើងវិញ',
     'Fail to reset search data, please try again':
@@ -116,7 +120,7 @@ const dictionary = {
     'restart the app after installation.']:
         'សូមដំឡើងអក្សរដែលបាត់ពីទំព័រដែលបានបើក ហើយចាប់ផ្តើមកម្មវិធីឡើងវិញបន្ទាប់ពីការដំឡើង',
     'Opening Missing Fonts Searching': 'កំពុងស្វែងរកអក្សរដែលបាត់',
-    'Open note': 'បើកកំណត់ត្រា',
+    'Open BibleNote': 'បើកកំណត់ត្រាព្រះគម្ពីរ',
     'No title': 'គ្មានចំណងជើង',
     'Background and Color': 'ផ្ទៃខាងក្រោយ និងពណ៌',
     'The current text color may not be visible with the new background color.':
@@ -473,14 +477,18 @@ const sanitizedDictionary = Object.fromEntries(
     ]),
 );
 const fontFamily = 'km-font-family';
+const stickyNoteFontFamily = 'km-font-Fasthand';
 const lang: LanguageDataType = {
     version: '0.0.1',
     locale: 'km-KH',
     langCode: 'km',
+    editorLink: 'https://editor-km.openworship.app',
     bibleBooks,
-    fontFamilyName: 'Battambang',
+    checkIsThisLang: (text: string) => {
+        return /[\u1780-\u17FF]/u.test(text);
+    },
     getFontFamilyFiles: () => {
-        return [btbRegular, btbBold, btbLight, btbThin, btbBlack];
+        return [btbRegular, btbBold, btbLight, btbThin, btbBlack, fhRegular];
     },
     genCss: () => {
         return `
@@ -509,9 +517,15 @@ const lang: LanguageDataType = {
             src: url(${btbBlack}) format("truetype");
             font-weight: 900;
         }
+        @font-face {
+            font-family: ${stickyNoteFontFamily};
+            src: url(${fhRegular}) format("truetype");
+            font-weight: normal;
+        }
         `;
     },
     fontFamily,
+    stickyNoteFontFamily,
     numList,
     dictionary: sanitizedDictionary,
     name: 'Khmer',

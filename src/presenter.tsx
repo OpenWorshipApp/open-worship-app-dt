@@ -1,3 +1,4 @@
+import './bootstrapCss';
 import { init } from './boot';
 import { run } from './others/main';
 import AppPresenterComp from './presenter/AppPresenterComp';

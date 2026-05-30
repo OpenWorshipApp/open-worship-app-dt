@@ -17,6 +17,7 @@ import {
     isMac,
     messageChannels,
     printHTMLContent,
+    tarCreate,
     tarExtract,
 } from './electronHelpers';
 import type { OptionalPromise } from './electronHelpers';
@@ -274,6 +275,24 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:tar-extract',
         (data: { filePath: string; outputDir: string }) => {
             return tarExtract(data.filePath, data.outputDir);
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:tar-create',
+        (data: {
+            inputDir: string;
+            outputFilePath: string;
+            files: string[];
+            isGzip?: boolean;
+        }) => {
+            return tarCreate(
+                data.inputDir,
+                data.outputFilePath,
+                data.files,
+                data.isGzip,
+            );
         },
     );
 

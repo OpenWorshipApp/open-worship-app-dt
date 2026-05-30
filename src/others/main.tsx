@@ -29,7 +29,7 @@ import { unlocking } from '../server/unlockingHelpers';
 import { checkDecidedBibleReaderHomePage } from '../server/appHelpers';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { openGeneralSetting } from '../setting/settingHelpers';
-import { useThemeSource } from './initHelpers';
+import { useThemeSource } from './themeHelpers';
 import { getReactRoot } from './rootHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
 import { checkForAppUpdate } from '../server/updatingAppHelpers';
@@ -142,7 +142,7 @@ export function RenderApp({
     );
 }
 
-export async function run(children: ReactNode) {
+export async function run(children?: ReactNode) {
     await initMain();
     KeyboardEventListener.onMacQuitting = () => {
         showAppConfirm(
@@ -186,10 +186,11 @@ export async function run(children: ReactNode) {
         document.body.style.fontFamily = fontFamily;
     }
 
-    const root = getReactRoot();
-    root.render(<RenderApp>{children}</RenderApp>);
-
     if (appProvider.isPagePresenter || appProvider.isPageReader) {
         setTimeout(checkForAppUpdate, 6e4);
+    }
+    if (children !== undefined) {
+        const root = getReactRoot();
+        root.render(<RenderApp>{children}</RenderApp>);
     }
 }

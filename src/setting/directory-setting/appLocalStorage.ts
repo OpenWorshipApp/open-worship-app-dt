@@ -16,6 +16,7 @@ import {
 export const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
 
 export const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
+export const TMP_FILES_FOLDER_NAME = 'tmp-files';
 const cache = new CacheManager<string>(10);
 class AppLocalStorage {
     get defaultStorage() {
@@ -53,6 +54,17 @@ class AppLocalStorage {
         }
         cache.setSync(LOCAL_STORAGE_FOLDER_NAME, localStorageDir);
         return localStorageDir;
+    }
+
+    get tmpFilesDir() {
+        const tmpFilesDir = pathJoin(
+            this.defaultStorage,
+            TMP_FILES_FOLDER_NAME,
+        );
+        if (!fsExistSync(tmpFilesDir)) {
+            fsMkDirSync(tmpFilesDir, true);
+        }
+        return tmpFilesDir;
     }
 
     async getSelectedParentDirectory() {

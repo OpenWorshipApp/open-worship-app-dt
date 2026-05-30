@@ -338,7 +338,7 @@ export async function exportToWordDocument(bibleItems: BibleItem[]) {
             const text = await bibleItem.toText();
             const title = await bibleItem.toTitleWithBibleKey();
             const langData = langDataMap[bibleItem.bibleKey];
-            const fontFamily = langData?.fontFamilyName ?? null;
+            const fontFamily = langData?.fontFamily ?? null;
             return { title, body: text, fontFamily };
         }),
     );

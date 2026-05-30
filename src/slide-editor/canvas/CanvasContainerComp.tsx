@@ -18,7 +18,7 @@ import ShadowingFillParentWidthComp, {
 } from '../../others/ShadowingFillParentWidthComp';
 import { getSlideItemShadowingStyle } from '../../app-document-presenter/items/slideItemRenderHelpers';
 import { genBoxEditorStyle } from './box/boxEditorHelpers';
-import { useThemeSource } from '../../others/initHelpers';
+import { useThemeSource } from '../../others/themeHelpers';
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 

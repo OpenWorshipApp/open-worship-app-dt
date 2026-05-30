@@ -7,7 +7,7 @@ import {
     useScreenManagerContext,
     useScreenManagerEvents,
 } from './managers/screenManagerHooks';
-import { getColorParts } from '../others/initHelpers';
+import { getColorParts } from '../others/themeHelpers';
 import { checkIsZoomed } from '../helper/domHelpers';
 import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
 

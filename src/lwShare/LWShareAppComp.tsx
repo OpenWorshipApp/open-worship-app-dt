@@ -1,4 +1,4 @@
-import { useThemeSource } from '../others/initHelpers';
+import { useThemeSource } from '../others/themeHelpers';
 import './LWShareAppComp.scss';
 
 import { handleForkingOnGithub, lwSharePackage } from './lwShareHelpers';

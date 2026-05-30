@@ -3,7 +3,9 @@ import { type CSSProperties, useState } from 'react';
 import type { DataInputType, FlexSizeType } from './flexSizeHelpers';
 import { getFlexSizeSetting, setFlexSizeSetting } from './flexSizeHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
-import RenderResizeActorItemComp from './RenderResizeActorItemComp';
+import RenderResizeActorItemComp, {
+    renderResizerChildren,
+} from './RenderResizeActorItemComp';
 import { freezeObject } from '../helper/helpers';
 
 export default function ResizeActorComp({
@@ -64,6 +66,13 @@ export default function ResizeActorComp({
         }
     }, [flexSize, flexSizeDefault]);
 
+    if (dataInput.length === 0) {
+        return null;
+    }
+    if (dataInput.length === 1) {
+        const { children } = dataInput[0];
+        return renderResizerChildren(children);
+    }
     return (
         <div
             className={

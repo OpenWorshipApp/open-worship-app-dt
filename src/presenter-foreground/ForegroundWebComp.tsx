@@ -36,7 +36,7 @@ import {
     genCommonMenu,
     genShowOnScreensContextMenu,
 } from '../others/FileItemHandlerComp';
-import { useWebCapturing } from '../helper/domHelpers';
+import { useWebCapturing } from '../helper/capturingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function getAllShowingScreenIdDataList() {

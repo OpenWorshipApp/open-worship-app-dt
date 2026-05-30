@@ -11,7 +11,7 @@ import type LyricEditingManager from './LyricEditingManager';
 import { useLyricEditingManagerContext } from './LyricEditingManager';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import AppRangeComp from '../others/AppRangeComp';
-import { checkIsDarkMode } from '../others/initHelpers';
+import { checkIsDarkMode } from '../others/themeHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import appProvider from '../server/appProvider';
 import { forceReloadAppWindows } from '../setting/settingHelpers';

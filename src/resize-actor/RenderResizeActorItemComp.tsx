@@ -21,7 +21,7 @@ import {
     reopenAnotherHiddenWidget,
 } from './dynamicFlexSizeHelpers';
 
-const renderChildren = (Children: any) => {
+export const renderResizerChildren = (Children: any) => {
     if (typeof Children === 'object' && 'render' in Children) {
         return Children.render();
     }
@@ -155,7 +155,7 @@ export default function RenderResizeActorItemComp({
                         ...extraStyle,
                     }}
                 >
-                    {renderChildren(children)}
+                    {renderResizerChildren(children)}
                 </div>
             )}
             {isWidgetHidden ? (

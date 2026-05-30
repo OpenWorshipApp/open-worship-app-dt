@@ -17,7 +17,7 @@ import { chooseColorNote } from '../../others/ItemColorNoteComp';
 import appProvider from '../../server/appProvider';
 import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
 import type FileSource from '../../helper/FileSource';
-import { useWebCapturing } from '../../helper/domHelpers';
+import { useWebCapturing } from '../../helper/capturingHelpers';
 import { tran } from '../../lang/langHelpers';
 
 const CAMERA_BACKGROUND_SRC = '/assets/background-camera.png';

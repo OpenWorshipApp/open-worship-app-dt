@@ -1,7 +1,8 @@
+import './bootstrapCss';
+import { init } from './boot';
 import { run } from './others/main';
 import { hideAllScreens } from './_screen/screenHelpers';
 import { resizeSettingNames } from './resize-actor/flexSizeHelpers';
-import { init } from './boot';
 import BibleReaderComp from './bible-reader/BibleReaderComp';
 import AppContextMenuComp from './context-menu/AppContextMenuComp';
 import HandleAlertComp from './popup-widget/HandleAlertComp';

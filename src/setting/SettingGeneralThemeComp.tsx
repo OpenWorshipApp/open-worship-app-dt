@@ -1,8 +1,8 @@
 import { type ChangeEvent, useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import type { ThemeOptionType } from '../others/initHelpers';
-import { useThemeSource } from '../others/initHelpers';
+import type { ThemeOptionType } from '../others/themeHelpers';
+import { useThemeSource } from '../others/themeHelpers';
 
 export default function SettingGeneralThemeComp() {
     const { themeSource, setThemeSource } = useThemeSource();

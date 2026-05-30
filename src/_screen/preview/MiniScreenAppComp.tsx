@@ -5,7 +5,7 @@ import ScreenBibleComp from '../ScreenBibleComp';
 import { getScreenManagerByScreenId } from '../managers/screenManagerHelpers';
 import { ScreenManagerBaseContext } from '../managers/screenManagerHooks';
 import type ScreenEffectManager from '../managers/ScreenEffectManager';
-import { checkIsDarkMode } from '../../others/initHelpers';
+import { checkIsDarkMode } from '../../others/themeHelpers';
 
 const genBGBlank = () => {
     const isDarkMode = checkIsDarkMode();

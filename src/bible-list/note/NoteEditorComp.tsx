@@ -32,7 +32,17 @@ class NoteTitleStore implements SimpleNoteEditorStoreType {
 export function NoteTitleEditorComp({
     note,
     noteItem,
-}: Readonly<{ note: Note; noteItem: NoteItem; title?: string }>) {
+    onEscape,
+    onBlur,
+    onEnter,
+}: Readonly<{
+    note: Note;
+    noteItem: NoteItem;
+    title?: string;
+    onEscape?: () => void;
+    onBlur?: () => void;
+    onEnter?: () => void;
+}>) {
     const [store, setStore] = useState(new NoteTitleStore(note, noteItem));
     useAppEffect(() => {
         setStore(new NoteTitleStore(note, noteItem));
@@ -72,6 +82,9 @@ export function NoteTitleEditorComp({
                 placeholder={tran('Enter your note here') + '...'}
                 isResizable
                 isInput
+                onEscape={onEscape}
+                onBlur={onBlur}
+                onEnter={onEnter}
             />
         </div>
     );

@@ -37,7 +37,7 @@ import {
     genBackgroundWebContextMenuItems,
     genBackgroundWebExtraItemContextMenuItems,
 } from './backgroundWebHelpers';
-import { useWebCapturing } from '../helper/domHelpers';
+import { useWebCapturing } from '../helper/capturingHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';

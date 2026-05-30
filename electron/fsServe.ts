@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { app, net, protocol, session, type WebContents } from 'electron';
 
+import appInfo from '../package.json';
+
 export const htmlFiles = {
     appDocumentEditor: 'appDocumentEditor.html',
     presenter: 'presenter.html',
@@ -37,6 +39,7 @@ export const schemePrivileges = {
 
 export const rootUrl = `${customScheme}://local`;
 export const rootUrlAccess = `${customScheme}://access`;
+const externalRequestReferrer = new URL(appInfo.homepage).href;
 
 function toFileFullPath(filePath: string) {
     try {
@@ -64,6 +67,72 @@ function handlerLocal(dirPath: string, url: string) {
     return net.fetch(urlPath);
 }
 
+function setResponseHeader(
+    responseHeaders: Record<string, string[]>,
+    headerName: string,
+    value: string[],
+) {
+    const matchingHeaderNames = Object.keys(responseHeaders).filter((key) => {
+        return key.toLowerCase() === headerName;
+    });
+    for (const matchingHeaderName of matchingHeaderNames) {
+        delete responseHeaders[matchingHeaderName];
+    }
+    responseHeaders[matchingHeaderNames[0] ?? headerName] = value;
+}
+
+function getRequestHeader(
+    requestHeaders: Record<string, string> | undefined,
+    headerName: string,
+) {
+    const matchingHeaderName = Object.keys(requestHeaders ?? {}).find((key) => {
+        return key.toLowerCase() === headerName;
+    });
+    return matchingHeaderName ? requestHeaders?.[matchingHeaderName] : undefined;
+}
+
+function setRequestHeader(
+    requestHeaders: Record<string, string>,
+    headerName: string,
+    value: string,
+) {
+    const matchingHeaderName = Object.keys(requestHeaders).find((key) => {
+        return key.toLowerCase() === headerName;
+    });
+    requestHeaders[matchingHeaderName ?? headerName] = value;
+}
+
+function isHttpUrl(urlString: string | undefined) {
+    if (!urlString || !URL.canParse(urlString)) {
+        return false;
+    }
+    const protocol = new URL(urlString).protocol;
+    return protocol === 'http:' || protocol === 'https:';
+}
+
+function ensureExternalRequestReferrer(details: {
+    url?: string;
+    referrer?: string;
+    requestHeaders: Record<string, string>;
+}) {
+    if (!isHttpUrl(details.url)) {
+        return;
+    }
+    const requestReferrer =
+        getRequestHeader(details.requestHeaders, 'referer') ?? details.referrer;
+    if (requestReferrer && !requestReferrer.startsWith(rootUrl)) {
+        return;
+    }
+    setRequestHeader(details.requestHeaders, 'referer', externalRequestReferrer);
+}
+
+function toUrlOrigin(urlString: string | undefined) {
+    if (!urlString || !URL.canParse(urlString)) {
+        return null;
+    }
+    return new URL(urlString).origin;
+}
+
 export function initCustomSchemeHandler() {
     const dirPath = path.resolve(app.getAppPath(), 'dist');
     protocol.handle(customScheme, (request) => {
@@ -76,15 +145,57 @@ export function initCustomSchemeHandler() {
     });
 
     const webRequest = session.defaultSession.webRequest;
+    const requestOriginById = new Map<number, string>();
+    const externalUrlFilter = { urls: ['http://*/*', 'https://*/*'] };
+    webRequest.onBeforeSendHeaders(externalUrlFilter, (details, callback) => {
+        const requestOrigin =
+            getRequestHeader(details.requestHeaders, 'origin') ??
+            toUrlOrigin(getRequestHeader(details.requestHeaders, 'referer')) ??
+            toUrlOrigin(details.referrer);
+        ensureExternalRequestReferrer(details);
+        if (requestOrigin) {
+            requestOriginById.set(details.id, requestOrigin);
+        }
+        callback({ requestHeaders: details.requestHeaders });
+    });
     webRequest.onHeadersReceived(
-        { urls: ['https://*/*'] },
+        externalUrlFilter,
         (details, callback) => {
+            const requestOrigin = requestOriginById.get(details.id);
+            requestOriginById.delete(details.id);
             if (details.responseHeaders) {
-                details.responseHeaders['access-control-allow-headers'] = [
-                    'x-api-key',
-                    'content-type',
-                ];
-                details.responseHeaders['access-control-allow-origin'] = ['*'];
+                setResponseHeader(
+                    details.responseHeaders,
+                    'access-control-allow-headers',
+                    [
+                        'authorization',
+                        'content-type',
+                        'x-api-key',
+                        'x-goog-api-key',
+                    ],
+                );
+                setResponseHeader(
+                    details.responseHeaders,
+                    'access-control-allow-methods',
+                    ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+                );
+                setResponseHeader(
+                    details.responseHeaders,
+                    'access-control-allow-origin',
+                    [requestOrigin ?? '*'],
+                );
+                if (requestOrigin) {
+                    setResponseHeader(
+                        details.responseHeaders,
+                        'access-control-allow-credentials',
+                        ['true'],
+                    );
+                }
+                setResponseHeader(
+                    details.responseHeaders,
+                    'access-control-expose-headers',
+                    ['*'],
+                );
             }
             callback({ responseHeaders: details.responseHeaders });
         },

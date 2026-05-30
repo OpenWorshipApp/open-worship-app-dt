@@ -447,11 +447,13 @@ export type LanguageDataType = {
     version: string;
     locale: LocaleType;
     langCode: string;
+    editorLink?: string;
     bibleBooks: BibleBookType[];
-    fontFamilyName?: string;
+    checkIsThisLang: (text: string) => boolean;
     getFontFamilyFiles?: () => string[];
     genCss: () => string;
     fontFamily?: string;
+    stickyNoteFontFamily?: string;
     numList: string[];
     dictionary: AnyObjectType;
     name: string;
@@ -498,7 +500,7 @@ export function getLangData(langCodeOrLocale: string) {
     return langCache.get(langCodeOrLocale) ?? null;
 }
 
-function initLangCss(langData: LanguageDataType) {
+export function initLangCss(langData: LanguageDataType) {
     const elementId = `lang-${langData.langCode}`;
     let styleElement = document.querySelector(`style#${elementId}`);
     if (styleElement === null) {

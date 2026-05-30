@@ -1,4 +1,4 @@
-import { checkIsDarkMode } from '../../../others/initHelpers';
+import { checkIsDarkMode } from '../../../others/themeHelpers';
 
 const editorStyle = `
 .app-box-editor {

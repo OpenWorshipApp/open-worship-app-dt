@@ -11,7 +11,7 @@ import type {
     FlexSizeType,
     DataInputType,
 } from '../resize-actor/flexSizeHelpers';
-import { checkIsDarkMode, useThemeSource } from '../others/initHelpers';
+import { checkIsDarkMode, useThemeSource } from '../others/themeHelpers';
 
 export default function BibleViewRendererComp({
     isHorizontal = true,

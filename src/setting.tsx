@@ -1,6 +1,7 @@
+import './bootstrapCss';
 import { init } from './boot';
-import AppContextMenuComp from './context-menu/AppContextMenuComp';
 import { run } from './others/main';
+import AppContextMenuComp from './context-menu/AppContextMenuComp';
 import HandleAlertComp from './popup-widget/HandleAlertComp';
 import TopProgressBarComp from './progress-bar/TopProgressBarComp';
 import { forceReloadAppWindows } from './setting/settingHelpers';

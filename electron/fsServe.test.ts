@@ -87,20 +87,119 @@ describe('fsServe', () => {
             'file:///tmp/document.pdf',
         );
 
+        const onBeforeSendHeaders =
+            electronMockState.session.defaultSession.webRequest
+                .onBeforeSendHeaders;
+        expect(onBeforeSendHeaders.mock.calls[0][0]).toEqual({
+            urls: ['http://*/*', 'https://*/*'],
+        });
+        const requestCallback = vi.fn();
+        onBeforeSendHeaders.mock.calls[0][1](
+            {
+                id: 7,
+                requestHeaders: {
+                    Origin: 'https://www.youtube-nocookie.com',
+                },
+            },
+            requestCallback,
+        );
+        expect(requestCallback).toHaveBeenCalledWith({
+            requestHeaders: {
+                Origin: 'https://www.youtube-nocookie.com',
+            },
+        });
+
         const onHeadersReceived =
             electronMockState.session.defaultSession.webRequest
                 .onHeadersReceived;
+        expect(onHeadersReceived.mock.calls[0][0]).toEqual({
+            urls: ['http://*/*', 'https://*/*'],
+        });
+
         const callback = vi.fn();
         onHeadersReceived.mock.calls[0][1](
-            { responseHeaders: { existing: ['x'] } },
+            {
+                id: 7,
+                responseHeaders: {
+                    existing: ['x'],
+                    'Access-Control-Allow-Headers': ['content-type'],
+                    'access-control-allow-origin': ['*'],
+                },
+            },
             callback,
         );
 
         expect(callback).toHaveBeenCalledWith({
             responseHeaders: {
                 existing: ['x'],
-                'access-control-allow-headers': ['x-api-key', 'content-type'],
-                'access-control-allow-origin': ['*'],
+                'Access-Control-Allow-Headers': [
+                    'authorization',
+                    'content-type',
+                    'x-api-key',
+                    'x-goog-api-key',
+                ],
+                'access-control-allow-methods': [
+                    'GET',
+                    'POST',
+                    'PUT',
+                    'PATCH',
+                    'DELETE',
+                    'OPTIONS',
+                ],
+                'access-control-allow-origin': [
+                    'https://www.youtube-nocookie.com',
+                ],
+                'access-control-allow-credentials': ['true'],
+                'access-control-expose-headers': ['*'],
+            },
+        });
+    });
+
+    test('adds an HTTP referrer to external requests from the production app scheme', () => {
+        initCustomSchemeHandler();
+
+        const onBeforeSendHeaders =
+            electronMockState.session.defaultSession.webRequest
+                .onBeforeSendHeaders;
+        const requestCallback = vi.fn();
+        onBeforeSendHeaders.mock.calls[0][1](
+            {
+                id: 8,
+                url: 'https://example.com/resource.json',
+                referrer: `${rootUrl}/${htmlFiles.noteItemEditor}`,
+                requestHeaders: {},
+            },
+            requestCallback,
+        );
+
+        expect(requestCallback).toHaveBeenCalledWith({
+            requestHeaders: {
+                referer: 'https://www.openworship.app/',
+            },
+        });
+    });
+
+    test('keeps existing HTTP referrers on external requests', () => {
+        initCustomSchemeHandler();
+
+        const onBeforeSendHeaders =
+            electronMockState.session.defaultSession.webRequest
+                .onBeforeSendHeaders;
+        const requestCallback = vi.fn();
+        onBeforeSendHeaders.mock.calls[0][1](
+            {
+                id: 9,
+                url: 'https://example.com/resource.json',
+                requestHeaders: {
+                    Referer: 'https://example.org/current-page',
+                },
+            },
+            requestCallback,
+        );
+
+        expect(requestCallback).toHaveBeenCalledWith({
+            requestHeaders: {
+                Referer: 'https://example.org/current-page',
             },
         });
     });

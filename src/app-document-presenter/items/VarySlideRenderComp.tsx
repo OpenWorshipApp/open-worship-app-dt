@@ -34,7 +34,7 @@ import ShadowingFillParentWidthComp, {
     useShadowingParentWidth,
 } from '../../others/ShadowingFillParentWidthComp';
 import VaryAppDocumentScaleContainerComp from './VaryAppDocumentScaleContainerComp';
-import { useThemeSource } from '../../others/initHelpers';
+import { useThemeSource } from '../../others/themeHelpers';
 import { tran } from '../../lang/langHelpers';
 
 function RenderScreenInfoComp({

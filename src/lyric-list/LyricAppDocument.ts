@@ -15,7 +15,7 @@ import {
     renderLyricSlideMarkdownMusicTextList,
     renderMarkdownMusic,
 } from './markdownHelpers';
-import { checkIsDarkMode } from '../others/initHelpers';
+import { checkIsDarkMode } from '../others/themeHelpers';
 import { HEX_COLOR_BLACK, HEX_COLOR_WHITE } from '../others/color/colorHelpers';
 
 export type LyricEditingPropsType = {

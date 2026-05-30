@@ -6,6 +6,7 @@ import { defaultDataDirNames } from '../../helper/constants';
 import DirSource from '../../helper/DirSource';
 import FileSource from '../../helper/FileSource';
 import { tran } from '../../lang/langHelpers';
+import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { addExtension } from '../../server/fileHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import Note from './Note';
@@ -82,6 +83,16 @@ export async function openNoteItemContextMenu(
         {
             menuElement: tran('Delete'),
             onSelect: async () => {
+                const isOk = await showAppConfirm(
+                    tran('Delete Note Item'),
+                    tran('Are you sure to delete this note item?'),
+                    {
+                        confirmButtonLabel: 'Yes',
+                    },
+                );
+                if (!isOk) {
+                    return;
+                }
                 await note.deleteNoteItem(noteItem);
             },
         },

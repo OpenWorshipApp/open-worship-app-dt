@@ -21,11 +21,20 @@ import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
 import Note from './Note';
 import NoteItem from './NoteItem';
+import { selectAndImportBibleNoteItemArchive } from './bibleNoteItemArchiveHelpers';
 import { moveNoteItemTo } from './noteHelpers';
 
 const LazyRenderNoteItemsComp = lazy(() => {
     return import('./RenderNoteItemsComp');
 });
+
+function createNewNoteItem(note: Note) {
+    const newId = note.maxItemId + 1;
+    const noteItemJsonData = NoteItem.genNewJsonData();
+    noteItemJsonData.metadata.id = newId;
+    const newNoteItem = new NoteItem(noteItemJsonData);
+    note.addAndSaveNoteItem(newNoteItem);
+}
 
 function genContextMenu(
     note: Note | null | undefined,
@@ -80,13 +89,19 @@ function genContextMenu(
         {
             menuElement: tran('New Note Item'),
             onSelect: () => {
-                const newId = note.maxItemId + 1;
-                const noteItemJsonData = NoteItem.genNewJsonData();
-                noteItemJsonData.metadata.id = newId;
-                const newNoteItem = new NoteItem(noteItemJsonData);
-                note.addAndSaveNoteItem(newNoteItem);
+                createNewNoteItem(note);
             },
         },
+        ...(note.isDefault
+            ? [
+                  {
+                      menuElement: tran('Import'),
+                      onSelect: () => {
+                          selectAndImportBibleNoteItemArchive(note);
+                      },
+                  },
+              ]
+            : []),
         ...(isAttachedBackgroundElement
             ? genRemovingAttachedBackgroundMenu(note.filePath)
             : []),
@@ -122,6 +137,18 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
                         {fileSource.name}
                     </span>
                 </div>
+                {note.isOpened ? (
+                    <div className="me-2">
+                        <i
+                            className="bi bi-plus app-caught-hover-pointer"
+                            style={{ color: 'green', fontSize: '20px' }}
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                createNewNoteItem(note);
+                            }}
+                        ></i>
+                    </div>
+                ) : null}
                 <div className="float-end">
                     <AttachBackgroundIconComponent filePath={note.filePath} />
                 </div>

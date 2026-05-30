@@ -104,6 +104,7 @@ export default function ItemColorNoteComp({
                               color: colorNote,
                           }
                         : {}),
+                    opacity: colorNote ? 1 : 0.2,
                 }}
             />
         </span>

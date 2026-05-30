@@ -13,7 +13,7 @@ import RenderBackgroundWebIframeComp, {
     BackgroundWebPlaceHolderComp,
 } from './RenderBackgroundWebIframeComp';
 import { type BackgroundWebUrlSource } from './backgroundWebUrlHelpers';
-import { useWebCapturing } from '../helper/domHelpers';
+import { useWebCapturing } from '../helper/capturingHelpers';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { copyToClipboard } from '../server/appHelpers';

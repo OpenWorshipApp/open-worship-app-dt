@@ -258,6 +258,14 @@ describe('appHelpers', () => {
                 ) => {
                     callback({}, undefined);
                 },
+            )
+            .mockImplementationOnce(
+                (
+                    _replyEventName: string,
+                    callback: (event: unknown, value: unknown) => void,
+                ) => {
+                    callback({}, undefined);
+                },
             );
 
         module.showFileOrDirExplorer('/docs');
@@ -266,6 +274,9 @@ describe('appHelpers', () => {
         ).resolves.toBeNull();
         await expect(
             module.tarExtract('archive.tar', '/output'),
+        ).resolves.toBeUndefined();
+        await expect(
+            module.tarCreate('/input', 'archive.tar.gz', ['manifest.json'], true),
         ).resolves.toBeUndefined();
         expect(module.copyToClipboard('lyrics')).toBe(true);
 

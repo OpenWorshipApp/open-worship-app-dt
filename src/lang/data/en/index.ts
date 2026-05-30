@@ -7,6 +7,9 @@ const lang: LanguageDataType = {
     locale: 'en-US',
     langCode: 'en',
     bibleBooks,
+    checkIsThisLang: () => {
+        return true;
+    },
     genCss: () => {
         return '';
     },

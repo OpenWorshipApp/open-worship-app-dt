@@ -1,139 +1,71 @@
-import { useCallback } from 'react';
-
-import { dirSourceSettingNames } from '../../helper/constants';
-import DirSource from '../../helper/DirSource';
-import { getParamFileFullName, getParamIdNum } from '../../helper/domHelpers';
-import { pathJoin, fsExistSync } from '../../server/fileHelpers';
-import Note from './Note';
-import FileReadErrorComp from '../../others/FileReadErrorComp';
-import { useAppStateAsync } from '../../helper/debuggerHelpers';
-import { handleError } from '../../helper/errorHelpers';
-import NoteEditorComp, { NoteTitleEditorComp } from './NoteEditorComp';
-import LoadingComp from '../../others/LoadingComp';
-import {
-    useDirSourceWatching,
-    useFileSourceEvents,
-    useGenDirSourceReload,
-} from '../../helper/dirSourceHelpers';
+import { type BibleNote, type BibleNoteFooterActionButton } from 'BibleNote.js';
+import { useThemeSource } from '../../others/themeHelpers';
+import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import appProvider from '../../server/appProvider';
-import type NoteItem from './NoteItem';
-import { tran } from '../../lang/langHelpers';
 import { useIsOnTop } from '../../server/appHelpers';
+import { getAllLangsAsync } from '../../lang/langHelpers';
 
-async function getNoteAndNoteItem() {
-    const fileFullName = getParamFileFullName();
-    if (fileFullName === null) {
-        throw new Error('Note file not specified');
-    }
-    const dirPath = DirSource.getDirPathBySettingName(
-        dirSourceSettingNames.NOTES,
-    );
-    if (dirPath === null) {
-        throw new Error('Note directory not set');
-    }
-    const filePath = pathJoin(dirPath, fileFullName);
-    if (fsExistSync(filePath) === false) {
-        throw new Error(`Note file not found: ${fileFullName}`);
-    }
-    const note = await Note.fromFilePath(filePath);
-    if (note === null) {
-        throw new Error(`Failed to load note from file: ${fileFullName}`);
-    }
-
-    const noteItemId = getParamIdNum();
-    if (noteItemId === null) {
-        throw new Error('Note item ID not specified');
-    }
-    const noteItem = note.getItemById(noteItemId);
-    if (noteItem === null) {
-        throw new Error(`Note item not found: ${noteItemId}`);
-    }
-    return { note, noteItem };
-}
-
-function updateWindowTitle(note: Note, noteItem: NoteItem) {
-    const { fullName } = note.fileSource;
-    const suffix = `(${fullName}: ${noteItem.title})`;
-    document.title = `${appProvider.windowTitle} - ${suffix}`;
-}
-function useUpdateWindowTitle(
-    data?: { note: Note; noteItem: NoteItem } | null,
-) {
-    useFileSourceEvents(
-        ['update'],
-        () => {
-            updateWindowTitle(data!.note, data!.noteItem);
-        },
-        [],
-        data?.note.filePath,
-    );
-}
-
-const HEIGHT = 40;
-export default function NoteItemEditorPopupComp() {
+export default function NoteItemEditorPopupComp({
+    bibleNote,
+}: Readonly<{ bibleNote: BibleNote }>) {
     const [isOnTop, setIsOnTop] = useIsOnTop();
-    const [data] = useAppStateAsync(async () => {
-        try {
-            const data = await getNoteAndNoteItem();
-            const { fullName } = data.note.fileSource;
-            const suffix = `(${fullName}: ${data.noteItem.title})`;
-            document.title = `${appProvider.windowTitle} - ${suffix}`;
-            return data;
-        } catch (error) {
-            handleError(error);
+    const themeSource = useThemeSource();
+    useAppEffect(() => {
+        bibleNote.setColorScheme(themeSource.theme as 'light' | 'dark');
+    }, [themeSource.theme]);
+    useAppEffectAsync(async () => {
+        const langDataList = await getAllLangsAsync();
+        for (const langData of langDataList) {
+            const editorLink = langData.editorLink;
+            if (!editorLink) {
+                return;
+            }
+            const buttonData: BibleNoteFooterActionButton = {
+                id: 'khmer-markdown-editor ' + langData.langCode,
+                description: `Open in ${langData.langCode} Markdown Editor`,
+                children: (
+                    <button
+                        className="action-button"
+                        onClick={() => {
+                            appProvider.browserUtils.openExternalURL(
+                                editorLink,
+                            );
+                        }}
+                        title={`Open in ${langData.langCode} Markdown Editor`}
+                        aria-label={`Open in ${langData.langCode} Markdown Editor`}
+                        aria-pressed={false}
+                    >
+                        <i className={`bi bi-spellcheck`} />
+                    </button>
+                ),
+            };
+            bibleNote.prependFooterActionButton(buttonData);
         }
-        return null;
-    }, []);
-    useUpdateWindowTitle(data);
-    const dirSource = useGenDirSourceReload(dirSourceSettingNames.NOTES);
-    useDirSourceWatching(dirSource);
-    const handleOnTopChange = useCallback(() => {
-        setIsOnTop((prev) => !prev);
-    }, [setIsOnTop]);
-    if (data === undefined) {
-        return <LoadingComp />;
-    }
-    if (data === null) {
-        return <FileReadErrorComp />;
-    }
-    return (
-        <div className="card w-100 h-100 app-overflow-hidden">
-            <div
-                className="card-header 100 d-flex"
-                style={{
-                    height: HEIGHT,
-                }}
-            >
-                <NoteTitleEditorComp
-                    note={data.note}
-                    noteItem={data.noteItem}
-                />
-                <div
-                    className="input-group-text app-inner-shadow p-0 px-1 app-caught-hover-pointer"
-                    onClick={handleOnTopChange}
-                >
-                    {tran('On Top')}:{' '}
-                    <input
-                        className="form-check-input mt-0"
-                        type="checkbox"
-                        checked={isOnTop}
-                    />
-                </div>
-            </div>
-            <div
-                className="card-body w-100 app-overflow-hidden"
-                style={{
-                    height: `calc(100% - ${HEIGHT}px)`,
-                }}
-            >
-                <NoteEditorComp
-                    note={data.note}
-                    noteItem={data.noteItem}
-                    extraStyle={{
-                        height: '100%',
+    }, [bibleNote]);
+    useAppEffect(() => {
+        const onTopButton: BibleNoteFooterActionButton = {
+            id: 'toggle-on-top',
+            description: 'Toggle always on top',
+            children: (
+                <button
+                    className="action-button"
+                    onClick={() => {
+                        setIsOnTop((prev) => !prev);
                     }}
-                />
-            </div>
-        </div>
-    );
+                    title="Toggle Always On Top"
+                    aria-label="Toggle Always On Top"
+                    aria-pressed={isOnTop}
+                >
+                    <i
+                        className={`bi bi-${isOnTop ? 'window-stack' : 'window-desktop'}`}
+                        style={{
+                            color: isOnTop ? 'green' : undefined,
+                        }}
+                    />
+                </button>
+            ),
+        };
+        bibleNote.prependFooterActionButton(onTopButton);
+    }, [bibleNote, isOnTop]);
+    return <div style={{ display: 'none' }}></div>;
 }

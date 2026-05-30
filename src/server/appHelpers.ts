@@ -64,6 +64,20 @@ export function tarExtract(filePath: string, outputDir: string) {
     });
 }
 
+export function tarCreate(
+    inputDir: string,
+    outputFilePath: string,
+    files: string[],
+    isGzip = false,
+) {
+    return electronSendAsync<void>('main:app:tar-create', {
+        inputDir,
+        outputFilePath,
+        files,
+        isGzip,
+    });
+}
+
 export function copyToClipboard(str: string) {
     appProvider.systemUtils.copyToClipboard(str);
     showSimpleToast('Copy', 'Text has been copied to clip');

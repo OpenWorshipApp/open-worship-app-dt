@@ -42,11 +42,17 @@ export default function SimpleNoteEditorComp({
     placeholder,
     isResizable,
     isInput,
+    onEscape,
+    onBlur,
+    onEnter,
 }: Readonly<{
     store: SimpleNoteEditorStoreType;
     placeholder?: string;
     isResizable?: boolean;
     isInput?: boolean;
+    onEscape?: () => void;
+    onBlur?: () => void;
+    onEnter?: () => void;
 }>) {
     const attemptTimeout = useMemo(() => {
         return genTimeoutAttempt(5e3); // 5 seconds
@@ -85,10 +91,28 @@ export default function SimpleNoteEditorComp({
             window.removeEventListener('beforeunload', blockUnload);
         };
     }, [isSaved]);
+    const forceSaving = useCallback(async () => {
+        if (store.save === undefined) {
+            return;
+        }
+        const isSaved = await store.save();
+        setIsSaved(isSaved);
+    }, [store]);
     const handleKeyDown = useCallback(
         async (
             event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
         ) => {
+            if (
+                onEscape !== undefined &&
+                event.key === 'Escape' &&
+                !event.shiftKey &&
+                !event.altKey &&
+                !event.ctrlKey &&
+                !event.metaKey
+            ) {
+                onEscape();
+                return;
+            }
             if (
                 checkIsKeyboardEventMatch(
                     [
@@ -109,8 +133,12 @@ export default function SimpleNoteEditorComp({
                 const isSaved = await store.save();
                 setIsSaved(isSaved);
             }
+            if (onEnter !== undefined && event.key === 'Enter') {
+                forceSaving();
+                onEnter();
+            }
         },
-        [store],
+        [store, onEscape, onEnter, forceSaving],
     );
     const handleChanging = useCallback(
         (event: any) => {
@@ -120,12 +148,9 @@ export default function SimpleNoteEditorComp({
         [setCurrentText1],
     );
     const handleBlur = useCallback(async () => {
-        if (store.save === undefined) {
-            return;
-        }
-        const isSaved = await store.save();
-        setIsSaved(isSaved);
-    }, [store]);
+        forceSaving();
+        onBlur?.();
+    }, [onBlur, forceSaving]);
     const style: CSSProperties = {
         outline: 'none',
         boxSizing: 'border-box',

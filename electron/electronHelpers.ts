@@ -48,6 +48,24 @@ export async function tarExtract(filePath: string, outputDir: string) {
     return await (tarX as any)({ file: filePath, cwd: outputDir });
 }
 
+export async function tarCreate(
+    inputDir: string,
+    outputFilePath: string,
+    files: string[],
+    isGzip = false,
+) {
+    const { c: tarC } = await import('tar');
+    return await (tarC as any)(
+        {
+            cwd: inputDir,
+            file: outputFilePath,
+            gzip: isGzip,
+            portable: true,
+        },
+        files,
+    );
+}
+
 interface ClosableInt {
     close: () => void;
 }
@@ -283,7 +301,7 @@ export type PopupWindowFeaturesType = {
     appScale?: number;
     appAlwaysOnTop?: boolean;
     appTopToMain?: boolean;
-    appAutoHideMenuBar?: boolean;
+    appShowMenuBar?: boolean;
     appResize?: boolean;
 };
 
@@ -420,7 +438,10 @@ function createPopupWindow(
     if (featuresRecord.appAlwaysOnTop) {
         popupWin.setAlwaysOnTop(true, 'screen-saver');
     }
-    if (featuresRecord.appAutoHideMenuBar) {
+    if (featuresRecord.appShowMenuBar) {
+        popupWin.setMenuBarVisibility(true);
+        popupWin.setAutoHideMenuBar(false);
+    } else {
         popupWin.setMenuBarVisibility(false);
         popupWin.setAutoHideMenuBar(true);
     }

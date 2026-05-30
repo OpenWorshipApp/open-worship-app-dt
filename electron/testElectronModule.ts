@@ -66,6 +66,7 @@ export const electronMockState = {
     session: {
         defaultSession: {
             webRequest: {
+                onBeforeSendHeaders: vi.fn(),
                 onHeadersReceived: vi.fn(),
             },
         },
@@ -110,6 +111,7 @@ export const electronMockState = {
         this.net.fetch.mockClear();
         this.protocol.handle.mockClear();
         this.protocol.registerSchemesAsPrivileged.mockClear();
+        this.session.defaultSession.webRequest.onBeforeSendHeaders.mockClear();
         this.session.defaultSession.webRequest.onHeadersReceived.mockClear();
         this.dialog.showOpenDialog.mockClear();
         this.ipcMain.handle.mockClear();

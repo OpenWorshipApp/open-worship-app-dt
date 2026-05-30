@@ -15,6 +15,7 @@ const {
     pptxToHtmls,
     getPptxToHtmlsVersion,
     tarExtract,
+    tarCreate,
     officeFileToPdf,
     pdfToImages,
     getPagesCount,
@@ -33,6 +34,7 @@ const {
     pptxToHtmls: vi.fn(),
     getPptxToHtmlsVersion: vi.fn(),
     tarExtract: vi.fn(),
+    tarCreate: vi.fn(),
     officeFileToPdf: vi.fn(),
     pdfToImages: vi.fn(),
     getPagesCount: vi.fn(),
@@ -61,6 +63,7 @@ vi.mock('./electronHelpers', () => ({
         screenMessage: 'app:screen:message',
     },
     printHTMLContent,
+    tarCreate,
     tarExtract,
 }));
 
@@ -99,6 +102,7 @@ describe('electronEventListener', () => {
     beforeEach(() => {
         electronMockState.reset();
         tarExtract.mockReset();
+        tarCreate.mockReset();
         officeFileToPdf.mockReset();
         pdfToImages.mockReset();
         getPagesCount.mockReset();
@@ -172,6 +176,9 @@ describe('electronEventListener', () => {
         const docxVersionHandler = electronMockState.ipcMain.on.mock.calls.find(
             ([eventName]) => eventName === 'main:app:get-docx-to-htmls-version',
         )?.[1];
+        const tarCreateHandler = electronMockState.ipcMain.on.mock.calls.find(
+            ([eventName]) => eventName === 'main:app:tar-create',
+        )?.[1];
         const sender = { send: vi.fn() };
 
         await docxToHtmlsHandler(
@@ -185,6 +192,16 @@ describe('electronEventListener', () => {
         await docxVersionHandler(
             { sender },
             { replyEventName: 'reply:docx-version' },
+        );
+        await tarCreateHandler(
+            { sender },
+            {
+                replyEventName: 'reply:tar-create',
+                inputDir: '/archives/owabn-export',
+                outputFilePath: '/archives/item.owabn.tar.gz',
+                files: ['manifest.json', 'note-item.json'],
+                isGzip: true,
+            },
         );
 
         expect(docxToHtmls).toHaveBeenCalledWith({
@@ -201,6 +218,16 @@ describe('electronEventListener', () => {
         expect(sender.send).toHaveBeenCalledWith('reply:docx-version', {
             version: '1.0.0',
         });
+        expect(tarCreate).toHaveBeenCalledWith(
+            '/archives/owabn-export',
+            '/archives/item.owabn.tar.gz',
+            ['manifest.json', 'note-item.json'],
+            true,
+        );
+        expect(sender.send).toHaveBeenCalledWith(
+            'reply:tar-create',
+            undefined,
+        );
     });
 
     test('shows a screen on a display and notifies the main window', async () => {

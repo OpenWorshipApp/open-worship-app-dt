@@ -72,7 +72,7 @@ export function RenderTitleMaterialComp({
             }}
         >
             <div className="d-flex">
-                <div>
+                <div className="ms-1">
                     <ItemColorNoteComp item={colorNoteHandler} />
                 </div>
                 <div className="mx-1">

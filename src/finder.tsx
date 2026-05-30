@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 
+import './bootstrapCss';
 import { init } from './boot';
 import FinderAppComp from './find/FinderAppComp';
 import { getReactRoot } from './others/rootHelpers';
