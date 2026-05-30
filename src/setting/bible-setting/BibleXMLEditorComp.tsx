@@ -22,6 +22,7 @@ import { getModelKeyBookMap } from '../../helper/bible-helpers/bibleLogicHelpers
 import { getBibleModelInfo } from '../../helper/bible-helpers/bibleModelHelpers';
 import { type BibleJsonInfoType } from './bibleXMLJsonDataHelpers';
 import {
+    type ContextMenuItemType,
     createMouseEvent,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
@@ -375,7 +376,7 @@ function BibleBooksMapXMLInputComp({
                     title="Choose Bible Books"
                     type="button"
                 >
-                    <i className="bi bi-book" /> Bible Books
+                    <i className="bi bi-book" /> Guessing Names
                 </button>
             </div>
         </div>
@@ -450,20 +451,22 @@ export function addMonacoBibleInfoActions(
         label: '🌎 `Choose Locale',
         contextMenuGroupId: 'navigation',
         run: async () => {
-            showAppContextMenu(
-                genMouseEvent(),
-                Object.entries(allLocalesMap).map(([locale, langCode]) => {
-                    const menuElement = `${locale} (${languageNameMap[langCode] ?? 'Unknown'})`;
-                    return {
-                        menuElement,
-                        onSelect: () => {
-                            setPartialBibleInfo({
-                                locale,
-                            });
-                        },
-                    };
-                }),
-            );
+            const contextMenuItems: ContextMenuItemType[] = Object.entries(
+                allLocalesMap,
+            ).map(([locale, langCode]) => {
+                const menuElement = `${locale} (${languageNameMap[langCode] ?? 'Unknown'})`;
+                return {
+                    menuElement,
+                    onSelect: () => {
+                        setPartialBibleInfo({
+                            locale,
+                        });
+                    },
+                };
+            });
+            showAppContextMenu(genMouseEvent(), contextMenuItems, {
+                shouldAutoFocusContainer: true,
+            });
         },
     });
     editorInstance.addAction({

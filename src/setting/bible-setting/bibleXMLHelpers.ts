@@ -35,7 +35,6 @@ import {
     bibleKeyToXMLFilePath,
     jsonToXMLText,
     xmlTextToJson,
-    xmlTextToBibleElement,
     getBibleInfoJson,
     getAllXMLFileKeys,
 } from './bibleXMLJsonDataHelpers';
@@ -190,11 +189,7 @@ export async function getBibleXMLInfo(bibleKey: string) {
     if (xmlText === null) {
         return null;
     }
-    const xmlElementBible = xmlTextToBibleElement(xmlText);
-    if (xmlElementBible === null) {
-        return null;
-    }
-    return await getBibleInfoJson(xmlElementBible);
+    return await getBibleInfoJson(xmlText);
 }
 
 export async function getBibleXMLCacheInfoList() {

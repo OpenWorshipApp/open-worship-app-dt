@@ -170,11 +170,64 @@ describe('bibleXMLJsonDataHelpers', () => {
         ).toBeNull();
     });
 
-    test('extracts bible info with defaults and supports prompting for a missing key', async () => {
-        const { getBibleInfoJson, xmlTextToBibleElement } = await loadModule();
-        const xmlElementBible = xmlTextToBibleElement(
-            '<bible locale="en-US"><book number="1"><chapter number="1"><verse number="1">One</verse></chapter></book></bible>',
+    test('optimizes hinted XML parses while preserving requested text and element attributes', async () => {
+        const OriginalDOMParser = globalThis.DOMParser;
+        const parsedXMLTexts: string[] = [];
+        vi.stubGlobal(
+            'DOMParser',
+            class DOMParserMock extends OriginalDOMParser {
+                parseFromString(
+                    xmlText: string,
+                    contentType: DOMParserSupportedType,
+                ) {
+                    parsedXMLTexts.push(xmlText);
+                    return super.parseFromString(xmlText, contentType);
+                }
+            },
         );
+
+        try {
+            const { xmlTextToBibleElement } = await loadModule();
+            const largeVerseText = 'In the beginning '.repeat(1000);
+            const xmlText =
+                '<bible key="KJV" title="Test Bible">' +
+                '<map><book-map key="GEN" value="Genesis" /></map>' +
+                '<book key="GEN"><chapter number="1">' +
+                `<verse number="1">${largeVerseText}</verse>` +
+                '</chapter></book>' +
+                '<new-lines><item>GEN 1:1</item></new-lines>' +
+                '</bible>';
+
+            const bibleElement = xmlTextToBibleElement(xmlText, {
+                childTags: ['new-lines'],
+            });
+
+            expect(bibleElement?.getAttribute('key')).toBe('KJV');
+            expect(
+                bibleElement?.getElementsByTagName('item')[0]?.textContent,
+            ).toBe('GEN 1:1');
+            expect(bibleElement?.getElementsByTagName('book')).toHaveLength(0);
+            expect(parsedXMLTexts[0]).not.toContain('<book');
+            expect(parsedXMLTexts[0]).not.toContain(largeVerseText);
+            expect(parsedXMLTexts[0].length).toBeLessThan(xmlText.length);
+
+            parsedXMLTexts.length = 0;
+            const bibleRootElement = xmlTextToBibleElement(xmlText, {
+                keys: ['key'],
+            });
+
+            expect(bibleRootElement?.getAttribute('title')).toBe('Test Bible');
+            expect(bibleRootElement?.getElementsByTagName('book')).toHaveLength(
+                0,
+            );
+            expect(parsedXMLTexts[0]).not.toContain('<book');
+        } finally {
+            vi.stubGlobal('DOMParser', OriginalDOMParser);
+        }
+    });
+
+    test('extracts bible info with defaults and supports prompting for a missing key', async () => {
+        const { getBibleInfoJson } = await loadModule();
 
         mocks.showAppInputMock.mockImplementationOnce(
             async (_title, element) => {
@@ -183,7 +236,10 @@ describe('bibleXMLJsonDataHelpers', () => {
             },
         );
 
-        const result = await getBibleInfoJson(xmlElementBible);
+        const result = await getBibleInfoJson(
+            '<bible locale="en-US"><book number="1"><chapter number="1">' +
+                '<verse number="1">One</verse></chapter></book></bible>',
+        );
 
         expect(result).toEqual({
             booksAvailable: ['GEN'],
@@ -215,6 +271,56 @@ describe('bibleXMLJsonDataHelpers', () => {
         });
         expect(mocks.showAppInputMock).toHaveBeenCalledTimes(1);
         expect(mocks.showAppConfirmMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('extracts bible info without parsing full book text', async () => {
+        const OriginalDOMParser = globalThis.DOMParser;
+        const parsedXMLTexts: string[] = [];
+        vi.stubGlobal(
+            'DOMParser',
+            class DOMParserMock extends OriginalDOMParser {
+                parseFromString(
+                    xmlText: string,
+                    contentType: DOMParserSupportedType,
+                ) {
+                    parsedXMLTexts.push(xmlText);
+                    return super.parseFromString(xmlText, contentType);
+                }
+            },
+        );
+
+        try {
+            const { getBibleInfoJson } = await loadModule();
+            const largeVerseText = 'In the beginning '.repeat(1000);
+            const xmlText =
+                '<bible key="KJV" locale="en-US">' +
+                '<book key="GEN"><chapter number="1">' +
+                `<verse number="1">${largeVerseText}</verse>` +
+                '</chapter></book>' +
+                '</bible>';
+
+            const result = await getBibleInfoJson(xmlText);
+
+            expect(result?.booksAvailable).toEqual(['GEN']);
+            expect(
+                parsedXMLTexts.some((parsedXMLText) => {
+                    return parsedXMLText.includes(largeVerseText);
+                }),
+            ).toBe(false);
+        } finally {
+            vi.stubGlobal('DOMParser', OriginalDOMParser);
+        }
+    });
+
+    test('defaults malformed bible versions to version 1', async () => {
+        const { getBibleInfoJson } = await loadModule();
+
+        const result = await getBibleInfoJson(
+            '<bible key="BAD" version="next"><book number="1"><chapter number="1">' +
+                '<verse number="1">One</verse></chapter></book></bible>',
+        );
+
+        expect(result?.version).toBe(1);
     });
 
     test('converts XML text to JSON including maps, verses, and extra metadata', async () => {
@@ -321,7 +427,7 @@ describe('bibleXMLJsonDataHelpers', () => {
                 },
             },
             customVersesMap: {
-                'GEN 1:1': [{ content: 'Custom verse' }],
+                'GEN 1:1': [{ content: 'Custom verse ]]> fallback' }],
             },
             info: {
                 booksAvailable: ['GEN', 'REV'],
@@ -353,7 +459,7 @@ describe('bibleXMLJsonDataHelpers', () => {
             },
             newLines: ['GEN 1:1'],
             newLinesTitleMap: {
-                'GEN 1:1': [{ content: 'Heading' }],
+                'GEN 1:1': [{ content: 'Heading <title> & body' }],
             },
         } as any;
 
@@ -361,27 +467,27 @@ describe('bibleXMLJsonDataHelpers', () => {
 
         expect(xmlText).toContain('<book key="GEN">');
         expect(xmlText).toContain('<new-lines>');
-        expect(await xmlTextToJson(xmlText)).toEqual(
+        expect(xmlText).toContain('<![CDATA[');
+        expect(xmlText).toContain('Heading <title> & body');
+        expect(await xmlTextToJson(xmlText!)).toEqual(
             expect.objectContaining({
                 books: jsonData.books,
+                customVersesMap: jsonData.customVersesMap,
                 newLines: ['GEN 1:1'],
+                newLinesTitleMap: jsonData.newLinesTitleMap,
             }),
         );
 
-        const OriginalXmlSerializer = globalThis.XMLSerializer;
+        const { appXMLSerializer } = await import('../../helper/xmlHelpers');
+        const serializeToStringSpy = vi
+            .spyOn(appXMLSerializer, 'serializeToString')
+            .mockReturnValue('<bible></bible>');
 
-        vi.stubGlobal(
-            'XMLSerializer',
-            class XMLSerializerMock {
-                serializeToString() {
-                    return '<bible></bible>';
-                }
-            } as any,
-        );
-
-        expect(jsonToXMLText(jsonData)).toBeNull();
-
-        vi.stubGlobal('XMLSerializer', OriginalXmlSerializer);
+        try {
+            expect(jsonToXMLText(jsonData)).toBeNull();
+        } finally {
+            serializeToStringSpy.mockRestore();
+        }
     });
 
     test('reads bible keys from files, lists XML file mappings, and resolves bible paths', async () => {

@@ -415,7 +415,12 @@ describe('bibleXMLHelpers', () => {
             key: 'KJV',
             title: 'Bible',
         });
-        mocks.xmlTextToBibleElementMock.mockReturnValueOnce(null);
+        expect(mocks.getBibleInfoJsonMock).toHaveBeenCalledWith(
+            '<bible key="KJV" />',
+        );
+        expect(mocks.xmlTextToBibleElementMock).not.toHaveBeenCalled();
+
+        mocks.getBibleInfoJsonMock.mockResolvedValueOnce(null);
         expect(await getBibleXMLInfo('KJV')).toBeNull();
 
         expect(await getBibleXMLCacheInfoList()).toEqual([

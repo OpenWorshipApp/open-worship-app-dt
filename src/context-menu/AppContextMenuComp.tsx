@@ -84,6 +84,7 @@ export default function AppContextMenuComp() {
                         return;
                     }
                     setPositionMenu(div, data.event, data.options);
+                    div.focus();
                 }}
                 className="app-context-menu app-focusable"
             >
