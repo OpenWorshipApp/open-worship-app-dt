@@ -28,7 +28,7 @@ export type ContextMenuItemType = {
     keyboardShortcut?: EventMapperType;
     style?: CSSProperties;
 };
-export type OptionsType = {
+export type AppContextMenuOptionsType = {
     maxHeigh?: number;
     coord?: { x: number; y: number };
     style?: CSSProperties;
@@ -36,13 +36,14 @@ export type OptionsType = {
     applyOnTab?: boolean;
     shouldHandleSelectedText?: boolean;
     extraSelectedTextContextMenuItems?: ContextMenuItemType[];
+    shouldAutoFocusContainer?: boolean;
 };
 
-export type PropsType = {
+export type AppContextMenuPropsType = {
     event: MouseEvent;
     items: ContextMenuItemType[];
     onClose: () => void;
-    options?: OptionsType;
+    options?: AppContextMenuOptionsType;
 };
 
 export function createMouseEvent(clientX: number, clientY: number) {
@@ -58,7 +59,7 @@ export function createMouseEvent(clientX: number, clientY: number) {
 export const setPositionMenu = (
     menu: HTMLElement,
     event: MouseEvent,
-    options?: OptionsType,
+    options?: AppContextMenuOptionsType,
 ) => {
     if (menu !== null) {
         Object.assign(menu.style, {
@@ -103,7 +104,7 @@ export const setPositionMenu = (
 };
 
 export const contextControl: {
-    setDataDelegator: ((data: PropsType | null) => void) | null;
+    setDataDelegator: ((data: AppContextMenuPropsType | null) => void) | null;
 } = {
     setDataDelegator: null,
 };
@@ -116,7 +117,7 @@ export type AppContextMenuControlType = {
 export function showAppContextMenu(
     event: MouseEvent,
     items: ContextMenuItemType[],
-    options?: OptionsType,
+    options?: AppContextMenuOptionsType,
 ): AppContextMenuControlType {
     event.preventDefault();
     event.stopPropagation();
@@ -199,7 +200,7 @@ function appKeyUpDown(isUp: boolean) {
         (tableDiv as any)?.focus();
     }, 100);
 }
-function checkKeyUpDown(event: any, data: PropsType) {
+function checkKeyUpDown(event: any, data: AppContextMenuPropsType) {
     const apply = (item: ContextMenuItemType) => {
         stopEvent();
         contextControl.setDataDelegator?.(null);
@@ -299,8 +300,8 @@ function listener(event: KeyboardEvent) {
 }
 
 export function useAppContextMenuData() {
-    const [data, setData] = useState<PropsType | null>(null);
-    const setData1 = (newData: PropsType | null) => {
+    const [data, setData] = useState<AppContextMenuPropsType | null>(null);
+    const setData1 = (newData: AppContextMenuPropsType | null) => {
         WindowEventListener.fireEvent({
             widget: 'context-menu',
             state: newData === null ? 'close' : 'open',
