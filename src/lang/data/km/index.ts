@@ -24,6 +24,8 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Open DOCX': 'បើក DOCX',
+    'Refresh DOCX Pages': 'ផ្ទុកទំព័រ DOCX ជាថ្មី',
     'Delete Note Item': 'លុបធាតុកំណត់សម្គាល់',
     'Are you sure to delete this note item?':
         'តើអ្នកពិតជាចង់លុបធាតុកំណត់សម្គាល់នេះឬ?',
