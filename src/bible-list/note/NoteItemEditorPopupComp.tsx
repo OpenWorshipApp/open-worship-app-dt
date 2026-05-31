@@ -4,10 +4,17 @@ import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import appProvider from '../../server/appProvider';
 import { useIsOnTop } from '../../server/appHelpers';
 import { getAllLangsAsync } from '../../lang/langHelpers';
+import { useState } from 'react';
+import FloatingWidgetComp from '../../app-modal/FloatingWidgetComp';
+import BibleItem from '../BibleItem';
 
-export default function NoteItemEditorPopupComp({
+function useBibleNoteControl({
     bibleNote,
-}: Readonly<{ bibleNote: BibleNote }>) {
+    setIsShowingBibleLookup,
+}: {
+    bibleNote: BibleNote;
+    setIsShowingBibleLookup: (isShowing: boolean) => void;
+}) {
     const [isOnTop, setIsOnTop] = useIsOnTop();
     const themeSource = useThemeSource();
     useAppEffect(() => {
@@ -49,7 +56,7 @@ export default function NoteItemEditorPopupComp({
                 <button
                     className="action-button"
                     onClick={() => {
-                        console.log('open bible lookup');
+                        setIsShowingBibleLookup(true);
                     }}
                     title={'Open Bible Lookup'}
                     aria-label={'Open Bible Lookup'}
@@ -88,5 +95,76 @@ export default function NoteItemEditorPopupComp({
             });
         }, 200);
     }, [bibleNote, isOnTop]);
-    return <div style={{ display: 'none' }}></div>;
+}
+
+function BibleNoteBibleLookupComp({
+    bibleNote,
+    setIsShowingBibleLookup,
+}: Readonly<{
+    bibleNote: BibleNote;
+    setIsShowingBibleLookup: (isShowing: boolean) => void;
+}>) {
+    return (
+        <FloatingWidgetComp
+            onClose={() => setIsShowingBibleLookup(false)}
+            options={{
+                width: 500,
+                height: 400,
+                minWidth: 300,
+                minHeight: 200,
+            }}
+        >
+            <div
+                className="card w-100 h-100 app-overflow-hidden app-focusable"
+                tabIndex={0}
+                ref={(ele) => {
+                    if (ele === null) {
+                        return;
+                    }
+                    // Focus to enable keyboard shortcut in the popup
+                    ele.focus();
+                }}
+            >
+                <div className="card-header">
+                    <span>Bible Lookup</span>
+                </div>
+                <div className="card-body">
+                    <button
+                        onClick={async () => {
+                            const bibleItem = BibleItem.fromJson({
+                                id: -1,
+                                bibleKey: 'KJV',
+                                target: {
+                                    bookKey: 'GEN',
+                                    chapter: 1,
+                                    verseStart: 1,
+                                    verseEnd: 3,
+                                },
+                                metadata: {},
+                            });
+                            const text = await bibleItem.toFullText();
+                            bibleNote.addText(text);
+                        }}
+                    >
+                        Add Bible (Genesis 1:1-3 KJV)
+                    </button>
+                </div>
+            </div>
+        </FloatingWidgetComp>
+    );
+}
+export default function NoteItemEditorPopupComp({
+    bibleNote,
+}: Readonly<{ bibleNote: BibleNote }>) {
+    const [isShowingBibleLookup, setIsShowingBibleLookup] = useState(false);
+    useBibleNoteControl({ bibleNote, setIsShowingBibleLookup });
+    if (isShowingBibleLookup) {
+        return (
+            <BibleNoteBibleLookupComp
+                bibleNote={bibleNote}
+                setIsShowingBibleLookup={setIsShowingBibleLookup}
+            />
+        );
+    }
+    return null;
 }

@@ -1,0 +1,94 @@
+@use '../others/variables.scss' as *;
+
+.floating-widget {
+  position: fixed;
+  z-index: $z-index-widget-full-view;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  background-color: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+  border: 1px solid var(--bs-border-color-translucent, rgb(108 117 125 / 40%));
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
+}
+
+.floating-widget__toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.4;
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.floating-widget__drag-indicator {
+  cursor: move;
+  touch-action: none;
+}
+
+.floating-widget__actions {
+  display: inline-flex;
+  gap: 0.125rem;
+  pointer-events: auto;
+  color: var(--bs-secondary-color, #6c757d);
+  background-color: rgba(var(--bs-body-bg-rgb, 255, 255, 255), 0.88);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
+}
+
+.floating-widget__drag-indicator,
+.floating-widget__button,
+.floating-widget__resize-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: inherit;
+  background-color: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.floating-widget__drag-indicator,
+.floating-widget__button {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.floating-widget__drag-indicator:hover,
+.floating-widget__drag-indicator:focus-visible,
+.floating-widget__button:hover,
+.floating-widget__button:focus-visible,
+.floating-widget__resize-handle:hover,
+.floating-widget__resize-handle:focus-visible {
+  background-color: rgba(var(--bs-secondary-rgb, 108, 117, 125), 0.16);
+}
+
+.floating-widget__content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.floating-widget__resize-handle {
+  position: absolute;
+  right: 0.125rem;
+  bottom: 0.125rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--bs-secondary-color, #6c757d);
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0.1;
+  &:hover {
+    opacity: 0.9;
+  }
+}
