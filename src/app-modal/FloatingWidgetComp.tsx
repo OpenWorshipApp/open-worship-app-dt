@@ -327,7 +327,7 @@ export default function FloatingWidgetComp({
                         aria-label="Move floating widget"
                         title="Move floating widget"
                     >
-                        <i className="bi bi-grip-horizontal" />
+                        <i className="bi bi-arrows-move" />
                     </button>
                     <button
                         type="button"

@@ -97,6 +97,22 @@ function useBibleNoteControl({
     }, [bibleNote, isOnTop]);
 }
 
+async function addBibleText(bibleNote: BibleNote) {
+    const bibleItem = BibleItem.fromJson({
+        id: -1,
+        bibleKey: 'KJV',
+        target: {
+            bookKey: 'GEN',
+            chapter: 1,
+            verseStart: 1,
+            verseEnd: 3,
+        },
+        metadata: {},
+    });
+    const text = await bibleItem.toFullText();
+    bibleNote.addText(text);
+}
+
 function BibleNoteBibleLookupComp({
     bibleNote,
     setIsShowingBibleLookup,
@@ -131,22 +147,20 @@ function BibleNoteBibleLookupComp({
                 <div className="card-body">
                     <button
                         onClick={async () => {
-                            const bibleItem = BibleItem.fromJson({
-                                id: -1,
-                                bibleKey: 'KJV',
-                                target: {
-                                    bookKey: 'GEN',
-                                    chapter: 1,
-                                    verseStart: 1,
-                                    verseEnd: 3,
-                                },
-                                metadata: {},
-                            });
-                            const text = await bibleItem.toFullText();
-                            bibleNote.addText(text);
+                            addBibleText(bibleNote);
                         }}
                     >
                         Add Bible (Genesis 1:1-3 KJV)
+                    </button>
+                </div>
+                <div className="card-body">
+                    <button
+                        onClick={async () => {
+                            bibleNote.addText('^');
+                            addBibleText(bibleNote);
+                        }}
+                    >
+                        Add Bible (^ Genesis 1:1-3 KJV)
                     </button>
                 </div>
             </div>
