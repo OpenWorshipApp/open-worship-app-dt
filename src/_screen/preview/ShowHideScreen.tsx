@@ -46,6 +46,7 @@ export default function ShowHideScreen() {
                     'app-showing-indicator bi' +
                     ` bi-file-slides${isShowing ? '-fill' : ''}`
                 }
+                style={{ transform: 'translateY(-3px)' }}
             />
         </div>
     );
