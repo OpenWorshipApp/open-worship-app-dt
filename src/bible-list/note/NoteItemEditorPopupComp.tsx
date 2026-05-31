@@ -1,4 +1,4 @@
-import { type BibleNote, type BibleNoteFooterActionButton } from 'BibleNote.js';
+import { type BibleNote } from 'BibleNote.js';
 import { useThemeSource } from '../../others/themeHelpers';
 import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import appProvider from '../../server/appProvider';
@@ -18,11 +18,12 @@ export default function NoteItemEditorPopupComp({
         for (const langData of langDataList) {
             const editorLink = langData.editorLink;
             if (!editorLink) {
-                return;
+                continue;
             }
-            const buttonData: BibleNoteFooterActionButton = {
+            bibleNote.prependFooterActionButton({
                 id: 'khmer-markdown-editor ' + langData.langCode,
                 description: `Open in ${langData.langCode} Markdown Editor`,
+                shortcutKey: 'Ctrl+Shift+Alt+K',
                 children: (
                     <button
                         className="action-button"
@@ -35,39 +36,56 @@ export default function NoteItemEditorPopupComp({
                         aria-label={`Open in ${langData.langCode} Markdown Editor`}
                         aria-pressed={false}
                     >
-                        <i className={`bi bi-spellcheck`} />
+                        <i className={'bi bi-spellcheck'} />
                     </button>
                 ),
-            };
-            bibleNote.prependFooterActionButton(buttonData);
+            });
         }
-    }, [bibleNote]);
-    useAppEffect(() => {
-        const onTopButton: BibleNoteFooterActionButton = {
-            id: 'toggle-on-top',
-            description: 'Toggle always on top',
+        bibleNote.prependFooterActionButton({
+            id: 'bible-lookup',
+            description: 'Open Bible Lookup',
+            shortcutKey: 'Ctrl+Shift+B',
             children: (
                 <button
                     className="action-button"
                     onClick={() => {
-                        setIsOnTop((prev) => !prev);
+                        console.log('open bible lookup');
                     }}
-                    title="Toggle Always On Top"
-                    aria-label="Toggle Always On Top"
-                    aria-pressed={isOnTop}
+                    title={'Open Bible Lookup'}
+                    aria-label={'Open Bible Lookup'}
+                    aria-pressed={false}
                 >
-                    <i
-                        className={`bi bi-${isOnTop ? 'window-stack' : 'window-desktop'}`}
-                        style={{
-                            color: isOnTop ? 'green' : undefined,
-                        }}
-                    />
+                    <i className={'bi bi-book'} />
                 </button>
             ),
-        };
+        });
+    }, [bibleNote]);
+    useAppEffect(() => {
         // To make sure it on the most left
         setTimeout(() => {
-            bibleNote.prependFooterActionButton(onTopButton);
+            bibleNote.prependFooterActionButton({
+                id: 'toggle-on-top',
+                description: 'Toggle always on top',
+                shortcutKey: 'Ctrl+Shift+Alt+T',
+                children: (
+                    <button
+                        className="action-button"
+                        onClick={() => {
+                            setIsOnTop((prev) => !prev);
+                        }}
+                        title="Toggle Always On Top"
+                        aria-label="Toggle Always On Top"
+                        aria-pressed={isOnTop}
+                    >
+                        <i
+                            className={`bi bi-${isOnTop ? 'window-stack' : 'window-desktop'}`}
+                            style={{
+                                color: isOnTop ? 'green' : undefined,
+                            }}
+                        />
+                    </button>
+                ),
+            });
         }, 200);
     }, [bibleNote, isOnTop]);
     return <div style={{ display: 'none' }}></div>;

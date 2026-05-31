@@ -125,6 +125,8 @@ export async function initBibleNote({
         resolveFilePath: resolveLocalFilePath,
         revealFile,
         print,
+        isOnApp: true,
+        isMinimize: true,
     });
 
     const abortController = new AbortController();

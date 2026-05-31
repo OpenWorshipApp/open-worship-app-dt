@@ -3,7 +3,8 @@ declare module 'BibleNote.js' {
 
     interface BibleNoteFooterActionButton {
         id: string;
-        description: string;
+        description?: string;
+        shortcutKey?: string;
         children: React.ReactNode;
     }
 
@@ -24,6 +25,8 @@ declare module 'BibleNote.js' {
         resolveFilePath?: FilePathResolver;
         revealFile?: (filePath: string) => void;
         print(): void;
+        isOnApp?: boolean;
+        isMinimize?: boolean;
     }
 
     interface BibleNoteRenderOptions {
