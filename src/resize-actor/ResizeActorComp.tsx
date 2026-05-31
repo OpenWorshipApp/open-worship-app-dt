@@ -71,7 +71,16 @@ export default function ResizeActorComp({
     }
     if (dataInput.length === 1) {
         const { children } = dataInput[0];
-        return renderResizerChildren(children);
+        return (
+            <div
+                className={'w-100 h-100 app-overflow-hidden'}
+                style={{
+                    ...containerStyle,
+                }}
+            >
+                {renderResizerChildren(children)}
+            </div>
+        );
     }
     return (
         <div
