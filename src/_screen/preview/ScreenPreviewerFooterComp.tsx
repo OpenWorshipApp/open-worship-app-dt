@@ -113,7 +113,9 @@ export default function ScreenPreviewerFooterComp() {
             className="card-footer w-100"
             style={{
                 overflowX: 'auto',
+                overflowY: 'hidden',
                 padding: '1px',
+                height: '26px',
             }}
         >
             <div

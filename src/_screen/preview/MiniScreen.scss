@@ -67,6 +67,11 @@
       height: 20px;
     }
   }
+
+  .control-buttons button {
+    padding: 0px 4px !important;
+    height: 18px !important;
+  }
 }
 
 @keyframes fade-out {

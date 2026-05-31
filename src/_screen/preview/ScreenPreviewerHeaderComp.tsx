@@ -24,7 +24,7 @@ export default function ScreenPreviewerHeaderComp() {
             style={{
                 overflowX: 'auto',
                 overflowY: 'hidden',
-                height: '30px',
+                height: '26px',
                 padding: '2px',
             }}
         >

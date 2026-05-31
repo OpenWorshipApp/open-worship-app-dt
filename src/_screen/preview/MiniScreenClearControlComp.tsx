@@ -114,7 +114,7 @@ export default function MiniScreenClearControlComp() {
     const screenManager = useScreenManagerContext();
     const btnMaps = genBtnMaps(screenManager);
     return (
-        <div className="btn-group control">
+        <div className="control-buttons btn-group control">
             {btnMaps.map((btnMaps) => {
                 return (
                     <RenderButtonComp key={btnMaps.title} btnMaps={btnMaps} />
