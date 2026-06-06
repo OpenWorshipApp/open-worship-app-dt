@@ -1,5 +1,7 @@
 import type { BibleNote } from 'BibleNote.js';
 
+import type { MouseEvent as ReactMouseEvent } from 'react';
+
 import { dirSourceSettingNames } from '../../helper/constants';
 import DirSource from '../../helper/DirSource';
 import { getParamFileFullName, getParamIdNum } from '../../helper/domHelpers';
@@ -16,6 +18,7 @@ import {
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
+import { showBibleOption } from '../../bible-lookup/BibleSelectionComp';
 
 const storageManager = {
     deleteSetting(key: string) {
@@ -101,6 +104,43 @@ async function verseFullTextToListShorts(verseFullText: string) {
     return shortVerseList;
 }
 
+// "(KJV) Genesis 1:1-2"
+const titleWithKeyRegex = /^\(\S+\) (.+)$/;
+async function changeBibleKey(
+    event: ReactMouseEvent<HTMLButtonElement>,
+    fullText: string,
+) {
+    const titleWithKey = fullText.split('\n')[0].trim();
+    const match = titleWithKeyRegex.exec(titleWithKey);
+    if (match === null) {
+        return null;
+    }
+    const bibleItem = await BibleItem.fromTitleText('KJV', titleWithKey);
+    if (bibleItem === null) {
+        return null;
+    }
+    const promise = new Promise<string>((resolve) => {
+        showBibleOption(
+            event,
+            (newBibleKey: string) => {
+                resolve(newBibleKey);
+            },
+            [bibleItem.bibleKey],
+        );
+    });
+    const newBibleKey = await promise;
+    if (newBibleKey === bibleItem.bibleKey) {
+        return null;
+    }
+    bibleItem.bibleKey = newBibleKey;
+    const newTitleWithKey = await bibleItem.toTitleWithBibleKey();
+    const newFullText = await bibleItem.toFullText();
+    return {
+        title: newTitleWithKey,
+        fullText: newFullText,
+    };
+}
+
 const attemptTimeout = genTimeoutAttempt(1_000);
 
 export async function initBibleNote({
@@ -171,6 +211,7 @@ export async function initBibleNote({
         isMinimize: true,
         shortToVerseData,
         verseFullTextToListShorts,
+        changeBibleKey,
     });
 
     const abortController = new AbortController();

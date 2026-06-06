@@ -14,6 +14,8 @@ declare module 'BibleNote.js' {
         deleteSetting(key: string): Promise<void>;
     }
 
+    type MentionedBibleDataType = { title: string; fullText: string };
+
     interface BibleNoteOptions {
         getLangCode: (text: string) => string;
         editorExtraFontFamilies: ReadonlyArray<ExtraFontFamilyOption>;
@@ -27,13 +29,16 @@ declare module 'BibleNote.js' {
         print(): void;
         isOnApp?: boolean;
         isMinimize?: boolean;
-        shortToVerseData?: (shortVerse: string) => Promise<{
-            title: string;
-            fullText: string;
-        } | null>;
+        shortToVerseData?: (
+            shortVerse: string,
+        ) => Promise<MentionedBibleDataType | null>;
         verseFullTextToListShorts?: (
             fullText: string,
         ) => Promise<string[] | null>;
+        changeBibleKey?: (
+            event: ReactMouseEvent<HTMLButtonElement>,
+            fullText: string,
+        ) => Promise<MentionedBibleDataType | null>;
     }
 
     interface BibleNoteRenderOptions {
