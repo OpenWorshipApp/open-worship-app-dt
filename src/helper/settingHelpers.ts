@@ -47,14 +47,16 @@ export function useStateSettingBoolean(
 export function useStateSettingString<T extends string>(
     settingName: string,
     defaultString: T = '' as T,
-): [T, Dispatch<SetStateAction<T>>] {
+): [T, (text: string | ((prev: T) => T), isSkipSetSetting?: boolean) => void] {
     const defaultData = getSetting(settingName) || defaultString;
     const [data, setData] = useState<T>(defaultData as T);
     const setDataSetting = useCallback(
-        (text: string | ((prev: T) => T)) => {
+        (text: string | ((prev: T) => T), isSkipSetSetting = false) => {
             const newValue = typeof text === 'function' ? text(data) : text;
             setData(newValue as T);
-            setSetting(settingName, `${newValue}`);
+            if (!isSkipSetSetting) {
+                setSetting(settingName, `${newValue}`);
+            }
         },
         [data, settingName],
     );
@@ -67,7 +69,7 @@ export function useWatchStateSettingString<T extends string>(
     const [data, setData] = useStateSettingString(settingName, defaultString);
     useWatchSetting(settingName, () => {
         const newValue = getSetting(settingName) || defaultString;
-        setData(newValue as T);
+        setData(newValue, true);
     });
     return [data, setData];
 }
