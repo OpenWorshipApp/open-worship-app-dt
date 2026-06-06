@@ -37,10 +37,10 @@ export default function RenderAIBibleCrossReferenceComp({
     const fontFamily = useBibleFontFamily(bibleKey);
     const { title, titleEn, verses } = crossReference;
     return (
-        <div>
+        <div style={{ maxWidth: '400px' }}>
             <strong
                 className="app-selectable-text app-found-highlight"
-                style={{ fontFamily }}
+                style={{ fontFamily, color: 'var(--bs-info)' }}
                 title={titleEn}
             >
                 {genGoogleTranslated()}

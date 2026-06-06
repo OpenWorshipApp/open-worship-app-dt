@@ -42,7 +42,6 @@ export default function BibleCrossRefWrapperComp({
             className="card w-100 my-1"
             style={{
                 border: '1px dotted var(--bs-info-text-emphasis)',
-                maxWidth: '400px',
             }}
         >
             <div
@@ -59,7 +58,7 @@ export default function BibleCrossRefWrapperComp({
                 {title} (<span style={{ fontFamily }}>{bibleKey}</span>)
             </div>
             {isShowing ? (
-                <div className="card-body app-inner-shadow px-1">
+                <div className="card-body app-inner-shadow px-1 d-flex flex-wrap gap-1">
                     {children}
                 </div>
             ) : null}
