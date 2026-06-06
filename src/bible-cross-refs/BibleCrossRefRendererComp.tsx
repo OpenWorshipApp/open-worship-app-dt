@@ -16,7 +16,7 @@ import {
 import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
 import { tran } from '../lang/langHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
-import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
+import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
@@ -107,7 +107,7 @@ export default function BibleCrossRefRendererComp({
                                 className="alert alert-info p-0 px-1 m-0"
                                 style={{ verticalAlign: 'center' }}
                             >
-                                <BibleSelectionMiniComp
+                                <BibleKeySelectionMiniComp
                                     bibleKey={bibleItem.bibleKey}
                                     onBibleKeyChange={(
                                         _isContextMenu,

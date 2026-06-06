@@ -9,7 +9,7 @@ import { handleError } from '../helper/errorHelpers';
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { showBibleOption } from '../bible-lookup/BibleSelectionComp';
+import { showBibleKeyOption } from '../bible-lookup/BibleKeySelectionComp';
 import appProvider from '../server/appProvider';
 import {
     APP_FULL_VIEW_CLASSNAME,
@@ -697,7 +697,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             {
                 menuElement: tran('Split Horizontal to'),
                 onSelect: (event1: any) => {
-                    showBibleOption(event1, (newBibleKey: string) => {
+                    showBibleKeyOption(event1, (newBibleKey: string) => {
                         const newBibleItem = ReadIdOnlyBibleItem.fromJson(
                             bibleItem.toJson(),
                         );
@@ -717,7 +717,7 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
             {
                 menuElement: tran('Split Vertical to'),
                 onSelect: (event2: any) => {
-                    showBibleOption(event2, (newBibleKey: string) => {
+                    showBibleKeyOption(event2, (newBibleKey: string) => {
                         const newBibleItem = ReadIdOnlyBibleItem.fromJson(
                             bibleItem.toJson(),
                         );

@@ -11,7 +11,7 @@ import { getDisplayByScreenId } from './managers/screenHelpers';
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { cloneJson } from '../helper/helpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
-import { genContextMenuBibleKeys } from '../bible-lookup/BibleSelectionComp';
+import { genContextMenuBibleKeys } from '../bible-lookup/BibleKeySelectionComp';
 import type { BibleItemDataType } from './screenTypeHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 

@@ -1,4 +1,4 @@
-import './BibleSelectionComp.scss';
+import './BibleKeySelectionComp.scss';
 
 import { useCallback, type MouseEvent, type CSSProperties } from 'react';
 
@@ -75,7 +75,7 @@ export async function genContextMenuBibleKeys(
     return menuItems;
 }
 
-export async function showBibleOption(
+export async function showBibleKeyOption(
     event: any,
     onSelect: (bibleKey: string) => void,
     excludeBibleKeys: string[] = [],
@@ -112,14 +112,14 @@ export async function showBibleOption(
     showAppContextMenu(event, menuItems);
 }
 
-function handleBibleSelectionMini(
+function handleBibleKeySelectionMini(
     event: any,
     bibleKey: string,
     onChange: (oldBibleKey: string, newBibleKey: string) => void,
     title?: string,
 ) {
     event.stopPropagation();
-    showBibleOption(
+    showBibleKeyOption(
         event,
         (newBibleKey: string) => {
             onChange(bibleKey, newBibleKey);
@@ -129,7 +129,19 @@ function handleBibleSelectionMini(
     );
 }
 
-export default function BibleSelectionComp({
+function BibleKeyWithTileComp({ bibleKey }: Readonly<{ bibleKey: string }>) {
+    const [bibleInfo] = useAppStateAsync(() => {
+        return getBibleInfo(bibleKey);
+    }, [bibleKey]);
+    const fontFamily = useBibleFontFamily(bibleKey);
+    return (
+        <span title={bibleInfo?.title} style={{ fontFamily }}>
+            {bibleKey}
+        </span>
+    );
+}
+
+export default function BibleKeySelectionComp({
     bibleKey,
     onBibleKeyChange,
 }: Readonly<{
@@ -138,7 +150,7 @@ export default function BibleSelectionComp({
 }>) {
     const handleClick = useCallback(
         (event: MouseEvent<HTMLButtonElement>) => {
-            handleBibleSelectionMini(event, bibleKey, onBibleKeyChange);
+            handleBibleKeySelectionMini(event, bibleKey, onBibleKeyChange);
         },
         [bibleKey, onBibleKeyChange],
     );
@@ -150,7 +162,7 @@ export default function BibleSelectionComp({
     );
 }
 
-export function BibleSelectionMiniComp({
+export function BibleKeySelectionMiniComp({
     bibleKey,
     onBibleKeyChange,
     isMinimal,
@@ -173,7 +185,7 @@ export function BibleSelectionMiniComp({
             if (onBibleKeyChange === undefined) {
                 return;
             }
-            handleBibleSelectionMini(
+            handleBibleKeySelectionMini(
                 event,
                 bibleKey,
                 onBibleKeyChange.bind(null, false),
@@ -186,7 +198,7 @@ export function BibleSelectionMiniComp({
             if (onBibleKeyChange === undefined) {
                 return;
             }
-            handleBibleSelectionMini(
+            handleBibleKeySelectionMini(
                 event,
                 bibleKey,
                 onBibleKeyChange.bind(null, true),
@@ -212,18 +224,6 @@ export function BibleSelectionMiniComp({
             }
         >
             <BibleKeyWithTileComp bibleKey={bibleKey} />
-        </span>
-    );
-}
-
-function BibleKeyWithTileComp({ bibleKey }: Readonly<{ bibleKey: string }>) {
-    const [bibleInfo] = useAppStateAsync(() => {
-        return getBibleInfo(bibleKey);
-    }, [bibleKey]);
-    const fontFamily = useBibleFontFamily(bibleKey);
-    return (
-        <span title={bibleInfo?.title} style={{ fontFamily }}>
-            {bibleKey}
         </span>
     );
 }

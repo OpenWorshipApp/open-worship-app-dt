@@ -4,11 +4,12 @@ import appProvider from '../../server/appProvider';
 import { getAllLangsAsync } from '../../lang/langHelpers';
 import { useIsOnTop } from '../../server/appHelpers';
 import BibleItem from '../BibleItem';
-import { showBibleOption } from '../../bible-lookup/BibleSelectionComp';
+import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { useThemeSource } from '../../others/themeHelpers';
 import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import { useWatchStateSettingString } from '../../helper/settingHelpers';
 import { BIBLE_KEY_SETTING_NAME } from './bibleNoteHelpers';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 
 export function useBibleNoteControl({
     bibleNote,
@@ -17,11 +18,6 @@ export function useBibleNoteControl({
     bibleNote: BibleNote;
     setIsShowingBibleLookup: (isShowing: boolean) => void;
 }) {
-    const [bibleKey, setBibleKey] = useWatchStateSettingString<string>(
-        BIBLE_KEY_SETTING_NAME,
-        'KJV',
-    );
-    const [isOnTop, setIsOnTop] = useIsOnTop();
     const themeSource = useThemeSource();
     useAppEffect(() => {
         bibleNote.setColorScheme(themeSource.theme as 'light' | 'dark');
@@ -73,6 +69,8 @@ export function useBibleNoteControl({
             ),
         });
     }, [bibleNote]);
+
+    const [isOnTop, setIsOnTop] = useIsOnTop();
     useAppEffect(() => {
         bibleNote.prependFooterActionButton({
             id: 'toggle-on-top',
@@ -98,6 +96,12 @@ export function useBibleNoteControl({
             ),
         });
     }, [bibleNote, isOnTop]);
+
+    const [bibleKey, setBibleKey] = useWatchStateSettingString<string>(
+        BIBLE_KEY_SETTING_NAME,
+        'KJV',
+    );
+    const fontFamily = useBibleFontFamily(bibleKey);
     useAppEffect(() => {
         bibleNote.prependFooterActionButton({
             id: 'bible-key',
@@ -107,7 +111,7 @@ export function useBibleNoteControl({
                 <button
                     className="action-button"
                     onClick={(event) => {
-                        showBibleOption(
+                        showBibleKeyOption(
                             event,
                             (newBibleKey: string) => {
                                 setBibleKey(newBibleKey);
@@ -122,11 +126,11 @@ export function useBibleNoteControl({
                         color: 'var(--bs-info)',
                     }}
                 >
-                    {bibleKey}
+                    <span style={{ fontFamily }}>{bibleKey}</span>
                 </button>
             ),
         });
-    }, [bibleNote, bibleKey]);
+    }, [bibleNote, fontFamily, bibleKey]);
 }
 
 export async function addBibleText(bibleNote: BibleNote) {

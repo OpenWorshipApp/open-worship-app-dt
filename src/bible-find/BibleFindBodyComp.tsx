@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import type { FindDataType, SelectedBookKeyType } from './bibleFindHelpers';
 import { doFinding } from './bibleFindHelpers';
 import BibleFindRenderDataComp from './BibleFindRenderDataComp';
-import BibleSelectionComp from '../bible-lookup/BibleSelectionComp';
+import BibleKeySelectionComp from '../bible-lookup/BibleKeySelectionComp';
 import BibleFindHeaderComp from './BibleFindHeaderComp';
 import { useBibleFindController } from './BibleFindController';
 import {
@@ -75,7 +75,7 @@ export default function BibleFindBodyComp({
                     minWidth: '200px',
                 }}
             >
-                <BibleSelectionComp
+                <BibleKeySelectionComp
                     onBibleKeyChange={setBibleKey}
                     bibleKey={bibleFindController.bibleKey}
                 />

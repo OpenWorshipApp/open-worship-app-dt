@@ -18,7 +18,7 @@ import {
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
-import { showBibleOption } from '../../bible-lookup/BibleSelectionComp';
+import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { getSetting } from '../../helper/settingHelpers';
 
 export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
@@ -127,7 +127,7 @@ async function changeBibleKey(
         return null;
     }
     const promise = new Promise<string>((resolve) => {
-        showBibleOption(
+        showBibleKeyOption(
             event,
             (newBibleKey: string) => {
                 resolve(newBibleKey);
