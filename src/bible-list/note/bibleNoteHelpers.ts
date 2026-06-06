@@ -15,6 +15,7 @@ import {
 } from '../../lang/langHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
+import BibleItem from '../BibleItem';
 
 const storageManager = {
     deleteSetting(key: string) {
@@ -57,6 +58,47 @@ async function getBibleNoteConstructor() {
         AppBibleNote = (globalThis as any).AppBibleNote;
     }
     return AppBibleNote as typeof BibleNote;
+}
+
+async function shortToVerseData(shortVerse: string) {
+    // `Genesis 1:1` => {
+    //     title: "Genesis 1:1",
+    //     fullText: "(1): In the beginning God created the heaven and the earth."
+    // }
+    const bibleItem = await BibleItem.fromTitleText('KJV', shortVerse);
+    if (bibleItem === null) {
+        return null;
+    }
+    const title = await bibleItem.toTitle();
+    // TODO: need selected Bible Key
+    const fullText = await bibleItem.toFullText();
+    return { title, fullText };
+}
+
+async function verseFullTextToListShorts(verseFullText: string) {
+    // `Genesis 1:1-2\n(1): In the beginning God created the heaven and the
+    // earth. (2): And the earth was without form, and void; and darkness
+    // was upon the face of the deep. And the Spirit of God moved upon the
+    // face of the waters.`
+    // => ["Genesis 1:1", "Genesis 1:2"]
+    let titleWithKey = verseFullText.split('\n')[0];
+    titleWithKey = titleWithKey.trim();
+    if (titleWithKey === undefined) {
+        return null;
+    }
+    const bibleItem = await BibleItem.fromTitleText('KJV', titleWithKey);
+    if (bibleItem === null) {
+        return null;
+    }
+    const { target } = bibleItem;
+    const startVerse = target.verseStart;
+    const endVerse = target.verseEnd;
+    const shortVerseList: string[] = [];
+    for (let i = startVerse; i <= endVerse; i++) {
+        const shortVerse = `${target.bookKey} ${target.chapter}:${i}`;
+        shortVerseList.push(shortVerse);
+    }
+    return shortVerseList;
 }
 
 const attemptTimeout = genTimeoutAttempt(1_000);
@@ -127,6 +169,8 @@ export async function initBibleNote({
         print,
         isOnApp: true,
         isMinimize: true,
+        shortToVerseData,
+        verseFullTextToListShorts,
     });
 
     const abortController = new AbortController();

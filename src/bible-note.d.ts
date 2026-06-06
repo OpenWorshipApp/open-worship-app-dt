@@ -27,6 +27,13 @@ declare module 'BibleNote.js' {
         print(): void;
         isOnApp?: boolean;
         isMinimize?: boolean;
+        shortToVerseData?: (shortVerse: string) => Promise<{
+            title: string;
+            fullText: string;
+        } | null>;
+        verseFullTextToListShorts?: (
+            fullText: string,
+        ) => Promise<string[] | null>;
     }
 
     interface BibleNoteRenderOptions {

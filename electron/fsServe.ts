@@ -146,15 +146,23 @@ export function initCustomSchemeHandler() {
 
     const webRequest = session.defaultSession.webRequest;
     const requestOriginById = new Map<number, string>();
+    const requestHeadersById = new Map<number, string>();
     const externalUrlFilter = { urls: ['http://*/*', 'https://*/*'] };
     webRequest.onBeforeSendHeaders(externalUrlFilter, (details, callback) => {
         const requestOrigin =
             getRequestHeader(details.requestHeaders, 'origin') ??
             toUrlOrigin(getRequestHeader(details.requestHeaders, 'referer')) ??
             toUrlOrigin(details.referrer);
+        const requestedHeaders = getRequestHeader(
+            details.requestHeaders,
+            'access-control-request-headers',
+        );
         ensureExternalRequestReferrer(details);
         if (requestOrigin) {
             requestOriginById.set(details.id, requestOrigin);
+        }
+        if (requestedHeaders) {
+            requestHeadersById.set(details.id, requestedHeaders);
         }
         callback({ requestHeaders: details.requestHeaders });
     });
@@ -163,16 +171,20 @@ export function initCustomSchemeHandler() {
         (details, callback) => {
             const requestOrigin = requestOriginById.get(details.id);
             requestOriginById.delete(details.id);
+            const requestedHeaders = requestHeadersById.get(details.id);
+            requestHeadersById.delete(details.id);
             if (details.responseHeaders) {
                 setResponseHeader(
                     details.responseHeaders,
                     'access-control-allow-headers',
-                    [
-                        'authorization',
-                        'content-type',
-                        'x-api-key',
-                        'x-goog-api-key',
-                    ],
+                    requestedHeaders
+                        ? [requestedHeaders]
+                        : [
+                              'authorization',
+                              'content-type',
+                              'x-api-key',
+                              'x-goog-api-key',
+                          ],
                 );
                 setResponseHeader(
                     details.responseHeaders,
