@@ -2,7 +2,10 @@ import type { SetStateAction, Dispatch } from 'react';
 import { useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
-import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import {
+    appLocalStorage,
+    useWatchSetting,
+} from '../setting/directory-setting/appLocalStorage';
 
 export function setSetting(key: string, value: string | null) {
     // TODO: Change to use SettingManager
@@ -56,6 +59,17 @@ export function useStateSettingString<T extends string>(
         [data, settingName],
     );
     return [data, setDataSetting];
+}
+export function useWatchStateSettingString<T extends string>(
+    settingName: string,
+    defaultString: T = '' as T,
+): [T, Dispatch<SetStateAction<T>>] {
+    const [data, setData] = useStateSettingString(settingName, defaultString);
+    useWatchSetting(settingName, () => {
+        const newValue = getSetting(settingName) || defaultString;
+        setData(newValue as T);
+    });
+    return [data, setData];
 }
 export function useStateSettingNumber(
     settingName: string,

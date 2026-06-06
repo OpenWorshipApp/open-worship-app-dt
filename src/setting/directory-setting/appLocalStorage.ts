@@ -149,3 +149,7 @@ class AppLocalStorage {
 }
 
 export const appLocalStorage = new AppLocalStorage();
+
+export function useWatchSetting(_settingName: string, _callback: () => void) {
+    
+}

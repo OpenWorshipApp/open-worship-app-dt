@@ -19,6 +19,12 @@ import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
 import { showBibleOption } from '../../bible-lookup/BibleSelectionComp';
+import { getSetting } from '../../helper/settingHelpers';
+
+export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
+export function getBibleNoteSelectedBibleKey() {
+    return getSetting(BIBLE_KEY_SETTING_NAME) ?? 'KJV';
+}
 
 const storageManager = {
     deleteSetting(key: string) {
@@ -72,8 +78,9 @@ async function shortToVerseData(shortVerse: string) {
     if (bibleItem === null) {
         return null;
     }
+    const selectedBibleKey = getBibleNoteSelectedBibleKey();
+    bibleItem.bibleKey = selectedBibleKey;
     const title = await bibleItem.toTitle();
-    // TODO: need selected Bible Key
     const fullText = await bibleItem.toFullText();
     return { title, fullText };
 }
