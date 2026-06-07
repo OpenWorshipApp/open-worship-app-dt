@@ -24,6 +24,8 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Insert Collapse Bible Text': 'បញ្ចូលអត្ថបទព្រះគម្ពីរដែលបើនបាន',
+    'Insert Bible Text': 'បញ្ចូលអត្ថបទព្រះគម្ពីរ',
     'Choose DOCX Preview Background (right click to clear)':
         'ជ្រើសរើសផ្ទៃខាងក្រោយសម្រាប់មើលជាមុន DOCX (ចុចស្ដាំដើម្បីលុប)',
     'Open DOCX': 'បើក DOCX',

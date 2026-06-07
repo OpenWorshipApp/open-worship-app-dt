@@ -16,12 +16,79 @@ import {
 } from '../bible-reader/LookupBibleItemController';
 import {
     addBibleItemAndPresent,
-    addListEventMapper,
-    presenterEventMapper,
-    useFoundActionKeyboard,
+    ctrlEnterEventMapper,
+    ctrlShiftEnterEventMapper,
+    showAddingBibleItemFail,
 } from './bibleActionHelpers';
 import { RenderCopyBibleItemActionButtonsComp } from './RenderActionButtonsComp';
 import { tran } from '../lang/langHelpers';
+
+function SaveButtonComp({
+    handleSaveBibleItem,
+    bibleItem,
+}: Readonly<{ bibleItem: BibleItem; handleSaveBibleItem: () => void }>) {
+    const viewController = useLookupBibleItemControllerContext();
+    useKeyboardRegistering(
+        [ctrlEnterEventMapper],
+        async () => {
+            const addedBibleItem = await saveBibleItem(bibleItem, () => {
+                viewController.onLookupSaveBibleItem();
+            });
+            if (addedBibleItem === null) {
+                showAddingBibleItemFail();
+            }
+        },
+        [bibleItem],
+    );
+    return (
+        <button
+            className="btn btn-sm btn-primary"
+            type="button"
+            title={
+                tran('Save bible item') +
+                ` [${toShortcutKey(ctrlEnterEventMapper)}]`
+            }
+            onClick={handleSaveBibleItem}
+        >
+            <i className="bi bi-floppy" />
+        </button>
+    );
+}
+
+function SaveAndShowButtonComp({
+    handleSaveAndPresent,
+    bibleItem,
+}: Readonly<{
+    bibleItem: BibleItem;
+    handleSaveAndPresent: (event: MouseEvent) => void;
+}>) {
+    const viewController = useLookupBibleItemControllerContext();
+    useKeyboardRegistering(
+        [ctrlShiftEnterEventMapper],
+        (event) => {
+            if (!appProvider.isPagePresenter) {
+                return;
+            }
+            addBibleItemAndPresent(event, bibleItem, () => {
+                viewController.onLookupSaveBibleItem();
+            });
+        },
+        [bibleItem],
+    );
+    return (
+        <button
+            className="btn btn-sm btn-primary"
+            type="button"
+            title={
+                tran('Save bible item and show on screen') +
+                ` [${toShortcutKey(ctrlShiftEnterEventMapper)}]`
+            }
+            onClick={handleSaveAndPresent}
+        >
+            <i className="bi bi-cast" />
+        </button>
+    );
+}
 
 export default function RenderEditingActionButtonsComp({
     bibleItem,
@@ -35,7 +102,6 @@ export default function RenderEditingActionButtonsComp({
     const onDone = useCallback(() => {
         viewController.onLookupSaveBibleItem();
     }, [viewController]);
-    useFoundActionKeyboard(bibleItem);
     useKeyboardRegistering(
         eventMaps,
         (event) => {
@@ -87,43 +153,34 @@ export default function RenderEditingActionButtonsComp({
             >
                 <i className="bi bi-hr" />
             </button>
-            <button
-                className="btn btn-sm btn-primary"
-                type="button"
-                title={
-                    tran('Save bible item') +
-                    ` [${toShortcutKey(addListEventMapper)}]`
-                }
-                onClick={handleSaveBibleItem}
-            >
-                <i className="bi bi-floppy" />
-            </button>
-            {appProvider.isPagePresenter ? (
-                <button
-                    className="btn btn-sm btn-primary"
-                    type="button"
-                    title={
-                        tran('Save bible item and show on screen') +
-                        ` [${toShortcutKey(presenterEventMapper)}]`
-                    }
-                    onClick={handleSaveAndPresent}
-                >
-                    <i className="bi bi-cast" />
-                </button>
-            ) : null}
-            <button
-                className="btn btn-sm btn-info"
-                type="button"
-                title={tran('Export to MS Word')}
-                onClick={handleExportToWord}
-            >
-                <i
-                    className="bi bi-file-earmark-word"
-                    style={{
-                        color: 'blue',
-                    }}
-                />
-            </button>
+            {viewController.isMinimized ? null : (
+                <>
+                    <SaveButtonComp
+                        handleSaveBibleItem={handleSaveBibleItem}
+                        bibleItem={bibleItem}
+                    />
+                    {appProvider.isPagePresenter ? (
+                        <SaveAndShowButtonComp
+                            handleSaveAndPresent={handleSaveAndPresent}
+                            bibleItem={bibleItem}
+                        />
+                    ) : null}
+                    <button
+                        className="btn btn-sm btn-info"
+                        type="button"
+                        title={tran('Export to MS Word')}
+                        onClick={handleExportToWord}
+                    >
+                        <i
+                            className="bi bi-file-earmark-word"
+                            style={{
+                                color: 'blue',
+                            }}
+                        />
+                    </button>
+                </>
+            )}
+            {viewController.extraEditingActionButtons}
         </div>
     );
 }

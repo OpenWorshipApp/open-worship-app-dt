@@ -86,7 +86,7 @@ export default function RenderActionButtonsComp({
             >
                 <i className="bi bi-hr" />
             </button>
-            {viewController.isLookup ? (
+            {!viewController.isMinimized && viewController.isLookup ? (
                 <>
                     <button
                         className="btn btn-sm btn-primary"
@@ -106,21 +106,22 @@ export default function RenderActionButtonsComp({
                             <i className="bi bi-cast" />
                         </button>
                     ) : null}
+                    <button
+                        className="btn btn-sm btn-secondary"
+                        type="button"
+                        title={tran('Export to MS Word')}
+                        onClick={handleExportToWord}
+                    >
+                        <i
+                            className="bi bi-file-earmark-word"
+                            style={{
+                                color: 'blue',
+                            }}
+                        />
+                    </button>
                 </>
             ) : null}
-            <button
-                className="btn btn-sm btn-secondary"
-                type="button"
-                title={tran('Export to MS Word')}
-                onClick={handleExportToWord}
-            >
-                <i
-                    className="bi bi-file-earmark-word"
-                    style={{
-                        color: 'blue',
-                    }}
-                />
-            </button>
+            {viewController.extraActionButtons}
         </div>
     );
 }

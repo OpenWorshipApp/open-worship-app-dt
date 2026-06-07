@@ -39,44 +39,50 @@ export default function RenderBibleLookupHeaderComp({
                 height: '38px',
             }}
         >
-            <div
-                className="app-flex-item h-100 overflow-hidden d-flex align-items-center"
-                style={{
-                    width: 'calc(50% - 175px)',
-                }}
-            >
-                <BibleLookupInputHistoryComp />
-            </div>
+            {viewController.isMinimized ? null : (
+                <div
+                    className="app-flex-item h-100 overflow-hidden d-flex align-items-center"
+                    style={{
+                        width: 'calc(50% - 175px)',
+                    }}
+                >
+                    <BibleLookupInputHistoryComp />
+                </div>
+            )}
             <div
                 className="app-flex-item input-group app-input-group-header"
                 style={{ width: 350 }}
             >
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
             </div>
-            <div className="mx-2">
-                <AIConfigComp />
-            </div>
-            <div
-                className={
-                    'app-flex-item flex-fill justify-content-end' +
-                    (appProvider.isPageReader ? '' : ' pe-5')
-                }
-            >
-                <RenderExportWordComp />
-                <RenderOpenWikiDictionaryComp />
-                <div className="float-start">
-                    <RenderExtraButtonsRightComp
-                        setIsLookupOnline={setIsLookupOnline}
-                        isLookupOnline={isLookupOnline}
-                    />
-                </div>
-            </div>
-            {hideBibleLookupPopup === null ? null : (
-                <ModalCloseButton
-                    close={() => {
-                        hideBibleLookupPopup();
-                    }}
-                />
+            {viewController.isMinimized ? null : (
+                <>
+                    <div className="mx-2">
+                        <AIConfigComp />
+                    </div>
+                    <div
+                        className={
+                            'app-flex-item flex-fill justify-content-end' +
+                            (appProvider.isPageReader ? '' : ' pe-5')
+                        }
+                    >
+                        <RenderExportWordComp />
+                        <RenderOpenWikiDictionaryComp />
+                        <div className="float-start">
+                            <RenderExtraButtonsRightComp
+                                setIsLookupOnline={setIsLookupOnline}
+                                isLookupOnline={isLookupOnline}
+                            />
+                        </div>
+                    </div>
+                    {hideBibleLookupPopup === null ? null : (
+                        <ModalCloseButton
+                            close={() => {
+                                hideBibleLookupPopup();
+                            }}
+                        />
+                    )}
+                </>
             )}
         </div>
     );

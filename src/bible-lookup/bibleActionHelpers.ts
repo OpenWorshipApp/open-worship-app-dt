@@ -1,6 +1,5 @@
 import { tran } from '../lang/langHelpers';
 import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
-import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import type BibleItem from '../bible-list/BibleItem';
@@ -12,19 +11,18 @@ import {
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
-import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 
-export const presenterEventMapper: KeyboardEventMapper = {
+export const ctrlShiftEnterEventMapper: KeyboardEventMapper = {
     allControlKey: ['Ctrl', 'Shift'],
     key: 'Enter',
 };
 
-export const addListEventMapper: KeyboardEventMapper = {
+export const ctrlEnterEventMapper: KeyboardEventMapper = {
     allControlKey: ['Ctrl'],
     key: 'Enter',
 };
 
-function showAddingBibleItemFail() {
+export function showAddingBibleItemFail() {
     showSimpleToast('Adding Bible Item', 'Fail to add bible item');
 }
 
@@ -39,33 +37,6 @@ export async function addBibleItemAndPresent(
     } else {
         ScreenBibleManager.handleBibleItemSelecting(event, addedBibleItem);
     }
-}
-
-export function useFoundActionKeyboard(bibleItem: BibleItem) {
-    const viewController = useLookupBibleItemControllerContext();
-    const onDone = () => {
-        viewController.onLookupSaveBibleItem();
-    };
-    useKeyboardRegistering(
-        [addListEventMapper],
-        async () => {
-            const addedBibleItem = await saveBibleItem(bibleItem, onDone);
-            if (addedBibleItem === null) {
-                showAddingBibleItemFail();
-            }
-        },
-        [bibleItem],
-    );
-    useKeyboardRegistering(
-        [presenterEventMapper],
-        (event) => {
-            if (!appProvider.isPagePresenter) {
-                return;
-            }
-            addBibleItemAndPresent(event, bibleItem, onDone);
-        },
-        [bibleItem],
-    );
 }
 
 export function genFoundBibleItemContextMenu(
@@ -96,7 +67,7 @@ export function genFoundBibleItemContextMenu(
             childBefore: genContextMenuItemIcon('floppy'),
             menuElement: tran('Save bible item'),
             keyboardShortcut: isKeyboardShortcut
-                ? addListEventMapper
+                ? ctrlEnterEventMapper
                 : undefined,
             onSelect: async () => {
                 const addedBibleItem = await saveBibleItem(bibleItem, onDone);
@@ -133,7 +104,7 @@ export function genFoundBibleItemContextMenu(
                   },
                   {
                       keyboardShortcut: isKeyboardShortcut
-                          ? presenterEventMapper
+                          ? ctrlShiftEnterEventMapper
                           : undefined,
                       menuElement: tran('Save bible item and show on screen'),
                       onSelect: async (event: any) => {

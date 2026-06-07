@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createContext, type ReactNode } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -78,6 +78,7 @@ class FoundBibleItem extends ReadIdOnlyBibleItem {
 const editingResultCacher = new CacheManager<EditingResultType>(3);
 class LookupBibleItemController extends BibleItemsViewController {
     isLookup = true;
+    extraEditingActionButtons: ReactNode | null = null;
     setInputText: (inputText: string) => OptionalPromise<void> = (
         _: string,
     ) => {};

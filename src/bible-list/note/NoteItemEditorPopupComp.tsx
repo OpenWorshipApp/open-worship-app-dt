@@ -1,8 +1,20 @@
 import { type BibleNote } from 'BibleNote.js';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import FloatingWidgetComp from '../../app-modal/FloatingWidgetComp';
-import { addBibleText, useBibleNoteControl } from './bibleNoteHelpers1';
+import { useBibleNoteControl } from './bibleNoteHelpers1';
+import RenderBibleLookupComp from '../../bible-lookup/RenderBibleLookupComp';
+import LookupBibleItemController from '../../bible-reader/LookupBibleItemController';
+import { BibleItemsViewControllerContext } from '../../bible-reader/BibleItemsViewController';
+import { tran } from '../../lang/langHelpers';
+import {
+    ctrlEnterEventMapper,
+    ctrlShiftEnterEventMapper,
+} from '../../bible-lookup/bibleActionHelpers';
+import {
+    toShortcutKey,
+    useKeyboardRegistering,
+} from '../../event/KeyboardEventListener';
 
 function BibleNoteBibleLookupComp({
     bibleNote,
@@ -11,50 +23,87 @@ function BibleNoteBibleLookupComp({
     bibleNote: BibleNote;
     setIsShowingBibleLookup: (isShowing: boolean) => void;
 }>) {
+    const addBibleFullText = useCallback(
+        async (
+            viewController: LookupBibleItemController,
+            preProcess = () => {},
+        ) => {
+            const { result } = await viewController.getEditingResult();
+            if (result.bibleItem === null) {
+                return;
+            }
+            preProcess();
+            const text = await result.bibleItem.toFullText();
+            bibleNote.addText(text);
+        },
+        [bibleNote],
+    );
+    const lookupBibleItemController = useMemo(() => {
+        const newLookupBibleItemController = new LookupBibleItemController();
+        newLookupBibleItemController.isMinimized = true;
+        newLookupBibleItemController.extraEditingActionButtons = (
+            <>
+                <button
+                    className="btn btn-sm btn-primary"
+                    type="button"
+                    title={
+                        tran('Insert Collapse Bible Text') +
+                        ` [${toShortcutKey(ctrlEnterEventMapper)}]`
+                    }
+                    onClick={async () => {
+                        addBibleFullText(newLookupBibleItemController);
+                    }}
+                >
+                    <i className="bi bi-archive" />
+                </button>
+                <button
+                    className="btn btn-sm btn-primary"
+                    type="button"
+                    title={
+                        tran('Insert Bible Text') +
+                        ` [${toShortcutKey(ctrlShiftEnterEventMapper)}]`
+                    }
+                    onClick={async () => {
+                        addBibleFullText(newLookupBibleItemController, () => {
+                            bibleNote.addText('^');
+                        });
+                    }}
+                >
+                    <i className="bi bi-box-arrow-in-left" />
+                </button>
+            </>
+        );
+        return newLookupBibleItemController;
+    }, [bibleNote, addBibleFullText]);
+    useKeyboardRegistering(
+        [ctrlEnterEventMapper],
+        async () => {
+            addBibleFullText(lookupBibleItemController);
+        },
+        [lookupBibleItemController],
+    );
+    useKeyboardRegistering(
+        [ctrlShiftEnterEventMapper],
+        () => {
+            addBibleFullText(lookupBibleItemController, () => {
+                bibleNote.addText('^');
+            });
+        },
+        [lookupBibleItemController, bibleNote, addBibleFullText],
+    );
     return (
         <FloatingWidgetComp
             onClose={() => setIsShowingBibleLookup(false)}
             options={{
                 width: 500,
-                height: 400,
+                height: 700,
                 minWidth: 300,
                 minHeight: 200,
             }}
         >
-            <div
-                className="card w-100 h-100 app-overflow-hidden app-focusable"
-                tabIndex={0}
-                ref={(ele) => {
-                    if (ele === null) {
-                        return;
-                    }
-                    // Focus to enable keyboard shortcut in the popup
-                    ele.focus();
-                }}
-            >
-                <div className="card-header">
-                    <span>Bible Lookup</span>
-                </div>
-                <div className="card-body">
-                    <button
-                        onClick={async () => {
-                            addBibleText(bibleNote);
-                        }}
-                    >
-                        Add Bible (Genesis 1:1-3 KJV)
-                    </button>
-                </div>
-                <div className="card-body">
-                    <button
-                        onClick={async () => {
-                            bibleNote.addText('^');
-                            addBibleText(bibleNote);
-                        }}
-                    >
-                        Add Bible (^ Genesis 1:1-3 KJV)
-                    </button>
-                </div>
-            </div>
+            <BibleItemsViewControllerContext value={lookupBibleItemController}>
+                <RenderBibleLookupComp />
+            </BibleItemsViewControllerContext>
         </FloatingWidgetComp>
     );
 }

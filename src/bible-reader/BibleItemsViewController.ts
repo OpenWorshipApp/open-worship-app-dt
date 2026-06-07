@@ -252,6 +252,8 @@ export type MovingPositionType = keyof typeof movingPosition;
 const BIBLE_ITEMS_PREVIEW_SETTING = 'bible-items-preview';
 class BibleItemsViewController extends EventHandler<UpdateEventType> {
     isLookup = true;
+    isMinimized = false;
+    extraActionButtons: ReactNode | null = null;
     shouldSelectFirstItem = false;
     _nestedBibleItems: NestedBibleItemsType = [];
     private readonly _settingNameSuffix: string;

@@ -3,7 +3,6 @@ import type { BibleNote } from 'BibleNote.js';
 import appProvider from '../../server/appProvider';
 import { getAllLangsAsync } from '../../lang/langHelpers';
 import { useIsOnTop } from '../../server/appHelpers';
-import BibleItem from '../BibleItem';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { useThemeSource } from '../../others/themeHelpers';
 import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
@@ -131,20 +130,4 @@ export function useBibleNoteControl({
             ),
         });
     }, [bibleNote, fontFamily, bibleKey]);
-}
-
-export async function addBibleText(bibleNote: BibleNote) {
-    const bibleItem = BibleItem.fromJson({
-        id: -1,
-        bibleKey: 'KJV',
-        target: {
-            bookKey: 'GEN',
-            chapter: 1,
-            verseStart: 1,
-            verseEnd: 3,
-        },
-        metadata: {},
-    });
-    const text = await bibleItem.toFullText();
-    bibleNote.addText(text);
 }
