@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-import { showBibleOption } from '../bible-lookup/BibleSelectionComp';
+import { showBibleKeyOption } from '../bible-lookup/BibleKeySelectionComp';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 
 export default function ButtonAddMoreBibleComp({
@@ -12,7 +12,7 @@ export default function ButtonAddMoreBibleComp({
 }>) {
     const handleClick = useCallback(
         (event: any) => {
-            showBibleOption(event, (bibleKey: string) => {
+            showBibleKeyOption(event, (bibleKey: string) => {
                 const newBibleItem = ReadIdOnlyBibleItem.fromJson(
                     bibleItems[0].toJson(),
                 );

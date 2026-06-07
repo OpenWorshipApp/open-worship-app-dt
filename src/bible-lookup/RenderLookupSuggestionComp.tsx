@@ -2,7 +2,7 @@ import { use, useCallback, type MouseEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import RenderChapterOptionsComp from './RenderChapterOptionsComp';
-import { BibleSelectionMiniComp } from './BibleSelectionComp';
+import { BibleKeySelectionMiniComp } from './BibleKeySelectionComp';
 import { RENDER_FOUND_CLASS } from './selectionHelpers';
 import {
     EditingResultContext,
@@ -125,7 +125,7 @@ export function BibleNotAvailableComp({
                         {tran('Please change bible key here')} 👉
                     </h4>
                     <div>
-                        <BibleSelectionMiniComp
+                        <BibleKeySelectionMiniComp
                             bibleKey={bibleKey}
                             onBibleKeyChange={handleBibleKeyChanging}
                         />

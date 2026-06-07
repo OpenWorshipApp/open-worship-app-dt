@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { tran } from '../../lang/langHelpers';
-import { BibleSelectionMiniComp } from '../../bible-lookup/BibleSelectionComp';
+import { BibleKeySelectionMiniComp } from '../../bible-lookup/BibleKeySelectionComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import type ColorNoteInf from '../../helper/ColorNoteInf';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
@@ -82,7 +82,7 @@ export function RenderTitleMaterialComp({
             <div className="d-flex flex-fill">
                 <div className="d-flex ps-1">
                     <div style={{ margin: 'auto' }}>
-                        <BibleSelectionMiniComp
+                        <BibleKeySelectionMiniComp
                             bibleKey={bibleItem.bibleKey}
                             onBibleKeyChange={onBibleKeyChange}
                             contextMenuTitle={tran('Add Extra Bible')}

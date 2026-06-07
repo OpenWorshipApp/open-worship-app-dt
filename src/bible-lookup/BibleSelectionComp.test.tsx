@@ -46,11 +46,11 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
     useBibleFontFamily: mocks.useBibleFontFamilyMock,
 }));
 
-import BibleSelectionComp, {
-    BibleSelectionMiniComp,
+import BibleKeySelectionComp, {
+    BibleKeySelectionMiniComp,
     genContextMenuBibleKeys,
-    showBibleOption,
-} from './BibleSelectionComp';
+    showBibleKeyOption,
+} from './BibleKeySelectionComp';
 
 type MenuItemType = {
     childBefore?: any;
@@ -137,7 +137,7 @@ describe('BibleSelectionComp', () => {
         );
 
         mocks.getAllLocalBibleInfoListMock.mockResolvedValueOnce(null);
-        await showBibleOption({ type: 'click' }, vi.fn());
+        await showBibleKeyOption({ type: 'click' }, vi.fn());
         expect(mocks.showAppContextMenuMock).not.toHaveBeenCalled();
     });
 
@@ -145,7 +145,7 @@ describe('BibleSelectionComp', () => {
         const onSelect = vi.fn();
         const event = { type: 'contextmenu' };
 
-        await showBibleOption(event, onSelect, ['KHM'], 'Pick a Bible');
+        await showBibleKeyOption(event, onSelect, ['KHM'], 'Pick a Bible');
 
         expect(mocks.showAppContextMenuMock).toHaveBeenCalledTimes(1);
         expect(mocks.showAppContextMenuMock).toHaveBeenCalledWith(
@@ -174,7 +174,7 @@ describe('BibleSelectionComp', () => {
             }
             root = createRoot(container);
             root.render(
-                <BibleSelectionComp
+                <BibleKeySelectionComp
                     bibleKey="KJV"
                     onBibleKeyChange={onBibleKeyChange}
                 />,
@@ -212,7 +212,7 @@ describe('BibleSelectionComp', () => {
             }
             root = createRoot(container);
             root.render(
-                <BibleSelectionMiniComp
+                <BibleKeySelectionMiniComp
                     bibleKey="KJV"
                     contextMenuTitle="Choose translation"
                     extraStyle={{ color: 'red' }}
@@ -257,7 +257,7 @@ describe('BibleSelectionComp', () => {
         expect(onBibleKeyChange).toHaveBeenCalledWith(true, 'KJV', 'ESV');
 
         await act(async () => {
-            root?.render(<BibleSelectionMiniComp bibleKey="WEB" />);
+            root?.render(<BibleKeySelectionMiniComp bibleKey="WEB" />);
         });
 
         const passiveSpan = container?.querySelector('span.bible-selector');

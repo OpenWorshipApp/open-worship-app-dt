@@ -12,7 +12,7 @@ import {
     extractDropData,
 } from '../helper/dragHelpers';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
-import { BibleSelectionMiniComp } from '../bible-lookup/BibleSelectionComp';
+import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
@@ -208,7 +208,7 @@ export default function BibleItemRenderComp({
                 <ItemColorNoteComp item={bibleItem} />
                 <div className="d-flex flex-fill">
                     <div className="px-1">
-                        <BibleSelectionMiniComp
+                        <BibleKeySelectionMiniComp
                             bibleKey={bibleItem.bibleKey}
                             onBibleKeyChange={(
                                 _isContextMenu,

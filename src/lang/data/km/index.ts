@@ -24,6 +24,8 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Choose DOCX Preview Background (right click to clear)':
+        'ជ្រើសរើសផ្ទៃខាងក្រោយសម្រាប់មើលជាមុន DOCX (ចុចស្ដាំដើម្បីលុប)',
     'Open DOCX': 'បើក DOCX',
     'Refresh DOCX Pages': 'ផ្ទុកទំព័រ DOCX ជាថ្មី',
     'Delete Note Item': 'លុបធាតុកំណត់សម្គាល់',

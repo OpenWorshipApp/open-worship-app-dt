@@ -2,7 +2,10 @@ import type { SetStateAction, Dispatch } from 'react';
 import { useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
-import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import {
+    appLocalStorage,
+    useWatchSetting,
+} from '../setting/directory-setting/appLocalStorage';
 
 export function setSetting(key: string, value: string | null) {
     // TODO: Change to use SettingManager
@@ -44,18 +47,31 @@ export function useStateSettingBoolean(
 export function useStateSettingString<T extends string>(
     settingName: string,
     defaultString: T = '' as T,
-): [T, Dispatch<SetStateAction<T>>] {
+): [T, (text: string | ((prev: T) => T), isSkipSetSetting?: boolean) => void] {
     const defaultData = getSetting(settingName) || defaultString;
     const [data, setData] = useState<T>(defaultData as T);
     const setDataSetting = useCallback(
-        (text: string | ((prev: T) => T)) => {
+        (text: string | ((prev: T) => T), isSkipSetSetting = false) => {
             const newValue = typeof text === 'function' ? text(data) : text;
             setData(newValue as T);
-            setSetting(settingName, `${newValue}`);
+            if (!isSkipSetSetting) {
+                setSetting(settingName, `${newValue}`);
+            }
         },
         [data, settingName],
     );
     return [data, setDataSetting];
+}
+export function useWatchStateSettingString<T extends string>(
+    settingName: string,
+    defaultString: T = '' as T,
+): [T, Dispatch<SetStateAction<T>>] {
+    const [data, setData] = useStateSettingString(settingName, defaultString);
+    useWatchSetting(settingName, () => {
+        const newValue = getSetting(settingName) || defaultString;
+        setData(newValue, true);
+    });
+    return [data, setData];
 }
 export function useStateSettingNumber(
     settingName: string,

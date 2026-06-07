@@ -8,7 +8,7 @@ import {
     type KeyboardEvent,
 } from 'react';
 
-import BibleSelectionComp from './BibleSelectionComp';
+import BibleKeySelectionComp from './BibleKeySelectionComp';
 import {
     BIBLE_LOOKUP_INPUT_ID,
     INPUT_TEXT_CLASS,
@@ -107,7 +107,7 @@ export default function InputHandlerComp({
     });
     return (
         <Fragment>
-            <BibleSelectionComp
+            <BibleKeySelectionComp
                 bibleKey={bibleKey}
                 onBibleKeyChange={onBibleKeyChange}
             />

@@ -13,8 +13,8 @@ $z-index-popup-full-screen: $base-z-index + 20;
 $z-index-resize-actor-top: $base-z-index + 30;
 $z-index-finder: $base-z-index + 40;
 $z-index-widget-full-view: $base-z-index + 45;
-$z-index-context-menu: $base-z-index + 50;
 $z-index-toast: $base-z-index + 60;
 $z-index-progress-bar: $base-z-index + 60;
+$z-index-context-menu: 99999;
 
 $hight-light-color: #ad0090;
