@@ -4,12 +4,14 @@ import CacheManager from '../../others/CacheManager';
 import appProvider from '../../server/appProvider';
 import {
     fsCheckDirExist,
+    fsCheckFileExist,
     fsDeleteFile,
     fsExistSync,
     fsListFiles,
     fsMkDirSync,
     fsReadSync,
     fsUnlinkSync,
+    fsWriteFile,
     fsWriteFileSync,
     getUserWritablePath,
     pathJoin,
@@ -163,6 +165,10 @@ export function useWatchSetting(settingName: string, callback: () => void) {
             appLocalStorage.localStorageDir,
             settingName,
         );
+        if (!(await fsCheckFileExist(settingFile))) {
+            fsMkDirSync(appLocalStorage.localStorageDir, true);
+            await fsWriteFile(settingFile, '', 'utf-8');
+        }
         const abortController = new AbortController();
         appProvider.fileUtils.watch(
             settingFile,
