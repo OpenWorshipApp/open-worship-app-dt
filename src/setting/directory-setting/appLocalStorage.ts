@@ -1,17 +1,13 @@
-import { useAppEffectAsync } from '../../helper/debuggerHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import CacheManager from '../../others/CacheManager';
-import appProvider from '../../server/appProvider';
 import {
     fsCheckDirExist,
-    fsCheckFileExist,
     fsDeleteFile,
     fsExistSync,
     fsListFiles,
     fsMkDirSync,
     fsReadSync,
     fsUnlinkSync,
-    fsWriteFile,
     fsWriteFileSync,
     getUserWritablePath,
     pathJoin,
@@ -158,33 +154,3 @@ class AppLocalStorage {
 }
 
 export const appLocalStorage = new AppLocalStorage();
-
-export function useWatchSetting(settingName: string, callback: () => void) {
-    useAppEffectAsync(async () => {
-        const settingFile = pathJoin(
-            appLocalStorage.localStorageDir,
-            settingName,
-        );
-        if (!(await fsCheckFileExist(settingFile))) {
-            fsMkDirSync(appLocalStorage.localStorageDir, true);
-            await fsWriteFile(settingFile, '', 'utf-8');
-        }
-        const abortController = new AbortController();
-        appProvider.fileUtils.watch(
-            settingFile,
-            {
-                signal: abortController.signal,
-            },
-            async (eventType: string, ..._args: any[]) => {
-                if (eventType !== 'change') {
-                    return;
-                }
-                appLocalStorage.removeItemCache(settingName);
-                callback();
-            },
-        );
-        return () => {
-            abortController.abort();
-        };
-    }, []);
-}

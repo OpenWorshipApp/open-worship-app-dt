@@ -2,10 +2,9 @@ import type { SetStateAction, Dispatch } from 'react';
 import { useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
-import {
-    appLocalStorage,
-    useWatchSetting,
-} from '../setting/directory-setting/appLocalStorage';
+import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
+import { pathJoin, fsCheckFileExist } from '../server/fileHelpers';
+import { useAppEffectAsync } from './debuggerHelpers';
 
 export function setSetting(key: string, value: string | null) {
     // TODO: Change to use SettingManager
@@ -22,6 +21,35 @@ export function getSetting(key: string) {
 export function getSettingForce(key: string) {
     // TODO: Change to use SettingManager
     return appLocalStorage.getItemForce(key);
+}
+
+function useWatchSetting(settingName: string, callback: () => void) {
+    useAppEffectAsync(async () => {
+        const settingFile = pathJoin(
+            appLocalStorage.localStorageDir,
+            settingName,
+        );
+        if (!(await fsCheckFileExist(settingFile))) {
+            setSetting(settingName, '');
+        }
+        const abortController = new AbortController();
+        appProvider.fileUtils.watch(
+            settingFile,
+            {
+                signal: abortController.signal,
+            },
+            async (eventType: string, ..._args: any[]) => {
+                if (eventType !== 'change') {
+                    return;
+                }
+                appLocalStorage.removeItemCache(settingName);
+                callback();
+            },
+        );
+        return () => {
+            abortController.abort();
+        };
+    }, []);
 }
 
 export function useStateSettingBoolean(
