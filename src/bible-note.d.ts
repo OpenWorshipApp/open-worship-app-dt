@@ -39,6 +39,9 @@ declare module 'BibleNote.js' {
             event: ReactMouseEvent<HTMLButtonElement>,
             fullText: string,
         ) => Promise<MentionedBibleDataType | null>;
+        excalidrawClearLibrariesFileList?: () => void;
+        excalidrawLoadLibrariesFileList?: () => string[];
+        excalidrawSaveLibrariesFile?: (librariesFile: string) => void;
     }
 
     interface BibleNoteRenderOptions {

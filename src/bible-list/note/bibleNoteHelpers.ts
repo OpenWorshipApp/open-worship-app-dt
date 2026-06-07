@@ -19,7 +19,7 @@ import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
-import { getSetting } from '../../helper/settingHelpers';
+import { getSetting, setSetting } from '../../helper/settingHelpers';
 
 export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
 export function getBibleNoteSelectedBibleKey() {
@@ -148,6 +148,40 @@ async function changeBibleKey(
     };
 }
 
+function excalidrawLoadLibrariesFileList() {
+    const libraries = getSetting('excalidraw-libraries');
+    if (libraries === null) {
+        return [];
+    }
+
+    try {
+        const parsedLibraries = JSON.parse(libraries);
+        return Array.isArray(parsedLibraries)
+            ? parsedLibraries.filter(
+                  (librariesFile): librariesFile is string =>
+                      typeof librariesFile === 'string',
+              )
+            : [];
+    } catch {
+        return [];
+    }
+}
+function excalidrawSaveLibrariesFile(librariesFile: string) {
+    const existingLibrariesFileList = excalidrawLoadLibrariesFileList();
+    if (existingLibrariesFileList.includes(librariesFile)) {
+        return;
+    }
+
+    const mergedLibrariesFileList = [
+        librariesFile,
+        ...existingLibrariesFileList,
+    ];
+    setSetting('excalidraw-libraries', JSON.stringify(mergedLibrariesFileList));
+}
+function excalidrawClearLibrariesFileList() {
+    setSetting('excalidraw-libraries', null);
+}
+
 const attemptTimeout = genTimeoutAttempt(1_000);
 
 export async function initBibleNote({
@@ -219,6 +253,9 @@ export async function initBibleNote({
         shortToVerseData,
         verseFullTextToListShorts,
         changeBibleKey,
+        excalidrawClearLibrariesFileList,
+        excalidrawLoadLibrariesFileList,
+        excalidrawSaveLibrariesFile,
     });
 
     const abortController = new AbortController();
