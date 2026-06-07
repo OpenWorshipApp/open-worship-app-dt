@@ -23,7 +23,7 @@ import { getSetting, setSetting } from '../../helper/settingHelpers';
 
 export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
 export function getBibleNoteSelectedBibleKey() {
-    return getSetting(BIBLE_KEY_SETTING_NAME) ?? 'KJV';
+    return getSetting(BIBLE_KEY_SETTING_NAME) || 'KJV';
 }
 
 const storageManager = {
