@@ -39,7 +39,7 @@ export default function SlideEditorToolsComp() {
                         };
                     })}
                     activeTabs={[tabKey]}
-                    setActiveTab={setTabKey}
+                    setActiveTab={(key) => setTabKey(key)}
                 />
             </div>
             <div

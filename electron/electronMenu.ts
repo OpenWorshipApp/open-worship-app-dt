@@ -68,7 +68,10 @@ export function initMenu(appController: ElectronAppController) {
                 {
                     label: 'Print',
                     accelerator: printShortcut,
-                    click: (_menuItem: unknown, browserWindow?: BrowserWindow) => {
+                    click: (
+                        _menuItem: unknown,
+                        browserWindow?: BrowserWindow,
+                    ) => {
                         void previewPrintCurrentWindow(browserWindow).catch(
                             (error) => {
                                 console.log('Print preview failed:', error);
@@ -78,7 +81,10 @@ export function initMenu(appController: ElectronAppController) {
                 },
                 {
                     label: 'Print Without Preview',
-                    click: (_menuItem: unknown, browserWindow?: BrowserWindow) => {
+                    click: (
+                        _menuItem: unknown,
+                        browserWindow?: BrowserWindow,
+                    ) => {
                         printCurrentWindow(browserWindow);
                     },
                 },

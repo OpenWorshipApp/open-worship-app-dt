@@ -88,7 +88,9 @@ function getRequestHeader(
     const matchingHeaderName = Object.keys(requestHeaders ?? {}).find((key) => {
         return key.toLowerCase() === headerName;
     });
-    return matchingHeaderName ? requestHeaders?.[matchingHeaderName] : undefined;
+    return matchingHeaderName
+        ? requestHeaders?.[matchingHeaderName]
+        : undefined;
 }
 
 function setRequestHeader(
@@ -123,7 +125,11 @@ function ensureExternalRequestReferrer(details: {
     if (requestReferrer && !requestReferrer.startsWith(rootUrl)) {
         return;
     }
-    setRequestHeader(details.requestHeaders, 'referer', externalRequestReferrer);
+    setRequestHeader(
+        details.requestHeaders,
+        'referer',
+        externalRequestReferrer,
+    );
 }
 
 function toUrlOrigin(urlString: string | undefined) {
@@ -166,52 +172,49 @@ export function initCustomSchemeHandler() {
         }
         callback({ requestHeaders: details.requestHeaders });
     });
-    webRequest.onHeadersReceived(
-        externalUrlFilter,
-        (details, callback) => {
-            const requestOrigin = requestOriginById.get(details.id);
-            requestOriginById.delete(details.id);
-            const requestedHeaders = requestHeadersById.get(details.id);
-            requestHeadersById.delete(details.id);
-            if (details.responseHeaders) {
+    webRequest.onHeadersReceived(externalUrlFilter, (details, callback) => {
+        const requestOrigin = requestOriginById.get(details.id);
+        requestOriginById.delete(details.id);
+        const requestedHeaders = requestHeadersById.get(details.id);
+        requestHeadersById.delete(details.id);
+        if (details.responseHeaders) {
+            setResponseHeader(
+                details.responseHeaders,
+                'access-control-allow-headers',
+                requestedHeaders
+                    ? [requestedHeaders]
+                    : [
+                          'authorization',
+                          'content-type',
+                          'x-api-key',
+                          'x-goog-api-key',
+                      ],
+            );
+            setResponseHeader(
+                details.responseHeaders,
+                'access-control-allow-methods',
+                ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+            );
+            setResponseHeader(
+                details.responseHeaders,
+                'access-control-allow-origin',
+                [requestOrigin ?? '*'],
+            );
+            if (requestOrigin) {
                 setResponseHeader(
                     details.responseHeaders,
-                    'access-control-allow-headers',
-                    requestedHeaders
-                        ? [requestedHeaders]
-                        : [
-                              'authorization',
-                              'content-type',
-                              'x-api-key',
-                              'x-goog-api-key',
-                          ],
-                );
-                setResponseHeader(
-                    details.responseHeaders,
-                    'access-control-allow-methods',
-                    ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-                );
-                setResponseHeader(
-                    details.responseHeaders,
-                    'access-control-allow-origin',
-                    [requestOrigin ?? '*'],
-                );
-                if (requestOrigin) {
-                    setResponseHeader(
-                        details.responseHeaders,
-                        'access-control-allow-credentials',
-                        ['true'],
-                    );
-                }
-                setResponseHeader(
-                    details.responseHeaders,
-                    'access-control-expose-headers',
-                    ['*'],
+                    'access-control-allow-credentials',
+                    ['true'],
                 );
             }
-            callback({ responseHeaders: details.responseHeaders });
-        },
-    );
+            setResponseHeader(
+                details.responseHeaders,
+                'access-control-expose-headers',
+                ['*'],
+            );
+        }
+        callback({ responseHeaders: details.responseHeaders });
+    });
 }
 
 export function toTitleCase(str: string) {

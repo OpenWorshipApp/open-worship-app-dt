@@ -8,7 +8,7 @@ import CacheManager from '../others/CacheManager';
 import { unlocking } from '../server/unlockingHelpers';
 
 const webScreenshotCacheManager = new CacheManager<string>(60 /* 1 minute */);
-async function captureWebScreenShot(
+export async function captureWebScreenShot(
     url: string,
     {
         width,

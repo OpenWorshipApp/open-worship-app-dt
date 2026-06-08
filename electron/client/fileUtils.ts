@@ -67,11 +67,7 @@ function installAppFilePathSupport() {
     if (installAppFilePathGetter() === false) {
         return false;
     }
-    globalThis.document?.addEventListener(
-        'drop',
-        injectDroppedFilePaths,
-        true,
-    );
+    globalThis.document?.addEventListener('drop', injectDroppedFilePaths, true);
     globalThis.document?.addEventListener(
         'change',
         injectInsertedFilePaths,

@@ -44,7 +44,7 @@ export default function SettingComp() {
                         };
                     })}
                     activeTabs={[tabKey]}
-                    setActiveTab={setTabKey}
+                    setActiveTab={(key) => setTabKey(key)}
                 />
                 <div
                     style={{

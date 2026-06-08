@@ -155,7 +155,7 @@ export default function BackgroundComp() {
                 <TabRenderComp<TabKeyType>
                     tabs={tabs}
                     activeTabs={[tabKey]}
-                    setActiveTab={setTabKey}
+                    setActiveTab={(key) => setTabKey(key)}
                 />
                 {appProvider.isPagePresenter ? (
                     <RenderAudiosTabComp

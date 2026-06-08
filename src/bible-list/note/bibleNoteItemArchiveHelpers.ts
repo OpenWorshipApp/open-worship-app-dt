@@ -65,10 +65,7 @@ function sanitizeFileNamePart(value: string) {
     const sanitizedText = Array.from(value.trim())
         .map((char) => {
             const codePoint = char.codePointAt(0) ?? 0;
-            if (
-                codePoint < 32 ||
-                INVALID_FILE_NAME_CHAR_CODES.has(codePoint)
-            ) {
+            if (codePoint < 32 || INVALID_FILE_NAME_CHAR_CODES.has(codePoint)) {
                 return '_';
             }
             return char;
@@ -408,7 +405,9 @@ async function copyImportedEmbeddedFiles(
             ),
         );
         if (importedFilePath === null) {
-            throw new Error(`Unable to import archive file: ${file.archivePath}`);
+            throw new Error(
+                `Unable to import archive file: ${file.archivePath}`,
+            );
         }
         appFilePathByOriginalPath.set(file.originalPath, importedFilePath);
     }
@@ -459,7 +458,10 @@ export async function importBibleNoteItemArchive(
 export async function exportBibleNoteItem(noteItem: NoteItem) {
     try {
         const archiveFilePath = await createBibleNoteItemArchive(noteItem);
-        showSimpleToast('Export Bible Note Item', `Exported to ${archiveFilePath}`);
+        showSimpleToast(
+            'Export Bible Note Item',
+            `Exported to ${archiveFilePath}`,
+        );
         showFileOrDirExplorer(archiveFilePath);
         return archiveFilePath;
     } catch (error: any) {
@@ -477,18 +479,17 @@ export async function selectAndImportBibleNoteItemArchive(note: Note) {
         const filePaths = await selectFiles([
             {
                 name: 'Open Worship BibleNote Archive',
-                extensions: [
-                    'gz',
-                    'tgz',
-                    'tar',
-                ],
+                extensions: ['gz', 'tgz', 'tar'],
             },
         ]);
         const archiveFilePath = filePaths[0];
         if (!archiveFilePath) {
             return null;
         }
-        const noteItem = await importBibleNoteItemArchive(note, archiveFilePath);
+        const noteItem = await importBibleNoteItemArchive(
+            note,
+            archiveFilePath,
+        );
         showSimpleToast('Import Bible Note Item', `Imported ${noteItem.title}`);
         return noteItem;
     } catch (error: any) {

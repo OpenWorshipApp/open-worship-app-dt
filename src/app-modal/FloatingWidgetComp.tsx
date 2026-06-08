@@ -39,10 +39,7 @@ function clampNumber(value: number, min: number, max: number) {
 }
 
 function getViewportSize() {
-    if (
-        globalThis.window === undefined ||
-        globalThis.document === undefined
-    ) {
+    if (globalThis.window === undefined || globalThis.document === undefined) {
         return {
             width: DEFAULT_WIDTH + VIEWPORT_PADDING * 2,
             height: DEFAULT_HEIGHT + VIEWPORT_PADDING * 2,
@@ -216,7 +213,10 @@ export default function FloatingWidgetComp({
 
         globalThis.window.addEventListener('resize', handleViewportResize);
         return () => {
-            globalThis.window.removeEventListener('resize', handleViewportResize);
+            globalThis.window.removeEventListener(
+                'resize',
+                handleViewportResize,
+            );
         };
     }, [
         isCollapsed,
@@ -323,7 +323,9 @@ export default function FloatingWidgetComp({
                     <button
                         type="button"
                         className="floating-widget__drag-indicator"
-                        onPointerDown={(event) => startInteraction(event, 'move')}
+                        onPointerDown={(event) =>
+                            startInteraction(event, 'move')
+                        }
                         aria-label="Move floating widget"
                         title="Move floating widget"
                     >

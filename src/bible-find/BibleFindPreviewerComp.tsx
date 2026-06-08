@@ -58,7 +58,7 @@ export default function BibleFindPreviewerComp() {
                         };
                     })}
                     activeTabs={[tabKey]}
-                    setActiveTab={setTabKey}
+                    setActiveTab={(key) => setTabKey(key)}
                 />
             </div>
             <div
