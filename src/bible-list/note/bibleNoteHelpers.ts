@@ -20,6 +20,7 @@ import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
+import { getBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 
 export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
 export function getBibleNoteSelectedBibleKey() {
@@ -73,6 +74,7 @@ async function shortToVerseData(shortVerse: string) {
     // `Genesis 1:1` => {
     //     title: "Genesis 1:1",
     //     fullText: "(1): In the beginning God created the heaven and the earth."
+    //     style: { color: 'green' }
     // }
     const bibleItem = await BibleItem.fromTitleText('KJV', shortVerse);
     if (bibleItem === null) {
@@ -82,7 +84,8 @@ async function shortToVerseData(shortVerse: string) {
     bibleItem.bibleKey = selectedBibleKey;
     const title = await bibleItem.toTitle();
     const fullText = await bibleItem.toFullText();
-    return { title, fullText };
+    const fontFamily = await getBibleFontFamily(selectedBibleKey);
+    return { title, fullText, style: { fontFamily } };
 }
 
 async function verseFullTextToListShorts(verseFullText: string) {

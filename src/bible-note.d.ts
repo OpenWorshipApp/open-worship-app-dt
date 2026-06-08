@@ -14,7 +14,11 @@ declare module 'BibleNote.js' {
         deleteSetting(key: string): Promise<void>;
     }
 
-    type MentionedBibleDataType = { title: string; fullText: string };
+    type MentionedBibleDataType = {
+        title: string;
+        fullText: string;
+        style?: React.CSSProperties;
+    };
 
     interface BibleNoteOptions {
         getLangCode: (text: string) => string;
