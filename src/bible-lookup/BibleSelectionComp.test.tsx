@@ -118,7 +118,7 @@ describe('BibleSelectionComp', () => {
             'Language en-US',
         );
         expect(menuItems?.[1]?.title).toBe('King James Version');
-        menuItems?.[1]?.onSelect?.('event-1');
+        menuItems?.[1]?.onSelect?.('event-1' as any);
         expect(onSelect).toHaveBeenCalledWith('event-1', 'KJV');
         expect(menuItems?.[2]?.menuElement).toBe('DIVIDER');
         expect(
@@ -222,7 +222,9 @@ describe('BibleSelectionComp', () => {
             );
         });
 
-        const activeSpan = container?.querySelector('span.bible-selector');
+        const activeSpan = container?.querySelector<HTMLElement>(
+            'span.bible-selector',
+        );
         expect(activeSpan?.className).toContain('pointer');
         expect(activeSpan?.className).toContain('bg-info');
         expect(activeSpan?.style.paddingLeft).toBe('2px');
@@ -260,7 +262,9 @@ describe('BibleSelectionComp', () => {
             root?.render(<BibleKeySelectionMiniComp bibleKey="WEB" />);
         });
 
-        const passiveSpan = container?.querySelector('span.bible-selector');
+        const passiveSpan = container?.querySelector<HTMLElement>(
+            'span.bible-selector',
+        );
         expect(passiveSpan?.className).not.toContain('pointer');
         expect(passiveSpan?.className).toContain(
             'badge rounded-pill text-bg-info',

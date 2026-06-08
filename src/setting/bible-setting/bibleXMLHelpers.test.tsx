@@ -458,8 +458,7 @@ describe('bibleXMLHelpers', () => {
     });
 
     test('uses backup and fresh cache paths when reading cached XML data and chapter data', async () => {
-        const { getBibleXMLDataFromKeyCaching, readBibleXMLData } =
-            await loadModule();
+        const { getBibleXMLDataFromKeyCaching } = await loadModule();
         const backupData = {
             books: {},
             customVersesMap: {},

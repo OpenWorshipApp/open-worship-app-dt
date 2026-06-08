@@ -276,7 +276,12 @@ describe('appHelpers', () => {
             module.tarExtract('archive.tar', '/output'),
         ).resolves.toBeUndefined();
         await expect(
-            module.tarCreate('/input', 'archive.tar.gz', ['manifest.json'], true),
+            module.tarCreate(
+                '/input',
+                'archive.tar.gz',
+                ['manifest.json'],
+                true,
+            ),
         ).resolves.toBeUndefined();
         expect(module.copyToClipboard('lyrics')).toBe(true);
 
@@ -685,7 +690,7 @@ describe('appHelpers', () => {
         }
         root = createRoot(container);
         await act(async () => {
-            root.render(<Harness />);
+            root?.render(<Harness />);
         });
         expect(container?.textContent).toContain('on');
 

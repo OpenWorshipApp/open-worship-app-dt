@@ -106,7 +106,7 @@ vi.mock('../others/AppRangeComp', () => ({
     handleCtrlWheel: handleCtrlWheelMock,
 }));
 
-vi.mock('../others/initHelpers', () => ({
+vi.mock('../others/themeHelpers', () => ({
     checkIsDarkMode: () => false,
     getColorParts: () => ({ colorPart: '#111111', invertColorPart: '#eeeeee' }),
 }));

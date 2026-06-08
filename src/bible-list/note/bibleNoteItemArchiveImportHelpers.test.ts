@@ -140,7 +140,10 @@ describe('bibleNoteItemArchive import', () => {
             addAndSaveNoteItem: vi.fn(async () => true),
         };
 
-        await importBibleNoteItemArchive(note as any, '/downloads/item.owabn.tar.gz');
+        await importBibleNoteItemArchive(
+            note as any,
+            '/downloads/item.owabn.tar.gz',
+        );
 
         const extractDir = '/app-data/tmp-files/owabn-import-import-id';
         expect(ensureDirectoryMock).toHaveBeenCalledWith(extractDir);
@@ -153,7 +156,9 @@ describe('bibleNoteItemArchive import', () => {
             '/app-data/tmp-files',
             IMPORTED_TRACE_FILE_NAME,
         );
-        expect(JSON.parse(noteItemFromJsonMock.mock.calls[0][0].content)).toEqual({
+        expect(
+            JSON.parse(noteItemFromJsonMock.mock.calls[0][0].content),
+        ).toEqual({
             root: {
                 children: [
                     { appFilePath: IMPORTED_TRACE_FILE_PATH },

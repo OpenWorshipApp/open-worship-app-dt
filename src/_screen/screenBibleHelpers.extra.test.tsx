@@ -101,13 +101,14 @@ vi.mock('./managers/screenHelpers', () => ({
 
 vi.mock('../helper/helpers', () => ({
     cloneJson: <T,>(value: T) => structuredClone(value),
+    freezeObject: <T,>(value: T) => value,
 }));
 
 vi.mock('../context-menu/AppContextMenuComp', () => ({
     elementDivider: 'divider',
 }));
 
-vi.mock('../bible-lookup/BibleSelectionComp', () => ({
+vi.mock('../bible-lookup/BibleKeySelectionComp', () => ({
     genContextMenuBibleKeys: genContextMenuBibleKeysMock,
 }));
 

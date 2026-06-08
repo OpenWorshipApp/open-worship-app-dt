@@ -191,10 +191,10 @@ describe('CanvasItem models', () => {
             CanvasItemText.genStyle(textJson as any),
         );
 
-        item.applyTextData({
+        (item as CanvasItemText).applyTextData({
             text: 'Updated',
             fontSize: 48,
-        });
+        } as any);
         expect(item.toJson()).toEqual(
             expect.objectContaining({
                 text: 'Updated',

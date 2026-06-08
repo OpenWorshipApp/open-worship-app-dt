@@ -12,6 +12,8 @@ const { getItemMock, getItemForceMock, setItemMock, appProviderMock } =
         setItemMock: vi.fn(),
         appProviderMock: {
             isPageReader: false,
+            systemUtils: { isDev: false },
+            pathUtils: { sep: '/' },
         },
     }));
 

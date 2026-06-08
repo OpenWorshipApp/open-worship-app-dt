@@ -42,7 +42,7 @@ vi.mock('../server/pptxHelpers', () => ({
     getPptxToHtmlsVersion: getPptxToHtmlsVersionMock,
 }));
 
-vi.mock('./initHelpers', () => ({
+vi.mock('./themeHelpers', () => ({
     useThemeSource: () => ({ theme: 'dark' }),
 }));
 
@@ -88,7 +88,7 @@ describe('AboutComp', () => {
 
         expect(getPptxToHtmlsVersionMock).toHaveBeenCalledTimes(1);
         expect(getDocxToHtmlsVersionMock).toHaveBeenCalledTimes(1);
-        expect(container?.textContent).toContain('pptx2html version:2.3.4');
-        expect(container?.textContent).toContain('docx2html version:1.2.3');
+        expect(container?.textContent).toContain('Pptx2Html version:2.3.4');
+        expect(container?.textContent).toContain('Docx2Html version:1.2.3');
     });
 });

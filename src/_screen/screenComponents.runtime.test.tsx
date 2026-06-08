@@ -89,7 +89,7 @@ vi.mock('../lang/langHelpers', () => ({
     tran: (value: string) => value,
 }));
 
-vi.mock('../others/initHelpers', () => ({
+vi.mock('../others/themeHelpers', () => ({
     getColorParts: () => ({
         colorPart: '#111111',
         invertColorPart: '#eeeeee',

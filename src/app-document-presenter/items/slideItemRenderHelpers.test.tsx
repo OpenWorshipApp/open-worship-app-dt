@@ -25,6 +25,9 @@ const {
     chooseColorNoteMock: vi.fn(),
     appProviderMock: {
         isPageAppDocumentEditor: false,
+        systemUtils: {
+            isDev: false,
+        },
     },
     useWebCapturingMock: vi.fn(),
 }));
@@ -77,25 +80,13 @@ vi.mock('./BackgroundRenderOnHoverComp', () => ({
     ),
 }));
 
-vi.mock('../../helper/domHelpers', () => ({
+vi.mock('../../helper/capturingHelpers', () => ({
     useWebCapturing: useWebCapturingMock,
 }));
 
 vi.mock('../../lang/langHelpers', () => ({
     tran: (value: string) => value,
 }));
-
-async function renderElement(
-    element: React.ReactElement,
-    root: Root,
-    container: HTMLDivElement,
-) {
-    await act(async () => {
-        root.render(element);
-        await Promise.resolve();
-    });
-    return container.firstElementChild as HTMLElement | null;
-}
 
 describe('slideItemRenderHelpers', () => {
     let container: HTMLDivElement;
@@ -272,7 +263,7 @@ describe('slideItemRenderHelpers', () => {
         expect(iconMarkup).toContain('bi-record-circle');
         expect(iconMarkup).toContain('color:#123456');
 
-        option.onSelect?.('menu-event');
+        option.onSelect?.('menu-event' as any);
 
         expect(chooseColorNoteMock).toHaveBeenCalledWith(
             '#123456',

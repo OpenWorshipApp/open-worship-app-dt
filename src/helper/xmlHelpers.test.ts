@@ -38,10 +38,10 @@ describe('appXMLSerializer', () => {
             bibleElement.appendChild(dataElement);
 
             expect(appXMLSerializer.serializeToString(xmlDoc)).toBe(
-                '<bible title="A &quot;quoted&quot; &lt;Bible&gt; &amp; more"><verse number="1">A &lt; B &amp; C &gt; D</verse><data><![CDATA[[{"content":"Heading <title> & body"}]]]></data></bible>',
+                '<?xml version="1.0" encoding="UTF-8"?><bible title="A &quot;quoted&quot; &lt;Bible&gt; &amp; more"><verse number="1">A &lt; B &amp; C &gt; D</verse><data><![CDATA[[{"content":"Heading <title> & body"}]]]></data></bible>',
             );
             expect(appXMLSerializer.serializeToString(verseElement)).toBe(
-                '<verse number="1">A &lt; B &amp; C &gt; D</verse>',
+                '<?xml version="1.0" encoding="UTF-8"?><verse number="1">A &lt; B &amp; C &gt; D</verse>',
             );
         } finally {
             vi.stubGlobal('XMLSerializer', OriginalXMLSerializer);

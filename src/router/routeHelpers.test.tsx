@@ -49,7 +49,7 @@ describe('routeHelpers', () => {
     test('builds an external-link title element', () => {
         const element = toTitleExternal('Open', {
             color: 'red',
-        }) as ReactElement;
+        }) as ReactElement<any>;
 
         expect(element.type).toBe('span');
         expect(element.props.style).toEqual({ color: 'red' });

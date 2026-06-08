@@ -46,7 +46,7 @@ async function flushAsyncEvents(times = 2) {
 describe('appContextMenuHelpers', () => {
     let container: HTMLDivElement | null = null;
     let root: Root | null = null;
-    let scrollIntoViewMock: ReturnType<typeof vi.fn>;
+    let scrollIntoViewMock: ReturnType<typeof vi.fn<(...args: any[]) => void>>;
 
     beforeEach(() => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -70,7 +70,7 @@ describe('appContextMenuHelpers', () => {
             value: 480,
         });
 
-        scrollIntoViewMock = vi.fn();
+        scrollIntoViewMock = vi.fn<(...args: any[]) => void>();
         Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
             configurable: true,
             value(...args: any[]) {
@@ -271,7 +271,9 @@ describe('appContextMenuHelpers', () => {
         });
 
         const overlay = document.getElementById(APP_CONTEXT_MENU_ID);
-        const menu = overlay?.querySelector(`.${APP_CONTEXT_MENU_CLASS}`);
+        const menu = overlay?.querySelector<HTMLElement>(
+            `.${APP_CONTEXT_MENU_CLASS}`,
+        );
         const items = Array.from(
             document.querySelectorAll(`.${APP_CONTEXT_MENU_ITEM_CLASS}`),
         ) as HTMLDivElement[];

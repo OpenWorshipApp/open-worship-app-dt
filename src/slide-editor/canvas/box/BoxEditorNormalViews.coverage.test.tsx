@@ -286,8 +286,9 @@ describe('BoxEditor normal view components', () => {
             false,
         );
 
-        const editHandler = genHandleContextMenuOpeningMock.mock
-            .calls[0]?.[1] as (() => void) | undefined;
+        const editHandler = (
+            genHandleContextMenuOpeningMock.mock.calls[0] as any
+        )?.[1] as (() => void) | undefined;
         editHandler?.();
 
         await act(async () => {

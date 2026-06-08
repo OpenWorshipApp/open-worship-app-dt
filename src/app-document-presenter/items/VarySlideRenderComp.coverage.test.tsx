@@ -34,6 +34,17 @@ const {
     appProviderMock: {
         isPagePresenter: true,
         isPageAppDocumentEditor: false,
+        systemUtils: {
+            isDev: false,
+        },
+        pathUtils: {
+            sep: '/',
+            join: (...parts: string[]) => parts.join('/'),
+            basename: (filePath: string) => filePath.split('/').pop() ?? '',
+            dirname: (filePath: string) =>
+                filePath.split('/').slice(0, -1).join('/'),
+            resolve: (...parts: string[]) => parts.join('/'),
+        },
     },
     appDocumentGetInstanceMock: vi.fn(),
     getSlideIndexMock: vi.fn(),
@@ -72,6 +83,7 @@ vi.mock('../../server/appProvider', () => ({
 
 vi.mock('../../helper/helpers', () => ({
     changeDragEventStyle: changeDragEventStyleMock,
+    freezeObject: (obj: any) => obj,
 }));
 
 vi.mock('../../app-document-list/AppDocument', () => ({
@@ -132,7 +144,7 @@ vi.mock('./VaryAppDocumentScaleContainerComp', () => ({
     ),
 }));
 
-vi.mock('../../others/initHelpers', () => ({
+vi.mock('../../others/themeHelpers', () => ({
     useThemeSource: useThemeSourceMock,
 }));
 

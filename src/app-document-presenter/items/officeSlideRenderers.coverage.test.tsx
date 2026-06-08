@@ -246,8 +246,9 @@ describe('office slide renderer coverage', () => {
         ).toBe('file:///slides/page.html');
         expect(fullWidthIframeSlide.style.height).toBe('auto');
         expect(
-            fullWidthIframeSlide.querySelector('iframe[title="docx-slide"]')
-                ?.style.transform,
+            fullWidthIframeSlide.querySelector<HTMLElement>(
+                'iframe[title="docx-slide"]',
+            )?.style.transform,
         ).toBe('scale(2)');
         expect(htmlSlide.style.height).toBe('auto');
         expect(htmlSlide.firstElementChild).not.toBeNull();

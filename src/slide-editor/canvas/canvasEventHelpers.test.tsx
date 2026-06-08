@@ -103,7 +103,7 @@ describe('canvasEventHelpers', () => {
     afterEach(async () => {
         if (root) {
             await act(async () => {
-                root.unmount();
+                root?.unmount();
             });
             root = null;
         }
@@ -121,7 +121,7 @@ describe('canvasEventHelpers', () => {
             }
             root = createRoot(container);
             root.render(
-                <CanvasControllerContext.Provider value={controller}>
+                <CanvasControllerContext.Provider value={controller as any}>
                     <EventHarness onEvent={onEvent} />
                 </CanvasControllerContext.Provider>,
             );
@@ -158,7 +158,7 @@ describe('canvasEventHelpers', () => {
             }
             root = createRoot(container);
             root.render(
-                <CanvasControllerContext.Provider value={controller}>
+                <CanvasControllerContext.Provider value={controller as any}>
                     <ScaleHarness
                         controller={controller}
                         onScale={(scale) => {

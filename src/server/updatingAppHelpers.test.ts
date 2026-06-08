@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const listenForDataMock = vi.fn();
 const sendDataMock = vi.fn();
@@ -97,6 +97,8 @@ describe('updatingAppHelpers', () => {
     beforeEach(() => {
         vi.resetModules();
         vi.clearAllMocks();
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-02-09T00:00:00Z'));
 
         Object.defineProperty(globalThis, 'addEventListener', {
             value: vi.fn(),
@@ -176,6 +178,10 @@ describe('updatingAppHelpers', () => {
                 }),
             } as Response;
         }) as any;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     test('registers update-check message listener on module load', async () => {

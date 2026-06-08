@@ -194,7 +194,7 @@ describe('scrollingHandlerHelpers', () => {
             value: 360,
         });
         resizeObserverEntries[0]?.callback(
-            [{ target: parent } as ResizeObserverEntry],
+            [{ target: parent } as unknown as ResizeObserverEntry],
             {} as ResizeObserver,
         );
         expect(play.style.display).toBe('block');

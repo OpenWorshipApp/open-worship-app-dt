@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
@@ -194,6 +196,7 @@ describe('backgroundWebUrlHelpers', () => {
 
     test('supports drag serialization, color notes, and drag deserialization', async () => {
         getColorNoteFilePathSettingMock.mockReturnValue('blue');
+        storageState.set('background-web-url_web-1', 'blue');
         const source = new BackgroundWebUrlSource({
             id: 'web-1',
             src: ' https://example.com/page ',
@@ -219,12 +222,11 @@ describe('backgroundWebUrlHelpers', () => {
         await source.setColorNote('green');
 
         expect(getColorNoteFilePathSettingMock).toHaveBeenCalledWith(
-            'background-web-url:web-1',
+            'background-web-url_web-1',
             null,
         );
-        expect(setColorNoteFilePathSettingMock).toHaveBeenCalledWith(
-            'background-web-url:web-1',
-            null,
+        expect(setItemMock).toHaveBeenCalledWith(
+            'background-web-url_web-1',
             'green',
         );
         expect(source.colorNote).toBe('green');

@@ -7,10 +7,9 @@ describe('Khmer language data', () => {
         expect(lang.locale).toBe('km-KH');
         expect(lang.langCode).toBe('km');
         expect(lang.name).toBe('Khmer');
-        expect(lang.fontFamily).toBe('km-font-family');
-        expect(lang.fontFamilyName).toBe('Battambang');
-        expect(lang.getFontFamilyFiles()).toHaveLength(5);
-        expect(lang.genCss()).toContain('font-family: km-font-family');
+        expect(lang.fontFamily).toBe('app-Battambang');
+        expect(lang.getFontFamilyFiles?.()).toHaveLength(6);
+        expect(lang.genCss()).toContain('font-family: app-Battambang');
         expect(lang.dictionary['open pptx']).toBe('បើក PPTX');
         expect(lang.dictionary['save']).toBe('រក្សាទុក');
         expect(lang.numList).toEqual([

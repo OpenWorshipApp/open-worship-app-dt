@@ -193,7 +193,7 @@ describe('downloadHelper', () => {
             'https://www.openworship.app/shared#shared-key',
         );
 
-        await menuItem.onSelect();
+        await menuItem.onSelect?.({} as any);
 
         expect(openExternalURLMock).toHaveBeenCalledWith(
             'https://www.openworship.app/shared#shared-key',
@@ -229,7 +229,7 @@ describe('downloadHelper', () => {
 
         expect(menuItems).toHaveLength(1);
 
-        await menuItems[0]?.onSelect();
+        await menuItems[0]?.onSelect?.({} as any);
 
         expect(downloadMock).not.toHaveBeenCalled();
     });
@@ -261,8 +261,8 @@ describe('downloadHelper', () => {
 
         expect(menuItems).toHaveLength(2);
 
-        await menuItems[0]?.onSelect();
-        await menuItems[1]?.onSelect();
+        await menuItems[0]?.onSelect?.({} as any);
+        await menuItems[1]?.onSelect?.({} as any);
 
         expect(downloadMock).toHaveBeenCalledWith(
             'https://cdn.example/file.zip',

@@ -54,7 +54,7 @@ describe('colorHelpers', () => {
 
     test('compares colors ignoring opacity and preserves serialized values', () => {
         expect(compareColor('#abcdef', '#ABCDEF99')).toBe(true);
-        expect(compareColor('rgb(0, 0, 0)', 'white')).toBe(false);
+        expect(compareColor('rgb(0, 0, 0)' as any, 'white' as any)).toBe(false);
         expect(mocks.removeOpacityFromHexColorMock).toHaveBeenCalled();
 
         expect(colorDeserialize('#123456')).toBe('#123456');

@@ -180,9 +180,9 @@ describe('fontHelpers', () => {
             );
         }
 
-        root = createRoot(container);
+        root = createRoot(container!);
         await act(async () => {
-            root.render(<Harness />);
+            root?.render(<Harness />);
         });
         await act(async () => {
             await Promise.resolve();

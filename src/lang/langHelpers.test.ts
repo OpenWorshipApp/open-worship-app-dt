@@ -118,13 +118,13 @@ describe('langHelpers', () => {
         const langData = await getLangDataAsync('km-KH');
 
         expect(langData?.langCode).toBe('km');
-        expect(langData?.fontFamily).toBe('km-font-family');
+        expect(langData?.fontFamily).toBe('app-Battambang');
         expect(getLangData('km-KH')).toBe(langData);
         expect(getLangData('km')).toBe(langData);
         expect(document.head.querySelectorAll('style#lang-km')).toHaveLength(1);
         expect(
             document.head.querySelector('style#lang-km')?.innerHTML,
-        ).toContain('km-font-family');
+        ).toContain('app-Battambang');
 
         const cachedLangData = await getLangDataAsync('km-KH');
 
@@ -312,21 +312,21 @@ describe('langHelpers', () => {
             useFontFamilyByLocale,
         } = await loadLangHelpers();
 
-        expect(await getFontFamilyByLocale('km-KH')).toBe('km-font-family');
+        expect(await getFontFamilyByLocale('km-KH')).toBe('app-Battambang');
         expect(mocks.cacheSetMock).toHaveBeenCalledWith(
             'FontFamilyLocale:km-KH',
-            'km-font-family',
+            'app-Battambang',
         );
 
         mocks.cacheSetMock.mockClear();
-        expect(await getFontFamilyByLocale('km-KH')).toBe('km-font-family');
+        expect(await getFontFamilyByLocale('km-KH')).toBe('app-Battambang');
         expect(mocks.cacheSetMock).not.toHaveBeenCalled();
         expect(await getFontFamilyByLocale('fr-FR' as any)).toBeUndefined();
 
         mocks.hookState.value = 'hook-value';
         mocks.useAppStateAsyncMock.mockImplementation(
-            (getter: () => unknown) => {
-                getter();
+            (getter?: () => unknown) => {
+                getter?.();
                 return [mocks.hookState.value];
             },
         );

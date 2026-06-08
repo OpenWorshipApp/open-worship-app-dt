@@ -229,10 +229,7 @@ describe('electronEventListener', () => {
             ['manifest.json', 'note-item.json'],
             true,
         );
-        expect(sender.send).toHaveBeenCalledWith(
-            'reply:tar-create',
-            undefined,
-        );
+        expect(sender.send).toHaveBeenCalledWith('reply:tar-create', undefined);
     });
 
     test('prints HTML payloads or previews the sender window', () => {

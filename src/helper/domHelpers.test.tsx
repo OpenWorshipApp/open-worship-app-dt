@@ -151,7 +151,6 @@ import {
     HoverMotionHandler,
     InputContextMenuHandler,
     addDomChangeEventListener,
-    captureWebScreenShot,
     checkIsZoomed,
     getParamFileFullName,
     getParamIdNum,
@@ -163,8 +162,8 @@ import {
     openPopupWindow,
     removeDomChangeEventListener,
     removeDomTitle,
-    useWebCapturing,
 } from './domHelpers';
+import { captureWebScreenShot, useWebCapturing } from './capturingHelpers';
 
 describe('domHelpers', () => {
     let container: HTMLDivElement | null = null;

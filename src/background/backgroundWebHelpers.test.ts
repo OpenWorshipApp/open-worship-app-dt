@@ -123,7 +123,7 @@ describe('backgroundWebHelpers', () => {
 
         const menuItems = genBackgroundWebContextMenuItems(dirSource as any);
 
-        await menuItems[0]?.onSelect();
+        await menuItems[0]?.onSelect?.({} as any);
 
         expect(dirSource.getAllFileFullNames).toHaveBeenCalledTimes(1);
         expect(dirSource.getFileSourceInstance).toHaveBeenCalledWith(
@@ -148,8 +148,12 @@ describe('backgroundWebHelpers', () => {
             },
         );
 
-        await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect();
-        await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect();
+        await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect?.(
+            {} as any,
+        );
+        await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect?.(
+            {} as any,
+        );
 
         expect(dirSource.getAllFileFullNames).not.toHaveBeenCalled();
         expect(fsWriteFileMock).not.toHaveBeenCalled();
@@ -167,7 +171,9 @@ describe('backgroundWebHelpers', () => {
             },
         );
 
-        await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect();
+        await genBackgroundWebContextMenuItems(dirSource as any)[0]?.onSelect?.(
+            {} as any,
+        );
 
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Create New Web File',
@@ -181,7 +187,7 @@ describe('backgroundWebHelpers', () => {
         const dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(1234);
         const randomUuidSpy = vi
             .spyOn(globalThis.crypto, 'randomUUID')
-            .mockReturnValue('popup-uuid');
+            .mockReturnValue('popup-uuid' as any);
         fileSourceGetInstanceMock.mockReturnValue({
             fullName: 'My Page.html',
         });
