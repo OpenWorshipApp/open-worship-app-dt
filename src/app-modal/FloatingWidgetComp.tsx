@@ -24,8 +24,30 @@ type WidgetRect = {
 
 type InteractionMode = 'move' | 'resize';
 
+type ResizeHandle =
+    | 'top'
+    | 'right'
+    | 'bottom'
+    | 'left'
+    | 'top-left'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-right';
+
+const RESIZE_HANDLES: ResizeHandle[] = [
+    'top',
+    'right',
+    'bottom',
+    'left',
+    'top-left',
+    'top-right',
+    'bottom-left',
+    'bottom-right',
+];
+
 type InteractionState = {
     mode: InteractionMode;
+    handle: ResizeHandle | null;
     pointerId: number;
     startClientX: number;
     startClientY: number;
@@ -112,6 +134,51 @@ function clampWidgetRect(
         ),
         ...size,
     };
+}
+
+function getResizeEdges(handle: ResizeHandle) {
+    return {
+        isLeft: handle.includes('left'),
+        isRight: handle.includes('right'),
+        isTop: handle.includes('top'),
+        isBottom: handle.includes('bottom'),
+    };
+}
+
+function resizeWidgetRect(
+    startRect: WidgetRect,
+    handle: ResizeHandle,
+    deltaX: number,
+    deltaY: number,
+    options?: FloatingWidgetOptions,
+) {
+    const edges = getResizeEdges(handle);
+    const right = startRect.left + startRect.width;
+    const bottom = startRect.top + startRect.height;
+
+    let width = startRect.width;
+    let height = startRect.height;
+    if (edges.isRight) {
+        width = startRect.width + deltaX;
+    } else if (edges.isLeft) {
+        width = startRect.width - deltaX;
+    }
+    if (edges.isBottom) {
+        height = startRect.height + deltaY;
+    } else if (edges.isTop) {
+        height = startRect.height - deltaY;
+    }
+
+    const size = getConstrainedSize(width, height, options);
+    let { left, top } = startRect;
+    if (edges.isLeft) {
+        left = right - size.width;
+    }
+    if (edges.isTop) {
+        top = bottom - size.height;
+    }
+
+    return clampWidgetRect({ left, top, ...size }, options);
 }
 
 function getInitialWidgetRect(options?: FloatingWidgetOptions) {
@@ -231,6 +298,7 @@ export default function FloatingWidgetComp({
     const startInteraction = (
         event: ReactPointerEvent<HTMLElement>,
         mode: InteractionMode,
+        handle: ResizeHandle | null = null,
     ) => {
         if (event.button !== 0) {
             return;
@@ -238,6 +306,7 @@ export default function FloatingWidgetComp({
 
         interactionRef.current = {
             mode,
+            handle,
             pointerId: event.pointerId,
             startClientX: event.clientX,
             startClientY: event.clientY,
@@ -245,6 +314,7 @@ export default function FloatingWidgetComp({
         };
         widgetRef.current?.setPointerCapture(event.pointerId);
         event.preventDefault();
+        event.stopPropagation();
     };
 
     const finishInteraction = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -283,12 +353,11 @@ export default function FloatingWidgetComp({
         }
 
         setWidgetRect(
-            clampWidgetRect(
-                {
-                    ...interactionState.startRect,
-                    width: interactionState.startRect.width + deltaX,
-                    height: interactionState.startRect.height + deltaY,
-                },
+            resizeWidgetRect(
+                interactionState.startRect,
+                interactionState.handle ?? 'bottom-right',
+                deltaX,
+                deltaY,
                 options,
             ),
         );
@@ -364,17 +433,18 @@ export default function FloatingWidgetComp({
             <div className="floating-widget__content" hidden={isCollapsed}>
                 {children}
             </div>
-            {!isCollapsed && (
-                <button
-                    type="button"
-                    className="floating-widget__resize-handle"
-                    onPointerDown={(event) => startInteraction(event, 'resize')}
-                    aria-label="Resize floating widget"
-                    title="Resize floating widget"
-                >
-                    <i className="bi bi-arrow-down-right" />
-                </button>
-            )}
+            {!isCollapsed &&
+                RESIZE_HANDLES.map((handle) => (
+                    <div
+                        key={handle}
+                        className={`floating-widget__resize-handle floating-widget__resize-handle--${handle}`}
+                        onPointerDown={(event) =>
+                            startInteraction(event, 'resize', handle)
+                        }
+                        title="Drag to resize"
+                        aria-hidden="true"
+                    />
+                ))}
         </div>
     );
 }

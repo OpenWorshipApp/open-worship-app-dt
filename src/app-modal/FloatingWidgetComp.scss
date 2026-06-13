@@ -1,5 +1,8 @@
 @use '../others/variables.scss' as *;
 
+$resize-edge-thickness: 8px;
+$resize-corner-size: 16px;
+
 .floating-widget {
   position: fixed;
   z-index: $z-index-widget-full-view;
@@ -18,7 +21,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  z-index: 1;
+  z-index: 5;
   display: flex;
   align-items: center;
   pointer-events: none;
@@ -45,11 +48,12 @@
 }
 
 .floating-widget__drag-indicator,
-.floating-widget__button,
-.floating-widget__resize-handle {
+.floating-widget__button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
   padding: 0;
   color: inherit;
   background-color: transparent;
@@ -57,18 +61,10 @@
   border-radius: 4px;
 }
 
-.floating-widget__drag-indicator,
-.floating-widget__button {
-  width: 1.75rem;
-  height: 1.75rem;
-}
-
 .floating-widget__drag-indicator:hover,
 .floating-widget__drag-indicator:focus-visible,
 .floating-widget__button:hover,
-.floating-widget__button:focus-visible,
-.floating-widget__resize-handle:hover,
-.floating-widget__resize-handle:focus-visible {
+.floating-widget__button:focus-visible {
   background-color: rgba(var(--bs-secondary-rgb, 108, 117, 125), 0.16);
 }
 
@@ -78,17 +74,90 @@
   overflow: auto;
 }
 
+// Resize handles cover every edge and corner of the widget.
 .floating-widget__resize-handle {
   position: absolute;
-  right: 0.125rem;
-  bottom: 0.125rem;
-  width: 1.75rem;
-  height: 1.75rem;
-  color: var(--bs-secondary-color, #6c757d);
-  cursor: nwse-resize;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+  border: 0;
   touch-action: none;
-  opacity: 0.1;
-  &:hover {
-    opacity: 0.9;
+  user-select: none;
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: '';
+    background-color: rgba(var(--bs-primary-rgb, 13, 110, 253), 0.2);
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
   }
+  &:hover::after {
+    opacity: 1;
+  }
+}
+
+.floating-widget__resize-handle--top,
+.floating-widget__resize-handle--bottom {
+  left: 0;
+  right: 0;
+  height: $resize-edge-thickness;
+  cursor: ns-resize;
+}
+
+.floating-widget__resize-handle--top {
+  top: 0;
+}
+
+.floating-widget__resize-handle--bottom {
+  bottom: 0;
+}
+
+.floating-widget__resize-handle--left,
+.floating-widget__resize-handle--right {
+  top: 0;
+  bottom: 0;
+  width: $resize-edge-thickness;
+  cursor: ew-resize;
+}
+
+.floating-widget__resize-handle--left {
+  left: 0;
+}
+
+.floating-widget__resize-handle--right {
+  right: 0;
+}
+
+.floating-widget__resize-handle--top-left,
+.floating-widget__resize-handle--top-right,
+.floating-widget__resize-handle--bottom-left,
+.floating-widget__resize-handle--bottom-right {
+  z-index: 3;
+  width: $resize-corner-size;
+  height: $resize-corner-size;
+}
+
+.floating-widget__resize-handle--top-left {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.floating-widget__resize-handle--top-right {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.floating-widget__resize-handle--bottom-left {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+
+.floating-widget__resize-handle--bottom-right {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
 }

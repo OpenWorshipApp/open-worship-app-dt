@@ -17,6 +17,7 @@ import {
 import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../others/LoadingComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
+import appProvider from '../server/appProvider';
 
 const LazyBibleSearchBodyPreviewerComp = lazy(() => {
     return import('../bible-find/BibleFindPreviewerComp');
@@ -45,11 +46,14 @@ export function useSelectedBibleKey() {
     }
     return { isValid: bibleInfo !== null, bibleKey };
 }
-
+const advanceLookupSettingKey =
+    LOOKUP_ONLINE_SETTING_NAME +
+    '-' +
+    appProvider.currentHomePage.split('/')[0];
 export default function RenderBibleLookupComp() {
     const viewController = useLookupBibleItemControllerContext();
     const [isAdvanceLookupOpened, setIsAdvanceLookupOpened] =
-        useStateSettingBoolean(LOOKUP_ONLINE_SETTING_NAME, false);
+        useStateSettingBoolean(advanceLookupSettingKey, false);
     useAppEffect(() => {
         viewController.setIsAdvanceLookupOpened = setIsAdvanceLookupOpened;
         return () => {
