@@ -39,7 +39,9 @@ function BibleNoteBibleLookupComp({
         [bibleNote],
     );
     const lookupBibleItemController = useMemo(() => {
-        const newLookupBibleItemController = new LookupBibleItemController();
+        const newLookupBibleItemController = new LookupBibleItemController(
+            'bible-note',
+        );
         newLookupBibleItemController.isMinimized = true;
         newLookupBibleItemController.extraEditingActionButtons = (
             <>
@@ -95,9 +97,7 @@ function BibleNoteBibleLookupComp({
         <FloatingWidgetComp
             onClose={() => setIsShowingBibleLookup(false)}
             collapsedChildren={
-                <div className="d-flex m-2">
-                    {tran('Bible Lookup')}
-                </div>
+                <div className="d-flex m-2">{tran('Bible Lookup')}</div>
             }
             options={{
                 width: 550,

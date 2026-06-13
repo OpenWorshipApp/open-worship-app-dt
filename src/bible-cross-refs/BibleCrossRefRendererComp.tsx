@@ -30,7 +30,7 @@ function RenderVerseTextComp({
     const { bibleKey } = bibleItem;
     const fontFamily = useBibleFontFamily(bibleKey);
     return (
-        <div
+        <div className="p-1"
             style={{
                 maxHeight: '75px',
                 overflow: 'auto',

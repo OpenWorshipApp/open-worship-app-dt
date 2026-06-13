@@ -89,8 +89,8 @@ class LookupBibleItemController extends BibleItemsViewController {
     setIsAdvanceLookupOpened = (_isLookupOnline: boolean) => {};
     openBibleSearch = setBibleSearchingTabType;
 
-    constructor() {
-        super('lookup');
+    constructor(settingNameSuffix = '') {
+        super('lookup' + settingNameSuffix);
         if (this.straightBibleItems.length === 0) {
             const bibleItem = this.bibleItemFromJson({
                 id: this.genBibleItemUniqueId(),
