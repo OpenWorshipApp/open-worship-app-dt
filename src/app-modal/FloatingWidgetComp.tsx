@@ -15,6 +15,7 @@ const DEFAULT_MIN_WIDTH = 220;
 const DEFAULT_MIN_HEIGHT = 140;
 const COLLAPSED_HEIGHT = 42;
 
+const PARENT_IGNORE_SELECTORS = ['[data-no-widget-drag="true"]'];
 // Pressing on these elements keeps their own click/drag behavior instead of
 // starting a widget move, so blank areas stay draggable without breaking
 // interactive controls inside the widget.
@@ -29,7 +30,6 @@ const NON_DRAGGABLE_SELECTOR = [
     '[role="textbox"]',
     '[role="menuitem"]',
     '[contenteditable="true"]',
-    '[data-no-widget-drag]',
 ].join(',');
 
 type WidgetRect = {
@@ -216,10 +216,17 @@ function getInitialWidgetRect(options?: FloatingWidgetOptions) {
     );
 }
 
-function isBlankDragArea(target: EventTarget | null) {
-    if (!(target instanceof Element)) {
+function isIgnored(target: Element | null) {
+    if (target === null || target.classList.contains('floating-widget')) {
         return false;
     }
+    if (PARENT_IGNORE_SELECTORS.some((selector) => target.closest(selector))) {
+        return true;
+    }
+    return isIgnored(target.parentElement);
+}
+
+function isBlankDragArea(target: Element) {
     return target.closest(NON_DRAGGABLE_SELECTOR) === null;
 }
 
@@ -401,7 +408,11 @@ export default function FloatingWidgetComp({
         event: ReactPointerEvent<HTMLDivElement>,
     ) => {
         const target = event.target;
-        if (!(target instanceof Element) || !isBlankDragArea(target)) {
+        if (
+            !(target instanceof Element) ||
+            !isBlankDragArea(target) ||
+            isIgnored(target)
+        ) {
             return;
         }
         if (isOnScrollbar(event.clientX, event.clientY, target)) {

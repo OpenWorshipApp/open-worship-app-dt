@@ -50,6 +50,7 @@ const advanceLookupSettingKey =
     LOOKUP_ONLINE_SETTING_NAME +
     '-' +
     appProvider.currentHomePage.split('/')[0];
+
 export default function RenderBibleLookupComp() {
     const viewController = useLookupBibleItemControllerContext();
     const [isAdvanceLookupOpened, setIsAdvanceLookupOpened] =
@@ -96,7 +97,7 @@ export default function RenderBibleLookupComp() {
                         />
                     </div>
                 </div>
-                <div className="card-body">
+                <div className="card-body" data-no-widget-drag="true">
                     {isValidBibleKey === undefined ? (
                         <LoadingComp />
                     ) : (
@@ -155,6 +156,7 @@ export default function RenderBibleLookupComp() {
                 />
                 <div
                     className={'card-body d-flex w-100 app-overflow-hidden'}
+                    data-no-widget-drag="true"
                     style={{
                         height: 'calc(100% - 38px)',
                     }}
