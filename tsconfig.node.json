@@ -6,5 +6,10 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "e2e/**/*.ts"]
+  "include": [
+    "vite.config.ts",
+    "vite-plugin-gz-bundle.ts",
+    "playwright.config.ts",
+    "e2e/**/*.ts"
+  ]
 }

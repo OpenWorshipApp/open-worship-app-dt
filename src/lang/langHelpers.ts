@@ -785,4 +785,3 @@ export async function getLocalBibleCrossRef(
     db.close();
     return data;
 }
-(window as any).getLocalBibleCrossRef = getLocalBibleCrossRef;

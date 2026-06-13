@@ -5,6 +5,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
+import { gzBundlePlugin } from './vite-plugin-gz-bundle';
+
 const htmlPlugin = () => {
     return {
         name: 'html-transform',
@@ -46,6 +48,7 @@ const htmlFiles = readdirSync(htmlDir)
 export default defineConfig({
     assetsInclude: ['**/*.dll'],
     plugins: [
+        gzBundlePlugin(),
         react(),
         htmlPlugin(),
         basicSsl({

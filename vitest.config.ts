@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
+import { gzBundlePlugin } from './vite-plugin-gz-bundle';
+
 export default defineConfig({
+    plugins: [gzBundlePlugin()],
     test: {
         environment: 'node',
         testTimeout: 10000,
