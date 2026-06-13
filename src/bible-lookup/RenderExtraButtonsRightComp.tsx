@@ -18,6 +18,27 @@ export function getIsKeepingPopup() {
     return getSetting(CLOSE_ON_ADD_BIBLE_ITEM) === 'true';
 }
 
+export function AdvanceLookupHandlerComp({
+    isAdvanceLookupOpened,
+    handleToggleLookupOnline,
+}: Readonly<{
+    isAdvanceLookupOpened: boolean;
+    handleToggleLookupOnline: () => void;
+}>) {
+    return (
+        <button
+            className={
+                'btn btn-sm btn' +
+                `-${isAdvanceLookupOpened ? '' : 'outline-'}info`
+            }
+            title={tran('Advance Bible Lookup')}
+            onClick={handleToggleLookupOnline}
+        >
+            <i className="bi bi-search" />
+        </button>
+    );
+}
+
 export default function RenderExtraButtonsRightComp({
     setIsAdvanceLookupOpened,
     isAdvanceLookupOpened,
@@ -61,16 +82,10 @@ export default function RenderExtraButtonsRightComp({
                     <span>{tran('Keep Open')}</span>
                 </div>
             ) : null}
-            <button
-                className={
-                    'btn btn-sm btn' +
-                    `-${isAdvanceLookupOpened ? '' : 'outline-'}info`
-                }
-                title={tran('Advance Bible Lookup')}
-                onClick={handleToggleLookupOnline}
-            >
-                <i className="bi bi-search" />
-            </button>
+            <AdvanceLookupHandlerComp
+                isAdvanceLookupOpened={isAdvanceLookupOpened}
+                handleToggleLookupOnline={handleToggleLookupOnline}
+            />
             {appProvider.isPageReader ? (
                 <>
                     <QuitCurrentPageComp

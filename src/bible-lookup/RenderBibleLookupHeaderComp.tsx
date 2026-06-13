@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import InputHandlerComp from './InputHandlerComp';
-import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
+import RenderExtraButtonsRightComp, { AdvanceLookupHandlerComp } from './RenderExtraButtonsRightComp';
 import BibleLookupInputHistoryComp from './BibleLookupInputHistoryComp';
 import appProvider from '../server/appProvider';
 import { ModalCloseButton } from '../app-modal/ModalComp';
@@ -55,7 +55,14 @@ export default function RenderBibleLookupHeaderComp({
             >
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
             </div>
-            {viewController.isMinimized ? null : (
+            {viewController.isMinimized ? (
+                <AdvanceLookupHandlerComp
+                    isAdvanceLookupOpened={isAdvanceLookupOpened}
+                    handleToggleLookupOnline={() =>
+                        setIsAdvanceLookupOpened(!isAdvanceLookupOpened)
+                    }
+                />
+            ) : (
                 <>
                     <div className="mx-2">
                         <AIConfigComp />
