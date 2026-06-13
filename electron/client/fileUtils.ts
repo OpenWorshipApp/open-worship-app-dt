@@ -1,5 +1,6 @@
 import { webUtils } from 'electron';
 import fs from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 
 function getAppFilePath(file: File) {
     return webUtils.getPathForFile(file);
@@ -96,6 +97,10 @@ const fileUtils = {
     unlink: fs.unlink,
     rmdir: fs.rmdir,
     readFile: fs.readFile,
+    openSync: fs.openSync,
+    readSync: fs.readSync,
+    fstatSync: fs.fstatSync,
+    closeSync: fs.closeSync,
     readFileSync: fs.readFileSync,
     writeFileSync: fs.writeFileSync,
     unlinkSync: fs.unlinkSync,
@@ -110,6 +115,7 @@ const fileUtils = {
         const decoded = Buffer.from(base64, 'base64');
         return fs.writeFileSync(filePath, decoded);
     },
+    gunzipSync,
 };
 
 export default fileUtils;

@@ -4,6 +4,7 @@ import appProvider from '../server/appProvider';
 import { unlocking } from '../server/unlockingHelpers';
 import { globalCacheManager1M } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -444,6 +445,7 @@ export type BibleBookType = {
 
 export type LocaleType = keyof typeof allLocalesMap;
 export type LanguageDataType = {
+    packageDir:string
     version: string;
     locale: LocaleType;
     langCode: string;
@@ -471,7 +473,7 @@ export type LanguageDataType = {
     bibleAudioAvailable: boolean;
     sanitizeTranKey: (key: string) => string;
     transformBibleBookName: (bookName: string) => string[];
-    getBibleCrossRefBundleFileName: () => string;
+    getBibleCrossRefBundleFilePath: () => string;
 };
 
 export function checkIsValidLangCode(text: string) {
@@ -760,3 +762,27 @@ export function getLanguageTitle(
     }
     return languageName;
 }
+
+export async function getLocalBibleCrossRef(
+    locale: LocaleType,
+    targetVerse: {
+        bookKey: string;
+        chapter: number;
+        verse: number;
+    },
+) {
+    const langData = await getLangDataAsync(locale);
+    if (langData === null) {
+        return null;
+    }
+    const bundleFilePath = langData.getBibleCrossRefBundleFilePath();
+    const db = new BibleCrossRefBundleReader(bundleFilePath);
+    const data = db.getVerse(
+        targetVerse.bookKey,
+        targetVerse.chapter,
+        targetVerse.verse,
+    );
+    db.close();
+    return data;
+}
+(window as any).getLocalBibleCrossRef = getLocalBibleCrossRef;

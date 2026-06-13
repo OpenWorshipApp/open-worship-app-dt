@@ -1,8 +1,10 @@
 import type { LanguageDataType } from '../../langHelpers';
 
 import bibleBooks from './bibleBooks.json';
+import bbCR from './bb-cr.gz.bundle';
 
 const lang: LanguageDataType = {
+    packageDir:__dirname,
     version: '0.0.1',
     locale: 'en-US',
     langCode: 'en',
@@ -83,8 +85,8 @@ const lang: LanguageDataType = {
     transformBibleBookName(bookName: string) {
         return [bookName];
     },
-    getBibleCrossRefBundleFileName() {
-        return 'bb-cr.gz.bundle';
+    getBibleCrossRefBundleFilePath() {
+        return bbCR.filePath;
     },
 };
 

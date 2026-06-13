@@ -8,6 +8,7 @@ import btbThin from './fonts/Battambang/Battambang-Thin.ttf';
 import fhRegular from './fonts/Fasthand/Fasthand-Regular.ttf';
 
 import bibleBooks from './bibleBooks.json';
+import bbCR from './bb-cr.gz.bundle';
 
 const numMap = {
     '០': '0',
@@ -485,6 +486,7 @@ const sanitizedDictionary = Object.fromEntries(
 const fontFamily = 'app-Battambang';
 const stickyNoteFontFamily = 'km-font-Fasthand';
 const lang: LanguageDataType = {
+    packageDir: __dirname,
     version: '0.0.1',
     locale: 'km-KH',
     langCode: 'km',
@@ -753,8 +755,8 @@ const lang: LanguageDataType = {
         }
         return [bookName];
     },
-    getBibleCrossRefBundleFileName() {
-        return 'bb-cr.gz.bundle';
+    getBibleCrossRefBundleFilePath() {
+        return bbCR.filePath;
     },
 };
 
