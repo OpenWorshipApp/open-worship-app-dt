@@ -85,7 +85,7 @@ export function genFoundBibleItemContextMenu(
                       onSelect: () => {
                           viewController.bibleCrossReferenceVerseKey = verseKey;
                           viewController.openBibleSearch('c');
-                          viewController.setIsBibleSearching(true);
+                          viewController.setIsAdvanceLookupOpened(true);
                       },
                   },
               ]),

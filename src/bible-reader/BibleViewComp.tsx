@@ -95,7 +95,7 @@ async function openContextMenu(
                 const lookupController =
                     viewController as LookupBibleItemController;
                 lookupController.openBibleSearch('s');
-                lookupController.setIsBibleSearching(true);
+                lookupController.setIsAdvanceLookupOpened(true);
             },
         });
     }

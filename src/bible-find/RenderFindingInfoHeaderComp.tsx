@@ -111,10 +111,15 @@ function showExtraActions(
     event: any,
     bibleKey: string,
     setSelectedBooks: (selectedBooks: SelectedBookKeyType[]) => void,
+    isDisabledFilterResetting = false,
 ) {
     const contextMenuItems: ContextMenuItemType[] = [
         {
-            menuElement: tran('Reset Search Data'),
+            menuElement: (
+                <span style={{ color: 'var(--bs-danger)' }}>
+                    {tran('Reset Search Data')}
+                </span>
+            ),
             onSelect: async () => {
                 const isOk = await showAppConfirm(
                     tran('Reset Search Data'),
@@ -140,6 +145,7 @@ function showExtraActions(
         },
         {
             menuElement: tran('Reset Selected Books'),
+            disabled: isDisabledFilterResetting,
             onSelect: () => {
                 setSelectedBooks([]);
             },
@@ -175,9 +181,14 @@ export default function RenderFindingInfoHeaderComp({
     );
     const handleExtraActions = useCallback(
         (event: any) => {
-            showExtraActions(event, bibleKey, setSelectedBooks);
+            showExtraActions(
+                event,
+                bibleKey,
+                setSelectedBooks,
+                selectedBooks.length === 0,
+            );
         },
-        [bibleKey, setSelectedBooks],
+        [bibleKey, setSelectedBooks, selectedBooks],
     );
     return (
         <div className="w-100 d-flex overflow-hidden app-inner-shadow p-1 align-items-center">

@@ -48,14 +48,12 @@ export function useSelectedBibleKey() {
 
 export default function RenderBibleLookupComp() {
     const viewController = useLookupBibleItemControllerContext();
-    const [isBibleSearching, setIsBibleSearching] = useStateSettingBoolean(
-        LOOKUP_ONLINE_SETTING_NAME,
-        false,
-    );
+    const [isAdvanceLookupOpened, setIsAdvanceLookupOpened] =
+        useStateSettingBoolean(LOOKUP_ONLINE_SETTING_NAME, false);
     useAppEffect(() => {
-        viewController.setIsBibleSearching = setIsBibleSearching;
+        viewController.setIsAdvanceLookupOpened = setIsAdvanceLookupOpened;
         return () => {
-            viewController.setIsBibleSearching = (_: boolean) => {};
+            viewController.setIsAdvanceLookupOpened = (_: boolean) => {};
         };
     }, []);
     const [inputText, setInputText] = useState<string>(
@@ -89,8 +87,8 @@ export default function RenderBibleLookupComp() {
                 <div className="card-header">
                     <div className="float-end">
                         <RenderExtraButtonsRightComp
-                            setIsLookupOnline={setIsBibleSearching}
-                            isLookupOnline={isBibleSearching}
+                            setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
+                            isAdvanceLookupOpened={isAdvanceLookupOpened}
                         />
                     </div>
                 </div>
@@ -148,8 +146,8 @@ export default function RenderBibleLookupComp() {
                 }
             >
                 <RenderBibleLookupHeaderComp
-                    isLookupOnline={isBibleSearching}
-                    setIsLookupOnline={setIsBibleSearching}
+                    isAdvanceLookupOpened={isAdvanceLookupOpened}
+                    setIsAdvanceLookupOpened={setIsAdvanceLookupOpened}
                 />
                 <div
                     className={'card-body d-flex w-100 app-overflow-hidden'}
@@ -157,7 +155,7 @@ export default function RenderBibleLookupComp() {
                         height: 'calc(100% - 38px)',
                     }}
                 >
-                    {isBibleSearching ? (
+                    {isAdvanceLookupOpened ? (
                         <ResizeActorComp
                             flexSizeName="bible-lookup-container-body"
                             isHorizontal

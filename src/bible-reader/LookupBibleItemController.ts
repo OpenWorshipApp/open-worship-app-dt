@@ -86,7 +86,7 @@ class LookupBibleItemController extends BibleItemsViewController {
     setBibleKey = (_bibleKey: string) => {};
     reloadEditingResult = (_inputText: string) => {};
     onLookupSaveBibleItem = () => {};
-    setIsBibleSearching = (_isLookupOnline: boolean) => {};
+    setIsAdvanceLookupOpened = (_isLookupOnline: boolean) => {};
     openBibleSearch = setBibleSearchingTabType;
 
     constructor() {

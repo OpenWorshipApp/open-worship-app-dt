@@ -12,11 +12,11 @@ import RenderOpenWikiDictionaryComp from './RenderOpenWikiDictionaryComp';
 import RenderExportWordComp from './RenderExportWordComp';
 
 export default function RenderBibleLookupHeaderComp({
-    isLookupOnline,
-    setIsLookupOnline,
+    setIsAdvanceLookupOpened,
+    isAdvanceLookupOpened,
 }: Readonly<{
-    isLookupOnline: boolean;
-    setIsLookupOnline: (isLookupOnline: boolean) => void;
+    setIsAdvanceLookupOpened: (isAdvanceLookupOpened: boolean) => void;
+    isAdvanceLookupOpened: boolean;
 }>) {
     const viewController = useLookupBibleItemControllerContext();
     const hideBibleLookupPopup = useToggleBibleLookupPopupContext(false);
@@ -70,8 +70,10 @@ export default function RenderBibleLookupHeaderComp({
                         <RenderOpenWikiDictionaryComp />
                         <div className="float-start">
                             <RenderExtraButtonsRightComp
-                                setIsLookupOnline={setIsLookupOnline}
-                                isLookupOnline={isLookupOnline}
+                                setIsAdvanceLookupOpened={
+                                    setIsAdvanceLookupOpened
+                                }
+                                isAdvanceLookupOpened={isAdvanceLookupOpened}
                             />
                         </div>
                     </div>

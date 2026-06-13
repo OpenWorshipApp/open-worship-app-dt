@@ -19,11 +19,11 @@ export function getIsKeepingPopup() {
 }
 
 export default function RenderExtraButtonsRightComp({
-    setIsLookupOnline,
-    isLookupOnline,
+    setIsAdvanceLookupOpened,
+    isAdvanceLookupOpened,
 }: Readonly<{
-    setIsLookupOnline: (_: boolean) => void;
-    isLookupOnline: boolean;
+    setIsAdvanceLookupOpened: (isAdvanceLookupOpened: boolean) => void;
+    isAdvanceLookupOpened: boolean;
 }>) {
     const [isKeepingPopup, setIsKeepingPopup] = useStateSettingBoolean(
         CLOSE_ON_ADD_BIBLE_ITEM,
@@ -40,8 +40,8 @@ export default function RenderExtraButtonsRightComp({
         [setIsKeepingPopup],
     );
     const handleToggleLookupOnline = useCallback(() => {
-        setIsLookupOnline(!isLookupOnline);
-    }, [isLookupOnline, setIsLookupOnline]);
+        setIsAdvanceLookupOpened(!isAdvanceLookupOpened);
+    }, [isAdvanceLookupOpened, setIsAdvanceLookupOpened]);
     return (
         <div className="d-flex">
             {appProvider.isPagePresenter ? (
@@ -64,7 +64,7 @@ export default function RenderExtraButtonsRightComp({
             <button
                 className={
                     'btn btn-sm btn' +
-                    `-${isLookupOnline ? '' : 'outline-'}info`
+                    `-${isAdvanceLookupOpened ? '' : 'outline-'}info`
                 }
                 title={tran('Advance Bible Lookup')}
                 onClick={handleToggleLookupOnline}
