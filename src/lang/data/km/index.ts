@@ -1,4 +1,5 @@
 import type { LanguageDataType } from '../../langHelpers';
+import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
 
 import btbBlack from './fonts/Battambang/Battambang-Black.ttf';
 import btbBold from './fonts/Battambang/Battambang-Bold.ttf';
@@ -756,7 +757,7 @@ const lang: LanguageDataType = {
         return [bookName];
     },
     getBibleCrossRefBundleFilePath() {
-        return bbCR.filePath;
+        return resolveGzBundleFilePath(bbCR);
     },
 };
 

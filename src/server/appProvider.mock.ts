@@ -634,6 +634,9 @@ function syncMessageFallback(channel: string, args: any[]) {
     if (channel === 'main:app:get-data-path') {
         return BROWSER_DATA_ROOT;
     }
+    if (channel === 'main:app:get-app-path') {
+        return BROWSER_DATA_ROOT;
+    }
     if (channel === 'main:app:get-special-path') {
         const pathType = args[0] as keyof typeof SPECIAL_PATHS;
         return SPECIAL_PATHS[pathType] ?? BROWSER_DATA_ROOT;

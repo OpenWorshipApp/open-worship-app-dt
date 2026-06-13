@@ -65,7 +65,8 @@
             "package.json"
         ],
         "asarUnpack": [
-            "electron-build/**/*"
+            "electron-build/**/*",
+            "dist/**/*.gz.bundle"
         ],
         "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
         "dmg": {

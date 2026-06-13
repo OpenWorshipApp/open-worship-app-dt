@@ -1,10 +1,11 @@
 import type { LanguageDataType } from '../../langHelpers';
+import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
 
 import bibleBooks from './bibleBooks.json';
 import bbCR from './bb-cr.gz.bundle';
 
 const lang: LanguageDataType = {
-    packageDir:__dirname,
+    packageDir: __dirname,
     version: '0.0.1',
     locale: 'en-US',
     langCode: 'en',
@@ -86,7 +87,7 @@ const lang: LanguageDataType = {
         return [bookName];
     },
     getBibleCrossRefBundleFilePath() {
-        return bbCR.filePath;
+        return resolveGzBundleFilePath(bbCR);
     },
 };
 

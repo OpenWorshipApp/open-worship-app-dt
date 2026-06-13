@@ -67,6 +67,10 @@ export function initEventListenerApp(appController: ElectronAppController) {
         event.returnValue = app.getPath('userData');
     });
 
+    ipcMain.on('main:app:get-app-path', (event) => {
+        event.returnValue = app.getAppPath();
+    });
+
     ipcMain.on(
         'main:app:get-special-path',
         (
