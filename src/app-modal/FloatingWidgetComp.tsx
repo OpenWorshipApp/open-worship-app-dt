@@ -239,6 +239,7 @@ function isOnScrollbar(clientX: number, clientY: number, target: Element) {
 
 interface MyProps {
     children?: ReactNode;
+    collapsedChildren?: ReactNode | null;
     onClose: () => void;
     options?: {
         extraStyle?: CSSProperties;
@@ -254,6 +255,7 @@ interface MyProps {
 
 export default function FloatingWidgetComp({
     children,
+    collapsedChildren = null,
     options,
     onClose,
 }: PropsWithChildren<MyProps>) {
@@ -480,8 +482,8 @@ export default function FloatingWidgetComp({
                     </button>
                 </div>
             </div>
-            <div className="floating-widget__content" hidden={isCollapsed}>
-                {children}
+            <div className="floating-widget__content">
+                {isCollapsed ? collapsedChildren : children}
             </div>
             {!isCollapsed &&
                 RESIZE_HANDLES.map((handle) => (

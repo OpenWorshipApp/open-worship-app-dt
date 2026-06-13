@@ -94,6 +94,11 @@ function BibleNoteBibleLookupComp({
     return (
         <FloatingWidgetComp
             onClose={() => setIsShowingBibleLookup(false)}
+            collapsedChildren={
+                <div className="d-flex m-2">
+                    {tran('Bible Lookup')}
+                </div>
+            }
             options={{
                 width: 550,
                 height: 700,
