@@ -10,21 +10,19 @@ import appProvider from '../server/appProvider';
 const MAGIC = 'FBBNDL01';
 const FLAG_GZIP = 1;
 
-const { openSync, readSync, fstatSync, closeSync, gunzipSync } =
-    appProvider.fileUtils;
 export class BibleCrossRefBundleReader {
     fd: number;
     gzip: boolean;
     index: Map<string, [number, number]>;
 
     constructor(path: string) {
-        this.fd = openSync(path, 'r');
-        const size = fstatSync(this.fd).size;
+        this.fd = appProvider.fileUtils.openSync(path, 'r');
+        const size = appProvider.fileUtils.fstatSync(this.fd).size;
 
         const footer = Buffer.alloc(20);
-        readSync(this.fd, footer, 0, 20, size - 20);
+        appProvider.fileUtils.readSync(this.fd, footer, 0, 20, size - 20);
         if (footer.toString('latin1', 12, 20) !== MAGIC) {
-            closeSync(this.fd);
+            appProvider.fileUtils.closeSync(this.fd);
             throw new Error('Not a valid bundle (bad magic)');
         }
         const indexOffset = footer.readUInt32LE(0);
@@ -32,7 +30,7 @@ export class BibleCrossRefBundleReader {
         this.gzip = (footer.readUInt32LE(8) & FLAG_GZIP) === FLAG_GZIP;
 
         const indexBuf = Buffer.alloc(indexLength);
-        readSync(this.fd, indexBuf, 0, indexLength, indexOffset);
+        appProvider.fileUtils.readSync(this.fd, indexBuf, 0, indexLength, indexOffset);
         // Map gives fast lookups and a low-overhead in-memory index (~1 MB).
         this.index = new Map(
             Object.entries(JSON.parse(indexBuf.toString('utf8'))),
@@ -53,8 +51,8 @@ export class BibleCrossRefBundleReader {
         if (!entry) return undefined;
         const [offset, length] = entry;
         const buf = Buffer.allocUnsafe(length);
-        readSync(this.fd, buf, 0, length, offset);
-        return this.gzip ? gunzipSync(buf) : buf;
+        appProvider.fileUtils.readSync(this.fd, buf, 0, length, offset);
+        return this.gzip ? appProvider.fileUtils.gunzipSync(buf) : buf;
     }
 
     /** Record as a UTF-8 string, or undefined. */
@@ -75,6 +73,6 @@ export class BibleCrossRefBundleReader {
     }
 
     close() {
-        closeSync(this.fd);
+        appProvider.fileUtils.closeSync(this.fd);
     }
 }
