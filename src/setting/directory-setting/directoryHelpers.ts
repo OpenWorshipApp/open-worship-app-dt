@@ -22,7 +22,7 @@ import FileSource from '../../helper/FileSource';
 
 export function getDefaultDataDir() {
     const desktopDirPath = getDesktopPath();
-    const dirPath = appProvider.pathUtils.join(
+    const dirPath = pathJoin(
         desktopDirPath,
         'open-worship-data',
     );
@@ -43,7 +43,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
     try {
         for (const [k, v] of Object.entries(defaultDataDirNames)) {
             const settingName = (dirSourceSettingNames as any)[k];
-            const dirPath = appProvider.pathUtils.join(parentDirPath, v);
+            const dirPath = pathJoin(parentDirPath, v);
             await fsCreateDir(dirPath);
             const isSuccess = await fsCheckDirExist(dirPath);
             if (isSuccess) {
@@ -93,7 +93,7 @@ export async function selectDefaultDataDirName(
         );
         return;
     }
-    const dirPath = appProvider.pathUtils.join(selectedParentDir, dirName);
+    const dirPath = pathJoin(selectedParentDir, dirName);
     const isOk = await showAppConfirm(
         tran('Select Default Folder'),
         `${tran('This will select')} "${dirPath}" ` +

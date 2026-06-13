@@ -8,6 +8,7 @@ import {
     fsCheckDirExist,
     pathBasename,
     getFileName,
+    pathJoin,
 } from '../../server/fileHelpers';
 import { getBibleInfo } from './bibleInfoHelpers';
 import { appApiFetch } from '../networkHelpers';
@@ -112,9 +113,7 @@ export async function extractDownloadedBible(filePath: string) {
         await tarExtract(filePath, downloadPath);
         const fileFullName = pathBasename(filePath);
         const fileName = getFileName(fileFullName);
-        isExtracted = await fsCheckDirExist(
-            appProvider.pathUtils.join(downloadPath, fileName),
-        );
+        isExtracted = await fsCheckDirExist(pathJoin(downloadPath, fileName));
     } catch (error: any) {
         handleError(error);
         showSimpleToast(BIBLE_DOWNLOAD_TOAST_TITLE, 'Fail to extract bible');

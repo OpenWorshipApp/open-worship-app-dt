@@ -23,6 +23,7 @@ import {
     mimetypePdf,
     mimetypePptx,
     pathBasename,
+    pathJoin,
 } from '../server/fileHelpers';
 import { openSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerComp';
 import { showSimpleToast } from '../toast/toastHelpers';
@@ -309,10 +310,7 @@ async function genTempFilePath(dotExt: string | null) {
     let tempFilePath: string | null = null;
     let i = 0;
     while (tempFilePath === null || (await fsCheckFileExist(tempFilePath))) {
-        tempFilePath = appProvider.pathUtils.join(
-            tempDirPath,
-            `temp-to-pdf-${i}${dotExt}`,
-        );
+        tempFilePath = pathJoin(tempDirPath, `temp-to-pdf-${i}${dotExt}`);
         i++;
     }
     return tempFilePath;
@@ -325,7 +323,7 @@ function toHtmlBold(text: string) {
 async function getPdfFilePath(dirPath: string, fileName: string) {
     let i = 0;
     while (true) {
-        const targetPdfFilePath = appProvider.pathUtils.join(
+        const targetPdfFilePath = pathJoin(
             dirPath,
             `${fileName}${i === 0 ? '' : '-' + i}.pdf`,
         );
