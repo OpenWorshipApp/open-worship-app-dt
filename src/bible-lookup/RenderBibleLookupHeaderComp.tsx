@@ -56,12 +56,14 @@ export default function RenderBibleLookupHeaderComp({
                 <InputHandlerComp onBibleKeyChange={handleBibleKeyChanging} />
             </div>
             {viewController.isMinimized ? (
-                <AdvanceLookupHandlerComp
-                    isAdvanceLookupOpened={isAdvanceLookupOpened}
-                    handleToggleLookupOnline={() =>
-                        setIsAdvanceLookupOpened(!isAdvanceLookupOpened)
-                    }
-                />
+                <div className="mx-2">
+                    <AdvanceLookupHandlerComp
+                        isAdvanceLookupOpened={isAdvanceLookupOpened}
+                        handleToggleLookupOnline={() =>
+                            setIsAdvanceLookupOpened(!isAdvanceLookupOpened)
+                        }
+                    />
+                </div>
             ) : (
                 <>
                     <div className="mx-2">

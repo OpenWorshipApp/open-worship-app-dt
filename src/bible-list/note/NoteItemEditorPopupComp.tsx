@@ -95,7 +95,7 @@ function BibleNoteBibleLookupComp({
         <FloatingWidgetComp
             onClose={() => setIsShowingBibleLookup(false)}
             options={{
-                width: 500,
+                width: 550,
                 height: 700,
                 minWidth: 300,
                 minHeight: 200,
