@@ -17,6 +17,19 @@ $resize-corner-size: 16px;
   box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
 }
 
+// While actively dragging, force a consistent cursor over the whole widget and
+// suppress text selection so the move feels smooth from any blank area.
+.floating-widget--moving,
+.floating-widget--moving * {
+  cursor: move !important;
+  user-select: none !important;
+}
+
+.floating-widget--resizing,
+.floating-widget--resizing * {
+  user-select: none !important;
+}
+
 .floating-widget__toolbar {
   position: absolute;
   top: 0;
@@ -32,11 +45,6 @@ $resize-corner-size: 16px;
   }
 }
 
-.floating-widget__drag-indicator {
-  cursor: move;
-  touch-action: none;
-}
-
 .floating-widget__actions {
   display: inline-flex;
   gap: 0.125rem;
@@ -47,7 +55,6 @@ $resize-corner-size: 16px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 16%);
 }
 
-.floating-widget__drag-indicator,
 .floating-widget__button {
   display: inline-flex;
   align-items: center;
@@ -61,8 +68,6 @@ $resize-corner-size: 16px;
   border-radius: 4px;
 }
 
-.floating-widget__drag-indicator:hover,
-.floating-widget__drag-indicator:focus-visible,
 .floating-widget__button:hover,
 .floating-widget__button:focus-visible {
   background-color: rgba(var(--bs-secondary-rgb, 108, 117, 125), 0.16);

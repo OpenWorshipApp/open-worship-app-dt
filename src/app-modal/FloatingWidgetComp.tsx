@@ -15,6 +15,23 @@ const DEFAULT_MIN_WIDTH = 220;
 const DEFAULT_MIN_HEIGHT = 140;
 const COLLAPSED_HEIGHT = 42;
 
+// Pressing on these elements keeps their own click/drag behavior instead of
+// starting a widget move, so blank areas stay draggable without breaking
+// interactive controls inside the widget.
+const NON_DRAGGABLE_SELECTOR = [
+    'a',
+    'button',
+    'input',
+    'textarea',
+    'select',
+    'label',
+    '[role="button"]',
+    '[role="textbox"]',
+    '[role="menuitem"]',
+    '[contenteditable="true"]',
+    '[data-no-widget-drag]',
+].join(',');
+
 type WidgetRect = {
     left: number;
     top: number;
@@ -199,6 +216,20 @@ function getInitialWidgetRect(options?: FloatingWidgetOptions) {
     );
 }
 
+function isBlankDragArea(target: EventTarget | null) {
+    if (!(target instanceof Element)) {
+        return false;
+    }
+    return target.closest(NON_DRAGGABLE_SELECTOR) === null;
+}
+
+function isOnScrollbar(clientX: number, clientY: number, target: Element) {
+    const rect = target.getBoundingClientRect();
+    const isOnVerticalBar = clientX - rect.left > target.clientWidth;
+    const isOnHorizontalBar = clientY - rect.top > target.clientHeight;
+    return isOnVerticalBar || isOnHorizontalBar;
+}
+
 interface MyProps {
     children?: ReactNode;
     onClose: () => void;
@@ -222,6 +253,7 @@ export default function FloatingWidgetComp({
     const widgetRef = useRef<HTMLDivElement>(null);
     const interactionRef = useRef<InteractionState | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [activeMode, setActiveMode] = useState<InteractionMode | null>(null);
     const [widgetRect, setWidgetRect] = useState(() =>
         getInitialWidgetRect(options),
     );
@@ -313,6 +345,7 @@ export default function FloatingWidgetComp({
             startRect: widgetRect,
         };
         widgetRef.current?.setPointerCapture(event.pointerId);
+        setActiveMode(mode);
         event.preventDefault();
         event.stopPropagation();
     };
@@ -326,6 +359,7 @@ export default function FloatingWidgetComp({
             widgetRef.current.releasePointerCapture(event.pointerId);
         }
         interactionRef.current = null;
+        setActiveMode(null);
     };
 
     const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -363,12 +397,27 @@ export default function FloatingWidgetComp({
         );
     };
 
+    const handleWidgetPointerDown = (
+        event: ReactPointerEvent<HTMLDivElement>,
+    ) => {
+        const target = event.target;
+        if (!(target instanceof Element) || !isBlankDragArea(target)) {
+            return;
+        }
+        if (isOnScrollbar(event.clientX, event.clientY, target)) {
+            return;
+        }
+        startInteraction(event, 'move');
+    };
+
     return (
         <div
             ref={widgetRef}
             className={[
                 'floating-widget',
                 isCollapsed ? 'floating-widget--collapsed' : '',
+                activeMode === 'move' ? 'floating-widget--moving' : '',
+                activeMode === 'resize' ? 'floating-widget--resizing' : '',
                 options?.extraClassName ?? '',
             ]
                 .filter(Boolean)
@@ -380,6 +429,7 @@ export default function FloatingWidgetComp({
                 width: widgetRect.width,
                 height: isCollapsed ? COLLAPSED_HEIGHT : widgetRect.height,
             }}
+            onPointerDown={handleWidgetPointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={finishInteraction}
             onPointerCancel={finishInteraction}
@@ -389,17 +439,6 @@ export default function FloatingWidgetComp({
                     className="floating-widget__actions"
                     onPointerDown={(event) => event.stopPropagation()}
                 >
-                    <button
-                        type="button"
-                        className="floating-widget__drag-indicator"
-                        onPointerDown={(event) =>
-                            startInteraction(event, 'move')
-                        }
-                        aria-label="Move floating widget"
-                        title="Move floating widget"
-                    >
-                        <i className="bi bi-arrows-move" />
-                    </button>
                     <button
                         type="button"
                         className="floating-widget__button"
