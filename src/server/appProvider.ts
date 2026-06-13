@@ -1,5 +1,6 @@
 import type http from 'node:http';
 import type fs from 'node:fs';
+import type zlip from 'node:zlib';
 import type path from 'node:path';
 import type * as nodeCrypto from 'node:crypto';
 
@@ -34,6 +35,10 @@ export type FileUtilsType = {
     unlink: typeof fs.unlink;
     rmdir: typeof fs.rmdir;
     readFile: typeof fs.readFile;
+    openSync: typeof fs.openSync;
+    readSync: typeof fs.readSync;
+    fstatSync: typeof fs.fstatSync;
+    closeSync: typeof fs.closeSync;
     readFileSync: typeof fs.readFileSync;
     writeFileSync: typeof fs.writeFileSync;
     unlinkSync: typeof fs.unlinkSync;
@@ -47,6 +52,7 @@ export type FileUtilsType = {
     ) => void;
     watch: typeof fs.watch;
     writeFileFromBase64Sync: (filePath: string, base64: string) => void;
+    gunzipSync: typeof zlip.gunzipSync;
 };
 
 export type PathUtilsType = {

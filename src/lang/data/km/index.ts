@@ -753,6 +753,9 @@ const lang: LanguageDataType = {
         }
         return [bookName];
     },
+    getBibleCrossRefBundleFileName() {
+        return 'bb-cr.gz.bundle';
+    },
 };
 
 export default lang;

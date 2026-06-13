@@ -83,6 +83,9 @@ const lang: LanguageDataType = {
     transformBibleBookName(bookName: string) {
         return [bookName];
     },
+    getBibleCrossRefBundleFileName() {
+        return 'bb-cr.gz.bundle';
+    },
 };
 
 export default lang;
