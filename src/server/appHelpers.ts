@@ -19,6 +19,7 @@ import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appError as logError } from '../helper/loggerHelpers';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
+import { getSetting, setSetting } from '../helper/settingHelpers';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${crypto.randomUUID()}`;
@@ -90,10 +91,7 @@ export interface ClipboardInf {
 
 const DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME = 'decided-reader-home-page';
 function setDecided() {
-    globalThis.localStorage.setItem(
-        DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME,
-        'true',
-    );
+    setSetting(DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME, 'true');
 }
 export async function checkDecidedBibleReaderHomePage() {
     if (!appProvider.isMainPage) {
@@ -102,9 +100,7 @@ export async function checkDecidedBibleReaderHomePage() {
     if (appProvider.isPageReader) {
         setDecided();
     }
-    const decided = globalThis.localStorage.getItem(
-        DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME,
-    );
+    const decided = getSetting(DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME);
     if (decided !== null) {
         return;
     }

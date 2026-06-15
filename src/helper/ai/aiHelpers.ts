@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppEffect } from '../debuggerHelpers';
 
+import { appHomeStorage } from '../../server/appHomeStorage';
 import bibleCrossRefSchemaJson from './bibleCrossRefSchema.json';
 export { bibleCrossRefSchemaJson };
 
@@ -17,7 +18,7 @@ export type AISettingType = {
 const AI_SETTING_NAME = 'ai-setting';
 
 export function getAISetting(): AISettingType {
-    const settingStr = localStorage.getItem(AI_SETTING_NAME) || '{}';
+    const settingStr = appHomeStorage.getItem(AI_SETTING_NAME) || '{}';
     try {
         const data = JSON.parse(settingStr);
         data.openAIAPIKey = (data.openAIAPIKey ?? '').trim();
@@ -36,7 +37,7 @@ export function getAISetting(): AISettingType {
 }
 const changingListener = new Set<() => void>();
 export function setAISetting(value: AISettingType) {
-    localStorage.setItem(AI_SETTING_NAME, JSON.stringify(value));
+    appHomeStorage.setItem(AI_SETTING_NAME, JSON.stringify(value));
     for (const listener of changingListener) {
         listener();
     }

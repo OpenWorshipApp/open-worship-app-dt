@@ -7,6 +7,7 @@ import DirSource from '../../helper/DirSource';
 import { getParamFileFullName, getParamIdNum } from '../../helper/domHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import appProvider from '../../server/appProvider';
+import { appHomeStorage } from '../../server/appHomeStorage';
 import { pathJoin, pathResolve, fsExistSync } from '../../server/fileHelpers';
 import Note from './Note';
 import type NoteItem from './NoteItem';
@@ -29,13 +30,13 @@ export function getBibleNoteSelectedBibleKey() {
 
 const storageManager = {
     deleteSetting(key: string) {
-        localStorage.removeItem(key);
+        appHomeStorage.removeItem(key);
     },
     getSetting(key: string) {
-        return localStorage.getItem(key);
+        return appHomeStorage.getItem(key);
     },
     setSetting(key: string, value: any) {
-        localStorage.setItem(key, value);
+        appHomeStorage.setItem(key, value);
     },
 };
 

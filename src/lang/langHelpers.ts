@@ -5,6 +5,7 @@ import { unlocking } from '../server/unlockingHelpers';
 import { globalCacheManager1M } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
+import { getSetting, setSetting } from '../helper/settingHelpers';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -445,7 +446,7 @@ export type BibleBookType = {
 
 export type LocaleType = keyof typeof allLocalesMap;
 export type LanguageDataType = {
-    packageDir:string
+    packageDir: string;
     version: string;
     locale: LocaleType;
     langCode: string;
@@ -484,8 +485,7 @@ export function checkIsValidLocale(text: string) {
 }
 
 export function getCurrentLocale(): LocaleType {
-    const locale =
-        localStorage.getItem(LANGUAGE_LOCALE_SETTING_NAME) ?? DEFAULT_LOCALE;
+    const locale = getSetting(LANGUAGE_LOCALE_SETTING_NAME) ?? DEFAULT_LOCALE;
     if (checkIsValidLocale(locale)) {
         return locale as LocaleType;
     }
@@ -495,7 +495,7 @@ export function setCurrentLocale(locale: LocaleType) {
     if (!checkIsValidLocale(locale)) {
         locale = DEFAULT_LOCALE;
     }
-    localStorage.setItem(LANGUAGE_LOCALE_SETTING_NAME, locale);
+    setSetting(LANGUAGE_LOCALE_SETTING_NAME, locale);
 }
 
 const langCache = new Map<string, LanguageDataType>();

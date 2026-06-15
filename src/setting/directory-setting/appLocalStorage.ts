@@ -1,5 +1,6 @@
 import { handleError } from '../../helper/errorHelpers';
 import CacheManager from '../../others/CacheManager';
+import { appHomeStorage } from '../../server/appHomeStorage';
 import {
     fsCheckDirExist,
     fsDeleteFile,
@@ -26,13 +27,11 @@ class AppLocalStorage {
         if (cachedDefaultStorage !== null) {
             return cachedDefaultStorage;
         }
-        let selectedParentDir = globalThis.localStorage.getItem(
+        let selectedParentDir = appHomeStorage.getItem(
             SELECTED_PARENT_DIR_SETTING_NAME,
         );
         if (!selectedParentDir || !fsExistSync(selectedParentDir)) {
-            globalThis.localStorage.removeItem(
-                SELECTED_PARENT_DIR_SETTING_NAME,
-            );
+            appHomeStorage.removeItem(SELECTED_PARENT_DIR_SETTING_NAME);
             selectedParentDir = getUserWritablePath();
         }
         cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, selectedParentDir);
@@ -68,7 +67,7 @@ class AppLocalStorage {
     }
 
     async getSelectedParentDirectory() {
-        const selectedParentDir = globalThis.localStorage.getItem(
+        const selectedParentDir = appHomeStorage.getItem(
             SELECTED_PARENT_DIR_SETTING_NAME,
         );
         if (!selectedParentDir || !(await fsCheckDirExist(selectedParentDir))) {
@@ -82,10 +81,7 @@ class AppLocalStorage {
             throw new Error(`Directory does not exist: ${dirPath}`);
         }
         cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
-        globalThis.localStorage.setItem(
-            SELECTED_PARENT_DIR_SETTING_NAME,
-            dirPath,
-        );
+        appHomeStorage.setItem(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
     }
 
     toFullPath(key: string): string {
@@ -146,7 +142,7 @@ class AppLocalStorage {
                     return fsDeleteFile(fullPath);
                 }),
             );
-            globalThis.localStorage.clear();
+            appHomeStorage.clear();
         } catch (error) {
             handleError(error);
         }
