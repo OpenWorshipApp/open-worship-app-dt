@@ -141,7 +141,10 @@ export async function getBibleInfo(
     if (cached !== null) {
         return cached;
     }
-    const bibleInfo = await bibleDataReader.readBibleData(bibleKey, '_info');
+    const bibleInfo = (await bibleDataReader.readBibleData(
+        bibleKey,
+        '_info',
+    )) as BibleInfoType | null;
     if (bibleInfo === null) {
         return null;
     } else {

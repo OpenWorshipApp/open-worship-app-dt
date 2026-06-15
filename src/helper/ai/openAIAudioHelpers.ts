@@ -35,7 +35,7 @@ export async function textToSpeech(
     { text, locale, filePath }: SpeakableTextDataType,
     isForce = false,
 ) {
-    return unlocking(filePath, async () => {
+    return unlocking('tts-' + filePath, async () => {
         try {
             // voice:
             // 'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer', 'coral', 'verse',

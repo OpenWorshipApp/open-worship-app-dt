@@ -14,17 +14,18 @@ export async function unlocking<T>(
             setTimeout(resolve, 100);
         });
         i++;
-        if (i === 500) {
-            // 600 x 100ms = 60s
+        if (i === 50) {
             appWarning(
                 `Unlocking key "${key}" is still locked after 50 attempts (5s).`,
             );
         }
     }
     lockSet.add(key);
-    const data = await callback();
-    lockSet.delete(key);
-    return data;
+    try {
+        return await callback();
+    } finally {
+        lockSet.delete(key);
+    }
 }
 
 const timeoutAttempt = genTimeoutAttempt(2000);

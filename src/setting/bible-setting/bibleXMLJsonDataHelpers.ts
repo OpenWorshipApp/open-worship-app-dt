@@ -30,13 +30,13 @@ import { appLog } from '../../helper/loggerHelpers';
 const bibleKeyFilePathCache = new CacheManager();
 export async function getBibleKeyFromFile(filePath: string) {
     return unlockingCacher(
-        filePath,
+        'bible-key-' + filePath,
         async () => {
             const xmlText = await FileSource.readFileData(filePath);
             if (xmlText === null) {
                 return null;
             }
-            const bibleKey = await guessingBibleKey(xmlText);
+            const bibleKey = guessValue(xmlText, attributesMap.bibleKey);
             return bibleKey;
         },
         bibleKeyFilePathCache,
@@ -47,12 +47,17 @@ export async function getBibleKeyFromFile(filePath: string) {
 export async function getAllXMLFileKeys() {
     const dirPath = await bibleDataReader.getWritableBiblePath();
     const files = await fsListFiles(dirPath);
+    const xmlFileFullNames = files.filter((fileFullName) => {
+        if (fileFullName.startsWith('.')) {
+            return false;
+        }
+        return fileFullName.toLocaleLowerCase().endsWith('.xml');
+    });
+    const xmlFilePaths = xmlFileFullNames.map((fileFullName) => {
+        return pathJoin(dirPath, fileFullName);
+    });
     const entries = await Promise.all(
-        files.map(async (fileFullName) => {
-            if (!fileFullName.toLocaleLowerCase().endsWith('.xml')) {
-                return null;
-            }
-            const filePath = pathJoin(dirPath, fileFullName);
+        xmlFilePaths.map(async (filePath) => {
             const bibleKey = await getBibleKeyFromFile(filePath);
             if (bibleKey === null) {
                 return null;

@@ -59,6 +59,21 @@ describe('unlockingHelpers', () => {
         expect(secondCallback).toHaveBeenCalledTimes(1);
     });
 
+    test('releases locks when a callback rejects', async () => {
+        const { unlocking } = await import('./unlockingHelpers');
+        const error = new Error('boom');
+
+        await expect(
+            unlocking('rejecting', async () => {
+                throw error;
+            }),
+        ).rejects.toThrow(error);
+
+        await expect(unlocking('rejecting', async () => 'next')).resolves.toBe(
+            'next',
+        );
+    });
+
     test('returns cached values without recomputing and refreshes deferred cache later', async () => {
         const { unlockingCacher } = await import('./unlockingHelpers');
         const callback = vi.fn(async () => 'fresh');
