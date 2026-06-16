@@ -86,7 +86,8 @@ async function shortToVerseData(shortVerse: string) {
     const title = await bibleItem.toTitle();
     const fullText = await bibleItem.toFullText();
     const fontFamily = await getBibleFontFamily(selectedBibleKey);
-    return { title, fullText, style: { fontFamily } };
+    const data = { title, fullText, style: { fontFamily } };
+    return data;
 }
 
 async function verseFullTextToListShorts(verseFullText: string) {
@@ -146,9 +147,11 @@ async function changeBibleKey(
     bibleItem.bibleKey = newBibleKey;
     const newTitleWithKey = await bibleItem.toTitleWithBibleKey();
     const newFullText = await bibleItem.toFullText();
+    const fontFamily = await getBibleFontFamily(newBibleKey);
     return {
         title: newTitleWithKey,
         fullText: newFullText,
+        style: { fontFamily },
     };
 }
 

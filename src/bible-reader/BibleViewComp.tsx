@@ -31,6 +31,23 @@ import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import BibleViewTextComp from './view-extra/BibleViewTextComp';
 import BibleViewRenderHeaderComp from './view-extra/BibleViewRenderHeaderComp';
 
+function checkIsParentPlayToBottom(verseElement: HTMLElement) {
+    const containerElements = Array.from(
+        document.querySelectorAll('div.bible-view'),
+    ).filter((element) => {
+        return element.contains(verseElement);
+    });
+    if (containerElements.length !== 1) {
+        return false;
+    }
+    const playToBottomElement =
+        containerElements[0].querySelector('i.play-to-bottom');
+    if (!(playToBottomElement instanceof HTMLElement)) {
+        return false;
+    }
+    return !!playToBottomElement.dataset.speed;
+}
+
 function handMovedChecking(
     viewController: BibleItemsViewController,
     bibleItem: ReadIdOnlyBibleItem,
@@ -64,6 +81,9 @@ function handMovedChecking(
             kjvVerseKey,
         );
         for (const element of elements) {
+            if (checkIsParentPlayToBottom(element)) {
+                continue;
+            }
             bringDomToNearestView(element);
         }
     }
