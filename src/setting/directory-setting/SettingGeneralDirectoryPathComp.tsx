@@ -15,6 +15,7 @@ import DirSource from '../../helper/DirSource';
 import {
     checkShouldSelectChildDir,
     getDefaultDataDir,
+    removePathForChildDir,
     selectPathForChildDir,
 } from './directoryHelpers';
 import { fsCheckDirExist, fsCreateDir } from '../../server/fileHelpers';
@@ -129,7 +130,8 @@ function RenderParentDirectoryComp({
                             </div>
                         </button>
                     </div>
-                    <strong className='app-selectable-text'
+                    <strong
+                        className="app-selectable-text"
                         style={{
                             marginLeft: '30px',
                         }}
@@ -242,7 +244,11 @@ export default function SettingGeneralDirectoryPathComp() {
         }
         dirSource.setParentDirPath = async (dirPath: string) => {
             await appLocalStorage.setSelectedParentDirectory(dirPath);
-            await selectPathForChildDir(dirPath);
+            if (dirPath === '' || !(await fsCheckDirExist(dirPath))) {
+                await removePathForChildDir();
+            } else {
+                await selectPathForChildDir(dirPath);
+            }
             const newDirSource = new ParentDirSource(dirPath);
             setDirSource(newDirSource);
         };

@@ -22,11 +22,16 @@ import FileSource from '../../helper/FileSource';
 
 export function getDefaultDataDir() {
     const desktopDirPath = getDesktopPath();
-    const dirPath = pathJoin(
-        desktopDirPath,
-        'open-worship-data',
-    );
+    const dirPath = pathJoin(desktopDirPath, 'open-worship-data');
     return dirPath;
+}
+
+export async function removePathForChildDir() {
+    for (const [k, _v] of Object.entries(defaultDataDirNames)) {
+        const settingName = (dirSourceSettingNames as any)[k];
+        setSetting(settingName, '');
+    }
+    appProvider.reload();
 }
 
 export async function selectPathForChildDir(parentDirPath: string) {
