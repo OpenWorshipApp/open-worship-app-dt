@@ -2,12 +2,10 @@ $border-radius: 10px;
 .render-found {
   .verse-select {
     .item {
-      min-width: 31px;
-      height: 31px;
-      padding: 3px;
+      min-width: 25px;
+      padding: 0px 3px;
       margin: 1px 0;
       border-radius: 0;
-      font-size: 18px;
       overflow: hidden;
       text-overflow: ellipsis;
 

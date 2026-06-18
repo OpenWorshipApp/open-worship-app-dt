@@ -20,6 +20,10 @@
   i.rotating::before {
     animation: rotating 0.5s ease-in-out infinite;
   }
+
+  .hand-pointing-right {
+    animation: hand-pointing-right 0.5s ease-in-out infinite;
+  }
 }
 
 @keyframes rotating {
@@ -29,5 +33,19 @@
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes hand-pointing-right {
+  0% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(5px);
+  }
+
+  100% {
+    transform: translateX(0);
   }
 }

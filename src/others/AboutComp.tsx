@@ -35,6 +35,7 @@ export default function AboutComp() {
     const { theme } = useThemeSource();
     const [docxToHtmlsVersion] = useAppStateAsync(getDocxToHtmlsVersion);
     const [pptxToHtmlsVersion] = useAppStateAsync(getPptxToHtmlsVersion);
+    const commitHash = appProvider.systemUtils.commitHash;
     return (
         <div
             id="app"
@@ -57,9 +58,20 @@ export default function AboutComp() {
                     <strong>
                         {appInfo.titleFull}
                         <br />
-                        version:{appInfo.version}, commit ID:
-                        {appProvider.systemUtils.commitHash?.substring(0, 7) ??
-                            'N/A'}
+                        version:{' '}
+                        <a
+                            target="_blank"
+                            href={`https://github.com/OpenWorshipApp/open-worship-app-dt/releases/tag/release-${appInfo.version}`}
+                        >
+                            {appInfo.version}
+                        </a>
+                        , commit ID:{' '}
+                        <a
+                            target="_blank"
+                            href={`https://github.com/OpenWorshipApp/open-worship-app-dt/commit/${commitHash}`}
+                        >
+                            {commitHash?.substring(0, 7) ?? 'N/A'}
+                        </a>
                     </strong>
                 </div>
                 <div className="card-body p-2">

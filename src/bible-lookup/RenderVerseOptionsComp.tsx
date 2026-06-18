@@ -96,7 +96,7 @@ export default function RenderVerseOptionsComp({
         <div className="render-found full-view-hide" style={{ fontFamily }}>
             <div
                 className={
-                    'verse-select w-100 d-flex p-1 align-content-start ' +
+                    'verse-select w-100 d-flex p-0 align-content-start ' +
                     'flex-wrap app-inner-shadow'
                 }
             >

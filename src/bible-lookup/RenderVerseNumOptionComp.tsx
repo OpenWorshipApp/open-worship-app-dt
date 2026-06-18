@@ -82,7 +82,7 @@ export default function RenderVerseNumOptionComp({
             onMouseDown={handleMouseDown}
             onMouseEnter={handleMouseEnter}
         >
-            <span>{verseNumText}</span>
+            <div className="number">{verseNumText}</div>
         </div>
     );
 }

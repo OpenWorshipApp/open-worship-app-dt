@@ -38,7 +38,7 @@ function RenderLanguageButtonComp({
         >
             {tran(langData.name)}
             <div
-                className="icon"
+                className="icon pe-1"
                 dangerouslySetInnerHTML={{
                     __html: langData.flagSVG,
                 }}

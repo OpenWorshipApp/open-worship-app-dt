@@ -59,11 +59,13 @@ export default function PathSelectorComp({
     dirSource,
     addItems,
     isForceShowEditor = false,
+    placeholder = '',
 }: Readonly<{
     dirSource: DirSource;
     prefix: string;
     addItems?: (event: any) => void;
     isForceShowEditor?: boolean;
+    placeholder?: string;
 }>) {
     const [isShowingEditor, setIsShowingEditor] = useState(false);
     const dirPath = dirSource.dirPath;
@@ -98,7 +100,10 @@ export default function PathSelectorComp({
             </div>
             {shouldShowingEditor && (
                 <AppSuspenseComp>
-                    <LazyPathEditorComp dirSource={dirSource} />
+                    <LazyPathEditorComp
+                        dirSource={dirSource}
+                        placeholder={placeholder}
+                    />
                 </AppSuspenseComp>
             )}
         </div>

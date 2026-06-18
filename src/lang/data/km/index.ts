@@ -111,7 +111,8 @@ const dictionary = {
     'Background Videos': 'វីដេអូផ្ទៃខាងក្រោយ',
     'Background Audios': 'សម្លេងផ្ទៃខាងក្រោយ',
     'Bible Present': 'បង្ហាញព្រះគម្ពីរ',
-    'Set Default Data': ' កំណត់ទិន្នន័យលំនាំដើម',
+    'Click here to set default data on "Desktop"':
+        'ចុចទីនេះដើម្បីកំណត់ទិន្នន័យលំនាំដើមនៅលើ "Desktop"',
     'Unable to get online bible list': 'មិនអាចទទួលបានបញ្ជីព្រះគម្ពីរអនឡាញ',
     'Fail to get find controller!': 'មិនអាចទទួលបានកម្មវិធីស្វែងរក!',
     'No slides to display': 'មិនមានស្លាយដែលត្រូវបង្ហាញទេ',

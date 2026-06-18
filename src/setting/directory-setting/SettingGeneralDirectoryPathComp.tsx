@@ -103,18 +103,39 @@ function RenderParentDirectoryComp({
                     <PathSelectorComp
                         prefix="path-parent-dir"
                         dirSource={dirSource}
+                        placeholder={defaultPath}
                     />
                 </div>
             </div>
             {dirSource.dirPath ? null : (
                 <div>
                     <hr />
-                    <button
-                        className="btn btn-sm btn-info ms-2"
-                        onClick={handleSetDefault}
+                    <div className="d-flex align-items-center">
+                        <div className="hand-pointing-right">👉</div>
+                        <button
+                            className="btn btn-sm btn-success ms-2 d-flex align-items-center"
+                            onClick={handleSetDefault}
+                        >
+                            <div className="d-flex align-items-center me-2">
+                                <strong
+                                    style={{
+                                        textShadow: '0 0 2px var(--bs-danger)',
+                                    }}
+                                >
+                                    {tran(
+                                        'Click here to set default data on "Desktop"',
+                                    )}{' '}
+                                </strong>
+                            </div>
+                        </button>
+                    </div>
+                    <strong className='app-selectable-text'
+                        style={{
+                            marginLeft: '30px',
+                        }}
                     >
-                        {tran('Set Default Data')} ({defaultPath})
-                    </button>
+                        "{defaultPath}"
+                    </strong>
                 </div>
             )}
         </div>

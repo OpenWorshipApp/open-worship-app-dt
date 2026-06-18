@@ -1,4 +1,5 @@
 import { handleError } from '../../helper/errorHelpers';
+import { appError } from '../../helper/loggerHelpers';
 import CacheManager from '../../others/CacheManager';
 import { appHomeStorage } from '../../server/appHomeStorage';
 import {
@@ -77,8 +78,9 @@ class AppLocalStorage {
     }
 
     async setSelectedParentDirectory(dirPath: string) {
-        if (!(await fsCheckDirExist(dirPath))) {
-            throw new Error(`Directory does not exist: ${dirPath}`);
+        if (dirPath && !(await fsCheckDirExist(dirPath))) {
+            appError(`Directory does not exist: ${dirPath}`);
+            return;
         }
         cache.setSync(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);
         appHomeStorage.setItem(SELECTED_PARENT_DIR_SETTING_NAME, dirPath);

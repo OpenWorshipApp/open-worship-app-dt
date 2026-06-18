@@ -10,7 +10,7 @@ function toVersionNumber(version: string) {
 const appInfo = {
     name: packageInfo.name,
     title: packageInfo.build.productName,
-    titleFull: `${packageInfo.build.productName} (Desktop version)`,
+    titleFull: `${packageInfo.build.productName} (desktop version)`,
     description: packageInfo.description,
     author: packageInfo.author,
     homepage: packageInfo.homepage.replace(/\/+$/, ''),

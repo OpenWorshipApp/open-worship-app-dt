@@ -6,8 +6,10 @@ import { useAppEffect } from '../helper/debuggerHelpers';
 
 export default function PathEditorComp({
     dirSource,
+    placeholder = '',
 }: Readonly<{
     dirSource: DirSource;
+    placeholder?: string;
 }>) {
     const [dirPath, setDirPath] = useState(dirSource.dirPath);
 
@@ -59,6 +61,7 @@ export default function PathEditorComp({
                 type="text"
                 value={dirPath}
                 onChange={handleDirPathChange}
+                placeholder={`e.g. ${placeholder}`}
             />
             <button
                 className="btn btn-secondary"
