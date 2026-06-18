@@ -169,7 +169,7 @@ const titleSettingNames = {
         dirSourceSettingNames.BIBLE_READ,
         defaultDataDirNames.BIBLE_READ,
     ],
-    Notes: [dirSourceSettingNames.NOTES, defaultDataDirNames.NOTES],
+    Notes: [dirSourceSettingNames.BIBLE_NOTES, defaultDataDirNames.BIBLE_NOTES],
 };
 
 function RenderChildDirectoriesComp({

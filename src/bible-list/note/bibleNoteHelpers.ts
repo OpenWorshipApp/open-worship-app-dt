@@ -307,7 +307,7 @@ async function getNoteAndNoteItem() {
         throw new Error('Note file not specified');
     }
     const dirPath = DirSource.getDirPathBySettingName(
-        dirSourceSettingNames.NOTES,
+        dirSourceSettingNames.BIBLE_NOTES,
     );
     if (dirPath === null) {
         throw new Error('Note directory not set');

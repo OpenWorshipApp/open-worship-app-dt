@@ -9,7 +9,7 @@ export const dirSourceSettingNames = {
     BACKGROUND_AUDIO: `${SELECT_DIR}-audio-bg`,
     BIBLE_PRESENT: `${SELECT_DIR}-bible-presenter`,
     BIBLE_READ: `${SELECT_DIR}-bible-read`,
-    NOTES: `${SELECT_DIR}-notes`,
+    BIBLE_NOTES: `${SELECT_DIR}-bible-notes`,
 };
 export const defaultDataDirNames = {
     APP_DOCUMENT: 'documents',
@@ -21,7 +21,7 @@ export const defaultDataDirNames = {
     BACKGROUND_AUDIO: 'audios',
     BIBLE_PRESENT: 'bibles',
     BIBLE_READ: 'bibles-read',
-    NOTES: 'notes',
+    BIBLE_NOTES: 'bible-notes',
 };
 
 export const fontSizeSettingNames = {

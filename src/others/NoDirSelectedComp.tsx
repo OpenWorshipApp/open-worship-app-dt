@@ -54,7 +54,7 @@ export default function NoDirSelectedComp({
                         color: 'purple',
                     }}
                 >
-                    <i className="bi bi-info-circle" />
+                    <i className="bi bi-info-circle me-1" />
                     <span>{tran('No directory selected')}</span>
                 </div>
                 <div className="w-100 d-flex flex-column align-items-center justify-content-center">

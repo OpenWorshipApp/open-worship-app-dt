@@ -11,7 +11,7 @@ const LazyBibleListComp = lazy(() => {
     return import('./BibleListComp');
 });
 const LazyNoteComp = lazy(() => {
-    return import('./note/NoteListComp');
+    return import('./note/BibleNoteListComp');
 });
 
 const hFlexSizeDefault: FlexSizeType = {

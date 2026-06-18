@@ -263,7 +263,7 @@ export default class Note
     }
 
     static async getDefault() {
-        const dir = getSetting(dirSourceSettingNames.NOTES) ?? '';
+        const dir = getSetting(dirSourceSettingNames.BIBLE_NOTES) ?? '';
         if (!dir) {
             return null;
         }

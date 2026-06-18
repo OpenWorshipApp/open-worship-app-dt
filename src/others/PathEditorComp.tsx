@@ -61,7 +61,7 @@ export default function PathEditorComp({
                 type="text"
                 value={dirPath}
                 onChange={handleDirPathChange}
-                placeholder={`e.g. ${placeholder}`}
+                placeholder={placeholder ? `e.g. ${placeholder}` : ''}
             />
             <button
                 className="btn btn-secondary"

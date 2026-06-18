@@ -17,7 +17,7 @@ export async function moveNoteItemTo(
     note: Note,
     noteItem?: NoteItem,
 ) {
-    const dirSource = await DirSource.getInstance(defaultDataDirNames.NOTES);
+    const dirSource = await DirSource.getInstance(defaultDataDirNames.BIBLE_NOTES);
     const filePaths = await dirSource.getFilePaths('note');
     const targetNames = (filePaths ?? [])
         .map((filePath) => {

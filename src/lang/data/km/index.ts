@@ -142,6 +142,7 @@ const dictionary = {
     'will create if not exist': 'នឹងបង្កើតឡើងប្រសិនបើមិនមាន',
     'No directory selected': 'មិនមានថតដែលបានជ្រើស',
     Notes: 'កំណត់ត្រា',
+    'Bible Notes': 'កំណត់ត្រាព្រះគម្ពីរ',
     'Not Supported Item Type': 'ប្រភេទធាតុដែលមិនគាំទ្រ',
     'Fail to read file data': 'មិនអាចទទួលបានទិន្នន័យពីឯកសារ',
     'No book options available': 'មិនមានជម្រើសសៀវភៅទេ',

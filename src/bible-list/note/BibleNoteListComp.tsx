@@ -11,8 +11,8 @@ import Note from './Note';
 import NoteFileComp from './NoteFileComp';
 import { sortNoteFilePaths } from './noteHelpers';
 
-export default function NoteListComp() {
-    const dirSource = useGenDirSourceReload(dirSourceSettingNames.NOTES);
+export default function BibleNoteListComp() {
+    const dirSource = useGenDirSourceReload(dirSourceSettingNames.BIBLE_NOTES);
     const handleBodyRendering = useCallback((filePaths: string[]) => {
         return filePaths.map((filePath, i) => {
             return (
@@ -29,12 +29,12 @@ export default function NoteListComp() {
         <FileListHandlerComp
             className="note-list"
             mimetypeName="note"
-            defaultFolderName={defaultDataDirNames.NOTES}
+            defaultFolderName={defaultDataDirNames.BIBLE_NOTES}
             dirSource={dirSource}
             onNewFile={async (dirPath: string, name: string) => {
                 return !(await Note.create(dirPath, name));
             }}
-            header={<span>{tran('Notes')}</span>}
+            header={<span>{tran('Bible Notes')}</span>}
             bodyHandler={handleBodyRendering}
             userClassName="p-0"
             sortFilePaths={sortNoteFilePaths}
