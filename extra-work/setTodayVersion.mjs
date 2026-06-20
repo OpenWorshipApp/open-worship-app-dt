@@ -2,9 +2,10 @@
 /* eslint-disable */
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 
 let filePath = new URL(import.meta.url).pathname;
-if (filePath.startsWith('/')) {
+if (os.platform() === 'win32' && filePath.startsWith('/')) {
     filePath = filePath.slice(1);
 }
 const cwd = path.dirname(filePath);
