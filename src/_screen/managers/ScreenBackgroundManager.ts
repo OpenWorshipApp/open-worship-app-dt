@@ -7,6 +7,7 @@ import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { genHtmlBackground } from '../ScreenBackgroundComp';
 import { getBackgroundSrcListOnScreenSetting } from '../screenHelpers';
 import { handleError } from '../../helper/errorHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     dirSourceSettingNames,
     screenManagerSettingNames,
@@ -330,6 +331,13 @@ class ScreenBackgroundManager
         const screenIds = await this.chooseScreenIds(event, isForceChoosing);
         for (const screenId of screenIds) {
             const screenBackgroundManager = this.getInstance(screenId);
+            if (screenBackgroundManager === null) {
+                showSimpleToast(
+                    'Failed to apply to screen. Please make sure the screen is open.',
+                    'error',
+                );
+                continue;
+            }
             screenBackgroundManager.applyBackgroundSrc(backgroundType, data);
         }
     }
@@ -495,6 +503,13 @@ class ScreenBackgroundManager
     static receiveSyncScreen(message: ScreenMessageType) {
         const { screenId } = message;
         const screenBackgroundManager = this.getInstance(screenId);
+        if (screenBackgroundManager === null) {
+            showSimpleToast(
+                'Failed to apply to screen. Please make sure the screen is open.',
+                'error',
+            );
+            return;
+        }
         screenBackgroundManager.receiveSyncScreen(message);
     }
 

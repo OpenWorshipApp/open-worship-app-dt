@@ -7,11 +7,20 @@ const { appProviderMock } = vi.hoisted(() => ({
     appProviderMock: {
         presenterHomePage: '/presenter.html',
         currentHomePage: '/editor.html',
+        systemUtils: { isDev: false },
     },
 }));
 
-vi.mock('../server/appProvider', () => ({
-    default: appProviderMock,
+vi.mock('../server/appProvider', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../server/appProvider')>();
+    return { default: Object.assign(actual.default, appProviderMock) };
+});
+
+vi.mock('../helper/settingHelpers', () => ({
+    getSetting: (key: string) => globalThis.localStorage.getItem(key),
+    setSetting: (key: string, value: string | null) =>
+        globalThis.localStorage.setItem(key, value ?? ''),
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -29,6 +38,9 @@ function stubNavigation(initialHref: string, storedPath: string | null) {
         getItem: vi.fn((key: string) => storage.get(key) ?? null),
         setItem: vi.fn((key: string, value: string) => {
             storage.set(key, value);
+        }),
+        removeItem: vi.fn((key: string) => {
+            storage.delete(key);
         }),
     };
     const locationMock = { href: initialHref };

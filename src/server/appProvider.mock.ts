@@ -66,6 +66,9 @@ function base64ToBytes(base64: string) {
     return Uint8Array.from(binary, (char) => char.codePointAt(0) ?? 0);
 }
 
+const mockOpenFiles = new Map<number, Uint8Array>();
+let mockNextFd = 3;
+
 function createHexDigest(input: Uint8Array) {
     let hash = 2166136261;
     for (const byte of input) {
@@ -991,6 +994,35 @@ const appProviderMock = {
             }
             return bytes;
         }) as any,
+        openSync: ((filePath: string) => {
+            const fd = mockNextFd++;
+            mockOpenFiles.set(fd, virtualFs.readFile(filePath));
+            return fd;
+        }) as any,
+        readSync: ((
+            fd: number,
+            buffer: Uint8Array,
+            offset: number,
+            length: number,
+            position: number | null,
+        ) => {
+            const bytes = mockOpenFiles.get(fd);
+            if (bytes === undefined) {
+                return 0;
+            }
+            const start = position ?? 0;
+            const slice = bytes.subarray(start, start + length);
+            buffer.set(slice, offset);
+            return slice.length;
+        }) as any,
+        fstatSync: ((fd: number) => {
+            const bytes = mockOpenFiles.get(fd);
+            return { size: bytes?.length ?? 0 } as any;
+        }) as any,
+        closeSync: ((fd: number) => {
+            mockOpenFiles.delete(fd);
+        }) as any,
+        gunzipSync: ((buffer: Uint8Array) => buffer) as any,
         writeFileSync: ((
             filePath: string,
             data: string | Uint8Array | ArrayBuffer,

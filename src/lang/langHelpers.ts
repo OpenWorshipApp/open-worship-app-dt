@@ -751,7 +751,7 @@ export function getLanguageTitle(
         return 'Unknown';
     }
     langCode ??= getLangCode(locale as LocaleType);
-    let languageName = '';
+    let languageName: string;
     if (langCode === null || !(langCode in languageNameMap)) {
         languageName = 'Unknown';
     } else {

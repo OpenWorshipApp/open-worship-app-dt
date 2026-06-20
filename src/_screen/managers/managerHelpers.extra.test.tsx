@@ -21,6 +21,7 @@ const appProviderMock = {
     isPagePresenter: true,
     getIsMouseOverApp: vi.fn(() => true),
     getIsWindowFocused: vi.fn(() => true),
+    systemUtils: { isDev: false },
 };
 
 const instanceSettings: any[] = [];

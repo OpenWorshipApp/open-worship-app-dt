@@ -28,6 +28,7 @@ vi.mock('../popup-widget/popupWidgetHelpers', () => ({
 
 vi.mock('../lang/langHelpers', () => ({
     getLanguageTitle: mocks.getLanguageTitleMock,
+    tran: (value: string) => value,
 }));
 
 vi.mock('../context-menu/AppContextMenuComp', () => ({

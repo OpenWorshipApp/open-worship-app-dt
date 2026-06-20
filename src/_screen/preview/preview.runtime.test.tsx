@@ -145,6 +145,24 @@ vi.mock('../../others/AppRangeComp', () => ({
         );
     },
     handleCtrlWheel: handleCtrlWheelMock,
+    useZoomingRegistering: (
+        containerRef: any,
+        { value, setValue, defaultSize }: any,
+    ) => {
+        useEffect(() => {
+            const container = containerRef.current;
+            if (container === null) {
+                return;
+            }
+            const handleWheel = (event: WheelEvent) => {
+                handleCtrlWheelMock({ event, value, setValue, defaultSize });
+            };
+            container.addEventListener('wheel', handleWheel);
+            return () => {
+                container.removeEventListener('wheel', handleWheel);
+            };
+        });
+    },
 }));
 
 vi.mock('../../helper/domHelpers', () => ({

@@ -115,6 +115,7 @@ vi.mock('../server/fileHelpers', () => ({
     mimetypePdf: { extensions: ['.pdf'] },
     mimetypePptx: { extensions: ['.pptx'] },
     pathBasename: (filePath: string) => filePath.split('/').at(-1) ?? filePath,
+    pathJoin: (...parts: string[]) => parts.join('/'),
 }));
 
 vi.mock('../app-document-presenter/SlideEditHandlerComp', () => ({

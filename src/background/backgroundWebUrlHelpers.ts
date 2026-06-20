@@ -175,7 +175,7 @@ export async function promptBackgroundWebUrlSource(existingSrcList: string[]) {
     if (url === null) {
         return null;
     }
-    let normalizedUrl = '';
+    let normalizedUrl: string;
     try {
         normalizedUrl = normalizeBackgroundWebUrl(url);
     } catch (_error) {

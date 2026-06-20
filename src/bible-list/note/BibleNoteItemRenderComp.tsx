@@ -27,8 +27,7 @@ export function handleOpening(note: Note, noteItem: NoteItem) {
     const fileFullName = note.fileSource.fullName;
     const fileFullNameEncoded = encodeURIComponent(fileFullName);
     const pathName =
-        `${appProvider.bibleNoteHomePage}?` +
-        `file=${fileFullNameEncoded}`;
+        `${appProvider.bibleNoteHomePage}?` + `file=${fileFullNameEncoded}`;
     const noteId = noteItem.id;
     const url = `${pathName}&id=${noteId}`;
     return openPopupWindow(

@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
 
 import InputHandlerComp from './InputHandlerComp';
-import RenderExtraButtonsRightComp, { AdvanceLookupHandlerComp } from './RenderExtraButtonsRightComp';
+import RenderExtraButtonsRightComp, {
+    AdvanceLookupHandlerComp,
+} from './RenderExtraButtonsRightComp';
 import BibleLookupInputHistoryComp from './BibleLookupInputHistoryComp';
 import appProvider from '../server/appProvider';
 import { ModalCloseButton } from '../app-modal/ModalComp';

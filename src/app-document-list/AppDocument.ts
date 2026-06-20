@@ -281,12 +281,9 @@ export default class AppDocument
         }
         this.notifyNewSlidesAdded([slide.id]);
         const slides = await this.getSlides();
-        let toIndex = 0;
-        if (isForward) {
-            toIndex = (index + 1) % slides.length;
-        } else {
-            toIndex = (index - 1 + slides.length) % slides.length;
-        }
+        const toIndex = isForward
+            ? (index + 1) % slides.length
+            : (index - 1 + slides.length) % slides.length;
         return this.moveSlideToIndex(slide, toIndex);
     }
 

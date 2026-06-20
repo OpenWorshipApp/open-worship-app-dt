@@ -129,7 +129,7 @@ describe('directoryHelpers', () => {
 
     test('builds the default data directory path', () => {
         expect(getDefaultDataDir()).toBe('/desktop/open-worship-data');
-        expect(appProviderMock.pathUtils.join).toHaveBeenCalledWith(
+        expect(pathJoinMock).toHaveBeenCalledWith(
             '/desktop',
             'open-worship-data',
         );

@@ -395,7 +395,9 @@ async function _fsCheckExist(
             return false;
         } else {
             handleError(error);
-            throw new Error('Error during checking file exist');
+            throw new Error('Error during checking file exist', {
+                cause: error,
+            });
         }
     }
 }

@@ -30,7 +30,13 @@ export class BibleCrossRefBundleReader {
         this.gzip = (footer.readUInt32LE(8) & FLAG_GZIP) === FLAG_GZIP;
 
         const indexBuf = Buffer.alloc(indexLength);
-        appProvider.fileUtils.readSync(this.fd, indexBuf, 0, indexLength, indexOffset);
+        appProvider.fileUtils.readSync(
+            this.fd,
+            indexBuf,
+            0,
+            indexLength,
+            indexOffset,
+        );
         // Map gives fast lookups and a low-overhead in-memory index (~1 MB).
         this.index = new Map(
             Object.entries(JSON.parse(indexBuf.toString('utf8'))),

@@ -125,7 +125,7 @@ export async function renderMarkdownMusic(
         if (options?.theme) {
             (markdown as any).setTheme(options.theme);
         }
-        let html = '';
+        let html: string;
         try {
             const renderedHtml = markdown.render(text);
             html = wrapHTML({
@@ -166,7 +166,7 @@ export async function renderMarkdown(
         if (options?.theme) {
             (markdown as any).setTheme(options.theme);
         }
-        let html = '';
+        let html: string;
         try {
             html = markdown.render(text);
         } catch (error) {

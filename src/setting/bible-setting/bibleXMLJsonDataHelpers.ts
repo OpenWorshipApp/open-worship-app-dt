@@ -172,7 +172,7 @@ function guessValue(
     keys: string[],
     defaultValue: string | null = null,
 ) {
-    let xmlElement: Element | null = null;
+    let xmlElement: Element | null;
     if (typeof xmlElementOrText === 'string') {
         xmlElement = xmlTextToBibleElement(xmlElementOrText, {
             keys,
@@ -198,7 +198,7 @@ function guessElement(
     optimizeOptions: OptimizeXMLTextOptions = {},
 ) {
     optimizeOptions.childTags = (optimizeOptions.childTags ?? []).concat(tags);
-    let xmlElement: Element | Document | null = null;
+    let xmlElement: Element | Document | null;
     if (typeof xmlElementOrText === 'string') {
         xmlElement = xmlTextToBibleElement(xmlElementOrText, optimizeOptions);
     } else {

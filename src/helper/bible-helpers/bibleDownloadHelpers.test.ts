@@ -76,6 +76,7 @@ vi.mock('../../server/fileHelpers', () => ({
     fsListDirectories: mocks.fsListDirectoriesMock,
     getFileName: mocks.getFileNameMock,
     pathBasename: mocks.pathBasenameMock,
+    pathJoin: mocks.pathJoinMock,
 }));
 
 vi.mock('./bibleInfoHelpers', () => ({

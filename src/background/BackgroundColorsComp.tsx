@@ -6,6 +6,7 @@ import {
     type AppColorType,
 } from '../others/color/colorHelpers';
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
+import { showSimpleToast } from '../toast/toastHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
@@ -22,6 +23,13 @@ function RenderColorPickerPerScreenComp({
         async (newColor: AppColorType | null) => {
             const screenBackgroundManager =
                 ScreenBackgroundManager.getInstance(screenId);
+            if (screenBackgroundManager === null) {
+                showSimpleToast(
+                    'Failed to apply to screen. Please make sure the screen is open.',
+                    'error',
+                );
+                return;
+            }
             screenBackgroundManager.applyBackgroundSrc('color', {
                 src: newColor,
             });

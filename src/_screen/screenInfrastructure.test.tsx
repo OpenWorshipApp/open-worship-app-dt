@@ -207,10 +207,20 @@ vi.mock('./managers/screenEventHelpers', () => ({
     useScreenForegroundManagerEvents: useScreenForegroundManagerEventsSpy,
 }));
 
-function createTimeContainer() {
+// jsdom 23's selector engine hangs on child-combinator queries against a
+// detached node, so the CountdownController container (which queries
+// `.foreground-countdown-container > div`) must be attached to the document.
+// Only that container is attached to avoid duplicate `#hour`/`#minute`/`#second`
+// ids, which would otherwise break scoped id lookups in the same engine.
+function createTimeContainer(attach = false) {
     const container = document.createElement('div');
+    container.className = 'foreground-countdown-container';
     container.innerHTML =
-        '<div id="hour"></div><div id="minute"></div><div id="second"></div>';
+        '<div><div id="hour"></div><div id="minute"></div>' +
+        '<div id="second"></div></div>';
+    if (attach) {
+        document.body.appendChild(container);
+    }
     return container;
 }
 
@@ -272,7 +282,7 @@ describe('screen infrastructure', () => {
         expect(timing.secondStr).toBe('12');
 
         const countdown = new CountdownController(
-            createTimeContainer(),
+            createTimeContainer(true),
             new Date(Date.now() + 3_661_000),
         );
         expect(countdown.hourStr).toBe('01');

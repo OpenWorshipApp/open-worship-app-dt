@@ -191,9 +191,7 @@ describe('appXMLParser.parseFromString', () => {
 
     describe('attributes', () => {
         test('parses double- and single-quoted attribute values', () => {
-            const xmlDoc = parse(
-                `<bible key="KJV" locale='en-US'></bible>`,
-            );
+            const xmlDoc = parse(`<bible key="KJV" locale='en-US'></bible>`);
             const bible = xmlDoc.documentElement;
 
             expect(bible?.getAttribute('key')).toBe('KJV');
@@ -203,9 +201,7 @@ describe('appXMLParser.parseFromString', () => {
         test('parses unquoted attribute values', () => {
             const xmlDoc = parse('<verse number=1></verse>');
 
-            expect(
-                xmlDoc.documentElement?.getAttribute('number'),
-            ).toBe('1');
+            expect(xmlDoc.documentElement?.getAttribute('number')).toBe('1');
         });
 
         test('parses an unquoted attribute on a self-closing element', () => {
@@ -232,9 +228,7 @@ describe('appXMLParser.parseFromString', () => {
         test('keeps ">" inside a quoted attribute value', () => {
             const xmlDoc = parse('<bible title="A > B"></bible>');
 
-            expect(
-                xmlDoc.documentElement?.getAttribute('title'),
-            ).toBe('A > B');
+            expect(xmlDoc.documentElement?.getAttribute('title')).toBe('A > B');
         });
 
         test('exposes attributes with name, value and nodeValue', () => {
@@ -257,9 +251,7 @@ describe('appXMLParser.parseFromString', () => {
         test('returns null from getAttribute for a missing attribute', () => {
             const xmlDoc = parse('<bible key="KJV"></bible>');
 
-            expect(
-                xmlDoc.documentElement?.getAttribute('missing'),
-            ).toBeNull();
+            expect(xmlDoc.documentElement?.getAttribute('missing')).toBeNull();
         });
 
         test('keeps the last value for a duplicated attribute', () => {
@@ -362,7 +354,9 @@ describe('appXMLParser.parseFromString', () => {
 
     describe('CDATA sections', () => {
         test('parses CDATA content as a raw CDATA node', () => {
-            const json = JSON.stringify([{ content: 'Heading <title> & body' }]);
+            const json = JSON.stringify([
+                { content: 'Heading <title> & body' },
+            ]);
             const xmlDoc = parse(`<item><![CDATA[${json}]]></item>`);
             const cdataNode = xmlDoc.documentElement?.childNodes[0];
 
@@ -416,9 +410,7 @@ describe('appXMLParser.parseFromString', () => {
         });
 
         test('drops prolog and epilog whitespace at the document level', () => {
-            const xmlDoc = parse(
-                '<?xml version="1.0"?>\n  <bible/>\n  ',
-            );
+            const xmlDoc = parse('<?xml version="1.0"?>\n  <bible/>\n  ');
             const childTypes = Array.from(
                 xmlDoc.childNodes,
                 (node) => node.nodeType,

@@ -1,6 +1,7 @@
 import type { CSSProperties, MouseEvent } from 'react';
 
 import { setSetting } from '../../helper/settingHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     genHtmlForegroundCountdown,
     genHtmlForegroundMarquee,
@@ -240,7 +241,15 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         };
         const screenIds = await this.chooseScreenIds(event, isForceChoosing);
         for (const screenId of screenIds) {
-            callbackSave(this.getInstance(screenId));
+            const screenForegroundManager = this.getInstance(screenId);
+            if (screenForegroundManager === null) {
+                showSimpleToast(
+                    'Failed to apply to screen. Please make sure the screen is open.',
+                    'error',
+                );
+                continue;
+            }
+            callbackSave(screenForegroundManager);
         }
     }
 
@@ -667,6 +676,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     static receiveSyncScreen(message: ScreenMessageType) {
         const { screenId } = message;
         const screenForegroundManager = this.getInstance(screenId);
+        if (screenForegroundManager === null) {
+            showSimpleToast(
+                'Failed to apply to screen. Please make sure the screen is open.',
+                'error',
+            );
+            return;
+        }
         screenForegroundManager.receiveSyncScreen(message);
     }
 

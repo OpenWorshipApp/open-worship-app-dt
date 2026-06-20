@@ -177,7 +177,7 @@ export default class AttachBackgroundManager {
         id?: string | number,
     ): Promise<DroppedDataType | null> {
         return await unlocking(this.toLockingKey(filePath), async () => {
-            let data = null;
+            let data: AttachBackgroundType | null;
             if (await cached.has(filePath)) {
                 data = await cached.get(filePath);
             } else {

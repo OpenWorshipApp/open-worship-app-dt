@@ -4,6 +4,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     getWindowDim: vi.fn(() => ({ width: 1440, height: 900 })),
+    getSetting: vi.fn(),
     setSetting: vi.fn(),
     getAllShowingScreenIds: vi.fn(() => [1]),
     hideScreen: vi.fn(),
@@ -40,6 +41,7 @@ vi.mock('../../helper/helpers', () => ({
 }));
 
 vi.mock('../../helper/settingHelpers', () => ({
+    getSetting: mocks.getSetting,
     setSetting: mocks.setSetting,
 }));
 

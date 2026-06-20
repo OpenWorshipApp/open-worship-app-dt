@@ -454,7 +454,7 @@ export default class BibleFindController {
         if (databaseFilePath === null) {
             return null;
         }
-        let searchingDatabase: SQLiteDatabaseType | null = null;
+        let searchingDatabase: SQLiteDatabaseType | null;
         if (await this.checkSearchingDatabaseValid(databaseFilePath)) {
             const databaseUtils = appProvider.databaseUtils;
             searchingDatabase =

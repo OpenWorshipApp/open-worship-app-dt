@@ -7,6 +7,7 @@ export default defineConfig({
     test: {
         environment: 'node',
         testTimeout: 10000,
+        setupFiles: ['./src/test-setup/localStoragePolyfill.ts'],
         include: [
             'src/**/*.test.ts',
             'src/**/*.test.tsx',

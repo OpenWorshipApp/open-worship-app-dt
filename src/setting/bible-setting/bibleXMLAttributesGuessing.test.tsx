@@ -10,6 +10,7 @@ const { getLangCodeMock } = vi.hoisted(() => ({
 
 vi.mock('../../lang/langHelpers', () => ({
     getLangCode: getLangCodeMock,
+    getLangDataAsync: vi.fn(async () => null),
     tran: (text: string) => text,
 }));
 

@@ -114,7 +114,7 @@ export default class BibleDataReader {
             if (cachedData !== null) {
                 return cachedData;
             }
-            let bibleData: any = null;
+            let bibleData: any;
             const isBibleXML = await checkIsBibleXML(bibleKey);
             if (isBibleXML) {
                 bibleData = await readBibleXMLData(bibleKey, key);

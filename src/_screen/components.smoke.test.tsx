@@ -104,6 +104,7 @@ vi.mock('../others/AppRangeComp', () => ({
         <div data-range-title={title}>{value}</div>
     ),
     handleCtrlWheel: handleCtrlWheelMock,
+    useZoomingRegistering: () => {},
 }));
 
 vi.mock('../others/themeHelpers', () => ({

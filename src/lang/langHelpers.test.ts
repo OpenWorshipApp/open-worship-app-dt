@@ -28,20 +28,42 @@ const mocks = vi.hoisted(() => {
     };
 });
 
-vi.mock('../server/appProvider', () => ({
-    default: mocks.appProviderMock,
-}));
+vi.mock('../server/appProvider', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../server/appProvider')>();
+    Object.assign(
+        mocks.appProviderMock.systemUtils,
+        actual.default.systemUtils,
+        { isDev: false },
+    );
+    return {
+        default: Object.assign(actual.default, {
+            systemUtils: mocks.appProviderMock.systemUtils,
+        }),
+    };
+});
 
 vi.mock('../server/unlockingHelpers', () => ({
     unlocking: mocks.unlockingMock,
 }));
 
-vi.mock('../others/CacheManager', () => ({
-    globalCacheManager1M: {
-        get: mocks.cacheGetMock,
-        set: mocks.cacheSetMock,
-    },
+vi.mock('../helper/settingHelpers', () => ({
+    getSetting: (key: string) => localStorage.getItem(key),
+    setSetting: (key: string, value: string | null) =>
+        localStorage.setItem(key, value ?? ''),
 }));
+
+vi.mock('../others/CacheManager', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../others/CacheManager')>();
+    return {
+        ...actual,
+        globalCacheManager1M: {
+            get: mocks.cacheGetMock,
+            set: mocks.cacheSetMock,
+        },
+    };
+});
 
 vi.mock('../helper/debuggerHelpers', () => ({
     useAppStateAsync: mocks.useAppStateAsyncMock,

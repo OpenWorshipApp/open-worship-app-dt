@@ -25,14 +25,20 @@ const {
             commitHash: '72929ff123',
             isDev: false,
         },
+        pathUtils: {
+            sep: '/',
+            join: (...parts: string[]) => parts.join('/'),
+        },
     },
     getDocxToHtmlsVersionMock: vi.fn(),
     getPptxToHtmlsVersionMock: vi.fn(),
 }));
 
-vi.mock('../server/appProvider', () => ({
-    default: appProviderMock,
-}));
+vi.mock('../server/appProvider', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../server/appProvider')>();
+    return { default: Object.assign(actual.default, appProviderMock) };
+});
 
 vi.mock('../server/docxHelpers', () => ({
     getDocxToHtmlsVersion: getDocxToHtmlsVersionMock,
@@ -88,7 +94,7 @@ describe('AboutComp', () => {
 
         expect(getPptxToHtmlsVersionMock).toHaveBeenCalledTimes(1);
         expect(getDocxToHtmlsVersionMock).toHaveBeenCalledTimes(1);
-        expect(container?.textContent).toContain('Pptx2Html version:2.3.4');
-        expect(container?.textContent).toContain('Docx2Html version:1.2.3');
+        expect(container?.textContent).toContain('Pptx2Html (2.3.4)');
+        expect(container?.textContent).toContain('Docx2Html (1.2.3)');
     });
 });

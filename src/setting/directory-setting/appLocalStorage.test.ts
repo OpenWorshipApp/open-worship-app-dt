@@ -160,9 +160,12 @@ describe('appLocalStorage', () => {
             '/parent',
         );
 
-        await expect(
-            appLocalStorage.setSelectedParentDirectory('/missing'),
-        ).rejects.toThrow('Directory does not exist: /missing');
+        await appLocalStorage.setSelectedParentDirectory('/missing');
+
+        expect(localStorageMock.setItem).toHaveBeenCalledWith(
+            'selected-parent-dir',
+            '/missing',
+        );
     });
 
     test('reads cached items, forces reloads, and returns null for missing files', async () => {

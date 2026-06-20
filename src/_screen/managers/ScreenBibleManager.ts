@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import type BibleItem from '../../bible-list/BibleItem';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
+import { showSimpleToast } from '../../toast/toastHelpers';
 import {
     bringDomToCenterView,
     bringDomToNearestView,
@@ -395,6 +396,13 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         }
         for (const screenId of screenIds) {
             const screenBibleManager = this.getInstance(screenId);
+            if (screenBibleManager === null) {
+                showSimpleToast(
+                    'Failed to apply to screen. Please make sure the screen is open.',
+                    'error',
+                );
+                continue;
+            }
             await screenBibleManager.applyNewBibleItemJson(
                 bibleItemJson,
                 filePath,
@@ -491,6 +499,13 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     static receiveSyncScreen(message: ScreenMessageType) {
         const { screenId } = message;
         const screenBibleManager = this.getInstance(screenId);
+        if (screenBibleManager === null) {
+            showSimpleToast(
+                'Failed to apply to screen. Please make sure the screen is open.',
+                'error',
+            );
+            return;
+        }
         screenBibleManager.receiveSyncScreen(message);
     }
 

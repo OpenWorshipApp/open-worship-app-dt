@@ -72,6 +72,17 @@ vi.mock('./appProvider', () => ({
     default: appProviderMock,
 }));
 
+vi.mock('../helper/settingHelpers', async (importOriginal) => {
+    const actual =
+        await importOriginal<typeof import('../helper/settingHelpers')>();
+    return {
+        ...actual,
+        getSetting: (key: string) => globalThis.localStorage.getItem(key),
+        setSetting: (key: string, value: string | null) =>
+            globalThis.localStorage.setItem(key, value ?? ''),
+    };
+});
+
 vi.mock('../toast/toastHelpers', () => ({
     showSimpleToast: showSimpleToastMock,
 }));
@@ -90,8 +101,17 @@ vi.mock('../router/routeHelpers', () => ({
 
 vi.mock('./fileHelpers', () => ({
     fsCheckFileExist: fsCheckFileExistMock,
+    fsCheckDirExist: vi.fn(() => Promise.resolve(false)),
+    fsDeleteFile: vi.fn(() => Promise.resolve()),
+    fsExistSync: vi.fn(() => false),
+    fsListFiles: vi.fn(() => []),
+    fsMkDirSync: vi.fn(),
+    fsReadSync: vi.fn(() => null),
+    fsUnlinkSync: vi.fn(),
+    fsWriteFileSync: vi.fn(),
     getDotExtensionFromBase64Data: getDotExtensionFromBase64DataMock,
     getDownloadPath: getDownloadPathMock,
+    getUserWritablePath: vi.fn(() => '/user-writable'),
     isSupportedMimetype: isSupportedMimetypeMock,
     pathJoin: pathJoinMock,
     pathResolve: pathResolveMock,

@@ -77,7 +77,7 @@ export default function BibleXMLDataPreviewComp({
         `bible-setting-${bibleKey}-xml-data-editing-type`,
         'info',
     );
-    let element: any = null;
+    let element: any;
     if (editingType === 'info') {
         element = <BibleXMLInfoEditorComp bibleKey={bibleKey} />;
     } else if (editingType === 'book-chapter') {

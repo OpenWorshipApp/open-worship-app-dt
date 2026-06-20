@@ -52,7 +52,7 @@ export default function SettingGeneralLanguageComp() {
         return getAllLangsAsync();
     });
     const [locale, setLocale] = useState(getCurrentLocale());
-    let element: ReactNode = null;
+    let element: ReactNode;
     if (allLangs === undefined) {
         element = <LoadingComp />;
     } else if (allLangs === null || allLangs.length === 0) {

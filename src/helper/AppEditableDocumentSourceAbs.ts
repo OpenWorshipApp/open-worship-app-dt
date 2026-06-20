@@ -121,12 +121,9 @@ export default abstract class AppEditableDocumentSourceAbs<
     }
 
     async getJsonData(isOriginal = false): Promise<T | null> {
-        let jsonText = null;
-        if (isOriginal) {
-            jsonText = await this.editingHistoryManager.getOriginalData();
-        } else {
-            jsonText = await this.editingHistoryManager.getCurrentHistory();
-        }
+        const jsonText = isOriginal
+            ? await this.editingHistoryManager.getOriginalData()
+            : await this.editingHistoryManager.getCurrentHistory();
         if (jsonText === null) {
             return null;
         }

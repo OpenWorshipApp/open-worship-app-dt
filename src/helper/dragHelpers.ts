@@ -88,7 +88,7 @@ function deserializeDragData({
     type,
     data,
 }: DragDataType<any>): DroppedDataType | null {
-    let item: any = null;
+    let item: any;
     if (type === DragTypeEnum.SLIDE) {
         item = Slide.dragDeserialize(data);
     } else if (type === DragTypeEnum.BIBLE_ITEM) {
