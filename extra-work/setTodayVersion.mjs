@@ -8,7 +8,7 @@ if (filePath.startsWith('/')) {
     filePath = filePath.slice(1);
 }
 const cwd = path.dirname(filePath);
-console.log('Current working dir:', cmd);
+console.log('Current working dir:', cwd);
 const packageJsonPath = path.join(cwd, '..', 'package.json');
 let packageJsonStr = fs.readFileSync(packageJsonPath, 'utf8');
 
