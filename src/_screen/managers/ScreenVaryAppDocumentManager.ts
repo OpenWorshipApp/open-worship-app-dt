@@ -35,6 +35,7 @@ import type { VarySlideScreenDataType } from '../screenAppDocumentTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import DocxAppDocument from '../../app-document-list/DocxAppDocument';
+import { showSimpleToast } from '../../toast/toastHelpers';
 
 function queryAllDeep(root: ParentNode, selector: string): Element[] {
     const results = Array.from(root.querySelectorAll(selector));
@@ -188,6 +189,13 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         const screenIds = await this.chooseScreenIds(event, isForceChoosing);
         for (const screenId of screenIds) {
             const screenVaryAppDocumentManager = this.getInstance(screenId);
+            if (screenVaryAppDocumentManager === null) {
+                showSimpleToast(
+                    'Failed to sync slide. Please make sure the screen is open.',
+                    'error',
+                );
+                continue;
+            }
             screenVaryAppDocumentManager.handleSlideSelecting(
                 filePath,
                 itemJson,
@@ -415,6 +423,13 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
     static receiveSyncScreen(message: ScreenMessageType) {
         const { screenId } = message;
         const screenVaryAppDocumentManager = this.getInstance(screenId);
+        if (screenVaryAppDocumentManager === null) {
+            showSimpleToast(
+                'Failed to sync slide. Please make sure the screen is open.',
+                'error',
+            );
+            return;
+        }
         screenVaryAppDocumentManager.receiveSyncScreen(message);
     }
 

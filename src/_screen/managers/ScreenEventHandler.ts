@@ -117,7 +117,7 @@ export default abstract class ScreenEventHandler<
     ) {
         const instance = cache.get(`${screenId}-${this.name}`) as T;
         if (instance === undefined) {
-            throw new Error('instance is not found.');
+            return null;
         }
         return instance;
     }
