@@ -2,10 +2,13 @@
 /* eslint-disable */
 import fs from 'node:fs';
 import path from 'node:path';
-console.log(new URL(import.meta.url).pathname);
 
-const filePath = new URL(import.meta.url).pathname;
+let filePath = new URL(import.meta.url).pathname;
+if (filePath.startsWith('/')) {
+    filePath = filePath.slice(1);
+}
 const cwd = path.dirname(filePath);
+console.log('Current working dir:', cmd);
 const packageJsonPath = path.join(cwd, '..', 'package.json');
 let packageJsonStr = fs.readFileSync(packageJsonPath, 'utf8');
 
