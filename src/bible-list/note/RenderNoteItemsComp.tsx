@@ -1,5 +1,5 @@
 import type Note from './Note';
-import NoteItemRenderComp from './NoteItemRenderComp';
+import BibleNoteItemRenderComp from './BibleNoteItemRenderComp';
 
 export default function RenderNoteItemsComp({
     note,
@@ -17,7 +17,7 @@ export default function RenderNoteItemsComp({
         >
             {items.map((noteItem, i1) => {
                 return (
-                    <NoteItemRenderComp
+                    <BibleNoteItemRenderComp
                         key={`${noteItem.id}`}
                         index={i1}
                         noteItem={noteItem}

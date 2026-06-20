@@ -1,8 +1,11 @@
+import './AboutComp.scss';
+
 import appProvider from '../server/appProvider';
 import { getDocxToHtmlsVersion } from '../server/docxHelpers';
 import { getPptxToHtmlsVersion } from '../server/pptxHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useThemeSource } from './themeHelpers';
+import { getBibleNoteConstructor } from '../bible-list/note/bibleNoteHelpers';
 
 const { appInfo } = appProvider;
 const GITHUB_URL = appInfo.gitRepository;
@@ -30,17 +33,27 @@ function renderVersion(version: string | null | undefined) {
     return version ?? 'N/A';
 }
 
+async function getBibleNoteVersion() {
+    const AppBibleNote = await getBibleNoteConstructor();
+    return AppBibleNote.VERSION;
+}
+
 // need width: '700px', height: '410px'
 export default function AboutComp() {
     const { theme } = useThemeSource();
     const [docxToHtmlsVersion] = useAppStateAsync(getDocxToHtmlsVersion);
     const [pptxToHtmlsVersion] = useAppStateAsync(getPptxToHtmlsVersion);
+    const [bibleNoteVersion] = useAppStateAsync(
+        getBibleNoteVersion,
+        [],
+        'Unknown',
+    );
     const commitHash = appProvider.systemUtils.commitHash;
     return (
         <div
             id="app"
             data-bs-theme={theme}
-            className="d-flex flex-wrap justify-content-center p-1 app-selectable-text"
+            className="app-about d-flex flex-wrap justify-content-center p-1 app-selectable-text"
         >
             <RenderVerseComp />
             <div className="card w-100 m-1">
@@ -76,14 +89,15 @@ export default function AboutComp() {
                 </div>
                 <div className="card-body p-2">
                     <div>{appInfo.description}</div>
-                    <div className="small mt-2">
-                        <div>
-                            Pptx2Html version:
-                            {renderVersion(pptxToHtmlsVersion)}
+                    <div className="small mt-2 d-flex flex-wrap">
+                        <div className="m-1 module-version">
+                            Pptx2Html ({renderVersion(pptxToHtmlsVersion)})
                         </div>
-                        <div>
-                            Docx2Html version:
-                            {renderVersion(docxToHtmlsVersion)}
+                        <div className="m-1 module-version">
+                            Docx2Html ({renderVersion(docxToHtmlsVersion)})
+                        </div>
+                        <div className="m-1 module-version">
+                            Bible Note ({renderVersion(bibleNoteVersion)})
                         </div>
                     </div>
                     <div className="my-2">

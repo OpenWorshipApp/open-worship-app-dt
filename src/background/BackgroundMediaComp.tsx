@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useRef } from 'react';
 import type { ReactNode, MouseEvent } from 'react';
 
 import FileListHandlerComp from '../others/FileListHandlerComp';
@@ -11,7 +11,7 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import type { OptionalPromise } from '../helper/typeHelpers';
 import type DirSource from '../helper/DirSource';
 import { useStateSettingNumber } from '../helper/settingHelpers';
-import { handleCtrlWheel } from '../others/AppRangeComp';
+import { useZoomingRegistering } from '../others/AppRangeComp';
 import BackgroundMediaItemComp from './BackgroundMediaItemComp';
 import type { RenderChildType } from './backgroundHelpers';
 import { backgroundTypeMapper } from './backgroundHelpers';
@@ -108,54 +108,50 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
     const dirSource = useGenDirSourceReload(props.dirSourceSettingName);
 
     useScreenBackgroundManagerEvents(['update']);
-    const handleWheel = useCallback(
-        (event: any) => {
-            handleCtrlWheel({
-                event,
-                value: thumbnailWidth,
-                setValue: setThumbnailWidth,
-                defaultSize: defaultRangeSize,
-            });
-        },
-        [thumbnailWidth, setThumbnailWidth],
-    );
-    if (dirSource === null) {
-        return null;
-    }
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: thumbnailWidth,
+        setValue: setThumbnailWidth,
+        defaultSize: defaultRangeSize,
+    });
+
     return (
         <div
             className="card w-100 h-100 app-zero-border-radius"
-            onWheel={handleWheel}
+            ref={containerRef}
         >
             <div className="card-body">
-                <FileListHandlerComp
-                    className={`app-background-${backgroundType}`}
-                    mimetypeName={backgroundType}
-                    defaultFolderName={props.defaultFolderName}
-                    dirSource={dirSource}
-                    bodyHandler={handleBodyRendering.bind(
-                        null,
-                        props,
-                        thumbnailWidth,
-                    )}
-                    contextMenuItems={props.contextMenuItems}
-                    genContextMenuItems={props.genContextMenuItems}
-                    fileSelectionOption={
-                        backgroundType === 'color'
-                            ? undefined
-                            : {
-                                  windowTitle: `Select ${backgroundType} files`,
-                                  dirPath: dirSource.dirPath,
-                                  extensions:
-                                      getMimetypeExtensions(backgroundType),
-                              }
-                    }
-                    onItemsAdding={
-                        props.onItemsAdding === undefined
-                            ? undefined
-                            : props.onItemsAdding.bind(null, dirSource)
-                    }
-                />
+                {dirSource === null ? null : (
+                    <FileListHandlerComp
+                        className={`app-background-${backgroundType}`}
+                        mimetypeName={backgroundType}
+                        defaultFolderName={props.defaultFolderName}
+                        dirSource={dirSource}
+                        bodyHandler={handleBodyRendering.bind(
+                            null,
+                            props,
+                            thumbnailWidth,
+                        )}
+                        contextMenuItems={props.contextMenuItems}
+                        genContextMenuItems={props.genContextMenuItems}
+                        fileSelectionOption={
+                            backgroundType === 'color'
+                                ? undefined
+                                : {
+                                      windowTitle: `Select ${backgroundType} files`,
+                                      dirPath: dirSource.dirPath,
+                                      extensions:
+                                          getMimetypeExtensions(backgroundType),
+                                  }
+                        }
+                        onItemsAdding={
+                            props.onItemsAdding === undefined
+                                ? undefined
+                                : props.onItemsAdding.bind(null, dirSource)
+                        }
+                    />
+                )}
                 {props.extraBodyChild ? <>{props.extraBodyChild}</> : null}
             </div>
             {props.shouldHideFooter ? null : (

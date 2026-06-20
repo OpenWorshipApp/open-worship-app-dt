@@ -76,6 +76,7 @@ export default function RenderVerseNumOptionComp({
     return (
         <div
             className={`item alert app-caught-hover-pointer text-center ${selectedNS}`}
+            data-verse-index={ind}
             title={
                 `${verseNum}` === verseNumText ? undefined : `Verse ${verseNum}`
             }

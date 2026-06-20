@@ -1,4 +1,4 @@
-import { useCallback, useState, type WheelEvent } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import BibleViewSettingComp, { defaultRangeSize } from './BibleViewSettingComp';
@@ -10,7 +10,7 @@ import {
 } from '../helper/bibleViewHelpers';
 import FullScreenButtonComp from './FullScreenButtonComp';
 import { fontSizeSettingNames } from '../helper/constants';
-import { handleCtrlWheel } from '../others/AppRangeComp';
+import { useZoomingRegistering } from '../others/AppRangeComp';
 import appProvider from '../server/appProvider';
 import { handleAutoHide } from '../helper/domHelpers';
 import { useAppEffect } from '../helper/debuggerHelpers';
@@ -60,24 +60,21 @@ export default function BiblePreviewerRenderComp() {
         },
         [],
     );
-    const handleWheel = useCallback(
-        (event: WheelEvent) => {
-            handleCtrlWheel({
-                event,
-                value: fontSize,
-                setValue: setFontSize,
-                defaultSize: defaultRangeSize,
-            });
-        },
-        [fontSize, setFontSize],
-    );
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: fontSize,
+        setValue: setFontSize,
+        defaultSize: defaultRangeSize,
+    });
+
     return (
         <div
             className={
                 'card w-100 h-100 app-zero-border-radius' +
                 ` ${isFulledScreen ? 'app-popup-full' : ''}`
             }
-            onWheel={handleWheel}
+            ref={containerRef}
         >
             <div className={'card-body d-flex app-overflow-hidden w-100 h-100'}>
                 <BibleViewFontSizeContext value={fontSize}>

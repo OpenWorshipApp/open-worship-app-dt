@@ -32,7 +32,7 @@ const htmlFiles = {
     about: 'about.html',
     experiment: 'experiment.html',
     lyricEditor: 'lyricEditor.html',
-    noteItemEditor: 'noteItemEditor.html',
+    bibleNote: 'bibleNote.html',
     webEditor: 'webEditor.html',
 } as const;
 
@@ -718,7 +718,7 @@ function getPageProps() {
     const aboutHomePage = `/${htmlFiles.about}`;
     const experimentHomePage = `/${htmlFiles.experiment}`;
     const lyricEditorHomePage = `/${htmlFiles.lyricEditor}`;
-    const noteItemEditorHomePage = `/${htmlFiles.noteItemEditor}`;
+    const bibleNoteHomePage = `/${htmlFiles.bibleNote}`;
     const webEditorHomePage = `/${htmlFiles.webEditor}`;
     return {
         currentHomePage,
@@ -732,7 +732,7 @@ function getPageProps() {
         aboutHomePage,
         experimentHomePage,
         lyricEditorHomePage,
-        noteItemEditorHomePage,
+        bibleNoteHomePage,
         webEditorHomePage,
         isPageAppDocumentEditor: currentHomePage.startsWith(
             appDocumentEditorHomePage,

@@ -34,6 +34,8 @@ const ICON_MAP: Record<'h' | 'v', [QuickMoveType, string, string][]> = {
     ],
 };
 
+type PointerLikeEvent = MouseEvent | TouchEvent;
+
 export type ResizeKindType = 'v' | 'h';
 export interface Props {
     type: ResizeKindType;
@@ -55,6 +57,8 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     sumSize: number = 0;
     mouseMoveListener: (event: MouseEvent) => void;
     mouseUpListener: (event: MouseEvent) => void;
+    touchMoveListener: (event: TouchEvent) => void;
+    touchEndListener: (event: TouchEvent) => void;
     attemptTimeout: (func: () => void, isImmediate?: boolean) => void;
 
     constructor(props: Props) {
@@ -64,6 +68,12 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             this.onMouseMove(event);
         };
         this.mouseUpListener = (event) => {
+            this.onMouseUp(event);
+        };
+        this.touchMoveListener = (event: TouchEvent) => {
+            this.onMouseMove(event);
+        };
+        this.touchEndListener = (event: TouchEvent) => {
             this.onMouseUp(event);
         };
         this.attemptTimeout = genTimeoutAttempt(100);
@@ -103,8 +113,9 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         return this.props.type === 'v';
     }
 
-    getMousePagePos(me: MouseEvent) {
-        return this.isVertical ? me.pageY : me.pageX;
+    getMousePagePos(event: PointerLikeEvent) {
+        const point = 'touches' in event ? event.touches[0] : event;
+        return this.isVertical ? point.pageY : point.pageX;
     }
 
     getOffsetSize(div: HTMLDivElement) {
@@ -148,11 +159,15 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         this.sumGrow = this.previousGrow + this.nextGrow;
     }
 
-    isShouldIgnore(md: MouseEvent) {
-        return (md.target as any).tagName === 'I';
+    isShouldIgnore(event: PointerLikeEvent) {
+        const target = event.target as HTMLElement;
+        return (
+            target.tagName === 'I' ||
+            target.classList.contains('disabling-arrow')
+        );
     }
 
-    onMouseDown(event: MouseEvent) {
+    onMouseDown(event: PointerLikeEvent) {
         if (this.isShouldIgnore(event)) {
             return;
         }
@@ -161,6 +176,11 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         this.lastPos = this.getMousePagePos(event);
         globalThis.addEventListener('mousemove', this.mouseMoveListener);
         globalThis.addEventListener('mouseup', this.mouseUpListener);
+        globalThis.addEventListener('touchmove', this.touchMoveListener, {
+            passive: false,
+        });
+        globalThis.addEventListener('touchend', this.touchEndListener);
+        globalThis.addEventListener('touchcancel', this.touchEndListener);
     }
 
     get isPreReachMinSize() {
@@ -171,9 +191,12 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         return this.nextSize <= this.nextMinSize;
     }
 
-    onMouseMove(event: MouseEvent) {
+    onMouseMove(event: PointerLikeEvent) {
         if (this.isShouldIgnore(event)) {
             return;
+        }
+        if ('touches' in event) {
+            event.preventDefault();
         }
         let pos = this.getMousePagePos(event);
         const posDiff = pos - this.lastPos;
@@ -227,7 +250,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         divElement.classList.remove(HIDDEN_WIDGET_CLASS);
     }
 
-    onMouseUp(event: MouseEvent) {
+    onMouseUp(event: PointerLikeEvent) {
         if (this.isShouldIgnore(event)) {
             return;
         }
@@ -236,6 +259,9 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         }
         globalThis.removeEventListener('mousemove', this.mouseMoveListener);
         globalThis.removeEventListener('mouseup', this.mouseUpListener);
+        globalThis.removeEventListener('touchmove', this.touchMoveListener);
+        globalThis.removeEventListener('touchend', this.touchEndListener);
+        globalThis.removeEventListener('touchcancel', this.touchEndListener);
 
         this.setInactive();
         if (this.preNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
@@ -311,6 +337,13 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             }
             this.onMouseDown(event);
         });
+        target.addEventListener(
+            'touchstart',
+            (event) => {
+                this.onMouseDown(event);
+            },
+            { passive: false },
+        );
         const quickMoveType = this.props.checkShouldQuickMove();
         if (quickMoveType !== null) {
             this.quickMove(quickMoveType);

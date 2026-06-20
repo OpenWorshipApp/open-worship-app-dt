@@ -166,7 +166,7 @@ describe('fsServe', () => {
             {
                 id: 8,
                 url: 'https://example.com/resource.json',
-                referrer: `${rootUrl}/${htmlFiles.noteItemEditor}`,
+                referrer: `${rootUrl}/${htmlFiles.bibleNote}`,
                 requestHeaders: {},
             },
             requestCallback,

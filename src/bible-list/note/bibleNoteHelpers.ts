@@ -60,7 +60,7 @@ function revealFile(filePath: string) {
     showFileOrDirExplorer(filePath);
 }
 
-async function getBibleNoteConstructor() {
+export async function getBibleNoteConstructor() {
     let AppBibleNote = (globalThis as any).AppBibleNote;
     while (AppBibleNote === undefined) {
         await new Promise((resolve) => {

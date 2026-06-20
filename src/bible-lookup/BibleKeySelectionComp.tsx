@@ -8,11 +8,12 @@ import type { BibleMinimalInfoType } from '../helper/bible-helpers/bibleDownload
 import { getAllLocalBibleInfoList } from '../helper/bible-helpers/bibleDownloadHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import type { LocaleType } from '../lang/langHelpers';
-import { getLanguageTitle } from '../lang/langHelpers';
+import { getLanguageTitle, tran } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync } from '../helper/debuggerHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { openBibleSetting } from '../setting/settingHelpers';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,
@@ -55,14 +56,16 @@ export async function genContextMenuBibleKeys(
                 : []),
             {
                 menuElement: <span data-locale-ff={locale}>{langTitle}</span>,
+                title: langTitle,
                 disabled: true,
             },
             ...bibleInfoList.map((bibleInfo) => {
+                const menuText = `(${bibleInfo.key}) ${bibleInfo.title}`;
                 return {
                     menuElement: (
-                        <span
-                            data-locale-ff={bibleInfo.locale}
-                        >{`(${bibleInfo.key}) ${bibleInfo.title}`}</span>
+                        <span data-locale-ff={bibleInfo.locale}>
+                            {menuText}
+                        </span>
                     ),
                     title: bibleInfo.title,
                     onSelect: (event1: any) => {
@@ -109,6 +112,22 @@ export async function showBibleKeyOption(
             },
         );
     }
+    menuItems.push({
+        menuElement: (
+            <span
+                style={{
+                    fontWeight: 'bold',
+                    color: 'var(--bs-info-text-emphasis)',
+                }}
+            >
+                {tran('Add New Bible')}{' '}
+                <i className="bi bi-journal-arrow-down"></i>
+            </span>
+        ),
+        onSelect: () => {
+            openBibleSetting();
+        },
+    });
     showAppContextMenu(event, menuItems);
 }
 

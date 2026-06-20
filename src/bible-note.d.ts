@@ -54,6 +54,8 @@ declare module 'BibleNote.js' {
     }
 
     export class BibleNote {
+        static VERSION: string;
+
         constructor(options: BibleNoteOptions);
 
         content: string;

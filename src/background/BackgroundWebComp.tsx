@@ -1,6 +1,6 @@
 import './BackgroundWebComp.scss';
 
-import { Fragment, useCallback, type ReactElement } from 'react';
+import { Fragment, useCallback, useRef, type ReactElement } from 'react';
 import { useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -20,7 +20,7 @@ import BackgroundMediaItemComp from './BackgroundMediaItemComp';
 import FileSource from '../helper/FileSource';
 import { tran } from '../lang/langHelpers';
 import FillingFlexCenterComp from '../others/FillingFlexCenterComp';
-import { handleCtrlWheel } from '../others/AppRangeComp';
+import { useZoomingRegistering } from '../others/AppRangeComp';
 import { useThumbnailWidthSetting } from './BackgroundMediaComp';
 import RenderBackgroundWebIframeComp, {
     BackgroundWebPlaceHolderComp,
@@ -203,17 +203,6 @@ export default function BackgroundWebComp() {
         setBackgroundWebUrlItemList(urlItems);
     }, [urlItems]);
 
-    const handleWheel = useCallback(
-        (event: any) => {
-            handleCtrlWheel({
-                event,
-                value: thumbnailWidth,
-                setValue: setThumbnailWidth,
-                defaultSize: defaultRangeSize,
-            });
-        },
-        [thumbnailWidth, setThumbnailWidth],
-    );
     const handleUrlAdding = useCallback(async () => {
         const urlSource = await promptBackgroundWebUrlSource(
             urlItems.map((item) => item.src),
@@ -284,9 +273,6 @@ export default function BackgroundWebComp() {
         },
         [genWebContextMenuItems],
     );
-    if (dirSource === null) {
-        return null;
-    }
     const renderBody = basicRenderBody.bind(
         null,
         urlSources,
@@ -294,27 +280,37 @@ export default function BackgroundWebComp() {
         handleUrlRemoving,
         handleUrlColorNoteChange,
     );
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: thumbnailWidth,
+        setValue: setThumbnailWidth,
+        defaultSize: defaultRangeSize,
+    });
+
     return (
         <div
             className="card w-100 h-100 app-zero-border-radius"
-            onWheel={handleWheel}
+            ref={containerRef}
         >
             <div className="card-body">
-                <FileListHandlerComp
-                    className="app-background-web"
-                    mimetypeName="web"
-                    defaultFolderName={defaultDataDirNames.BACKGROUND_WEB}
-                    dirSource={dirSource}
-                    bodyHandler={renderBody}
-                    disableColorNoteGrouping
-                    genContextMenuItems={handleContextMenuItemsGenerating}
-                    fileSelectionOption={{
-                        windowTitle: 'Select web files',
-                        dirPath: dirSource.dirPath,
-                        extensions: getMimetypeExtensions('web'),
-                    }}
-                    onItemsAdding={handleItemsAdding}
-                />
+                {dirSource === null ? null : (
+                    <FileListHandlerComp
+                        className="app-background-web"
+                        mimetypeName="web"
+                        defaultFolderName={defaultDataDirNames.BACKGROUND_WEB}
+                        dirSource={dirSource}
+                        bodyHandler={renderBody}
+                        disableColorNoteGrouping
+                        genContextMenuItems={handleContextMenuItemsGenerating}
+                        fileSelectionOption={{
+                            windowTitle: 'Select web files',
+                            dirPath: dirSource.dirPath,
+                            extensions: getMimetypeExtensions('web'),
+                        }}
+                        onItemsAdding={handleItemsAdding}
+                    />
+                )}
             </div>
             <BackgroundFooterComp
                 thumbnailWidth={thumbnailWidth}

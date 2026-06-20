@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
+import { useRef } from 'react';
 
 import { useCameraInfoList } from '../helper/cameraHelpers';
 import { useThumbnailWidthSetting } from './BackgroundMediaComp';
-import { handleCtrlWheel } from '../others/AppRangeComp';
+import { useZoomingRegistering } from '../others/AppRangeComp';
 import BackgroundCameraItemComp from './BackgroundCameraItemComp';
 import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
@@ -12,21 +12,18 @@ export default function BackgroundCamerasComp() {
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
     const cameraInfoList = useCameraInfoList();
     const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
-    const handleWheel = useCallback(
-        (event: any) => {
-            handleCtrlWheel({
-                event,
-                value: thumbnailWidth,
-                setValue: setThumbnailWidth,
-                defaultSize: defaultRangeSize,
-            });
-        },
-        [thumbnailWidth, setThumbnailWidth],
-    );
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: thumbnailWidth,
+        setValue: setThumbnailWidth,
+        defaultSize: defaultRangeSize,
+    });
+
     return (
         <div
             className="card w-100 h-100 app-zero-border-radius"
-            onWheel={handleWheel}
+            ref={containerRef}
         >
             <div className="card-body d-flex flex-wrap">
                 {cameraInfoList.map((cameraInfo) => {

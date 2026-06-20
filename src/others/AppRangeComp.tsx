@@ -1,4 +1,10 @@
-import { type ChangeEvent, useCallback, useState } from 'react';
+import {
+    type ChangeEvent,
+    type RefObject,
+    useCallback,
+    useRef,
+    useState,
+} from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 
@@ -28,16 +34,43 @@ export function wheelToRangeValue({
     return newScale;
 }
 
+export function pinchToRangeValue({
+    defaultSize,
+    startValue,
+    startDistance,
+    currentDistance,
+}: {
+    defaultSize: AppRangeDefaultType;
+    startValue: number;
+    startDistance: number;
+    currentDistance: number;
+}) {
+    if (startDistance <= 0) {
+        return startValue;
+    }
+    let newScale = (startValue * currentDistance) / startDistance;
+    if (newScale < defaultSize.min) {
+        newScale = defaultSize.min;
+    }
+    if (newScale > defaultSize.max) {
+        newScale = defaultSize.max;
+    }
+    return newScale;
+}
+
+type HandleCtrlWheelOptions = {
+    value: number;
+    setValue: (newValue: number) => void;
+    defaultSize: AppRangeDefaultType;
+};
+
 export function handleCtrlWheel({
     event,
     value,
     setValue,
     defaultSize,
-}: {
+}: HandleCtrlWheelOptions & {
     event: any;
-    value: number;
-    setValue: (newValue: number) => void;
-    defaultSize: AppRangeDefaultType;
 }) {
     if (!event.ctrlKey) {
         return;
@@ -48,6 +81,84 @@ export function handleCtrlWheel({
         currentScale: value,
     });
     setValue(newValue);
+}
+
+export function useZoomingRegistering<T extends HTMLElement>(
+    containerRef: RefObject<T | null>,
+    { value, setValue, defaultSize }: HandleCtrlWheelOptions,
+) {
+    const valueRef = useRef(value);
+    valueRef.current = value;
+    const setValueRef = useRef(setValue);
+    setValueRef.current = setValue;
+
+    useAppEffect(() => {
+        const container = containerRef.current;
+        if (container === null) {
+            return;
+        }
+
+        const handleWheel = (event: WheelEvent) => {
+            handleCtrlWheel({
+                event,
+                value: valueRef.current,
+                setValue: setValueRef.current,
+                defaultSize,
+            });
+        };
+        container.addEventListener('wheel', handleWheel, {
+            passive: false,
+        });
+
+        const getTouchesDistance = (touches: TouchList) => {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.hypot(dx, dy);
+        };
+        let pinchStartDistance: number | null = null;
+        let pinchStartFontSize = valueRef.current;
+        const handleTouchStart = (event: TouchEvent) => {
+            if (event.touches.length === 2) {
+                pinchStartDistance = getTouchesDistance(event.touches);
+                pinchStartFontSize = valueRef.current;
+            }
+        };
+        const handleTouchMove = (event: TouchEvent) => {
+            if (event.touches.length !== 2 || pinchStartDistance === null) {
+                return;
+            }
+            event.preventDefault();
+            const newFontSize = pinchToRangeValue({
+                currentDistance: getTouchesDistance(event.touches),
+                startValue: pinchStartFontSize,
+                defaultSize,
+                startDistance: pinchStartDistance,
+            });
+            setValueRef.current(Math.round(newFontSize));
+        };
+        const handleTouchEnd = (event: TouchEvent) => {
+            if (event.touches.length < 2) {
+                pinchStartDistance = null;
+            }
+        };
+        container.addEventListener('touchstart', handleTouchStart, {
+            passive: false,
+        });
+        container.addEventListener('touchmove', handleTouchMove, {
+            passive: false,
+        });
+        container.addEventListener('touchend', handleTouchEnd);
+        container.addEventListener('touchcancel', handleTouchEnd);
+
+        return () => {
+            container.removeEventListener('touchstart', handleTouchStart);
+            container.removeEventListener('touchmove', handleTouchMove);
+            container.removeEventListener('touchend', handleTouchEnd);
+            container.removeEventListener('touchcancel', handleTouchEnd);
+
+            container.removeEventListener('wheel', handleWheel);
+        };
+    }, [containerRef.current]);
 }
 
 function roundSize(

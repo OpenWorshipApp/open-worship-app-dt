@@ -126,7 +126,7 @@ export type PagePropsType = {
     isPageLWShare: boolean;
     isMainPage: boolean;
     lwShareHomePage: string;
-    noteItemEditorHomePage: string;
+    bibleNoteHomePage: string;
     webEditorHomePage: string;
     experimentHomePage: string;
     getIsMouseOverApp: () => boolean;

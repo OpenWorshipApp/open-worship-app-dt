@@ -15,7 +15,7 @@ export const htmlFiles = {
     about: 'about.html',
     experiment: 'experiment.html',
     lyricEditor: 'lyricEditor.html',
-    noteItemEditor: 'noteItemEditor.html',
+    bibleNote: 'bibleNote.html',
     webEditor: 'webEditor.html',
 };
 export const preloadFileMap = {

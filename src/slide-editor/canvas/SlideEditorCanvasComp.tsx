@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { defaultRangeSize } from './CanvasController';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
-import { handleCtrlWheel } from '../../others/AppRangeComp';
+import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { onCanvasKeyboardEvent } from '../slideEditingKeyboardEventHelpers';
 import { MultiContextRender } from '../../helper/MultiContextRender';
 import { type useEditingCanvasContextValue } from '../canvasEditingHelpers';
@@ -75,20 +75,6 @@ export default function SlideEditorCanvasComp({
         stopAllModes,
     } = contextData;
 
-    const handleScrollEvent = useCallback(
-        (event: any) => {
-            event.stopPropagation();
-            handleCtrlWheel({
-                event,
-                value: canvasController.scale * 10,
-                setValue: (scale) => {
-                    canvasController.scale = scale / 10;
-                },
-                defaultSize: defaultRangeSize,
-            });
-        },
-        [canvasController],
-    );
     const handleKeyDownEvent = useCallback(
         (event: any) => {
             if (document.activeElement !== event.currentTarget) {
@@ -111,6 +97,16 @@ export default function SlideEditorCanvasComp({
             setSelectedCanvasItems,
         ],
     );
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: canvasController.scale * 10,
+        setValue: (scale) => {
+            canvasController.scale = scale / 10;
+        },
+        defaultSize: defaultRangeSize,
+    });
+
     return (
         <div className="card w-100 h-100 app-overflow-hidden">
             <div
@@ -119,8 +115,8 @@ export default function SlideEditorCanvasComp({
                     'app-overflow-hidden'
                 }
                 tabIndex={0}
-                onWheel={handleScrollEvent}
                 onKeyDown={handleKeyDownEvent}
+                ref={containerRef}
             >
                 <EditorComp contextData={contextData} />
             </div>

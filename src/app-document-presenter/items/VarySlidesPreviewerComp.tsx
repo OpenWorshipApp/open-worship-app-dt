@@ -1,10 +1,10 @@
 import type { DragEvent } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import VarySlidesComp from './VarySlidesComp';
 import AppDocument from '../../app-document-list/AppDocument';
-import { handleCtrlWheel } from '../../others/AppRangeComp';
+import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { defaultRangeSize } from './AppDocumentPreviewerFooterComp';
 import SlidesMenuComp from './SlidesMenuComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
@@ -58,17 +58,6 @@ export default function VarySlidesPreviewerComp() {
         },
         [onSlideItemsKeyboardEvent],
     );
-    const handleContainerWheel = useCallback(
-        (event: any) => {
-            handleCtrlWheel({
-                event,
-                value: thumbSizeScale,
-                setValue: setThumbnailSizeScale,
-                defaultSize: defaultRangeSize,
-            });
-        },
-        [thumbSizeScale, setThumbnailSizeScale],
-    );
     const handleContextMenu = useCallback(
         (event: any) => {
             varyAppDocument.showContextMenu(event);
@@ -94,6 +83,14 @@ export default function VarySlidesPreviewerComp() {
         },
         [varyAppDocument],
     );
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    useZoomingRegistering(containerRef, {
+        value: thumbSizeScale,
+        setValue: setThumbnailSizeScale,
+        defaultSize: defaultRangeSize,
+    });
+
     return (
         <div
             className={
@@ -105,11 +102,11 @@ export default function VarySlidesPreviewerComp() {
             onKeyDown={handleContainerKeyDown}
             // keep vertical to avoid conflict with item resizing effect scroll bar
             style={{ overflowX: 'hidden', overflowY: 'scroll' }}
-            onWheel={handleContainerWheel}
             onContextMenu={handleContextMenu}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleContainerDrop}
+            ref={containerRef}
         >
             <div
                 style={{
