@@ -28,7 +28,8 @@ export default abstract class ScreenEventHandler<
     }
 
     protected toCacheKey() {
-        return `${this.screenId}-${this.constructor.name}`;
+        const constructor = this.constructor as typeof ScreenEventHandler;
+        return `${this.screenId}-${constructor.eventNamePrefix}`;
     }
 
     abstract get isShowing(): boolean;
@@ -115,7 +116,7 @@ export default abstract class ScreenEventHandler<
     static getInstanceBase<T extends ScreenEventHandler<any>>(
         screenId: number,
     ) {
-        const instance = cache.get(`${screenId}-${this.name}`) as T;
+        const instance = cache.get(`${screenId}-${this.eventNamePrefix}`) as T;
         if (instance === undefined) {
             return null;
         }
