@@ -15,16 +15,15 @@ type XMLTagInfo = {
 };
 
 class AppXMLParser {
-    domParser: DOMParser;
-    constructor() {
-        this.domParser = new DOMParser();
-    }
-
-    parseFromString(xmlText: string, contentType: DOMParserSupportedType) {
-        // FIXME: from electron 40.x.x parsed Dom cause app crashes
-        // TODO: figure out difference approach to parse XML to Json
-        const doc = this.domParser.parseFromString(xmlText, contentType);
-        return doc;
+    // Electron 40.x.x crashes when the native DOMParser parses very large XML
+    // text (e.g. a full bible with tens of thousands of verses). Use a
+    // lightweight custom parser that builds a minimal DOM-like tree without
+    // relying on the native DOMParser.
+    parseFromString(
+        xmlText: string,
+        _contentType?: DOMParserSupportedType,
+    ): Document {
+        return parseXMLText(xmlText) as unknown as Document;
     }
 }
 
@@ -409,4 +408,358 @@ export function optimizeXMLText(
         );
     }
     return newXMLText;
+}
+
+const XML_NODE_TYPE = {
+    ELEMENT: 1,
+    TEXT: 3,
+    CDATA_SECTION: 4,
+    DOCUMENT: 9,
+} as const;
+
+type AppXMLAttribute = {
+    name: string;
+    value: string;
+    nodeValue: string;
+};
+
+class AppXMLNode {
+    nodeType: number;
+    nodeValue: string | null;
+    parentNode: AppXMLNode | null = null;
+    childNodes: AppXMLNode[] = [];
+
+    constructor(nodeType: number, nodeValue: string | null = null) {
+        this.nodeType = nodeType;
+        this.nodeValue = nodeValue;
+    }
+
+    appendChild<T extends AppXMLNode>(childNode: T): T {
+        childNode.parentNode = this;
+        this.childNodes.push(childNode);
+        return childNode;
+    }
+
+    getElementsByTagName(tagName: string): AppXMLElement[] {
+        const result: AppXMLElement[] = [];
+        collectElementsByTagName(this, tagName, result);
+        return result;
+    }
+
+    get textContent(): string {
+        if (
+            this.nodeType === XML_NODE_TYPE.TEXT ||
+            this.nodeType === XML_NODE_TYPE.CDATA_SECTION
+        ) {
+            return this.nodeValue ?? '';
+        }
+        let textContent = '';
+        for (const childNode of this.childNodes) {
+            textContent += childNode.textContent;
+        }
+        return textContent;
+    }
+
+    set textContent(value: string) {
+        this.childNodes = [];
+        if (value !== '') {
+            this.appendChild(new AppXMLNode(XML_NODE_TYPE.TEXT, value));
+        }
+    }
+}
+
+function collectElementsByTagName(
+    node: AppXMLNode,
+    tagName: string,
+    result: AppXMLElement[],
+) {
+    for (const childNode of node.childNodes) {
+        if (childNode.nodeType !== XML_NODE_TYPE.ELEMENT) {
+            continue;
+        }
+        const childElement = childNode as AppXMLElement;
+        if (tagName === '*' || childElement.tagName === tagName) {
+            result.push(childElement);
+        }
+        collectElementsByTagName(childElement, tagName, result);
+    }
+}
+
+class AppXMLElement extends AppXMLNode {
+    tagName: string;
+    attributes: AppXMLAttribute[] = [];
+    private readonly attributeMap = new Map<string, AppXMLAttribute>();
+
+    constructor(tagName: string) {
+        super(XML_NODE_TYPE.ELEMENT);
+        this.tagName = tagName;
+    }
+
+    getAttribute(name: string): string | null {
+        const attribute = this.attributeMap.get(name);
+        return attribute === undefined ? null : attribute.value;
+    }
+
+    setAttribute(name: string, value: string): void {
+        const existingAttribute = this.attributeMap.get(name);
+        if (existingAttribute !== undefined) {
+            existingAttribute.value = value;
+            existingAttribute.nodeValue = value;
+            return;
+        }
+        const attribute: AppXMLAttribute = { name, value, nodeValue: value };
+        this.attributeMap.set(name, attribute);
+        this.attributes.push(attribute);
+    }
+}
+
+class AppXMLDocument extends AppXMLNode {
+    constructor() {
+        super(XML_NODE_TYPE.DOCUMENT);
+    }
+
+    get documentElement(): AppXMLElement | null {
+        for (const childNode of this.childNodes) {
+            if (childNode.nodeType === XML_NODE_TYPE.ELEMENT) {
+                return childNode as AppXMLElement;
+            }
+        }
+        return null;
+    }
+
+    createElement(tagName: string): AppXMLElement {
+        return new AppXMLElement(tagName);
+    }
+
+    createCDATASection(data: string): AppXMLNode {
+        return new AppXMLNode(XML_NODE_TYPE.CDATA_SECTION, data);
+    }
+}
+
+function decodeNumericXMLEntity(match: string, entityBody: string) {
+    const codePoint =
+        entityBody[1] === 'x'
+            ? Number.parseInt(entityBody.slice(2), 16)
+            : Number.parseInt(entityBody.slice(1), 10);
+    if (Number.isNaN(codePoint)) {
+        return match;
+    }
+    try {
+        return String.fromCodePoint(codePoint);
+    } catch {
+        return match;
+    }
+}
+
+const NAMED_XML_ENTITIES: { [name: string]: string } = {
+    amp: '&',
+    apos: "'",
+    gt: '>',
+    lt: '<',
+    quot: '"',
+};
+
+function decodeXMLEntities(text: string): string {
+    if (!text.includes('&')) {
+        return text;
+    }
+    return text.replace(
+        /&(#x[\da-fA-F]+|#\d+|[a-zA-Z][a-zA-Z\d]*);/g,
+        (match, entityBody: string) => {
+            if (entityBody.startsWith('#')) {
+                return decodeNumericXMLEntity(match, entityBody);
+            }
+            return NAMED_XML_ENTITIES[entityBody] ?? match;
+        },
+    );
+}
+
+function appendXMLTextNode(parentNode: AppXMLNode, rawText: string) {
+    if (rawText === '') {
+        return;
+    }
+    // native DOMParser does not expose text outside the root element (such as
+    // prolog/epilog whitespace) as document child nodes
+    if (parentNode.nodeType === XML_NODE_TYPE.DOCUMENT) {
+        return;
+    }
+    parentNode.appendChild(
+        new AppXMLNode(XML_NODE_TYPE.TEXT, decodeXMLEntities(rawText)),
+    );
+}
+
+function findMatchingOpenTagIndex(
+    openElementStack: AppXMLElement[],
+    tagName: string,
+) {
+    for (let index = openElementStack.length - 1; index >= 0; index--) {
+        if (openElementStack[index].tagName === tagName) {
+            return index;
+        }
+    }
+    return -1;
+}
+
+function skipXMLWhitespace(xmlText: string, index: number, endIndex: number) {
+    while (index < endIndex && isXMLWhitespace(xmlText[index])) {
+        index++;
+    }
+    return index;
+}
+
+function readXMLAttributeName(
+    xmlText: string,
+    index: number,
+    endIndex: number,
+) {
+    const nameStartIndex = index;
+    while (index < endIndex && !isXMLNameEnd(xmlText[index])) {
+        index++;
+    }
+    return { name: xmlText.slice(nameStartIndex, index), nextIndex: index };
+}
+
+function readXMLAttributeValue(
+    xmlText: string,
+    index: number,
+    endIndex: number,
+) {
+    const quote = xmlText[index];
+    if (quote === '"' || quote === "'") {
+        const valueStartIndex = index + 1;
+        let valueEndIndex = valueStartIndex;
+        while (valueEndIndex < endIndex && xmlText[valueEndIndex] !== quote) {
+            valueEndIndex++;
+        }
+        return {
+            value: xmlText.slice(valueStartIndex, valueEndIndex),
+            nextIndex: valueEndIndex + 1,
+        };
+    }
+    let valueEndIndex = index;
+    while (
+        valueEndIndex < endIndex &&
+        !isXMLWhitespace(xmlText[valueEndIndex]) &&
+        xmlText[valueEndIndex] !== '/'
+    ) {
+        valueEndIndex++;
+    }
+    return {
+        value: xmlText.slice(index, valueEndIndex),
+        nextIndex: valueEndIndex,
+    };
+}
+
+function parseXMLAttributes(
+    xmlText: string,
+    tag: XMLTagInfo,
+    element: AppXMLElement,
+) {
+    let index = tag.nameEndIndex;
+    const endIndex = tag.endIndex;
+    while (index < endIndex) {
+        index = skipXMLWhitespace(xmlText, index, endIndex);
+        if (index >= endIndex || xmlText[index] === '/') {
+            index++;
+            continue;
+        }
+        const { name, nextIndex } = readXMLAttributeName(
+            xmlText,
+            index,
+            endIndex,
+        );
+        index = skipXMLWhitespace(xmlText, nextIndex, endIndex);
+        if (xmlText[index] !== '=') {
+            if (name) {
+                element.setAttribute(name, '');
+            }
+            continue;
+        }
+        index = skipXMLWhitespace(xmlText, index + 1, endIndex);
+        const valueResult = readXMLAttributeValue(xmlText, index, endIndex);
+        index = valueResult.nextIndex;
+        if (name) {
+            element.setAttribute(name, decodeXMLEntities(valueResult.value));
+        }
+    }
+}
+
+function appendXMLCDATA(
+    parentNode: AppXMLNode,
+    xmlText: string,
+    tagStartIndex: number,
+    tag: XMLTagInfo,
+) {
+    if (!xmlText.startsWith('<![CDATA[', tagStartIndex)) {
+        return;
+    }
+    const contentStartIndex = tagStartIndex + '<![CDATA['.length;
+    // a terminated CDATA section ends with "]]>"; an unterminated one runs to
+    // the end of the input, so keep all remaining content in that case
+    const hasTerminator = xmlText.startsWith(']]>', tag.endIndex - 2);
+    const contentEndIndex = hasTerminator ? tag.endIndex - 2 : tag.endIndex + 1;
+    const data = xmlText.slice(contentStartIndex, contentEndIndex);
+    parentNode.appendChild(new AppXMLNode(XML_NODE_TYPE.CDATA_SECTION, data));
+}
+
+function appendXMLElement(
+    parentNode: AppXMLNode,
+    openElementStack: AppXMLElement[],
+    xmlText: string,
+    tag: XMLTagInfo,
+): AppXMLNode {
+    const element = new AppXMLElement(tag.name);
+    parseXMLAttributes(xmlText, tag, element);
+    parentNode.appendChild(element);
+    if (tag.isSelfClosing) {
+        return parentNode;
+    }
+    openElementStack.push(element);
+    return element;
+}
+
+function parseXMLText(xmlText: string): AppXMLDocument {
+    const xmlDocument = new AppXMLDocument();
+    const openElementStack: AppXMLElement[] = [];
+    let parentNode: AppXMLNode = xmlDocument;
+    let index = 0;
+    const length = xmlText.length;
+    while (index < length) {
+        const tagStartIndex = xmlText.indexOf('<', index);
+        if (tagStartIndex === -1) {
+            appendXMLTextNode(parentNode, xmlText.slice(index));
+            break;
+        }
+        if (tagStartIndex > index) {
+            appendXMLTextNode(parentNode, xmlText.slice(index, tagStartIndex));
+        }
+        const tag = readXMLTag(xmlText, tagStartIndex);
+        if (tag === null) {
+            appendXMLTextNode(parentNode, xmlText.slice(tagStartIndex));
+            break;
+        }
+        // only CDATA sections carry content; comments, processing instructions
+        // and doctypes are ignored
+        if (tag.isSpecial) {
+            appendXMLCDATA(parentNode, xmlText, tagStartIndex, tag);
+        } else if (tag.isClosing) {
+            const matchingIndex = findMatchingOpenTagIndex(
+                openElementStack,
+                tag.name,
+            );
+            if (matchingIndex !== -1) {
+                openElementStack.length = matchingIndex;
+            }
+            parentNode = openElementStack.at(-1) ?? xmlDocument;
+        } else {
+            parentNode = appendXMLElement(
+                parentNode,
+                openElementStack,
+                xmlText,
+                tag,
+            );
+        }
+        index = tag.endIndex + 1;
+    }
+    return xmlDocument;
 }

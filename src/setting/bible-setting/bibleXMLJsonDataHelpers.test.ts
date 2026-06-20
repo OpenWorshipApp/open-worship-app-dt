@@ -171,23 +171,19 @@ describe('bibleXMLJsonDataHelpers', () => {
     });
 
     test('optimizes hinted XML parses while preserving requested text and element attributes', async () => {
-        const OriginalDOMParser = globalThis.DOMParser;
+        const { xmlTextToBibleElement } = await loadModule();
+        const { appXMLParser } = await import('../../helper/xmlHelpers');
         const parsedXMLTexts: string[] = [];
-        vi.stubGlobal(
-            'DOMParser',
-            class DOMParserMock extends OriginalDOMParser {
-                parseFromString(
-                    xmlText: string,
-                    contentType: DOMParserSupportedType,
-                ) {
-                    parsedXMLTexts.push(xmlText);
-                    return super.parseFromString(xmlText, contentType);
-                }
-            },
-        );
+        const originalParseFromString =
+            appXMLParser.parseFromString.bind(appXMLParser);
+        const parseSpy = vi
+            .spyOn(appXMLParser, 'parseFromString')
+            .mockImplementation((xmlText, contentType) => {
+                parsedXMLTexts.push(xmlText);
+                return originalParseFromString(xmlText, contentType);
+            });
 
         try {
-            const { xmlTextToBibleElement } = await loadModule();
             const largeVerseText = 'In the beginning '.repeat(1000);
             const xmlText =
                 '<bible key="KJV" title="Test Bible">' +
@@ -222,7 +218,7 @@ describe('bibleXMLJsonDataHelpers', () => {
             );
             expect(parsedXMLTexts[0]).not.toContain('<book');
         } finally {
-            vi.stubGlobal('DOMParser', OriginalDOMParser);
+            parseSpy.mockRestore();
         }
     });
 
@@ -274,23 +270,19 @@ describe('bibleXMLJsonDataHelpers', () => {
     });
 
     test('extracts bible info without parsing full book text', async () => {
-        const OriginalDOMParser = globalThis.DOMParser;
+        const { getBibleInfoJson } = await loadModule();
+        const { appXMLParser } = await import('../../helper/xmlHelpers');
         const parsedXMLTexts: string[] = [];
-        vi.stubGlobal(
-            'DOMParser',
-            class DOMParserMock extends OriginalDOMParser {
-                parseFromString(
-                    xmlText: string,
-                    contentType: DOMParserSupportedType,
-                ) {
-                    parsedXMLTexts.push(xmlText);
-                    return super.parseFromString(xmlText, contentType);
-                }
-            },
-        );
+        const originalParseFromString =
+            appXMLParser.parseFromString.bind(appXMLParser);
+        const parseSpy = vi
+            .spyOn(appXMLParser, 'parseFromString')
+            .mockImplementation((xmlText, contentType) => {
+                parsedXMLTexts.push(xmlText);
+                return originalParseFromString(xmlText, contentType);
+            });
 
         try {
-            const { getBibleInfoJson } = await loadModule();
             const largeVerseText = 'In the beginning '.repeat(1000);
             const xmlText =
                 '<bible key="KJV" locale="en-US">' +
@@ -308,7 +300,7 @@ describe('bibleXMLJsonDataHelpers', () => {
                 }),
             ).toBe(false);
         } finally {
-            vi.stubGlobal('DOMParser', OriginalDOMParser);
+            parseSpy.mockRestore();
         }
     });
 
