@@ -321,7 +321,7 @@ export async function checkForAppUpdate(isSilent = true) {
         if (
             !(
                 checkIsVersionOutdated(version, onlineVersion) ||
-                isWrongCommitHas
+                (version === onlineVersion && isWrongCommitHas)
             )
         ) {
             if (!isSilent) {
