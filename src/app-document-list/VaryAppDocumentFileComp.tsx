@@ -129,7 +129,10 @@ function FilePreviewPdfAppDocumentComp({
     const fileSource = FileSource.getInstance(pdfAppDocument.filePath);
     return (
         <div className="w-100 h-100 app-ellipsis">
-            <i className="bi bi-file-earmark-pdf" />
+            <i
+                className="bi bi-file-earmark-pdf"
+                style={{ color: '#d24726' }}
+            />
             {fileSource.name}
         </div>
     );
@@ -141,7 +144,12 @@ function FilePreviewPptxAppDocumentComp({
     const fileSource = FileSource.getInstance(pptxAppDocument.filePath);
     return (
         <div className="w-100 h-100 app-ellipsis">
-            <i className="bi bi-file-earmark-ppt" />
+            <i
+                className="bi bi-file-earmark-ppt"
+                style={{
+                    color: '#d24726',
+                }}
+            />
             {fileSource.name}
         </div>
     );
@@ -153,7 +161,10 @@ function FilePreviewDocxAppDocumentComp({
     const fileSource = FileSource.getInstance(docxAppDocument.filePath);
     return (
         <div className="w-100 h-100 app-ellipsis">
-            <i className="bi bi-file-earmark-word" />
+            <i
+                className="bi bi-file-earmark-word"
+                style={{ color: '#2b579a' }}
+            />
             {fileSource.name}
         </div>
     );
