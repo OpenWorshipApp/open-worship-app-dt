@@ -67,6 +67,12 @@ export function RenderWebChildComp({
                     return Number.parseInt(key);
                 })}
             />
+            <BackgroundWebPlaceHolderComp
+                height={height}
+                imageData={imageData}
+                isUrl={isUrl}
+                isPlaying={isPlaying}
+            />
             {isPlaying ? (
                 <RenderBackgroundWebIframeComp
                     iframeSource={fileOrUrlSource}
@@ -74,13 +80,6 @@ export function RenderWebChildComp({
                     height={height}
                 />
             ) : null}
-            {isPlaying ? null : (
-                <BackgroundWebPlaceHolderComp
-                    height={height}
-                    imageData={imageData}
-                    isUrl={isUrl}
-                />
-            )}
             {extraChild}
         </div>
     );
