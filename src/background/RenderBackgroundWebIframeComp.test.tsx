@@ -49,10 +49,11 @@ describe('RenderBackgroundWebIframeComp', () => {
             imageData: 'data:image/png;base64,abc',
         }) as ReactElement<any>;
 
-        expect(element.type).toBe('img');
-        expect(element.props.alt).toBe('web preview');
-        expect(element.props.src).toBe('data:image/png;base64,abc');
-        expect(element.props.style.height).toBe('180px');
+        const img = Array.from(element.props.children)[0] as ReactElement<any>;
+        expect(img.type).toBe('img');
+        expect(img.props.alt).toBe('web preview');
+        expect(img.props.src).toBe('data:image/png;base64,abc');
+        expect(img.props.style.height).toBe('180px');
     });
 
     test('renders the icon placeholder when preview data is missing', () => {
@@ -75,7 +76,7 @@ describe('RenderBackgroundWebIframeComp', () => {
             root = createRoot(container);
             root.render(
                 <RenderBackgroundWebIframeComp
-                    src={{
+                    iframeSource={{
                         src: '/backgrounds/live.html',
                         fullName: 'live.html',
                     }}
@@ -104,7 +105,7 @@ describe('RenderBackgroundWebIframeComp', () => {
             root = createRoot(container);
             root.render(
                 <RenderBackgroundWebIframeComp
-                    src={{
+                    iframeSource={{
                         src: '/backgrounds/custom.html',
                         fullName: 'custom.html',
                     }}

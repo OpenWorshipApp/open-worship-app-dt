@@ -160,7 +160,7 @@ function RenderWebInfoComp({
         },
         [filePath, getWidthScale, genStyle],
     );
-    const imageData = useWebCapturing(fileSource, { width, height });
+    const imageData = useWebCapturing(fileSource.src, { width, height });
     const handleContextMenuOpening = useCallback(
         (event: MouseEvent) => {
             showAppContextMenu(event as any, [
@@ -206,7 +206,7 @@ function RenderWebInfoComp({
             >
                 {isPlaying ? (
                     <RenderBackgroundWebIframeComp
-                        src={fileSource}
+                        iframeSource={fileSource}
                         width={width}
                         height={height}
                     />

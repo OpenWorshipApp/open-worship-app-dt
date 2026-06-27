@@ -357,7 +357,7 @@ export function genHtmlForegroundWeb(
     const fileSource = FileSource.getInstance(filePath);
     const htmlString = renderToStaticMarkup(
         <RenderBackgroundWebIframeComp
-            src={fileSource}
+            iframeSource={fileSource}
             width={width}
             height={height}
             targetWidth={displayDim.width}

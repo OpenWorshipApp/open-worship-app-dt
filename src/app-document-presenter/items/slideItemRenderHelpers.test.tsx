@@ -44,9 +44,9 @@ vi.mock('../../app-document-list/appDocumentHelpers', () => ({
 }));
 
 vi.mock('../../background/RenderBackgroundWebIframeComp', () => ({
-    default: ({ src, width, height }: any) => (
+    default: ({ iframeSource, width, height }: any) => (
         <div data-testid="web-iframe">
-            {src.src}:{width}:{height}
+            {iframeSource.src}:{width}:{height}
         </div>
     ),
 }));

@@ -1,22 +1,16 @@
-import { useCallback, type ReactElement } from 'react';
-import { useState } from 'react';
+import { useCallback } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { handleDragStart } from '../helper/dragHelpers';
-import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 import { tran } from '../lang/langHelpers';
 import { genBackgroundMediaItemData } from './backgroundHelpers';
-import RenderBackgroundWebIframeComp, {
-    BackgroundWebPlaceHolderComp,
-} from './RenderBackgroundWebIframeComp';
 import { type BackgroundWebUrlSource } from './backgroundWebUrlHelpers';
-import { useWebCapturing } from '../helper/capturingHelpers';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { copyToClipboard } from '../server/appHelpers';
+import { RenderWebChildComp } from './BackgroundWebChildComp';
 
 function genFileNameElement(fileName: string) {
     return (
@@ -33,73 +27,6 @@ function genFileNameElement(fileName: string) {
     );
 }
 
-function RenderUrlChildComp({
-    urlSource,
-    selectedBackgroundSrcList,
-    width,
-    height,
-    extraChild,
-}: Readonly<{
-    urlSource: BackgroundWebUrlSource;
-    selectedBackgroundSrcList: [string, BackgroundSrcType][];
-    width: number;
-    height: number;
-    extraChild?: ReactElement;
-}>) {
-    const [isPlaying, setIsPlaying] = useState(false);
-    const imageData = useWebCapturing(urlSource);
-    const handleMouseOver = useCallback(() => {
-        setIsPlaying(true);
-    }, []);
-    const handleMouseOut = useCallback(() => {
-        setIsPlaying(false);
-    }, []);
-    return (
-        <div
-            className="card-body app-blank-bg"
-            title={urlSource.fullName}
-            style={{
-                height: `${height}px`,
-                overflow: 'hidden',
-                borderRadius: '5px 5px 0px 0px',
-                position: 'relative',
-            }}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-        >
-            <RenderBackgroundScreenIds
-                screenIds={selectedBackgroundSrcList.map(([key]) => {
-                    return Number.parseInt(key);
-                })}
-            />
-            {isPlaying ? (
-                <RenderBackgroundWebIframeComp
-                    src={urlSource}
-                    width={width}
-                    height={height}
-                />
-            ) : (
-                <BackgroundWebPlaceHolderComp
-                    height={height}
-                    imageData={imageData}
-                />
-            )}
-            <small
-                className="badge rounded-pill text-bg-info"
-                style={{
-                    position: 'absolute',
-                    left: '4px',
-                    bottom: '4px',
-                    zIndex: 1,
-                }}
-            >
-                URL
-            </small>
-            {extraChild}
-        </div>
-    );
-}
-
 export default function BackgroundWebUrlItemComp({
     urlSource,
     thumbnailWidth,
@@ -111,7 +38,7 @@ export default function BackgroundWebUrlItemComp({
     thumbnailWidth: number;
     thumbnailHeight: number;
     onRemove: (urlSource: BackgroundWebUrlSource) => Promise<void>;
-    onColorNoteChange?: () => void;
+    onColorNoteChange: () => void;
 }>) {
     const {
         selectedCN,
@@ -177,11 +104,12 @@ export default function BackgroundWebUrlItemComp({
             onContextMenu={handleContextMenuOpening}
             onClick={handleClicking}
         >
-            <RenderUrlChildComp
-                urlSource={urlSource}
+            <RenderWebChildComp
+                fileOrUrlSource={urlSource}
                 selectedBackgroundSrcList={selectedBackgroundSrcList}
                 width={thumbnailWidth}
                 height={thumbnailHeight}
+                isUrl
                 extraChild={
                     <div
                         style={{

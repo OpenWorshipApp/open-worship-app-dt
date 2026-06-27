@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import { electronSendAsync } from '../server/appHelpers';
 import { useAppEffectAsync } from './debuggerHelpers';
-import type FileSource from './FileSource';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import CacheManager from '../others/CacheManager';
 import { unlocking } from '../server/unlockingHelpers';
@@ -40,7 +39,7 @@ export async function captureWebScreenShot(
     });
 }
 export function useWebCapturing(
-    src: Pick<FileSource, 'src'>,
+    src: string,
     { width, height }: { width?: number; height?: number } = {},
 ) {
     const [imageData, setImageData] = useState<string | null | undefined>();
@@ -48,7 +47,7 @@ export function useWebCapturing(
         async (contextMethods) => {
             contextMethods.setImageData(undefined);
             const screenDisplay = getDefaultScreenDisplay();
-            const imageData = await captureWebScreenShot(src.src, {
+            const imageData = await captureWebScreenShot(src, {
                 width: width ?? screenDisplay.bounds.width,
                 height: height ?? screenDisplay.bounds.height,
                 delay: 3000,

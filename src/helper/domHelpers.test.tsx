@@ -435,9 +435,8 @@ describe('domHelpers', () => {
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
 
         const observedValues: Array<string | null | undefined> = [];
-        const fileSource = { src: 'https://example.com/page' };
         function Probe() {
-            const value = useWebCapturing(fileSource as any);
+            const value = useWebCapturing('https://example.com/page');
             useEffect(() => {
                 observedValues.push(value);
             }, [value]);

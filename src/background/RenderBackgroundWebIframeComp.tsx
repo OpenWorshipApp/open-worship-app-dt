@@ -1,31 +1,48 @@
 import { useMemo } from 'react';
 
-import type FileSource from '../helper/FileSource';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 
-type BackgroundWebIframeSourceType = Pick<FileSource, 'src' | 'fullName'>;
+type BackgroundWebIframeSourceType = {
+    src: string;
+    fullName: string;
+};
 
 export function BackgroundWebPlaceHolderComp({
     height,
     imageData,
-}: Readonly<{ height: number; imageData?: string | null }>) {
+    isUrl = false,
+}: Readonly<{ height: number; imageData?: string | null; isUrl?: boolean }>) {
     if (imageData) {
         return (
-            <img
-                src={imageData}
-                alt="web preview"
-                style={{
-                    width: '100%',
-                    height: `${height}px`,
-                    objectFit: 'cover',
-                }}
-            />
+            <>
+                <img
+                    src={imageData}
+                    alt="web preview"
+                    style={{
+                        width: '100%',
+                        height: `${height}px`,
+                        objectFit: 'cover',
+                    }}
+                />
+                {isUrl ? (
+                    <small
+                        className="badge rounded-pill text-bg-info"
+                        style={{
+                            position: 'absolute',
+                            left: '4px',
+                            zIndex: 1,
+                        }}
+                    >
+                        URL
+                    </small>
+                ) : null}
+            </>
         );
     }
     return (
         <div className="w-100 h-100 d-flex justify-content-center align-items-center">
             <i
-                className="bi bi-filetype-html"
+                className={'bi ' + (isUrl ? 'bi-globe' : 'bi-filetype-html')}
                 style={{
                     fontSize: `${Math.floor(height / 2)}px`,
                 }}
@@ -35,13 +52,13 @@ export function BackgroundWebPlaceHolderComp({
 }
 
 export default function RenderBackgroundWebIframeComp({
-    src,
+    iframeSource,
     width,
     height,
     targetWidth,
     targetHeight,
 }: Readonly<{
-    src: BackgroundWebIframeSourceType;
+    iframeSource: BackgroundWebIframeSourceType;
     width: number;
     height: number;
     targetWidth?: number;
@@ -64,8 +81,8 @@ export default function RenderBackgroundWebIframeComp({
     return (
         <iframe
             sandbox="allow-scripts"
-            src={src.src}
-            title={src.fullName}
+            src={iframeSource.src}
+            title={iframeSource.fullName}
             style={{
                 pointerEvents: 'none',
                 colorScheme: 'normal',

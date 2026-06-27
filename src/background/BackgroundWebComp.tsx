@@ -1,6 +1,6 @@
 import './BackgroundWebComp.scss';
 
-import { Fragment, useCallback, useRef, type ReactElement } from 'react';
+import { useCallback, useRef } from 'react';
 import { useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -11,20 +11,11 @@ import {
 } from '../helper/constants';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
-import { DragTypeEnum } from '../helper/DragInf';
-import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import type DirSource from '../helper/DirSource';
-import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
-import BackgroundMediaItemComp from './BackgroundMediaItemComp';
-import FileSource from '../helper/FileSource';
 import { tran } from '../lang/langHelpers';
-import FillingFlexCenterComp from '../others/FillingFlexCenterComp';
 import { useZoomingRegistering } from '../others/AppRangeComp';
 import { useThumbnailWidthSetting } from './BackgroundMediaComp';
-import RenderBackgroundWebIframeComp, {
-    BackgroundWebPlaceHolderComp,
-} from './RenderBackgroundWebIframeComp';
 import {
     type BackgroundWebUrlItemData,
     type BackgroundWebUrlSource,
@@ -33,160 +24,12 @@ import {
     promptBackgroundWebUrlSource,
     setBackgroundWebUrlItemList,
 } from './backgroundWebUrlHelpers';
-import {
-    genBackgroundWebContextMenuItems,
-    genBackgroundWebExtraItemContextMenuItems,
-} from './backgroundWebHelpers';
-import { useWebCapturing } from '../helper/capturingHelpers';
+import { genBackgroundWebContextMenuItems } from './backgroundWebHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
-import BackgroundWebUrlItemComp from './BackgroundWebUrlItemComp';
-import { genColorBar } from '../helper/colorNoteHelpers';
-import { genBackgroundWebColorSections } from './backgroundWebCompHelpers';
-
-function RenderChildComp({
-    filePath,
-    selectedBackgroundSrcList,
-    width,
-    height,
-    extraChild,
-}: Readonly<{
-    filePath: string;
-    selectedBackgroundSrcList: [string, BackgroundSrcType][];
-    width: number;
-    height: number;
-    extraChild?: ReactElement;
-}>) {
-    const [isPlaying, setIsPlaying] = useState(false);
-    const fileSource = FileSource.getInstance(filePath);
-    const imageData = useWebCapturing(fileSource);
-    const handleMouseOver = useCallback(() => {
-        setIsPlaying(true);
-    }, []);
-    const handleMouseOut = useCallback(() => {
-        setIsPlaying(false);
-    }, []);
-    return (
-        <div
-            className="card-body app-blank-bg"
-            title={fileSource.fullName}
-            style={{
-                height: `${height}px`,
-                overflow: 'hidden',
-                borderRadius: '5px 5px 0px 0px',
-            }}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
-        >
-            <RenderBackgroundScreenIds
-                screenIds={selectedBackgroundSrcList.map(([key]) => {
-                    return Number.parseInt(key);
-                })}
-            />
-            <RenderBackgroundScreenIds
-                screenIds={selectedBackgroundSrcList.map(([key]) => {
-                    return Number.parseInt(key);
-                })}
-            />
-            {isPlaying ? (
-                <RenderBackgroundWebIframeComp
-                    src={fileSource}
-                    width={width}
-                    height={height}
-                />
-            ) : (
-                <BackgroundWebPlaceHolderComp
-                    height={height}
-                    imageData={imageData}
-                />
-            )}
-            {extraChild}
-        </div>
-    );
-}
-
-function rendChild(
-    filePath: string,
-    selectedBackgroundSrcList: [string, BackgroundSrcType][],
-    width: number,
-    height: number,
-    extraChild?: ReactElement,
-) {
-    return (
-        <RenderChildComp
-            filePath={filePath}
-            selectedBackgroundSrcList={selectedBackgroundSrcList}
-            width={width}
-            height={height}
-            extraChild={extraChild}
-        />
-    );
-}
-
-function basicRenderBody(
-    urlSources: BackgroundWebUrlSource[],
-    thumbnailWidth: number,
-    handleUrlRemoving: (urlSource: BackgroundWebUrlSource) => Promise<void>,
-    handleUrlColorNoteChange: () => void,
-    filePaths: string[],
-) {
-    const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
-    const sections = genBackgroundWebColorSections(filePaths, urlSources);
-
-    return (
-        <div className="w-100">
-            {sections.map((section) => {
-                return (
-                    <Fragment key={section.colorNote ?? 'default'}>
-                        {section.colorNote === undefined
-                            ? null
-                            : genColorBar(section.colorNote)}
-                        <div className="d-flex justify-content-center flex-wrap">
-                            {section.filePaths.map((filePath) => {
-                                return (
-                                    <BackgroundMediaItemComp
-                                        key={filePath}
-                                        rendChild={rendChild}
-                                        genExtraItemContextMenuItems={
-                                            genBackgroundWebExtraItemContextMenuItems
-                                        }
-                                        dragType={DragTypeEnum.BACKGROUND_WEB}
-                                        onClick={undefined}
-                                        noDraggable={false}
-                                        isNameOnTop={false}
-                                        thumbnailWidth={thumbnailWidth}
-                                        thumbnailHeight={thumbnailHeight}
-                                        filePath={filePath}
-                                    />
-                                );
-                            })}
-                            {section.urlSources.map((urlSource) => {
-                                return (
-                                    <BackgroundWebUrlItemComp
-                                        key={urlSource.id}
-                                        urlSource={urlSource}
-                                        thumbnailWidth={thumbnailWidth}
-                                        thumbnailHeight={thumbnailHeight}
-                                        onRemove={handleUrlRemoving}
-                                        onColorNoteChange={
-                                            handleUrlColorNoteChange
-                                        }
-                                    />
-                                );
-                            })}
-                            <FillingFlexCenterComp
-                                width={thumbnailWidth}
-                                className="web-thumbnail"
-                            />
-                        </div>
-                    </Fragment>
-                );
-            })}
-        </div>
-    );
-}
+import { basicRenderBody } from './BackgroundWebChildComp';
 
 export default function BackgroundWebComp() {
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
