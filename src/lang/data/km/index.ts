@@ -26,6 +26,8 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Remove URL': 'លុប URL',
+    'Copy URL to Clipboard': 'ចម្លង URL ទៅកាន់ក្តារចុច',
     'Add URL': 'បន្ថែម URL',
     'Add New Bible': 'បន្ថែមព្រះគម្ពីរថ្មី',
     'Insert Collapse Bible Text': 'បញ្ចូលអត្ថបទព្រះគម្ពីរដែលបើនបាន',
