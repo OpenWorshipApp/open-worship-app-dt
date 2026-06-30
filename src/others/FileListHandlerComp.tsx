@@ -67,7 +67,7 @@ function RenderHeaderComp({
                     onClick={handleSetCreatingNew}
                     style={{
                         color: 'var(--bs-info-text-emphasis)',
-                        fontSize: '20px',
+                        fontSize: '17px',
                     }}
                 >
                     <i className="bi bi-file-earmark-plus" />

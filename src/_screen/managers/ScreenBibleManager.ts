@@ -80,12 +80,18 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         const thElements = div.querySelectorAll<HTMLElement>('th.header');
         for (const thElement of thElements) {
             const percentage = Math.min(div.scrollTop, 118) / 118;
-            thElement.style.fontSize = `${1 - 0.5 * percentage}em`;
+            const fontSize = `${1 - 0.5 * percentage}em`;
+            if (thElement.style.fontSize !== fontSize) {
+                thElement.style.fontSize = fontSize;
+            }
 
-            const hexAlpha = Math.round(83 + 100 * percentage).toString(16);
             const firstChild = thElement.children[0];
             if (firstChild instanceof HTMLElement) {
-                firstChild.style.backgroundColor = `#999999${hexAlpha}`;
+                const hexAlpha = Math.round(83 + 100 * percentage).toString(16);
+                const backgroundColor = `#999999${hexAlpha}`;
+                if (firstChild.style.backgroundColor !== backgroundColor) {
+                    firstChild.style.backgroundColor = backgroundColor;
+                }
             }
         }
     }
@@ -118,6 +124,7 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
                     return;
                 }
                 event.preventDefault();
+                event.stopPropagation();
                 const isUp = event.deltaY < 0;
                 ScreenBibleManager.changeTextStyleTextFontSize(isUp);
             });

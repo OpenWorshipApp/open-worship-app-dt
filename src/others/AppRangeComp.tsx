@@ -75,6 +75,8 @@ export function handleCtrlWheel({
     if (!event.ctrlKey) {
         return;
     }
+    event.preventDefault();
+    event.stopPropagation();
     const newValue = wheelToRangeValue({
         defaultSize,
         isUp: event.deltaY > 0,

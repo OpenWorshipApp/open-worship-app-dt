@@ -129,12 +129,14 @@ export default function ScreenPreviewerFooterComp() {
                     </div>
                     <ScreenEffectControlComp />
                     {videoSources.length > 0 ? (
-                        <BackgroundAudioSwitchComp
-                            isAudioHandlersVisible={isAudioHandlersVisible}
-                            setIsAudioHandlersVisible={
-                                setIsAudioHandlersVisible
-                            }
-                        />
+                        <div>
+                            <BackgroundAudioSwitchComp
+                                isAudioHandlersVisible={isAudioHandlersVisible}
+                                setIsAudioHandlersVisible={
+                                    setIsAudioHandlersVisible
+                                }
+                            />
+                        </div>
                     ) : null}
                 </div>
                 <div
