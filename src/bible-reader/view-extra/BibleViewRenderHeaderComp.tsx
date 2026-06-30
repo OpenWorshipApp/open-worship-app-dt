@@ -1,9 +1,5 @@
 import { useCallback } from 'react';
 
-import {
-    fontSizeToHeightStyle,
-    useBibleViewFontSizeContext,
-} from '../../helper/bibleViewHelpers';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import RenderActionButtonsComp from '../../bible-lookup/RenderActionButtonsComp';
 import { HoverMotionHandler } from '../../helper/domHelpers';
@@ -14,7 +10,6 @@ export default function BibleViewRenderHeaderComp({
     bibleItem,
 }: Readonly<{ bibleItem: ReadIdOnlyBibleItem }>) {
     const viewController = useBibleItemsViewControllerContext();
-    const fontSize = useBibleViewFontSizeContext();
     const handleBibleKeyChange = useCallback(
         (isContextMenu: boolean, _oldBibleKey: string, newBibleKey: string) => {
             viewController.applyTargetOrBibleKey(
@@ -39,7 +34,7 @@ export default function BibleViewRenderHeaderComp({
     return (
         <div
             className="card-header d-flex app-top-hover-motion-1 p-0"
-            style={{ ...fontSizeToHeightStyle(fontSize) }}
+            style={{ height: 'unset' }}
         >
             <RenderTitleMaterialComp
                 bibleItem={bibleItem}
