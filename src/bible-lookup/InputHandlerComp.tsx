@@ -27,6 +27,7 @@ import {
     BIBLE_XML_CACHE_DURATION_SEC,
     getBibleXMLDataFromKeyCaching,
 } from '../setting/bible-setting/bibleXMLHelpers';
+import { pasteTextToInput } from '../server/appHelpers';
 
 export const InputTextContext = createContext<{
     inputText: string;
@@ -74,6 +75,20 @@ export default function InputHandlerComp({
     const handleInputChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const value = event.target.value;
+            if (value.trim().includes(' (')) {
+                // `(kjv) Genesis 1:1 (1): In the beginning ...`
+                // will change to `(kjv) Genesis 1:1`
+                const lines = value
+                    .split(' (')
+                    .map((line) => {
+                        return line.trim();
+                    })
+                    .filter(Boolean);
+                if (lines.length > 0) {
+                    pasteTextToInput(event.target, lines[0]);
+                    return;
+                }
+            }
             viewController.inputText = value;
         },
         [viewController],
