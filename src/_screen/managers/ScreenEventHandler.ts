@@ -59,7 +59,7 @@ export default abstract class ScreenEventHandler<
         scroll: { x: number; y: number },
     ) {
         if (
-            !appProvider.getIsMouseOverApp() &&
+            !appProvider.getIsMouseOverApp() ||
             !appProvider.getIsWindowFocused()
         ) {
             return;
