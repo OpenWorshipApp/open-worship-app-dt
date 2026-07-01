@@ -46,7 +46,7 @@ export default function RenderFoundItemComp({
     );
     const handleClicking = useCallback(
         (event: any) => {
-            openInBibleLookup(event, viewController, data!.bibleItem);
+            openInBibleLookup(event, viewController, data!.bibleItem, true);
         },
         [viewController, data],
     );
