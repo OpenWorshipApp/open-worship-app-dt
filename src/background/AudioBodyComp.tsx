@@ -11,6 +11,7 @@ import { tran } from '../lang/langHelpers';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import appProvider from '../server/appProvider';
+import { getFileMetaData } from '../server/fileHelpers';
 
 function getAudioRepeatSettingName(src: string) {
     const md5 = appProvider.systemUtils.generateMD5(src);
@@ -76,17 +77,29 @@ export function genAudioBodyChild(
     _height: number,
     extraChild?: ReactNode,
 ) {
-    if (!activeMap[filePath]) {
-        return (
-            <>
-                <div data-file-path={filePath} style={{ display: 'none' }} />
-                {extraChild}
-            </>
-        );
-    }
+    const fileSource = FileSource.getInstance(filePath);
+    const isVideo =
+        getFileMetaData(fileSource.fullName)?.appMimetype.mimetypeName ===
+        'video';
+
     return (
         <>
-            <AudioBodyComp filePath={filePath} />
+            {isVideo ? (
+                <i
+                    className="bi bi-film me-2"
+                    style={{
+                        position: 'absolute',
+                        top: -7,
+                        left: 4,
+                        fontSize: '0.8rem',
+                    }}
+                />
+            ) : null}
+            {!activeMap[filePath] ? (
+                <div data-file-path={filePath} style={{ display: 'none' }} />
+            ) : (
+                <AudioBodyComp filePath={filePath} />
+            )}
             {extraChild}
         </>
     );

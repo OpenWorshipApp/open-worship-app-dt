@@ -120,6 +120,7 @@ export default function BackgroundAudiosComp() {
             extraBodyChild={<VaryAppDocumentAudiosComp />}
             defaultFolderName={defaultDataDirNames.BACKGROUND_AUDIO}
             dragType={DragTypeEnum.BACKGROUND_AUDIO}
+            extraMimetypeNames={['video']}
             onClick={handleItemClicking}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_AUDIO}
             noDraggable={true}

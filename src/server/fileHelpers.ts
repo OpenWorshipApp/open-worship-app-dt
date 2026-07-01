@@ -189,14 +189,14 @@ export function getFileMetaData(
 ): FileMetadataType | null {
     mimetypeList = mimetypeList ?? getAllAppMimetype();
     const dotExtension = getFileDotExtension(fileFullName);
-    const foundMT = mimetypeList.find((mimetype) => {
+    const foundMimetype = mimetypeList.find((mimetype) => {
         const lowerExtensions = mimetype.extensions.map((ext) => {
             return ext.toLowerCase();
         });
         return lowerExtensions.includes(dotExtension.toLowerCase());
     });
-    if (foundMT) {
-        return { fileFullName: fileFullName, appMimetype: foundMT };
+    if (foundMimetype) {
+        return { fileFullName: fileFullName, appMimetype: foundMimetype };
     }
     return null;
 }

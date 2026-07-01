@@ -171,31 +171,36 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
         return filePaths;
     }
 
-    getFilePaths(mimetypeName: MimetypeNameType, isForce = false) {
+    async getFilePaths(mimetypeName: MimetypeNameType, isForce = false) {
         if (!this.dirPath) {
-            return [] as string[];
+            return [];
         }
-        return unlocking(
+        const getFile = async () => {
+            const filePathsInMap = this.filePathsMap[mimetypeName];
+            if (filePathsInMap?.length && !isForce) {
+                return filePathsInMap;
+            }
+            try {
+                const newFilePaths = await this.getFilePathsQuick(mimetypeName);
+                this.filePathsMap[mimetypeName] = newFilePaths;
+            } catch (error) {
+                handleError(error);
+                showSimpleToast(
+                    tran('Getting File List'),
+                    tran('Error occurred during listing file'),
+                );
+            }
+            const filePaths = this.filePathsMap[mimetypeName];
+            if (filePaths === undefined) {
+                return null;
+            }
+            return filePaths;
+        };
+        const result = await unlocking(
             `getFilePaths-${mimetypeName}-${this.dirPath}`,
-            async () => {
-                const filePathsInMap = this.filePathsMap[mimetypeName];
-                if (filePathsInMap?.length && !isForce) {
-                    return filePathsInMap;
-                }
-                try {
-                    const newFilePaths =
-                        await this.getFilePathsQuick(mimetypeName);
-                    this.filePathsMap[mimetypeName] = newFilePaths;
-                } catch (error) {
-                    handleError(error);
-                    showSimpleToast(
-                        tran('Getting File List'),
-                        tran('Error occurred during listing file'),
-                    );
-                }
-                return this.filePathsMap[mimetypeName] ?? null;
-            },
+            getFile,
         );
+        return result;
     }
 
     static async getInstance(settingName: string) {

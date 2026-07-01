@@ -6,7 +6,10 @@ import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEven
 import type FileSource from '../helper/FileSource';
 import type { DragTypeEnum } from '../helper/DragInf';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
-import { getMimetypeExtensions } from '../server/fileHelpers';
+import {
+    getMimetypeExtensions,
+    type MimetypeNameType,
+} from '../server/fileHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import type DirSource from '../helper/DirSource';
@@ -32,6 +35,7 @@ type PropsType = {
     rendChild: RenderChildType;
     extraBodyChild?: ReactNode;
     dragType: DragTypeEnum;
+    extraMimetypeNames?: MimetypeNameType[];
     onClick?: (event: any, fileSource: FileSource) => void;
     defaultFolderName?: string;
     dirSourceSettingName: string;
@@ -126,6 +130,7 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
                     <FileListHandlerComp
                         className={`app-background-${backgroundType}`}
                         mimetypeName={backgroundType}
+                        extraMimetypeNames={props.extraMimetypeNames}
                         defaultFolderName={props.defaultFolderName}
                         dirSource={dirSource}
                         bodyHandler={handleBodyRendering.bind(

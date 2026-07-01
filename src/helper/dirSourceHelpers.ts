@@ -38,22 +38,30 @@ function notifyNewFilePaths(oldFilePaths: string[], newFilePaths: string[]) {
 
 export function useFilePaths(
     dirSource: DirSource,
-    mimetypeName: MimetypeNameType,
+    mimetypeNames: MimetypeNameType[],
 ) {
     const filePathLoadedCtx = use(FilePathLoadedContext);
     const [filePaths, setFilePaths] = useState<string[] | null | undefined>(
         undefined,
     );
     const refresh = async () => {
-        const newFilePaths = await dirSource.getFilePaths(mimetypeName);
-        if (newFilePaths !== null) {
-            const promises = newFilePaths.map(async (filePath) => {
-                const fileSource = FileSource.getInstance(filePath);
-                const color = await fileSource.getColorNote();
-                fileSource.colorNote = color;
-            });
-            await Promise.all(promises);
-        }
+        const newFilePathsList = await Promise.all(
+            mimetypeNames.map((mimetypeName) => {
+                return dirSource.getFilePaths(mimetypeName);
+            }),
+        );
+        let newFilePaths = newFilePathsList
+            .filter((filePaths) => {
+                return filePaths !== null;
+            })
+            .flat();
+        newFilePaths = Array.from(new Set(newFilePaths));
+        const promises = newFilePaths.map(async (filePath) => {
+            const fileSource = FileSource.getInstance(filePath);
+            const color = await fileSource.getColorNote();
+            fileSource.colorNote = color;
+        });
+        await Promise.all(promises);
         if (checkAreArraysEqual(filePaths, newFilePaths)) {
             return;
         }
@@ -75,7 +83,7 @@ export function useFilePaths(
         return () => {
             dirSource.unregisterEventListener(registeredEvent);
         };
-    }, [dirSource, mimetypeName]);
+    }, [dirSource, mimetypeNames.join(',')]);
     useAppEffect(() => {
         if (filePaths !== undefined) {
             return;

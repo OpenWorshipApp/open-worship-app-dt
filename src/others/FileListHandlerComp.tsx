@@ -80,6 +80,7 @@ function RenderHeaderComp({
 type PropsType = {
     className: string;
     mimetypeName: MimetypeNameType;
+    extraMimetypeNames?: MimetypeNameType[];
     dirSource: DirSource;
     header?: any;
     bodyHandler: (filePaths: string[], colorNote?: string) => any;
@@ -107,6 +108,7 @@ type PropsType = {
 export default function FileListHandlerComp({
     className,
     mimetypeName,
+    extraMimetypeNames = [],
     dirSource,
     header,
     bodyHandler,
@@ -213,7 +215,10 @@ export default function FileListHandlerComp({
                             <RenderListComp
                                 dirSource={dirSource}
                                 bodyHandler={bodyHandler}
-                                mimetypeName={mimetypeName}
+                                mimetypeNames={[
+                                    mimetypeName,
+                                    ...extraMimetypeNames,
+                                ]}
                                 setIsOnScreen={setIsOnScreen}
                                 checkIsOnScreen={checkIsOnScreen}
                                 sortFilePaths={sortFilePaths}

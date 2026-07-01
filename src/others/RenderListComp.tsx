@@ -75,7 +75,7 @@ function RenderFailListComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
 
 export default function RenderListComp({
     dirSource,
-    mimetypeName,
+    mimetypeNames,
     bodyHandler,
     setIsOnScreen,
     checkIsOnScreen,
@@ -83,14 +83,14 @@ export default function RenderListComp({
     disableColorNoteGrouping,
 }: Readonly<{
     dirSource: DirSource;
-    mimetypeName: MimetypeNameType;
+    mimetypeNames: MimetypeNameType[];
     bodyHandler: (filePaths: string[], colorNote?: string) => any;
     setIsOnScreen: (isOnScreen: boolean) => void;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
     sortFilePaths?: (filePaths: string[]) => string[];
     disableColorNoteGrouping?: boolean;
 }>) {
-    const filePaths = useFilePaths(dirSource, mimetypeName);
+    const filePaths = useFilePaths(dirSource, mimetypeNames);
     useFileSourceIsOnScreen(
         filePaths ?? [],
         async (filePaths) => {
