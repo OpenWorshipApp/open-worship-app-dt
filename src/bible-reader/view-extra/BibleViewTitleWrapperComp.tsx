@@ -1,21 +1,58 @@
-import type { ReactNode } from 'react';
+import {
+    useCallback,
+    type DragEvent as ReactDragEvent,
+    type ReactNode,
+} from 'react';
 
 import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
+import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
+import { DragTypeEnum } from '../../helper/DragInf';
+
+function toggleParentReceiveDrop(element: HTMLElement, isDraggable: boolean) {
+    if (element.classList.contains('bible-view')) {
+        element.setAttribute('data-do-not-allow-drop', isDraggable ? '0' : '1');
+        return;
+    }
+    if (element.parentElement) {
+        toggleParentReceiveDrop(element.parentElement, isDraggable);
+    }
+}
 
 export default function BibleViewTitleWrapperComp({
     children,
     bibleKey,
+    bibleItem,
 }: Readonly<{
     children: ReactNode;
     bibleKey: string;
+    bibleItem?: ReadIdOnlyBibleItem;
 }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
     const fontSize = useBibleViewFontSizeContext();
+    const handleDraggingStart = useCallback(
+        (event: ReactDragEvent<HTMLSpanElement>) => {
+            if (bibleItem === undefined) {
+                return;
+            }
+            toggleParentReceiveDrop(event.currentTarget, false);
+            const draggingData = bibleItem.dragSerialize(
+                DragTypeEnum.BIBLE_ITEM_TARGET_ONLY,
+            );
+            event.dataTransfer.setData('text', JSON.stringify(draggingData));
+        },
+        [bibleItem],
+    );
+    const handleDraggingEnd = (event: ReactDragEvent<HTMLSpanElement>) => {
+        toggleParentReceiveDrop(event.currentTarget, true);
+    };
     return (
         <span
             className="title full-view-reset-font-size"
             style={{ fontSize, fontFamily, paddingLeft: '5px' }}
+            draggable={bibleItem !== undefined}
+            onDragStart={handleDraggingStart}
+            onDragEnd={handleDraggingEnd}
         >
             {children}
         </span>

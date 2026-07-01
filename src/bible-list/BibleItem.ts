@@ -315,11 +315,11 @@ export default class BibleItem
     syncData(bibleItem: BibleItem) {
         this.originalJson = bibleItem.originalJson;
     }
-    dragSerialize() {
+    dragSerialize(dragType: DragTypeEnum = DragTypeEnum.BIBLE_ITEM) {
         const data = this.toJson() as any;
         data.filePath = this.filePath;
         return {
-            type: DragTypeEnum.BIBLE_ITEM,
+            type: dragType,
             data,
         };
     }

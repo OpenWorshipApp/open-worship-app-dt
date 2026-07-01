@@ -1,6 +1,6 @@
 import './BibleViewComp.scss';
 
-import { use, useCallback } from 'react';
+import { use, useCallback, type DragEvent as ReactDragEvent } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import type BibleItemsViewController from './BibleItemsViewController';
@@ -151,18 +151,28 @@ export default function BibleViewComp({
     const foundBibleItem = isEditing
         ? (editingResult?.result.bibleItem ?? null)
         : bibleItem;
-    const handleDragOver = useCallback((event: any) => {
-        event.preventDefault();
-        removeDraggingClass(event);
-        const className = genDraggingClass(event);
-        event.currentTarget.classList.add(className);
-    }, []);
-    const handleDragLeave = useCallback((event: any) => {
-        event.preventDefault();
-        removeDraggingClass(event);
-    }, []);
-    const handleDrop = useCallback(
-        async (event: any) => {
+    const handleDragOver = useCallback(
+        (event: ReactDragEvent<HTMLDivElement>) => {
+            const currentTarget = event.currentTarget;
+            if (currentTarget.dataset.doNotAllowDrop === '1') {
+                return;
+            }
+            event.preventDefault();
+            removeDraggingClass(event);
+            const className = genDraggingClass(event);
+            event.currentTarget.classList.add(className);
+        },
+        [],
+    );
+    const handleDragLeaving = useCallback(
+        (event: ReactDragEvent<HTMLDivElement>) => {
+            event.preventDefault();
+            removeDraggingClass(event);
+        },
+        [],
+    );
+    const handleDropping = useCallback(
+        async (event: ReactDragEvent<HTMLDivElement>) => {
             applyDropped(event, viewController, bibleItem);
         },
         [viewController, bibleItem],
@@ -189,8 +199,8 @@ export default function BibleViewComp({
             }
             style={{ minWidth: '30%' }}
             onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
+            onDragLeave={handleDragLeaving}
+            onDrop={handleDropping}
             onContextMenu={handleContextMenu}
         >
             {isEditing ? (

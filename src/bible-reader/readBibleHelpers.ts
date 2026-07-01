@@ -1,4 +1,4 @@
-import type { DragEvent } from 'react';
+import type { DragEvent as ReactDragEvent } from 'react';
 
 import type LookupBibleItemController from './LookupBibleItemController';
 import {
@@ -11,6 +11,7 @@ import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import type BibleItemsViewController from './BibleItemsViewController';
 import { RECEIVING_DROP_CLASSNAME } from '../helper/helpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import { DragTypeEnum } from '../helper/DragInf';
 
 enum DraggingPosEnum {
     TOP = '-top',
@@ -20,7 +21,7 @@ enum DraggingPosEnum {
     CENTER = '',
 }
 
-type DragDropEventType = DragEvent<HTMLDivElement>;
+type DragDropEventType = ReactDragEvent<HTMLDivElement>;
 
 export function genDraggingClass(event: DragDropEventType) {
     const { nativeEvent } = event;
@@ -66,43 +67,45 @@ export function applyDropped(
     bibleItemViewCtl: BibleItemsViewController,
     bibleItem: ReadIdOnlyBibleItem,
 ) {
-    const allPos = removeDraggingClass(event);
     const data = event.dataTransfer.getData('text');
     try {
         const json = JSON.parse(data);
-        if (json.type === 'bibleItem') {
-            const newBibleItem = ReadIdOnlyBibleItem.fromJson(json.data);
-            for (const pos of allPos) {
-                if (pos === DraggingPosEnum.CENTER.toString()) {
-                    bibleItemViewCtl.applyTargetOrBibleKey(
-                        bibleItem,
-                        newBibleItem,
-                    );
-                } else if (pos === DraggingPosEnum.LEFT.toString()) {
-                    bibleItemViewCtl.addBibleItemLeft(
-                        bibleItem,
-                        newBibleItem,
-                        true,
-                    );
-                } else if (pos === DraggingPosEnum.RIGHT.toString()) {
-                    bibleItemViewCtl.addBibleItemRight(
-                        bibleItem,
-                        newBibleItem,
-                        true,
-                    );
-                } else if (pos === DraggingPosEnum.TOP.toString()) {
-                    bibleItemViewCtl.addBibleItemTop(
-                        bibleItem,
-                        newBibleItem,
-                        true,
-                    );
-                } else if (pos === DraggingPosEnum.BOTTOM.toString()) {
-                    bibleItemViewCtl.addBibleItemBottom(
-                        bibleItem,
-                        newBibleItem,
-                        true,
-                    );
-                }
+        if (
+            ![
+                DragTypeEnum.BIBLE_ITEM,
+                DragTypeEnum.BIBLE_ITEM_TARGET_ONLY,
+            ].includes(json.type)
+        ) {
+            return;
+        }
+        const newBibleItem = ReadIdOnlyBibleItem.fromJson(json.data);
+        if (json.type === DragTypeEnum.BIBLE_ITEM_TARGET_ONLY) {
+            newBibleItem.bibleKey = bibleItem.bibleKey;
+        }
+        const positions = removeDraggingClass(event);
+        for (const position of positions) {
+            if (position === DraggingPosEnum.CENTER) {
+                bibleItemViewCtl.applyTargetOrBibleKey(bibleItem, newBibleItem);
+            } else if (position === DraggingPosEnum.LEFT) {
+                bibleItemViewCtl.addBibleItemLeft(
+                    bibleItem,
+                    newBibleItem,
+                    true,
+                );
+            } else if (position === DraggingPosEnum.RIGHT) {
+                bibleItemViewCtl.addBibleItemRight(
+                    bibleItem,
+                    newBibleItem,
+                    true,
+                );
+            } else if (position === DraggingPosEnum.TOP) {
+                bibleItemViewCtl.addBibleItemTop(bibleItem, newBibleItem, true);
+            } else if (position === DraggingPosEnum.BOTTOM) {
+                bibleItemViewCtl.addBibleItemBottom(
+                    bibleItem,
+                    newBibleItem,
+                    true,
+                );
             }
         }
     } catch (error) {

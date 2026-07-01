@@ -5,6 +5,7 @@ export enum DragTypeEnum {
     DOCX_SLIDE = 'docxSlide',
     SLIDE = 'slide',
     BIBLE_ITEM = 'bibleItem',
+    BIBLE_ITEM_TARGET_ONLY = 'bibleItem-target-only',
     NOTE_ITEM = 'noteItem',
     LYRIC_ITEM = 'lyricItem',
     BACKGROUND_VIDEO = 'bg-video',

@@ -15,7 +15,10 @@ export function BibleViewTitleEditingComp({
     children?: ReactNode;
 }>) {
     return (
-        <BibleViewTitleWrapperComp bibleKey={bibleItem.bibleKey}>
+        <BibleViewTitleWrapperComp
+            bibleKey={bibleItem.bibleKey}
+            bibleItem={bibleItem}
+        >
             <BibleViewTitleEditorComp
                 bibleItem={bibleItem}
                 onTargetChange={onTargetChange}
