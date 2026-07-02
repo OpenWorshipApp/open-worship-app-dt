@@ -16,6 +16,8 @@ import {
     bibleExtraUri,
     bibleInfoUri,
 } from './schemas/bibleEditorUriHelpers';
+import { getBibleXMLDataFromKey } from './bibleXMLHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
 
 json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
@@ -68,6 +70,25 @@ function RenderChoiceComp({
     );
 }
 
+async function downloadBibleJSON(bibleKey: string) {
+    const bibleXMLData = await getBibleXMLDataFromKey(bibleKey);
+    if (bibleXMLData === null) {
+        showSimpleToast(
+            'error',
+            `Bible XML data for key "${bibleKey}" not found.`,
+        );
+        return;
+    }
+    const blob = new Blob([JSON.stringify(bibleXMLData, null, 2)], {
+        type: 'application/json',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${bibleKey}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
 export default function BibleXMLDataPreviewComp({
     bibleKey,
 }: Readonly<{
@@ -111,6 +132,16 @@ export default function BibleXMLDataPreviewComp({
                     targetEditingType="book-chapter"
                     editingType={editingType}
                 />
+                {/* add download button here, when click then download the whole bible json data to Download */}
+                <button
+                    className="btn btn-sm btn-success"
+                    onClick={() => {
+                        downloadBibleJSON(bibleKey);
+                    }}
+                >
+                    Download
+                    <i className="bi bi-download ms-1" />
+                </button>
             </div>
             <div className="card-body">{element}</div>
         </div>
