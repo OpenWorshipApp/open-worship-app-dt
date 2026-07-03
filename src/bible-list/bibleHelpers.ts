@@ -41,8 +41,9 @@ import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
 import { exportBibleMSWord, showFileOrDirExplorer } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { cloneJson } from '../helper/helpers';
+import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 
-export const SelectedBibleKeyContext = createContext<string>('KJV');
+export const SelectedBibleKeyContext = createContext<string>(BIBLE_KJV_KEY);
 export function useBibleKeyContext() {
     const bibleKey = use(SelectedBibleKeyContext);
     if (!bibleKey) {

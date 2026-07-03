@@ -23,7 +23,10 @@ import { handleError } from '../errorHelpers';
 import { getModelKeyBookMap } from '../bible-helpers/bibleLogicHelpers1';
 import { cloneJson } from '../helpers';
 import { toVerseFullKeyFormat } from '../bible-helpers/bibleInfoHelpers';
-import { getBibleModelInfoSetting } from '../bible-helpers/bibleModelHelpers';
+import {
+    BIBLE_KJV_KEY,
+    getBibleModelInfoSetting,
+} from '../bible-helpers/bibleModelHelpers';
 import { appError as logError } from '../loggerHelpers';
 
 type GetBibleCrossRefParamsType = {
@@ -227,7 +230,7 @@ export type CrossReferenceType = {
     verses: string[];
 };
 
-export const BibleKeyContext = createContext<string>('KJV');
+export const BibleKeyContext = createContext<string>(BIBLE_KJV_KEY);
 export function useBibleKeyContext() {
     return use(BibleKeyContext);
 }

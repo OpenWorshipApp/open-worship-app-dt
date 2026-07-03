@@ -9,6 +9,7 @@ import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
 import { useWatchStateSettingString } from '../../helper/settingHelpers';
 import { BIBLE_KEY_SETTING_NAME } from './bibleNoteHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
+import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 
 export function useBibleNoteControl({
     bibleNote,
@@ -98,7 +99,7 @@ export function useBibleNoteControl({
 
     const [bibleKey, setBibleKey] = useWatchStateSettingString<string>(
         BIBLE_KEY_SETTING_NAME,
-        'KJV',
+        BIBLE_KJV_KEY,
     );
     const fontFamily = useBibleFontFamily(bibleKey);
     useAppEffect(() => {

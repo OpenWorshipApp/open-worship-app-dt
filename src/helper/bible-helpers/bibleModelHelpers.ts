@@ -1,6 +1,6 @@
 import { freezeObject } from '../helpers';
 
-import kjvBibleJson from './kjvBible.json';
+import kjvBibleConfigJson from './kjvBibleConfig.json';
 import kjvdBibleJson from './kjvdBible.json';
 import douayRheimsBibleJson from './douayRheimsBible.json';
 
@@ -23,7 +23,9 @@ export type BibleModelInfoType = {
     flippingKey: { [key: string]: string };
 };
 
-const kjvBibleModelInfo = kjvBibleJson as BibleModelInfoType;
+export const BIBLE_KJV_KEY = 'KJV';
+
+export const kjvBibleModelInfo = kjvBibleConfigJson as BibleModelInfoType;
 freezeObject(kjvBibleModelInfo);
 const kjvdBibleModelInfo = kjvdBibleJson as BibleModelInfoType;
 freezeObject(kjvdBibleModelInfo);
@@ -34,7 +36,7 @@ export const modelNewLinerInfo: string[] = modelNewLiners;
 freezeObject(modelNewLinerInfo);
 
 export enum BibleModelInfoEnum {
-    KJV = 'KJV',
+    KJV = BIBLE_KJV_KEY,
     KJVD = 'KJVD',
     DR = 'DR',
 }

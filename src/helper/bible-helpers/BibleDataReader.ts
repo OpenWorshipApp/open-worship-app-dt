@@ -1,6 +1,11 @@
 import appProvider from '../../server/appProvider';
-import { fsCreateDir, pathJoin } from '../../server/fileHelpers';
-import type { LocaleType } from '../../lang/langHelpers';
+import {
+    fsCheckFileExist,
+    fsCreateDir,
+    fsWriteFile,
+    pathJoin,
+} from '../../server/fileHelpers';
+import { DEFAULT_LOCALE, type LocaleType } from '../../lang/langHelpers';
 import { decrypt } from '../../_owa-crypto';
 import { handleError } from '../errorHelpers';
 import {
@@ -14,6 +19,13 @@ import { appLocalStorage } from '../../setting/directory-setting/appLocalStorage
 import { unlocking } from '../../server/unlockingHelpers';
 import { checkIsBibleXML } from './bibleInfoHelpers';
 import { readBibleXMLData } from '../../setting/bible-setting/bibleXMLHelpers';
+import { BIBLE_KJV_KEY, kjvBibleModelInfo } from './bibleModelHelpers';
+import {
+    type BibleXMLExtraType,
+    type BibleXMLJsonType,
+    jsonToXMLText,
+} from '../../setting/bible-setting/bibleXMLJsonDataHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
 
 const { base64Decode } = appProvider.appUtils;
 
@@ -151,6 +163,48 @@ export default class BibleDataReader {
             this._writableBiblePath = dirPath;
         }
         return this._writableBiblePath;
+    }
+
+    initKJVBible() {
+        return unlocking('init-kjv-xml-file', async () => {
+            const dirPath = await bibleDataReader.getWritableBiblePath();
+            const kjvFilePath = pathJoin(dirPath, `${BIBLE_KJV_KEY}.xml`);
+            if (await fsCheckFileExist(kjvFilePath)) {
+                return;
+            }
+            const { basicKJVBibleData } =
+                await import('./bible-data/kjvBibleHelpers');
+            basicKJVBibleData.info = {
+                ...basicKJVBibleData.info,
+                key: BIBLE_KJV_KEY,
+                version: 1,
+                locale: DEFAULT_LOCALE,
+                numbersMap: Object.fromEntries(
+                    Array.from({ length: 10 }, (_, i) => [
+                        i.toString(),
+                        i.toString(),
+                    ]),
+                ),
+                keyBookMap: kjvBibleModelInfo.keyBookMap,
+            };
+            const extraData: BibleXMLExtraType = {
+                newLines: [],
+                newLinesTitleMap: {},
+                customVersesMap: {},
+            };
+            const xmlText = jsonToXMLText({
+                ...basicKJVBibleData,
+                ...extraData,
+            } as BibleXMLJsonType);
+            if (xmlText === null) {
+                showSimpleToast(
+                    'Failed to convert KJV Bible data to XML text.',
+                    'error',
+                );
+                return;
+            }
+            await fsWriteFile(kjvFilePath, xmlText);
+        });
     }
 
     async clearBibleDatabaseData(bibleKey: string) {

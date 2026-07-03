@@ -29,6 +29,7 @@ import { genFoundBibleItemContextMenu } from '../bible-lookup/bibleActionHelpers
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import { setBibleSearchingTabType } from '../bible-find/bibleFindHelpers';
 import { tran } from '../lang/langHelpers';
+import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
 
 export const closeEventMapper: EventMapperType = {
     wControlKey: ['Ctrl'],
@@ -94,7 +95,7 @@ class LookupBibleItemController extends BibleItemsViewController {
         if (this.straightBibleItems.length === 0) {
             const bibleItem = this.bibleItemFromJson({
                 id: this.genBibleItemUniqueId(),
-                bibleKey: 'KJV',
+                bibleKey: BIBLE_KJV_KEY,
                 metadata: {},
                 target: {
                     bookKey: 'GEN',

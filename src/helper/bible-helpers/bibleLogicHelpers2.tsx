@@ -414,8 +414,8 @@ const regexTitleMap: [
             if (matches.length !== 5) {
                 return null;
             }
-            const [_, booKey, chapter, verseStart, verseEnd] = matches;
-            const book = await keyToBook(bibleKey, booKey);
+            const [_, bookKey, chapter, verseStart, verseEnd] = matches;
+            const book = await keyToBook(bibleKey, bookKey);
             if (book === null) {
                 return null;
             }
@@ -435,8 +435,8 @@ const regexTitleMap: [
             if (matches.length !== 4) {
                 return null;
             }
-            const [_, booKey, chapter, verseStart] = matches;
-            const book = await keyToBook(bibleKey, booKey);
+            const [_, bookKey, chapter, verseStart] = matches;
+            const book = await keyToBook(bibleKey, bookKey);
             if (book === null) {
                 return null;
             }
@@ -456,8 +456,8 @@ const regexTitleMap: [
             if (matches.length !== 3) {
                 return null;
             }
-            const [_, booKey, chapter] = matches;
-            const book = await keyToBook(bibleKey, booKey);
+            const [_, bookKey, chapter] = matches;
+            const book = await keyToBook(bibleKey, bookKey);
             if (book === null) {
                 return null;
             }
@@ -471,8 +471,8 @@ const regexTitleMap: [
             if (matches.length !== 2) {
                 return null;
             }
-            const [_, booKey] = matches;
-            const book = await keyToBook(bibleKey, booKey);
+            const [_, bookKey] = matches;
+            const book = await keyToBook(bibleKey, bookKey);
             if (book === null) {
                 return null;
             }

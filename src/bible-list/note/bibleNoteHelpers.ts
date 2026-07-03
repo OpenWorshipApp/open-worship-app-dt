@@ -22,10 +22,11 @@ import BibleItem from '../BibleItem';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
+import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
 
 export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
 export function getBibleNoteSelectedBibleKey() {
-    return getSetting(BIBLE_KEY_SETTING_NAME) || 'KJV';
+    return getSetting(BIBLE_KEY_SETTING_NAME) || BIBLE_KJV_KEY;
 }
 
 const storageManager = {
@@ -77,7 +78,7 @@ async function shortToVerseData(shortVerse: string) {
     //     fullText: "(1): In the beginning God created the heaven and the earth."
     //     style: { color: 'green' }
     // }
-    const bibleItem = await BibleItem.fromTitleText('KJV', shortVerse);
+    const bibleItem = await BibleItem.fromTitleText(BIBLE_KJV_KEY, shortVerse);
     if (bibleItem === null) {
         return null;
     }
@@ -101,7 +102,10 @@ async function verseFullTextToListShorts(verseFullText: string) {
     if (titleWithKey === undefined) {
         return null;
     }
-    const bibleItem = await BibleItem.fromTitleText('KJV', titleWithKey);
+    const bibleItem = await BibleItem.fromTitleText(
+        BIBLE_KJV_KEY,
+        titleWithKey,
+    );
     if (bibleItem === null) {
         return null;
     }
@@ -127,7 +131,10 @@ async function changeBibleKey(
     if (match === null) {
         return null;
     }
-    const bibleItem = await BibleItem.fromTitleText('KJV', titleWithKey);
+    const bibleItem = await BibleItem.fromTitleText(
+        BIBLE_KJV_KEY,
+        titleWithKey,
+    );
     if (bibleItem === null) {
         return null;
     }

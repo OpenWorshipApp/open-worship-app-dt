@@ -44,7 +44,7 @@ export async function getBibleKeyFromFile(filePath: string) {
     );
 }
 
-export async function getAllXMLFileKeys() {
+export async function getAllXMLFileKeys(isInitKJV = true) {
     const dirPath = await bibleDataReader.getWritableBiblePath();
     const files = await fsListFiles(dirPath);
     const xmlFileFullNames = files.filter((fileFullName) => {
@@ -53,6 +53,13 @@ export async function getAllXMLFileKeys() {
         }
         return fileFullName.toLocaleLowerCase().endsWith('.xml');
     });
+    if (xmlFileFullNames.length === 0) {
+        if (isInitKJV) {
+            await bibleDataReader.initKJVBible();
+            return await getAllXMLFileKeys(false);
+        }
+        return {};
+    }
     const xmlFilePaths = xmlFileFullNames.map((fileFullName) => {
         return pathJoin(dirPath, fileFullName);
     });
@@ -152,7 +159,7 @@ export type BibleJsonInfoType = {
     legalNote: string;
     publisher: string;
     copyRights: string;
-    keyBookMap: { [booKey: string]: string };
+    keyBookMap: { [bookKey: string]: string };
     booksAvailable: string[];
     numbersMap: { [key: string]: string };
 };
@@ -164,7 +171,7 @@ export type BibleXMLExtraType = {
 };
 export type BibleXMLJsonType = BibleXMLExtraType & {
     info: BibleJsonInfoType;
-    books: { [booKey: string]: BibleBookJsonType };
+    books: { [bookKey: string]: BibleBookJsonType };
 };
 
 function guessValue(
@@ -627,7 +634,7 @@ function getBibleBooksJson(xmlText: string) {
             childTags: tagNamesMap.testament,
         }) ?? [],
     );
-    const booksJson: { [booKey: string]: BibleBookJsonType } = {};
+    const booksJson: { [bookKey: string]: BibleBookJsonType } = {};
     for (const xmlElementBook of xmlElementBooks) {
         const bookKey = getBookKey(xmlElementBook);
         if (bookKey === null) {
@@ -645,7 +652,7 @@ function getBibleBooksJson(xmlText: string) {
 function setBibleBooks(
     xmlDoc: Document,
     xmlElementBible: Element,
-    books: { [booKey: string]: BibleBookJsonType },
+    books: { [bookKey: string]: BibleBookJsonType },
 ) {
     for (const [bookKey, book] of Object.entries(books)) {
         const xmlElementBook = xmlDoc.createElement(tagNamesMap.book[0]);
