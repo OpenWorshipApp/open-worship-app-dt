@@ -28,13 +28,13 @@ async function getLibFilePath(libName: string) {
 
 class SQLiteDatabase {
     public database: any;
-    databasePath: string;
-    constructor(databasePath: string) {
-        this.databasePath = databasePath;
+    databaseFilePath: string;
+    constructor(databaseFilePath: string) {
+        this.databaseFilePath = databaseFilePath;
     }
     async initExtension() {
         const { DatabaseSync } = require('node:sqlite');
-        const database = new DatabaseSync(this.databasePath, {
+        const database = new DatabaseSync(this.databaseFilePath, {
             allowExtension: true,
         });
         const destLibFile = await getLibFilePath('fts5');
@@ -59,8 +59,8 @@ class SQLiteDatabase {
 }
 
 const databaseUtils = {
-    async getSQLiteDatabaseInstance(databaseName: string) {
-        const db = new SQLiteDatabase(databaseName);
+    async getSQLiteDatabaseInstance(databaseFilePath: string) {
+        const db = new SQLiteDatabase(databaseFilePath);
         await db.initExtension();
         return db;
     },

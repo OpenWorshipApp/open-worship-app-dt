@@ -76,9 +76,9 @@ interface ClosableInt {
 export function toUnpackedPath(path: string) {
     return path.replace('app.asar', 'app.asar.unpacked');
 }
-export function attemptClosing(win?: ClosableInt | null) {
+export function attemptClosing(target?: ClosableInt | null) {
     try {
-        win?.close();
+        target?.close();
     } catch (_error) {}
 }
 
