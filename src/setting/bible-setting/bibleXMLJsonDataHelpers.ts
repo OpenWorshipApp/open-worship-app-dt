@@ -44,7 +44,7 @@ export async function getBibleKeyFromFile(filePath: string) {
     );
 }
 
-export async function getAllXMLFileKeys(isInitKJV = true) {
+export async function getAllXMLFileKeys() {
     const dirPath = await bibleDataReader.getWritableBiblePath();
     const files = await fsListFiles(dirPath);
     const xmlFileFullNames = files.filter((fileFullName) => {
@@ -53,13 +53,6 @@ export async function getAllXMLFileKeys(isInitKJV = true) {
         }
         return fileFullName.toLocaleLowerCase().endsWith('.xml');
     });
-    if (xmlFileFullNames.length === 0) {
-        if (isInitKJV) {
-            await bibleDataReader.initKJVBible();
-            return await getAllXMLFileKeys(false);
-        }
-        return {};
-    }
     const xmlFilePaths = xmlFileFullNames.map((fileFullName) => {
         return pathJoin(dirPath, fileFullName);
     });

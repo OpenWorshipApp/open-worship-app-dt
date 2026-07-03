@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import LoadingComp from '../../others/LoadingComp';
 import BibleXMLInfoComp from './BibleXMLInfoComp';
 import { tran } from '../../lang/langHelpers';
+import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 
 export default function BibleXMLListComp({
     isPending,
@@ -51,6 +52,19 @@ export default function BibleXMLListComp({
         return (
             <div>
                 {tran('No Bible XML files')} {buttons}
+                <hr />
+                <div className="d-flex align-items-center ms-2">
+                    <div className="hand-pointing-right">👉</div>
+                    <button
+                        className="btn btn-success mt-2"
+                        onClick={async () => {
+                            await bibleDataReader.initKJVBible();
+                            handleRefresh();
+                        }}
+                    >
+                        {tran('Create KJV Bible XML')}
+                    </button>
+                </div>
             </div>
         );
     }
