@@ -1,5 +1,6 @@
 import { app, protocol } from 'electron';
 
+import { isDev } from './electronHelpers';
 import {
     customScheme,
     initCustomSchemeHandler,
@@ -21,7 +22,6 @@ import {
 } from './electronEventListener';
 import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
-import { isDev } from './electronHelpers';
 
 function applyLaunchOverrides() {
     const userDataPath = process.env.OWA_USER_DATA_PATH;

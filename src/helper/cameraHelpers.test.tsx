@@ -37,6 +37,9 @@ vi.mock('../server/appProvider', () => ({
         systemUtils: {
             isDev: false,
         },
+        envUtils: {
+            isFEUseEffectWarning: false,
+        },
     },
 }));
 

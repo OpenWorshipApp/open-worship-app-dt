@@ -163,6 +163,10 @@ type YTHelper = {
     };
 };
 
+type EnvUtilsType = {
+isFEUseEffectWarning: boolean;
+};
+
 export type AppProviderType = Readonly<
     PagePropsType & {
         appType: AppTypeEnum;
@@ -206,6 +210,7 @@ export type AppProviderType = Readonly<
         windowTitle: string;
         POPUP_FRAME_NAME_PREFIX: string;
         init: () => Promise<void>;
+        envUtils: EnvUtilsType;
     }
 >;
 

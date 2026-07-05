@@ -55,6 +55,12 @@ vi.mock('../../server/appProvider', () => ({
         appUtils: {
             base64Decode: mocks.base64DecodeMock,
         },
+        systemUtils: {
+            isDev: false,
+        },
+        envUtils: {
+            isFEUseEffectWarning: false,
+        },
     },
 }));
 

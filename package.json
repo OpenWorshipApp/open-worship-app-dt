@@ -11,7 +11,7 @@
         "dev": "concurrently -k \"npm run vite:dev\" \"npm run electron:build && npm run electron\"",
         "electron:build": "node extra-work/rmdir.mjs electron-build && tsc -p electron.tsconfig.json && node extra-work/copy-build.mjs && node extra-work/build-info.mjs",
         "electron:build:watch": "tsc -p electron.tsconfig.json -w",
-        "electron": "cross-env NODE_ENV=development electron . --remote-debugging-port=9223",
+        "electron": "electron . --remote-debugging-port=9223",
         "electron:watch": "nodemon --exec \"npm run electron\" --watch electron-build",
         "electron:dev": "npm run electron:build && concurrently -k \"npm run electron:build:watch\" \"npm run electron:watch\"",
         "build": "npm run vite:build && npm run electron:build",

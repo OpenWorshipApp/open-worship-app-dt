@@ -31,11 +31,17 @@ function restore(toKey: string) {
 }
 
 function warningMethod(key: string) {
+    if (!appProvider.envUtils.isFEUseEffectWarning) {
+        return;
+    }
     appWarning(`[useAppEffect] ${key} is called after unmounting`);
 }
 
 const storeMapper = new Map<string, StoreType>();
 function checkStore(toKey: string) {
+    if (!appProvider.envUtils.isFEUseEffectWarning) {
+        return;
+    }
     if (!appProvider.systemUtils.isDev) {
         return;
     }
@@ -54,19 +60,21 @@ function useAppEffect_private(
     deps: DependencyList,
     key?: string,
 ) {
+    if (appProvider.envUtils.isFEUseEffectWarning) {
+        for (const dep of deps) {
+            if (Array.isArray(dep)) {
+                appWarning(
+                    '[useAppEffect] Detected object in dependency list. ' +
+                        'This may cause unnecessary re-renders.',
+                    dep,
+                );
+            }
+        }
+    }
     const toKey = useMemo(() => {
         return key ?? effect.toString();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    for (const dep of deps) {
-        if (Array.isArray(dep)) {
-            appWarning(
-                '[useAppEffect] Detected object in dependency list. ' +
-                    'This may cause unnecessary re-renders.',
-                dep,
-            );
-        }
-    }
     useEffect(() => {
         checkStore(toKey);
         return effect();

@@ -8,6 +8,7 @@ import pathUtils from './pathUtils';
 import fontUtils from './fontUtils';
 import appUtils from './appUtils';
 import databaseUtils from './databaseUtils';
+import envUtils from './envUtils';
 
 import { ytUtils } from './ytUtils';
 import appInfo from './appInfo';
@@ -32,4 +33,5 @@ export const provider = {
     databaseUtils,
     ytUtils,
     POPUP_FRAME_NAME_PREFIX,
+    envUtils,
 };

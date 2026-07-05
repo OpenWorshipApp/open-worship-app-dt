@@ -10,6 +10,9 @@ const { appWarningMock, providerMock } = vi.hoisted(() => ({
         systemUtils: {
             isDev: false,
         },
+        envUtils: {
+            isFEUseEffectWarning: true,
+        },
     },
 }));
 

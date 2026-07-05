@@ -10,6 +10,7 @@ import {
     type HandlerDetails,
     type WebContents,
 } from 'electron';
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { release } from 'node:os';
 import path from 'node:path';
@@ -18,6 +19,46 @@ import { pathToFileURL } from 'node:url';
 import appInfo from '../package.json';
 import { htmlFiles } from './fsServe';
 export type OptionalPromise<T> = T | Promise<T>;
+
+function parseEnvContent(content: string) {
+    const env: Record<string, string> = {};
+    for (const rawLine of content.split(/\r?\n/)) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith('#')) {
+            continue;
+        }
+        const match = /^(?:export\s+)?([\w.-]+)\s*=\s*(.*)$/.exec(line);
+        if (match === null) {
+            continue;
+        }
+        const key = match[1];
+        let value = match[2].trim();
+        if (
+            (value.startsWith('"') && value.endsWith('"')) ||
+            (value.startsWith("'") && value.endsWith("'"))
+        ) {
+            value = value.slice(1, -1);
+        }
+        env[key] = value;
+    }
+    return env;
+}
+
+function loadEnvFile() {
+    try {
+        const envFilePath = path.join(process.cwd(), '.env');
+        if (!existsSync(envFilePath)) {
+            return;
+        }
+        const content = readFileSync(envFilePath, 'utf-8');
+        const env = parseEnvContent(content);
+        for (const [key, value] of Object.entries(env)) {
+            process.env[key] = value;
+        }
+    } catch (_error) {}
+}
+
+loadEnvFile();
 
 function getPackInfo() {
     try {

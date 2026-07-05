@@ -1167,6 +1167,9 @@ const appProviderMock = {
     },
     windowTitle: globalThis.document.title,
     POPUP_FRAME_NAME_PREFIX,
+    envUtils: {
+        isFEUseEffectWarning: false,
+    },
     getIsMouseOverApp: () => false,
     getIsWindowFocused: () => globalThis.document.hasFocus(),
     init: async () => {
