@@ -135,6 +135,84 @@ describe('screenEventHelpers', () => {
         root = createRoot(container);
     });
 
+    test('keeps a single registration while dispatching to the latest callback', async () => {
+        const { useScreenEvents } = await import('./screenEventHelpers');
+
+        let updateCallback: ((data: string) => void) | undefined;
+        const staticHandler = {
+            registerEventListener: vi.fn((_events: string[], callback) => {
+                updateCallback = callback;
+                return ['static-listener'];
+            }),
+            unregisterEventListener: vi.fn(),
+        };
+        const firstCallback = vi.fn();
+        const secondCallback = vi.fn();
+
+        function Host({
+            callback,
+        }: Readonly<{ callback: (data: any) => void }>) {
+            const count = useScreenEvents(
+                ['update'],
+                staticHandler as any,
+                undefined,
+                callback,
+            );
+            return <output data-count={`${count}`} />;
+        }
+
+        await act(async () => {
+            root.render(<Host callback={firstCallback} />);
+        });
+        expect(staticHandler.registerEventListener).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            root.render(<Host callback={secondCallback} />);
+        });
+        expect(staticHandler.registerEventListener).toHaveBeenCalledTimes(1);
+        expect(staticHandler.unregisterEventListener).not.toHaveBeenCalled();
+
+        await act(async () => {
+            updateCallback?.('payload');
+        });
+        expect(firstCallback).not.toHaveBeenCalled();
+        expect(secondCallback).toHaveBeenCalledWith('payload');
+        expect(container.querySelector('output')?.dataset.count).toBe('1');
+    });
+
+    test('re-registers listeners when the events list changes', async () => {
+        const { useScreenEvents } = await import('./screenEventHelpers');
+
+        const staticHandler = {
+            registerEventListener: vi.fn((events: string[]) => {
+                return events.map((eventName) => `${eventName}-listener`);
+            }),
+            unregisterEventListener: vi.fn(),
+        };
+
+        function Host({ events }: Readonly<{ events: string[] }>) {
+            useScreenEvents(events, staticHandler as any);
+            return null;
+        }
+
+        await act(async () => {
+            root.render(<Host events={['update']} />);
+        });
+        expect(staticHandler.registerEventListener).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            root.render(<Host events={['update', 'delete']} />);
+        });
+        expect(staticHandler.registerEventListener).toHaveBeenCalledTimes(2);
+        expect(staticHandler.unregisterEventListener).toHaveBeenCalledWith([
+            'update-listener',
+        ]);
+        expect(staticHandler.registerEventListener).toHaveBeenLastCalledWith(
+            ['update', 'delete'],
+            expect.any(Function),
+        );
+    });
+
     test('falls back to static handlers and wrapper hooks subscribe to their classes', async () => {
         const {
             useScreenEvents,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import type { ScreenBackgroundManagerEventType } from './ScreenBackgroundManager';
@@ -19,12 +19,16 @@ export function useScreenEvents<T extends string>(
     callback?: (data: any) => void,
 ) {
     const [n, setN] = useState(0);
+
+    const callbackRef = useRef(callback);
+    callbackRef.current = callback;
+
     useAppEffect(() => {
         const update = (data: any) => {
             setN((n) => {
                 return n + 1;
             });
-            callback?.(data);
+            callbackRef.current?.(data);
         };
         const registeredEvents =
             eventHandler?.registerEventListener(events, update) ||
@@ -36,7 +40,7 @@ export function useScreenEvents<T extends string>(
                 eventHandler.unregisterEventListener(registeredEvents);
             }
         };
-    }, [JSON.stringify(events), StaticHandler, eventHandler, callback]);
+    }, [JSON.stringify(events), eventHandler, StaticHandler]);
     return n;
 }
 

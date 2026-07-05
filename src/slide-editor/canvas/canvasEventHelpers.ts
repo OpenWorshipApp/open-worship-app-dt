@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useAppEffect } from '../../helper/debuggerHelpers';
 import type { CanvasItemEventDataType } from './CanvasController';
@@ -11,17 +11,19 @@ export function useCanvasControllerEvents(
     callback?: (data: CanvasItemEventDataType) => void,
 ) {
     const canvasController = useCanvasControllerContext();
+    const callbackRef = useRef(callback);
+    callbackRef.current = callback;
     useAppEffect(() => {
         const regEvents = canvasController.itemRegisterEventListener(
             eventTypes,
             (data) => {
-                callback?.(data);
+                callbackRef.current?.(data);
             },
         );
         return () => {
             canvasController.unregisterEventListener(regEvents);
         };
-    }, [canvasController]);
+    }, [JSON.stringify(eventTypes), canvasController]);
 }
 
 export function useSlideCanvasScale(canvasController: CanvasController) {
@@ -46,7 +48,9 @@ export function useCanvasControllerRefreshEvents(
     eventTypes ??= ['update', 'scale'];
     const [n, setN] = useState(0);
     useCanvasControllerEvents(eventTypes, () => {
-        setN((n) => n + 1);
+        setN((n) => {
+            return n + 1;
+        });
     });
     return n;
 }

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
 import {
     THUMBNAIL_WIDTH_SETTING_NAME,
@@ -25,15 +26,19 @@ export default class AppDocumentListEventListener extends EventHandler<AppDocume
 export function useVarySlideSelecting(
     listener: ListenerType<VarySlideType | null>,
 ) {
+    const listenerRef = useRef(listener);
+    listenerRef.current = listener;
     useAppEffect(() => {
         const event = AppDocumentListEventListener.registerEventListener(
             ['app-document-item-select'],
-            listener,
+            (data: VarySlideType | null) => {
+                listenerRef.current(data);
+            },
         );
         return () => {
             AppDocumentListEventListener.unregisterEventListener(event);
         };
-    }, [listener]);
+    }, []);
 }
 
 export function useVarySlideThumbnailSizeScale({

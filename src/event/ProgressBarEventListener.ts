@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import type { ListenerType } from './EventHandler';
 import EventHandler from './EventHandler';
@@ -14,25 +15,33 @@ export default class ProgressBarEventListener extends EventHandler<string> {
 }
 
 export function useShowProgressBar(listener: ListenerType<string>) {
+    const listenerRef = useRef(listener);
+    listenerRef.current = listener;
     useAppEffect(() => {
         const event = ProgressBarEventListener.registerEventListener(
             ['show'],
-            listener,
+            (data: string) => {
+                listenerRef.current(data);
+            },
         );
         return () => {
             ProgressBarEventListener.unregisterEventListener(event);
         };
-    }, [listener]);
+    }, []);
 }
 
 export function useHideProgressBar(listener: ListenerType<string>) {
+    const listenerRef = useRef(listener);
+    listenerRef.current = listener;
     useAppEffect(() => {
         const event = ProgressBarEventListener.registerEventListener(
             ['hide'],
-            listener,
+            (data: string) => {
+                listenerRef.current(data);
+            },
         );
         return () => {
             ProgressBarEventListener.unregisterEventListener(event);
         };
-    }, [listener]);
+    }, []);
 }

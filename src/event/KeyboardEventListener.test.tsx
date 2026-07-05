@@ -259,7 +259,7 @@ describe('KeyboardEventListener', () => {
 
         expect(registerSpy).toHaveBeenCalledWith(
             ['root>Q', 'root>Ctrl+W'],
-            listener,
+            expect.any(Function),
         );
 
         await act(async () => {
@@ -268,5 +268,55 @@ describe('KeyboardEventListener', () => {
         root = null;
 
         expect(unregisterSpy).toHaveBeenCalledTimes(1);
+    });
+
+    test('keeps one registration while dispatching to the latest listener', async () => {
+        setPlatform('windows');
+        const firstListener = vi.fn();
+        const secondListener = vi.fn();
+        const registerSpy = vi.spyOn(
+            KeyboardEventListener,
+            'registerEventListener',
+        );
+        const unregisterSpy = vi.spyOn(
+            KeyboardEventListener,
+            'unregisterEventListener',
+        );
+
+        function Probe({
+            listener,
+        }: Readonly<{ listener: (event: any) => void }>) {
+            useKeyboardRegistering([{ key: 'q' }], listener, []);
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe listener={firstListener} />);
+        });
+        expect(registerSpy).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            root?.render(<Probe listener={secondListener} />);
+        });
+        expect(registerSpy).toHaveBeenCalledTimes(1);
+        expect(unregisterSpy).not.toHaveBeenCalled();
+
+        const event = {
+            key: 'q',
+            ctrlKey: false,
+            altKey: false,
+            shiftKey: false,
+            metaKey: false,
+            defaultPrevented: false,
+        };
+        KeyboardEventListener.fireEvent(event as any);
+        await flushAsyncEvents();
+
+        expect(firstListener).not.toHaveBeenCalled();
+        expect(secondListener).toHaveBeenCalledWith(event);
     });
 });

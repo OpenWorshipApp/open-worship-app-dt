@@ -1,5 +1,5 @@
 import type { DependencyList } from 'react';
-import { createContext, use, useState } from 'react';
+import { createContext, use, useRef, useState } from 'react';
 
 import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
 import DirSource from './DirSource';
@@ -126,7 +126,9 @@ export function useFileSourceRefreshEvents(
     const [n, setN] = useState(0);
     useAppEffect(() => {
         const update = () => {
-            setN(n + 1);
+            setN((n) => {
+                return n + 1;
+            });
         };
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,
@@ -136,7 +138,8 @@ export function useFileSourceRefreshEvents(
         return () => {
             FileSource.unregisterEventListener(staticEvents);
         };
-    }, [filePath, n]);
+    }, [JSON.stringify(events), filePath]);
+    return n;
 }
 
 export function useFileSourceEvents<T>(
@@ -145,16 +148,20 @@ export function useFileSourceEvents<T>(
     deps?: DependencyList,
     filePath?: string,
 ) {
+    const callbackRef = useRef(callback);
+    callbackRef.current = callback;
     useAppEffect(() => {
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,
-            callback,
+            (data: T) => {
+                callbackRef.current(data);
+            },
             filePath,
         );
         return () => {
             FileSource.unregisterEventListener(staticEvents);
         };
-    }, [callback, filePath, ...(deps ?? [])]);
+    }, [JSON.stringify(events), filePath, ...(deps ?? [])]);
 }
 
 async function handleFileEvent(dirSource: DirSource, ...args: any[]) {

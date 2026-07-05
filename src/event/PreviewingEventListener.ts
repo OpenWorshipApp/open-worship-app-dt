@@ -1,4 +1,4 @@
-import type { DependencyList } from 'react';
+import { useRef, type DependencyList } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import type Lyric from '../lyric-list/Lyric';
@@ -67,43 +67,55 @@ export function useBibleItemShowing(
 }
 
 export function useLyricUpdating(listener: ListenerType<Lyric>) {
+    const listenerRef = useRef(listener);
+    listenerRef.current = listener;
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['update-lyric'],
-            listener,
+            (lyric: Lyric) => {
+                listenerRef.current(lyric);
+            },
         );
         return () => {
             previewingEventListener.unregisterEventListener(event);
         };
-    }, [listener]);
+    }, []);
 }
 
 export function useVaryAppDocumentSelecting(
     listener: ListenerType<AppDocument | null>,
 ) {
+    const listenerRef = useRef(listener);
+    listenerRef.current = listener;
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['select-app-document'],
-            listener,
+            (varyAppDocument: AppDocument | null) => {
+                listenerRef.current(varyAppDocument);
+            },
         );
         return () => {
             previewingEventListener.unregisterEventListener(event);
         };
-    }, [listener]);
+    }, []);
 }
 
 export function useVaryAppDocumentUpdating(
     listener: ListenerType<AppDocument>,
 ) {
+    const listenerRef = useRef(listener);
+    listenerRef.current = listener;
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['update-app-document'],
-            listener,
+            (varyAppDocument: AppDocument) => {
+                listenerRef.current(varyAppDocument);
+            },
         );
         return () => {
             previewingEventListener.unregisterEventListener(event);
         };
-    }, [listener]);
+    }, []);
 }
 
 export default PreviewingEventListener;

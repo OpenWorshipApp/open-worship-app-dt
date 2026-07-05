@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import type { ListenerType } from './EventHandler';
 import EventHandler from './EventHandler';
@@ -31,18 +32,22 @@ export default class WindowEventListener extends EventHandler<string> {
     }
 }
 
-export function useWindowEvent(
+export function useWindowEvent<T>(
     eventMapper: WindowEventMapperType,
-    listener: ListenerType<any>,
+    listener: ListenerType<T>,
 ) {
+    const listenerRef = useRef(listener);
+    listenerRef.current = listener;
     useAppEffect(() => {
         const eventName = WindowEventListener.toEventMapperKey(eventMapper);
         const event = WindowEventListener.registerEventListener(
             [eventName],
-            listener,
+            (data: T) => {
+                listenerRef.current(data);
+            },
         );
         return () => {
             WindowEventListener.unregisterEventListener(event);
         };
-    }, [JSON.stringify(eventMapper), listener]);
+    }, [JSON.stringify(eventMapper)]);
 }

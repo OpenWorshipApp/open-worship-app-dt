@@ -201,6 +201,55 @@ describe('transitionEffectHelpers', () => {
         root = createRoot(container);
     });
 
+    test('keeps the effect registration while calling the latest callback', async () => {
+        const { useScreenEffectEvents } =
+            await import('./transitionEffectHelpers');
+
+        const updateCallbacks: Array<() => void> = [];
+        const screenEffectManager = {
+            registerEventListener: vi.fn((_events: string[], callback) => {
+                updateCallbacks.push(callback);
+                return ['effect-listener'];
+            }),
+            unregisterEventListener: vi.fn(),
+        };
+        const firstCallback = vi.fn();
+        const secondCallback = vi.fn();
+
+        function Host({ callback }: Readonly<{ callback: () => void }>) {
+            const count = useScreenEffectEvents(
+                ['update'],
+                screenEffectManager as any,
+                callback,
+            );
+            return <output data-count={`${count}`} />;
+        }
+
+        await act(async () => {
+            root.render(<Host callback={firstCallback} />);
+        });
+        expect(screenEffectManager.registerEventListener).toHaveBeenCalledTimes(
+            1,
+        );
+
+        await act(async () => {
+            root.render(<Host callback={secondCallback} />);
+        });
+        expect(screenEffectManager.registerEventListener).toHaveBeenCalledTimes(
+            1,
+        );
+        expect(
+            screenEffectManager.unregisterEventListener,
+        ).not.toHaveBeenCalled();
+
+        await act(async () => {
+            updateCallbacks[0]?.();
+        });
+        expect(firstCallback).not.toHaveBeenCalled();
+        expect(secondCallback).toHaveBeenCalledOnce();
+        expect(container.querySelector('output')?.dataset.count).toBe('1');
+    });
+
     test('renders the selected transition icon and opens the context menu', async () => {
         const { default: RenderTransitionEffectComp } =
             await import('./RenderTransitionEffectComp');

@@ -148,6 +148,77 @@ describe('canvasEventHelpers', () => {
         expect(onEvent).toHaveBeenCalledTimes(2);
     });
 
+    test('keeps controller registration while dispatching to the latest callback', async () => {
+        const controller = createFakeController();
+        const firstCallback = vi.fn();
+        const secondCallback = vi.fn();
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(
+                <CanvasControllerContext.Provider value={controller as any}>
+                    <EventHarness onEvent={firstCallback} />
+                </CanvasControllerContext.Provider>,
+            );
+        });
+        expect(controller.itemRegisterEventListener).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            root?.render(
+                <CanvasControllerContext.Provider value={controller as any}>
+                    <EventHarness onEvent={secondCallback} />
+                </CanvasControllerContext.Provider>,
+            );
+        });
+        expect(controller.itemRegisterEventListener).toHaveBeenCalledTimes(1);
+        expect(controller.unregisterEventListener).not.toHaveBeenCalled();
+
+        controller.emit('update', { canvasItems: [{ id: 1 }] });
+        expect(firstCallback).not.toHaveBeenCalled();
+        expect(secondCallback).toHaveBeenCalledWith({
+            canvasItems: [{ id: 1 }],
+        });
+    });
+
+    test('re-registers controller listeners when event types change', async () => {
+        const controller = createFakeController();
+        const onEvent = vi.fn();
+
+        function Harness({ eventTypes }: Readonly<{ eventTypes: string[] }>) {
+            useCanvasControllerEvents(eventTypes as any, onEvent);
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(
+                <CanvasControllerContext.Provider value={controller as any}>
+                    <Harness eventTypes={['update']} />
+                </CanvasControllerContext.Provider>,
+            );
+        });
+        expect(controller.itemRegisterEventListener).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            root?.render(
+                <CanvasControllerContext.Provider value={controller as any}>
+                    <Harness eventTypes={['update', 'reload']} />
+                </CanvasControllerContext.Provider>,
+            );
+        });
+        expect(controller.itemRegisterEventListener).toHaveBeenCalledTimes(2);
+        expect(controller.unregisterEventListener).toHaveBeenCalledTimes(1);
+
+        controller.emit('reload', { canvasItems: [] });
+        expect(onEvent).toHaveBeenCalledWith({ canvasItems: [] });
+    });
+
     test('tracks scale changes and refresh counters from controller events', async () => {
         const controller = createFakeController();
         const observedScales: number[] = [];

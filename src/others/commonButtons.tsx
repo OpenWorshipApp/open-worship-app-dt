@@ -1,4 +1,4 @@
-import { createContext, use, useCallback, useMemo } from 'react';
+import { createContext, use, useCallback, useMemo, useRef } from 'react';
 
 import type { EventMapperType } from '../event/KeyboardEventListener';
 import KeyboardEventListener, {
@@ -112,12 +112,14 @@ const shortcutKey = openBibleEventMaps
 export function BibleLookupButtonComp() {
     const { setIsShowing: setIsBibleLookupShowing } =
         useIsBibleLookupShowingContext();
+    const setIsBibleLookupShowingRef = useRef(setIsBibleLookupShowing);
+    setIsBibleLookupShowingRef.current = setIsBibleLookupShowing;
     useKeyboardRegistering(openBibleEventMaps, () => {
-        setIsBibleLookupShowing(true);
-    }, [setIsBibleLookupShowing]);
+        setIsBibleLookupShowingRef.current(true);
+    }, []);
     const handleClick = useCallback(() => {
-        setIsBibleLookupShowing(true);
-    }, [setIsBibleLookupShowing]);
+        setIsBibleLookupShowingRef.current(true);
+    }, []);
     return (
         <button
             className="btn btn-sm btn-labeled btn-primary app-zero-border-radius"

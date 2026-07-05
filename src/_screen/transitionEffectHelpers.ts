@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useAppEffect } from '../helper/debuggerHelpers';
 import type ScreenEffectManager from './managers/ScreenEffectManager';
@@ -353,12 +353,16 @@ export function useScreenEffectEvents(
     callback?: () => void,
 ) {
     const [n, setN] = useState(0);
+
+    const callbackRef = useRef(callback);
+    callbackRef.current = callback;
+
     useAppEffect(() => {
         const update = () => {
             setN((n) => {
                 return n + 1;
             });
-            callback?.();
+            callbackRef.current?.();
         };
         const instanceEvents = screenEffectManager.registerEventListener(
             events,
@@ -367,6 +371,6 @@ export function useScreenEffectEvents(
         return () => {
             screenEffectManager.unregisterEventListener(instanceEvents);
         };
-    }, [screenEffectManager, callback]);
+    }, [JSON.stringify(events)]);
     return n;
 }

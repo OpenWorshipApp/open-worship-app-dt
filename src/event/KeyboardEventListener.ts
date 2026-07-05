@@ -1,5 +1,6 @@
 import {
     useMemo,
+    useRef,
     type DependencyList,
     type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
@@ -307,15 +308,19 @@ export function useKeyboardRegistering(
         const eventNames = genEventNames(eventMappers);
         return eventNames;
     }, [eventMappers]);
+    const listenerRef = useRef(listener);
+    listenerRef.current = listener;
     useAppEffect(() => {
         const registeredEvents = KeyboardEventListener.registerEventListener(
             eventNames,
-            listener,
+            (event: KeyboardEvent | ReactKeyboardEvent<any>) => {
+                listenerRef.current(event);
+            },
         );
         return () => {
             KeyboardEventListener.unregisterEventListener(registeredEvents);
         };
-    }, [listener, ...deps, ...eventNames]);
+    }, [...deps, ...eventNames]);
 }
 
 document.onkeydown = function (event) {

@@ -160,7 +160,9 @@ describe('dirSourceHelpers', () => {
         };
 
         function Probe() {
-            const value = useFilePaths(dirSource as any, 'appDocument' as any);
+            const value = useFilePaths(dirSource as any, [
+                'appDocument',
+            ] as any);
             useEffect(() => {
                 observedValues.push(value);
             }, [value]);
@@ -326,6 +328,59 @@ describe('dirSourceHelpers', () => {
         expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith(
             'listener-2',
         );
+    });
+
+    test('keeps file source listeners registered while using the latest callback', async () => {
+        const observedPayloads: string[] = [];
+        const registeredCallbacks: Array<(payload?: string) => void> = [];
+        registerFileSourceEventListenerMock.mockImplementation(
+            (_events: string[], callback: (payload?: string) => void) => {
+                registeredCallbacks.push(callback);
+                return `listener-${registeredCallbacks.length}`;
+            },
+        );
+
+        function Probe({ tag }: Readonly<{ tag: string }>) {
+            const count = useFileSourceRefreshEvents(
+                ['update'],
+                '/docs/slide.owa',
+            );
+            useFileSourceEvents<string>(
+                ['update'],
+                (payload) => {
+                    observedPayloads.push(`${tag}:${payload}`);
+                },
+                [],
+                '/docs/slide.owa',
+            );
+            return <output data-count={`${count}`} />;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe tag="first" />);
+        });
+        expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
+
+        await act(async () => {
+            root?.render(<Probe tag="second" />);
+        });
+        expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
+        expect(unregisterFileSourceEventListenerMock).not.toHaveBeenCalled();
+
+        await act(async () => {
+            registeredCallbacks[0]?.();
+            registeredCallbacks[1]?.('payload');
+            await Promise.resolve();
+        });
+
+        expect(observedPayloads).toEqual(['second:payload']);
+        expect(
+            container?.querySelector('output')?.dataset.count,
+        ).toBe('1');
     });
 
     test('watches directory changes and refreshes when files change', async () => {

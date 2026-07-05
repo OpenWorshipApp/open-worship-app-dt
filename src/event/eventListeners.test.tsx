@@ -329,4 +329,102 @@ describe('event listeners', () => {
             'update-doc',
         ]);
     });
+
+    test('keeps registrations stable while dispatching to the latest listener', async () => {
+        const progressRegisterSpy = vi.spyOn(
+            ProgressBarEventListener,
+            'registerEventListener',
+        );
+        const toastRegisterSpy = vi.spyOn(
+            ToastEventListener,
+            'registerEventListener',
+        );
+        const windowRegisterSpy = vi.spyOn(
+            WindowEventListener,
+            'registerEventListener',
+        );
+        const varySlideRegisterSpy = vi.spyOn(
+            AppDocumentListEventListener,
+            'registerEventListener',
+        );
+        const previewingRegisterSpy = vi.spyOn(
+            previewingEventListener,
+            'registerEventListener',
+        );
+        const events: string[] = [];
+
+        function Probe({ tag }: Readonly<{ tag: string }>) {
+            useShowProgressBar((key) => {
+                events.push(`${tag}-show:${key}`);
+            });
+            useToastSimpleShowing((toast) => {
+                events.push(`${tag}-toast:${toast.title}`);
+            });
+            useWindowEvent(
+                { widget: 'context-menu', state: 'open' },
+                (payload: any) => {
+                    events.push(`${tag}-open:${payload.id}`);
+                },
+            );
+            useVarySlideSelecting(() => {
+                events.push(`${tag}-select-slide`);
+            });
+            useLyricUpdating(() => {
+                events.push(`${tag}-update-lyric`);
+            });
+            useVaryAppDocumentSelecting(() => {
+                events.push(`${tag}-select-doc`);
+            });
+            useVaryAppDocumentUpdating(() => {
+                events.push(`${tag}-update-doc`);
+            });
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe tag="first" />);
+        });
+        const registerCounts = () => [
+            progressRegisterSpy.mock.calls.length,
+            toastRegisterSpy.mock.calls.length,
+            windowRegisterSpy.mock.calls.length,
+            varySlideRegisterSpy.mock.calls.length,
+            previewingRegisterSpy.mock.calls.length,
+        ];
+        const initialCounts = registerCounts();
+
+        await act(async () => {
+            root?.render(<Probe tag="second" />);
+        });
+        expect(registerCounts()).toEqual(initialCounts);
+
+        ProgressBarEventListener.showProgressBar('syncing');
+        ToastEventListener.showSimpleToast({
+            title: 'Saved',
+            message: 'ok',
+        } as any);
+        WindowEventListener.fireEvent(
+            { widget: 'context-menu', state: 'open' },
+            { id: 7 },
+        );
+        AppDocumentListEventListener.selectVarySlide({ id: 1 } as any);
+        previewingEventListener.updateLyric({ id: 'lyric' } as any);
+        previewingEventListener.showVaryAppDocument({ id: 'doc' } as any);
+        previewingEventListener.updateVaryAppDocument({ id: 'doc' } as any);
+        await flushAsyncEvents();
+
+        expect(events).toEqual([
+            'second-show:syncing',
+            'second-toast:Saved',
+            'second-open:7',
+            'second-select-slide',
+            'second-update-lyric',
+            'second-select-doc',
+            'second-update-doc',
+        ]);
+    });
 });

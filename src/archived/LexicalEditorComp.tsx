@@ -85,7 +85,9 @@ export default function LexicalEditorComp() {
     const [n, setN] = useState(0);
     useAppEffect(() => {
         const interval = setInterval(() => {
-            setN((prev) => prev + 1);
+            setN((n) => {
+                return n + 1;
+            });
         }, 1000);
         return () => clearInterval(interval);
     }, []);
