@@ -108,6 +108,7 @@ export default class KeyboardEventListener extends EventHandler<string> {
         }
         return true;
     }
+
     async checkShouldNext(event: KeyboardEvent | ReactKeyboardEvent<any>) {
         return await KeyboardEventListener.checkShouldNext(event);
     }
@@ -115,28 +116,56 @@ export default class KeyboardEventListener extends EventHandler<string> {
     static getLastLayer() {
         return getLastItem(this._layers);
     }
+
     static addLayer(layer: AppWidgetType) {
         this._layers.push(layer);
     }
+
     static removeLayer(layer: AppWidgetType) {
         this._layers.splice(this._layers.indexOf(layer), 1);
     }
+
+    // Force key to en-US layout by using the physical key code, to avoid
+    // different key names in different layouts, e.g. 'ü' in German keyboard.
+    static toEnUsKey(event: KeyboardEvent | ReactKeyboardEvent<any>) {
+        const { key, code } = event;
+        if (key.length !== 1 || !code) {
+            // Named keys (e.g. 'ArrowUp', 'Enter') are layout independent.
+            return key;
+        }
+        const letterMatch = /^Key([A-Z])$/.exec(code);
+        if (letterMatch !== null) {
+            const letter = letterMatch[1];
+            return key === key.toLocaleUpperCase()
+                ? letter
+                : letter.toLowerCase();
+        }
+        const digitMatch = /^(?:Digit|Numpad)(\d)$/.exec(code);
+        if (digitMatch !== null) {
+            return digitMatch[1];
+        }
+        return key;
+    }
+
     static genEventKeyFromFiredEvent(
         event: KeyboardEvent | ReactKeyboardEvent<any>,
     ) {
+        const enKey = this.toEnUsKey(event);
         const eventMapper = this.addControlKey(
             {
-                key: event.key,
+                key: enKey,
             },
             event,
         );
         const eventKey = this.toEventMapperKey(eventMapper);
         return eventKey;
     }
+
     static fireEvent(event: KeyboardEvent | ReactKeyboardEvent<any>) {
         const eventKey = this.genEventKeyFromFiredEvent(event);
         this.addPropEvent(eventKey, event);
     }
+
     static addControlKey(
         eventMapper: EventMapperType,
         event: KeyboardEvent | ReactKeyboardEvent<any>,
