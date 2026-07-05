@@ -443,8 +443,142 @@
         "JUD": "Jude",
         "REV": "Revelation"
     },
-    "oneChapterBooks": ["OBA", "PHM", "2JN", "3JN", "JUD"],
+    "oneChapterBooks": [
+        "OBA",
+        "PHM",
+        "2JN",
+        "3JN",
+        "JUD"
+    ],
     "flippingKey": {
         "JAM": "JAS"
-    }
+    },
+    "bookKeysSubtype": [
+        {
+            "title": "The Law (Pentateuch or Torah)",
+            "type": "law",
+            "bookKeys": [
+                "GEN",
+                "EXO",
+                "LEV",
+                "NUM",
+                "DEU"
+            ]
+        },
+        {
+            "title": "History",
+            "type": "history",
+            "bookKeys": [
+                "JOS",
+                "JDG",
+                "RUT",
+                "1SA",
+                "2SA",
+                "1KI",
+                "2KI",
+                "1CH",
+                "2CH",
+                "EZR",
+                "NEH",
+                "EST"
+            ]
+        },
+        {
+            "title": "Poetry and Wisdom",
+            "type": "poetry",
+            "bookKeys": [
+                "JOB",
+                "PSA",
+                "PRO",
+                "ECC",
+                "SNG"
+            ]
+        },
+        {
+            "title": "Major Prophets",
+            "type": "majorProphets",
+            "bookKeys": [
+                "ISA",
+                "JER",
+                "LAM",
+                "EZK",
+                "DAN"
+            ]
+        },
+        {
+            "title": "Minor Prophets",
+            "type": "minorProphets",
+            "bookKeys": [
+                "HOS",
+                "JOL",
+                "AMO",
+                "OBA",
+                "JON",
+                "MIC",
+                "NAM",
+                "HAB",
+                "ZEP",
+                "HAG",
+                "ZEC",
+                "MAL"
+            ]
+        },
+        {
+            "title": "Gospels",
+            "type": "gospels",
+            "bookKeys": [
+                "MAT",
+                "MRK",
+                "LUK",
+                "JHN"
+            ]
+        },
+        {
+            "title": "History (Acts of the Apostles)",
+            "type": "historyActs",
+            "bookKeys": [
+                "ACT"
+            ]
+        },
+        {
+            "title": "Pauline Epistles",
+            "type": "paulineEpistles",
+            "bookKeys": [
+                "ROM",
+                "1CO",
+                "2CO",
+                "GAL",
+                "EPH",
+                "PHP",
+                "COL",
+                "1TH",
+                "2TH",
+                "1TI",
+                "2TI",
+                "TIT",
+                "PHM"
+            ]
+        },
+        {
+            "title": "General Epistles",
+            "type": "generalEpistles",
+            "bookKeys": [
+                "HEB",
+                "JAS",
+                "1PE",
+                "2PE",
+                "1JN",
+                "2JN",
+                "3JN",
+                "JUD"
+            ]
+        },
+        {
+            "title": "Prophecy (Revelation)",
+            "type": "prophecyRevelation",
+            "bookKeys": [
+                "REV"
+            ]
+        }
+    ]
 }

@@ -1,3 +1,29 @@
+// colors ordered so each subtype contrasts strongly with its neighbors
+// (alternating warm/cool hues in Bible book order)
+$book-subtype-color-law: #e6194b; // red (warm)
+$book-subtype-color-history: #4363d8; // blue (cool)
+$book-subtype-color-poetry: #ffe119; // yellow (warm)
+$book-subtype-color-majorProphets: #911eb4; // purple (cool)
+$book-subtype-color-minorProphets: #3cb44b; // green (cool-warm)
+$book-subtype-color-gospels: #f58231; // orange (warm)
+$book-subtype-color-historyActs: #42d4f4; // cyan (cool)
+$book-subtype-color-paulineEpistles: #f032e6; // magenta (warm)
+$book-subtype-color-generalEpistles: #bfef45; // lime (cool-warm)
+$book-subtype-color-prophecyRevelation: #9a6324; // brown (warm-dark)
+
+$book-subtype-colors: (
+  'law': $book-subtype-color-law,
+  'history': $book-subtype-color-history,
+  'poetry': $book-subtype-color-poetry,
+  'majorProphets': $book-subtype-color-majorProphets,
+  'minorProphets': $book-subtype-color-minorProphets,
+  'gospels': $book-subtype-color-gospels,
+  'historyActs': $book-subtype-color-historyActs,
+  'paulineEpistles': $book-subtype-color-paulineEpistles,
+  'generalEpistles': $book-subtype-color-generalEpistles,
+  'prophecyRevelation': $book-subtype-color-prophecyRevelation,
+);
+
 .book-option {
   margin: 2px;
   button {
@@ -5,13 +31,22 @@
       content: attr(data-book-index);
       clear: both;
       display: inline-block;
-      opacity: 0.2;
+      opacity: 0.3;
       margin-right: 3px;
       font-size: 0.8em;
     }
     .book-option-text {
       overflow-x: auto;
       overflow-y: hidden;
+    }
+
+    @each $subtype, $color in $book-subtype-colors {
+      &[data-book-subtype='#{$subtype}'] {
+        .book-option-index {
+          color: rgb($color, 0.8);
+          text-shadow: 0 0 1px var(--bs-body-color);
+        }
+      }
     }
   }
 }

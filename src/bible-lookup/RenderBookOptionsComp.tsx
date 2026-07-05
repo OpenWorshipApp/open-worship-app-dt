@@ -23,9 +23,25 @@ import {
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import { tran } from '../lang/langHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import {
+    type BookSubtypeType,
+    kjvBibleModelInfo,
+} from '../helper/bible-helpers/bibleModelHelpers';
 
 const OPTION_CLASS = 'bible-lookup-book-option';
 const OPTION_SELECTED_CLASS = 'active';
+
+const bookToSubtype = Object.fromEntries(
+    (kjvBibleModelInfo.bookKeysSubtype || []).reduce(
+        (acc, subtype: BookSubtypeType) => {
+            subtype.bookKeys.forEach((bookKey) => {
+                acc.push([bookKey, subtype.type]);
+            });
+            return acc;
+        },
+        [] as [string, string][],
+    ),
+);
 
 function genBookOption({
     onSelect,
@@ -47,12 +63,12 @@ function genBookOption({
     const activeClass = index === 0 && isAvailable ? OPTION_SELECTED_CLASS : '';
     const isOldTestament = checkIsOldTestament(bookKey);
     const isApocrypha = checkIsApocrypha(bookKey);
-    let borderColor = '#3a3a8eb2';
+    let borderColor = '#a415d85a';
     if (isOldTestament) {
-        borderColor = '#53854420';
+        borderColor = '#5385441a';
     }
     if (isApocrypha) {
-        borderColor = '#733a8eb2';
+        borderColor = '#3a578e2a';
     }
     return (
         <div
@@ -68,9 +84,11 @@ function genBookOption({
                     'd-flex text-nowrap btn-sm btn btn-outline-success' +
                     ` ${OPTION_CLASS} ${activeClass}`
                 }
+                data-book-subtype={bookToSubtype[bookKey]}
                 disabled={!isAvailable}
                 style={{
-                    borderColor,
+                    borderColor: '#00000000',
+                    borderBottomColor: borderColor,
                     width: BOOK_OPTION_WIDTH,
                 }}
                 type="button"

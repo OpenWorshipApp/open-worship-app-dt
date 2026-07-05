@@ -12,6 +12,22 @@ export type BookType = {
     chapterCount: number;
 };
 
+export type BookSubtypeType = {
+    title: string;
+    type:
+        | 'law'
+        | 'history'
+        | 'poetry'
+        | 'majorProphets'
+        | 'minorProphets'
+        | 'gospels'
+        | 'historyActs'
+        | 'paulineEpistles'
+        | 'generalEpistles'
+        | 'prophecyRevelation';
+    bookKeys: string[];
+};
+
 export type BibleModelInfoType = {
     title: string;
     bookKeysOrder: string[];
@@ -21,6 +37,7 @@ export type BibleModelInfoType = {
     keyBookMap: { [key: string]: string };
     oneChapterBooks: string[];
     flippingKey: { [key: string]: string };
+    bookKeysSubtype?: BookSubtypeType[];
 };
 
 export const BIBLE_KJV_KEY = 'KJV';
