@@ -260,6 +260,11 @@ export default class ScreenManager extends ScreenManagerBase {
         }
         if (type === 'init') {
             screenManagerBase.sendSyncScreen();
+            // with some reason Bible rendering has some issue with styling
+            // should fire init again to make sure the styling is applied correctly
+            setTimeout(() => {
+                screenManagerBase.sendSyncScreen();
+            }, 2e3);
         } else if (type === 'visible') {
             screenManagerBase.isShowing = data.isShowing;
         } else if (type === 'effect') {
