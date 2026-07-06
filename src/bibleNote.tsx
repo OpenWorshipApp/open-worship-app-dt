@@ -19,6 +19,7 @@ init(async () => {
         <PopupLayoutComp>
             <div
                 id="bible-note-root"
+                className="app-selectable-text"
                 style={{
                     position: 'absolute',
                     top: 0,
