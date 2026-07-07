@@ -9,6 +9,7 @@ import AppSuspenseComp from '../others/AppSuspenseComp';
 import { useAppEffect } from '../helper/debuggerHelpers';
 import FileSource from '../helper/FileSource';
 import AppDocument from '../app-document-list/AppDocument';
+import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
 
 const LazySlideEditorPopupComp = lazy(() => {
     return import('../slide-editor/SlideEditorPopupComp');
@@ -36,7 +37,7 @@ export default function SlideEditHandlerComp() {
             return;
         }
         const callback = async (data: any) => {
-            if (!['undo', 'redo'].includes(data?.eventType)) {
+            if (!checkIsHistoryMovementEventType(data?.eventType)) {
                 return;
             }
             const appDocument = AppDocument.getInstance(slide.filePath);

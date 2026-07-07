@@ -1,0 +1,57 @@
+.slide-editor-canvas-footer {
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  min-height: 40px;
+  border-top: 1px solid var(--bs-border-color, #cccccc2f);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--bs-info-rgb), 0.04),
+    rgba(var(--bs-info-rgb), 0)
+  );
+
+  // Undo / redo / discard / save group
+  .editing-menu-body {
+    width: auto;
+    flex: 0 0 auto;
+    padding: 0;
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 9px !important;
+    }
+  }
+
+  // Center-view button
+  .app-caught-hover-pointer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--bs-border-radius);
+    opacity: 0.75;
+    transition:
+      background-color 0.15s ease,
+      opacity 0.15s ease;
+
+    &:hover {
+      opacity: 1;
+      background: rgba(var(--bs-info-rgb), 0.15);
+    }
+  }
+
+  // Scale label sits next to the shared `.app-range` zoom pill.
+  .canvas-board-size-container {
+    align-items: center;
+
+    span {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      opacity: 0.85;
+      white-space: nowrap;
+    }
+  }
+}

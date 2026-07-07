@@ -1,10 +1,14 @@
+import './SlideEditorCanvasComp.scss';
+
 import { useCallback, useRef } from 'react';
 
 import { defaultRangeSize } from './CanvasController';
+import { useSlideCanvasScale } from './canvasEventHelpers';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { onCanvasKeyboardEvent } from '../slideEditingKeyboardEventHelpers';
 import { MultiContextRender } from '../../helper/MultiContextRender';
+import { useAppEffect } from '../../helper/debuggerHelpers';
 import { type useEditingCanvasContextValue } from '../canvasEditingHelpers';
 import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
@@ -98,14 +102,30 @@ export default function SlideEditorCanvasComp({
         ],
     );
 
+    // `useZoomingRegistering` snapshots `value` into a ref that is only
+    // refreshed when this component re-renders. Reading
+    // `canvasController.scale` directly here would never re-render on its
+    // own scale changes (only the sibling `SlideEditorCanvasScalingComp`
+    // subscribes to those), so every Ctrl+Scroll after the first would
+    // recompute from a stale base value and appear to do nothing.
+    const scale = useSlideCanvasScale(canvasController);
     const containerRef = useRef<HTMLDivElement | null>(null);
     useZoomingRegistering(containerRef, {
-        value: canvasController.scale * 10,
-        setValue: (scale) => {
-            canvasController.scale = scale / 10;
+        value: scale * 10,
+        setValue: (newScale) => {
+            canvasController.scale = newScale / 10;
         },
         defaultSize: defaultRangeSize,
     });
+
+    useAppEffect(() => {
+        canvasController.focusEditor = () => {
+            containerRef.current?.focus();
+        };
+        return () => {
+            canvasController.focusEditor = () => {};
+        };
+    }, [canvasController]);
 
     return (
         <div className="card w-100 h-100 app-overflow-hidden">
@@ -121,7 +141,7 @@ export default function SlideEditorCanvasComp({
                 <EditorComp contextData={contextData} />
             </div>
             <div className="card-footer w-100 m-0 p-0">
-                <div className="w-100 d-flex">
+                <div className="slide-editor-canvas-footer w-100 d-flex">
                     <VaryAppDocumentContext
                         value={canvasController.appDocument}
                     >

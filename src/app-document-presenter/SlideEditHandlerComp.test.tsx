@@ -132,7 +132,8 @@ describe('SlideEditHandlerComp', () => {
 
         appDocumentGetItemByIdMock
             .mockResolvedValueOnce(refreshedSlide)
-            .mockResolvedValueOnce(null);
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(refreshedSlide);
 
         await act(async () => {
             root.render(<SlideEditHandlerComp />);
@@ -196,6 +197,15 @@ describe('SlideEditHandlerComp', () => {
         });
 
         expect(appDocumentGetItemByIdMock).toHaveBeenCalledTimes(2);
+        expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
+        expect(container.textContent).toContain('Updated slide');
+
+        await act(async () => {
+            await fileSourceCallbacks[1]?.({ eventType: 'discard' });
+            await flushAsyncEvents();
+        });
+
+        expect(appDocumentGetItemByIdMock).toHaveBeenCalledTimes(3);
         expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
         expect(container.textContent).toContain('Updated slide');
 

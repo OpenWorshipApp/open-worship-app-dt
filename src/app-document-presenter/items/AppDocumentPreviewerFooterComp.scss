@@ -1,0 +1,21 @@
+.app-document-previewer-footer {
+  border-top: 1px solid var(--bs-border-color, #cccccc2f);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--bs-info-rgb), 0.04),
+    rgba(var(--bs-info-rgb), 0)
+  );
+
+  // Vertically center everything in the short (28px) bar. The zoom slider
+  // itself is styled globally by `.app-range`.
+  .app-flex-item {
+    align-items: center;
+  }
+
+  // Document-name preview reads as a quiet chip rather than filling the bar.
+  .app-ellipsis-left {
+    align-self: center;
+    flex: 0 1 auto;
+    opacity: 0.8;
+  }
+}

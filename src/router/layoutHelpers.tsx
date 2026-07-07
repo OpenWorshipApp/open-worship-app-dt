@@ -5,6 +5,7 @@ import AppDocument from '../app-document-list/AppDocument';
 import type Slide from '../app-document-list/Slide';
 import { useAppEffectAsync } from '../helper/debuggerHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
+import { checkIsSameValues } from '../helper/helpers';
 import {
     getSelectedVaryAppDocument,
     getSelectedEditingSlide,
@@ -20,8 +21,10 @@ import type { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHe
 import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
 import { type AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
 import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardEventHelpers';
+import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
@@ -245,22 +248,67 @@ export function useAppDocumentContextValues() {
         };
     }, [slide, varyAppDocument, holdingSlides, setSlide1]);
 
-    const handleFileUpdate = useCallback(async () => {
-        if (
-            varyAppDocument === null ||
-            !AppDocument.checkIsThisType(varyAppDocument)
-        ) {
-            return;
-        }
-        const slides = await varyAppDocument.getSlides();
-        const newSlide =
-            slides.find((item) => {
-                return slide !== null && item.checkIsSame(slide);
-            }) ??
-            slides[0] ??
-            null;
-        setSlide1(newSlide);
-    }, [varyAppDocument, slide, setSlide1]);
+    const handleFileUpdate = useCallback(
+        async (data?: any) => {
+            if (
+                varyAppDocument === null ||
+                !AppDocument.checkIsThisType(varyAppDocument)
+            ) {
+                return;
+            }
+            // Distinguish a self-write echo from a genuine external change.
+            // Our own editing/saving fires history-update events; re-applying
+            // them reverts in-progress edits (the a->b->c glitch, where a
+            // late "b" save event overwrites the current "c" editor state).
+            // Only history navigation (undo/redo/discard) should refresh the
+            // editor
+            // from a history event; other history-editing echoes are ignored.
+            const isHistoryNavigation = checkIsHistoryMovementEventType(
+                data?.eventType,
+            );
+            if (data?.isHistoryEditing === true && !isHistoryNavigation) {
+                return;
+            }
+            const slides = await varyAppDocument.getSlides();
+            const matchedSlide =
+                slides.find((item) => {
+                    return slide !== null && item.checkIsSame(slide);
+                }) ?? null;
+            // Never silently jump the editor to an unrelated slide. If the
+            // slide the user is currently viewing no longer exists at this
+            // point in the document's history (e.g. an Undo/Redo/Discard
+            // moved past the point where it was created/still exists), fall
+            // back to the first slide but tell the user why their view
+            // changed, instead of swapping it out from under them with no
+            // indication (this previously looked like silent data loss).
+            if (matchedSlide === null) {
+                if (slide !== null && slides.length > 0) {
+                    showSimpleToast(
+                        'Slide History',
+                        'The slide you were viewing no longer exists at ' +
+                            'this point in history; switched to the first ' +
+                            'slide instead.',
+                    );
+                }
+                setSlide1(slides[0] ?? null);
+                return;
+            }
+            // Guard against redundant/self echoes: only refresh the editor
+            // when the saved value actually differs from what the editor
+            // currently holds. If a different application changed the file,
+            // the content differs and we apply it; if the file was saved with
+            // the current editing value, we keep the live editor state.
+            if (
+                !isHistoryNavigation &&
+                slide !== null &&
+                checkIsSameValues(matchedSlide.toJson(), slide.toJson())
+            ) {
+                return;
+            }
+            setSlide1(matchedSlide);
+        },
+        [varyAppDocument, slide, setSlide1],
+    );
 
     useFileSourceEvents(
         ['update'],

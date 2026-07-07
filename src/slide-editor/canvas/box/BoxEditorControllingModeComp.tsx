@@ -4,6 +4,7 @@ import CanvasItem, {
     useCanvasItemContext,
     useCanvasItemPropsContext,
     useSetEditingCanvasItem,
+    useSetSelectedCanvasItems,
 } from '../CanvasItem';
 import { BoxEditorNormalImageRender } from './BoxEditorNormalViewImageModeComp';
 import {
@@ -15,6 +16,7 @@ import { useCanvasControllerContext } from '../CanvasController';
 import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { useBoxEditorControllerContext } from '../../BoxEditorController';
+import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
 
 function BoxEditorCanvasItemRender() {
     const canvasItem = useCanvasItemContext();
@@ -40,9 +42,19 @@ export default function BoxEditorControllingModeComp() {
     const canvasItem = useCanvasItemContext();
     const boxEditorController = useBoxEditorControllerContext();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
-    const handleClick = useCallback((event: MouseEvent) => {
-        event.stopPropagation();
-    }, []);
+    const handleSelectCanvasItem = useSetSelectedCanvasItems();
+    const handleClick = useCallback(
+        (event: MouseEvent) => {
+            event.stopPropagation();
+            // Shift/Ctrl click on an already-selected box removes it from
+            // the current selection.
+            if (checkIsAppendSelectionModifier(event)) {
+                handleSelectCanvasItem(canvasItem, { isAppend: true });
+            }
+            canvasController.focusEditor();
+        },
+        [canvasController, handleSelectCanvasItem, canvasItem],
+    );
     const handleDoubleClick = useCallback(
         (event: MouseEvent) => {
             event.stopPropagation();
@@ -63,8 +75,12 @@ export default function BoxEditorControllingModeComp() {
                     if (info === null) {
                         return;
                     }
-                    canvasItem.applyProps(info);
-                    canvasController.applyEditItem(canvasItem);
+                    canvasController.editCanvasItemById(
+                        canvasItem.id,
+                        (latestCanvasItem) => {
+                            latestCanvasItem.applyProps(info);
+                        },
+                    );
                 });
                 return () => {
                     boxEditorController.release();

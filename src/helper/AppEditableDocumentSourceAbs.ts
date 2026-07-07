@@ -142,7 +142,7 @@ export default abstract class AppEditableDocumentSourceAbs<
     async setJsonData(jsonData: T) {
         const Class = this.constructor as typeof AppEditableDocumentSourceAbs;
         const jsonString = Class.toJsonString(jsonData);
-        this.editingHistoryManager.addHistory(jsonString);
+        return this.editingHistoryManager.addHistory(jsonString);
     }
 
     async getMetadata() {

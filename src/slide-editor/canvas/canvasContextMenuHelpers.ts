@@ -143,9 +143,5 @@ export function showCanvasItemContextMenu(
             },
         },
     ];
-    showAppContextMenu(event, menuItems, {
-        style: {
-            minWidth: '70px',
-        },
-    });
+    showAppContextMenu(event, menuItems);
 }

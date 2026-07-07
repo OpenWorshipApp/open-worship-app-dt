@@ -44,6 +44,9 @@ export type ToolingTextType = {
     textHorizontalAlignment?: HAlignmentType;
     textVerticalAlignment?: VAlignmentType;
 };
+
+export const SCRIPT_SAFE_LINE_HEIGHT = 1.35;
+
 class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
     static genStyle(props: CanvasItemTextPropsType) {
         const style: CSSProperties = {
@@ -51,6 +54,8 @@ class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
             width: '100%',
             height: '100%',
             fontSize: `${props.fontSize}px`,
+            // Keep ascenders/combining marks visible for complex scripts (Khmer, etc.).
+            lineHeight: SCRIPT_SAFE_LINE_HEIGHT,
             fontFamily: props.fontFamily ?? '',
             fontWeight: props.fontWeight ?? '',
             color: props.color,

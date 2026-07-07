@@ -1,0 +1,62 @@
+.app-tool {
+  margin: 6px 4px;
+  border: 1px solid var(--bs-border-color, #cccccc2f);
+  border-radius: var(--bs-border-radius);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--bs-info-rgb), 0.05),
+    rgba(var(--bs-info-rgb), 0)
+  );
+
+  > .app-tool-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(var(--bs-info-rgb), 0.9);
+    border-bottom: 1px solid var(--bs-border-color, #cccccc2f);
+
+    // small accent bar before the label
+    &::before {
+      content: '';
+      width: 3px;
+      height: 0.8em;
+      border-radius: 2px;
+      background: rgba(var(--bs-info-rgb), 0.75);
+    }
+  }
+
+  > .app-tool-body {
+    padding: 8px;
+  }
+
+  // Nested sub-sections render lighter so we don't get heavy box-in-box
+  // borders. They read as labelled groups inside the parent card.
+  .app-tool {
+    margin: 8px 0 4px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+
+    > .app-tool-title {
+      padding: 0 0 2px;
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: rgba(var(--bs-body-color-rgb, 222, 226, 230), 0.6);
+      border-bottom: 1px dashed var(--bs-border-color, #cccccc26);
+
+      &::before {
+        display: none;
+      }
+    }
+
+    > .app-tool-body {
+      padding: 6px 2px;
+    }
+  }
+}

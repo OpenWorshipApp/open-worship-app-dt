@@ -43,7 +43,7 @@ export default function VirtualBGColorSettingComp({
         [onDocxPreviewBackgroundColorChange],
     );
     return (
-        <div className="d-flex align-items-center">
+        <div className="docx-bg-color d-flex align-items-center">
             <input
                 ref={colorInputRef}
                 className="visually-hidden position-absolute"

@@ -11,7 +11,7 @@
   .app-context-menu {
     position: fixed;
     max-width: 210px;
-    min-width: 50px;
+    min-width: 120px;
     border-radius: var(--bs-border-radius);
     padding: 10px 0;
     z-index: $z-index-context-menu + 1;

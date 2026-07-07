@@ -1,3 +1,5 @@
+import './AppRangeComp.scss';
+
 import {
     type ChangeEvent,
     type RefObject,
@@ -222,7 +224,7 @@ export default function AppRangeComp({
     }, [setLocalValue1, localValue, defaultSize.step]);
     return (
         <div
-            className="form form-inline d-flex mx-2 px-1 py-0"
+            className="form form-inline d-flex app-range"
             title={title}
             style={{ minWidth: '100px' }}
         >
