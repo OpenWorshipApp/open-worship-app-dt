@@ -214,6 +214,7 @@ function RenderWebInfoComp({
                     <BackgroundWebPlaceHolderComp
                         height={height}
                         imageData={imageData}
+                        isPlaying={isPlaying}
                     />
                 )}
             </div>

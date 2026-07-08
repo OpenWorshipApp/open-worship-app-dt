@@ -7,6 +7,7 @@ import {
     useSetEditingCanvasItem,
     useSetSelectedCanvasItems,
 } from '../CanvasItem';
+import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
 
 export default function BoxEditorNormalWrapperComp({
     style,
@@ -26,9 +27,11 @@ export default function BoxEditorNormalWrapperComp({
     const handleClick = useCallback(
         (event: MouseEvent) => {
             event.stopPropagation();
-            handleCanvasItemControlling(canvasItem);
+            const isAppend = checkIsAppendSelectionModifier(event);
+            handleCanvasItemControlling(canvasItem, { isAppend });
+            canvasController.focusEditor();
         },
-        [handleCanvasItemControlling, canvasItem],
+        [handleCanvasItemControlling, canvasItem, canvasController],
     );
     return (
         <div

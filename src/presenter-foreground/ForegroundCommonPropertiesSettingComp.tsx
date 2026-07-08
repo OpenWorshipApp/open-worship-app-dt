@@ -1,138 +1,152 @@
-import { type ChangeEvent, useCallback } from 'react';
+import {
+    type ChangeEvent,
+    type CSSProperties,
+    type ReactNode,
+    useState,
+} from 'react';
 
 import { tran } from '../lang/langHelpers';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
-import {
-    getSetting,
-    useStateSettingBoolean,
-    useStateSettingNumber,
-    useStateSettingString,
-} from '../helper/settingHelpers';
+import { getSetting } from '../helper/settingHelpers';
 import ColorPicker from '../others/color/ColorPicker';
-import { HEX_COLOR_WHITE } from '../others/color/colorHelpers';
+import {
+    type AppColorType,
+    HEX_COLOR_WHITE,
+} from '../others/color/colorHelpers';
 
-const FONT_FAMILY_SETTING_NAME = 'foreground-common-font-family';
-const FONT_WEIGHT_SETTING_NAME = 'foreground-common-font-weight';
-const TEXT_COLOR_SETTING_NAME = 'foreground-common-color';
-const BACKGROUND_COLOR_SETTING_NAME = 'foreground-common-background-color';
-const BACKDROP_FILTER_SETTING_NAME = 'foreground-common-backdrop-filter';
-const DEFAULT_TEXT_COLOR = HEX_COLOR_WHITE;
-const DEFAULT_BACKGROUND_COLOR = '#000080AA';
-const DEFAULT_BACKDROP_FILTER = 5;
+export const DEFAULT_TEXT_COLOR = HEX_COLOR_WHITE;
+export const DEFAULT_BACKGROUND_COLOR: AppColorType = '#000080AA';
+export const DEFAULT_BACKDROP_FILTER = 5;
 
-export function getForegroundCommonProperties() {
-    const backdropFilterSetting =
-        getSetting(BACKDROP_FILTER_SETTING_NAME) ?? DEFAULT_BACKDROP_FILTER;
+export function genCommonStyleSettingNames(prefix: string) {
     return {
-        fontFamily: getSetting(FONT_FAMILY_SETTING_NAME) ?? '',
-        fontWeight: getSetting(FONT_WEIGHT_SETTING_NAME) ?? '',
-        color: getSetting(TEXT_COLOR_SETTING_NAME) ?? DEFAULT_TEXT_COLOR,
+        fontFamily: `${prefix}-common-font-family`,
+        fontWeight: `${prefix}-common-font-weight`,
+        color: `${prefix}-common-color`,
+        backgroundColor: `${prefix}-common-background-color`,
+        backdropFilter: `${prefix}-common-backdrop-filter`,
+    };
+}
+
+export function getForegroundCommonProperties(prefix: string) {
+    const names = genCommonStyleSettingNames(prefix);
+    const backdropFilterSetting =
+        getSetting(names.backdropFilter) ?? DEFAULT_BACKDROP_FILTER;
+    return {
+        fontFamily: getSetting(names.fontFamily) ?? '',
+        fontWeight: getSetting(names.fontWeight) ?? '',
+        color: getSetting(names.color) ?? DEFAULT_TEXT_COLOR,
         backgroundColor:
-            getSetting(BACKGROUND_COLOR_SETTING_NAME) ??
-            DEFAULT_BACKGROUND_COLOR,
+            getSetting(names.backgroundColor) ?? DEFAULT_BACKGROUND_COLOR,
         backdropFilter: `blur(${backdropFilterSetting}px)`,
     };
 }
 
-export default function ForegroundCommonPropertiesSettingComp() {
-    const [isOpened, setIsOpened] = useStateSettingBoolean(
-        `foreground-show-common-properties-setting`,
-        false,
-    );
-    const [fontFamily, setFontFamily] = useStateSettingString(
-        FONT_FAMILY_SETTING_NAME,
-    );
-    const [fontWeight, setFontWeight] = useStateSettingString(
-        FONT_WEIGHT_SETTING_NAME,
-    );
-    const [color, setColor] = useStateSettingString(
-        TEXT_COLOR_SETTING_NAME,
-        DEFAULT_TEXT_COLOR,
-    );
-    const [backgroundColor, setBackgroundColor] = useStateSettingString(
-        BACKGROUND_COLOR_SETTING_NAME,
-        DEFAULT_BACKGROUND_COLOR,
-    );
-    const [backdropFilter, setBackdropFilter] = useStateSettingNumber(
-        BACKDROP_FILTER_SETTING_NAME,
-        DEFAULT_BACKDROP_FILTER,
-    );
-    const handleOpen = useCallback(() => {
-        setIsOpened(true);
-    }, [setIsOpened]);
-    const handleClose = useCallback(() => {
-        setIsOpened(false);
-    }, [setIsOpened]);
-    const handleBackdropFilterChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
-            setBackdropFilter(Number.parseInt(e.target.value, 10));
-        },
-        [setBackdropFilter],
-    );
-    const handleTextColorReset = useCallback(() => {
-        setColor(DEFAULT_TEXT_COLOR);
-    }, [setColor]);
-    const handleTextColorChange = useCallback(
-        (newColor: string) => {
-            setColor(newColor as any);
-        },
-        [setColor],
-    );
-    const handleBgColorReset = useCallback(() => {
-        setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
-    }, [setBackgroundColor]);
-    const handleBgColorChange = useCallback(
-        (newColor: string) => {
-            setBackgroundColor(newColor as any);
-        },
-        [setBackgroundColor],
-    );
-    if (!isOpened) {
-        return (
-            <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={handleOpen}
-            >
-                <i className="bi bi-chevron-right" />
-                <i className="bi bi-gear" /> {tran('Properties')}
-            </button>
-        );
-    }
+function PropCardComp({
+    iconClassName,
+    label,
+    style,
+    children,
+}: Readonly<{
+    iconClassName: string;
+    label: string;
+    style?: CSSProperties;
+    children: ReactNode;
+}>) {
     return (
-        <div>
-            <div>
-                <button
-                    className="btn btn-sm btn-outline-secondary"
-                    onClick={handleClose}
-                >
-                    <i className="bi bi-chevron-down" />
-                    <i className="bi bi-gear" /> {tran('Properties')}
-                </button>
+        <div className="app-border-white-round p-2" style={style}>
+            <div className="d-flex align-items-center gap-2 mb-2">
+                <i className={`${iconClassName} opacity-75`} />
+                <strong>{label}</strong>
             </div>
+            {children}
+        </div>
+    );
+}
+
+function ColorPropCardComp({
+    iconClassName,
+    label,
+    color,
+    children,
+}: Readonly<{
+    iconClassName: string;
+    label: string;
+    color: string;
+    children: ReactNode;
+}>) {
+    const [isOpened, setIsOpened] = useState(false);
+    return (
+        <div className="app-border-white-round p-2">
             <div
-                className={
-                    'd-flex flex-wrap justify-content-start ' +
-                    'align-items-start app-inner-shadow p-2'
-                }
+                className="d-flex align-items-center gap-2 app-caught-hover-pointer"
+                onClick={() => setIsOpened((old) => !old)}
+                title={label}
             >
-                <div>
-                    <div className="app-border-white-round p-1 m-1">
-                        <strong>Font:</strong>
-                        <FontFamilyControlComp
-                            fontFamily={fontFamily}
-                            setFontFamily={setFontFamily}
-                            fontWeight={fontWeight}
-                            setFontWeight={setFontWeight}
-                            isShowingLabel={false}
-                        />
-                    </div>
-                    <div
-                        className="input-group input-group-sm m-1 app-border-white-round"
-                        style={{
-                            width: '250px',
-                        }}
-                    >
-                        <small>{tran('Backdrop Filter (PX):')}</small>
+                <i className={`bi bi-chevron-${isOpened ? 'down' : 'right'}`} />
+                <i
+                    className={iconClassName}
+                    style={{
+                        color,
+                        textShadow: '0 0 2px rgba(128,128,128,0.9)',
+                    }}
+                />
+                <strong>{label}</strong>
+            </div>
+            {isOpened ? <div className="mt-2">{children}</div> : null}
+        </div>
+    );
+}
+
+export default function CommonStyleControlsComp({
+    fontFamily,
+    setFontFamily,
+    fontWeight,
+    setFontWeight,
+    color,
+    setColor,
+    backgroundColor,
+    setBackgroundColor,
+    backdropFilter,
+    setBackdropFilter,
+}: Readonly<{
+    fontFamily: string;
+    setFontFamily: (value: string) => void;
+    fontWeight: string;
+    setFontWeight: (value: string) => void;
+    color: AppColorType;
+    setColor: (value: AppColorType) => void;
+    backgroundColor: AppColorType;
+    setBackgroundColor: (value: AppColorType) => void;
+    backdropFilter: number;
+    setBackdropFilter: (value: number) => void;
+}>) {
+    const handleBackdropFilterChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setBackdropFilter(Number.parseInt(e.target.value, 10) || 0);
+    };
+    return (
+        <div className="d-flex flex-wrap gap-2 align-items-start p-1">
+            <div
+                className="d-flex flex-column gap-2"
+                style={{ minWidth: '260px' }}
+            >
+                <PropCardComp
+                    iconClassName="bi bi-fonts"
+                    label={tran('Font Family')}
+                >
+                    <FontFamilyControlComp
+                        fontFamily={fontFamily}
+                        setFontFamily={setFontFamily}
+                        fontWeight={fontWeight}
+                        setFontWeight={setFontWeight}
+                        isShowingLabel={false}
+                    />
+                </PropCardComp>
+                <PropCardComp
+                    iconClassName="bi bi-droplet-half"
+                    label={tran('Backdrop Filter')}
+                >
+                    <div className="input-group input-group-sm">
                         <input
                             className="form-control form-control-sm"
                             type="number"
@@ -140,32 +154,40 @@ export default function ForegroundCommonPropertiesSettingComp() {
                             value={backdropFilter}
                             onChange={handleBackdropFilterChange}
                         />
+                        <span className="input-group-text">px</span>
                     </div>
-                </div>
-                <div
-                    className="p-1 m-1 app-border-white-round"
-                    style={{ minWidth: '280px' }}
+                </PropCardComp>
+            </div>
+            <div
+                className="d-flex flex-column gap-2"
+                style={{ minWidth: '300px' }}
+            >
+                <ColorPropCardComp
+                    iconClassName="bi bi-palette"
+                    label={tran('Text Color:')}
+                    color={color}
                 >
-                    <strong>{tran('Text Color:')}</strong>
                     <ColorPicker
                         color={color}
                         defaultColor={DEFAULT_TEXT_COLOR}
-                        onNoColor={handleTextColorReset}
-                        onColorChange={handleTextColorChange}
+                        onNoColor={() => setColor(DEFAULT_TEXT_COLOR)}
+                        onColorChange={setColor}
                     />
-                </div>
-                <div
-                    className="p-1 m-1 app-border-white-round"
-                    style={{ minWidth: '280px' }}
+                </ColorPropCardComp>
+                <ColorPropCardComp
+                    iconClassName="bi bi-paint-bucket"
+                    label={tran('Background Color:')}
+                    color={backgroundColor}
                 >
-                    <strong>{tran('Background Color:')}</strong>
                     <ColorPicker
                         color={backgroundColor}
                         defaultColor={DEFAULT_BACKGROUND_COLOR}
-                        onNoColor={handleBgColorReset}
-                        onColorChange={handleBgColorChange}
+                        onNoColor={() =>
+                            setBackgroundColor(DEFAULT_BACKGROUND_COLOR)
+                        }
+                        onColorChange={setBackgroundColor}
                     />
-                </div>
+                </ColorPropCardComp>
             </div>
         </div>
     );

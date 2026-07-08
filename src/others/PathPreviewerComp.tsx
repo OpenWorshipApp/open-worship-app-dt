@@ -66,13 +66,14 @@ export function PathPreviewerComp({
     return (
         <div
             className={
-                'app-ellipsis-left app-border-white-round px-1 flex-fill' +
+                'app-ellipsis-left app-border-white-round px-1 flex-fill text-muted' +
                 ` ${onClick ? 'pointer' : ''}`
             }
             onClick={onClick}
             title={isValidPath ? cleanedDirectoryPath : tran('Invalid Path')}
             style={{
                 color: isValidPath ? '' : 'red',
+                fontSize: '0.9rem',
             }}
             onContextMenu={handleContextMenuOpening}
         >

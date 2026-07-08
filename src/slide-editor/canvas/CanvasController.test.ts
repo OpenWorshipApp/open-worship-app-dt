@@ -193,18 +193,55 @@ describe('CanvasController', () => {
             canvasItems: [existingItem],
         });
 
-        controller.applyEditItem(replacementItem as any);
-        controller.applyEditItem(missingItem as any);
+        controller.editCanvasItemById(replacementItem.id, (latestItem) => {
+            latestItem.applyProps(replacementItem.props);
+        });
+        controller.editCanvasItemById(missingItem.id, (latestItem) => {
+            latestItem.applyProps(missingItem.props);
+        });
 
         expect(controller.scale).toBe(2);
         expect(mocks.setSettingMock).toHaveBeenCalledWith(
             'canvas-editor-scale',
             '2',
         );
-        expect(canvas.canvasItems[0]).toBe(replacementItem);
+        expect(canvas.canvasItems[0]?.id).toBe(replacementItem.id);
+        expect(canvas.canvasItems[0]?.props.left).toBe(50);
         expect(appDocument.updateSlide).toHaveBeenCalledWith(canvas.slide);
-        expect(replacementItem.fireEditEvent).toHaveBeenCalledTimes(1);
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Edit Canvas Item',
+            'Canvas item not found',
+        );
+    });
+
+    test('edits latest items by id and commits once for multi-item edits', () => {
+        const firstItem = createCanvasItem({ id: 1, left: 10, top: 20 });
+        const secondItem = createCanvasItem({ id: 2, left: 30, top: 40 });
+        const { appDocument, canvas, controller } = createController([
+            firstItem,
+            secondItem,
+        ]);
+
+        const editedItems = controller.editCanvasItemsByIds(
+            [1, 2],
+            (item) => {
+                item.applyProps({ left: item.props.left + 5 });
+            },
+            { showNotFoundToast: false },
+        );
+
+        expect(editedItems).toHaveLength(2);
+        expect(canvas.canvasItems[0]?.props.left).toBe(15);
+        expect(canvas.canvasItems[1]?.props.left).toBe(35);
+        expect(appDocument.updateSlide).toHaveBeenCalledTimes(1);
+        expect(firstItem.fireEditEvent).toHaveBeenCalledTimes(1);
+        expect(secondItem.fireEditEvent).toHaveBeenCalledTimes(1);
+
+        const result = controller.editCanvasItemsByIds([999], () => {}, {
+            showNotFoundToast: false,
+        });
+        expect(result).toEqual([]);
+        expect(mocks.showSimpleToastMock).not.toHaveBeenCalledWith(
             'Edit Canvas Item',
             'Canvas item not found',
         );

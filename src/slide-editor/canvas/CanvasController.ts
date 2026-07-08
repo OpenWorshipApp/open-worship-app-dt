@@ -1,4 +1,4 @@
-import EventHandler from '../../event/EventHandler';
+import EventHandler, { type ListenerType } from '../../event/EventHandler';
 import type Canvas from './Canvas';
 import type { CanvasItemPropsType } from './CanvasItem';
 import type CanvasItem from './CanvasItem';
@@ -29,6 +29,9 @@ export const defaultRangeSize = {
 };
 
 export type CanvasItemEventDataType = { canvasItems: CanvasItem<any>[] };
+type EditCanvasItemsOptionsType = {
+    showNotFoundToast?: boolean;
+};
 
 class CanvasController extends EventHandler<CanvasControllerEventType> {
     readonly MOVING_OFFSET = 20;
@@ -37,6 +40,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     readonly appDocument: AppDocument;
     readonly canvas: Canvas;
     public toCenterView: () => void = () => {};
+    public focusEditor: () => void = () => {};
     public onArrowing: (event: KeyboardEvent) => void = () => {};
 
     constructor(appDocument: AppDocument, canvas: Canvas) {
@@ -68,18 +72,52 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         super.addPropEvent(eventName, data);
     }
 
-    applyEditItem(canvasItem: CanvasItem<any>) {
-        const canvasItems = this.canvas.canvasItems;
-        const index = canvasItems.findIndex((item) => {
-            return item.checkIsSame(canvasItem);
-        });
-        if (index === -1) {
-            showSimpleToast('Edit Canvas Item', 'Canvas item not found');
-            return;
+    editCanvasItemsByIds(
+        ids: number[],
+        mutator: (canvasItem: CanvasItem<any>) => void,
+        options: EditCanvasItemsOptionsType = {},
+    ) {
+        const { showNotFoundToast = true } = options;
+        if (ids.length === 0) {
+            return [];
         }
-        canvasItems[index] = canvasItem;
-        this.setCanvasItems(canvasItems);
-        canvasItem.fireEditEvent();
+
+        const latestCanvasItems = this.canvas.canvasItems;
+        const idSet = new Set(ids);
+        const matchedCanvasItems = latestCanvasItems.filter((canvasItem) => {
+            return idSet.has(canvasItem.id);
+        });
+
+        if (matchedCanvasItems.length === 0) {
+            if (showNotFoundToast) {
+                showSimpleToast('Edit Canvas Item', 'Canvas item not found');
+            }
+            return [];
+        }
+
+        for (const matchedCanvasItem of matchedCanvasItems) {
+            mutator(matchedCanvasItem);
+        }
+
+        this.setCanvasItems(latestCanvasItems);
+        for (const matchedCanvasItem of matchedCanvasItems) {
+            matchedCanvasItem.fireEditEvent();
+        }
+
+        return matchedCanvasItems;
+    }
+
+    editCanvasItemById(
+        id: number,
+        mutator: (canvasItem: CanvasItem<any>) => void,
+        options: EditCanvasItemsOptionsType = {},
+    ) {
+        const [matchedCanvasItem] = this.editCanvasItemsByIds(
+            [id],
+            mutator,
+            options,
+        );
+        return matchedCanvasItem;
     }
 
     fireUpdateEvent() {
@@ -362,7 +400,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
 
     itemRegisterEventListener(
         eventNames: CanvasControllerEventType[],
-        listener: (data: CanvasItemEventDataType) => void,
+        listener: ListenerType<CanvasItemEventDataType>,
     ) {
         return super.registerEventListener<CanvasItemEventDataType>(
             eventNames,

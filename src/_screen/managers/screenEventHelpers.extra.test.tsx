@@ -83,7 +83,7 @@ describe('screenEventHelpers', () => {
     test('uses instance event handlers and cleans them up', async () => {
         const { useScreenEvents } = await import('./screenEventHelpers');
 
-        let updateCallback: ((data: string) => void) | undefined;
+        let updateCallback: ((data: string, time: number) => void) | undefined;
         const staticHandler = {
             registerEventListener: vi.fn(),
             unregisterEventListener: vi.fn(),
@@ -98,13 +98,13 @@ describe('screenEventHelpers', () => {
         const onData = vi.fn();
 
         function Host() {
-            const count = useScreenEvents(
+            useScreenEvents(
                 ['update'],
                 staticHandler as any,
                 instanceHandler as any,
                 onData,
             );
-            return <output data-count={`${count}`} />;
+            return null;
         }
 
         await act(async () => {
@@ -116,14 +116,12 @@ describe('screenEventHelpers', () => {
             expect.any(Function),
         );
         expect(staticHandler.registerEventListener).not.toHaveBeenCalled();
-        expect(container.querySelector('output')?.dataset.count).toBe('0');
 
         await act(async () => {
-            updateCallback?.('payload');
+            updateCallback?.('payload', Date.now());
         });
 
-        expect(onData).toHaveBeenCalledWith('payload');
-        expect(container.querySelector('output')?.dataset.count).toBe('1');
+        expect(onData).toHaveBeenCalledWith('payload', expect.any(Number));
 
         await act(async () => {
             root.unmount();
@@ -138,7 +136,7 @@ describe('screenEventHelpers', () => {
     test('keeps a single registration while dispatching to the latest callback', async () => {
         const { useScreenEvents } = await import('./screenEventHelpers');
 
-        let updateCallback: ((data: string) => void) | undefined;
+        let updateCallback: ((data: string, time: number) => void) | undefined;
         const staticHandler = {
             registerEventListener: vi.fn((_events: string[], callback) => {
                 updateCallback = callback;
@@ -152,13 +150,13 @@ describe('screenEventHelpers', () => {
         function Host({
             callback,
         }: Readonly<{ callback: (data: any) => void }>) {
-            const count = useScreenEvents(
+            useScreenEvents(
                 ['update'],
                 staticHandler as any,
                 undefined,
                 callback,
             );
-            return <output data-count={`${count}`} />;
+            return null;
         }
 
         await act(async () => {
@@ -173,11 +171,13 @@ describe('screenEventHelpers', () => {
         expect(staticHandler.unregisterEventListener).not.toHaveBeenCalled();
 
         await act(async () => {
-            updateCallback?.('payload');
+            updateCallback?.('payload', Date.now());
         });
         expect(firstCallback).not.toHaveBeenCalled();
-        expect(secondCallback).toHaveBeenCalledWith('payload');
-        expect(container.querySelector('output')?.dataset.count).toBe('1');
+        expect(secondCallback).toHaveBeenCalledWith(
+            'payload',
+            expect.any(Number),
+        );
     });
 
     test('re-registers listeners when the events list changes', async () => {
@@ -237,12 +237,12 @@ describe('screenEventHelpers', () => {
         screenForegroundRegisterMock.mockReturnValue(['foreground-listener']);
 
         function Host() {
-            const count = useScreenEvents(['sync'], staticHandler as any);
+            useScreenEvents(['sync'], staticHandler as any);
             useScreenBackgroundManagerEvents(['update']);
             useScreenVaryAppDocumentManagerEvents(['update']);
             useScreenBibleManagerEvents(['update']);
             useScreenForegroundManagerEvents(['update']);
-            return <output data-count={`${count}`} />;
+            return null;
         }
 
         await act(async () => {
@@ -273,7 +273,6 @@ describe('screenEventHelpers', () => {
         await act(async () => {
             staticCallback?.();
         });
-        expect(container.querySelector('output')?.dataset.count).toBe('1');
 
         await act(async () => {
             root.unmount();

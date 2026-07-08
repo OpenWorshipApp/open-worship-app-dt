@@ -165,42 +165,59 @@ function TimeInSetComp({
         dragStore.onDropped = handleByDropped;
     }, [handleByDropped]);
     return (
-        <div className="d-flex flex-column">
+        <div className="d-flex flex-column gap-2">
             <div className="btn-group">
                 <button
                     className="btn btn-outline-secondary"
+                    title={tran('Use this device’s timezone')}
                     onClick={handleUseCurrentTimezone}
                 >
-                    Use Current Timezone
+                    <i className="bi bi-geo-alt" />{' '}
+                    {tran('Use Current Timezone')}
                 </button>
                 <button
                     className="btn btn-outline-secondary"
+                    title={tran('Pick a city to set its timezone')}
                     onClick={handleChooseCity}
                 >
-                    {tran('Choose City')}
+                    <i className="bi bi-globe-americas" /> {tran('Choose City')}
                 </button>
             </div>
-            <hr />
-            <div className="d-flex">
-                <div className="input-group" style={{ width: '250px' }}>
-                    <div className="input-group-text">City:</div>
+            <div className="d-flex flex-wrap align-items-center gap-2">
+                <div
+                    className="input-group"
+                    style={{ width: '250px' }}
+                    title={tran('Label shown above the time')}
+                >
+                    <span className="input-group-text">
+                        <i className="bi bi-buildings" />
+                    </span>
                     <input
-                        className="form-control form-control-sm"
+                        className="form-control"
                         type="text"
+                        placeholder={tran('City')}
                         value={cityName}
                         onChange={handleCityNameChange}
                     />
                 </div>
-                <div className="input-group" style={{ width: '270px' }}>
-                    <div className="input-group-text">
-                        {tran('Timezone Minute Offset')}:
-                    </div>
+                <div
+                    className="input-group"
+                    style={{ width: '230px' }}
+                    title={tran('Timezone Minute Offset')}
+                >
+                    <span className="input-group-text">
+                        <i className="bi bi-clock" />
+                    </span>
+                    <span className="input-group-text">
+                        {tran('UTC Offset')}
+                    </span>
                     <input
-                        className="form-control form-control-sm"
+                        className="form-control"
                         type="number"
                         value={timezoneMinuteOffset}
                         onChange={handleTimezoneOffsetChange}
                     />
+                    <span className="input-group-text">min</span>
                 </div>
                 <div className="input-group-text">
                     <div className="form-check form-switch mb-0">
@@ -220,17 +237,16 @@ function TimeInSetComp({
                         </label>
                     </div>
                 </div>
-                <div>
-                    <button
-                        className="btn btn-secondary"
-                        onClick={handleShowing}
-                        onContextMenu={handleContextMenuOpening}
-                        draggable
-                        onDragStart={handleTimeDragStart}
-                    >
-                        {tran('Show Time')}
-                    </button>
-                </div>
+                <button
+                    className="btn btn-primary"
+                    title={tran('Show Time')}
+                    onClick={handleShowing}
+                    onContextMenu={handleContextMenuOpening}
+                    draggable
+                    onDragStart={handleTimeDragStart}
+                >
+                    <i className="bi bi-display" /> {tran('Show Time')}
+                </button>
             </div>
         </div>
     );

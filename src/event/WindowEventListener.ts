@@ -42,8 +42,8 @@ export function useWindowEvent<T>(
         const eventName = WindowEventListener.toEventMapperKey(eventMapper);
         const event = WindowEventListener.registerEventListener(
             [eventName],
-            (data: T) => {
-                listenerRef.current(data);
+            (data: T, time: number) => {
+                listenerRef.current(data, time);
             },
         );
         return () => {

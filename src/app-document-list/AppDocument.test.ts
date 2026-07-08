@@ -560,7 +560,6 @@ describe('AppDocument', () => {
             1,
             'slide-event',
             [{ menuElement: 'Slide Item' }, { menuElement: 'Extra' }],
-            { style: { minWidth: '70px' } },
         );
 
         documentSource.showHoldingSlidesContextMenu('holding-event', [
@@ -570,7 +569,6 @@ describe('AppDocument', () => {
             2,
             'holding-event',
             [{ menuElement: 'Slides Item' }],
-            { style: { minWidth: '70px' } },
         );
 
         const copiedSlidesSpy = vi

@@ -10,6 +10,7 @@ import { checkAreArraysEqual } from '../server/comparisonHelpers';
 import appProvider from '../server/appProvider';
 import { handleError } from './errorHelpers';
 import { notifyNewElementAdded } from './domHelpers';
+import { type ListenerType } from '../event/EventHandler';
 
 export const DirSourceContext = createContext<DirSource | null>(null);
 
@@ -123,12 +124,10 @@ export function useFileSourceRefreshEvents(
     events: FileSourceEventType[],
     filePath?: string,
 ) {
-    const [n, setN] = useState(0);
+    const [_n, setN] = useState(Date.now());
     useAppEffect(() => {
-        const update = () => {
-            setN((n) => {
-                return n + 1;
-            });
+        const update = (_data: any, time: number) => {
+            setN(time);
         };
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,
@@ -139,12 +138,11 @@ export function useFileSourceRefreshEvents(
             FileSource.unregisterEventListener(staticEvents);
         };
     }, [JSON.stringify(events), filePath]);
-    return n;
 }
 
 export function useFileSourceEvents<T>(
     events: FileSourceEventType[],
-    callback: (data: T) => void,
+    callback: ListenerType<T>,
     deps?: DependencyList,
     filePath?: string,
 ) {
@@ -153,8 +151,8 @@ export function useFileSourceEvents<T>(
     useAppEffect(() => {
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,
-            (data: T) => {
-                callbackRef.current(data);
+            (data: T, time: number) => {
+                callbackRef.current(data, time);
             },
             filePath,
         );

@@ -1,7 +1,6 @@
 import './PresenterForegroundComp.scss';
 
 import ForegroundCameraComp from './ForegroundCameraComp';
-import ForegroundCommonPropertiesSettingComp from './ForegroundCommonPropertiesSettingComp';
 import ForegroundCountDownComp from './ForegroundCountDownComp';
 import ForegroundImagesSlideShowComp from './ForegroundImagesSlideShowComp';
 import ForegroundMarqueeComp from './ForegroundMarqueeComp';
@@ -18,8 +17,6 @@ export default function PresenterForegroundComp() {
                 'p-2 app-zero-border-radius'
             }
         >
-            <ForegroundCommonPropertiesSettingComp />
-            <hr />
             <ForegroundMarqueeComp />
             <hr />
             <ForegroundQuickTextComp />

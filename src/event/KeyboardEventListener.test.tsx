@@ -202,7 +202,7 @@ describe('KeyboardEventListener', () => {
         );
         KeyboardEventListener.fireEvent(event as any);
         await flushAsyncEvents();
-        expect(listener).toHaveBeenCalledWith(event);
+        expect(listener).toHaveBeenCalledWith(event, expect.any(Number));
 
         KeyboardEventListener.unregisterEventListener(registered);
         KeyboardEventListener.fireEvent(event as any);

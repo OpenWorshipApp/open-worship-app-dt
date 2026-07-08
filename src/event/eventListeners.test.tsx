@@ -168,7 +168,7 @@ describe('event listeners', () => {
         const events: string[] = [];
 
         function Probe() {
-            useWindowEvent(
+            useWindowEvent<{ id: number }>(
                 { widget: 'context-menu', state: 'open' },
                 (payload) => {
                     events.push(`open:${payload.id}`);

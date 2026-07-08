@@ -55,6 +55,30 @@ type ShowScreenDataType = {
     displayId: number;
 };
 
+// Enumerating system fonts spawns PowerShell (Windows) / a shell helper on the
+// first call, which can take several seconds while the OS cold-loads its font
+// APIs. Cache the result for the whole app run so it happens once regardless of
+// how many windows/dropdowns request it (each renderer only caches per-window).
+let cachedFontListMap: Record<string, string[]> | null = null;
+async function getFontListMap() {
+    if (cachedFontListMap !== null) {
+        return cachedFontListMap;
+    }
+    try {
+        const fontList = await import('font-list');
+        const fonts = await fontList.getFonts({ disableQuoting: true });
+        cachedFontListMap = Object.fromEntries(
+            fonts.map((fontName) => {
+                return [fontName, []];
+            }),
+        );
+        return cachedFontListMap;
+    } catch (error) {
+        console.log(error);
+    }
+    return null;
+}
+
 export function initEventListenerApp(appController: ElectronAppController) {
     ipcMain.handle('get-is-packaged', () => {
         return app.isPackaged;
@@ -302,20 +326,10 @@ export function initEventOther(appController: ElectronAppController) {
     );
 
     onAsync(ipcMain, 'main:app:get-font-list', async () => {
-        try {
-            const fontList = await import('font-list');
-            const fonts = await fontList.getFonts({ disableQuoting: true });
-            const fontsMap = Object.fromEntries(
-                fonts.map((fontName) => {
-                    return [fontName, []];
-                }),
-            );
-            return fontsMap;
-        } catch (error) {
-            console.log(error);
-        }
-        return null;
+        return await getFontListMap();
     });
+    // Prewarm the font list so the first font dropdown doesn't pay the cold cost.
+    void getFontListMap();
 
     ipcMain.on('main:app:reveal-path', (_, filePath: string) => {
         if (typeof filePath !== 'string' || filePath.length === 0) {

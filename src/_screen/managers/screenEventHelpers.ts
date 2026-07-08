@@ -11,24 +11,23 @@ import type EventHandler from '../../event/EventHandler';
 import type { ScreenForegroundEventType } from './ScreenForegroundManager';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import appProvider from '../../server/appProvider';
+import { type ListenerType } from '../../event/EventHandler';
 
 export function useScreenEvents<T extends string>(
     events: T[],
     StaticHandler: EventHandler<T>,
     eventHandler?: EventHandler<T>,
-    callback?: (data: any) => void,
+    callback?: ListenerType<any>,
 ) {
-    const [n, setN] = useState(0);
+    const [_n, setN] = useState(Date.now());
 
     const callbackRef = useRef(callback);
     callbackRef.current = callback;
 
     useAppEffect(() => {
-        const update = (data: any) => {
-            setN((n) => {
-                return n + 1;
-            });
-            callbackRef.current?.(data);
+        const update = (data: any, time: number) => {
+            setN(time);
+            callbackRef.current?.(data, time);
         };
         const registeredEvents =
             eventHandler?.registerEventListener(events, update) ||
@@ -41,13 +40,12 @@ export function useScreenEvents<T extends string>(
             }
         };
     }, [JSON.stringify(events), eventHandler, StaticHandler]);
-    return n;
 }
 
 export function useScreenBackgroundManagerEvents(
     events: ScreenBackgroundManagerEventType[],
     screenBackgroundManager?: ScreenBackgroundManager,
-    callback?: () => void,
+    callback?: ListenerType<void>,
 ) {
     useScreenEvents(
         events,
@@ -60,7 +58,7 @@ export function useScreenBackgroundManagerEvents(
 export function useScreenVaryAppDocumentManagerEvents(
     events: ScreenVaryAppDocumentManagerEventType[],
     screenVaryAppDocumentManager?: ScreenVaryAppDocumentManager,
-    callback?: () => void,
+    callback?: ListenerType<void>,
 ) {
     useScreenEvents(
         events,
@@ -73,7 +71,7 @@ export function useScreenVaryAppDocumentManagerEvents(
 export function useScreenBibleManagerEvents(
     events: ScreenBibleManagerEventType[],
     screenFulTextManager?: ScreenBibleManager,
-    callback?: (args: any) => void,
+    callback?: ListenerType<any>,
 ) {
     useScreenEvents(
         events,
@@ -86,7 +84,7 @@ export function useScreenBibleManagerEvents(
 export function useScreenForegroundManagerEvents(
     events: ScreenForegroundEventType[],
     screenForegroundManager?: ScreenForegroundManager,
-    callback?: () => void,
+    callback?: ListenerType<void>,
 ) {
     useScreenEvents(
         events,

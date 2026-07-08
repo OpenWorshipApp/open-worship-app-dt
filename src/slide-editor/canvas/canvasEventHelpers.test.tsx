@@ -35,12 +35,16 @@ import {
 } from './canvasEventHelpers';
 
 function createFakeController() {
-    const listeners = new Map<string, Set<(data: any) => void>>();
+    const listeners = new Map<string, Set<(data: any, time: number) => void>>();
+    let timeCounter = 0;
 
     return {
         scale: 1,
         itemRegisterEventListener: vi.fn(
-            (eventTypes: string[], listener: (data: any) => void) => {
+            (
+                eventTypes: string[],
+                listener: (data: any, time: number) => void,
+            ) => {
                 return eventTypes.map((eventName) => {
                     const eventListeners =
                         listeners.get(eventName) ?? new Set();
@@ -56,8 +60,9 @@ function createFakeController() {
             }
         }),
         emit(eventName: string, data: any = { canvasItems: [] }) {
+            timeCounter += 1;
             for (const listener of listeners.get(eventName) ?? []) {
-                listener(data);
+                listener(data, timeCounter);
             }
         },
     };
@@ -84,9 +89,15 @@ function ScaleHarness({
     return <div data-testid="scale">{scale}</div>;
 }
 
-function RefreshHarness({ eventTypes }: Readonly<{ eventTypes?: string[] }>) {
-    const refreshCount = useCanvasControllerRefreshEvents(eventTypes as any);
-    return <div data-testid="refresh">{refreshCount}</div>;
+function RefreshHarness({
+    eventTypes,
+    onRender,
+}: Readonly<{ eventTypes?: string[]; onRender?: () => void }>) {
+    useCanvasControllerRefreshEvents(eventTypes as any);
+    useEffect(() => {
+        onRender?.();
+    });
+    return <div data-testid="refresh" />;
 }
 
 describe('canvasEventHelpers', () => {
@@ -130,12 +141,16 @@ describe('canvasEventHelpers', () => {
         controller.emit('update', { canvasItems: [{ id: 1 }] });
         controller.emit('reload', { canvasItems: [{ id: 2 }] });
 
-        expect(onEvent).toHaveBeenNthCalledWith(1, {
-            canvasItems: [{ id: 1 }],
-        });
-        expect(onEvent).toHaveBeenNthCalledWith(2, {
-            canvasItems: [{ id: 2 }],
-        });
+        expect(onEvent).toHaveBeenNthCalledWith(
+            1,
+            { canvasItems: [{ id: 1 }] },
+            expect.any(Number),
+        );
+        expect(onEvent).toHaveBeenNthCalledWith(
+            2,
+            { canvasItems: [{ id: 2 }] },
+            expect.any(Number),
+        );
 
         await act(async () => {
             root?.unmount();
@@ -178,9 +193,10 @@ describe('canvasEventHelpers', () => {
 
         controller.emit('update', { canvasItems: [{ id: 1 }] });
         expect(firstCallback).not.toHaveBeenCalled();
-        expect(secondCallback).toHaveBeenCalledWith({
-            canvasItems: [{ id: 1 }],
-        });
+        expect(secondCallback).toHaveBeenCalledWith(
+            { canvasItems: [{ id: 1 }] },
+            expect.any(Number),
+        );
     });
 
     test('re-registers controller listeners when event types change', async () => {
@@ -216,12 +232,16 @@ describe('canvasEventHelpers', () => {
         expect(controller.unregisterEventListener).toHaveBeenCalledTimes(1);
 
         controller.emit('reload', { canvasItems: [] });
-        expect(onEvent).toHaveBeenCalledWith({ canvasItems: [] });
+        expect(onEvent).toHaveBeenCalledWith(
+            { canvasItems: [] },
+            expect.any(Number),
+        );
     });
 
     test('tracks scale changes and refresh counters from controller events', async () => {
         const controller = createFakeController();
         const observedScales: number[] = [];
+        let refreshRenderCount = 0;
 
         await act(async () => {
             if (!container) {
@@ -236,10 +256,16 @@ describe('canvasEventHelpers', () => {
                             observedScales.push(scale);
                         }}
                     />
-                    <RefreshHarness />
+                    <RefreshHarness
+                        onRender={() => {
+                            refreshRenderCount += 1;
+                        }}
+                    />
                 </CanvasControllerContext.Provider>,
             );
         });
+
+        const refreshRenderCountAfterMount = refreshRenderCount;
 
         controller.scale = 1.5;
         await act(async () => {
@@ -255,8 +281,8 @@ describe('canvasEventHelpers', () => {
         });
 
         expect(observedScales).toEqual([1, 1.5]);
-        expect(
-            container?.querySelector('[data-testid="refresh"]')?.textContent,
-        ).toBe('2');
+        // The refresh hook re-renders on 'update' and 'scale' (its default
+        // event types), but not on 'reload'.
+        expect(refreshRenderCount - refreshRenderCountAfterMount).toBe(2);
     });
 });

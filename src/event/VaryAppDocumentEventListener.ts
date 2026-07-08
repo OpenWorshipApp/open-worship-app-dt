@@ -31,8 +31,8 @@ export function useVarySlideSelecting(
     useAppEffect(() => {
         const event = AppDocumentListEventListener.registerEventListener(
             ['app-document-item-select'],
-            (data: VarySlideType | null) => {
-                listenerRef.current(data);
+            (data: VarySlideType | null, time: number) => {
+                listenerRef.current(data, time);
             },
         );
         return () => {

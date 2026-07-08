@@ -564,13 +564,13 @@ describe('FileSource', () => {
         await flushEvents();
 
         expect(genericListener.mock.calls).toEqual([
-            ['selected'],
-            [{ changed: true }],
-            ['/docs/item.txt'],
+            ['selected', expect.any(Number)],
+            [{ changed: true }, expect.any(Number)],
+            ['/docs/item.txt', expect.any(Number)],
         ]);
         expect(scopedListener.mock.calls).toEqual([
-            [{ changed: true }],
-            ['/docs/item.txt'],
+            [{ changed: true }, expect.any(Number)],
+            ['/docs/item.txt', expect.any(Number)],
         ]);
 
         FileSource.unregisterEventListener(genericEvents);
@@ -578,7 +578,10 @@ describe('FileSource', () => {
         await flushEvents();
 
         expect(genericListener.mock.calls).toHaveLength(3);
-        expect(scopedListener.mock.calls.at(-1)).toEqual(['after-unregister']);
+        expect(scopedListener.mock.calls.at(-1)).toEqual([
+            'after-unregister',
+            expect.any(Number),
+        ]);
     });
 
     test('trashes files with progress feedback and delete events', async () => {
@@ -611,7 +614,10 @@ describe('FileSource', () => {
                 path: '/docs/trash.txt',
             },
         );
-        expect(deleteListener).toHaveBeenCalledWith('/docs/trash.txt');
+        expect(deleteListener).toHaveBeenCalledWith(
+            '/docs/trash.txt',
+            expect.any(Number),
+        );
 
         await failedTrashFile.trash();
 

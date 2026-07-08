@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import type { ReactNode } from 'react';
+import { tran } from '../lang/langHelpers';
 
 export default function HeaderAlertPopupComp({
     header,
@@ -18,6 +19,8 @@ export default function HeaderAlertPopupComp({
                 className="btn-close float-end"
                 type="button"
                 onClick={handleClose}
+                aria-label={tran('Close')}
+                title={tran('Close')}
                 style={{
                     transform: 'translate(0, -90%)',
                 }}

@@ -1,6 +1,6 @@
 import type { OptionalPromise } from '../helper/typeHelpers';
 
-export type ListenerType<T> = (data: T) => OptionalPromise<void>;
+export type ListenerType<T> = (data: T, time: number) => OptionalPromise<void>;
 
 export type RegisteredEventType<T, F> = {
     eventName: T;
@@ -67,6 +67,7 @@ export class BasicEventHandler<T extends string> {
 
     private async checkOnEvent(eventName: T, data?: any) {
         this.guardEventName(eventName);
+        const time = Date.now();
         const listeners = [
             ...(this.eventListenersMapper.get(eventName) ?? []),
         ].reverse();
@@ -74,7 +75,7 @@ export class BasicEventHandler<T extends string> {
             if (!(await this.checkShouldNext(data))) {
                 break;
             }
-            listener(data);
+            listener(data, time);
             if (data?.defaultPrevented) {
                 break;
             }

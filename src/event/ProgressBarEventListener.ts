@@ -20,8 +20,8 @@ export function useShowProgressBar(listener: ListenerType<string>) {
     useAppEffect(() => {
         const event = ProgressBarEventListener.registerEventListener(
             ['show'],
-            (data: string) => {
-                listenerRef.current(data);
+            (data: string, time: number) => {
+                listenerRef.current(data, time);
             },
         );
         return () => {
@@ -36,8 +36,8 @@ export function useHideProgressBar(listener: ListenerType<string>) {
     useAppEffect(() => {
         const event = ProgressBarEventListener.registerEventListener(
             ['hide'],
-            (data: string) => {
-                listenerRef.current(data);
+            (data: string, time: number) => {
+                listenerRef.current(data, time);
             },
         );
         return () => {

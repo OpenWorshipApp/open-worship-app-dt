@@ -119,22 +119,26 @@ export default function ForegroundStopwatchComp() {
         >
             {propsSetting}
             <hr />
-            <div>
+            <div className="app-border-white-round p-2">
+                <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+                    <i className="bi bi-stopwatch" />
+                    <small>{tran('Count up from zero')}</small>
+                </div>
                 <div className="d-flex">
-                    <div>
-                        <button
-                            className="btn btn-secondary"
-                            onClick={handleShowing}
-                            onContextMenu={handleContextMenuOpening}
-                            draggable
-                            onDragStart={handleDragStart}
-                        >
-                            {tran('Start Stopwatch')}
-                        </button>
-                    </div>
+                    <button
+                        className="btn btn-primary"
+                        title={tran('Start Stopwatch')}
+                        onClick={handleShowing}
+                        onContextMenu={handleContextMenuOpening}
+                        draggable
+                        onDragStart={handleDragStart}
+                    >
+                        <i className="bi bi-play-fill" />{' '}
+                        {tran('Start Stopwatch')}
+                    </button>
                 </div>
             </div>
-            <div>{genHidingElement(false)}</div>
+            <div className="mt-2">{genHidingElement(false)}</div>
         </ForegroundLayoutComp>
     );
 }

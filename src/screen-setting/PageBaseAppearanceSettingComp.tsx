@@ -1,3 +1,5 @@
+import './PageBaseAppearanceSettingComp.scss';
+
 import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -36,10 +38,13 @@ export default function PageBaseAppearanceSettingComp({
         setIsFullWidth1(true);
     }, [setIsFullWidth1]);
     return (
-        <div className="d-flex align-items-center flex-wrap gap-2">
-            <div className="d-flex align-items-center">
-                <small className="mx-1">{tran('On Screen Width:')}</small>
-                <fieldset className="btn-group btn-group-sm ms-2" role="group">
+        <div className="page-base-appearance-setting">
+            <div className="setting-group">
+                <span className="setting-label">
+                    <i className="bi bi-aspect-ratio" />
+                    {tran('On Screen Width:')}
+                </span>
+                <fieldset className="btn-group btn-group-sm" role="group">
                     <input
                         className="btn-check"
                         type="radio"
@@ -70,12 +75,18 @@ export default function PageBaseAppearanceSettingComp({
                     </label>
                 </fieldset>
             </div>
-            <VirtualBGColorSettingComp
-                docxPreviewBackgroundColor={docxPreviewBackgroundColor}
-                onDocxPreviewBackgroundColorChange={
-                    onDocxPreviewBackgroundColorChange
-                }
-            />
+            <div className="setting-group">
+                <span className="setting-label">
+                    <i className="bi bi-palette" />
+                    {tran('Preview BG:')}
+                </span>
+                <VirtualBGColorSettingComp
+                    docxPreviewBackgroundColor={docxPreviewBackgroundColor}
+                    onDocxPreviewBackgroundColorChange={
+                        onDocxPreviewBackgroundColorChange
+                    }
+                />
+            </div>
         </div>
     );
 }

@@ -8,6 +8,10 @@ import {
     useSetEditingCanvasItem,
     useSetSelectedCanvasItems,
 } from '../CanvasItem';
+import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
+
+const PREVIEW_WIDTH = 280;
+const PREVIEW_HEIGHT = 150;
 
 export default function ToolCanvasItemsComp() {
     const canvasController = useCanvasControllerContext();
@@ -42,7 +46,11 @@ export default function ToolCanvasItemsComp() {
                         }}
                         onClick={(event) => {
                             event.stopPropagation();
-                            handleCanvasItemControlling(canvasItem);
+                            const isAppend =
+                                checkIsAppendSelectionModifier(event);
+                            handleCanvasItemControlling(canvasItem, {
+                                isAppend,
+                            });
                         }}
                         onContextMenu={canvasController.genHandleContextMenuOpening(
                             canvasItem,
@@ -56,12 +64,25 @@ export default function ToolCanvasItemsComp() {
                         <div
                             className="card-body"
                             style={{
-                                overflow: 'auto',
+                                overflow: 'hidden',
+                                position: 'relative',
                             }}
                         >
-                            <CanvasItemContext value={canvasItem}>
-                                <CanvasItemRendererComp />
-                            </CanvasItemContext>
+                            <div
+                                style={{
+                                    width: `${props.width}px`,
+                                    height: `${props.height}px`,
+                                    transform: `scale(${Math.min(
+                                        PREVIEW_WIDTH / props.width,
+                                        PREVIEW_HEIGHT / props.height,
+                                    )})`,
+                                    transformOrigin: 'top left',
+                                }}
+                            >
+                                <CanvasItemContext value={canvasItem}>
+                                    <CanvasItemRendererComp />
+                                </CanvasItemContext>
+                            </div>
                         </div>
                     </div>
                 );

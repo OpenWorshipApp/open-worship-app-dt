@@ -250,13 +250,24 @@ export function checkCanvasItemsIncludes(
 export function useSetSelectedCanvasItems() {
     const { canvasItems, setCanvasItems } =
         useSelectedCanvasItemsAndSetterContext();
-    return (targetCanvasItem: CanvasItem<any>, isControlling = true) => {
-        let newCanvasItems = [targetCanvasItem];
-        if (
-            !isControlling &&
-            checkCanvasItemsIncludes(canvasItems, targetCanvasItem)
-        ) {
-            newCanvasItems = [];
+    return (
+        targetCanvasItem: CanvasItem<any>,
+        { isAppend = false }: { isAppend?: boolean } = {},
+    ) => {
+        const isAlreadySelected = checkCanvasItemsIncludes(
+            canvasItems,
+            targetCanvasItem,
+        );
+        let newCanvasItems: CanvasItem<any>[];
+        if (isAppend) {
+            // Shift/Ctrl click toggles the item within the current selection.
+            newCanvasItems = isAlreadySelected
+                ? canvasItems.filter((item) => {
+                      return !item.checkIsSame(targetCanvasItem);
+                  })
+                : [...canvasItems, targetCanvasItem];
+        } else {
+            newCanvasItems = [targetCanvasItem];
         }
         setCanvasItems(newCanvasItems);
     };

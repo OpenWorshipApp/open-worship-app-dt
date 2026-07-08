@@ -160,9 +160,10 @@ describe('dirSourceHelpers', () => {
         };
 
         function Probe() {
-            const value = useFilePaths(dirSource as any, [
-                'appDocument',
-            ] as any);
+            const value = useFilePaths(
+                dirSource as any,
+                ['appDocument'] as any,
+            );
             useEffect(() => {
                 observedValues.push(value);
             }, [value]);
@@ -341,10 +342,7 @@ describe('dirSourceHelpers', () => {
         );
 
         function Probe({ tag }: Readonly<{ tag: string }>) {
-            const count = useFileSourceRefreshEvents(
-                ['update'],
-                '/docs/slide.owa',
-            );
+            useFileSourceRefreshEvents(['update'], '/docs/slide.owa');
             useFileSourceEvents<string>(
                 ['update'],
                 (payload) => {
@@ -353,7 +351,7 @@ describe('dirSourceHelpers', () => {
                 [],
                 '/docs/slide.owa',
             );
-            return <output data-count={`${count}`} />;
+            return null;
         }
 
         await act(async () => {
@@ -378,9 +376,6 @@ describe('dirSourceHelpers', () => {
         });
 
         expect(observedPayloads).toEqual(['second:payload']);
-        expect(
-            container?.querySelector('output')?.dataset.count,
-        ).toBe('1');
     });
 
     test('watches directory changes and refreshes when files change', async () => {

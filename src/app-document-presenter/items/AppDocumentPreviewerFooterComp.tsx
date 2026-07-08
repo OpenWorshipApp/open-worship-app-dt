@@ -1,3 +1,5 @@
+import './AppDocumentPreviewerFooterComp.scss';
+
 import { useCallback, useState } from 'react';
 
 import { PathPreviewerComp } from '../../others/PathPreviewerComp';
@@ -105,7 +107,7 @@ export default function AppDocumentPreviewerFooterComp({
     );
     return (
         <div
-            className="card-footer w-100 p-0"
+            className="app-document-previewer-footer card-footer w-100 p-0"
             style={{
                 height: '28px',
             }}

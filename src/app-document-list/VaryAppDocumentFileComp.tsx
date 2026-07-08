@@ -131,7 +131,7 @@ function FilePreviewPdfAppDocumentComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-pdf"
-                style={{ color: '#d24726' }}
+                style={{ color: '#bd0b02' }}
             />
             {fileSource.name}
         </div>

@@ -1,4 +1,10 @@
-import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
+import {
+    type ChangeEvent,
+    type ComponentProps,
+    type ReactNode,
+    useCallback,
+    type CSSProperties,
+} from 'react';
 
 import { tran } from '../lang/langHelpers';
 import {
@@ -9,7 +15,13 @@ import {
 } from '../helper/settingHelpers';
 import SlideEditorToolAlignComp from '../slide-editor/canvas/tools/SlideEditorToolAlignComp';
 import AppRangeComp from '../others/AppRangeComp';
-import { getForegroundCommonProperties } from './ForegroundCommonPropertiesSettingComp';
+import CommonStyleControlsComp, {
+    DEFAULT_BACKDROP_FILTER,
+    DEFAULT_BACKGROUND_COLOR,
+    DEFAULT_TEXT_COLOR,
+    genCommonStyleSettingNames,
+    getForegroundCommonProperties,
+} from './ForegroundCommonPropertiesSettingComp';
 
 const DEFAULT_FONT_SIZE = 100;
 const DEFAULT_WIDGET_WIDTH_PERCENTAGE = 50;
@@ -157,6 +169,41 @@ function getFontSizeStyle(fontSizeSettingName: string): CSSProperties {
     };
 }
 
+function wrapSetter<T>(
+    setter: (value: T) => void,
+    afterChange: () => void,
+): (value: T) => void {
+    return (value: T) => {
+        setter(value);
+        afterChange();
+    };
+}
+
+function PropGroupComp({
+    iconClassName,
+    label,
+    isDimmed,
+    children,
+}: Readonly<{
+    iconClassName: string;
+    label: string;
+    isDimmed?: boolean;
+    children: ReactNode;
+}>) {
+    return (
+        <div
+            className="d-flex align-items-center app-border-white-round m-1 px-2 gap-1"
+            style={isDimmed ? { opacity: 0.5 } : undefined}
+        >
+            <span className="d-flex align-items-center gap-1 text-nowrap">
+                <i className={iconClassName} />
+                <small>{label}</small>
+            </span>
+            {children}
+        </div>
+    );
+}
+
 function PropertiesSettingComp({
     alignmentData,
     setAlignmentData,
@@ -177,6 +224,10 @@ function PropertiesSettingComp({
     setFontSize,
     roundSizePixel,
     setRoundSizePixel,
+    isGeometry,
+    isCommonStyle,
+    commonStyleProps,
+    extraControls,
     target,
 }: Readonly<{
     alignmentData: string;
@@ -198,17 +249,18 @@ function PropertiesSettingComp({
     setFontSize: (value: number) => void;
     roundSizePixel: number;
     setRoundSizePixel: (value: number) => void;
+    isGeometry: boolean;
+    isCommonStyle: boolean;
+    commonStyleProps: ComponentProps<typeof CommonStyleControlsComp>;
+    extraControls?: ReactNode;
     target: string;
 }>) {
     const [isOpened, setIsOpened] = useStateSettingBoolean(
         `foreground-${target}-show-properties-setting`,
         false,
     );
-    const handleOpen = useCallback(() => {
-        setIsOpened(true);
-    }, [setIsOpened]);
-    const handleClose = useCallback(() => {
-        setIsOpened(false);
+    const handleToggle = useCallback(() => {
+        setIsOpened((old) => !old);
     }, [setIsOpened]);
     const handleOffsetXChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
@@ -236,159 +288,199 @@ function PropertiesSettingComp({
         },
         [setFontSize],
     );
+    const toggleButton = (
+        <button
+            type="button"
+            className={
+                'btn btn-sm d-inline-flex align-items-center gap-2 px-3' +
+                ' rounded-pill' +
+                (isOpened ? ' btn-secondary' : ' btn-outline-secondary')
+            }
+            onClick={handleToggle}
+            title={tran('Properties')}
+        >
+            <i className="bi bi-sliders2" />
+            <span className="fw-semibold">{tran('Properties')}</span>
+            <i
+                className="bi bi-chevron-down"
+                style={{
+                    transition: 'transform 0.2s ease',
+                    transform: isOpened ? 'rotate(180deg)' : 'rotate(0deg)',
+                }}
+            />
+        </button>
+    );
     if (!isOpened) {
-        return (
-            <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={handleOpen}
-            >
-                <i className="bi bi-chevron-right" />
-                <i className="bi bi-gear" /> {tran('Properties')}
-            </button>
-        );
+        return toggleButton;
     }
     return (
         <div>
-            <button
-                className="btn btn-sm btn-outline-secondary"
-                onClick={handleClose}
-            >
-                <i className="bi bi-chevron-down" />
-                <i className="bi bi-gear" /> {tran('Properties')}
-            </button>
-            <div className="d-flex flex-wrap p-1 align-items-center app-inner-shadow">
-                <div className="m-1">
-                    <SlideEditorToolAlignComp
-                        data={JSON.parse(alignmentData)}
-                        onData={(data) => {
-                            const oldData = JSON.parse(alignmentData);
-                            setAlignmentData(
-                                JSON.stringify({
-                                    ...oldData,
-                                    ...data,
-                                }),
-                            );
-                        }}
-                    />
-                </div>
-                <div
-                    className="d-flex input-group m-1"
-                    style={{ width: '330px', height: '35px' }}
-                >
-                    <div className="input-group-text">Offset X:</div>
-                    <input
-                        className="form-control form-control-sm"
-                        type="number"
-                        value={widgetOffsetX}
-                        onChange={handleOffsetXChange}
-                    />
-                    <div className="input-group-text">Offset Y:</div>
-                    <input
-                        className="form-control form-control-sm"
-                        type="number"
-                        value={widgetOffsetY}
-                        onChange={handleOffsetYChange}
-                    />
-                </div>
-                <div className="d-flex app-border-white-round m-1">
-                    {tran('Width (%):')}
-                    <AppRangeComp
-                        value={widgetWidthPercentage}
-                        title={tran('Width (%)')}
-                        setValue={setWidgetWidthPercentage}
-                        defaultSize={{
-                            size: widgetWidthPercentage,
-                            min: 1,
-                            max: 100,
-                            step: 1,
-                        }}
-                        isShowValue
-                    />
-                </div>
-                <div className="d-flex app-border-white-round m-1">
-                    {tran('Scale:')}
-                    <AppRangeComp
-                        value={widgetScale}
-                        title={tran('Scale')}
-                        setValue={setWidgetScale}
-                        defaultSize={{
-                            size: widgetScale,
-                            min: 0.1,
-                            max: 3,
-                            step: 0.1,
-                        }}
-                        isShowValue
-                    />
-                </div>
-                <div className="d-flex app-border-white-round m-1">
-                    {tran('Opacity:')}
-                    <AppRangeComp
-                        value={opacityPercentage}
-                        title={tran('Opacity (%)')}
-                        setValue={setOpacityPercentage}
-                        defaultSize={{
-                            size: opacityPercentage,
-                            min: 0,
-                            max: 100,
-                            step: 1,
-                        }}
-                        isShowValue
-                    />
-                </div>
-                <div
-                    className="d-flex app-border-white-round m-1"
-                    style={{
-                        opacity: roundSizePixel > 0 ? 0.5 : 1,
-                    }}
-                >
-                    {tran('Round Size %:')}
-                    <AppRangeComp
-                        value={roundPercentage}
-                        title={
-                            roundSizePixel > 0
-                                ? 'Set round size pixel to 0 to use this'
-                                : tran('Round (%)')
-                        }
-                        setValue={setRoundPercentage}
-                        defaultSize={{
-                            size: roundPercentage,
-                            min: 0,
-                            max: 100,
-                            step: 1,
-                        }}
-                        isShowValue
-                    />
-                </div>
-                <div
-                    className="d-flex input-group m-1"
-                    style={{ width: '260px', height: '35px' }}
-                >
-                    <div className="input-group-text">
-                        {tran('Round Size Pixel:')}
+            <div className="mb-1">{toggleButton}</div>
+            <div className="app-inner-shadow">
+                {isGeometry || isFontSize || extraControls ? (
+                    <div className="d-flex flex-wrap p-1 align-items-center gap-1">
+                        {isGeometry ? (
+                            <>
+                                <PropGroupComp
+                                    iconClassName="bi bi-align-center"
+                                    label={tran('Align')}
+                                >
+                                    <SlideEditorToolAlignComp
+                                        data={JSON.parse(alignmentData)}
+                                        onData={(data) => {
+                                            const oldData =
+                                                JSON.parse(alignmentData);
+                                            setAlignmentData(
+                                                JSON.stringify({
+                                                    ...oldData,
+                                                    ...data,
+                                                }),
+                                            );
+                                        }}
+                                    />
+                                </PropGroupComp>
+                                <div
+                                    className="d-flex input-group m-1"
+                                    style={{ width: '330px', height: '35px' }}
+                                    title={tran('Position offset in pixels')}
+                                >
+                                    <span className="input-group-text">
+                                        <i className="bi bi-arrows-move" />
+                                    </span>
+                                    <span className="input-group-text">X</span>
+                                    <input
+                                        className="form-control form-control-sm"
+                                        type="number"
+                                        value={widgetOffsetX}
+                                        onChange={handleOffsetXChange}
+                                    />
+                                    <span className="input-group-text">Y</span>
+                                    <input
+                                        className="form-control form-control-sm"
+                                        type="number"
+                                        value={widgetOffsetY}
+                                        onChange={handleOffsetYChange}
+                                    />
+                                    <span className="input-group-text">px</span>
+                                </div>
+                                <PropGroupComp
+                                    iconClassName="bi bi-arrows"
+                                    label={tran('Width (%)')}
+                                >
+                                    <AppRangeComp
+                                        value={widgetWidthPercentage}
+                                        title={tran('Width (%)')}
+                                        setValue={setWidgetWidthPercentage}
+                                        defaultSize={{
+                                            size: widgetWidthPercentage,
+                                            min: 1,
+                                            max: 100,
+                                            step: 1,
+                                        }}
+                                        isShowValue
+                                    />
+                                </PropGroupComp>
+                                <PropGroupComp
+                                    iconClassName="bi bi-arrows-fullscreen"
+                                    label={tran('Scale')}
+                                >
+                                    <AppRangeComp
+                                        value={widgetScale}
+                                        title={tran('Scale')}
+                                        setValue={setWidgetScale}
+                                        defaultSize={{
+                                            size: widgetScale,
+                                            min: 0.1,
+                                            max: 3,
+                                            step: 0.1,
+                                        }}
+                                        isShowValue
+                                    />
+                                </PropGroupComp>
+                                <PropGroupComp
+                                    iconClassName="bi bi-circle-half"
+                                    label={tran('Opacity')}
+                                >
+                                    <AppRangeComp
+                                        value={opacityPercentage}
+                                        title={tran('Opacity (%)')}
+                                        setValue={setOpacityPercentage}
+                                        defaultSize={{
+                                            size: opacityPercentage,
+                                            min: 0,
+                                            max: 100,
+                                            step: 1,
+                                        }}
+                                        isShowValue
+                                    />
+                                </PropGroupComp>
+                                <PropGroupComp
+                                    iconClassName="bi bi-app"
+                                    label={tran('Round (%)')}
+                                    isDimmed={roundSizePixel > 0}
+                                >
+                                    <AppRangeComp
+                                        value={roundPercentage}
+                                        title={
+                                            roundSizePixel > 0
+                                                ? 'Set round size pixel to 0' +
+                                                  ' to use this'
+                                                : tran('Round (%)')
+                                        }
+                                        setValue={setRoundPercentage}
+                                        defaultSize={{
+                                            size: roundPercentage,
+                                            min: 0,
+                                            max: 100,
+                                            step: 1,
+                                        }}
+                                        isShowValue
+                                    />
+                                </PropGroupComp>
+                                <div
+                                    className="d-flex input-group m-1"
+                                    style={{ width: '200px', height: '35px' }}
+                                    title={tran(
+                                        'Corner radius in pixels (0 to use %)',
+                                    )}
+                                >
+                                    <span className="input-group-text">
+                                        <i className="bi bi-app" />
+                                    </span>
+                                    <input
+                                        className="form-control form-control-sm"
+                                        type="number"
+                                        value={roundSizePixel}
+                                        min={0}
+                                        onChange={handleRoundSizePixelChange}
+                                    />
+                                    <span className="input-group-text">px</span>
+                                </div>
+                            </>
+                        ) : null}
+                        {isFontSize ? (
+                            <div
+                                className="d-flex input-group m-1"
+                                style={{ width: '180px', height: '35px' }}
+                                title={tran('Font size in pixels')}
+                            >
+                                <span className="input-group-text">
+                                    <i className="bi bi-fonts" />
+                                </span>
+                                <input
+                                    className="form-control form-control-sm"
+                                    type="number"
+                                    value={fontSize}
+                                    onChange={handleFontSizeChange}
+                                />
+                                <span className="input-group-text">px</span>
+                            </div>
+                        ) : null}
+                        {extraControls}
                     </div>
-                    <input
-                        className="form-control form-control-sm"
-                        type="number"
-                        value={roundSizePixel}
-                        min={0}
-                        onChange={handleRoundSizePixelChange}
-                    />
-                    <div className="input-group-text">px</div>
-                </div>
-                {isFontSize ? (
-                    <div
-                        className="d-flex input-group m-1"
-                        style={{ width: '220px', height: '35px' }}
-                    >
-                        <div className="input-group-text">Font Size:</div>
-                        <input
-                            className="form-control form-control-sm"
-                            type="number"
-                            value={fontSize}
-                            onChange={handleFontSizeChange}
-                        />
-                        <div className="input-group-text">px</div>
-                    </div>
+                ) : null}
+                {isCommonStyle ? (
+                    <CommonStyleControlsComp {...commonStyleProps} />
                 ) : null}
             </div>
         </div>
@@ -399,10 +491,16 @@ export function useForegroundPropsSetting({
     prefix,
     onChange,
     isFontSize = false,
+    isGeometry = true,
+    isCommonStyle = true,
+    extraControls,
 }: Readonly<{
     prefix: string;
     onChange: (style: CSSProperties) => void;
     isFontSize?: boolean;
+    isGeometry?: boolean;
+    isCommonStyle?: boolean;
+    extraControls?: ReactNode;
 }>) {
     const widgetRoundPercentageSettingName = `${prefix}-setting-show-widget-round-percentage`;
     const widgetWidthPercentageSettingName = `${prefix}-setting-show-widget-width-percentage`;
@@ -413,26 +511,35 @@ export function useForegroundPropsSetting({
     const offsetYSettingName = `${prefix}-setting-show-widget-offset-y`;
     const fontSizeSettingName = `${prefix}-setting-show-widget-font-size`;
     const roundSizePixelSettingName = `${prefix}-setting-show-widget-round-size-px`;
+    const commonNames = genCommonStyleSettingNames(prefix);
 
     const genStyle: () => CSSProperties = () => {
-        return {
-            ...getForegroundCommonProperties(),
-            position: 'absolute',
-            height: 'auto',
-            ...getWidgetRoundExtraStyle(
-                roundSizePixelSettingName,
-                widgetRoundPercentageSettingName,
-            ),
-            ...genWidgetWidthExtraStyle(widgetWidthPercentageSettingName),
-            ...genWidgetOpacityExtraStyle(opacityPercentageSettingName),
-            ...genTransformingExtraStyle(
-                alignmentSettingName,
-                offsetXSettingName,
-                offsetYSettingName,
-                widgetScaleSettingName,
-            ),
-            ...getFontSizeStyle(fontSizeSettingName),
-        };
+        const style: CSSProperties = {};
+        if (isCommonStyle) {
+            Object.assign(style, getForegroundCommonProperties(prefix));
+        }
+        if (isGeometry) {
+            Object.assign(style, {
+                position: 'absolute',
+                height: 'auto',
+                ...getWidgetRoundExtraStyle(
+                    roundSizePixelSettingName,
+                    widgetRoundPercentageSettingName,
+                ),
+                ...genWidgetWidthExtraStyle(widgetWidthPercentageSettingName),
+                ...genWidgetOpacityExtraStyle(opacityPercentageSettingName),
+                ...genTransformingExtraStyle(
+                    alignmentSettingName,
+                    offsetXSettingName,
+                    offsetYSettingName,
+                    widgetScaleSettingName,
+                ),
+            });
+        }
+        if (isFontSize) {
+            Object.assign(style, getFontSizeStyle(fontSizeSettingName));
+        }
+        return style;
     };
 
     const onChange1 = () => {
@@ -443,52 +550,27 @@ export function useForegroundPropsSetting({
         offsetXSettingName,
         DEFAULT_WIDGET_OFFSET_X,
     );
-    const setWidgetOffsetX1 = (value: number) => {
-        setWidgetOffsetX(value);
-        onChange1();
-    };
     const [widgetOffsetY, setWidgetOffsetY] = useStateSettingNumber(
         offsetYSettingName,
         DEFAULT_WIDGET_OFFSET_Y,
     );
-    const setWidgetOffsetY1 = (value: number) => {
-        setWidgetOffsetY(value);
-        onChange1();
-    };
-
     const [roundPercentage, setRoundPercentage] = useStateSettingNumber(
         widgetRoundPercentageSettingName,
         DEFAULT_ROUND_PERCENTAGE,
     );
-    const setRoundPercentage1 = (value: number) => {
-        setRoundPercentage(value);
-        onChange1();
-    };
     const [widgetWidthPercentage, setWidgetWidthPercentage] =
         useStateSettingNumber(
             widgetWidthPercentageSettingName,
             DEFAULT_WIDGET_WIDTH_PERCENTAGE,
         );
-    const setWidgetWidthPercentage1 = (value: number) => {
-        setWidgetWidthPercentage(value);
-        onChange1();
-    };
     const [widgetScale, setWidgetScale] = useStateSettingNumber(
         widgetScaleSettingName,
         DEFAULT_WIDGET_SCALE,
     );
-    const setWidgetScale1 = (value: number) => {
-        setWidgetScale(value);
-        onChange1();
-    };
     const [opacityPercentage, setOpacityPercentage] = useStateSettingNumber(
         opacityPercentageSettingName,
         DEFAULT_WIDGET_OPACITY_PERCENTAGE,
     );
-    const setOpacityPercentage1 = (value: number) => {
-        setOpacityPercentage(value);
-        onChange1();
-    };
     const [alignmentData, setAlignmentData] = useStateSettingString(
         alignmentSettingName,
         JSON.stringify({
@@ -496,53 +578,87 @@ export function useForegroundPropsSetting({
             verticalAlignment: 'center',
         }),
     );
-    const setAlignmentData1 = (data: string) => {
-        setAlignmentData(data);
-        onChange1();
-    };
     const [fontSize, setFontSize] = useStateSettingNumber(
         fontSizeSettingName,
         DEFAULT_FONT_SIZE,
     );
-    const setFontSize1 = (value: number) => {
-        setFontSize(value);
-        onChange1();
-    };
     const [roundSizePixel, setRoundSizePixel] = useStateSettingNumber(
         roundSizePixelSettingName,
         DEFAULT_ROUND_SIZE_PIXEL,
     );
-    const setRoundSizePixel1 = (value: number) => {
-        setRoundSizePixel(value);
-        onChange1();
-    };
+    const [fontFamily, setFontFamily] = useStateSettingString(
+        commonNames.fontFamily,
+        '',
+    );
+    const [fontWeight, setFontWeight] = useStateSettingString(
+        commonNames.fontWeight,
+        '',
+    );
+    const [textColor, setTextColor] = useStateSettingString(
+        commonNames.color,
+        DEFAULT_TEXT_COLOR,
+    );
+    const [backgroundColor, setBackgroundColor] = useStateSettingString(
+        commonNames.backgroundColor,
+        DEFAULT_BACKGROUND_COLOR,
+    );
+    const [backdropFilter, setBackdropFilter] = useStateSettingNumber(
+        commonNames.backdropFilter,
+        DEFAULT_BACKDROP_FILTER,
+    );
 
     return {
         genStyle,
+        fontFamily,
+        fontWeight,
         getWidthScale: () => {
             return getWidgetWidthScale(widgetWidthPercentageSettingName);
         },
         element: (
             <PropertiesSettingComp
                 alignmentData={alignmentData}
-                setAlignmentData={setAlignmentData1}
+                setAlignmentData={wrapSetter(setAlignmentData, onChange1)}
                 widgetWidthPercentage={widgetWidthPercentage}
-                setWidgetWidthPercentage={setWidgetWidthPercentage1}
+                setWidgetWidthPercentage={wrapSetter(
+                    setWidgetWidthPercentage,
+                    onChange1,
+                )}
                 widgetScale={widgetScale}
-                setWidgetScale={setWidgetScale1}
+                setWidgetScale={wrapSetter(setWidgetScale, onChange1)}
                 opacityPercentage={opacityPercentage}
-                setOpacityPercentage={setOpacityPercentage1}
+                setOpacityPercentage={wrapSetter(
+                    setOpacityPercentage,
+                    onChange1,
+                )}
                 roundPercentage={roundPercentage}
-                setRoundPercentage={setRoundPercentage1}
+                setRoundPercentage={wrapSetter(setRoundPercentage, onChange1)}
                 widgetOffsetX={widgetOffsetX}
-                setWidgetOffsetX={setWidgetOffsetX1}
+                setWidgetOffsetX={wrapSetter(setWidgetOffsetX, onChange1)}
                 widgetOffsetY={widgetOffsetY}
-                setWidgetOffsetY={setWidgetOffsetY1}
+                setWidgetOffsetY={wrapSetter(setWidgetOffsetY, onChange1)}
                 isFontSize={isFontSize}
                 fontSize={fontSize}
-                setFontSize={setFontSize1}
+                setFontSize={wrapSetter(setFontSize, onChange1)}
                 roundSizePixel={roundSizePixel}
-                setRoundSizePixel={setRoundSizePixel1}
+                setRoundSizePixel={wrapSetter(setRoundSizePixel, onChange1)}
+                isGeometry={isGeometry}
+                isCommonStyle={isCommonStyle}
+                extraControls={extraControls}
+                commonStyleProps={{
+                    fontFamily,
+                    setFontFamily: wrapSetter(setFontFamily, onChange1),
+                    fontWeight,
+                    setFontWeight: wrapSetter(setFontWeight, onChange1),
+                    color: textColor,
+                    setColor: wrapSetter(setTextColor, onChange1),
+                    backgroundColor,
+                    setBackgroundColor: wrapSetter(
+                        setBackgroundColor,
+                        onChange1,
+                    ),
+                    backdropFilter,
+                    setBackdropFilter: wrapSetter(setBackdropFilter, onChange1),
+                }}
                 target={prefix}
             />
         ),

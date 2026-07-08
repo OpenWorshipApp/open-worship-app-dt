@@ -1,6 +1,7 @@
 import {
-    useMemo,
     useCallback,
+    useRef,
+    useState,
     type CSSProperties,
     type MouseEvent,
     type KeyboardEvent,
@@ -12,52 +13,86 @@ import {
     useCanvasItemContext,
     useCanvasItemPropsContext,
     useSetEditingCanvasItem,
+    useSetSelectedCanvasItems,
 } from '../CanvasItem';
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
-import { genTimeoutAttempt } from '../../../helper/timeoutHelpers';
 
 export default function BoxEditorNormalTextEditModeComp({
     style,
 }: Readonly<{
     style: CSSProperties;
 }>) {
-    const attemptTimeout = useMemo(() => {
-        return genTimeoutAttempt(2000);
-    }, []);
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
-    const handleTextSetting = useCallback(
-        (text: string) => {
-            attemptTimeout(() => {
-                canvasItem.applyProps({ text });
-                canvasController.applyEditItem(canvasItem);
-            });
-        },
-        [attemptTimeout, canvasItem, canvasController],
-    );
     const props = useCanvasItemPropsContext<CanvasItemTextPropsType>();
+    const [draftText, setDraftText] = useState(props.text);
+    const isCancellingRef = useRef(false);
     const handleCanvasItemEditing = useSetEditingCanvasItem();
+    const handleSelectCanvasItem = useSetSelectedCanvasItems();
+
+    const closeTextEditor = useCallback(
+        (shouldCommit: boolean) => {
+            if (!shouldCommit) {
+                // Escape cancels the edit without changing the text and exits
+                // edit mode entirely.
+                handleCanvasItemEditing(canvasItem, false);
+                return;
+            }
+            if (draftText !== props.text) {
+                canvasController.editCanvasItemById(
+                    canvasItem.id,
+                    (latestCanvasItem) => {
+                        latestCanvasItem.applyProps({ text: draftText });
+                    },
+                );
+            }
+            // Leaving text-edit by committing (blur / Ctrl+Enter) switches the
+            // box to the selected state (not editing) so the properties panel
+            // stays open for it.
+            handleSelectCanvasItem(canvasItem);
+        },
+        [
+            canvasController,
+            canvasItem,
+            draftText,
+            handleCanvasItemEditing,
+            handleSelectCanvasItem,
+            props.text,
+        ],
+    );
+
     const handleClick = useCallback((event: MouseEvent) => {
         event.stopPropagation();
     }, []);
     const handleContextMenu = useCallback(
-        async (event: MouseEvent) => {
+        (event: MouseEvent) => {
             event.stopPropagation();
-            handleCanvasItemEditing(canvasItem, false);
+            closeTextEditor(true);
         },
-        [handleCanvasItemEditing, canvasItem],
+        [closeTextEditor],
     );
     const handleKeyUp = useCallback(
         (event: KeyboardEvent) => {
-            if (
-                event.key === 'Escape' ||
-                (event.key === 'Enter' && event.ctrlKey)
-            ) {
-                handleCanvasItemEditing(canvasItem, false);
+            if (event.key === 'Escape') {
+                isCancellingRef.current = true;
+                closeTextEditor(false);
+                return;
+            }
+            if (event.key === 'Enter' && event.ctrlKey) {
+                closeTextEditor(true);
             }
         },
-        [handleCanvasItemEditing, canvasItem],
+        [closeTextEditor],
     );
+
+    const handleTextBlur = useCallback(() => {
+        if (isCancellingRef.current) {
+            isCancellingRef.current = false;
+            return;
+        }
+        closeTextEditor(true);
+    }, [closeTextEditor]);
+
     return (
         <div
             className="app-box-editor shadow-caught-hover-pointer editable"
@@ -67,7 +102,12 @@ export default function BoxEditorNormalTextEditModeComp({
             onContextMenu={handleContextMenu}
             onKeyUp={handleKeyUp}
         >
-            <BoxEditorTextAreaComp props={props} setText={handleTextSetting} />
+            <BoxEditorTextAreaComp
+                props={props}
+                text={draftText}
+                onTextChange={setDraftText}
+                onBlur={handleTextBlur}
+            />
         </div>
     );
 }

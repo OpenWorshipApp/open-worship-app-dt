@@ -77,7 +77,7 @@ function MenuIsModifying({
     const handleDiscard = useCallback(async () => {
         const isOk = await showAppConfirm(
             tran('Discard changed'),
-            tran('Are you sure to discard all histories?'),
+            tran('Are you sure to discard all change histories?'),
             {
                 confirmButtonLabel: 'Yes',
             },

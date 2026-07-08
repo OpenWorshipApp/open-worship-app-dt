@@ -164,7 +164,7 @@ type YTHelper = {
 };
 
 type EnvUtilsType = {
-isFEUseEffectWarning: boolean;
+    isFEUseEffectWarning: boolean;
 };
 
 export type AppProviderType = Readonly<

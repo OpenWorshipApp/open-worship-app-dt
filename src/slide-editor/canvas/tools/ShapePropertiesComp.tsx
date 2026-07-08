@@ -34,9 +34,9 @@ export default function ShapePropertiesComp() {
         [setProps],
     );
     return (
-        <div>
-            <div className="d-flex">
-                <span className="pe-2">Glass Effect:</span>
+        <div className="d-flex flex-column gap-2" style={{ maxWidth: '280px' }}>
+            <div className="d-flex align-items-center">
+                <span className="pe-2 flex-grow-1">{tran('Glass Effect')}</span>
                 <input
                     className="form-control form-control-sm"
                     type="number"
@@ -50,14 +50,14 @@ export default function ShapePropertiesComp() {
                 <span className="ps-1">px</span>
             </div>
             <div
-                className="d-flex app-border-white-round m-1"
+                className="d-flex align-items-center gap-2 app-border-white-round px-2 py-1"
                 style={
                     roundSizePixel > 0
                         ? { opacity: 0.5, pointerEvents: 'none' }
                         : {}
                 }
             >
-                {tran('Round Size %:')}
+                <span className="text-nowrap">{tran('Round Size %:')}</span>
                 <AppRangeComp
                     value={roundSizePercentage}
                     title={
@@ -75,10 +75,7 @@ export default function ShapePropertiesComp() {
                     isShowValue
                 />
             </div>
-            <div
-                className="d-flex input-group m-1"
-                style={{ width: '260px', height: '35px' }}
-            >
+            <div className="d-flex input-group input-group-sm">
                 <div className="input-group-text">
                     {tran('Round Size Pixel:')}
                 </div>

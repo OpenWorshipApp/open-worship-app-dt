@@ -47,9 +47,11 @@ describe('RenderBackgroundWebIframeComp', () => {
         const element = BackgroundWebPlaceHolderComp({
             height: 180,
             imageData: 'data:image/png;base64,abc',
+            isPlaying: false,
         }) as ReactElement<any>;
 
-        const img = Array.from(element.props.children)[0] as ReactElement<any>;
+        const fragment = element.props.children as ReactElement<any>;
+        const img = (fragment.props.children as any[])[0] as ReactElement<any>;
         expect(img.type).toBe('img');
         expect(img.props.alt).toBe('web preview');
         expect(img.props.src).toBe('data:image/png;base64,abc');
@@ -59,6 +61,7 @@ describe('RenderBackgroundWebIframeComp', () => {
     test('renders the icon placeholder when preview data is missing', () => {
         const element = BackgroundWebPlaceHolderComp({
             height: 120,
+            isPlaying: false,
         }) as ReactElement<any>;
         const icon = element.props.children as ReactElement<any>;
 

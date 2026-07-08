@@ -109,42 +109,53 @@ function CountDownOnDatetimeComp({
         );
     }, [getTargetDateTime, genStyle]);
     return (
-        <div className="d-flex">
-            <div>
+        <div className="app-border-white-round p-2">
+            <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+                <i className="bi bi-calendar-event" />
+                <small>{tran('Count down to a specific date & time')}</small>
+            </div>
+            <div className="d-flex flex-wrap align-items-center gap-2">
                 <button
                     title="Reset Date and Time to Now"
                     className="btn btn-outline-warning"
                     onClick={handleResetting}
                 >
+                    <i className="bi bi-arrow-counterclockwise" />{' '}
                     {tran('Reset')}
                 </button>
-            </div>
-            <div>
-                <input
-                    type="date"
-                    className="form-control"
-                    value={date}
-                    onChange={handleDateChange}
-                    min={todayString()}
-                />
-            </div>
-            <div>
-                <input
-                    type="time"
-                    className="form-control"
-                    value={time}
-                    onChange={handleTimeChange}
-                    min={nowString()}
-                />
-            </div>
-            <div>
+                <div className="input-group" style={{ width: 'auto' }}>
+                    <span className="input-group-text">
+                        <i className="bi bi-calendar3" />
+                    </span>
+                    <input
+                        type="date"
+                        className="form-control"
+                        value={date}
+                        onChange={handleDateChange}
+                        min={todayString()}
+                    />
+                </div>
+                <div className="input-group" style={{ width: 'auto' }}>
+                    <span className="input-group-text">
+                        <i className="bi bi-clock" />
+                    </span>
+                    <input
+                        type="time"
+                        className="form-control"
+                        value={time}
+                        onChange={handleTimeChange}
+                        min={nowString()}
+                    />
+                </div>
                 <button
-                    className="btn btn-secondary"
+                    className="btn btn-primary"
+                    title={tran('Start Countdown to DateTime')}
                     onClick={handleDateTimeShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
                     onDragStart={handleDragStart}
                 >
+                    <i className="bi bi-play-fill" />{' '}
                     {tran('Start Countdown to DateTime')}
                 </button>
             </div>
@@ -214,45 +225,53 @@ function CountDownInSetComp({
         );
     }, [getTargetDateTime, genStyle]);
     return (
-        <div className="d-flex">
-            <div
-                className="input-group"
-                style={{ width: '120px' }}
-                title="Hours"
-            >
-                <div className="input-group-text">H:</div>
-                <input
-                    className="form-control form-control-sm"
-                    type="number"
-                    value={hours}
-                    onChange={handleHoursChange}
-                    min="0"
-                />
+        <div className="app-border-white-round p-2">
+            <div className="d-flex align-items-center gap-1 mb-2 text-muted">
+                <i className="bi bi-hourglass-split" />
+                <small>{tran('Count down for a duration')}</small>
             </div>
-            <div
-                className="input-group"
-                style={{ width: '120px' }}
-                title="Minutes"
-            >
-                <div className="input-group-text">M:</div>
-                <input
-                    className="form-control form-control-sm"
-                    type="number"
-                    value={minutes}
-                    onChange={handleMinutesChange}
-                    min="0"
-                    max="59"
-                />
-            </div>
-            <div>
+            <div className="d-flex flex-wrap align-items-center gap-2">
+                <div
+                    className="input-group"
+                    style={{ width: '130px' }}
+                    title="Hours"
+                >
+                    <span className="input-group-text">
+                        <i className="bi bi-clock-history" />
+                    </span>
+                    <input
+                        className="form-control"
+                        type="number"
+                        value={hours}
+                        onChange={handleHoursChange}
+                        min="0"
+                    />
+                    <span className="input-group-text">h</span>
+                </div>
+                <div
+                    className="input-group"
+                    style={{ width: '130px' }}
+                    title="Minutes"
+                >
+                    <input
+                        className="form-control"
+                        type="number"
+                        value={minutes}
+                        onChange={handleMinutesChange}
+                        min="0"
+                        max="59"
+                    />
+                    <span className="input-group-text">m</span>
+                </div>
                 <button
-                    className="btn btn-secondary"
+                    className="btn btn-primary"
+                    title={tran('Start Countdown')}
                     onClick={handleShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
                     onDragStart={handleInSetDragStart}
                 >
-                    {tran('Start Countdown')}
+                    <i className="bi bi-play-fill" /> {tran('Start Countdown')}
                 </button>
             </div>
         </div>
@@ -329,13 +348,11 @@ export default function ForegroundCountDownComp() {
         >
             {propsSetting}
             <hr />
-            <div>
+            <div className="d-flex flex-column gap-2">
                 <CountDownOnDatetimeComp genStyle={genStyle} />
-            </div>
-            <div>
                 <CountDownInSetComp genStyle={genStyle} />
             </div>
-            <div>{genHidingElement(false)}</div>
+            <div className="mt-2">{genHidingElement(false)}</div>
         </ForegroundLayoutComp>
     );
 }

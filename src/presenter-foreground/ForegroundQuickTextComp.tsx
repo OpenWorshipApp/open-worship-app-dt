@@ -80,7 +80,12 @@ export default function ForegroundQuickTextComp() {
         .filter((item) => {
             return item !== null;
         });
-    const { genStyle, element: propsSetting } = useForegroundPropsSetting({
+    const {
+        genStyle,
+        fontFamily,
+        fontWeight,
+        element: propsSetting,
+    } = useForegroundPropsSetting({
         prefix: 'quick-text',
         onChange: (extraStyle) => {
             refreshAllQuickText(showingScreenIdDataList, extraStyle);
@@ -163,39 +168,49 @@ export default function ForegroundQuickTextComp() {
         >
             {propsSetting}
             <hr />
-            <div className="d-flex flex-column gap-1">
-                <div className="d-flex flex-wrap gap-1">
+            <div className="d-flex flex-column gap-2">
+                <div className="d-flex flex-wrap gap-2">
                     <div
-                        className="input-group input-group-sm"
-                        title="Stage number"
+                        className="input-group"
+                        title={tran('Seconds to wait before showing the text')}
                         style={{
-                            width: '250px',
+                            width: '220px',
                         }}
                     >
-                        <small>{tran('Time Second Delay:')}</small>
+                        <span className="input-group-text">
+                            <i className="bi bi-hourglass-top" />
+                        </span>
+                        <span className="input-group-text">
+                            {tran('Delay')}
+                        </span>
                         <input
-                            className="form-control form-control-sm"
+                            className="form-control"
                             type="number"
                             min="0"
                             value={timeSecondDelay}
                             onChange={handleTimeSecondDelayChange}
                         />
+                        <span className="input-group-text">s</span>
                     </div>
                     <div
-                        className="input-group input-group-sm"
-                        title="Stage number"
+                        className="input-group"
+                        title={tran('Seconds the text stays on screen')}
                         style={{
-                            width: '250px',
+                            width: '220px',
                         }}
                     >
-                        <small>{tran('Time Second to Live:')}</small>
+                        <span className="input-group-text">
+                            <i className="bi bi-clock" />
+                        </span>
+                        <span className="input-group-text">{tran('Live')}</span>
                         <input
-                            className="form-control form-control-sm"
+                            className="form-control"
                             type="number"
                             min="1"
                             value={timeSecondToLive}
                             onChange={handleTimeSecondToLiveChange}
                         />
+                        <span className="input-group-text">s</span>
                     </div>
                 </div>
                 <div className="form-floating">
@@ -207,15 +222,26 @@ export default function ForegroundQuickTextComp() {
                         value={markdownText}
                         onChange={handleMarkdownTextChange}
                         placeholder="Leave a markdown text here"
+                        style={{
+                            fontFamily: fontFamily || undefined,
+                            fontWeight: fontWeight || undefined,
+                            height: '150px',
+                        }}
                     />
-                    <label htmlFor="quick-text-textarea">Markdown</label>
+                    <label htmlFor="quick-text-textarea">
+                        {tran('Markdown')}
+                    </label>
+                </div>
+                <div className="d-flex">
                     <button
-                        className="btn btn-secondary"
+                        className="btn btn-primary"
+                        title={tran('Show Quick Text')}
                         onClick={handleShowing}
                         onContextMenu={handleContextMenuOpening}
                         draggable
                         onDragStart={handleQuickTextDragStart}
                     >
+                        <i className="bi bi-display" />{' '}
                         {tran('Show Quick Text')}
                     </button>
                 </div>

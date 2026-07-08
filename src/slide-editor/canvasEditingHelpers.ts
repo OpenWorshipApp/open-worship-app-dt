@@ -65,19 +65,28 @@ function useCanvasItemsData(canvasController: CanvasController) {
 
     useAppEffect(() => {
         canvasController.onArrowing = (event) => {
-            for (const selectedCanvasItem of selectedCanvasItems) {
-                canvasController.moveCanvasItem(
-                    selectedCanvasItem,
-                    canvasController.MOVING_OFFSET,
-                    canvasController.MOVING_OFFSET,
-                    {
-                        arrowing: event.key as any,
-                        isCtrlKey: event.ctrlKey,
-                        isShiftKey: event.shiftKey,
-                    },
-                );
-                canvasController.applyEditItem(selectedCanvasItem);
+            if (selectedCanvasItems.length === 0) {
+                return;
             }
+
+            canvasController.editCanvasItemsByIds(
+                selectedCanvasItems.map((item) => item.id),
+                (selectedCanvasItem) => {
+                    canvasController.moveCanvasItem(
+                        selectedCanvasItem,
+                        canvasController.MOVING_OFFSET,
+                        canvasController.MOVING_OFFSET,
+                        {
+                            arrowing: event.key as any,
+                            isCtrlKey: event.ctrlKey,
+                            isShiftKey: event.shiftKey,
+                        },
+                    );
+                },
+                {
+                    showNotFoundToast: false,
+                },
+            );
         };
         return () => {
             canvasController.onArrowing = () => {};

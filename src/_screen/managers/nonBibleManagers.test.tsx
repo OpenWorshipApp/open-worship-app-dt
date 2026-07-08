@@ -220,7 +220,7 @@ describe('non-Bible screen managers', () => {
         manager.backgroundSrc = { type: 'color', src: '#ffffff' } as any;
         await Promise.resolve();
 
-        expect(listener).toHaveBeenCalledWith('#ffffff');
+        expect(listener).toHaveBeenCalledWith('#ffffff', expect.any(Number));
         expect(setSettingMock).toHaveBeenCalled();
         expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
             {

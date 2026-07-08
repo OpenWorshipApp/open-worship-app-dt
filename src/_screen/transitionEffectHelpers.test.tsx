@@ -169,12 +169,12 @@ describe('transitionEffectHelpers', () => {
         const onUpdate = vi.fn();
 
         function Host() {
-            const count = useScreenEffectEvents(
+            useScreenEffectEvents(
                 ['update'],
                 screenEffectManager as any,
                 onUpdate,
             );
-            return <output data-count={`${count}`} />;
+            return null;
         }
 
         await act(async () => {
@@ -184,13 +184,11 @@ describe('transitionEffectHelpers', () => {
             ['update'],
             expect.any(Function),
         );
-        expect(container.querySelector('output')?.dataset.count).toBe('0');
 
         await act(async () => {
             updateCallbacks[0]?.();
         });
         expect(onUpdate).toHaveBeenCalledOnce();
-        expect(container.querySelector('output')?.dataset.count).toBe('1');
 
         await act(async () => {
             root.unmount();
@@ -217,12 +215,12 @@ describe('transitionEffectHelpers', () => {
         const secondCallback = vi.fn();
 
         function Host({ callback }: Readonly<{ callback: () => void }>) {
-            const count = useScreenEffectEvents(
+            useScreenEffectEvents(
                 ['update'],
                 screenEffectManager as any,
                 callback,
             );
-            return <output data-count={`${count}`} />;
+            return null;
         }
 
         await act(async () => {
@@ -247,7 +245,6 @@ describe('transitionEffectHelpers', () => {
         });
         expect(firstCallback).not.toHaveBeenCalled();
         expect(secondCallback).toHaveBeenCalledOnce();
-        expect(container.querySelector('output')?.dataset.count).toBe('1');
     });
 
     test('renders the selected transition icon and opens the context menu', async () => {

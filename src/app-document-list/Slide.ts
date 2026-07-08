@@ -227,6 +227,9 @@ export default class Slide
         }
         try {
             const { filePath, data } = JSON.parse(jsonString);
+            if (typeof data !== 'object') {
+                throw new Error('Invalid clipboard data');
+            }
             this.validate(data);
             return this.fromJson(data, filePath);
         } catch (_error) {}

@@ -5,10 +5,11 @@ import type { CanvasItemEventDataType } from './CanvasController';
 import type CanvasController from './CanvasController';
 import { useCanvasControllerContext } from './CanvasController';
 import type { CanvasControllerEventType } from './canvasHelpers';
+import { type ListenerType } from '../../event/EventHandler';
 
 export function useCanvasControllerEvents(
     eventTypes: CanvasControllerEventType[],
-    callback?: (data: CanvasItemEventDataType) => void,
+    callback?: ListenerType<CanvasItemEventDataType>,
 ) {
     const canvasController = useCanvasControllerContext();
     const callbackRef = useRef(callback);
@@ -16,8 +17,8 @@ export function useCanvasControllerEvents(
     useAppEffect(() => {
         const regEvents = canvasController.itemRegisterEventListener(
             eventTypes,
-            (data) => {
-                callbackRef.current?.(data);
+            (data, time) => {
+                callbackRef.current?.(data, time);
             },
         );
         return () => {
@@ -46,11 +47,8 @@ export function useCanvasControllerRefreshEvents(
     eventTypes?: CanvasControllerEventType[],
 ) {
     eventTypes ??= ['update', 'scale'];
-    const [n, setN] = useState(0);
-    useCanvasControllerEvents(eventTypes, () => {
-        setN((n) => {
-            return n + 1;
-        });
+    const [_n, setN] = useState(Date.now());
+    useCanvasControllerEvents(eventTypes, (_data, time) => {
+        setN(time);
     });
-    return n;
 }

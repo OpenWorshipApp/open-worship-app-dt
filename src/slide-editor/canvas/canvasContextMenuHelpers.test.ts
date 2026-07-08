@@ -193,11 +193,7 @@ describe('canvasContextMenuHelpers', () => {
         expect(
             selectedItemMenuItems.map((item: any) => item.menuElement),
         ).toEqual(['Copy', 'Duplicate', 'Edit', 'Delete']);
-        expect(selectedItemMenu[2]).toEqual({
-            style: {
-                minWidth: '70px',
-            },
-        });
+        expect(selectedItemMenu[2]).toBeUndefined();
 
         selectedItemMenuItems[0].onSelect();
         expect(setCopiedItemsMock).toHaveBeenCalledWith([textCanvasItem]);

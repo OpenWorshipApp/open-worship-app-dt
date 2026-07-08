@@ -105,7 +105,7 @@ describe('EventHandler', () => {
 
         TestEventHandler.addPropEvent('open', { id: 1 });
         await flushAsyncEvents();
-        expect(listener).toHaveBeenCalledWith({ id: 1 });
+        expect(listener).toHaveBeenCalledWith({ id: 1 }, expect.any(Number));
 
         TestEventHandler.shouldProceed = false;
         TestEventHandler.addPropEvent('open', { id: 2 });

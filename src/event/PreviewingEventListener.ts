@@ -72,8 +72,8 @@ export function useLyricUpdating(listener: ListenerType<Lyric>) {
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['update-lyric'],
-            (lyric: Lyric) => {
-                listenerRef.current(lyric);
+            (lyric: Lyric, time: number) => {
+                listenerRef.current(lyric, time);
             },
         );
         return () => {
@@ -90,8 +90,8 @@ export function useVaryAppDocumentSelecting(
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['select-app-document'],
-            (varyAppDocument: AppDocument | null) => {
-                listenerRef.current(varyAppDocument);
+            (varyAppDocument: AppDocument | null, time: number) => {
+                listenerRef.current(varyAppDocument, time);
             },
         );
         return () => {
@@ -108,8 +108,8 @@ export function useVaryAppDocumentUpdating(
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['update-app-document'],
-            (varyAppDocument: AppDocument) => {
-                listenerRef.current(varyAppDocument);
+            (varyAppDocument: AppDocument, time: number) => {
+                listenerRef.current(varyAppDocument, time);
             },
         );
         return () => {

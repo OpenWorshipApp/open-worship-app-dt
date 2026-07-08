@@ -6,6 +6,7 @@ import {
 } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import type ElectronSettingManager from './ElectronSettingManager';
+import { htmlFiles } from './fsServe';
 import {
     attemptClosing,
     genWebPreferences,
@@ -13,6 +14,18 @@ import {
     guardBrowsing,
     messageChannels,
 } from './electronHelpers';
+
+const allowedMainHtmlFiles: string[] = [
+    htmlFiles.presenter,
+    htmlFiles.reader,
+    htmlFiles.appDocumentEditor,
+];
+
+function toAllowedMainHtmlPath(mainHtmlPath: string) {
+    return allowedMainHtmlFiles.includes(mainHtmlPath)
+        ? mainHtmlPath
+        : htmlFiles.presenter;
+}
 
 let instance: ElectronMainController | null = null;
 export default class ElectronMainController {
@@ -23,7 +36,8 @@ export default class ElectronMainController {
     }
 
     createWindow(settingManager: ElectronSettingManager) {
-        const routeProps = genRoutProps(settingManager.mainHtmlPath);
+        const mainHtmlPath = toAllowedMainHtmlPath(settingManager.mainHtmlPath);
+        const routeProps = genRoutProps(mainHtmlPath);
         const webPreferences = genWebPreferences(routeProps.preloadFilePath);
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),

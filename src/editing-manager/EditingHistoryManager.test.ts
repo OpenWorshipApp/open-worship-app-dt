@@ -273,6 +273,10 @@ describe('EditingHistoryManager', () => {
         });
 
         expect(await manager.discard()).toBe(true);
+        expect(fileSource.fireUpdateEvent).toHaveBeenLastCalledWith({
+            isHistoryEditing: true,
+            eventType: 'discard',
+        });
         expect(mocks.dirs.has(historyDirPath)).toBe(false);
         expect(await manager.checkCanUndo()).toBe(false);
         expect(await manager.checkCanRedo()).toBe(false);

@@ -17,7 +17,17 @@ import GarbageCollectableCacher from '../others/GarbageCollectableCacher';
 import FileSource from '../helper/FileSource';
 import { unlocking } from '../server/unlockingHelpers';
 
-type HistoryMovementType = 'undo' | 'redo';
+type HistoryMovementType = 'undo' | 'redo' | 'discard';
+const HISTORY_MOVEMENT_TYPES: HistoryMovementType[] = [
+    'undo',
+    'redo',
+    'discard',
+];
+export function checkIsHistoryMovementEventType(
+    eventType: unknown,
+): eventType is HistoryMovementType {
+    return HISTORY_MOVEMENT_TYPES.includes(eventType as HistoryMovementType);
+}
 const CURRENT_FILE_SIGN = '-head';
 export class FileLineHandler {
     filePath: string;
@@ -305,7 +315,12 @@ export default class EditingHistoryManager {
     }
 
     async addHistory(dataText: string) {
-        await this.fileLineHandler.ensureHistoriesDir();
+        try {
+            await this.fileLineHandler.ensureHistoriesDir();
+        } catch (error) {
+            handleError(error);
+            return;
+        }
         await this.fileLineHandler.appendHistory(dataText);
         this.fireEvent();
     }
@@ -355,7 +370,7 @@ export default class EditingHistoryManager {
         try {
             this.checkCanRedo();
             await this.fileLineHandler.clearHistories();
-            this.fireEvent();
+            this.fireEvent('discard');
             return true;
         } catch (error) {
             handleError(error);

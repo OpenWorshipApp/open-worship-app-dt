@@ -15,38 +15,48 @@ import { HEX_COLOR_BLACK } from '../../../others/color/colorHelpers';
 function SizingComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
-    const handleFull = useCallback(() => {
-        canvasController.applyCanvasItemFully(canvasItem);
-        canvasController.applyEditItem(canvasItem);
-    }, [canvasController, canvasItem]);
-    const handleOriginal = useCallback(() => {
-        canvasController.applyCanvasItemOriginal(canvasItem);
-        canvasController.applyEditItem(canvasItem);
-    }, [canvasController, canvasItem]);
-    const handleStrip = useCallback(() => {
-        canvasController.applyCanvasItemMediaStrip(canvasItem);
-        canvasController.applyEditItem(canvasItem);
-    }, [canvasController, canvasItem]);
+
+    const handleSizing = useCallback(
+        (kind: 'full' | 'original' | 'strip') => {
+            canvasController.editCanvasItemById(canvasItem.id, (item) => {
+                if (kind === 'full') {
+                    canvasController.applyCanvasItemFully(item);
+                } else if (kind === 'original') {
+                    canvasController.applyCanvasItemOriginal(item);
+                } else {
+                    canvasController.applyCanvasItemMediaStrip(item);
+                }
+            });
+        },
+        [canvasController, canvasItem.id],
+    );
+
     return (
         <SlideEditorToolTitleComp title="Size">
             <button
                 className="btn btn-sm btn-secondary"
                 title="Fit to canvas"
-                onClick={handleFull}
+                onClick={() => {
+                    return handleSizing('full');
+                }}
             >
                 {tran('Full')}
             </button>
             <button
                 className="btn btn-sm btn-secondary m-1"
                 title="Set to original size"
-                onClick={handleOriginal}
+                onClick={() => {
+                    return handleSizing('original');
+                }}
             >
                 {tran('Original Size')}
             </button>
             {['image', 'video'].includes(canvasItem.type) ? (
                 <button
                     className="btn btn-sm btn-secondary"
-                    onClick={handleStrip}
+                    onClick={() => {
+                        return handleSizing('strip');
+                    }}
                 >
                     {tran('Strip')}
                 </button>
@@ -70,7 +80,7 @@ function LayerComp() {
     }, [setProps]);
     return (
         <div className="ps-2">
-            <div className="d-flex">
+            <div className="d-flex gap-3">
                 <SlideEditorToolTitleComp title="Box Layer">
                     <button
                         className="btn btn-sm btn-outline-info"

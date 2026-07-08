@@ -41,6 +41,7 @@ const {
             value: {
                 deleteItems: deleteItemsMock,
                 genHandleContextMenuOpening: genHandleContextMenuOpeningMock,
+                focusEditor: vi.fn(),
             } as any,
         },
         canvasItemPropsState: {
@@ -265,6 +266,7 @@ describe('BoxEditor normal view components', () => {
 
         expect(setSelectedCanvasItemsMock).toHaveBeenCalledWith(
             canvasItemState.value,
+            { isAppend: false },
         );
         expect(customContextMenuMock).toHaveBeenCalledTimes(1);
         expect(customDoubleClickMock).toHaveBeenCalledTimes(1);

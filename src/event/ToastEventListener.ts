@@ -19,8 +19,8 @@ export function useToastSimpleShowing(listener: ListenerType<SimpleToastType>) {
     useAppEffect(() => {
         const event = ToastEventListener.registerEventListener(
             ['simple'],
-            (data: SimpleToastType) => {
-                listenerRef.current(data);
+            (data: SimpleToastType, time: number) => {
+                listenerRef.current(data, time);
             },
         );
         return () => {

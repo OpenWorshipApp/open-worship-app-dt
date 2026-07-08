@@ -443,13 +443,7 @@
         "JUD": "Jude",
         "REV": "Revelation"
     },
-    "oneChapterBooks": [
-        "OBA",
-        "PHM",
-        "2JN",
-        "3JN",
-        "JUD"
-    ],
+    "oneChapterBooks": ["OBA", "PHM", "2JN", "3JN", "JUD"],
     "flippingKey": {
         "JAM": "JAS"
     },
@@ -457,13 +451,7 @@
         {
             "title": "The Law (Pentateuch or Torah)",
             "type": "law",
-            "bookKeys": [
-                "GEN",
-                "EXO",
-                "LEV",
-                "NUM",
-                "DEU"
-            ]
+            "bookKeys": ["GEN", "EXO", "LEV", "NUM", "DEU"]
         },
         {
             "title": "History",
@@ -486,24 +474,12 @@
         {
             "title": "Poetry and Wisdom",
             "type": "poetry",
-            "bookKeys": [
-                "JOB",
-                "PSA",
-                "PRO",
-                "ECC",
-                "SNG"
-            ]
+            "bookKeys": ["JOB", "PSA", "PRO", "ECC", "SNG"]
         },
         {
             "title": "Major Prophets",
             "type": "majorProphets",
-            "bookKeys": [
-                "ISA",
-                "JER",
-                "LAM",
-                "EZK",
-                "DAN"
-            ]
+            "bookKeys": ["ISA", "JER", "LAM", "EZK", "DAN"]
         },
         {
             "title": "Minor Prophets",
@@ -526,19 +502,12 @@
         {
             "title": "Gospels",
             "type": "gospels",
-            "bookKeys": [
-                "MAT",
-                "MRK",
-                "LUK",
-                "JHN"
-            ]
+            "bookKeys": ["MAT", "MRK", "LUK", "JHN"]
         },
         {
             "title": "History (Acts of the Apostles)",
             "type": "historyActs",
-            "bookKeys": [
-                "ACT"
-            ]
+            "bookKeys": ["ACT"]
         },
         {
             "title": "Pauline Epistles",
@@ -562,23 +531,12 @@
         {
             "title": "General Epistles",
             "type": "generalEpistles",
-            "bookKeys": [
-                "HEB",
-                "JAS",
-                "1PE",
-                "2PE",
-                "1JN",
-                "2JN",
-                "3JN",
-                "JUD"
-            ]
+            "bookKeys": ["HEB", "JAS", "1PE", "2PE", "1JN", "2JN", "3JN", "JUD"]
         },
         {
             "title": "Prophecy (Revelation)",
             "type": "prophecyRevelation",
-            "bookKeys": [
-                "REV"
-            ]
+            "bookKeys": ["REV"]
         }
     ]
 }

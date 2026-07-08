@@ -317,14 +317,17 @@ describe('CanvasItem', () => {
         expect(checkCanvasItemsIncludes([targetItem], otherItem)).toBe(false);
 
         await act(async () => {
-            latest.setSelectedCanvasItems(targetItem, false);
-            latest.setSelectedCanvasItems(otherItem, false);
+            latest.setSelectedCanvasItems(targetItem, { isAppend: true });
+            latest.setSelectedCanvasItems(otherItem, { isAppend: true });
             latest.setEditingCanvasItem(targetItem, false);
             latest.setEditingCanvasItem(otherItem, false);
         });
 
         expect(setCanvasItems).toHaveBeenNthCalledWith(1, []);
-        expect(setCanvasItems).toHaveBeenNthCalledWith(2, [otherItem]);
+        expect(setCanvasItems).toHaveBeenNthCalledWith(2, [
+            targetItem,
+            otherItem,
+        ]);
         expect(setCanvasItem).toHaveBeenNthCalledWith(1, null);
         expect(setCanvasItem).toHaveBeenNthCalledWith(2, targetItem);
     });

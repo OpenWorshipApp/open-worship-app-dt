@@ -1,34 +1,44 @@
 import type { ChangeEvent, CSSProperties, FocusEvent } from 'react';
-import { useCallback, useState } from 'react';
-
-import { useAppEffect } from '../../../helper/debuggerHelpers';
+import { useCallback } from 'react';
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
-import CanvasItemText from '../CanvasItemText';
+import CanvasItemText, { SCRIPT_SAFE_LINE_HEIGHT } from '../CanvasItemText';
 
 function calcAlignmentStyle(props: CanvasItemTextPropsType) {
-    let height = 0;
-    if (props.textVerticalAlignment !== 'start') {
-        height = props.height / 2 - props.fontSize;
+    const basePadding = props.fontSize / 10;
+    const lineHeight = props.fontSize * SCRIPT_SAFE_LINE_HEIGHT;
+    const lineCount = Math.max(1, props.text.split('\n').length);
+    const estimatedTextHeight = lineHeight * lineCount;
+    const availableHeight = Math.max(0, props.height - basePadding * 2);
+    const extraHeight = Math.max(0, availableHeight - estimatedTextHeight);
+
+    let topPadding = basePadding;
+    if (props.textVerticalAlignment === 'center') {
+        topPadding += extraHeight / 2;
+    } else if (props.textVerticalAlignment === 'end') {
+        topPadding += extraHeight;
     }
+
     const style: CSSProperties = {
         textAlign: props.textHorizontalAlignment,
-        padding: height + 'px 0',
-        overflow: 'hidden',
+        paddingTop: `${topPadding}px`,
+        paddingRight: `${basePadding}px`,
+        paddingBottom: `${basePadding}px`,
+        paddingLeft: `${basePadding}px`,
     };
     return style;
 }
 
 export default function BoxEditorTextAreaComp({
     props,
-    setText,
+    text,
+    onTextChange,
+    onBlur,
 }: Readonly<{
     props: CanvasItemTextPropsType;
-    setText: (newText: string) => void;
+    text: string;
+    onTextChange: (newText: string) => void;
+    onBlur: () => void;
 }>) {
-    const [localText, setLocalText] = useState(props.text);
-    useAppEffect(() => {
-        setLocalText(props.text);
-    }, [props.text]);
     const handleTextAreaFocus = useCallback(
         (event: FocusEvent<HTMLTextAreaElement>) => {
             const target = event.target as HTMLTextAreaElement;
@@ -39,10 +49,9 @@ export default function BoxEditorTextAreaComp({
     const handleTextChange = useCallback(
         (event: ChangeEvent<HTMLTextAreaElement>) => {
             const newText = event.target.value;
-            setLocalText(newText);
-            setText(newText);
+            onTextChange(newText);
         },
-        [setText],
+        [onTextChange],
     );
     const style = CanvasItemText.genStyle(props);
     return (
@@ -52,12 +61,22 @@ export default function BoxEditorTextAreaComp({
                 height: '100%',
                 ...style,
                 ...calcAlignmentStyle(props),
-                overflow: 'auto',
+                display: 'block',
+                margin: 0,
+                border: 'none',
+                borderRadius: 0,
+                outline: 'none',
+                boxShadow: 'none',
+                background: 'transparent',
+                resize: 'none',
+                boxSizing: 'border-box',
+                overflow: 'hidden',
             }}
-            value={localText}
+            value={text}
             autoFocus
             onFocus={handleTextAreaFocus}
             onChange={handleTextChange}
+            onBlur={onBlur}
         />
     );
 }

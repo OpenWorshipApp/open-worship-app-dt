@@ -17,7 +17,7 @@ import {
 } from '../server/fileHelpers';
 import { isValidJson } from './helpers';
 import { pathToFileURL } from '../server/calcHelpers';
-import EventHandler from '../event/EventHandler';
+import EventHandler, { type ListenerType } from '../event/EventHandler';
 import appProvider from '../server/appProvider';
 import type DragInf from './DragInf';
 import { DragTypeEnum } from './DragInf';
@@ -326,7 +326,7 @@ export default class FileSource
 
     static registerFileSourceEventListener<T>(
         events: FileSourceEventType[],
-        callback: (data: T) => void,
+        callback: ListenerType<T>,
         filePath?: string,
     ) {
         const newEvents = events.map((event) => {

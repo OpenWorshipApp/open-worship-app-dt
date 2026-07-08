@@ -352,16 +352,14 @@ export function useScreenEffectEvents(
     screenEffectManager: ScreenEffectManager,
     callback?: () => void,
 ) {
-    const [n, setN] = useState(0);
+    const [_n, setN] = useState(Date.now());
 
     const callbackRef = useRef(callback);
     callbackRef.current = callback;
 
     useAppEffect(() => {
-        const update = () => {
-            setN((n) => {
-                return n + 1;
-            });
+        const update = (_data: any, time: number) => {
+            setN(time);
             callbackRef.current?.();
         };
         const instanceEvents = screenEffectManager.registerEventListener(
@@ -372,5 +370,4 @@ export function useScreenEffectEvents(
             screenEffectManager.unregisterEventListener(instanceEvents);
         };
     }, [JSON.stringify(events)]);
-    return n;
 }

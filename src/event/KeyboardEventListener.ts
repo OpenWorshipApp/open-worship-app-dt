@@ -73,9 +73,9 @@ export type EventMapperType =
           key: string;
       };
 export type RegisteredEventMapperType = EventMapperType & {
-    listener: ListenerType;
+    listener: KeyboardListenerType;
 };
-export type ListenerType =
+export type KeyboardListenerType =
     | ((event: KeyboardEvent | ReactKeyboardEvent<any>) => void)
     | (() => void);
 
@@ -330,7 +330,7 @@ function genEventNames(eventMappers: EventMapperType[]) {
 }
 export function useKeyboardRegistering(
     eventMappers: EventMapperType[],
-    listener: ListenerType,
+    listener: KeyboardListenerType,
     deps: DependencyList,
 ) {
     const eventNames = useMemo(() => {
@@ -352,26 +352,28 @@ export function useKeyboardRegistering(
     }, [...deps, ...eventNames]);
 }
 
-document.onkeydown = function (event) {
-    if (checkIsControlKeys(event)) {
-        return;
-    }
-    if (
-        KeyboardEventListener.onMacQuitting !== null &&
-        checkIsKeyboardEventMatch(
-            [
-                {
-                    platform: PlatformEnum.MacOS,
-                    key: 'q',
-                    mControlKey: ['Meta'],
-                },
-            ],
-            event,
-        )
-    ) {
-        event.preventDefault();
-        KeyboardEventListener.onMacQuitting();
-        return;
-    }
-    KeyboardEventListener.fireEvent(event);
-};
+if (typeof document !== 'undefined') {
+    document.onkeydown = function (event) {
+        if (checkIsControlKeys(event)) {
+            return;
+        }
+        if (
+            KeyboardEventListener.onMacQuitting !== null &&
+            checkIsKeyboardEventMatch(
+                [
+                    {
+                        platform: PlatformEnum.MacOS,
+                        key: 'q',
+                        mControlKey: ['Meta'],
+                    },
+                ],
+                event,
+            )
+        ) {
+            event.preventDefault();
+            KeyboardEventListener.onMacQuitting();
+            return;
+        }
+        KeyboardEventListener.fireEvent(event);
+    };
+}

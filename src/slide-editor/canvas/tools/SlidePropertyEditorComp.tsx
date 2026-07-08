@@ -1,3 +1,5 @@
+import './SlidePropertyEditorComp.scss';
+
 import { type ChangeEvent, useCallback, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
@@ -9,6 +11,7 @@ import { getDefaultScreenDisplay } from '../../../_screen/managers/screenHelpers
 import { showAppConfirm } from '../../../popup-widget/popupWidgetHelpers';
 import type Slide from '../../../app-document-list/Slide';
 import { useFileSourceEvents } from '../../../helper/dirSourceHelpers';
+import { ExpandChevron, useExpandToggle } from './useExpandToggle';
 
 async function checkIsDiffOtherSlides(
     slide: Slide,
@@ -61,18 +64,15 @@ function RenderDimElementComp({
         [setValue],
     );
     return (
-        <div className="m-1 p-1 d-flex align-items-center">
-            {name}:
+        <div className="d-flex align-items-center gap-1">
+            <label className="spe-label">{tran(name)}</label>
             <input
-                className="form-control form-control-sm"
+                className="form-control form-control-sm spe-dim-input"
                 type="number"
-                style={{
-                    maxWidth: '70px',
-                }}
                 value={value}
                 onChange={handleChange}
             />
-            px
+            <span className="spe-unit">px</span>
         </div>
     );
 }
@@ -128,50 +128,58 @@ function RenderDimEditComp() {
         applyDim(width, height, true);
     }, [applyDim, width, height]);
     return (
-        <div className="d-flex flex-column">
-            <div className="d-flex flex-wrap">
-                <RenderDimElementComp
-                    name="Width"
-                    value={width}
-                    setValue={setWidth}
-                />
-                <RenderDimElementComp
-                    name="Height"
-                    value={height}
-                    setValue={setHeight}
-                />
+        <div className="spe-field d-flex flex-column">
+            <div className="d-flex align-items-start gap-2">
+                <label className="spe-label">{tran('Size')}</label>
+                <div className="d-flex flex-column gap-1">
+                    <RenderDimElementComp
+                        name="Width"
+                        value={width}
+                        setValue={setWidth}
+                    />
+                    <RenderDimElementComp
+                        name="Height"
+                        value={height}
+                        setValue={setHeight}
+                    />
+                </div>
             </div>
-            <div>
-                {hasChanged ? (
-                    <button
-                        className="btn btn-primary btn-sm m-1"
-                        title={tran('Apply changed dimension to this slide')}
-                        onClick={handleApply}
-                    >
-                        {tran('Apply')}
-                    </button>
-                ) : null}
-                {isScreenDiff ? (
-                    <button
-                        className="btn btn-primary btn-sm m-1"
-                        title={tran('Reset to default display dimension')}
-                        onClick={handleReset}
-                    >
-                        {tran('Reset')}
-                    </button>
-                ) : null}
-                {isDiffOther ? (
-                    <button
-                        className="btn btn-danger btn-sm m-1"
-                        title={tran(
-                            'Apply this dimension to all slides in this document',
-                        )}
-                        onClick={handleApplyAll}
-                    >
-                        {tran('Apply All Slides')}
-                    </button>
-                ) : null}
-            </div>
+            {hasChanged || isScreenDiff || isDiffOther ? (
+                <div className="spe-actions d-flex flex-wrap mt-2">
+                    {hasChanged ? (
+                        <button
+                            className="btn btn-primary btn-sm"
+                            title={tran(
+                                'Apply changed dimension to this slide',
+                            )}
+                            onClick={handleApply}
+                        >
+                            {tran('Apply')}
+                        </button>
+                    ) : null}
+                    {isScreenDiff ? (
+                        <button
+                            className="btn btn-outline-secondary btn-sm"
+                            title={tran('Reset to default display dimension')}
+                            onClick={handleReset}
+                        >
+                            {tran('Reset')}
+                        </button>
+                    ) : null}
+                    {isDiffOther ? (
+                        <button
+                            className="btn btn-outline-danger btn-sm"
+                            title={tran(
+                                'Apply this dimension to all slides in this' +
+                                    ' document',
+                            )}
+                            onClick={handleApplyAll}
+                        >
+                            {tran('Apply All Slides')}
+                        </button>
+                    ) : null}
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -189,12 +197,12 @@ function RenderNameEditorComp() {
         setName(e.target.value);
     }, []);
     return (
-        <div className="m-1 p-1 d-flex align-items-center">
-            Name:{' '}
+        <div className="spe-field d-flex align-items-center">
+            <label className="spe-label">{tran('Name')}</label>
             <input
                 className="form-control form-control-sm"
                 type="text"
-                placeholder="name"
+                placeholder={tran('name')}
                 style={{
                     maxWidth: '200px',
                 }}
@@ -203,7 +211,7 @@ function RenderNameEditorComp() {
             />
             {hasChanged ? (
                 <button
-                    className="btn btn-primary btn-sm m-1"
+                    className="btn btn-primary btn-sm"
                     title={tran('Apply changed name to this slide')}
                     onClick={handleNameChanging}
                 >
@@ -216,23 +224,41 @@ function RenderNameEditorComp() {
 
 export default function SlidePropertyEditorComp() {
     const slide = useSelectedEditingSlideContext();
+    const { isExpanded, headerProps } = useExpandToggle(false);
     const [index] = useAppStateAsync(() => {
         const appDocument = AppDocument.getInstance(slide.filePath);
         return appDocument.getSlideIndex(slide);
     }, [slide]);
     return (
-        <div className="m-1 app-border-white-round">
-            <div className="d-flex flex-wrap">
-                <div className="d-flex flex-row m-1 p-1">
-                    Index:
-                    <RenderSlideIndexComp viewIndex={index ?? -1} />
+        <div className="slide-property-editor m-1 app-border-white-round">
+            <div
+                className="spe-header d-flex align-items-center justify-content-between px-2 py-1"
+                {...headerProps}
+            >
+                <div className="d-flex align-items-center gap-2">
+                    <ExpandChevron
+                        isExpanded={isExpanded}
+                        className="spe-toggle-icon"
+                    />
+                    <span className="spe-title">{tran('Slide')}</span>
+                    <RenderSlideIndexComp
+                        viewIndex={index ?? -1}
+                        title={tran('Slide index')}
+                    />
                 </div>
-                <div className="m-1 p-1 app-border-white-round">
-                    Id: {slide.id}
-                </div>
-                <RenderNameEditorComp />
+                <span
+                    className="spe-id badge text-bg-secondary"
+                    title={tran('Slide Id')}
+                >
+                    ID {slide.id}
+                </span>
             </div>
-            <RenderDimEditComp />
+            {isExpanded ? (
+                <div className="d-flex flex-column gap-2 p-2">
+                    <RenderNameEditorComp />
+                    <RenderDimEditComp />
+                </div>
+            ) : null}
         </div>
     );
 }

@@ -405,11 +405,7 @@ export default class AppDocument
             slide,
             isSelectedEditing,
         );
-        showAppContextMenu(event, [...contextMenuItems, ...extraMenuItems], {
-            style: {
-                minWidth: '70px',
-            },
-        });
+        showAppContextMenu(event, [...contextMenuItems, ...extraMenuItems]);
     }
 
     showHoldingSlidesContextMenu(event: any, slides: Slide[]) {
@@ -417,11 +413,7 @@ export default class AppDocument
             this,
             slides,
         );
-        showAppContextMenu(event, contextMenuItems, {
-            style: {
-                minWidth: '70px',
-            },
-        });
+        showAppContextMenu(event, contextMenuItems);
     }
 
     async showContextMenu(event: any) {

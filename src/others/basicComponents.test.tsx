@@ -246,13 +246,23 @@ describe('others basic components', () => {
 
         const setValue = vi.fn();
         handleCtrlWheel({
-            event: { ctrlKey: true, deltaY: 1 },
+            event: {
+                ctrlKey: true,
+                deltaY: 1,
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
+            },
             value: 5,
             setValue,
             defaultSize: { size: 5, min: 1, max: 10, step: 1 },
         });
         handleCtrlWheel({
-            event: { ctrlKey: false, deltaY: 1 },
+            event: {
+                ctrlKey: false,
+                deltaY: 1,
+                preventDefault: vi.fn(),
+                stopPropagation: vi.fn(),
+            },
             value: 5,
             setValue,
             defaultSize: { size: 5, min: 1, max: 10, step: 1 },
