@@ -1,11 +1,10 @@
 import {
     useMemo,
-    useRef,
     type DependencyList,
     type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import appProvider from '../server/appProvider';
 import EventHandler from './EventHandler';
 import type { AppWidgetType } from './WindowEventListener';
@@ -337,8 +336,7 @@ export function useKeyboardRegistering(
         const eventNames = genEventNames(eventMappers);
         return eventNames;
     }, [eventMappers]);
-    const listenerRef = useRef(listener);
-    listenerRef.current = listener;
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const registeredEvents = KeyboardEventListener.registerEventListener(
             eventNames,

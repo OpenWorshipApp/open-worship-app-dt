@@ -13,7 +13,7 @@ import { fontSizeSettingNames } from '../helper/constants';
 import { useZoomingRegistering } from '../others/AppRangeComp';
 import appProvider from '../server/appProvider';
 import { handleAutoHide } from '../helper/domHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { showSimpleToast } from '../toast/toastHelpers';
 import NewLineSettingComp from './NewLineSettingComp';
 import BibleModelInfoSettingComp from './BibleModelInfoSettingComp';

@@ -22,7 +22,7 @@ import { tran } from '../../lang/langHelpers';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect } from '../../helper/appHooks';
 import {
     fromBibleFileName,
     getModelKeyBookMap,

@@ -27,6 +27,7 @@ import {
     DirSourceContext,
     useDirSourceWatching,
 } from '../helper/dirSourceHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const LazyAskingNewNameComp = lazy(() => {
     return import('./AskingNewNameComp');
@@ -47,9 +48,11 @@ function RenderHeaderComp({
     dirSource: DirSource;
     setIsCreatingNew: (isCreating: boolean) => void;
 }>) {
+    const setIsCreatingNewRef = useAppCurrentRef(setIsCreatingNew);
     const handleSetCreatingNew = useCallback(() => {
-        setIsCreatingNew(true);
-    }, [setIsCreatingNew]);
+        setIsCreatingNewRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="card-header"
@@ -126,18 +129,20 @@ export default function FileListHandlerComp({
     disableColorNoteGrouping,
 }: Readonly<PropsType>) {
     const [isOnScreen, setIsOnScreen] = useState(false);
-    const handleNameApplying = useCallback(
-        async (name: string | null) => {
-            if (name === null) {
-                setIsCreatingNew(false);
-                return;
-            }
-            onNewFile?.(dirSource.dirPath, name).then((isSuccess) => {
+    const onNewFileRef = useAppCurrentRef(onNewFile);
+    const dirSourceRef = useAppCurrentRef(dirSource);
+    const handleNameApplying = useCallback(async (name: string | null) => {
+        if (name === null) {
+            setIsCreatingNew(false);
+            return;
+        }
+        onNewFileRef
+            .current?.(dirSourceRef.current.dirPath, name)
+            .then((isSuccess) => {
                 setIsCreatingNew(isSuccess);
             });
-        },
-        [onNewFile, dirSource],
-    );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     useDirSourceWatching(dirSource);
     const handleItemsAdding = useMemo(() => {

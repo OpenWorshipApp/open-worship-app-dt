@@ -7,6 +7,10 @@ vi.mock('../../_screen/managers/screenEventHelpers', () => ({
     useScreenVaryAppDocumentManagerEvents: vi.fn(),
 }));
 
+vi.mock('../../helper/appHooks', () => ({
+    useAppCurrentRef: (target: any) => ({ current: target }),
+}));
+
 vi.mock('../../app-document-list/appDocumentHelpers', () => ({
     useVaryAppDocumentContext: () => ({
         showSlideContextMenu: vi.fn(),

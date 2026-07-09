@@ -1,4 +1,5 @@
 import { useCallback, type MouseEvent } from 'react';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function RenderNoColor({
     isSelected,
@@ -7,12 +8,11 @@ export default function RenderNoColor({
     isSelected: boolean;
     onClick?: (event: MouseEvent) => void;
 }>) {
-    const handleClick = useCallback(
-        (event: MouseEvent) => {
-            onClick?.(event as any);
-        },
-        [onClick],
-    );
+    const onClickRef = useAppCurrentRef(onClick);
+    const handleClick = useCallback((event: MouseEvent) => {
+        onClickRef.current?.(event as any);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             title="No Color"

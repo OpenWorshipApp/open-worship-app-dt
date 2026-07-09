@@ -12,19 +12,19 @@ import appProvider from '../server/appProvider';
 import { addBibleItemAndPresent } from './bibleActionHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export function RenderCopyBibleItemActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
-    const handleCopying = useCallback(
-        (event: any) => {
-            showAppContextMenu(
-                event,
-                genBibleItemCopyingContextMenu(bibleItem),
-            );
-        },
-        [bibleItem],
-    );
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleCopying = useCallback((event: any) => {
+        showAppContextMenu(
+            event,
+            genBibleItemCopyingContextMenu(bibleItemRef.current),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className="btn btn-sm btn-success"
@@ -41,32 +41,42 @@ export default function RenderActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
     const viewController = useBibleItemsViewControllerContext();
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
     const handleSplitHorizontal = useCallback(() => {
-        viewController.addBibleItemLeft(bibleItem, bibleItem);
-    }, [viewController, bibleItem]);
+        viewControllerRef.current.addBibleItemLeft(
+            bibleItemRef.current,
+            bibleItemRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleSplitVertical = useCallback(() => {
-        viewController.addBibleItemBottom(bibleItem, bibleItem);
-    }, [viewController, bibleItem]);
+        viewControllerRef.current.addBibleItemBottom(
+            bibleItemRef.current,
+            bibleItemRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleSaveBibleItem = useCallback(() => {
         const lookupViewController =
-            viewController as LookupBibleItemController;
-        saveBibleItem(bibleItem, () => {
+            viewControllerRef.current as LookupBibleItemController;
+        saveBibleItem(bibleItemRef.current, () => {
             lookupViewController.onLookupSaveBibleItem();
         });
-    }, [viewController, bibleItem]);
-    const handleSaveAndPresent = useCallback(
-        (event: any) => {
-            const lookupViewController =
-                viewController as LookupBibleItemController;
-            addBibleItemAndPresent(event, bibleItem, () => {
-                lookupViewController.onLookupSaveBibleItem();
-            });
-        },
-        [viewController, bibleItem],
-    );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSaveAndPresent = useCallback((event: any) => {
+        const lookupViewController =
+            viewControllerRef.current as LookupBibleItemController;
+        addBibleItemAndPresent(event, bibleItemRef.current, () => {
+            lookupViewController.onLookupSaveBibleItem();
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleExportToWord = useCallback(() => {
-        exportToWordDocument([bibleItem]);
-    }, [bibleItem]);
+        exportToWordDocument([bibleItemRef.current]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="btn-group mx-1">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />

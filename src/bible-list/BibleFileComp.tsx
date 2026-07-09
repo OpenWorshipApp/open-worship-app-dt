@@ -7,7 +7,7 @@ import Bible from './Bible';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync, useAppCurrentRef } from '../helper/appHooks';
 import {
     exportToWordDocument,
     moveBibleItemTo,
@@ -105,9 +105,11 @@ function genContextMenu(
 function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
     const fileSource = FileSource.getInstance(bible.filePath);
     const isOnScreen = useIsOnScreen(bible.items);
+    const bibleRef = useAppCurrentRef(bible);
     const handleToggleOpened = useCallback(() => {
-        bible.setIsOpened(!bible.isOpened);
-    }, [bible]);
+        bibleRef.current.setIsOpened(!bibleRef.current.isOpened);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="w-100 accordion accordion-flush py-1">
             <div
@@ -193,25 +195,25 @@ export default function BibleFileComp({
         [bible],
         filePath,
     );
-    const handleDataDropping = useCallback(
-        (event: any) => {
-            const droppedData = extractDropData(event);
-            if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
-                stopDraggingState(event);
-                const bibleItem = droppedData.item as BibleItem;
-                if (bibleItem.filePath === undefined) {
-                    bible?.saveBibleItem(droppedData.item);
-                } else {
-                    bible?.moveItemFrom(bibleItem.filePath, bibleItem);
-                }
+    const bibleRef = useAppCurrentRef(bible);
+    const filePathRef = useAppCurrentRef(filePath);
+    const handleDataDropping = useCallback((event: any) => {
+        const droppedData = extractDropData(event);
+        if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
+            stopDraggingState(event);
+            const bibleItem = droppedData.item as BibleItem;
+            if (bibleItem.filePath === undefined) {
+                bibleRef.current?.saveBibleItem(droppedData.item);
             } else {
-                handleAttachBackgroundDrop(event, {
-                    filePath,
-                });
+                bibleRef.current?.moveItemFrom(bibleItem.filePath, bibleItem);
             }
-        },
-        [bible, filePath],
-    );
+        } else {
+            handleAttachBackgroundDrop(event, {
+                filePath: filePathRef.current,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <FileItemHandlerComp
             index={index}

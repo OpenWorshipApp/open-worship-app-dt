@@ -6,7 +6,7 @@ import {
     saveJsonDataToXMLfile,
 } from './bibleXMLHelpers';
 import BibleXMLEditorComp from './BibleXMLEditorComp';
-import { useAppStateAsync } from '../../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
 import type { BibleXMLExtraType } from './bibleXMLJsonDataHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 
@@ -60,19 +60,18 @@ export default function BibleXMLExtraEditorComp({
         };
     }, [xmlBibleData, bibleKey]);
     const handleStore = useCallback(() => {}, []);
-    const handleSave = useCallback(
-        (newJsonData: DataType) => {
-            if (newJsonData.bibleKey !== bibleKey) {
-                showSimpleToast(
-                    'Saving Bible Data',
-                    `Invalid Bible Key ${newJsonData.bibleKey}`,
-                );
-                return;
-            }
-            handleSaving(bibleKey, newJsonData);
-        },
-        [bibleKey],
-    );
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const handleSave = useCallback((newJsonData: DataType) => {
+        if (newJsonData.bibleKey !== bibleKeyRef.current) {
+            showSimpleToast(
+                'Saving Bible Data',
+                `Invalid Bible Key ${newJsonData.bibleKey}`,
+            );
+            return;
+        }
+        handleSaving(bibleKeyRef.current, newJsonData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (xmlBibleData === undefined) {
         return <LoadingComp />;
     }

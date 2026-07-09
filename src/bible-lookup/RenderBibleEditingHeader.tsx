@@ -12,15 +12,17 @@ import { HoverMotionHandler } from '../helper/domHelpers';
 import { RenderTitleMaterialComp } from '../bible-reader/view-extra/RenderTitleMaterialComp';
 import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
 import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function RenderBibleEditingHeader() {
     const viewController = useLookupBibleItemControllerContext();
     const editingResult = use(EditingResultContext);
     const foundBibleItem = editingResult?.result.bibleItem ?? null;
+    const viewControllerRef = useAppCurrentRef(viewController);
     const handleBibleKeyChange = useCallback(
         (isContextMenu: boolean, _oldBibleKey: string, newBibleKey: string) => {
-            const bibleItem = viewController.selectedBibleItem;
-            viewController.applyTargetOrBibleKey(
+            const bibleItem = viewControllerRef.current.selectedBibleItem;
+            viewControllerRef.current.applyTargetOrBibleKey(
                 bibleItem,
                 isContextMenu
                     ? {
@@ -32,11 +34,13 @@ export default function RenderBibleEditingHeader() {
                     : { bibleKey: newBibleKey },
             );
         },
-        [viewController],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleClose = useCallback(() => {
-        closeCurrentEditingBibleItem(viewController);
-    }, [viewController]);
+        closeCurrentEditingBibleItem(viewControllerRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={

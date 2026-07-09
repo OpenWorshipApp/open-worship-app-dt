@@ -22,6 +22,7 @@ import CommonStyleControlsComp, {
     genCommonStyleSettingNames,
     getForegroundCommonProperties,
 } from './ForegroundCommonPropertiesSettingComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const DEFAULT_FONT_SIZE = 100;
 const DEFAULT_WIDGET_WIDTH_PERCENTAGE = 50;
@@ -259,34 +260,50 @@ function PropertiesSettingComp({
         `foreground-${target}-show-properties-setting`,
         false,
     );
+    const setIsOpenedRef = useAppCurrentRef(setIsOpened);
     const handleToggle = useCallback(() => {
-        setIsOpened((old) => !old);
-    }, [setIsOpened]);
+        setIsOpenedRef.current((old) => !old);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setWidgetOffsetXRef = useAppCurrentRef(setWidgetOffsetX);
     const handleOffsetXChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setWidgetOffsetX(Number.parseInt(event.target.value) || 0);
+            setWidgetOffsetXRef.current(
+                Number.parseInt(event.target.value) || 0,
+            );
         },
-        [setWidgetOffsetX],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const setWidgetOffsetYRef = useAppCurrentRef(setWidgetOffsetY);
     const handleOffsetYChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setWidgetOffsetY(Number.parseInt(event.target.value) || 0);
+            setWidgetOffsetYRef.current(
+                Number.parseInt(event.target.value) || 0,
+            );
         },
-        [setWidgetOffsetY],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const setRoundSizePixelRef = useAppCurrentRef(setRoundSizePixel);
     const handleRoundSizePixelChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setRoundSizePixel(Number.parseInt(event.target.value) || 0);
+            setRoundSizePixelRef.current(
+                Number.parseInt(event.target.value) || 0,
+            );
         },
-        [setRoundSizePixel],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const setFontSizeRef = useAppCurrentRef(setFontSize);
     const handleFontSizeChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setFontSize(
+            setFontSizeRef.current(
                 Number.parseInt(event.target.value) || DEFAULT_FONT_SIZE,
             );
         },
-        [setFontSize],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const toggleButton = (
         <button

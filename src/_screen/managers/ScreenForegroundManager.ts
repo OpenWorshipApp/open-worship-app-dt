@@ -19,7 +19,8 @@ import type {
     ForegroundDataType,
     BasicScreenMessageType,
     ScreenMessageType,
-    ForegroundMarqueDataType,
+    ForegroundMarqueeDataType,
+    MarqueePositionType,
     ForegroundCameraDataType,
     ForegroundCountdownDataType,
     ForegroundTimeDataType,
@@ -27,6 +28,7 @@ import type {
     ForegroundStopwatchDataType,
     ForegroundWebDataType,
 } from '../screenTypeHelpers';
+import { DEFAULT_MARQUEE_SPEED_PERCENTAGE } from '../screenTypeHelpers';
 import {
     checkAreObjectsEqual,
     checkIsItemInArray,
@@ -67,7 +69,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['countdownData', this.renderCountdown.bind(this)],
             ['stopwatchData', this.renderStopwatch.bind(this)],
             ['timeDataList', this.renderTime.bind(this)],
-            ['marqueeData', this.renderMarquee.bind(this)],
+            ['marqueeTopData', this.renderMarqueeTop.bind(this)],
+            ['marqueeBottomData', this.renderMarqueeBottom.bind(this)],
             ['quickTextData', this.renderQuickText.bind(this)],
             ['cameraDataList', this.renderCamera.bind(this)],
             ['webDataList', this.renderWeb.bind(this)],
@@ -79,7 +82,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ['countdownData', this.setCountdownData.bind(this)],
             ['stopwatchData', this.setStopwatchData.bind(this)],
             ['timeDataList', this.setTimeDataList.bind(this)],
-            ['marqueeData', this.setMarqueeData.bind(this)],
+            ['marqueeTopData', this.setMarqueeTopData.bind(this)],
+            ['marqueeBottomData', this.setMarqueeBottomData.bind(this)],
             ['quickTextData', this.setQuickTextData.bind(this)],
             ['cameraDataList', this.setCameraDataList.bind(this)],
             ['webDataList', this.setWebDataList.bind(this)],
@@ -103,7 +107,8 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             countdownData,
             stopwatchData,
             timeDataList: foregroundData['timeDataList'] ?? [],
-            marqueeData: foregroundData['marqueeData'] ?? null,
+            marqueeTopData: foregroundData['marqueeTopData'] ?? null,
+            marqueeBottomData: foregroundData['marqueeBottomData'] ?? null,
             quickTextData: foregroundData['quickTextData'] ?? null,
             cameraDataList: foregroundData['cameraDataList'] ?? [],
             webDataList: foregroundData['webDataList'] ?? [],
@@ -393,37 +398,82 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
 
-    renderMarquee(data: ForegroundMarqueDataType) {
+    renderMarquee(
+        data: ForegroundMarqueeDataType,
+        position: MarqueePositionType,
+    ) {
         const { element, handleRemoving } = genHtmlForegroundMarquee(
             data,
             this.screenManagerBase,
+            position,
         );
         const divContainer = this.createDivContainer(data, handleRemoving);
         divContainer!.appendChild(element);
     }
-    setMarqueeData(
-        data: ForegroundMarqueDataType | null,
+    renderMarqueeTop(data: ForegroundMarqueeDataType) {
+        this.renderMarquee(data, 'top');
+    }
+    renderMarqueeBottom(data: ForegroundMarqueeDataType) {
+        this.renderMarquee(data, 'bottom');
+    }
+    setMarqueeTopData(
+        data: ForegroundMarqueeDataType | null,
         isNoSyncGroup = false,
     ) {
         this.applyForegroundDataWithSyncGroup(
             {
                 ...this.foregroundData,
-                marqueeData: data,
+                marqueeTopData: data,
             },
             isNoSyncGroup,
         );
     }
-    static async setMarquee(
+    setMarqueeBottomData(
+        data: ForegroundMarqueeDataType | null,
+        isNoSyncGroup = false,
+    ) {
+        this.applyForegroundDataWithSyncGroup(
+            {
+                ...this.foregroundData,
+                marqueeBottomData: data,
+            },
+            isNoSyncGroup,
+        );
+    }
+    static async setMarqueeTop(
         event: MouseEvent,
         text: string | null,
         extraStyle: CSSProperties = {},
+        speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
         isForceChoosing = false,
     ) {
         this.setData(
             event,
             (screenForegroundManager) => {
-                const marqueeData = text === null ? null : { text, extraStyle };
-                screenForegroundManager.setMarqueeData(marqueeData);
+                const marqueeTopData =
+                    text === null
+                        ? null
+                        : { text, speedPercentage, extraStyle };
+                screenForegroundManager.setMarqueeTopData(marqueeTopData);
+            },
+            isForceChoosing,
+        );
+    }
+    static async setMarqueeBottom(
+        event: MouseEvent,
+        text: string | null,
+        extraStyle: CSSProperties = {},
+        speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
+        isForceChoosing = false,
+    ) {
+        this.setData(
+            event,
+            (screenForegroundManager) => {
+                const marqueeBottomData =
+                    text === null
+                        ? null
+                        : { text, speedPercentage, extraStyle };
+                screenForegroundManager.setMarqueeBottomData(marqueeBottomData);
             },
             isForceChoosing,
         );

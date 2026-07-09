@@ -36,7 +36,7 @@ import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
 import { exportBibleMSWord, showFileOrDirExplorer } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';

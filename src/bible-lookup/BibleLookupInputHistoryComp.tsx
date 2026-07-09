@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import {
     extractBibleTitle,
@@ -161,9 +161,17 @@ function RendHistoryItemComp({
     handleDoubleClicking: (historyText: string, event: any) => void;
 }>) {
     const fontFamily = useBibleFontFamily(extracted?.bibleKey ?? '');
+    const historyTextListRef = useAppCurrentRef(historyTextList);
+    const historyTextRef = useAppCurrentRef(historyText);
+    const setHistoryTextListRef = useAppCurrentRef(setHistoryTextList);
     const handleRemoveHistory = useCallback(() => {
-        removeHistory(historyTextList, historyText, setHistoryTextList);
-    }, [historyTextList, historyText, setHistoryTextList]);
+        removeHistory(
+            historyTextListRef.current,
+            historyTextRef.current,
+            setHistoryTextListRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className={'btn btn-sm d-flex app-border-white-round mx-1 p-0'}
@@ -205,22 +213,26 @@ export default function BibleLookupInputHistoryComp({
     const viewController = useLookupBibleItemControllerContext();
     const [historyTextList, setHistoryTextList] =
         useHistoryTextList(maxHistoryCount);
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const historyTextListRef = useAppCurrentRef(historyTextList);
+    const setHistoryTextListRef = useAppCurrentRef(setHistoryTextList);
     const handleContextMenuOpening = useCallback(
         async (historyText: string, event: any) => {
             const bibleItem = await getBibleItemFromHistoryText(historyText);
             openContextMenu(event, {
-                viewController,
+                viewController: viewControllerRef.current,
                 bibleItem,
                 remove: () => {
                     removeHistory(
-                        historyTextList,
+                        historyTextListRef.current,
                         historyText,
-                        setHistoryTextList,
+                        setHistoryTextListRef.current,
                     );
                 },
             });
         },
-        [viewController, historyTextList, setHistoryTextList],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleDoubleClicking = useCallback(
         async (historyText: string, event: any) => {
@@ -228,9 +240,10 @@ export default function BibleLookupInputHistoryComp({
             if (bibleItem === null) {
                 return;
             }
-            openInBibleLookup(event, viewController, bibleItem);
+            openInBibleLookup(event, viewControllerRef.current, bibleItem);
         },
-        [viewController],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div

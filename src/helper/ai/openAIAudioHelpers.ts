@@ -14,7 +14,7 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { getBibleInfo } from '../bible-helpers/bibleInfoHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
-import { useAppEffectAsync, useAppStateAsync } from '../debuggerHelpers';
+import { useAppEffectAsync, useAppStateAsync } from '../appHooks';
 import type BibleItem from '../../bible-list/BibleItem';
 import { getLangDataFromBibleKey } from '../bible-helpers/bibleLogicHelpers2';
 import type { LocaleType } from '../../lang/langHelpers';

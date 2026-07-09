@@ -4,7 +4,11 @@ import { type RefObject, useCallback, useRef, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import RenderVerseNumOptionComp, { mouseUp } from './RenderVerseNumOptionComp';
-import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
+import {
+    useAppEffect,
+    useAppStateAsync,
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { genVerseList } from '../bible-list/bibleHelpers';
 import {
@@ -26,10 +30,8 @@ function useTouchDrag(
         handleApplying: (verseStart: number, verseEnd?: number) => void;
     },
 ) {
-    const handleVerseChangeRef = useRef(handleVerseChange);
-    handleVerseChangeRef.current = handleVerseChange;
-    const handleApplyingRef = useRef(handleApplying);
-    handleApplyingRef.current = handleApplying;
+    const handleVerseChangeRef = useAppCurrentRef(handleVerseChange);
+    const handleApplyingRef = useAppCurrentRef(handleApplying);
     useAppEffect(() => {
         const container = verseSelectRef.current;
         if (container === null) {
@@ -156,6 +158,9 @@ export default function RenderVerseOptionsComp({
         },
         [],
     );
+    const targetRef = useAppCurrentRef(target);
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
     const handleApplying = useCallback(
         (newVerseStart: number, newVerseEnd?: number) => {
             const newSelectedTarget = {
@@ -164,27 +169,33 @@ export default function RenderVerseOptionsComp({
             };
             setSelectedTarget(newSelectedTarget);
             const newTarget: BibleTargetType = {
-                ...target,
+                ...targetRef.current,
                 ...newSelectedTarget,
             };
-            viewController.applyTargetOrBibleKey(bibleItem, {
-                target: newTarget,
-            });
+            viewControllerRef.current.applyTargetOrBibleKey(
+                bibleItemRef.current,
+                {
+                    target: newTarget,
+                },
+            );
         },
-        [target, viewController, bibleItem],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const verseListRef = useAppCurrentRef(verseList);
     const handleFullVersesClick = useCallback(() => {
-        if (!verseList) {
+        if (!verseListRef.current) {
             return;
         }
-        viewController.applyTargetOrBibleKey(bibleItem, {
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
             target: {
-                ...target,
+                ...targetRef.current,
                 verseStart: 1,
-                verseEnd: verseList.length,
+                verseEnd: verseListRef.current.length,
             },
         });
-    }, [verseList, viewController, bibleItem, target]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const verseSelectRef = useRef<HTMLDivElement>(null);
     useTouchDrag(verseSelectRef, {

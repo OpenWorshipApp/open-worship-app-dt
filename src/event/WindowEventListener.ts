@@ -1,5 +1,4 @@
-import { useRef } from 'react';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type { ListenerType } from './EventHandler';
 import EventHandler from './EventHandler';
 import KeyboardEventListener from './KeyboardEventListener';
@@ -36,8 +35,7 @@ export function useWindowEvent<T>(
     eventMapper: WindowEventMapperType,
     listener: ListenerType<T>,
 ) {
-    const listenerRef = useRef(listener);
-    listenerRef.current = listener;
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const eventName = WindowEventListener.toEventMapperKey(eventMapper);
         const event = WindowEventListener.registerEventListener(

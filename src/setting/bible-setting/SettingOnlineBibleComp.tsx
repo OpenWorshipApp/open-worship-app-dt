@@ -5,6 +5,7 @@ import LoadingComp from '../../others/LoadingComp';
 import type { BibleListType } from './bibleSettingHelpers';
 import { useBibleXMLKeys } from './bibleXMLHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function SettingOnlineBibleComp({
     downloadedBibleInfoList,
@@ -22,13 +23,20 @@ export default function SettingOnlineBibleComp({
         isPending: isPendingBibleXMLKeys,
         loadBibleKeys: loadBibleXMLKeys,
     } = useBibleXMLKeys();
+    const setDownloadedBibleInfoListRef = useAppCurrentRef(
+        setDownloadedBibleInfoList,
+    );
     const handleDownloadedEvent = useCallback(() => {
-        setDownloadedBibleInfoList(null);
-    }, [setDownloadedBibleInfoList]);
+        setDownloadedBibleInfoListRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setOnlineBibleInfoListRef = useAppCurrentRef(setOnlineBibleInfoList);
+    const loadBibleXMLKeysRef = useAppCurrentRef(loadBibleXMLKeys);
     const handleRefreshing = useCallback(() => {
-        setOnlineBibleInfoList(null);
-        loadBibleXMLKeys();
-    }, [setOnlineBibleInfoList, loadBibleXMLKeys]);
+        setOnlineBibleInfoListRef.current(null);
+        loadBibleXMLKeysRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const bibleInfoList = useMemo(() => {
         if (!onlineBibleInfoList) {
             return [];

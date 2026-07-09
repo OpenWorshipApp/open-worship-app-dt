@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import type { ScreenBackgroundManagerEventType } from './ScreenBackgroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
 import type { ScreenBibleManagerEventType } from '../screenBibleHelpers';
@@ -21,8 +21,7 @@ export function useScreenEvents<T extends string>(
 ) {
     const [_n, setN] = useState(Date.now());
 
-    const callbackRef = useRef(callback);
-    callbackRef.current = callback;
+    const callbackRef = useAppCurrentRef(callback);
 
     useAppEffect(() => {
         const update = (data: any, time: number) => {

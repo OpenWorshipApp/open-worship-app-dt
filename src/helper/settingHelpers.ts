@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react';
 import appProvider from '../server/appProvider';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { pathJoin, fsCheckFileExist } from '../server/fileHelpers';
-import { useAppEffectAsync } from './debuggerHelpers';
+import { useAppEffectAsync } from './appHooks';
+import { useAppCurrentRef } from './appHooks';
 
 export function setSetting(key: string, value: string | null) {
     // TODO: Change to use SettingManager
@@ -62,13 +63,16 @@ export function useStateSettingBoolean(
             ? !!defaultValue
             : originalSettingName === 'true';
     const [data, setData] = useState(defaultData);
+    const dataRef = useAppCurrentRef(data);
+    const settingNameRef = useAppCurrentRef(settingName);
     const setDataSetting = useCallback(
         (b: boolean | ((prev: boolean) => boolean)) => {
-            const newValue = typeof b === 'function' ? b(data) : b;
+            const newValue = typeof b === 'function' ? b(dataRef.current) : b;
             setData(newValue);
-            setSetting(settingName, `${newValue}`);
+            setSetting(settingNameRef.current, `${newValue}`);
         },
-        [data, settingName],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return [data, setDataSetting];
 }
@@ -78,15 +82,19 @@ export function useStateSettingString<T extends string>(
 ): [T, (text: string | ((prev: T) => T), isSkipSetSetting?: boolean) => void] {
     const defaultData = getSetting(settingName) || defaultString;
     const [data, setData] = useState<T>(defaultData as T);
+    const dataRef = useAppCurrentRef(data);
+    const settingNameRef = useAppCurrentRef(settingName);
     const setDataSetting = useCallback(
         (text: string | ((prev: T) => T), isSkipSetSetting = false) => {
-            const newValue = typeof text === 'function' ? text(data) : text;
+            const newValue =
+                typeof text === 'function' ? text(dataRef.current) : text;
             setData(newValue as T);
             if (!isSkipSetSetting) {
-                setSetting(settingName, `${newValue}`);
+                setSetting(settingNameRef.current, `${newValue}`);
             }
         },
-        [data, settingName],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return [data, setDataSetting];
 }
@@ -114,13 +122,17 @@ export function useStateSettingNumber(
         defaultData = resolvedDefault;
     }
     const [data, setData] = useState(defaultData);
+    const dataRef = useAppCurrentRef(data);
+    const settingNameRef = useAppCurrentRef(settingName);
     const setDataSetting = useCallback(
         (num: number | ((prev: number) => number)) => {
-            const newValue = typeof num === 'function' ? num(data) : num;
+            const newValue =
+                typeof num === 'function' ? num(dataRef.current) : num;
             setData(newValue);
-            setSetting(settingName, `${newValue}`);
+            setSetting(settingNameRef.current, `${newValue}`);
         },
-        [data, settingName],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return [data, setDataSetting];
 }

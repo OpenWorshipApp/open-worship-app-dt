@@ -11,6 +11,7 @@ import HtmlSlideRenderComp, {
     genHtmlSlideContent,
 } from './HtmlSlideRenderComp';
 import FileSource from '../../helper/FileSource';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function genDocxIframeElement(
     htmlFilePath: string,
@@ -195,15 +196,18 @@ export default function DocxSlideRenderComp({
 }>) {
     const docxAppDocument = useVaryAppDocumentContext() as DocxAppDocument;
     useScreenVaryAppDocumentManagerEvents(['update']);
+    const docxAppDocumentRef = useAppCurrentRef(docxAppDocument);
+    const docxSlideRef = useAppCurrentRef(docxSlide);
     const handleContextMenuOpening = useCallback(
         (event: MouseEvent, extraMenuItems: ContextMenuItemType[]) => {
-            docxAppDocument.showSlideContextMenu(
+            docxAppDocumentRef.current.showSlideContextMenu(
                 event,
-                docxSlide,
+                docxSlideRef.current,
                 extraMenuItems,
             );
         },
-        [docxAppDocument, docxSlide],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <VarySlideRenderComp

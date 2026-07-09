@@ -3,7 +3,7 @@ import './AboutComp.scss';
 import appProvider from '../server/appProvider';
 import { getDocxToHtmlsVersion } from '../server/docxHelpers';
 import { getPptxToHtmlsVersion } from '../server/pptxHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
 import { useThemeSource } from './themeHelpers';
 import { getBibleNoteConstructor } from '../bible-list/note/bibleNoteHelpers';
 

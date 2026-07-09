@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
 import type { LanguageDataType, LocaleType } from '../lang/langHelpers';
 import {
     getAllLangsAsync,

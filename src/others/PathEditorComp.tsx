@@ -2,7 +2,7 @@ import { type ChangeEvent, useCallback, useState } from 'react';
 
 import type DirSource from '../helper/DirSource';
 import { selectDirs } from '../server/fileHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 
 export default function PathEditorComp({
     dirSource,
@@ -29,21 +29,25 @@ export default function PathEditorComp({
         dirValidClassname = 'is-invalid';
     }
 
+    const dirSourceRef = useAppCurrentRef(dirSource);
     const handleDirSelecting = useCallback(async () => {
         const dirs = await selectDirs();
         if (dirs.length === 0) {
             return;
         }
-        dirSource.dirPath = dirs[0];
-    }, [dirSource]);
+        dirSourceRef.current.dirPath = dirs[0];
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleReload = useCallback(() => {
-        return dirSource.fireReloadEvent();
-    }, [dirSource]);
+        return dirSourceRef.current.fireReloadEvent();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleDirPathChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            dirSource.dirPath = event.target.value;
+            dirSourceRef.current.dirPath = event.target.value;
         },
-        [dirSource],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div className="input-group mb-3">

@@ -3,6 +3,7 @@ import { useCallback, type MouseEvent } from 'react';
 import type DirSource from '../helper/DirSource';
 import { PathPreviewerComp } from './PathPreviewerComp';
 import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function RenderPathTitleComp({
     dirSource,
@@ -11,20 +12,18 @@ export default function RenderPathTitleComp({
     dirSource: DirSource;
     addItems?: (event: MouseEvent) => void;
 }>) {
-    const handleReload = useCallback(
-        (event: MouseEvent) => {
-            event.stopPropagation();
-            dirSource.fireReloadEvent();
-        },
-        [dirSource],
-    );
-    const handleAddItems = useCallback(
-        (event: MouseEvent) => {
-            event.stopPropagation();
-            addItems?.(event);
-        },
-        [addItems],
-    );
+    const dirSourceRef = useAppCurrentRef(dirSource);
+    const handleReload = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        dirSourceRef.current.fireReloadEvent();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const addItemsRef = useAppCurrentRef(addItems);
+    const handleAddItems = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        addItemsRef.current?.(event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (!dirSource.dirPath) {
         return null;
     }

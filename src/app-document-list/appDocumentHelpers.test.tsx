@@ -336,9 +336,17 @@ vi.mock('../_screen/managers/screenEventHelpers', () => ({
         useScreenVaryAppDocumentManagerEventsMock,
 }));
 
-vi.mock('../helper/debuggerHelpers', () => ({
-    useAppEffect: useAppEffectMock,
-}));
+vi.mock('../helper/appHooks', async () => {
+    const React = (await vi.importActual('react')) as any;
+    return {
+        useAppEffect: useAppEffectMock,
+        useAppCurrentRef: (target: any) => {
+            const ref = React.useRef(target);
+            ref.current = target;
+            return ref;
+        },
+    };
+});
 
 vi.mock('../others/selectedHelpers', () => ({
     checkSelectedFilePathExist: checkSelectedFilePathExistMock,

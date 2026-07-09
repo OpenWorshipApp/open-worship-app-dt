@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
-import { useAppStateAsync } from '../../helper/debuggerHelpers';
+import { useAppStateAsync } from '../../helper/appHooks';
 import {
     toLocaleNumBible,
     useBibleFontFamily,

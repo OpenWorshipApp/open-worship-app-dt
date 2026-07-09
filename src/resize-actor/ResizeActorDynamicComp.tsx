@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { type DataInputType, type FlexSizeType } from './flexSizeHelpers';
 import ResizeActorComp from './ResizeActorComp';
 import { DYN_SUFFIX } from './dynamicFlexSizeHelpers';

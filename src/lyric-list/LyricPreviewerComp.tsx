@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { useSelectedLyricContext } from './lyricHelpers';
 import type { HTMLDataType } from './markdownHelpers';
 import { renderLyricSlide } from './markdownHelpers';
@@ -56,9 +56,11 @@ function RenderControlBodyComp() {
     const handleApply = useCallback(() => {
         forceReloadAppWindows();
     }, []);
+    const selectedLyricRef = useAppCurrentRef(selectedLyric);
     const handleEdit = useCallback(() => {
-        openPopupLyricEditorWindow(selectedLyric);
-    }, [selectedLyric]);
+        openPopupLyricEditorWindow(selectedLyricRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div>
             <div className="d-flex">

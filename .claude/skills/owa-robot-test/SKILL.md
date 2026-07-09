@@ -1,7 +1,7 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp. Use when asked to robot test, QA test, smoke test, or e2e test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings UI like a QA engineer, captures screenshots + console + network, and reports findings by severity.'
-argument-hint: '[optional focus area, e.g. "presenter", "bible lookup", "settings", "background", "lyrics"]'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Full-coverage runs are tracked row-by-row against references/coverage-matrix.md (~135 stable-ID rows, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
 # OWA Robot Test — QA e2e via chrome-devtools-mcp
@@ -21,6 +21,11 @@ unit or Playwright tests.
 - After a feature/refactor, to verify nothing is visually or interactively broken.
 - To collect console errors, failed network requests, and accessibility gaps from the
   real renderer.
+- "Write a tutorial / help page / user guide for the app" → **tutorial mode** (§9).
+- "Check this manual / tutorial / learning doc against the app" → **doc-verify mode**
+  (§10). Both are grounded in
+  [references/user-workflows.md](./references/user-workflows.md) — the user-facing
+  task recipes that this skill keeps in sync with the live app.
 
 ## How it works (architecture)
 
@@ -67,7 +72,7 @@ Confirm at least these are available: `mcp_chrome_devtoo_list_pages`,
 Quick-probe the debugger (short timeout). Run from the workspace root:
 
 ```bash
-node .github/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=3000 --interval=500
+node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=3000 --interval=500
 ```
 
 - Exit code `0` → the app + debugger are already up. **Skip step 2.**
@@ -86,7 +91,7 @@ Then block until the Electron CDP endpoint exposes the presenter page. The first
 also compiles `electron-build`, so allow a generous timeout:
 
 ```bash
-node .github/skills/owa-robot-test/scripts/wait-for-debugger.mjs --match=presenter.html --timeout=180000
+node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --match=presenter.html --timeout=180000
 ```
 
 When it prints `{ "ready": true, ... }` the debugger is attached and the window has
@@ -155,7 +160,12 @@ You can also test the in-app navigation UX itself: click the header tabs `Presen
 Follow [references/test-plan.md](./references/test-plan.md). If the user named a focus
 area (argument-hint), navigate to that page (step 5) and start there; otherwise iterate
 over the pages — `presenter` → `reader` → `appDocumentEditor` → `setting` — navigating to
-each per step 5. For every scenario:
+each per step 5.
+
+If the user asked for **"full"**, **"everything"**, or a **coverage percentage/target**
+(e.g. "99% coverage"), run in **full-coverage mode** — see "Coverage accounting" below —
+where every row of [references/coverage-matrix.md](./references/coverage-matrix.md) must
+end the run with a status. For every scenario:
 
 1. `take_snapshot` to get fresh `uid`s.
 2. Interact: `click` / `fill` / `hover` / `press_key` / `drag` using the labels &
@@ -172,13 +182,62 @@ For a page-by-page **component tree with the exact interactions each component s
 (click / double-click / right-click / drag-drop / keyboard-shortcut / slider / input),
 use [references/components-path.md](./references/components-path.md) as the targeting index.
 
+### 6b. Coverage accounting (full-coverage mode)
+
+The definition of "coverage" is the row inventory in
+[references/coverage-matrix.md](./references/coverage-matrix.md) (~135 rows with stable
+IDs like `PM-29`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
+or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
+counts as exercised only with evidence (screenshot, asserted `evaluate_script` result, or
+console/network diff) — see the matrix's "Evidence rule".
+
+**Run state file** — create `test-results/robot-test/coverage-<runid>.json` at start
+(`<runid>` = `yyyyMMdd-HHmm`), and update it after **every 5–10 rows** (not only at the
+end), so an interrupted or context-compacted session loses nothing:
+
+```json
+{
+    "matrixVersion": "2026-07-08",
+    "runId": "20260708-1430",
+    "startedAt": "2026-07-08T14:30:00+07:00",
+    "focus": "full",
+    "rows": {
+        "PM-29": { "status": "PASS", "evidence": "shot-014-bg-color.png" },
+        "PM-32": { "status": "BLOCKED", "note": "EX-03: no camera device" }
+    }
+}
+```
+
+**Resume:** before starting, look for the newest `coverage-*.json` less than a day old
+with unfinished rows — if found, continue that run (same file, same runid) instead of
+restarting from zero. This is how a full-coverage pass can span several sessions.
+
+**Recommended order** (dependencies first, disruption last):
+
+1. `GL` baseline on presenter → `NAV` → `PL` → `PM` (backgrounds/foregrounds restore as
+   you go) → `PR` → `KB` (F6–F10 double as cleanup).
+2. `RD` (reader) → `ED` (editor — needs a selected doc from `PL`) → `SC` observations
+   while content is live.
+3. Popups `PU` (each opened from its trigger row).
+4. `ST` settings last-but-one — `LT` locale/theme spot-checks ride on `ST-04/05`, restore
+   everything, and `ST-08 Apply Settings` goes **very last** because it reloads windows.
+
+**Honesty rules:** never mark a row PASS without its pass condition observed; never drop
+a row silently — if you ran out of budget, mark the remainder `BLOCKED: "not reached,
+resume next run"` and say so in the report. An honest 97% with reasons beats a fake 100%.
+
 ### 7. Report
 
 - Write the full report to `test-results/robot-test/report-<timestamp>.md` (this folder
   is git-ignored) and keep screenshots beside it.
+- In full-coverage mode the report MUST include the **coverage summary** (template in
+  [references/test-plan.md](./references/test-plan.md)): the formula result
+  (`exercised / (total − EXCLUDED)`), plus every BLOCKED / PARTIAL / EXCLUDED row with
+  its reason. The coverage claim must be reproducible from the `coverage-<runid>.json`.
 - In chat, summarize the top issues with **severity** (Critical/High/Medium/Low/Info),
   each with: what was tested, expected vs actual, evidence (screenshot path / console
-  line / failed request), and a suggested fix or file to look at.
+  line / failed request), and a suggested fix or file to look at — plus the coverage %
+  when in full-coverage mode.
 
 ### 8. Cleanup
 
@@ -186,6 +245,55 @@ use [references/components-path.md](./references/components-path.md) as the targ
   (`concurrently -k` tears down both children).
 - If the app was already running (step 1), leave it alone.
 - Do not delete `test-results/robot-test/` — those are the deliverables.
+
+### 9. Tutorial mode — generate a help page from the live app
+
+When asked for a tutorial, help page, or user guide (argument `tutorial`, optionally
+naming workflows/pages):
+
+1. Connect to the live app (steps 0–3).
+2. Walk the requested workflows from
+   [references/user-workflows.md](./references/user-workflows.md) (all of them if
+   unspecified) **performing every step for real**. At each `📸` checkpoint, put the
+   app in exactly that state and `take_screenshot` into
+   `test-results/robot-test/tutorial-<runid>/` with a name like `w03-2-slide-live.png`.
+3. Write the tutorial using the workflow text as the base — same step order, same
+   labels (use the labels of the **current locale**, and mention the other locale's
+   label once, as the workflows do). Keep the `W-xx` IDs as anchors/headings so future
+   verification can map back. Output: a markdown page next to the screenshots, or an
+   HTML Artifact if the user wants a shareable page.
+4. **Divergence rule:** if the live app does not match a workflow step, STOP treating
+   the workflow as truth for that step: decide bug vs. drift (check `src/` and
+   [references/knowledge-base.md](./references/knowledge-base.md)). App bug → file a
+   Finding and write the tutorial to the *intended* behavior with a note. Doc drift →
+   **fix `user-workflows.md` in the same run** (bump `workflowsVersion`) and generate
+   from the corrected text. Never publish a tutorial step you did not see work.
+5. Restore any state you changed (KB §10) and clean up per step 8.
+
+### 10. Doc-verify mode — check a learning document against the app
+
+When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
+
+1. Read the document and split it into **discrete, checkable claims** — each numbered
+   step, named control, label, shortcut, or described outcome is a claim.
+2. Map each claim to a `W-xx` workflow and/or coverage-matrix rows; claims with no
+   mapping get an ad-hoc replay (and are candidates for a new workflow entry).
+3. Connect to the live app (steps 0–3) and **replay every claim**, capturing evidence
+   like a normal run. Statuses per claim:
+   - **MATCH** — the app does what the doc says (evidence attached).
+   - **DRIFT** — doc says X, app does Y: quote the doc line, state the observed
+     behavior, attach a screenshot. Decide (via `src/` + git history) whether the doc
+     is stale or the app regressed — say which.
+   - **UNTESTABLE** — policy exclusion (EX-xx) or blocked; give the reason.
+   - **NOT-IN-APP** — the doc describes a feature that does not exist.
+4. Also report **gaps**: workflows in `user-workflows.md` that the document never
+   covers (a completeness signal for the doc's author).
+5. Write `test-results/robot-test/doc-verify-<runid>.md`: per-claim table
+   (claim → status → evidence), the drift list with suggested doc wording, and a
+   verdict. **Every claim gets a status — no silent skips**, same honesty rules as
+   coverage accounting (§6b).
+6. If the run reveals that `user-workflows.md` itself is wrong, fix it too — it is the
+   source of truth and must never knowingly lag the app.
 
 ## What counts as a UI/UX issue
 
@@ -234,5 +342,12 @@ use [references/components-path.md](./references/components-path.md) as the targ
   signals, keyboard shortcuts.
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
+- [references/coverage-matrix.md](./references/coverage-matrix.md) — the **coverage
+  contract**: ~135 stable-ID rows over the whole UI surface, the policy-exclusion table,
+  statuses, evidence rule, and the coverage formula for full-coverage runs.
+- [references/user-workflows.md](./references/user-workflows.md) — the **tutorial source
+  of truth**: user-facing `W-xx` task recipes in tutorial voice with `📸` screenshot
+  checkpoints and EN/KM labels, each traceable to matrix rows; feeds tutorial mode (§9)
+  and doc-verify mode (§10).
 - [references/test-plan.md](./references/test-plan.md) — scenario checklist, severity
   scale, and the report template.

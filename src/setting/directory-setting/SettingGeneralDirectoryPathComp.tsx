@@ -6,7 +6,8 @@ import {
     useAppEffect,
     useAppEffectAsync,
     useAppStateAsync,
-} from '../../helper/debuggerHelpers';
+    useAppCurrentRef,
+} from '../../helper/appHooks';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -91,11 +92,14 @@ function RenderParentDirectoryComp({
     dirSource,
 }: Readonly<{ dirSource: DirSource }>) {
     const defaultPath = getDefaultDataDir();
+    const defaultPathRef = useAppCurrentRef(defaultPath);
+    const dirSourceRef = useAppCurrentRef(dirSource);
     const handleSetDefault = useCallback(async () => {
-        await fsCreateDir(defaultPath);
-        dirSource.dirPath = defaultPath;
-        await selectPathForChildDir(defaultPath);
-    }, [defaultPath, dirSource]);
+        await fsCreateDir(defaultPathRef.current);
+        dirSourceRef.current.dirPath = defaultPathRef.current;
+        await selectPathForChildDir(defaultPathRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex flex-column">
             <div className={`${HIGHLIGHT_SELECTED_CLASSNAME} p-2`}>
@@ -177,9 +181,11 @@ const titleSettingNames = {
 function RenderChildDirectoriesComp({
     parentDirPath,
 }: Readonly<{ parentDirPath: string }>) {
+    const parentDirPathRef = useAppCurrentRef(parentDirPath);
     const handleResetChildDirs = useCallback(() => {
-        selectPathForChildDir(parentDirPath);
-    }, [parentDirPath]);
+        selectPathForChildDir(parentDirPathRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <>
             <div className="card-header">

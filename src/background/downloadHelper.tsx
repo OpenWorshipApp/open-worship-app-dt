@@ -13,6 +13,7 @@ import {
 } from '../helper/bible-helpers/downloadHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function InputUrlComp({
     defaultUrl,
@@ -25,13 +26,12 @@ function InputUrlComp({
 }>) {
     const [url, setUrl] = useState(defaultUrl);
     const invalidMessage = url.trim() === '' ? 'Cannot be empty' : '';
-    const handleUrlChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
-            setUrl(e.target.value);
-            onChange(e.target.value);
-        },
-        [onChange],
-    );
+    const onChangeRef = useAppCurrentRef(onChange);
+    const handleUrlChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setUrl(e.target.value);
+        onChangeRef.current(e.target.value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="w-100 h-100">
             <div className="input-group" title={invalidMessage}>

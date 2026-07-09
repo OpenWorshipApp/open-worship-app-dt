@@ -3,7 +3,7 @@ import { useState } from 'react';
 import type Slide from '../../app-document-list/Slide';
 import type AppDocument from '../../app-document-list/AppDocument';
 import { type SimpleNoteEditorStoreType } from '../../others/SimpleNoteEditorComp';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect } from '../../helper/appHooks';
 import NoteEditorRenderComp from '../../others/NoteEditorRenderComp';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 

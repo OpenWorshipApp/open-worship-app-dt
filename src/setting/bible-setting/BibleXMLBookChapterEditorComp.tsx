@@ -1,6 +1,10 @@
 import { type ChangeEvent, useCallback, useMemo, useState } from 'react';
 
-import { useAppEffect, useAppStateAsync } from '../../helper/debuggerHelpers';
+import {
+    useAppEffect,
+    useAppStateAsync,
+    useAppCurrentRef,
+} from '../../helper/appHooks';
 import {
     genBookMatches,
     useChapterMatch,
@@ -47,11 +51,13 @@ function RenderBookOptionsComp({
         }
         setSelectedBookKey(book.bookKey);
     }, [selectedBookKey, booksAvailable]);
+    const setSelectedBookKeyRef = useAppCurrentRef(setSelectedBookKey);
     const handleBookChange = useCallback(
         (e: ChangeEvent<HTMLSelectElement>) => {
-            setSelectedBookKey(e.target.value);
+            setSelectedBookKeyRef.current(e.target.value);
         },
-        [setSelectedBookKey],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     if (booksAvailable === undefined) {
         return <LoadingComp />;
@@ -99,11 +105,13 @@ function RenderChapterOptionsComp({
     setSelectedChapter: (chapter: number) => void;
 }>) {
     const chapterList = useChapterMatch(bibleKey, selectedBookKey, null);
+    const setSelectedChapterRef = useAppCurrentRef(setSelectedChapter);
     const handleChapterChange = useCallback(
         (e: ChangeEvent<HTMLSelectElement>) => {
-            setSelectedChapter(Number(e.target.value));
+            setSelectedChapterRef.current(Number(e.target.value));
         },
-        [setSelectedChapter],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     if (chapterList === null) {
         return <div>Unable to load chapter list.</div>;

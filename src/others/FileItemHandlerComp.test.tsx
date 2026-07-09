@@ -44,6 +44,12 @@ const {
         useFileSourceIsOnScreenMock: vi.fn(() => false),
         appProviderMock: {
             isPagePresenter: false,
+            systemUtils: {
+                isDev: false,
+            },
+            envUtils: {
+                isFEUseEffectWarning: false,
+            },
         },
         fileSourceInstances,
         getMockFileSource,

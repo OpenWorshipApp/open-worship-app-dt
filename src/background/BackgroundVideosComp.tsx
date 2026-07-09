@@ -1,7 +1,7 @@
 import './BackgroundVideosComp.scss';
 
 import { useCallback, type ReactElement } from 'react';
-import { createRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
 import BackgroundMediaComp from './BackgroundMediaComp';
@@ -25,7 +25,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
     getIsFadingAtTheEndSetting,
     methodMapIsFadingAtTheEnd,
@@ -69,28 +69,24 @@ function RendBodyComp({
             delete methodMapIsFadingAtTheEnd[filePath];
         };
     }, [filePath]);
-    const vRef = createRef<HTMLVideoElement>();
-    const handleMouseOver = useCallback(
-        (event: any) => {
-            if (vRef.current === null) {
-                return;
-            }
-            vRef.current.play();
-            const currentTarget = event.currentTarget as HTMLDivElement;
-            if (
-                typeof vRef.current.duration === 'number' &&
-                !currentTarget.title
-            ) {
-                currentTarget.title =
-                    `${fileSource.fullName}\n` +
-                    `(${timeToTimeString(vRef.current.duration)})`;
-            }
-        },
-        [vRef, fileSource],
-    );
+    const vRef = useRef<HTMLVideoElement>(null);
+    const fileSourceRef = useAppCurrentRef(fileSource);
+    const handleMouseOver = useCallback((event: any) => {
+        if (vRef.current === null) {
+            return;
+        }
+        vRef.current.play();
+        const currentTarget = event.currentTarget as HTMLDivElement;
+        if (typeof vRef.current.duration === 'number' && !currentTarget.title) {
+            currentTarget.title =
+                `${fileSourceRef.current.fullName}\n` +
+                `(${timeToTimeString(vRef.current.duration)})`;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleMouseOut = useCallback(() => {
         vRef.current?.pause();
-    }, [vRef]);
+    }, []);
     return (
         <div
             className="card-body app-overflow-hidden app-blank-bg"

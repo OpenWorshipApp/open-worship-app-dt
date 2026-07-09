@@ -4,12 +4,18 @@ import { getHTMLChild } from '../helper/helpers';
 import type ScreenManagerBase from './managers/ScreenManagerBase';
 import type {
     ForegroundCountdownDataType,
-    ForegroundMarqueDataType,
+    ForegroundMarqueeDataType,
     ForegroundQuickTextDataType,
     ForegroundStopwatchDataType,
     ForegroundTimeDataType,
     ForegroundWebDataType,
+    MarqueePositionType,
     StyleAnimType,
+} from './screenTypeHelpers';
+import {
+    DEFAULT_MARQUEE_SPEED_PERCENTAGE,
+    MAX_MARQUEE_SPEED_PERCENTAGE,
+    MIN_MARQUEE_SPEED_PERCENTAGE,
 } from './screenTypeHelpers';
 import TimingController from './managers/TimingController';
 import StopwatchController from './managers/StopwatchController';
@@ -17,21 +23,40 @@ import FileSource from '../helper/FileSource';
 import RenderBackgroundWebIframeComp from '../background/RenderBackgroundWebIframeComp';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 
+const MARQUEE_SLIDE_MILLISECOND = 500;
+
 export function genHtmlForegroundMarquee(
-    { text, extraStyle = {} }: ForegroundMarqueDataType,
+    {
+        text,
+        speedPercentage = DEFAULT_MARQUEE_SPEED_PERCENTAGE,
+        extraStyle = {},
+    }: ForegroundMarqueeDataType,
     screenManagerBase: ScreenManagerBase,
+    position: MarqueePositionType,
 ) {
-    const duration = text.length / 6;
+    const clampedSpeedPercentage = Math.max(
+        MIN_MARQUEE_SPEED_PERCENTAGE,
+        Math.min(MAX_MARQUEE_SPEED_PERCENTAGE, speedPercentage),
+    );
+    const duration =
+        (text.length / 6) *
+        (DEFAULT_MARQUEE_SPEED_PERCENTAGE / clampedSpeedPercentage);
     const scale = screenManagerBase.height / 768;
     const fontSize = Math.round(75 * scale);
     const uniqueClassname = `cn-${crypto.randomUUID()}`;
+    // Keyframes are scoped per instance so a top and a bottom marquee showing
+    // at the same time cannot overwrite each other's slide-in direction.
+    const movingKeyframe = `anim-${uniqueClassname}-moving`;
+    const inKeyframe = `anim-${uniqueClassname}-in`;
+    const outKeyframe = `anim-${uniqueClassname}-out`;
+    const hiddenTranslateY = position === 'top' ? '-100%' : '100%';
     const htmlString = renderToStaticMarkup(
         <div
             style={{
                 position: 'absolute',
                 width: '100%',
                 left: '0px',
-                bottom: '0px',
+                ...(position === 'top' ? { top: '0px' } : { bottom: '0px' }),
             }}
         >
             <style>{`
@@ -44,12 +69,12 @@ export function genHtmlForegroundMarquee(
                     font-size: ${fontSize}px;
                     box-shadow: inset 0 0 10px lightblue;
                     will-change: transform;
-                    transform: translateY(100%);
-                    animation: from-bottom 500ms ease-in forwards;
+                    transform: translateY(${hiddenTranslateY});
+                    animation: ${inKeyframe} ${MARQUEE_SLIDE_MILLISECOND}ms ease-in forwards;
                     white-space: nowrap;
                 }
                 .${uniqueClassname}.out {
-                    animation: to-bottom 500ms ease-out forwards;
+                    animation: ${outKeyframe} ${MARQUEE_SLIDE_MILLISECOND}ms ease-out forwards;
                 }
                 .${uniqueClassname} span {
                     display: inline-block;
@@ -65,22 +90,22 @@ export function genHtmlForegroundMarquee(
                     animation-direction: normal;
                     animation-fill-mode: none;
                     animation-play-state: running;
-                    animation-name: moving;
+                    animation-name: ${movingKeyframe};
                 }
                 .${uniqueClassname}.out span {
                     animation-play-state: paused;
                 }
-                @keyframes moving {
+                @keyframes ${movingKeyframe} {
                     0% { transform: translateX(0); }
                     100% { transform: translateX(-100%); }
                 }
-                @keyframes from-bottom {
-                    0% { transform: translateY(100%); }
+                @keyframes ${inKeyframe} {
+                    0% { transform: translateY(${hiddenTranslateY}); }
                     100% { transform: translateY(0); }
                 }
-                @keyframes to-bottom {
+                @keyframes ${outKeyframe} {
                     0% { transform: translateY(0); }
-                    100% { transform: translateY(100%); }
+                    100% { transform: translateY(${hiddenTranslateY}); }
                 }
             `}</style>
             <p className={uniqueClassname} style={extraStyle}>
@@ -111,7 +136,10 @@ export function genHtmlForegroundMarquee(
                 )) {
                     (element as any).classList.add('out');
                 }
-                setTimeout(resolve, duration * 1000 + 500);
+                // Only the slide-out has to finish before the node is dropped;
+                // tying this to `duration` would keep a hidden marquee around
+                // for minutes at the slowest scroll speeds.
+                setTimeout(resolve, MARQUEE_SLIDE_MILLISECOND);
             });
         },
     };

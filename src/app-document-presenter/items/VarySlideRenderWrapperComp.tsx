@@ -13,6 +13,7 @@ import Slide from '../../app-document-list/Slide';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import { type AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
 import type { OptionalPromise } from '../../helper/typeHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function selectVarySlide(
     {
@@ -61,6 +62,7 @@ export default function VarySlideRenderWrapperComp({
     index: number;
 }>) {
     const setSelectedVarySlide = useSelectedEditingSlideSetterContext();
+    const setSelectedVarySlideRef = useAppCurrentRef(setSelectedVarySlide);
     const handleClicking = useCallback(
         (
             event: MouseEvent<HTMLDivElement>,
@@ -71,12 +73,13 @@ export default function VarySlideRenderWrapperComp({
                 {
                     index,
                     varySlide,
-                    setVarySlides: setSelectedVarySlide,
+                    setVarySlides: setSelectedVarySlideRef.current,
                 },
                 event,
             );
         },
-        [setSelectedVarySlide],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     if (PdfSlide.checkIsThisType(varySlide)) {
         return (

@@ -11,6 +11,7 @@ import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { copyToClipboard } from '../server/appHelpers';
 import { RenderWebChildComp } from './BackgroundWebChildComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function genFileNameElement(fileName: string) {
     return (
@@ -52,45 +53,47 @@ export default function BackgroundWebUrlItemComp({
         urlSource.src,
         DragTypeEnum.BACKGROUND_WEB,
     );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            const contextMenuItems: ContextMenuItemType[] = [
-                {
-                    menuElement: tran('Copy URL to Clipboard'),
-                    onSelect: () => {
-                        copyToClipboard(urlSource.src);
-                    },
+    const handleSelectingRef = useAppCurrentRef(handleSelecting);
+    const isInScreenRef = useAppCurrentRef(isInScreen);
+    const onRemoveRef = useAppCurrentRef(onRemove);
+    const urlSourceRef = useAppCurrentRef(urlSource);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        const contextMenuItems: ContextMenuItemType[] = [
+            {
+                menuElement: tran('Copy URL to Clipboard'),
+                onSelect: () => {
+                    copyToClipboard(urlSourceRef.current.src);
                 },
-                ...genShowOnScreensContextMenu((event) => {
-                    handleSelecting(event, true);
-                }),
-                ...(isInScreen
-                    ? []
-                    : [
-                          {
-                              menuElement: tran('Remove URL'),
-                              onSelect: () => {
-                                  void onRemove(urlSource);
-                              },
+            },
+            ...genShowOnScreensContextMenu((event) => {
+                handleSelectingRef.current(event, true);
+            }),
+            ...(isInScreenRef.current
+                ? []
+                : [
+                      {
+                          menuElement: tran('Remove URL'),
+                          onSelect: () => {
+                              void onRemoveRef.current(urlSourceRef.current);
                           },
-                      ]),
-            ];
-            showAppContextMenu(event, contextMenuItems);
-        },
-        [handleSelecting, isInScreen, onRemove, urlSource],
-    );
-    const handleClicking = useCallback(
-        (event: any) => {
-            handleSelecting(event);
-        },
-        [handleSelecting],
-    );
-    const handleMediaDragStart = useCallback(
-        (event: any) => {
-            handleDragStart(event, urlSource, DragTypeEnum.BACKGROUND_WEB);
-        },
-        [urlSource],
-    );
+                      },
+                  ]),
+        ];
+        showAppContextMenu(event, contextMenuItems);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleClicking = useCallback((event: any) => {
+        handleSelectingRef.current(event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleMediaDragStart = useCallback((event: any) => {
+        handleDragStart(
+            event,
+            urlSourceRef.current,
+            DragTypeEnum.BACKGROUND_WEB,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}

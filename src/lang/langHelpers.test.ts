@@ -65,9 +65,17 @@ vi.mock('../others/CacheManager', async (importOriginal) => {
     };
 });
 
-vi.mock('../helper/debuggerHelpers', () => ({
-    useAppStateAsync: mocks.useAppStateAsyncMock,
-}));
+vi.mock('../helper/appHooks', async () => {
+    const React = (await vi.importActual('react')) as any;
+    return {
+        useAppStateAsync: mocks.useAppStateAsyncMock,
+        useAppCurrentRef: (target: any) => {
+            const ref = React.useRef(target);
+            ref.current = target;
+            return ref;
+        },
+    };
+});
 
 async function loadLangHelpers() {
     return await import('./langHelpers');

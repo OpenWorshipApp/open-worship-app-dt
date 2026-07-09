@@ -9,6 +9,7 @@ import {
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 const BibleXMLDataPreviewCompLazy = lazy(
     () => import('./BibleXMLDataPreviewComp'),
@@ -28,27 +29,30 @@ export default function BibleXMLInfoComp({
         false,
     );
     const { bibleInfo } = useBibleXMLInfo(bibleKey);
+    const isShowingRef = useAppCurrentRef(isShowing);
+    const setIsShowingRef = useAppCurrentRef(setIsShowing);
     const handleToggleShowing = useCallback(() => {
-        setIsShowing(!isShowing);
-    }, [isShowing, setIsShowing]);
-    const handleFileTrashing = useCallback(
-        async (event: any) => {
-            event.stopPropagation();
-            const isConfirmed = await showAppConfirm(
-                'Delete Bible XML',
-                `Are you sure to delete bible XML "${bibleKey}"?`,
-                {
-                    confirmButtonLabel: 'Yes',
-                },
-            );
-            if (!isConfirmed) {
-                return;
-            }
-            await deleteBibleXML(bibleKey);
-            loadBibleKeys();
-        },
-        [bibleKey, loadBibleKeys],
-    );
+        setIsShowingRef.current(!isShowingRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const loadBibleKeysRef = useAppCurrentRef(loadBibleKeys);
+    const handleFileTrashing = useCallback(async (event: any) => {
+        event.stopPropagation();
+        const isConfirmed = await showAppConfirm(
+            'Delete Bible XML',
+            `Are you sure to delete bible XML "${bibleKeyRef.current}"?`,
+            {
+                confirmButtonLabel: 'Yes',
+            },
+        );
+        if (!isConfirmed) {
+            return;
+        }
+        await deleteBibleXML(bibleKeyRef.current);
+        loadBibleKeysRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const title = bibleInfo ? bibleInfo.title : null;
     return (
         <li

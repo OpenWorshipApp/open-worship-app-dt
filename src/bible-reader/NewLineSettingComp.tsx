@@ -2,6 +2,7 @@ import { type ChangeEvent, useCallback, useState } from 'react';
 
 import { useBibleItemsViewControllerContext } from './BibleItemsViewController';
 import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function NewLineSettingComp() {
     const viewController = useBibleItemsViewControllerContext();
@@ -25,17 +26,21 @@ export default function NewLineSettingComp() {
         },
         [viewController],
     );
+    const setShouldNewLine1Ref = useAppCurrentRef(setShouldNewLine1);
     const handleNewLineChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setShouldNewLine1(event.target.checked);
+            setShouldNewLine1Ref.current(event.target.checked);
         },
-        [setShouldNewLine1],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const setUseModelNewLine1Ref = useAppCurrentRef(setUseModelNewLine1);
     const handleModelNewLineChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setUseModelNewLine1(event.target.checked);
+            setUseModelNewLine1Ref.current(event.target.checked);
         },
-        [setUseModelNewLine1],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <>

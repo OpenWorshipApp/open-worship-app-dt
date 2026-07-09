@@ -57,7 +57,7 @@ anything abnormal using the severity scale and report template below.
   switch correctly.
 
 ### S5 — Foreground
-- Presenter `Foreground` tab: exercise countdown / marquee / clock controls; confirm
+- Presenter `Foreground` tab: exercise countdown / marquee top / marquee bottom / clock controls; confirm
   each toggles on the mini screen preview without console errors.
 
 ### S6 — Background

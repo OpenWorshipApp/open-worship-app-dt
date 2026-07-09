@@ -10,7 +10,8 @@ import {
     useAppEffect,
     useAppEffectAsync,
     useAppStateAsync,
-} from '../helper/debuggerHelpers';
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import RenderFindingInfoHeaderComp from './RenderFindingInfoHeaderComp';
 
 export default function BibleFindBodyComp({
@@ -49,23 +50,23 @@ export default function BibleFindBodyComp({
         });
         setSelectedBooks(newSelectedBooks);
     };
-    const handleFinding = useCallback(
-        (text: string, isFresh?: boolean) => {
-            if (text === findText) {
-                if (isFresh) {
-                    doFinding(
-                        bibleFindController,
-                        findText,
-                        undefined,
-                        setData,
-                    );
-                }
-                return;
+    const findTextRef = useAppCurrentRef(findText);
+    const bibleFindControllerRef = useAppCurrentRef(bibleFindController);
+    const handleFinding = useCallback((text: string, isFresh?: boolean) => {
+        if (text === findTextRef.current) {
+            if (isFresh) {
+                doFinding(
+                    bibleFindControllerRef.current,
+                    findTextRef.current,
+                    undefined,
+                    setData,
+                );
             }
-            setFindText(text);
-        },
-        [findText, bibleFindController],
-    );
+            return;
+        }
+        setFindText(text);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="card app-overflow-hidden w-100 h-100">
             <div

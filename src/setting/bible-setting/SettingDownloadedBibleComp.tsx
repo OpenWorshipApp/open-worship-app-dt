@@ -4,6 +4,7 @@ import type { BibleListType } from './bibleSettingHelpers';
 import OnlineBibleItemComp from './OnlineBibleItemComp';
 import LoadingComp from '../../others/LoadingComp';
 import type { LocaleType } from '../../lang/langHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 type DownloadingBibleInfoType = {
     isUpdatable: boolean;
@@ -23,9 +24,13 @@ export default function SettingDownloadedBibleComp({
     downloadedBibleInfoList: BibleListType;
     setDownloadedBibleInfoList: (bbList: BibleListType) => void;
 }>) {
+    const setDownloadedBibleInfoListRef = useAppCurrentRef(
+        setDownloadedBibleInfoList,
+    );
     const handleRefresh = useCallback(() => {
-        setDownloadedBibleInfoList(null);
-    }, [setDownloadedBibleInfoList]);
+        setDownloadedBibleInfoListRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (downloadedBibleInfoList === null) {
         return <LoadingComp />;
     }
@@ -93,16 +98,24 @@ function RenderItem({
     index: number;
     setDownloadedBibleInfoList: (bbList: BibleListType) => void;
 }>) {
+    const setDownloadedBibleInfoListRef = useAppCurrentRef(
+        setDownloadedBibleInfoList,
+    );
     const handleDownloadedEvent = useCallback(() => {
-        setDownloadedBibleInfoList(null);
-    }, [setDownloadedBibleInfoList]);
+        setDownloadedBibleInfoListRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleDeleting = useCallback(() => {
-        setDownloadedBibleInfoList(null);
-    }, [setDownloadedBibleInfoList]);
+        setDownloadedBibleInfoListRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const bibleInfoRef = useAppCurrentRef(bibleInfo);
+    const bibleInfoListRef = useAppCurrentRef(bibleInfoList);
     const handleUpdating = useCallback(() => {
-        bibleInfo.isDownloading = true;
-        setDownloadedBibleInfoList([...bibleInfoList]);
-    }, [bibleInfo, bibleInfoList, setDownloadedBibleInfoList]);
+        bibleInfoRef.current.isDownloading = true;
+        setDownloadedBibleInfoListRef.current([...bibleInfoListRef.current]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (bibleInfo.isDownloading) {
         return (
             <OnlineBibleItemComp

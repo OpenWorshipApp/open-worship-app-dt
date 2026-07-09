@@ -2,6 +2,7 @@ import type { ChangeEvent, CSSProperties, FocusEvent } from 'react';
 import { useCallback } from 'react';
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
 import CanvasItemText, { SCRIPT_SAFE_LINE_HEIGHT } from '../CanvasItemText';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 function calcAlignmentStyle(props: CanvasItemTextPropsType) {
     const basePadding = props.fontSize / 10;
@@ -46,12 +47,14 @@ export default function BoxEditorTextAreaComp({
         },
         [],
     );
+    const onTextChangeRef = useAppCurrentRef(onTextChange);
     const handleTextChange = useCallback(
         (event: ChangeEvent<HTMLTextAreaElement>) => {
             const newText = event.target.value;
-            onTextChange(newText);
+            onTextChangeRef.current(newText);
         },
-        [onTextChange],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const style = CanvasItemText.genStyle(props);
     return (

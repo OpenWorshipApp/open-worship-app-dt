@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { electronSendAsync } from '../server/appHelpers';
-import { useAppEffectAsync } from './debuggerHelpers';
+import { useAppEffectAsync } from './appHooks';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import CacheManager from '../others/CacheManager';
 import { unlocking } from '../server/unlockingHelpers';

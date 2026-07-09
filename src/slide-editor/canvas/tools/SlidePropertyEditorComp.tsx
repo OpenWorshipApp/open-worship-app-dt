@@ -6,7 +6,7 @@ import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';
 import { useSelectedEditingSlideContext } from '../../../app-document-list/appDocumentHelpers';
 import RenderSlideIndexComp from '../../../app-document-presenter/items/RenderSlideIndexComp';
-import { useAppStateAsync } from '../../../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../../../helper/appHooks';
 import { getDefaultScreenDisplay } from '../../../_screen/managers/screenHelpers';
 import { showAppConfirm } from '../../../popup-widget/popupWidgetHelpers';
 import type Slide from '../../../app-document-list/Slide';
@@ -54,15 +54,14 @@ function RenderDimElementComp({
     value: number;
     setValue: (value: number) => void;
 }>) {
-    const handleChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
-            const newValue = Number.parseInt(e.target.value, 10);
-            if (!Number.isNaN(newValue)) {
-                setValue(newValue);
-            }
-        },
-        [setValue],
-    );
+    const setValueRef = useAppCurrentRef(setValue);
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        const newValue = Number.parseInt(e.target.value, 10);
+        if (!Number.isNaN(newValue)) {
+            setValueRef.current(newValue);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex align-items-center gap-1">
             <label className="spe-label">{tran(name)}</label>
@@ -102,18 +101,24 @@ function RenderDimEditComp() {
         },
         [slide],
     );
+    const applyDimRef = useAppCurrentRef(applyDim);
+    const widthRef = useAppCurrentRef(width);
+    const heightRef = useAppCurrentRef(height);
     const handleApply = useCallback(() => {
-        applyDim(width, height);
-    }, [applyDim, width, height]);
+        applyDimRef.current(widthRef.current, heightRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const slideRef = useAppCurrentRef(slide);
     const handleReset = useCallback(() => {
         const { bounds } = getDefaultScreenDisplay();
         if (
-            bounds.width !== slide.metadata.width ||
-            bounds.height !== slide.metadata.height
+            bounds.width !== slideRef.current.metadata.width ||
+            bounds.height !== slideRef.current.metadata.height
         ) {
-            applyDim(bounds.width, bounds.height);
+            applyDimRef.current(bounds.width, bounds.height);
         }
-    }, [applyDim, slide.metadata.width, slide.metadata.height]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleApplyAll = useCallback(async () => {
         const isConfirmed = await showAppConfirm(
             tran('This will change all Slides'),
@@ -125,8 +130,9 @@ function RenderDimEditComp() {
         if (!isConfirmed) {
             return;
         }
-        applyDim(width, height, true);
-    }, [applyDim, width, height]);
+        applyDimRef.current(widthRef.current, heightRef.current, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="spe-field d-flex flex-column">
             <div className="d-flex align-items-start gap-2">
@@ -188,11 +194,14 @@ function RenderNameEditorComp() {
     const slide = useSelectedEditingSlideContext();
     const [name, setName] = useState(slide.name);
     const hasChanged = name !== slide.name;
+    const slideRef = useAppCurrentRef(slide);
+    const nameRef = useAppCurrentRef(name);
     const handleNameChanging = useCallback(() => {
-        const appDocument = AppDocument.getInstance(slide.filePath);
-        slide.name = name;
-        appDocument.updateSlide(slide);
-    }, [slide, name]);
+        const appDocument = AppDocument.getInstance(slideRef.current.filePath);
+        slideRef.current.name = nameRef.current;
+        appDocument.updateSlide(slideRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         setName(e.target.value);
     }, []);

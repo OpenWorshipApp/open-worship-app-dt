@@ -11,7 +11,7 @@ import { useCallback, useState } from 'react';
 import AttachBackgroundManager, {
     attachBackgroundManager,
 } from '../others/AttachBackgroundManager';
-import { useAppEffectAsync } from './debuggerHelpers';
+import { useAppEffectAsync } from './appHooks';
 import { useFileSourceEvents } from './dirSourceHelpers';
 import { stopDraggingState } from './helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';

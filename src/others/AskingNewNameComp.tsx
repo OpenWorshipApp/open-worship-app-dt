@@ -2,6 +2,7 @@ import type { ChangeEvent, ReactNode, KeyboardEvent, MouseEvent } from 'react';
 import { useCallback, useState } from 'react';
 
 import { showSimpleToast } from '../toast/toastHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function AskingNewNameComp({
     defaultName,
@@ -17,15 +18,18 @@ export default function AskingNewNameComp({
     const handleDivClick = useCallback((event: MouseEvent) => {
         event.stopPropagation();
     }, []);
+    const creatingNewNameRef = useAppCurrentRef(creatingNewName);
+    const applyNameRef = useAppCurrentRef(applyName);
     const handleKeyDown = useCallback(
         (event: KeyboardEvent<HTMLInputElement>) => {
-            if (event.key === 'Enter' && creatingNewName) {
-                applyName(creatingNewName);
+            if (event.key === 'Enter' && creatingNewNameRef.current) {
+                applyNameRef.current(creatingNewNameRef.current);
             } else if (event.key === 'Escape') {
-                applyName(null);
+                applyNameRef.current(null);
             }
         },
-        [creatingNewName, applyName],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleInputChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
@@ -33,8 +37,9 @@ export default function AskingNewNameComp({
         },
         [],
     );
+    const isValidRef = useAppCurrentRef(isValid);
     const handleApplyClick = useCallback(() => {
-        if (!isValid) {
+        if (!isValidRef.current) {
             showSimpleToast(
                 'Invalid file name',
                 'File name cannot contain any of the following ' +
@@ -42,8 +47,9 @@ export default function AskingNewNameComp({
             );
             return;
         }
-        applyName(creatingNewName || null);
-    }, [isValid, creatingNewName, applyName]);
+        applyNameRef.current(creatingNewNameRef.current || null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="input-group" onClick={handleDivClick}>
             <input

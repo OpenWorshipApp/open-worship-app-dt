@@ -7,20 +7,24 @@ import type { InputDataType } from './popupWidgetHelpers';
 import { closeAlert } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function ConfirmPopupComp({
     inputData,
 }: Readonly<{
     inputData: InputDataType;
 }>) {
+    const inputDataRef = useAppCurrentRef(inputData);
     const handleClosing = useCallback(() => {
-        inputData.onConfirm(false);
+        inputDataRef.current.onConfirm(false);
         closeAlert();
-    }, [inputData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleOkClicking = useCallback(() => {
-        inputData.onConfirm(true);
+        inputDataRef.current.onConfirm(true);
         closeAlert();
-    }, [inputData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useKeyboardRegistering(
         [{ key: 'Escape' }],
         (event) => {

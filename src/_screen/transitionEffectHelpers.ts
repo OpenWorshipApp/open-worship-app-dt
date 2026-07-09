@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type ScreenEffectManager from './managers/ScreenEffectManager';
 import type { StyleAnimType, PTFEventType } from './screenTypeHelpers';
 
@@ -354,8 +354,7 @@ export function useScreenEffectEvents(
 ) {
     const [_n, setN] = useState(Date.now());
 
-    const callbackRef = useRef(callback);
-    callbackRef.current = callback;
+    const callbackRef = useAppCurrentRef(callback);
 
     useAppEffect(() => {
         const update = (_data: any, time: number) => {

@@ -5,6 +5,7 @@ import BibleItemRenderComp from './BibleItemRenderComp';
 import { genDuplicatedMessage } from './bibleItemHelpers';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function RenderBibleItemsComp({
     bible,
@@ -14,9 +15,11 @@ export default function RenderBibleItemsComp({
     const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const items = bible.items;
     const shouldAddBibleItem = bible.isDefault && showBibleLookupPopup !== null;
+    const showBibleLookupPopupRef = useAppCurrentRef(showBibleLookupPopup);
     const handleAddBibleItem = useCallback(() => {
-        showBibleLookupPopup?.();
-    }, [showBibleLookupPopup]);
+        showBibleLookupPopupRef.current?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <ul
             className="list-group"

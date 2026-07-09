@@ -8,7 +8,7 @@ import {
 import ScreenBackgroundManager from '../_screen/managers/ScreenBackgroundManager';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 
@@ -19,10 +19,12 @@ function RenderColorPickerPerScreenComp({
     screenId: number;
     backgroundSrc: BackgroundSrcType;
 }>) {
+    const screenIdRef = useAppCurrentRef(screenId);
     const handleColorChanging = useCallback(
         async (newColor: AppColorType | null) => {
-            const screenBackgroundManager =
-                ScreenBackgroundManager.getInstance(screenId);
+            const screenBackgroundManager = ScreenBackgroundManager.getInstance(
+                screenIdRef.current,
+            );
             if (screenBackgroundManager === null) {
                 showSimpleToast(
                     'Failed to apply to screen. Please make sure the screen is open.',
@@ -34,7 +36,8 @@ function RenderColorPickerPerScreenComp({
                 src: newColor,
             });
         },
-        [screenId],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div className="p-1 m-1 app-border-white-round">

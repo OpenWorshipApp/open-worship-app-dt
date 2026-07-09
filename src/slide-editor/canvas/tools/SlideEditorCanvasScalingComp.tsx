@@ -6,20 +6,21 @@ import {
 } from '../CanvasController';
 import { useSlideCanvasScale } from '../canvasEventHelpers';
 import AppRangeComp from '../../../others/AppRangeComp';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 export default function SlideEditorCanvasScalingComp() {
     const canvasController = useCanvasControllerContext();
     const scale = useSlideCanvasScale(canvasController);
     const actualScale = scale * 10;
+    const canvasControllerRef = useAppCurrentRef(canvasController);
     const handleCenterView = useCallback(() => {
-        canvasController.toCenterView();
-    }, [canvasController]);
-    const handleScaleChange = useCallback(
-        (newScale: number) => {
-            canvasController.scale = newScale / 10;
-        },
-        [canvasController],
-    );
+        canvasControllerRef.current.toCenterView();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleScaleChange = useCallback((newScale: number) => {
+        canvasControllerRef.current.scale = newScale / 10;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={

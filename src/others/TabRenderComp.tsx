@@ -2,7 +2,7 @@ import type { ReactNode, LazyExoticComponent, MouseEvent } from 'react';
 import { useCallback } from 'react';
 
 import AppSuspenseComp from './AppSuspenseComp';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
 import type { OptionalPromise } from '../helper/typeHelpers';
 
@@ -41,12 +41,12 @@ function RendTabComp<T>({
 }>) {
     const activeClass = activeTabs.includes(tab.key) ? 'active' : '';
     const isOnScreen = useIsOnScreen(tab);
-    const handleClick = useCallback(
-        (event: MouseEvent<HTMLButtonElement>) => {
-            setActiveTab?.(tab.key, event);
-        },
-        [setActiveTab, tab.key],
-    );
+    const setActiveTabRef = useAppCurrentRef(setActiveTab);
+    const tabRef = useAppCurrentRef(tab);
+    const handleClick = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+        setActiveTabRef.current?.(tabRef.current.key, event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <li key={tab.title} className={'nav-item ' + (tab.className ?? '')}>
             <button

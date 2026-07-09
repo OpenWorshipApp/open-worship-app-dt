@@ -2,7 +2,7 @@ import { lazy, useCallback, useState } from 'react';
 
 import { type ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { type AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
-import { useAppEffectAsync } from '../../helper/debuggerHelpers';
+import { useAppEffectAsync, useAppCurrentRef } from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
@@ -111,9 +111,11 @@ function genContextMenu(
 
 function NotePreview({ note }: Readonly<{ note: Note }>) {
     const fileSource = FileSource.getInstance(note.filePath);
+    const noteRef = useAppCurrentRef(note);
     const handleToggleOpened = useCallback(() => {
-        note.setIsOpened(!note.isOpened);
-    }, [note]);
+        noteRef.current.setIsOpened(!noteRef.current.isOpened);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="w-100 accordion accordion-flush py-1">
             <div
@@ -208,25 +210,25 @@ export default function NoteFileComp({
         [note],
         filePath,
     );
-    const handleDataDropping = useCallback(
-        (event: any) => {
-            const droppedData = extractDropData(event);
-            if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
-                stopDraggingState(event);
-                const noteItem = droppedData.item as NoteItem;
-                if (noteItem.filePath === undefined) {
-                    note?.addAndSaveNoteItem(droppedData.item);
-                } else {
-                    note?.moveItemFrom(noteItem.filePath, noteItem);
-                }
+    const noteRef = useAppCurrentRef(note);
+    const filePathRef = useAppCurrentRef(filePath);
+    const handleDataDropping = useCallback((event: any) => {
+        const droppedData = extractDropData(event);
+        if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
+            stopDraggingState(event);
+            const noteItem = droppedData.item as NoteItem;
+            if (noteItem.filePath === undefined) {
+                noteRef.current?.addAndSaveNoteItem(droppedData.item);
             } else {
-                handleAttachBackgroundDrop(event, {
-                    filePath,
-                });
+                noteRef.current?.moveItemFrom(noteItem.filePath, noteItem);
             }
-        },
-        [note, filePath],
-    );
+        } else {
+            handleAttachBackgroundDrop(event, {
+                filePath: filePathRef.current,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <FileItemHandlerComp
             index={index}

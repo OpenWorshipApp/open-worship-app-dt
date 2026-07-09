@@ -13,6 +13,7 @@ import RenderVerseTextViewComp from './RenderVerseTextViewComp';
 import { getAISetting } from '../../helper/ai/aiHelpers';
 import { checkIsVerticalPartialInvisible } from '../../helper/helpers';
 import appProvider from '../../server/appProvider';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function handleNextChapterSelection(
     lookupBibleItemController: LookupBibleItemController,
@@ -80,30 +81,42 @@ export default function RenderVerseTextDetailListComp({
     const { isAudioEnabled } = useIsAudioAIEnabled(bibleItem);
     const bibleItemViewController = useBibleItemsViewControllerContext();
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
+    const nextVerseInfoRef = useAppCurrentRef(nextVerseInfo);
     const handleAudioStarting = useCallback(() => {
-        if (nextVerseInfo === null) {
+        if (nextVerseInfoRef.current === null) {
             return;
         }
-        bibleTextToSpeech(nextVerseInfo);
-    }, [nextVerseInfo]);
+        bibleTextToSpeech(nextVerseInfoRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const verseTextRefRef = useAppCurrentRef(verseTextRef);
+    const verseInfoRef = useAppCurrentRef(verseInfo);
+    const bibleItemViewControllerRef = useAppCurrentRef(
+        bibleItemViewController,
+    );
     const handleAudioEnding = useCallback(() => {
-        if (verseTextRef.current === null) {
+        const verseTextElement = verseTextRefRef.current.current;
+        if (verseTextElement === null) {
             return;
         }
-        if (verseInfo.isLast && bibleItemViewController.isLookup) {
+        if (
+            verseInfoRef.current.isLast &&
+            bibleItemViewControllerRef.current.isLookup
+        ) {
             handleNextChapterSelection(
-                bibleItemViewController as LookupBibleItemController,
-                verseTextRef.current,
+                bibleItemViewControllerRef.current as LookupBibleItemController,
+                verseTextElement,
             );
         }
-        if (nextVerseInfo === null) {
+        if (nextVerseInfoRef.current === null) {
             return;
         }
         handleNextVersionSelection(
-            verseTextRef.current,
-            nextVerseInfo.kjvBibleVersesKey,
+            verseTextElement,
+            nextVerseInfoRef.current.kjvBibleVersesKey,
         );
-    }, [verseTextRef, verseInfo, bibleItemViewController, nextVerseInfo]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return verseInfoList.map((verseInfo) => {
         return (
             <RenderVerseTextViewComp

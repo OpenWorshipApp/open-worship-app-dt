@@ -10,7 +10,7 @@ import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
 import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 
 import { useStateSettingBoolean } from './settingHelpers';
-import { useAppEffect } from './debuggerHelpers';
+import { useAppEffect } from './appHooks';
 import { checkIsDarkMode } from '../others/themeHelpers';
 import { appError as logError } from './loggerHelpers';
 import { genTimeoutAttempt } from './timeoutHelpers';

@@ -1,10 +1,9 @@
-import { useRef } from 'react';
 import type { VarySlideType } from '../app-document-list/appDocumentTypeHelpers';
 import {
     THUMBNAIL_WIDTH_SETTING_NAME,
     DEFAULT_THUMBNAIL_SIZE_FACTOR,
 } from '../app-document-list/appDocumentTypeHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { getSetting, useStateSettingNumber } from '../helper/settingHelpers';
 import type { ListenerType } from './EventHandler';
 import EventHandler from './EventHandler';
@@ -26,8 +25,7 @@ export default class AppDocumentListEventListener extends EventHandler<AppDocume
 export function useVarySlideSelecting(
     listener: ListenerType<VarySlideType | null>,
 ) {
-    const listenerRef = useRef(listener);
-    listenerRef.current = listener;
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const event = AppDocumentListEventListener.registerEventListener(
             ['app-document-item-select'],

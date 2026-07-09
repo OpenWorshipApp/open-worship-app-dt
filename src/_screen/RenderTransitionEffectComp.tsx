@@ -8,6 +8,7 @@ import {
     type TransitionEffectType,
     useScreenEffectEvents,
 } from './transitionEffectHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function openContextMenu(event: any, screenEffectManager: ScreenEffectManager) {
     const transitionEffectList = Object.entries(transitionEffect);
@@ -42,12 +43,11 @@ export default function RenderTransitionEffectComp({
 }>) {
     useScreenEffectEvents(['update'], screenEffectManager);
     const selected = transitionEffect[screenEffectManager.effectType];
-    const handleOpenContextMenu = useCallback(
-        (event: any) => {
-            openContextMenu(event, screenEffectManager);
-        },
-        [screenEffectManager],
-    );
+    const screenEffectManagerRef = useAppCurrentRef(screenEffectManager);
+    const handleOpenContextMenu = useCallback((event: any) => {
+        openContextMenu(event, screenEffectManagerRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className="btn btn-outline-secondary"

@@ -8,7 +8,7 @@ import ScreenManager from './managers/ScreenManager';
 import { ScreenManagerBaseContext } from './managers/screenManagerHooks';
 import appProvider from '../server/appProvider';
 import { genStyleRendering } from './preview/MiniScreenAppComp';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 
 ScreenManager.initReceiveScreenMessage();
 export default function ScreenAppComp() {

@@ -18,6 +18,7 @@ import {
 } from './schemas/bibleEditorUriHelpers';
 import { getBibleXMLDataFromKey } from './bibleXMLHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
@@ -57,9 +58,12 @@ function RenderChoiceComp({
     targetEditingType: string;
 }>) {
     const isActive = editingType === targetEditingType;
+    const setEditingTypeRef = useAppCurrentRef(setEditingType);
+    const targetEditingTypeRef = useAppCurrentRef(targetEditingType);
     const handleClick = useCallback(() => {
-        setEditingType(targetEditingType);
-    }, [setEditingType, targetEditingType]);
+        setEditingTypeRef.current(targetEditingTypeRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className={'btn btn-sm ' + (isActive ? 'btn-light' : 'btn-primary')}

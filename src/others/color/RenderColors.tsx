@@ -6,6 +6,7 @@ import SelectCustomColor from './SelectCustomColor';
 import RenderColor from './RenderColor';
 import RenderNoColor from './RenderNoColor';
 import type { AnyObjectType } from '../../helper/typeHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function RenderColors({
     colors,
@@ -18,23 +19,24 @@ export default function RenderColors({
     onColorChange: (color: AppColorType | null, event: MouseEvent) => void;
     isNoImmediate?: boolean;
 }>) {
-    const handleNoColoring = useCallback(
-        (event: any) => {
-            onColorChange(null, event);
-        },
-        [onColorChange],
-    );
+    const onColorChangeRef = useAppCurrentRef(onColorChange);
+    const handleNoColoring = useCallback((event: any) => {
+        onColorChangeRef.current(null, event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleColorChanging = useCallback(
         (event: any, color: AppColorType) => {
-            onColorChange(color, event);
+            onColorChangeRef.current(color, event);
         },
-        [onColorChange],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleColorSelecting = useCallback(
         (color: AppColorType, event: any) => {
-            onColorChange(color, event);
+            onColorChangeRef.current(color, event);
         },
-        [onColorChange],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div>

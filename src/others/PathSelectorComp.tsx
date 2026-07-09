@@ -12,6 +12,7 @@ import { copyToClipboard, showFileOrDirExplorer } from '../server/appHelpers';
 import appProvider from '../server/appProvider';
 import { openGeneralSetting } from '../setting/settingHelpers';
 import RenderPathTitleComp from './RenderPathTitleComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const LazyPathEditorComp = lazy(() => {
     return import('./PathEditorComp');
@@ -71,9 +72,11 @@ export default function PathSelectorComp({
     const dirPath = dirSource.dirPath;
     const shouldShowingEditor =
         isForceShowEditor || !dirPath || isShowingEditor;
+    const isShowingEditorRef = useAppCurrentRef(isShowingEditor);
     const handleToggleEditor = useCallback(() => {
-        setIsShowingEditor(!isShowingEditor);
-    }, [isShowingEditor]);
+        setIsShowingEditor(!isShowingEditorRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="path-selector w-100"

@@ -1,6 +1,6 @@
 import { type CSSProperties, useRef } from 'react';
 
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect } from '../../helper/appHooks';
 import FileSource from '../../helper/FileSource';
 import { pathToFileURL } from '../../server/calcHelpers';
 import appProvider from '../../server/appProvider';

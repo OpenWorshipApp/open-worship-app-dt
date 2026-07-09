@@ -397,7 +397,7 @@ describe('screen render helpers', () => {
         ]);
     });
 
-    test('renders marquee and quick text foreground DOM helpers', async () => {
+    test('renders marquee bottom and quick text foreground DOM helpers', async () => {
         vi.useFakeTimers();
 
         const { genHtmlForegroundMarquee, genHtmlForegroundQuickText } =
@@ -412,15 +412,23 @@ describe('screen render helpers', () => {
             animOut: vi.fn(async () => {}),
         };
 
-        const marquee = genHtmlForegroundMarquee(
+        const marqueeBottom = genHtmlForegroundMarquee(
             { text: 'Hello there', extraStyle: {} },
             { height: 768 } as any,
+            'bottom',
         );
-        expect(marquee.element.textContent).toContain('Hello there');
-        const removing = marquee.handleRemoving();
+        expect(marqueeBottom.element.textContent).toContain('Hello there');
+        const removing = marqueeBottom.handleRemoving();
         await vi.advanceTimersByTimeAsync(Math.ceil((11 / 6) * 1000) + 500);
         await removing;
-        expect(marquee.element.querySelector('p.out')).not.toBeNull();
+        expect(marqueeBottom.element.querySelector('p.out')).not.toBeNull();
+
+        const marqueeTop = genHtmlForegroundMarquee(
+            { text: 'Hello there', extraStyle: {} },
+            { height: 768 } as any,
+            'top',
+        );
+        expect(marqueeTop.element.style.top).toBe('0px');
 
         const quickText = genHtmlForegroundQuickText(
             {

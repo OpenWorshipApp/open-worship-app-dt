@@ -635,7 +635,7 @@ describe('non-Bible manager coverage', () => {
                     extraStyle: {},
                 },
                 timeDataList: [],
-                marqueeData: null,
+                marqueeBottomData: null,
                 quickTextData: null,
                 cameraDataList: [],
                 webDataList: [],
@@ -714,7 +714,8 @@ describe('non-Bible manager coverage', () => {
             extraStyle: {},
         } as any);
         manager.renderTime(timeA as any);
-        manager.renderMarquee({ text: 'Hello', extraStyle: {} } as any);
+        manager.renderMarqueeTop({ text: 'Hello', extraStyle: {} } as any);
+        manager.renderMarqueeBottom({ text: 'Hello', extraStyle: {} } as any);
         manager.renderQuickText({
             htmlText: '<b>Hello</b>',
             timeSecondDelay: 0,
@@ -738,6 +739,12 @@ describe('non-Bible manager coverage', () => {
         expect(mocks.genMarquee).toHaveBeenCalledWith(
             { text: 'Hello', extraStyle: {} },
             base,
+            'top',
+        );
+        expect(mocks.genMarquee).toHaveBeenCalledWith(
+            { text: 'Hello', extraStyle: {} },
+            base,
+            'bottom',
         );
         expect(mocks.genQuickText).toHaveBeenCalled();
         expect(mocks.getCameraAndShowMedia).toHaveBeenCalled();
@@ -779,7 +786,11 @@ describe('non-Bible manager coverage', () => {
             new MouseEvent('click') as any,
             timeA as any,
         );
-        await ScreenForegroundManager.setMarquee(
+        await ScreenForegroundManager.setMarqueeTop(
+            new MouseEvent('click') as any,
+            'Ticker',
+        );
+        await ScreenForegroundManager.setMarqueeBottom(
             new MouseEvent('click') as any,
             'Ticker',
         );
@@ -816,13 +827,13 @@ describe('non-Bible manager coverage', () => {
                 countdownData: null,
                 stopwatchData: null,
                 timeDataList: [timeB],
-                marqueeData: { text: 'Synced', extraStyle: {} },
+                marqueeBottomData: { text: 'Synced', extraStyle: {} },
                 quickTextData: null,
                 cameraDataList: [],
                 webDataList: [webData],
             },
         } as any);
-        expect(manager.foregroundData.marqueeData).toEqual({
+        expect(manager.foregroundData.marqueeBottomData).toEqual({
             text: 'Synced',
             extraStyle: {},
         });
@@ -840,7 +851,7 @@ describe('non-Bible manager coverage', () => {
                 countdownData: null,
                 stopwatchData: null,
                 timeDataList: [],
-                marqueeData: null,
+                marqueeBottomData: null,
                 quickTextData: null,
                 cameraDataList: [],
                 webDataList: [],

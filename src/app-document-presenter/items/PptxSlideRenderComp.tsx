@@ -11,6 +11,7 @@ import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpe
 import HtmlSlideRenderComp, {
     genHtmlSlideContent,
 } from './HtmlSlideRenderComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function genPptxIframeElement(
     htmlFilePath: string,
@@ -132,15 +133,18 @@ export default function PptxSlideRenderComp({
 }>) {
     const pptxAppDocument = useVaryAppDocumentContext() as PptxAppDocument;
     useScreenVaryAppDocumentManagerEvents(['update']);
+    const pptxAppDocumentRef = useAppCurrentRef(pptxAppDocument);
+    const pptxSlideRef = useAppCurrentRef(pptxSlide);
     const handleContextMenuOpening = useCallback(
         (event: MouseEvent, extraMenuItems: ContextMenuItemType[]) => {
-            pptxAppDocument.showSlideContextMenu(
+            pptxAppDocumentRef.current.showSlideContextMenu(
                 event,
-                pptxSlide,
+                pptxSlideRef.current,
                 extraMenuItems,
             );
         },
-        [pptxAppDocument, pptxSlide],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <>

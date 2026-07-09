@@ -2,7 +2,7 @@ import { lazy } from 'react';
 
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { useStateSettingString } from '../helper/settingHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import { tran } from '../lang/langHelpers';

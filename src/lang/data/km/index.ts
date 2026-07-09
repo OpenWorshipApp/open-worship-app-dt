@@ -223,7 +223,8 @@ const dictionary = {
     Reset: 'កំណត់ឡើងវិញ',
     'Start Countdown to DateTime': 'ចាប់ផ្តើមរាប់ថយក្រោយទៅកាន់ថ្ងៃម៉ោង',
     'Start Countdown': 'ចាប់ផ្តើមរាប់ថយក្រោយ',
-    'Show Marquee': 'បង្ហាញអក្សររត់',
+    'Show Marquee Top': 'បង្ហាញអក្សររត់ខាងលើ',
+    'Show Marquee Bottom': 'បង្ហាញអក្សររត់ខាងក្រោម',
     'Show Quick Text': 'បង្ហាញអក្សរយ៉ាងឆាប់រហ័ស',
     'Start Stopwatch': 'ចាប់ផ្តើមម៉ោងចាប់ពេល',
     'Show Time': 'បង្ហាញម៉ោង',
@@ -332,7 +333,8 @@ const dictionary = {
     'Hide Camera': 'លាក់កាមេរ៉ា',
     'Hide Countdown': 'លាក់ការរាប់ថយក្រោយ',
     'Hide Editor': 'លាក់កម្មវិធីកែសម្រួល',
-    'Hide Marquee': 'លាក់អក្សររត់',
+    'Hide Marquee Bottom': 'លាក់អក្សររត់ខាងក្រោម',
+    'Hide Marquee Top': 'លាក់អក្សររត់ខាងលើ',
     'Hide Quick Text': 'លាក់អត្ថបទរហ័ស',
     'Hide Stopwatch': 'លាក់នាឡិកាបញ្ឈប់',
     'Hide Time': 'លាក់ម៉ោង',
@@ -348,7 +350,8 @@ const dictionary = {
     Light: 'ភ្លឺ',
     Lookup: 'រកមើល',
     'Markdown Music Help': 'ជំនួយតន្ត្រី Markdown',
-    Marquee: 'អក្សររត់',
+    'Marquee Bottom': 'អក្សររត់ខាងក្រោម',
+    'Marquee Top': 'អក្សររត់ខាងលើ',
     'Mix Color:': 'លាយពណ៌:',
     'Move All Items To': 'ផ្លាស់ទីធាតុទាំងអស់ទៅ',
     'Move backward': 'ផ្លាស់ទីទៅក្រោយ',
@@ -467,6 +470,79 @@ const dictionary = {
     Yes: 'យល់ព្រម',
     No: 'ទេ',
     'will be converted to PDF into': 'នឹងត្រូវបានបម្លែងទៅជា PDF ទៅក្នុង',
+    Align: 'តម្រឹម',
+    'All Files': 'ឯកសារទាំងអស់',
+    'AM/PM': 'ព្រឹក/ល្ងាច',
+    'Apply this dimension to all slides in this document':
+        'អនុវត្តវិមាត្រនេះទៅកាន់ស្លាយទាំងអស់ក្នុងឯកសារនេះ',
+    'Are you sure to apply this dimension to all slides?':
+        'តើអ្នកពិតជាចង់អនុវត្តវិមាត្រនេះទៅកាន់ស្លាយទាំងអស់ឬ?',
+    Auto: 'ស្វ័យប្រវត្តិ',
+    'Backdrop Filter': 'តម្រងផ្ទៃខាងក្រោយ',
+    'Camera Error': 'កំហុសកាមេរ៉ា',
+    City: 'ទីក្រុង',
+    Collapse: 'បង្រួម',
+    'Corner radius in pixels (0 to use %)':
+        'កាំជ្រុងគិតជាភីកសែល (0 ដើម្បីប្រើ %)',
+    'Count down for a duration': 'រាប់ថយក្រោយតាមរយៈពេល',
+    'Count down to a specific date & time':
+        'រាប់ថយក្រោយទៅកាន់ថ្ងៃ និងម៉ោងជាក់លាក់',
+    'Count up from zero': 'រាប់ឡើងចាប់ពីសូន្យ',
+    Delay: 'ការពន្យារពេល',
+    'Double click on header to edit': 'ចុចពីរដងលើក្បាលដើម្បីកែសម្រួល',
+    Expand: 'ពង្រីក',
+    Export: 'នាំចេញ',
+    'Fail to get data for': 'បរាជ័យក្នុងការទទួលបានទិន្នន័យសម្រាប់',
+    'Font size in pixels': 'ទំហំតួអក្សរគិតជាភីកសែល',
+    'Glass Effect': 'បែបផែនកញ្ចក់',
+    "Insert today's date as the marquee bottom text":
+        'បញ្ចូលកាលបរិច្ឆេទថ្ងៃនេះជាអត្ថបទអក្សររត់ខាងក្រោម',
+    "Insert today's date as the marquee top text":
+        'បញ្ចូលកាលបរិច្ឆេទថ្ងៃនេះជាអត្ថបទអក្សររត់ខាងលើ',
+    'Label shown above the time': 'ស្លាកបង្ហាញនៅពីលើម៉ោង',
+    Live: 'ផ្សាយផ្ទាល់',
+    Markdown: 'Markdown',
+    'Marquee Bottom font size (0 = auto)':
+        'ទំហំតួអក្សរអក្សររត់ខាងក្រោម (0 = ស្វ័យប្រវត្តិ)',
+    'Marquee Bottom scroll speed (%)': 'ល្បឿនរំកិលអក្សររត់ខាងក្រោម (%)',
+    'Marquee Top font size (0 = auto)':
+        'ទំហំតួអក្សរអក្សររត់ខាងលើ (0 = ស្វ័យប្រវត្តិ)',
+    'Marquee Top scroll speed (%)': 'ល្បឿនរំកិលអក្សររត់ខាងលើ (%)',
+    Name: 'ឈ្មោះ',
+    'No languages available.': 'មិនមានភាសាទេ។',
+    'No pages to display': 'មិនមានទំព័រដើម្បីបង្ហាញទេ',
+    Normal: 'ធម្មតា',
+    Opacity: 'ភាពស្រអាប់',
+    'Pick a city to set its timezone':
+        'ជ្រើសរើសទីក្រុងដើម្បីកំណត់តំបន់ពេលវេលារបស់វា',
+    'Please install the missing fonts from the opened pages. and restart the app after installation.':
+        'សូមដំឡើងពុម្ពអក្សរដែលបាត់ពីទំព័រដែលបានបើក ' +
+        'ហើយចាប់ផ្តើមកម្មវិធីឡើងវិញបន្ទាប់ពីការដំឡើង។',
+    'Position offset in pixels': 'ការផ្លាស់ទីទីតាំងគិតជាភីកសែល',
+    'Preview BG:': 'មើលផ្ទៃខាងក្រោយ:',
+    'Quick font size': 'ទំហំតួអក្សររហ័ស',
+    'Quick scroll speed': 'ល្បឿនរំកិលរហ័ស',
+    'Return to Presenter': 'ត្រឡប់ទៅកម្មវិធីបង្ហាញ',
+    'Seconds the text stays on screen': 'ចំនួនវិនាទីដែលអត្ថបទនៅលើអេក្រង់',
+    'Seconds to wait before showing the text':
+        'ចំនួនវិនាទីត្រូវរង់ចាំមុនពេលបង្ហាញអត្ថបទ',
+    Size: 'ទំហំ',
+    'Slide Id': 'លេខសម្គាល់ស្លាយ',
+    'Slide index': 'លំដាប់ស្លាយ',
+    'This key will be used in custom Bible Cross Ref':
+        'កូនសោរនេះនឹងត្រូវបានប្រើក្នុងឯកសារយោងឆ្លងព្រះគម្ពីរផ្ទាល់ខ្លួន',
+    'This key will be used in custom Bible Cross Ref and Bible Audio':
+        'កូនសោរនេះនឹងត្រូវបានប្រើក្នុងឯកសារយោងឆ្លងព្រះគម្ពីរផ្ទាល់ខ្លួន ' +
+        'និងសំលេងព្រះគម្ពីរ',
+    "Today's Date": 'កាលបរិច្ឆេទថ្ងៃនេះ',
+    'Unable to access the camera for background. Please check your camera settings.':
+        'មិនអាចចូលប្រើកាមេរ៉ាសម្រាប់ផ្ទៃខាងក្រោយបានទេ។ ' +
+        'សូមពិនិត្យការកំណត់កាមេរ៉ារបស់អ្នក។',
+    'Use Current Timezone': 'ប្រើតំបន់ពេលវេលាបច្ចុប្បន្ន',
+    'Use this device’s timezone': 'ប្រើតំបន់ពេលវេលានៃឧបករណ៍នេះ',
+    'UTC Offset': 'ការបន្ថែម/បញ្ចូល UTC',
+    'You will be redirected to the General Settings page to select a parent directory.':
+        'អ្នកនឹងត្រូវបានបញ្ជូនទៅទំព័រការកំណត់ទូទៅ ដើម្បីជ្រើសរើសថតមេ។',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();

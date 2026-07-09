@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { dragStore, extractDropData } from '../../helper/dragHelpers';
 import { openContextMenu } from './screenPreviewerHelpers';
 import { useScreenManagerContext } from '../managers/screenManagerHooks';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import ScreenPreviewerHeaderComp from './ScreenPreviewerHeaderComp';
 import ScreenPreviewerFooterComp from './ScreenPreviewerFooterComp';
 import {
@@ -44,12 +44,11 @@ export default function ScreenPreviewerItemComp({
     const height = Math.round(
         width * (screenManagerDim.height / screenManagerDim.width),
     );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            openContextMenu(event, screenManager);
-        },
-        [screenManager],
-    );
+    const screenManagerRef = useAppCurrentRef(screenManager);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        openContextMenu(event, screenManagerRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleDragOver = useCallback((event: any) => {
         event.preventDefault();
         event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
@@ -58,26 +57,25 @@ export default function ScreenPreviewerItemComp({
         event.preventDefault();
         event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
     }, []);
-    const handleDrop = useCallback(
-        (event: any) => {
-            event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
-            const droppedData = extractDropData(event);
-            if (droppedData === null) {
-                dragStore.onDropped?.(event);
-                return;
-            }
-            screenManager.receiveScreenDropped(droppedData);
-        },
-        [screenManager],
-    );
-    const handleWheel = useCallback(
-        (event: any) => {
-            if (event.ctrlKey && screenManager.screenBibleManager.isShowing) {
-                event.stopPropagation();
-            }
-        },
-        [screenManager],
-    );
+    const handleDrop = useCallback((event: any) => {
+        event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+        const droppedData = extractDropData(event);
+        if (droppedData === null) {
+            dragStore.onDropped?.(event);
+            return;
+        }
+        screenManagerRef.current.receiveScreenDropped(droppedData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleWheel = useCallback((event: any) => {
+        if (
+            event.ctrlKey &&
+            screenManagerRef.current.screenBibleManager.isShowing
+        ) {
+            event.stopPropagation();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleScroll = useCallback((event: any) => {
         event.currentTarget.scrollTop = 0;
     }, []);

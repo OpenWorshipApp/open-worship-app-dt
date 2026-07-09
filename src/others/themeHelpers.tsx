@@ -1,6 +1,6 @@
 import appProvider from '../server/appProvider';
 import EventHandler from '../event/EventHandler';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { useState } from 'react';
 import {
     HEX_COLOR_BLACK,

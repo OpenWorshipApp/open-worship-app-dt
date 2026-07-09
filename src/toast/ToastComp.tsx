@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { useToastSimpleShowing } from '../event/ToastEventListener';
 import type { SimpleToastType } from './SimpleToastComp';
 import SimpleToastComp from './SimpleToastComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 let timeoutId: ReturnType<typeof setTimeout> | null = null;
 export default function ToastComp() {
@@ -27,12 +28,16 @@ export default function ToastComp() {
         },
         [clearTimer],
     );
+    const clearTimerRef = useAppCurrentRef(clearTimer);
     const handleMouseEntering = useCallback(() => {
-        clearTimer();
-    }, [clearTimer]);
+        clearTimerRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const initTimeoutRef = useAppCurrentRef(initTimeout);
     const handleMouseLeaving = useCallback(() => {
-        initTimeout(2e3);
-    }, [initTimeout]);
+        initTimeoutRef.current(2e3);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleClosing = useCallback(() => {
         setSimpleToast(null);
     }, []);

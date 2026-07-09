@@ -3,7 +3,7 @@ import { useMemo, useState, useCallback } from 'react';
 import appProvider from '../server/appProvider';
 import AppDocument from '../app-document-list/AppDocument';
 import type Slide from '../app-document-list/Slide';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { checkIsSameValues } from '../helper/helpers';
 import {

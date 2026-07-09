@@ -15,7 +15,7 @@ import {
     calcShowingHiddenWidget,
 } from './flexSizeHelpers';
 import RenderHiddenWidgetTitleComp from './RenderHiddenWidgetTitleComp';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
     checkShouldQuickMove,
     reopenAnotherHiddenWidget,
@@ -66,22 +66,30 @@ export default function RenderResizeActorItemComp({
             anotherDefaultFlexSize,
         );
     }, [flexSizeName, defaultFlexSize, anotherDefaultFlexSize]);
+    const flexSizeNameRef = useAppCurrentRef(flexSizeName);
+    const restoreFlexSizeRef = useAppCurrentRef(restoreFlexSize);
+    const setFlexSizeRef = useAppCurrentRef(setFlexSize);
     const handleDisabling = useCallback(
         (targetDataFlexSizeKey: string, target: DisabledType) => {
             const size = setDisablingSetting(
-                flexSizeName,
-                restoreFlexSize,
+                flexSizeNameRef.current,
+                restoreFlexSizeRef.current,
                 targetDataFlexSizeKey,
                 target,
             );
-            setFlexSize(size);
+            setFlexSizeRef.current(size);
         },
-        [flexSizeName, restoreFlexSize, setFlexSize],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleSizeChecking = useCallback(() => {
-        const size = genFlexSizeSetting(flexSizeName, restoreFlexSize);
-        setFlexSize(size);
-    }, [flexSizeName, restoreFlexSize, setFlexSize]);
+        const size = genFlexSizeSetting(
+            flexSizeNameRef.current,
+            restoreFlexSizeRef.current,
+        );
+        setFlexSizeRef.current(size);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const { children, key, className = '', extraStyle = {}, widgetName } = data;
     const flexSizeValue = flexSize[key] ?? restoreFlexSize[key] ?? [];

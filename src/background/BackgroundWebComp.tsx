@@ -9,7 +9,7 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
 import type DirSource from '../helper/DirSource';
 import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
@@ -98,23 +98,27 @@ export default function BackgroundWebComp() {
         },
         [getAddUrlContextMenuItem],
     );
+    const dirSourceRef = useAppCurrentRef(dirSource);
+    const genWebContextMenuItemsRef = useAppCurrentRef(genWebContextMenuItems);
     const handleItemsAdding = useCallback(
         (defaultContextMenuItems: ContextMenuItemType[], event: any) => {
-            if (dirSource === null) {
+            if (dirSourceRef.current === null) {
                 return;
             }
             showAppContextMenu(event, [
                 ...defaultContextMenuItems,
-                ...genWebContextMenuItems(dirSource),
+                ...genWebContextMenuItemsRef.current(dirSourceRef.current),
             ]);
         },
-        [dirSource, genWebContextMenuItems],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleContextMenuItemsGenerating = useCallback(
         async (dirSource: DirSource) => {
-            return genWebContextMenuItems(dirSource);
+            return genWebContextMenuItemsRef.current(dirSource);
         },
-        [genWebContextMenuItems],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const renderBody = basicRenderBody.bind(
         null,

@@ -17,6 +17,7 @@ import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { useBoxEditorControllerContext } from '../../BoxEditorController';
 import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 function BoxEditorCanvasItemRender() {
     const canvasItem = useCanvasItemContext();
@@ -43,25 +44,29 @@ export default function BoxEditorControllingModeComp() {
     const boxEditorController = useBoxEditorControllerContext();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
     const handleSelectCanvasItem = useSetSelectedCanvasItems();
-    const handleClick = useCallback(
-        (event: MouseEvent) => {
-            event.stopPropagation();
-            // Shift/Ctrl click on an already-selected box removes it from
-            // the current selection.
-            if (checkIsAppendSelectionModifier(event)) {
-                handleSelectCanvasItem(canvasItem, { isAppend: true });
-            }
-            canvasController.focusEditor();
-        },
-        [canvasController, handleSelectCanvasItem, canvasItem],
+    const canvasControllerRef = useAppCurrentRef(canvasController);
+    const handleSelectCanvasItemRef = useAppCurrentRef(handleSelectCanvasItem);
+    const canvasItemRef = useAppCurrentRef(canvasItem);
+    const handleClick = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        // Shift/Ctrl click on an already-selected box removes it from
+        // the current selection.
+        if (checkIsAppendSelectionModifier(event)) {
+            handleSelectCanvasItemRef.current(canvasItemRef.current, {
+                isAppend: true,
+            });
+        }
+        canvasControllerRef.current.focusEditor();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleCanvasItemEditingRef = useAppCurrentRef(
+        handleCanvasItemEditing,
     );
-    const handleDoubleClick = useCallback(
-        (event: MouseEvent) => {
-            event.stopPropagation();
-            handleCanvasItemEditing(canvasItem);
-        },
-        [handleCanvasItemEditing, canvasItem],
-    );
+    const handleDoubleClick = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        handleCanvasItemEditingRef.current(canvasItemRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const props = useCanvasItemPropsContext();
     return (
         <div

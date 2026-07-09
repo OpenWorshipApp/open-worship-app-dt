@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 let mouseDownObj: {
     indStart: number;
@@ -40,39 +41,47 @@ export default function RenderVerseNumOptionComp({
         selectedNS += ` ${ended ? 'selected-end' : ''}`;
         return { selectedNS, ind };
     }, [index, verseStart, verseEnd]);
-    const handleMouseDown = useCallback(
-        (event: any) => {
-            if (event.shiftKey) {
-                const arr = [ind, verseStart, verseEnd].sort((a, b) => {
-                    return a - b;
-                });
-                const verse = arr.shift();
-                if (verse === undefined) {
-                    return;
-                }
-                onApply(verse, arr.pop());
-                mouseDownObj = null;
+    const indRef = useAppCurrentRef(ind);
+    const verseStartRef = useAppCurrentRef(verseStart);
+    const verseEndRef = useAppCurrentRef(verseEnd);
+    const onVerseChangeRef = useAppCurrentRef(onVerseChange);
+    const onApplyRef = useAppCurrentRef(onApply);
+    const handleMouseDown = useCallback((event: any) => {
+        if (event.shiftKey) {
+            const arr = [
+                indRef.current,
+                verseStartRef.current,
+                verseEndRef.current,
+            ].sort((a, b) => {
+                return a - b;
+            });
+            const verse = arr.shift();
+            if (verse === undefined) {
                 return;
             }
-            onVerseChange(ind);
-            mouseDownObj = {
-                indStart: ind,
-                indEnd: ind,
-                onMouseUp: () => {
-                    onApply(...genVerseObject());
-                    mouseDownObj = null;
-                },
-            };
-        },
-        [ind, verseStart, verseEnd, onVerseChange, onApply],
-    );
+            onApplyRef.current(verse, arr.pop());
+            mouseDownObj = null;
+            return;
+        }
+        onVerseChangeRef.current(indRef.current);
+        mouseDownObj = {
+            indStart: indRef.current,
+            indEnd: indRef.current,
+            onMouseUp: () => {
+                onApplyRef.current(...genVerseObject());
+                mouseDownObj = null;
+            },
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleMouseEnter = useCallback(() => {
         if (mouseDownObj === null) {
             return;
         }
-        mouseDownObj.indEnd = ind;
-        onVerseChange(...genVerseObject());
-    }, [ind, onVerseChange]);
+        mouseDownObj.indEnd = indRef.current;
+        onVerseChangeRef.current(...genVerseObject());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={`item alert app-caught-hover-pointer text-center ${selectedNS}`}

@@ -18,7 +18,7 @@ import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appError as logError } from '../helper/loggerHelpers';
 import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 
 export function genReturningEventName(eventName: string) {

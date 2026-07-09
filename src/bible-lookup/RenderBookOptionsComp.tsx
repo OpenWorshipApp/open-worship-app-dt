@@ -16,7 +16,7 @@ import {
     userEnteringSelected,
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
 import {
     checkIsApocrypha,
     checkIsOldTestament,

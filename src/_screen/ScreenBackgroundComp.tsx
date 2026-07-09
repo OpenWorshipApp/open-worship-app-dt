@@ -5,7 +5,7 @@ import ScreenBackgroundColorComp from './ScreenBackgroundColorComp';
 import ScreenBackgroundImageComp from './ScreenBackgroundImageComp';
 import ScreenBackgroundVideoComp from './ScreenBackgroundVideoComp';
 import type { AppColorType } from '../others/color/colorHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { getScreenManagerBase } from './managers/screenManagerBaseHelpers';
 import {
     useScreenManagerContext,

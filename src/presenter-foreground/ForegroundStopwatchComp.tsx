@@ -14,6 +14,7 @@ import type { ForegroundStopwatchDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllStopwatches(
@@ -88,12 +89,11 @@ export default function ForegroundStopwatchComp() {
         },
         [genStyle],
     );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            handleShowing(event, true);
-        },
-        [handleShowing],
-    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleByDropped = useCallback(
         (event: any) => {
             const screenForegroundManager =
@@ -108,9 +108,11 @@ export default function ForegroundStopwatchComp() {
         },
         [genStyle],
     );
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const handleDragStart = useCallback(() => {
-        dragStore.onDropped = handleByDropped;
-    }, [handleByDropped]);
+        dragStore.onDropped = handleByDroppedRef.current;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <ForegroundLayoutComp
             target="stopwatch"

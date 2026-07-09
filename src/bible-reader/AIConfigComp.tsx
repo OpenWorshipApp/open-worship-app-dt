@@ -8,6 +8,7 @@ import {
 } from '../helper/ai/aiHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
 import appProvider from '../server/appProvider';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 async function handleAISetting() {
     if (!appProvider.isPageReader) {
@@ -139,11 +140,13 @@ function AISettingComp() {
 
 function AudioAutoPlayComp() {
     const aiSetting = useAISetting();
+    const aiSettingRef = useAppCurrentRef(aiSetting);
     const handleToggleAutoPlay = useCallback(() => {
         const audioAISetting = getAISetting();
-        audioAISetting.isAutoPlay = !aiSetting.isAutoPlay;
+        audioAISetting.isAutoPlay = !aiSettingRef.current.isAutoPlay;
         setAISetting(audioAISetting);
-    }, [aiSetting]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (!aiSetting.openAIAPIKey) {
         return null;
     }

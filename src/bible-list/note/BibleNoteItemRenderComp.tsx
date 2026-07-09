@@ -22,6 +22,7 @@ import appProvider from '../../server/appProvider';
 import { openPopupWindow } from '../../helper/domHelpers';
 import { NoteTitleEditorComp } from './NoteEditorComp';
 import { exportBibleNoteItem } from './bibleNoteItemArchiveHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export function handleOpening(note: Note, noteItem: NoteItem) {
     const fileFullName = note.fileSource.fullName;
@@ -62,69 +63,81 @@ export default function BibleNoteItemRenderComp({
     );
     useFileSourceRefreshEvents(['select'], filePath);
 
+    const noteRef = useAppCurrentRef(note);
+    const noteItemRef = useAppCurrentRef(noteItem);
+    const filePathRef = useAppCurrentRef(filePath);
+    const indexRef = useAppCurrentRef(index);
     const handleContextMenuOpening = useCallback(
         async (event: MouseEvent<any>) => {
             const menuItems: ContextMenuItemType[] = [
                 {
                     menuElement: tran('Open'),
                     onSelect: () => {
-                        handleOpening(note, noteItem);
+                        handleOpening(noteRef.current, noteItemRef.current);
                     },
                 },
                 {
                     menuElement: tran('Export'),
                     onSelect: () => {
-                        exportBibleNoteItem(noteItem);
+                        exportBibleNoteItem(noteItemRef.current);
                     },
                 },
             ];
             const attachedBackgroundData =
                 await attachBackgroundManager.getAttachedBackground(
-                    filePath,
-                    noteItem.id,
+                    filePathRef.current,
+                    noteItemRef.current.id,
                 );
             if (attachedBackgroundData !== null) {
                 menuItems.push(
-                    ...genRemovingAttachedBackgroundMenu(filePath, noteItem.id),
+                    ...genRemovingAttachedBackgroundMenu(
+                        filePathRef.current,
+                        noteItemRef.current.id,
+                    ),
                 );
             }
-            openNoteItemContextMenu(event, noteItem, index, menuItems);
+            openNoteItemContextMenu(
+                event,
+                noteItemRef.current,
+                indexRef.current,
+                menuItems,
+            );
         },
-        [note, noteItem, filePath, index],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
-    const handleDataDropping = useCallback(
-        async (event: any) => {
-            changeDragEventStyle(event, 'opacity', '1');
-            const droppedData = extractDropData(event);
-            if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
-                const note = await Note.fromFilePath(filePath);
-                if (note === null) {
-                    return;
-                }
-                const droppedNoteItem = droppedData.item as NoteItem;
-                if (droppedNoteItem.filePath !== undefined) {
-                    if (droppedNoteItem.filePath === noteItem.filePath) {
-                        const toIndex = note.getItemIndex(noteItem);
-                        note.moveItemToIndex(droppedNoteItem, toIndex);
-                        stopDraggingState(event);
-                        note.save();
-                    }
-                }
-            } else {
-                handleAttachBackgroundDrop(event, {
-                    filePath,
-                    id: noteItem.id,
-                });
+    const handleDataDropping = useCallback(async (event: any) => {
+        changeDragEventStyle(event, 'opacity', '1');
+        const droppedData = extractDropData(event);
+        if (droppedData?.type === DragTypeEnum.NOTE_ITEM) {
+            const note = await Note.fromFilePath(filePathRef.current);
+            if (note === null) {
+                return;
             }
-        },
-        [noteItem, filePath],
-    );
+            const droppedNoteItem = droppedData.item as NoteItem;
+            if (droppedNoteItem.filePath !== undefined) {
+                if (droppedNoteItem.filePath === noteItemRef.current.filePath) {
+                    const toIndex = note.getItemIndex(noteItemRef.current);
+                    note.moveItemToIndex(droppedNoteItem, toIndex);
+                    stopDraggingState(event);
+                    note.save();
+                }
+            }
+        } else {
+            handleAttachBackgroundDrop(event, {
+                filePath: filePathRef.current,
+                id: noteItemRef.current.id,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleDragStartEvent = useCallback(
         (event: DragEvent<HTMLLIElement>) => {
-            handleDragStartHelper(event, noteItem);
+            handleDragStartHelper(event, noteItemRef.current);
         },
-        [noteItem],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleDragOver = useCallback((event: DragEvent<HTMLLIElement>) => {
         event.preventDefault();
@@ -135,14 +148,18 @@ export default function BibleNoteItemRenderComp({
         changeDragEventStyle(event, 'opacity', '1');
     }, []);
     const handleBibleNoteOpening = useCallback(() => {
-        handleOpening(note, noteItem);
-    }, [note, noteItem]);
+        handleOpening(noteRef.current, noteItemRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const isEditingTitleRef = useAppCurrentRef(isEditingTitle);
+    const setIsEditingTitle1Ref = useAppCurrentRef(setIsEditingTitle1);
     const handleStartEditingTitle = useCallback(() => {
-        if (isEditingTitle) {
+        if (isEditingTitleRef.current) {
             return;
         }
-        setIsEditingTitle1(!isEditingTitle);
-    }, [isEditingTitle, setIsEditingTitle1]);
+        setIsEditingTitle1Ref.current(!isEditingTitleRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (noteItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;

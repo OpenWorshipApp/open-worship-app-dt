@@ -5,7 +5,7 @@ import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { previewingEventListener } from '../event/PreviewingEventListener';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
     SelectedLyricContext,
     useSelectedLyricSetterContext,
@@ -78,27 +78,29 @@ export default function LyricFileComp({
     const handleReloading = useCallback(() => {
         setLyric(undefined);
     }, []);
+    const lyricRef = useAppCurrentRef(lyric);
+    const setSelectedLyricRef = useAppCurrentRef(setSelectedLyric);
     const handleClicking = useCallback(() => {
-        if (!lyric) {
+        if (!lyricRef.current) {
             return;
         }
-        setSelectedLyric(lyric);
+        setSelectedLyricRef.current(lyricRef.current);
         if (!getIsShowingLyricPreviewer()) {
-            previewingEventListener.showLyric(lyric);
+            previewingEventListener.showLyric(lyricRef.current);
         }
-    }, [lyric, setSelectedLyric]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleChildRendering = useCallback((lyric: AppDocumentSourceAbs) => {
         return <LyricFilePreview lyric={lyric as Lyric} />;
     }, []);
-    const handleRenaming = useCallback(
-        async (newFileSource: FileSource) => {
-            if (isSelected) {
-                const newLyric = Lyric.getInstance(newFileSource.filePath);
-                setSelectedLyric(newLyric);
-            }
-        },
-        [isSelected, setSelectedLyric],
-    );
+    const isSelectedRef = useAppCurrentRef(isSelected);
+    const handleRenaming = useCallback(async (newFileSource: FileSource) => {
+        if (isSelectedRef.current) {
+            const newLyric = Lyric.getInstance(newFileSource.filePath);
+            setSelectedLyricRef.current(newLyric);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <FileItemHandlerComp
             index={index}

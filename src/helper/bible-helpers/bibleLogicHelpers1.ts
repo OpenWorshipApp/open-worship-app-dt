@@ -6,7 +6,7 @@ import {
     getChapterData,
 } from './bibleInfoHelpers';
 import { getOnlineBibleInfoList } from './bibleDownloadHelpers';
-import { useAppEffectAsync } from '../debuggerHelpers';
+import { useAppEffectAsync } from '../appHooks';
 import { toLocaleNumBible } from './bibleLogicHelpers2';
 import { getBibleModelInfo } from './bibleModelHelpers';
 

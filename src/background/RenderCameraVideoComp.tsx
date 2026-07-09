@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import LoadingComp from '../others/LoadingComp';
 import { getCameraAndShowMedia } from '../helper/cameraHelpers';
 

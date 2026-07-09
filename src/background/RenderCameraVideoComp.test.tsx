@@ -9,7 +9,7 @@ const { effectModeState, getCameraAndShowMediaMock } = vi.hoisted(() => ({
     getCameraAndShowMediaMock: vi.fn(),
 }));
 
-vi.mock('../helper/debuggerHelpers', () => ({
+vi.mock('../helper/appHooks', () => ({
     useAppEffectAsync: (
         effectMethod: (methods: Record<string, unknown>) => Promise<unknown>,
         deps: readonly unknown[],

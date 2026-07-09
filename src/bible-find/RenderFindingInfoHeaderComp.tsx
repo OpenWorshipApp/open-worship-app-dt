@@ -12,6 +12,7 @@ import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import BibleFindController from './BibleFindController';
 import appProvider from '../server/appProvider';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function genMenuItem(
     selectedBooks: SelectedBookKeyType[],
@@ -173,23 +174,27 @@ export default function RenderFindingInfoHeaderComp({
                   })
                   .join(', ')}`;
     }, [selectedBooks]);
-    const handleSelectBookKeys = useCallback(
-        (event: any) => {
-            selectBookKeys(event, bibleKey, selectedBooks, setSelectedBooks);
-        },
-        [bibleKey, selectedBooks, setSelectedBooks],
-    );
-    const handleExtraActions = useCallback(
-        (event: any) => {
-            showExtraActions(
-                event,
-                bibleKey,
-                setSelectedBooks,
-                selectedBooks.length === 0,
-            );
-        },
-        [bibleKey, setSelectedBooks, selectedBooks],
-    );
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const selectedBooksRef = useAppCurrentRef(selectedBooks);
+    const setSelectedBooksRef = useAppCurrentRef(setSelectedBooks);
+    const handleSelectBookKeys = useCallback((event: any) => {
+        selectBookKeys(
+            event,
+            bibleKeyRef.current,
+            selectedBooksRef.current,
+            setSelectedBooksRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleExtraActions = useCallback((event: any) => {
+        showExtraActions(
+            event,
+            bibleKeyRef.current,
+            setSelectedBooksRef.current,
+            selectedBooksRef.current.length === 0,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="w-100 d-flex overflow-hidden app-inner-shadow p-1 align-items-center">
             <button

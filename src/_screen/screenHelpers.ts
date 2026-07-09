@@ -17,7 +17,7 @@ import {
     applyToTheTop,
 } from '../scrolling/scrollingHandlerHelpers';
 import { unlocking } from '../server/unlockingHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
 import { useScreenUpdateEvents } from './managers/screenManagerHooks';
 import type {
     ImageScaleType,

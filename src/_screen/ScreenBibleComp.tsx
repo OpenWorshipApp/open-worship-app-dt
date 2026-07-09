@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { useScreenBibleManagerEvents } from './managers/screenEventHelpers';
 import ScreenBibleManager from './managers/ScreenBibleManager';
 import {

@@ -16,6 +16,7 @@ import type { ForegroundCountdownDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { dragStore } from '../helper/dragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function useTiming() {
     const nowArray = () => {
@@ -79,35 +80,44 @@ function CountDownOnDatetimeComp({
         },
         [getTargetDateTime, genStyle],
     );
+    const setDateRef = useAppCurrentRef(setDate);
+    const setTimeRef = useAppCurrentRef(setTime);
+    const todayStringRef = useAppCurrentRef(todayString);
+    const nowStringRef = useAppCurrentRef(nowString);
     const handleResetting = useCallback(() => {
-        setDate(todayString());
-        setTime(nowString());
-    }, [setDate, setTime, todayString, nowString]);
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            handleDateTimeShowing(event, true);
-        },
-        [handleDateTimeShowing],
-    );
+        setDateRef.current(todayStringRef.current());
+        setTimeRef.current(nowStringRef.current());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDateTimeShowingRef = useAppCurrentRef(handleDateTimeShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleDateTimeShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleDateChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setDate(event.target.value);
+            setDateRef.current(event.target.value);
         },
-        [setDate],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleTimeChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setTime(event.target.value);
+            setTimeRef.current(event.target.value);
         },
-        [setTime],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
+    const genStyleRef = useAppCurrentRef(genStyle);
     const handleDragStart = useCallback(() => {
         dragStore.onDropped = handleByDropped.bind(
             null,
-            getTargetDateTime(),
-            genStyle(),
+            getTargetDateTimeRef.current(),
+            genStyleRef.current(),
         );
-    }, [getTargetDateTime, genStyle]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="app-border-white-round p-2">
             <div className="d-flex align-items-center gap-1 mb-2 text-muted">
@@ -199,31 +209,37 @@ function CountDownInSetComp({
         },
         [getTargetDateTime, genStyle],
     );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            handleShowing(event, true);
-        },
-        [handleShowing],
-    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setHoursRef = useAppCurrentRef(setHours);
     const handleHoursChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setHours(event.target.value);
+            setHoursRef.current(event.target.value);
         },
-        [setHours],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const setMinutesRef = useAppCurrentRef(setMinutes);
     const handleMinutesChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setMinutes(event.target.value);
+            setMinutesRef.current(event.target.value);
         },
-        [setMinutes],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
+    const genStyleRef = useAppCurrentRef(genStyle);
     const handleInSetDragStart = useCallback(() => {
         dragStore.onDropped = handleByDropped.bind(
             null,
-            getTargetDateTime(),
-            genStyle(),
+            getTargetDateTimeRef.current(),
+            genStyleRef.current(),
         );
-    }, [getTargetDateTime, genStyle]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="app-border-white-round p-2">
             <div className="d-flex align-items-center gap-1 mb-2 text-muted">

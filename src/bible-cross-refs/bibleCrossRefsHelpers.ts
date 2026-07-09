@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { decrypt, bible_ref } from '../_owa-crypto';
 import { handleError } from '../helper/errorHelpers';
 import { toBibleFileName } from '../helper/bible-helpers/bibleLogicHelpers1';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import { appApiFetch } from '../helper/networkHelpers';
 import CacheManager from '../others/CacheManager';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';

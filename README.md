@@ -70,7 +70,7 @@ Other Features:
 - 🔄 **Undo/Redo** — Easily revert or reapply changes
 - 🔍 **Find in Page** — Find text within slides and documents
 - ⏰ **Timer and Countdown** — Built-in timers for sermons, prayers, and service segments
-- 📜 **Scrolling Messages** — Display scrolling marquee text for announcements and notices
+- 📜 **Scrolling Messages** — Display scrolling Marquee Bottom text for announcements and notices
 - 🖱️ **Drag and Drop** — Easily arrange slides, import media files, and organize content by dragging and dropping
 - 🖼️ **Dynamic Wallpaper Display** — Automatically cycle through background images
 - And a lot more

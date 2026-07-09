@@ -11,7 +11,7 @@ import type { LocaleType } from '../lang/langHelpers';
 import { getLanguageTitle, tran } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { openBibleSetting } from '../setting/settingHelpers';
 
@@ -167,12 +167,16 @@ export default function BibleKeySelectionComp({
     bibleKey: string;
     onBibleKeyChange: (oldBibleKey: string, newBibleKey: string) => void;
 }>) {
-    const handleClick = useCallback(
-        (event: MouseEvent<HTMLButtonElement>) => {
-            handleBibleKeySelectionMini(event, bibleKey, onBibleKeyChange);
-        },
-        [bibleKey, onBibleKeyChange],
-    );
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const onBibleKeyChangeRef = useAppCurrentRef(onBibleKeyChange);
+    const handleClick = useCallback((event: MouseEvent<HTMLButtonElement>) => {
+        handleBibleKeySelectionMini(
+            event,
+            bibleKeyRef.current,
+            onBibleKeyChangeRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button className="input-group-text" onClick={handleClick}>
             <BibleKeyWithTileComp bibleKey={bibleKey} />
@@ -199,33 +203,32 @@ export function BibleKeySelectionMiniComp({
     extraStyle?: CSSProperties;
 }>) {
     const isHandleClickEvent = onBibleKeyChange !== undefined;
-    const handleClickEvent = useCallback(
-        (event: MouseEvent) => {
-            if (onBibleKeyChange === undefined) {
-                return;
-            }
-            handleBibleKeySelectionMini(
-                event,
-                bibleKey,
-                onBibleKeyChange.bind(null, false),
-            );
-        },
-        [bibleKey, onBibleKeyChange],
-    );
-    const handleContextMenuEvent = useCallback(
-        (event: MouseEvent) => {
-            if (onBibleKeyChange === undefined) {
-                return;
-            }
-            handleBibleKeySelectionMini(
-                event,
-                bibleKey,
-                onBibleKeyChange.bind(null, true),
-                contextMenuTitle,
-            );
-        },
-        [bibleKey, onBibleKeyChange, contextMenuTitle],
-    );
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const onBibleKeyChangeRef = useAppCurrentRef(onBibleKeyChange);
+    const handleClickEvent = useCallback((event: MouseEvent) => {
+        if (onBibleKeyChangeRef.current === undefined) {
+            return;
+        }
+        handleBibleKeySelectionMini(
+            event,
+            bibleKeyRef.current,
+            onBibleKeyChangeRef.current.bind(null, false),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const contextMenuTitleRef = useAppCurrentRef(contextMenuTitle);
+    const handleContextMenuEvent = useCallback((event: MouseEvent) => {
+        if (onBibleKeyChangeRef.current === undefined) {
+            return;
+        }
+        handleBibleKeySelectionMini(
+            event,
+            bibleKeyRef.current,
+            onBibleKeyChangeRef.current.bind(null, true),
+            contextMenuTitleRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <span
             className={

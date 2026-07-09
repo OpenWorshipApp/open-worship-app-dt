@@ -11,25 +11,29 @@ import {
 import SlideEditorToolsColorComp from './SlideEditorToolsColorComp';
 import ShapePropertiesComp from './ShapePropertiesComp';
 import { HEX_COLOR_BLACK } from '../../../others/color/colorHelpers';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 function SizingComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
 
-    const handleSizing = useCallback(
-        (kind: 'full' | 'original' | 'strip') => {
-            canvasController.editCanvasItemById(canvasItem.id, (item) => {
+    const canvasControllerRef = useAppCurrentRef(canvasController);
+    const canvasItemRef = useAppCurrentRef(canvasItem);
+    const handleSizing = useCallback((kind: 'full' | 'original' | 'strip') => {
+        canvasControllerRef.current.editCanvasItemById(
+            canvasItemRef.current.id,
+            (item) => {
                 if (kind === 'full') {
-                    canvasController.applyCanvasItemFully(item);
+                    canvasControllerRef.current.applyCanvasItemFully(item);
                 } else if (kind === 'original') {
-                    canvasController.applyCanvasItemOriginal(item);
+                    canvasControllerRef.current.applyCanvasItemOriginal(item);
                 } else {
-                    canvasController.applyCanvasItemMediaStrip(item);
+                    canvasControllerRef.current.applyCanvasItemMediaStrip(item);
                 }
-            });
-        },
-        [canvasController, canvasItem.id],
-    );
+            },
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <SlideEditorToolTitleComp title="Size">
@@ -69,15 +73,27 @@ function LayerComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
     const [_, setProps] = useCanvasItemPropsSetterContext();
+    const canvasControllerRef = useAppCurrentRef(canvasController);
+    const canvasItemRef = useAppCurrentRef(canvasItem);
     const handleLayerBackward = useCallback(() => {
-        canvasController.applyOrderingData(canvasItem, true);
-    }, [canvasController, canvasItem]);
+        canvasControllerRef.current.applyOrderingData(
+            canvasItemRef.current,
+            true,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleLayerForward = useCallback(() => {
-        canvasController.applyOrderingData(canvasItem, false);
-    }, [canvasController, canvasItem]);
+        canvasControllerRef.current.applyOrderingData(
+            canvasItemRef.current,
+            false,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setPropsRef = useAppCurrentRef(setProps);
     const handleResetRotate = useCallback(() => {
-        setProps({ rotate: 0 });
-    }, [setProps]);
+        setPropsRef.current({ rotate: 0 });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="ps-2">
             <div className="d-flex gap-3">
@@ -110,15 +126,15 @@ function LayerComp() {
 
 export default function SlideEditorToolsBoxComp() {
     const [props, setProps] = useCanvasItemPropsSetterContext();
+    const setPropsRef = useAppCurrentRef(setProps);
     const handleNoColoring = useCallback(() => {
-        setProps({ backgroundColor: `${HEX_COLOR_BLACK}00` });
-    }, [setProps]);
-    const handleColorChanging = useCallback(
-        (newColor: string) => {
-            setProps({ backgroundColor: newColor });
-        },
-        [setProps],
-    );
+        setPropsRef.current({ backgroundColor: `${HEX_COLOR_BLACK}00` });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleColorChanging = useCallback((newColor: string) => {
+        setPropsRef.current({ backgroundColor: newColor });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex flex-wrap app-inner-shadow">
             <div className="p-1">

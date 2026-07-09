@@ -84,7 +84,7 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
   presentation screen.
   - Documents tab: slide thumbnails container; footer has a size range slider
     (`.app-range`) and the current document path.
-  - Foreground tab: countdowns, marquees, clocks/timers, web overlays, cameras, image
+  - Foreground tab: countdowns, marquee top/bottom, clocks/timers, web overlays, cameras, image
     slideshows.
 - **Fullscreen toggle** (presenter header, top-right): icon `bi bi-fullscreen` /
   `bi bi-fullscreen-exit`.

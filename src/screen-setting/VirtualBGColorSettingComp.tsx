@@ -6,6 +6,7 @@ import {
 } from 'react';
 
 import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const DEFAULT_DOCX_PREVIEW_BACKGROUND_COLOR = '#FFFFFF';
 const EMPTY_DOCX_PREVIEW_ICON_COLOR = '#adb5bd30';
@@ -26,21 +27,26 @@ export default function VirtualBGColorSettingComp({
         },
         [],
     );
+    const onDocxPreviewBackgroundColorChangeRef = useAppCurrentRef(
+        onDocxPreviewBackgroundColorChange,
+    );
     const handleDocxPreviewBackgroundChanging = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            onDocxPreviewBackgroundColorChange?.(
+            onDocxPreviewBackgroundColorChangeRef.current?.(
                 event.target.value.toUpperCase(),
             );
         },
-        [onDocxPreviewBackgroundColorChange],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleDocxPreviewBackgroundClearing = useCallback(
         (event: ReactMouseEvent<HTMLElement>) => {
             event.preventDefault();
             event.stopPropagation();
-            onDocxPreviewBackgroundColorChange?.('');
+            onDocxPreviewBackgroundColorChangeRef.current?.('');
         },
-        [onDocxPreviewBackgroundColorChange],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div className="docx-bg-color d-flex align-items-center">

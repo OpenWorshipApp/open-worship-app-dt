@@ -37,7 +37,7 @@ import ShadowingFillParentWidthComp, {
 import { getSlideItemShadowingStyle } from '../../app-document-presenter/items/slideItemRenderHelpers';
 import { genBoxEditorStyle } from './box/boxEditorHelpers';
 import { useThemeSource } from '../../others/themeHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 
 function dragOverHandling(event: any) {
@@ -127,16 +127,11 @@ function BodyRendererComp({
     } = useSelectedCanvasItemsAndSetterContext();
     // Mirrored in a ref so the document-level mousemove/mouseup listeners
     // below don't need to be re-subscribed on every render.
-    const latestRef = useRef({
+    const latestRef = useAppCurrentRef({
         canvasItems,
         selectedCanvasItems,
         setSelectedCanvasItems,
     });
-    latestRef.current = {
-        canvasItems,
-        selectedCanvasItems,
-        setSelectedCanvasItems,
-    };
     const { theme } = useThemeSource();
     const canvasElementRef = useRef<HTMLDivElement | null>(null);
     const [marquee, setMarquee] = useState<{
@@ -168,40 +163,42 @@ function BodyRendererComp({
         event.preventDefault();
         event.currentTarget.style.opacity = '1';
     }, []);
-    const handleDrop = useCallback(
-        (event: DragEvent) => {
-            event.preventDefault();
-            handleDropping(canvasController, event);
-        },
-        [canvasController],
-    );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            event.preventDefault();
-            openCanvasContextMenu(canvasController, event, stopAllModes);
-        },
-        [canvasController, stopAllModes],
-    );
-    const handleMouseDown = useCallback(
-        (event: any) => {
-            event.stopPropagation();
-            // Start a marquee (rubber-band) selection only when the press
-            // begins on the empty canvas background, not on a box.
-            if (event.target === event.currentTarget && event.button === 0) {
-                const { x, y } = toCanvasPoint(event.clientX, event.clientY);
-                const isAppend = checkIsAppendSelectionModifier(event);
-                setMarquee({ startX: x, startY: y, x, y, isAppend });
-            }
-            (event.target as HTMLDivElement).dataset.mouseDown = JSON.stringify(
-                {
-                    time: Date.now(),
-                    x: event.clientX,
-                    y: event.clientY,
-                },
+    const canvasControllerRef = useAppCurrentRef(canvasController);
+    const handleDrop = useCallback((event: DragEvent) => {
+        event.preventDefault();
+        handleDropping(canvasControllerRef.current, event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const stopAllModesRef = useAppCurrentRef(stopAllModes);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        event.preventDefault();
+        openCanvasContextMenu(
+            canvasControllerRef.current,
+            event,
+            stopAllModesRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const toCanvasPointRef = useAppCurrentRef(toCanvasPoint);
+    const handleMouseDown = useCallback((event: any) => {
+        event.stopPropagation();
+        // Start a marquee (rubber-band) selection only when the press
+        // begins on the empty canvas background, not on a box.
+        if (event.target === event.currentTarget && event.button === 0) {
+            const { x, y } = toCanvasPointRef.current(
+                event.clientX,
+                event.clientY,
             );
-        },
-        [toCanvasPoint],
-    );
+            const isAppend = checkIsAppendSelectionModifier(event);
+            setMarquee({ startX: x, startY: y, x, y, isAppend });
+        }
+        (event.target as HTMLDivElement).dataset.mouseDown = JSON.stringify({
+            time: Date.now(),
+            x: event.clientX,
+            y: event.clientY,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useAppEffect(() => {
         if (marquee === null) {
             return;
@@ -288,31 +285,29 @@ function BodyRendererComp({
             }
         };
     }, [marquee !== null, scale, canvas.width, canvas.height]);
-    const handleMouseUp = useCallback(
-        (event: any) => {
-            if (event.target instanceof HTMLTextAreaElement) {
-                return;
+    const handleMouseUp = useCallback((event: any) => {
+        if (event.target instanceof HTMLTextAreaElement) {
+            return;
+        }
+        const dataset = (event.target as HTMLDivElement).dataset;
+        // A right-click (button 2) opens the item's context menu instead
+        // of selecting/dragging it (see `BoxEditorController.moveHandler`,
+        // which ignores button 2). Treating it as a plain click here
+        // would clear the selection right as the context menu opens.
+        if (dataset.mouseDown && event.button === 0) {
+            const mouseDown = JSON.parse(dataset.mouseDown);
+            const timeDiff = Date.now() - mouseDown.time;
+            const distance = Math.sqrt(
+                Math.pow(event.clientX - mouseDown.x, 2) +
+                    Math.pow(event.clientY - mouseDown.y, 2),
+            );
+            if (timeDiff < 500 && distance < 10) {
+                stopAllModesRef.current();
             }
-            const dataset = (event.target as HTMLDivElement).dataset;
-            // A right-click (button 2) opens the item's context menu instead
-            // of selecting/dragging it (see `BoxEditorController.moveHandler`,
-            // which ignores button 2). Treating it as a plain click here
-            // would clear the selection right as the context menu opens.
-            if (dataset.mouseDown && event.button === 0) {
-                const mouseDown = JSON.parse(dataset.mouseDown);
-                const timeDiff = Date.now() - mouseDown.time;
-                const distance = Math.sqrt(
-                    Math.pow(event.clientX - mouseDown.x, 2) +
-                        Math.pow(event.clientY - mouseDown.y, 2),
-                );
-                if (timeDiff < 500 && distance < 10) {
-                    stopAllModes();
-                }
-            }
-            dataset.mouseDown = '';
-        },
-        [stopAllModes],
-    );
+        }
+        dataset.mouseDown = '';
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const marqueeStyle = useMemo((): CSSProperties | null => {
         if (marquee === null) {
             return null;

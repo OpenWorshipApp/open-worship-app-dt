@@ -15,7 +15,11 @@ import {
     focusRenderFound,
 } from './selectionHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
-import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
+import {
+    useAppEffect,
+    useAppStateAsync,
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import {
     toInputText,
     useBibleFontFamily,
@@ -72,6 +76,7 @@ export default function InputHandlerComp({
         },
         [],
     );
+    const viewControllerRef = useAppCurrentRef(viewController);
     const handleInputChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const value = event.target.value;
@@ -89,16 +94,19 @@ export default function InputHandlerComp({
                     return;
                 }
             }
-            viewController.inputText = value;
+            viewControllerRef.current.inputText = value;
         },
-        [viewController],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handlePreviousChapter = useCallback(() => {
-        viewController.tryJumpingChapter(false);
-    }, [viewController]);
+        viewControllerRef.current.tryJumpingChapter(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleNextChapter = useCallback(() => {
-        viewController.tryJumpingChapter(true);
-    }, [viewController]);
+        viewControllerRef.current.tryJumpingChapter(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const bibleKey = useBibleKeyContext();
     const fontFamily = useBibleFontFamily(bibleKey);
     useAppEffect(() => {

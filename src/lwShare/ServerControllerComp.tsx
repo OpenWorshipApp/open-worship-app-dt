@@ -2,7 +2,11 @@ import { type ChangeEvent, useCallback, useState } from 'react';
 
 import type { StatusDataType, StatusType } from './lwShareHelpers';
 import { controller } from './lwShareHelpers';
-import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
+import {
+    useAppEffect,
+    useAppStateAsync,
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import { ensureDataDirectory } from '../setting/directory-setting/directoryHelpers';
 import LoadingComp from '../others/LoadingComp';
 import appProvider from '../server/appProvider';
@@ -72,19 +76,25 @@ function CustomPortInputComp({
     port: number;
     setPort: (port: number) => void;
 }>) {
+    const setPortRef = useAppCurrentRef(setPort);
     const handlePortChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const newPort = Number(event.target.value);
-            setPort(newPort);
+            setPortRef.current(newPort);
         },
-        [setPort],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleGenerateRandomPort = useCallback(() => {
-        setPort(Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024);
-    }, [setPort]);
+        setPortRef.current(
+            Math.floor(Math.random() * (65535 - 1024 + 1)) + 1024,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleUseDefaultPort = useCallback(() => {
-        setPort(8080);
-    }, [setPort]);
+        setPortRef.current(8080);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex align-items-center p-2">
             <label htmlFor="port-input">Custom Port:</label>
@@ -137,15 +147,18 @@ export default function ServerControllerComp() {
             },
         );
     }, [port]);
+    const statusRef = useAppCurrentRef(status);
+    const serverDataRef = useAppCurrentRef(serverData);
     const handleServer = useCallback(async () => {
-        if (status === 'starting') {
+        if (statusRef.current === 'starting') {
             return;
-        } else if (status === 'running') {
-            serverData?.stop();
+        } else if (statusRef.current === 'running') {
+            serverDataRef.current?.stop();
         } else {
-            serverData?.restart();
+            serverDataRef.current?.restart();
         }
-    }, [status, serverData]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (serverData === undefined) {
         return <LoadingComp />;
     }

@@ -5,9 +5,17 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const getInstanceMock = vi.fn();
 
-vi.mock('../../helper/debuggerHelpers', () => ({
-    useAppEffect: vi.fn(),
-}));
+vi.mock('../../helper/appHooks', async () => {
+    const React = (await vi.importActual('react')) as any;
+    return {
+        useAppEffect: vi.fn(),
+        useAppCurrentRef: (target: any) => {
+            const ref = React.useRef(target);
+            ref.current = target;
+            return ref;
+        },
+    };
+});
 
 vi.mock('../../helper/FileSource', () => ({
     default: {

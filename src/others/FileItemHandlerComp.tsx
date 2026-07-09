@@ -22,6 +22,7 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';
 import RenderRenamingComp from './RenderRenamingComp';
 import LoadingComp from './LoadingComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export const genCommonMenu = (filePath: string): ContextMenuItemType[] => {
     return [
@@ -154,64 +155,59 @@ export default function FileItemHandlerComp({
     );
     const [isRenaming, setIsRenaming] = useState(false);
     useFileSourceRefreshEvents(['select']);
+    const filePathRef = useAppCurrentRef(filePath);
+    const onClickRef = useAppCurrentRef(onClick);
     const handleClicking = useCallback(() => {
-        FileSource.getInstance(filePath).fireSelectEvent();
-        onClick?.();
-    }, [filePath, onClick]);
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            const selfContextMenu = genContextMenu(
-                filePath,
-                setIsRenaming,
-                reload,
-            );
-            const preDelete1 = () => {
-                fileData?.preDelete();
-                preDelete?.();
-            };
-            selfContextMenu.push(...genTrashContextMenu(filePath, preDelete1));
-            showAppContextMenu(event, [
-                ...(contextMenuItems ?? []),
-                ...genCommonMenu(filePath),
-                ...selfContextMenu,
-            ]);
-        },
-        [
-            filePath,
+        FileSource.getInstance(filePathRef.current).fireSelectEvent();
+        onClickRef.current?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const reloadRef = useAppCurrentRef(reload);
+    const fileDataRef = useAppCurrentRef(fileData);
+    const preDeleteRef = useAppCurrentRef(preDelete);
+    const contextMenuItemsRef = useAppCurrentRef(contextMenuItems);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        const selfContextMenu = genContextMenu(
+            filePathRef.current,
             setIsRenaming,
-            reload,
-            fileData,
-            preDelete,
-            contextMenuItems,
-        ],
-    );
-    const handleDragOver = useCallback(
-        (event: any) => {
-            if (onDrop) {
-                event.preventDefault();
-                event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
-            }
-        },
-        [onDrop],
-    );
-    const handleDragLeave = useCallback(
-        (event: any) => {
-            if (onDrop) {
-                event.preventDefault();
-                event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
-            }
-        },
-        [onDrop],
-    );
-    const handleDropEvent = useCallback(
-        (event: any) => {
-            if (onDrop) {
-                event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
-                onDrop(event);
-            }
-        },
-        [onDrop],
-    );
+            reloadRef.current,
+        );
+        const preDelete1 = () => {
+            fileDataRef.current?.preDelete();
+            preDeleteRef.current?.();
+        };
+        selfContextMenu.push(
+            ...genTrashContextMenu(filePathRef.current, preDelete1),
+        );
+        showAppContextMenu(event, [
+            ...(contextMenuItemsRef.current ?? []),
+            ...genCommonMenu(filePathRef.current),
+            ...selfContextMenu,
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onDropRef = useAppCurrentRef(onDrop);
+    const handleDragOver = useCallback((event: any) => {
+        if (onDropRef.current) {
+            event.preventDefault();
+            event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDragLeave = useCallback((event: any) => {
+        if (onDropRef.current) {
+            event.preventDefault();
+            event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleDropEvent = useCallback((event: any) => {
+        if (onDropRef.current) {
+            event.currentTarget.classList.remove(RECEIVING_DROP_CLASSNAME);
+            onDropRef.current(event);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     if (fileData === null) {
         return (

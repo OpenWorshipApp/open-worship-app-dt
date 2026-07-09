@@ -38,6 +38,7 @@ import {
 } from '../others/FileItemHandlerComp';
 import { useWebCapturing } from '../helper/capturingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function getAllShowingScreenIdDataList() {
     const showingScreenIdDataList = getForegroundShowingScreenIdDataList(
@@ -161,21 +162,23 @@ function RenderWebInfoComp({
         [filePath, getWidthScale, genStyle],
     );
     const imageData = useWebCapturing(fileSource.src, { width, height });
-    const handleContextMenuOpening = useCallback(
-        (event: MouseEvent) => {
-            showAppContextMenu(event as any, [
-                ...genCommonMenu(filePath),
-                ...genShowOnScreensContextMenu((event) => {
-                    handleShowing(event, true);
-                }),
-                ...genBackgroundWebExtraItemContextMenuItems(filePath),
-            ]);
-        },
-        [filePath, handleShowing],
-    );
+    const filePathRef = useAppCurrentRef(filePath);
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: MouseEvent) => {
+        showAppContextMenu(event as any, [
+            ...genCommonMenu(filePathRef.current),
+            ...genShowOnScreensContextMenu((event) => {
+                handleShowingRef.current(event, true);
+            }),
+            ...genBackgroundWebExtraItemContextMenuItems(filePathRef.current),
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const handleDragStart = useCallback(() => {
-        dragStore.onDropped = handleByDropped;
-    }, [handleByDropped]);
+        dragStore.onDropped = handleByDroppedRef.current;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleMouseOver = useCallback(() => {
         setIsPlaying(true);
     }, []);

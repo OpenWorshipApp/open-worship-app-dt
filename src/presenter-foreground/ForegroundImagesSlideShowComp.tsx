@@ -14,7 +14,7 @@ import SlideAutoPlayComp, {
 } from '../slide-auto-play/SlideAutoPlayComp';
 import { getScreenManagerByScreenId } from '../_screen/managers/screenManagerHelpers';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import ScreenManagerBase from '../_screen/managers/ScreenManagerBase';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import type {
@@ -128,22 +128,21 @@ function HeaderElements({
     setScaleType: (event: any, value: ImageScaleType) => void;
     isMini?: boolean;
 }>) {
-    const handleClick = useCallback(
-        (event: any) => {
-            showAppContextMenu(
-                event,
-                scaleTypeList.map((scaleType) => {
-                    return {
-                        menuElement: scaleType,
-                        onSelect: (event1) => {
-                            setScaleType(event1, scaleType);
-                        },
-                    };
-                }),
-            );
-        },
-        [setScaleType],
-    );
+    const setScaleTypeRef = useAppCurrentRef(setScaleType);
+    const handleClick = useCallback((event: any) => {
+        showAppContextMenu(
+            event,
+            scaleTypeList.map((scaleType) => {
+                return {
+                    menuElement: scaleType,
+                    onSelect: (event1) => {
+                        setScaleTypeRef.current(event1, scaleType);
+                    },
+                };
+            }),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex">
             {isMini ? null : <div>Scale Type:</div>}
@@ -200,16 +199,15 @@ export default function ForegroundImagesSlideShowComp() {
             scaleType,
         });
     };
-    const handleShowing = useCallback(
-        (event: any, fileSource: FileSource) => {
-            ScreenBackgroundManager.handleBackgroundSelecting(event, 'image', {
-                src: fileSource.src,
-                scaleType,
-                extraStyle,
-            });
-        },
-        [scaleType],
-    );
+    const scaleTypeRef = useAppCurrentRef(scaleType);
+    const handleShowing = useCallback((event: any, fileSource: FileSource) => {
+        ScreenBackgroundManager.handleBackgroundSelecting(event, 'image', {
+            src: fileSource.src,
+            scaleType: scaleTypeRef.current,
+            extraStyle,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const genHeaderElements = (isMini: boolean) => (
         <HeaderElements
             scaleType={scaleType}
@@ -217,22 +215,24 @@ export default function ForegroundImagesSlideShowComp() {
             isMini={isMini}
         />
     );
-    const handleNext = useCallback(
-        (data: NextDataType) => {
-            if (filePaths === null || filePaths.length === 0) {
-                return;
-            }
-            handleNextItemSelecting({
-                srcList: filePaths.map((filePath) => {
-                    const fileSource = FileSource.getInstance(filePath);
-                    return fileSource.src;
-                }),
-                scaleType: scaleType,
-                isNext: data.isNext,
-            });
-        },
-        [filePaths, scaleType],
-    );
+    const filePathsRef = useAppCurrentRef(filePaths);
+    const handleNext = useCallback((data: NextDataType) => {
+        if (
+            filePathsRef.current === null ||
+            filePathsRef.current.length === 0
+        ) {
+            return;
+        }
+        handleNextItemSelecting({
+            srcList: filePathsRef.current.map((filePath) => {
+                const fileSource = FileSource.getInstance(filePath);
+                return fileSource.src;
+            }),
+            scaleType: scaleTypeRef.current,
+            isNext: data.isNext,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <ForegroundLayoutComp
             target="images-slide-show"

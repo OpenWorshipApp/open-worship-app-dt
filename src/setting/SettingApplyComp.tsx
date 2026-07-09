@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { forceReloadAppWindows } from './settingHelpers';
 
 export const applyStore = {

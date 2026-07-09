@@ -44,6 +44,12 @@ vi.mock('../server/appProvider', () => ({
         browserUtils: {
             openExternalURL: openExternalURLMock,
         },
+        systemUtils: {
+            isDev: false,
+        },
+        envUtils: {
+            isFEUseEffectWarning: false,
+        },
     },
 }));
 

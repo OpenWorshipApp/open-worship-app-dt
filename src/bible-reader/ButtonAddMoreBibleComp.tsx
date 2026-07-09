@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { showBibleKeyOption } from '../bible-lookup/BibleKeySelectionComp';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function ButtonAddMoreBibleComp({
     bibleItems,
@@ -10,19 +11,19 @@ export default function ButtonAddMoreBibleComp({
     bibleItems: ReadIdOnlyBibleItem[];
     applyPresents: (bibleItem: ReadIdOnlyBibleItem[]) => void;
 }>) {
-    const handleClick = useCallback(
-        (event: any) => {
-            showBibleKeyOption(event, (bibleKey: string) => {
-                const newBibleItem = ReadIdOnlyBibleItem.fromJson(
-                    bibleItems[0].toJson(),
-                );
-                newBibleItem.bibleKey = bibleKey;
-                const newBibleItems = [...bibleItems, newBibleItem];
-                applyPresents(newBibleItems);
-            });
-        },
-        [bibleItems, applyPresents],
-    );
+    const bibleItemsRef = useAppCurrentRef(bibleItems);
+    const applyPresentsRef = useAppCurrentRef(applyPresents);
+    const handleClick = useCallback((event: any) => {
+        showBibleKeyOption(event, (bibleKey: string) => {
+            const newBibleItem = ReadIdOnlyBibleItem.fromJson(
+                bibleItemsRef.current[0].toJson(),
+            );
+            newBibleItem.bibleKey = bibleKey;
+            const newBibleItems = [...bibleItemsRef.current, newBibleItem];
+            applyPresentsRef.current(newBibleItems);
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className="btn btn-info btn-sm"

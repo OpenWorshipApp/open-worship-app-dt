@@ -8,6 +8,7 @@ import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { DragTypeEnum } from '../../helper/DragInf';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function toggleParentReceiveDrop(element: HTMLElement, isDraggable: boolean) {
     if (element.classList.contains('bible-view')) {
@@ -30,18 +31,20 @@ export default function BibleViewTitleWrapperComp({
 }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
     const fontSize = useBibleViewFontSizeContext();
+    const bibleItemRef = useAppCurrentRef(bibleItem);
     const handleDraggingStart = useCallback(
         (event: ReactDragEvent<HTMLSpanElement>) => {
-            if (bibleItem === undefined) {
+            if (bibleItemRef.current === undefined) {
                 return;
             }
             toggleParentReceiveDrop(event.currentTarget, false);
-            const draggingData = bibleItem.dragSerialize(
+            const draggingData = bibleItemRef.current.dragSerialize(
                 DragTypeEnum.BIBLE_ITEM_TARGET_ONLY,
             );
             event.dataTransfer.setData('text', JSON.stringify(draggingData));
         },
-        [bibleItem],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleDraggingEnd = (event: ReactDragEvent<HTMLSpanElement>) => {
         toggleParentReceiveDrop(event.currentTarget, true);

@@ -18,7 +18,7 @@ import {
     toLocaleNum,
     toStringNum,
 } from '../../lang/langHelpers';
-import { useAppEffect, useAppStateAsync } from '../debuggerHelpers';
+import { useAppEffect, useAppStateAsync } from '../appHooks';
 import BibleItem from '../../bible-list/BibleItem';
 import { getModelChapterCount } from './bibleLogicHelpers1';
 import CacheManager, { globalCacheManager1M } from '../../others/CacheManager';

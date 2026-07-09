@@ -25,6 +25,7 @@ import type {
     DataInputType,
     FlexSizeType,
 } from '../resize-actor/flexSizeHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
@@ -50,9 +51,12 @@ function RenderToggleFullViewComp({
         ? 'fullscreen-exit'
         : 'arrows-fullscreen';
 
+    const isFullWidgetRef = useAppCurrentRef(isFullWidget);
+    const setIsFullWidgetRef = useAppCurrentRef(setIsFullWidget);
     const handleClick = useCallback(async () => {
-        setIsFullWidget(!isFullWidget);
-    }, [isFullWidget, setIsFullWidget]);
+        setIsFullWidgetRef.current(!isFullWidgetRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div>
@@ -176,9 +180,11 @@ export default function PresenterComp() {
     const handleBibleShow = useCallback(() => {
         setTabKey1('b', { isForce: true });
     }, [setTabKey1]);
+    const setTabKey1Ref = useAppCurrentRef(setTabKey1);
     const handleDocumentSelect = useCallback(() => {
-        setTabKey1('d', { isForce: true });
-    }, [setTabKey1]);
+        setTabKey1Ref.current('d', { isForce: true });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useLyricSelecting(handleLyricSelect, [handleLyricSelect]);
     useBibleItemShowing(handleBibleShow, [handleBibleShow]);

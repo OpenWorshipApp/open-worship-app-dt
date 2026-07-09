@@ -9,6 +9,7 @@ import {
 } from '../../progress-bar/progressBarHelpers';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function DownloadedBibleItemComp({
     bibleInfo,
@@ -20,10 +21,13 @@ export default function DownloadedBibleItemComp({
     onUpdate: () => void;
 }>) {
     const { key, title } = bibleInfo;
+    const keyRef = useAppCurrentRef(key);
+    const titleRef = useAppCurrentRef(title);
+    const onDeletedRef = useAppCurrentRef(onDeleted);
     const handleBibleDeleting = useCallback(async () => {
         const isOk = await showAppConfirm(
             'Delete Bible',
-            `Are you sure to delete bible "${title}"?`,
+            `Are you sure to delete bible "${titleRef.current}"?`,
             {
                 confirmButtonLabel: 'Yes',
             },
@@ -32,25 +36,30 @@ export default function DownloadedBibleItemComp({
             return;
         }
         try {
-            const progressKey = `Deleting bible "${title}"`;
+            const progressKey = `Deleting bible "${titleRef.current}"`;
             showProgressBar(progressKey);
-            const bibleDestination = await bibleDataReader.toBiblePath(key);
+            const bibleDestination = await bibleDataReader.toBiblePath(
+                keyRef.current,
+            );
             if (
                 bibleDestination !== null &&
                 (await fsCheckDirExist(bibleDestination))
             ) {
                 await fsDeleteDir(bibleDestination);
-                await bibleDataReader.clearBibleDatabaseData(key);
+                await bibleDataReader.clearBibleDatabaseData(keyRef.current);
             }
             hideProgressBar(progressKey);
-            onDeleted();
+            onDeletedRef.current();
         } catch (error: any) {
             showSimpleToast('Deleting', error.message);
         }
-    }, [key, title, onDeleted]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onUpdateRef = useAppCurrentRef(onUpdate);
     const handleUpdate = useCallback(() => {
-        onUpdate();
-    }, [onUpdate]);
+        onUpdateRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <li className="list-group-item">
             <div>

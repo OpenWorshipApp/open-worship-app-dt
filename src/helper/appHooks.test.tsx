@@ -27,7 +27,7 @@ vi.mock('../server/appProvider', () => ({
 async function loadModule(isDev: boolean) {
     providerMock.systemUtils.isDev = isDev;
     vi.resetModules();
-    return await import('./debuggerHelpers');
+    return await import('./appHooks');
 }
 
 describe('debuggerHelpers', () => {

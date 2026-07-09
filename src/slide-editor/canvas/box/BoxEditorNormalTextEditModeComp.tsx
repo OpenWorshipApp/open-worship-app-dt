@@ -16,6 +16,7 @@ import {
     useSetSelectedCanvasItems,
 } from '../CanvasItem';
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 export default function BoxEditorNormalTextEditModeComp({
     style,
@@ -64,34 +65,32 @@ export default function BoxEditorNormalTextEditModeComp({
     const handleClick = useCallback((event: MouseEvent) => {
         event.stopPropagation();
     }, []);
-    const handleContextMenu = useCallback(
-        (event: MouseEvent) => {
-            event.stopPropagation();
-            closeTextEditor(true);
-        },
-        [closeTextEditor],
-    );
-    const handleKeyUp = useCallback(
-        (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                isCancellingRef.current = true;
-                closeTextEditor(false);
-                return;
-            }
-            if (event.key === 'Enter' && event.ctrlKey) {
-                closeTextEditor(true);
-            }
-        },
-        [closeTextEditor],
-    );
+    const closeTextEditorRef = useAppCurrentRef(closeTextEditor);
+    const handleContextMenu = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        closeTextEditorRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleKeyUp = useCallback((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            isCancellingRef.current = true;
+            closeTextEditorRef.current(false);
+            return;
+        }
+        if (event.key === 'Enter' && event.ctrlKey) {
+            closeTextEditorRef.current(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleTextBlur = useCallback(() => {
         if (isCancellingRef.current) {
             isCancellingRef.current = false;
             return;
         }
-        closeTextEditor(true);
-    }, [closeTextEditor]);
+        closeTextEditorRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div

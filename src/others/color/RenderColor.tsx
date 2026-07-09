@@ -8,6 +8,7 @@ import ScreenBackgroundManager from '../../_screen/managers/ScreenBackgroundMana
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function showContextMenu(event: any, color: AppColorType) {
     const menuItems: ContextMenuItemType[] = [
@@ -39,24 +40,20 @@ export default function RenderColor({
     isSelected?: boolean;
     onClick?: (event: MouseEvent, color: AppColorType) => void;
 }>) {
-    const handleDragStart = useCallback(
-        (event: DragEvent) => {
-            serializeForDragging(event, color);
-        },
-        [color],
-    );
-    const handleContextMenu = useCallback(
-        (event: MouseEvent) => {
-            showContextMenu(event, color);
-        },
-        [color],
-    );
-    const handleClick = useCallback(
-        (event: MouseEvent) => {
-            onClick?.(event as any, color);
-        },
-        [onClick, color],
-    );
+    const colorRef = useAppCurrentRef(color);
+    const handleDragStart = useCallback((event: DragEvent) => {
+        serializeForDragging(event, colorRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleContextMenu = useCallback((event: MouseEvent) => {
+        showContextMenu(event, colorRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onClickRef = useAppCurrentRef(onClick);
+    const handleClick = useCallback((event: MouseEvent) => {
+        onClickRef.current?.(event as any, colorRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const element = (
         <div
             title={name}

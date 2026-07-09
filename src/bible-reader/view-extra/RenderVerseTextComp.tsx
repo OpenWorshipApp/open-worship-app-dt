@@ -6,6 +6,7 @@ import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderCustomVerseComp from '../RenderCustomVerseComp';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
 import RenderVerseTextDetailComp from './RenderVerseTextDetailComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function RenderVerseTextComp({
     bibleItem,
@@ -21,19 +22,20 @@ export default function RenderVerseTextComp({
     index: number;
 }>) {
     const viewController = useBibleItemsViewControllerContext();
-    const handleDoubleClick = useCallback(
-        (event: MouseEvent) => {
-            cleanupVerseNumberClicked(event);
-            viewController.applyTargetOrBibleKey(bibleItem, {
-                target: {
-                    ...bibleItem.target,
-                    verseStart: verseInfo.verse,
-                    verseEnd: verseInfo.verse,
-                },
-            });
-        },
-        [viewController, bibleItem, verseInfo.verse],
-    );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const verseInfoRef = useAppCurrentRef(verseInfo);
+    const handleDoubleClick = useCallback((event: MouseEvent) => {
+        cleanupVerseNumberClicked(event);
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
+            target: {
+                ...bibleItemRef.current.target,
+                verseStart: verseInfoRef.current.verse,
+                verseEnd: verseInfoRef.current.verse,
+            },
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const isExtraVerses = extraVerseInfoList.length > 0;
     const verseInfoList = [verseInfo, ...extraVerseInfoList];
     const isNewLine =

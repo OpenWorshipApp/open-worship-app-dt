@@ -19,6 +19,7 @@ import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { renderMarkdown } from '../lyric-list/markdownHelpers';
 import { dragStore } from '../helper/dragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllQuickText(
@@ -109,12 +110,11 @@ export default function ForegroundQuickTextComp() {
         },
         [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
     );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            handleShowing(event, true);
-        },
-        [handleShowing],
-    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleByDropped = useCallback(
         async (event: any) => {
             const screenForegroundManager =
@@ -131,27 +131,35 @@ export default function ForegroundQuickTextComp() {
         },
         [getRenderedHtml, timeSecondDelay, timeSecondToLive, genStyle],
     );
+    const setTimeSecondDelayRef = useAppCurrentRef(setTimeSecondDelay);
     const handleTimeSecondDelayChange = useCallback(
         (e: ChangeEvent<HTMLInputElement>) => {
-            setTimeSecondDelay(Number.parseInt(e.target.value, 10));
+            setTimeSecondDelayRef.current(Number.parseInt(e.target.value, 10));
         },
-        [setTimeSecondDelay],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const setTimeSecondToLiveRef = useAppCurrentRef(setTimeSecondToLive);
     const handleTimeSecondToLiveChange = useCallback(
         (e: ChangeEvent<HTMLInputElement>) => {
-            setTimeSecondToLive(Number.parseInt(e.target.value, 10));
+            setTimeSecondToLiveRef.current(Number.parseInt(e.target.value, 10));
         },
-        [setTimeSecondToLive],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const setMarkdownTextRef = useAppCurrentRef(setMarkdownText);
     const handleMarkdownTextChange = useCallback(
         (event: ChangeEvent<HTMLTextAreaElement>) => {
-            setMarkdownText(event.target.value);
+            setMarkdownTextRef.current(event.target.value);
         },
-        [setMarkdownText],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const handleQuickTextDragStart = useCallback(() => {
-        dragStore.onDropped = handleByDropped;
-    }, [handleByDropped]);
+        dragStore.onDropped = handleByDroppedRef.current;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const genHidingElement = (isMini: boolean) => (
         <ScreensRendererComp
             showingScreenIdDataList={showingScreenIdDataList}

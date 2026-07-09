@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAppEffect } from '../debuggerHelpers';
+import { useAppEffect } from '../appHooks';
 
 import { appHomeStorage } from '../../server/appHomeStorage';
 import bibleCrossRefSchemaJson from './bibleCrossRefSchema.json';

@@ -30,6 +30,7 @@ import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import BibleViewTextComp from './view-extra/BibleViewTextComp';
 import BibleViewRenderHeaderComp from './view-extra/BibleViewRenderHeaderComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function checkIsParentPlayToBottom(verseElement: HTMLElement) {
     const containerElements = Array.from(
@@ -171,25 +172,32 @@ export default function BibleViewComp({
         },
         [],
     );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
     const handleDropping = useCallback(
         async (event: ReactDragEvent<HTMLDivElement>) => {
-            applyDropped(event, viewController, bibleItem);
+            applyDropped(
+                event,
+                viewControllerRef.current,
+                bibleItemRef.current,
+            );
         },
-        [viewController, bibleItem],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
-    const handleContextMenu = useCallback(
-        (event: any) => {
-            if (foundBibleItem === null) {
-                return;
-            }
-            openContextMenu(event, {
-                viewController,
-                foundBibleItem,
-                uuid,
-            });
-        },
-        [foundBibleItem, viewController, uuid],
-    );
+    const foundBibleItemRef = useAppCurrentRef(foundBibleItem);
+    const uuidRef = useAppCurrentRef(uuid);
+    const handleContextMenu = useCallback((event: any) => {
+        if (foundBibleItemRef.current === null) {
+            return;
+        }
+        openContextMenu(event, {
+            viewController: viewControllerRef.current,
+            foundBibleItem: foundBibleItemRef.current,
+            uuid: uuidRef.current,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             id={id}

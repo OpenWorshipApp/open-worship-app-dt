@@ -6,7 +6,7 @@ import WindowEventListener, {
 } from '../event/WindowEventListener';
 import type Slide from '../app-document-list/Slide';
 import AppSuspenseComp from '../others/AppSuspenseComp';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import FileSource from '../helper/FileSource';
 import AppDocument from '../app-document-list/AppDocument';
 import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';

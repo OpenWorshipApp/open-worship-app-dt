@@ -13,7 +13,7 @@ import {
 } from '../../lang/langHelpers';
 import type { EditorStoreType } from '../../helper/monacoEditorHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
@@ -70,17 +70,21 @@ function RenderSaveButton({
             setCanSave1 = () => {};
         };
     }, []);
+    const jsonDataSchemaRef = useAppCurrentRef(jsonDataSchema);
+    const editorStoreRef = useAppCurrentRef(editorStore);
+    const saveRef = useAppCurrentRef(save);
     const handleSaving = useCallback(() => {
         const { canSave, newJsonData } = validateCanSave(
-            jsonDataSchema,
-            editorStore.systemContent,
-            editorStore.editorInstance.getValue(),
+            jsonDataSchemaRef.current,
+            editorStoreRef.current.systemContent,
+            editorStoreRef.current.editorInstance.getValue(),
         );
         if (canSave) {
-            save(newJsonData);
+            saveRef.current(newJsonData);
             setCanSave(false);
         }
-    }, [jsonDataSchema, editorStore, save]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className={
@@ -138,9 +142,12 @@ export default function BibleXMLEditorComp({
     useAppEffect(() => {
         applyJsonData(jsonData);
     }, [jsonData]);
+    const isFullViewRef = useAppCurrentRef(isFullView);
+    const setIsFullViewRef = useAppCurrentRef(setIsFullView);
     const handleToggleFullView = useCallback(() => {
-        setIsFullView(!isFullView);
-    }, [isFullView, setIsFullView]);
+        setIsFullViewRef.current(!isFullViewRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (jsonData === null) {
         return null;
     }
@@ -244,28 +251,29 @@ function BibleBooksMapXMLInputComp({
         [onChange, editorStore],
     );
     const langCode = getLangCode(locale) ?? 'en';
-    const handleResetting = useCallback(
-        (event: MouseEvent) => {
-            event.stopPropagation();
-            editorStore.replaceValue(
-                Object.values(getModelKeyBookMap()).join('\n'),
-            );
-        },
-        [editorStore],
+    const editorStoreRef = useAppCurrentRef(editorStore);
+    const handleResetting = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        editorStoreRef.current.replaceValue(
+            Object.values(getModelKeyBookMap()).join('\n'),
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const localeRef = useAppCurrentRef(locale);
+    const handleMarkupStringParsingRef = useAppCurrentRef(
+        handleMarkupStringParsing,
     );
-    const handleParseMarkup = useCallback(
-        async (event: MouseEvent) => {
-            event.stopPropagation();
-            const value = editorStore.editorInstance.getValue();
-            const isHTML = value.includes('<');
-            if (!isHTML) {
-                return;
-            }
-            const lang = await getLangDataAsync(locale);
-            handleMarkupStringParsing(value, lang);
-        },
-        [editorStore, locale, handleMarkupStringParsing],
-    );
+    const handleParseMarkup = useCallback(async (event: MouseEvent) => {
+        event.stopPropagation();
+        const value = editorStoreRef.current.editorInstance.getValue();
+        const isHTML = value.includes('<');
+        if (!isHTML) {
+            return;
+        }
+        const lang = await getLangDataAsync(localeRef.current);
+        handleMarkupStringParsingRef.current(value, lang);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleChoosingBibleBooks = useCallback(
         async (event: MouseEvent) => {
             event.stopPropagation();

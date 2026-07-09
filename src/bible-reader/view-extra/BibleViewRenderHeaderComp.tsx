@@ -5,19 +5,22 @@ import RenderActionButtonsComp from '../../bible-lookup/RenderActionButtonsComp'
 import { HoverMotionHandler } from '../../helper/domHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { RenderTitleMaterialComp } from './RenderTitleMaterialComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function BibleViewRenderHeaderComp({
     bibleItem,
 }: Readonly<{ bibleItem: ReadIdOnlyBibleItem }>) {
     const viewController = useBibleItemsViewControllerContext();
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
     const handleBibleKeyChange = useCallback(
         (isContextMenu: boolean, _oldBibleKey: string, newBibleKey: string) => {
-            viewController.applyTargetOrBibleKey(
-                bibleItem,
+            viewControllerRef.current.applyTargetOrBibleKey(
+                bibleItemRef.current,
                 isContextMenu
                     ? {
                           extraBibleKeys: [
-                              ...bibleItem.extraBibleKeys,
+                              ...bibleItemRef.current.extraBibleKeys,
                               newBibleKey,
                           ],
                       }
@@ -26,11 +29,13 @@ export default function BibleViewRenderHeaderComp({
                       },
             );
         },
-        [viewController, bibleItem],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleDelete = useCallback(() => {
-        viewController.deleteBibleItem(bibleItem);
-    }, [viewController, bibleItem]);
+        viewControllerRef.current.deleteBibleItem(bibleItemRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="card-header d-flex app-top-hover-motion-1 p-0"

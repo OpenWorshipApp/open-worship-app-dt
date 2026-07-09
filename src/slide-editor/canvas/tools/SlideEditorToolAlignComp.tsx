@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import type { VAlignmentType, HAlignmentType } from '../canvasHelpers';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 type AlignmentDataType = {
     verticalAlignment?: VAlignmentType;
@@ -21,9 +22,13 @@ function RendElementComp({
     onData: (data: { [key: string]: string }) => void;
 }>) {
     const isOld = data[dataKey] === value;
+    const onDataRef = useAppCurrentRef(onData);
+    const dataKeyRef = useAppCurrentRef(dataKey);
+    const valueRef = useAppCurrentRef(value);
     const handleClick = useCallback(() => {
-        onData({ [dataKey]: value });
-    }, [onData, dataKey, value]);
+        onDataRef.current({ [dataKeyRef.current]: valueRef.current });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className={`btn btn-sm btn-${isOld ? '' : 'outline-'}info`}

@@ -9,7 +9,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import { checkIsKeyboardEventMatch } from '../event/KeyboardEventListener';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 
 const attemptTimeout = genTimeoutAttempt(3000);
 let attemptCount = 0;
@@ -98,19 +98,23 @@ export default function SimpleNoteEditorComp({
         const isSaved = await store.save();
         setIsSaved(isSaved);
     }, [store]);
+    const storeRef = useAppCurrentRef(store);
+    const onEscapeRef = useAppCurrentRef(onEscape);
+    const onEnterRef = useAppCurrentRef(onEnter);
+    const forceSavingRef = useAppCurrentRef(forceSaving);
     const handleKeyDown = useCallback(
         async (
             event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
         ) => {
             if (
-                onEscape !== undefined &&
+                onEscapeRef.current !== undefined &&
                 event.key === 'Escape' &&
                 !event.shiftKey &&
                 !event.altKey &&
                 !event.ctrlKey &&
                 !event.metaKey
             ) {
-                onEscape();
+                onEscapeRef.current();
                 return;
             }
             if (
@@ -126,31 +130,33 @@ export default function SimpleNoteEditorComp({
                     event,
                 )
             ) {
-                if (store.save === undefined) {
+                if (storeRef.current.save === undefined) {
                     return;
                 }
                 event.preventDefault();
-                const isSaved = await store.save();
+                const isSaved = await storeRef.current.save();
                 setIsSaved(isSaved);
             }
-            if (onEnter !== undefined && event.key === 'Enter') {
-                forceSaving();
-                onEnter();
+            if (onEnterRef.current !== undefined && event.key === 'Enter') {
+                forceSavingRef.current();
+                onEnterRef.current();
             }
         },
-        [store, onEscape, onEnter, forceSaving],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
-    const handleChanging = useCallback(
-        (event: any) => {
-            const value = event.target.value;
-            setCurrentText1(value);
-        },
-        [setCurrentText1],
-    );
+    const setCurrentText1Ref = useAppCurrentRef(setCurrentText1);
+    const handleChanging = useCallback((event: any) => {
+        const value = event.target.value;
+        setCurrentText1Ref.current(value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onBlurRef = useAppCurrentRef(onBlur);
     const handleBlur = useCallback(async () => {
-        forceSaving();
-        onBlur?.();
-    }, [onBlur, forceSaving]);
+        forceSavingRef.current();
+        onBlurRef.current?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const style: CSSProperties = {
         outline: 'none',
         boxSizing: 'border-box',

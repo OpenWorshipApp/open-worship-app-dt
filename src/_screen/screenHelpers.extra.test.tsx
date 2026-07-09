@@ -84,7 +84,7 @@ vi.mock('../bible-list/BibleItem', () => ({
     },
 }));
 
-vi.mock('../helper/debuggerHelpers', () => {
+vi.mock('../helper/appHooks', () => {
     return {
         useAppStateAsync: function useAppStateAsync<T>(
             callee: () => Promise<T> | T,

@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { fsCheckDirExist, pathBasename } from '../server/fileHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
@@ -47,22 +47,22 @@ export function PathPreviewerComp({
             directoryPath = directoryPath.substring(0, index);
         }
     }
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            if (!canOpenFileExplorer) {
-                return;
-            }
-            showAppContextMenu(event, [
-                {
-                    menuElement: getMenuTitleRevealFile(),
-                    onSelect: () => {
-                        showFileOrDirExplorer(dirPath);
-                    },
+    const canOpenFileExplorerRef = useAppCurrentRef(canOpenFileExplorer);
+    const dirPathRef = useAppCurrentRef(dirPath);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        if (!canOpenFileExplorerRef.current) {
+            return;
+        }
+        showAppContextMenu(event, [
+            {
+                menuElement: getMenuTitleRevealFile(),
+                onSelect: () => {
+                    showFileOrDirExplorer(dirPathRef.current);
                 },
-            ]);
-        },
-        [canOpenFileExplorer, dirPath],
-    );
+            },
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={

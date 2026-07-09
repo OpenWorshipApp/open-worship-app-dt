@@ -10,7 +10,7 @@ import {
 import { handleDragStart as handleDragStartHelper } from '../helper/dragHelpers';
 import { breakItem } from './bibleCrossRefsHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
@@ -43,27 +43,28 @@ export default function BibleCrossRefAIRenderFoundItemComp({
     const [data] = useAppStateAsync(() => {
         return breakItem(bibleKey, bibleVersesKey);
     }, [bibleKey, bibleVersesKey]);
-    const handleDragStart = useCallback(
-        (event: any) => {
-            handleDragStartHelper(event, data!.bibleItem);
-        },
-        [data],
-    );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            openContextMenu(event, {
-                viewController,
-                bibleItem: data!.bibleItem,
-            });
-        },
-        [viewController, data],
-    );
-    const handleClicking = useCallback(
-        (event: any) => {
-            openInBibleLookup(event, viewController, data!.bibleItem, true);
-        },
-        [viewController, data],
-    );
+    const dataRef = useAppCurrentRef(data);
+    const handleDragStart = useCallback((event: any) => {
+        handleDragStartHelper(event, dataRef.current!.bibleItem);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        openContextMenu(event, {
+            viewController: viewControllerRef.current,
+            bibleItem: dataRef.current!.bibleItem,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleClicking = useCallback((event: any) => {
+        openInBibleLookup(
+            event,
+            viewControllerRef.current,
+            dataRef.current!.bibleItem,
+            true,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (data === undefined) {
         return <div>{tran('Loading')}...</div>;
     }

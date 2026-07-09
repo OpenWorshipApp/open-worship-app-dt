@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import EditingHistoryManager from './EditingHistoryManager';
 import type AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
@@ -74,6 +74,7 @@ function MenuIsModifying({
     caDiscard: boolean;
     canSave: boolean;
 }>) {
+    const editableDocumentRef = useAppCurrentRef(editableDocument);
     const handleDiscard = useCallback(async () => {
         const isOk = await showAppConfirm(
             tran('Discard changed'),
@@ -85,11 +86,13 @@ function MenuIsModifying({
         if (!isOk) {
             return;
         }
-        editableDocument.historyDiscard();
-    }, [editableDocument]);
+        editableDocumentRef.current.historyDiscard();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleSave = useCallback(() => {
-        editableDocument.save();
-    }, [editableDocument]);
+        editableDocumentRef.current.save();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <>
             <button
@@ -127,12 +130,15 @@ export function FileEditingMenuComp({
         editableDocument.filePath,
     );
     const isShowingTools = canUndo || canRedo || canSave;
+    const editableDocumentRef = useAppCurrentRef(editableDocument);
     const handleUndo = useCallback(() => {
-        editableDocument.historyUndo();
-    }, [editableDocument]);
+        editableDocumentRef.current.historyUndo();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleRedo = useCallback(() => {
-        editableDocument.historyRedo();
-    }, [editableDocument]);
+        editableDocumentRef.current.historyRedo();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (!(isShowingTools || extraChildren)) {
         return null;
     }

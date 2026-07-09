@@ -3,15 +3,18 @@ import { type ChangeEvent, useCallback } from 'react';
 import { tran } from '../lang/langHelpers';
 import type { ThemeOptionType } from '../others/themeHelpers';
 import { useThemeSource } from '../others/themeHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function SettingGeneralThemeComp() {
     const { themeSource, setThemeSource } = useThemeSource();
+    const setThemeSourceRef = useAppCurrentRef(setThemeSource);
     const handleThemeChange = useCallback(
         (event: ChangeEvent<HTMLSelectElement>) => {
             const value = event.target.value;
-            setThemeSource(value as ThemeOptionType);
+            setThemeSourceRef.current(value as ThemeOptionType);
         },
-        [setThemeSource],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
 
     return (

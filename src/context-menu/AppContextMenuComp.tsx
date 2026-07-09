@@ -12,6 +12,7 @@ import {
     APP_CONTEXT_MENU_ITEM_CLASS,
     APP_CONTEXT_MENU_ID,
 } from './appContextMenuHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export const elementDivider = (
     <hr className="w-100" style={{ padding: 0, margin: 0 }} />
@@ -25,21 +26,22 @@ function ContextMenuItemComp({
     onClose: () => void;
 }>) {
     const isDisabled = (item.disabled ?? false) || item.onSelect === undefined;
-    const handleClick = useCallback(
-        (event: MouseEvent) => {
-            event.preventDefault();
-            event.stopPropagation();
-            const { onSelect } = item;
-            if (isDisabled) {
-                return;
-            }
-            setTimeout(() => {
-                onClose();
-                onSelect?.(event as any);
-            }, 0);
-        },
-        [item, isDisabled, onClose],
-    );
+    const itemRef = useAppCurrentRef(item);
+    const isDisabledRef = useAppCurrentRef(isDisabled);
+    const onCloseRef = useAppCurrentRef(onClose);
+    const handleClick = useCallback((event: MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const { onSelect } = itemRef.current;
+        if (isDisabledRef.current) {
+            return;
+        }
+        setTimeout(() => {
+            onCloseRef.current();
+            onSelect?.(event as any);
+        }, 0);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (item.menuElement === elementDivider) {
         return item.menuElement;
     }
@@ -65,9 +67,11 @@ function ContextMenuItemComp({
 
 export default function AppContextMenuComp() {
     const data = useAppContextMenuData();
+    const dataRef = useAppCurrentRef(data);
     const handleClose = useCallback(() => {
-        data?.onClose();
-    }, [data]);
+        dataRef.current?.onClose();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (data === null) {
         return null;
     }

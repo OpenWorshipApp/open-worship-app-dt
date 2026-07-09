@@ -28,10 +28,15 @@ vi.mock('../server/appProvider', () => ({
     default: appProviderMock,
 }));
 
-vi.mock('../helper/debuggerHelpers', async () => {
-    const React = await vi.importActual('react');
+vi.mock('../helper/appHooks', async () => {
+    const React = (await vi.importActual('react')) as any;
     return {
         useAppEffect: React.useEffect,
+        useAppCurrentRef: (target: any) => {
+            const ref = React.useRef(target);
+            ref.current = target;
+            return ref;
+        },
     };
 });
 

@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { useMemo } from 'react';
 
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
 import {
     getBibleInfo,
     getVerses,

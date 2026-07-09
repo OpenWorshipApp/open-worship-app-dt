@@ -5,6 +5,7 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function BibleCrossRefWrapperComp({
     title,
@@ -20,23 +21,25 @@ export default function BibleCrossRefWrapperComp({
     const bibleKey = useBibleKeyContext();
     const fontFamily = useBibleFontFamily(bibleKey);
     const [isShowing, setIsShowing] = useStateSettingBoolean(settingName, true);
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            if (!isShowing) {
-                return;
-            }
-            showAppContextMenu(event, [
-                {
-                    menuElement: tran('Refresh'),
-                    onSelect: onRefresh,
-                },
-            ]);
-        },
-        [isShowing, onRefresh],
-    );
+    const isShowingRef = useAppCurrentRef(isShowing);
+    const onRefreshRef = useAppCurrentRef(onRefresh);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        if (!isShowingRef.current) {
+            return;
+        }
+        showAppContextMenu(event, [
+            {
+                menuElement: tran('Refresh'),
+                onSelect: onRefreshRef.current,
+            },
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setIsShowingRef = useAppCurrentRef(setIsShowing);
     const handleToggleShowing = useCallback(() => {
-        setIsShowing(!isShowing);
-    }, [isShowing, setIsShowing]);
+        setIsShowingRef.current(!isShowingRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="card w-100 my-1"

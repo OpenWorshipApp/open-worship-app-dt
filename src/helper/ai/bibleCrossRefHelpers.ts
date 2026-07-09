@@ -16,7 +16,7 @@ import { ensureDataDirectory } from '../../setting/directory-setting/directoryHe
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
-import { useAppEffect, useAppEffectAsync } from '../debuggerHelpers';
+import { useAppEffect, useAppEffectAsync } from '../appHooks';
 import type { RefreshingRefType } from './aiHelpers';
 import { bibleCrossRefSchemaJson } from './aiHelpers';
 import { handleError } from '../errorHelpers';

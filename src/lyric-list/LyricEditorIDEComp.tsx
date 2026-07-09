@@ -6,7 +6,7 @@ import { useSelectedLyricContext } from './lyricHelpers';
 import type Lyric from './Lyric';
 import LyricMenuComp from './LyricMenuComp';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync, useAppCurrentRef } from '../helper/appHooks';
 import appProvider from '../server/appProvider';
 import { useInitMonacoEditor } from '../helper/monacoEditorHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -64,12 +64,14 @@ export default function LyricEditorIDEComp() {
         selectedLyric.filePath,
     );
 
+    const setIsWrapTextRef = useAppCurrentRef(setIsWrapText);
     const handleWrapTextChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const checked = event.target.checked;
-            setIsWrapText(checked);
+            setIsWrapTextRef.current(checked);
         },
-        [setIsWrapText],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
 
     return (

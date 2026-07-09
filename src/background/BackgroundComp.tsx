@@ -11,7 +11,7 @@ import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEven
 import { getBackgroundSrcListOnScreenSetting } from '../_screen/screenHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { tran } from '../lang/langHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
     AUDIO_PLAYING_CHANGE_EVENT,
     checkAudioPlaying,
@@ -70,9 +70,12 @@ function RenderAudiosTabComp({
             EventHandler.unregisterEventListener(registerEvent);
         };
     }, []);
+    const isActiveRef = useAppCurrentRef(isActive);
+    const setIsActiveRef = useAppCurrentRef(setIsActive);
     const handleToggleActive = useCallback(() => {
-        setIsActive(!isActive);
-    }, [isActive, setIsActive]);
+        setIsActiveRef.current(!isActiveRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <ul className={'nav nav-tabs flex-fill d-flex justify-content-end'}>
             <li className={'nav-item '}>
@@ -114,17 +117,16 @@ export default function BackgroundComp() {
         'background-audio-active',
         false,
     );
-    const setIsAudioTabActive1 = useCallback(
-        (newValue: boolean) => {
-            const isAudioPlaying = checkAudioPlaying();
-            if (!newValue && isAudioPlaying) {
-                showAudioPlayingToast();
-                return;
-            }
-            setIsAudioTabActive(newValue);
-        },
-        [setIsAudioTabActive],
-    );
+    const setIsAudioTabActiveRef = useAppCurrentRef(setIsAudioTabActive);
+    const setIsAudioTabActive1 = useCallback((newValue: boolean) => {
+        const isAudioPlaying = checkAudioPlaying();
+        if (!newValue && isAudioPlaying) {
+            showAudioPlayingToast();
+            return;
+        }
+        setIsAudioTabActiveRef.current(newValue);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
         'background-tab',
         'image',

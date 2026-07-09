@@ -2,7 +2,7 @@ import { type CSSProperties, useState } from 'react';
 
 import type { DataInputType, FlexSizeType } from './flexSizeHelpers';
 import { getFlexSizeSetting, setFlexSizeSetting } from './flexSizeHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import RenderResizeActorItemComp, {
     renderResizerChildren,
 } from './RenderResizeActorItemComp';

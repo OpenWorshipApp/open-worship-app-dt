@@ -9,7 +9,7 @@ import KeyboardEventListener, {
 } from '../event/KeyboardEventListener';
 import { getWindowDim } from '../helper/helpers';
 import WindowEventListener from '../event/WindowEventListener';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import { genSelectedTextContextMenus } from '../helper/textSelectionHelpers';
 

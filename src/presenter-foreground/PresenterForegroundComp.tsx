@@ -3,7 +3,8 @@ import './PresenterForegroundComp.scss';
 import ForegroundCameraComp from './ForegroundCameraComp';
 import ForegroundCountDownComp from './ForegroundCountDownComp';
 import ForegroundImagesSlideShowComp from './ForegroundImagesSlideShowComp';
-import ForegroundMarqueeComp from './ForegroundMarqueeComp';
+import ForegroundMarqueeBottomComp from './ForegroundMarqueeBottomComp';
+import ForegroundMarqueeTopComp from './ForegroundMarqueeTopComp';
 import ForegroundQuickTextComp from './ForegroundQuickTextComp';
 import ForegroundStopwatchComp from './ForegroundStopwatchComp';
 import ForegroundTimeComp from './ForegroundTimeComp';
@@ -17,7 +18,9 @@ export default function PresenterForegroundComp() {
                 'p-2 app-zero-border-radius'
             }
         >
-            <ForegroundMarqueeComp />
+            <ForegroundMarqueeTopComp />
+            <hr />
+            <ForegroundMarqueeBottomComp />
             <hr />
             <ForegroundQuickTextComp />
             <hr />

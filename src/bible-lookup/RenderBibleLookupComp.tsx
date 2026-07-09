@@ -9,7 +9,7 @@ import { MultiContextRender } from '../helper/MultiContextRender';
 import RenderBibleLookupHeaderComp from './RenderBibleLookupHeaderComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
-import { useAppEffect, useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
 import {
     EditingResultContext,
     useLookupBibleItemControllerContext,

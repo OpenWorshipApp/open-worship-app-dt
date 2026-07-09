@@ -11,6 +11,7 @@ import { useVaryAppDocumentContext } from '../../app-document-list/appDocumentHe
 import type PdfAppDocument from '../../app-document-list/PdfAppDocument';
 import { sanitizeHtml } from '../../helper/sanitizeHelpers';
 import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function PdfSlideRenderContentComp({
     pdfImageSrc,
@@ -64,15 +65,18 @@ export default function PdfSlideRenderComp({
     const pdfAppDocument = useVaryAppDocumentContext() as PdfAppDocument;
     const pdfPreviewSrc = pdfSlide.pdfPreviewSrc;
     useScreenVaryAppDocumentManagerEvents(['update']);
+    const pdfAppDocumentRef = useAppCurrentRef(pdfAppDocument);
+    const pdfSlideRef = useAppCurrentRef(pdfSlide);
     const handleContextMenuOpening = useCallback(
         (event: MouseEvent, extraMenuItems: ContextMenuItemType[]) => {
-            pdfAppDocument.showSlideContextMenu(
+            pdfAppDocumentRef.current.showSlideContextMenu(
                 event,
-                pdfSlide,
+                pdfSlideRef.current,
                 extraMenuItems,
             );
         },
-        [pdfAppDocument, pdfSlide],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <VarySlideRenderComp

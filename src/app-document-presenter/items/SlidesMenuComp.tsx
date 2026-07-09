@@ -8,6 +8,7 @@ import {
 import type { WrongDimensionType } from '../../app-document-list/AppDocument';
 import AppDocument from '../../app-document-list/AppDocument';
 import { FileEditingMenuComp } from '../../editing-manager/editingHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function CheckingDimensionComp({
     wrongDimension,
@@ -16,12 +17,19 @@ function CheckingDimensionComp({
 }>) {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
     const screenDisplay = getDefaultScreenDisplay();
+    const selectedVaryAppDocumentRef = useAppCurrentRef(
+        selectedVaryAppDocument,
+    );
+    const screenDisplayRef = useAppCurrentRef(screenDisplay);
     const handleFixDimension = useCallback(() => {
-        if (!AppDocument.checkIsThisType(selectedVaryAppDocument)) {
+        if (!AppDocument.checkIsThisType(selectedVaryAppDocumentRef.current)) {
             return;
         }
-        selectedVaryAppDocument.fixSlidesDimensionForDisplay(screenDisplay);
-    }, [selectedVaryAppDocument, screenDisplay]);
+        selectedVaryAppDocumentRef.current.fixSlidesDimensionForDisplay(
+            screenDisplayRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (!AppDocument.checkIsThisType(selectedVaryAppDocument)) {
         return null;
     }

@@ -7,7 +7,7 @@ import {
     type JSX,
 } from 'react';
 import { createRoot } from 'react-dom/client';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 
 declare module 'react/jsx-runtime' {
     // eslint-disable-next-line @typescript-eslint/no-namespace

@@ -3,7 +3,7 @@ import { createContext, use, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import EventHandler from '../event/EventHandler';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';

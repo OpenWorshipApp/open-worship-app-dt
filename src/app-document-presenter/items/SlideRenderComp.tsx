@@ -12,6 +12,7 @@ import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpe
 import SlideRendererComp from './SlideRendererComp';
 import type AppDocument from '../../app-document-list/AppDocument';
 import { type VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function useData() {
     const selectedEditingSlideContext = use(SelectedEditingSlideContext);
@@ -43,6 +44,12 @@ export default function SlideRenderComp({
     const appDocument = useVaryAppDocumentContext() as AppDocument;
     const { selectedEditingSlide, holdingEditingSlides } = useData();
     useScreenVaryAppDocumentManagerEvents(['update']);
+    const indexRef = useAppCurrentRef(index);
+    const holdingEditingSlidesRef = useAppCurrentRef(holdingEditingSlides);
+    const slideRef = useAppCurrentRef(slide);
+    const appDocumentRef = useAppCurrentRef(appDocument);
+    const selectedEditingSlideRef = useAppCurrentRef(selectedEditingSlide);
+    const onClickRef = useAppCurrentRef(onClick);
     const handleContextMenuOpening = useCallback(
         (event: any, extraMenuItems: ContextMenuItemType[]) => {
             if (event.ctrlKey) {
@@ -50,38 +57,34 @@ export default function SlideRenderComp({
                 // but trigger clicking (selecting) instead
                 event.preventDefault();
                 event.stopPropagation();
-                onClick?.(event, index, slide);
+                onClickRef.current?.(event, indexRef.current, slideRef.current);
                 return;
             }
-            const isOnHoldingSlide = holdingEditingSlides.some(
+            const isOnHoldingSlide = holdingEditingSlidesRef.current.some(
                 (holdingSlide) => {
-                    return holdingSlide.checkIsSame(slide);
+                    return holdingSlide.checkIsSame(slideRef.current);
                 },
             );
             if (isOnHoldingSlide) {
-                appDocument.showHoldingSlidesContextMenu(
+                appDocumentRef.current.showHoldingSlidesContextMenu(
                     event,
-                    holdingEditingSlides,
+                    holdingEditingSlidesRef.current,
                 );
             } else {
                 const isSelectedEditing =
-                    !!selectedEditingSlide?.checkIsSame(slide);
-                appDocument.showSlideContextMenu(
+                    !!selectedEditingSlideRef.current?.checkIsSame(
+                        slideRef.current,
+                    );
+                appDocumentRef.current.showSlideContextMenu(
                     event,
-                    slide,
+                    slideRef.current,
                     extraMenuItems,
                     isSelectedEditing,
                 );
             }
         },
-        [
-            index,
-            holdingEditingSlides,
-            slide,
-            appDocument,
-            selectedEditingSlide,
-            onClick,
-        ],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <VarySlideRenderComp

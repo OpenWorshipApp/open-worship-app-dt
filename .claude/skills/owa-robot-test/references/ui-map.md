@@ -84,7 +84,7 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
   presentation screen.
   - Documents tab: slide thumbnails container; footer has a size range slider
     (`.app-range`) and the current document path.
-  - Foreground tab: countdowns, marquees, clocks/timers, web overlays, cameras, image
+  - Foreground tab: countdowns, marquee top/bottom, clocks/timers, web overlays, cameras, image
     slideshows.
 - **Fullscreen toggle** (presenter header, top-right): icon `bi bi-fullscreen` /
   `bi bi-fullscreen-exit`.
@@ -106,8 +106,10 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 
 ## Settings window (`setting.html`)
 
-Known visible buttons (from the existing e2e smoke test): `Apply Settings`, `General`,
-`Set Default Data`. Title matches `/Settings/`.
+Title matches `/Settings/`. Tabs `General` / `Bible`, plus a fixed `Apply Settings`
+button (top-right). The General tab holds: directory paths, `Khmer`/`English` language
+toggle, theme, font family, and the destructive resets (`Reset All Child Directories` /
+`Reset Widgets Size` / `Clear All Settings` — the old `Set Default Data` button is gone).
 
 ## Keyboard shortcuts worth testing
 

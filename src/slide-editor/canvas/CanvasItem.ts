@@ -14,7 +14,7 @@ import {
     cleanupProps,
 } from './canvasHelpers';
 import EventHandler from '../../event/EventHandler';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect } from '../../helper/appHooks';
 import { useProgressBarComp } from '../../progress-bar/ProgressBarComp';
 import type { ClipboardInf } from '../../server/appHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';

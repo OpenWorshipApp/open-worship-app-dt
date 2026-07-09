@@ -32,7 +32,7 @@ vi.mock('./appProvider', () => ({
     },
 }));
 
-vi.mock('../helper/debuggerHelpers', async () => {
+vi.mock('../helper/appHooks', async () => {
     const React = await vi.importActual<typeof import('react')>('react');
 
     return {

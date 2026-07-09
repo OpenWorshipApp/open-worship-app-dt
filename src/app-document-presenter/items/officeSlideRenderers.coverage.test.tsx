@@ -69,11 +69,16 @@ vi.mock('./VarySlideRenderComp', () => ({
     },
 }));
 
-vi.mock('../../helper/debuggerHelpers', async () => {
-    const { useEffect } = await import('react');
+vi.mock('../../helper/appHooks', async () => {
+    const { useEffect, useRef } = await import('react');
 
     return {
         useAppEffect: useEffect,
+        useAppCurrentRef: (target: any) => {
+            const ref = useRef(target);
+            ref.current = target;
+            return ref;
+        },
     };
 });
 

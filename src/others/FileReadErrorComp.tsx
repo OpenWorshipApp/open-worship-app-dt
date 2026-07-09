@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import type FileSource from '../helper/FileSource';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function FileReadErrorComp({
     fileSource,
@@ -12,14 +13,18 @@ export default function FileReadErrorComp({
     onContextMenu?: (event: any) => void;
     reload?: () => void;
 }>) {
+    const reloadRef = useAppCurrentRef(reload);
     const handleReload = useCallback(() => {
-        reload?.();
-    }, [reload]);
+        reloadRef.current?.();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const fileSourceRef = useAppCurrentRef(fileSource);
     const handleTrash = useCallback(() => {
-        if (fileSource) {
-            fileSource.trash();
+        if (fileSourceRef.current) {
+            fileSourceRef.current.trash();
         }
-    }, [fileSource]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="card app-caught-hover-pointer"

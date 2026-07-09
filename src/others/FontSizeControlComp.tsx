@@ -1,4 +1,5 @@
 import { type ChangeEvent, useCallback } from 'react';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function FontSizeControlComp({
     fontSize,
@@ -7,11 +8,13 @@ export default function FontSizeControlComp({
     fontSize: number;
     setFontSize: (fontSize: number) => void;
 }>) {
+    const setFontSizeRef = useAppCurrentRef(setFontSize);
     const handleFontSizeChange = useCallback(
         (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-            setFontSize(Number.parseInt(event.target.value));
+            setFontSizeRef.current(Number.parseInt(event.target.value));
         },
-        [setFontSize],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div className="d-flex">

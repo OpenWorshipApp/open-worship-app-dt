@@ -18,7 +18,8 @@ import {
     useAppEffect,
     useAppEffectAsync,
     useAppStateAsync,
-} from '../../helper/debuggerHelpers';
+    useAppCurrentRef,
+} from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import {
@@ -110,30 +111,42 @@ function useVarySlidesData() {
     const isDocxAppDocument = useMemo(() => {
         return DocxAppDocument.checkIsThisType(selectedVaryAppDocument);
     }, [selectedVaryAppDocument]);
+    const selectedVaryAppDocumentRef = useAppCurrentRef(
+        selectedVaryAppDocument,
+    );
+    const isPDFAppDocumentRef = useAppCurrentRef(isPDFAppDocument);
     const refreshPDFImages = useCallback(async () => {
-        if (!isPDFAppDocument) {
+        if (!isPDFAppDocumentRef.current) {
             return;
         }
-        const pdfAppDocument = selectedVaryAppDocument as PdfAppDocument;
+        const pdfAppDocument =
+            selectedVaryAppDocumentRef.current as PdfAppDocument;
         await removePdfImagesPreview(pdfAppDocument.filePath);
         pdfAppDocument.fileSource.fireUpdateEvent();
-    }, [selectedVaryAppDocument, isPDFAppDocument]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const isPptxAppDocumentRef = useAppCurrentRef(isPptxAppDocument);
     const refreshPptxSlides = useCallback(async () => {
-        if (!isPptxAppDocument) {
+        if (!isPptxAppDocumentRef.current) {
             return;
         }
-        const pptxAppDocument = selectedVaryAppDocument as PptxAppDocument;
+        const pptxAppDocument =
+            selectedVaryAppDocumentRef.current as PptxAppDocument;
         await removePptxHtmlsPreview(pptxAppDocument.filePath);
         pptxAppDocument.fileSource.fireUpdateEvent();
-    }, [selectedVaryAppDocument, isPptxAppDocument]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const isDocxAppDocumentRef = useAppCurrentRef(isDocxAppDocument);
     const refreshDocxSlides = useCallback(async () => {
-        if (!isDocxAppDocument) {
+        if (!isDocxAppDocumentRef.current) {
             return;
         }
-        const docxAppDocument = selectedVaryAppDocument as DocxAppDocument;
+        const docxAppDocument =
+            selectedVaryAppDocumentRef.current as DocxAppDocument;
         await removeDocxHtmlsPreview(docxAppDocument.filePath);
         docxAppDocument.fileSource.fireUpdateEvent();
-    }, [selectedVaryAppDocument, isDocxAppDocument]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return {
         varySlides,
@@ -166,20 +179,19 @@ export default function VarySlidesComp() {
     const varySlideThumbnailSize =
         thumbSizeScale * DEFAULT_THUMBNAIL_SIZE_FACTOR;
     const isAnyItemSelected = useAnyItemSelected(varySlides);
-    const handleNext = useCallback(
-        (data: { isNext: boolean }) => {
-            const element = getContainerDiv();
-            if (element === null || !varySlides) {
-                return;
-            }
-            handleNextItemSelecting({
-                container: element,
-                varySlides,
-                isNext: data.isNext,
-            });
-        },
-        [varySlides],
-    );
+    const varySlidesRef = useAppCurrentRef(varySlides);
+    const handleNext = useCallback((data: { isNext: boolean }) => {
+        const element = getContainerDiv();
+        if (element === null || !varySlidesRef.current) {
+            return;
+        }
+        handleNextItemSelecting({
+            container: element,
+            varySlides: varySlidesRef.current,
+            isNext: data.isNext,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useAppEffect(() => {
         if (varySlides?.length) {
             notifyNewElementAdded(() => {

@@ -10,6 +10,7 @@ import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import type { LookupOptions } from './finderHelpers';
 import { findString } from './finderHelpers';
 import { useThemeSource } from '../others/themeHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function FinderAppComp() {
     const [lookupText, setLookupText] = useState('');
@@ -55,37 +56,43 @@ export default function FinderAppComp() {
 
     useKeyboardRegistering([{ key: 'Enter' }], handleEnter, [handleEnter]);
 
+    const lookupTextRef = useAppCurrentRef(lookupText);
+    const setLookupText1Ref = useAppCurrentRef(setLookupText1);
     const handlePrevClick = useCallback(() => {
-        setLookupText1(lookupText, {
+        setLookupText1Ref.current(lookupTextRef.current, {
             forward: false,
             findNext: true,
         });
-    }, [lookupText, setLookupText1]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleNextClick = useCallback(() => {
-        setLookupText1(lookupText, {
+        setLookupText1Ref.current(lookupTextRef.current, {
             forward: true,
             findNext: true,
         });
-    }, [lookupText, setLookupText1]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleInputChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const text = event.target.value;
-            setLookupText1(text);
+            setLookupText1Ref.current(text);
         },
-        [setLookupText1],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
 
     const handleMatchCaseChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const checked = event.target.checked;
             setIsMatchCase(checked);
-            setLookupText1(lookupText, {
+            setLookupText1Ref.current(lookupTextRef.current, {
                 matchCase: checked,
             });
         },
-        [lookupText, setLookupText1],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
 
     const { theme } = useThemeSource();

@@ -9,6 +9,7 @@ import {
     setIsPdfFullWidth,
 } from '../_screen/managers/ScreenVaryAppDocumentManager';
 import VirtualBGColorSettingComp from './VirtualBGColorSettingComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function PageBaseAppearanceSettingComp({
     docxPreviewBackgroundColor = null,
@@ -31,12 +32,15 @@ export default function PageBaseAppearanceSettingComp({
         }
         setIsFullWidth(newIsFullWidth);
     }, []);
+    const setIsFullWidth1Ref = useAppCurrentRef(setIsFullWidth1);
     const handleSetNotFullWidth = useCallback(() => {
-        setIsFullWidth1(false);
-    }, [setIsFullWidth1]);
+        setIsFullWidth1Ref.current(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleSetFullWidth = useCallback(() => {
-        setIsFullWidth1(true);
-    }, [setIsFullWidth1]);
+        setIsFullWidth1Ref.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="page-base-appearance-setting">
             <div className="setting-group">

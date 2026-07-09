@@ -13,6 +13,7 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import type { RenderChildType } from './backgroundHelpers';
 import { genBackgroundMediaItemData } from './backgroundHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function genFileNameElement(fileName: string) {
     return (
@@ -63,35 +64,40 @@ export default function BackgroundMediaItemComp({
         fileSource.src,
         dragType,
     );
-    const handleMediaDragStart = useCallback(
-        (event: any) => {
-            handleDragStart(event, fileSource, dragType);
-        },
-        [fileSource, dragType],
+    const fileSourceRef = useAppCurrentRef(fileSource);
+    const dragTypeRef = useAppCurrentRef(dragType);
+    const handleMediaDragStart = useCallback((event: any) => {
+        handleDragStart(event, fileSourceRef.current, dragTypeRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const filePathRef = useAppCurrentRef(filePath);
+    const handleSelectingRef = useAppCurrentRef(handleSelecting);
+    const genExtraItemContextMenuItemsRef = useAppCurrentRef(
+        genExtraItemContextMenuItems,
     );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            showAppContextMenu(event, [
-                ...genCommonMenu(filePath),
-                ...genShowOnScreensContextMenu((event) => {
-                    handleSelecting(event, true);
-                }),
-                ...genExtraItemContextMenuItems(filePath),
-                ...(isInScreen ? [] : genTrashContextMenu(filePath)),
-            ]);
-        },
-        [filePath, handleSelecting, genExtraItemContextMenuItems, isInScreen],
-    );
-    const handleClicking = useCallback(
-        (event: any) => {
-            if (onClick) {
-                onClick(event, fileSource);
-            } else {
-                handleSelecting(event);
-            }
-        },
-        [onClick, fileSource, handleSelecting],
-    );
+    const isInScreenRef = useAppCurrentRef(isInScreen);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        showAppContextMenu(event, [
+            ...genCommonMenu(filePathRef.current),
+            ...genShowOnScreensContextMenu((event) => {
+                handleSelectingRef.current(event, true);
+            }),
+            ...genExtraItemContextMenuItemsRef.current(filePathRef.current),
+            ...(isInScreenRef.current
+                ? []
+                : genTrashContextMenu(filePathRef.current)),
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onClickRef = useAppCurrentRef(onClick);
+    const handleClicking = useCallback((event: any) => {
+        if (onClickRef.current) {
+            onClickRef.current(event, fileSourceRef.current);
+        } else {
+            handleSelectingRef.current(event);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}

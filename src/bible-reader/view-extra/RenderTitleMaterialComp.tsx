@@ -9,6 +9,7 @@ import { AudioAIEnablingComp } from '../AudioAIEnablingComp';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { useBibleViewTitleMaterialContext } from './viewExtraHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function RenderBibleKeyComp({
     bibleKey,
@@ -16,13 +17,17 @@ function RenderBibleKeyComp({
 }: Readonly<{ bibleKey: string; bibleItem: ReadIdOnlyBibleItem }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useBibleItemsViewControllerContext();
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
     const handleClicking = useCallback(() => {
-        viewController.applyTargetOrBibleKey(bibleItem, {
-            extraBibleKeys: bibleItem.extraBibleKeys.filter(
-                (key) => key !== bibleKey,
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
+            extraBibleKeys: bibleItemRef.current.extraBibleKeys.filter(
+                (key) => key !== bibleKeyRef.current,
             ),
         });
-    }, [viewController, bibleItem, bibleKey]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <span
             className="bible-extra-key bg-primary small app-caught-hover-pointer"

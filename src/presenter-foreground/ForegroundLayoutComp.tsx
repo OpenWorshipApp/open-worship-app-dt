@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import { useStateSettingBoolean } from '../helper/settingHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function ForegroundLayoutComp({
     target,
@@ -26,9 +27,12 @@ export default function ForegroundLayoutComp({
         `foreground-${target}-show-opened`,
         false,
     );
+    const isOpenedRef = useAppCurrentRef(isOpened);
+    const setIsOpenedRef = useAppCurrentRef(setIsOpened);
     const handleToggleOpened = useCallback(() => {
-        setIsOpened(!isOpened);
-    }, [isOpened, setIsOpened]);
+        setIsOpenedRef.current(!isOpenedRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="card m-2">
             <div

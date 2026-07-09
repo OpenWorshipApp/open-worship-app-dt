@@ -6,7 +6,7 @@ import { SelectedLyricContext } from './lyricHelpers';
 import LyricEditingManager, {
     LyricEditingManagerContext,
 } from './LyricEditingManager';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 
 const LazyLyricPreviewerComp = lazy(() => {
     return import('./LyricPreviewerComp');

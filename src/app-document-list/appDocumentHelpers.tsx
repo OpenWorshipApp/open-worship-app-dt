@@ -46,7 +46,7 @@ import { createContext, use, useCallback, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { checkSelectedFilePathExist } from '../others/selectedHelpers';
 import type { DisplayType } from '../_screen/screenTypeHelpers';
 import type {

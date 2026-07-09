@@ -7,7 +7,7 @@ import type { AppColorType } from './colorHelpers';
 import { transparentColor, colorToTransparent } from './colorHelpers';
 import OpacitySlider from './OpacitySlider';
 import RenderColors from './RenderColors';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { freezeObject } from '../../helper/helpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
@@ -59,46 +59,50 @@ export default function ColorPicker({
         },
         [onColorChange],
     );
+    const onNoColorRef = useAppCurrentRef(onNoColor);
+    const defaultColorRef = useAppCurrentRef(defaultColor);
+    const opacityRef = useAppCurrentRef(opacity);
+    const applyNewColorRef = useAppCurrentRef(applyNewColor);
     const handleColorChanging = useCallback(
         (newColor: AppColorType | null, event: any) => {
             if (newColor === null) {
-                onNoColor?.(defaultColor, event);
+                onNoColorRef.current?.(defaultColorRef.current, event);
                 return;
             }
-            const newColorStr = setOpacity(newColor as string, opacity);
-            applyNewColor(newColorStr, event);
+            const newColorStr = setOpacity(
+                newColor as string,
+                opacityRef.current,
+            );
+            applyNewColorRef.current(newColorStr, event);
         },
-        [onNoColor, defaultColor, opacity, applyNewColor],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
-    const handleOpacityChanging = useCallback(
-        (value: number, event: any) => {
-            if (!localColor) {
-                return;
-            }
-            const newColor = setOpacity(localColor, value);
-            applyNewColor(newColor, event);
-        },
-        [localColor, applyNewColor],
-    );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            if (!localColor) {
-                return;
-            }
-            const contextMenuItems: ContextMenuItemType[] = [];
-            // TODO: paste color
-            if (localColor) {
-                contextMenuItems.push({
-                    menuElement: 'Copy Color',
-                    onSelect: () => {
-                        copyToClipboard(localColor);
-                    },
-                });
-            }
-            showAppContextMenu(event, contextMenuItems);
-        },
-        [localColor],
-    );
+    const localColorRef = useAppCurrentRef(localColor);
+    const handleOpacityChanging = useCallback((value: number, event: any) => {
+        if (!localColorRef.current) {
+            return;
+        }
+        const newColor = setOpacity(localColorRef.current, value);
+        applyNewColorRef.current(newColor, event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        const currentLocalColor = localColorRef.current;
+        if (!currentLocalColor) {
+            return;
+        }
+        const contextMenuItems: ContextMenuItemType[] = [];
+        // TODO: paste color
+        contextMenuItems.push({
+            menuElement: 'Copy Color',
+            onSelect: () => {
+                copyToClipboard(currentLocalColor);
+            },
+        });
+        showAppContextMenu(event, contextMenuItems);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleOpen = useCallback(() => {
         setIsOpened(true);
     }, []);

@@ -36,6 +36,7 @@ import ShadowingFillParentWidthComp, {
 import VaryAppDocumentScaleContainerComp from './VaryAppDocumentScaleContainerComp';
 import { useThemeSource } from '../../others/themeHelpers';
 import { tran } from '../../lang/langHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 function RenderScreenInfoComp({
     varySlide,
@@ -221,31 +222,29 @@ export default function VarySlideRenderComp({
         varySlide.filePath,
         varySlide.id,
     );
-    const handleDataDropping = useCallback(
-        async (event: any) => {
-            changeDragEventStyle(event, 'opacity', '1');
-            const droppedData = extractDropData(event);
-            if (droppedData?.type === DragTypeEnum.SLIDE) {
-                if (
-                    !Slide.checkIsThisType(varySlide) ||
-                    droppedData.item.filePath !== varySlide.filePath
-                ) {
-                    return;
-                }
-                const appDocument = AppDocument.getInstance(varySlide.filePath);
-                const toIndex = await appDocument.getSlideIndex(
-                    varySlide as Slide,
-                );
-                appDocument.moveSlideToIndex(
-                    droppedData.item as Slide,
-                    toIndex,
-                );
-            } else {
-                handleAttachBackgroundDrop(event, varySlide);
+    const varySlideRef = useAppCurrentRef(varySlide);
+    const handleDataDropping = useCallback(async (event: any) => {
+        changeDragEventStyle(event, 'opacity', '1');
+        const droppedData = extractDropData(event);
+        if (droppedData?.type === DragTypeEnum.SLIDE) {
+            if (
+                !Slide.checkIsThisType(varySlideRef.current) ||
+                droppedData.item.filePath !== varySlideRef.current.filePath
+            ) {
+                return;
             }
-        },
-        [varySlide],
-    );
+            const appDocument = AppDocument.getInstance(
+                varySlideRef.current.filePath,
+            );
+            const toIndex = await appDocument.getSlideIndex(
+                varySlideRef.current as Slide,
+            );
+            appDocument.moveSlideToIndex(droppedData.item as Slide, toIndex);
+        } else {
+            handleAttachBackgroundDrop(event, varySlideRef.current);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleDragOver = useCallback((event: any) => {
         event.preventDefault();
         changeDragEventStyle(event, 'opacity', '0.5');
@@ -254,34 +253,35 @@ export default function VarySlideRenderComp({
         event.preventDefault();
         changeDragEventStyle(event, 'opacity', '1');
     }, []);
-    const handleDragStartEvent = useCallback(
-        (event: any) => {
-            handleDragStart(event, varySlide);
-            event.stopPropagation();
-        },
-        [varySlide],
-    );
+    const handleDragStartEvent = useCallback((event: any) => {
+        handleDragStart(event, varySlideRef.current);
+        event.stopPropagation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleDragEnd = useCallback((event: any) => {
         changeDragEventStyle(event, 'opacity', '1');
     }, []);
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            const menuItems: ContextMenuItemType[] = [];
-            if (attachedBackgroundData) {
-                menuItems.push(
-                    ...genRemovingAttachedBackgroundMenu(
-                        varySlide.filePath,
-                        varySlide.id,
-                    ),
-                );
-            }
+    const attachedBackgroundDataRef = useAppCurrentRef(attachedBackgroundData);
+    const onContextMenuRef = useAppCurrentRef(onContextMenu);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        const menuItems: ContextMenuItemType[] = [];
+        if (attachedBackgroundDataRef.current) {
             menuItems.push(
-                ...genChooseColorNoteOption(varySlide.filePath, varySlide.id),
+                ...genRemovingAttachedBackgroundMenu(
+                    varySlideRef.current.filePath,
+                    varySlideRef.current.id,
+                ),
             );
-            onContextMenu(event, menuItems);
-        },
-        [attachedBackgroundData, varySlide, onContextMenu],
-    );
+        }
+        menuItems.push(
+            ...genChooseColorNoteOption(
+                varySlideRef.current.filePath,
+                varySlideRef.current.id,
+            ),
+        );
+        onContextMenuRef.current(event, menuItems);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={

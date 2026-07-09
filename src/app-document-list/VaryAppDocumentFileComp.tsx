@@ -4,7 +4,7 @@ import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
 import AppDocument from './AppDocument';
 import { previewingEventListener } from '../event/PreviewingEventListener';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { goToPath } from '../router/routeHelpers';
 import { removePdfImagesPreview } from '../helper/pdfHelpers';
@@ -236,27 +236,31 @@ export default function VaryAppDocumentFileComp({
     const handleReloading = useCallback(() => {
         setVaryAppDocument(undefined);
     }, []);
+    const varyAppDocumentRef = useAppCurrentRef(varyAppDocument);
+    const setSelectedAppDocumentRef = useAppCurrentRef(setSelectedAppDocument);
     const handleClicking = useCallback(() => {
-        if (!varyAppDocument) {
+        if (!varyAppDocumentRef.current) {
             return;
         }
-        setSelectedAppDocument(varyAppDocument);
+        setSelectedAppDocumentRef.current(varyAppDocumentRef.current);
         if (!getIsShowingVaryAppDocumentPreviewer()) {
-            previewingEventListener.showVaryAppDocument(varyAppDocument);
+            previewingEventListener.showVaryAppDocument(
+                varyAppDocumentRef.current,
+            );
         }
-    }, [varyAppDocument, setSelectedAppDocument]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    const handleRenaming = useCallback(
-        async (newFileSource: FileSource) => {
-            if (isSelected) {
-                const newVaryAppDocument = varyAppDocumentFromFilePath(
-                    newFileSource.filePath,
-                );
-                setSelectedAppDocument(newVaryAppDocument);
-            }
-        },
-        [isSelected, setSelectedAppDocument],
-    );
+    const isSelectedRef = useAppCurrentRef(isSelected);
+    const handleRenaming = useCallback(async (newFileSource: FileSource) => {
+        if (isSelectedRef.current) {
+            const newVaryAppDocument = varyAppDocumentFromFilePath(
+                newFileSource.filePath,
+            );
+            setSelectedAppDocumentRef.current(newVaryAppDocument);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <FileItemHandlerComp

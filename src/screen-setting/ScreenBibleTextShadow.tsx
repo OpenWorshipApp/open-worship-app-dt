@@ -10,7 +10,7 @@ import {
     toHexColorString,
     HEX_COLOR_WHITE,
 } from '../others/color/colorHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useStylingColor } from '../_screen/preview/stylingHelpers';
 

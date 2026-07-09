@@ -8,6 +8,7 @@ import {
     useScreenManagerBaseContext,
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 const showingScreenEventMap = { key: 'F5' };
 export default function ShowHideScreen() {
@@ -21,9 +22,12 @@ export default function ShowHideScreen() {
     );
     const isShowing = screenManagerBase.isShowing;
     useScreenManagerEvents(['visible'], screenManagerBase);
+    const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
+    const isShowingRef = useAppCurrentRef(isShowing);
     const handleToggleShowing = useCallback(() => {
-        screenManagerBase.isShowing = !isShowing;
-    }, [screenManagerBase, isShowing]);
+        screenManagerBaseRef.current.isShowing = !isShowingRef.current;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={

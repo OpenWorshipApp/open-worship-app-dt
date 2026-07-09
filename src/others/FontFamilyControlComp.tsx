@@ -2,6 +2,7 @@ import { type ChangeEvent, useCallback, useMemo } from 'react';
 
 import type { FontListType } from '../server/appProvider';
 import { useFontList } from '../server/fontHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function FontFamilyControlComp({
     fontFamily,
@@ -28,15 +29,17 @@ export default function FontFamilyControlComp({
         newFontFamilies.unshift(['--', '--']);
         return newFontFamilies;
     }, [fontList, fontFamily]);
+    const setFontFamilyRef = useAppCurrentRef(setFontFamily);
     const handleFontFamilyChange = useCallback(
         (event: ChangeEvent<HTMLSelectElement>) => {
             let value = event.target.value;
             if (value === '--') {
                 value = '';
             }
-            setFontFamily(value);
+            setFontFamilyRef.current(value);
         },
-        [setFontFamily],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     if (fontList === undefined) {
         return <div>Loading Font ...</div>;
@@ -91,11 +94,13 @@ function FontWeight({
     fontList: FontListType;
     isShowingLabel?: boolean;
 }>) {
+    const setFontWeightRef = useAppCurrentRef(setFontWeight);
     const handleFontWeightChange = useCallback(
         (event: ChangeEvent<HTMLSelectElement>) => {
-            setFontWeight(event.target.value);
+            setFontWeightRef.current(event.target.value);
         },
-        [setFontWeight],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div>

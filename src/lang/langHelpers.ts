@@ -3,7 +3,7 @@ import type { AnyObjectType } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
 import { unlocking } from '../server/unlockingHelpers';
 import { globalCacheManager1M } from '../others/CacheManager';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 

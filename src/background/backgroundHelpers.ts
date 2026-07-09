@@ -5,7 +5,7 @@ import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import type { CameraInfoType } from '../helper/cameraHelpers';
-import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppEffectAsync } from '../helper/appHooks';
 import PptxAppDocument from '../app-document-list/PptxAppDocument';
 import { dirSourceSettingNames } from '../helper/constants';
 import type DirSource from '../helper/DirSource';

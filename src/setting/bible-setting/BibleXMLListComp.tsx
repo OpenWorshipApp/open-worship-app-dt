@@ -4,6 +4,7 @@ import LoadingComp from '../../others/LoadingComp';
 import BibleXMLInfoComp from './BibleXMLInfoComp';
 import { tran } from '../../lang/langHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function BibleXMLListComp({
     isPending,
@@ -23,9 +24,11 @@ export default function BibleXMLListComp({
         );
         return localBibleKeys;
     }, [bibleKeysMap]);
+    const loadBibleKeysRef = useAppCurrentRef(loadBibleKeys);
     const handleRefresh = useCallback(() => {
-        loadBibleKeys();
-    }, [loadBibleKeys]);
+        loadBibleKeysRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (isPending) {
         return <LoadingComp />;
     }

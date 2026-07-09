@@ -22,6 +22,7 @@ import {
 } from './bibleActionHelpers';
 import { RenderCopyBibleItemActionButtonsComp } from './RenderActionButtonsComp';
 import { tran } from '../lang/langHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function SaveButtonComp({
     handleSaveBibleItem,
@@ -113,24 +114,35 @@ export default function RenderEditingActionButtonsComp({
         },
         [],
     );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
     const handleSplitHorizontal = useCallback(() => {
-        viewController.addBibleItemLeft(bibleItem, bibleItem);
-    }, [viewController, bibleItem]);
+        viewControllerRef.current.addBibleItemLeft(
+            bibleItemRef.current,
+            bibleItemRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleSplitVertical = useCallback(() => {
-        viewController.addBibleItemBottom(bibleItem, bibleItem);
-    }, [viewController, bibleItem]);
+        viewControllerRef.current.addBibleItemBottom(
+            bibleItemRef.current,
+            bibleItemRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onDoneRef = useAppCurrentRef(onDone);
     const handleSaveBibleItem = useCallback(() => {
-        saveBibleItem(bibleItem, onDone);
-    }, [bibleItem, onDone]);
-    const handleSaveAndPresent = useCallback(
-        (event: MouseEvent) => {
-            addBibleItemAndPresent(event, bibleItem, onDone);
-        },
-        [bibleItem, onDone],
-    );
+        saveBibleItem(bibleItemRef.current, onDoneRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSaveAndPresent = useCallback((event: MouseEvent) => {
+        addBibleItemAndPresent(event, bibleItemRef.current, onDoneRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleExportToWord = useCallback(() => {
-        exportToWordDocument([bibleItem]);
-    }, [bibleItem]);
+        exportToWordDocument([bibleItemRef.current]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="btn-group mx-1">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />

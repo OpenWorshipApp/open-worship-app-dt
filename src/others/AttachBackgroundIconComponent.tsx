@@ -7,6 +7,7 @@ import { DragTypeEnum } from '../helper/DragInf';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
 import type FileSource from '../helper/FileSource';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function showMediaContextMenu(event: any, filePath: string) {
     event.stopPropagation();
@@ -32,16 +33,15 @@ function RendItemComp({
     iType: string;
     onContextMenu?: (event: any) => void;
 }>) {
-    const handleContextMenu = useCallback(
-        (event: MouseEvent) => {
-            if (onContextMenu) {
-                onContextMenu(event);
-            } else {
-                event.stopPropagation();
-            }
-        },
-        [onContextMenu],
-    );
+    const onContextMenuRef = useAppCurrentRef(onContextMenu);
+    const handleContextMenu = useCallback((event: MouseEvent) => {
+        if (onContextMenuRef.current) {
+            onContextMenuRef.current(event);
+        } else {
+            event.stopPropagation();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className="btn btn-secondary btn-sm p-0 mx-1"

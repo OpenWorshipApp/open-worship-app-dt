@@ -12,6 +12,7 @@ import { DragTypeEnum } from '../helper/DragInf';
 import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
 import { handleDragStart } from '../helper/dragHelpers';
 import RenderCameraVideoComp from './RenderCameraVideoComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const TITLE_HEIGHT = 30;
 
@@ -35,37 +36,33 @@ export default function BackgroundCameraItemComp({
         cameraInfo.deviceId,
         DragTypeEnum.BACKGROUND_CAMERA,
     );
-    const handleCameraDragStart = useCallback(
-        (event: any) => {
-            handleDragStart(event, {
-                dragSerialize: () => {
-                    return cameraDragSerialize(cameraInfo);
-                },
-            });
-        },
-        [cameraInfo],
-    );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            showAppContextMenu(event, [
-                ...genShowOnScreensContextMenu((event) => {
-                    handleSelecting(event, true);
-                }),
-            ]);
-        },
-        [handleSelecting],
-    );
-    const handleClicking = useCallback(
-        (event: any) => {
-            ScreenBackgroundManager.handleBackgroundSelecting(
-                event,
-                'camera',
-                { src: cameraInfo.deviceId },
-                false,
-            );
-        },
-        [cameraInfo],
-    );
+    const cameraInfoRef = useAppCurrentRef(cameraInfo);
+    const handleCameraDragStart = useCallback((event: any) => {
+        handleDragStart(event, {
+            dragSerialize: () => {
+                return cameraDragSerialize(cameraInfoRef.current);
+            },
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSelectingRef = useAppCurrentRef(handleSelecting);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        showAppContextMenu(event, [
+            ...genShowOnScreensContextMenu((event) => {
+                handleSelectingRef.current(event, true);
+            }),
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleClicking = useCallback((event: any) => {
+        ScreenBackgroundManager.handleBackgroundSelecting(
+            event,
+            'camera',
+            { src: cameraInfoRef.current.deviceId },
+            false,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}

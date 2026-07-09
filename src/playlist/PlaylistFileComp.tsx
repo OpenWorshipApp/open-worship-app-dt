@@ -12,7 +12,8 @@ import {
     useAppEffect,
     useAppEffectAsync,
     useAppStateAsync,
-} from '../helper/debuggerHelpers';
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import FileSource from '../helper/FileSource';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import { tran } from '../lang/langHelpers';
@@ -34,18 +35,20 @@ export default function PlaylistFileComp({
     const handleReloading = useCallback(() => {
         setPlaylist(undefined);
     }, []);
+    const isOpenedRef = useAppCurrentRef(isOpened);
+    const setIsOpenedRef = useAppCurrentRef(setIsOpened);
     const handleClicking = useCallback(() => {
-        setIsOpened(!isOpened);
-    }, [isOpened, setIsOpened]);
-    const handleDropping = useCallback(
-        async (event: any) => {
-            if (playlist) {
-                const receivedData = event.dataTransfer.getData('text');
-                await playlist.addFromData(receivedData);
-            }
-        },
-        [playlist],
-    );
+        setIsOpenedRef.current(!isOpenedRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const playlistRef = useAppCurrentRef(playlist);
+    const handleDropping = useCallback(async (event: any) => {
+        if (playlistRef.current) {
+            const receivedData = event.dataTransfer.getData('text');
+            await playlistRef.current.addFromData(receivedData);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleChildRendering = useCallback(
         (playlist: AppDocumentSourceAbs) => {
             return (
@@ -93,9 +96,12 @@ function PlaylistPreview({
     const [items] = useAppStateAsync(() => {
         return playlist.getItems();
     }, [playlist]);
+    const isOpenedRef = useAppCurrentRef(isOpened);
+    const setIsOpenedRef = useAppCurrentRef(setIsOpened);
     const handleToggleOpened = useCallback(() => {
-        setIsOpened(!isOpened);
-    }, [isOpened, setIsOpened]);
+        setIsOpenedRef.current(!isOpenedRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (items === undefined) {
         return <LoadingComp />;
     }

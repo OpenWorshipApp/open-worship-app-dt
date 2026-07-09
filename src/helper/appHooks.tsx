@@ -1,5 +1,5 @@
 import type { DependencyList, EffectCallback } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { appWarning } from './loggerHelpers';
 import type { OptionalPromise } from './typeHelpers';
@@ -163,4 +163,10 @@ export function useAppStateAsync<T>(
         { setValue },
     );
     return [value, setValue] as const;
+}
+
+export function useAppCurrentRef<T>(target: T) {
+    const ref = useRef<T>(target);
+    ref.current = target;
+    return ref;
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, useEffect } from 'react';
+import { act, useEffect, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -29,9 +29,14 @@ const {
     notifyNewElementAddedMock: vi.fn(),
 }));
 
-vi.mock('./debuggerHelpers', () => {
+vi.mock('./appHooks', () => {
     return {
         useAppEffect: useEffect,
+        useAppCurrentRef: (target: any) => {
+            const ref = useRef(target);
+            ref.current = target;
+            return ref;
+        },
         useAppEffectAsync: (
             effectMethod: (
                 methods: Record<string, unknown>,

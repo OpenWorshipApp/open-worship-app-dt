@@ -1,4 +1,4 @@
-import { createContext, use, useCallback, useMemo, useRef } from 'react';
+import { createContext, use, useCallback, useMemo } from 'react';
 
 import type { EventMapperType } from '../event/KeyboardEventListener';
 import KeyboardEventListener, {
@@ -6,6 +6,7 @@ import KeyboardEventListener, {
     toShortcutKey,
     useKeyboardRegistering,
 } from '../event/KeyboardEventListener';
+import { useAppCurrentRef } from '../helper/appHooks';
 import { tran } from '../lang/langHelpers';
 import { goToPath } from '../router/routeHelpers';
 import { openSettingPage } from '../setting/settingHelpers';
@@ -18,9 +19,11 @@ export function QuitCurrentPageComp({
     title: string;
     pathname?: string;
 }>) {
+    const pathnameRef = useAppCurrentRef(pathname);
     const handleClick = useCallback(() => {
-        goToPath(pathname);
-    }, [pathname]);
+        goToPath(pathnameRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className="btn btn-sm btn-outline-warning"
@@ -54,9 +57,11 @@ export function HelpButtonComp() {
             .replace(/\.html$/, '');
         return `${appProvider.appInfo.homepage}/help#${helpKey}`;
     }, []);
+    const urlRef = useAppCurrentRef(url);
     const handleClick = useCallback(() => {
-        appProvider.browserUtils.openExternalURL(url);
-    }, [url]);
+        appProvider.browserUtils.openExternalURL(urlRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className="btn btn-outline-info"
@@ -112,13 +117,15 @@ const shortcutKey = openBibleEventMaps
 export function BibleLookupButtonComp() {
     const { setIsShowing: setIsBibleLookupShowing } =
         useIsBibleLookupShowingContext();
-    const setIsBibleLookupShowingRef = useRef(setIsBibleLookupShowing);
-    setIsBibleLookupShowingRef.current = setIsBibleLookupShowing;
+    const setIsBibleLookupShowingRef = useAppCurrentRef(
+        setIsBibleLookupShowing,
+    );
     useKeyboardRegistering(openBibleEventMaps, () => {
         setIsBibleLookupShowingRef.current(true);
     }, []);
     const handleClick = useCallback(() => {
         setIsBibleLookupShowingRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
         <button

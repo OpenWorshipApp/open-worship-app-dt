@@ -1,6 +1,6 @@
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
 import AppDocumentNoteEditorComp from './AppDocumentNoteEditorComp';
-import { useAppStateAsync } from '../../helper/debuggerHelpers';
+import { useAppStateAsync } from '../../helper/appHooks';
 import SlidesNoteEditorComp from './SlidesNoteEditorComp';
 import {
     type VarySlideWithNoteType,

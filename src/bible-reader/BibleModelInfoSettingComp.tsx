@@ -10,6 +10,7 @@ import {
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import appProvider from '../server/appProvider';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function chooseModel(
     event: any,
@@ -38,12 +39,12 @@ export default function BibleModelInfoSettingComp() {
         setBibleModelInfoSetting(newModel);
         appProvider.reload();
     }, []);
-    const handleClick = useCallback(
-        (event: any) => {
-            chooseModel(event, model, setModel1);
-        },
-        [model, setModel1],
-    );
+    const modelRef = useAppCurrentRef(model);
+    const setModel1Ref = useAppCurrentRef(setModel1);
+    const handleClick = useCallback((event: any) => {
+        chooseModel(event, modelRef.current, setModel1Ref.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex mx-1" title={tran('Change Bible Model Info')}>
             <label htmlFor="change-bible-model-info" className="form-label">

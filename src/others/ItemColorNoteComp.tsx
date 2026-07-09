@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import colorList from './color-list.json';
 import type ColorNoteInf from '../helper/ColorNoteInf';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import { freezeObject } from '../helper/helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';

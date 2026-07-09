@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import { VERSE_TEXT_CLASS } from '../../helper/bibleViewHelpers';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import type { CompiledVerseType } from '../../bible-list/bibleRenderHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { getSelectedText } from '../../helper/textSelectionHelpers';
 import FileSource from '../../helper/FileSource';
 import {
@@ -71,42 +71,42 @@ export default function RenderVerseTextDetailComp({
         },
         [bibleItem, verseInfo],
     );
-    const handleVerseClicking = useCallback(
-        (event: any) => {
-            if (getSelectedText()) {
-                return;
-            }
-            viewController.handleVersesSelecting(
-                event.currentTarget,
-                event.altKey,
-                false,
-                bibleItem,
-            );
-            loadAudio();
-        },
-        [viewController, bibleItem, loadAudio],
-    );
-    const handleVerseDBClicking = useCallback(
-        (event: any) => {
-            event.stopPropagation();
-            event.preventDefault();
-            const selection = globalThis.getSelection();
-            if (selection !== null && selection.rangeCount > 0) {
-                selection.removeAllRanges();
-            }
-            viewController.handleVersesSelecting(
-                event.currentTarget,
-                true,
-                false,
-                bibleItem,
-            );
-            loadAudio();
-        },
-        [viewController, bibleItem, loadAudio],
-    );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const loadAudioRef = useAppCurrentRef(loadAudio);
+    const handleVerseClicking = useCallback((event: any) => {
+        if (getSelectedText()) {
+            return;
+        }
+        viewControllerRef.current.handleVersesSelecting(
+            event.currentTarget,
+            event.altKey,
+            false,
+            bibleItemRef.current,
+        );
+        loadAudioRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleVerseDBClicking = useCallback((event: any) => {
+        event.stopPropagation();
+        event.preventDefault();
+        const selection = globalThis.getSelection();
+        if (selection !== null && selection.rangeCount > 0) {
+            selection.removeAllRanges();
+        }
+        viewControllerRef.current.handleVersesSelecting(
+            event.currentTarget,
+            true,
+            false,
+            bibleItemRef.current,
+        );
+        loadAudioRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleAudioRefreshing = useCallback(() => {
-        loadAudio(true);
-    }, [loadAudio]);
+        loadAudioRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             ref={verseTextRef}

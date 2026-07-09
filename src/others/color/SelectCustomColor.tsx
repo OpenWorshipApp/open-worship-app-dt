@@ -10,7 +10,7 @@ import {
 import { tran } from '../../lang/langHelpers';
 import { createMouseEvent } from '../../context-menu/appContextMenuHelpers';
 import { HEX_COLOR_WHITE, type AppColorType } from './colorHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { removeOpacityFromHexColor } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 
@@ -63,23 +63,26 @@ export default function SelectCustomColor({
             setLocalColor(HEX_COLOR_WHITE as AppColorType);
         }
     }, [color]);
-    const handleChange = useCallback(
-        (event: ChangeEvent<HTMLInputElement>) => {
-            setLocalColor1(event.target.value as any);
-        },
-        [setLocalColor1],
-    );
+    const setLocalColor1Ref = useAppCurrentRef(setLocalColor1);
+    const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+        setLocalColor1Ref.current(event.target.value as any);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const localColorRef = useAppCurrentRef(localColor);
+    const applyColorRef = useAppCurrentRef(applyColor);
     const handleKeyDown = useCallback(
         (event: KeyboardEvent<HTMLInputElement>) => {
             if (event.key === 'Enter') {
-                applyColor(localColor);
+                applyColorRef.current(localColorRef.current);
             }
         },
-        [localColor, applyColor],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleBlur = useCallback(() => {
-        applyColor(localColor);
-    }, [localColor, applyColor]);
+        applyColorRef.current(localColorRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <>
             <span>{tran('Mix Color: ')}</span>

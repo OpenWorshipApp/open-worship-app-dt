@@ -13,6 +13,7 @@ import {
 } from './bibleXMLHelpers';
 import { xmlFormatExample } from './bibleXMLAttributesGuessing';
 import { xmlTextToJson } from './bibleXMLJsonDataHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function BibleXMLImportComp({
     loadBibleKeys,
@@ -34,6 +35,10 @@ export default function BibleXMLImportComp({
         }
         setIsFileSelected(false);
     }, []);
+    const isFileSelectedRef = useAppCurrentRef(isFileSelected);
+    const isValidUrlRef = useAppCurrentRef(isValidUrl);
+    const loadBibleKeysRef = useAppCurrentRef(loadBibleKeys);
+    const handleFileCancelingRef = useAppCurrentRef(handleFileCanceling);
     const handleFormSubmitting = useCallback(
         async (event: SyntheticEvent<HTMLFormElement>) => {
             event.preventDefault();
@@ -44,9 +49,9 @@ export default function BibleXMLImportComp({
                         return;
                     }
                     let dataText: string | null = null;
-                    if (isFileSelected) {
+                    if (isFileSelectedRef.current) {
                         dataText = await readFromFile(form, setLoadingMessage);
-                    } else if (isValidUrl) {
+                    } else if (isValidUrlRef.current) {
                         dataText = await readFromUrl(form, setLoadingMessage);
                     }
                     if (dataText === null) {
@@ -63,29 +68,33 @@ export default function BibleXMLImportComp({
                     }
                     const isSuccess = await saveJsonDataToXMLfile(dataJson);
                     if (isSuccess) {
-                        handleFileCanceling(form);
+                        handleFileCancelingRef.current(form);
                         setUrlText('');
-                        loadBibleKeys();
+                        loadBibleKeysRef.current();
                     }
                 } catch (error) {
                     showSimpleToast('Format Submit Error', `Error: ${error}`);
                 }
             });
         },
-        [isFileSelected, isValidUrl, loadBibleKeys, handleFileCanceling],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const isShowingExampleRef = useAppCurrentRef(isShowingExample);
     const handleToggleExample = useCallback(() => {
-        setIsShowingExample(!isShowingExample);
-    }, [isShowingExample]);
+        setIsShowingExample(!isShowingExampleRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleFileSelected = useCallback(() => {
         setIsFileSelected(true);
     }, []);
     const handleCancelSelection = useCallback(
         (event: MouseEvent<HTMLButtonElement>) => {
             const form = event.currentTarget.form;
-            handleFileCanceling(form);
+            handleFileCancelingRef.current(form);
         },
-        [handleFileCanceling],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleUrlChange = useCallback((event: any) => {
         setUrlText(event.target.value);

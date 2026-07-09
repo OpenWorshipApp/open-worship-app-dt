@@ -6,7 +6,7 @@ import FileSource from '../../helper/FileSource';
 import { useSelectedWebContext } from './webEditorHelpers';
 import { useInitMonacoEditor } from '../../helper/monacoEditorHelpers';
 import appProvider from '../../server/appProvider';
-import { useAppEffectAsync } from '../../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 

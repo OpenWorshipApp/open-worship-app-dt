@@ -20,6 +20,7 @@ import { checkIsSupportMediaType } from '../../slide-editor/canvas/canvasHelpers
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { createNewSlidesFromDroppedData } from './appDocumentHelpers';
 import appProvider from '../../server/appProvider';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     const files: File[] = [];
@@ -43,27 +44,25 @@ export default function VarySlidesPreviewerComp() {
         useVarySlideThumbnailSizeScale();
     const isDisplayingEditingMenu =
         appProvider.isPagePresenter && varyAppDocument.isEditable;
-    const handleContainerBlur = useCallback(
-        (event: any) => {
-            onSlideItemsKeyboardEvent(event);
-        },
-        [onSlideItemsKeyboardEvent],
+    const onSlideItemsKeyboardEventRef = useAppCurrentRef(
+        onSlideItemsKeyboardEvent,
     );
-    const handleContainerKeyDown = useCallback(
-        (event: any) => {
-            if (document.activeElement !== event.currentTarget) {
-                return;
-            }
-            onSlideItemsKeyboardEvent(event);
-        },
-        [onSlideItemsKeyboardEvent],
-    );
-    const handleContextMenu = useCallback(
-        (event: any) => {
-            varyAppDocument.showContextMenu(event);
-        },
-        [varyAppDocument],
-    );
+    const handleContainerBlur = useCallback((event: any) => {
+        onSlideItemsKeyboardEventRef.current(event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleContainerKeyDown = useCallback((event: any) => {
+        if (document.activeElement !== event.currentTarget) {
+            return;
+        }
+        onSlideItemsKeyboardEventRef.current(event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const varyAppDocumentRef = useAppCurrentRef(varyAppDocument);
+    const handleContextMenu = useCallback((event: any) => {
+        varyAppDocumentRef.current.showContextMenu(event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleDragOver = useCallback((event: any) => {
         event.preventDefault();
         changeDragEventStyle(event, 'opacity', '0.5');
@@ -72,17 +71,15 @@ export default function VarySlidesPreviewerComp() {
         event.preventDefault();
         changeDragEventStyle(event, 'opacity', '1');
     }, []);
-    const handleContainerDrop = useCallback(
-        (event: DragEvent) => {
-            event.preventDefault();
-            changeDragEventStyle(event, 'opacity', '1');
-            if (varyAppDocument instanceof AppDocument === false) {
-                return;
-            }
-            handleDataDropping(varyAppDocument, event);
-        },
-        [varyAppDocument],
-    );
+    const handleContainerDrop = useCallback((event: DragEvent) => {
+        event.preventDefault();
+        changeDragEventStyle(event, 'opacity', '1');
+        if (varyAppDocumentRef.current instanceof AppDocument === false) {
+            return;
+        }
+        handleDataDropping(varyAppDocumentRef.current, event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     useZoomingRegistering(containerRef, {

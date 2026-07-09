@@ -22,7 +22,7 @@ import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import type { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { handleError } from '../helper/errorHelpers';
 import { dragStore } from '../helper/dragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -108,12 +108,11 @@ function TimeInSetComp({
         },
         [genTimeData],
     );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            handleShowing(event, true);
-        },
-        [handleShowing],
-    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleByDropped = useCallback(
         (event: any) => {
             const screenForegroundManager =
@@ -125,45 +124,60 @@ function TimeInSetComp({
         },
         [genTimeData],
     );
-    const handleUseCurrentTimezone = useCallback(() => {
-        setTimezoneMinuteOffset(getSystemTimezoneMinuteOffset());
-    }, [setTimezoneMinuteOffset]);
-    const handleChooseCity = useCallback(
-        async (event: any) => {
-            const result = await getMinuteOffsetFromCity(event);
-            if (result === null) {
-                return;
-            }
-            setCityName(result[0]);
-            setTimezoneMinuteOffset(result[1]);
-        },
-        [setCityName, setTimezoneMinuteOffset],
+    const setTimezoneMinuteOffsetRef = useAppCurrentRef(
+        setTimezoneMinuteOffset,
     );
+    const handleUseCurrentTimezone = useCallback(() => {
+        setTimezoneMinuteOffsetRef.current(getSystemTimezoneMinuteOffset());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setCityNameRef = useAppCurrentRef(setCityName);
+    const handleChooseCity = useCallback(async (event: any) => {
+        const result = await getMinuteOffsetFromCity(event);
+        if (result === null) {
+            return;
+        }
+        setCityNameRef.current(result[0]);
+        setTimezoneMinuteOffsetRef.current(result[1]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleCityNameChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setCityName(event.target.value);
+            setCityNameRef.current(event.target.value);
         },
-        [setCityName],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleTimezoneOffsetChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setTimezoneMinuteOffset(Number.parseInt(event.target.value));
+            setTimezoneMinuteOffsetRef.current(
+                Number.parseInt(event.target.value),
+            );
         },
-        [setTimezoneMinuteOffset],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const setIs24HourFormatRef = useAppCurrentRef(setIs24HourFormat);
+    const showingScreenIdDataListRef = useAppCurrentRef(
+        showingScreenIdDataList,
+    );
+    const genTimeDataRef = useAppCurrentRef(genTimeData);
     const handleTimeFormatChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const newIs24HourFormat = !event.target.checked;
-            setIs24HourFormat(newIs24HourFormat);
-            refreshAllTimes(showingScreenIdDataList, () => {
-                return genTimeData(newIs24HourFormat);
+            setIs24HourFormatRef.current(newIs24HourFormat);
+            refreshAllTimes(showingScreenIdDataListRef.current, () => {
+                return genTimeDataRef.current(newIs24HourFormat);
             });
         },
-        [setIs24HourFormat, showingScreenIdDataList, genTimeData],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const handleTimeDragStart = useCallback(() => {
-        dragStore.onDropped = handleByDropped;
-    }, [handleByDropped]);
+        dragStore.onDropped = handleByDroppedRef.current;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex flex-column gap-2">
             <div className="btn-group">

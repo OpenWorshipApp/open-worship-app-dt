@@ -8,6 +8,7 @@ import {
     useSetSelectedCanvasItems,
 } from '../CanvasItem';
 import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 export default function BoxEditorNormalWrapperComp({
     style,
@@ -24,15 +25,20 @@ export default function BoxEditorNormalWrapperComp({
     const canvasController = useCanvasControllerContext();
     const handleCanvasItemControlling = useSetSelectedCanvasItems();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
-    const handleClick = useCallback(
-        (event: MouseEvent) => {
-            event.stopPropagation();
-            const isAppend = checkIsAppendSelectionModifier(event);
-            handleCanvasItemControlling(canvasItem, { isAppend });
-            canvasController.focusEditor();
-        },
-        [handleCanvasItemControlling, canvasItem, canvasController],
+    const handleCanvasItemControllingRef = useAppCurrentRef(
+        handleCanvasItemControlling,
     );
+    const canvasItemRef = useAppCurrentRef(canvasItem);
+    const canvasControllerRef = useAppCurrentRef(canvasController);
+    const handleClick = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        const isAppend = checkIsAppendSelectionModifier(event);
+        handleCanvasItemControllingRef.current(canvasItemRef.current, {
+            isAppend,
+        });
+        canvasControllerRef.current.focusEditor();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="app-box-editor shadow-caught-hover-pointer"

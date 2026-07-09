@@ -298,13 +298,13 @@ describe('non-Bible screen managers', () => {
                 countdownData: null,
                 stopwatchData: null,
                 timeDataList: [],
-                marqueeData: { text: 'Hello', extraStyle: {} },
+                marqueeBottomData: { text: 'Hello', extraStyle: {} },
                 quickTextData: null,
                 cameraDataList: [],
                 webDataList: [],
             },
         } as any);
-        expect(manager.foregroundData.marqueeData).toEqual({
+        expect(manager.foregroundData.marqueeBottomData).toEqual({
             text: 'Hello',
             extraStyle: {},
         });

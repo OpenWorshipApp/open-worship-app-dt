@@ -12,6 +12,7 @@ import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import appProvider from '../server/appProvider';
 import { getFileMetaData } from '../server/fileHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 function getAudioRepeatSettingName(src: string) {
     const md5 = appProvider.systemUtils.generateMD5(src);
@@ -33,9 +34,12 @@ export default function AudioBodyComp({
         settingName,
         false,
     );
+    const isRepeatingRef = useAppCurrentRef(isRepeating);
+    const setIsRepeatingRef = useAppCurrentRef(setIsRepeating);
     const handleToggleRepeating = useCallback(() => {
-        setIsRepeating(!isRepeating);
-    }, [isRepeating, setIsRepeating]);
+        setIsRepeatingRef.current(!isRepeatingRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="w-100" data-file-path={filePath}>
             <div className="d-flex align-items-center w-100 my-2">

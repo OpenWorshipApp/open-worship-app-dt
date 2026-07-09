@@ -7,15 +7,18 @@ import {
     useStylingColor,
     useStylingFontSize,
 } from '../_screen/preview/stylingHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function ScreenBibleAppearanceComp() {
     const [color, setColor] = useStylingColor();
     const [fontSize, setFontSize] = useStylingFontSize();
+    const setColorRef = useAppCurrentRef(setColor);
     const handleColorChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setColor(event.target.value as AppColorType);
+            setColorRef.current(event.target.value as AppColorType);
         },
-        [setColor],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div>

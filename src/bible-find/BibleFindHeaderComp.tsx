@@ -2,7 +2,7 @@ import { type ChangeEvent, type KeyboardEvent } from 'react';
 import { useCallback, useMemo, useRef } from 'react';
 
 import { useBibleFindController } from './BibleFindController';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -56,11 +56,16 @@ export default function BibleFindHeaderComp({
             setFindText = () => {};
         };
     }, []);
+    const bibleFindControllerRef = useAppCurrentRef(bibleFindController);
+    const textRef = useAppCurrentRef(text);
+    const setTextRef = useAppCurrentRef(setText);
+    const attemptTimeoutRef = useAppCurrentRef(attemptTimeout);
+    const handleFindingRef = useAppCurrentRef(handleFinding);
     const keyUpHandling = useCallback(
         (event: KeyboardEvent<HTMLInputElement>) => {
-            if (bibleFindController.menuControllerSession !== null) {
+            if (bibleFindControllerRef.current.menuControllerSession !== null) {
                 if (event.key === 'Enter') {
-                    bibleFindController.closeSuggestionMenu();
+                    bibleFindControllerRef.current.closeSuggestionMenu();
                 }
                 return;
             }
@@ -68,31 +73,35 @@ export default function BibleFindHeaderComp({
                 event.preventDefault();
                 event.stopPropagation();
                 const isEnterKey = event.key === 'Enter';
-                const newText = isEnterKey ? text : '';
-                setText(newText);
-                attemptTimeout(() => {
-                    handleFinding(newText, isEnterKey);
+                const newText = isEnterKey ? textRef.current : '';
+                setTextRef.current(newText);
+                attemptTimeoutRef.current(() => {
+                    handleFindingRef.current(newText, isEnterKey);
                 }, true);
             }
         },
-        [bibleFindController, text, setText, attemptTimeout, handleFinding],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     // empty deps is intentional to only trigger finding on the first render
     useAppEffect(() => {
         handleFinding(text);
     }, []);
+    const setText1Ref = useAppCurrentRef(setText1);
     const handleInputChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            bibleFindController.handleNewValue(event);
-            setText1(event.target.value);
+            bibleFindControllerRef.current.handleNewValue(event);
+            setText1Ref.current(event.target.value);
         },
-        [bibleFindController, setText1],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleRefreshing = useCallback(() => {
-        attemptTimeout(() => {
-            handleFinding(text, true);
+        attemptTimeoutRef.current(() => {
+            handleFindingRef.current(textRef.current, true);
         }, true);
-    }, [attemptTimeout, handleFinding, text]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <>
             <input

@@ -13,7 +13,7 @@ import AppRangeComp from '../../others/AppRangeComp';
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import appProvider from '../../server/appProvider';
 import { showAppAlert } from '../../popup-widget/popupWidgetHelpers';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import {
     MIN_THUMBNAIL_SCALE,
@@ -88,23 +88,25 @@ export default function AppDocumentPreviewerFooterComp({
     const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
     const [thumbnailSizeScale, setThumbnailSizeScale] =
         useVarySlideThumbnailSizeScale();
-    const handleSlideChoosing = useCallback(
-        async (event: any) => {
-            const slide = await selectSlide(
-                event,
-                selectedVaryAppDocument.filePath,
-            );
-            if (slide === null) {
-                showAppAlert(
-                    'No Slide Available',
-                    'No other slide found in the slide directory',
-                );
-            } else {
-                setSelectedAppDocument(slide);
-            }
-        },
-        [selectedVaryAppDocument, setSelectedAppDocument],
+    const selectedVaryAppDocumentRef = useAppCurrentRef(
+        selectedVaryAppDocument,
     );
+    const setSelectedAppDocumentRef = useAppCurrentRef(setSelectedAppDocument);
+    const handleSlideChoosing = useCallback(async (event: any) => {
+        const slide = await selectSlide(
+            event,
+            selectedVaryAppDocumentRef.current.filePath,
+        );
+        if (slide === null) {
+            showAppAlert(
+                'No Slide Available',
+                'No other slide found in the slide directory',
+            );
+        } else {
+            setSelectedAppDocumentRef.current(slide);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="app-document-previewer-footer card-footer w-100 p-0"

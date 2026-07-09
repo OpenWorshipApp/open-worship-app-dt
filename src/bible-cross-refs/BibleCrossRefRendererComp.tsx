@@ -15,7 +15,7 @@ import {
 } from '../helper/ai/bibleCrossRefHelpers';
 import { useAvailable as useAnthropicAvailable } from '../helper/ai/anthropicHelpers';
 import { tran } from '../lang/langHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync } from '../helper/appHooks';
 import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';

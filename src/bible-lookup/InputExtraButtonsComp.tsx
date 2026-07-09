@@ -6,7 +6,11 @@ import {
     INPUT_TEXT_CLASS,
     setBibleLookupInputFocus,
 } from './selectionHelpers';
-import { useAppEffect, useAppEffectAsync } from '../helper/debuggerHelpers';
+import {
+    useAppEffect,
+    useAppEffectAsync,
+    useAppCurrentRef,
+} from '../helper/appHooks';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
@@ -103,20 +107,20 @@ export default function InputExtraButtonsComp() {
         wrapper.style.right = `${parentRect.right - inputRect.right + 5}px`;
         wrapper.style.zIndex = '5';
     }, []);
-    const handleTabbing = useCallback(
-        async (event?: any) => {
-            const newInputText = await checkNewTabInputText(
-                viewController,
-                inputText,
-                event,
-            );
-            if (newInputText === null) {
-                return;
-            }
-            viewController.inputText = newInputText;
-        },
-        [viewController, inputText],
-    );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const inputTextRef = useAppCurrentRef(inputText);
+    const handleTabbing = useCallback(async (event?: any) => {
+        const newInputText = await checkNewTabInputText(
+            viewControllerRef.current,
+            inputTextRef.current,
+            event,
+        );
+        if (newInputText === null) {
+            return;
+        }
+        viewControllerRef.current.inputText = newInputText;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useKeyboardRegistering([tabEventMap], handleTabbing, []);
     useKeyboardRegistering(
         [escapeEventMap],
@@ -154,13 +158,12 @@ export default function InputExtraButtonsComp() {
         viewController.inputText = '';
         setBibleLookupInputFocus();
     };
-    const handleClearInputChunk = useCallback(
-        (event: MouseEvent) => {
-            event.stopPropagation();
-            removeInputTextChunk();
-        },
-        [removeInputTextChunk],
-    );
+    const removeInputTextChunkRef = useAppCurrentRef(removeInputTextChunk);
+    const handleClearInputChunk = useCallback((event: MouseEvent) => {
+        event.stopPropagation();
+        removeInputTextChunkRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             ref={extractButtonsRef}

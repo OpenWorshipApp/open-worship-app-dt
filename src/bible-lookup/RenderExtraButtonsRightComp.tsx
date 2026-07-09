@@ -8,6 +8,7 @@ import {
     SettingButtonComp,
 } from '../others/commonButtons';
 import appProvider from '../server/appProvider';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const CLOSE_ON_ADD_BIBLE_ITEM = 'close-on-add-bible-item';
 
@@ -50,19 +51,28 @@ export default function RenderExtraButtonsRightComp({
         CLOSE_ON_ADD_BIBLE_ITEM,
         false,
     );
+    const isKeepingPopupRef = useAppCurrentRef(isKeepingPopup);
+    const setIsKeepingPopupRef = useAppCurrentRef(setIsKeepingPopup);
     const handleToggleKeepingPopup = useCallback(() => {
-        setIsKeepingPopup(!isKeepingPopup);
-    }, [isKeepingPopup, setIsKeepingPopup]);
+        setIsKeepingPopupRef.current(!isKeepingPopupRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleCheckboxChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const checked = event.target.checked;
-            setIsKeepingPopup(checked);
+            setIsKeepingPopupRef.current(checked);
         },
-        [setIsKeepingPopup],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
+    const isAdvanceLookupOpenedRef = useAppCurrentRef(isAdvanceLookupOpened);
+    const setIsAdvanceLookupOpenedRef = useAppCurrentRef(
+        setIsAdvanceLookupOpened,
     );
     const handleToggleLookupOnline = useCallback(() => {
-        setIsAdvanceLookupOpened(!isAdvanceLookupOpened);
-    }, [isAdvanceLookupOpened, setIsAdvanceLookupOpened]);
+        setIsAdvanceLookupOpenedRef.current(!isAdvanceLookupOpenedRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="d-flex">
             {appProvider.isPagePresenter ? (

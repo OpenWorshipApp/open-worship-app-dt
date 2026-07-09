@@ -11,6 +11,7 @@ import type { AnyObjectType } from '../../helper/typeHelpers';
 import { forceReloadAppWindows } from '../settingHelpers';
 import { infoEditorSchemaHandler } from './schemas/bibleSchemaHelpers';
 import { bibleInfoUri } from './schemas/bibleEditorUriHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 async function handleSaving(
     oldBibleInfo: BibleJsonInfoType,
@@ -51,15 +52,14 @@ export default function BibleXMLInfoEditorComp({
             },
         );
     }, []);
-    const handleSave = useCallback(
-        (newBibleInfo: BibleJsonInfoType) => {
-            if (bibleInfo === null) {
-                return;
-            }
-            handleSaving(bibleInfo, newBibleInfo);
-        },
-        [bibleInfo],
-    );
+    const bibleInfoRef = useAppCurrentRef(bibleInfo);
+    const handleSave = useCallback((newBibleInfo: BibleJsonInfoType) => {
+        if (bibleInfoRef.current === null) {
+            return;
+        }
+        handleSaving(bibleInfoRef.current, newBibleInfo);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (isPending) {
         return <LoadingComp />;
     }

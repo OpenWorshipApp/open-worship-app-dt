@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import BibleCrossRefRendererComp from '../bible-cross-refs/BibleCrossRefRendererComp';
 import BibleItem from '../bible-list/BibleItem';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 

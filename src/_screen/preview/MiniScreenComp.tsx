@@ -8,6 +8,7 @@ import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { getAllScreenManagers } from '../managers/screenManagerHelpers';
 import ScreenManager from '../managers/ScreenManager';
 import MiniScreenBodyComp from './MiniScreenBodyComp';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 ScreenManager.initReceiveScreenMessage();
 export default function MiniScreenComp() {
@@ -15,15 +16,14 @@ export default function MiniScreenComp() {
         'mini-screen-previewer',
         defaultRangeSize.size,
     );
-    const setPreviewScale1 = useCallback(
-        (size: number) => {
-            setPreviewScale(size);
-            for (const screenManager of getAllScreenManagers()) {
-                screenManager.fireRefreshEvent();
-            }
-        },
-        [setPreviewScale],
-    );
+    const setPreviewScaleRef = useAppCurrentRef(setPreviewScale);
+    const setPreviewScale1 = useCallback((size: number) => {
+        setPreviewScaleRef.current(size);
+        for (const screenManager of getAllScreenManagers()) {
+            screenManager.fireRefreshEvent();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
     useZoomingRegistering(containerRef, {

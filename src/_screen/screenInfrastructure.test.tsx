@@ -317,8 +317,14 @@ describe('screen infrastructure', () => {
             }
             if (key === screenManagerSettingNames.FOREGROUND) {
                 return JSON.stringify({
-                    1: { marqueeData: { text: 'hello' }, timeDataList: [] },
-                    9: { marqueeData: { text: 'skip' }, timeDataList: [] },
+                    1: {
+                        marqueeBottomData: { text: 'hello' },
+                        timeDataList: [],
+                    },
+                    9: {
+                        marqueeBottomData: { text: 'skip' },
+                        timeDataList: [],
+                    },
                 });
             }
             if (key === screenManagerSettingNames.BACKGROUND) {
@@ -402,7 +408,7 @@ describe('screen infrastructure', () => {
         expect(createMouseEventMock).toHaveBeenCalledWith(12, 24);
 
         expect(screenHelpers.getForegroundDataListOnScreenSetting()).toEqual({
-            1: { marqueeData: { text: 'hello' }, timeDataList: [] },
+            1: { marqueeBottomData: { text: 'hello' }, timeDataList: [] },
         });
         expect(screenHelpers.getBackgroundSrcListOnScreenSetting()).toEqual({
             1: { type: 'color', src: '#fff' },

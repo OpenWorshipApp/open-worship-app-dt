@@ -1,14 +1,8 @@
 import './AppRangeComp.scss';
 
-import {
-    type ChangeEvent,
-    type RefObject,
-    useCallback,
-    useRef,
-    useState,
-} from 'react';
+import { type ChangeEvent, type RefObject, useCallback, useState } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 
 export type AppRangeDefaultType = {
     size: number;
@@ -91,10 +85,8 @@ export function useZoomingRegistering<T extends HTMLElement>(
     containerRef: RefObject<T | null>,
     { value, setValue, defaultSize }: HandleCtrlWheelOptions,
 ) {
-    const valueRef = useRef(value);
-    valueRef.current = value;
-    const setValueRef = useRef(setValue);
-    setValueRef.current = setValue;
+    const valueRef = useAppCurrentRef(value);
+    const setValueRef = useAppCurrentRef(setValue);
 
     useAppEffect(() => {
         const container = containerRef.current;
@@ -210,18 +202,28 @@ export default function AppRangeComp({
                 JSON.stringify(defaultSize),
         );
     }
+    const setLocalValue1Ref = useAppCurrentRef(setLocalValue1);
+    const localValueRef = useAppCurrentRef(localValue);
+    const defaultSizeRef = useAppCurrentRef(defaultSize);
     const handleZoomOut = useCallback(() => {
-        setLocalValue1(localValue - defaultSize.step);
-    }, [setLocalValue1, localValue, defaultSize.step]);
+        setLocalValue1Ref.current(
+            localValueRef.current - defaultSizeRef.current.step,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleRangeChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setLocalValue1(Number.parseInt(event.target.value));
+            setLocalValue1Ref.current(Number.parseInt(event.target.value));
         },
-        [setLocalValue1],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleZoomIn = useCallback(() => {
-        setLocalValue1(localValue + defaultSize.step);
-    }, [setLocalValue1, localValue, defaultSize.step]);
+        setLocalValue1Ref.current(
+            localValueRef.current + defaultSizeRef.current.step,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="form form-inline d-flex app-range"

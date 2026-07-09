@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import type { CanvasItemEventDataType } from './CanvasController';
 import type CanvasController from './CanvasController';
 import { useCanvasControllerContext } from './CanvasController';
@@ -12,8 +12,7 @@ export function useCanvasControllerEvents(
     callback?: ListenerType<CanvasItemEventDataType>,
 ) {
     const canvasController = useCanvasControllerContext();
-    const callbackRef = useRef(callback);
-    callbackRef.current = callback;
+    const callbackRef = useAppCurrentRef(callback);
     useAppEffect(() => {
         const regEvents = canvasController.itemRegisterEventListener(
             eventTypes,

@@ -7,6 +7,7 @@ import {
     handleAudioEnding,
 } from '../../helper/audioControlHelpers';
 import { useScreenManagerContext } from '../managers/screenManagerHooks';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function MiniScreenAudioHandlersComp({
     src,
@@ -19,20 +20,22 @@ export default function MiniScreenAudioHandlersComp({
     const [isRepeating, setIsRepeating] = useState(true);
     const decodeSrc = decodeURIComponent(src);
     const fileFullName = decodeSrc.split('/').pop() || decodeSrc;
-    const handleTimeUpdate = useCallback(
-        (event: any) => {
-            const { screenBackgroundManager } = screenManager;
-            screenBackgroundManager.setBackgroundVideoCurrentTimeForce(
-                videoId,
-                event.currentTarget.currentTime,
-                false,
-            );
-        },
-        [screenManager, videoId],
-    );
+    const screenManagerRef = useAppCurrentRef(screenManager);
+    const videoIdRef = useAppCurrentRef(videoId);
+    const handleTimeUpdate = useCallback((event: any) => {
+        const { screenBackgroundManager } = screenManagerRef.current;
+        screenBackgroundManager.setBackgroundVideoCurrentTimeForce(
+            videoIdRef.current,
+            event.currentTarget.currentTime,
+            false,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const isRepeatingRef = useAppCurrentRef(isRepeating);
     const handleToggleRepeating = useCallback(() => {
-        setIsRepeating(!isRepeating);
-    }, [isRepeating]);
+        setIsRepeating(!isRepeatingRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="w-100">
             <hr className="w-100" />

@@ -30,9 +30,12 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
 ## 1. Localization is dynamic — target by structure, not text
 
 - The app renders in **Khmer (`km-KH`)** or **English (`en`)**, switchable in
-  Settings → Language (`Khmer` / `English` buttons). Current value:
-  `localStorage['language-locale']` (e.g. `"km-KH"`). `document.documentElement.lang` follows
-  the active render.
+  Settings → Language (`Khmer` / `English` buttons).
+- ⚠️ **Do NOT trust `window.localStorage['language-locale']`** — it is a stale leftover key
+  (verified 2026-07-08: it read `"km-KH"` while the UI rendered English). Settings now go
+  through `appLocalStorage` (`src/helper/settingHelpers.ts` → `getSetting`), which is a
+  separate store. To read the real locale: open Settings → Language and see which button is
+  highlighted, or check `document.documentElement.lang` (follows the active render).
 - **Consequence:** the same button reads `ស្វែងរកព្រះគម្ពីរ` or `Bible Lookup` depending on
   locale. Snapshot `uid`s and text both shift.
 - **Do:** click by `button.nav-link` + CSS state (`.active`, `.app-on-screen`), by icon class
@@ -147,9 +150,18 @@ Keep the main window on `presenter.html`.
   Pick step-by-step, or use the **Bible Reader** page which resolves full refs correctly.
   Also: a single `fill()` = one change event (test artifact); use char-by-char `type_text` to
   mimic a real user.
-- **Slide/lyric previews live in `<iframe srcdoc>`** — not reachable from document-level
-  `querySelectorAll`, and awkward to target. To present a slide, **double-click** the slide/
-  media item (verified: double-click the video item set it as the live background).
+- **Presenting is a SINGLE-CLICK TOGGLE, not double-click** (verified 2026-07-08 against
+  `ScreenVaryAppDocumentManager.handleSlideSelecting`): one click on a slide thumbnail (or a
+  background media item) presents it; clicking the **same** item again clears it. A
+  **double-click therefore nets to nothing** — present + immediately un-present — and if
+  another slide was live, the first click replaces it and the second click clears the layer
+  (this exact accident cleared the live slide during a run). Use `click` (no `dblClick`),
+  then verify via `.app-on-screen` before proceeding.
+- **Slide/lyric previews live in `<iframe srcdoc>`** (lyric ones inside a
+  `shadowing-parent-width-tag` shadow root, `sandbox="allow-scripts"` so their DOM is
+  unreadable from the parent — inspect the `srcdoc` attribute string instead). A lyric's
+  slide 1 is often just the `<h1>` title, which at ~0.2 preview scale looks like a blank
+  dark card — not a rendering bug.
 
 ---
 
@@ -175,8 +187,9 @@ Real console issues to flag: uncaught errors, unhandled promise rejections, Reac
 key/warning spam, failed dynamic imports.
 
 ## 8. Known-benign network — DO NOT report
-- On presenter load the **same background video is fetched 3×** (`award background(1).mp4`,
-  all `200`) — redundant I/O, not an error.
+- On presenter load the **same live background video is fetched repeatedly** (3× observed
+  2026-07-06 with `award background(1).mp4`; **11×** observed 2026-07-08 with `6_cv.mp4`, all
+  `200`) — redundant I/O, not an error, but worth tracking as it may be growing.
 - `file://` media loads are normal.
 Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken images/media.
 

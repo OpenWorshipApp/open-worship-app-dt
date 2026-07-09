@@ -3,35 +3,37 @@ import { type ChangeEvent, useCallback } from 'react';
 import { tran } from '../../../lang/langHelpers';
 import AppRangeComp from '../../../others/AppRangeComp';
 import { useCanvasItemPropsSetterContext } from '../CanvasItem';
+import { useAppCurrentRef } from '../../../helper/appHooks';
 
 export default function ShapePropertiesComp() {
     const [props, setProps] = useCanvasItemPropsSetterContext();
     const roundSizePixel = props.roundSizePixel ?? 0;
     const roundSizePercentage =
         roundSizePixel > 0 ? 0 : (props.roundSizePercentage ?? 0);
+    const setPropsRef = useAppCurrentRef(setProps);
     const handleBackdropFilterChange = useCallback(
         (e: ChangeEvent<HTMLInputElement>) => {
-            setProps({
+            setPropsRef.current({
                 backdropFilter: Number.parseInt(e.target.value, 10),
             });
         },
-        [setProps],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
-    const handleRoundPercentageChange = useCallback(
-        (value: number) => {
-            setProps({ roundSizePercentage: value });
-        },
-        [setProps],
-    );
+    const handleRoundPercentageChange = useCallback((value: number) => {
+        setPropsRef.current({ roundSizePercentage: value });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleRoundPixelChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const value = Number.parseInt(event.target.value, 10) || 0;
-            setProps({
+            setPropsRef.current({
                 roundSizePixel: value,
                 roundSizePercentage: 0,
             });
         },
-        [setProps],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div className="d-flex flex-column gap-2" style={{ maxWidth: '280px' }}>

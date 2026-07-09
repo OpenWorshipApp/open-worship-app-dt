@@ -11,6 +11,8 @@ Pair it with:
 - [knowledge-base.md](./knowledge-base.md) — traps (popup windows, dynamic locale, benign
   noise) — **read before driving anything**.
 - [test-plan.md](./test-plan.md) — scenario checklist + report format.
+- [coverage-matrix.md](./coverage-matrix.md) — the enumerated coverage contract (stable
+  row IDs) that full-coverage runs must fill in.
 
 > **Component paths** below read top-down like a breadcrumb: `Page → Parent → Child`.
 > Every React component in this app is named `…Comp` (project convention). Source files
@@ -125,8 +127,10 @@ Source: [app-document-presenter/PresenterComp.tsx](../../../../src/app-document-
 | `PresenterComp` tab bar (`Documents`/`Lyrics`/`Bibles`/`Foreground`) | [others/TabRenderComp.tsx](../../../../src/others/TabRenderComp.tsx) | 🖱️ a tab → toggles it into the split view. 🖱️R a tab → **solo** (that tab only). A tab with live content shows `.app-on-screen`. |
 | `PresenterComp → RenderToggleFullViewComp` (fullscreen widget) | ⤴ PresenterComp.tsx | 🖱️ (icon `bi bi-arrows-fullscreen` / `bi-fullscreen-exit`) → toggles `.app-full-view` on the presenter panel (widget-fullscreen, not OS fullscreen). |
 | `PresenterComp → AppDocumentPreviewerComp` (Documents tab) | [app-document-presenter/items/AppDocumentPreviewerComp.tsx](../../../../src/app-document-presenter/items/AppDocumentPreviewerComp.tsx) | Slide thumbnails (`<iframe srcdoc>`). 🖱️🖱️ a thumb → send that slide to screen. 🖱️R → context menu. ⌨️ `Arrows`/`PageUp`/`PageDown`/`Space` navigate when focused. 🎚️ footer size slider (`.app-range`, `max=200`) rescales thumbs. |
+| ↳ `SlideAutoPlayComp` (auto-play widget) | [slide-auto-play/SlideAutoPlayComp.tsx](../../../../src/slide-auto-play/SlideAutoPlayComp.tsx) | 🖱️ stopwatch icon (`bi bi-stopwatch-fill`) → expands the widget. ⌨️✎ seconds input. 🖱️ play (`bi bi-play`) → slides auto-advance on the timer; 🖱️ pause. 🖱️ red `bi bi-x-lg` → collapses. Also used inside `ForegroundImagesSlideShowComp`. |
 | `PresenterComp → LyricHandlerComp` (Lyrics tab) | [lyric-list/LyricHandlerComp.tsx](../../../../src/lyric-list/LyricHandlerComp.tsx) | Renders selected lyric verses (in `<iframe>`). 🖱️🖱️ a verse → send to screen (`.app-on-screen`). |
-| `PresenterComp → PresenterBiblePreviewerRenderComp` (Bibles tab) | [app-document-presenter/PresenterBiblePreviewerRenderComp.tsx](../../../../src/app-document-presenter/PresenterBiblePreviewerRenderComp.tsx) | Shows the currently looked-up verse. 🖱️🖱️ → send verse to screen. |
+| `PresenterComp → PresenterBiblePreviewerRenderComp` (Bibles tab) | [app-document-presenter/PresenterBiblePreviewerRenderComp.tsx](../../../../src/app-document-presenter/PresenterBiblePreviewerRenderComp.tsx) | Shows the currently looked-up verse. 🖱️🖱️ → send verse to screen. Hosts a resizable split with `BibleCustomStyleComp` (next row). |
+| ↳ `BibleCustomStyleComp` (bible appearance) | [screen-setting/BibleCustomStyleComp.tsx](../../../../src/screen-setting/BibleCustomStyleComp.tsx) | Two cards: **Appearance** (`ScreenBibleAppearanceComp` — font size/color/etc. of the on-screen bible text) and **Text Shadow** (`ScreenBibleTextShadow`). 🎚️/🖱️ a control → live bible text on the mini-screen restyles. Restore values afterward. |
 | `PresenterComp → PresenterForegroundComp` (Foreground tab) | see next block | 8 stacked foreground widgets. |
 
 ##### `PresenterForegroundComp` widgets (Foreground tab)
@@ -135,7 +139,8 @@ Source: [presenter-foreground/PresenterForegroundComp.tsx](../../../../src/prese
 
 | Component | Source | Interactions & expected result |
 |---|---|---|
-| `ForegroundMarqueeComp` | [ForegroundMarqueeComp.tsx](../../../../src/presenter-foreground/ForegroundMarqueeComp.tsx) | ⌨️✎ marquee text input. 🖱️ Show → scrolls text on screen. ⇕ drag show-button → drop on mini-screen target. |
+| `ForegroundMarqueeTopComp` | [ForegroundMarqueeTopComp.tsx](../../../../src/presenter-foreground/ForegroundMarqueeTopComp.tsx) | ⌨️✎ marquee top text input. 🎚️ scroll speed %. 🖱️ Show → scrolls text along the top of the screen. ⇕ drag show-button → drop on mini-screen target. |
+| `ForegroundMarqueeBottomComp` | [ForegroundMarqueeBottomComp.tsx](../../../../src/presenter-foreground/ForegroundMarqueeBottomComp.tsx) | ⌨️✎ marquee bottom text input. 🎚️ scroll speed %. 🖱️ Show → scrolls text along the bottom of the screen. ⇕ drag show-button → drop on mini-screen target. |
 | `ForegroundQuickTextComp` | [ForegroundQuickTextComp.tsx](../../../../src/presenter-foreground/ForegroundQuickTextComp.tsx) | ⌨️✎ text. 🖱️ Show. ⇕ drag→drop. |
 | `ForegroundCountDownComp` | [ForegroundCountDownComp.tsx](../../../../src/presenter-foreground/ForegroundCountDownComp.tsx) | Two modes. **To datetime:** ⌨️✎ `date` + `time` inputs, 🖱️ Reset (`bi bi-arrow-counterclockwise`), 🖱️ `Start Countdown to DateTime` (`bi bi-play-fill`). **Duration:** ⌨️✎ hours/minutes number inputs, 🖱️ `Start Countdown`. 🖱️R the start button → force choose target screen. ⇕ drag start button → drop onto a mini-screen. `Hide Countdown` button when live. |
 | `ForegroundStopwatchComp` | [ForegroundStopwatchComp.tsx](../../../../src/presenter-foreground/ForegroundStopwatchComp.tsx) | 🖱️ start/stop; ⌨️✎ config inputs; ⇕ drag→drop. |
@@ -191,6 +196,9 @@ Root `BibleReaderComp` (no `#app-header`). Source:
 | ↳ `RenderBookOptionsComp` / `RenderChapterOptionsComp` / `RenderVerseOptionsComp` | [bible-lookup/](../../../../src/bible-lookup/) | 🖱️ pick book / chapter / verse options; ⌨️ arrow navigation within options. |
 | ↳ `BibleLookupInputHistoryComp` | [bible-lookup/BibleLookupInputHistoryComp.tsx](../../../../src/bible-lookup/BibleLookupInputHistoryComp.tsx) | 🖱️ a history entry → re-runs that lookup. |
 | ↳ `BibleLookupBodyPreviewerComp` | [bible-lookup/BibleLookupBodyPreviewerComp.tsx](../../../../src/bible-lookup/BibleLookupBodyPreviewerComp.tsx) | Rendered verse panel; 🖱️🖱️ to present. |
+| ↳ `RenderBibleLookupHeaderComp` + `RenderExtraButtonsRightComp` | [bible-lookup/RenderBibleLookupHeaderComp.tsx](../../../../src/bible-lookup/RenderBibleLookupHeaderComp.tsx) | Lookup header: 🖱️ bible-version selector → verse re-renders in that version. 🖱️ the **advance-lookup toggle** → opens/closes a resizable split (`Lookup` + `Bible Online Lookup`) hosting Bible Find (next row). State persists (`bible-lookup-online-*` setting). |
+| ↳ `BibleFindPreviewerComp` (Bible Find, in the advance-lookup split) | [bible-find/BibleFindPreviewerComp.tsx](../../../../src/bible-find/BibleFindPreviewerComp.tsx) | Find-in-bible search. ⌨️✎ query in `BibleFindHeaderComp`; results render per page (`BibleFindRenderPerPageComp`/`RenderFoundItemComp`); 🖱️ page numbers (`RenderPageNumberComp`) paginate. Empty query/results → sane empty state. |
+| ↳ Cross-references (`bible-cross-refs`) | [bible-cross-refs/BibleCrossRefRendererComp.tsx](../../../../src/bible-cross-refs/BibleCrossRefRendererComp.tsx) | Cross-reference items for the current verse (`BibleCrossRefRenderFoundItemsComp`); 🖱️ an item → that ref renders. AI variants (Anthropic/OpenAI renderers) need configured API keys — mark BLOCKED if unconfigured, not FAIL. |
 
 > Known Low finding (KB §5): the header **modal** lookup only book-filters a full `John 3:16`
 > (adds a history entry but doesn't jump to the verse). The **Reader page** resolves it fully.

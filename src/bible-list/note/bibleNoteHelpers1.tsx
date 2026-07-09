@@ -5,7 +5,7 @@ import { getAllLangsAsync } from '../../lang/langHelpers';
 import { useIsOnTop } from '../../server/appHelpers';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { useThemeSource } from '../../others/themeHelpers';
-import { useAppEffect, useAppEffectAsync } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppEffectAsync } from '../../helper/appHooks';
 import { useWatchStateSettingString } from '../../helper/settingHelpers';
 import { BIBLE_KEY_SETTING_NAME } from './bibleNoteHelpers';
 import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';

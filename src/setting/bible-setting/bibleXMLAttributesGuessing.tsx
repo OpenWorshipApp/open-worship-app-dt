@@ -7,7 +7,7 @@ import {
     toLocaleNum,
     tran,
 } from '../../lang/langHelpers';
-import { useAppStateAsync } from '../../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
 
 function BibleKeyXMLInputComp({
     defaultVale,
@@ -34,12 +34,11 @@ function BibleKeyXMLInputComp({
         },
         [onChange, takenBibleKeys],
     );
-    const handleChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
-            setValue1(e.target.value);
-        },
-        [setValue1],
-    );
+    const setValue1Ref = useAppCurrentRef(setValue1);
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setValue1Ref.current(e.target.value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="w-100 h-100">
             <div>{tran('Define a Bible key')}</div>
@@ -139,12 +138,11 @@ function BibleNumbersMapXMLInputComp({
         },
         [onChange],
     );
-    const handleChange = useCallback(
-        (e: ChangeEvent<HTMLInputElement>) => {
-            setValue1(e.target.value);
-        },
-        [setValue1],
-    );
+    const setValue1Ref = useAppCurrentRef(setValue1);
+    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+        setValue1Ref.current(e.target.value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const langCode = getLangCode(locale) ?? 'en';
     return (
         <div className="w-100 h-100">

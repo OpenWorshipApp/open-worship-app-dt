@@ -11,6 +11,7 @@ import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpe
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
     return import('./MiniScreenAudioHandlersComp');
@@ -58,8 +59,12 @@ function BackgroundAudioSwitchComp({
     isAudioHandlersVisible: boolean;
     setIsAudioHandlersVisible: (isVisible: boolean) => void;
 }>) {
+    const isAudioHandlersVisibleRef = useAppCurrentRef(isAudioHandlersVisible);
+    const setIsAudioHandlersVisibleRef = useAppCurrentRef(
+        setIsAudioHandlersVisible,
+    );
     const handleToggleAudioHandlers = useCallback(() => {
-        if (isAudioHandlersVisible) {
+        if (isAudioHandlersVisibleRef.current) {
             const isPlaying = Array.from(
                 document.querySelectorAll<HTMLAudioElement>(
                     'audio[data-video-id]',
@@ -75,8 +80,11 @@ function BackgroundAudioSwitchComp({
                 return;
             }
         }
-        setIsAudioHandlersVisible(!isAudioHandlersVisible);
-    }, [isAudioHandlersVisible, setIsAudioHandlersVisible]);
+        setIsAudioHandlersVisibleRef.current(
+            !isAudioHandlersVisibleRef.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <button
             className={`btn btn-sm btn-${isAudioHandlersVisible ? 'primary' : 'outline-secondary'}`}
@@ -102,12 +110,16 @@ export default function ScreenPreviewerFooterComp() {
         },
         [screenManagerBase],
     );
-    const handleStageNumberChange = useCallback(
-        (event: any) => {
-            getNewStageNumber(event, stageNumber, setStageNumber1);
-        },
-        [stageNumber, setStageNumber1],
-    );
+    const stageNumberRef = useAppCurrentRef(stageNumber);
+    const setStageNumber1Ref = useAppCurrentRef(setStageNumber1);
+    const handleStageNumberChange = useCallback((event: any) => {
+        getNewStageNumber(
+            event,
+            stageNumberRef.current,
+            setStageNumber1Ref.current,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="card-footer w-100"

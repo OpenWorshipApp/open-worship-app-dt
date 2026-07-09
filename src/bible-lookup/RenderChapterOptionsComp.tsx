@@ -13,7 +13,7 @@ import {
 } from './selectionHelpers';
 import { useChapterMatch } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
-import { useAppStateAsync } from '../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { getChapterData } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 
@@ -53,9 +53,11 @@ function RenderChapterZeroComp({
     bookKey,
 }: Readonly<{ bibleKey: string; bookKey: string }>) {
     const [expanded, setExpanded] = useState(false);
+    const expandedRef = useAppCurrentRef(expanded);
     const handleToggleExpanded = useCallback(() => {
-        setExpanded(!expanded);
-    }, [expanded]);
+        setExpanded(!expandedRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="w-100 my-2"

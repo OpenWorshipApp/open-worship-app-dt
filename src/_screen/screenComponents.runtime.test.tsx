@@ -24,10 +24,15 @@ const appProviderMock = {
 
 let screenManager: any;
 
-vi.mock('../helper/debuggerHelpers', async () => {
+vi.mock('../helper/appHooks', async () => {
     const React = (await vi.importActual('react')) as any;
     return {
         useAppEffect: React.useEffect,
+        useAppCurrentRef: (target: any) => {
+            const ref = React.useRef(target);
+            ref.current = target;
+            return ref;
+        },
     };
 });
 

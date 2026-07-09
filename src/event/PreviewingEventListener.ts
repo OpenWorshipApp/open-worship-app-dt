@@ -1,6 +1,6 @@
-import { useRef, type DependencyList } from 'react';
+import type { DependencyList } from 'react';
 
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type Lyric from '../lyric-list/Lyric';
 import type AppDocument from '../app-document-list/AppDocument';
 import type { ListenerType } from './EventHandler';
@@ -67,8 +67,7 @@ export function useBibleItemShowing(
 }
 
 export function useLyricUpdating(listener: ListenerType<Lyric>) {
-    const listenerRef = useRef(listener);
-    listenerRef.current = listener;
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['update-lyric'],
@@ -85,8 +84,7 @@ export function useLyricUpdating(listener: ListenerType<Lyric>) {
 export function useVaryAppDocumentSelecting(
     listener: ListenerType<AppDocument | null>,
 ) {
-    const listenerRef = useRef(listener);
-    listenerRef.current = listener;
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['select-app-document'],
@@ -103,8 +101,7 @@ export function useVaryAppDocumentSelecting(
 export function useVaryAppDocumentUpdating(
     listener: ListenerType<AppDocument>,
 ) {
-    const listenerRef = useRef(listener);
-    listenerRef.current = listener;
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const event = previewingEventListener.registerEventListener(
             ['update-app-document'],

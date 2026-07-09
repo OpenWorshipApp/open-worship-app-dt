@@ -5,6 +5,7 @@ import LoadingComp from '../../others/LoadingComp';
 import { getAISetting } from '../../helper/ai/aiHelpers';
 import appProvider from '../../server/appProvider';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function AudioPlayerComp({
     src,
@@ -17,17 +18,16 @@ export default function AudioPlayerComp({
     onEnd: (audio: HTMLAudioElement) => void;
     refreshAudio: () => void;
 }>) {
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            showAppContextMenu(event, [
-                {
-                    menuElement: tran('Refresh'),
-                    onSelect: refreshAudio,
-                },
-            ]);
-        },
-        [refreshAudio],
-    );
+    const refreshAudioRef = useAppCurrentRef(refreshAudio);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        showAppContextMenu(event, [
+            {
+                menuElement: tran('Refresh'),
+                onSelect: refreshAudioRef.current,
+            },
+        ]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handlePlay = useCallback(
         (event: SyntheticEvent<HTMLAudioElement>) => {
             const el = event.currentTarget;
@@ -39,14 +39,16 @@ export default function AudioPlayerComp({
         },
         [],
     );
+    const onEndRef = useAppCurrentRef(onEnd);
     const handleEnded = useCallback(
         (event: SyntheticEvent<HTMLAudioElement>) => {
             const el = event.currentTarget;
             if (el && el.checkVisibility()) {
-                onEnd(el);
+                onEndRef.current(el);
             }
         },
-        [onEnd],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     if (src === undefined) {
         return (

@@ -93,8 +93,15 @@ export type ForegroundTimeDataType = {
     is24HourFormat?: boolean;
     extraStyle?: CSSProperties;
 };
-export type ForegroundMarqueDataType = {
+export const marqueePositionList = ['top', 'bottom'] as const;
+export type MarqueePositionType = (typeof marqueePositionList)[number];
+// Scroll speed as a percentage of the default pace: 200 scrolls twice as fast.
+export const DEFAULT_MARQUEE_SPEED_PERCENTAGE = 100;
+export const MIN_MARQUEE_SPEED_PERCENTAGE = 10;
+export const MAX_MARQUEE_SPEED_PERCENTAGE = 1000;
+export type ForegroundMarqueeDataType = {
     text: string;
+    speedPercentage?: number;
     extraStyle?: CSSProperties;
 };
 export type ForegroundQuickTextDataType = {
@@ -117,7 +124,8 @@ export type ForegroundDataType = {
     countdownData: ForegroundCountdownDataType | null;
     stopwatchData: ForegroundStopwatchDataType | null;
     timeDataList: ForegroundTimeDataType[];
-    marqueeData: ForegroundMarqueDataType | null;
+    marqueeTopData: ForegroundMarqueeDataType | null;
+    marqueeBottomData: ForegroundMarqueeDataType | null;
     quickTextData: ForegroundQuickTextDataType | null;
     cameraDataList: ForegroundCameraDataType[];
     webDataList: ForegroundWebDataType[];

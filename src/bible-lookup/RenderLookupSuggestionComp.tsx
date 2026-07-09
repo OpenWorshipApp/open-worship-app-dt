@@ -13,6 +13,7 @@ import { openBibleSetting } from '../setting/settingHelpers';
 import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
 import RenderBookOptionsComp from './RenderBookOptionsComp';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function RenderLookupSuggestionComp({
     applyChapterSelection,
@@ -86,20 +87,22 @@ export function BibleNotAvailableComp({
 }>) {
     const fontFamily = useBibleFontFamily(bibleKey);
     const viewController = useLookupBibleItemControllerContext();
+    const viewControllerRef = useAppCurrentRef(viewController);
     const handleBibleKeyChanging = useCallback(
         (
             _isContextMenu: boolean,
             _oldBibleKey: string,
             newBibleKey: string,
         ) => {
-            viewController.applyTargetOrBibleKey(
-                viewController.selectedBibleItem,
+            viewControllerRef.current.applyTargetOrBibleKey(
+                viewControllerRef.current.selectedBibleItem,
                 {
                     bibleKey: newBibleKey,
                 },
             );
         },
-        [viewController],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleBibleSettingOpening = useCallback(() => {
         openBibleSetting();

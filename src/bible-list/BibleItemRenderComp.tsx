@@ -32,6 +32,7 @@ import {
 } from './bibleHelpers';
 import FileSource from '../helper/FileSource';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath
@@ -100,72 +101,83 @@ export default function BibleItemRenderComp({
     };
     const isOnScreen = useIsOnScreen([bibleItem]);
 
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const showBibleLookupPopupRef = useAppCurrentRef(showBibleLookupPopup);
+    const filePathRef = useAppCurrentRef(filePath);
+    const indexRef = useAppCurrentRef(index);
     const handleContextMenuOpening = useCallback(
         async (event: MouseEvent<any>) => {
             const menuItems: ContextMenuItemType[] = [
                 {
                     menuElement: tran('Open'),
                     onSelect: (event) => {
-                        handleOpening(event, viewController, bibleItem);
+                        handleOpening(
+                            event,
+                            viewControllerRef.current,
+                            bibleItemRef.current,
+                        );
                     },
                 },
             ];
             const attachedBackgroundData =
                 await attachBackgroundManager.getAttachedBackground(
-                    filePath,
-                    bibleItem.id,
+                    filePathRef.current,
+                    bibleItemRef.current.id,
                 );
             if (attachedBackgroundData !== null) {
                 menuItems.push(
                     ...genRemovingAttachedBackgroundMenu(
-                        filePath,
-                        bibleItem.id,
+                        filePathRef.current,
+                        bibleItemRef.current.id,
                     ),
                 );
             }
             openBibleItemContextMenu(
                 event,
-                bibleItem,
-                index,
-                showBibleLookupPopup,
+                bibleItemRef.current,
+                indexRef.current,
+                showBibleLookupPopupRef.current,
                 menuItems,
             );
         },
-        [bibleItem, viewController, showBibleLookupPopup, filePath, index],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
-    const handleDataDropping = useCallback(
-        async (event: any) => {
-            changeDragEventStyle(event, 'opacity', '1');
-            const droppedData = extractDropData(event);
-            if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
-                const bible = await Bible.fromFilePath(filePath);
-                if (bible === null) {
-                    return;
-                }
-                const droppedBibleItem = droppedData.item as BibleItem;
-                if (droppedBibleItem.filePath !== undefined) {
-                    if (droppedBibleItem.filePath === bibleItem.filePath) {
-                        const toIndex = bible.getItemIndex(bibleItem);
-                        bible.moveItemToIndex(droppedBibleItem, toIndex);
-                        stopDraggingState(event);
-                        bible.save();
-                    }
-                }
-            } else {
-                handleAttachBackgroundDrop(event, {
-                    filePath,
-                    id: bibleItem.id,
-                });
+    const handleDataDropping = useCallback(async (event: any) => {
+        changeDragEventStyle(event, 'opacity', '1');
+        const droppedData = extractDropData(event);
+        if (droppedData?.type === DragTypeEnum.BIBLE_ITEM) {
+            const bible = await Bible.fromFilePath(filePathRef.current);
+            if (bible === null) {
+                return;
             }
-        },
-        [bibleItem, filePath],
-    );
+            const droppedBibleItem = droppedData.item as BibleItem;
+            if (droppedBibleItem.filePath !== undefined) {
+                if (
+                    droppedBibleItem.filePath === bibleItemRef.current.filePath
+                ) {
+                    const toIndex = bible.getItemIndex(bibleItemRef.current);
+                    bible.moveItemToIndex(droppedBibleItem, toIndex);
+                    stopDraggingState(event);
+                    bible.save();
+                }
+            }
+        } else {
+            handleAttachBackgroundDrop(event, {
+                filePath: filePathRef.current,
+                id: bibleItemRef.current.id,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleDragStartEvent = useCallback(
         (event: DragEvent<HTMLLIElement>) => {
-            handleDragStartHelper(event, bibleItem);
+            handleDragStartHelper(event, bibleItemRef.current);
         },
-        [bibleItem],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const handleDragOver = useCallback((event: DragEvent<HTMLLIElement>) => {
         event.preventDefault();
@@ -177,9 +189,14 @@ export default function BibleItemRenderComp({
     }, []);
     const handleDoubleClick = useCallback(
         (event: MouseEvent<HTMLLIElement>) => {
-            handleOpening(event, viewController, bibleItem);
+            handleOpening(
+                event,
+                viewControllerRef.current,
+                bibleItemRef.current,
+            );
         },
-        [viewController, bibleItem],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
 
     if (bibleItem.isError) {

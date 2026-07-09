@@ -8,7 +8,7 @@ import { HeadingNode, QuoteNode, registerRichText } from '@lexical/rich-text';
 import { mergeRegister } from '@lexical/utils';
 
 import prepopulatedRichText from './prepopulatedRichText';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect } from '../helper/appHooks';
 
 function initEditor() {
     const target = document.createElement('div');

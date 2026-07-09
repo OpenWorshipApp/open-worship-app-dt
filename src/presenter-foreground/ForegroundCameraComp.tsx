@@ -2,7 +2,7 @@ import { useCallback, type CSSProperties } from 'react';
 import { useRef } from 'react';
 
 import { tran } from '../lang/langHelpers';
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync, useAppCurrentRef } from '../helper/appHooks';
 import LoadingComp from '../others/LoadingComp';
 import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager';
 import {
@@ -56,12 +56,11 @@ function RenderCameraInfoComp({
         },
         [cameraInfo, genStyle],
     );
-    const handleContextMenuOpening = useCallback(
-        (event: any) => {
-            handleShowing(event, true);
-        },
-        [handleShowing],
-    );
+    const handleShowingRef = useAppCurrentRef(handleShowing);
+    const handleContextMenuOpening = useCallback((event: any) => {
+        handleShowingRef.current(event, true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleByDropped = useCallback(
         (event: any) => {
             const screenForegroundManager =
@@ -76,9 +75,11 @@ function RenderCameraInfoComp({
         },
         [cameraInfo, genStyle],
     );
+    const handleByDroppedRef = useAppCurrentRef(handleByDropped);
     const handleDragStart = useCallback(() => {
-        dragStore.onDropped = handleByDropped;
-    }, [handleByDropped]);
+        dragStore.onDropped = handleByDroppedRef.current;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="card m-1" style={{ width: `${width}px` }}>
             <div className="card-header app-ellipsis" title={cameraInfo.label}>

@@ -153,10 +153,15 @@ vi.mock('../../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: mocks.showAppContextMenuMock,
 }));
 
-vi.mock('../../helper/debuggerHelpers', async () => {
+vi.mock('../../helper/appHooks', async () => {
     const React = await import('react');
     return {
         useAppEffect: React.useEffect,
+        useAppCurrentRef: (target: any) => {
+            const ref = React.useRef(target);
+            ref.current = target;
+            return ref;
+        },
     };
 });
 

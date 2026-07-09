@@ -6,7 +6,7 @@ import {
     useStateSettingBoolean,
     useStateSettingNumber,
 } from '../helper/settingHelpers';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 
 export type NextDataType = {
     isNext: boolean;
@@ -23,9 +23,11 @@ function PlayingIconComp({
     setIsPlaying: (isPlaying: boolean) => void;
     timerSeconds: number;
 }>) {
+    const setIsPlayingRef = useAppCurrentRef(setIsPlaying);
     const handleStopPlaying = useCallback(() => {
-        setIsPlaying(false);
-    }, [setIsPlaying]);
+        setIsPlayingRef.current(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     useAppEffect(() => {
         if (timerSeconds <= 0) {
             return;
@@ -61,9 +63,11 @@ function PlayerComp({
         `${prefix}-slide-auto-play-playing`,
         false,
     );
+    const setIsPlayingRef = useAppCurrentRef(setIsPlaying);
     const handleStartPlaying = useCallback(() => {
-        setIsPlaying(true);
-    }, [setIsPlaying]);
+        setIsPlayingRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     if (!isPlaying) {
         return (
             <button
@@ -100,19 +104,24 @@ export default function SlideAutoPlayComp({
         `${prefix}-slide-auto-play-timer-seconds`,
         5,
     );
+    const setIsShowingRef = useAppCurrentRef(setIsShowing);
     const handleShowAutoPlay = useCallback(() => {
-        setIsShowing(true);
-    }, [setIsShowing]);
+        setIsShowingRef.current(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleHideAutoPlay = useCallback(() => {
-        setIsShowing(false);
-    }, [setIsShowing]);
+        setIsShowingRef.current(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const setTimerSecondsRef = useAppCurrentRef(setTimerSeconds);
     const handleTimerChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
-            setTimerSeconds(
+            setTimerSecondsRef.current(
                 Math.max(0, Number.parseInt(event.target.value) || 0),
             );
         },
-        [setTimerSeconds],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     if (!isShowing) {
         return (

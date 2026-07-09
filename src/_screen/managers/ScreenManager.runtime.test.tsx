@@ -380,7 +380,7 @@ describe('ScreenManager runtime orchestration', () => {
             {
                 screenId: 3,
                 type: 'foreground',
-                data: { marqueeData: { text: 'hello' } },
+                data: { marqueeBottomData: { text: 'hello' } },
             } as any,
             true,
         );
@@ -389,7 +389,7 @@ describe('ScreenManager runtime orchestration', () => {
             {
                 screenId: 3,
                 type: 'foreground',
-                data: { marqueeData: { text: 'hello' } },
+                data: { marqueeBottomData: { text: 'hello' } },
                 isScreen: false,
             },
         );
@@ -547,7 +547,7 @@ describe('ScreenManager runtime orchestration', () => {
         await ScreenManager.syncScreenManagerGroup({
             screenId: 9,
             type: 'foreground',
-            data: { marqueeData: { text: 'ignore' } },
+            data: { marqueeBottomData: { text: 'ignore' } },
         } as any);
         expect(MockForegroundManager.receiveSyncScreen).not.toHaveBeenCalled();
 
@@ -556,7 +556,7 @@ describe('ScreenManager runtime orchestration', () => {
         await ScreenManager.syncScreenManagerGroup({
             screenId: 9,
             type: 'foreground',
-            data: { marqueeData: { text: 'blocked' } },
+            data: { marqueeBottomData: { text: 'blocked' } },
         } as any);
         expect(MockForegroundManager.receiveSyncScreen).not.toHaveBeenCalled();
 
@@ -564,12 +564,12 @@ describe('ScreenManager runtime orchestration', () => {
         await ScreenManager.syncScreenManagerGroup({
             screenId: 9,
             type: 'foreground',
-            data: { marqueeData: { text: 'allowed' } },
+            data: { marqueeBottomData: { text: 'allowed' } },
         } as any);
         expect(MockForegroundManager.receiveSyncScreen).toHaveBeenCalledWith({
             screenId: 10,
             type: 'foreground',
-            data: { marqueeData: { text: 'allowed' } },
+            data: { marqueeBottomData: { text: 'allowed' } },
         });
         expect(
             sibling.noSyncGroupMap.get(MockForegroundManager.eventNamePrefix),

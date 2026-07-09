@@ -4,6 +4,7 @@ import ItemColorNoteComp from '../../others/ItemColorNoteComp';
 import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
 import { useCallback, useState } from 'react';
 import ShowingScreenIcon from './ShowingScreenIcon';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function ScreenPreviewerHeaderComp() {
     const screenManagerBase = useScreenManagerBaseContext();
@@ -15,9 +16,12 @@ export default function ScreenPreviewerHeaderComp() {
         },
         [screenManagerBase],
     );
+    const isLockedRef = useAppCurrentRef(isLocked);
+    const setIsLocked1Ref = useAppCurrentRef(setIsLocked1);
     const handleToggleLock = useCallback(() => {
-        setIsLocked1(!isLocked);
-    }, [isLocked, setIsLocked1]);
+        setIsLocked1Ref.current(!isLockedRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="card-header w-100"

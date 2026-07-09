@@ -92,7 +92,7 @@ vi.mock('./helpers', () => ({
     checkIsVerticalAtBottom: checkIsVerticalAtBottomMock,
 }));
 
-vi.mock('./debuggerHelpers', () => {
+vi.mock('./appHooks', () => {
     return {
         useAppEffectAsync: (
             effectMethod: (methods: Record<string, unknown>) => Promise<void>,

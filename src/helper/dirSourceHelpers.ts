@@ -1,7 +1,7 @@
 import type { DependencyList } from 'react';
-import { createContext, use, useRef, useState } from 'react';
+import { createContext, use, useState } from 'react';
 
-import { useAppEffect, useAppEffectAsync } from './debuggerHelpers';
+import { useAppEffect, useAppEffectAsync, useAppCurrentRef } from './appHooks';
 import DirSource from './DirSource';
 import type { FileSourceEventType } from './FileSource';
 import FileSource from './FileSource';
@@ -146,8 +146,7 @@ export function useFileSourceEvents<T>(
     deps?: DependencyList,
     filePath?: string,
 ) {
-    const callbackRef = useRef(callback);
-    callbackRef.current = callback;
+    const callbackRef = useAppCurrentRef(callback);
     useAppEffect(() => {
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,

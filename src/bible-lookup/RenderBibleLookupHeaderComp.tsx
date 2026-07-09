@@ -12,6 +12,7 @@ import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBible
 import { AIConfigComp } from '../bible-reader/AIConfigComp';
 import RenderOpenWikiDictionaryComp from './RenderOpenWikiDictionaryComp';
 import RenderExportWordComp from './RenderExportWordComp';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function RenderBibleLookupHeaderComp({
     setIsAdvanceLookupOpened,
@@ -23,16 +24,18 @@ export default function RenderBibleLookupHeaderComp({
     const viewController = useLookupBibleItemControllerContext();
     const hideBibleLookupPopup = useToggleBibleLookupPopupContext(false);
 
+    const viewControllerRef = useAppCurrentRef(viewController);
     const handleBibleKeyChanging = useCallback(
         async (_oldBibleKey: string, newBibleKey: string) => {
-            viewController.applyTargetOrBibleKey(
-                viewController.selectedBibleItem,
+            viewControllerRef.current.applyTargetOrBibleKey(
+                viewControllerRef.current.selectedBibleItem,
                 {
                     bibleKey: newBibleKey,
                 },
             );
         },
-        [viewController],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div

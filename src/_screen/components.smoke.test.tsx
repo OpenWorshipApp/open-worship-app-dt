@@ -84,10 +84,18 @@ vi.mock('../server/appProvider', () => ({
     },
 }));
 
-vi.mock('../helper/debuggerHelpers', () => ({
-    useAppEffect: vi.fn(),
-    useAppEffectAsync: vi.fn(),
-}));
+vi.mock('../helper/appHooks', async () => {
+    const React = (await vi.importActual('react')) as any;
+    return {
+        useAppEffect: vi.fn(),
+        useAppEffectAsync: vi.fn(),
+        useAppCurrentRef: (target: any) => {
+            const ref = React.useRef(target);
+            ref.current = target;
+            return ref;
+        },
+    };
+});
 
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,

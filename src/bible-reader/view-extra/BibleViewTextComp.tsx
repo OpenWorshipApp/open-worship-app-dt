@@ -6,7 +6,7 @@ import {
 } from '../../helper/bibleViewHelpers';
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
-import { useAppStateAsync } from '../../helper/debuggerHelpers';
+import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
 import {
     getVersesCount,
     useBibleFontFamily,
@@ -118,34 +118,29 @@ export default function BibleViewTextComp({
         return getBibleInfoIsRtl(bibleKey);
     }, [bibleKey]);
     const isExtraVerses = extraBibleKeys.length > 0;
-    const handleSelectVerseStart = useCallback(
-        (verse: number) => {
-            viewController.applyTargetOrBibleKey(bibleItem, {
-                target: { ...bibleItem.target, verseStart: verse },
-            });
-        },
-        [viewController, bibleItem],
-    );
-    const handleVerseStartTitle = useCallback(
-        (verse: number) => {
-            return `${verse}-${target.verseStart}`;
-        },
-        [target.verseStart],
-    );
-    const handleSelectVerseEnd = useCallback(
-        (verse: number) => {
-            viewController.applyTargetOrBibleKey(bibleItem, {
-                target: { ...bibleItem.target, verseEnd: verse },
-            });
-        },
-        [viewController, bibleItem],
-    );
-    const handleVerseEndTitle = useCallback(
-        (verse: number) => {
-            return `${target.verseStart}-${verse}`;
-        },
-        [target.verseStart],
-    );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleSelectVerseStart = useCallback((verse: number) => {
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
+            target: { ...bibleItemRef.current.target, verseStart: verse },
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const targetRef = useAppCurrentRef(target);
+    const handleVerseStartTitle = useCallback((verse: number) => {
+        return `${verse}-${targetRef.current.verseStart}`;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleSelectVerseEnd = useCallback((verse: number) => {
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
+            target: { ...bibleItemRef.current.target, verseEnd: verse },
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const handleVerseEndTitle = useCallback((verse: number) => {
+        return `${targetRef.current.verseStart}-${verse}`;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className={`${BIBLE_VIEW_TEXT_CLASS} app-selectable-text p-1`}

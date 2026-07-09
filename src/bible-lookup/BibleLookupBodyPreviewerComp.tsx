@@ -16,6 +16,7 @@ import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewT
 import BibleViewTitleWrapperComp from '../bible-reader/view-extra/BibleViewTitleWrapperComp';
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
 import { HoverMotionHandler } from '../helper/domHelpers';
+import { useAppCurrentRef } from '../helper/appHooks';
 
 const LazyBiblePreviewerRenderComp = lazy(() => {
     return import('../bible-reader/BiblePreviewerRenderComp');
@@ -26,14 +27,17 @@ function RenderBodyEditingComp() {
     const selectedBibleItem = viewController.selectedBibleItem;
     const editingResult = use(EditingResultContext);
     const foundBibleItem = editingResult?.result.bibleItem ?? null;
-    const handleTargetChange = useCallback(
-        async (newBibleTarget: any) => {
-            viewController.applyTargetOrBibleKey(foundBibleItem!, {
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const foundBibleItemRef = useAppCurrentRef(foundBibleItem);
+    const handleTargetChange = useCallback(async (newBibleTarget: any) => {
+        viewControllerRef.current.applyTargetOrBibleKey(
+            foundBibleItemRef.current!,
+            {
                 target: newBibleTarget,
-            });
-        },
-        [viewController, foundBibleItem],
-    );
+            },
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleFocusInput = useCallback(() => {
         setBibleLookupInputFocus();
     }, []);
@@ -80,17 +84,18 @@ function RenderBodyComp({
     bibleItem: BibleItem;
 }>) {
     const viewController = useLookupBibleItemControllerContext();
-    const handleTargetChange = useCallback(
-        (newBibleTarget: any) => {
-            viewController.applyTargetOrBibleKey(bibleItem, {
-                target: newBibleTarget,
-            });
-        },
-        [viewController, bibleItem],
-    );
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const handleTargetChange = useCallback((newBibleTarget: any) => {
+        viewControllerRef.current.applyTargetOrBibleKey(bibleItemRef.current, {
+            target: newBibleTarget,
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleEditBibleItem = useCallback(() => {
-        viewController.editBibleItem(bibleItem);
-    }, [viewController, bibleItem]);
+        viewControllerRef.current.editBibleItem(bibleItemRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <BibleViewTitleMaterialContext
             value={{

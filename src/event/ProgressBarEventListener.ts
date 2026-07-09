@@ -1,5 +1,4 @@
-import { useRef } from 'react';
-import { useAppEffect } from '../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type { ListenerType } from './EventHandler';
 import EventHandler from './EventHandler';
 
@@ -15,8 +14,7 @@ export default class ProgressBarEventListener extends EventHandler<string> {
 }
 
 export function useShowProgressBar(listener: ListenerType<string>) {
-    const listenerRef = useRef(listener);
-    listenerRef.current = listener;
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const event = ProgressBarEventListener.registerEventListener(
             ['show'],
@@ -31,8 +29,7 @@ export function useShowProgressBar(listener: ListenerType<string>) {
 }
 
 export function useHideProgressBar(listener: ListenerType<string>) {
-    const listenerRef = useRef(listener);
-    listenerRef.current = listener;
+    const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const event = ProgressBarEventListener.registerEventListener(
             ['hide'],

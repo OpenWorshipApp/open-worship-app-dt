@@ -8,7 +8,7 @@ import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { onCanvasKeyboardEvent } from '../slideEditingKeyboardEventHelpers';
 import { MultiContextRender } from '../../helper/MultiContextRender';
-import { useAppEffect } from '../../helper/debuggerHelpers';
+import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { type useEditingCanvasContextValue } from '../canvasEditingHelpers';
 import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
@@ -79,28 +79,25 @@ export default function SlideEditorCanvasComp({
         stopAllModes,
     } = contextData;
 
-    const handleKeyDownEvent = useCallback(
-        (event: any) => {
-            if (document.activeElement !== event.currentTarget) {
-                return;
-            }
-            onCanvasKeyboardEvent(
-                {
-                    stopAllModes,
-                    canvasController,
-                    selectedCanvasItems,
-                    setSelectedCanvasItems,
-                },
-                event,
-            );
-        },
-        [
-            stopAllModes,
-            canvasController,
-            selectedCanvasItems,
-            setSelectedCanvasItems,
-        ],
-    );
+    const stopAllModesRef = useAppCurrentRef(stopAllModes);
+    const canvasControllerRef = useAppCurrentRef(canvasController);
+    const selectedCanvasItemsRef = useAppCurrentRef(selectedCanvasItems);
+    const setSelectedCanvasItemsRef = useAppCurrentRef(setSelectedCanvasItems);
+    const handleKeyDownEvent = useCallback((event: any) => {
+        if (document.activeElement !== event.currentTarget) {
+            return;
+        }
+        onCanvasKeyboardEvent(
+            {
+                stopAllModes: stopAllModesRef.current,
+                canvasController: canvasControllerRef.current,
+                selectedCanvasItems: selectedCanvasItemsRef.current,
+                setSelectedCanvasItems: setSelectedCanvasItemsRef.current,
+            },
+            event,
+        );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // `useZoomingRegistering` snapshots `value` into a ref that is only
     // refreshed when this component re-renders. Reading

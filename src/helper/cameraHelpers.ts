@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useAppEffectAsync } from './debuggerHelpers';
+import { useAppEffectAsync } from './appHooks';
 import { handleError } from './errorHelpers';
 import type {
     ForegroundCameraDataType,

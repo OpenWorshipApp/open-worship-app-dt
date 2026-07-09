@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useAppEffectAsync } from '../helper/debuggerHelpers';
+import { useAppEffectAsync } from '../helper/appHooks';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { FontListType } from './appProvider';
 import appProvider from './appProvider';
