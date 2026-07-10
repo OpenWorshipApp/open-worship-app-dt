@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { useSelectedEditingSlideContext } from '../app-document-list/appDocumentHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import CanvasController, {
@@ -14,6 +14,10 @@ import {
 import AppDocument from '../app-document-list/AppDocument';
 import Canvas from './canvas/Canvas';
 import type Slide from '../app-document-list/Slide';
+import { BibleLookupTogglePopupContext } from '../others/commonButtons';
+import { CanvasBibleItemEventListener } from './canvas/canvasBibleItemHelpers';
+import type BibleItem from '../bible-list/BibleItem';
+import { showSimpleToast } from '../toast/toastHelpers';
 
 function useCanvasItemsData(canvasController: CanvasController) {
     const [canvasItems, setCanvasItems] = useState<CanvasItem<any>[]>([]);
@@ -70,7 +74,9 @@ function useCanvasItemsData(canvasController: CanvasController) {
             }
 
             canvasController.editCanvasItemsByIds(
-                selectedCanvasItems.map((item) => item.id),
+                selectedCanvasItems
+                    .filter((item) => !item.isLocked)
+                    .map((item) => item.id),
                 (selectedCanvasItem) => {
                     canvasController.moveCanvasItem(
                         selectedCanvasItem,
@@ -147,6 +153,24 @@ export function useEditingCanvasContextValue() {
         );
         setCanvasController(newCanvasController);
     }, [slide]);
+    useAppEffect(() => {
+        const registeredEvents =
+            CanvasBibleItemEventListener.registerEventListener(
+                ['insert-bible-item'],
+                async (bibleItem: BibleItem) => {
+                    await canvasController.addNewBibleItem(bibleItem);
+                    showSimpleToast(
+                        'Insert Bible Item',
+                        'Bible item is inserted into the editing slide',
+                    );
+                },
+            );
+        return () => {
+            CanvasBibleItemEventListener.unregisterEventListener(
+                registeredEvents,
+            );
+        };
+    }, [canvasController]);
     const {
         canvasItems,
         selectedCanvasItems,
@@ -154,7 +178,14 @@ export function useEditingCanvasContextValue() {
         editingCanvasItem,
         setEditingCanvasItem,
     } = useCanvasItemsData(canvasController);
+    // The canvas renders into its own React root inside a shadow root, so any
+    // app-level context a canvas item needs has to be handed across explicitly.
+    const bibleLookupTogglePopup = use(BibleLookupTogglePopupContext);
     const contextValue = [
+        {
+            context: BibleLookupTogglePopupContext,
+            value: bibleLookupTogglePopup,
+        },
         {
             context: CanvasControllerContext,
             value: canvasController,

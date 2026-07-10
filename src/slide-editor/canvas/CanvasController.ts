@@ -6,11 +6,14 @@ import { getSetting, setSetting } from '../../helper/settingHelpers';
 import FileSource from '../../helper/FileSource';
 import CanvasItemText from './CanvasItemText';
 import CanvasItemImage from './CanvasItemImage';
+import type { CanvasItemBiblePropsType } from './CanvasItemBibleItem';
 import CanvasItemBibleItem from './CanvasItemBibleItem';
+import { genFittedHtmlBoxLayout } from './canvasBoxLayoutHelpers';
 import type BibleItem from '../../bible-list/BibleItem';
-import type {
-    CanvasItemMediaPropsType,
-    CanvasControllerEventType,
+import {
+    checkIsMediaCanvasItemType,
+    type CanvasItemMediaPropsType,
+    type CanvasControllerEventType,
 } from './canvasHelpers';
 import CanvasItemVideo from './CanvasItemVideo';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -144,9 +147,21 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     }
 
     deleteItems(targetCanvasItems: CanvasItem<any>[]) {
+        const deletableCanvasItems = targetCanvasItems.filter((targetItem) => {
+            return !targetItem.isLocked;
+        });
+        if (deletableCanvasItems.length < targetCanvasItems.length) {
+            showSimpleToast(
+                'Delete Canvas Items',
+                'Locked items cannot be deleted',
+            );
+        }
+        if (deletableCanvasItems.length === 0) {
+            return;
+        }
         const canvasItems = this.canvas.canvasItems;
         const newCanvasItems = canvasItems.filter((item) => {
-            return !targetCanvasItems.some((targetItem) => {
+            return !deletableCanvasItems.some((targetItem) => {
                 return item.checkIsSame(targetItem);
             });
         });
@@ -179,7 +194,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             const fileSource = FileSource.getInstance(filePath);
             const mediaType =
                 fileSource.metadata?.appMimetype.mimetypeName ?? '';
-            if (!['image', 'video'].includes(mediaType)) {
+            if (!checkIsMediaCanvasItemType(mediaType)) {
                 showSimpleToast(
                     'Insert Medias',
                     'Only image and video files are supported',
@@ -208,9 +223,43 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         showSimpleToast('Pasting Image', 'Fail to insert image');
     }
 
-    async addNewBibleItem(bibleItem: BibleItem) {
+    static genMediaItemFromFile(x: number, y: number, file: File | Blob) {
+        return file.type.startsWith('video/')
+            ? CanvasItemVideo.genFromFile(x, y, file)
+            : CanvasItemImage.genFromFile(x, y, file);
+    }
+
+    async genNewMediaItemFromFile(file: File | Blob, event: any) {
+        try {
+            const { x, y } = this.getMousePosition(event);
+            const newItem = await CanvasController.genMediaItemFromFile(
+                x,
+                y,
+                file,
+            );
+            return newItem;
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast('Insert Image or Video', 'Fail to insert medias');
+    }
+
+    // `event` comes from the canvas context menu; without it the box is
+    // centered, as for a keyboard paste that has no cursor position.
+    async addNewBibleItem(bibleItem: BibleItem, event?: any) {
         const id = this.canvas.maxItemId + 1;
         const newItem = await CanvasItemBibleItem.fromBibleItem(id, bibleItem);
+        if (newItem.type === 'bible') {
+            const layout = genFittedHtmlBoxLayout(
+                newItem.props as CanvasItemBiblePropsType,
+                this.canvas.width,
+                this.canvas.height,
+                event === undefined ? null : this.getMousePosition(event),
+            );
+            if (layout !== null) {
+                newItem.applyProps(layout);
+            }
+        }
         this.addNewItems([newItem]);
     }
 
@@ -323,7 +372,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         const props = canvasItem.props as CanvasItemPropsType;
         let width = props.width;
         let height = props.height;
-        if (['image', 'video'].includes(canvasItem.type)) {
+        if (checkIsMediaCanvasItemType(canvasItem.type)) {
             const mediaProps = props as any as CanvasItemMediaPropsType;
             width = mediaProps.mediaWidth;
             height = mediaProps.mediaHeight;
@@ -348,7 +397,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         const props = canvasItem.props as CanvasItemPropsType;
         let width = props.width;
         let height = props.height;
-        if (['image', 'video'].includes(canvasItem.type)) {
+        if (checkIsMediaCanvasItemType(canvasItem.type)) {
             const mediaProps = props as any as CanvasItemMediaPropsType;
             width = mediaProps.mediaWidth;
             height = mediaProps.mediaHeight;
@@ -357,7 +406,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
     }
 
     applyCanvasItemMediaStrip(canvasItem: CanvasItem<any>) {
-        if (!['image', 'video'].includes(canvasItem.type)) {
+        if (!checkIsMediaCanvasItemType(canvasItem.type)) {
             return;
         }
         const props = canvasItem.props as CanvasItemPropsType;
@@ -385,6 +434,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         canvasItem: CanvasItem<any>,
         handleCanvasItemEditing: () => void,
         isSelected: boolean,
+        openBibleLookup: (() => void) | null = null,
     ) {
         return (event: any) => {
             event.stopPropagation();
@@ -394,6 +444,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
                 canvasItem,
                 handleCanvasItemEditing,
                 isSelected,
+                openBibleLookup,
             );
         };
     }

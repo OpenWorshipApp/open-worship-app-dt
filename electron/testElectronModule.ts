@@ -50,6 +50,7 @@ export const electronMockState = {
         getVersion: vi.fn(() => '1.2.3'),
         getAppPath: vi.fn(() => '/mock-app'),
         getPath: vi.fn(() => '/mock-user-data'),
+        setPath: vi.fn(),
         isPackaged: false,
         name: 'Open Worship app',
         on: vi.fn(),
@@ -117,6 +118,7 @@ export const electronMockState = {
         this.app.getVersion.mockClear();
         this.app.getAppPath.mockClear();
         this.app.getPath.mockClear();
+        this.app.setPath.mockClear();
         this.app.on.mockClear();
         this.app.whenReady.mockClear();
         this.app.requestSingleInstanceLock.mockClear();

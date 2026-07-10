@@ -20,10 +20,7 @@ import {
     useAppStateAsync,
     useAppCurrentRef,
 } from '../helper/appHooks';
-import {
-    toInputText,
-    useBibleFontFamily,
-} from '../helper/bible-helpers/bibleLogicHelpers2';
+import { toInputText } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { getBookKVList } from '../helper/bible-helpers/bibleInfoHelpers';
 import InputExtraButtonsComp from './InputExtraButtonsComp';
@@ -32,6 +29,7 @@ import {
     getBibleXMLDataFromKeyCaching,
 } from '../setting/bible-setting/bibleXMLHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export const InputTextContext = createContext<{
     inputText: string;

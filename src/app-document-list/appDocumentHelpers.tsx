@@ -157,6 +157,13 @@ export function genSlideContextMenuItems(
                 appDocument.moveSlide(slide, false);
             },
         },
+        {
+            menuElement: slide.isDisabled ? tran('Enable') : tran('Disable'),
+            onSelect: () => {
+                slide.isDisabled = !slide.isDisabled;
+                appDocument.updateSlide(slide);
+            },
+        },
     ];
     if (appProvider.isPagePresenter) {
         menuItems.push({

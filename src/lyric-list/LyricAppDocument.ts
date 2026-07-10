@@ -79,7 +79,7 @@ export default class LyricAppDocument extends AppDocument {
                     id: 0,
                     type: 'html',
                     text,
-                    htmlText,
+                    html: htmlText,
                     color: `${HEX_COLOR_WHITE}FF`,
                     fontSize: 90,
                     fontFamily: this.lyricEditingProps.fontFamily,

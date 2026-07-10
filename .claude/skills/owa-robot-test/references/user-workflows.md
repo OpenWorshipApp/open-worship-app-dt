@@ -21,7 +21,7 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-07-08** (bump when any workflow changes)
+**workflowsVersion: 2026-07-09** (bump when any workflow changes)
 
 ---
 
@@ -186,16 +186,31 @@ everything at once.
 
 ### W-10 — Control what the audience sees (mini screen + clears)
 
-**Goal:** manage the live output.
+**Goal:** manage the live output from the screen preview card.
 
 - The **mini screen** (right column, bottom) always mirrors the audience view; the
   zoom slider under it only rescales your preview, not the output. 📸
-- Clear buttons under the mini screen (each also has a function key):
-  **Clear All `F6` / Background `F7` / Slide `F8` / Bible `F9` / Foreground `F10`**
+- Each screen has its own preview card with a **header** and **footer** of controls:
+- **Show / hide the screen** (header, leftmost — or press **F5**): turns the physical
+  output display on or off. The icon fills in and brightens while showing. 📸
+- **Clear buttons** (header — each also has a function key):
+  **Clear All `F6` / BG `F7` / SL `F8` / BB `F9` / FG `F10`**
   (លុបទាំងអស់ / លុបផ្ទៃខាងក្រោយ / លុបស្លាយ / លុបព្រះគម្ពីរ / លុបផ្ទៃខាងមុខ).
-- The show/hide screen control turns the physical output display on or off.
+  A button is only lit while its layer has something to clear.
+- **Lock** (header, the padlock): when locked (red), the screen refuses slide changes —
+  handy during a live moment; click again (green) to unlock.
+- **Display** (footer, e.g. `(0):2678…`): click to pick **which physical display** this
+  screen projects to — the menu lists every display with its resolution, and marks the
+  current one with `*` and the primary one with `(primary)`.
+- **Transitions** (footer, `Tr:`): the **Slide:** and **Background:** buttons choose the
+  change animation — **none / fade / move / zoom**. 📸
+- **Background audio** (footer, the soundwave icon — appears while a video background
+  is live): opens a small player per video to play/pause its audio in sync; the
+  repeat icon loops it. The app refuses to close the player while audio is playing.
+- **Stage number** (footer, `St:`): click to assign this screen a stage number
+  (0–4, or increment/decrement) for stage-view setups.
 
-*Verify: PR-04..07, KB-03..07.*
+*Verify: PR-04..07, SP-01..09, KB-03..07, KB-13.*
 
 ---
 
@@ -307,6 +322,25 @@ enter the URL and title, save, and the new item appears in the Web tab.
 
 *Verify: PU-01, PU-05.*
 
+### W-18 — Use more than one screen (multi-screen)
+
+**Goal:** project different (or the same) content to several displays.
+
+1. **Right-click** an empty area of the mini-screen panel and choose **Add New
+   Screen** — a second preview card appears with its own number and color. 📸
+2. Each card targets its own physical display (W-10, the Display button) and has its
+   own show/hide, clears, transitions, and lock.
+3. Content goes to every **selected** screen. Right-click a card to **Select /
+   Deselect** it, or **Solo** to make it the only selected one.
+4. You can also **drag** a slide, background item, or foreground Show button and
+   **drop it on one specific card** to present it on that screen only. 📸
+5. While a Bible verse is live, the card's right-click menu offers **Set Line Sync**
+   to keep verse highlighting in sync across screens.
+6. Right-click a card → **Delete** removes a screen you no longer need (the first
+   screen can't be deleted while it is the only one).
+
+*Verify: SP-04..05, SP-10..12.*
+
 ---
 
 ## Keyboard shortcut reference (tutorial appendix)
@@ -315,11 +349,13 @@ enter the URL and title, save, and the new item appears in the Web tab.
 |---|---|---|
 | `Ctrl+B` | Open Bible Lookup | Presenter / Editor |
 | `Ctrl+Q` | Close the open dialog | any dialog |
+| `F5` | Show / hide the presentation screen | Presenter |
 | `F6` / `F7` / `F8` / `F9` / `F10` | Clear All / Background / Slide / Bible / Foreground | Presenter |
+| `Ctrl/Alt+ArrowLeft/Right` | Previous / next Bible verse | the output screen |
 | Arrows, `PageUp`/`PageDown`, `Space` | Move through slides / toggle | slide thumbnails focused |
 | `Tab` / `Escape` / `Ctrl+Escape` | Complete / clear / clear-part in bible input | lookup & reader |
 | `Ctrl+Enter` | Focus the editing canvas | Slide Editor |
 | `Ctrl+S` | Save | all editors |
 | `Enter` / `Escape` | Confirm / cancel | confirmation dialogs |
 
-*Verify: KB-01..12.*
+*Verify: KB-01..13, SC-03.*

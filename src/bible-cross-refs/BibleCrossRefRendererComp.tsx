@@ -19,7 +19,7 @@ import { useAppStateAsync } from '../helper/appHooks';
 import { BibleKeySelectionMiniComp } from '../bible-lookup/BibleKeySelectionComp';
 import BibleCrossRefAIItemRendererBodyComp from './BibleCrossRefAIItemRendererBodyComp';
 import appProvider from '../server/appProvider';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 function RenderVerseTextComp({
     bibleItem,

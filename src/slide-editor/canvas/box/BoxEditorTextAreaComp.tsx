@@ -1,7 +1,8 @@
 import type { ChangeEvent, CSSProperties, FocusEvent } from 'react';
 import { useCallback } from 'react';
 import type { CanvasItemTextPropsType } from '../CanvasItemText';
-import CanvasItemText, { SCRIPT_SAFE_LINE_HEIGHT } from '../CanvasItemText';
+import CanvasItemText from '../CanvasItemText';
+import { SCRIPT_SAFE_LINE_HEIGHT } from '../canvasHelpers';
 import { useAppCurrentRef } from '../../../helper/appHooks';
 
 function calcAlignmentStyle(props: CanvasItemTextPropsType) {

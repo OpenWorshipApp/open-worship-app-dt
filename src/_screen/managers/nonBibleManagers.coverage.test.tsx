@@ -161,6 +161,10 @@ vi.mock('../../app-document-presenter/items/SlideRendererComp', () => ({
     genSlideHtml: mocks.genSlideHtml,
 }));
 
+vi.mock('../../helper/bible-helpers/bibleLogicHelpers2', () => ({
+    getBibleFontFamily: vi.fn(async () => 'TestFont'),
+}));
+
 vi.mock('./screenBackgroundHelpers', () => ({
     applyAttachBackground: mocks.applyAttachBackground,
 }));
@@ -915,6 +919,7 @@ describe('non-Bible manager coverage', () => {
             filePath: '/slides/a.slide',
             itemJson: slideJson,
             isRenderFullWidth: true,
+            virtualBackgroundColor: null,
         });
 
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
@@ -1080,6 +1085,7 @@ describe('non-Bible manager coverage', () => {
             filePath: '/slides/from-drop.slide',
             itemJson: slideJson,
             isRenderFullWidth: true,
+            virtualBackgroundColor: null,
         });
         expect(manager.toSyncMessage()).toEqual({
             type: 'vary-app-document',

@@ -39,6 +39,21 @@ import { genBoxEditorStyle } from './box/boxEditorHelpers';
 import { useThemeSource } from '../../others/themeHelpers';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
+import {
+    CanvasRulerComp,
+    CanvasRulerCornerComp,
+    RULER_THICKNESS,
+} from './CanvasRulerComp';
+import {
+    CanvasGuideLineComp,
+    CanvasSnapLinesComp,
+} from './CanvasGuideLineComp';
+import {
+    CanvasSnapContext,
+    type GuideLineType,
+    type SnapLinesType,
+    type SnapTargetsType,
+} from './canvasSnapGuideHelpers';
 
 function dragOverHandling(event: any) {
     event.preventDefault();
@@ -60,7 +75,7 @@ async function handleDropping(
     for await (const file of readDroppedFiles(event)) {
         if (checkIsSupportMediaType(file.type)) {
             const newCanvasItem =
-                await canvasController.genNewImageItemFromFile(file, event);
+                await canvasController.genNewMediaItemFromFile(file, event);
             if (newCanvasItem) {
                 canvasController.addNewItems([newCanvasItem]);
             }
@@ -112,7 +127,15 @@ const CanvasItemsListComp = memo(function CanvasItemsListComp({
 
 function BodyRendererComp({
     stopAllModes,
-}: Readonly<{ stopAllModes: () => void }>) {
+    guides,
+    onGuideMouseDown,
+    onGuideRemove,
+}: Readonly<{
+    stopAllModes: () => void;
+    guides: GuideLineType[];
+    onGuideMouseDown: (axis: 'v' | 'h', id: number, event: any) => void;
+    onGuideRemove: (id: number) => void;
+}>) {
     const parentWidth = useShadowingParentWidth();
     const canvasController = useCanvasControllerContext();
     const { canvas } = canvasController;
@@ -125,13 +148,55 @@ function BodyRendererComp({
         canvasItems: selectedCanvasItems,
         setCanvasItems: setSelectedCanvasItems,
     } = useSelectedCanvasItemsAndSetterContext();
+    const [snapLines, setSnapLines] = useState<SnapLinesType>({
+        vertical: [],
+        horizontal: [],
+    });
     // Mirrored in a ref so the document-level mousemove/mouseup listeners
     // below don't need to be re-subscribed on every render.
     const latestRef = useAppCurrentRef({
         canvasItems,
         selectedCanvasItems,
         setSelectedCanvasItems,
+        guides,
     });
+    const getSnapTargets = useCallback(
+        (excludeIds: number[]): SnapTargetsType => {
+            const excludedIdSet = new Set(excludeIds);
+            const vertical: number[] = [0, canvas.width / 2, canvas.width];
+            const horizontal: number[] = [0, canvas.height / 2, canvas.height];
+            for (const item of latestRef.current.canvasItems) {
+                if (excludedIdSet.has(item.id)) {
+                    continue;
+                }
+                const props = item.props as any;
+                vertical.push(
+                    props.left,
+                    props.left + props.width / 2,
+                    props.left + props.width,
+                );
+                horizontal.push(
+                    props.top,
+                    props.top + props.height / 2,
+                    props.top + props.height,
+                );
+            }
+            for (const guide of latestRef.current.guides) {
+                if (guide.axis === 'v') {
+                    vertical.push(guide.pos);
+                } else {
+                    horizontal.push(guide.pos);
+                }
+            }
+            return { vertical, horizontal };
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [canvas.width, canvas.height],
+    );
+    const snapContextValue = useMemo(
+        () => ({ getSnapTargets, setSnapLines }),
+        [getSnapTargets],
+    );
     const { theme } = useThemeSource();
     const canvasElementRef = useRef<HTMLDivElement | null>(null);
     const [marquee, setMarquee] = useState<{
@@ -343,7 +408,23 @@ function BodyRendererComp({
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
         >
-            <CanvasItemsListComp canvasItems={canvasItems} />
+            <CanvasSnapContext value={snapContextValue}>
+                <CanvasItemsListComp canvasItems={canvasItems} />
+            </CanvasSnapContext>
+            {guides.map((guide) => (
+                <CanvasGuideLineComp
+                    key={guide.id}
+                    guide={guide}
+                    onMouseDown={(event) => {
+                        onGuideMouseDown(guide.axis, guide.id, event);
+                    }}
+                    onRemove={() => onGuideRemove(guide.id)}
+                />
+            ))}
+            <CanvasSnapLinesComp
+                vertical={snapLines.vertical}
+                horizontal={snapLines.horizontal}
+            />
             {marqueeStyle !== null ? <div style={marqueeStyle} /> : null}
         </div>
     );
@@ -371,11 +452,85 @@ export default function CanvasContainerComp({
     } = contextData;
     const scale = useSlideCanvasScale(canvasController);
     const { canvas } = canvasController;
+    const { theme } = useThemeSource();
     const { actualWidth, actualHeight } = useMemo(() => {
         const actualWidth = Math.round(canvas.width * scale);
         const actualHeight = Math.round(canvas.height * scale);
         return { actualWidth, actualHeight };
     }, [canvas.width, canvas.height, scale]);
+
+    const [guides, setGuides] = useState<GuideLineType[]>([]);
+    const nextGuideIdRef = useRef(1);
+    const handleGuideRemove = useCallback((id: number) => {
+        setGuides((prev) => prev.filter((guide) => guide.id !== id));
+    }, []);
+    const startGuideDrag = useCallback(
+        (axis: 'v' | 'h', id: number, clientX: number, clientY: number) => {
+            const moveToPoint = (clientX: number, clientY: number) => {
+                const element = containerRef.current;
+                if (element === null || scale === 0) {
+                    return;
+                }
+                const bcr = element.getBoundingClientRect();
+                const { x, y } = clampToCanvasPoint(
+                    clientX,
+                    clientY,
+                    bcr,
+                    scale,
+                    canvas.width,
+                    canvas.height,
+                );
+                setGuides((prev) => {
+                    return prev.map((guide) => {
+                        if (guide.id !== id) {
+                            return guide;
+                        }
+                        return { ...guide, pos: axis === 'h' ? y : x };
+                    });
+                });
+            };
+            const handleMove = (event: MouseEvent) => {
+                moveToPoint(event.clientX, event.clientY);
+            };
+            const handleUp = (event: MouseEvent) => {
+                globalThis.removeEventListener('mousemove', handleMove);
+                globalThis.removeEventListener('mouseup', handleUp);
+                const element = containerRef.current;
+                const bcr = element?.getBoundingClientRect();
+                if (bcr) {
+                    const outOfBounds =
+                        axis === 'h'
+                            ? event.clientY < bcr.top ||
+                              event.clientY > bcr.top + bcr.height
+                            : event.clientX < bcr.left ||
+                              event.clientX > bcr.left + bcr.width;
+                    if (outOfBounds) {
+                        handleGuideRemove(id);
+                    }
+                }
+            };
+            globalThis.addEventListener('mousemove', handleMove);
+            globalThis.addEventListener('mouseup', handleUp);
+            moveToPoint(clientX, clientY);
+        },
+        [scale, canvas.width, canvas.height, handleGuideRemove],
+    );
+    const handleCreateGuide = useCallback(
+        (axis: 'v' | 'h', clientX: number, clientY: number) => {
+            const id = nextGuideIdRef.current++;
+            setGuides((prev) => [...prev, { id, axis, pos: 0 }]);
+            startGuideDrag(axis, id, clientX, clientY);
+        },
+        [startGuideDrag],
+    );
+    const handleGuideMouseDown = useCallback(
+        (axis: 'v' | 'h', id: number, event: any) => {
+            event.stopPropagation();
+            event.preventDefault();
+            startGuideDrag(axis, id, event.clientX, event.clientY);
+        },
+        [startGuideDrag],
+    );
 
     useAppEffect(() => {
         canvasController.toCenterView = () => {
@@ -427,15 +582,45 @@ export default function CanvasContainerComp({
                 style={{
                     width: actualWidth,
                     height: actualHeight,
-                    margin: `${actualHeight * 2}px ${actualWidth * 2}px`,
+                    margin: `${actualHeight * 2 + RULER_THICKNESS}px ${
+                        actualWidth * 2 + RULER_THICKNESS
+                    }px`,
                     position: 'relative',
+                    // Confine the rulers/guides/marquee z-indexes to this
+                    // subtree, otherwise they compete with app-wide layers
+                    // (modals, popups, toasts) in the root stacking context.
+                    isolation: 'isolate',
                 }}
             >
+                <CanvasRulerCornerComp isDarkTheme={theme === 'dark'} />
+                <CanvasRulerComp
+                    isHorizontal
+                    logicalLength={canvas.width}
+                    scale={scale}
+                    isDarkTheme={theme === 'dark'}
+                    onCreateGuide={(clientX, clientY) => {
+                        handleCreateGuide('h', clientX, clientY);
+                    }}
+                />
+                <CanvasRulerComp
+                    isHorizontal={false}
+                    logicalLength={canvas.height}
+                    scale={scale}
+                    isDarkTheme={theme === 'dark'}
+                    onCreateGuide={(clientX, clientY) => {
+                        handleCreateGuide('v', clientX, clientY);
+                    }}
+                />
                 <ShadowingFillParentWidthComp width={actualWidth}>
                     <MultiContextRender contexts={allCanvasContextValue}>
                         {genBoxEditorStyle()}
                         {getSlideItemShadowingStyle()}
-                        <BodyRendererComp stopAllModes={stopAllModes} />
+                        <BodyRendererComp
+                            stopAllModes={stopAllModes}
+                            guides={guides}
+                            onGuideMouseDown={handleGuideMouseDown}
+                            onGuideRemove={handleGuideRemove}
+                        />
                     </MultiContextRender>
                 </ShadowingFillParentWidthComp>
             </div>

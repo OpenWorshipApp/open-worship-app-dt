@@ -68,6 +68,14 @@ describe('electron index', () => {
         expect(
             electronMockState.app.commandLine.appendSwitch,
         ).toHaveBeenCalledWith('ignore-certificate-errors');
+        expect(electronMockState.app.setPath).toHaveBeenCalledWith(
+            'userData',
+            '/mock-user-data-dev',
+        );
+        expect(electronMockState.app.setPath).toHaveBeenCalledWith(
+            'sessionData',
+            '/mock-user-data-dev',
+        );
         expect(initCustomSchemeHandler).toHaveBeenCalledTimes(1);
         expect(getInstance).toHaveBeenCalledTimes(1);
         expect(initMenu).toHaveBeenCalledWith({ id: 'app-controller' });

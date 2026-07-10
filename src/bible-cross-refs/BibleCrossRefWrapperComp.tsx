@@ -4,8 +4,8 @@ import { tran } from '../lang/langHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export default function BibleCrossRefWrapperComp({
     title,

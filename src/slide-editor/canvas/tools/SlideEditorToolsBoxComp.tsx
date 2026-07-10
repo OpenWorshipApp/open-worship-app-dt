@@ -10,8 +10,10 @@ import {
 } from '../CanvasItem';
 import SlideEditorToolsColorComp from './SlideEditorToolsColorComp';
 import ShapePropertiesComp from './ShapePropertiesComp';
+import BoxPositionSizeComp from './BoxPositionSizeComp';
 import { HEX_COLOR_BLACK } from '../../../others/color/colorHelpers';
 import { useAppCurrentRef } from '../../../helper/appHooks';
+import { checkIsMediaCanvasItemType } from '../canvasHelpers';
 
 function SizingComp() {
     const canvasController = useCanvasControllerContext();
@@ -36,35 +38,41 @@ function SizingComp() {
     }, []);
 
     return (
-        <SlideEditorToolTitleComp title="Size">
-            <button
-                className="btn btn-sm btn-secondary"
-                title="Fit to canvas"
-                onClick={() => {
-                    return handleSizing('full');
-                }}
+        <SlideEditorToolTitleComp title="Size" isInline>
+            <div
+                className="btn-group btn-group-sm"
+                role="group"
+                aria-label={tran('Size')}
             >
-                {tran('Full')}
-            </button>
-            <button
-                className="btn btn-sm btn-secondary m-1"
-                title="Set to original size"
-                onClick={() => {
-                    return handleSizing('original');
-                }}
-            >
-                {tran('Original Size')}
-            </button>
-            {['image', 'video'].includes(canvasItem.type) ? (
                 <button
                     className="btn btn-sm btn-secondary"
+                    title="Fit to canvas"
                     onClick={() => {
-                        return handleSizing('strip');
+                        return handleSizing('full');
                     }}
                 >
-                    {tran('Strip')}
+                    {tran('Full')}
                 </button>
-            ) : null}
+                <button
+                    className="btn btn-sm btn-secondary"
+                    title="Set to original size"
+                    onClick={() => {
+                        return handleSizing('original');
+                    }}
+                >
+                    {tran('Original Size')}
+                </button>
+                {checkIsMediaCanvasItemType(canvasItem.type) ? (
+                    <button
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => {
+                            return handleSizing('strip');
+                        }}
+                    >
+                        {tran('Strip')}
+                    </button>
+                ) : null}
+            </div>
         </SlideEditorToolTitleComp>
     );
 }
@@ -72,7 +80,6 @@ function SizingComp() {
 function LayerComp() {
     const canvasController = useCanvasControllerContext();
     const canvasItem = useCanvasItemContext();
-    const [_, setProps] = useCanvasItemPropsSetterContext();
     const canvasControllerRef = useAppCurrentRef(canvasController);
     const canvasItemRef = useAppCurrentRef(canvasItem);
     const handleLayerBackward = useCallback(() => {
@@ -89,43 +96,37 @@ function LayerComp() {
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const setPropsRef = useAppCurrentRef(setProps);
-    const handleResetRotate = useCallback(() => {
-        setPropsRef.current({ rotate: 0 });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
     return (
-        <div className="ps-2">
-            <div className="d-flex gap-3">
-                <SlideEditorToolTitleComp title="Box Layer">
-                    <button
-                        className="btn btn-sm btn-outline-info"
-                        onClick={handleLayerBackward}
-                    >
-                        <i className="bi bi-layer-backward" />
-                    </button>
-                    <button
-                        className="btn btn-sm btn-outline-info"
-                        onClick={handleLayerForward}
-                    >
-                        <i className="bi bi-layer-forward" />
-                    </button>
-                </SlideEditorToolTitleComp>
-                <SlideEditorToolTitleComp title="Rotate">
-                    <button
-                        className="btn btn-sm btn-outline-info"
-                        onClick={handleResetRotate}
-                    >
-                        {tran('Reset Rotate')}
-                    </button>
-                </SlideEditorToolTitleComp>
+        <SlideEditorToolTitleComp title="Box Layer" isInline>
+            <div
+                className="btn-group btn-group-sm"
+                role="group"
+                aria-label={tran('Box Layer')}
+            >
+                <button
+                    className="btn btn-sm btn-outline-info"
+                    title={tran('Send backward')}
+                    aria-label={tran('Send backward')}
+                    onClick={handleLayerBackward}
+                >
+                    <i className="bi bi-layer-backward" />
+                </button>
+                <button
+                    className="btn btn-sm btn-outline-info"
+                    title={tran('Bring forward')}
+                    aria-label={tran('Bring forward')}
+                    onClick={handleLayerForward}
+                >
+                    <i className="bi bi-layer-forward" />
+                </button>
             </div>
-        </div>
+        </SlideEditorToolTitleComp>
     );
 }
 
 export default function SlideEditorToolsBoxComp() {
     const [props, setProps] = useCanvasItemPropsSetterContext();
+    const canvasItem = useCanvasItemContext();
     const setPropsRef = useAppCurrentRef(setProps);
     const handleNoColoring = useCallback(() => {
         setPropsRef.current({ backgroundColor: `${HEX_COLOR_BLACK}00` });
@@ -135,29 +136,35 @@ export default function SlideEditorToolsBoxComp() {
         setPropsRef.current({ backgroundColor: newColor });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // Media items always fill their box, so their background color is
+    // never actually visible — the control would just be confusing.
+    const canShowBackgroundColor = !checkIsMediaCanvasItemType(canvasItem.type);
     return (
-        <div className="d-flex flex-wrap app-inner-shadow">
-            <div className="p-1">
-                <SlideEditorToolTitleComp title="Background Color">
+        <div
+            className="app-inner-shadow ps-1"
+            style={{
+                minWidth: '300px',
+            }}
+        >
+            {canShowBackgroundColor ? (
+                <SlideEditorToolTitleComp title="Background Color" isInline>
                     <SlideEditorToolsColorComp
                         color={props.backgroundColor}
                         handleNoColoring={handleNoColoring}
                         handleColorChanging={handleColorChanging}
                     />
                 </SlideEditorToolTitleComp>
-            </div>
-            <div
-                className="ps-1"
-                style={{
-                    minWidth: '300px',
-                }}
-            >
-                <SlideEditorToolTitleComp title="Box Alignment">
-                    <SlideEditorToolAlignComp onData={setProps} />
-                </SlideEditorToolTitleComp>
-                <SlideEditorToolTitleComp title="Shape Properties">
-                    <ShapePropertiesComp />
-                </SlideEditorToolTitleComp>
+            ) : null}
+            <SlideEditorToolTitleComp title="Position & Size">
+                <BoxPositionSizeComp />
+            </SlideEditorToolTitleComp>
+            <SlideEditorToolTitleComp title="Box Alignment" isInline>
+                <SlideEditorToolAlignComp onData={setProps} />
+            </SlideEditorToolTitleComp>
+            <SlideEditorToolTitleComp title="Shape Properties">
+                <ShapePropertiesComp />
+            </SlideEditorToolTitleComp>
+            <div className="d-flex flex-wrap column-gap-3">
                 <LayerComp />
                 <SizingComp />
             </div>

@@ -50,6 +50,7 @@ function RenderToggleFullViewComp({
     const fullScreenClassname = isFullWidget
         ? 'fullscreen-exit'
         : 'arrows-fullscreen';
+    const label = isFullWidget ? tran('Exit full view') : tran('Full view');
 
     const isFullWidgetRef = useAppCurrentRef(isFullWidget);
     const setIsFullWidgetRef = useAppCurrentRef(setIsFullWidget);
@@ -62,6 +63,8 @@ function RenderToggleFullViewComp({
         <div>
             <button
                 className={`btn btn-${isFullWidget ? '' : 'outline-'}info `}
+                title={label}
+                aria-label={label}
                 onClick={handleClick}
             >
                 <i className={`bi bi-${fullScreenClassname}`} />

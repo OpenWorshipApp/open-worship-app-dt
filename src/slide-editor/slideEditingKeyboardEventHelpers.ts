@@ -8,6 +8,7 @@ import {
 } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
+import { readBibleItemFromClipboard } from './canvas/canvasBibleItemHelpers';
 import Canvas from './canvas/Canvas';
 import type CanvasController from './canvas/CanvasController';
 import type CanvasItem from './canvas/CanvasItem';
@@ -299,7 +300,14 @@ export async function onCanvasKeyboardEvent(
         )
     ) {
         const copiedItems = await Canvas.getCopiedCanvasItems();
-        canvasController.duplicateItems(copiedItems);
+        if (copiedItems.length > 0) {
+            canvasController.duplicateItems(copiedItems);
+        } else {
+            const bibleItem = await readBibleItemFromClipboard();
+            if (bibleItem !== null) {
+                await canvasController.addNewBibleItem(bibleItem);
+            }
+        }
         isHandled = true;
     } else if (
         checkIsKeyboardEventMatch(

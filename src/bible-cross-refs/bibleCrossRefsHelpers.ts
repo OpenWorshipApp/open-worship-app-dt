@@ -10,11 +10,11 @@ import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
 import { getLangCode, getLocalBibleCrossRef } from '../lang/langHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import { validateCrossReference } from '../helper/ai/bibleCrossRefHelpers';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 import { appLog, appError as logError } from '../helper/loggerHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type RawBibleCrossRefListType = string[][];
 export type BibleCrossRefType = {

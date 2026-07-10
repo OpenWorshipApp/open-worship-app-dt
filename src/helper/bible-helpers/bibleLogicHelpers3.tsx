@@ -15,7 +15,7 @@ import type BibleItemsViewController from '../../bible-reader/BibleItemsViewCont
 import { copyToClipboard } from '../../server/appHelpers';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 import { elementDivider } from '../../context-menu/AppContextMenuComp';
-import { getBibleLocale, getLangDataFromBibleKey } from './bibleLogicHelpers2';
+import { getBibleLocale, getLangDataFromBibleKey } from './bibleStyleHelpers';
 
 async function getBibleItemsFromTitleVerseKey(
     bibleKey: string,

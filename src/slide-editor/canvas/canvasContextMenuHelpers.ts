@@ -12,13 +12,23 @@ import {
     checkIsImagesInClipboard,
     readImagesFromClipboard,
 } from '../../server/appHelpers';
+import {
+    lookupBibleItemProps,
+    readBibleItemFromClipboard,
+} from './canvasBibleItemHelpers';
+import type { CanvasItemBiblePropsType } from './CanvasItemBibleItem';
 
 export async function showCanvasContextMenu(
     event: any,
     canvasController: CanvasController,
 ) {
-    const isClipboardHasImage = await checkIsImagesInClipboard();
-    const copiedCanvasItems = await Canvas.getCopiedCanvasItems();
+    // The menu waits for these, so read the clipboard forms in parallel.
+    const [isClipboardHasImage, clipboardBibleItem, copiedCanvasItems] =
+        await Promise.all([
+            checkIsImagesInClipboard(),
+            readBibleItemFromClipboard(),
+            Canvas.getCopiedCanvasItems(),
+        ]);
     showAppContextMenu(event, [
         {
             menuElement: tran('New'),
@@ -80,6 +90,19 @@ export async function showCanvasContextMenu(
                   },
               ]
             : []),
+        ...(clipboardBibleItem !== null
+            ? [
+                  {
+                      menuElement: tran('Paste Bible Item'),
+                      onSelect: () => {
+                          canvasController.addNewBibleItem(
+                              clipboardBibleItem,
+                              event,
+                          );
+                      },
+                  },
+              ]
+            : []),
     ]);
 }
 
@@ -89,9 +112,38 @@ export function showCanvasItemContextMenu(
     canvasItem: CanvasItem<any>,
     handleCanvasItemEditing: () => void,
     isSelected: boolean,
+    // Absent on pages without the bible lookup popup.
+    openBibleLookup: (() => void) | null = null,
 ) {
-    const isEditable = ['text', 'html'].includes(canvasItem.type);
+    const isLocked = canvasItem.props.locked === true;
+    const isEditable = !isLocked && canvasItem.type === 'text';
+    const isLookupable =
+        canvasItem.type === 'bible' && openBibleLookup !== null;
     const menuItems: ContextMenuItemType[] = [
+        ...(isLookupable
+            ? [
+                  {
+                      menuElement: tran('Lookup'),
+                      onSelect: () => {
+                          lookupBibleItemProps(
+                              canvasItem.props as CanvasItemBiblePropsType,
+                              openBibleLookup,
+                          );
+                      },
+                  },
+              ]
+            : []),
+        {
+            menuElement: tran(isLocked ? 'Unlock' : 'Lock'),
+            onSelect: () => {
+                canvasController.editCanvasItemById(
+                    canvasItem.id,
+                    (latestCanvasItem) => {
+                        latestCanvasItem.applyProps({ locked: !isLocked });
+                    },
+                );
+            },
+        },
         {
             menuElement: tran('Copy'),
             keyboardShortcut: isSelected
@@ -131,17 +183,21 @@ export function showCanvasItemContextMenu(
                   },
               ]
             : []),
-        {
-            menuElement: tran('Delete'),
-            keyboardShortcut: isSelected
-                ? {
-                      key: 'Delete',
-                  }
-                : undefined,
-            onSelect: () => {
-                canvasController.deleteItems([canvasItem]);
-            },
-        },
+        ...(isLocked
+            ? []
+            : [
+                  {
+                      menuElement: tran('Delete'),
+                      keyboardShortcut: isSelected
+                          ? {
+                                key: 'Delete',
+                            }
+                          : undefined,
+                      onSelect: () => {
+                          canvasController.deleteItems([canvasItem]);
+                      },
+                  },
+              ]),
     ];
     showAppContextMenu(event, menuItems);
 }

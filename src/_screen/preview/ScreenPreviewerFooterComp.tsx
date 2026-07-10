@@ -90,6 +90,7 @@ function BackgroundAudioSwitchComp({
             className={`btn btn-sm btn-${isAudioHandlersVisible ? 'primary' : 'outline-secondary'}`}
             onClick={handleToggleAudioHandlers}
             title={tran('Enable Background Audio Handlers')}
+            aria-label={tran('Enable Background Audio Handlers')}
         >
             <i className="bi bi-soundwave" />
         </button>

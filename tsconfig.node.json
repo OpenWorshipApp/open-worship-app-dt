@@ -8,6 +8,7 @@
   },
   "include": [
     "vite.config.ts",
+    "vite-plugin-comp-name.ts",
     "vite-plugin-gz-bundle.ts",
     "playwright.config.ts",
     "e2e/**/*.ts"

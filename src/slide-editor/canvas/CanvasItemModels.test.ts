@@ -8,6 +8,7 @@ const {
     canvasItemErrorFromJsonErrorMock,
     cloneJsonMock,
     fileSourceGetInstanceMock,
+    getBibleFontFamilyMock,
     getImageDimMock,
     getSrcDataFromBlobMock,
     getVideoDimMock,
@@ -44,6 +45,7 @@ const {
         })),
         cloneJsonMock: vi.fn((value: any) => structuredClone(value)),
         fileSourceGetInstanceMock: vi.fn(),
+        getBibleFontFamilyMock: vi.fn(),
         getImageDimMock: vi.fn(),
         getSrcDataFromBlobMock: vi.fn(),
         getVideoDimMock: vi.fn(),
@@ -84,6 +86,10 @@ vi.mock('../../server/fileHelpers', () => ({
     isSupportedMimetype: vi.fn(() => true),
 }));
 
+vi.mock('../../helper/bible-helpers/bibleLogicHelpers2', () => ({
+    getBibleFontFamily: getBibleFontFamilyMock,
+}));
+
 vi.mock('../../bible-list/BibleItem', () => ({
     default: class BibleItemMock {
         static readonly validate = bibleValidateMock;
@@ -99,8 +105,16 @@ vi.mock('../../bible-list/BibleItem', () => ({
             return this.title;
         }
 
+        async toTitleWithBibleKey() {
+            return `(${this.bibleKey}) ${this.title}`;
+        }
+
         async toText() {
             return this.text;
+        }
+
+        async toVerseTextList() {
+            return [{ localeVerse: '1', text: this.text }];
         }
 
         toJson() {
@@ -124,6 +138,7 @@ vi.mock('../../server/appProvider', () => ({
 
 import BibleItem from '../../bible-list/BibleItem';
 import CanvasItemBibleItem from './CanvasItemBibleItem';
+import CanvasItemHtml, { genHtmlDefaultProps } from './CanvasItemHtml';
 import CanvasItemImage from './CanvasItemImage';
 import CanvasItemText, { genTextDefaultProps } from './CanvasItemText';
 import CanvasItemVideo from './CanvasItemVideo';
@@ -154,6 +169,7 @@ describe('CanvasItem models', () => {
             getSrcData: vi.fn(async () => 'data:media'),
         });
         getSrcDataFromBlobMock.mockResolvedValue('data:blob');
+        getBibleFontFamilyMock.mockResolvedValue('Battambang');
     });
 
     test('builds and validates text canvas items', () => {
@@ -246,6 +262,58 @@ describe('CanvasItem models', () => {
         expect(handleErrorMock).toHaveBeenCalled();
     });
 
+    test('builds html canvas items and migrates legacy htmlText props', () => {
+        const htmlJson = {
+            ...createBaseBox('html'),
+            ...genHtmlDefaultProps(),
+        };
+        const item = CanvasItemHtml.fromJson(htmlJson as any);
+
+        expect(item).toBeInstanceOf(CanvasItemHtml);
+        expect(item.getStyle()).toEqual(
+            CanvasItemHtml.genStyle(htmlJson as any),
+        );
+
+        const defaultItem = CanvasItemHtml.genDefaultItem();
+        expect(defaultItem.toJson()).toEqual(
+            expect.objectContaining({
+                type: 'html',
+                html: 'Open Worship App',
+                color: HEX_COLOR_WHITE,
+            }),
+        );
+
+        const legacyJson: any = {
+            ...createBaseBox('html'),
+            ...genHtmlDefaultProps(),
+            htmlText: '<b>Legacy</b>',
+        };
+        delete legacyJson.html;
+        const legacyItem = CanvasItemHtml.fromJson(legacyJson);
+
+        expect(legacyItem).toBeInstanceOf(CanvasItemHtml);
+        expect((legacyItem.toJson() as any).html).toBe('<b>Legacy</b>');
+
+        expect(() => CanvasItemHtml.validate(htmlJson)).not.toThrow();
+        expect(() =>
+            CanvasItemHtml.validate({
+                ...htmlJson,
+                html: 42,
+            }),
+        ).toThrow('Invalid canvas item html data');
+        expect(
+            CanvasItemHtml.fromJson({
+                ...htmlJson,
+                fontSize: 'invalid',
+            } as any),
+        ).toEqual({
+            type: 'error',
+            json: expect.objectContaining({
+                fontSize: 'invalid',
+            }),
+        });
+    });
+
     test('builds image canvas items from raw media and files', async () => {
         const imageJson = {
             ...createBaseBox('image'),
@@ -325,7 +393,7 @@ describe('CanvasItem models', () => {
         });
     });
 
-    test('builds video canvas items from insertion data', async () => {
+    test('builds video canvas items from insertion data and files', async () => {
         const videoJson = {
             ...createBaseBox('video'),
             srcData: 'data:video',
@@ -353,6 +421,26 @@ describe('CanvasItem models', () => {
                 top: 210,
             }),
         );
+
+        const fileItem = await CanvasItemVideo.genFromFile(
+            250,
+            220,
+            new Blob(['video']),
+        );
+        expect(getSrcDataFromBlobMock).toHaveBeenCalled();
+        expect(fileItem.toJson()).toEqual(
+            expect.objectContaining({
+                type: 'video',
+                srcData: 'data:blob',
+                left: 90,
+                top: 130,
+            }),
+        );
+
+        getSrcDataFromBlobMock.mockResolvedValueOnce(null);
+        await expect(
+            CanvasItemVideo.genFromFile(100, 100, new Blob(['video'])),
+        ).rejects.toThrow('Error occurred during reading video data from blob');
 
         expect(
             CanvasItemVideo.fromJson({
@@ -404,7 +492,8 @@ describe('CanvasItem models', () => {
             55,
             bibleItem,
         );
-        expect(fromBibleItem.toJson()).toEqual(
+        const fromBibleItemJson = fromBibleItem.toJson() as any;
+        expect(fromBibleItemJson).toEqual(
             expect.objectContaining({
                 id: 55,
                 type: 'bible',
@@ -412,12 +501,62 @@ describe('CanvasItem models', () => {
                 bibleItemTarget: 'chapter',
                 bibleRenderingList: [
                     {
-                        title: 'Psalm 1',
+                        title: '(NIV) Psalm 1',
                         text: 'Blessed is the man',
+                        verses: [{ num: '1', text: 'Blessed is the man' }],
                     },
                 ],
+                fontSize: 45,
+                fontFamily: 'Battambang',
+                textHorizontalAlignment: 'left',
+                textVerticalAlignment: 'start',
             }),
         );
+        expect(getBibleFontFamilyMock).toHaveBeenCalledWith('NIV');
+
+        // English has no font family of its own.
+        getBibleFontFamilyMock.mockResolvedValue(undefined);
+        const withoutFontItem = await CanvasItemBibleItem.fromBibleItem(
+            56,
+            bibleItem,
+        );
+        expect((withoutFontItem.toJson() as any).fontFamily).toBeNull();
+        expect(fromBibleItemJson.html).toContain('<svg');
+        expect(fromBibleItemJson.html).toContain(
+            '<span>(NIV) Psalm 1</span></div>',
+        );
+        expect(fromBibleItemJson.html).toContain('>1</sup>Blessed is the man');
+
+        // Verse numbers become superscripts, and every value is escaped.
+        expect(
+            CanvasItemBibleItem.genHtml([
+                {
+                    title: '2 & 3 John',
+                    text: 'ignored when verses exist',
+                    verses: [
+                        { num: '1', text: '<script>alert(1)</script>' },
+                        { num: '2', text: 'and light' },
+                    ],
+                },
+            ]),
+        ).toContain(
+            '>1</sup>&lt;script&gt;alert(1)&lt;/script&gt; <sup style=',
+        );
+
+        // Bible items saved before verses existed fall back to the flat text,
+        // and any stale stored `html` is re-derived from the rendering list.
+        const legacyHtml = (
+            CanvasItemBibleItem.fromJson({
+                ...bibleJson,
+                html: '<div>stale markup</div>',
+            } as any) as any
+        ).toJson().html;
+        expect(legacyHtml).not.toContain('stale markup');
+        expect(legacyHtml).toContain('<span>Genesis 1:1</span></div>');
+        expect(legacyHtml).toContain(
+            '<div style="padding: 0.3em;">In the beginning</div>',
+        );
+        expect(legacyHtml).not.toContain('<sup');
 
         bibleValidateMock.mockImplementationOnce(() => {
             throw new Error('Invalid bible item');

@@ -297,7 +297,15 @@ export default function VarySlideRenderComp({
             style={{
                 width: `${width}px`,
                 ...(varySlide.isDisabled
-                    ? { opacity: 0.5, pointerEvents: 'none' }
+                    ? {
+                          opacity: 0.5,
+                          // Editable slides must keep pointer events so the
+                          // context menu can re-enable them; file-based
+                          // slides (e.g. pptx) cannot be re-enabled in-app.
+                          ...(Slide.checkIsThisType(varySlide)
+                              ? {}
+                              : { pointerEvents: 'none' as const }),
+                      }
                     : {}),
             }}
             data-vary-app-document-item-id={varySlide.id}
@@ -309,6 +317,12 @@ export default function VarySlideRenderComp({
             onDragStart={handleDragStartEvent}
             onDragEnd={handleDragEnd}
             onClick={(event) => {
+                if (
+                    varySlide.isDisabled &&
+                    !appProvider.isPageAppDocumentEditor
+                ) {
+                    return;
+                }
                 onClick?.(event, index, varySlide);
             }}
             onContextMenu={handleContextMenuOpening}

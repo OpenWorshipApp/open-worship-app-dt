@@ -2,7 +2,7 @@ import { getImageDim } from '../../helper/helpers';
 import type { SrcData } from '../../helper/FileSource';
 import FileSource from '../../helper/FileSource';
 import type { CanvasItemMediaPropsType } from './canvasHelpers';
-import { genTextDefaultBoxStyle, validateMediaProps } from './canvasHelpers';
+import { genMediaDefaultBoxStyle, validateMediaProps } from './canvasHelpers';
 import type { CanvasItemPropsType } from './CanvasItem';
 import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
@@ -17,6 +17,9 @@ class CanvasItemImage extends CanvasItem<CanvasItemImagePropsType> {
     getStyle() {
         return CanvasItemImage.gegStyle(this.props);
     }
+    get shouldLockAspectRatio() {
+        return true;
+    }
     static async genCanvasItem(
         srcData: SrcData,
         mediaWidth: number,
@@ -28,7 +31,7 @@ class CanvasItemImage extends CanvasItem<CanvasItemImagePropsType> {
             srcData,
             mediaWidth,
             mediaHeight,
-            ...genTextDefaultBoxStyle(),
+            ...genMediaDefaultBoxStyle(),
             left: x - mediaWidth / 2,
             top: y - mediaHeight / 2,
             width: mediaWidth,

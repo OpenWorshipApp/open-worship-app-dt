@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { handleDragStart as handleDragStartHelper } from '../helper/dragHelpers';
 import { tran } from '../lang/langHelpers';
@@ -13,6 +12,7 @@ import {
     openContextMenu,
     openInBibleLookup,
 } from './bibleFindHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export default function RenderFoundItemComp({
     findText,

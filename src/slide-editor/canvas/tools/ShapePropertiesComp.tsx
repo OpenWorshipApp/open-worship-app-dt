@@ -36,59 +36,62 @@ export default function ShapePropertiesComp() {
         [],
     );
     return (
-        <div className="d-flex flex-column gap-2" style={{ maxWidth: '280px' }}>
-            <div className="d-flex align-items-center">
-                <span className="pe-2 flex-grow-1">{tran('Glass Effect')}</span>
+        <div className="d-flex flex-column gap-1" style={{ maxWidth: '280px' }}>
+            <div className="d-flex input-group input-group-sm">
+                <div className="input-group-text">{tran('Glass Effect')}</div>
                 <input
                     className="form-control form-control-sm"
                     type="number"
                     min={0}
-                    style={{
-                        width: '80px',
-                    }}
                     value={props.backdropFilter}
                     onChange={handleBackdropFilterChange}
                 />
-                <span className="ps-1">px</span>
+                <div className="input-group-text">px</div>
             </div>
             <div
-                className="d-flex align-items-center gap-2 app-border-white-round px-2 py-1"
-                style={
-                    roundSizePixel > 0
-                        ? { opacity: 0.5, pointerEvents: 'none' }
-                        : {}
-                }
+                className="d-flex align-items-center gap-1"
+                title={tran('Round Size %:')}
             >
-                <span className="text-nowrap">{tran('Round Size %:')}</span>
-                <AppRangeComp
-                    value={roundSizePercentage}
-                    title={
-                        roundSizePercentage > 0
-                            ? 'Set round size pixel to 0 to use this'
-                            : tran('Round (%)')
+                <span className="text-nowrap small">{tran('Round:')}</span>
+                <div
+                    className="flex-grow-1"
+                    style={
+                        roundSizePixel > 0
+                            ? { opacity: 0.5, pointerEvents: 'none' }
+                            : {}
                     }
-                    setValue={handleRoundPercentageChange}
-                    defaultSize={{
-                        size: roundSizePercentage,
-                        min: 0,
-                        max: 100,
-                        step: 1,
-                    }}
-                    isShowValue
-                />
-            </div>
-            <div className="d-flex input-group input-group-sm">
-                <div className="input-group-text">
-                    {tran('Round Size Pixel:')}
+                >
+                    <AppRangeComp
+                        value={roundSizePercentage}
+                        title={
+                            roundSizePixel > 0
+                                ? 'Set round size pixel to 0 to use this'
+                                : tran('Round (%)')
+                        }
+                        setValue={handleRoundPercentageChange}
+                        defaultSize={{
+                            size: roundSizePercentage,
+                            min: 0,
+                            max: 100,
+                            step: 1,
+                        }}
+                        isShowValue
+                    />
                 </div>
-                <input
-                    className="form-control form-control-sm"
-                    type="number"
-                    value={roundSizePixel}
-                    min={0}
-                    onChange={handleRoundPixelChange}
-                />
-                <div className="input-group-text">px</div>
+                <div
+                    className="d-flex input-group input-group-sm flex-nowrap"
+                    style={{ width: '90px', flexShrink: 0 }}
+                    title={tran('Round Size Pixel:')}
+                >
+                    <input
+                        className="form-control form-control-sm"
+                        type="number"
+                        value={roundSizePixel}
+                        min={0}
+                        onChange={handleRoundPixelChange}
+                    />
+                    <div className="input-group-text">px</div>
+                </div>
             </div>
         </div>
     );

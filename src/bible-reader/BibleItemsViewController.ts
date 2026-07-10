@@ -22,7 +22,6 @@ import {
     VERSE_TEXT_CLASS,
 } from '../helper/bibleViewHelpers';
 import {
-    getLangDataFromBibleKey,
     getShouldModelNewLine,
     setShouldModelNewLine,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
@@ -38,6 +37,7 @@ import {
 } from './readBibleScrollHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { getLangDataFromBibleKey } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type UpdateEventType = 'update';
 export const RESIZE_SETTING_NAME = 'bible-previewer-render';

@@ -16,7 +16,6 @@ import { unlocking } from '../../server/unlockingHelpers';
 
 import { useAppEffectAsync, useAppStateAsync } from '../appHooks';
 import type BibleItem from '../../bible-list/BibleItem';
-import { getLangDataFromBibleKey } from '../bible-helpers/bibleLogicHelpers2';
 import type { LocaleType } from '../../lang/langHelpers';
 import {
     checkIsAvailable,
@@ -24,6 +23,7 @@ import {
     getOpenAIInstance,
     useAvailable,
 } from './openAIHelpers';
+import { getLangDataFromBibleKey } from '../bible-helpers/bibleStyleHelpers';
 
 export type SpeakableTextDataType = {
     text: string;

@@ -1,7 +1,8 @@
 import { getVideoDim } from '../../helper/helpers';
+import type { SrcData } from '../../helper/FileSource';
 import FileSource from '../../helper/FileSource';
 import type { CanvasItemMediaPropsType } from './canvasHelpers';
-import { genTextDefaultBoxStyle, validateMediaProps } from './canvasHelpers';
+import { genMediaDefaultBoxStyle, validateMediaProps } from './canvasHelpers';
 import type { CanvasItemPropsType } from './CanvasItem';
 import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
@@ -16,15 +17,21 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
     getStyle() {
         return CanvasItemVideo.gegStyle(this.props);
     }
-    static async genFromInsertion(x: number, y: number, filePath: string) {
-        const fileSource = FileSource.getInstance(filePath);
-        const [mediaWidth, mediaHeight] = await getVideoDim(fileSource.src);
-        const srcData = await fileSource.getSrcData();
+    get shouldLockAspectRatio() {
+        return true;
+    }
+    static async genCanvasItem(
+        srcData: SrcData,
+        mediaWidth: number,
+        mediaHeight: number,
+        x: number,
+        y: number,
+    ) {
         const props: CanvasItemVideoPropsType = {
             srcData,
-            mediaWidth: mediaWidth,
-            mediaHeight: mediaHeight,
-            ...genTextDefaultBoxStyle(),
+            mediaWidth,
+            mediaHeight,
+            ...genMediaDefaultBoxStyle(),
             left: x - mediaWidth / 2,
             top: y - mediaHeight / 2,
             width: mediaWidth,
@@ -32,6 +39,22 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
             type: 'video',
         };
         return this.fromJson(props);
+    }
+    static async genFromInsertion(x: number, y: number, filePath: string) {
+        const fileSource = FileSource.getInstance(filePath);
+        const [mediaWidth, mediaHeight] = await getVideoDim(fileSource.src);
+        const srcData = await fileSource.getSrcData();
+        return this.genCanvasItem(srcData, mediaWidth, mediaHeight, x, y);
+    }
+    static async genFromFile(x: number, y: number, file: File | Blob) {
+        const srcData = await FileSource.getSrcDataFromFrom(file);
+        if (srcData === null) {
+            throw new Error(
+                'Error occurred during reading video data from blob',
+            );
+        }
+        const [mediaWidth, mediaHeight] = await getVideoDim(srcData);
+        return this.genCanvasItem(srcData, mediaWidth, mediaHeight, x, y);
     }
     toJson(): CanvasItemVideoPropsType {
         return {

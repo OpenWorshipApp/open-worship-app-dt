@@ -12,13 +12,13 @@ import {
     getModelKeyBookMap,
 } from '../helper/bible-helpers/bibleLogicHelpers1';
 import {
-    getBibleFontFamily,
     getVersesCount,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
+import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 function chose<T>(
     event: any,

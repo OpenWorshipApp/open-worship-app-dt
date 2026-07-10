@@ -1,13 +1,12 @@
-import type { CSSProperties } from 'react';
-
 import { handleError } from '../../helper/errorHelpers';
-import {
-    HEX_COLOR_WHITE,
-    type AppColorType,
-} from '../../others/color/colorHelpers';
+import { HEX_COLOR_WHITE } from '../../others/color/colorHelpers';
 import appProvider from '../../server/appProvider';
-import type { HAlignmentType, VAlignmentType } from './canvasHelpers';
-import { genTextDefaultBoxStyle } from './canvasHelpers';
+import type { TextStylePropsType } from './canvasHelpers';
+import {
+    checkIsValidTextStyleProps,
+    genTextDefaultBoxStyle,
+    genTextStyle,
+} from './canvasHelpers';
 import type { CanvasItemPropsType } from './CanvasItem';
 import CanvasItem, { CanvasItemError } from './CanvasItem';
 import type { AnyObjectType } from '../../helper/typeHelpers';
@@ -23,48 +22,15 @@ export function genTextDefaultProps(): TextPropsType {
         textVerticalAlignment: 'center',
     };
 }
-export type TextPropsType = {
+export type TextPropsType = TextStylePropsType & {
     text: string;
-    color: AppColorType;
-    fontSize: number;
-    fontFamily: string | null;
-    fontWeight: string | null;
-    textHorizontalAlignment: HAlignmentType;
-    textVerticalAlignment: VAlignmentType;
 };
 export type CanvasItemTextPropsType = CanvasItemPropsType & TextPropsType;
-export type CanvasItemTextHtmlPropsType = CanvasItemTextPropsType & {
-    htmlText: string;
-};
-export type ToolingTextType = {
-    color?: AppColorType;
-    fontSize?: number;
-    fontFamily?: string | null;
-    fontWeight?: string | null;
-    textHorizontalAlignment?: HAlignmentType;
-    textVerticalAlignment?: VAlignmentType;
-};
-
-export const SCRIPT_SAFE_LINE_HEIGHT = 1.35;
+export type ToolingTextType = Partial<TextStylePropsType>;
 
 class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
     static genStyle(props: CanvasItemTextPropsType) {
-        const style: CSSProperties = {
-            display: 'flex',
-            width: '100%',
-            height: '100%',
-            fontSize: `${props.fontSize}px`,
-            // Keep ascenders/combining marks visible for complex scripts (Khmer, etc.).
-            lineHeight: SCRIPT_SAFE_LINE_HEIGHT,
-            fontFamily: props.fontFamily ?? '',
-            fontWeight: props.fontWeight ?? '',
-            color: props.color,
-            alignItems: props.textVerticalAlignment,
-            justifyContent: props.textHorizontalAlignment,
-            textAlign: props.textHorizontalAlignment,
-            padding: `${props.fontSize / 10}px`,
-        };
-        return style;
+        return genTextStyle(props);
     }
     getStyle() {
         return CanvasItemText.genStyle(this.props);
@@ -95,10 +61,7 @@ class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {
         super.validate(json);
         if (
             typeof json.text !== 'string' ||
-            typeof json.color !== 'string' ||
-            typeof json.fontSize !== 'number' ||
-            (json.fontFamily !== null && typeof json.fontFamily !== 'string') ||
-            (json.fontWeight !== null && typeof json.fontWeight !== 'string')
+            !checkIsValidTextStyleProps(json)
         ) {
             throw new Error('Invalid canvas item text data');
         }

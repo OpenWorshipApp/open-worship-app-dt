@@ -8,8 +8,8 @@ import { useBibleItemsViewControllerContext } from '../BibleItemsViewController'
 import { AudioAIEnablingComp } from '../AudioAIEnablingComp';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { useBibleViewTitleMaterialContext } from './viewExtraHelpers';
-import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 function RenderBibleKeyComp({
     bibleKey,

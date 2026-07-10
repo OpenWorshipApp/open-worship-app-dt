@@ -15,7 +15,7 @@ import { useChapterMatch } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { getChapterData } from '../helper/bible-helpers/bibleInfoHelpers';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const OPTION_CLASS = 'bible-lookup-chapter-option';
 const OPTION_SELECTED_CLASS = 'active';

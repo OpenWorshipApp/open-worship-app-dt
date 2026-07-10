@@ -10,7 +10,6 @@ import {
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import {
     extractBibleTitle,
-    getBibleLocale,
     toInputText,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
@@ -42,6 +41,7 @@ import { exportBibleMSWord, showFileOrDirExplorer } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { cloneJson } from '../helper/helpers';
 import { BIBLE_KJV_KEY } from '../helper/bible-helpers/bibleModelHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export const SelectedBibleKeyContext = createContext<string>(BIBLE_KJV_KEY);
 export function useBibleKeyContext() {

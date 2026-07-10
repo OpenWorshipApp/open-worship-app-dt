@@ -4,6 +4,8 @@ const {
     checkIsImagesInClipboardMock,
     getCopiedCanvasItemsMock,
     getMimetypeExtensionsMock,
+    lookupBibleItemPropsMock,
+    readBibleItemFromClipboardMock,
     readImagesFromClipboardMock,
     selectFilesMock,
     setCopiedItemsMock,
@@ -13,6 +15,8 @@ const {
     checkIsImagesInClipboardMock: vi.fn(),
     getCopiedCanvasItemsMock: vi.fn(),
     getMimetypeExtensionsMock: vi.fn(),
+    lookupBibleItemPropsMock: vi.fn(),
+    readBibleItemFromClipboardMock: vi.fn(),
     readImagesFromClipboardMock: vi.fn(),
     selectFilesMock: vi.fn(),
     setCopiedItemsMock: vi.fn(),
@@ -42,6 +46,11 @@ vi.mock('../../server/appHelpers', () => ({
     readImagesFromClipboard: readImagesFromClipboardMock,
 }));
 
+vi.mock('./canvasBibleItemHelpers', () => ({
+    lookupBibleItemProps: lookupBibleItemPropsMock,
+    readBibleItemFromClipboard: readBibleItemFromClipboardMock,
+}));
+
 vi.mock('./Canvas', () => ({
     default: {
         getCopiedCanvasItems: getCopiedCanvasItemsMock,
@@ -64,6 +73,7 @@ describe('canvasContextMenuHelpers', () => {
         vi.clearAllMocks();
         getCopiedCanvasItemsMock.mockResolvedValue([]);
         checkIsImagesInClipboardMock.mockResolvedValue(false);
+        readBibleItemFromClipboardMock.mockResolvedValue(null);
         getMimetypeExtensionsMock.mockImplementation((type: string) => {
             return type === 'image' ? ['png', 'jpg'] : ['mp4'];
         });
@@ -159,6 +169,151 @@ describe('canvasContextMenuHelpers', () => {
         ]);
     });
 
+    test('adds a bible item at the cursor when the clipboard holds a bible item text', async () => {
+        const bibleItem = { bibleKey: 'KJV' };
+        const event = { clientX: 10, clientY: 20 };
+        const canvasController = {
+            addNewTextItem: vi.fn(),
+            addNewItems: vi.fn(),
+            addNewBibleItem: vi.fn(),
+            genNewMediaItemFromFilePath: vi.fn(),
+            genNewImageItemFromFile: vi.fn(),
+        };
+        readBibleItemFromClipboardMock.mockResolvedValue(bibleItem);
+
+        await showCanvasContextMenu(event, canvasController as any);
+
+        const menuItems = showAppContextMenuMock.mock.calls[0]?.[1] ?? [];
+        expect(menuItems.map((item: any) => item.menuElement)).toEqual([
+            'New',
+            'Insert Medias',
+            'Paste Bible Item',
+        ]);
+
+        menuItems[2].onSelect();
+        expect(canvasController.addNewBibleItem).toHaveBeenCalledWith(
+            bibleItem,
+            event,
+        );
+    });
+
+    test('offers Lookup only for a bible item on a page with the lookup popup', () => {
+        const bibleCanvasItem = {
+            type: 'bible',
+            props: { bibleKeys: ['KJV'] },
+        };
+        const openBibleLookup = vi.fn();
+        const handleCanvasItemEditing = vi.fn();
+
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            bibleCanvasItem as any,
+            handleCanvasItemEditing,
+            true,
+            openBibleLookup,
+        );
+        const menuItems = showAppContextMenuMock.mock.calls[0]?.[1] ?? [];
+        expect(menuItems.map((item: any) => item.menuElement)).toEqual([
+            'Lookup',
+            'Lock',
+            'Copy',
+            'Duplicate',
+            'Delete',
+        ]);
+
+        menuItems[0].onSelect();
+        expect(lookupBibleItemPropsMock).toHaveBeenCalledWith(
+            bibleCanvasItem.props,
+            openBibleLookup,
+        );
+
+        // No lookup popup on this page.
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            bibleCanvasItem as any,
+            handleCanvasItemEditing,
+            true,
+        );
+        expect(
+            (showAppContextMenuMock.mock.calls[1]?.[1] ?? []).map(
+                (item: any) => item.menuElement,
+            ),
+        ).toEqual(['Lock', 'Copy', 'Duplicate', 'Delete']);
+
+        // Not a bible item.
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            { type: 'text', props: {} } as any,
+            handleCanvasItemEditing,
+            true,
+            openBibleLookup,
+        );
+        expect(
+            (showAppContextMenuMock.mock.calls[2]?.[1] ?? []).map(
+                (item: any) => item.menuElement,
+            ),
+        ).toEqual(['Lock', 'Copy', 'Duplicate', 'Edit', 'Delete']);
+    });
+
+    test('locks and unlocks a canvas item and hides destructive actions', () => {
+        const editCanvasItemById = vi.fn();
+        const canvasController = { editCanvasItemById };
+        const handleCanvasItemEditing = vi.fn();
+
+        // Unlocked item offers Lock.
+        showCanvasItemContextMenu(
+            {},
+            canvasController as any,
+            { id: 7, type: 'text', props: {} } as any,
+            handleCanvasItemEditing,
+            true,
+        );
+        const unlockedMenuItems = showAppContextMenuMock.mock.calls[0]?.[1];
+        expect(unlockedMenuItems.map((item: any) => item.menuElement)).toEqual([
+            'Lock',
+            'Copy',
+            'Duplicate',
+            'Edit',
+            'Delete',
+        ]);
+
+        unlockedMenuItems[0].onSelect();
+        expect(editCanvasItemById).toHaveBeenCalledWith(
+            7,
+            expect.any(Function),
+        );
+        const lockMutator = editCanvasItemById.mock.calls[0][1];
+        const lockedTarget = { applyProps: vi.fn() };
+        lockMutator(lockedTarget);
+        expect(lockedTarget.applyProps).toHaveBeenCalledWith({ locked: true });
+
+        // Locked item offers Unlock and hides Edit and Delete.
+        showCanvasItemContextMenu(
+            {},
+            canvasController as any,
+            { id: 7, type: 'text', props: { locked: true } } as any,
+            handleCanvasItemEditing,
+            true,
+        );
+        const lockedMenuItems = showAppContextMenuMock.mock.calls[1]?.[1];
+        expect(lockedMenuItems.map((item: any) => item.menuElement)).toEqual([
+            'Unlock',
+            'Copy',
+            'Duplicate',
+        ]);
+
+        lockedMenuItems[0].onSelect();
+        const unlockMutator = editCanvasItemById.mock.calls[1][1];
+        const unlockedTarget = { applyProps: vi.fn() };
+        unlockMutator(unlockedTarget);
+        expect(unlockedTarget.applyProps).toHaveBeenCalledWith({
+            locked: false,
+        });
+    });
+
     test('omits unavailable canvas actions and builds item menus with the right handlers', async () => {
         const canvasController = {
             addNewTextItem: vi.fn(),
@@ -169,8 +324,8 @@ describe('canvasContextMenuHelpers', () => {
             deleteItems: vi.fn(),
         };
         const handleCanvasItemEditing = vi.fn();
-        const textCanvasItem = { type: 'text' };
-        const imageCanvasItem = { type: 'image' };
+        const textCanvasItem = { type: 'text', props: {} };
+        const imageCanvasItem = { type: 'image', props: {} };
         const event = { button: 2 };
 
         await showCanvasContextMenu(event, canvasController as any);
@@ -192,29 +347,29 @@ describe('canvasContextMenuHelpers', () => {
 
         expect(
             selectedItemMenuItems.map((item: any) => item.menuElement),
-        ).toEqual(['Copy', 'Duplicate', 'Edit', 'Delete']);
+        ).toEqual(['Lock', 'Copy', 'Duplicate', 'Edit', 'Delete']);
         expect(selectedItemMenu[2]).toBeUndefined();
 
-        selectedItemMenuItems[0].onSelect();
+        selectedItemMenuItems[1].onSelect();
         expect(setCopiedItemsMock).toHaveBeenCalledWith([textCanvasItem]);
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Copied',
             'Canvas item copied',
         );
 
-        selectedItemMenuItems[1].onSelect();
+        selectedItemMenuItems[2].onSelect();
         expect(canvasController.duplicateItems).toHaveBeenCalledWith([
             textCanvasItem,
         ]);
 
-        selectedItemMenuItems[2].onSelect();
+        selectedItemMenuItems[3].onSelect();
         expect(handleCanvasItemEditing).toHaveBeenCalledTimes(1);
 
-        selectedItemMenuItems[3].onSelect();
+        selectedItemMenuItems[4].onSelect();
         expect(canvasController.deleteItems).toHaveBeenCalledWith([
             textCanvasItem,
         ]);
-        expect(selectedItemMenuItems[0].keyboardShortcut).toEqual(
+        expect(selectedItemMenuItems[1].keyboardShortcut).toEqual(
             expect.objectContaining({
                 key: 'c',
             }),
@@ -232,9 +387,9 @@ describe('canvasContextMenuHelpers', () => {
 
         expect(
             unselectedItemMenuItems.map((item: any) => item.menuElement),
-        ).toEqual(['Copy', 'Duplicate', 'Delete']);
-        expect(unselectedItemMenuItems[0].keyboardShortcut).toBeUndefined();
+        ).toEqual(['Lock', 'Copy', 'Duplicate', 'Delete']);
         expect(unselectedItemMenuItems[1].keyboardShortcut).toBeUndefined();
         expect(unselectedItemMenuItems[2].keyboardShortcut).toBeUndefined();
+        expect(unselectedItemMenuItems[3].keyboardShortcut).toBeUndefined();
     });
 });

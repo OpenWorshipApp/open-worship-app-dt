@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 import type { SrcData } from '../../helper/FileSource';
 import type { AppColorType } from '../../others/color/colorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
@@ -79,6 +81,10 @@ export const canvasItemList = [
 ] as const;
 export type CanvasItemKindType = (typeof canvasItemList)[number];
 
+export function checkIsMediaCanvasItemType(type: string) {
+    return type === 'image' || type === 'video';
+}
+
 export function genTextDefaultBoxStyle(
     width: number = 700,
     height: number = 400,
@@ -90,7 +96,7 @@ export function genTextDefaultBoxStyle(
         width,
         height,
         rotate: 0,
-        backgroundColor: '#ff00ff8b' as AppColorType,
+        backgroundColor: '#0000008b' as AppColorType,
         backdropFilter: 0,
         roundSizePercentage: 0,
         roundSizePixel: 0,
@@ -99,7 +105,57 @@ export function genTextDefaultBoxStyle(
     };
 }
 
+export function genMediaDefaultBoxStyle(width?: number, height?: number) {
+    return {
+        ...genTextDefaultBoxStyle(width, height),
+        // Media fills its box, so a visible background color would never
+        // actually be seen — default to transparent black.
+        backgroundColor: '#00000000' as AppColorType,
+    };
+}
+
+export const SCRIPT_SAFE_LINE_HEIGHT = 1.35;
+
+// Shared by every canvas item that lays out rich text: text, html and bible.
+export type TextStylePropsType = {
+    color: AppColorType;
+    fontSize: number;
+    fontFamily: string | null;
+    fontWeight: string | null;
+    textHorizontalAlignment: HAlignmentType;
+    textVerticalAlignment: VAlignmentType;
+};
+
+export function genTextStyle(props: TextStylePropsType): CSSProperties {
+    return {
+        display: 'flex',
+        width: '100%',
+        height: '100%',
+        fontSize: `${props.fontSize}px`,
+        // Keep ascenders/combining marks visible for complex scripts (Khmer, etc.).
+        lineHeight: SCRIPT_SAFE_LINE_HEIGHT,
+        fontFamily: props.fontFamily ?? '',
+        fontWeight: props.fontWeight ?? '',
+        color: props.color,
+        alignItems: props.textVerticalAlignment,
+        justifyContent: props.textHorizontalAlignment,
+        textAlign: props.textHorizontalAlignment,
+        padding: `${props.fontSize / 10}px`,
+    };
+}
+
+export function checkIsValidTextStyleProps(json: AnyObjectType) {
+    return (
+        typeof json.color === 'string' &&
+        typeof json.fontSize === 'number' &&
+        (json.fontFamily === null || typeof json.fontFamily === 'string') &&
+        (json.fontWeight === null || typeof json.fontWeight === 'string')
+    );
+}
+
 export function checkIsSupportMediaType(fileType: string) {
-    // TODO: add support for video
-    return isSupportedMimetype(fileType, 'image');
+    return (
+        isSupportedMimetype(fileType, 'image') ||
+        isSupportedMimetype(fileType, 'video')
+    );
 }

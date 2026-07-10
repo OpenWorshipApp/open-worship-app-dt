@@ -8,26 +8,24 @@ import {
     keyToBook,
     toVerseFullKeyFormat,
 } from './bibleInfoHelpers';
-import type { LocaleType } from '../../lang/langHelpers';
 import {
-    DEFAULT_LOCALE,
     fromLocaleNum,
     fromStringNum,
-    getFontFamilyByLocale,
     getLangDataAsync,
     toLocaleNum,
     toStringNum,
 } from '../../lang/langHelpers';
-import { useAppEffect, useAppStateAsync } from '../appHooks';
+import { useAppEffect } from '../appHooks';
 import BibleItem from '../../bible-list/BibleItem';
 import { getModelChapterCount } from './bibleLogicHelpers1';
-import CacheManager, { globalCacheManager1M } from '../../others/CacheManager';
+import CacheManager from '../../others/CacheManager';
 import type { BibleMinimalInfoType } from './bibleDownloadHelpers';
 import { getAllLocalBibleInfoList } from './bibleDownloadHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
 import { getSetting, setSetting } from '../settingHelpers';
 import { appLog } from '../loggerHelpers';
 import { getBibleModelInfo, modelNewLinerInfo } from './bibleModelHelpers';
+import { getBibleLocale, getLangDataFromBibleKey } from './bibleStyleHelpers';
 
 export async function toInputText(
     bibleKey: string,
@@ -64,45 +62,6 @@ export async function toInputText(
     text += `-${await toLocaleNumBible(bibleKey, verseEnd)}`;
     // 1 John 1:1-2
     return text;
-}
-
-export async function getBibleLocale(bibleKey: string) {
-    const bibleInfo = await getBibleInfo(bibleKey);
-    if (bibleInfo === null) {
-        return 'en' as LocaleType;
-    }
-    return bibleInfo.locale;
-}
-
-export async function getLangDataFromBibleKey(bibleKey: string) {
-    const locale = await getBibleLocale(bibleKey);
-    const langData =
-        (await getLangDataAsync(locale)) ||
-        (await getLangDataAsync(DEFAULT_LOCALE));
-    return langData;
-}
-
-export async function getBibleFontFamily(bibleKey: string): Promise<string> {
-    if (!bibleKey) {
-        return await getFontFamilyByLocale(DEFAULT_LOCALE);
-    }
-    const key = `FontFamilyBibleKey:${bibleKey}`;
-    return await unlocking(key, async () => {
-        const cachedFontFamily = await globalCacheManager1M.get(key);
-        if (cachedFontFamily) {
-            return cachedFontFamily;
-        }
-        const locale = await getBibleLocale(bibleKey);
-        const fontFamily = getFontFamilyByLocale(locale);
-        await globalCacheManager1M.set(key, fontFamily);
-        return fontFamily;
-    });
-}
-export function useBibleFontFamily(bibleKey: string): string | undefined {
-    const [fontFamily] = useAppStateAsync(() => {
-        return getBibleFontFamily(bibleKey);
-    }, [bibleKey]);
-    return fontFamily ?? undefined;
 }
 
 const toLocaleNumCache = new CacheManager<string>(60); // 1 minute

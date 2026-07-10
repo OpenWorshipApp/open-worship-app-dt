@@ -22,11 +22,11 @@ import {
     checkIsOldTestament,
 } from '../helper/bible-helpers/bibleInfoHelpers';
 import { tran } from '../lang/langHelpers';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import {
     type BookSubtypeType,
     kjvBibleModelInfo,
 } from '../helper/bible-helpers/bibleModelHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const OPTION_CLASS = 'bible-lookup-book-option';
 const OPTION_SELECTED_CLASS = 'active';

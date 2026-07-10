@@ -2,6 +2,7 @@ import { toMaxId } from '../../helper/helpers';
 import type CanvasItem from './CanvasItem';
 import { CanvasItemError } from './CanvasItem';
 import CanvasItemBibleItem from './CanvasItemBibleItem';
+import CanvasItemHtml from './CanvasItemHtml';
 import CanvasItemImage from './CanvasItemImage';
 import CanvasItemText from './CanvasItemText';
 import CanvasItemVideo from './CanvasItemVideo';
@@ -54,8 +55,9 @@ export default class Canvas {
             case 'video':
                 return CanvasItemVideo.fromJson(json);
             case 'text':
-            case 'html':
                 return CanvasItemText.fromJson(json);
+            case 'html':
+                return CanvasItemHtml.fromJson(json);
             case 'bible':
                 return CanvasItemBibleItem.fromJson(json);
             default:

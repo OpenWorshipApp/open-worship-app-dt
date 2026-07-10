@@ -31,6 +31,7 @@ function RenderButtonComp({
             className={`btn btn-${isEnabled ? '' : 'outline-'}${btnType}`}
             type="button"
             title={`${title} [${toShortcutKey(eventMap)}]`}
+            aria-label={title}
             onClick={onClickCallback}
         >
             {text}

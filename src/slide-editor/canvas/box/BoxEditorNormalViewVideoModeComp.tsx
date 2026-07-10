@@ -28,13 +28,7 @@ export function BoxEditorNormalVideoRender() {
         handleError(error);
         return <BENViewErrorRender />;
     }
-    const pWidth = props.width;
-    const pHeight = props.height;
-    const rWidth = pWidth / props.mediaWidth;
-    const rHeight = pHeight / props.mediaHeight;
-    const mR = Math.min(rWidth, rHeight);
-    const width = mR * props.mediaWidth;
-    const minSize = Math.min(width, pWidth) / 4;
+    const minSize = Math.min(props.width, props.height) / 4;
     return (
         <div
             title={props.id.toString()}
@@ -49,7 +43,16 @@ export function BoxEditorNormalVideoRender() {
         >
             <video
                 src={props.srcData || img404}
-                width={width}
+                style={{
+                    width: '100%',
+                    height: '100%',
+                    // Always fill the box exactly rather than
+                    // letterboxing to the media's own ratio, so the box's
+                    // background color never shows through around the
+                    // video (same as the image render).
+                    objectFit: 'fill',
+                    display: 'block',
+                }}
                 loop
                 muted
                 playsInline

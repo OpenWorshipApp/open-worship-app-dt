@@ -60,6 +60,9 @@ function ContextMenuItemComp({
         >
             {item.childBefore || null}
             <div className="app-ellipsis flex-fill">{item.menuElement}</div>
+            {item.keyboardShortcut !== undefined
+                ? genContextMenuItemShortcutKey(item.keyboardShortcut)
+                : null}
             {item.childAfter || null}
         </div>
     );
@@ -95,16 +98,6 @@ export default function AppContextMenuComp() {
                 className="app-context-menu app-focusable"
             >
                 {data.items.map((item, i) => {
-                    if (item.keyboardShortcut !== undefined) {
-                        item.childAfter = (
-                            <>
-                                {genContextMenuItemShortcutKey(
-                                    item.keyboardShortcut,
-                                )}
-                                {item.childAfter ?? null}
-                            </>
-                        );
-                    }
                     return (
                         <ContextMenuItemComp
                             key={i}

@@ -13,6 +13,7 @@ import { addBibleItemAndPresent } from './bibleActionHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
 export function RenderCopyBibleItemActionButtonsComp({
     bibleItem,
@@ -77,6 +78,13 @@ export default function RenderActionButtonsComp({
         exportToWordDocument([bibleItemRef.current]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleBibleItemInserting = useCallback(() => {
+        const lookupViewController =
+            viewControllerRef.current as LookupBibleItemController;
+        CanvasBibleItemEventListener.insertBibleItem(bibleItemRef.current);
+        lookupViewController.onLookupSaveBibleItem();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="btn-group mx-1">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />
@@ -114,6 +122,18 @@ export default function RenderActionButtonsComp({
                             onClick={handleSaveAndPresent}
                         >
                             <i className="bi bi-cast" />
+                        </button>
+                    ) : null}
+                    {appProvider.isPageAppDocumentEditor ? (
+                        <button
+                            className="btn btn-sm btn-primary"
+                            type="button"
+                            title={tran(
+                                'Insert bible item into selected slide',
+                            )}
+                            onClick={handleBibleItemInserting}
+                        >
+                            <i className="bi bi-file-earmark-slides" />
                         </button>
                     ) : null}
                     <button

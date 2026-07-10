@@ -7,16 +7,14 @@ import {
 import { useBibleItemsViewControllerContext } from '../BibleItemsViewController';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../../helper/appHooks';
-import {
-    getVersesCount,
-    useBibleFontFamily,
-} from '../../helper/bible-helpers/bibleLogicHelpers2';
+import { getVersesCount } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import LoadingComp from '../../others/LoadingComp';
 import { getBibleInfoIsRtl } from '../../helper/bible-helpers/bibleInfoHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import RenderRestVerseNumListComp from './RenderRestVerseNumListComp';
 import RenderVerseTextComp from './RenderVerseTextComp';
 import { tran } from '../../lang/langHelpers';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 function RenderVerseTitleComp({
     bibleItem,

@@ -152,6 +152,7 @@ describe('screen setting coverage', () => {
             id: 7,
             isRenderFullWidth: false,
             title: 'Preview',
+            virtualBackgroundColor: '#ABCDEF',
         });
         expect(notFullWidthInput?.checked).toBe(true);
     });

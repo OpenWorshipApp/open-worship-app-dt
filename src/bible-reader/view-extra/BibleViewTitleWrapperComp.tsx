@@ -5,10 +5,10 @@ import {
 } from 'react';
 
 import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
-import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { DragTypeEnum } from '../../helper/DragInf';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 function toggleParentReceiveDrop(element: HTMLElement, isDraggable: boolean) {
     if (element.classList.contains('bible-view')) {

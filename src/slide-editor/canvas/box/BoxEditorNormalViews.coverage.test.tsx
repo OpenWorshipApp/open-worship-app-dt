@@ -16,6 +16,8 @@ const {
     genHandleContextMenuOpeningMock,
     getBoxStyleMock,
     handleErrorMock,
+    htmlGenStyleMock,
+    htmlValidateMock,
     imageValidateMock,
     setEditingCanvasItemMock,
     setSelectedCanvasItemsMock,
@@ -48,7 +50,7 @@ const {
             value: {
                 id: 11,
                 text: 'Line 1\nLine 2',
-                htmlText: '<strong>Markup</strong>',
+                html: '<strong>Markup</strong>',
                 width: 120,
                 height: 60,
                 mediaWidth: 240,
@@ -79,6 +81,8 @@ const {
         genHandleContextMenuOpeningMock,
         getBoxStyleMock,
         handleErrorMock: vi.fn(),
+        htmlGenStyleMock: vi.fn(() => ({ fontSize: '20px' })),
+        htmlValidateMock: vi.fn(),
         imageValidateMock: vi.fn(),
         setEditingCanvasItemMock: vi.fn(),
         setSelectedCanvasItemsMock: vi.fn(),
@@ -107,6 +111,13 @@ vi.mock('../CanvasItemBibleItem', () => ({
     },
 }));
 
+vi.mock('../CanvasItemHtml', () => ({
+    default: {
+        validate: htmlValidateMock,
+        genStyle: htmlGenStyleMock,
+    },
+}));
+
 vi.mock('../CanvasItemImage', () => ({
     default: {
         validate: imageValidateMock,
@@ -128,6 +139,10 @@ vi.mock('../CanvasItemVideo', () => ({
 
 vi.mock('../../../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: showAppContextMenuMock,
+}));
+
+vi.mock('../../../others/commonButtons', () => ({
+    useToggleBibleLookupPopupContext: () => null,
 }));
 
 vi.mock('../../../server/appProvider', () => ({
@@ -152,11 +167,13 @@ import BoxEditorNormalViewBibleModeComp, {
 import BoxEditorNormalViewErrorComp, {
     BENViewErrorRender,
 } from './BoxEditorNormalViewErrorComp';
+import BoxEditorNormalViewHtmlModeComp, {
+    BoxEditorNormalHtmlRender,
+} from './BoxEditorNormalViewHtmlModeComp';
 import BoxEditorNormalViewImageModeComp, {
     BoxEditorNormalImageRender,
 } from './BoxEditorNormalViewImageModeComp';
 import BoxEditorNormalViewTextModeComp, {
-    BoxEditorNormalHtmlRender,
     BoxEditorNormalTextRender,
 } from './BoxEditorNormalViewTextModeComp';
 import BoxEditorNormalViewVideoModeComp, {
@@ -174,7 +191,7 @@ describe('BoxEditor normal view components', () => {
         canvasItemPropsState.value = {
             id: 11,
             text: 'Line 1\nLine 2',
-            htmlText: '<strong>Markup</strong>',
+            html: '<strong>Markup</strong>',
             width: 120,
             height: 60,
             mediaWidth: 240,
@@ -286,6 +303,7 @@ describe('BoxEditor normal view components', () => {
             canvasItemState.value,
             expect.any(Function),
             false,
+            null,
         );
 
         const editHandler = (
@@ -358,6 +376,13 @@ describe('BoxEditor normal view components', () => {
     });
 
     test('renders Bible content inside the normal wrapper', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            html:
+                '<div><div>Genesis 1:1</div><div>In the beginning</div></div>' +
+                '<div><div>John 3:16</div>' +
+                '<div>For God so loved the world</div></div>',
+        };
         await render(
             <BoxEditorNormalViewBibleModeComp
                 style={{ backgroundColor: 'lavender' }}
@@ -417,12 +442,19 @@ describe('BoxEditor normal view components', () => {
         canvasItemPropsState.value = {
             ...canvasItemPropsState.value,
             id: 12,
-            htmlText: '<em>Inline html</em>',
+            html: '<em>Inline html</em>',
         };
-        await render(<BoxEditorNormalHtmlRender />);
+        await render(
+            <BoxEditorNormalViewHtmlModeComp
+                style={{ backgroundColor: 'azure' }}
+            />,
+        );
 
         const htmlNode =
             container?.querySelector<HTMLDivElement>('[title="12"]');
+        expect(htmlValidateMock).toHaveBeenCalledWith(
+            canvasItemPropsState.value,
+        );
         expect(htmlNode?.innerHTML).toBe('<em>Inline html</em>');
     });
 
@@ -440,7 +472,7 @@ describe('BoxEditor normal view components', () => {
 
     test('falls back to the error view when html props are invalid', async () => {
         const error = new Error('bad html');
-        textValidateMock.mockImplementation(() => {
+        htmlValidateMock.mockImplementation(() => {
             throw error;
         });
 
@@ -450,7 +482,7 @@ describe('BoxEditor normal view components', () => {
         expect(container?.textContent).toContain('Error');
     });
 
-    test('renders images with scaled width and falls back to the 404 asset', async () => {
+    test('renders images filling the box and falls back to the 404 asset', async () => {
         await render(
             <BoxEditorNormalViewImageModeComp
                 style={{ backgroundColor: 'mintcream' }}
@@ -464,7 +496,9 @@ describe('BoxEditor normal view components', () => {
             canvasItemPropsState.value,
         );
         expect(wrapper?.style.backgroundColor).toBe('mintcream');
-        expect(image?.getAttribute('width')).toBe('120');
+        expect(image?.style.width).toBe('100%');
+        expect(image?.style.height).toBe('100%');
+        expect(image?.style.objectFit).toBe('fill');
         expect(image?.getAttribute('src')).toBe('data:image/png;base64,image');
 
         canvasItemPropsState.value = {
@@ -505,8 +539,10 @@ describe('BoxEditor normal view components', () => {
         );
         expect(wrapper?.style.backgroundColor).toBe('aliceblue');
         expect(video?.getAttribute('src')).toBe('data:image/png;base64,image');
-        expect(video?.getAttribute('width')).toBe('120');
-        expect(playIcon?.getAttribute('width')).toBe('30');
+        expect(video?.style.width).toBe('100%');
+        expect(video?.style.height).toBe('100%');
+        expect(video?.style.objectFit).toBe('fill');
+        expect(playIcon?.getAttribute('width')).toBe('15');
 
         canvasItemPropsState.value = {
             ...canvasItemPropsState.value,

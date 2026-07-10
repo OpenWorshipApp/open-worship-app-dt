@@ -19,8 +19,11 @@ vi.mock('./canvas/box/BoxEditorNormalViewVideoModeComp', () => ({
     BoxEditorNormalVideoRender: () => <div>video-render</div>,
 }));
 
-vi.mock('./canvas/box/BoxEditorNormalViewTextModeComp', () => ({
+vi.mock('./canvas/box/BoxEditorNormalViewHtmlModeComp', () => ({
     BoxEditorNormalHtmlRender: () => <div>html-render</div>,
+}));
+
+vi.mock('./canvas/box/BoxEditorNormalViewTextModeComp', () => ({
     BoxEditorNormalTextRender: () => <div>text-render</div>,
 }));
 

@@ -1,9 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { getVerses } from '../helper/bible-helpers/bibleInfoHelpers';
-import {
-    getBibleLocale,
-    toLocaleNumBible,
-} from '../helper/bible-helpers/bibleLogicHelpers2';
+import { toLocaleNumBible } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type BibleItem from '../bible-list/BibleItem';
 import type {
     BibleItemRenderingType,
@@ -14,6 +11,7 @@ import { getHTMLChild } from '../helper/helpers';
 import appProvider from '../server/appProvider';
 import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const bibleScreenHelper = {
     async genHtmlFromScreenViewBibleItem(

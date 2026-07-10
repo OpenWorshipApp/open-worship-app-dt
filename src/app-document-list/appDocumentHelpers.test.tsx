@@ -177,6 +177,7 @@ vi.mock('./AppDocument', () => {
             items: any[] = [];
             duplicateSlides = vi.fn();
             moveSlide = vi.fn();
+            updateSlide = vi.fn();
             deleteSlides = vi.fn();
             getIsWrongDimension = vi.fn(async () => null);
 
@@ -507,6 +508,7 @@ describe('appDocumentHelpers', () => {
             'Duplicate',
             'Move forward',
             'Move backward',
+            'Disable',
             'Quick Edit',
             'Show On Screens',
             'Delete',
@@ -516,8 +518,9 @@ describe('appDocumentHelpers', () => {
         menuItems[2].onSelect?.(contextMenuEvent);
         menuItems[3].onSelect?.(contextMenuEvent);
         menuItems[4].onSelect?.(contextMenuEvent);
-        menuItems[5].onSelect?.('presenter-event' as any);
-        menuItems[6].onSelect?.(contextMenuEvent);
+        menuItems[5].onSelect?.(contextMenuEvent);
+        menuItems[6].onSelect?.('presenter-event' as any);
+        menuItems[7].onSelect?.(contextMenuEvent);
 
         expect(appDocumentSetCopiedSlidesMock).toHaveBeenCalledWith([slide]);
         expect(showSimpleToastMock).toHaveBeenCalledWith(
@@ -527,6 +530,16 @@ describe('appDocumentHelpers', () => {
         expect(doc.duplicateSlides).toHaveBeenCalledWith([slide]);
         expect(doc.moveSlide).toHaveBeenNthCalledWith(1, slide, true);
         expect(doc.moveSlide).toHaveBeenNthCalledWith(2, slide, false);
+        expect((slide as any).isDisabled).toBe(true);
+        expect(doc.updateSlide).toHaveBeenCalledWith(slide);
+        const disabledMenuItems = appDocumentHelpers.genSlideContextMenuItems(
+            doc,
+            slide as any,
+            true,
+        );
+        expect(disabledMenuItems[4].menuElement).toBe('Enable');
+        disabledMenuItems[4].onSelect?.(contextMenuEvent);
+        expect((slide as any).isDisabled).toBe(false);
         expect(selectVarySlideMock).toHaveBeenCalledWith(slide);
         expect(handleSlideSelectingMock).toHaveBeenCalledWith(
             'presenter-event',

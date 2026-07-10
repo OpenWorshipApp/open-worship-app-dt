@@ -3,6 +3,7 @@ import type { MouseEvent, CSSProperties } from 'react';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import type { SlideType } from '../../app-document-list/Slide';
+import type { CanvasItemBiblePropsType } from '../../slide-editor/canvas/CanvasItemBibleItem';
 import { genPdfSlide } from '../../app-document-presenter/items/PdfSlideRenderComp';
 import { genPptxSlide } from '../../app-document-presenter/items/PptxSlideRenderComp';
 import { genDocxSlide } from '../../app-document-presenter/items/DocxSlideRenderComp';
@@ -32,10 +33,12 @@ import type {
     ScreenMessageType,
 } from '../screenTypeHelpers';
 import type { VarySlideScreenDataType } from '../screenAppDocumentTypeHelpers';
+import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../screenAppDocumentTypeHelpers';
 import { registerScrollingSyncEvent } from './screenEventHelpers';
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { showSimpleToast } from '../../toast/toastHelpers';
+import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 function queryAllDeep(root: ParentNode, selector: string): Element[] {
     const results = Array.from(root.querySelectorAll(selector));
@@ -57,6 +60,10 @@ export function checkIsPdfFullWidth() {
 }
 export function setIsPdfFullWidth(isRenderFullWidth: boolean) {
     setSetting(PDF_FULL_WIDTH_SETTING_NAME, `${isRenderFullWidth}`);
+}
+
+export function getPageBaseVirtualBackgroundColor(): string | null {
+    return getSetting(PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME) || null;
 }
 
 class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocumentManagerEventType> {
@@ -164,7 +171,12 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         filePath: string,
         itemJson: VarySlideDataType,
     ): VarySlideScreenDataType {
-        return { filePath, itemJson, isRenderFullWidth: checkIsPdfFullWidth() };
+        return {
+            filePath,
+            itemJson,
+            isRenderFullWidth: checkIsPdfFullWidth(),
+            virtualBackgroundColor: getPageBaseVirtualBackgroundColor(),
+        };
     }
 
     handleSlideSelecting(filePath: string, itemJson: VarySlideDataType) {
@@ -207,11 +219,34 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         divHaftScale: HTMLDivElement,
         pdfImageData: PdfSlideType,
         isFullWidth: boolean,
+        virtualBackgroundColor: string | null,
     ) {
         if (!pdfImageData.imagePreviewSrc) {
             return null;
         }
         const content = genPdfSlide(pdfImageData.imagePreviewSrc, isFullWidth);
+        const { width, height } = pdfImageData.metadata;
+        if (!isFullWidth && width > 0 && height > 0) {
+            // size to the page box so the background color paints only the
+            // page area, leaving the screen background visible around it
+            if (virtualBackgroundColor !== null) {
+                content.style.backgroundColor = virtualBackgroundColor;
+            }
+            Object.assign(divHaftScale.style, {
+                width: `${width}px`,
+                height: `${height}px`,
+                overflow: 'hidden',
+                transform: 'translate(-50%, -50%)',
+            });
+            const scale = Math.min(
+                this.screenManagerBase.width / width,
+                this.screenManagerBase.height / height,
+            );
+            return { content, scale };
+        }
+        if (isFullWidth && virtualBackgroundColor !== null) {
+            content.style.backgroundColor = virtualBackgroundColor;
+        }
         Object.assign(divHaftScale.style, {
             width: '100%',
             height: '100%',
@@ -221,13 +256,20 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         return { content, scale: 1 };
     }
 
-    renderPptx(divHaftScale: HTMLDivElement, pptxData: PptxSlideType) {
+    renderPptx(
+        divHaftScale: HTMLDivElement,
+        pptxData: PptxSlideType,
+        virtualBackgroundColor: string | null,
+    ) {
         const content = genPptxSlide(
             pptxData.html,
             pptxData.htmlFilePath,
             pptxData.metadata.width,
             pptxData.metadata.height,
         );
+        if (virtualBackgroundColor !== null) {
+            content.style.backgroundColor = virtualBackgroundColor;
+        }
         const { width, height } = pptxData.metadata;
         Object.assign(divHaftScale.style, {
             width: `${width}px`,
@@ -246,6 +288,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         divHaftScale: HTMLDivElement,
         docxData: DocxSlideType,
         isFullWidth: boolean,
+        virtualBackgroundColor: string | null,
     ) {
         const parentWidth = this.screenManagerBase.width;
         const content = genDocxSlide(
@@ -256,6 +299,9 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             parentWidth,
             isFullWidth,
         );
+        if (virtualBackgroundColor !== null) {
+            content.style.backgroundColor = virtualBackgroundColor;
+        }
         const { width, height } = docxData.metadata;
         if (isFullWidth) {
             Object.assign(divHaftScale.style, {
@@ -297,7 +343,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         }
     }
 
-    async getRenderableItemJson(
+    async getRenderingItemJson(
         item: VarySlideType,
     ): Promise<VarySlideDataType> {
         if (PptxSlide.checkIsThisType(item) && item.html === undefined) {
@@ -315,7 +361,31 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         return item.toJson() as VarySlideDataType;
     }
 
-    renderAppDocument(divHaftScale: HTMLDivElement, itemJson: SlideType) {
+    async renderAppDocument(divHaftScale: HTMLDivElement, itemJson: SlideType) {
+        // A bible key's @font-face is injected per window when its language
+        // data loads. This also runs in the screen window, where
+        // `AppDocument.getSlides` never did that, so resolve the fonts here
+        // before generating the HTML. Imported dynamically because a static
+        // import changes the module evaluation order on the screen page and
+        // trips a circular-import TDZ crash.
+        const bibleKeys = new Set<string>();
+        for (const canvasItem of itemJson.canvasItems) {
+            if (canvasItem.type !== 'bible') {
+                continue;
+            }
+            const { bibleKeys: itemBibleKeys } =
+                canvasItem as CanvasItemBiblePropsType;
+            for (const bibleKey of itemBibleKeys ?? []) {
+                bibleKeys.add(bibleKey);
+            }
+        }
+        if (bibleKeys.size > 0) {
+            await Promise.all(
+                Array.from(bibleKeys).map((bibleKey) => {
+                    return getBibleFontFamily(bibleKey);
+                }),
+            );
+        }
         const content = genSlideHtml(itemJson.canvasItems);
         this.cleanupSlideContent(content);
         const { width, height } = itemJson.metadata;
@@ -341,7 +411,7 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         targetDiv.remove();
     }
 
-    render() {
+    async render() {
         if (this.div === null) {
             return;
         }
@@ -358,7 +428,9 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             this.sendSyncScrollPercentage('.half-scale-container', scroll);
         });
 
-        const { itemJson, isRenderFullWidth } = this.varySlideData;
+        const { itemJson, isRenderFullWidth, virtualBackgroundColor } =
+            this.varySlideData;
+        const backgroundColor = virtualBackgroundColor ?? null;
 
         let target;
         if (PdfSlide.tryValidate(itemJson)) {
@@ -366,17 +438,23 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
                 divHaftScale,
                 itemJson as PdfSlideType,
                 isRenderFullWidth,
+                backgroundColor,
             );
         } else if (PptxSlide.tryValidate(itemJson)) {
-            target = this.renderPptx(divHaftScale, itemJson as PptxSlideType);
+            target = this.renderPptx(
+                divHaftScale,
+                itemJson as PptxSlideType,
+                backgroundColor,
+            );
         } else if (DocxSlide.tryValidate(itemJson)) {
             target = this.renderDocx(
                 divHaftScale,
                 itemJson as DocxSlideType,
                 isRenderFullWidth,
+                backgroundColor,
             );
         } else {
-            target = this.renderAppDocument(
+            target = await this.renderAppDocument(
                 divHaftScale,
                 itemJson as SlideType,
             );
@@ -412,11 +490,12 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
 
     async receiveScreenDropped(droppedData: DroppedDataType) {
         const item: VarySlideType = droppedData.item;
-        const itemJson = await this.getRenderableItemJson(item);
+        const itemJson = await this.getRenderingItemJson(item);
         this.varySlideData = {
             filePath: item.filePath,
             itemJson,
             isRenderFullWidth: checkIsPdfFullWidth(),
+            virtualBackgroundColor: getPageBaseVirtualBackgroundColor(),
         };
     }
 

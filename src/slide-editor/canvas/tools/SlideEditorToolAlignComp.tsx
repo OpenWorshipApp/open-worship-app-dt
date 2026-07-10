@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import type { VAlignmentType, HAlignmentType } from '../canvasHelpers';
 import { useAppCurrentRef } from '../../../helper/appHooks';
+import { tran } from '../../../lang/langHelpers';
 
 type AlignmentDataType = {
     verticalAlignment?: VAlignmentType;
@@ -12,12 +13,14 @@ function RendElementComp({
     iconClassname,
     dataKey,
     value,
+    label,
     data = {},
     onData,
 }: Readonly<{
     iconClassname: string;
     dataKey: string;
     value: string;
+    label: string;
     data?: { [key: string]: string };
     onData: (data: { [key: string]: string }) => void;
 }>) {
@@ -33,6 +36,8 @@ function RendElementComp({
         <button
             className={`btn btn-sm btn-${isOld ? '' : 'outline-'}info`}
             disabled={isOld}
+            title={label}
+            aria-label={label}
             onClick={handleClick}
         >
             <i className={'bi ' + iconClassname} />
@@ -46,18 +51,19 @@ function genElements({
     data,
     onData,
 }: Readonly<{
-    elements: [string, string][];
+    elements: [string, string, string][];
     dataKey: string;
     data: AlignmentDataType;
     onData: (data: AlignmentDataType) => void;
 }>) {
-    return elements.map(([iconClassname, value]) => {
+    return elements.map(([iconClassname, value, label]) => {
         return (
             <RendElementComp
                 key={iconClassname}
                 iconClassname={iconClassname}
                 dataKey={dataKey}
                 value={value}
+                label={label}
                 data={data}
                 onData={onData}
             />
@@ -75,13 +81,17 @@ export default function SlideEditorToolAlignComp({
     isText?: boolean;
 }>) {
     return (
-        <div className="d-flex">
-            <div>
+        <div className="d-flex flex-wrap gap-2">
+            <div
+                className="btn-group btn-group-sm"
+                role="group"
+                aria-label={tran('Vertical alignment')}
+            >
                 {genElements({
                     elements: [
-                        ['bi-align-top', 'start'],
-                        ['bi-align-middle', 'center'],
-                        ['bi-align-bottom', 'end'],
+                        ['bi-align-top', 'start', tran('Align top')],
+                        ['bi-align-middle', 'center', tran('Align middle')],
+                        ['bi-align-bottom', 'end', tran('Align bottom')],
                     ],
                     dataKey: 'verticalAlignment',
                     data,
@@ -89,12 +99,24 @@ export default function SlideEditorToolAlignComp({
                 })}
             </div>
             {isText ? (
-                <div>
+                <div
+                    className="btn-group btn-group-sm"
+                    role="group"
+                    aria-label={tran('Horizontal alignment')}
+                >
                     {genElements({
                         elements: [
-                            ['bi-text-left', 'left'],
-                            ['bi-text-center', 'center'],
-                            ['bi-text-right', 'right'],
+                            ['bi-text-left', 'left', tran('Text align left')],
+                            [
+                                'bi-text-center',
+                                'center',
+                                tran('Text align center'),
+                            ],
+                            [
+                                'bi-text-right',
+                                'right',
+                                tran('Text align right'),
+                            ],
                         ],
                         dataKey: 'horizontalAlignment',
                         data,
@@ -102,12 +124,16 @@ export default function SlideEditorToolAlignComp({
                     })}
                 </div>
             ) : (
-                <div>
+                <div
+                    className="btn-group btn-group-sm"
+                    role="group"
+                    aria-label={tran('Horizontal alignment')}
+                >
                     {genElements({
                         elements: [
-                            ['bi-align-start', 'left'],
-                            ['bi-align-center', 'center'],
-                            ['bi-align-end', 'right'],
+                            ['bi-align-start', 'left', tran('Align left')],
+                            ['bi-align-center', 'center', tran('Align center')],
+                            ['bi-align-end', 'right', tran('Align right')],
                         ],
                         dataKey: 'horizontalAlignment',
                         data,

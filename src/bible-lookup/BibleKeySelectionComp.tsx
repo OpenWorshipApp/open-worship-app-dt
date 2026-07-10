@@ -12,8 +12,8 @@ import { getLanguageTitle, tran } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { openBibleSetting } from '../setting/settingHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export async function genContextMenuBibleKeys(
     onSelect: (event: any, bibleKey: string) => void,

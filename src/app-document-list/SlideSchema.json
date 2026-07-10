@@ -7,6 +7,9 @@
         "name": {
             "type": "string"
         },
+        "isDisabled": {
+            "type": "boolean"
+        },
         "canvasItems": {
             "type": "array",
             "items": {

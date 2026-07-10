@@ -22,8 +22,10 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
    was the user).
 4. **Most console output is expected dev noise** (Electron security warnings, React DevTools,
    `printHtmlText`, empty `[log]`). Don't report it (§5).
-5. **Restore what you change** (live background, selected doc) and **don't take over the live
-   window** (fullscreen / present-to-display) — the user may be using it (§8).
+5. **Restore what you change** (live background, selected doc, shown screens). Screen
+   controlling & presenting is **mandatory in every run** (SKILL §6a): show the screen
+   briefly, drive its `screen.html` CDP target, then **hide it again** — only leaving it
+   taken over (or touching a display the user says is in live use) is off-limits (§10).
 
 ---
 
@@ -165,12 +167,28 @@ Keep the main window on `presenter.html`.
 
 ---
 
-## 6. `.app-on-screen` / live-output semantics
+## 6. `.app-on-screen` / live-output semantics — and driving the screen window
 - Any element currently shown on the presentation output carries **`.app-on-screen`**.
 - The active background tab gets a **`*` prefix** (e.g. `*Videos`, `*Colors`).
 - Use both to verify "send to screen" toggles:
   `[...document.querySelectorAll('.app-on-screen')].map(e=>e.textContent.trim())`.
-- A separate `screen.html` **page target** appears only while presenting to a display.
+
+### Screen window CDP visibility (verified, corrected 2026-07-08)
+- While a screen is **SHOWING** (toggle `ShowHideScreen` / `F5`), it **is** a normal CDP
+  target: `https://localhost:3000/screen.html?screenId=N` in `list_pages` — fully
+  drivable (`take_snapshot` / `click` / `take_screenshot`; the ❌ `#close` button has
+  been clicked via MCP and it hid the screen).
+- The target **vanishes the moment the screen hides** — an earlier session concluded it
+  was "never on CDP"; that was wrong, it's just absent while hidden.
+- A **hidden** screen's console forwards via `all:app:log` → electron main stdout (the
+  `npm run dev` terminal). Read that channel for screen-only bugs while hidden.
+- The mini preview reuses the same screen React components but **without
+  `isPageScreen`/StrictMode** — screen-window-only bugs (e.g. full-width PDF, mount
+  loops) do NOT reproduce there. **That is why driving the real target once per run is
+  mandatory** (SKILL §6a): screenshot the screen target itself and compare with the
+  mini preview.
+- Presenting is a **single-click toggle** (§5) — present, verify, then clear with
+  `F6`–`F10`; end with the screen hidden unless it started showing.
 
 ---
 
@@ -182,6 +200,7 @@ Keep the main window on `presenter.html`.
 | `[info] Download the React DevTools…` | dev only |
 | `[debug] [vite] connecting… / connected` | dev HMR |
 | `[log] printHtmlText` and an empty `[log]` | benign; the empty log repeats on interaction (cleanup candidate, not a bug) |
+| `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` (Settings → Bible tab) | **intended** — the online bible `info.json` fetch failed or is unavailable (e.g. offline/dev); the error is caught and logged by `handleError`, the function returns `null`, and the UI simply shows no online bible list |
 
 Real console issues to flag: uncaught errors, unhandled promise rejections, React
 key/warning spam, failed dynamic imports.
@@ -217,8 +236,12 @@ Real network issues to flag: `4xx`/`5xx` on app assets, blocked/CORS, broken ima
 ## 10. Don't disrupt the live window (courtesy)
 - If you change the live **background** (color/image/video) or the selected document, **restore
   it** afterward (double-click the original item; verified working).
-- **Avoid** triggering presenter **fullscreen** or **present-to-display** on a window the user
-  is actively using.
+- **Showing the physical screen is part of the mandatory screen block** (SKILL §6a):
+  toggle it ON briefly, drive the `screen.html` target, then **hide it and restore
+  every control you touched** (lock, transitions, stage number, display, color note).
+  What stays forbidden: **leaving** a display taken over, OS-fullscreen games on a
+  window in use, or showing any screen at all when the user says a **live service** is
+  running — in that case assert via mini-screen and mark the SC rows BLOCKED→EX-02.
 - **Never leave the main window on a popup-only page** (§2–§3).
 
 ---

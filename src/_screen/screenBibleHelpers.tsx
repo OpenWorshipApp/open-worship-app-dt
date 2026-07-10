@@ -13,7 +13,7 @@ import { cloneJson } from '../helper/helpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { genContextMenuBibleKeys } from '../bible-lookup/BibleKeySelectionComp';
 import type { BibleItemDataType } from './screenTypeHelpers';
-import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type ScreenBibleManagerEventType = 'update' | 'text-style';
 

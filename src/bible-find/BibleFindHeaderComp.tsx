@@ -6,7 +6,7 @@ import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { setSetting, useStateSettingString } from '../helper/settingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const BIBLE_FIND_RECENT_SEARCH_SETTING_NAME = 'bible-find-recent-search';
 let setFindText: (text: string) => void = () => {};

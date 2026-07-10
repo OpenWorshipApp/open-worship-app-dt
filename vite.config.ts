@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 
+import { compNameAttributePlugin } from './vite-plugin-comp-name';
 import { gzBundlePlugin } from './vite-plugin-gz-bundle';
 
 const htmlPlugin = () => {
@@ -49,6 +50,7 @@ export default defineConfig({
     assetsInclude: ['**/*.dll'],
     plugins: [
         gzBundlePlugin(),
+        compNameAttributePlugin(),
         react(),
         htmlPlugin(),
         basicSsl({

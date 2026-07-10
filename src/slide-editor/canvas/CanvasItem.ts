@@ -31,6 +31,8 @@ export type CanvasItemPropsType = {
     roundSizePercentage: number;
     roundSizePixel: number;
     type: CanvasItemKindType;
+    // Absent on items saved before locking existed; absent means unlocked.
+    locked?: boolean;
 };
 
 export type CanvasItemEventType = 'edit';
@@ -63,6 +65,17 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
 
     get type(): CanvasItemKindType {
         return this.props.type;
+    }
+
+    // Whether resizing this item's box should preserve its aspect ratio.
+    get shouldLockAspectRatio() {
+        return false;
+    }
+
+    // A locked item cannot be moved, resized, rotated, edited or deleted
+    // until it is unlocked again.
+    get isLocked() {
+        return this.props.locked === true;
     }
 
     static genStyle(_props: CanvasItemPropsType) {
@@ -171,6 +184,7 @@ export default abstract class CanvasItem<T extends CanvasItemPropsType>
             typeof json.height !== 'number' ||
             (json.backgroundColor !== null &&
                 typeof json.backgroundColor !== 'string') ||
+            typeof (json.locked ?? false) !== 'boolean' ||
             !canvasItemList.includes(json.type)
         ) {
             throw new Error('Invalid canvas item data');

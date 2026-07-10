@@ -9,6 +9,7 @@ import {
 } from '../CanvasItem';
 import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
 import { useAppCurrentRef } from '../../../helper/appHooks';
+import { useToggleBibleLookupPopupContext } from '../../../others/commonButtons';
 
 export default function BoxEditorNormalWrapperComp({
     style,
@@ -25,6 +26,7 @@ export default function BoxEditorNormalWrapperComp({
     const canvasController = useCanvasControllerContext();
     const handleCanvasItemControlling = useSetSelectedCanvasItems();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
+    const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const handleCanvasItemControllingRef = useAppCurrentRef(
         handleCanvasItemControlling,
     );
@@ -50,6 +52,7 @@ export default function BoxEditorNormalWrapperComp({
                     canvasItem,
                     handleCanvasItemEditing.bind(null, canvasItem),
                     false,
+                    showBibleLookupPopup,
                 )
             }
             onClick={handleClick}

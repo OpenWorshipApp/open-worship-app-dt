@@ -46,6 +46,7 @@ function RendItemComp({
         <button
             className="btn btn-secondary btn-sm p-0 mx-1"
             title={title}
+            aria-label={title}
             onContextMenu={handleContextMenu}
         >
             <i className={`bi bi-${iType}`} style={iStyle} />

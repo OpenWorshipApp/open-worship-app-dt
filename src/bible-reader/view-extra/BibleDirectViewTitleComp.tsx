@@ -1,5 +1,5 @@
-import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import { useAppStateAsync } from '../../helper/appHooks';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 
 export function BibleDirectViewTitleComp({

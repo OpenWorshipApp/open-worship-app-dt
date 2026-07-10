@@ -4,6 +4,7 @@ import { compileSchema } from 'json-schema-library';
 import { ItemBaseFilePath } from '../helper/ItemBase';
 import { cloneJson } from '../helper/helpers';
 import type { CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
+import type { CanvasItemBiblePropsType } from '../slide-editor/canvas/CanvasItemBibleItem';
 import type DragInf from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
@@ -24,6 +25,7 @@ type MetadataType = {
 export type SlideType = {
     id: number;
     name?: string;
+    isDisabled?: boolean;
     canvasItems: CanvasItemPropsType[];
     metadata: MetadataType;
 };
@@ -43,7 +45,12 @@ export default class Slide
     }
 
     get isDisabled() {
-        return false;
+        return this.originalJson.isDisabled ?? false;
+    }
+    set isDisabled(isDisabled: boolean) {
+        const json = this.cloneOriginalJson;
+        json.isDisabled = isDisabled;
+        this.originalJson = json;
     }
 
     get cloneOriginalJson() {
@@ -149,6 +156,21 @@ export default class Slide
             }
         }
         return fontFamilies;
+    }
+
+    getBibleKeys() {
+        const bibleKeys = new Set<string>();
+        for (const canvasItem of this.canvasItemsJson) {
+            if (canvasItem.type !== 'bible') {
+                continue;
+            }
+            const { bibleKeys: itemBibleKeys } =
+                canvasItem as CanvasItemBiblePropsType;
+            for (const bibleKey of itemBibleKeys ?? []) {
+                bibleKeys.add(bibleKey);
+            }
+        }
+        return bibleKeys;
     }
 
     async getUnavailableFontFamilies() {

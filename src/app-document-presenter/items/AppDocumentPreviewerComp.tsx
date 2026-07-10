@@ -18,6 +18,7 @@ import appProvider from '../../server/appProvider';
 import PresenterNoteContainerHandlerComp from '../../slide-editor/note/PresenterNoteContainerHandlerComp';
 import { useStateSettingString } from '../../helper/settingHelpers';
 import { DOCX_PREVIEW_BACKGROUND_COLOR_VAR_NAME } from './slideItemRenderHelpers';
+import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../../_screen/screenAppDocumentTypeHelpers';
 
 type PreviewerBodyStyle = CSSProperties & {
     '--app-docx-preview-background'?: string;
@@ -73,7 +74,7 @@ function EditorComp() {
 export default function AppDocumentPreviewerComp() {
     const selectedAppDocumentContext = use(SelectedVaryAppDocumentContext);
     const [docxPreviewBackgroundColor, setDocxPreviewBackgroundColor] =
-        useStateSettingString<string>('page-base-virtual-bg-color');
+        useStateSettingString<string>(PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME);
     if (!selectedAppDocumentContext?.selectedVaryAppDocument) {
         return (
             <div

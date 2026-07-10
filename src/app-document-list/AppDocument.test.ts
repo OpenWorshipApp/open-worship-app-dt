@@ -20,6 +20,7 @@ const {
     tranMock,
     canvasItemGenDefaultItemMock,
     getDefaultScreenDisplayMock,
+    getBibleFontFamilyMock,
 } = vi.hoisted(() => ({
     deleteMetaDataFileMock: vi.fn(),
     createNewFileDetailMock: vi.fn(),
@@ -40,6 +41,7 @@ const {
     tranMock: vi.fn(),
     canvasItemGenDefaultItemMock: vi.fn(),
     getDefaultScreenDisplayMock: vi.fn(),
+    getBibleFontFamilyMock: vi.fn(),
 }));
 
 vi.mock('../editing-manager/EditingHistoryManager', () => ({
@@ -125,6 +127,10 @@ vi.mock('../_screen/managers/screenHelpers', () => ({
     getDefaultScreenDisplay: getDefaultScreenDisplayMock,
 }));
 
+vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
+    getBibleFontFamily: getBibleFontFamilyMock,
+}));
+
 import AppDocument, { type AppDocumentType } from './AppDocument';
 import Slide from './Slide';
 
@@ -199,6 +205,10 @@ function createDocumentJson(ids: number[]): AppDocumentType {
     return AppDocument.genNewJsonData<AppDocumentType>({
         items: ids.map((id) => Slide.defaultSlideData(id)),
     });
+}
+
+function createBibleCanvasItem(id: number, bibleKeys: string[]) {
+    return { id, type: 'bible', bibleKeys } as any;
 }
 
 function createClipboardItem(text: string) {
@@ -370,6 +380,33 @@ describe('AppDocument', () => {
                 fixMissingFontFamiliesMock.mock.calls[0][0] as Set<string>,
             ),
         ).toEqual(['Missing Font']);
+
+        unavailableFontsSpy.mockRestore();
+    });
+
+    test('pre-fetches the font of every bible key used in the document', async () => {
+        const filePath = '/docs/bible.ows';
+        const currentData = createDocumentJson([1, 2]);
+        currentData.items[0].canvasItems = [
+            createBibleCanvasItem(1, ['KJV']),
+            createBibleCanvasItem(2, ['NIV', 'KJV']),
+        ];
+        currentData.items[1].canvasItems = [
+            createBibleCanvasItem(3, ['KHOV']),
+            { id: 4, type: 'text' } as any,
+        ];
+        setHistory(filePath, currentData);
+
+        const unavailableFontsSpy = vi
+            .spyOn(Slide.prototype, 'getUnavailableFontFamilies')
+            .mockResolvedValue([]);
+
+        const documentSource = new AppDocument(filePath);
+        await documentSource.getSlides();
+
+        expect(
+            getBibleFontFamilyMock.mock.calls.map(([bibleKey]) => bibleKey),
+        ).toEqual(['KJV', 'NIV', 'KHOV']);
 
         unavailableFontsSpy.mockRestore();
     });

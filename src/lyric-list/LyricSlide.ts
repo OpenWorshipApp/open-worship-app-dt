@@ -1,8 +1,9 @@
 import Slide from '../app-document-list/Slide';
-import type { CanvasItemTextPropsType } from '../slide-editor/canvas/CanvasItemText';
+import type { CanvasItemHtmlPropsType } from '../slide-editor/canvas/CanvasItemHtml';
 
-export type CanvasItemPropsTypeWithText = CanvasItemTextPropsType & {
-    htmlText: string;
+// `text` is the markdown source the `html` was rendered from.
+export type CanvasItemPropsTypeWithText = CanvasItemHtmlPropsType & {
+    text: string;
 };
 export type LyricType = {
     id: number;

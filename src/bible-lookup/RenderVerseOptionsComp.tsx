@@ -11,12 +11,10 @@ import {
 } from '../helper/appHooks';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { genVerseList } from '../bible-list/bibleHelpers';
-import {
-    getVersesCount,
-    useBibleFontFamily,
-} from '../helper/bible-helpers/bibleLogicHelpers2';
+import { getVersesCount } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type BibleItem from '../bible-list/BibleItem';
 import { type BibleTargetType } from '../bible-list/bibleRenderHelpers';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 function useTouchDrag(
     verseSelectRef: RefObject<HTMLDivElement | null>,

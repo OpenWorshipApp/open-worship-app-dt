@@ -31,8 +31,8 @@ import {
     useIsOnScreen,
 } from './bibleHelpers';
 import FileSource from '../helper/FileSource';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 async function getBible(bibleItem: BibleItem) {
     return bibleItem.filePath

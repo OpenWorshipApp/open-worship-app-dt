@@ -123,6 +123,10 @@ vi.mock('../../app-document-presenter/items/SlideRendererComp', () => ({
     genSlideHtml: vi.fn(() => document.createElement('div')),
 }));
 
+vi.mock('../../helper/bible-helpers/bibleLogicHelpers2', () => ({
+    getBibleFontFamily: vi.fn(async () => 'TestFont'),
+}));
+
 vi.mock('./screenBackgroundHelpers', () => ({
     applyAttachBackground: applyAttachBackgroundMock,
 }));
@@ -412,6 +416,7 @@ describe('non-Bible screen managers', () => {
             filePath: '/slides/b.slide',
             itemJson: slideJson,
             isRenderFullWidth: true,
+            virtualBackgroundColor: null,
         });
 
         manager.render();

@@ -28,29 +28,26 @@ export function BoxEditorNormalImageRender() {
         handleError(error);
         return <BENViewErrorRender />;
     }
-    const pWidth = props.width;
-    const pHeight = props.height;
-    const rWidth = pWidth / props.mediaWidth;
-    const rHeight = pHeight / props.mediaHeight;
-    const mR = Math.min(rWidth, rHeight);
-    const width = mR * props.mediaWidth;
     return (
         <div
             title={props.id.toString()}
             style={{
                 width: '100%',
                 height: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
             }}
         >
             <img
                 alt=""
-                width={width}
                 style={{
+                    width: '100%',
+                    height: '100%',
+                    // Always fill the box exactly rather than
+                    // letterboxing to the media's own ratio, so the box's
+                    // background color never shows through around the
+                    // image.
+                    objectFit: 'fill',
+                    display: 'block',
                     pointerEvents: 'none',
-                    alignSelf: 'center',
                 }}
                 src={props.srcData || img404}
             />

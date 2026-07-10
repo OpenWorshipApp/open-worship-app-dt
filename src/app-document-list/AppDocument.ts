@@ -26,6 +26,7 @@ import {
 import { fixMissingFontFamilies } from '../server/fontHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
 import { notifyNewElementAdded } from '../helper/domHelpers';
+import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -103,6 +104,19 @@ export default class AppDocument
             }
             return Slide.fromJsonError(json, this.filePath);
         });
+        // A bible key's font lives in lazily loaded language data, so resolve
+        // every key up front or its verses first render in a fallback font.
+        const bibleKeys = new Set<string>();
+        for (const slide of slides) {
+            for (const bibleKey of slide.getBibleKeys()) {
+                bibleKeys.add(bibleKey);
+            }
+        }
+        await Promise.all(
+            Array.from(bibleKeys).map((bibleKey) => {
+                return getBibleFontFamily(bibleKey);
+            }),
+        );
         jsonData = await this.getJsonData(true);
         for (const [index, slide] of slides.entries()) {
             this.checkSlideIsChanged(index, slide, jsonData.items);

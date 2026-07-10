@@ -24,9 +24,14 @@ import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
 
 function applyLaunchOverrides() {
-    const userDataPath = process.env.OWA_USER_DATA_PATH;
+    // The single-instance lock lives in `userData`, so dev must use its own
+    // directory to be able to run alongside the installed app.
+    const userDataPath =
+        process.env.OWA_USER_DATA_PATH ??
+        (isDev ? `${app.getPath('userData')}-dev` : null);
     if (userDataPath) {
         app.setPath('userData', userDataPath);
+        app.setPath('sessionData', userDataPath);
     }
 }
 

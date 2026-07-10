@@ -49,6 +49,7 @@ live-on-screen = `.app-on-screen` (active background tab also gets a `*` prefix)
 |---|---|---|
 | `Ctrl+B` / `Cmd+B` | Open Bible Lookup modal | [others/commonButtons.tsx](../../../../src/others/commonButtons.tsx) |
 | `Ctrl+Q` | Close current modal | [app-modal/ModalComp.tsx](../../../../src/app-modal/ModalComp.tsx) |
+| `F5` | Toggle show/hide the presentation screen | [_screen/preview/ShowHideScreen.tsx](../../../../src/_screen/preview/ShowHideScreen.tsx) |
 | `F6` | Clear All (screen) | [_screen/preview/MiniScreenClearControlComp.tsx](../../../../src/_screen/preview/MiniScreenClearControlComp.tsx) |
 | `F7` | Clear Background | ⤴ same |
 | `F8` | Clear Slide | ⤴ same |
@@ -176,9 +177,18 @@ Source: [presenter/AppPresenterRightComp.tsx](../../../../src/presenter/AppPrese
 | `…Right → BibleReadingLeftComp` | [bible-list/BibleReadingLeftComp.tsx](../../../../src/bible-list/BibleReadingLeftComp.tsx) | Splits into `Bibles` + `Notes` (layout flips H/V by width). |
 | ↳ `BibleListComp` (Bibles) | [bible-list/BibleListComp.tsx](../../../../src/bible-list/BibleListComp.tsx) | 🖱️ `li.list-group-item` bible items; 🖱️🖱️ → send verse to screen; 🖱️R → context menu. |
 | ↳ `BibleNoteListComp` (Notes) | [bible-list/note/BibleNoteListComp.tsx](../../../../src/bible-list/note/BibleNoteListComp.tsx) | 🖱️ a note; edit → opens **Bible Note** popup. |
-| `…Right → MiniScreenComp` | [_screen/preview/MiniScreenComp.tsx](../../../../src/_screen/preview/MiniScreenComp.tsx) | Live preview `div.card.app-zero-border-radius`. 🎚️ zoom slider (`max=30`) rescales the preview. |
-| ↳ `MiniScreenClearControlComp` (footer) | [_screen/preview/MiniScreenClearControlComp.tsx](../../../../src/_screen/preview/MiniScreenClearControlComp.tsx) | 🖱️ / ⌨️ clear buttons: Clear All `F6`, Clear Background `F7`, Clear Slide `F8`, Clear Bible `F9`, Clear Foreground `F10`. Titles include the shortcut. |
-| ↳ `ShowHideScreen` | [_screen/preview/ShowHideScreen.tsx](../../../../src/_screen/preview/ShowHideScreen.tsx) | 🖱️ show/hide the physical presentation display. ⚠️ **courtesy: don't take over the user's live display.** |
+| `…Right → MiniScreenComp` | [_screen/preview/MiniScreenComp.tsx](../../../../src/_screen/preview/MiniScreenComp.tsx) | Live preview container `div.card.app-zero-border-radius`. 🎚️ zoom slider (`max=30`) rescales the preview. Holds one `ScreenPreviewerItemComp` **per screen** (multi-screen capable). |
+| ↳ `MiniScreenBodyComp` | [_screen/preview/MiniScreenBodyComp.tsx](../../../../src/_screen/preview/MiniScreenBodyComp.tsx) | 🖱️R the empty body → context menu **`Add New Screen`** / `Refresh Preview`. With several screens carrying color notes, previews group under color bars. |
+| ↳ `ScreenPreviewerItemComp` (one card per screen; `data-screen-key`) | [_screen/preview/ScreenPreviewerItemComp.tsx](../../../../src/_screen/preview/ScreenPreviewerItemComp.tsx) | 🖱️R → menu: `Refresh Preview` (always); >1 screens: `Solo` / `Select`/`Deselect` / `Delete`; bible live: `Set/Unset Line Sync`. ⇕ drop target — card highlights on dragover; dropped slide/bg/foreground presents on THAT screen. |
+| ↳↳ `ShowHideScreen` (header) | [_screen/preview/ShowHideScreen.tsx](../../../../src/_screen/preview/ShowHideScreen.tsx) | 🖱️ or ⌨️ `F5` → toggles the physical screen. ON: `.showing` class, opacity 1, and a `screen.html?screenId=N` CDP target appears. **Mandatory to exercise once per run (show → verify → hide-restore, SKILL §6a).** |
+| ↳↳ `MiniScreenClearControlComp` (header) | [_screen/preview/MiniScreenClearControlComp.tsx](../../../../src/_screen/preview/MiniScreenClearControlComp.tsx) | 🖱️ / ⌨️ clear buttons: eraser=Clear All `F6`, `BG` `F7`, `SL` `F8`, `BB` `F9`, `FG` `F10`. Enabled-state is observable: a button is `btn-outline-*` while its layer is empty, solid `btn-*` while live. |
+| ↳↳ `ShowingScreenIcon` + `ItemColorNoteComp` (header) | [_screen/preview/ShowingScreenIcon.tsx](../../../../src/_screen/preview/ShowingScreenIcon.tsx) | Screen-id badge (`data-screen-id`, per-id color) + 🖱️ color-note dot → color picker (groups previews when multiple screens). |
+| ↳↳ Lock toggle (header, `bi-unlock`/`bi-lock-fill`) | [_screen/preview/ScreenPreviewerHeaderComp.tsx](../../../../src/_screen/preview/ScreenPreviewerHeaderComp.tsx) | 🖱️ → locked (red): app-document changes on this screen are refused with toast "Screen Manager is locked"; unlocked (green) normal. Restore unlocked. |
+| ↳↳ `DisplayControl` (footer) | [_screen/preview/DisplayControl.tsx](../../../../src/_screen/preview/DisplayControl.tsx) | Button `label(screenId):displayId` → 🖱️ context menu of all OS displays (`label(id): WxH (primary)`, `*` = current) → pick to retarget the screen. Re-select current = safe no-op. |
+| ↳↳ `ScreenEffectControlComp` (footer, `Tr:`) | [_screen/preview/ScreenEffectControlComp.tsx](../../../../src/_screen/preview/ScreenEffectControlComp.tsx) | Two `RenderTransitionEffectComp` buttons (`Slide:` / `Background:`) → 🖱️ menu of transition effects `none/fade/move/zoom` (current highlighted); button icon updates. Restore after testing. |
+| ↳↳ `BackgroundAudioSwitchComp` (footer, `bi-soundwave`) | [_screen/preview/ScreenPreviewerFooterComp.tsx](../../../../src/_screen/preview/ScreenPreviewerFooterComp.tsx) | Rendered only while a **video background** is live. 🖱️ toggles the audio-handler rows; toggling off while audio plays → toast refusal. |
+| ↳↳ `MiniScreenAudioHandlersComp` | [_screen/preview/MiniScreenAudioHandlersComp.tsx](../../../../src/_screen/preview/MiniScreenAudioHandlersComp.tsx) | Per-video `<audio controls data-video-id>` player (filename shown): 🖱️ play/pause — playback syncs the background-video time; 🖱️ repeat toggle `bi-repeat-1` (green=on). End paused. |
+| ↳↳ Stage number (footer, `St: N`) | [_screen/preview/ScreenPreviewerFooterComp.tsx](../../../../src/_screen/preview/ScreenPreviewerFooterComp.tsx) | 🖱️ → context menu `0`–`4` + `Increment`/`Decrement` (current disabled; Decrement disabled at 0). Round-trip and restore. |
 
 ---
 
@@ -239,22 +249,29 @@ Source: [setting/SettingComp.tsx](../../../../src/setting/SettingComp.tsx).
 | `SettingGeneralComp → SettingGeneralThemeComp` | [setting/SettingGeneralThemeComp.tsx](../../../../src/setting/SettingGeneralThemeComp.tsx) | 🖱️ theme (system/light/dark). |
 | `SettingGeneralComp → SettingGeneralFontFamilyComp` | [setting/SettingGeneralFontFamilyComp.tsx](../../../../src/setting/SettingGeneralFontFamilyComp.tsx) | 🖱️ pick font. A configured-but-missing font shows `"Hanuman (Missing)"` — **informative, not a bug** (KB §9). |
 | `SettingGeneralComp → SettingGeneralOtherOptionsComp` | [setting/SettingGeneralOtherOptionsComp.tsx](../../../../src/setting/SettingGeneralOtherOptionsComp.tsx) | 🖱️ `Reset All Child Directories` / `Reset Widgets Size` / `Clear All Settings` (destructive — confirm dialogs). |
-| `SettingComp → SettingBibleComp` (Bible tab) | [setting/bible-setting/SettingBibleComp.tsx](../../../../src/setting/bible-setting/SettingBibleComp.tsx) | 🖱️ download/enable/disable bible versions; ⌨️✎ search. |
+| `SettingComp → SettingBibleComp` (Bible tab) | [setting/bible-setting/SettingBibleComp.tsx](../../../../src/setting/bible-setting/SettingBibleComp.tsx) | 🖱️ download/enable/disable bible versions; ⌨️✎ search. A console `TypeError: Cannot get bible list` at `getOnlineBibleInfoList` is **intended** when the online list is unavailable — do not report (KB §7). |
 
 ---
 
-## 5. `screen.html` — Presentation output (separate window)
+## 5. `screen.html` — Presentation output (separate window) — **mandatory to drive once per run**
 
-Appears as its own page target only while presenting. Root `ScreenAppComp`.
-Source: [_screen/ScreenAppComp.tsx](../../../../src/_screen/ScreenAppComp.tsx),
-[screen.tsx](../../../../src/screen.tsx). Mostly output-only.
+Root `ScreenAppComp`. Source:
+[_screen/ScreenAppComp.tsx](../../../../src/_screen/ScreenAppComp.tsx),
+[screen.tsx](../../../../src/screen.tsx).
+
+> **CDP (verified 2026-07-08):** while a screen is SHOWING it **is** a normal CDP target
+> — `screen.html?screenId=N` in `list_pages`, fully drivable (snapshot / click /
+> screenshot). The target vanishes when the screen hides; a **hidden** screen's console
+> forwards via `all:app:log` to the electron-main stdout (the `npm run dev` terminal).
+> Reach it only via `ShowHideScreen`/`F5` + `list_pages` — never `navigate_page` the
+> main window here. Screen-only bugs (e.g. full-width PDF) do NOT reproduce in the
+> presenter's mini preview — the mini preview reuses the same React components but
+> without `isPageScreen`/StrictMode.
 
 | Component | Source | Interactions & expected result |
 |---|---|---|
-| `ScreenAppComp` | [_screen/ScreenAppComp.tsx](../../../../src/_screen/ScreenAppComp.tsx) | ⌨️ `Ctrl/Alt+ArrowLeft` / `ArrowRight` → previous / next bible verse on the live screen. Renders active background + slide/bible/foreground layers. |
-
-> Screen window is **not on CDP** — its logs are forwarded to the presenter via `all:app:log`.
-> Screen-only bugs (e.g. full-width PDF) won't show in the presenter DevTools.
+| `ScreenAppComp` | [_screen/ScreenAppComp.tsx](../../../../src/_screen/ScreenAppComp.tsx) | Renders active background + slide + bible + foreground layers — screenshot and compare against the mini preview. ⌨️ `Ctrl/Alt+ArrowLeft` / `ArrowRight` → previous / next bible verse on the live screen. |
+| `ScreenCloseButtonComp` (❌ `#close`) | [_screen/ScreenCloseButtonComp.tsx](../../../../src/_screen/ScreenCloseButtonComp.tsx) | 🖱️ → hides this screen: CDP target disappears, presenter `ShowHideScreen` flips to hidden. |
 
 ---
 
@@ -289,8 +306,8 @@ check only (`#root` has children, no `img.loading`).
 
 ## Quick per-page interaction checklist
 
-- **Presenter:** header tabs 🖱️ · `Ctrl+B`/`Ctrl+Q` modal · doc/lyric list 🖱️🖱️ present · expand Background 🖱️ then tab-switch · color swatch (+contrast confirm) · foreground drag⇕drop onto mini-screen · `F6`–`F10` clears · zoom/size 🎚️.
+- **Presenter:** header tabs 🖱️ · `Ctrl+B`/`Ctrl+Q` modal · doc/lyric list 🖱️🖱️ present · expand Background 🖱️ then tab-switch · color swatch (+contrast confirm) · foreground drag⇕drop onto mini-screen · **screen block (mandatory): present → `F5` show → drive `screen.html` target → `F6`–`F10` clears → hide** · lock/display/transition/stage controls on the previewer card · zoom/size 🎚️.
 - **Reader:** incremental lookup ⌨️✎ + `Tab`/`Escape` · full ref resolves to verse.
 - **Slide Editor:** select doc first · box 🖱️/⇕/resize · `Ctrl+Enter` focus · tools drag⇕drop · background tabs.
 - **Settings (popup):** tab 🖱️ · Language `Khmer`/`English` · `Apply Settings` · destructive resets (confirm).
-- **Screen:** `Ctrl/Alt+Arrows` change bible (output-only, off-CDP).
+- **Screen (while showing = CDP target):** screenshot layers · `Ctrl/Alt+Arrows` change bible · ❌ `#close` hides; hidden → logs via `all:app:log`.

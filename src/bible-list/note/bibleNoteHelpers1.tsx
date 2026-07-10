@@ -8,8 +8,8 @@ import { useThemeSource } from '../../others/themeHelpers';
 import { useAppEffect, useAppEffectAsync } from '../../helper/appHooks';
 import { useWatchStateSettingString } from '../../helper/settingHelpers';
 import { BIBLE_KEY_SETTING_NAME } from './bibleNoteHelpers';
-import { useBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 export function useBibleNoteControl({
     bibleNote,

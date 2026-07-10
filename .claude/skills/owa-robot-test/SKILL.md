@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Full-coverage runs are tracked row-by-row against references/coverage-matrix.md (~135 stable-ID rows, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against references/coverage-matrix.md (~150 stable-ID rows, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -160,7 +160,7 @@ You can also test the in-app navigation UX itself: click the header tabs `Presen
 Follow [references/test-plan.md](./references/test-plan.md). If the user named a focus
 area (argument-hint), navigate to that page (step 5) and start there; otherwise iterate
 over the pages — `presenter` → `reader` → `appDocumentEditor` → `setting` — navigating to
-each per step 5.
+each per step 5. **Whatever the focus, the screen-controlling block (§6a) always runs.**
 
 If the user asked for **"full"**, **"everything"**, or a **coverage percentage/target**
 (e.g. "99% coverage"), run in **full-coverage mode** — see "Coverage accounting" below —
@@ -182,10 +182,45 @@ For a page-by-page **component tree with the exact interactions each component s
 (click / double-click / right-click / drag-drop / keyboard-shortcut / slider / input),
 use [references/components-path.md](./references/components-path.md) as the targeting index.
 
+### 6a. MANDATORY: screen controlling & presenting (every run, every focus)
+
+Presenting content to a screen is the app's core purpose, so this block is **not
+optional and not skippable by focus area**: a run that only tested "bible lookup" must
+still run it. A report without evidence for this block is **incomplete** — say so
+rather than shipping it. Full row definitions: coverage-matrix.md §SP + §SC; recipe:
+test-plan.md §S7.
+
+Minimum pass (≈5 minutes, self-restoring):
+
+1. **Present something real** — single-click a slide thumbnail (present is a
+   single-click TOGGLE — KB §5) or double-click a bible verse. Verify `.app-on-screen`
+   appears and the mini-screen preview renders it (`PR-04`).
+2. **Check the clear-control states** — the matching `BG`/`SL`/`BB`/`FG` button in the
+   previewer header flips from outline (disabled-look) to solid (`SP-02`).
+3. **Show the screen** — click `ShowHideScreen` (or ⌨️ `F5`). A
+   `screen.html?screenId=N` target MUST appear in `list_pages`; `select_page` it,
+   run the readiness check, and `take_screenshot` **of the screen target itself**
+   (`SP-01`, `SC-01`). The mini preview is NOT sufficient — screen-only bugs (e.g.
+   full-width PDF) never reproduce there.
+4. **Verify layer composition on the real output** and compare against the
+   mini-screen (`SC-02`).
+5. **Clear + hide + restore** — clear the layer with its key (`F8` slide / `F9`
+   bible) or button, hide the screen (toggle / ❌ close button on the output), confirm
+   the CDP target disappears, and restore anything you changed (background, selected
+   doc, lock, transitions).
+
+Exception: only if the user explicitly says the display is in **live use** (e.g. an
+actual service is running), skip steps 3–4, assert via the mini-screen, and mark
+`SC-01/02 BLOCKED→EX-02` with that reason.
+
+While the screen is hidden its window has **no CDP target**; its console forwards via
+`all:app:log` to the `npm run dev` terminal (electron main stdout) — read that channel
+when hunting screen-only bugs while hidden (`SC-05`).
+
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[references/coverage-matrix.md](./references/coverage-matrix.md) (~135 rows with stable
+[references/coverage-matrix.md](./references/coverage-matrix.md) (~150 rows with stable
 IDs like `PM-29`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
 counts as exercised only with evidence (screenshot, asserted `evaluate_script` result, or
@@ -215,9 +250,9 @@ restarting from zero. This is how a full-coverage pass can span several sessions
 **Recommended order** (dependencies first, disruption last):
 
 1. `GL` baseline on presenter → `NAV` → `PL` → `PM` (backgrounds/foregrounds restore as
-   you go) → `PR` → `KB` (F6–F10 double as cleanup).
-2. `RD` (reader) → `ED` (editor — needs a selected doc from `PL`) → `SC` observations
-   while content is live.
+   you go) → `PR` → **`SP` + `SC` (the mandatory screen block §6a — run it while
+   content from `PM` is still live)** → `KB` (F6–F10 double as cleanup).
+2. `RD` (reader) → `ED` (editor — needs a selected doc from `PL`).
 3. Popups `PU` (each opened from its trigger row).
 4. `ST` settings last-but-one — `LT` locale/theme spot-checks ride on `ST-04/05`, restore
    everything, and `ST-08 Apply Settings` goes **very last** because it reloads windows.
@@ -230,6 +265,10 @@ resume next run"` and say so in the report. An honest 97% with reasons beats a f
 
 - Write the full report to `test-results/robot-test/report-<timestamp>.md` (this folder
   is git-ignored) and keep screenshots beside it.
+- **Every report** (focused or full) MUST contain the **mandatory screen block** (§6a)
+  results: the SP-01/SP-02/SC-01/SC-02 statuses and the screenshot taken from the
+  `screen.html` target. If the block was skipped (EX-02 live-use exception), the report
+  must state that and why.
 - In full-coverage mode the report MUST include the **coverage summary** (template in
   [references/test-plan.md](./references/test-plan.md)): the formula result
   (`exercised / (total − EXCLUDED)`), plus every BLOCKED / PARTIAL / EXCLUDED row with
@@ -319,8 +358,9 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   `.mcp.json` uses `--browserUrl=http://127.0.0.1:9223`.
 - **Wrong target selected**: there is normally ONE main window target — keep using it and
   switch pages with `navigate_page` (step 5), not by opening new tabs. A separate
-  `screen.html` target appears only when presenting to a screen; ignore it unless you are
-  testing the presentation output.
+  `screen.html?screenId=N` target exists **only while that screen is showing** — select
+  it for the mandatory screen block (§6a), and select the presenter target back
+  afterward. Never `navigate_page` the main window to `screen.html`.
 - **Stuck on Settings / can't navigate away (`ERR_ABORTED`)**: you loaded a **popup-only**
   page (`setting.html`, `about.html`, …) in the main window (see step 5 warning). That state
   can't navigate out and persists `mainHtmlPath`. Recover: stop the app, set `mainHtmlPath`
@@ -343,7 +383,8 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [references/coverage-matrix.md](./references/coverage-matrix.md) — the **coverage
-  contract**: ~135 stable-ID rows over the whole UI surface, the policy-exclusion table,
+  contract**: ~150 stable-ID rows over the whole UI surface (screen controlling &
+  presenting rows `SP`/`SC` are mandatory in every run), the policy-exclusion table,
   statuses, evidence rule, and the coverage formula for full-coverage runs.
 - [references/user-workflows.md](./references/user-workflows.md) — the **tutorial source
   of truth**: user-facing `W-xx` task recipes in tutorial voice with `📸` screenshot

@@ -1,8 +1,6 @@
 import { BoxEditorNormalImageRender } from './canvas/box/BoxEditorNormalViewImageModeComp';
-import {
-    BoxEditorNormalHtmlRender,
-    BoxEditorNormalTextRender,
-} from './canvas/box/BoxEditorNormalViewTextModeComp';
+import { BoxEditorNormalHtmlRender } from './canvas/box/BoxEditorNormalViewHtmlModeComp';
+import { BoxEditorNormalTextRender } from './canvas/box/BoxEditorNormalViewTextModeComp';
 import { BoxEditorNormalBibleRender } from './canvas/box/BoxEditorNormalViewBibleModeComp';
 import { useCanvasItemContext } from './canvas/CanvasItem';
 import { BoxEditorNormalVideoRender } from './canvas/box/BoxEditorNormalViewVideoModeComp';

@@ -4,6 +4,10 @@ Work through the scenarios relevant to the requested focus area (or all of them)
 each: take a snapshot, interact, screenshot, then re-check console + network. Record
 anything abnormal using the severity scale and report template below.
 
+> **Two scenarios run in EVERY run, regardless of focus: S0 (baseline) and S7 (screen
+> controlling & presenting).** A run that never presented content and never drove the
+> `screen.html` output target is incomplete — the report must say so.
+
 > **Full-coverage runs:** scenarios are the *narrative* grouping; the *accounting* unit
 > is the row IDs in [coverage-matrix.md](./coverage-matrix.md) (each scenario lists the
 > matrix rows it covers). A scenario is only complete when all its rows have a status in
@@ -91,14 +95,49 @@ anything abnormal using the severity scale and report template below.
 - `Web` tab `+` opens the **Web Editor popup** (S12).
 - Right-click background items → context menu.
 
-### S7 — Mini screen / presentation `[PR-04..07, SC-01..03]`
-- Confirm the mini screen (`.card.app-zero-border-radius`) reflects the active content.
-- Zoom slider changes preview scale.
-- Clear buttons / `F6`–`F10` each clear their layer.
-- Toggle widget-fullscreen (`bi bi-arrows-fullscreen`) — `.app-full-view` on/off. Do
-  **not** take over the physical display (EX-02); check for a `screen.html` target via
-  `list_pages` only if content is being presented, and remember the physical screen
-  window is **not on CDP** (its logs forward via `all:app:log`).
+### S7 — Screen controlling & presenting `[PR-04..07, SP-01..12, SC-01..05]` — **MANDATORY, every run**
+
+This is the app's core flow and runs in **every** session, whatever the focus area
+(SKILL.md §6a). Everything here is self-restoring — end with the screen hidden (unless
+it started showing) and all changed state restored.
+
+**Mandatory core (minimum for a focused run):**
+- Present one real item (single-click a slide thumbnail — presenting is a single-click
+  TOGGLE, KB §5 — or double-click a bible verse); confirm `.app-on-screen` + the mini
+  screen mirrors it (PR-04).
+- Clear-control states: the matching `BG`/`SL`/`BB`/`FG` button flips outline→solid
+  while its layer is live; clicking (or `F6`–`F10`) clears it back (SP-02, KB-03..07).
+- Show the screen via `ShowHideScreen` / `F5` (SP-01) → a `screen.html?screenId=N`
+  target MUST appear in `list_pages` → `select_page` it → readiness check →
+  **screenshot the screen target itself** (SC-01) and verify layer composition against
+  the mini preview (SC-02). Screen-only bugs (full-width PDF etc.) never reproduce in
+  the mini preview.
+- Hide (toggle, `F5`, or the ❌ `#close` button on the output — SC-04): the target
+  disappears; restore everything.
+
+**Full-coverage additions (SP/SC deep rows):**
+- Lock toggle: locked (red `bi-lock-fill`) refuses slide changes with a "Screen Manager
+  is locked" toast; unlock restores (SP-03).
+- Screen-id badge + color note round-trip (SP-04); display-choosing context menu lists
+  every display, `*` on current — re-select current as a safe no-op (SP-05).
+- Transitions `Tr: Slide:/Background:` — pick a different effect (none/fade/move/zoom),
+  present, observe, restore (SP-06). Stage number `St:` menu round-trip (SP-07).
+- With a video background live: `bi-soundwave` toggles the audio-handler rows; play/
+  pause syncs the bg video; repeat toggle flips; off-while-playing pops a toast
+  (SP-08..09).
+- Previewer context menu (`Refresh Preview`, and with a bible live `Set/Unset Line
+  Sync`) (SP-10); `Add New Screen` → solo/select → delete the added screen —
+  self-cleaning (SP-11); drag a slide/foreground onto a specific previewer card
+  (SP-12).
+- `Ctrl/Alt+ArrowLeft/Right` on the screen target steps the live bible verse (SC-03).
+- After hiding: screen console forwards via `all:app:log` to the `npm run dev`
+  terminal — check it when hunting screen-only bugs (SC-05).
+- Zoom slider rescales the preview (PR-05); widget-fullscreen `.app-full-view` on/off
+  (PM-04).
+
+**EX-02 (narrowed):** only *leaving* the display taken over — or the user explicitly
+saying the display is in live use — is excluded. In that case skip the show step,
+assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 
 ### S8 — Settings `[ST-01..10]`
 - Open settings via the **gear button** (it opens a **popup window**); then `list_pages` →
@@ -184,9 +223,17 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 ## Summary
 <one-paragraph verdict>
 
+## Mandatory screen block (required in EVERY report)
+
+- Presented: <what was presented, e.g. slide 2 of "test.owa">
+- SP-01 <status> · SP-02 <status> · SC-01 <status> · SC-02 <status>
+- Screen target screenshot: `<file>.png` (taken FROM screen.html, not the mini preview)
+- Restored: <screen hidden, layers cleared, state restored — or what was left and why>
+- (If skipped: `BLOCKED→EX-02` + the user's live-use reason — never skip silently)
+
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 135
+- Matrix version: <date> · rows total: 150
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)

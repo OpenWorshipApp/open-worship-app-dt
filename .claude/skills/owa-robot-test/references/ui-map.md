@@ -15,7 +15,7 @@ Main window in dev loads `presenter.html`. Other windows open on demand.
 | Bible Reader | `https://localhost:3000/reader.html` | |
 | Slide/Doc Editor | `https://localhost:3000/appDocumentEditor.html` | Opens when editing a doc |
 | Settings | `https://localhost:3000/setting.html` | Gear button |
-| Presentation output | `https://localhost:3000/screen.html` | Appears when presenting to a screen |
+| Presentation output | `https://localhost:3000/screen.html?screenId=N` | **CDP target while showing** (toggle via `ShowHideScreen`/`F5`); target vanishes when hidden — hidden logs forward via `all:app:log` to the dev terminal |
 | Finder | `https://localhost:3000/finder.html` | |
 | Lyric Editor | `https://localhost:3000/lyricEditor.html` | |
 | Bible Note | `https://localhost:3000/bibleNote.html` | |
@@ -41,8 +41,10 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 - `Slide Editor` needs a selected Open Worship document; without one it shows the alert
   "No slide selected" instead of navigating.
 - After navigating, re-run the readiness check below — it is a full document reload.
-- `screen.html` (presentation output) normally appears as its own target only while
-  presenting; you can also open it directly for isolated testing.
+- `screen.html?screenId=N` (presentation output) is its own CDP target **while the
+  screen is showing** — reach it via `ShowHideScreen`/`F5` then `list_pages` →
+  `select_page`. Driving it once per run is **mandatory** (SKILL §6a). Never
+  `navigate_page` the main window to it.
 
 ## Readiness signals
 
@@ -94,8 +96,19 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 ### Right column — bible + mini screen
 - **Bibles / Notes** sub-tabs: headers `Bibles` and `Notes`; lists are
   `li.list-group-item`.
-- **Mini screen preview**: `div.card.app-zero-border-radius` — live preview of the
-  presentation output; footer zoom range slider.
+- **Mini screen preview**: `div.card.app-zero-border-radius` — one previewer card
+  **per screen** (`.mini-screen.card`, `data-screen-key`); footer zoom range slider.
+  Each card is the **screen-controlling surface** (testing it is mandatory — SKILL §6a):
+  - Header: show/hide screen toggle (`F5`, `.showing` when on) · clear buttons
+    eraser/`BG`/`SL`/`BB`/`FG` (`F6`–`F10`; outline = layer empty, solid = live) ·
+    screen-id badge (`data-screen-id`) · color-note dot · lock icon
+    (`bi-unlock` green / `bi-lock-fill` red).
+  - Footer: display button `label(screenId):displayId` (menu of OS displays) ·
+    `Tr:` transition buttons `Slide:`/`Background:` (menu: none/fade/move/zoom) ·
+    `bi-soundwave` audio-handlers toggle (only with a live video background; expands
+    per-video `<audio controls>` players + repeat toggles) · stage `St: N` (menu 0–4).
+  - Body: right-click a card → Solo/Select/Delete/Line-Sync/Refresh menu; right-click
+    empty space → `Add New Screen`; cards accept drag-drop (slide/bg/foreground).
 
 ## Modals
 
@@ -117,7 +130,10 @@ toggle, theme, font family, and the destructive resets (`Reset All Child Directo
 |---|---|
 | Ctrl+B / Cmd+B | Open Bible Lookup |
 | Ctrl+Q | Close current modal |
+| F5 | Toggle show/hide the presentation screen |
+| F6 / F7 / F8 / F9 / F10 | Clear All / Background / Slide / Bible / Foreground |
 | Arrow keys / Enter | Navigate slide thumbnails (when the slide container is focused) |
+| Ctrl/Alt+ArrowLeft/Right | Prev/next bible verse (on the screen output window) |
 
 ## Stable ids present in production
 

@@ -12,8 +12,8 @@ import RenderVerseOptionsComp from './RenderVerseOptionsComp';
 import { openBibleSetting } from '../setting/settingHelpers';
 import BibleViewTextComp from '../bible-reader/view-extra/BibleViewTextComp';
 import RenderBookOptionsComp from './RenderBookOptionsComp';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export default function RenderLookupSuggestionComp({
     applyChapterSelection,

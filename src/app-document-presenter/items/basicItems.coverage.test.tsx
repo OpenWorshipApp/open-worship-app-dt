@@ -13,9 +13,11 @@ const {
     sanitizeHtmlMock,
     getHTMLChildMock,
     scaleCanvasItemToSizeMock,
-    genFromFileMock,
+    genMediaItemFromFileMock,
+    handleErrorMock,
     SlideMock,
     CanvasItemImageMock,
+    CanvasItemVideoMock,
 } = vi.hoisted(() => {
     const useScreenVaryAppDocumentManagerEventsMock = vi.fn();
     const useShadowingParentWidthMock = vi.fn();
@@ -26,7 +28,8 @@ const {
         (element: HTMLDivElement) => element.firstElementChild,
     );
     const scaleCanvasItemToSizeMock = vi.fn();
-    const genFromFileMock = vi.fn();
+    const genMediaItemFromFileMock = vi.fn();
+    const handleErrorMock = vi.fn();
 
     class SlideMock {
         width = 800;
@@ -36,7 +39,7 @@ const {
         constructor(public id = 1) {}
     }
 
-    class CanvasItemImageMock {
+    class CanvasItemMediaMock {
         props: {
             mediaWidth: number;
             mediaHeight: number;
@@ -46,7 +49,7 @@ const {
             top: number;
         };
         applyProps = vi.fn(
-            (newProps: Partial<CanvasItemImageMock['props']>) => {
+            (newProps: Partial<CanvasItemMediaMock['props']>) => {
                 this.props = { ...this.props, ...newProps };
             },
         );
@@ -68,11 +71,12 @@ const {
                 top: 0,
             };
         }
-
-        static genFromFile(...args: unknown[]) {
-            return genFromFileMock(...args);
-        }
     }
+
+    // Siblings, not subclasses, so the helper's per-type `instanceof`
+    // checks are each exercised on their own.
+    class CanvasItemImageMock extends CanvasItemMediaMock {}
+    class CanvasItemVideoMock extends CanvasItemMediaMock {}
 
     return {
         useScreenVaryAppDocumentManagerEventsMock,
@@ -82,9 +86,11 @@ const {
         sanitizeHtmlMock,
         getHTMLChildMock,
         scaleCanvasItemToSizeMock,
-        genFromFileMock,
+        genMediaItemFromFileMock,
+        handleErrorMock,
         SlideMock,
         CanvasItemImageMock,
+        CanvasItemVideoMock,
     };
 });
 
@@ -133,11 +139,20 @@ vi.mock('../../app-document-list/Slide', () => ({
 vi.mock('../../slide-editor/canvas/CanvasController', () => ({
     default: {
         scaleCanvasItemToSize: scaleCanvasItemToSizeMock,
+        genMediaItemFromFile: genMediaItemFromFileMock,
     },
 }));
 
 vi.mock('../../slide-editor/canvas/CanvasItemImage', () => ({
     default: CanvasItemImageMock,
+}));
+
+vi.mock('../../slide-editor/canvas/CanvasItemVideo', () => ({
+    default: CanvasItemVideoMock,
+}));
+
+vi.mock('../../helper/errorHelpers', () => ({
+    handleError: handleErrorMock,
 }));
 
 async function renderIntoRoot(
@@ -335,23 +350,32 @@ describe('presenter item basic coverage', () => {
             await import('./appDocumentHelpers');
 
         const validSlide = new SlideMock(1) as any;
-        const invalidSlide = new SlideMock(2) as any;
+        const videoSlide = new SlideMock(2) as any;
+        const invalidSlide = new SlideMock(3) as any;
+        const failedSlide = new SlideMock(4) as any;
         const canvasItem = new CanvasItemImageMock();
+        const videoCanvasItem = new CanvasItemVideoMock(640, 360);
         const appDocument = {
             genNewSlide: vi
                 .fn()
                 .mockResolvedValueOnce(validSlide)
-                .mockResolvedValueOnce(invalidSlide),
+                .mockResolvedValueOnce(videoSlide)
+                .mockResolvedValueOnce(invalidSlide)
+                .mockResolvedValueOnce(failedSlide),
             addSlides: vi.fn(),
         } as any;
 
-        genFromFileMock
+        genMediaItemFromFileMock
             .mockResolvedValueOnce(canvasItem)
-            .mockResolvedValueOnce({ invalid: true });
+            .mockResolvedValueOnce(videoCanvasItem)
+            .mockResolvedValueOnce({ invalid: true })
+            .mockRejectedValueOnce(new Error('undecodable file'));
 
         await createNewSlidesFromDroppedData(appDocument, [
             new Blob(['a']),
-            new Blob(['b']),
+            new Blob(['b'], { type: 'video/mp4' }),
+            new Blob(['c']),
+            new Blob(['d']),
         ]);
 
         expect(scaleCanvasItemToSizeMock).toHaveBeenCalledWith(
@@ -374,10 +398,24 @@ describe('presenter item basic coverage', () => {
                 height: 100,
             },
         ]);
-        expect(appDocument.addSlides).toHaveBeenCalledWith([validSlide]);
+        // Video files land as slides too, and a file that fails to decode
+        // only skips its own slide instead of rejecting the whole batch.
+        expect(scaleCanvasItemToSizeMock).toHaveBeenCalledWith(
+            videoCanvasItem,
+            800,
+            600,
+            640,
+            360,
+        );
+        expect(videoSlide.canvasItemsJson).toHaveLength(1);
+        expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
+        expect(appDocument.addSlides).toHaveBeenCalledWith([
+            validSlide,
+            videoSlide,
+        ]);
     });
 
-    test('does not add slides when every dropped file resolves to a non-image item', async () => {
+    test('does not add slides when every dropped file resolves to a non-media item', async () => {
         const { createNewSlidesFromDroppedData } =
             await import('./appDocumentHelpers');
 
@@ -385,7 +423,7 @@ describe('presenter item basic coverage', () => {
             genNewSlide: vi.fn().mockResolvedValue(new SlideMock(3)),
             addSlides: vi.fn(),
         } as any;
-        genFromFileMock.mockResolvedValue({ invalid: true });
+        genMediaItemFromFileMock.mockResolvedValue({ invalid: true });
 
         await createNewSlidesFromDroppedData(appDocument, [new Blob(['x'])]);
 

@@ -14,7 +14,6 @@ import {
 import {
     checkShouldNewLine,
     checkShouldNewLineModel,
-    getLangDataFromBibleKey,
     toLocaleNumBible,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import CacheManager from '../others/CacheManager';
@@ -25,6 +24,7 @@ import {
 } from '../helper/bible-helpers/bibleLogicHelpers3';
 import { getBibleModelInfo } from '../helper/bible-helpers/bibleModelHelpers';
 import { type LocaleType } from '../lang/langHelpers';
+import { getLangDataFromBibleKey } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type BibleTargetType = {
     bookKey: string;

@@ -23,6 +23,7 @@ import {
 import { RenderCopyBibleItemActionButtonsComp } from './RenderActionButtonsComp';
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
 function SaveButtonComp({
     handleSaveBibleItem,
@@ -91,6 +92,40 @@ function SaveAndShowButtonComp({
     );
 }
 
+function InsertBibleItemToSlideButtonComp({
+    handleBibleItemInserting,
+    bibleItem,
+}: Readonly<{
+    bibleItem: BibleItem;
+    handleBibleItemInserting: () => void;
+}>) {
+    const viewController = useLookupBibleItemControllerContext();
+    useKeyboardRegistering(
+        [ctrlShiftEnterEventMapper],
+        () => {
+            if (!appProvider.isPageAppDocumentEditor) {
+                return;
+            }
+            CanvasBibleItemEventListener.insertBibleItem(bibleItem);
+            viewController.onLookupSaveBibleItem();
+        },
+        [bibleItem],
+    );
+    return (
+        <button
+            className="btn btn-sm btn-primary"
+            type="button"
+            title={
+                tran('Insert bible item into selected slide') +
+                ` [${toShortcutKey(ctrlShiftEnterEventMapper)}]`
+            }
+            onClick={handleBibleItemInserting}
+        >
+            <i className="bi bi-file-earmark-slides" />
+        </button>
+    );
+}
+
 export default function RenderEditingActionButtonsComp({
     bibleItem,
 }: Readonly<{ bibleItem: BibleItem }>) {
@@ -143,6 +178,11 @@ export default function RenderEditingActionButtonsComp({
         exportToWordDocument([bibleItemRef.current]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleBibleItemInserting = useCallback(() => {
+        CanvasBibleItemEventListener.insertBibleItem(bibleItemRef.current);
+        onDoneRef.current();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="btn-group mx-1">
             <RenderCopyBibleItemActionButtonsComp bibleItem={bibleItem} />
@@ -174,6 +214,12 @@ export default function RenderEditingActionButtonsComp({
                     {appProvider.isPagePresenter ? (
                         <SaveAndShowButtonComp
                             handleSaveAndPresent={handleSaveAndPresent}
+                            bibleItem={bibleItem}
+                        />
+                    ) : null}
+                    {appProvider.isPageAppDocumentEditor ? (
+                        <InsertBibleItemToSlideButtonComp
+                            handleBibleItemInserting={handleBibleItemInserting}
                             bibleItem={bibleItem}
                         />
                     ) : null}

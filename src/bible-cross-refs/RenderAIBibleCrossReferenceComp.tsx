@@ -1,6 +1,6 @@
 import type { CrossReferenceType } from '../helper/ai/bibleCrossRefHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { tran } from '../lang/langHelpers';
 import appProvider from '../server/appProvider';

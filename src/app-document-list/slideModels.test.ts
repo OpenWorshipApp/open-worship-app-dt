@@ -126,8 +126,13 @@ describe('slide models', () => {
         slide.height = 360;
         slide.note = 'Speaker note';
         slide.canvasItemsJson = [];
+        slide.isDisabled = true;
 
         expect(slide.isChanged).toBe(true);
+        expect(slide.isDisabled).toBe(true);
+        expect(slide.toJson().isDisabled).toBe(true);
+        slide.isDisabled = false;
+        expect(slide.isDisabled).toBe(false);
         expect(slide.name).toBe('Updated');
         expect(slide.id).toBe(9);
         expect(slide.width).toBe(640);

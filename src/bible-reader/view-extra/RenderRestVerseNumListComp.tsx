@@ -2,12 +2,10 @@ import { useMemo } from 'react';
 
 import { useBibleViewFontSizeContext } from '../../helper/bibleViewHelpers';
 import { useAppStateAsync } from '../../helper/appHooks';
-import {
-    toLocaleNumBible,
-    useBibleFontFamily,
-} from '../../helper/bible-helpers/bibleLogicHelpers2';
+import { toLocaleNumBible } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import type { ReadIdOnlyBibleItem } from '../ReadIdOnlyBibleItem';
 import { cleanupVerseNumberClicked } from './viewExtraHelpers';
+import { useBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 export default function RenderRestVerseNumListComp({
     to,

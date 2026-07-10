@@ -21,8 +21,8 @@ import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import BibleItem from '../BibleItem';
 import { showBibleKeyOption } from '../../bible-lookup/BibleKeySelectionComp';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
-import { getBibleFontFamily } from '../../helper/bible-helpers/bibleLogicHelpers2';
 import { BIBLE_KJV_KEY } from '../../helper/bible-helpers/bibleModelHelpers';
+import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 
 export const BIBLE_KEY_SETTING_NAME = 'bible-note-bible-key';
 export function getBibleNoteSelectedBibleKey() {

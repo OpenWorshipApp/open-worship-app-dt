@@ -41,6 +41,22 @@ export default function PageBaseAppearanceSettingComp({
         setIsFullWidth1Ref.current(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const onDocxPreviewBackgroundColorChangeRef = useAppCurrentRef(
+        onDocxPreviewBackgroundColorChange,
+    );
+    const handleBackgroundColorChanging = useCallback((color: string) => {
+        onDocxPreviewBackgroundColorChangeRef.current?.(color);
+        for (const { screenVaryAppDocumentManager } of getAllScreenManagers()) {
+            if (screenVaryAppDocumentManager.varySlideData === null) {
+                continue;
+            }
+            screenVaryAppDocumentManager.varySlideData = {
+                ...screenVaryAppDocumentManager.varySlideData,
+                virtualBackgroundColor: color || null,
+            };
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="page-base-appearance-setting">
             <div className="setting-group">
@@ -87,7 +103,7 @@ export default function PageBaseAppearanceSettingComp({
                 <VirtualBGColorSettingComp
                     docxPreviewBackgroundColor={docxPreviewBackgroundColor}
                     onDocxPreviewBackgroundColorChange={
-                        onDocxPreviewBackgroundColorChange
+                        handleBackgroundColorChanging
                     }
                 />
             </div>

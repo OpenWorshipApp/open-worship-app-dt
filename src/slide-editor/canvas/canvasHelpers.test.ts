@@ -142,7 +142,7 @@ describe('canvasHelpers', () => {
             width: 700,
             height: 400,
             rotate: 0,
-            backgroundColor: '#ff00ff8b',
+            backgroundColor: '#0000008b',
             backdropFilter: 0,
             roundSizePercentage: 0,
             roundSizePixel: 0,
@@ -156,11 +156,23 @@ describe('canvasHelpers', () => {
             }),
         );
 
-        isSupportedMimetypeMock.mockReturnValue(false);
-        expect(checkIsSupportMediaType('video/mp4')).toBe(false);
+        // Falls through the image check to accept supported video types.
+        isSupportedMimetypeMock.mockImplementation(
+            (_fileType: string, mimetypeName: string) => {
+                return mimetypeName === 'video';
+            },
+        );
+        expect(checkIsSupportMediaType('video/mp4')).toBe(true);
         expect(isSupportedMimetypeMock).toHaveBeenCalledWith(
             'video/mp4',
             'image',
         );
+        expect(isSupportedMimetypeMock).toHaveBeenCalledWith(
+            'video/mp4',
+            'video',
+        );
+
+        isSupportedMimetypeMock.mockReturnValue(false);
+        expect(checkIsSupportMediaType('application/pdf')).toBe(false);
     });
 });

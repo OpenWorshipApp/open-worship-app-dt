@@ -28,6 +28,7 @@ export function QuitCurrentPageComp({
         <button
             className="btn btn-sm btn-outline-warning"
             title={title}
+            aria-label={title}
             onClick={handleClick}
         >
             <i className="bi bi-escape" />
@@ -43,6 +44,7 @@ export function SettingButtonComp() {
         <button
             className="btn btn-outline-success rotating-hover"
             title={tran('Setting')}
+            aria-label={tran('Setting')}
             onClick={handleClick}
         >
             <i className="bi bi-gear-wide-connected" />
@@ -66,6 +68,7 @@ export function HelpButtonComp() {
         <button
             className="btn btn-outline-info"
             title={url}
+            aria-label={tran('Help')}
             onClick={handleClick}
         >
             <i className="bi bi-question-circle" />

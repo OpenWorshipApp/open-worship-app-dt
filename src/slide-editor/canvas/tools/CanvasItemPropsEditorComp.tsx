@@ -14,6 +14,7 @@ import SlideEditorToolTitleComp from './SlideEditorToolTitleComp';
 import { useCanvasControllerContext } from '../CanvasController';
 import { cloneJson } from '../../../helper/helpers';
 import { genTimeoutAttempt } from '../../../helper/timeoutHelpers';
+import { useCanvasControllerEvents } from '../canvasEventHelpers';
 
 export default function CanvasItemPropsEditorComp({
     canvasItem,
@@ -21,6 +22,10 @@ export default function CanvasItemPropsEditorComp({
     canvasItem: CanvasItem<any>;
 }>) {
     const canvasController = useCanvasControllerContext();
+    // A bible item lays its own title and verses out from the verse data, so it
+    // exposes every text property except the alignment and the raw content.
+    const hasTextProps = ['text', 'bible'].includes(canvasItem.type);
+    const isPlainText = canvasItem.type === 'text';
     const [props, setProps] = useState(canvasItem.props);
     const { isExpanded, headerProps } = useExpandToggle(true);
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
@@ -30,6 +35,14 @@ export default function CanvasItemPropsEditorComp({
         });
         attemptTimeout(() => {
             const { canvas } = canvasController;
+            // The editors are hidden while locked, but a pending debounced
+            // commit could still fire after the item just got locked.
+            const latestItem = canvas.canvasItems.find((item) => {
+                return item.id === canvasItem.id;
+            });
+            if (latestItem === undefined || latestItem.isLocked) {
+                return;
+            }
             canvasController.editCanvasItemById(canvasItem.id, (item) => {
                 // Apply only the changed fields onto the latest item state.
                 // Committing a full local snapshot here would overwrite
@@ -50,6 +63,25 @@ export default function CanvasItemPropsEditorComp({
         const newProps = cloneJson(canvasItem.props);
         setProps(newProps);
     });
+    // `edit` above only fires from this panel's own commits. Undo/redo (and
+    // any other external change) instead replaces the whole canvas item
+    // list and fires a controller-level event, so re-sync from the latest
+    // matching item there too — otherwise the panel shows stale values
+    // after an undo.
+    useCanvasControllerEvents(['update', 'reload'], () => {
+        const latestItem = canvasController.canvas.canvasItems.find(
+            (item) => item.id === canvasItem.id,
+        );
+        if (latestItem) {
+            setProps(cloneJson(latestItem.props));
+        }
+    });
+    const isLocked = props.locked === true;
+    const handleUnlocking = () => {
+        canvasController.editCanvasItemById(canvasItem.id, (item) => {
+            item.applyProps({ locked: false });
+        });
+    };
     return (
         <CanvasItemPropsSetterContext
             value={{
@@ -80,21 +112,50 @@ export default function CanvasItemPropsEditorComp({
                             overflow: 'auto',
                         }}
                     >
-                        <CanvasItemContext value={canvasItem}>
-                            <div className="m-1 app-border-white-round">
-                                <SlideEditorToolTitleComp title="Box Properties">
-                                    <SlideEditorToolsBoxComp />
-                                </SlideEditorToolTitleComp>
+                        {isLocked ? (
+                            <div className="d-flex align-items-center gap-2 p-2">
+                                <span>🔒 This item is locked</span>
+                                <button
+                                    className="btn btn-sm btn-outline-warning"
+                                    onClick={handleUnlocking}
+                                >
+                                    Unlock
+                                </button>
                             </div>
-                            {canvasItem.type === 'text' ? (
-                                <div className="m-1 app-border-white-round">
-                                    <SlideEditorToolTitleComp title="Text Properties">
-                                        <SlideEditorToolsTextComp />
+                        ) : (
+                            <CanvasItemContext value={canvasItem}>
+                                <div>
+                                    <SlideEditorToolTitleComp
+                                        title="Box Properties"
+                                        isCollapsible
+                                        isInitiallyExpanded={false}
+                                    >
+                                        <SlideEditorToolsBoxComp />
                                     </SlideEditorToolTitleComp>
                                 </div>
-                            ) : null}
-                            <div />
-                        </CanvasItemContext>
+                                {hasTextProps ? (
+                                    <div
+                                        // Take the whole panel row so the text
+                                        // content textarea gets the full width
+                                        // and grows when the panel is resized.
+                                        style={{
+                                            flexBasis: '100%',
+                                            minWidth: 0,
+                                        }}
+                                    >
+                                        <SlideEditorToolTitleComp title="Text Properties">
+                                            <SlideEditorToolsTextComp
+                                                isAlignmentEnabled={isPlainText}
+                                                isTextContentEnabled={
+                                                    isPlainText
+                                                }
+                                            />
+                                        </SlideEditorToolTitleComp>
+                                    </div>
+                                ) : null}
+                                <div />
+                            </CanvasItemContext>
+                        )}
                     </div>
                 ) : null}
             </div>

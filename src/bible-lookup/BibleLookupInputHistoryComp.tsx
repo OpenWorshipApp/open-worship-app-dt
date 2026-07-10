@@ -3,10 +3,7 @@ import { useCallback, useState } from 'react';
 import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { getSetting, setSetting } from '../helper/settingHelpers';
-import {
-    extractBibleTitle,
-    useBibleFontFamily,
-} from '../helper/bible-helpers/bibleLogicHelpers2';
+import { extractBibleTitle } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { bibleHistoryStore } from '../bible-reader/BibleItemsViewController';
@@ -17,6 +14,7 @@ import type BibleItem from '../bible-list/BibleItem';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const HISTORY_TEXT_LIST_SETTING_NAME = 'history-text-list';
 function useHistoryTextList(maxHistoryCount: number) {

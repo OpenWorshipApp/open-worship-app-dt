@@ -8,11 +8,11 @@ import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { SelectedBookKeyType } from './bibleFindHelpers';
 import { tran } from '../lang/langHelpers';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import BibleFindController from './BibleFindController';
 import appProvider from '../server/appProvider';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 function genMenuItem(
     selectedBooks: SelectedBookKeyType[],

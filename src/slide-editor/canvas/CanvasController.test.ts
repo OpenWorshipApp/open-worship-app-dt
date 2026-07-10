@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
     fromBibleItemMock: vi.fn(),
     genDefaultItemMock: vi.fn(),
     genFromFileImageMock: vi.fn(),
+    genFromFileVideoMock: vi.fn(),
     genFromInsertionImageMock: vi.fn(),
     genFromInsertionVideoMock: vi.fn(),
     getSettingMock: vi.fn(),
@@ -46,6 +47,7 @@ vi.mock('./CanvasItemBibleItem', () => ({
 
 vi.mock('./CanvasItemVideo', () => ({
     default: {
+        genFromFile: mocks.genFromFileVideoMock,
         genFromInsertion: mocks.genFromInsertionVideoMock,
     },
 }));
@@ -64,6 +66,12 @@ vi.mock('./canvasContextMenuHelpers', () => ({
 
 vi.mock('../../event/KeyboardEventListener', () => ({
     allArrows: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
+}));
+
+// `canvasHelpers` pulls in `server/fileHelpers`, whose `appProvider` mock
+// needs a DOM this node-environment test doesn't have.
+vi.mock('../../server/fileHelpers', () => ({
+    isSupportedMimetype: vi.fn(() => true),
 }));
 
 import CanvasController from './CanvasController';
@@ -112,6 +120,12 @@ function createCanvasItem({
         configurable: true,
         get() {
             return item.props.id;
+        },
+    });
+    Object.defineProperty(item, 'isLocked', {
+        configurable: true,
+        get() {
+            return item.props.locked === true;
         },
     });
 
@@ -280,6 +294,37 @@ describe('CanvasController', () => {
         );
     });
 
+    test('refuses to delete locked items until they are unlocked', () => {
+        const lockedItem = createCanvasItem({ id: 1 });
+        lockedItem.props.locked = true;
+        const normalItem = createCanvasItem({ id: 2 });
+        const { appDocument, canvas, controller } = createController([
+            lockedItem,
+            normalItem,
+        ]);
+
+        controller.deleteItems([lockedItem]);
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Delete Canvas Items',
+            'Locked items cannot be deleted',
+        );
+        expect(canvas.canvasItems.map((item: any) => item.props.id)).toEqual([
+            1, 2,
+        ]);
+        // Nothing was deletable, so no history entry either.
+        expect(appDocument.updateSlide).not.toHaveBeenCalled();
+
+        // A mixed selection deletes only the unlocked items.
+        controller.deleteItems([lockedItem, normalItem]);
+        expect(canvas.canvasItems.map((item: any) => item.props.id)).toEqual([
+            1,
+        ]);
+
+        lockedItem.props.locked = false;
+        controller.deleteItems([lockedItem]);
+        expect(canvas.canvasItems).toEqual([]);
+    });
+
     test('creates media items from paths and blobs and reports unsupported or failed paths', async () => {
         const { controller } = createController();
         const imageItem = createCanvasItem({ id: 3, type: 'image' });
@@ -295,6 +340,7 @@ describe('CanvasController', () => {
         mocks.genFromInsertionImageMock.mockResolvedValue(imageItem);
         mocks.genFromInsertionVideoMock.mockResolvedValue(videoItem);
         mocks.genFromFileImageMock.mockResolvedValue(imageItem);
+        mocks.genFromFileVideoMock.mockResolvedValue(videoItem);
 
         await expect(
             controller.genNewMediaItemFromFilePath(
@@ -362,6 +408,49 @@ describe('CanvasController', () => {
             100,
             200,
             expect.any(Blob),
+        );
+
+        // Dropped files dispatch on their mimetype: video files become
+        // video items, everything else goes through the image path.
+        mocks.genFromFileImageMock.mockClear();
+        await expect(
+            controller.genNewMediaItemFromFile(
+                new Blob(['video'], { type: 'video/mp4' }),
+                event as any,
+            ),
+        ).resolves.toBe(videoItem);
+        expect(mocks.genFromFileVideoMock).toHaveBeenCalledWith(
+            100,
+            200,
+            expect.any(Blob),
+        );
+        expect(mocks.genFromFileImageMock).not.toHaveBeenCalled();
+
+        await expect(
+            controller.genNewMediaItemFromFile(
+                new Blob(['image'], { type: 'image/png' }),
+                event as any,
+            ),
+        ).resolves.toBe(imageItem);
+        expect(mocks.genFromFileImageMock).toHaveBeenCalledWith(
+            100,
+            200,
+            expect.any(Blob),
+        );
+
+        mocks.genFromFileVideoMock.mockRejectedValueOnce(
+            new Error('broken video'),
+        );
+        await expect(
+            controller.genNewMediaItemFromFile(
+                new Blob(['video'], { type: 'video/mp4' }),
+                event as any,
+            ),
+        ).resolves.toBeUndefined();
+        expect(mocks.handleErrorMock).toHaveBeenCalled();
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Insert Image or Video',
+            'Fail to insert medias',
         );
     });
 
@@ -440,6 +529,7 @@ describe('CanvasController', () => {
             mediaItem,
             editHandler,
             true,
+            null,
         );
         expect(stopPropagation).toHaveBeenCalledTimes(1);
     });

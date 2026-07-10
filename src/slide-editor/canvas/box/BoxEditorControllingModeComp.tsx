@@ -7,10 +7,8 @@ import CanvasItem, {
     useSetSelectedCanvasItems,
 } from '../CanvasItem';
 import { BoxEditorNormalImageRender } from './BoxEditorNormalViewImageModeComp';
-import {
-    BoxEditorNormalHtmlRender,
-    BoxEditorNormalTextRender,
-} from './BoxEditorNormalViewTextModeComp';
+import { BoxEditorNormalHtmlRender } from './BoxEditorNormalViewHtmlModeComp';
+import { BoxEditorNormalTextRender } from './BoxEditorNormalViewTextModeComp';
 import { BoxEditorNormalBibleRender } from './BoxEditorNormalViewBibleModeComp';
 import { useCanvasControllerContext } from '../CanvasController';
 import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
@@ -18,6 +16,8 @@ import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { useBoxEditorControllerContext } from '../../BoxEditorController';
 import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
 import { useAppCurrentRef } from '../../../helper/appHooks';
+import { getRotatedResizeCursor } from './boxEditorHelpers';
+import { useToggleBibleLookupPopupContext } from '../../../others/commonButtons';
 
 function BoxEditorCanvasItemRender() {
     const canvasItem = useCanvasItemContext();
@@ -44,6 +44,7 @@ export default function BoxEditorControllingModeComp() {
     const boxEditorController = useBoxEditorControllerContext();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
     const handleSelectCanvasItem = useSetSelectedCanvasItems();
+    const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const canvasControllerRef = useAppCurrentRef(canvasController);
     const handleSelectCanvasItemRef = useAppCurrentRef(handleSelectCanvasItem);
     const canvasItemRef = useAppCurrentRef(canvasItem);
@@ -64,26 +65,48 @@ export default function BoxEditorControllingModeComp() {
     );
     const handleDoubleClick = useCallback((event: MouseEvent) => {
         event.stopPropagation();
+        if (canvasItemRef.current.isLocked) {
+            return;
+        }
         handleCanvasItemEditingRef.current(canvasItemRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const props = useCanvasItemPropsContext();
+    const isLocked = props.locked === true;
     return (
         <div
             className="editor-controller-box-wrapper"
             ref={(div) => {
-                if (div === null) {
+                if (div === null || isLocked) {
                     return;
                 }
-                boxEditorController.initEvent(div, async () => {
+                boxEditorController.initEvent(div, async (groupMoves) => {
                     const info = boxEditorController.getInfo();
                     if (info === null) {
                         return;
                     }
-                    canvasController.editCanvasItemById(
-                        canvasItem.id,
+                    if (groupMoves.length === 0) {
+                        canvasController.editCanvasItemById(
+                            canvasItem.id,
+                            (latestCanvasItem) => {
+                                latestCanvasItem.applyProps(info);
+                            },
+                        );
+                        return;
+                    }
+                    // A single call so dragging a multi-selection lands as one
+                    // undo step rather than one per box.
+                    const movesById = new Map(
+                        groupMoves.map(({ id, ...props }) => {
+                            return [id, props];
+                        }),
+                    );
+                    canvasController.editCanvasItemsByIds(
+                        [canvasItem.id, ...movesById.keys()],
                         (latestCanvasItem) => {
-                            latestCanvasItem.applyProps(info);
+                            latestCanvasItem.applyProps(
+                                movesById.get(latestCanvasItem.id) ?? info,
+                            );
                         },
                     );
                 });
@@ -100,38 +123,59 @@ export default function BoxEditorControllingModeComp() {
             }}
         >
             <div
-                className="app-box-editor controllable"
+                className={
+                    'app-box-editor controllable' + (isLocked ? ' locked' : '')
+                }
                 data-app-box-editor-id={canvasItem.id}
                 onClick={handleClick}
                 onContextMenu={canvasController.genHandleContextMenuOpening(
                     canvasItem,
                     handleCanvasItemEditing.bind(null, canvasItem),
                     true,
+                    showBibleLookupPopup,
                 )}
                 onDoubleClick={handleDoubleClick}
                 style={{
-                    border: '2px dashed green',
+                    // The wrapper above owns the box's position, so this
+                    // carries everything else `genBoxStyle` would give a
+                    // non-selected box — `display: flex` included, or the
+                    // renderer inside would lay itself out as a block and
+                    // wrap its text at a different width than when
+                    // unselected.
+                    display: 'flex',
                     transform: 'translate(-50%, -50%)',
                     ...CanvasItem.genShapeBoxStyle(props),
                 }}
             >
                 <BoxEditorCanvasItemRender />
-                <div className="tools">
-                    <div
-                        className={`object ${boxEditorController.rotatorCN}`}
-                    />
-                    <div className="rotate-link" />
-                    {Object.keys(boxEditorController.resizeActorList).map(
-                        (className) => {
-                            return (
-                                <div
-                                    key={className}
-                                    className={`object ${className}`}
-                                />
-                            );
-                        },
-                    )}
-                </div>
+                {isLocked ? (
+                    <div className="locked-indicator" title="Locked">
+                        🔒
+                    </div>
+                ) : (
+                    <div className="tools">
+                        <div
+                            className={`object ${boxEditorController.rotatorCN}`}
+                        />
+                        <div className="rotate-link" />
+                        {Object.keys(boxEditorController.resizeActorList).map(
+                            (className) => {
+                                return (
+                                    <div
+                                        key={className}
+                                        className={`object ${className}`}
+                                        style={{
+                                            cursor: getRotatedResizeCursor(
+                                                className,
+                                                props.rotate,
+                                            ),
+                                        }}
+                                    />
+                                );
+                            },
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -100,6 +100,7 @@ function MenuIsModifying({
                 type="button"
                 disabled={!caDiscard}
                 title={tran('Discard changed')}
+                aria-label={tran('Discard changed')}
                 style={genDisabledStyle(!caDiscard)}
                 onClick={handleDiscard}
             >
@@ -110,6 +111,7 @@ function MenuIsModifying({
                 type="button"
                 disabled={!canSave}
                 title={tran('Save') + ` [${toShortcutKey(savingEventMapper)}]`}
+                aria-label={tran('Save')}
                 style={genDisabledStyle(!canSave)}
                 onClick={handleSave}
             >
@@ -148,6 +150,7 @@ export function FileEditingMenuComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title="Undo"
+                aria-label={tran('Undo')}
                 disabled={!canUndo}
                 style={genDisabledStyle(!canUndo)}
                 onClick={handleUndo}
@@ -158,6 +161,7 @@ export function FileEditingMenuComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title="Redo"
+                aria-label={tran('Redo')}
                 disabled={!canRedo}
                 style={genDisabledStyle(!canRedo)}
                 onClick={handleRedo}

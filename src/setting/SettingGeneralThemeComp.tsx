@@ -23,7 +23,7 @@ export default function SettingGeneralThemeComp() {
             <div className="card-body">
                 <select
                     className="form-select"
-                    aria-label="Default select example"
+                    aria-label={tran('Theme')}
                     value={themeSource}
                     onChange={handleThemeChange}
                 >

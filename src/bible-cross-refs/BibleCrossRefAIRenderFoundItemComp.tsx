@@ -12,7 +12,7 @@ import { breakItem } from './bibleCrossRefsHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { BibleDirectViewTitleComp } from '../bible-reader/view-extra/BibleDirectViewTitleComp';
-import { useBibleFontFamily } from '../helper/bible-helpers/bibleLogicHelpers2';
+import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 function RenderVerseTextComp({
     bibleKey,

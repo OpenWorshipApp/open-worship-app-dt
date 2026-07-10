@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 const {
     bibleFromJsonMock,
     errorFromJsonErrorMock,
+    htmlFromJsonMock,
     imageFromJsonMock,
     navigatorClipboard,
     textFromJsonMock,
@@ -12,6 +13,7 @@ const {
 } = vi.hoisted(() => ({
     bibleFromJsonMock: vi.fn(),
     errorFromJsonErrorMock: vi.fn(),
+    htmlFromJsonMock: vi.fn(),
     imageFromJsonMock: vi.fn(),
     navigatorClipboard: {
         read: vi.fn(),
@@ -36,6 +38,12 @@ vi.mock('./CanvasItem', () => ({
 vi.mock('./CanvasItemBibleItem', () => ({
     default: {
         fromJson: bibleFromJsonMock,
+    },
+}));
+
+vi.mock('./CanvasItemHtml', () => ({
+    default: {
+        fromJson: htmlFromJsonMock,
     },
 }));
 
@@ -82,6 +90,10 @@ describe('Canvas', () => {
         videoFromJsonMock.mockImplementation((json: any) => ({
             ...json,
             type: 'video',
+        }));
+        htmlFromJsonMock.mockImplementation((json: any) => ({
+            ...json,
+            type: 'html',
         }));
         textFromJsonMock.mockImplementation((json: any) => ({
             ...json,

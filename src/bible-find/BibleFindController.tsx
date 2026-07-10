@@ -1,6 +1,5 @@
 import { createContext, use } from 'react';
 
-import { getBibleLocale } from '../helper/bible-helpers/bibleLogicHelpers2';
 import { handleError } from '../helper/errorHelpers';
 import FileSource from '../helper/FileSource';
 import { appApiFetch } from '../helper/networkHelpers';
@@ -43,6 +42,7 @@ import { pasteTextToInput } from '../server/appHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { appLog } from '../helper/loggerHelpers';
+import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const DEFAULT_ROW_LIMIT = 20;
 const SUCCESS_FILE_SUFFIX = '-success';

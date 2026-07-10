@@ -75,7 +75,8 @@ export default function RenderExtraButtonsRightComp({
     }, []);
     return (
         <div className="d-flex">
-            {appProvider.isPagePresenter ? (
+            {appProvider.isPagePresenter ||
+            appProvider.isPageAppDocumentEditor ? (
                 <div
                     className="input-group-text app-caught-hover-pointer"
                     title={tran(

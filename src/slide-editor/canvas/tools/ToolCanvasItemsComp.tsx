@@ -9,6 +9,7 @@ import {
     useSetSelectedCanvasItems,
 } from '../CanvasItem';
 import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
+import { useToggleBibleLookupPopupContext } from '../../../others/commonButtons';
 
 const PREVIEW_WIDTH = 280;
 const PREVIEW_HEIGHT = 150;
@@ -18,6 +19,7 @@ export default function ToolCanvasItemsComp() {
     const canvasItems = useCanvasItemsContext();
     const handleCanvasItemControlling = useSetSelectedCanvasItems();
     const handleCanvasItemEditing = useSetEditingCanvasItem();
+    const showBibleLookupPopup = useToggleBibleLookupPopupContext();
     const { canvasItems: selectedCanvasItems } =
         useSelectedCanvasItemsAndSetterContext();
     return (
@@ -56,6 +58,7 @@ export default function ToolCanvasItemsComp() {
                             canvasItem,
                             handleCanvasItemEditing.bind(null, canvasItem),
                             false,
+                            showBibleLookupPopup,
                         )}
                     >
                         <div className="card-header">

@@ -13,7 +13,20 @@ EXCLUDED by the policy table below.
 > Before a full run, spot-check the matrix against `src/` (new `*Comp.tsx` folders =
 > new rows).
 
-**matrixVersion: 2026-07-08**
+**matrixVersion: 2026-07-09**
+
+## Mandatory core — screen controlling & presenting (every run)
+
+Screen controlling and presenting is the app's reason to exist, so it is **never
+optional**: every run — full-coverage OR focused (e.g. "robot test bible lookup") —
+must exercise the **mandatory core** and record its rows in the run state file:
+
+> **SP-01, SP-02, SC-01, SC-02, PR-04, KB-05 (or another clear key)** — present at
+> least one real content item, verify it on the mini-screen AND on the `screen.html`
+> CDP target while showing, exercise the clear controls, then hide/restore.
+
+A report that lacks evidence for the mandatory core is **incomplete** — say so
+explicitly rather than shipping it. The full recipe is test-plan.md §S7.
 
 ## How a run uses this matrix
 
@@ -51,7 +64,7 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 | ID | Excluded | Why | Cover to the edge by… |
 |---|---|---|---|
 | EX-01 | OS-native file dialogs (browse/open/save) | Not drivable via CDP | click the button, confirm the app doesn't crash while the dialog is cancelled by policy — mark the *dialog itself* excluded |
-| EX-02 | Physically presenting to / hiding the user's real display (`ShowHideScreen`, OS fullscreen) | Takes over a live window the user may be using (KB §10) | verify the control exists + is enabled; use the mini-screen for output assertions |
+| EX-02 | **Leaving** the user's real display taken over, or OS-fullscreen during a live service | The user may be actively presenting (KB §10) | **Showing the screen is now MANDATORY, not excluded** (SP-01/SC-01): toggle it on briefly, drive the `screen.html` CDP target, then hide + restore. EX-02 applies only to *leaving* it showing, or when the user explicitly said the display is in live use — then assert via mini-screen only and mark the SC rows BLOCKED→EX-02 |
 | EX-03 | Camera-dependent rows | Needs hardware; may be absent | if a device exists, exercise; else BLOCKED→EX-03 |
 | EX-04 | Following external links (Help, About links) | Opens the user's browser | click-eligibility only: control present, named, enabled |
 | EX-05 | Destructive tails: `Clear All Settings`, `Reset All Child Directories`, `Reset Widgets Size`, deleting user documents/lyrics | Destroys user data/state | click → **confirm dialog appears → Cancel** (covers the control + dialog); for delete, create a scratch item first, delete *that* |
@@ -159,8 +172,8 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 | PR-03 | `BibleNoteListComp` | 🖱️ note; edit | **Bible Note popup** target appears |
 | PR-04 | `MiniScreenComp` | observe across PM rows | preview mirrors every live change |
 | PR-05 | Zoom slider (`max=30`) | 🎚️ | preview rescales |
-| PR-06 | `MiniScreenClearControlComp` | 🖱️ each clear button | each clears its layer (pair with KB-03..07) |
-| PR-07 | `ShowHideScreen` | presence only (EX-02) | control present + enabled |
+| PR-06 | `MiniScreenClearControlComp` | 🖱️ each clear button | each clears its layer (pair with KB-03..07; enabled-state logic = SP-02) |
+| PR-07 | `ShowHideScreen` | 🖱️ toggle on → verify → toggle off (details in SP-01) | screen shows then hides; state restored — **no longer presence-only** |
 
 ## RD — `reader.html` (Bible Reader)
 
@@ -222,16 +235,47 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 | PU-05 | About (`AboutComp`) | open; observe | version renders; links present (EX-04 for following them) |
 | PU-06 | LW Share (`LWShareAppComp`) | open if reachable | share view renders; else BLOCKED with the reason |
 
-## SC — `screen.html` (presentation output)
+## SP — Screen controlling (mini-screen previewer) — **MANDATORY core: SP-01..02**
 
-> The physical screen window is **not on CDP** — its logs forward to the presenter via
-> `all:app:log`. Never `navigate_page` the main window to `screen.html`.
+Every screen gets its own previewer card (`ScreenPreviewerItemComp`): header =
+`ShowHideScreen` + `MiniScreenClearControlComp` + screen-id badge + color note + lock;
+body = live preview (drop target, right-click menu); footer = `DisplayControl` +
+transition effects + background-audio switch + stage number. Sources in
+[components-path.md](./components-path.md) §Presenter-right.
 
 | ID | Target | Interactions | Pass condition |
 |---|---|---|---|
-| SC-01 | Screen target | present content → `list_pages` | if a `screen.html` target appears, select + screenshot it; else verify via mini-screen + forwarded `all:app:log` lines and note that |
-| SC-02 | Layer rendering | observe while bg + slide + bible + foreground live | all layers composite on mini-screen (and screen target if attached) |
-| SC-03 | ⌨️ `Ctrl/Alt+ArrowLeft/Right` | only if screen target drivable | bible verse steps prev/next; else BLOCKED |
+| SP-01 | `ShowHideScreen` toggle | 🖱️ click (and ⌨️ `F5`) on → verify → off | ON: `.showing` class + opacity 1; a `screen.html?screenId=N` target appears in `list_pages`. OFF: target disappears. **Always end hidden unless it started showing** |
+| SP-02 | `MiniScreenClearControlComp` enabled states | observe before/after presenting each layer | with a layer empty its button is `btn-outline-*` (disabled-look); presenting that layer flips it to solid `btn-*`; clicking clears and it flips back (eraser=All F6, BG F7, SL F8, BB F9, FG F10) |
+| SP-03 | Lock toggle (`bi-unlock`/`bi-lock-fill`) | 🖱️ lock → try presenting a slide → unlock | locked: icon red `bi-lock-fill` and slide change is refused with toast "Screen Manager is locked"; unlocked (green) works again — **restore unlocked** |
+| SP-04 | `ShowingScreenIcon` + `ItemColorNoteComp` | observe badge; 🖱️ color-note dot → pick a color → restore | badge shows screen id with a stable per-id color (`data-screen-id`); color note applies (multi-screen: previews group under color bars) and restores |
+| SP-05 | `DisplayControl` (`Display(screenId):displayId`) | 🖱️ → context menu | menu lists every OS display as `label(id): WxH (primary)` with `*` on the current one; re-selecting the current display is a safe no-op round-trip; only pick another display if one exists AND you restore it |
+| SP-06 | Transition effects (`Tr:` `Slide:`/`Background:`) | 🖱️ each button → pick a different effect (none/fade/move/zoom) → present content → restore | menu shows the 4 effects with the current one highlighted; icon on the button updates; the presented change uses the effect (observe mini-screen) — **restore the original effect** |
+| SP-07 | Stage number (`St: N`) | 🖱️ → menu `0`–`4` / Increment / Decrement | picking a value updates the label; current value is disabled in the menu; Decrement disabled at 0 — **restore original value** |
+| SP-08 | `BackgroundAudioSwitchComp` (`bi-soundwave`) | appears only while a video background is live: 🖱️ toggle on; 🖱️ toggle off while audio playing | ON: audio-handler rows render in the footer; OFF while playing: refused with toast (pair GL-10); OFF while paused: rows collapse |
+| SP-09 | `MiniScreenAudioHandlersComp` (audio player) | 🖱️ play/pause the `<audio controls>`; 🖱️ repeat toggle (`bi-repeat-1`) | filename renders; play syncs the background-video time (video restarts in sync); repeat toggle flips green/dim — **end paused** |
+| SP-10 | Previewer context menu | 🖱️R on a previewer card | `Refresh Preview` always present (click it — preview re-renders); with >1 screens also `Solo`/`Select`/`Deselect`/`Delete`; with a bible live also `Set/Unset Line Sync` |
+| SP-11 | Multi-screen lifecycle | 🖱️R empty mini-screen body → `Add New Screen`; then `Solo`/`Select` on cards; then `Delete` the added screen | second previewer card appears with its own id + color; solo/select toggle `HIGHLIGHT_SELECTED` state; delete removes it — **self-cleaning: never leave an extra screen** |
+| SP-12 | Drop onto a specific previewer | ⇕ drag a slide / bg item / foreground Show button onto one previewer card | card highlights while dragging over (receiving-drop class); dropped content presents on THAT screen (pair PM-25) |
+
+## SC — `screen.html` (presentation output window) — **MANDATORY core: SC-01..02**
+
+> **CDP facts (verified 2026-07-08):** while a screen is SHOWING it **is** a normal CDP
+> target — `https://localhost:3000/screen.html?screenId=N` in `list_pages`, fully
+> drivable (snapshot / click / screenshot). The target vanishes when the screen hides;
+> a hidden screen's console forwards to the **electron main stdout** (the `npm run dev`
+> terminal) via `all:app:log`. Never `navigate_page` the main window to `screen.html` —
+> reach it only through SP-01 + `list_pages`. Screen-only bugs (e.g. full-width PDF) do
+> NOT reproduce in the presenter's mini preview — that is why driving the real target is
+> mandatory.
+
+| ID | Target | Interactions | Pass condition |
+|---|---|---|---|
+| SC-01 | Screen target attach | present content → SP-01 show → `list_pages` → `select_page` → readiness → screenshot | the `screen.html?screenId=N` target MUST appear and be drivable; screenshot captured from the screen target itself (not just the mini preview) |
+| SC-02 | Layer rendering on the real output | while bg + slide + bible + foreground are live | all live layers composite correctly **on the screen target's own screenshot**, and the mini-screen mirrors it; compare the two for screen-only rendering bugs |
+| SC-03 | ⌨️ `Ctrl/Alt+ArrowLeft/Right` on the screen target | with a bible verse live, `press_key` on the selected screen page | bible verse steps prev/next on the output (mirror on mini-screen) |
+| SC-04 | `ScreenCloseButtonComp` (❌ `#close`) | 🖱️ on the screen target | screen hides; its CDP target disappears; the presenter's `ShowHideScreen` reflects hidden |
+| SC-05 | Hidden-screen log forwarding | after hiding, trigger screen activity; read the `npm run dev` terminal | screen console lines arrive via `all:app:log` on electron-main stdout (use this channel when hunting screen-only bugs while hidden) |
 
 ## KB — Keyboard-shortcut matrix (explicit pass)
 
@@ -249,6 +293,7 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 | KB-10 | `Ctrl+Enter` | slide editor | canvas focused |
 | KB-11 | `Ctrl+S` | editors (lyric/web/note/slide) | saves |
 | KB-12 | `Enter` / `Escape` | confirm/input popups | confirm / cancel |
+| KB-13 | `F5` | presenter | toggles show/hide of the (focused) screen — pair with SP-01; end hidden unless it started showing |
 
 ## LT — Locale & theme passes
 
@@ -263,6 +308,9 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 
 ## Row counts (for the coverage denominator)
 
-GL 13 · NAV 11 · PL 10 · PM 35 · PR 7 · RD 12 · ED 12 · ST 10 · PU 6 · SC 3 · KB 12 · LT 4
-= **135 rows total**. Compute the denominator per run as `135 − EXCLUDED` (hardware and
-policy exclusions vary by machine).
+GL 13 · NAV 11 · PL 10 · PM 35 · PR 7 · RD 12 · ED 12 · ST 10 · PU 6 · SP 12 · SC 5 ·
+KB 13 · LT 4 = **150 rows total**. Compute the denominator per run as `150 − EXCLUDED`
+(hardware and policy exclusions vary by machine).
+
+> Reminder: whatever the focus area, the **mandatory core** (SP-01, SP-02, SC-01,
+> SC-02, PR-04, one clear key) must appear in every run's state file.
