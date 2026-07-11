@@ -27,7 +27,10 @@ export default function CanvasItemPropsEditorComp({
     const hasTextProps = ['text', 'bible'].includes(canvasItem.type);
     const isPlainText = canvasItem.type === 'text';
     const [props, setProps] = useState(canvasItem.props);
-    const { isExpanded, headerProps } = useExpandToggle(true);
+    const { isExpanded, headerProps } = useExpandToggle(
+        true,
+        'canvas-item-props-editor',
+    );
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const setProps1 = (anyProps: Partial<typeof props>) => {
         setProps((prevProps: any) => {

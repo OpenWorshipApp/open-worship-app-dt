@@ -2,25 +2,25 @@
     {
         "type": "MP3",
         "title": "",
-        "mimetypeSignature": "audio/mpeg",
+        "mimetypeSignatures": ["audio/mpeg"],
         "extensions": [".mp3"]
     },
     {
         "type": "Ogg",
         "title": "",
-        "mimetypeSignature": "audio/ogg",
+        "mimetypeSignatures": ["audio/ogg"],
         "extensions": [".ogg"]
     },
     {
         "type": "WAV",
         "title": "Waveform Audio File Format",
-        "mimetypeSignature": "audio/wav",
+        "mimetypeSignatures": ["audio/wav"],
         "extensions": [".wav"]
     },
     {
         "type": "M4A",
         "title": "MPEG-4 Part 14",
-        "mimetypeSignature": "audio/mp4",
+        "mimetypeSignatures": ["audio/mp4"],
         "extensions": [".m4a"]
     }
 ]

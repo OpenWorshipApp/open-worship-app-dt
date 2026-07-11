@@ -36,3 +36,8 @@ export const screenManagerSettingNames = {
     FULL_TEXT: 'screen-ft-manager',
     MANAGERS: 'screen-managers',
 };
+
+// Marks elements that are editor/preview-only affordances (e.g. the play
+// badge drawn over a video canvas item). The screen output hides every
+// element carrying this attribute.
+export const PREVIEW_ONLY_ATTR = 'data-preview-only';

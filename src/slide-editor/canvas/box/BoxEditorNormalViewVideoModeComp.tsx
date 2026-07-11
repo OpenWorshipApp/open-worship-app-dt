@@ -6,7 +6,9 @@ import img404 from '../404.png';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
+import { pathToFileURL } from '../../../server/calcHelpers';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
+import { PREVIEW_ONLY_ATTR } from '../../../helper/constants';
 
 export default function BoxEditorNormalViewVideoModeComp({
     style,
@@ -29,6 +31,7 @@ export function BoxEditorNormalVideoRender() {
         return <BENViewErrorRender />;
     }
     const minSize = Math.min(props.width, props.height) / 4;
+    const videoSrc = props.filePath ? pathToFileURL(props.filePath) : img404;
     return (
         <div
             title={props.id.toString()}
@@ -42,7 +45,7 @@ export function BoxEditorNormalVideoRender() {
             }}
         >
             <video
-                src={props.srcData || img404}
+                src={videoSrc}
                 style={{
                     width: '100%',
                     height: '100%',
@@ -72,9 +75,14 @@ function PlayIcon({ width }: Readonly<{ width: number }>) {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"
+            {...{ [PREVIEW_ONLY_ATTR]: '' }}
             width={width}
             filter="drop-shadow(3px 5px 2px rgb(0 0 0 / 0.4))"
             viewBox="0 0 16 16"
+            // Outline keeps the icon legible on dark/black video frames.
+            stroke="white"
+            strokeWidth={0.5}
+            paintOrder="stroke"
         >
             <path
                 d={

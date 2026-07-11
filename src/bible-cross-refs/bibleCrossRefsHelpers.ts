@@ -5,7 +5,7 @@ import { handleError } from '../helper/errorHelpers';
 import { toBibleFileName } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useAppEffectAsync } from '../helper/appHooks';
 import { appApiFetch } from '../helper/networkHelpers';
-import CacheManager from '../others/CacheManager';
+import { globalCacheManager1M } from '../others/CacheManager';
 import { bibleRenderHelper } from '../bible-list/bibleRenderHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { unlocking } from '../server/unlockingHelpers';
@@ -58,14 +58,14 @@ function transform(bibleRef: RawBibleCrossRefListType): BibleCrossRefType[][] {
 }
 
 // TODO: subject to remove
-const bibleCrossRefCache = new CacheManager<BibleCrossRefType[][]>(60); // 1 minute
 export async function getBibleCrossRef(
     bibleTitle: string,
     forceRefresh = false,
 ) {
-    return unlocking(`bible-refs/${bibleTitle}`, async () => {
+    const key = `bible-refs/${bibleTitle}`;
+    return unlocking(key, async () => {
         if (!forceRefresh) {
-            const cachedData = await bibleCrossRefCache.get(bibleTitle);
+            const cachedData = await globalCacheManager1M.get(key);
             if (cachedData !== null) {
                 return cachedData;
             }
@@ -79,7 +79,7 @@ export async function getBibleCrossRef(
             const json = JSON.parse(text);
             if (Array.isArray(json)) {
                 const data = transform(json);
-                await bibleCrossRefCache.set(bibleTitle, data);
+                await globalCacheManager1M.set(key, data);
                 return data;
             }
         } catch (error) {

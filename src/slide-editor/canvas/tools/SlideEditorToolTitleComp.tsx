@@ -15,7 +15,10 @@ export default function SlideEditorToolTitleComp({
     isInline?: boolean;
     children: any;
 }>) {
-    const { isExpanded, headerProps } = useExpandToggle(isInitiallyExpanded);
+    const { isExpanded, headerProps } = useExpandToggle(
+        isInitiallyExpanded,
+        'slide-editor-tool-title',
+    );
     if (!isCollapsible || !title) {
         return (
             <div className={'app-tool' + (isInline ? ' app-tool-inline' : '')}>

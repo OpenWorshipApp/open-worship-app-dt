@@ -1,0 +1,3 @@
+- bible icon on CanvasItemBibleItem not displaying (bootstrap not loaded)
+- CanvasItemVideo take a moment (Video dim not cached)
+- 

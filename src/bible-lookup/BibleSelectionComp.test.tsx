@@ -10,7 +10,6 @@ const mocks = vi.hoisted(() => ({
     getLanguageTitleMock: vi.fn(),
     showAppAlertMock: vi.fn(),
     showAppContextMenuMock: vi.fn(),
-    useAppStateAsyncMock: vi.fn(),
     useBibleFontFamilyMock: vi.fn(),
 }));
 
@@ -39,11 +38,7 @@ vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
     getBibleInfo: mocks.getBibleInfoMock,
 }));
 
-vi.mock('../helper/debuggerHelpers', () => ({
-    useAppStateAsync: mocks.useAppStateAsyncMock,
-}));
-
-vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
+vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     useBibleFontFamily: mocks.useBibleFontFamilyMock,
 }));
 
@@ -86,9 +81,6 @@ describe('BibleSelectionComp', () => {
         mocks.getBibleInfoMock.mockResolvedValue({
             title: 'King James Version',
         });
-        mocks.useAppStateAsyncMock.mockReturnValue([
-            { title: 'King James Version' },
-        ]);
         mocks.useBibleFontFamilyMock.mockReturnValue('BibleFont');
 
         container = document.createElement('div');

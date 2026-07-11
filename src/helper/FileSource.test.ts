@@ -298,7 +298,7 @@ describe('FileSource', () => {
 
     test('exposes getters, cache helpers, drag data and color note hooks', async () => {
         state.metadataByName.set('song.txt', {
-            appMimetype: { mimetypeSignature: 'text/plain' },
+            appMimetype: { mimetypeSignatures: ['text/plain'] },
         });
         getColorNoteMock.mockResolvedValue('blue');
 
@@ -320,7 +320,7 @@ describe('FileSource', () => {
         expect(fileSource.src).toBe('file-url:/docs/song.txt');
         expect(fileSource.isAppFile).toBe(false);
         expect(fileSource.metadata).toEqual({
-            appMimetype: { mimetypeSignature: 'text/plain' },
+            appMimetype: { mimetypeSignatures: ['text/plain'] },
         });
         expect(fileSource.name).toBe('song');
         expect(fileSource.dotExtension).toBe('.txt');
@@ -359,7 +359,7 @@ describe('FileSource', () => {
     test('builds src data and rejects missing metadata or read errors', async () => {
         state.callbackReadData.set('/docs/photo.png', 'YWJj');
         state.metadataByName.set('photo.png', {
-            appMimetype: { mimetypeSignature: 'image/png' },
+            appMimetype: { mimetypeSignatures: ['image/png'] },
         });
         state.callbackReadData.set('/docs/no-meta.bin', 'AA==');
         state.callbackReadErrors.set(
@@ -367,7 +367,7 @@ describe('FileSource', () => {
             new Error('read failed'),
         );
         state.metadataByName.set('broken.png', {
-            appMimetype: { mimetypeSignature: 'image/png' },
+            appMimetype: { mimetypeSignatures: ['image/png'] },
         });
 
         const { default: FileSource } = await loadFileSourceModule();

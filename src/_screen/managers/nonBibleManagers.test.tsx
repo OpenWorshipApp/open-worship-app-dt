@@ -123,7 +123,7 @@ vi.mock('../../app-document-presenter/items/SlideRendererComp', () => ({
     genSlideHtml: vi.fn(() => document.createElement('div')),
 }));
 
-vi.mock('../../helper/bible-helpers/bibleLogicHelpers2', () => ({
+vi.mock('../../helper/bible-helpers/bibleStyleHelpers', () => ({
     getBibleFontFamily: vi.fn(async () => 'TestFont'),
 }));
 

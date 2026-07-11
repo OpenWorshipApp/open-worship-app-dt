@@ -165,7 +165,7 @@ vi.mock('../../lang/langHelpers', () => ({
     toStringNum: mocks.toStringNumMock,
 }));
 
-vi.mock('../debuggerHelpers', async () => {
+vi.mock('../appHooks', async () => {
     const React = await import('react');
     return {
         useAppEffect: React.useEffect,
@@ -311,9 +311,6 @@ describe('bibleLogicHelpers2', () => {
                 return `${locale}:${value}`;
             },
         );
-        mocks.getFontFamilyByLocaleMock.mockImplementation(
-            (locale: string) => `font:${locale}`,
-        );
         mocks.getLangDataAsyncMock.mockImplementation(
             async (locale: string) => {
                 if (locale === 'km-KH') {
@@ -405,7 +402,7 @@ describe('bibleLogicHelpers2', () => {
         container = null;
     });
 
-    test('formats input text and resolves locale and language metadata', async () => {
+    test('formats input text', async () => {
         const module = await loadModule();
 
         expect(await module.toInputText('KJV')).toBe('');
@@ -420,36 +417,14 @@ describe('bibleLogicHelpers2', () => {
         expect(await module.toInputText('KJV', 'John', 3, 16, 16)).toBe(
             'John ៣:១៦-១៦',
         );
-
-        mocks.getBibleInfoMock.mockResolvedValueOnce(null);
-        expect(await module.getBibleLocale('missing')).toBe('en');
-        expect(await module.getBibleLocale('KJV')).toBe('km-KH');
-
-        mocks.getLangDataAsyncMock
-            .mockResolvedValueOnce(null)
-            .mockResolvedValueOnce({
-                fontFamily: 'Fallback Font',
-                sanitizeText: (text: string) => text,
-                transformBibleBookName: (text: string) => [text],
-            });
-        expect(await module.getLangDataFromBibleKey('KJV')).toEqual({
-            fontFamily: 'Fallback Font',
-            sanitizeText: expect.any(Function),
-            transformBibleBookName: expect.any(Function),
-        });
     });
 
-    test('converts locale numbers, caches font families, and resolves async hook values', async () => {
+    test('converts locale numbers and resolves async hook values', async () => {
         const module = await loadModule();
         const updates: Array<{
-            font: ReturnType<typeof module.useBibleFontFamily>;
             localeNum: ReturnType<typeof module.useToLocaleNumBible>;
             parsedNum: ReturnType<typeof module.useFromLocaleNumBible>;
         }> = [];
-
-        expect(await module.getBibleFontFamily('')).toBe('font:en-US');
-        expect(await module.getBibleFontFamily('KJV')).toBe('font:km-KH');
-        expect(await module.getBibleFontFamily('KJV')).toBe('font:km-KH');
 
         expect(await module.toLocaleNumBible('KJV', 3)).toBe('៣');
         expect(await module.toLocaleNumBible('KJV', 3)).toBe('៣');
@@ -466,14 +441,13 @@ describe('bibleLogicHelpers2', () => {
         mocks.getBibleInfoMock.mockResolvedValueOnce({ locale: 'en-US' });
         expect(await module.fromLocaleNumBible('WEB', 'verse 99')).toBe(99);
 
-        function HookHarness() {
-            const font = module.useBibleFontFamily('KJV');
+        function HookHarnessComp() {
             const localeNum = module.useToLocaleNumBible('KJV', 3);
             const parsedNum = module.useFromLocaleNumBible('KJV', '៣');
 
             useEffect(() => {
-                updates.push({ font, localeNum, parsedNum });
-            }, [font, localeNum, parsedNum]);
+                updates.push({ localeNum, parsedNum });
+            }, [localeNum, parsedNum]);
 
             return null;
         }
@@ -483,14 +457,13 @@ describe('bibleLogicHelpers2', () => {
                 throw new Error('Missing container');
             }
             root = createRoot(container);
-            root.render(<HookHarness />);
+            root.render(<HookHarnessComp />);
         });
         await act(async () => {
             await Promise.resolve();
         });
 
         expect(updates.at(-1)).toEqual({
-            font: 'font:km-KH',
             localeNum: '៣',
             parsedNum: 3,
         });

@@ -127,7 +127,7 @@ vi.mock('../_screen/managers/screenHelpers', () => ({
     getDefaultScreenDisplay: getDefaultScreenDisplayMock,
 }));
 
-vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
+vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     getBibleFontFamily: getBibleFontFamilyMock,
 }));
 

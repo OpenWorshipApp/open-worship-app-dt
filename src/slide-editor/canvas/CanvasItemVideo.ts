@@ -1,7 +1,7 @@
 import { getVideoDim } from '../../helper/helpers';
-import type { SrcData } from '../../helper/FileSource';
 import FileSource from '../../helper/FileSource';
-import type { CanvasItemMediaPropsType } from './canvasHelpers';
+import { getAppFilePathFromFile } from '../../helper/localFileHelpers';
+import type { CanvasItemVideoMediaPropsType } from './canvasHelpers';
 import { genMediaDefaultBoxStyle, validateMediaProps } from './canvasHelpers';
 import type { CanvasItemPropsType } from './CanvasItem';
 import CanvasItem, { CanvasItemError } from './CanvasItem';
@@ -9,7 +9,7 @@ import { handleError } from '../../helper/errorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 
 export type CanvasItemVideoPropsType = CanvasItemPropsType &
-    CanvasItemMediaPropsType;
+    CanvasItemVideoMediaPropsType;
 class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
     static gegStyle(_props: CanvasItemVideoPropsType) {
         return {};
@@ -21,14 +21,14 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
         return true;
     }
     static async genCanvasItem(
-        srcData: SrcData,
+        filePath: string,
         mediaWidth: number,
         mediaHeight: number,
         x: number,
         y: number,
     ) {
         const props: CanvasItemVideoPropsType = {
-            srcData,
+            filePath,
             mediaWidth,
             mediaHeight,
             ...genMediaDefaultBoxStyle(),
@@ -43,22 +43,23 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
     static async genFromInsertion(x: number, y: number, filePath: string) {
         const fileSource = FileSource.getInstance(filePath);
         const [mediaWidth, mediaHeight] = await getVideoDim(fileSource.src);
-        const srcData = await fileSource.getSrcData();
-        return this.genCanvasItem(srcData, mediaWidth, mediaHeight, x, y);
+        return this.genCanvasItem(filePath, mediaWidth, mediaHeight, x, y);
     }
     static async genFromFile(x: number, y: number, file: File | Blob) {
-        const srcData = await FileSource.getSrcDataFromFrom(file);
-        if (srcData === null) {
+        // Videos are referenced by their on-disk path rather than inlined, so
+        // a blob without a resolvable file path (e.g. clipboard paste) cannot
+        // become a video item.
+        const filePath = getAppFilePathFromFile(file);
+        if (filePath === null) {
             throw new Error(
-                'Error occurred during reading video data from blob',
+                'Error occurred during resolving video file path from blob',
             );
         }
-        const [mediaWidth, mediaHeight] = await getVideoDim(srcData);
-        return this.genCanvasItem(srcData, mediaWidth, mediaHeight, x, y);
+        return this.genFromInsertion(x, y, filePath);
     }
     toJson(): CanvasItemVideoPropsType {
         return {
-            srcData: this.props.srcData,
+            filePath: this.props.filePath,
             mediaWidth: this.props.mediaWidth,
             mediaHeight: this.props.mediaHeight,
             ...super.toJson(),
@@ -75,7 +76,7 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
     }
     static validate(json: AnyObjectType) {
         super.validate(json);
-        validateMediaProps(json);
+        validateMediaProps(json, 'filePath');
     }
 }
 

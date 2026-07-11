@@ -7,15 +7,27 @@ import { isSupportedMimetype } from '../../server/fileHelpers';
 
 export type CanvasControllerEventType = 'update' | 'scale' | 'reload';
 
-export type CanvasItemMediaPropsType = {
-    srcData: SrcData;
+export type CanvasItemMediaDimPropsType = {
     mediaWidth: number;
     mediaHeight: number;
 };
 
-export function validateMediaProps(props: AnyObjectType) {
+// Images embed their data inline (`srcData`). Videos would balloon the slide
+// document if inlined, so they reference their source file by path instead.
+export type CanvasItemMediaPropsType = CanvasItemMediaDimPropsType & {
+    srcData: SrcData;
+};
+
+export type CanvasItemVideoMediaPropsType = CanvasItemMediaDimPropsType & {
+    filePath: string;
+};
+
+export function validateMediaProps(
+    props: AnyObjectType,
+    srcKey: 'srcData' | 'filePath' = 'srcData',
+) {
     if (
-        typeof props.srcData !== 'string' ||
+        typeof props[srcKey] !== 'string' ||
         typeof props.mediaWidth !== 'number' ||
         typeof props.mediaHeight !== 'number'
     ) {

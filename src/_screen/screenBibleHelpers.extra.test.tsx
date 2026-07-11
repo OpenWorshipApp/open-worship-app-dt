@@ -112,7 +112,7 @@ vi.mock('../bible-lookup/BibleKeySelectionComp', () => ({
     genContextMenuBibleKeys: genContextMenuBibleKeysMock,
 }));
 
-vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
+vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     getBibleLocale: getBibleLocaleMock,
 }));
 

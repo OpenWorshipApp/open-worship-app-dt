@@ -85,7 +85,8 @@ export default class FileSource
                         reject(new Error('metadata not found'));
                         return;
                     }
-                    const { mimetypeSignature } = metadata.appMimetype;
+                    const [mimetypeSignature] =
+                        metadata.appMimetype.mimetypeSignatures;
                     resolve(`data:${mimetypeSignature};base64,${data}`);
                 },
             );

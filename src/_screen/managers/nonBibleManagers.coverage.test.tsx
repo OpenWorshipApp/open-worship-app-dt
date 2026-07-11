@@ -161,7 +161,7 @@ vi.mock('../../app-document-presenter/items/SlideRendererComp', () => ({
     genSlideHtml: mocks.genSlideHtml,
 }));
 
-vi.mock('../../helper/bible-helpers/bibleLogicHelpers2', () => ({
+vi.mock('../../helper/bible-helpers/bibleStyleHelpers', () => ({
     getBibleFontFamily: vi.fn(async () => 'TestFont'),
 }));
 
@@ -938,7 +938,12 @@ describe('non-Bible manager coverage', () => {
         );
         expect(manager.varySlideData?.filePath).toBe('/slides/b.slide');
 
-        const svg = document.createElementNS(
+        const playIconSvg = document.createElementNS(
+            'http://www.w3.org/2000/svg',
+            'svg',
+        );
+        playIconSvg.setAttribute('data-preview-only', '');
+        const contentIconSvg = document.createElementNS(
             'http://www.w3.org/2000/svg',
             'svg',
         );
@@ -949,11 +954,15 @@ describe('non-Bible manager coverage', () => {
             configurable: true,
             value: playMock,
         });
-        content.appendChild(svg);
+        content.appendChild(playIconSvg);
+        content.appendChild(contentIconSvg);
         content.appendChild(video);
         mocks.appProvider.isPageScreen = true;
         manager.cleanupSlideContent(content);
-        expect(svg.style.display).toBe('none');
+        expect(playIconSvg.style.display).toBe('none');
+        // Icons drawn by canvas items, such as the bible item's book icon,
+        // must survive onto the screen output.
+        expect(contentIconSvg.style.display).toBe('');
         expect(video.loop).toBe(false);
         expect(video.muted).toBe(false);
         expect(playMock).toHaveBeenCalled();
@@ -1038,7 +1047,7 @@ describe('non-Bible manager coverage', () => {
             getItemById: vi.fn(() => ({ toJson: () => pptxLoadedJson })),
         });
         await expect(
-            manager.getRenderableItemJson({
+            manager.getRenderingItemJson({
                 id: 9,
                 filePath: '/slides/deck.pptx',
                 html: undefined,
@@ -1059,7 +1068,7 @@ describe('non-Bible manager coverage', () => {
             getItemById: vi.fn(() => ({ toJson: () => docxLoadedJson })),
         });
         await expect(
-            manager.getRenderableItemJson({
+            manager.getRenderingItemJson({
                 id: 10,
                 filePath: '/slides/doc.docx',
                 html: undefined,
@@ -1069,7 +1078,7 @@ describe('non-Bible manager coverage', () => {
 
         mocks.docxCheckIsThisType.mockReturnValue(false);
         await expect(
-            manager.getRenderableItemJson({
+            manager.getRenderingItemJson({
                 toJson: () => slideJson,
             } as any),
         ).resolves.toEqual(slideJson);

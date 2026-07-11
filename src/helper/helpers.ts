@@ -4,6 +4,8 @@ import { handleError } from './errorHelpers';
 import { appTrace } from './loggerHelpers';
 import appProvider from '../server/appProvider';
 import { tran } from '../lang/langHelpers';
+import { unlocking } from '../server/unlockingHelpers';
+import { globalCacheManager1M } from '../others/CacheManager';
 
 export type MutationType = 'added' | 'attr-modified' | 'removed';
 
@@ -128,17 +130,30 @@ export function getImageDim(src: string) {
 }
 
 export function getVideoDim(src: string) {
-    return new Promise<[number, number]>((resolve, reject) => {
-        const video = document.createElement('video');
-        const loadMetadata = () => {
-            resolve([video.videoWidth, video.videoHeight]);
-            video.removeEventListener('loadedmetadata', loadMetadata, false);
-        };
-        video.addEventListener('loadedmetadata', loadMetadata, false);
-        video.onerror = () => {
-            reject(new Error('Fail to load video:' + src));
-        };
-        video.src = src;
+    const key = `video-dim-${src}`;
+    return unlocking(key, async () => {
+        const cachedDim = await globalCacheManager1M.get(key);
+        if (cachedDim) {
+            return Promise.resolve(cachedDim);
+        }
+        const dim = await new Promise<[number, number]>((resolve, reject) => {
+            const video = document.createElement('video');
+            const loadMetadata = () => {
+                resolve([video.videoWidth, video.videoHeight]);
+                video.removeEventListener(
+                    'loadedmetadata',
+                    loadMetadata,
+                    false,
+                );
+            };
+            video.addEventListener('loadedmetadata', loadMetadata, false);
+            video.onerror = () => {
+                reject(new Error('Fail to load video:' + src));
+            };
+            video.src = src;
+        });
+        await globalCacheManager1M.set(key, dim);
+        return dim;
     });
 }
 

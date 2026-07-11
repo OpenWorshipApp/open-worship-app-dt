@@ -40,7 +40,7 @@ for (const ml of [
 export const mimetypePdf: AppMimetypeType = {
     type: 'PDF File',
     title: 'PDF File',
-    mimetypeSignature: 'application/pdf',
+    mimetypeSignatures: ['application/pdf'],
     mimetypeName: 'other',
     extensions: ['.pdf'],
 };
@@ -48,8 +48,9 @@ export const mimetypePdf: AppMimetypeType = {
 export const mimetypePptx: AppMimetypeType = {
     type: 'PPTX File',
     title: 'PPTX File',
-    mimetypeSignature:
+    mimetypeSignatures: [
         'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ],
     mimetypeName: 'other',
     extensions: ['.pptx'],
 };
@@ -57,8 +58,9 @@ export const mimetypePptx: AppMimetypeType = {
 export const mimetypeDocx: AppMimetypeType = {
     type: 'DOCX File',
     title: 'DOCX File',
-    mimetypeSignature:
+    mimetypeSignatures: [
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
     mimetypeName: 'other',
     extensions: ['.docx'],
 };
@@ -99,7 +101,7 @@ const mimeTypesMapper = {
 export type AppMimetypeType = {
     type: string;
     title: string;
-    mimetypeSignature: string;
+    mimetypeSignatures: string[];
     mimetypeName: MimetypeNameType;
     extensions: string[];
 };
@@ -239,11 +241,9 @@ export function isSupportedMimetype(
     mimetypeName: MimetypeNameType,
 ) {
     const mimetypeList = getAppMimetype(mimetypeName);
-    return mimetypeList
-        .map((newMimetype) => {
-            return newMimetype.mimetypeSignature;
-        })
-        .includes(fileMimetype);
+    return mimetypeList.some((newMimetype) => {
+        return newMimetype.mimetypeSignatures.includes(fileMimetype);
+    });
 }
 
 export function isSupportedExt(
@@ -684,7 +684,7 @@ export function getDotExtensionFromBase64Data(base64Data: string) {
         const mimeType = mimeMatch[1].toLowerCase();
         const allMimeTypes = Object.values(mimeTypesMapper).flat();
         const foundMime = allMimeTypes.find((mt) => {
-            return mt.mimetypeSignature === mimeType;
+            return mt.mimetypeSignatures.includes(mimeType);
         });
         if (foundMime) {
             return foundMime.extensions[0];

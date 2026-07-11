@@ -1,5 +1,19 @@
 # Project instructions
 
+## Performance is the top-priority requirement
+
+This app is designed to run on very low-spec machines. Performance outranks
+convenience and code elegance in every design and review decision.
+
+- Do not read or hold data that isn't needed for what's currently on screen —
+  load lazily/on demand and release it when no longer used.
+- Caches must be short-lived: cache data only for a short period; never
+  accumulate long-lived caches that grow memory.
+- Weigh memory footprint and I/O cost first when writing or reviewing any
+  change; prefer the lighter approach even if it costs a little more code.
+- Watch for eager imports, preloading whole files/collections (e.g. bibles,
+  media) when only a slice is needed, and unbounded in-memory maps.
+
 ## Naming conventions
 
 Every React function component must have a name ending in `Comp`

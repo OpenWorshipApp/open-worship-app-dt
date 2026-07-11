@@ -8,7 +8,10 @@ import { genPdfSlide } from '../../app-document-presenter/items/PdfSlideRenderCo
 import { genPptxSlide } from '../../app-document-presenter/items/PptxSlideRenderComp';
 import { genDocxSlide } from '../../app-document-presenter/items/DocxSlideRenderComp';
 import { genSlideHtml } from '../../app-document-presenter/items/SlideRendererComp';
-import { screenManagerSettingNames } from '../../helper/constants';
+import {
+    screenManagerSettingNames,
+    PREVIEW_ONLY_ATTR,
+} from '../../helper/constants';
 import ScreenEventHandler from './ScreenEventHandler';
 import type ScreenManagerBase from './ScreenManagerBase';
 import type ScreenEffectManager from './ScreenEffectManager';
@@ -329,9 +332,15 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         if (!appProvider.isPageScreen) {
             return;
         }
-        for (const svg of queryAllDeep(content, 'svg')) {
-            if (svg instanceof SVGElement) {
-                svg.style.display = 'none';
+        // Only elements opted in as preview-only (e.g. the video play
+        // badge), never every `svg`: canvas items draw their own icons
+        // (e.g. the bible item's book icon) as inline svg.
+        for (const element of queryAllDeep(content, `[${PREVIEW_ONLY_ATTR}]`)) {
+            if (
+                element instanceof HTMLElement ||
+                element instanceof SVGElement
+            ) {
+                element.style.display = 'none';
             }
         }
         for (const video of queryAllDeep(content, 'video')) {

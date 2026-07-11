@@ -162,7 +162,7 @@ vi.mock('../../context-menu/AppContextMenuComp', () => ({
     elementDivider: 'DIVIDER',
 }));
 
-vi.mock('./bibleLogicHelpers2', () => ({
+vi.mock('./bibleStyleHelpers', () => ({
     getBibleLocale: mocks.getBibleLocaleMock,
     getLangDataFromBibleKey: mocks.getLangDataFromBibleKeyMock,
 }));

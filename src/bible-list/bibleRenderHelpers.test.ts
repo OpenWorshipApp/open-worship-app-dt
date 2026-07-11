@@ -67,8 +67,11 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers1', () => ({
 vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
     checkShouldNewLine: mocks.checkShouldNewLineMock,
     checkShouldNewLineModel: mocks.checkShouldNewLineModelMock,
-    getLangDataFromBibleKey: mocks.getLangDataFromBibleKeyMock,
     toLocaleNumBible: mocks.toLocaleNumBibleMock,
+}));
+
+vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
+    getLangDataFromBibleKey: mocks.getLangDataFromBibleKeyMock,
 }));
 
 vi.mock('../helper/bible-helpers/bibleLogicHelpers3', () => ({

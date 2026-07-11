@@ -12,7 +12,7 @@ import { genFittedHtmlBoxLayout } from './canvasBoxLayoutHelpers';
 import type BibleItem from '../../bible-list/BibleItem';
 import {
     checkIsMediaCanvasItemType,
-    type CanvasItemMediaPropsType,
+    type CanvasItemMediaDimPropsType,
     type CanvasControllerEventType,
 } from './canvasHelpers';
 import CanvasItemVideo from './CanvasItemVideo';
@@ -373,7 +373,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         let width = props.width;
         let height = props.height;
         if (checkIsMediaCanvasItemType(canvasItem.type)) {
-            const mediaProps = props as any as CanvasItemMediaPropsType;
+            const mediaProps = props as any as CanvasItemMediaDimPropsType;
             width = mediaProps.mediaWidth;
             height = mediaProps.mediaHeight;
         }
@@ -398,7 +398,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         let width = props.width;
         let height = props.height;
         if (checkIsMediaCanvasItemType(canvasItem.type)) {
-            const mediaProps = props as any as CanvasItemMediaPropsType;
+            const mediaProps = props as any as CanvasItemMediaDimPropsType;
             width = mediaProps.mediaWidth;
             height = mediaProps.mediaHeight;
         }
@@ -412,7 +412,7 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         const props = canvasItem.props as CanvasItemPropsType;
         const targeWidth = props.width;
         const targetHeightHeight = props.height;
-        const mediaProps = props as any as CanvasItemMediaPropsType;
+        const mediaProps = props as any as CanvasItemMediaDimPropsType;
         const width = mediaProps.mediaWidth;
         const height = mediaProps.mediaHeight;
         this.scaleCanvasItemToSize(

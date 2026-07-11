@@ -45,7 +45,7 @@ function SizingComp() {
                 aria-label={tran('Size')}
             >
                 <button
-                    className="btn btn-sm btn-secondary"
+                    className="btn btn-sm btn-outline-secondary"
                     title="Fit to canvas"
                     onClick={() => {
                         return handleSizing('full');
@@ -54,7 +54,7 @@ function SizingComp() {
                     {tran('Full')}
                 </button>
                 <button
-                    className="btn btn-sm btn-secondary"
+                    className="btn btn-sm btn-outline-secondary"
                     title="Set to original size"
                     onClick={() => {
                         return handleSizing('original');
@@ -64,7 +64,7 @@ function SizingComp() {
                 </button>
                 {checkIsMediaCanvasItemType(canvasItem.type) ? (
                     <button
-                        className="btn btn-sm btn-secondary"
+                        className="btn btn-sm btn-outline-secondary"
                         onClick={() => {
                             return handleSizing('strip');
                         }}

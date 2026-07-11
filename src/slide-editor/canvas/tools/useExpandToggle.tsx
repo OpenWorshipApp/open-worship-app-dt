@@ -1,6 +1,8 @@
 import { type CSSProperties, useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
+import { useAppEffect } from '../../../helper/appHooks';
+import { getSetting, setSetting } from '../../../helper/settingHelpers';
 
 /**
  * Shared collapse/expand state for the slide-editor tool panels.
@@ -9,11 +11,28 @@ import { tran } from '../../../lang/langHelpers';
  * clickable header (role/title/onClick) so every panel toggles and reads the
  * same way.
  */
-export function useExpandToggle(initiallyExpanded: boolean) {
+export function useExpandToggle(
+    initiallyExpanded: boolean,
+    persistingKey?: string,
+) {
     const [isExpanded, setIsExpanded] = useState(initiallyExpanded);
+    useAppEffect(() => {
+        if (persistingKey) {
+            const stored = getSetting(persistingKey);
+            if (stored !== null) {
+                setIsExpanded(stored === 'true');
+            }
+        }
+    }, [persistingKey]);
     const toggleExpanded = useCallback(() => {
-        setIsExpanded((prev) => !prev);
-    }, []);
+        setIsExpanded((prev) => {
+            const next = !prev;
+            if (persistingKey) {
+                setSetting(persistingKey, next.toString());
+            }
+            return next;
+        });
+    }, [persistingKey]);
     const headerProps = useMemo(
         () =>
             ({

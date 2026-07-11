@@ -233,7 +233,10 @@ function RenderNameEditorComp() {
 
 export default function SlidePropertyEditorComp() {
     const slide = useSelectedEditingSlideContext();
-    const { isExpanded, headerProps } = useExpandToggle(false);
+    const { isExpanded, headerProps } = useExpandToggle(
+        false,
+        'slide-property-editor',
+    );
     const [index] = useAppStateAsync(() => {
         const appDocument = AppDocument.getInstance(slide.filePath);
         return appDocument.getSlideIndex(slide);

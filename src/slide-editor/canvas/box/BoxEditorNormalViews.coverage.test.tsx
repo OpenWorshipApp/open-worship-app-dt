@@ -161,6 +161,10 @@ vi.mock('../404.png', () => ({
     default: 'fallback-404.png',
 }));
 
+vi.mock('../../../server/calcHelpers', () => ({
+    pathToFileURL: (filePath: string) => `file://${filePath}`,
+}));
+
 import BoxEditorNormalViewBibleModeComp, {
     BoxEditorNormalBibleRender,
 } from './BoxEditorNormalViewBibleModeComp';
@@ -524,6 +528,10 @@ describe('BoxEditor normal view components', () => {
     });
 
     test('renders videos with a play icon and falls back to the 404 asset', async () => {
+        canvasItemPropsState.value = {
+            ...canvasItemPropsState.value,
+            filePath: '/videos/clip.mp4',
+        };
         await render(
             <BoxEditorNormalViewVideoModeComp
                 style={{ backgroundColor: 'aliceblue' }}
@@ -538,7 +546,8 @@ describe('BoxEditor normal view components', () => {
             canvasItemPropsState.value,
         );
         expect(wrapper?.style.backgroundColor).toBe('aliceblue');
-        expect(video?.getAttribute('src')).toBe('data:image/png;base64,image');
+        // Video src is derived from the file path, not inlined base64 data.
+        expect(video?.getAttribute('src')).toBe('file:///videos/clip.mp4');
         expect(video?.style.width).toBe('100%');
         expect(video?.style.height).toBe('100%');
         expect(video?.style.objectFit).toBe('fill');
@@ -546,7 +555,7 @@ describe('BoxEditor normal view components', () => {
 
         canvasItemPropsState.value = {
             ...canvasItemPropsState.value,
-            srcData: '',
+            filePath: '',
         };
         await render(<BoxEditorNormalVideoRender />);
 

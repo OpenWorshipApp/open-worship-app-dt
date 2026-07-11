@@ -2,7 +2,7 @@
     {
         "type": "OpenWorship Note",
         "title": "Json file for OpenWorship note",
-        "mimetypeSignature": "application/json",
+        "mimetypeSignatures": ["application/json"],
         "extensions": [".own"]
     }
 ]

@@ -43,8 +43,11 @@ vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({
 }));
 
 vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
-    getBibleLocale: getBibleLocaleMock,
     toLocaleNumBible: toLocaleNumBibleMock,
+}));
+
+vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
+    getBibleLocale: getBibleLocaleMock,
 }));
 
 vi.mock('../bible-list/bibleRenderHelpers', () => ({

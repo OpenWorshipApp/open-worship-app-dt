@@ -9,6 +9,10 @@ import { handleError } from '../../helper/errorHelpers';
 import appProvider from '../../server/appProvider';
 import { appHomeStorage } from '../../server/appHomeStorage';
 import { pathJoin, pathResolve, fsExistSync } from '../../server/fileHelpers';
+import {
+    getAppFilePathFromFile,
+    type LocalFile,
+} from '../../helper/localFileHelpers';
 import Note from './Note';
 import type NoteItem from './NoteItem';
 import {
@@ -41,13 +45,9 @@ const storageManager = {
     },
 };
 
-type LocalFile = Readonly<{
-    appFilePath?: unknown;
-}>;
-
 async function resolveLocalFilePath(file: LocalFile | null | undefined) {
-    const filePath = file?.appFilePath;
-    if (typeof filePath !== 'string' || filePath.trim() === '') {
+    const filePath = getAppFilePathFromFile(file);
+    if (filePath === null) {
         return null;
     }
     const resolvedFilePath = pathResolve(filePath);

@@ -86,7 +86,7 @@ vi.mock('../../server/fileHelpers', () => ({
     isSupportedMimetype: vi.fn(() => true),
 }));
 
-vi.mock('../../helper/bible-helpers/bibleLogicHelpers2', () => ({
+vi.mock('../../helper/bible-helpers/bibleStyleHelpers', () => ({
     getBibleFontFamily: getBibleFontFamilyMock,
 }));
 
@@ -396,7 +396,7 @@ describe('CanvasItem models', () => {
     test('builds video canvas items from insertion data and files', async () => {
         const videoJson = {
             ...createBaseBox('video'),
-            srcData: 'data:video',
+            filePath: '/slides/video.mp4',
             mediaWidth: 320,
             mediaHeight: 180,
         };
@@ -413,44 +413,44 @@ describe('CanvasItem models', () => {
             '/slides/video.mp4',
         );
         expect(getVideoDimMock).toHaveBeenCalledWith('/slides/media.png');
+        // Video references its file by path instead of inlining base64 data.
         expect(insertedItem.toJson()).toEqual(
             expect.objectContaining({
                 type: 'video',
-                srcData: 'data:media',
+                filePath: '/slides/video.mp4',
                 left: 240,
                 top: 210,
             }),
         );
 
-        const fileItem = await CanvasItemVideo.genFromFile(
-            250,
-            220,
-            new Blob(['video']),
-        );
-        expect(getSrcDataFromBlobMock).toHaveBeenCalled();
+        const fileItem = await CanvasItemVideo.genFromFile(250, 220, {
+            appFilePath: '/slides/dropped.mp4',
+        } as any);
         expect(fileItem.toJson()).toEqual(
             expect.objectContaining({
                 type: 'video',
-                srcData: 'data:blob',
+                filePath: '/slides/dropped.mp4',
                 left: 90,
                 top: 130,
             }),
         );
 
-        getSrcDataFromBlobMock.mockResolvedValueOnce(null);
+        // A blob without a resolvable on-disk path cannot become a video item.
         await expect(
             CanvasItemVideo.genFromFile(100, 100, new Blob(['video'])),
-        ).rejects.toThrow('Error occurred during reading video data from blob');
+        ).rejects.toThrow(
+            'Error occurred during resolving video file path from blob',
+        );
 
         expect(
             CanvasItemVideo.fromJson({
                 ...videoJson,
-                srcData: 123,
+                filePath: 123,
             } as any),
         ).toEqual({
             type: 'error',
             json: expect.objectContaining({
-                srcData: 123,
+                filePath: 123,
             }),
         });
     });

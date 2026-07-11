@@ -188,8 +188,17 @@ describe('helpers', () => {
         createdImages[0].onload?.(new Event('load'));
         await expect(goodImage).resolves.toEqual([640, 480]);
 
+        // `getVideoDim` only creates the element after awaiting the cache, so
+        // the video is absent for a few microtasks unlike the image above.
+        const waitForVideo = (index: number) => {
+            return vi.waitFor(() => {
+                expect(createdVideos[index]).toBeDefined();
+                return createdVideos[index];
+            });
+        };
+
         const goodVideo = getVideoDim('good.mp4');
-        createdVideos[0].loadedMetadata?.(new Event('loadedmetadata'));
+        (await waitForVideo(0)).loadedMetadata?.(new Event('loadedmetadata'));
         await expect(goodVideo).resolves.toEqual([1920, 1080]);
 
         const badImage = getImageDim('bad.png');
@@ -197,7 +206,7 @@ describe('helpers', () => {
         await expect(badImage).rejects.toThrow('Fail to load image:bad.png');
 
         const badVideo = getVideoDim('bad.mp4');
-        createdVideos[1].onerror?.(new Event('error'));
+        (await waitForVideo(1)).onerror?.(new Event('error'));
         await expect(badVideo).rejects.toThrow('Fail to load video:bad.mp4');
 
         createElementSpy.mockRestore();
