@@ -125,7 +125,10 @@ function FilePreviewAppDocumentNormalComp({
     const { canSave } = useEditingHistoryStatus(varyAppDocument.filePath);
     return (
         <div className="w-100 h-100 app-ellipsis">
-            <i className="bi bi-file-earmark-slides" />
+            <i
+                className="bi bi-file-earmark-slides"
+                title="PowerPoint Document"
+            />
             {fileSource.name}
             {canSave && <span style={{ color: 'red' }}>*</span>}
         </div>
@@ -140,6 +143,7 @@ function FilePreviewPdfAppDocumentComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-pdf"
+                title="PDF Document"
                 style={{ color: '#bd0b02' }}
             />
             {fileSource.name}
@@ -155,6 +159,7 @@ function FilePreviewPptxAppDocumentComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-ppt"
+                title="PowerPoint Document"
                 style={{
                     color: '#d24726',
                 }}
@@ -172,6 +177,7 @@ function FilePreviewDocxAppDocumentComp({
         <div className="w-100 h-100 app-ellipsis">
             <i
                 className="bi bi-file-earmark-word"
+                title="Word Document"
                 style={{ color: '#2b579a' }}
             />
             {fileSource.name}
