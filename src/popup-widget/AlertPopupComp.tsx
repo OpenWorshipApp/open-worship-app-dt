@@ -30,7 +30,7 @@ export default function AlertPopupComp({
                 <HeaderAlertPopupComp
                     header={
                         <>
-                            <i className="bi bi-exclamation-circle" />
+                            <i className="bi bi-exclamation-circle me-1" />
                             {alertData.title}
                         </>
                     }

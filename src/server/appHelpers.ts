@@ -3,9 +3,7 @@ import { useState } from 'react';
 import appProvider from './appProvider';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { handleError } from '../helper/errorHelpers';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
-import { goToPath } from '../router/routeHelpers';
 import {
     fsCheckFileExist,
     getDotExtensionFromBase64Data,
@@ -17,9 +15,7 @@ import {
 import FileSource from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appError as logError } from '../helper/loggerHelpers';
-import { tran } from '../lang/langHelpers';
 import { useAppEffect } from '../helper/appHooks';
-import { getSetting, setSetting } from '../helper/settingHelpers';
 
 export function genReturningEventName(eventName: string) {
     return `${eventName}-return-${crypto.randomUUID()}`;
@@ -87,34 +83,6 @@ export function copyToClipboard(str: string) {
 
 export interface ClipboardInf {
     clipboardSerialize(): OptionalPromise<string | null>;
-}
-
-const DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME = 'decided-reader-home-page';
-function setDecided() {
-    setSetting(DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME, 'true');
-}
-export async function checkDecidedBibleReaderHomePage() {
-    if (!appProvider.isMainPage) {
-        return;
-    }
-    if (appProvider.isPageReader) {
-        setDecided();
-    }
-    const decided = getSetting(DECIDED_BIBLE_READER_HOME_PAGE_SETTING_NAME);
-    if (decided !== null) {
-        return;
-    }
-    const isOk = await showAppConfirm(
-        tran('The application is started first time'),
-        tran('This will set the home page to "📖 Bible Reader🔎"?'),
-        {
-            confirmButtonLabel: 'Yes',
-        },
-    );
-    setDecided();
-    if (isOk) {
-        goToPath(appProvider.readerHomePage);
-    }
 }
 
 export function pasteTextToInput(inputElement: HTMLInputElement, text: string) {

@@ -188,8 +188,6 @@ const dictionary = {
     'Refresh Preview': 'ផ្ទុកមើលជាមុន',
     'The application is started first time':
         'កម្មវិធីត្រូវបានចាប់ផ្តើមជាលើកដំបូង',
-    'This will set the home page to "📖 Bible Reader🔎"?':
-        'នេះនឹងកំណត់ទំព័រដើមទៅ "📖 អានព្រះគម្ពីរ🔎"?',
     Close: 'បិទ',
     'Toggle Widget Full View': 'បិទ/បើក ទិដ្ឋភាពពេញលេញរបស់វីដេអូ',
     'Split Vertical to': 'បំបែកបញ្ឈរទៅ',

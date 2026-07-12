@@ -11,20 +11,29 @@ export default class ElectronSettingManager {
         mainWinBounds: Electron.Rectangle | null;
         appScreenDisplayId: number | null;
         mainHtmlPath: string;
+        clientSetting: Record<string, any>;
     } = {
         mainWinBounds: null,
         appScreenDisplayId: null,
-        mainHtmlPath: htmlFiles.presenter,
+        mainHtmlPath: htmlFiles.reader,
+        clientSetting: {},
     };
     constructor() {
         try {
-            const str = fs.readFileSync(this.fileSettingPath, 'utf8');
-            const json = JSON.parse(str);
+            console.log('Reading setting from', this.fileSettingPath);
+            const str = fs.readFileSync(this.fileSettingPath, 'utf8').trim();
+            let json;
+            if (str === '') {
+                json = {};
+            } else {
+                json = JSON.parse(str);
+            }
             this.settingObject.mainWinBounds = json.mainWinBounds;
             this.settingObject.appScreenDisplayId = json.appScreenDisplayId;
             this.settingObject.mainHtmlPath =
                 json.mainHtmlPath ?? this.settingObject.mainHtmlPath;
             nativeTheme.themeSource = json.themeSource ?? 'system';
+            this.settingObject.clientSetting = json.clientSetting ?? {};
         } catch (error: any) {
             if (error.code === 'ENOENT') {
                 this.save();
@@ -146,6 +155,32 @@ export default class ElectronSettingManager {
 
     set mainHtmlPath(path: string) {
         this.settingObject.mainHtmlPath = path;
+        this.save();
+    }
+
+    getClientSetting(key: string) {
+        const value = this.settingObject.clientSetting[key];
+        if (typeof value !== 'string') {
+            return null;
+        }
+        return value;
+    }
+    setClientSetting(key: string, value: any) {
+        if (typeof value !== 'string') {
+            value = null;
+        }
+        this.settingObject.clientSetting[key] = value;
+        this.save();
+    }
+    deleteClientSetting(key: string) {
+        delete this.settingObject.clientSetting[key];
+        this.save();
+    }
+    getAllClientSettingKeys() {
+        return Object.keys(this.settingObject.clientSetting);
+    }
+    clearClientSettings() {
+        this.settingObject.clientSetting = {};
         this.save();
     }
 }

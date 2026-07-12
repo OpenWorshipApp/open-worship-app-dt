@@ -54,7 +54,7 @@ export default function ConfirmPopupComp({
                 <HeaderAlertPopupComp
                     header={
                         <div className="app-ellipsis" title={inputData.title}>
-                            <i className="bi bi-exclamation-circle" />
+                            <i className="bi bi-exclamation-circle me-1" />
                             {inputData.title}
                         </div>
                     }

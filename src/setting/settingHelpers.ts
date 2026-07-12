@@ -10,6 +10,9 @@ export function openSettingPage() {
         appProvider.settingHomePage,
         `setting_${Date.now()}`,
         'setting',
+        {
+            appTopToMain: true,
+        },
     );
 }
 

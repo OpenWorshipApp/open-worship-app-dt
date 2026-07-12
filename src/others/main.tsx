@@ -26,7 +26,6 @@ import {
 } from '../helper/domHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import { unlocking } from '../server/unlockingHelpers';
-import { checkDecidedBibleReaderHomePage } from '../server/appHelpers';
 import { useAppEffectAsync } from '../helper/appHooks';
 import { openGeneralSetting } from '../setting/settingHelpers';
 import { useThemeSource } from './themeHelpers';
@@ -56,7 +55,6 @@ function useCheckSetting() {
             }
             return;
         }
-        checkDecidedBibleReaderHomePage();
     }, []);
 }
 

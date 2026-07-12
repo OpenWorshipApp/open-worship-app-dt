@@ -23,7 +23,7 @@ const allowedMainHtmlFiles: string[] = [
 function toAllowedMainHtmlPath(mainHtmlPath: string) {
     return allowedMainHtmlFiles.includes(mainHtmlPath)
         ? mainHtmlPath
-        : htmlFiles.presenter;
+        : htmlFiles.reader;
 }
 
 let instance: ElectronMainController | null = null;

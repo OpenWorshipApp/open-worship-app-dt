@@ -547,4 +547,38 @@ export function initEventOther(appController: ElectronAppController) {
             });
         },
     );
+
+    ipcMain.on(
+        'main:app:client-setting',
+        (
+            event,
+            data: {
+                key: string;
+                type: 'get' | 'set' | 'delete' | 'get-all-keys' | 'clear';
+                value?: any;
+            },
+        ) => {
+            const { key, type, value } = data;
+            let returnValue: any = null;
+            if (type === 'get') {
+                const setting =
+                    appController.settingManager.getClientSetting(key);
+                returnValue = setting;
+            } else if (type === 'set') {
+                appController.settingManager.setClientSetting(key, value);
+                returnValue = true;
+            } else if (type === 'delete') {
+                appController.settingManager.deleteClientSetting(key);
+                returnValue = true;
+            } else if (type === 'get-all-keys') {
+                const allSettings =
+                    appController.settingManager.getAllClientSettingKeys();
+                returnValue = JSON.stringify(allSettings);
+            } else if (type === 'clear') {
+                appController.settingManager.clearClientSettings();
+                returnValue = true;
+            }
+            event.returnValue = returnValue;
+        },
+    );
 }
