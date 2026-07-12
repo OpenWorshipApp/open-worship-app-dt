@@ -62,7 +62,7 @@ describe('ElectronMainController', () => {
         expect(electronMockState.BrowserWindowMock).toHaveBeenCalledTimes(1);
         const windowOptions =
             electronMockState.BrowserWindowMock.mock.calls[0][0];
-        expect(windowOptions.icon).toContain('icon.png');
+        expect(windowOptions.icon).toContain('icon-dev.png');
         expect(loadURL).toHaveBeenCalledWith(controller.win);
         expect(guardBrowsing).toHaveBeenCalledTimes(1);
         processExit.mockRestore();
