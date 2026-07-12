@@ -450,6 +450,7 @@ export type LanguageDataType = {
     version: string;
     locale: LocaleType;
     langCode: string;
+    customMenusData?: CustomMenusDataType;
     editorLink?: string;
     bibleBooks: BibleBookType[];
     checkIsThisLang: (text: string) => boolean;
@@ -475,6 +476,26 @@ export type LanguageDataType = {
     sanitizeTranKey: (key: string) => string;
     transformBibleBookName: (bookName: string) => string[];
     getBibleCrossRefBundleFilePath: () => string;
+};
+
+type CustomMenuItemType =
+    | {
+          label: string;
+          submenu: {
+              label: string;
+              clickData: any;
+          }[];
+      }
+    | {
+          label: string;
+          clickData: any;
+      };
+export type CustomMenusDataType = {
+    tools?: CustomMenuItemType[];
+};
+
+type ClicDataType = {
+    url: string;
 };
 
 export function checkIsValidLangCode(text: string) {
@@ -784,4 +805,29 @@ export async function getLocalBibleCrossRef(
     );
     db.close();
     return data;
+}
+
+appProvider.messageUtils.listenForData(
+    'app:main:menu-item-clicked',
+    (_event: any, clickData?: ClicDataType) => {
+        const { url } = clickData ?? {};
+        if (url) {
+            appProvider.browserUtils.openExternalURL(url);
+        }
+    },
+);
+export async function initLangAppMenu() {
+    const menusData: AnyObjectType = {};
+    const langDataList = await getAllLangsAsync();
+    for (const langData of langDataList) {
+        const customMenusData = langData.customMenusData ?? {};
+        Object.entries(customMenusData).forEach(([key, value]) => {
+            menusData[key] ??= [];
+            menusData[key] = menusData[key].concat(value);
+        });
+    }
+    appProvider.messageUtils.sendData(
+        'main:app:set-menu-items',
+        menusData as CustomMenusDataType,
+    );
 }

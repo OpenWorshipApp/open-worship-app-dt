@@ -602,6 +602,33 @@ const lang: LanguageDataType = {
     version: '0.0.1',
     locale: 'km-KH',
     langCode: 'km',
+    customMenusData: {
+        tools: [
+            {
+                label: 'Khmer Tools',
+                submenu: [
+                    {
+                        label: 'Editor',
+                        clickData: {
+                            url: 'https://editor-km.openworship.app',
+                        },
+                    },
+                    {
+                        label: 'Open Lyric',
+                        clickData: {
+                            url: 'https://lyric-km.openworship.app',
+                        },
+                    },
+                    {
+                        label: 'BibleNote',
+                        clickData: {
+                            url: 'https://biblenote-km.openworship.app',
+                        },
+                    },
+                ],
+            },
+        ],
+    },
     editorLink: 'https://editor-km.openworship.app',
     bibleBooks,
     checkIsThisLang: (text: string) => {

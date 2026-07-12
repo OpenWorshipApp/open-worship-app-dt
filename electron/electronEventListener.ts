@@ -21,7 +21,7 @@ import {
     tarCreate,
     tarExtract,
 } from './electronHelpers';
-import type { OptionalPromise } from './electronHelpers';
+import type { CustomMenusDataType, OptionalPromise } from './electronHelpers';
 import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
@@ -38,6 +38,7 @@ import {
     type PptxToHtmlsParamsType,
     type GetPptxToHtmlsVersionParamsType,
 } from './msHelpers';
+import { initMenu } from './electronMenu';
 
 const { dialog, ipcMain, app } = electron;
 
@@ -528,6 +529,22 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:get-docx-to-htmls-version',
         (data: GetDocxToHtmlsVersionParamsType) => {
             return getDocxToHtmlsVersion(data);
+        },
+    );
+
+    ipcMain.on(
+        'main:app:set-menu-items',
+        (_event, menusData: CustomMenusDataType) => {
+            initMenu(appController, {
+                menusData,
+                clickMenu: (menuData: any) => {
+                    console.log('Menu item clicked:', menuData);
+                    appController.mainController.sendMessage(
+                        'app:main:menu-item-clicked',
+                        menuData,
+                    );
+                },
+            });
         },
     );
 }

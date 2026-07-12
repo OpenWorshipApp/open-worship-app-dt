@@ -18,7 +18,24 @@ import { pathToFileURL } from 'node:url';
 
 import appInfo from '../package.json';
 import { htmlFiles } from './fsServe';
+
 export type OptionalPromise<T> = T | Promise<T>;
+
+export type CustomMenuItemType =
+    | {
+          label: string;
+          submenu: {
+              label: string;
+              clickData: any;
+          }[];
+      }
+    | {
+          label: string;
+          clickData: any;
+      };
+export type CustomMenusDataType = {
+    tools?: CustomMenuItemType[];
+};
 
 function parseEnvContent(content: string) {
     const env: Record<string, string> = {};

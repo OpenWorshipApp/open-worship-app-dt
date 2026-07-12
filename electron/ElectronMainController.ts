@@ -1,10 +1,7 @@
 import { app, BrowserWindow, Menu, MenuItem } from 'electron';
 import path from 'node:path';
 
-import {
-    type AnyObjectType,
-    type ScreenMessageType,
-} from './electronEventListener';
+import { type ScreenMessageType } from './electronEventListener';
 import { genRoutProps } from './protocolHelpers';
 import type ElectronSettingManager from './ElectronSettingManager';
 import { htmlFiles } from './fsServe';
@@ -86,12 +83,8 @@ export default class ElectronMainController {
         process.exit(0);
     }
 
-    sendData(channel: string, data?: any) {
+    sendMessage(channel: string, data?: any) {
         this.win.webContents.send(channel, data);
-    }
-
-    sendMessage(channel: string, message?: AnyObjectType) {
-        this.win.webContents.send(channel, message);
     }
 
     sendScreenMessage(message: ScreenMessageType) {
@@ -99,11 +92,11 @@ export default class ElectronMainController {
     }
 
     changeBible(isNext: boolean) {
-        this.sendData('app:main:change-bible', isNext);
+        this.sendMessage('app:main:change-bible', isNext);
     }
 
     ctrlScrolling(isUp: boolean) {
-        this.sendData('app:main:ctrl-scrolling', isUp);
+        this.sendMessage('app:main:ctrl-scrolling', isUp);
     }
 
     sendNotifyInvisibility(screenId: number) {
@@ -122,6 +115,6 @@ export default class ElectronMainController {
     }
 
     gotoSettingHomePage() {
-        this.sendData('app:main:go-to-setting-home');
+        this.sendMessage('app:main:go-to-setting-home');
     }
 }

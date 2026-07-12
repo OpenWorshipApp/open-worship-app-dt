@@ -10,6 +10,8 @@ import BibleViewComp from '../bible-reader/BibleViewComp';
 import type BibleItem from '../bible-list/BibleItem';
 import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewTitleEditingComp';
 import { BibleViewTitleMaterialContext } from '../bible-reader/view-extra/viewExtraHelpers';
+import { useAppEffect } from '../helper/appHooks';
+import { initLangAppMenu } from '../lang/langHelpers';
 
 const LazyAppPresenterLeftComp = lazy(() => {
     return import('./AppPresenterLeftComp');
@@ -22,6 +24,9 @@ const LazyAppPresenterRightComp = lazy(() => {
 });
 
 export default function AppPresenterComp() {
+    useAppEffect(() => {
+        initLangAppMenu();
+    }, []);
     const viewController = useMemo(() => {
         const newViewController = new BibleItemsViewController('presenter');
         newViewController.finalRenderer = (bibleItem: BibleItem) => {

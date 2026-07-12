@@ -22,5 +22,6 @@
         },
         "outDir": "electron-build/"
     },
-    "include": ["electron/**/*.ts", "electron/**/*.json"]
+    "include": ["electron/**/*.ts", "electron/**/*.json"],
+    "exclude": ["electron/**/*.test.ts"]
 }

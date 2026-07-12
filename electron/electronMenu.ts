@@ -7,6 +7,8 @@ import {
     previewPrintCurrentWindow,
     printCurrentWindow,
     toShortcutKey,
+    type CustomMenusDataType,
+    type CustomMenuItemType,
 } from './electronHelpers';
 
 import packageInfo from '../package.json';
@@ -26,7 +28,45 @@ const printShortcut = toShortcutKey({
     key: 'p',
 });
 
-export function initMenu(appController: ElectronAppController) {
+function formatMenuItems(
+    items: CustomMenuItemType[],
+    clickHandler: (clickData: any) => void,
+) {
+    return items
+        .map((item) => {
+            if ('submenu' in item) {
+                return {
+                    label: item.label,
+                    submenu: item.submenu
+                        .map((subItem) => ({
+                            label: subItem.label,
+                            click: () => {
+                                clickHandler(subItem.clickData);
+                            },
+                        }))
+                        .filter((subItem) => subItem.label),
+                };
+            }
+            return {
+                label: item.label,
+                click: () => {
+                    clickHandler(item.clickData);
+                },
+            };
+        })
+        .filter((item) => item.label);
+}
+
+export function initMenu(
+    appController: ElectronAppController,
+    {
+        menusData: { tools = [] } = {},
+        clickMenu = () => {},
+    }: {
+        menusData?: CustomMenusDataType;
+        clickMenu?: (clickData: any) => void;
+    } = {},
+) {
     const isMac = process.platform === 'darwin';
 
     const template: any[] = [
@@ -182,35 +222,7 @@ export function initMenu(appController: ElectronAppController) {
                         shell.openExternal('https://fonts.google.com/');
                     },
                 },
-                {
-                    label: 'Khmer Tools',
-                    submenu: [
-                        {
-                            label: 'Eitor',
-                            click: () => {
-                                shell.openExternal(
-                                    'https://editor-km.openworship.app',
-                                );
-                            },
-                        },
-                        {
-                            label: 'Open Lyric',
-                            click: () => {
-                                shell.openExternal(
-                                    'https://lyric-km.openworship.app',
-                                );
-                            },
-                        },
-                        {
-                            label: 'BibleNote',
-                            click: () => {
-                                shell.openExternal(
-                                    'https://biblenote-km.openworship.app',
-                                );
-                            },
-                        },
-                    ],
-                },
+                ...formatMenuItems(tools, clickMenu),
             ],
         },
         // { role: 'windowMenu' }
