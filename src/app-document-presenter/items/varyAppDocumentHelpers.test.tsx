@@ -8,7 +8,7 @@ const {
     getScreenManagerByScreenIdMock,
     slideItemSelectedMock,
     bringDomToTopViewMock,
-    notifyNewElementAddedMock,
+    notifyElementHighlightMock,
     slideCheckIsThisTypeMock,
     pptxCheckIsThisTypeMock,
 } = vi.hoisted(() => ({
@@ -20,7 +20,7 @@ const {
     getScreenManagerByScreenIdMock: vi.fn(),
     slideItemSelectedMock: vi.fn(),
     bringDomToTopViewMock: vi.fn(),
-    notifyNewElementAddedMock: vi.fn(),
+    notifyElementHighlightMock: vi.fn(),
     slideCheckIsThisTypeMock: vi.fn(),
     pptxCheckIsThisTypeMock: vi.fn(),
 }));
@@ -55,7 +55,7 @@ vi.mock('./appDocumentHelpers', () => ({
 }));
 
 vi.mock('../../helper/domHelpers', () => ({
-    notifyNewElementAdded: notifyNewElementAddedMock,
+    notifyElementHighlight: notifyElementHighlightMock,
 }));
 
 vi.mock('../../app-document-list/Slide', () => ({
@@ -118,23 +118,23 @@ describe('varyAppDocumentHelpers', () => {
 
         focusNoteEditor(createVarySlide(1));
 
-        expect(notifyNewElementAddedMock).toHaveBeenCalledWith(
+        expect(notifyElementHighlightMock).toHaveBeenCalledWith(
             expect.any(Function),
             {
                 moveToView: bringDomToTopViewMock,
                 shouldSkipHighlighting: true,
             },
         );
-        const getter = notifyNewElementAddedMock.mock.calls[0]?.[0] as
+        const getter = notifyElementHighlightMock.mock.calls[0]?.[0] as
             | (() => Element | null)
             | undefined;
         expect(getter?.()).toBe(noteEditor);
 
         focusNoteEditor(createVarySlide(2, { isSlide: false, isPptx: true }));
-        expect(notifyNewElementAddedMock).toHaveBeenCalledTimes(2);
+        expect(notifyElementHighlightMock).toHaveBeenCalledTimes(2);
 
         focusNoteEditor(createVarySlide(3, { isSlide: false, isPptx: false }));
-        expect(notifyNewElementAddedMock).toHaveBeenCalledTimes(2);
+        expect(notifyElementHighlightMock).toHaveBeenCalledTimes(2);
     });
 
     test('handles selection differently in editor mode and presenter mode', async () => {
@@ -160,7 +160,7 @@ describe('varyAppDocumentHelpers', () => {
             '/docs/main.ows',
             { id: 4, filePath: '/docs/main.ows' },
         );
-        expect(notifyNewElementAddedMock).toHaveBeenCalled();
+        expect(notifyElementHighlightMock).toHaveBeenCalled();
     });
 
     test('returns slide ids, finds the container, and scrolls a selected item into view', async () => {

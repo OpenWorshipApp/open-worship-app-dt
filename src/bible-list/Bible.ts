@@ -16,7 +16,7 @@ import type DocumentInf from '../others/DocumentInf';
 import { handleError } from '../helper/errorHelpers';
 import type { ItemSourceInfBasic } from '../others/ItemSourceInf';
 import type { AnyObjectType } from '../helper/typeHelpers';
-import { notifyNewElementAdded } from '../helper/domHelpers';
+import { notifyElementHighlight } from '../helper/domHelpers';
 
 export type BibleType = {
     items: BibleItemType[];
@@ -319,7 +319,7 @@ export default class Bible
     }
 
     notifyNewBibleItemAdded(bibleItemId: number) {
-        notifyNewElementAdded(() => {
+        notifyElementHighlight(() => {
             return document.querySelector(
                 `[data-bible-item-id="${this.fileSource.name}-${bibleItemId}"]`,
             );

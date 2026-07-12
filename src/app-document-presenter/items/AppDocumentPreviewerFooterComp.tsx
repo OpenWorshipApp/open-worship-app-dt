@@ -65,6 +65,7 @@ function HistoryPreviewerFooterComp() {
                     <RenderSlideIndexComp
                         key={itemKey + i}
                         viewIndex={index}
+                        dataKey={itemKey}
                         title={itemKey}
                     />
                 );

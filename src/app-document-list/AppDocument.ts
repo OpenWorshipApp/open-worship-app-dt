@@ -25,7 +25,7 @@ import {
 } from '../app-document-presenter/items/appDocumentHelpers';
 import { fixMissingFontFamilies } from '../server/fontHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
-import { notifyNewElementAdded } from '../helper/domHelpers';
+import { notifyElementHighlight } from '../helper/domHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 export type AppDocumentType = {
@@ -210,7 +210,7 @@ export default class AppDocument
             const key =
                 `.${APP_DOCUMENT_ITEM_CLASS}` +
                 `[data-vary-app-document-item-id="${slideId}"]`;
-            notifyNewElementAdded(() => {
+            notifyElementHighlight(() => {
                 return document.querySelector(key);
             });
         }

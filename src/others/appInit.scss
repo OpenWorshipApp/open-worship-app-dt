@@ -1,6 +1,12 @@
 @use 'sass:math';
 @use './variables.scss' as *;
 
+$app-notify-element-highlight-colors: (
+  success: green,
+  warning: yellow,
+  danger: red,
+);
+
 body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
@@ -362,21 +368,25 @@ body {
     border-radius: 0 !important;
   }
 
-  .app-new-element-highlight {
-    border-width: 1px;
-    border-style: solid;
-    animation: app-new-element-highlight 2s ease-out;
+  @each $type, $color in $app-notify-element-highlight-colors {
+    .app-notify-element-highlight-#{$type} {
+      border-width: 1px;
+      border-style: solid;
+      animation: app-notify-element-highlight-#{$type} 2s ease-out;
+    }
   }
 }
 
-@keyframes app-new-element-highlight {
-  0% {
-    background-color: green;
-    border-color: green;
-  }
-  100% {
-    background-color: transparent;
-    border-color: transparent;
+@each $type, $color in $app-notify-element-highlight-colors {
+  @keyframes app-notify-element-highlight-#{$type} {
+    0% {
+      background-color: $color;
+      border-color: $color;
+    }
+    100% {
+      background-color: transparent;
+      border-color: transparent;
+    }
   }
 }
 

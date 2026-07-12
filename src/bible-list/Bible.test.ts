@@ -109,7 +109,7 @@ const mocks = vi.hoisted(() => {
         getFileSource,
         getSettingMock: vi.fn(),
         handleErrorMock: vi.fn(),
-        notifyNewElementAddedMock: vi.fn(),
+        notifyElementHighlightMock: vi.fn(),
         readFileDataMock: vi.fn(async (filePath: string) => {
             return files.get(filePath.replaceAll('\\', '/')) ?? null;
         }),
@@ -166,7 +166,7 @@ vi.mock('../helper/errorHelpers', () => ({
 }));
 
 vi.mock('../helper/domHelpers', () => ({
-    notifyNewElementAdded: mocks.notifyNewElementAddedMock,
+    notifyElementHighlight: mocks.notifyElementHighlightMock,
 }));
 
 import Bible, { type BibleType } from './Bible';
@@ -209,7 +209,7 @@ describe('Bible', () => {
                 return filePath;
             },
         );
-        mocks.notifyNewElementAddedMock.mockImplementation(
+        mocks.notifyElementHighlightMock.mockImplementation(
             (callback: () => unknown) => callback(),
         );
         vi.stubGlobal('document', {
@@ -260,7 +260,7 @@ describe('Bible', () => {
             mocks.MockBibleItem.fromJson(createBibleItemJson(50, 'ESV')) as any,
         );
         expect(bible.toJson().items.at(-1)?.id).toBe(4);
-        expect(mocks.notifyNewElementAddedMock).toHaveBeenCalledTimes(1);
+        expect(mocks.notifyElementHighlightMock).toHaveBeenCalledTimes(1);
         expect(document.querySelector as any).toHaveBeenCalledWith(
             '[data-bible-item-id="main-4"]',
         );

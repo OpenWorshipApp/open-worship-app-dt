@@ -4,7 +4,10 @@ import { type ChangeEvent, useCallback, useState } from 'react';
 
 import { tran } from '../../../lang/langHelpers';
 import AppDocument from '../../../app-document-list/AppDocument';
-import { useSelectedEditingSlideContext } from '../../../app-document-list/appDocumentHelpers';
+import {
+    toKeyByFilePath,
+    useSelectedEditingSlideContext,
+} from '../../../app-document-list/appDocumentHelpers';
 import RenderSlideIndexComp from '../../../app-document-presenter/items/RenderSlideIndexComp';
 import { useAppStateAsync, useAppCurrentRef } from '../../../helper/appHooks';
 import { getDefaultScreenDisplay } from '../../../_screen/managers/screenHelpers';
@@ -255,6 +258,7 @@ export default function SlidePropertyEditorComp() {
                     <span className="spe-title">{tran('Slide')}</span>
                     <RenderSlideIndexComp
                         viewIndex={index ?? -1}
+                        dataKey={toKeyByFilePath(slide.filePath, slide.id)}
                         title={tran('Slide index')}
                     />
                 </div>

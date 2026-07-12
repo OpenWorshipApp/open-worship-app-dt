@@ -13,7 +13,7 @@ const {
     checkAreArraysEqualMock,
     watchMock,
     handleErrorMock,
-    notifyNewElementAddedMock,
+    notifyElementHighlightMock,
 } = vi.hoisted(() => ({
     dirSourceGetInstanceMock: vi.fn(),
     fileSourceGetInstanceMock: vi.fn(),
@@ -26,7 +26,7 @@ const {
     ),
     watchMock: vi.fn(),
     handleErrorMock: vi.fn(),
-    notifyNewElementAddedMock: vi.fn(),
+    notifyElementHighlightMock: vi.fn(),
 }));
 
 vi.mock('./appHooks', () => {
@@ -95,7 +95,7 @@ vi.mock('./errorHelpers', () => ({
 }));
 
 vi.mock('./domHelpers', () => ({
-    notifyNewElementAdded: notifyNewElementAddedMock,
+    notifyElementHighlight: notifyElementHighlightMock,
 }));
 
 import {
@@ -220,7 +220,7 @@ describe('dirSourceHelpers', () => {
             '/docs/b.owa',
             '/docs/c.owa',
         ]);
-        expect(notifyNewElementAddedMock).toHaveBeenCalledTimes(1);
+        expect(notifyElementHighlightMock).toHaveBeenCalledTimes(1);
 
         await act(async () => {
             root?.unmount();

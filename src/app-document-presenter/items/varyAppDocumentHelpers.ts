@@ -10,7 +10,7 @@ import {
     HIGHLIGHT_SELECTED_CLASSNAME,
 } from '../../helper/helpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentHelpers';
-import { notifyNewElementAdded } from '../../helper/domHelpers';
+import { notifyElementHighlight } from '../../helper/domHelpers';
 import Slide from '../../app-document-list/Slide';
 import PptxSlide from '../../app-document-list/PptxSlide';
 
@@ -25,7 +25,7 @@ export function focusNoteEditor(varySlide: VarySlideType) {
         const elementGetter = () => {
             return document.querySelector(query);
         };
-        notifyNewElementAdded(elementGetter, {
+        notifyElementHighlight(elementGetter, {
             moveToView: bringDomToTopView,
             shouldSkipHighlighting: true,
         });

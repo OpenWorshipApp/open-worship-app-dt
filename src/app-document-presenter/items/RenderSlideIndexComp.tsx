@@ -1,14 +1,47 @@
+import { useCallback } from 'react';
+import { notifyElementHighlight } from '../../helper/domHelpers';
+import { bringDomToCenterView } from '../../helper/helpers';
+
 export default function RenderSlideIndexComp({
     viewIndex,
+    dataKey,
+    isInSlide = false,
     title,
 }: Readonly<{
     viewIndex: number;
+    dataKey: string;
+    isInSlide?: boolean;
     title?: string;
 }>) {
+    const handleClicking = useCallback(() => {
+        if (isInSlide) {
+            return;
+        }
+        const query = `[data-slide-badge-key="${CSS.escape(`slide-${dataKey}`)}"]`;
+        const elementGetter = () => {
+            const badgeElement = document.querySelector(query);
+            if (badgeElement === null) {
+                return null;
+            }
+            const targetElement = badgeElement.closest(
+                '.data-vary-app-document-item ',
+            ) as HTMLElement | null;
+            return targetElement;
+        };
+        notifyElementHighlight(elementGetter, {
+            moveToView: bringDomToCenterView,
+            type: 'warning',
+        });
+    }, [dataKey, isInSlide]);
     return (
         <div
-            className="d-flex badge rounded-pill text-bg-info align-items-center"
+            onClick={handleClicking}
+            className={
+                'd-flex badge rounded-pill text-bg-info align-items-center' +
+                (isInSlide ? '' : ' app-caught-hover-pointer')
+            }
             title={title ?? `Index: ${viewIndex}`}
+            data-slide-badge-key={`${isInSlide ? 'slide-' : ''}${dataKey}`}
         >
             {viewIndex}
         </div>

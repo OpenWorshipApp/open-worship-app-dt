@@ -9,7 +9,7 @@ import { fsCheckDirExist, type MimetypeNameType } from '../server/fileHelpers';
 import { checkAreArraysEqual } from '../server/comparisonHelpers';
 import appProvider from '../server/appProvider';
 import { handleError } from './errorHelpers';
-import { notifyNewElementAdded } from './domHelpers';
+import { notifyElementHighlight } from './domHelpers';
 import { type ListenerType } from '../event/EventHandler';
 
 export const DirSourceContext = createContext<DirSource | null>(null);
@@ -28,7 +28,7 @@ function notifyNewFilePaths(oldFilePaths: string[], newFilePaths: string[]) {
     for (const filePath of diffFilePaths) {
         setTimeout(() => {
             const src = FileSource.getInstance(filePath).src;
-            notifyNewElementAdded(() => {
+            notifyElementHighlight(() => {
                 return document.querySelector(
                     `[data-file-item-file-src="${src}"]`,
                 );

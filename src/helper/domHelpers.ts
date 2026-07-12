@@ -415,15 +415,17 @@ export function setParamFileFullName(fileFullName: string) {
     history.replaceState(null, '', newUrl);
 }
 
-const APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME = 'app-new-element-highlight';
-export async function notifyNewElementAdded(
+const APP_NOTIFY_ELEMENT_HIGHLIGHT_CLASSNAME = 'app-notify-element-highlight';
+export async function notifyElementHighlight(
     elementGetter: () => Element | null,
     {
         moveToView,
         shouldSkipHighlighting = false,
+        type,
     }: {
         moveToView?: (element: Element) => void;
         shouldSkipHighlighting?: boolean;
+        type?: 'success' | 'warning' | 'danger';
     } = {},
 ) {
     let element = elementGetter();
@@ -443,12 +445,15 @@ export async function notifyNewElementAdded(
     if (shouldSkipHighlighting) {
         return;
     }
+    const targetClassName =
+        APP_NOTIFY_ELEMENT_HIGHLIGHT_CLASSNAME +
+        (type === undefined ? '-success' : `-${type}`);
     const classList = element.classList;
-    classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+    classList.remove(targetClassName);
     setTimeout(() => {
-        classList.add(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+        classList.add(targetClassName);
     }, 100);
     setTimeout(() => {
-        classList.remove(APP_NEW_ELEMENT_HIGHLIGHT_CLASSNAME);
+        classList.remove(targetClassName);
     }, 2e3 + 200);
 }

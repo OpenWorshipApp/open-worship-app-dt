@@ -42,7 +42,7 @@ import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { removePdfImagesPreview } from '../../helper/pdfHelpers';
 import { removePptxHtmlsPreview } from '../../server/pptxHelpers';
 import { removeDocxHtmlsPreview } from '../../server/docxHelpers';
-import { notifyNewElementAdded } from '../../helper/domHelpers';
+import { notifyElementHighlight } from '../../helper/domHelpers';
 
 const varySlidesToView: { [key: string]: VarySlideType } = {};
 
@@ -194,7 +194,7 @@ export default function VarySlidesComp() {
     }, []);
     useAppEffect(() => {
         if (varySlides?.length) {
-            notifyNewElementAdded(() => {
+            notifyElementHighlight(() => {
                 return document.querySelector(
                     `.${APP_DOCUMENT_ITEM_CLASS}.app-highlight-selected.animation`,
                 );

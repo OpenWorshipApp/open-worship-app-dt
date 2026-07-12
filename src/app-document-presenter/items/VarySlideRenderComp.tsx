@@ -37,6 +37,7 @@ import VaryAppDocumentScaleContainerComp from './VaryAppDocumentScaleContainerCo
 import { useThemeSource } from '../../others/themeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
 
 function RenderScreenInfoComp({
     varySlide,
@@ -82,7 +83,14 @@ function VarySlideHeaderComp({
         >
             <div className="d-flex w-100 overflow-hidden">
                 <div className="d-flex overflow-hidden flex-grow-1">
-                    <RenderSlideIndexComp viewIndex={viewIndex} />
+                    <RenderSlideIndexComp
+                        viewIndex={viewIndex}
+                        isInSlide
+                        dataKey={toKeyByFilePath(
+                            varySlide.filePath,
+                            varySlide.id,
+                        )}
+                    />
                     <span className="mx-1 app-ellipsis">{name}</span>
                 </div>
                 <div className="d-flex justify-content-end">

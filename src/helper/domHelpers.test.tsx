@@ -158,7 +158,7 @@ import {
     handleAutoHide,
     handleClassNameAction,
     handleFullWidgetView,
-    notifyNewElementAdded,
+    notifyElementHighlight,
     openPopupWindow,
     removeDomChangeEventListener,
     removeDomTitle,
@@ -385,7 +385,7 @@ describe('domHelpers', () => {
 
         let element: HTMLDivElement | null = null;
         const moveToView = vi.fn();
-        const notificationPromise = notifyNewElementAdded(() => element, {
+        const notificationPromise = notifyElementHighlight(() => element, {
             moveToView,
         });
 
@@ -397,16 +397,16 @@ describe('domHelpers', () => {
 
         expect(moveToView).toHaveBeenCalledWith(element);
         vi.advanceTimersByTime(100);
-        expect(element.classList.contains('app-new-element-highlight')).toBe(
-            true,
-        );
+        expect(
+            element.classList.contains('app-notify-element-highlight-success'),
+        ).toBe(true);
         vi.advanceTimersByTime(2200);
-        expect(element.classList.contains('app-new-element-highlight')).toBe(
-            false,
-        );
+        expect(
+            element.classList.contains('app-notify-element-highlight-success'),
+        ).toBe(false);
 
         const skipElement = document.createElement('div');
-        await notifyNewElementAdded(() => skipElement, {
+        await notifyElementHighlight(() => skipElement, {
             shouldSkipHighlighting: true,
         });
         expect(bringDomToNearestViewMock).toHaveBeenCalledWith(skipElement);

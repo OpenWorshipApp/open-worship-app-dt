@@ -110,6 +110,10 @@ vi.mock('./varyAppDocumentHelpers', () => ({
     SLIDE_ITEMS_CONTAINER_CLASS_NAME: 'slide-items-container',
 }));
 
+vi.mock('../../app-document-list/appDocumentHelpers', () => ({
+    toKeyByFilePath: (filePath: string, id: number) => `${filePath}<>${id}`,
+}));
+
 vi.mock('../../helper/FileSourceMetaManager', () => ({
     getColorNoteFilePathSetting: getColorNoteFilePathSettingMock,
 }));

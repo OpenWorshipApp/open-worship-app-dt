@@ -126,6 +126,7 @@ vi.mock('../../slide-editor/canvas/Canvas', () => ({
 
 vi.mock('../../helper/helpers', () => ({
     getHTMLChild: getHTMLChildMock,
+    freezeObject: (obj: any) => obj,
 }));
 
 vi.mock('../../helper/sanitizeHelpers', () => ({
@@ -199,7 +200,7 @@ describe('presenter item basic coverage', () => {
             await import('./RenderSlideIndexComp');
 
         let element = await renderIntoRoot(
-            <RenderSlideIndexComp viewIndex={4} />,
+            <RenderSlideIndexComp viewIndex={4} dataKey="key-4" />,
             root,
             container,
         );
@@ -207,7 +208,11 @@ describe('presenter item basic coverage', () => {
         expect(element?.getAttribute('title')).toBe('Index: 4');
 
         element = await renderIntoRoot(
-            <RenderSlideIndexComp viewIndex={9} title="Custom title" />,
+            <RenderSlideIndexComp
+                viewIndex={9}
+                dataKey="key-9"
+                title="Custom title"
+            />,
             root,
             container,
         );

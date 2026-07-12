@@ -16,7 +16,7 @@ const {
     createNewSlidesFromDroppedDataMock,
     fixMissingFontFamiliesMock,
     getFontFamiliesMock,
-    notifyNewElementAddedMock,
+    notifyElementHighlightMock,
     tranMock,
     canvasItemGenDefaultItemMock,
     getDefaultScreenDisplayMock,
@@ -37,7 +37,7 @@ const {
     createNewSlidesFromDroppedDataMock: vi.fn(),
     fixMissingFontFamiliesMock: vi.fn(),
     getFontFamiliesMock: vi.fn(),
-    notifyNewElementAddedMock: vi.fn(),
+    notifyElementHighlightMock: vi.fn(),
     tranMock: vi.fn(),
     canvasItemGenDefaultItemMock: vi.fn(),
     getDefaultScreenDisplayMock: vi.fn(),
@@ -116,7 +116,7 @@ vi.mock('../slide-editor/canvas/CanvasItemText', () => ({
 }));
 
 vi.mock('../helper/domHelpers', () => ({
-    notifyNewElementAdded: notifyNewElementAddedMock,
+    notifyElementHighlight: notifyElementHighlightMock,
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -479,7 +479,7 @@ describe('AppDocument', () => {
         expect(
             (await documentSource.getSlides()).map((slide) => slide.id),
         ).toEqual([1, 3, 2]);
-        const firstNotify = notifyNewElementAddedMock.mock
+        const firstNotify = notifyElementHighlightMock.mock
             .calls[0][0] as () => unknown;
         firstNotify();
         expect((globalThis.document as any).querySelector).toHaveBeenCalledWith(

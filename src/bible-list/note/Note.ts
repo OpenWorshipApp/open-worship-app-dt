@@ -1,6 +1,6 @@
 import { AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
 import { dirSourceSettingNames } from '../../helper/constants';
-import { notifyNewElementAdded } from '../../helper/domHelpers';
+import { notifyElementHighlight } from '../../helper/domHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import FileSource from '../../helper/FileSource';
 import { cloneJson, toMaxId } from '../../helper/helpers';
@@ -335,7 +335,7 @@ export default class Note
     }
 
     notifyNewNoteItemAdded(noteItemId: number) {
-        notifyNewElementAdded(() => {
+        notifyElementHighlight(() => {
             return document.querySelector(
                 `[data-note-item-id="${this.fileSource.name}-${noteItemId}"]`,
             );
