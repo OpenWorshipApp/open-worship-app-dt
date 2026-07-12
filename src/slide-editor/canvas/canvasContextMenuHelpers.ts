@@ -117,10 +117,10 @@ export function showCanvasItemContextMenu(
 ) {
     const isLocked = canvasItem.props.locked === true;
     const isEditable = !isLocked && canvasItem.type === 'text';
-    const isLookupable =
+    const isAbleForLookup =
         canvasItem.type === 'bible' && openBibleLookup !== null;
     const menuItems: ContextMenuItemType[] = [
-        ...(isLookupable
+        ...(isAbleForLookup
             ? [
                   {
                       menuElement: tran('Lookup'),
