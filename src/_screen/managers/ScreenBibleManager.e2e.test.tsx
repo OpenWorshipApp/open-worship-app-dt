@@ -5,6 +5,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import type { BibleItemDataType } from '../screenTypeHelpers';
 
+// The first test to run pays the one-time cost of dynamically importing the
+// heavy ScreenBibleManager module graph. Under the full parallel test suite
+// that transform+import can spike past the default 10s timeout, and a timeout
+// here leaks pending async work into the next test (mocks are module-hoisted),
+// cascading a second failure. A generous per-test timeout absorbs that spike.
+const E2E_TEST_TIMEOUT = 30000;
+
 const mocks = vi.hoisted(() => ({
     addPlayToBottom: vi.fn(),
     addToTheTop: vi.fn(),
@@ -309,136 +316,154 @@ describe('ScreenBibleManager e2e', () => {
         mocks.checkIsVerticalPartialInvisible.mockReturnValue(false);
     });
 
-    test('renders a scaled Bible table and syncs verse selection across columns', async () => {
-        const { renderScreenBibleManager } =
-            await import('../screenBibleHelpers');
-        const { default: ScreenBibleManager } =
-            await import('./ScreenBibleManager');
+    test(
+        'renders a scaled Bible table and syncs verse selection across columns',
+        async () => {
+            const { renderScreenBibleManager } =
+                await import('../screenBibleHelpers');
+            const { default: ScreenBibleManager } =
+                await import('./ScreenBibleManager');
 
-        const screenManagerBase = createScreenManagerBase(101);
-        const screenBibleManager = new ScreenBibleManager(screenManagerBase);
-        const host = createHost();
-        const highlightSpy = vi.fn();
+            const screenManagerBase = createScreenManagerBase(101);
+            const screenBibleManager = new ScreenBibleManager(
+                screenManagerBase,
+            );
+            const host = createHost();
+            const highlightSpy = vi.fn();
 
-        screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
-        screenBibleManager.div = host;
-        screenBibleManager.screenViewData = createScreenViewData();
-        await renderScreenBibleManager(screenBibleManager);
+            screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
+            screenBibleManager.div = host;
+            screenBibleManager.screenViewData = createScreenViewData();
+            await renderScreenBibleManager(screenBibleManager);
 
-        expect(host.style.pointerEvents).toBe('auto');
-        expect(host.querySelectorAll('span.highlight')).toHaveLength(4);
-        expect(host.firstElementChild).not.toBeNull();
-        expect((host.firstElementChild as HTMLDivElement).style.transform).toBe(
-            'scale(0.5,0.5) translate(50%, 50%)',
-        );
+            expect(host.style.pointerEvents).toBe('auto');
+            expect(host.querySelectorAll('span.highlight')).toHaveLength(4);
+            expect(host.firstElementChild).not.toBeNull();
+            expect(
+                (host.firstElementChild as HTMLDivElement).style.transform,
+            ).toBe('scale(0.5,0.5) translate(50%, 50%)');
 
-        const verse = host.querySelector(
-            '[data-kjv-verse-key="GEN-1-1"]',
-        ) as HTMLSpanElement | null;
-        expect(verse).not.toBeNull();
+            const verse = host.querySelector(
+                '[data-kjv-verse-key="GEN-1-1"]',
+            ) as HTMLSpanElement | null;
+            expect(verse).not.toBeNull();
 
-        verse?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            verse?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-        expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-1');
-        expect(host.querySelectorAll('span.selected')).toHaveLength(2);
-        expect(highlightSpy).toHaveBeenCalledWith('GEN-1-1', false);
-        expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
-            expect.objectContaining({
-                screenId: 101,
-                type: 'bible-screen-view-selected-index',
-                data: {
-                    selectedKJVVerseKey: 'GEN-1-1',
-                },
-            }),
-            true,
-        );
+            expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-1');
+            expect(host.querySelectorAll('span.selected')).toHaveLength(2);
+            expect(highlightSpy).toHaveBeenCalledWith('GEN-1-1', false);
+            expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    screenId: 101,
+                    type: 'bible-screen-view-selected-index',
+                    data: {
+                        selectedKJVVerseKey: 'GEN-1-1',
+                    },
+                }),
+                true,
+            );
 
-        verse?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            verse?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-        expect(screenBibleManager.selectedKJVVerseKey).toBeNull();
-        expect(host.querySelectorAll('span.selected')).toHaveLength(0);
-        expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
-            expect.objectContaining({
-                screenId: 101,
-                type: 'bible-screen-view-selected-index',
-                data: {
-                    selectedKJVVerseKey: null,
-                },
-            }),
-            true,
-        );
-    });
+            expect(screenBibleManager.selectedKJVVerseKey).toBeNull();
+            expect(host.querySelectorAll('span.selected')).toHaveLength(0);
+            expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    screenId: 101,
+                    type: 'bible-screen-view-selected-index',
+                    data: {
+                        selectedKJVVerseKey: null,
+                    },
+                }),
+                true,
+            );
+        },
+        E2E_TEST_TIMEOUT,
+    );
 
-    test('double click promotes the selected verse to the top flow', async () => {
-        const { renderScreenBibleManager } =
-            await import('../screenBibleHelpers');
-        const { default: ScreenBibleManager } =
-            await import('./ScreenBibleManager');
+    test(
+        'double click promotes the selected verse to the top flow',
+        async () => {
+            const { renderScreenBibleManager } =
+                await import('../screenBibleHelpers');
+            const { default: ScreenBibleManager } =
+                await import('./ScreenBibleManager');
 
-        const screenManagerBase = createScreenManagerBase(102);
-        const screenBibleManager = new ScreenBibleManager(screenManagerBase);
-        const host = createHost();
-        const highlightSpy = vi.fn();
+            const screenManagerBase = createScreenManagerBase(102);
+            const screenBibleManager = new ScreenBibleManager(
+                screenManagerBase,
+            );
+            const host = createHost();
+            const highlightSpy = vi.fn();
 
-        screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
-        screenBibleManager.div = host;
-        screenBibleManager.screenViewData = createScreenViewData();
-        await renderScreenBibleManager(screenBibleManager);
+            screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
+            screenBibleManager.div = host;
+            screenBibleManager.screenViewData = createScreenViewData();
+            await renderScreenBibleManager(screenBibleManager);
 
-        const verse = host.querySelector(
-            '[data-kjv-verse-key="GEN-1-2"]',
-        ) as HTMLSpanElement | null;
-        expect(verse).not.toBeNull();
+            const verse = host.querySelector(
+                '[data-kjv-verse-key="GEN-1-2"]',
+            ) as HTMLSpanElement | null;
+            expect(verse).not.toBeNull();
 
-        verse?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+            verse?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
 
-        expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-2');
-        expect(mocks.bringDomToTopView).toHaveBeenCalledTimes(2);
-        expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();
-        expect(mocks.bringDomToCenterView).not.toHaveBeenCalled();
-        expect(highlightSpy).toHaveBeenCalledWith('GEN-1-2', true);
-        expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
-            expect.objectContaining({
-                screenId: 102,
+            expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-2');
+            expect(mocks.bringDomToTopView).toHaveBeenCalledTimes(2);
+            expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();
+            expect(mocks.bringDomToCenterView).not.toHaveBeenCalled();
+            expect(highlightSpy).toHaveBeenCalledWith('GEN-1-2', true);
+            expect(screenManagerBase.sendScreenMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    screenId: 102,
+                    type: 'bible-screen-view-selected-index',
+                    data: {
+                        selectedKJVVerseKey: 'GEN-1-2',
+                    },
+                }),
+                true,
+            );
+        },
+        E2E_TEST_TIMEOUT,
+    );
+
+    test(
+        'applies synced selections and centers partially hidden verses',
+        async () => {
+            const { renderScreenBibleManager } =
+                await import('../screenBibleHelpers');
+            const { default: ScreenBibleManager } =
+                await import('./ScreenBibleManager');
+
+            const screenManagerBase = createScreenManagerBase(103);
+            const screenBibleManager = new ScreenBibleManager(
+                screenManagerBase,
+            );
+            const host = createHost();
+            const highlightSpy = vi.fn();
+
+            screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
+            screenBibleManager.div = host;
+            screenBibleManager.screenViewData = createScreenViewData();
+            await renderScreenBibleManager(screenBibleManager);
+
+            mocks.checkIsVerticalPartialInvisible.mockReturnValue(true);
+            ScreenBibleManager.receiveSyncSelectedIndex({
+                screenId: 103,
                 type: 'bible-screen-view-selected-index',
                 data: {
                     selectedKJVVerseKey: 'GEN-1-2',
                 },
-            }),
-            true,
-        );
-    });
+            } as any);
 
-    test('applies synced selections and centers partially hidden verses', async () => {
-        const { renderScreenBibleManager } =
-            await import('../screenBibleHelpers');
-        const { default: ScreenBibleManager } =
-            await import('./ScreenBibleManager');
-
-        const screenManagerBase = createScreenManagerBase(103);
-        const screenBibleManager = new ScreenBibleManager(screenManagerBase);
-        const host = createHost();
-        const highlightSpy = vi.fn();
-
-        screenBibleManager.handleBibleViewVersesHighlighting = highlightSpy;
-        screenBibleManager.div = host;
-        screenBibleManager.screenViewData = createScreenViewData();
-        await renderScreenBibleManager(screenBibleManager);
-
-        mocks.checkIsVerticalPartialInvisible.mockReturnValue(true);
-        ScreenBibleManager.receiveSyncSelectedIndex({
-            screenId: 103,
-            type: 'bible-screen-view-selected-index',
-            data: {
-                selectedKJVVerseKey: 'GEN-1-2',
-            },
-        } as any);
-
-        expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-2');
-        expect(host.querySelectorAll('span.selected')).toHaveLength(2);
-        expect(mocks.bringDomToCenterView).toHaveBeenCalledTimes(2);
-        expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();
-        expect(mocks.bringDomToTopView).not.toHaveBeenCalled();
-        expect(highlightSpy).toHaveBeenCalledWith('GEN-1-2', false);
-    });
+            expect(screenBibleManager.selectedKJVVerseKey).toBe('GEN-1-2');
+            expect(host.querySelectorAll('span.selected')).toHaveLength(2);
+            expect(mocks.bringDomToCenterView).toHaveBeenCalledTimes(2);
+            expect(mocks.bringDomToNearestView).not.toHaveBeenCalled();
+            expect(mocks.bringDomToTopView).not.toHaveBeenCalled();
+            expect(highlightSpy).toHaveBeenCalledWith('GEN-1-2', false);
+        },
+        E2E_TEST_TIMEOUT,
+    );
 });
