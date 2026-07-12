@@ -82,27 +82,40 @@ function genVersesHtml({ text, verses }: BibleRenderedType) {
 
 export default class CanvasItemBibleItem extends CanvasItemHtml {
     props: CanvasItemBiblePropsType;
+
     constructor(props: CanvasItemBiblePropsType) {
         super(props);
         this.props = cloneJson(props);
     }
+
     toJson(): CanvasItemBiblePropsType {
         return this.props;
+    }
+
+    static formatBibleVerseTitle(title: string) {
+        // (KJV) Genesis 1:1
+        // replace (KJV) with (<span data-bible-key="KJV">KJV</span>)
+        return title.replace(/\(([^)]+)\)/, (_match, p1) => {
+            return `(<span data-bible-key="${p1}">${p1}</span>)`;
+        });
     }
     // `bibleRenderingList` stays the source of truth; `html` is what gets shown.
     static genHtml(bibleRenderingList: BibleRenderedType[]) {
         return bibleRenderingList
             .map((bibleRendered) => {
+                const title = this.formatBibleVerseTitle(bibleRendered.title);
                 return (
                     '<div style="width:100%">' +
                     `<div style="${TITLE_STYLE}">${BOOK_ICON_SVG}` +
-                    `<span>${escapeHtml(bibleRendered.title)}</span></div>` +
+                    `<div>${title}</div>` +
+                    '</div>' +
                     `<div style="padding: 0.3em;">${genVersesHtml(bibleRendered)}</div>` +
                     '</div>'
                 );
             })
             .join('');
     }
+
     static fromJson(json: CanvasItemBiblePropsType) {
         try {
             // Always re-derive; a stored `html` is only a cache of the list,
@@ -118,6 +131,7 @@ export default class CanvasItemBibleItem extends CanvasItemHtml {
             return CanvasItemError.fromJsonError(json);
         }
     }
+
     static async fromBibleItem(id: number, bibleItem: BibleItem) {
         const [title, text, verseTextList, fontFamily] = await Promise.all([
             bibleItem.toTitleWithBibleKey(),
@@ -156,6 +170,7 @@ export default class CanvasItemBibleItem extends CanvasItemHtml {
         };
         return CanvasItemBibleItem.fromJson(json);
     }
+
     static validate(json: AnyObjectType) {
         super.validate(json);
         BibleItem.validate({

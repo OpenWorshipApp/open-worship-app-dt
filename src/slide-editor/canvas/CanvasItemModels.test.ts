@@ -523,7 +523,7 @@ describe('CanvasItem models', () => {
         expect((withoutFontItem.toJson() as any).fontFamily).toBeNull();
         expect(fromBibleItemJson.html).toContain('<svg');
         expect(fromBibleItemJson.html).toContain(
-            '<span>(NIV) Psalm 1</span></div>',
+            '<div>(<span data-bible-key="NIV">NIV</span>) Psalm 1</div></div>',
         );
         expect(fromBibleItemJson.html).toContain('>1</sup>Blessed is the man');
 
@@ -552,7 +552,7 @@ describe('CanvasItem models', () => {
             } as any) as any
         ).toJson().html;
         expect(legacyHtml).not.toContain('stale markup');
-        expect(legacyHtml).toContain('<span>Genesis 1:1</span></div>');
+        expect(legacyHtml).toContain('<div>Genesis 1:1</div></div>');
         expect(legacyHtml).toContain(
             '<div style="padding: 0.3em;">In the beginning</div>',
         );

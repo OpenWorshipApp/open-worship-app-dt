@@ -58,7 +58,7 @@ live-on-screen = `.app-on-screen` (active background tab also gets a `*` prefix)
 | `Arrows` / `PageUp` / `PageDown` / `Space` | Navigate slides (container focused; `Space` toggles) | [app-document-presenter/items/VarySlidesComp.tsx](../../../../src/app-document-presenter/items/VarySlidesComp.tsx) |
 | `Tab` | Bible Lookup: complete current book/chapter/verse chunk | [bible-lookup/InputExtraButtonsComp.tsx](../../../../src/bible-lookup/InputExtraButtonsComp.tsx) |
 | `Escape` / `Ctrl+Escape` | Bible Lookup: clear input / clear chunk | ⤴ same |
-| `Ctrl+Enter` | Slide editor: focus the canvas | [slide-editor/canvas/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/CanvasContainerComp.tsx) |
+| `Ctrl+Enter` | Slide editor: focus the canvas | [slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx) |
 | `Escape` | Slide editor: close quick-edit popup | [slide-editor/SlideEditorPopupComp.tsx](../../../../src/slide-editor/SlideEditorPopupComp.tsx) |
 | `Ctrl+S` | Editors: save | (lyric/web/bible-note editors) |
 | `Ctrl/Alt+ArrowLeft/Right` | Screen output: prev/next bible | [screen.tsx](../../../../src/screen.tsx) |
@@ -226,7 +226,7 @@ Source: [app-document-editor/AppDocumentEditorComp.tsx](../../../../src/app-docu
 | `AppDocumentEditorComp → AppDocumentPreviewerComp` (left slide list) | [app-document-presenter/items/AppDocumentPreviewerComp.tsx](../../../../src/app-document-presenter/items/AppDocumentPreviewerComp.tsx) | 🖱️ a slide → select for editing. 🖱️🖱️ → open. 🖱️R → context menu (add/duplicate/delete). ⇕ reorder slides. |
 | `…Editor → AppDocumentEditorRightComp` | [app-document-editor/AppDocumentEditorRightComp.tsx](../../../../src/app-document-editor/AppDocumentEditorRightComp.tsx) | Splits into Slide Editor Ground (top) + Background (bottom). |
 | ↳ `SlideEditorGroundComp` | [slide-editor/SlideEditorGroundComp.tsx](../../../../src/slide-editor/SlideEditorGroundComp.tsx) | The editing canvas + toolbars. |
-| ↳↳ `CanvasContainerComp` (canvas) | [slide-editor/canvas/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/CanvasContainerComp.tsx) | 🖱️ select a box; ⇕ drag to move; drag handles to resize; `Shift`/`Ctrl` while dragging appends to selection. ⌨️ `Ctrl+Enter` focuses the canvas. |
+| ↳↳ `CanvasContainerComp` (canvas) | [slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx) | 🖱️ select a box; ⇕ drag to move; drag handles to resize; `Shift`/`Ctrl` while dragging appends to selection. ⌨️ `Ctrl+Enter` focuses the canvas. |
 | ↳↳ `BoxEditorControllingModeComp` / `BoxEditorNormalTextEditModeComp` | [slide-editor/canvas/box/](../../../../src/slide-editor/canvas/box/) | 🖱️🖱️ a text box → enter text-edit mode; ⌨️✎ type; ⇕ drag box; drop external items onto the box. |
 | ↳↳ `ToolCanvasItemsComp` (tools) | [slide-editor/canvas/tools/ToolCanvasItemsComp.tsx](../../../../src/slide-editor/canvas/tools/ToolCanvasItemsComp.tsx) | 🖱️ add box / image / etc.; ⇕ drag a tool item onto the canvas. |
 | ↳↳ `SlideEditorPopupComp` (quick edit) | [slide-editor/SlideEditorPopupComp.tsx](../../../../src/slide-editor/SlideEditorPopupComp.tsx) | ⌨️ `Escape` closes it. |

@@ -14,7 +14,7 @@ import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
 import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpers';
 import CanvasNoteContainerHandlerComp from '../note/CanvasNoteContainerHandlerComp';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
-import CanvasContainerComp from './CanvasContainerComp';
+import CanvasContainerComp from './canvas-container/CanvasContainerComp';
 
 function EditorComp({
     contextData,
