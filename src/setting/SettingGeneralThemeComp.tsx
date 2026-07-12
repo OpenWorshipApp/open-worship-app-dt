@@ -19,7 +19,10 @@ export default function SettingGeneralThemeComp() {
 
     return (
         <div className="card m-1">
-            <div className="card-header">{tran('Theme')}</div>
+            <div className="card-header d-flex align-items-center">
+                <i className="bi bi-palette me-2" />
+                {tran('Theme')}
+            </div>
             <div className="card-body">
                 <select
                     className="form-select"

@@ -16,24 +16,28 @@ export default function SettingGeneralOtherOptionsComp() {
     }, []);
     return (
         <div className="card m-1">
-            <div className="card-header">{tran('Other General Options')}</div>
-            <div className="card-body">
-                <div className="m-2">
-                    <button
-                        className="btn btn-warning"
-                        onClick={handleResetWidgetSize}
-                    >
-                        {tran('Reset Widgets Size')}
-                    </button>
-                </div>
-                <div className="m-2 p-2">
-                    <button
-                        className="btn btn-danger"
-                        onClick={handleClearSettings}
-                    >
-                        {tran('Clear All Settings')}
-                    </button>
-                </div>
+            <div className="card-header d-flex align-items-center">
+                <i className="bi bi-sliders me-2" />
+                {tran('Other General Options')}
+            </div>
+            <div className="card-body d-grid gap-2">
+                <button
+                    className="btn btn-warning d-flex align-items-center justify-content-center"
+                    title={tran('Reset Widgets Size')}
+                    onClick={handleResetWidgetSize}
+                >
+                    <i className="bi bi-arrows-angle-expand me-2" />
+                    {tran('Reset Widgets Size')}
+                </button>
+                <hr className="my-1" />
+                <button
+                    className="btn btn-outline-danger d-flex align-items-center justify-content-center"
+                    title={tran('Clear All Settings')}
+                    onClick={handleClearSettings}
+                >
+                    <i className="bi bi-trash3 me-2" />
+                    {tran('Clear All Settings')}
+                </button>
             </div>
         </div>
     );

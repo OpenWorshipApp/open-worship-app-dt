@@ -283,6 +283,7 @@ const dictionary = {
     'Bible Lookup': 'ស្វែងរកព្រះគម្ពីរ',
     'Camera Show': 'បង្ហាញកាមេរ៉ា',
     'Change Bible Model Info': 'ផ្លាស់ប្តូរព័ត៌មានគំរូព្រះគម្ពីរ',
+    'Child Directories': 'ថតកូន',
     'Clear All Settings': 'លុបការកំណត់ទាំងអស់',
     'Clear All': 'លុបទាំងអស់',
     'Clear Background': 'លុបផ្ទៃខាងក្រោយ',
@@ -516,6 +517,7 @@ const dictionary = {
     'Marquee Top font size (0 = auto)':
         'ទំហំតួអក្សរអក្សររត់ខាងលើ (0 = ស្វ័យប្រវត្តិ)',
     'Marquee Top scroll speed (%)': 'ល្បឿនរំកិលអក្សររត់ខាងលើ (%)',
+    Missing: 'បាត់',
     Name: 'ឈ្មោះ',
     'No languages available.': 'មិនមានភាសាទេ។',
     'No pages to display': 'មិនមានទំព័រដើម្បីបង្ហាញទេ',

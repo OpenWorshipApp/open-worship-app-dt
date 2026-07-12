@@ -28,15 +28,14 @@ export default function SettingComp() {
     return (
         <div
             id="app-setting"
-            className="card w-100 h-100 app-overflow-hidden app-zero-border-radius"
+            className={
+                'card w-100 h-100 app-overflow-hidden app-zero-border-radius' +
+                ' d-flex flex-row'
+            }
         >
-            <div
-                className="card-header overflow-hidden p-0"
-                style={{
-                    height: '37px',
-                }}
-            >
+            <div className="app-setting-sidebar d-flex flex-column p-1">
                 <TabRenderComp<TabKeyType>
+                    className="app-setting-nav flex-column flex-grow-1"
                     tabs={tabTypeList.map(([key, name]) => {
                         return {
                             key,
@@ -46,20 +45,14 @@ export default function SettingComp() {
                     activeTabs={[tabKey]}
                     setActiveTab={(key) => setTabKey(key)}
                 />
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        right: 0,
-                    }}
-                >
+                <div className="app-setting-apply mt-1 pt-1">
                     <SettingApplyComp />
                 </div>
             </div>
             <div
-                className="card-body app-overflow-hidden"
+                className="card-body app-overflow-hidden flex-grow-1 p-0"
                 style={{
-                    height: 'calc(100% - 37px)',
+                    height: '100%',
                 }}
             >
                 {tabTypeList.map(([type, _, target]) => {

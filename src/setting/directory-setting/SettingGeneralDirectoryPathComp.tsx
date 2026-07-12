@@ -49,10 +49,12 @@ class ParentDirSource extends DirSource {
 
 function RenderPathElementComp({
     title,
+    iconClassName,
     settingName,
     defaultFolderName,
 }: Readonly<{
     title: string;
+    iconClassName: string;
     settingName: string;
     defaultFolderName: string;
 }>) {
@@ -64,8 +66,20 @@ function RenderPathElementComp({
         return null;
     }
     return (
-        <div className="d-flex w-100 flex-column">
-            <div>{title}:</div>
+        <div className="app-setting-path-item d-flex w-100 flex-column p-2 mb-2">
+            <div className="d-flex align-items-center mb-1">
+                <i
+                    className={`bi ${iconClassName} app-setting-path-item-icon me-2`}
+                />
+                <span className="app-setting-path-item-title flex-grow-1">
+                    {title}
+                </span>
+                {isValidDirPath ? null : (
+                    <span className="badge rounded-pill text-bg-danger">
+                        {tran('Missing')}
+                    </span>
+                )}
+            </div>
             <div className="d-flex flex-column">
                 <div className="flex-grow-1">
                     <PathSelectorComp
@@ -83,7 +97,6 @@ function RenderPathElementComp({
                     </div>
                 )}
             </div>
-            <hr />
         </div>
     );
 }
@@ -102,8 +115,13 @@ function RenderParentDirectoryComp({
     }, []);
     return (
         <div className="d-flex flex-column">
-            <div className={`${HIGHLIGHT_SELECTED_CLASSNAME} p-2`}>
-                <div>{tran('Parent Directory:')}</div>
+            <div
+                className={`${HIGHLIGHT_SELECTED_CLASSNAME} app-border-white-round p-2`}
+            >
+                <div className="app-setting-path-item-title d-flex align-items-center mb-1">
+                    <i className="bi bi-folder-symlink me-2" />
+                    {tran('Parent Directory:')}
+                </div>
                 <div>
                     <PathSelectorComp
                         prefix="path-parent-dir"
@@ -152,30 +170,48 @@ const titleSettingNames = {
     Documents: [
         dirSourceSettingNames.APP_DOCUMENT,
         defaultDataDirNames.APP_DOCUMENT,
+        'bi-file-earmark-text',
     ],
-    Lyrics: [dirSourceSettingNames.LYRIC, defaultDataDirNames.LYRIC],
-    Playlists: [dirSourceSettingNames.PLAYLIST, defaultDataDirNames.PLAYLIST],
+    Lyrics: [
+        dirSourceSettingNames.LYRIC,
+        defaultDataDirNames.LYRIC,
+        'bi-music-note-list',
+    ],
+    Playlists: [
+        dirSourceSettingNames.PLAYLIST,
+        defaultDataDirNames.PLAYLIST,
+        'bi-collection-play',
+    ],
     'Background Images': [
         dirSourceSettingNames.BACKGROUND_IMAGE,
         defaultDataDirNames.BACKGROUND_IMAGE,
+        'bi-image',
     ],
     'Background Videos': [
         dirSourceSettingNames.BACKGROUND_VIDEO,
         defaultDataDirNames.BACKGROUND_VIDEO,
+        'bi-film',
     ],
     'Background Audios': [
         dirSourceSettingNames.BACKGROUND_AUDIO,
         defaultDataDirNames.BACKGROUND_AUDIO,
+        'bi-volume-up',
     ],
     'Bible Present': [
         dirSourceSettingNames.BIBLE_PRESENT,
         defaultDataDirNames.BIBLE_PRESENT,
+        'bi-book',
     ],
     'Bible Reader': [
         dirSourceSettingNames.BIBLE_READ,
         defaultDataDirNames.BIBLE_READ,
+        'bi-book-half',
     ],
-    Notes: [dirSourceSettingNames.BIBLE_NOTES, defaultDataDirNames.BIBLE_NOTES],
+    Notes: [
+        dirSourceSettingNames.BIBLE_NOTES,
+        defaultDataDirNames.BIBLE_NOTES,
+        'bi-journal-text',
+    ],
 };
 
 function RenderChildDirectoriesComp({
@@ -188,21 +224,31 @@ function RenderChildDirectoriesComp({
     }, []);
     return (
         <>
-            <div className="card-header">
+            <div className="card-header d-flex align-items-center justify-content-between">
+                <span className="d-flex align-items-center">
+                    <i className="bi bi-diagram-3 me-2" />
+                    {tran('Child Directories')}
+                </span>
                 <button
-                    className="btn btn-sm btn-warning"
+                    className="btn btn-sm btn-warning d-flex align-items-center"
+                    title={tran('Reset All Child Directories')}
                     onClick={handleResetChildDirs}
                 >
+                    <i className="bi bi-arrow-counterclockwise me-1" />
                     {tran('Reset All Child Directories')}
                 </button>
             </div>
             <div className="card-body">
                 {Object.entries(titleSettingNames).map(
-                    ([title, [settingName, defaultFolderName]]) => {
+                    ([
+                        title,
+                        [settingName, defaultFolderName, iconClassName],
+                    ]) => {
                         return (
                             <RenderPathElementComp
                                 key={title}
                                 title={tran(title)}
+                                iconClassName={iconClassName}
                                 settingName={settingName}
                                 defaultFolderName={defaultFolderName}
                             />
@@ -222,7 +268,10 @@ function RenderBodyComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
     }, [dirSource]);
     return (
         <div className="card h-100">
-            <div className="card-header">{tran('Path Settings')}</div>
+            <div className="card-header d-flex align-items-center">
+                <i className="bi bi-folder2-open me-2" />
+                {tran('Path Settings')}
+            </div>
             <div className="card-body w-100 p-2">
                 <RenderParentDirectoryComp dirSource={dirSource} />
                 <div className="card app-border-white-round p-1">

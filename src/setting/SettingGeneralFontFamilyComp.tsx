@@ -24,7 +24,10 @@ export default function SettingGeneralFontFamilyComp() {
     };
     return (
         <div className="card m-1">
-            <div className="card-header">{tran('Font Family')}</div>
+            <div className="card-header d-flex align-items-center">
+                <i className="bi bi-fonts me-2" />
+                {tran('Font Family')}
+            </div>
             <div className="card-body">
                 <FontFamilyControlComp
                     fontFamily={fontFamily}

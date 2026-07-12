@@ -19,6 +19,8 @@ import {
 import { getBibleXMLDataFromKey } from './bibleXMLHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { tran } from '../../lang/langHelpers';
+import { checkIsBibleKeyDirty } from './bibleEditorDirtyHelpers';
 
 json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
@@ -102,6 +104,28 @@ export default function BibleXMLDataPreviewComp({
         `bible-setting-${bibleKey}-xml-data-editing-type`,
         'info',
     );
+    const editingTypeRef = useAppCurrentRef(editingType);
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
+    const handleSetEditingType = useCallback((newEditingType: string) => {
+        // Block switching tabs while the current editor has unsaved changes,
+        // mirroring the reload/close guards, so edits are not silently discarded
+        // when the editor unmounts.
+        if (
+            newEditingType !== editingTypeRef.current &&
+            checkIsBibleKeyDirty(bibleKeyRef.current)
+        ) {
+            showSimpleToast(
+                tran('Unsaved Bible Data'),
+                tran(
+                    'Save or discard unsaved Bible changes before switching ' +
+                        'tabs.',
+                ),
+            );
+            return;
+        }
+        setEditingType(newEditingType);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     let element: any;
     if (editingType === 'info') {
         element = <BibleXMLInfoEditorComp bibleKey={bibleKey} />;
@@ -118,27 +142,29 @@ export default function BibleXMLDataPreviewComp({
                     height: '30px',
                 }}
             >
-                <RenderChoiceComp
-                    setEditingType={setEditingType}
-                    title="Info"
-                    targetEditingType="info"
-                    editingType={editingType}
-                />
-                <RenderChoiceComp
-                    setEditingType={setEditingType}
-                    title="Extra"
-                    targetEditingType="extra"
-                    editingType={editingType}
-                />
-                <RenderChoiceComp
-                    setEditingType={setEditingType}
-                    title="Book Chapter"
-                    targetEditingType="book-chapter"
-                    editingType={editingType}
-                />
+                <div className="btn-group" role="group">
+                    <RenderChoiceComp
+                        setEditingType={handleSetEditingType}
+                        title="Info"
+                        targetEditingType="info"
+                        editingType={editingType}
+                    />
+                    <RenderChoiceComp
+                        setEditingType={handleSetEditingType}
+                        title="Extra"
+                        targetEditingType="extra"
+                        editingType={editingType}
+                    />
+                    <RenderChoiceComp
+                        setEditingType={handleSetEditingType}
+                        title="Book Chapter"
+                        targetEditingType="book-chapter"
+                        editingType={editingType}
+                    />
+                </div>
                 {/* add download button here, when click then download the whole bible json data to Download */}
                 <button
-                    className="btn btn-sm btn-success"
+                    className="btn btn-sm btn-success ms-2"
                     onClick={() => {
                         downloadBibleJSON(bibleKey);
                     }}
@@ -147,7 +173,18 @@ export default function BibleXMLDataPreviewComp({
                     <i className="bi bi-download ms-1" />
                 </button>
             </div>
-            <div className="card-body">{element}</div>
+            <div
+                className="card-body"
+                style={{
+                    // Reserve the editor's height so the card does not collapse
+                    // to the small loading spinner and then snap to full size.
+                    minHeight: '488px',
+                    transition:
+                        'min-height 0.2s ease-in-out, height 0.2s ease-in-out',
+                }}
+            >
+                {element}
+            </div>
         </div>
     );
 }

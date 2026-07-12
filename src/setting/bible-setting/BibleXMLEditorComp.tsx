@@ -28,6 +28,7 @@ import {
 } from '../../context-menu/appContextMenuHelpers';
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import { genBibleNumbersMapXMLInput } from './bibleXMLAttributesGuessing';
+import { setBibleEditorDirty } from './bibleEditorDirtyHelpers';
 
 function parseJsonData(content: string) {
     try {
@@ -37,8 +38,7 @@ function parseJsonData(content: string) {
     }
 }
 
-let setCanSave1: (canSave: boolean) => void = () => {};
-function validateCanSave(
+function evaluateEditorState(
     jsonDataSchema: SchemaNode,
     oldContent: string,
     newContent: string,
@@ -50,52 +50,7 @@ function validateCanSave(
     const isChanged =
         oldJsonData !== null &&
         checkAreObjectsEqual(oldJsonData, newJsonData) === false;
-    setCanSave1(isNoError && isChanged);
-    return { canSave: isNoError, newJsonData };
-}
-
-function RenderSaveButton({
-    editorStore,
-    jsonDataSchema,
-    save,
-}: Readonly<{
-    editorStore: ReturnType<typeof useInitMonacoEditor>['editorStore'];
-    jsonDataSchema: SchemaNode;
-    save: (newJsonData: AnyObjectType) => void;
-}>) {
-    const [canSave, setCanSave] = useState(false);
-    useAppEffect(() => {
-        setCanSave1 = setCanSave;
-        return () => {
-            setCanSave1 = () => {};
-        };
-    }, []);
-    const jsonDataSchemaRef = useAppCurrentRef(jsonDataSchema);
-    const editorStoreRef = useAppCurrentRef(editorStore);
-    const saveRef = useAppCurrentRef(save);
-    const handleSaving = useCallback(() => {
-        const { canSave, newJsonData } = validateCanSave(
-            jsonDataSchemaRef.current,
-            editorStoreRef.current.systemContent,
-            editorStoreRef.current.editorInstance.getValue(),
-        );
-        if (canSave) {
-            saveRef.current(newJsonData);
-            setCanSave(false);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    return (
-        <button
-            className={
-                'btn btn-sm m-1 ' + (canSave ? 'btn-primary' : 'btn-secondary')
-            }
-            disabled={!canSave}
-            onClick={handleSaving}
-        >
-            {tran('Save')}
-        </button>
-    );
+    return { canSave: isNoError && isChanged, isChanged, newJsonData };
 }
 
 export default function BibleXMLEditorComp({
@@ -117,6 +72,22 @@ export default function BibleXMLEditorComp({
         `bible-xml-info-full-view-${id}`,
         false,
     );
+    const [canSave, setCanSave] = useState(false);
+    const [isChanged, setIsChanged] = useState(false);
+    const jsonDataSchemaRef = useAppCurrentRef(jsonDataSchema);
+    const handleContentChange = useCallback(
+        (oldContent: string, newContent: string) => {
+            const state = evaluateEditorState(
+                jsonDataSchemaRef.current,
+                oldContent,
+                newContent,
+            );
+            setCanSave(state.canSave);
+            setIsChanged(state.isChanged);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const store = useInitMonacoEditor({
         settingName: 'bible-xml-wrap-text',
         options: {
@@ -128,7 +99,7 @@ export default function BibleXMLEditorComp({
             bracketPairColorization: { enabled: true },
         },
         onStore,
-        onContentChange: validateCanSave.bind(null, jsonDataSchema),
+        onContentChange: handleContentChange,
         uri: editorUri,
         language: 'json',
     });
@@ -137,11 +108,50 @@ export default function BibleXMLEditorComp({
         const content =
             newJsonData === null ? '' : JSON.stringify(newJsonData, null, 4);
         store.setNewValue(content);
-        validateCanSave(jsonDataSchema, content, content);
+        handleContentChange(content, content);
     };
     useAppEffect(() => {
         applyJsonData(jsonData);
     }, [jsonData]);
+    const editorId = editorUri.toString();
+    useAppEffect(() => {
+        setBibleEditorDirty(id, editorId, isChanged);
+        return () => {
+            setBibleEditorDirty(id, editorId, false);
+        };
+    }, [id, editorId, isChanged]);
+    const editorStoreRef = useAppCurrentRef(editorStore);
+    const saveRef = useAppCurrentRef(save);
+    const handleSaving = useCallback(() => {
+        const currentEditorStore = editorStoreRef.current;
+        const newContent = currentEditorStore.editorInstance.getValue();
+        const state = evaluateEditorState(
+            jsonDataSchemaRef.current,
+            currentEditorStore.systemContent,
+            newContent,
+        );
+        if (!state.canSave) {
+            return;
+        }
+        // Update the baseline and clear the dirty flag before saving so the
+        // force-reload that follows a successful save is not blocked as unsaved.
+        currentEditorStore.systemContent = newContent;
+        setBibleEditorDirty(id, editorId, false);
+        setCanSave(false);
+        setIsChanged(false);
+        saveRef.current(state.newJsonData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, editorId]);
+    const handleReset = useCallback(() => {
+        const currentEditorStore = editorStoreRef.current;
+        // Restore the editor to the last saved/loaded baseline, discarding any
+        // unsaved changes.
+        currentEditorStore.replaceValue(currentEditorStore.systemContent);
+        setBibleEditorDirty(id, editorId, false);
+        setCanSave(false);
+        setIsChanged(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id, editorId]);
     const isFullViewRef = useAppCurrentRef(isFullView);
     const setIsFullViewRef = useAppCurrentRef(setIsFullView);
     const handleToggleFullView = useCallback(() => {
@@ -178,12 +188,37 @@ export default function BibleXMLEditorComp({
                         {isFullView ? 'Exit Full View' : 'Full View'}
                     </button>
                 </div>
-                <div>
-                    <RenderSaveButton
-                        editorStore={editorStore}
-                        jsonDataSchema={jsonDataSchema}
-                        save={save}
-                    />
+                {isChanged ? (
+                    <div
+                        className="align-self-center text-warning px-2 app-ellipsis"
+                        title={tran('You have unsaved Bible changes.')}
+                    >
+                        <i className="bi bi-exclamation-triangle-fill me-1" />
+                        {tran('Unsaved changes')}
+                    </div>
+                ) : null}
+                <div className="d-flex">
+                    <button
+                        className={
+                            'btn btn-sm m-1 ' +
+                            (isChanged ? 'btn-warning' : 'btn-secondary')
+                        }
+                        disabled={!isChanged}
+                        onClick={handleReset}
+                        title={tran('Discard unsaved changes')}
+                    >
+                        {tran('Reset')}
+                    </button>
+                    <button
+                        className={
+                            'btn btn-sm m-1 ' +
+                            (canSave ? 'btn-primary' : 'btn-secondary')
+                        }
+                        disabled={!canSave}
+                        onClick={handleSaving}
+                    >
+                        {tran('Save')}
+                    </button>
                 </div>
             </div>
         </div>

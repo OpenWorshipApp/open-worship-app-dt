@@ -76,7 +76,10 @@ export default function SettingGeneralLanguageComp() {
 
     return (
         <div className="card lang m-1">
-            <div className="card-header">{tran('Language')}</div>
+            <div className="card-header d-flex align-items-center">
+                <i className="bi bi-translate me-2" />
+                {tran('Language')}
+            </div>
             <div className="card-body">{element}</div>
         </div>
     );

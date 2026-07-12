@@ -10,6 +10,8 @@ import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { checkIsBibleKeyDirty } from './bibleEditorDirtyHelpers';
+import { showSimpleToast } from '../../toast/toastHelpers';
 
 const BibleXMLDataPreviewCompLazy = lazy(
     () => import('./BibleXMLDataPreviewComp'),
@@ -31,11 +33,23 @@ export default function BibleXMLInfoComp({
     const { bibleInfo } = useBibleXMLInfo(bibleKey);
     const isShowingRef = useAppCurrentRef(isShowing);
     const setIsShowingRef = useAppCurrentRef(setIsShowing);
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
     const handleToggleShowing = useCallback(() => {
+        // Block collapsing the editor while it has unsaved changes, mirroring the
+        // window-reload guard, so edits are not silently discarded.
+        if (isShowingRef.current && checkIsBibleKeyDirty(bibleKeyRef.current)) {
+            showSimpleToast(
+                tran('Unsaved Bible Data'),
+                tran(
+                    'Save or discard unsaved Bible changes before closing ' +
+                        'the editor.',
+                ),
+            );
+            return;
+        }
         setIsShowingRef.current(!isShowingRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const bibleKeyRef = useAppCurrentRef(bibleKey);
     const loadBibleKeysRef = useAppCurrentRef(loadBibleKeys);
     const handleFileTrashing = useCallback(async (event: any) => {
         event.stopPropagation();
