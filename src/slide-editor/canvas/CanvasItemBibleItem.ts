@@ -92,6 +92,44 @@ export default class CanvasItemBibleItem extends CanvasItemHtml {
         return this.props;
     }
 
+    static async getBibleItemProps(bibleItem: BibleItem) {
+        const data = await Promise.all([
+            bibleItem.toTitleWithBibleKey(),
+            bibleItem.toText(),
+            bibleItem.toVerseTextList(),
+            getBibleFontFamily(bibleItem.bibleKey),
+        ]);
+        const [title, text, verseTextList, fontFamily] = data;
+        const bibleRenderingList = [
+            {
+                title,
+                text,
+                verses: (verseTextList ?? []).map(({ localeVerse, text }) => {
+                    return {
+                        num: localeVerse,
+                        text,
+                    };
+                }),
+            },
+        ];
+        return {
+            bibleRenderingList,
+            fontFamily,
+        };
+    }
+
+    async setNewBibleItem(bibleItem: BibleItem) {
+        const { bibleRenderingList, fontFamily } =
+            await CanvasItemBibleItem.getBibleItemProps(bibleItem);
+        this.props.bibleItemTarget = bibleItem.target;
+        Object.assign(this.props, {
+            fontFamily: fontFamily || null,
+            bibleKeys: [bibleItem.bibleKey],
+            bibleItemTarget: bibleItem.target,
+            bibleRenderingList,
+        });
+    }
+
     static formatBibleVerseTitle(title: string) {
         // (KJV) Genesis 1:1
         // replace (KJV) with (<span data-bible-key="KJV">KJV</span>)
@@ -133,40 +171,25 @@ export default class CanvasItemBibleItem extends CanvasItemHtml {
     }
 
     static async fromBibleItem(id: number, bibleItem: BibleItem) {
-        const [title, text, verseTextList, fontFamily] = await Promise.all([
-            bibleItem.toTitleWithBibleKey(),
-            bibleItem.toText(),
-            bibleItem.toVerseTextList(),
-            getBibleFontFamily(bibleItem.bibleKey),
-        ]);
+        const { bibleRenderingList, fontFamily } =
+            await CanvasItemBibleItem.getBibleItemProps(bibleItem);
         const newHtmlItem = super.genDefaultItem();
         const props = newHtmlItem.toJson();
         props.id = id;
-        const bibleRenderingList = [
-            {
-                title,
-                text,
-                verses: (verseTextList ?? []).map(({ localeVerse, text }) => {
-                    return {
-                        num: localeVerse,
-                        text,
-                    };
-                }),
-            },
-        ];
         // `html` is left as the default's; `fromJson` derives the real one
         // from `bibleRenderingList`.
         const json: CanvasItemBiblePropsType = {
             ...props,
             fontSize: BIBLE_DEFAULT_FONT_SIZE,
-            fontFamily: fontFamily || null,
             // The title sits above the verses, so anchor the block top-left.
             textHorizontalAlignment: 'left',
             textVerticalAlignment: 'start',
-            bibleKeys: [bibleItem.bibleKey],
-            bibleItemTarget: bibleItem.toJson().target,
-            bibleRenderingList,
             type: 'bible',
+
+            fontFamily: fontFamily || null,
+            bibleKeys: [bibleItem.bibleKey],
+            bibleItemTarget: bibleItem.target,
+            bibleRenderingList,
         };
         return CanvasItemBibleItem.fromJson(json);
     }

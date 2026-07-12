@@ -155,7 +155,7 @@ describe('BibleSelectionComp', () => {
         expect(menuItems[1]?.menuElement).toBe('DIVIDER');
 
         menuItems[3]?.onSelect?.('event-2');
-        expect(onSelect).toHaveBeenCalledWith('KJV');
+        expect(onSelect).toHaveBeenCalledWith('KJV', 'event-2');
     });
 
     test('renders the default selector button and opens a menu on click', async () => {

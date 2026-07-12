@@ -80,13 +80,13 @@ export async function genContextMenuBibleKeys(
 
 export async function showBibleKeyOption(
     event: any,
-    onSelect: (bibleKey: string) => void,
+    onSelect: (bibleKey: string, event: any) => void,
     excludeBibleKeys: string[] = [],
     title?: string,
 ) {
     const menuItems = await genContextMenuBibleKeys(
-        (_: any, bibleKey: string) => {
-            onSelect(bibleKey);
+        (event: any, bibleKey: string) => {
+            onSelect(bibleKey, event);
         },
         excludeBibleKeys,
     );

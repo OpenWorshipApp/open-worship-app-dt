@@ -263,6 +263,20 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         this.addNewItems([newItem]);
     }
 
+    async replaceBibleItem(canvasItemId: number, bibleItem: BibleItem) {
+        const canvasItem = this.canvas.canvasItems.find((item) => {
+            return item.id === canvasItemId && item.type === 'bible';
+        });
+        if (canvasItem === undefined) {
+            return;
+        }
+        await (canvasItem as CanvasItemBibleItem).setNewBibleItem(bibleItem);
+        const newCanvasItems = this.canvas.canvasItems.map((item) =>
+            item.checkIsSame(canvasItem) ? canvasItem : item,
+        );
+        this.setCanvasItems(newCanvasItems);
+    }
+
     applyOrderingData(canvasItem: CanvasItem<any>, isBack: boolean) {
         // move canvasItem to next if isBack is false else move to previous
         const newCanvasItems = this.canvas.canvasItems;

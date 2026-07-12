@@ -93,8 +93,22 @@ const {
     };
 });
 
-vi.mock('../CanvasController', () => ({
-    useCanvasControllerContext: () => canvasControllerState.value,
+vi.mock('../CanvasController', async () => {
+    const { createContext } = await import('react');
+    return {
+        useCanvasControllerContext: () => canvasControllerState.value,
+        CanvasControllerContext: createContext(null),
+    };
+});
+
+vi.mock('../../../bible-list/BibleItem', () => ({
+    default: {
+        fromTitleText: vi.fn(),
+    },
+}));
+
+vi.mock('../../../bible-lookup/BibleKeySelectionComp', () => ({
+    showBibleKeyOption: vi.fn(),
 }));
 
 vi.mock('../CanvasItem', () => ({
