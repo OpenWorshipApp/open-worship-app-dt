@@ -33,6 +33,7 @@ import { useThemeSource } from './themeHelpers';
 import { getReactRoot } from './rootHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
 import { checkForAppUpdate } from '../server/updatingAppHelpers';
+import { initTitleSoundMeter } from '../helper/titleSoundMeterHelpers';
 
 const ERROR_DATETIME_SETTING_NAME = 'error-datetime-setting';
 const ERROR_DURATION = 1000 * 10; // 10 seconds;
@@ -169,6 +170,7 @@ export async function run(children?: ReactNode) {
     );
     addDomChangeEventListener(applyFontFamily);
     addDomChangeEventListener(handleFullWidgetView);
+    initTitleSoundMeter();
     addDomChangeEventListener(
         handleClassNameAction.bind(
             null,
