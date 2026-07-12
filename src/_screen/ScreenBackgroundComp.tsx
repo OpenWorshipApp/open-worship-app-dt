@@ -15,6 +15,7 @@ import {
 import type { BackgroundSrcType } from './screenTypeHelpers';
 import { getCameraStream } from '../helper/cameraHelpers';
 import { handleError } from '../helper/errorHelpers';
+import { playMediaElement } from '../helper/mediaHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { tran } from '../lang/langHelpers';
 
@@ -64,7 +65,7 @@ export function genHtmlBackground(
                         }
                     };
                     video.onloadedmetadata = () => {
-                        video.play();
+                        playMediaElement(video);
                         resolve(clearTracks);
                     };
                 })

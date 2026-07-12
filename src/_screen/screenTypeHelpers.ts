@@ -161,6 +161,7 @@ export const screenTypeList = [
     'init',
     'effect',
     'background-video-time',
+    'vary-app-document-video-time',
     'sync-scroll-percentage',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];

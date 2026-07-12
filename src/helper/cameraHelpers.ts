@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { useAppEffectAsync } from './appHooks';
 import { handleError } from './errorHelpers';
+import { playMediaElement } from './mediaHelpers';
 import type {
     ForegroundCameraDataType,
     StyleAnimType,
@@ -80,7 +81,7 @@ export async function getCameraAndShowMedia(
         const video = document.createElement('video');
         video.srcObject = mediaStream;
         video.onloadedmetadata = () => {
-            video.play();
+            playMediaElement(video);
         };
         if (width !== undefined) {
             video.style.width = `${width}px`;

@@ -12,7 +12,15 @@ import {
     screenManagerSettingNames,
     PREVIEW_ONLY_ATTR,
 } from '../../helper/constants';
-import ScreenEventHandler from './ScreenEventHandler';
+import { playMediaElement } from '../../helper/mediaHelpers';
+import {
+    handleMediaPlaying,
+    handleMediaStopped,
+} from '../../helper/audioControlHelpers';
+import { genVideoIDFromSrc } from '../screenHelpers';
+import ScreenEventHandler, {
+    type GroupMembershipInf,
+} from './ScreenEventHandler';
 import type ScreenManagerBase from './ScreenManagerBase';
 import type ScreenEffectManager from './ScreenEffectManager';
 import { getAppDocumentListOnScreenSetting } from '../preview/screenPreviewerHelpers';
@@ -53,6 +61,19 @@ function queryAllDeep(root: ParentNode, selector: string): Element[] {
     return results;
 }
 
+// The sync id must be identical in every window for the same media file. Both
+// the presenter and the screen rebase the slide HTML against the same file
+// path, so the resolved `src` (or the first `<source>`) matches everywhere.
+function getMediaSyncSrc(media: HTMLMediaElement): string {
+    if (media.src) {
+        return media.src;
+    }
+    const sourceSrc = media
+        .querySelector<HTMLSourceElement>('source[src]')
+        ?.getAttribute('src');
+    return sourceSrc ?? media.currentSrc;
+}
+
 export type ScreenVaryAppDocumentManagerEventType = 'update';
 
 const PDF_FULL_WIDTH_SETTING_NAME = 'pdf-full-width';
@@ -69,10 +90,22 @@ export function getPageBaseVirtualBackgroundColor(): string | null {
     return getSetting(PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME) || null;
 }
 
-class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocumentManagerEventType> {
+type SlideVideoTimeDataType = {
+    videoId: string;
+    videoTime: number;
+    timestamp: number;
+    isPlaying: boolean;
+};
+
+class ScreenVaryAppDocumentManager
+    extends ScreenEventHandler<ScreenVaryAppDocumentManagerEventType>
+    implements GroupMembershipInf
+{
     static readonly eventNamePrefix: string = 'screen-vary-app-document-m';
     private _varySlideData: VarySlideScreenDataType | null = null;
     private _div: HTMLDivElement | null = null;
+    private readonly syncAdjustedMediaElements =
+        new WeakSet<HTMLMediaElement>();
     effectManager: ScreenEffectManager;
 
     constructor(
@@ -143,6 +176,131 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
 
     receiveSyncScreen(message: ScreenMessageType) {
         this.varySlideData = message.data;
+    }
+
+    async getMemberInstances(): Promise<ScreenVaryAppDocumentManager[]> {
+        return [];
+    }
+    async getMemberIds(): Promise<number[]> {
+        return [];
+    }
+    async checkIsMainInstance(): Promise<boolean> {
+        return false;
+    }
+
+    sendSyncVideoTime(videoId: string, videoTime: number, isPlaying: boolean) {
+        setTimeout(() => {
+            this.screenManagerBase.sendScreenMessage(
+                {
+                    screenId: this.screenId,
+                    type: 'vary-app-document-video-time',
+                    data: {
+                        videoId,
+                        videoTime,
+                        timestamp: Date.now(),
+                        isPlaying,
+                    },
+                },
+                true,
+            );
+        }, 0);
+    }
+
+    getMediaElements(videoId: string): HTMLMediaElement[] {
+        const div = this.div;
+        if (div === null) {
+            return [];
+        }
+        // PPTX/DOCX slides mount their media inside a shadow root, so the
+        // lookup must pierce shadow boundaries and cover both video and audio.
+        return queryAllDeep(div, `video#${videoId}, audio#${videoId}`).filter(
+            (element): element is HTMLMediaElement => {
+                return element instanceof HTMLMediaElement;
+            },
+        );
+    }
+
+    setVideoCurrentTime(data: SlideVideoTimeDataType) {
+        const div = this.div;
+        if (div === null) {
+            return;
+        }
+        const { videoId, videoTime, timestamp, isPlaying } = data;
+        const mediaElements = this.getMediaElements(videoId);
+        for (const mediaElement of mediaElements) {
+            if (appProvider.isPageScreen) {
+                // The screen follows the mini screen's play state; sound
+                // stays on the presenter side, the screen keeps muted.
+                if (isPlaying && mediaElement.paused) {
+                    playMediaElement(mediaElement);
+                } else if (!isPlaying && !mediaElement.paused) {
+                    mediaElement.pause();
+                }
+            }
+            const latency = isPlaying ? (Date.now() - timestamp) / 1000 : 0;
+            const exactVideoTime = videoTime + latency;
+            // 24 fps, 1000/24 = 0.04166..., for 0.15 second threshold, it can
+            // be 3 frames, which is good enough for syncing video.
+            if (Math.abs(mediaElement.currentTime - exactVideoTime) > 0.15) {
+                // Prevent the timeupdate emitted by this sync correction from
+                // being broadcast back to the group.
+                this.syncAdjustedMediaElements.add(mediaElement);
+                mediaElement.currentTime = exactVideoTime;
+            }
+        }
+    }
+
+    setVideoCurrentTimeForce(
+        videoId: string,
+        videoTime: number,
+        isPlaying: boolean,
+    ) {
+        const data = {
+            videoId,
+            videoTime,
+            timestamp: Date.now(),
+            isPlaying,
+        };
+        this.sendSyncVideoTime(videoId, videoTime, isPlaying);
+        this.setVideoCurrentTime(data);
+    }
+
+    async setSlideVideoCurrentTimeForce(
+        videoId: string,
+        videoTime: number,
+        isPlaying: boolean,
+    ) {
+        this.sendSyncVideoTime(videoId, videoTime, isPlaying);
+        const managers = await this.getMemberInstances();
+        for (const manager of managers) {
+            manager.setVideoCurrentTimeForce(videoId, videoTime, isPlaying);
+        }
+    }
+
+    receiveSyncVideoTime(message: ScreenMessageType) {
+        if (message.screenId !== this.screenId) {
+            return;
+        }
+        const { data } = message;
+        const { videoId, videoTime, timestamp, isPlaying } = data;
+        if (
+            !videoId ||
+            typeof videoTime !== 'number' ||
+            typeof timestamp !== 'number' ||
+            typeof isPlaying !== 'boolean'
+        ) {
+            return;
+        }
+        this.setVideoCurrentTime(data);
+    }
+
+    static receiveSyncVideoTime(message: ScreenMessageType) {
+        const { screenId } = message;
+        const screenVaryAppDocumentManager = this.getInstance(screenId);
+        if (screenVaryAppDocumentManager === null) {
+            return;
+        }
+        screenVaryAppDocumentManager.receiveSyncVideoTime(message);
     }
 
     fireUpdateEvent() {
@@ -270,6 +428,9 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             pptxData.metadata.width,
             pptxData.metadata.height,
         );
+        // Give embedded video/audio native controls on the mini screen and
+        // the play/pause/time sync wiring, mirroring regular slides.
+        this.cleanupSlideContent(content);
         if (virtualBackgroundColor !== null) {
             content.style.backgroundColor = virtualBackgroundColor;
         }
@@ -302,6 +463,9 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
             parentWidth,
             isFullWidth,
         );
+        // Give embedded video/audio native controls on the mini screen and
+        // the play/pause/time sync wiring, mirroring regular slides.
+        this.cleanupSlideContent(content);
         if (virtualBackgroundColor !== null) {
             content.style.backgroundColor = virtualBackgroundColor;
         }
@@ -328,26 +492,138 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
         return { content, scale };
     }
 
-    cleanupSlideContent(content: HTMLDivElement) {
-        if (!appProvider.isPageScreen) {
-            return;
+    private setSlideVideoBadgeVisibility(
+        videoElement: HTMLVideoElement,
+        isVisible: boolean,
+    ) {
+        const badge = videoElement.parentElement?.querySelector(
+            `[${PREVIEW_ONLY_ATTR}]`,
+        );
+        if (badge instanceof HTMLElement || badge instanceof SVGElement) {
+            badge.style.display = isVisible ? '' : 'none';
         }
-        // Only elements opted in as preview-only (e.g. the video play
-        // badge), never every `svg`: canvas items draw their own icons
-        // (e.g. the bible item's book icon) as inline svg.
-        for (const element of queryAllDeep(content, `[${PREVIEW_ONLY_ATTR}]`)) {
-            if (
-                element instanceof HTMLElement ||
-                element instanceof SVGElement
-            ) {
-                element.style.display = 'none';
+    }
+
+    private readonly handleSlideMediaPlaying = async (event: Event) => {
+        const mediaElement = event.currentTarget as HTMLMediaElement;
+        handleMediaPlaying(event);
+        if (mediaElement instanceof HTMLVideoElement) {
+            this.setSlideVideoBadgeVisibility(mediaElement, false);
+        }
+        // Same rule as the background audio handlers: starting one slide's
+        // media stops the media playing on other slides/screens. The
+        // initiating manager is skipped so a slide that embeds both a video
+        // and an audio (a PPTX renders its audio as a muted-less <video>) can
+        // play them together. A group member's copy of this same element keeps
+        // its screen driven by this instance, so its pause must not broadcast
+        // a pause back to the group.
+        const groupManagers = new Set(await this.getMemberInstances());
+        groupManagers.add(this);
+        for (const manager of ScreenVaryAppDocumentManager.getAllInstances()) {
+            const div = manager.div;
+            if (div === null || manager === this) {
+                continue;
+            }
+            for (const media of queryAllDeep(div, 'video, audio')) {
+                if (
+                    media instanceof HTMLMediaElement === false ||
+                    media === mediaElement ||
+                    media.paused
+                ) {
+                    continue;
+                }
+                if (
+                    groupManagers.has(manager) &&
+                    media.id === mediaElement.id
+                ) {
+                    media.dataset.pausedByGroupSync = '1';
+                }
+                media.pause();
             }
         }
-        for (const video of queryAllDeep(content, 'video')) {
-            if (video instanceof HTMLVideoElement) {
-                video.loop = false;
-                video.muted = false;
-                video.play();
+        void this.setSlideVideoCurrentTimeForce(
+            mediaElement.id,
+            mediaElement.currentTime,
+            true,
+        );
+    };
+
+    private readonly handleSlideMediaPausing = (event: Event) => {
+        const mediaElement = event.currentTarget as HTMLMediaElement;
+        handleMediaStopped(event);
+        if (mediaElement instanceof HTMLVideoElement) {
+            this.setSlideVideoBadgeVisibility(mediaElement, true);
+        }
+        if (mediaElement.dataset.pausedByGroupSync !== undefined) {
+            delete mediaElement.dataset.pausedByGroupSync;
+            return;
+        }
+        void this.setSlideVideoCurrentTimeForce(
+            mediaElement.id,
+            mediaElement.currentTime,
+            false,
+        );
+    };
+
+    private readonly handleSlideMediaTimeUpdate = (event: Event) => {
+        const mediaElement = event.currentTarget as HTMLMediaElement;
+        if (this.syncAdjustedMediaElements.has(mediaElement)) {
+            this.syncAdjustedMediaElements.delete(mediaElement);
+            return;
+        }
+        if (mediaElement.dataset.pausedByGroupSync !== undefined) {
+            // `pause()` fires a trailing timeupdate before the pause event;
+            // this one belongs to a group takeover, so do not broadcast.
+            return;
+        }
+        void this.setSlideVideoCurrentTimeForce(
+            mediaElement.id,
+            mediaElement.currentTime,
+            !mediaElement.paused,
+        );
+    };
+
+    cleanupSlideContent(content: HTMLDivElement) {
+        if (appProvider.isPageScreen) {
+            // Only elements opted in as preview-only (e.g. the video play
+            // badge), never every `svg`: canvas items draw their own icons
+            // (e.g. the bible item's book icon) as inline svg.
+            for (const element of queryAllDeep(
+                content,
+                `[${PREVIEW_ONLY_ATTR}]`,
+            )) {
+                if (
+                    element instanceof HTMLElement ||
+                    element instanceof SVGElement
+                ) {
+                    element.style.display = 'none';
+                }
+            }
+        }
+        for (const media of queryAllDeep(content, 'video, audio')) {
+            if (media instanceof HTMLMediaElement === false) {
+                continue;
+            }
+            media.loop = false;
+            media.id = genVideoIDFromSrc(getMediaSyncSrc(media));
+            if (appProvider.isPageScreen) {
+                // No auto-play: hold the first frame, muted. Playback is
+                // driven from a mini screen and the sound stays there.
+                media.muted = true;
+                media.preload = 'auto';
+            } else {
+                media.muted = false;
+                media.controls = true;
+                // The canvas/pptx render disables pointer events on its
+                // wrapper; re-enable them for the native controls.
+                media.style.pointerEvents = 'auto';
+                media.addEventListener('play', this.handleSlideMediaPlaying);
+                media.addEventListener('pause', this.handleSlideMediaPausing);
+                media.addEventListener('ended', this.handleSlideMediaPausing);
+                media.addEventListener(
+                    'timeupdate',
+                    this.handleSlideMediaTimeUpdate,
+                );
             }
         }
     }
@@ -500,12 +776,13 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
     async receiveScreenDropped(droppedData: DroppedDataType) {
         const item: VarySlideType = droppedData.item;
         const itemJson = await this.getRenderingItemJson(item);
-        this.varySlideData = {
+        const varySlideData = {
             filePath: item.filePath,
             itemJson,
             isRenderFullWidth: checkIsPdfFullWidth(),
             virtualBackgroundColor: getPageBaseVirtualBackgroundColor(),
         };
+        this.applySlideSrcWithSyncGroup(varySlideData);
     }
 
     static receiveSyncScreen(message: ScreenMessageType) {
@@ -527,6 +804,10 @@ class ScreenVaryAppDocumentManager extends ScreenEventHandler<ScreenVaryAppDocum
 
     static getInstance(screenId: number) {
         return super.getInstanceBase<ScreenVaryAppDocumentManager>(screenId);
+    }
+
+    static getAllInstances() {
+        return super.getAllInstancesBase<ScreenVaryAppDocumentManager>();
     }
 }
 

@@ -428,7 +428,9 @@ export function initEventOther(appController: ElectronAppController) {
 
     ipcMain.on('all:app:print', (event, htmlText?: string) => {
         if (typeof htmlText === 'string') {
-            printHTMLContent(htmlText);
+            void printHTMLContent(htmlText).catch((error) => {
+                console.error('Print content failed:', error);
+            });
             return;
         }
 

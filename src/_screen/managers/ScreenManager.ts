@@ -96,6 +96,15 @@ export default class ScreenManager extends ScreenManagerBase {
             this,
             this.varyAppDocumentEffectManager,
         );
+        setGroupMembershipInf(
+            this,
+            this.screenVaryAppDocumentManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager)
+                    .screenVaryAppDocumentManager;
+            },
+        );
         this.screenBibleManager = new ScreenBibleManager(this);
         this.screenForegroundManager = new ScreenForegroundManager(
             this,
@@ -140,6 +149,19 @@ export default class ScreenManager extends ScreenManagerBase {
         });
     }
 
+    async setIsLockedWithSyncGroup(isLocked: boolean) {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(this);
+        const affectedScreenManagers = [this, ...groupScreenManagers];
+        for (const screenManagerBase of affectedScreenManagers) {
+            screenManagerBase._isLocked = isLocked;
+        }
+        await saveScreenManagersSetting();
+        for (const screenManagerBase of affectedScreenManagers) {
+            screenManagerBase.fireInstanceEvent();
+        }
+    }
+
     get stageNumber() {
         return super.stageNumber;
     }
@@ -162,8 +184,27 @@ export default class ScreenManager extends ScreenManagerBase {
 
     async setColorNote(color: string | null) {
         await super.setColorNote(color);
+        await this.syncIsLockedFromGroup();
         await saveScreenManagersSetting();
         this.fireColorNoteUpdateEvent();
+    }
+
+    // When this screen joins a color-note group, adopt the group's lock state
+    // so a newly added member matches the rest of the group (a locked group
+    // stays locked when a screen is added to it).
+    private async syncIsLockedFromGroup() {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(this);
+        if (groupScreenManagers.length === 0) {
+            return;
+        }
+        const isLocked = groupScreenManagers.some((screenManagerBase) => {
+            return screenManagerBase._isLocked;
+        });
+        if (this._isLocked !== isLocked) {
+            this._isLocked = isLocked;
+            this.fireInstanceEvent();
+        }
     }
 
     sendSyncScreen() {
@@ -275,6 +316,8 @@ export default class ScreenManager extends ScreenManagerBase {
             ScreenBibleManager.receiveSyncTextStyle(message);
         } else if (type === 'background-video-time') {
             ScreenBackgroundManager.receiveSyncVideoTime(message);
+        } else if (type === 'vary-app-document-video-time') {
+            ScreenVaryAppDocumentManager.receiveSyncVideoTime(message);
         } else if (type === 'sync-scroll-percentage') {
             screenManagerBase.syncScrollPercentage(data);
         } else {

@@ -1,4 +1,5 @@
-import { BrowserWindow, Menu, MenuItem } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem } from 'electron';
+import path from 'node:path';
 
 import {
     type AnyObjectType,
@@ -12,6 +13,7 @@ import {
     genWebPreferences,
     getAppThemeBackgroundColor,
     guardBrowsing,
+    isDev,
     messageChannels,
 } from './electronHelpers';
 
@@ -42,6 +44,17 @@ export default class ElectronMainController {
         const win = new BrowserWindow({
             backgroundColor: getAppThemeBackgroundColor(),
             webPreferences,
+            // The packaged app gets its icon from electron-builder; `icon.png`
+            // only exists at the project root in dev, so set it dev-only.
+            ...(isDev
+                ? {
+                      icon: path.join(
+                          app.getAppPath(),
+                          'extra-work',
+                          'icon-dev.png',
+                      ),
+                  }
+                : {}),
         });
         guardBrowsing(win, webPreferences);
         win.on('closed', () => {

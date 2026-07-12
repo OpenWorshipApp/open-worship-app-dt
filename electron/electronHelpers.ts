@@ -639,37 +639,51 @@ export async function previewPrintCurrentWindow(
     return previewWin;
 }
 
-export function printHTMLContent(htmlText: string) {
-    const printWin = new BrowserWindow({
-        show: false,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false,
-        },
-    });
-    printWin.loadURL(
-        `data:text/html;charset=utf-8,${encodeURIComponent(htmlText)}`,
+export async function printHTMLContent(htmlText: string) {
+    // A data: URL cannot carry the content here — Chromium caps URLs at 2MB
+    // and slide HTML with embedded images easily exceeds that — so stage the
+    // HTML in a temp file instead.
+    const contentDir = path.join(app.getPath('temp'), printPreviewDirName);
+    await mkdir(contentDir, { recursive: true });
+    printPreviewFileIndex += 1;
+    const contentFilePath = path.join(
+        contentDir,
+        `print-content-${Date.now()}-${printPreviewFileIndex}.html`,
     );
-    const timeout = setTimeout(() => {
+    await writeFile(contentFilePath, htmlText);
+    const printWin = new BrowserWindow({ show: false });
+    const cleanup = () => {
         attemptClosing(printWin);
-    }, 30_000);
-    printWin.webContents.on('did-finish-load', () => {
-        printWin.webContents.print({}, (success, errorType) => {
-            clearTimeout(timeout);
-            if (!success) {
-                console.log('Print failed:', errorType);
-            }
-            attemptClosing(printWin);
+        rm(contentFilePath, { force: true }).catch((error) => {
+            console.log('Failed to remove print content file:', error);
         });
+    };
+    const timeout = setTimeout(cleanup, 30_000);
+    printWin.webContents.on('did-finish-load', async () => {
+        clearTimeout(timeout);
+        try {
+            // Web fonts referenced by the content may still be loading when
+            // did-finish-load fires; printing before they finish rasterizes
+            // fallback glyphs into the PDF.
+            await printWin.webContents.executeJavaScript(
+                'document.fonts.ready.then(() => true)',
+                true,
+            );
+            await previewPrintCurrentWindow(printWin);
+        } catch (error) {
+            console.log('Print preview failed:', error);
+        }
+        cleanup();
     });
     printWin.webContents.on(
         'did-fail-load',
         (_event, _errorCode, errorDescription) => {
             clearTimeout(timeout);
             console.log('Print content failed to load:', errorDescription);
-            attemptClosing(printWin);
+            cleanup();
         },
     );
+    await printWin.loadURL(pathToFileURL(contentFilePath).toString());
 }
 
 export async function captureWebScreenShot(

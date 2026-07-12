@@ -30,6 +30,7 @@ import DocxAppDocument from './DocxAppDocument';
 import { removeDocxHtmlsPreview } from '../server/docxHelpers';
 import appProvider from '../server/appProvider';
 import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
+import { printAppDocument } from './appDocumentPrintHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
@@ -106,6 +107,14 @@ function genContextMenuItems(
             },
         },
     ];
+    if (AppDocument.checkIsThisType(varyAppDocument)) {
+        menuItems.push({
+            menuElement: tran('Print'),
+            onSelect: () => {
+                printAppDocument(varyAppDocument);
+            },
+        });
+    }
     return menuItems;
 }
 

@@ -95,6 +95,10 @@ export default class ScreenManagerBase
         this._isLocked = isLocked;
     }
 
+    async setIsLockedWithSyncGroup(isLocked: boolean) {
+        this.isLocked = isLocked;
+    }
+
     get stageNumber() {
         return this._stageNumber;
     }

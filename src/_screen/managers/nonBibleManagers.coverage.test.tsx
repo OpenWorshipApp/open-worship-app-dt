@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
     setSetting: vi.fn(),
     getBackgroundSrcListOnScreenSetting: vi.fn(() => ({})),
     getForegroundDataListOnScreenSetting: vi.fn(() => ({})),
+    genVideoIDFromSrc: vi.fn(() => 'video-abc123'),
     getAppDocumentListOnScreenSetting: vi.fn(() => ({})),
     applyAttachBackground: vi.fn(),
     registerScrollingSyncEvent: vi.fn(),
@@ -122,6 +123,7 @@ vi.mock('../screenHelpers', () => ({
         mocks.getBackgroundSrcListOnScreenSetting,
     getForegroundDataListOnScreenSetting:
         mocks.getForegroundDataListOnScreenSetting,
+    genVideoIDFromSrc: mocks.genVideoIDFromSrc,
 }));
 
 vi.mock('../screenForegroundHelpers', () => ({
@@ -964,9 +966,97 @@ describe('non-Bible manager coverage', () => {
         // must survive onto the screen output.
         expect(contentIconSvg.style.display).toBe('');
         expect(video.loop).toBe(false);
-        expect(video.muted).toBe(false);
-        expect(playMock).toHaveBeenCalled();
+        // The screen holds the first frame, muted and paused; playback is
+        // driven from the presenter's mini screen.
+        expect(video.muted).toBe(true);
+        expect(video.id).toBe('video-abc123');
+        expect(playMock).not.toHaveBeenCalled();
         mocks.appProvider.isPageScreen = false;
+
+        // On the presenter's mini screen the video gets native controls
+        // and stays paused until the user interacts with it.
+        const presenterContent = document.createElement('div');
+        const presenterVideo = document.createElement('video');
+        presenterContent.appendChild(presenterVideo);
+        manager.cleanupSlideContent(presenterContent);
+        expect(presenterVideo.controls).toBe(true);
+        expect(presenterVideo.muted).toBe(false);
+        expect(presenterVideo.style.pointerEvents).toBe('auto');
+        expect(presenterVideo.id).toBe('video-abc123');
+        expect(playMock).not.toHaveBeenCalled();
+
+        // Embedded audio (e.g. from a PPTX slide) is wired up the same way as
+        // video so it can be played and synced from the mini screen.
+        const presenterAudioContent = document.createElement('div');
+        const presenterAudio = document.createElement('audio');
+        presenterAudioContent.appendChild(presenterAudio);
+        manager.cleanupSlideContent(presenterAudioContent);
+        expect(presenterAudio.controls).toBe(true);
+        expect(presenterAudio.muted).toBe(false);
+        expect(presenterAudio.style.pointerEvents).toBe('auto');
+        expect(presenterAudio.id).toBe('video-abc123');
+
+        // PPTX/DOCX media lives inside a shadow root; cleanup must reach it.
+        const shadowHostContent = document.createElement('div');
+        const shadowHost = document.createElement('div');
+        const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+        const shadowVideo = document.createElement('video');
+        shadowRoot.appendChild(shadowVideo);
+        shadowHostContent.appendChild(shadowHost);
+        manager.cleanupSlideContent(shadowHostContent);
+        expect(shadowVideo.controls).toBe(true);
+        expect(shadowVideo.id).toBe('video-abc123');
+
+        presenterVideo.dispatchEvent(new Event('play'));
+        expect(
+            presenterVideo.hasAttribute('data-block-unload-while-playing'),
+        ).toBe(true);
+        presenterVideo.dispatchEvent(new Event('pause'));
+        expect(
+            presenterVideo.hasAttribute('data-block-unload-while-playing'),
+        ).toBe(false);
+        presenterVideo.dispatchEvent(new Event('play'));
+        presenterVideo.dispatchEvent(new Event('ended'));
+        expect(
+            presenterVideo.hasAttribute('data-block-unload-while-playing'),
+        ).toBe(false);
+
+        const groupMember = {
+            setVideoCurrentTimeForce: vi.fn(),
+        };
+        manager.getMemberInstances = vi.fn(async () => [groupMember]);
+        const sendSyncVideoTimeSpy = vi.spyOn(manager, 'sendSyncVideoTime');
+        await manager.setSlideVideoCurrentTimeForce('video-abc123', 33, true);
+        expect(sendSyncVideoTimeSpy).toHaveBeenCalledWith(
+            'video-abc123',
+            33,
+            true,
+        );
+        expect(groupMember.setVideoCurrentTimeForce).toHaveBeenCalledWith(
+            'video-abc123',
+            33,
+            true,
+        );
+
+        const suppressLoopSpy = vi
+            .spyOn(manager, 'setSlideVideoCurrentTimeForce')
+            .mockResolvedValue(undefined);
+        manager.div = presenterContent;
+        manager.setVideoCurrentTime({
+            videoId: 'video-abc123',
+            videoTime: 8,
+            timestamp: Date.now(),
+            isPlaying: true,
+        });
+        presenterVideo.dispatchEvent(new Event('timeupdate'));
+        expect(suppressLoopSpy).not.toHaveBeenCalled();
+        presenterVideo.dispatchEvent(new Event('timeupdate'));
+        expect(suppressLoopSpy).toHaveBeenCalledWith(
+            'video-abc123',
+            presenterVideo.currentTime,
+            !presenterVideo.paused,
+        );
+        suppressLoopSpy.mockRestore();
 
         const existingChild = document.createElement('div');
         host.appendChild(existingChild);

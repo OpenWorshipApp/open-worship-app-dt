@@ -3,6 +3,7 @@ import { type SyntheticEvent, useCallback } from 'react';
 import { tran } from '../../lang/langHelpers';
 import LoadingComp from '../../others/LoadingComp';
 import { getAISetting } from '../../helper/ai/aiHelpers';
+import { playMediaElement } from '../../helper/mediaHelpers';
 import appProvider from '../../server/appProvider';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
@@ -76,7 +77,7 @@ export default function AudioPlayerComp({
                     openAISetting.isAutoPlay &&
                     element?.checkVisibility()
                 ) {
-                    element.play();
+                    playMediaElement(element);
                     element.focus();
                     onStart(element);
                 }

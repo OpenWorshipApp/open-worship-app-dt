@@ -123,6 +123,18 @@ export default abstract class ScreenEventHandler<
         return instance;
     }
 
+    static getAllInstancesBase<T extends ScreenEventHandler<any>>(): T[] {
+        const instances: T[] = [];
+        for (const instance of cache.values()) {
+            const constructor =
+                instance.constructor as typeof ScreenEventHandler;
+            if (constructor.eventNamePrefix === this.eventNamePrefix) {
+                instances.push(instance as T);
+            }
+        }
+        return instances;
+    }
+
     static getInstance(_screenId: number) {
         throw new Error('getInstance is not implemented.');
     }

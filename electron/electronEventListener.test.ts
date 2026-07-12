@@ -31,7 +31,7 @@ const {
     docxToHtmls: vi.fn(),
     getDocxToHtmlsVersion: vi.fn(),
     goDownload: vi.fn(),
-    printHTMLContent: vi.fn(),
+    printHTMLContent: vi.fn(async () => undefined),
     pptxToHtmls: vi.fn(),
     getPptxToHtmlsVersion: vi.fn(),
     tarExtract: vi.fn(),

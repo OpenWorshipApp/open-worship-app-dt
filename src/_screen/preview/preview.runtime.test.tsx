@@ -116,6 +116,9 @@ function createScreenManager(
             isShowing: false,
             clear: vi.fn(),
         },
+        setIsLockedWithSyncGroup: vi.fn((isLocked: boolean) => {
+            manager.isLocked = isLocked;
+        }),
     };
     return Object.assign(manager, overrides);
 }

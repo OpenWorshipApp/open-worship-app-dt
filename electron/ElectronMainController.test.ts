@@ -24,6 +24,7 @@ vi.mock('./electronHelpers', () => ({
     genWebPreferences,
     getAppThemeBackgroundColor,
     guardBrowsing,
+    isDev: true,
     messageChannels: {
         screenMessage: 'app:screen:message',
     },
@@ -59,6 +60,9 @@ describe('ElectronMainController', () => {
         } as any);
 
         expect(electronMockState.BrowserWindowMock).toHaveBeenCalledTimes(1);
+        const windowOptions =
+            electronMockState.BrowserWindowMock.mock.calls[0][0];
+        expect(windowOptions.icon).toContain('icon.png');
         expect(loadURL).toHaveBeenCalledWith(controller.win);
         expect(guardBrowsing).toHaveBeenCalledTimes(1);
         processExit.mockRestore();

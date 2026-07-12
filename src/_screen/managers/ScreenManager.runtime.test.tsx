@@ -413,6 +413,100 @@ describe('ScreenManager runtime orchestration', () => {
         expect(saveScreenManagersSettingMock).toHaveBeenCalledWith(3);
     });
 
+    test('propagates lock state to same-group members only', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(3);
+        const sibling = new ScreenManager(4);
+        const outsider = new ScreenManager(5);
+        screenManager.colorNote = 'red';
+        sibling.colorNote = 'red';
+        outsider.colorNote = 'blue';
+        baseInstances.set(3, screenManager);
+        baseInstances.set(4, sibling);
+        baseInstances.set(5, outsider);
+
+        await screenManager.setIsLockedWithSyncGroup(true);
+
+        expect(screenManager.isLocked).toBe(true);
+        expect(sibling.isLocked).toBe(true);
+        expect(outsider.isLocked).toBe(false);
+        expect(saveScreenManagersSettingMock).toHaveBeenCalledTimes(1);
+        expect(screenManager.fireInstanceEvent).toHaveBeenCalled();
+        expect(sibling.fireInstanceEvent).toHaveBeenCalled();
+        expect(outsider.fireInstanceEvent).not.toHaveBeenCalled();
+
+        await screenManager.setIsLockedWithSyncGroup(false);
+        expect(screenManager.isLocked).toBe(false);
+        expect(sibling.isLocked).toBe(false);
+    });
+
+    test('adopts the group lock state when joining a group via color note', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const existing = new ScreenManager(3);
+        const joiner = new ScreenManager(4);
+        existing.colorNote = 'red';
+        existing._isLocked = true;
+        baseInstances.set(3, existing);
+        baseInstances.set(4, joiner);
+
+        expect(joiner.isLocked).toBe(false);
+
+        await joiner.setColorNote('red');
+
+        expect(joiner.isLocked).toBe(true);
+        expect(joiner.fireInstanceEvent).toHaveBeenCalled();
+    });
+
+    test('unlocks a member that joins an unlocked group', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const existing = new ScreenManager(3);
+        const joiner = new ScreenManager(4);
+        existing.colorNote = 'red';
+        existing._isLocked = false;
+        joiner._isLocked = true;
+        baseInstances.set(3, existing);
+        baseInstances.set(4, joiner);
+
+        await joiner.setColorNote('red');
+
+        expect(joiner.isLocked).toBe(false);
+    });
+
+    test('keeps its own lock state when its color note joins no group', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const existing = new ScreenManager(3);
+        const joiner = new ScreenManager(4);
+        existing.colorNote = 'red';
+        existing._isLocked = true;
+        joiner._isLocked = false;
+        baseInstances.set(3, existing);
+        baseInstances.set(4, joiner);
+
+        await joiner.setColorNote('blue');
+
+        expect(joiner.isLocked).toBe(false);
+    });
+
+    test('locks only itself when it has no color-note group', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(3);
+        const other = new ScreenManager(4);
+        screenManager.colorNote = null;
+        other.colorNote = null;
+        baseInstances.set(3, screenManager);
+        baseInstances.set(4, other);
+
+        await screenManager.setIsLockedWithSyncGroup(true);
+
+        expect(screenManager.isLocked).toBe(true);
+        expect(other.isLocked).toBe(false);
+    });
+
     test('maps sync handlers, guards screen-origin sends, and returns ghost bases', async () => {
         const { default: ScreenManager } = await import('./ScreenManager');
 

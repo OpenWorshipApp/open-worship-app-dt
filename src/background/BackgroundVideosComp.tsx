@@ -13,6 +13,7 @@ import {
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { genDownloadContextMenuItems } from './downloadHelper';
 import { handleError } from '../helper/errorHelpers';
+import { playMediaElement } from '../helper/mediaHelpers';
 import { tran } from '../lang/langHelpers';
 import {
     showProgressBar,
@@ -71,20 +72,20 @@ function RendBodyComp({
     }, [filePath]);
     const vRef = useRef<HTMLVideoElement>(null);
     const fileSourceRef = useAppCurrentRef(fileSource);
-    const handleMouseOver = useCallback((event: any) => {
+    const handleMouseEnter = useCallback((event: any) => {
         if (vRef.current === null) {
             return;
         }
-        vRef.current.play();
+        playMediaElement(vRef.current);
         const currentTarget = event.currentTarget as HTMLDivElement;
-        if (typeof vRef.current.duration === 'number' && !currentTarget.title) {
+        if (!Number.isNaN(vRef.current.duration) && !currentTarget.title) {
             currentTarget.title =
                 `${fileSourceRef.current.fullName}\n` +
                 `(${timeToTimeString(vRef.current.duration)})`;
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleMouseOut = useCallback(() => {
+    const handleMouseLeave = useCallback(() => {
         vRef.current?.pause();
     }, []);
     return (
@@ -95,8 +96,8 @@ function RendBodyComp({
                 overflow: 'hidden',
                 borderRadius: '5px 5px 0px 0px',
             }}
-            onMouseOver={handleMouseOver}
-            onMouseOut={handleMouseOut}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
         >
             <RenderBackgroundScreenIds
                 screenIds={selectedBackgroundSrcList.map(([key]) => {

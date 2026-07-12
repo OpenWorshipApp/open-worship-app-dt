@@ -13,6 +13,7 @@ import {
     setColorNoteFilePathSetting,
 } from '../../helper/FileSourceMetaManager';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
+import { playMediaElement } from '../../helper/mediaHelpers';
 import { chooseColorNote } from '../../others/ItemColorNoteComp';
 import appProvider from '../../server/appProvider';
 import BackgroundRenderOnHoverComp from './BackgroundRenderOnHoverComp';
@@ -124,8 +125,12 @@ export function genAttachBackgroundComponent(
                     objectFit: 'cover',
                     objectPosition: 'center center',
                 }}
+                // NOTE: this video renders inside ShadowingFillParentWidthComp's
+                // shadow-rooted React root; React cannot synthesize
+                // mouseenter/mouseleave across that boundary, so keep the
+                // bubbling over/out events (the video has no children).
                 onMouseOver={(event) => {
-                    event.currentTarget.play();
+                    playMediaElement(event.currentTarget);
                 }}
                 onMouseOut={(event) => {
                     event.currentTarget.pause();

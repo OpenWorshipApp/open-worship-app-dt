@@ -1,27 +1,26 @@
 import ShowHideScreen from './ShowHideScreen';
 import MiniScreenClearControlComp from './MiniScreenClearControlComp';
 import ItemColorNoteComp from '../../others/ItemColorNoteComp';
-import { useScreenManagerBaseContext } from '../managers/screenManagerHooks';
+import {
+    useScreenManagerBaseContext,
+    useScreenManagerEvents,
+} from '../managers/screenManagerHooks';
 import { useCallback, useState } from 'react';
 import ShowingScreenIcon from './ShowingScreenIcon';
-import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function ScreenPreviewerHeaderComp() {
     const screenManagerBase = useScreenManagerBaseContext();
     const [isLocked, setIsLocked] = useState(screenManagerBase.isLocked);
-    const setIsLocked1 = useCallback(
-        (newIsLocked: boolean) => {
-            screenManagerBase.isLocked = newIsLocked;
-            setIsLocked(newIsLocked);
-        },
-        [screenManagerBase],
-    );
-    const isLockedRef = useAppCurrentRef(isLocked);
-    const setIsLocked1Ref = useAppCurrentRef(setIsLocked1);
+    // A group member's lock is toggled from a sibling; re-sync from the
+    // instance event that its setter fires.
+    useScreenManagerEvents(['instance'], screenManagerBase, () => {
+        setIsLocked(screenManagerBase.isLocked);
+    });
     const handleToggleLock = useCallback(() => {
-        setIsLocked1Ref.current(!isLockedRef.current);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        const newIsLocked = !screenManagerBase.isLocked;
+        setIsLocked(newIsLocked);
+        screenManagerBase.setIsLockedWithSyncGroup(newIsLocked);
+    }, [screenManagerBase]);
     return (
         <div
             className="card-header w-100"
