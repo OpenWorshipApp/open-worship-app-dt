@@ -10,8 +10,7 @@ import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { useStateSettingBoolean } from '../../helper/settingHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 import { useAppCurrentRef } from '../../helper/appHooks';
-import { checkIsBibleKeyDirty } from './bibleEditorDirtyHelpers';
-import { showSimpleToast } from '../../toast/toastHelpers';
+import { warnIfBibleKeyDirty } from './bibleEditorDirtyHelpers';
 
 const BibleXMLDataPreviewCompLazy = lazy(
     () => import('./BibleXMLDataPreviewComp'),
@@ -37,14 +36,14 @@ export default function BibleXMLInfoComp({
     const handleToggleShowing = useCallback(() => {
         // Block collapsing the editor while it has unsaved changes, mirroring the
         // window-reload guard, so edits are not silently discarded.
-        if (isShowingRef.current && checkIsBibleKeyDirty(bibleKeyRef.current)) {
-            showSimpleToast(
-                tran('Unsaved Bible Data'),
-                tran(
-                    'Save or discard unsaved Bible changes before closing ' +
-                        'the editor.',
-                ),
-            );
+        if (
+            isShowingRef.current &&
+            warnIfBibleKeyDirty(
+                bibleKeyRef.current,
+                'Save or discard unsaved Bible changes before closing ' +
+                    'the editor.',
+            )
+        ) {
             return;
         }
         setIsShowingRef.current(!isShowingRef.current);

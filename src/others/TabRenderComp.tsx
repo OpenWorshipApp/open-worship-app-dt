@@ -67,20 +67,27 @@ export default function TabRenderComp<T extends string>({
     tabs,
     activeTabs,
     setActiveTab,
-    className,
+    className = '',
+    isVertical = false,
 }: Readonly<{
     tabs: TabHeaderPropsType<T>[];
     activeTabs: T[];
     setActiveTab?: (key: T, event: MouseEvent<HTMLButtonElement>) => void;
     className?: string;
+    isVertical?: boolean;
 }>) {
     return (
         <ul
-            className={`nav nav-tabs ${className} d-flex flex-nowrap`}
-            style={{
-                overflowY: 'hidden',
-                overflowX: 'auto',
-            }}
+            className={
+                'nav d-flex flex-nowrap ' +
+                (isVertical ? 'flex-column' : 'nav-tabs') +
+                ` ${className}`
+            }
+            style={
+                isVertical
+                    ? { overflowY: 'auto', overflowX: 'hidden' }
+                    : { overflowY: 'hidden', overflowX: 'auto' }
+            }
         >
             {tabs.map((tab) => {
                 return (

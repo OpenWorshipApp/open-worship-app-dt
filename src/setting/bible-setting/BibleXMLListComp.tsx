@@ -5,6 +5,7 @@ import BibleXMLInfoComp from './BibleXMLInfoComp';
 import { tran } from '../../lang/langHelpers';
 import { bibleDataReader } from '../../helper/bible-helpers/BibleDataReader';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { warnIfAnyBibleEditorDirty } from './bibleEditorDirtyHelpers';
 
 export default function BibleXMLListComp({
     isPending,
@@ -26,6 +27,15 @@ export default function BibleXMLListComp({
     }, [bibleKeysMap]);
     const loadBibleKeysRef = useAppCurrentRef(loadBibleKeys);
     const handleRefresh = useCallback(() => {
+        // Refreshing unmounts every editor, which would silently discard any
+        // unsaved changes.
+        if (
+            warnIfAnyBibleEditorDirty(
+                'Save or discard unsaved Bible changes before refreshing.',
+            )
+        ) {
+            return;
+        }
         loadBibleKeysRef.current();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

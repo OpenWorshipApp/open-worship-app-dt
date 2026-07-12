@@ -9,27 +9,17 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import { checkIsKeyboardEventMatch } from '../event/KeyboardEventListener';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { genBlockUnload } from '../helper/blockUnloadHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 
-const attemptTimeout = genTimeoutAttempt(3000);
-let attemptCount = 0;
-function blockUnload(event: BeforeUnloadEvent) {
-    attemptTimeout(() => {
-        attemptCount = 0;
-    });
-    attemptCount++;
-    if (attemptCount > 3) {
-        window.removeEventListener('beforeunload', blockUnload);
-        return;
-    }
-    event.preventDefault();
+const blockUnload = genBlockUnload(() => {
     showSimpleToast(
         tran('Saving note'),
         tran('Please wait while the note is being saved.') +
             ' ' +
             tran('Or attempt 3 times to force leaving.'),
     );
-}
+});
 
 export interface SimpleNoteEditorStoreType {
     defaultText: string;

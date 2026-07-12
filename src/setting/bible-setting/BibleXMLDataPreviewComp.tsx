@@ -19,8 +19,11 @@ import {
 import { getBibleXMLDataFromKey } from './bibleXMLHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
-import { tran } from '../../lang/langHelpers';
-import { checkIsBibleKeyDirty } from './bibleEditorDirtyHelpers';
+import { warnIfBibleKeyDirty } from './bibleEditorDirtyHelpers';
+import {
+    BIBLE_EDITOR_BODY_HEIGHT,
+    BIBLE_EDITOR_FOOTER_HEIGHT,
+} from './BibleXMLEditorComp';
 
 json.jsonDefaults.setDiagnosticsOptions({
     validate: true,
@@ -104,28 +107,21 @@ export default function BibleXMLDataPreviewComp({
         `bible-setting-${bibleKey}-xml-data-editing-type`,
         'info',
     );
-    const editingTypeRef = useAppCurrentRef(editingType);
-    const bibleKeyRef = useAppCurrentRef(bibleKey);
-    const handleSetEditingType = useCallback((newEditingType: string) => {
-        // Block switching tabs while the current editor has unsaved changes,
-        // mirroring the reload/close guards, so edits are not silently discarded
-        // when the editor unmounts.
+    // Block switching tabs while the current editor has unsaved changes,
+    // mirroring the reload/close guards, so edits are not silently discarded
+    // when the editor unmounts.
+    const handleSetEditingType = (newEditingType: string) => {
         if (
-            newEditingType !== editingTypeRef.current &&
-            checkIsBibleKeyDirty(bibleKeyRef.current)
+            newEditingType !== editingType &&
+            warnIfBibleKeyDirty(
+                bibleKey,
+                'Save or discard unsaved Bible changes before switching tabs.',
+            )
         ) {
-            showSimpleToast(
-                tran('Unsaved Bible Data'),
-                tran(
-                    'Save or discard unsaved Bible changes before switching ' +
-                        'tabs.',
-                ),
-            );
             return;
         }
         setEditingType(newEditingType);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    };
     let element: any;
     if (editingType === 'info') {
         element = <BibleXMLInfoEditorComp bibleKey={bibleKey} />;
@@ -176,11 +172,13 @@ export default function BibleXMLDataPreviewComp({
             <div
                 className="card-body"
                 style={{
-                    // Reserve the editor's height so the card does not collapse
-                    // to the small loading spinner and then snap to full size.
-                    minHeight: '488px',
-                    transition:
-                        'min-height 0.2s ease-in-out, height 0.2s ease-in-out',
+                    // Reserve the editor card's height (body + footer +
+                    // borders) so the card does not collapse to the small
+                    // loading spinner and then snap to full size.
+                    minHeight:
+                        BIBLE_EDITOR_BODY_HEIGHT +
+                        BIBLE_EDITOR_FOOTER_HEIGHT +
+                        3,
                 }}
             >
                 {element}

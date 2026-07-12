@@ -28,6 +28,7 @@ import { SelectDefaultDirButton } from '../../others/NoDirSelectedComp';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 import { type OptionalPromise } from '../../helper/typeHelpers';
+import SettingCardHeaderComp from '../SettingCardHeaderComp';
 
 class ParentDirSource extends DirSource {
     _dirPath: string;
@@ -66,7 +67,12 @@ function RenderPathElementComp({
         return null;
     }
     return (
-        <div className="app-setting-path-item d-flex w-100 flex-column p-2 mb-2">
+        <div
+            className={
+                'app-setting-path-item app-border-white-round d-flex w-100' +
+                ' flex-column p-2 mb-2'
+            }
+        >
             <div className="d-flex align-items-center mb-1">
                 <i
                     className={`bi ${iconClassName} app-setting-path-item-icon me-2`}
@@ -224,11 +230,10 @@ function RenderChildDirectoriesComp({
     }, []);
     return (
         <>
-            <div className="card-header d-flex align-items-center justify-content-between">
-                <span className="d-flex align-items-center">
-                    <i className="bi bi-diagram-3 me-2" />
-                    {tran('Child Directories')}
-                </span>
+            <SettingCardHeaderComp
+                iconClassName="bi-diagram-3"
+                title="Child Directories"
+            >
                 <button
                     className="btn btn-sm btn-warning d-flex align-items-center"
                     title={tran('Reset All Child Directories')}
@@ -237,7 +242,7 @@ function RenderChildDirectoriesComp({
                     <i className="bi bi-arrow-counterclockwise me-1" />
                     {tran('Reset All Child Directories')}
                 </button>
-            </div>
+            </SettingCardHeaderComp>
             <div className="card-body">
                 {Object.entries(titleSettingNames).map(
                     ([
@@ -268,10 +273,10 @@ function RenderBodyComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
     }, [dirSource]);
     return (
         <div className="card h-100">
-            <div className="card-header d-flex align-items-center">
-                <i className="bi bi-folder2-open me-2" />
-                {tran('Path Settings')}
-            </div>
+            <SettingCardHeaderComp
+                iconClassName="bi-folder2-open"
+                title="Path Settings"
+            />
             <div className="card-body w-100 p-2">
                 <RenderParentDirectoryComp dirSource={dirSource} />
                 <div className="card app-border-white-round p-1">

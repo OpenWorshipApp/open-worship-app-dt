@@ -4,6 +4,7 @@ import { tran } from '../lang/langHelpers';
 import type { ThemeOptionType } from '../others/themeHelpers';
 import { useThemeSource } from '../others/themeHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import SettingCardHeaderComp from './SettingCardHeaderComp';
 
 export default function SettingGeneralThemeComp() {
     const { themeSource, setThemeSource } = useThemeSource();
@@ -19,10 +20,7 @@ export default function SettingGeneralThemeComp() {
 
     return (
         <div className="card m-1">
-            <div className="card-header d-flex align-items-center">
-                <i className="bi bi-palette me-2" />
-                {tran('Theme')}
-            </div>
+            <SettingCardHeaderComp iconClassName="bi-palette" title="Theme" />
             <div className="card-body">
                 <select
                     className="form-select"

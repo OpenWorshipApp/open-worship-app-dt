@@ -2,7 +2,7 @@ import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import EventHandler from '../event/EventHandler';
 import { playMediaElement } from './mediaHelpers';
-import { genTimeoutAttempt } from './timeoutHelpers';
+import { genBlockUnload } from './blockUnloadHelpers';
 
 export const AUDIO_PLAYING_CHANGE_EVENT = 'audio-playing-change';
 export const BLOCK_UNLOAD_WHILE_PLAYING_ATTR =
@@ -26,24 +26,10 @@ export function showAudioPlayingToast() {
     );
 }
 
-const attemptTimeout = genTimeoutAttempt(3000);
-let attemptCount = 0;
-function blockUnload(event: BeforeUnloadEvent) {
-    if (!checkBlockingMediaPlaying()) {
-        window.removeEventListener('beforeunload', blockUnload);
-        return;
-    }
-    attemptTimeout(() => {
-        attemptCount = 0;
-    });
-    attemptCount++;
-    if (attemptCount > 3) {
-        window.removeEventListener('beforeunload', blockUnload);
-        return;
-    }
-    event.preventDefault();
-    showMediaPlayingToast();
-}
+const blockUnload = genBlockUnload(
+    showMediaPlayingToast,
+    checkBlockingMediaPlaying,
+);
 
 export function checkAudioPlaying() {
     return Array.from(document.querySelectorAll('audio')).some(

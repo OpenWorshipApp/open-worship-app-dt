@@ -11,10 +11,6 @@
   }
 
   .app-setting-nav {
-    &.nav-tabs {
-      border-bottom: none;
-    }
-
     .nav-item {
       width: 100%;
     }
@@ -61,9 +57,9 @@
     opacity: 0.85;
   }
 
+  // Border and radius come from the app-wide app-border-white-round class so
+  // the items pick up the per-theme border colors.
   .app-setting-path-item {
-    border: 1px solid var(--bs-border-color);
-    border-radius: var(--bs-border-radius);
     background-color: rgba(var(--bs-body-color-rgb), 0.03);
     transition:
       background-color 0.15s ease-in-out,

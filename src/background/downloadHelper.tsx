@@ -11,7 +11,7 @@ import {
     type MessageCallbackType,
     writeStreamToFile,
 } from '../helper/bible-helpers/downloadHelpers';
-import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import { genBlockUnload } from '../helper/blockUnloadHelpers';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 
@@ -114,18 +114,7 @@ export async function genDownloadContextMenuItems(
     return contextMenuItems;
 }
 
-const attemptTimeout = genTimeoutAttempt(3000);
-let attemptCount = 0;
-function blockUnload(event: BeforeUnloadEvent) {
-    attemptTimeout(() => {
-        attemptCount = 0;
-    });
-    attemptCount++;
-    if (attemptCount > 3) {
-        window.removeEventListener('beforeunload', blockUnload);
-        return;
-    }
-    event.preventDefault();
+const blockUnload = genBlockUnload(() => {
     showSimpleToast(
         tran('Downloading in progress'),
         tran("Can't leave the page while downloading.") +
@@ -134,7 +123,7 @@ function blockUnload(event: BeforeUnloadEvent) {
             ' ' +
             tran('Or attempt 3 times to force leaving.'),
     );
-}
+});
 
 export function streamDownloadFile(
     filePath: string,

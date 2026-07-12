@@ -1,4 +1,4 @@
-import { useCallback, useState, type MouseEvent } from 'react';
+import { useCallback, useMemo, useState, type MouseEvent } from 'react';
 import type { SchemaNode } from 'json-schema-library';
 import { Uri } from 'monaco-editor';
 
@@ -29,6 +29,10 @@ import {
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import { genBibleNumbersMapXMLInput } from './bibleXMLAttributesGuessing';
 import { setBibleEditorDirty } from './bibleEditorDirtyHelpers';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
+
+export const BIBLE_EDITOR_BODY_HEIGHT = 450;
+export const BIBLE_EDITOR_FOOTER_HEIGHT = 35;
 
 function parseJsonData(content: string) {
     try {
@@ -43,6 +47,10 @@ function evaluateEditorState(
     oldContent: string,
     newContent: string,
 ) {
+    if (oldContent === newContent) {
+        // Identical content can never be saved; skip the heavy parse/compare.
+        return { canSave: false, newJsonData: null };
+    }
     const oldJsonData = parseJsonData(oldContent);
     const newJsonData = parseJsonData(newContent);
     const { valid, errors } = jsonDataSchema.validate(newJsonData);
@@ -50,7 +58,7 @@ function evaluateEditorState(
     const isChanged =
         oldJsonData !== null &&
         checkAreObjectsEqual(oldJsonData, newJsonData) === false;
-    return { canSave: isNoError && isChanged, isChanged, newJsonData };
+    return { canSave: isNoError && isChanged, newJsonData };
 }
 
 export default function BibleXMLEditorComp({
@@ -75,15 +83,27 @@ export default function BibleXMLEditorComp({
     const [canSave, setCanSave] = useState(false);
     const [isChanged, setIsChanged] = useState(false);
     const jsonDataSchemaRef = useAppCurrentRef(jsonDataSchema);
+    // Evaluating canSave parses and deep-compares the whole bible JSON, so it
+    // is debounced behind keystrokes. isChanged is a plain text comparison so
+    // the dirty guards arm immediately on the first keystroke.
+    const evaluateAttemptTimeout = useMemo(() => genTimeoutAttempt(300), []);
     const handleContentChange = useCallback(
         (oldContent: string, newContent: string) => {
-            const state = evaluateEditorState(
-                jsonDataSchemaRef.current,
-                oldContent,
-                newContent,
-            );
-            setCanSave(state.canSave);
-            setIsChanged(state.isChanged);
+            if (oldContent === newContent) {
+                setIsChanged(false);
+                // The immediate call also cancels any pending evaluation.
+                evaluateAttemptTimeout(() => setCanSave(false), true);
+                return;
+            }
+            setIsChanged(true);
+            evaluateAttemptTimeout(() => {
+                const { canSave } = evaluateEditorState(
+                    jsonDataSchemaRef.current,
+                    oldContent,
+                    newContent,
+                );
+                setCanSave(canSave);
+            });
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
@@ -137,8 +157,10 @@ export default function BibleXMLEditorComp({
         // force-reload that follows a successful save is not blocked as unsaved.
         currentEditorStore.systemContent = newContent;
         setBibleEditorDirty(id, editorId, false);
-        setCanSave(false);
         setIsChanged(false);
+        // The immediate call also cancels any pending evaluation scheduled by
+        // keystrokes just before the save.
+        evaluateAttemptTimeout(() => setCanSave(false), true);
         saveRef.current(state.newJsonData);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, editorId]);
@@ -148,8 +170,8 @@ export default function BibleXMLEditorComp({
         // unsaved changes.
         currentEditorStore.replaceValue(currentEditorStore.systemContent);
         setBibleEditorDirty(id, editorId, false);
-        setCanSave(false);
         setIsChanged(false);
+        evaluateAttemptTimeout(() => setCanSave(false), true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id, editorId]);
     const isFullViewRef = useAppCurrentRef(isFullView);
@@ -172,12 +194,12 @@ export default function BibleXMLEditorComp({
             <div
                 className="w-100 card-body p-0 m-0 app-overflow-hidden"
                 ref={onContainerInit}
-                style={{ height: '450px' }}
+                style={{ height: BIBLE_EDITOR_BODY_HEIGHT }}
             />
             <div
                 className="w-100 card-footer d-flex p-0 app-overflow-hidden"
                 style={{
-                    height: '35px',
+                    height: BIBLE_EDITOR_FOOTER_HEIGHT,
                 }}
             >
                 <div className="flex-grow-1">

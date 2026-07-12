@@ -12,6 +12,7 @@ import {
 } from '../lang/langHelpers';
 import { applyStore } from './SettingApplyComp';
 import LoadingComp from '../others/LoadingComp';
+import SettingCardHeaderComp from './SettingCardHeaderComp';
 
 function RenderLanguageButtonComp({
     currentLocale,
@@ -76,10 +77,10 @@ export default function SettingGeneralLanguageComp() {
 
     return (
         <div className="card lang m-1">
-            <div className="card-header d-flex align-items-center">
-                <i className="bi bi-translate me-2" />
-                {tran('Language')}
-            </div>
+            <SettingCardHeaderComp
+                iconClassName="bi-translate"
+                title="Language"
+            />
             <div className="card-body">{element}</div>
         </div>
     );

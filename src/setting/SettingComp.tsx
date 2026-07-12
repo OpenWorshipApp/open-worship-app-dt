@@ -7,6 +7,7 @@ import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { SETTING_SETTING_NAME } from './settingHelpers';
 import SettingApplyComp from './SettingApplyComp';
 import { tran } from '../lang/langHelpers';
+import { warnIfAnyBibleEditorDirty } from './bible-setting/bibleEditorDirtyHelpers';
 
 const LazySettingGeneralComp = lazy(() => {
     return import('./SettingGeneralComp');
@@ -25,17 +26,27 @@ export default function SettingComp() {
         SETTING_SETTING_NAME,
         'g',
     );
+    const handleSettingTab = (key: TabKeyType) => {
+        // Leaving the Bible tab unmounts its editors, which would silently
+        // discard any unsaved changes.
+        if (
+            warnIfAnyBibleEditorDirty(
+                'Save or discard unsaved Bible changes before switching tabs.',
+            )
+        ) {
+            return;
+        }
+        setTabKey(key);
+    };
     return (
         <div
             id="app-setting"
-            className={
-                'card w-100 h-100 app-overflow-hidden app-zero-border-radius' +
-                ' d-flex flex-row'
-            }
+            className="card flex-row w-100 h-100 app-overflow-hidden app-zero-border-radius"
         >
             <div className="app-setting-sidebar d-flex flex-column p-1">
                 <TabRenderComp<TabKeyType>
-                    className="app-setting-nav flex-column flex-grow-1"
+                    isVertical
+                    className="app-setting-nav flex-grow-1"
                     tabs={tabTypeList.map(([key, name]) => {
                         return {
                             key,
@@ -43,18 +54,13 @@ export default function SettingComp() {
                         };
                     })}
                     activeTabs={[tabKey]}
-                    setActiveTab={(key) => setTabKey(key)}
+                    setActiveTab={handleSettingTab}
                 />
                 <div className="app-setting-apply mt-1 pt-1">
                     <SettingApplyComp />
                 </div>
             </div>
-            <div
-                className="card-body app-overflow-hidden flex-grow-1 p-0"
-                style={{
-                    height: '100%',
-                }}
-            >
+            <div className="card-body app-overflow-hidden p-0">
                 {tabTypeList.map(([type, _, target]) => {
                     return genTabBody<TabKeyType>(tabKey, [type, target]);
                 })}
