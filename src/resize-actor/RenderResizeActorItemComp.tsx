@@ -135,7 +135,7 @@ export default function RenderResizeActorItemComp({
         return false;
     }, [index, handleReopening, dataInput, flexSize]);
     const type = isHorizontal ? 'h' : 'v';
-    const isWidgetHidden = handleReopening !== null;
+    const isWidgetHidden = !isDisableQuickResize && handleReopening !== null;
     return (
         <Fragment key={index}>
             {isShowingFlexSizeActor && (
