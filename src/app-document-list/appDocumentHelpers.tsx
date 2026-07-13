@@ -14,6 +14,7 @@ import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
     fsCopyFilePathToPath,
+    fsExistSync,
     getFileDotExtension,
     getFileFullName,
     getFileName,
@@ -73,6 +74,7 @@ import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 import { getSlidesCount } from '../server/pptxHelpers';
 import { type ItemBaseFilePath } from '../helper/ItemBase';
+import { getParamFileFullName } from '../helper/domHelpers';
 
 export async function showStaticSlideContextMenu(
     event: any,
@@ -588,10 +590,41 @@ export async function toSlideFromKey(key: string) {
     return await varyAppDocument.getItemById(id);
 }
 
+function getInjectedAppDocumentFilePath(): string | null {
+    try {
+        const fileFullName = getParamFileFullName();
+        if (fileFullName === null) {
+            return null;
+        }
+        const dirPath = DirSource.getDirPathBySettingName(
+            dirSourceSettingNames.APP_DOCUMENT,
+        );
+        if (dirPath === null) {
+            throw new Error('App document directory not set');
+        }
+        const filePath = pathJoin(dirPath, fileFullName);
+        if (fsExistSync(filePath) === false) {
+            throw new Error(`App document file not found: ${fileFullName}`);
+        }
+        return filePath;
+    } catch (error) {
+        handleError(error);
+    }
+    return null;
+}
+
+export const isInjectedAppDocument = getInjectedAppDocumentFilePath() !== null;
+
 const SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME =
     SELECTED_APP_DOCUMENT_SETTING_NAME + '-item';
 
 export async function getSelectedVaryAppDocument() {
+    const injectedFilePath = getInjectedAppDocumentFilePath();
+    if (injectedFilePath !== null) {
+        const fileSource = FileSource.getInstance(injectedFilePath);
+        document.title = `${appProvider.windowTitle} - ${fileSource.name}`;
+        return AppDocument.getInstance(injectedFilePath);
+    }
     const selectedAppDocumentFilePath =
         await getSelectedVaryAppDocumentFilePathWithEnsure();
     if (selectedAppDocumentFilePath === null) {
@@ -606,7 +639,21 @@ export async function setSelectedVaryAppDocument(
     setSelectedVaryAppDocumentFilePath(varyAppDocument?.filePath ?? null);
 }
 
-export async function getSelectedEditingSlideFilePath() {
+export async function getSelectedEditingSlideFilePath(): Promise<{
+    filePath: string;
+    id: number;
+} | null> {
+    const injectedFilePath = getInjectedAppDocumentFilePath();
+    if (injectedFilePath !== null) {
+        const slides =
+            await AppDocument.getInstance(injectedFilePath).getSlides();
+        const firstSlide = slides[0];
+        return {
+            filePath: injectedFilePath,
+            id: firstSlide?.id ?? -1,
+        };
+    }
+
     const selectedKey =
         getSetting(SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME) ?? '';
     const [filePath, idString] = selectedKey.split(KEY_SEPARATOR);

@@ -14,6 +14,7 @@ import HandleAlertComp from '../popup-widget/HandleAlertComp';
 import ToastComp from '../toast/ToastComp';
 import TopProgressBarComp from '../progress-bar/TopProgressBarComp';
 import {
+    isInjectedAppDocument,
     SelectedEditingSlideContext,
     SelectedVaryAppDocumentContext,
 } from '../app-document-list/appDocumentHelpers';
@@ -73,7 +74,7 @@ export default function AppLayoutComp({
         <MultiContextRender contexts={contexts}>
             {/* <TestInfinite /> */}
             <div id="app-header" className="d-flex">
-                <LayoutTabRenderComp />
+                {isInjectedAppDocument ? null : <LayoutTabRenderComp />}
                 <div
                     className={
                         'app-highlight-border-bottom d-flex' +
@@ -82,9 +83,11 @@ export default function AppLayoutComp({
                 >
                     <BibleLookupButtonComp />
                 </div>
-                <div className="app-highlight-border-bottom">
-                    <SettingButtonComp />
-                </div>
+                {isInjectedAppDocument ? null : (
+                    <div className="app-highlight-border-bottom">
+                        <SettingButtonComp />
+                    </div>
+                )}
                 <div className="app-highlight-border-bottom">
                     <HelpButtonComp />
                 </div>

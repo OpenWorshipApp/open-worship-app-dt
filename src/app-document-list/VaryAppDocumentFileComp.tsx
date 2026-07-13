@@ -2,11 +2,10 @@ import { use, useCallback, useState } from 'react';
 
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
-import AppDocument from './AppDocument';
+import AppDocument, { openAppDocumentPopup } from './AppDocument';
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { goToPath } from '../router/routeHelpers';
 import { removePdfImagesPreview } from '../helper/pdfHelpers';
 import {
     varyAppDocumentFromFilePath,
@@ -17,11 +16,7 @@ import {
 import PdfAppDocument from './PdfAppDocument';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
-import type {
-    VaryAppDocumentDynamicType,
-    VaryAppDocumentType,
-} from './appDocumentTypeHelpers';
-import { genLayoutTabs } from '../router/layoutHelpers';
+import type { VaryAppDocumentDynamicType } from './appDocumentTypeHelpers';
 import { tran } from '../lang/langHelpers';
 import { openPopupWindow } from '../helper/domHelpers';
 import PptxAppDocument from './PptxAppDocument';
@@ -34,7 +29,6 @@ import { printAppDocument } from './appDocumentPrintHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
-    setSelectedAppDocument: (value: VaryAppDocumentType | null) => void,
 ): ContextMenuItemType[] {
     if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
         const menuItems: ContextMenuItemType[] = [
@@ -95,15 +89,19 @@ function genContextMenuItems(
         ];
         return menuItems;
     }
-    const { editorTab } = genLayoutTabs();
     const menuItems: ContextMenuItemType[] = [
         {
-            menuElement: tran('Edit'),
+            menuElement: (
+                <>
+                    {tran('Edit')}
+                    <i className="bi bi-box-arrow-up-right ms-1" />
+                </>
+            ),
             onSelect: () => {
-                if (varyAppDocument) {
-                    setSelectedAppDocument(varyAppDocument);
-                    goToPath(editorTab.routePath);
+                if (!varyAppDocument) {
+                    return;
                 }
+                openAppDocumentPopup(varyAppDocument!);
             },
         },
     ];
@@ -285,10 +283,7 @@ export default function VaryAppDocumentFileComp({
             filePath={filePath}
             onClick={handleClicking}
             renderChild={handleChildRendering}
-            contextMenuItems={genContextMenuItems(
-                varyAppDocument,
-                setSelectedAppDocument,
-            )}
+            contextMenuItems={genContextMenuItems(varyAppDocument)}
             renamedCallback={handleRenaming}
             isSelected={isSelected}
             checkIsOnScreen={checkIsOnScreen}

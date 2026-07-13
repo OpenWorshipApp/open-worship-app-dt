@@ -18,12 +18,7 @@ export enum WindowModEnum {
 }
 
 export function toTitleExternal(title: string, style?: CSSProperties) {
-    return (
-        <span style={style}>
-            {tran(title) + ' '}
-            <i className="bi bi-box-arrow-up-right" />
-        </span>
-    );
+    return <span style={style}>{tran(title) + ' '}</span>;
 }
 
 const PATH_NAME_SETTING_NAME = 'last-page-location';

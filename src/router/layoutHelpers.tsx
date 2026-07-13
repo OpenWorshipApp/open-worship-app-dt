@@ -1,7 +1,10 @@
 import { useMemo, useState, useCallback } from 'react';
 
 import appProvider from '../server/appProvider';
-import AppDocument from '../app-document-list/AppDocument';
+import AppDocument, {
+    checkIsAppDocumentSelected,
+    openAppDocumentPopup,
+} from '../app-document-list/AppDocument';
 import type Slide from '../app-document-list/Slide';
 import { useAppEffectAsync } from '../helper/appHooks';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
@@ -20,11 +23,11 @@ import type Lyric from '../lyric-list/Lyric';
 import type { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
 import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
-import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { type AllControlType as KeyboardControlType } from '../event/KeyboardEventListener';
 import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardEventHelpers';
 import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
+import { tran } from '../lang/langHelpers';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
@@ -54,19 +57,29 @@ export function genLayoutTabs() {
     };
 
     const editorTab: TabOptionType = {
-        title: toTitleExternal('Slide Editor'),
+        title: (
+            <>
+                <span>{tran('Slide Editor') + ' '}</span>
+                <span
+                    className="ms-2"
+                    onClick={async (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const isSelected = await checkIsAppDocumentSelected();
+                        if (!isSelected) {
+                            return;
+                        }
+                        const varyAppDocument =
+                            await getSelectedVaryAppDocument();
+                        openAppDocumentPopup(varyAppDocument!);
+                    }}
+                >
+                    <i className="bi bi-box-arrow-up-right" />
+                </span>
+            </>
+        ),
         routePath: appProvider.appDocumentEditorHomePage,
-        preCheck: async () => {
-            const varyAppDocument = await getSelectedVaryAppDocument();
-            if (!AppDocument.checkIsThisType(varyAppDocument)) {
-                showAppAlert(
-                    'No slide selected',
-                    'Please select an Open Worship slide first',
-                );
-                return false;
-            }
-            return true;
-        },
+        preCheck: checkIsAppDocumentSelected,
     };
     return { presenterTab, readerTab, experimentTab, editorTab };
 }
@@ -126,6 +139,7 @@ async function calculateNewHoldingSlides(
         Math.max(index, currentIndex) + 1,
     );
 }
+
 export function useAppDocumentContextValues() {
     const [varyAppDocument, setVaryAppDocument] =
         useState<VaryAppDocumentType | null>(null);

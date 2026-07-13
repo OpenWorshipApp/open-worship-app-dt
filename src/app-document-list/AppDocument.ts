@@ -6,6 +6,7 @@ import { tran } from '../lang/langHelpers';
 import {
     genSelectedSlidesContextMenuItems,
     genSlideContextMenuItems,
+    getSelectedVaryAppDocument,
 } from './appDocumentHelpers';
 import { checkIsSameValues, toMaxId } from '../helper/helpers';
 import type { MimetypeNameType } from '../server/fileHelpers';
@@ -25,8 +26,11 @@ import {
 } from '../app-document-presenter/items/appDocumentHelpers';
 import { fixMissingFontFamilies } from '../server/fontHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
-import { notifyElementHighlight } from '../helper/domHelpers';
+import { notifyElementHighlight, openPopupWindow } from '../helper/domHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
+import { type VaryAppDocumentType } from './appDocumentTypeHelpers';
+import appProvider from '../server/appProvider';
+import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
@@ -506,4 +510,29 @@ export default class AppDocument
             return new this(filePath);
         });
     }
+}
+
+export async function checkIsAppDocumentSelected() {
+    const varyAppDocument = await getSelectedVaryAppDocument();
+    if (!AppDocument.checkIsThisType(varyAppDocument)) {
+        showAppAlert(
+            'No slide selected',
+            'Please select an Open Worship slide first',
+        );
+        return false;
+    }
+    return true;
+}
+
+export async function openAppDocumentPopup(
+    varyAppDocument: VaryAppDocumentType,
+) {
+    const fileFullName = varyAppDocument!.fileSource.fullName;
+    const fileFullNameEncoded = encodeURIComponent(fileFullName);
+    const url = `${appProvider.appDocumentEditorHomePage}?file=${fileFullNameEncoded}`;
+    openPopupWindow(
+        url,
+        `app_document_editor_${Date.now()}`,
+        'app_document_editor',
+    );
 }

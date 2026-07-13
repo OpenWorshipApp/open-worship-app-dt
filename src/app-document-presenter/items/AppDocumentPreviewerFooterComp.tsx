@@ -8,6 +8,7 @@ import {
     useSelectedAppDocumentSetterContext,
     toKeyByFilePath,
     useVaryAppDocumentContext,
+    isInjectedAppDocument,
 } from '../../app-document-list/appDocumentHelpers';
 import AppRangeComp from '../../others/AppRangeComp';
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
@@ -123,15 +124,19 @@ export default function AppDocumentPreviewerFooterComp({
                         setValue={setThumbnailSizeScale}
                         defaultSize={defaultRangeSize}
                     />
-                    <PathPreviewerComp
-                        dirPath={selectedVaryAppDocument.filePath}
-                        isShowingNameOnly
-                        onClick={
-                            isDisableChanging ? undefined : handleSlideChoosing
-                        }
-                        shouldNotValidate
-                        canOpenFileExplorer
-                    />
+                    {isInjectedAppDocument ? null : (
+                        <PathPreviewerComp
+                            dirPath={selectedVaryAppDocument.filePath}
+                            isShowingNameOnly
+                            onClick={
+                                isDisableChanging
+                                    ? undefined
+                                    : handleSlideChoosing
+                            }
+                            shouldNotValidate
+                            canOpenFileExplorer
+                        />
+                    )}
                 </div>
                 {appProvider.isPagePresenter ? (
                     <div className="app-flex-item">
