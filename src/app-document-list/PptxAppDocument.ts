@@ -12,6 +12,7 @@ import {
     getPptxToHtmlsVersion,
     removePptxHtmlsPreview,
 } from '../server/pptxHelpers';
+import { type VarySlideAudioDataType } from '../background/backgroundHelpers';
 
 export default class PptxAppDocument
     extends AppDocumentSourceAbs
@@ -129,10 +130,13 @@ export default class PptxAppDocument
             if (slide.audioFilePaths.length === 0) {
                 continue;
             }
-            audioSlideDataList.push({
+            const audioSlideData: VarySlideAudioDataType = {
                 slideIndex: i,
+                slideId: slide.id,
                 filePaths: slide.audioFilePaths,
-            });
+                slideFilePath: slide.filePath,
+            };
+            audioSlideDataList.push(audioSlideData);
         }
         return audioSlideDataList;
     }

@@ -26,6 +26,8 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import VaryAppDocumentAudiosComp from './VaryAppDocumentAudiosComp';
 import { genAudioBodyChild } from './AudioBodyComp';
+import { useAppDocumentAudioData } from './backgroundHelpers';
+import ResizeActorComp from '../resize-actor/ResizeActorComp';
 
 async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
@@ -114,10 +116,9 @@ export default function BackgroundAudiosComp() {
         },
         [],
     );
-    return (
+    const mainElement = (
         <BackgroundMediaComp
             rendChild={genAudioBodyChild.bind(null, activeMap)}
-            extraBodyChild={<VaryAppDocumentAudiosComp />}
             defaultFolderName={defaultDataDirNames.BACKGROUND_AUDIO}
             dragType={DragTypeEnum.BACKGROUND_AUDIO}
             extraMimetypeNames={['video']}
@@ -128,6 +129,48 @@ export default function BackgroundAudiosComp() {
             genContextMenuItems={genAudioDownloadContextMenuItems}
             onItemsAdding={handleItemsAdding}
             shouldHideFooter
+        />
+    );
+
+    const appDocumentAudioData = useAppDocumentAudioData();
+
+    if (appDocumentAudioData === null) {
+        return mainElement;
+    }
+
+    return (
+        <ResizeActorComp
+            flexSizeName={'flex-size-background'}
+            isHorizontal={false}
+            isDisableQuickResize
+            flexSizeDefault={{
+                v1: ['3'],
+                v2: ['1'],
+            }}
+            dataInput={[
+                {
+                    children: {
+                        render: () => {
+                            return mainElement;
+                        },
+                    },
+                    key: 'v1',
+                    widgetName: 'Background',
+                },
+                {
+                    children: {
+                        render: () => {
+                            return (
+                                <VaryAppDocumentAudiosComp
+                                    appDocumentAudioData={appDocumentAudioData}
+                                />
+                            );
+                        },
+                    },
+                    key: 'v2',
+                    widgetName: 'Background Audio',
+                },
+            ]}
         />
     );
 }

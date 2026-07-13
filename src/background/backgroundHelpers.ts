@@ -5,7 +5,7 @@ import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../helper/helpers';
 import type { CameraInfoType } from '../helper/cameraHelpers';
-import { useAppEffect, useAppEffectAsync } from '../helper/appHooks';
+import { useAppEffect } from '../helper/appHooks';
 import PptxAppDocument from '../app-document-list/PptxAppDocument';
 import { dirSourceSettingNames } from '../helper/constants';
 import type DirSource from '../helper/DirSource';
@@ -73,9 +73,11 @@ export function cameraDragDeserialize(data: string) {
     };
 }
 
-type VarySlideAudioDataType = {
+export type VarySlideAudioDataType = {
     slideIndex: number;
+    slideId: number;
     filePaths: string[];
+    slideFilePath: string;
 };
 export type VaryAppDocumentAudioDataType = {
     [key: string]: VarySlideAudioDataType[];
@@ -100,11 +102,20 @@ async function getAudioDataList(dirSource: DirSource) {
             ];
         }),
     );
-    return Object.fromEntries(
+    const audioDataObject = Object.fromEntries(
         audioDataList.filter((item) => {
             return item !== null;
         }),
     );
+    const dataEntries = Object.entries(audioDataObject);
+    if (
+        dataEntries.every(
+            ([, audioSlideDataList]) => audioSlideDataList.length === 0,
+        )
+    ) {
+        return null;
+    }
+    return audioDataObject;
 }
 export function useAppDocumentAudioData() {
     const [audioData, setAudioData] =
@@ -115,8 +126,11 @@ export function useAppDocumentAudioData() {
         if (dirSource === null) {
             return;
         }
+        getAudioDataList(dirSource).then((audioDataObject) => {
+            setAudioData(audioDataObject);
+        });
         const registeredEvent = dirSource.registerEventListener(
-            ['refresh'],
+            ['refresh', 'reload'],
             async () => {
                 const audioDataObject = await getAudioDataList(dirSource);
                 setAudioData(audioDataObject);
@@ -127,16 +141,5 @@ export function useAppDocumentAudioData() {
         };
     }, [dirSource]);
 
-    useAppEffectAsync(
-        async (contextMethods) => {
-            if (dirSource === null) {
-                return;
-            }
-            const audioDataObject = await getAudioDataList(dirSource);
-            contextMethods.setAudioData(audioDataObject);
-        },
-        [dirSource],
-        { setAudioData },
-    );
     return audioData;
 }

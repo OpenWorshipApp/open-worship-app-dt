@@ -1,67 +1,51 @@
-import { useAppDocumentAudioData } from './backgroundHelpers';
+import { type VaryAppDocumentAudioDataType } from './backgroundHelpers';
 import AudioBodyComp from './AudioBodyComp';
 import { tran } from '../lang/langHelpers';
-import { bringDomToNearestView } from '../helper/helpers';
-import { useState } from 'react';
+import RenderSlideIndexComp from '../app-document-presenter/items/RenderSlideIndexComp';
+import { toKeyByFilePath } from '../app-document-list/appDocumentHelpers';
 
 function AudioElementComp({
     slideIndex,
+    slideId,
     filePath,
+    slideFilePath,
 }: Readonly<{
     slideIndex: number;
+    slideId: number;
     filePath: string;
+    slideFilePath: string;
 }>) {
     return (
         <div className="d-flex">
             <div>
-                <small className="badge rounded-pill text-bg-info align-items-center">
-                    {slideIndex + 1}
-                </small>
+                <RenderSlideIndexComp
+                    viewIndex={slideIndex + 1}
+                    dataKey={toKeyByFilePath(slideFilePath, slideId)}
+                    title={`${slideIndex + 1}`}
+                />
             </div>
             <AudioBodyComp key={filePath} filePath={filePath} />
         </div>
     );
 }
 
-export default function VaryAppDocumentAudiosComp() {
-    const [isShowing, setIsShowing] = useState(false);
-    const appDocumentAudioData = useAppDocumentAudioData();
-    if (appDocumentAudioData === null) {
-        return null;
-    }
-    const dataEntries = Object.entries(appDocumentAudioData);
-    if (
-        dataEntries.every(
-            ([, audioSlideDataList]) => audioSlideDataList.length === 0,
-        )
-    ) {
-        return null;
-    }
+export default function VaryAppDocumentAudiosComp({
+    appDocumentAudioData,
+}: Readonly<{
+    appDocumentAudioData: VaryAppDocumentAudioDataType;
+}>) {
     return (
-        <div
-            ref={(element) => {
-                if (!isShowing) {
-                    return;
-                }
-
-                if (element === null) {
-                    return;
-                }
-                bringDomToNearestView(element);
-            }}
-            className="w-10 app-inner-shadow p-2 mb-3 mt-5"
-        >
+        <div className="card w-100 h-100 app-overflow-hidden">
             <div
-                className="app-caught-hover-pointer"
-                onClick={() => setIsShowing(!isShowing)}
+                className="card-header p-0 ps-1"
+                style={{
+                    height: '25px',
+                }}
             >
-                <strong>{tran('Document Audios')}</strong>
-                <i
-                    className={`bi bi-chevron-${isShowing ? 'down' : 'right'}`}
-                />
+                <small>{tran('Document Audios')}</small>
             </div>
-            {isShowing &&
-                Object.entries(appDocumentAudioData).map(
+            <div className="card-body app-overflow-auto">
+                {Object.entries(appDocumentAudioData).map(
                     ([varyAppDocumentName, audioSlideDataList]) => {
                         if (audioSlideDataList.length === 0) {
                             return null;
@@ -73,13 +57,22 @@ export default function VaryAppDocumentAudiosComp() {
                                     {varyAppDocumentName}
                                 </span>
                                 {audioSlideDataList.map(
-                                    ({ slideIndex, filePaths }) => {
+                                    ({
+                                        slideIndex,
+                                        filePaths,
+                                        slideId,
+                                        slideFilePath,
+                                    }) => {
                                         return filePaths.map((filePath) => {
                                             return (
                                                 <AudioElementComp
                                                     key={filePath}
                                                     slideIndex={slideIndex}
+                                                    slideId={slideId}
                                                     filePath={filePath}
+                                                    slideFilePath={
+                                                        slideFilePath
+                                                    }
                                                 />
                                             );
                                         });
@@ -89,6 +82,7 @@ export default function VaryAppDocumentAudiosComp() {
                         );
                     },
                 )}
+            </div>
         </div>
     );
 }
