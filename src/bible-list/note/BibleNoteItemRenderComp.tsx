@@ -77,6 +77,12 @@ export default function BibleNoteItemRenderComp({
                     },
                 },
                 {
+                    menuElement: tran('Edit Title'),
+                    onSelect: () => {
+                        setIsEditingTitle1(true);
+                    },
+                },
+                {
                     menuElement: tran('Export'),
                     onSelect: () => {
                         exportBibleNoteItem(noteItemRef.current);
@@ -151,15 +157,6 @@ export default function BibleNoteItemRenderComp({
         handleOpening(noteRef.current, noteItemRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const isEditingTitleRef = useAppCurrentRef(isEditingTitle);
-    const setIsEditingTitle1Ref = useAppCurrentRef(setIsEditingTitle1);
-    const handleStartEditingTitle = useCallback(() => {
-        if (isEditingTitleRef.current) {
-            return;
-        }
-        setIsEditingTitle1Ref.current(!isEditingTitleRef.current);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     if (noteItem.isError) {
         return <ItemReadErrorComp onContextMenu={handleContextMenuOpening} />;
@@ -179,7 +176,7 @@ export default function BibleNoteItemRenderComp({
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDataDropping}
-            onDoubleClick={handleStartEditingTitle}
+            onDoubleClick={handleBibleNoteOpening}
             onContextMenu={handleContextMenuOpening}
         >
             <div className="d-flex ps-1">

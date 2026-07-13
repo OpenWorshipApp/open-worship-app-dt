@@ -74,7 +74,7 @@ export function NoteTitleEditorComp({
         <div
             className="w-100 app-overflow-hidden"
             style={{
-                height: '30px',
+                maxHeight: '30px',
             }}
         >
             <SimpleNoteEditorComp
