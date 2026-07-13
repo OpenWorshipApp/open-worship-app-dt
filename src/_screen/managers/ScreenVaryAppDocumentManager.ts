@@ -417,11 +417,7 @@ class ScreenVaryAppDocumentManager
         return { content, scale: 1 };
     }
 
-    renderPptx(
-        divHaftScale: HTMLDivElement,
-        pptxData: PptxSlideType,
-        virtualBackgroundColor: string | null,
-    ) {
+    renderPptx(divHaftScale: HTMLDivElement, pptxData: PptxSlideType) {
         const content = genPptxSlide(
             pptxData.html,
             pptxData.htmlFilePath,
@@ -431,9 +427,6 @@ class ScreenVaryAppDocumentManager
         // Give embedded video/audio native controls on the mini screen and
         // the play/pause/time sync wiring, mirroring regular slides.
         this.cleanupSlideContent(content);
-        if (virtualBackgroundColor !== null) {
-            content.style.backgroundColor = virtualBackgroundColor;
-        }
         const { width, height } = pptxData.metadata;
         Object.assign(divHaftScale.style, {
             width: `${width}px`,
@@ -726,11 +719,7 @@ class ScreenVaryAppDocumentManager
                 backgroundColor,
             );
         } else if (PptxSlide.tryValidate(itemJson)) {
-            target = this.renderPptx(
-                divHaftScale,
-                itemJson as PptxSlideType,
-                backgroundColor,
-            );
+            target = this.renderPptx(divHaftScale, itemJson as PptxSlideType);
         } else if (DocxSlide.tryValidate(itemJson)) {
             target = this.renderDocx(
                 divHaftScale,
