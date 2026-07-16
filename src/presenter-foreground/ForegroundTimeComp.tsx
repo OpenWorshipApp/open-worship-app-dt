@@ -406,11 +406,14 @@ function useIdList() {
 
 export default function ForegroundTimeComp() {
     const [idList, setIdList] = useIdList();
+    useScreenForegroundManagerEvents(['update']);
+    const isOnScreen = getAllShowingScreenIdDataList().length > 0;
     return (
         <ForegroundLayoutComp
             target="time"
             fullChildHeaders={<h4>{tran('Time')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
+            isOnScreen={isOnScreen}
         >
             <div className="d-flex flex-wrap gap-1">
                 {idList.map((id) => {

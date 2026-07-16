@@ -9,7 +9,6 @@ import {
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import PptxSlidesNoteEditorComp from './PptxSlidesNoteEditorComp';
 import type PptxSlide from '../../app-document-list/PptxSlide';
-import type Slide from '../../app-document-list/Slide';
 
 export default function PresenterNoteContainerHandlerComp({
     varyAppDocumentWithNote,
@@ -50,7 +49,7 @@ export default function PresenterNoteContainerHandlerComp({
                 {
                     children: {
                         render: () => {
-                            const slides = (varySlides ?? []) as Slide[];
+                            const slides = (varySlides ?? []);
                             return (
                                 <SlidesNoteEditorComp
                                     appDocument={varyAppDocumentWithNote}

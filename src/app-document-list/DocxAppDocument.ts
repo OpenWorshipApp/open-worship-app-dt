@@ -1,7 +1,7 @@
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import type { MimetypeNameType } from '../server/fileHelpers';
 import type ItemSourceInf from '../others/ItemSourceInf';
-import { showStaticSlideContextMenu } from './appDocumentHelpers';
+import { BLANK_HTML_SLIDE_SRC, showStaticSlideContextMenu } from './appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
@@ -9,6 +9,7 @@ import { appLog } from '../helper/loggerHelpers';
 import DocxSlide, { type DocxSlideType } from './DocxSlide';
 import {
     getDocxData,
+    getDocxMissingFontFamilyList,
     getDocxToHtmlsVersion,
     removeDocxHtmlsPreview,
 } from '../server/docxHelpers';
@@ -52,6 +53,10 @@ export default class DocxAppDocument
         return {};
     }
 
+    async getMissingFontFamilyList() {
+        return await getDocxMissingFontFamilyList(this.filePath);
+    }
+
     async getSlides() {
         try {
             const docxData = await getDocxData(this.filePath);
@@ -89,7 +94,7 @@ export default class DocxAppDocument
             const slide1 = dataList[0];
             const slide0 = new DocxSlide(this.filePath, {
                 id: 0,
-                htmlFilePath: '/assets/slide0.html',
+                htmlFilePath: BLANK_HTML_SLIDE_SRC,
                 html: '',
                 metadata: { width: slide1.width, height: slide1.height },
             });

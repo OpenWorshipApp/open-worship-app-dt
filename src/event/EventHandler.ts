@@ -35,7 +35,8 @@ export class BasicEventHandler<T extends string> {
     }
 
     addPropEvent(eventName: T, data?: any) {
-        this.propEvent.push({ eventName, data });
+        const eventData = { eventName, data };
+        this.propEvent.push(eventData);
         this.checkPropEvent();
     }
 

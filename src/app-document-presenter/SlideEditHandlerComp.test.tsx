@@ -22,10 +22,12 @@ const {
     popupRenderMock: vi.fn(),
 }));
 
-vi.mock('../helper/debuggerHelpers', async () => {
+vi.mock('../helper/appHooks', async (importOriginal) => {
+    const actual = await importOriginal<Record<string, unknown>>();
     const { useEffect } = await import('react');
 
     return {
+        ...actual,
         useAppEffect: useEffect,
     };
 });
@@ -66,16 +68,23 @@ vi.mock('../slide-editor/SlideEditorPopupComp', () => ({
 }));
 
 function createSlide(overrides: Record<string, unknown> = {}) {
-    return {
+    const data = {
         id: 7,
         filePath: '/docs/main.ows',
         name: 'Original slide',
         ...overrides,
+    };
+    return {
+        ...data,
+        toJson: () => ({ id: data.id, name: data.name }),
     } as any;
 }
 
 async function flushAsyncEvents() {
-    await Promise.resolve();
+    // WindowEventListener dispatches open/close through genTimeoutAttempt(10),
+    // a real 10ms setTimeout, so flushing microtasks alone is not enough — wait
+    // a macrotask longer than the debounce for those events to actually fire.
+    await new Promise((resolve) => setTimeout(resolve, 25));
     await Promise.resolve();
     await Promise.resolve();
 }
@@ -118,108 +127,156 @@ describe('SlideEditHandlerComp', () => {
         (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
     });
 
-    test('opens, refreshes, ignores unrelated updates, and closes the quick editor', async () => {
-        const {
-            closeItemSlideEditEvent,
-            closeSlideQuickEdit,
-            default: SlideEditHandlerComp,
-            openItemSlideEditEvent,
-            openSlideQuickEdit,
-        } = await import('./SlideEditHandlerComp');
+    test(
+        'opens; refreshes on external change and history navigation; ' +
+            'ignores self-echoes and redundant updates; closes',
+        async () => {
+            const {
+                closeItemSlideEditEvent,
+                closeSlideQuickEdit,
+                default: SlideEditHandlerComp,
+                openItemSlideEditEvent,
+                openSlideQuickEdit,
+            } = await import('./SlideEditHandlerComp');
 
-        const initialSlide = createSlide();
-        const refreshedSlide = createSlide({ name: 'Updated slide' });
+            const initialSlide = createSlide();
+            const externallyChangedSlide = createSlide({
+                name: 'Updated slide',
+            });
+            const sameContentEcho = createSlide({ name: 'Updated slide' });
+            const historySlide = createSlide({ name: 'History slide' });
 
-        appDocumentGetItemByIdMock
-            .mockResolvedValueOnce(refreshedSlide)
-            .mockResolvedValueOnce(null)
-            .mockResolvedValueOnce(refreshedSlide);
+            appDocumentGetItemByIdMock
+                .mockResolvedValueOnce(externallyChangedSlide) // external change
+                .mockResolvedValueOnce(sameContentEcho) // redundant echo
+                .mockResolvedValueOnce(historySlide) // history navigation
+                .mockResolvedValueOnce(null); // slide gone
 
-        await act(async () => {
-            root.render(<SlideEditHandlerComp />);
-            await flushAsyncEvents();
-        });
+            await act(async () => {
+                root.render(<SlideEditHandlerComp />);
+                await flushAsyncEvents();
+            });
 
-        expect(
-            container.querySelector('[data-testid="slide-editor-popup"]'),
-        ).toBeNull();
-        expect(openItemSlideEditEvent).toEqual({
-            widget: 'slide-edit',
-            state: 'open',
-        });
-        expect(closeItemSlideEditEvent).toEqual({
-            widget: 'slide-edit',
-            state: 'close',
-        });
+            expect(
+                container.querySelector('[data-testid="slide-editor-popup"]'),
+            ).toBeNull();
+            expect(openItemSlideEditEvent).toEqual({
+                widget: 'slide-edit',
+                state: 'open',
+            });
+            expect(closeItemSlideEditEvent).toEqual({
+                widget: 'slide-edit',
+                state: 'close',
+            });
 
-        await act(async () => {
-            openSlideQuickEdit(initialSlide);
-            await flushAsyncEvents();
-        });
+            await act(async () => {
+                openSlideQuickEdit(initialSlide);
+                await flushAsyncEvents();
+            });
 
-        expect(addLayerMock).toHaveBeenCalledWith('slide-edit');
-        expect(registerFileSourceEventListenerMock).toHaveBeenCalledWith(
-            ['update'],
-            expect.any(Function),
-            '/docs/main.ows',
-        );
-        expect(popupRenderMock).toHaveBeenCalledWith(initialSlide);
-        expect(container.textContent).toContain('Original slide');
-        expect(fileSourceCallbacks).toHaveLength(1);
+            expect(addLayerMock).toHaveBeenCalledWith('slide-edit');
+            expect(registerFileSourceEventListenerMock).toHaveBeenCalledWith(
+                ['update'],
+                expect.any(Function),
+                '/docs/main.ows',
+            );
+            expect(popupRenderMock).toHaveBeenCalledWith(initialSlide);
+            expect(container.textContent).toContain('Original slide');
+            expect(fileSourceCallbacks).toHaveLength(1);
 
-        await act(async () => {
-            await fileSourceCallbacks[0]?.({ eventType: 'save' });
-            await flushAsyncEvents();
-        });
+            // A self-echo from this window's own in-progress editing must be
+            // ignored so it doesn't revert the live edits.
+            await act(async () => {
+                await fileSourceCallbacks[0]?.({ isHistoryEditing: true });
+                await flushAsyncEvents();
+            });
 
-        expect(appDocumentGetInstanceMock).not.toHaveBeenCalled();
-        expect(appDocumentGetItemByIdMock).not.toHaveBeenCalled();
+            expect(appDocumentGetInstanceMock).not.toHaveBeenCalled();
+            expect(appDocumentGetItemByIdMock).not.toHaveBeenCalled();
+            expect(container.textContent).toContain('Original slide');
 
-        await act(async () => {
-            await fileSourceCallbacks[0]?.({ eventType: 'redo' });
-            await flushAsyncEvents();
-        });
+            // A genuine external change (another window/process saved the file)
+            // arrives as a bare update and must refresh the popup.
+            await act(async () => {
+                await fileSourceCallbacks[0]?.(undefined);
+                await flushAsyncEvents();
+            });
 
-        expect(appDocumentGetInstanceMock).toHaveBeenCalledWith(
-            '/docs/main.ows',
-        );
-        expect(appDocumentGetItemByIdMock).toHaveBeenCalledWith(7);
-        expect(popupRenderMock).toHaveBeenLastCalledWith(refreshedSlide);
-        expect(container.textContent).toContain('Updated slide');
-        expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
-        expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith(
-            listenerTokens[0],
-        );
+            expect(appDocumentGetInstanceMock).toHaveBeenCalledWith(
+                '/docs/main.ows',
+            );
+            expect(appDocumentGetItemByIdMock).toHaveBeenCalledWith(7);
+            expect(popupRenderMock).toHaveBeenLastCalledWith(
+                externallyChangedSlide,
+            );
+            expect(container.textContent).toContain('Updated slide');
+            expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(
+                2,
+            );
+            expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith(
+                listenerTokens[0],
+            );
 
-        await act(async () => {
-            await fileSourceCallbacks[1]?.({ eventType: 'undo' });
-            await flushAsyncEvents();
-        });
+            // A redundant update whose content matches the current slide must
+            // not reload the canvas (no re-render / re-registration).
+            await act(async () => {
+                await fileSourceCallbacks[1]?.(undefined);
+                await flushAsyncEvents();
+            });
 
-        expect(appDocumentGetItemByIdMock).toHaveBeenCalledTimes(2);
-        expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
-        expect(container.textContent).toContain('Updated slide');
+            expect(appDocumentGetItemByIdMock).toHaveBeenCalledTimes(2);
+            expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(
+                2,
+            );
+            expect(popupRenderMock).toHaveBeenLastCalledWith(
+                externallyChangedSlide,
+            );
+            expect(container.textContent).toContain('Updated slide');
 
-        await act(async () => {
-            await fileSourceCallbacks[1]?.({ eventType: 'discard' });
-            await flushAsyncEvents();
-        });
+            // History navigation always refreshes, even when content matches.
+            await act(async () => {
+                await fileSourceCallbacks[1]?.({
+                    eventType: 'undo',
+                    isHistoryEditing: true,
+                });
+                await flushAsyncEvents();
+            });
 
-        expect(appDocumentGetItemByIdMock).toHaveBeenCalledTimes(3);
-        expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
-        expect(container.textContent).toContain('Updated slide');
+            expect(appDocumentGetItemByIdMock).toHaveBeenCalledTimes(3);
+            expect(popupRenderMock).toHaveBeenLastCalledWith(historySlide);
+            expect(container.textContent).toContain('History slide');
+            expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(
+                3,
+            );
 
-        await act(async () => {
-            closeSlideQuickEdit();
-            await flushAsyncEvents();
-        });
+            // If the slide no longer exists at this history point, keep the
+            // current view instead of crashing.
+            await act(async () => {
+                await fileSourceCallbacks[2]?.({
+                    eventType: 'discard',
+                    isHistoryEditing: true,
+                });
+                await flushAsyncEvents();
+            });
 
-        expect(removeLayerMock).toHaveBeenCalledWith('slide-edit');
-        expect(
-            container.querySelector('[data-testid="slide-editor-popup"]'),
-        ).toBeNull();
-        expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith(
-            listenerTokens[1],
-        );
-    });
+            expect(appDocumentGetItemByIdMock).toHaveBeenCalledTimes(4);
+            expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(
+                3,
+            );
+            expect(container.textContent).toContain('History slide');
+
+            await act(async () => {
+                closeSlideQuickEdit();
+                await flushAsyncEvents();
+            });
+
+            expect(removeLayerMock).toHaveBeenCalledWith('slide-edit');
+            expect(
+                container.querySelector('[data-testid="slide-editor-popup"]'),
+            ).toBeNull();
+            expect(unregisterFileSourceEventListenerMock).toHaveBeenCalledWith(
+                listenerTokens[2],
+            );
+        },
+    );
 });

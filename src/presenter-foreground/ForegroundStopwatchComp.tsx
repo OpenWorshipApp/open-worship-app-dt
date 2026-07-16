@@ -118,6 +118,7 @@ export default function ForegroundStopwatchComp() {
             target="stopwatch"
             fullChildHeaders={<h4>{tran('Stopwatch')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
+            isOnScreen={showingScreenIdDataList.length > 0}
         >
             {propsSetting}
             <hr />

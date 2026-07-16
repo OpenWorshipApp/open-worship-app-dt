@@ -46,17 +46,16 @@ export default function BibleModelInfoSettingComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="d-flex mx-1" title={tran('Change Bible Model Info')}>
-            <label htmlFor="change-bible-model-info" className="form-label">
-                Change Bible Model Info:
-            </label>
-            <button
-                className="btn btn-sm p-1"
-                title={bibleModelInfoTitleMap[model]}
-                onClick={handleClick}
-            >
-                {model}
-            </button>
-        </div>
+        <button
+            className={
+                'btn btn-sm btn-outline-secondary p-1 text-nowrap ' +
+                'd-flex align-items-center gap-1'
+            }
+            title={`${tran('Change Bible Model Info')} (${bibleModelInfoTitleMap[model]})`}
+            onClick={handleClick}
+        >
+            <i className="bi bi-book" />
+            {model}
+        </button>
     );
 }

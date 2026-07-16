@@ -392,16 +392,26 @@ export function genHtmlForegroundWeb(
             targetHeight={displayDim.height}
         />,
     );
-    const div = document.createElement('div');
-    Object.assign(div.style, extraStyle);
-    div.innerHTML = htmlString;
-    const element = getHTMLChild<HTMLIFrameElement>(div, 'iframe');
+    // extraStyle carries the widget positioning (alignment + X/Y offset via
+    // left/top/transform), sizing and box styling. It must live on the element
+    // that is actually mounted. The iframe already uses its own `transform` to
+    // scale the page, so it can't also carry the positioning transform — wrap
+    // it in a sized, clipped container that gets extraStyle instead. Mounting
+    // the bare iframe (as before) dropped extraStyle entirely, pinning every
+    // web overlay to the top-left corner.
+    const container = document.createElement('div');
+    container.innerHTML = htmlString;
+    Object.assign(container.style, extraStyle, {
+        width: `${width}px`,
+        height: `${Math.round(displayDim.height * widthScale)}px`,
+        overflow: 'hidden',
+    });
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
-            await animData.animIn(element, parentContainer);
+            await animData.animIn(container, parentContainer);
         },
         handleRemoving: async () => {
-            await animData.animOut(element);
+            await animData.animOut(container);
         },
     };
 }

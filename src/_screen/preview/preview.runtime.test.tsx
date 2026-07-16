@@ -430,7 +430,10 @@ describe('preview runtime interactions', () => {
                 <div>
                     <DisplayControl />
                     <ShowHideScreen />
-                    <ScreenPreviewerHeaderComp />
+                    <ScreenPreviewerHeaderComp
+                        isFullView={false}
+                        setIsFullView={() => {}}
+                    />
                 </div>,
             );
         });

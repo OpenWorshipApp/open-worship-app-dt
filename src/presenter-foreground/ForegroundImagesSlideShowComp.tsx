@@ -239,6 +239,7 @@ export default function ForegroundImagesSlideShowComp() {
             fullChildHeaders={<h4>{tran('Background Images Slide Show')}</h4>}
             childHeadersOnHidden={genHeaderElements(true)}
             extraBodyStyle={{ maxHeight: '450px' }}
+            isOnScreen={isAnyItemSelected}
         >
             <div>{genHeaderElements(false)}</div>
             <hr />

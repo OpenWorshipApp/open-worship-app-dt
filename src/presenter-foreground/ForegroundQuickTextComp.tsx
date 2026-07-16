@@ -173,6 +173,7 @@ export default function ForegroundQuickTextComp() {
             target="quick-text"
             fullChildHeaders={<h4>{tran('Quick Text')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
+            isOnScreen={showingScreenIdDataList.length > 0}
         >
             {propsSetting}
             <hr />

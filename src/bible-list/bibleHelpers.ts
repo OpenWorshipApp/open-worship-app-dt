@@ -1,4 +1,4 @@
-import { createContext, use, useState } from 'react';
+import { createContext, use, useMemo, useState } from 'react';
 
 import type { LanguageDataType } from '../lang/langHelpers';
 import { getLangDataAsync, tran } from '../lang/langHelpers';
@@ -24,7 +24,6 @@ import {
     pathJoin,
     writeFileFromBase64Sync,
 } from '../server/fileHelpers';
-import appProvider from '../server/appProvider';
 import type { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
@@ -36,6 +35,7 @@ import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
 import { useAppEffectAsync } from '../helper/appHooks';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
 import { exportBibleMSWord, showFileOrDirExplorer } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
@@ -74,11 +74,6 @@ export async function genInputText(
 }
 
 export async function saveBibleItem(bibleItem: BibleItem, onDone?: () => void) {
-    if (appProvider.isPageAppDocumentEditor) {
-        // TODO: Implement this, find canvasController
-        // canvasController.addNewBibleItem(bibleItem);
-        return null;
-    }
     const savedBibleItem = await Bible.addBibleItemToDefault(bibleItem);
     if (savedBibleItem === null) {
         showSimpleToast('Adding bible', 'Fail to add bible to list');
@@ -299,11 +294,14 @@ export async function checkIsBibleItemOnScreen(items: BibleItem[]) {
 
 export function useIsOnScreen(items: BibleItem[]) {
     const [isOnScreen, setIsOnScreen] = useState(false);
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     useAppEffectAsync(async () => {
         setIsOnScreen(await checkIsBibleItemOnScreen(items));
     }, [items]);
-    useScreenUpdateEvents(undefined, async () => {
-        setIsOnScreen(await checkIsBibleItemOnScreen(items));
+    useScreenUpdateEvents(undefined, () => {
+        attemptTimeout(async () => {
+            setIsOnScreen(await checkIsBibleItemOnScreen(items));
+        });
     });
     return isOnScreen;
 }

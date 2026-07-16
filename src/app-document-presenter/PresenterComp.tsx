@@ -8,8 +8,14 @@ import {
     useVaryAppDocumentSelecting,
 } from '../event/PreviewingEventListener';
 import { useVarySlideSelecting } from '../event/VaryAppDocumentEventListener';
-import { useStateSettingString } from '../helper/settingHelpers';
+import {
+    useStateSettingString,
+    useStateSettingBoolean,
+} from '../helper/settingHelpers';
 import TabRenderComp from '../others/TabRenderComp';
+import type { TabHeaderPropsType } from '../others/TabRenderComp';
+import AppSuspenseComp from '../others/AppSuspenseComp';
+import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import { tran } from '../lang/langHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import {
@@ -17,9 +23,12 @@ import {
     useBibleItemViewControllerUpdateEvent,
 } from '../bible-reader/BibleItemsViewController';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
+import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEventHelpers';
+import { getIsAnyForegroundShowing } from '../presenter-foreground/foregroundHelpers';
 import {
     checkIsOnScreen,
     PRESENT_TAB_SETTING_NAME,
+    PRESENT_FOREGROUND_FLOATING_SETTING_NAME,
 } from './presenterRendererHelpers';
 import type {
     DataInputType,
@@ -79,7 +88,6 @@ function genReElements(tabKeys: string) {
         h1: ['1'],
         h2: ['1'],
         h3: ['1'],
-        h4: ['1'],
     };
     const dataInput: DataInputType[] = [];
     if (arr.includes('d')) {
@@ -103,13 +111,6 @@ function genReElements(tabKeys: string) {
             widgetName: tran('Bible'),
         });
     }
-    if (arr.includes('f')) {
-        dataInput.push({
-            children: LazyPresenterForegroundComp,
-            key: 'h4',
-            widgetName: tran('Foreground'),
-        });
-    }
     return {
         flexSizeDefault,
         dataInput,
@@ -120,9 +121,63 @@ const tabTypeList = [
     ['d', tran('Documents'), LazyAppDocumentPreviewerComp],
     ['l', tran('Lyrics'), LazyLyricHandlerComp],
     ['b', tran('Bibles'), LazyPresenterBiblePreviewerRenderComp],
-    ['f', tran('Foreground'), LazyPresenterForegroundComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
+
+function ForegroundFloatingComp() {
+    const viewController = useBibleItemsViewControllerContext();
+    const [isShowing, setIsShowing] = useStateSettingBoolean(
+        PRESENT_FOREGROUND_FLOATING_SETTING_NAME,
+        false,
+    );
+    useScreenForegroundManagerEvents(['update']);
+    const isOnScreen = getIsAnyForegroundShowing();
+    const foregroundTabs = useMemo<TabHeaderPropsType<'f'>[]>(
+        () => [
+            {
+                key: 'f',
+                title: tran('Foreground'),
+                checkIsOnScreen: async () => {
+                    return checkIsOnScreen('f', viewController);
+                },
+            },
+        ],
+        [viewController],
+    );
+    return (
+        <>
+            <TabRenderComp<'f'>
+                tabs={foregroundTabs}
+                activeTabs={isShowing ? ['f'] : []}
+                setActiveTab={() => {
+                    setIsShowing((prev) => !prev);
+                }}
+            />
+            {isShowing ? (
+                <FloatingWidgetComp
+                    title={
+                        <span className={isOnScreen ? 'app-on-screen' : ''}>
+                            {tran('Foreground')}
+                        </span>
+                    }
+                    onClose={() => {
+                        setIsShowing(false);
+                    }}
+                    options={{
+                        width: 420,
+                        height: 560,
+                        minWidth: 300,
+                        minHeight: 220,
+                    }}
+                >
+                    <AppSuspenseComp>
+                        <LazyPresenterForegroundComp />
+                    </AppSuspenseComp>
+                </FloatingWidgetComp>
+            ) : null}
+        </>
+    );
+}
 export default function PresenterComp() {
     const [tabKeys, setTabKeys] = useStateSettingString<string>(
         PRESENT_TAB_SETTING_NAME,
@@ -219,9 +274,15 @@ export default function PresenterComp() {
             }),
         [viewController],
     );
-    const { flexSizeDefault, dataInput } = useMemo(() => {
-        return genReElements(tabKeys);
+    const mainTabKeys = useMemo(() => {
+        const filtered = tabKeys
+            .split('')
+            .filter((key) => tabTypeList.some(([tabKey]) => tabKey === key));
+        return filtered.length > 0 ? filtered.join('') : 'd';
     }, [tabKeys]);
+    const { flexSizeDefault, dataInput } = useMemo(() => {
+        return genReElements(mainTabKeys);
+    }, [mainTabKeys]);
 
     return (
         <div
@@ -233,12 +294,13 @@ export default function PresenterComp() {
             <div className="header d-flex w-100">
                 <TabRenderComp<TabKeyType>
                     tabs={tabs}
-                    activeTabs={tabKeys.split('') as TabKeyType[]}
+                    activeTabs={mainTabKeys.split('') as TabKeyType[]}
                     setActiveTab={(key, event) => {
                         setTabKey1(key, { event });
                     }}
                     className="flex-fill"
                 />
+                <ForegroundFloatingComp />
                 <RenderToggleFullViewComp
                     isFullWidget={isFullWidget}
                     setIsFullWidget={setIsFullWidget}

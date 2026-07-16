@@ -39,16 +39,19 @@ import { getCameraAndShowMedia } from '../../helper/cameraHelpers';
 
 export type ScreenForegroundEventType = 'update';
 
-const containerMapper = new WeakMap<
-    object,
-    {
-        container: HTMLElement;
-        removeHandler: () => OptionalPromise<void>;
-    }
->();
 export default class ScreenForegroundManager extends ScreenEventHandler<ScreenForegroundEventType> {
     static readonly eventNamePrefix: string = 'screen-foreground-m';
     private _div: HTMLDivElement | null = null;
+    // Per-instance: sync-grouped screens share the SAME foreground-data object
+    // references, so a module-level map keyed by data would let one screen's
+    // render evict another screen's container. Each screen owns its containers.
+    private readonly containerMapper = new WeakMap<
+        object,
+        {
+            container: HTMLElement;
+            removeHandler: () => OptionalPromise<void>;
+        }
+    >();
     foregroundData: ForegroundDataType;
     rendererMap: Map<string, (data: any) => void>;
     setterMap: Map<string, (data: any, isNoSyncGroup?: boolean) => void>;
@@ -138,11 +141,11 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     removeDivContainer(data: any) {
-        if (data === null || !containerMapper.has(data)) {
+        if (data === null || !this.containerMapper.has(data)) {
             return;
         }
-        const { removeHandler } = containerMapper.get(data)!;
-        containerMapper.delete(data);
+        const { removeHandler } = this.containerMapper.get(data)!;
+        this.containerMapper.delete(data);
         removeHandler();
     }
 
@@ -152,7 +155,7 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     ): HTMLElement | null {
         const container = document.createElement('div');
         this.removeDivContainer(data);
-        containerMapper.set(data, {
+        this.containerMapper.set(data, {
             container,
             removeHandler: async () => {
                 await removingHandler?.(container);

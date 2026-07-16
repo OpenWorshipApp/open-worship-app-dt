@@ -168,7 +168,7 @@ describe('varyAppDocumentHelpers', () => {
             DATA_QUERY_KEY,
             genSlideIds,
             getContainerDiv,
-            handleArrowing,
+            handleSlideMoving: handleArrowing,
             showVarySlideInViewport,
             SLIDE_ITEMS_CONTAINER_CLASS_NAME,
         } = await import('./varyAppDocumentHelpers');
@@ -230,7 +230,7 @@ describe('varyAppDocumentHelpers', () => {
     test('moves highlighted slides across screens and responds to arrow navigation', async () => {
         const {
             DATA_QUERY_KEY,
-            handleArrowing,
+            handleSlideMoving: handleArrowing,
             handleNextItemSelecting,
             SLIDE_ITEMS_CONTAINER_CLASS_NAME,
         } = await import('./varyAppDocumentHelpers');

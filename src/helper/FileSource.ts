@@ -149,10 +149,11 @@ export default class FileSource
                 return dataText;
             } catch (error: any) {
                 if (!isSilent) {
-                    showSimpleToast(
-                        'Reader File Data',
-                        'Error occurred during reading ' +
-                            `file: "${filePath}", error: ${error.message}`,
+                    handleError(
+                        new Error(
+                            'Reader File Data, Error occurred during reading ' +
+                                `file: "${filePath}", error: ${error.message}`,
+                        ),
                     );
                 }
             }

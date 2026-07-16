@@ -361,6 +361,7 @@ export default function ForegroundCountDownComp() {
             target="countdown"
             fullChildHeaders={<h4>{tran('Countdown')}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
+            isOnScreen={showingScreenIdDataList.length > 0}
         >
             {propsSetting}
             <hr />

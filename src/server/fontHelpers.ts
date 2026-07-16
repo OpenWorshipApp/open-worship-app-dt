@@ -1,15 +1,11 @@
 import { useState } from 'react';
 
 import { useAppEffectAsync } from '../helper/appHooks';
-import { showSimpleToast } from '../toast/toastHelpers';
 import type { FontListType } from './appProvider';
 import appProvider from './appProvider';
 import CacheManager from '../others/CacheManager';
-import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
-import FileSource from '../helper/FileSource';
 import { electronSendAsync } from './appHelpers';
 import { unlocking } from './unlockingHelpers';
-import { tran } from '../lang/langHelpers';
 
 const cacheManager = new CacheManager<FontListType | null>(60 * 10); // 10 minutes
 export async function getFontFamilyMapByNodeFont() {
@@ -54,48 +50,12 @@ export function useFontList() {
     return fontList;
 }
 
-const handledFontFamilies = new Set<string>();
-export async function fixMissingFontFamilies(
-    fontFamilies: Set<string>,
-    filePath: string,
-) {
-    fontFamilies = new Set(
-        Array.from(fontFamilies).filter((fontFamily) => {
-            return !handledFontFamilies.has(fontFamily);
-        }),
+export function getMissingFontSearchUrl(fontFamily: string) {
+    return `https://www.google.com/search?q=font+download: "${fontFamily}"`;
+}
+
+export function searchMissingFontFamily(fontFamily: string) {
+    appProvider.browserUtils.openExternalURL(
+        getMissingFontSearchUrl(fontFamily),
     );
-    if (fontFamilies.size === 0) {
-        return;
-    }
-    for (const fontFamily of fontFamilies) {
-        handledFontFamilies.add(fontFamily);
-    }
-    const fileSource = FileSource.getInstance(filePath);
-    const isConfirmed = await showAppConfirm(
-        `${tran('Missing Fonts in')} "${fileSource.name}"`,
-        `${tran('The document is using fonts that are not installed on your system')}:<br><br>${Array.from(
-            fontFamilies,
-        )
-            .map((font) => `"${font}"`)
-            .join(
-                ', ',
-            )}<br><br>${tran('Would you like to search for the missing fonts?')}`,
-        {
-            confirmButtonLabel: 'Yes',
-        },
-    );
-    if (!isConfirmed) {
-        return;
-    }
-    showSimpleToast(
-        tran('Opening Missing Fonts Searching'),
-        tran(
-            'Please install the missing fonts from the opened pages. and ' +
-                'restart the app after installation.',
-        ),
-    );
-    for (const fontFamily of fontFamilies) {
-        const url = `https://www.google.com/search?q=font+download: "${fontFamily}"`;
-        appProvider.browserUtils.openExternalURL(url);
-    }
 }

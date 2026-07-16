@@ -24,7 +24,10 @@ import ScreenEventHandler, {
 import type ScreenManagerBase from './ScreenManagerBase';
 import type ScreenEffectManager from './ScreenEffectManager';
 import { getAppDocumentListOnScreenSetting } from '../preview/screenPreviewerHelpers';
-import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
+import {
+    BLANK_HTML_SLIDE_SRC,
+    BLANK_IMAGE_SLIDE_SRC,
+} from '../../app-document-list/appDocumentHelpers';
 import type { PdfSlideType } from '../../app-document-list/PdfSlide';
 import PdfSlide from '../../app-document-list/PdfSlide';
 import type { PptxSlideType } from '../../app-document-list/PptxSlide';
@@ -50,6 +53,7 @@ import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { cloneJson } from '../../helper/helpers';
 
 function queryAllDeep(root: ParentNode, selector: string): Element[] {
     const results = Array.from(root.querySelectorAll(selector));
@@ -137,7 +141,22 @@ class ScreenVaryAppDocumentManager
         return this._varySlideData;
     }
 
-    set varySlideData(varySlideData: VarySlideScreenDataType | null) {
+    set varySlideData(targetVarySlideData: VarySlideScreenDataType | null) {
+        const varySlideData =
+            targetVarySlideData !== null
+                ? cloneJson(targetVarySlideData)
+                : null;
+
+        if (varySlideData !== null) {
+            const { itemJson } = varySlideData;
+            if (
+                varySlideData.virtualBackgroundColor &&
+                ((itemJson as any).htmlFilePath === BLANK_HTML_SLIDE_SRC ||
+                    (itemJson as any).imagePreviewSrc === BLANK_IMAGE_SLIDE_SRC)
+            ) {
+                varySlideData.virtualBackgroundColor = null;
+            }
+        }
         if (
             this.screenManagerBase.checkIsLockedWithMessage() ||
             checkAreObjectsEqual(this._varySlideData, varySlideData)
@@ -341,15 +360,7 @@ class ScreenVaryAppDocumentManager
     }
 
     handleSlideSelecting(filePath: string, itemJson: VarySlideDataType) {
-        const { varySlideData } = this;
-        const selectedFilePath = varySlideData?.filePath ?? '';
-        const selectedSlideId = varySlideData?.itemJson.id ?? -1;
-        const selected = toKeyByFilePath(selectedFilePath, selectedSlideId);
-        const willSelected = toKeyByFilePath(filePath, itemJson.id);
-        const newSlideData =
-            selected === willSelected
-                ? null
-                : this.toSlideData(filePath, itemJson);
+        const newSlideData = this.toSlideData(filePath, itemJson);
         this.applySlideSrcWithSyncGroup(newSlideData);
     }
 

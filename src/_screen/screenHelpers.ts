@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import * as loggerHelpers from '../helper/loggerHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { screenManagerSettingNames } from '../helper/constants';
@@ -28,6 +30,7 @@ import type {
     SetDisplayType,
 } from './screenTypeHelpers';
 import { bibleDataTypeList } from './screenTypeHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 const messageUtils = appProvider.messageUtils;
 
@@ -355,6 +358,7 @@ export function useFileSourceIsOnScreen(
     checkIsOnScreen: (filePaths: string[]) => Promise<boolean>,
     onUpdate?: (isOnScreen: boolean) => void,
 ) {
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const [isOnScreen, setIsOnScreen] = useAppStateAsync(async () => {
         if (filePaths.length === 0) {
             return false;
@@ -364,9 +368,11 @@ export function useFileSourceIsOnScreen(
         return isOnScreen;
     }, [filePaths.join('|')]);
     useScreenUpdateEvents(undefined, async () => {
-        const isOnScreen = await checkIsOnScreen(filePaths);
-        onUpdate?.(isOnScreen);
-        setIsOnScreen(isOnScreen);
+        attemptTimeout(async () => {
+            const isOnScreen = await checkIsOnScreen(filePaths);
+            onUpdate?.(isOnScreen);
+            setIsOnScreen(isOnScreen);
+        });
     });
     return isOnScreen ?? false;
 }

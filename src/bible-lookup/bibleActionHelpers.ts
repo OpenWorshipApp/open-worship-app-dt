@@ -11,6 +11,7 @@ import {
     genContextMenuItemIcon,
 } from '../context-menu/AppContextMenuComp';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
+import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
 export const ctrlShiftEnterEventMapper: KeyboardEventMapper = {
     allControlKey: ['Ctrl', 'Shift'],
@@ -45,10 +46,6 @@ export function genFoundBibleItemContextMenu(
     bibleItem: BibleItem,
     isKeyboardShortcut?: boolean,
 ): ContextMenuItemType[] {
-    // TODO: fix slide select editing
-    if (appProvider.isPageAppDocumentEditor) {
-        return [];
-    }
     let verseKey: string | null = null;
     if (event.target instanceof HTMLElement) {
         verseKey =
@@ -76,7 +73,7 @@ export function genFoundBibleItemContextMenu(
                 }
             },
         },
-        ...(verseKey === null
+        ...(verseKey === null || appProvider.isPageAppDocumentEditor
             ? []
             : [
                   {
@@ -109,6 +106,22 @@ export function genFoundBibleItemContextMenu(
                       menuElement: tran('Save bible item and show on screen'),
                       onSelect: async (event: any) => {
                           addBibleItemAndPresent(event, bibleItem, onDone);
+                      },
+                  },
+              ]
+            : []),
+        ...(appProvider.isPageAppDocumentEditor
+            ? [
+                  {
+                      childBefore: genContextMenuItemIcon(
+                          'file-earmark-slides',
+                      ),
+                      menuElement: tran('Insert bible item'),
+                      onSelect: () => {
+                          CanvasBibleItemEventListener.insertBibleItem(
+                              bibleItem,
+                          );
+                          onDone();
                       },
                   },
               ]

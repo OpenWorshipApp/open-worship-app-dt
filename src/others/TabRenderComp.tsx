@@ -1,9 +1,10 @@
 import type { ReactNode, LazyExoticComponent, MouseEvent } from 'react';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import AppSuspenseComp from './AppSuspenseComp';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
 
 export type TabHeaderPropsType<T> = {
@@ -20,12 +21,15 @@ function useIsOnScreen<T>(tab: TabHeaderPropsType<T>) {
         }
         return tab.checkIsOnScreen(tab.key);
     }, [tab.key]);
-    useScreenUpdateEvents(undefined, async () => {
-        if (tab.checkIsOnScreen === undefined) {
-            return;
-        }
-        const isOnScreen = await tab.checkIsOnScreen(tab.key);
-        setIsOnScreen(isOnScreen);
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    useScreenUpdateEvents(undefined, () => {
+        attemptTimeout(async () => {
+            if (tab.checkIsOnScreen === undefined) {
+                return;
+            }
+            const isOnScreen = await tab.checkIsOnScreen(tab.key);
+            setIsOnScreen(isOnScreen);
+        });
     });
     return isOnScreen;
 }

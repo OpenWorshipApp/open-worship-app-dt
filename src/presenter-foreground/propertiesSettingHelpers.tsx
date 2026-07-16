@@ -118,6 +118,23 @@ function genTransformingExtraStyle(
     const transformScale = genTransformScale(widgetScaleSettingName);
     const transformRotate = genTransformRotate();
     const transformScaleRotate = `${transformScale} ${transformRotate}`;
+    // Anchor scaling to the aligned edge so `scale()` grows the widget away from
+    // the screen edge it is pinned to. With the default center origin, an
+    // edge-anchored widget (left/right/top/bottom) scaled up expands past that
+    // edge and gets clipped off-screen.
+    const horizontalOrigin =
+        horizontalAlignment === 'left'
+            ? 'left'
+            : horizontalAlignment === 'right'
+              ? 'right'
+              : 'center';
+    const verticalOrigin =
+        verticalAlignment === 'start'
+            ? 'top'
+            : verticalAlignment === 'end'
+              ? 'bottom'
+              : 'center';
+    const transformOrigin = `${horizontalOrigin} ${verticalOrigin}`;
     if (horizontalAlignment === 'center' && verticalAlignment === 'center') {
         const translate =
             `translate(${genMinusCalc(widgetOffsetX)},` +
@@ -126,6 +143,7 @@ function genTransformingExtraStyle(
             left: '50%',
             top: '50%',
             transform: `${translate} ${transformScaleRotate}`,
+            transformOrigin,
         };
         return style;
     }
@@ -158,6 +176,7 @@ function genTransformingExtraStyle(
     } else if (verticalAlignment === 'end') {
         style.bottom = `${widgetOffsetY}px`;
     }
+    style.transformOrigin = transformOrigin;
     return style;
 }
 

@@ -75,6 +75,26 @@ export function useFilePaths(
         });
         filePathLoadedCtx?.onLoaded?.(newFilePaths);
     };
+    const filePathsRef = useAppCurrentRef(filePaths);
+    useAppEffect(() => {
+        const registeredEvent = dirSource.registerEventListener(
+            ['file-update'],
+            (changedFilePath: string) => {
+                const targetFile = filePathsRef.current?.find(
+                    (targetFilePath1) => {
+                        return changedFilePath.startsWith(targetFilePath1);
+                    },
+                );
+                if (targetFile !== undefined) {
+                    FileSource.getInstance(targetFile).fireUpdateEvent();
+                }
+                FileSource.getInstance(changedFilePath).fireUpdateEvent();
+            },
+        );
+        return () => {
+            dirSource.unregisterEventListener(registeredEvent);
+        };
+    }, [dirSource]);
     useAppEffect(() => {
         setFilePaths(undefined);
         const registeredEvent = dirSource.registerEventListener(

@@ -22,27 +22,32 @@ export default function BibleViewSettingComp({
 }>) {
     return (
         <div
-            className="bible-view-setting"
-            style={{
-                maxWidth: 450,
-            }}
+            className="bible-view-setting d-flex align-items-center"
+            style={{ maxWidth: 450 }}
+            title={`${tran('Font Size')} [Ctrl + Scroll]`}
         >
-            <div className="input-group d-flex">
-                <div className="flex-fill d-flex mx-1">
-                    <div className="d-flex flex-fill">
-                        <label htmlFor={rangeId} className="form-label">
-                            {tran('Font Size')} [Ctrl + Scroll] ({fontSize}px):
-                        </label>
-                        <AppRangeComp
-                            value={fontSize}
-                            title={tran('Font Size')}
-                            id={rangeId}
-                            setValue={setFontSize}
-                            defaultSize={defaultRangeSize}
-                        />
-                    </div>
-                </div>
-            </div>
+            <label
+                htmlFor={rangeId}
+                className={
+                    'form-label text-nowrap mb-0 me-1 ' +
+                    'd-flex align-items-center'
+                }
+            >
+                <i className="bi bi-fonts me-1" />
+                <span
+                    className="badge bg-secondary"
+                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
+                    {fontSize}px
+                </span>
+            </label>
+            <AppRangeComp
+                value={fontSize}
+                title={tran('Font Size')}
+                id={rangeId}
+                setValue={setFontSize}
+                defaultSize={defaultRangeSize}
+            />
         </div>
     );
 }

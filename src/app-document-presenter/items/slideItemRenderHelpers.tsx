@@ -106,7 +106,11 @@ export function genAttachBackgroundComponent(
         const src = droppedData.item.src;
         return (
             <img
-                style={fillingParentStyle}
+                style={{
+                    ...fillingParentStyle,
+                    objectFit: 'cover',
+                    objectPosition: 'center center',
+                }}
                 alt={src}
                 src={src}
                 onError={(event) => {

@@ -10,6 +10,7 @@ import { useAppEffect } from '../helper/appHooks';
 import FileSource from '../helper/FileSource';
 import AppDocument from '../app-document-list/AppDocument';
 import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
+import { checkIsSameValues } from '../helper/helpers';
 
 const LazySlideEditorPopupComp = lazy(() => {
     return import('../slide-editor/SlideEditorPopupComp');
@@ -37,12 +38,28 @@ export default function SlideEditHandlerComp() {
             return;
         }
         const callback = async (data: any) => {
-            if (!checkIsHistoryMovementEventType(data?.eventType)) {
+            // Mirror the main document editor (layoutHelpers.handleFileUpdate):
+            // refresh on genuine external changes (another window/process saved
+            // the file) and on history navigation, but ignore this window's own
+            // in-progress history-editing echoes, which would revert live edits.
+            const isHistoryNavigation = checkIsHistoryMovementEventType(
+                data?.eventType,
+            );
+            if (data?.isHistoryEditing === true && !isHistoryNavigation) {
                 return;
             }
             const appDocument = AppDocument.getInstance(slide.filePath);
             const newSlide = await appDocument.getItemById(slide.id);
             if (newSlide === null) {
+                return;
+            }
+            // Skip redundant refreshes: only reload when the on-disk content
+            // actually differs from what the popup currently shows, so a
+            // self-save echo doesn't needlessly reload the canvas.
+            if (
+                !isHistoryNavigation &&
+                checkIsSameValues(newSlide.toJson(), slide.toJson())
+            ) {
                 return;
             }
             setSlide(newSlide);

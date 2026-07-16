@@ -17,7 +17,7 @@ import FileSource from './FileSource';
 import { getSetting, setSetting } from './settingHelpers';
 import { type OptionalPromise } from './typeHelpers';
 
-export type DirSourceEventType = 'refresh' | 'reload';
+export type DirSourceEventType = 'refresh' | 'reload' | 'file-update';
 
 const fileCacheKeys: string[] = [];
 const cache = new Map<string, DirSource>();
@@ -228,10 +228,6 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
             return;
         }
         const filePath = pathJoin(dirPath, fileFullName);
-        if (!(await fsCheckFileExist(filePath))) {
-            return;
-        }
-        const fileSource = this.getFileSourceInstance(fileFullName);
-        fileSource.fireUpdateEvent();
+        this.addPropEvent('file-update', filePath);
     }
 }

@@ -11,6 +11,7 @@ import type AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSour
 import type { EventMapperType as KeyboardEventMapper } from '../event/KeyboardEventListener';
 import { toShortcutKey } from '../event/KeyboardEventListener';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
+import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function sanitizeForUpdatingComparison(jsonText: string | null) {
     if (jsonText === null) {
@@ -24,6 +25,7 @@ function sanitizeForUpdatingComparison(jsonText: string | null) {
     } catch (_error) {}
     return jsonText;
 }
+const attemptTimeout = genTimeoutAttempt(500);
 export function useEditingHistoryStatus(filePath: string) {
     const [status, setStatus] = useState({
         canUndo: false,
@@ -44,7 +46,14 @@ export function useEditingHistoryStatus(filePath: string) {
             sanitizedHistoryText !== sanitizedText;
         setStatus({ canUndo, canRedo, canSave });
     };
-    useFileSourceEvents(['update'], update, [], filePath);
+    useFileSourceEvents(
+        ['update'],
+        () => {
+            attemptTimeout(update);
+        },
+        [],
+        filePath,
+    );
     useAppEffect(() => {
         update();
     }, [filePath]);

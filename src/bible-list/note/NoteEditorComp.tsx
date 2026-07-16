@@ -1,10 +1,11 @@
-import { type CSSProperties, useState } from 'react';
+import { type CSSProperties, useMemo, useState } from 'react';
 
 import SimpleNoteEditorComp, {
     type SimpleNoteEditorStoreType,
 } from '../../others/SimpleNoteEditorComp';
 import { useAppEffect } from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import type NoteItem from './NoteItem';
 import type Note from './Note';
 import { tran } from '../../lang/langHelpers';
@@ -53,18 +54,21 @@ export function NoteTitleEditorComp({
         };
     }, [store]);
 
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     useFileSourceEvents(
         ['update'],
-        async () => {
-            await note.reload();
-            const newNoteItem = note.getItemById(noteItem.id);
-            if (
-                newNoteItem === null ||
-                newNoteItem.content === store.currentText
-            ) {
-                return;
-            }
-            setStore(new NoteTitleStore(note, newNoteItem));
+        () => {
+            attemptTimeout(async () => {
+                await note.reload();
+                const newNoteItem = note.getItemById(noteItem.id);
+                if (
+                    newNoteItem === null ||
+                    newNoteItem.content === store.currentText
+                ) {
+                    return;
+                }
+                setStore(new NoteTitleStore(note, newNoteItem));
+            });
         },
         [note, noteItem, store],
         note.filePath,
@@ -130,18 +134,21 @@ export default function NoteEditorComp({
         };
     }, [store]);
 
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     useFileSourceEvents(
         ['update'],
-        async () => {
-            await note.reload();
-            const newNoteItem = note.getItemById(noteItem.id);
-            if (
-                newNoteItem === null ||
-                newNoteItem.content === store.currentText
-            ) {
-                return;
-            }
-            setStore(new NoteContentStore(note, newNoteItem));
+        () => {
+            attemptTimeout(async () => {
+                await note.reload();
+                const newNoteItem = note.getItemById(noteItem.id);
+                if (
+                    newNoteItem === null ||
+                    newNoteItem.content === store.currentText
+                ) {
+                    return;
+                }
+                setStore(new NoteContentStore(note, newNoteItem));
+            });
         },
         [note, noteItem, store],
         note.filePath,

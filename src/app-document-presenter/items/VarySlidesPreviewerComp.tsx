@@ -105,28 +105,31 @@ export default function VarySlidesPreviewerComp() {
             onDrop={handleContainerDrop}
             ref={containerRef}
         >
-            <div
-                style={{
-                    marginTop: isDisplayingEditingMenu ? '30px' : undefined,
-                }}
-            >
+            <div>
+                {isDisplayingEditingMenu ? (
+                    <div
+                        className="w-100 app-outer-shadow"
+                        style={{
+                            height: 30,
+                        }}
+                    >
+                        <div
+                            className="w-100 app-outer-shadow"
+                            style={{
+                                overflowX: 'auto',
+                                overflowY: 'hidden',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                            }}
+                        >
+                            <SlidesMenuComp />
+                        </div>
+                    </div>
+                ) : null}
                 <VarySlidesComp />
             </div>
             <ScrollingHandlerComp />
-            {isDisplayingEditingMenu ? (
-                <div
-                    className="w-100 app-outer-shadow"
-                    style={{
-                        overflowX: 'auto',
-                        overflowY: 'hidden',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                    }}
-                >
-                    <SlidesMenuComp />
-                </div>
-            ) : null}
         </div>
     );
 }

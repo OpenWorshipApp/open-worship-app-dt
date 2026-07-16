@@ -43,44 +43,45 @@ export default function NewLineSettingComp() {
         [],
     );
     return (
-        <>
-            <div
-                className="d-flex mx-1"
-                title="Break lines following bible info"
+        <div className="d-flex align-items-center gap-2">
+            <label
+                htmlFor="new-line-setting"
+                className={
+                    'form-label mb-0 text-nowrap app-caught-hover-pointer ' +
+                    'd-flex align-items-center gap-1'
+                }
+                title={`${tran('Should New Lines')} — break lines following bible info`}
             >
-                <label htmlFor="new-line-setting" className="form-label">
-                    {tran('Should New Lines')}:
-                </label>
                 <input
-                    className="form-check-input app-caught-hover-pointer"
+                    className="form-check-input mt-0 app-caught-hover-pointer"
                     type="checkbox"
                     id="new-line-setting"
                     checked={shouldNewLine}
                     onChange={handleNewLineChange}
                 />
-            </div>
-            <div
-                className="d-flex mx-1"
+                <i className="bi bi-arrow-return-left" />
+            </label>
+            <label
+                htmlFor="use-model-new-line-setting"
+                className={
+                    'form-label mb-0 text-nowrap app-caught-hover-pointer ' +
+                    'd-flex align-items-center gap-1'
+                }
                 title={tran('Break lines following model formatting')}
                 style={{
                     opacity: shouldNewLine ? 1 : 0.5,
                 }}
             >
-                <label
-                    htmlFor="use-model-new-line-setting"
-                    className="form-label"
-                >
-                    {tran('Use Model New Lines')}:
-                </label>
                 <input
-                    className="form-check-input app-caught-hover-pointer"
+                    className="form-check-input mt-0 app-caught-hover-pointer"
                     type="checkbox"
                     id="use-model-new-line-setting"
                     disabled={!shouldNewLine}
                     checked={useModelNewLine}
                     onChange={handleModelNewLineChange}
                 />
-            </div>
-        </>
+                <i className="bi bi-file-text" />
+            </label>
+        </div>
     );
 }

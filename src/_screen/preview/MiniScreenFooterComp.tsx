@@ -1,5 +1,6 @@
 import { handleAutoHide } from '../../helper/domHelpers';
 import AppRangeComp from '../../others/AppRangeComp';
+import BibleCustomStyleFloatingToggleComp from '../../screen-setting/BibleCustomStyleFloatingToggleComp';
 
 export const DEFAULT_PREVIEW_SIZE = 50;
 export const defaultRangeSize = {
@@ -24,7 +25,7 @@ export default function MiniScreenFooterComp({
                 }
             }}
         >
-            <div className="d-flex w-100 h-100">
+            <div className="d-flex w-100 h-100 align-items-center">
                 <div className="row">
                     <div className="col-auto">
                         <AppRangeComp
@@ -34,6 +35,9 @@ export default function MiniScreenFooterComp({
                             defaultSize={defaultRangeSize}
                         />
                     </div>
+                </div>
+                <div className="ms-auto me-1 flex-shrink-0">
+                    <BibleCustomStyleFloatingToggleComp />
                 </div>
             </div>
         </div>

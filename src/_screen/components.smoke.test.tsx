@@ -482,9 +482,14 @@ describe('screen component smoke tests', () => {
         expect(renderToStaticMarkup(<MiniScreenComp />)).toContain(
             'card-footer',
         );
-        expect(renderToStaticMarkup(<ScreenPreviewerHeaderComp />)).toContain(
-            'ColorNote',
-        );
+        expect(
+            renderToStaticMarkup(
+                <ScreenPreviewerHeaderComp
+                    isFullView={false}
+                    setIsFullView={() => {}}
+                />,
+            ),
+        ).toContain('ColorNote');
         expect(renderToStaticMarkup(<ScreenPreviewerFooterComp />)).toContain(
             'Stage',
         );

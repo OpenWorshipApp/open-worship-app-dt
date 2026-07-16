@@ -13,6 +13,7 @@ export default function ForegroundLayoutComp({
     children,
     extraBodyClassName,
     extraBodyStyle,
+    isOnScreen = false,
 }: Readonly<{
     target: string;
     fullChildHeaders?: ReactNode;
@@ -22,6 +23,7 @@ export default function ForegroundLayoutComp({
     children?: ReactNode;
     extraBodyClassName?: string;
     extraBodyStyle?: CSSProperties;
+    isOnScreen?: boolean;
 }>) {
     const [isOpened, setIsOpened] = useStateSettingBoolean(
         `foreground-${target}-show-opened`,
@@ -49,7 +51,14 @@ export default function ForegroundLayoutComp({
                             (isOpened ? 'down' : 'right')
                         }
                     />
-                    {fullChildHeaders}
+                    <div
+                        className={
+                            'd-flex align-items-center' +
+                            (isOnScreen ? ' app-on-screen' : '')
+                        }
+                    >
+                        {fullChildHeaders}
+                    </div>
                 </div>
                 {isOpened ? null : (
                     <div className="d-flex">{childHeadersOnHidden}</div>

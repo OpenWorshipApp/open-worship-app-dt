@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 
 import { useStateSettingNumber } from '../helper/settingHelpers';
 import BibleViewSettingComp, { defaultRangeSize } from './BibleViewSettingComp';
@@ -23,7 +23,11 @@ function RenderComp() {
     return <BibleViewRendererComp nestedBibleItems={nestedBibleItems} />;
 }
 
-export default function BiblePreviewerRenderComp() {
+export default function BiblePreviewerRenderComp({
+    footerExtra = null,
+}: Readonly<{
+    footerExtra?: ReactNode;
+}> = {}) {
     const [isFulledScreen, setIsFulledScreen] = useState(
         document.fullscreenElement !== null,
     );
@@ -89,8 +93,8 @@ export default function BiblePreviewerRenderComp() {
                     }
                 }}
             >
-                <div className="d-flex w-100">
-                    <div className="flex-fill d-flex">
+                <div className="d-flex w-100 align-items-center gap-2">
+                    <div className="flex-fill d-flex align-items-center gap-2 flex-wrap">
                         <BibleViewSettingComp
                             fontSize={fontSize}
                             setFontSize={setFontSize}
@@ -98,10 +102,13 @@ export default function BiblePreviewerRenderComp() {
                         <NewLineSettingComp />
                         <BibleModelInfoSettingComp />
                     </div>
-                    <FullScreenButtonComp
-                        isFulledScreen={isFulledScreen}
-                        toggleFullScreen={handleFullScreenToggling}
-                    />
+                    <div className="d-flex align-items-center gap-1 flex-shrink-0">
+                        {footerExtra}
+                        <FullScreenButtonComp
+                            isFulledScreen={isFulledScreen}
+                            toggleFullScreen={handleFullScreenToggling}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

@@ -6,7 +6,7 @@ export default function SlideEditorPopupHeaderComp() {
     return (
         <div className="card-header text-center w-100 app-overflow-hidden">
             <span>
-                <i className="bi bi-pencil-square" />
+                <i className="bi bi-pencil-square me-2" />
                 {tran('Slide Quick Edit')}
             </span>
             <ModalCloseButton close={closeSlideQuickEdit} />

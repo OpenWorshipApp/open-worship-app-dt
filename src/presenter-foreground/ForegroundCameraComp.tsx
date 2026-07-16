@@ -206,11 +206,14 @@ function RenderShownMiniComp() {
 
 export default function ForegroundCameraComp() {
     const cameraInfoList = useCameraInfoList();
+    useScreenForegroundManagerEvents(['update']);
+    const isOnScreen = getAllShowingScreenIdDataList().length > 0;
     return (
         <ForegroundLayoutComp
             target="camera"
             fullChildHeaders={<h4>{tran('Camera Show')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
+            isOnScreen={isOnScreen}
         >
             <div className="d-flex flex-wrap">
                 {cameraInfoList.map((cameraInfo) => {

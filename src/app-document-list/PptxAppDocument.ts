@@ -1,7 +1,10 @@
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import type { MimetypeNameType } from '../server/fileHelpers';
 import type ItemSourceInf from '../others/ItemSourceInf';
-import { showStaticSlideContextMenu } from './appDocumentHelpers';
+import {
+    BLANK_HTML_SLIDE_SRC,
+    showStaticSlideContextMenu,
+} from './appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
@@ -9,6 +12,7 @@ import { appLog } from '../helper/loggerHelpers';
 import PptxSlide, { type PptxSlideType } from './PptxSlide';
 import {
     getPptxData,
+    getPptxMissingFontFamilyList,
     getPptxToHtmlsVersion,
     removePptxHtmlsPreview,
 } from '../server/pptxHelpers';
@@ -51,6 +55,10 @@ export default class PptxAppDocument
         return {};
     }
 
+    async getMissingFontFamilyList() {
+        return await getPptxMissingFontFamilyList(this.filePath);
+    }
+
     async getSlides() {
         try {
             const pptxData = await getPptxData(this.filePath);
@@ -73,7 +81,7 @@ export default class PptxAppDocument
             }
             const slide0 = new PptxSlide(this.filePath, {
                 id: 0,
-                htmlFilePath: '/assets/slide0.html',
+                htmlFilePath: BLANK_HTML_SLIDE_SRC,
                 subHtmlFilePaths: [],
                 html: '',
                 subHtmls: [],

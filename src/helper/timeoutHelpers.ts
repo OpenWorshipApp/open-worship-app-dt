@@ -4,7 +4,7 @@ export function genTimeoutAttempt(
 ) {
     let timeoutId: any = null;
     let lastSchedule = Date.now() - timeMilliseconds - 1;
-    return function (func: () => void, isImmediate: boolean = false) {
+    const caller = function (func: () => void, isImmediate: boolean = false) {
         if (!shouldWait && Date.now() - lastSchedule > timeMilliseconds) {
             isImmediate = true;
         }
@@ -22,4 +22,5 @@ export function genTimeoutAttempt(
             func();
         }, timeMilliseconds);
     };
+    return caller;
 }

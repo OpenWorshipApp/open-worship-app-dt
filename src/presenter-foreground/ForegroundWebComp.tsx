@@ -289,6 +289,7 @@ export default function ForegroundWebComp() {
         dirSourceSettingNames.BACKGROUND_WEB,
     );
     useScreenForegroundManagerEvents(['update']);
+    const isOnScreen = getAllShowingScreenIdDataList().length > 0;
     if (dirSource === null) {
         return null;
     }
@@ -298,6 +299,7 @@ export default function ForegroundWebComp() {
             target="web"
             fullChildHeaders={<h4>{tran('Web Show')}</h4>}
             childHeadersOnHidden={<RenderShownMiniComp />}
+            isOnScreen={isOnScreen}
             extraBodyStyle={{
                 maxHeight: '500px',
             }}

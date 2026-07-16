@@ -6,7 +6,10 @@ import {
     removePdfImagesPreview,
 } from '../helper/pdfHelpers';
 import PdfSlide from './PdfSlide';
-import { showStaticSlideContextMenu } from './appDocumentHelpers';
+import {
+    BLANK_IMAGE_SLIDE_SRC,
+    showStaticSlideContextMenu,
+} from './appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
@@ -71,7 +74,7 @@ export default class PdfAppDocument
             const slide1 = dataList[0];
             const slide0 = new PdfSlide(this.filePath, {
                 id: 0,
-                imagePreviewSrc: '/assets/blank.png',
+                imagePreviewSrc: BLANK_IMAGE_SLIDE_SRC,
                 pdfPageNumber: 0,
                 metadata: { width: slide1.width, height: slide1.height },
             });

@@ -1,4 +1,3 @@
-import LexicalEditorComp from './LexicalEditorComp';
 import { getReactRoot } from '../others/rootHelpers';
 
 const root = getReactRoot();
@@ -12,6 +11,6 @@ root.render(
             margin: 'auto',
         }}
     >
-        <LexicalEditorComp />
+        No content
     </div>,
 );

@@ -153,6 +153,19 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
     });
 }
 
+export async function getPptxMissingFontFamilyList(
+    filePath: string,
+): Promise<string[]> {
+    // Read only the small info.json (already short-lived cached) — no HTML/media
+    // reads and no preview regeneration; returns [] when the preview isn't
+    // generated yet.
+    const outDir = toPptxHtmlsPreviewDirPath(filePath);
+    const infoFilePath = pathJoin(outDir, 'info.json');
+    const infoFileSource = FileSource.getInstance(infoFilePath);
+    const infoData = await infoFileSource.readFileJsonData();
+    return (infoData?.missingFontFamily as string[] | undefined) ?? [];
+}
+
 export async function removeSlideBackground(filePath: string) {
     // This API is retained for future work and is not production-ready yet.
     const isSuccess = await electronSendAsync<boolean>(

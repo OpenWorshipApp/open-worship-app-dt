@@ -432,6 +432,7 @@ export default function ForegroundMarqueeComp({
             target={config.target}
             fullChildHeaders={<h4>{tran(config.label)}</h4>}
             childHeadersOnHidden={genHidingElement(true)}
+            isOnScreen={showingScreenIdDataList.length > 0}
         >
             {propsSetting}
             <hr />

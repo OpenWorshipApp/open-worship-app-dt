@@ -82,6 +82,13 @@ export abstract class AppDocumentSourceAbs {
         attachBackgroundManager.deleteMetaDataFile(this.filePath);
     }
 
+    // Fonts the document references that aren't installed on this system.
+    // Surfaced as a non-blocking banner in the slides preview; defaults to
+    // none and is overridden by document types that can detect missing fonts.
+    async getMissingFontFamilyList(): Promise<string[]> {
+        return [];
+    }
+
     static getInstance(_filePath: string) {
         throw new Error('getInstance must be implemented in derived class');
     }

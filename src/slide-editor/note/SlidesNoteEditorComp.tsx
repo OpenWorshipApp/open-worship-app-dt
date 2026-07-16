@@ -1,13 +1,13 @@
 import type AppDocument from '../../app-document-list/AppDocument';
-import SlideNoteEditorComp from './SlideNoteEditorComp';
-import type Slide from '../../app-document-list/Slide';
+import VarySlideNoteEditorComp from './VarySlideNoteEditorComp';
+import { type VarySlideWithNoteType } from '../../app-document-list/appDocumentTypeHelpers';
 
 export default function SlidesNoteEditorComp({
     appDocument,
     slides,
 }: Readonly<{
     appDocument: AppDocument;
-    slides: Slide[];
+    slides: VarySlideWithNoteType[];
 }>) {
     return (
         <div
@@ -27,7 +27,7 @@ export default function SlidesNoteEditorComp({
                             borderBottom: '1px solid #ccc',
                         }}
                     >
-                        <SlideNoteEditorComp
+                        <VarySlideNoteEditorComp
                             appDocument={appDocument}
                             slide={slide}
                             title={`Slide Note: ${slide.name || index + 1}`}

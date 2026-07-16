@@ -7,6 +7,7 @@ import type {
     PropsWithChildren,
     ReactNode,
 } from 'react';
+import { useThemeSource } from '../others/themeHelpers';
 
 const VIEWPORT_PADDING = 8;
 const DEFAULT_WIDTH = 360;
@@ -240,6 +241,7 @@ function isOnScrollbar(clientX: number, clientY: number, target: Element) {
 interface MyProps {
     children?: ReactNode;
     collapsedChildren?: ReactNode | null;
+    title?: ReactNode;
     onClose: () => void;
     options?: {
         extraStyle?: CSSProperties;
@@ -256,6 +258,7 @@ interface MyProps {
 export default function FloatingWidgetComp({
     children,
     collapsedChildren = null,
+    title,
     options,
     onClose,
 }: PropsWithChildren<MyProps>) {
@@ -423,9 +426,46 @@ export default function FloatingWidgetComp({
         startInteraction(event, 'move');
     };
 
+    const { theme } = useThemeSource();
+
+    const actionButtons = (
+        <div
+            className="floating-widget__actions"
+            onPointerDown={(event) => event.stopPropagation()}
+        >
+            <button
+                type="button"
+                className="floating-widget__button"
+                onClick={() => setIsCollapsed((prev) => !prev)}
+                aria-label={
+                    isCollapsed
+                        ? 'Expand floating widget'
+                        : 'Collapse floating widget'
+                }
+                title={
+                    isCollapsed
+                        ? 'Expand floating widget'
+                        : 'Collapse floating widget'
+                }
+            >
+                <i className={`bi bi-chevron-${isCollapsed ? 'up' : 'down'}`} />
+            </button>
+            <button
+                type="button"
+                className="floating-widget__button"
+                onClick={onClose}
+                aria-label="Close floating widget"
+                title="Close floating widget"
+            >
+                <i className="bi bi-x-lg" />
+            </button>
+        </div>
+    );
+
     return (
         <div
             ref={widgetRef}
+            data-bs-theme={theme}
             className={[
                 'floating-widget',
                 isCollapsed ? 'floating-widget--collapsed' : '',
@@ -447,41 +487,14 @@ export default function FloatingWidgetComp({
             onPointerUp={finishInteraction}
             onPointerCancel={finishInteraction}
         >
-            <div className="floating-widget__toolbar">
-                <div
-                    className="floating-widget__actions"
-                    onPointerDown={(event) => event.stopPropagation()}
-                >
-                    <button
-                        type="button"
-                        className="floating-widget__button"
-                        onClick={() => setIsCollapsed((prev) => !prev)}
-                        aria-label={
-                            isCollapsed
-                                ? 'Expand floating widget'
-                                : 'Collapse floating widget'
-                        }
-                        title={
-                            isCollapsed
-                                ? 'Expand floating widget'
-                                : 'Collapse floating widget'
-                        }
-                    >
-                        <i
-                            className={`bi bi-chevron-${isCollapsed ? 'up' : 'down'}`}
-                        />
-                    </button>
-                    <button
-                        type="button"
-                        className="floating-widget__button"
-                        onClick={onClose}
-                        aria-label="Close floating widget"
-                        title="Close floating widget"
-                    >
-                        <i className="bi bi-x-lg" />
-                    </button>
+            {title == null ? (
+                <div className="floating-widget__toolbar">{actionButtons}</div>
+            ) : (
+                <div className="floating-widget__header">
+                    <div className="floating-widget__title">{title}</div>
+                    {actionButtons}
                 </div>
-            </div>
+            )}
             <div className="floating-widget__content">
                 {isCollapsed ? collapsedChildren : children}
             </div>

@@ -235,6 +235,11 @@ export default function BibleItemRenderComp({
                                 changeBible(newBibleKey);
                             }}
                             isMinimal
+                            extraStyle={{
+                                background: 'var(--bs-secondary) !important',
+                                padding: '0px !important',
+                                fontSize: '0.8rem !important',
+                            }}
                         />
                     </div>
                     <span

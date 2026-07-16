@@ -148,9 +148,12 @@ describe('dirSourceHelpers', () => {
         const observedValues: Array<string[] | null | undefined> = [];
         const dirSource = {
             registerEventListener: vi.fn(
-                (_events: string[], callback: () => void) => {
-                    refreshCallbacks.push(callback);
-                    return ['refresh-listener'];
+                (events: string[], callback: () => void) => {
+                    if (events.includes('refresh')) {
+                        refreshCallbacks.push(callback);
+                        return ['refresh-listener'];
+                    }
+                    return ['other-listener'];
                 },
             ),
             unregisterEventListener: vi.fn(),
@@ -229,6 +232,63 @@ describe('dirSourceHelpers', () => {
         expect(dirSource.unregisterEventListener).toHaveBeenCalledWith([
             'refresh-listener',
         ]);
+    });
+
+    test('maps file-update events back to the owning managed file', async () => {
+        const listeners: Record<string, (data: unknown) => void> = {};
+        const dirSource = {
+            registerEventListener: vi.fn(
+                (events: string[], callback: (data: unknown) => void) => {
+                    for (const event of events) {
+                        listeners[event] = callback;
+                    }
+                    return events;
+                },
+            ),
+            unregisterEventListener: vi.fn(),
+            getFilePaths: vi
+                .fn()
+                .mockResolvedValue(['/docs/a.owa', '/docs/b.owa']),
+        };
+        const updateSpies: Record<string, ReturnType<typeof vi.fn>> = {};
+        fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
+            updateSpies[filePath] ??= vi.fn();
+            return {
+                src: `src:${filePath}`,
+                colorNote: null,
+                getColorNote: vi.fn(async () => null),
+                fireUpdateEvent: updateSpies[filePath],
+            };
+        });
+
+        function Probe() {
+            useFilePaths(dirSource as any, ['appDocument'] as any);
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe />);
+        });
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+        });
+
+        // A change inside `<doc>.histories` maps back to the document itself.
+        await act(async () => {
+            listeners['file-update']?.('/docs/a.owa.histories');
+        });
+        expect(updateSpies['/docs/a.owa']).toHaveBeenCalledTimes(1);
+
+        // An exact match is a self-write echo and must not re-fire an update.
+        await act(async () => {
+            listeners['file-update']?.('/docs/b.owa');
+        });
+        expect(updateSpies['/docs/b.owa']).not.toHaveBeenCalled();
     });
 
     test('reloads dir sources when the reload event fires', async () => {
@@ -441,6 +501,16 @@ describe('dirSourceHelpers', () => {
         });
 
         expect(dirSource.fireRefreshEvent).toHaveBeenCalledTimes(2);
+
+        await act(async () => {
+            await watchCallback?.('change', '/docs/a1 (Copy).ows.histories');
+        });
+
+        // handleFileEvent forwards the raw changed path as-is; mapping the
+        // `.histories` folder back to its document happens in useFilePaths.
+        expect(dirSource.alertFileChanging).toHaveBeenLastCalledWith(
+            '/docs/a1 (Copy).ows.histories',
+        );
     });
 
     test('skips or reports directory watch setup errors', async () => {

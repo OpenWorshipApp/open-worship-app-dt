@@ -10,6 +10,8 @@ import type BibleItemsViewController from '../bible-reader/BibleItemsViewControl
 import { getOnScreenBibleItems } from '../bible-list/bibleHelpers';
 
 export const PRESENT_TAB_SETTING_NAME = 'presenter-tab';
+export const PRESENT_FOREGROUND_FLOATING_SETTING_NAME =
+    'presenter-foreground-floating';
 
 export function getIsShowingVaryAppDocumentPreviewer() {
     return getSetting(PRESENT_TAB_SETTING_NAME) === 'd';

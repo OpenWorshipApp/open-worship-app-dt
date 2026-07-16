@@ -83,6 +83,19 @@ export type DocxDataType100 = {
     baseDirPath: string;
 };
 
+export async function getDocxMissingFontFamilyList(
+    filePath: string,
+): Promise<string[]> {
+    // Read only the small info.json (already short-lived cached) — no HTML reads
+    // and no preview regeneration; returns [] when the preview isn't generated
+    // yet.
+    const outDir = toDocxHtmlsPreviewDirPath(filePath);
+    const infoFilePath = pathJoin(outDir, 'info.json');
+    const infoFileSource = FileSource.getInstance(infoFilePath);
+    const infoData = await infoFileSource.readFileJsonData();
+    return (infoData?.missingFontFamily as string[] | undefined) ?? [];
+}
+
 export function getDocxData(filePath: string): Promise<DocxDataType100 | null> {
     const key = `get-docx-data-${filePath}`;
     return unlocking<DocxDataType100 | null>(key, async () => {

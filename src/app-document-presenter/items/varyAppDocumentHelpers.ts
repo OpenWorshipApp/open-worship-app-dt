@@ -182,7 +182,7 @@ export function getContainerDiv(): HTMLDivElement | null {
     return document.querySelector(`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`);
 }
 
-export function handleArrowing(
+export function handleSlideMoving(
     event: KeyboardEvent | ReactKeyboardEvent<any>,
     varySlides: VarySlideType[],
 ) {

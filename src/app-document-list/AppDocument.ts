@@ -24,7 +24,6 @@ import {
     APP_DOCUMENT_ITEM_CLASS,
     createNewSlidesFromDroppedData,
 } from '../app-document-presenter/items/appDocumentHelpers';
-import { fixMissingFontFamilies } from '../server/fontHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
 import { notifyElementHighlight, openPopupWindow } from '../helper/domHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
@@ -70,16 +69,9 @@ export default class AppDocument
         if (jsonData !== null) {
             return jsonData;
         }
-        await this.historyDiscard();
         if (!isOriginal) {
             jsonData = await this.getJsonData(true);
             if (jsonData !== null) {
-                showSimpleToast(
-                    tran('Corrupted Document'),
-                    tran(
-                        'Document data will be reset to the last saved state.',
-                    ),
-                );
                 return jsonData;
             }
         }
@@ -125,6 +117,11 @@ export default class AppDocument
         for (const [index, slide] of slides.entries()) {
             this.checkSlideIsChanged(index, slide, jsonData.items);
         }
+        return slides;
+    }
+
+    async getMissingFontFamilyList() {
+        const slides = await this.getSlides();
         const unavailableFontFamiliesSet = new Set<string>();
         for (const slide of slides) {
             const unavailableFonts = await slide.getUnavailableFontFamilies();
@@ -132,13 +129,7 @@ export default class AppDocument
                 unavailableFontFamiliesSet.add(font);
             }
         }
-        if (unavailableFontFamiliesSet.size > 0) {
-            await fixMissingFontFamilies(
-                unavailableFontFamiliesSet,
-                this.filePath,
-            );
-        }
-        return slides;
+        return Array.from(unavailableFontFamiliesSet);
     }
 
     async setSlides(newSlides: Slide[]) {

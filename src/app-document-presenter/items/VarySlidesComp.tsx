@@ -9,7 +9,7 @@ import {
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
 import {
     getContainerDiv,
-    handleArrowing,
+    handleSlideMoving,
     handleNextItemSelecting,
     showVarySlideInViewport,
 } from './varyAppDocumentHelpers';
@@ -43,6 +43,9 @@ import { removePdfImagesPreview } from '../../helper/pdfHelpers';
 import { removePptxHtmlsPreview } from '../../server/pptxHelpers';
 import { removeDocxHtmlsPreview } from '../../server/docxHelpers';
 import { notifyElementHighlight } from '../../helper/domHelpers';
+import MissingFontFamilyBannerComp from './MissingFontFamilyBannerComp';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
+import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 
 const varySlidesToView: { [key: string]: VarySlideType } = {};
 
@@ -54,6 +57,7 @@ eventMaps.push({
     allControlKey: ['Shift'],
     key: ' ',
 });
+const attemptTimeout = genTimeoutAttempt(500);
 function useVarySlidesData() {
     const selectedVaryAppDocument = useVaryAppDocumentContext();
     const [varySlides, setVarySlide] = useAppStateAsync<VarySlideType[]>(() => {
@@ -71,8 +75,10 @@ function useVarySlidesData() {
         { setVarySlide },
     );
     const refresh = async () => {
-        const newVarySlides = await selectedVaryAppDocument.getSlides();
-        setVarySlide(newVarySlides);
+        attemptTimeout(async () => {
+            const newVarySlides = await selectedVaryAppDocument.getSlides();
+            setVarySlide(newVarySlides);
+        });
     };
 
     useFileSourceEvents(
@@ -85,7 +91,7 @@ function useVarySlidesData() {
     useKeyboardRegistering(
         eventMaps,
         (event) => {
-            handleArrowing(event, varySlides ?? []);
+            handleSlideMoving(event, varySlides ?? []);
         },
         [varySlides],
     );
@@ -148,6 +154,19 @@ function useVarySlidesData() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // Read the document's missing fonts once the preview is built. Keyed on
+    // `varySlides` so it re-reads after a regeneration/refresh.
+    const [missingFontFamilyList] = useAppStateAsync<string[]>(
+        async () => {
+            if (!varySlides?.length) {
+                return [];
+            }
+            return await selectedVaryAppDocument.getMissingFontFamilyList();
+        },
+        [selectedVaryAppDocument, varySlides],
+        [],
+    );
+
     return {
         varySlides,
         startLoading: () => {
@@ -156,6 +175,7 @@ function useVarySlidesData() {
         isPDFAppDocument,
         isPptxAppDocument,
         isDocxAppDocument,
+        missingFontFamilyList,
         refreshPDFImages,
         refreshPptxSlides,
         refreshDocxSlides,
@@ -172,6 +192,7 @@ export default function VarySlidesComp() {
         isPDFAppDocument,
         isPptxAppDocument,
         isDocxAppDocument,
+        missingFontFamilyList,
         refreshPDFImages,
         refreshPptxSlides,
         refreshDocxSlides,
@@ -196,7 +217,7 @@ export default function VarySlidesComp() {
         if (varySlides?.length) {
             notifyElementHighlight(() => {
                 return document.querySelector(
-                    `.${APP_DOCUMENT_ITEM_CLASS}.app-highlight-selected.animation`,
+                    `.${APP_DOCUMENT_ITEM_CLASS}.${HIGHLIGHT_SELECTED_CLASSNAME}.animation`,
                 );
             });
         }
@@ -277,6 +298,9 @@ export default function VarySlidesComp() {
     }
     return (
         <div className="d-flex flex-wrap justify-content-center pb-5">
+            <MissingFontFamilyBannerComp
+                missingFontFamilyList={missingFontFamilyList ?? []}
+            />
             {varySlides.map((varySlide, i) => {
                 return (
                     <VarySlideRenderWrapperComp

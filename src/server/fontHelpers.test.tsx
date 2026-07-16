@@ -4,25 +4,14 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const {
-    openExternalURLMock,
-    showSimpleToastMock,
-    showAppConfirmMock,
-    fileSourceGetInstanceMock,
-    electronSendAsyncMock,
-    unlockingMock,
-    tranMock,
-} = vi.hoisted(() => ({
-    openExternalURLMock: vi.fn(),
-    showSimpleToastMock: vi.fn(),
-    showAppConfirmMock: vi.fn(),
-    fileSourceGetInstanceMock: vi.fn(),
-    electronSendAsyncMock: vi.fn(),
-    unlockingMock: vi.fn(async (_key: string, callback: () => unknown) => {
-        return await callback();
-    }),
-    tranMock: vi.fn((value: string) => value),
-}));
+const { openExternalURLMock, electronSendAsyncMock, unlockingMock } =
+    vi.hoisted(() => ({
+        openExternalURLMock: vi.fn(),
+        electronSendAsyncMock: vi.fn(),
+        unlockingMock: vi.fn(async (_key: string, callback: () => unknown) => {
+            return await callback();
+        }),
+    }));
 
 vi.mock('./appProvider', () => ({
     default: {
@@ -56,30 +45,12 @@ vi.mock('../helper/appHooks', async () => {
     };
 });
 
-vi.mock('../toast/toastHelpers', () => ({
-    showSimpleToast: showSimpleToastMock,
-}));
-
-vi.mock('../popup-widget/popupWidgetHelpers', () => ({
-    showAppConfirm: showAppConfirmMock,
-}));
-
-vi.mock('../helper/FileSource', () => ({
-    default: {
-        getInstance: fileSourceGetInstanceMock,
-    },
-}));
-
 vi.mock('./appHelpers', () => ({
     electronSendAsync: electronSendAsyncMock,
 }));
 
 vi.mock('./unlockingHelpers', () => ({
     unlocking: unlockingMock,
-}));
-
-vi.mock('../lang/langHelpers', () => ({
-    tran: tranMock,
 }));
 
 vi.mock('../others/CacheManager', () => ({
@@ -192,47 +163,19 @@ describe('fontHelpers', () => {
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(1);
     });
 
-    test('stops when missing fonts were already handled or the user declines', async () => {
-        fileSourceGetInstanceMock.mockReturnValue({ name: 'sample.docx' });
-        showAppConfirmMock.mockResolvedValue(false);
+    test('builds the font download search url for a font family', async () => {
         const module = await loadModule();
 
-        await module.fixMissingFontFamilies(
-            new Set(['Missing Sans']),
-            '/docs/sample.docx',
-        );
-        await module.fixMissingFontFamilies(
-            new Set(['Missing Sans']),
-            '/docs/sample.docx',
-        );
-
-        expect(showAppConfirmMock).toHaveBeenCalledTimes(1);
-        expect(showSimpleToastMock).not.toHaveBeenCalled();
-        expect(openExternalURLMock).not.toHaveBeenCalled();
-    });
-
-    test('opens search pages for each missing font after confirmation', async () => {
-        fileSourceGetInstanceMock.mockReturnValue({ name: 'worship.docx' });
-        showAppConfirmMock.mockResolvedValue(true);
-        const module = await loadModule();
-
-        await module.fixMissingFontFamilies(
-            new Set(['Open Sans', 'Noto Serif']),
-            '/docs/worship.docx',
-        );
-
-        expect(showAppConfirmMock).toHaveBeenCalledWith(
-            'Missing Fonts in "worship.docx"',
-            expect.stringContaining('"Open Sans"'),
-            { confirmButtonLabel: 'Yes' },
-        );
-        expect(showSimpleToastMock).toHaveBeenCalledWith(
-            'Opening Missing Fonts Searching',
-            'Please install the missing fonts from the opened pages. and restart the app after installation.',
-        );
-        expect(openExternalURLMock).toHaveBeenCalledWith(
+        expect(module.getMissingFontSearchUrl('Open Sans')).toBe(
             'https://www.google.com/search?q=font+download: "Open Sans"',
         );
+    });
+
+    test('opens an external search page for the given missing font', async () => {
+        const module = await loadModule();
+
+        module.searchMissingFontFamily('Noto Serif');
+
         expect(openExternalURLMock).toHaveBeenCalledWith(
             'https://www.google.com/search?q=font+download: "Noto Serif"',
         );

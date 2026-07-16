@@ -410,6 +410,14 @@ export function fsCheckFileExist(filePath: string, fileFullName?: string) {
     return _fsCheckExist(true, filePath, fileFullName);
 }
 
+export async function fsGetFileSize(filePath: string) {
+    const stat = await _fsStat(filePath);
+    if (!stat.isFile()) {
+        throw new Error('Path is not a file');
+    }
+    return stat.size;
+}
+
 export async function fsList(dir: string) {
     if (!dir) {
         return [];
@@ -564,12 +572,12 @@ export function fsUnlinkSync(filePath: string) {
     return appProvider.fileUtils.unlinkSync(filePath);
 }
 
-export async function fsDeleteDir(filePath: string) {
-    if (await fsCheckFileExist(filePath)) {
-        throw new Error(`${filePath} is not a directory`);
+export async function fsDeleteDir(dirPath: string) {
+    if (await fsCheckFileExist(dirPath)) {
+        throw new Error(`${dirPath} is not a directory`);
     }
-    if (await fsCheckDirExist(filePath)) {
-        await _fsRmdir(filePath);
+    if (await fsCheckDirExist(dirPath)) {
+        await _fsRmdir(dirPath);
     }
 }
 

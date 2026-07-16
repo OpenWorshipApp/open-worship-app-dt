@@ -17,6 +17,7 @@ export default function PresenterForegroundComp() {
                 'presenter-foreground w-100 h-100 app-border-white-round ' +
                 'p-2 app-zero-border-radius'
             }
+            data-no-widget-drag="true"
         >
             <ForegroundMarqueeTopComp />
             <hr />

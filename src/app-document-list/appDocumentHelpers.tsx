@@ -76,6 +76,9 @@ import { getSlidesCount } from '../server/pptxHelpers';
 import { type ItemBaseFilePath } from '../helper/ItemBase';
 import { getParamFileFullName } from '../helper/domHelpers';
 
+export const BLANK_HTML_SLIDE_SRC = '/assets/slide0.html';
+export const BLANK_IMAGE_SLIDE_SRC = '/assets/blank.png';
+
 export async function showStaticSlideContextMenu(
     event: any,
     slide: ItemBaseFilePath,

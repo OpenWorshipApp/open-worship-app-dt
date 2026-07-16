@@ -6,6 +6,7 @@ import BibleItemsViewController, {
     BibleItemsViewControllerContext,
 } from '../bible-reader/BibleItemsViewController';
 import SlideEditHandlerComp from '../app-document-presenter/SlideEditHandlerComp';
+import BibleCustomStyleFloatingComp from '../screen-setting/BibleCustomStyleFloatingComp';
 import BibleViewComp from '../bible-reader/BibleViewComp';
 import type BibleItem from '../bible-list/BibleItem';
 import { BibleViewTitleEditingComp } from '../bible-reader/view-extra/BibleViewTitleEditingComp';
@@ -81,6 +82,7 @@ export default function AppPresenterComp() {
                 ]}
             />
             <SlideEditHandlerComp />
+            <BibleCustomStyleFloatingComp />
         </BibleItemsViewControllerContext>
     );
 }

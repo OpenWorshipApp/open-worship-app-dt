@@ -14,7 +14,6 @@ const {
     checkIsImagesInClipboardMock,
     readImagesFromClipboardMock,
     createNewSlidesFromDroppedDataMock,
-    fixMissingFontFamiliesMock,
     getFontFamiliesMock,
     notifyElementHighlightMock,
     tranMock,
@@ -35,7 +34,6 @@ const {
     checkIsImagesInClipboardMock: vi.fn(),
     readImagesFromClipboardMock: vi.fn(),
     createNewSlidesFromDroppedDataMock: vi.fn(),
-    fixMissingFontFamiliesMock: vi.fn(),
     getFontFamiliesMock: vi.fn(),
     notifyElementHighlightMock: vi.fn(),
     tranMock: vi.fn(),
@@ -105,7 +103,6 @@ vi.mock('../app-document-presenter/items/appDocumentHelpers', () => ({
 }));
 
 vi.mock('../server/fontHelpers', () => ({
-    fixMissingFontFamilies: fixMissingFontFamiliesMock,
     getFontFamilies: getFontFamiliesMock,
 }));
 
@@ -249,7 +246,6 @@ describe('AppDocument', () => {
         ]);
         checkIsImagesInClipboardMock.mockResolvedValue(false);
         readImagesFromClipboardMock.mockImplementation(async function* () {});
-        fixMissingFontFamiliesMock.mockResolvedValue(undefined);
         getFontFamiliesMock.mockResolvedValue([]);
         tranMock.mockImplementation((value: string) => value);
         canvasItemGenDefaultItemMock.mockReturnValue({
@@ -352,7 +348,7 @@ describe('AppDocument', () => {
         );
     });
 
-    test('reads slides, tracks changes and repairs missing fonts', async () => {
+    test('reads slides, tracks changes, and reports missing fonts', async () => {
         const filePath = '/docs/live.ows';
         const currentData = createDocumentJson([1, 2]);
         const originalData = createDocumentJson([1, 2]);
@@ -371,15 +367,13 @@ describe('AppDocument', () => {
         expect(slides).toHaveLength(2);
         expect(slides[0].isChanged).toBe(false);
         expect(slides[1].isChanged).toBe(true);
-        expect(fixMissingFontFamiliesMock).toHaveBeenCalledWith(
-            expect.any(Set),
-            filePath,
-        );
-        expect(
-            Array.from(
-                fixMissingFontFamiliesMock.mock.calls[0][0] as Set<string>,
-            ),
-        ).toEqual(['Missing Font']);
+        // getSlides no longer probes fonts (no blocking dialog); the missing
+        // fonts are reported on demand for the preview banner instead.
+        expect(unavailableFontsSpy).not.toHaveBeenCalled();
+
+        const missingFontFamilyList =
+            await documentSource.getMissingFontFamilyList();
+        expect(missingFontFamilyList).toEqual(['Missing Font']);
 
         unavailableFontsSpy.mockRestore();
     });
