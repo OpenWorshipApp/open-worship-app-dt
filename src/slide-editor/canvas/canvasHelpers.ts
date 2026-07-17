@@ -22,6 +22,21 @@ export type CanvasItemVideoMediaPropsType = CanvasItemMediaDimPropsType & {
     filePath: string;
 };
 
+// Shared by the URL-embedding canvas items (YouTube, Website): they only need
+// the source URL — the box carries its own width/height like any other item.
+export type CanvasItemUrlPropsType = {
+    url: string;
+};
+
+// YouTube's canonical recommended embed dimensions (16:9).
+export const YOUTUBE_EMBED_WIDTH = 560;
+export const YOUTUBE_EMBED_HEIGHT = 315;
+
+// A generic embedded website has no natural size; default to a comfortable
+// 4:3 viewport that fits inside the default slide.
+export const WEBSITE_EMBED_WIDTH = 800;
+export const WEBSITE_EMBED_HEIGHT = 600;
+
 export function validateMediaProps(
     props: AnyObjectType,
     srcKey: 'srcData' | 'filePath' = 'srcData',
@@ -32,6 +47,12 @@ export function validateMediaProps(
         typeof props.mediaHeight !== 'number'
     ) {
         throw new TypeError('Invalid canvas item media data');
+    }
+}
+
+export function validateUrlProps(props: AnyObjectType) {
+    if (typeof props.url !== 'string' || props.url === '') {
+        throw new TypeError('Invalid canvas item url data');
     }
 }
 
@@ -88,6 +109,8 @@ export const canvasItemList = [
     'html',
     'image',
     'video',
+    'youtube',
+    'website',
     'bible',
     'error',
 ] as const;

@@ -49,7 +49,7 @@ export default function PresenterNoteContainerHandlerComp({
                 {
                     children: {
                         render: () => {
-                            const slides = (varySlides ?? []);
+                            const slides = varySlides ?? [];
                             return (
                                 <SlidesNoteEditorComp
                                     appDocument={varyAppDocumentWithNote}

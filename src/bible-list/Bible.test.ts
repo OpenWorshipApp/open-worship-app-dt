@@ -8,6 +8,11 @@ const mocks = vi.hoisted(() => {
         systemUtils: {
             isDev: true,
         },
+        // langHelpers registers a menu listener at module load.
+        messageUtils: {
+            listenForData: vi.fn(),
+            sendData: vi.fn(),
+        },
     };
 
     class MockBibleItem {

@@ -3,7 +3,7 @@ import { useMemo, useState, useCallback } from 'react';
 import appProvider from '../server/appProvider';
 import AppDocument, {
     checkIsAppDocumentSelected,
-    openAppDocumentPopup,
+    openAppDocumentEditorExternal,
 } from '../app-document-list/AppDocument';
 import type Slide from '../app-document-list/Slide';
 import { useAppEffectAsync } from '../helper/appHooks';
@@ -71,7 +71,7 @@ export function genLayoutTabs() {
                         }
                         const varyAppDocument =
                             await getSelectedVaryAppDocument();
-                        openAppDocumentPopup(varyAppDocument!);
+                        openAppDocumentEditorExternal(varyAppDocument!);
                     }}
                 >
                     <i className="bi bi-box-arrow-up-right" />

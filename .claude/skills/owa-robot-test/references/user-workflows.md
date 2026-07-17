@@ -21,7 +21,7 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-07-09** (bump when any workflow changes)
+**workflowsVersion: 2026-07-16** (bump when any workflow changes)
 
 ---
 
@@ -277,8 +277,9 @@ everything at once.
 2. Left: the slide list — click to select; right-click to **add / duplicate / delete**;
    drag to reorder.
 3. Canvas: click a box to select it; drag to move; drag the handles to resize;
-   **double-click a text box** to type into it; **Ctrl+Enter** focuses the canvas;
-   **Escape** closes the quick-edit popup. 📸
+   **double-click a text box** to type into it; **Ctrl+Enter** focuses the canvas. 📸
+   (From the **Presenter**, right-click a slide → **Edit ↗** opens this editor in its
+   own window, focused on that slide.)
 4. Add new boxes/images from the tools panel (click, or drag onto the canvas).
 5. Save with **Ctrl+S**.
 

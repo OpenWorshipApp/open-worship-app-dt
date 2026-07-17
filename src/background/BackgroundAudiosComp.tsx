@@ -9,7 +9,7 @@ import {
     defaultDataDirNames,
     dirSourceSettingNames,
 } from '../helper/constants';
-import { showAudioPlayingToast } from '../helper/audioControlHelpers';
+import { showAudioPlayingToast } from '../helper/mediaControlHelpers';
 import { tran } from '../lang/langHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';

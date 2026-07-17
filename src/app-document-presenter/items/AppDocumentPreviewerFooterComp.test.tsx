@@ -40,6 +40,7 @@ vi.mock('../../app-document-list/appDocumentHelpers', () => ({
         useSelectedAppDocumentSetterContextMock,
     toKeyByFilePath: toKeyByFilePathMock,
     useVaryAppDocumentContext: useVaryAppDocumentContextMock,
+    isInjectedAppDocumentFilePath: false,
 }));
 
 vi.mock('../../others/AppRangeComp', () => ({

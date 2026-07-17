@@ -67,6 +67,7 @@ describe('setting settingHelpers', () => {
             '/setting.html',
             'setting_12345',
             'setting',
+            { appTopToMain: true },
         );
         expect(setSettingMock).toHaveBeenNthCalledWith(
             1,
@@ -83,6 +84,7 @@ describe('setting settingHelpers', () => {
             '/setting.html',
             'setting_12345',
             'setting',
+            { appTopToMain: true },
         );
 
         nowSpy.mockRestore();
@@ -108,6 +110,7 @@ describe('setting settingHelpers', () => {
             '/setting.html',
             expect.stringMatching(/^setting_\d+$/),
             'setting',
+            { appTopToMain: true },
         );
 
         module.forceReloadAppWindows();

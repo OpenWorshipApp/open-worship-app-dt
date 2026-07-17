@@ -10,6 +10,8 @@ const {
     navigatorClipboard,
     textFromJsonMock,
     videoFromJsonMock,
+    youtubeFromJsonMock,
+    websiteFromJsonMock,
 } = vi.hoisted(() => ({
     bibleFromJsonMock: vi.fn(),
     errorFromJsonErrorMock: vi.fn(),
@@ -21,6 +23,8 @@ const {
     },
     textFromJsonMock: vi.fn(),
     videoFromJsonMock: vi.fn(),
+    youtubeFromJsonMock: vi.fn(),
+    websiteFromJsonMock: vi.fn(),
 }));
 
 vi.mock('../../helper/helpers', () => ({
@@ -65,6 +69,18 @@ vi.mock('./CanvasItemVideo', () => ({
     },
 }));
 
+vi.mock('./CanvasItemYouTube', () => ({
+    default: {
+        fromJson: youtubeFromJsonMock,
+    },
+}));
+
+vi.mock('./CanvasItemWebsite', () => ({
+    default: {
+        fromJson: websiteFromJsonMock,
+    },
+}));
+
 import Canvas from './Canvas';
 
 function createClipboardItem(text: string, types = ['text/plain']) {
@@ -90,6 +106,14 @@ describe('Canvas', () => {
         videoFromJsonMock.mockImplementation((json: any) => ({
             ...json,
             type: 'video',
+        }));
+        youtubeFromJsonMock.mockImplementation((json: any) => ({
+            ...json,
+            type: 'youtube',
+        }));
+        websiteFromJsonMock.mockImplementation((json: any) => ({
+            ...json,
+            type: 'website',
         }));
         htmlFromJsonMock.mockImplementation((json: any) => ({
             ...json,
@@ -160,6 +184,14 @@ describe('Canvas', () => {
         expect(Canvas.canvasItemFromJson({ type: 'video', id: 2 })).toEqual({
             type: 'video',
             id: 2,
+        });
+        expect(Canvas.canvasItemFromJson({ type: 'youtube', id: 7 })).toEqual({
+            type: 'youtube',
+            id: 7,
+        });
+        expect(Canvas.canvasItemFromJson({ type: 'website', id: 8 })).toEqual({
+            type: 'website',
+            id: 8,
         });
         expect(Canvas.canvasItemFromJson({ type: 'text', id: 3 })).toEqual({
             type: 'text',

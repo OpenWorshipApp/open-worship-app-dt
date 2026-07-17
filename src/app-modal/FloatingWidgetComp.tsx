@@ -1,258 +1,41 @@
 import './FloatingWidgetComp.scss';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
-    CSSProperties,
     PointerEvent as ReactPointerEvent,
     PropsWithChildren,
     ReactNode,
 } from 'react';
 import { useThemeSource } from '../others/themeHelpers';
-
-const VIEWPORT_PADDING = 8;
-const DEFAULT_WIDTH = 360;
-const DEFAULT_HEIGHT = 240;
-const DEFAULT_MIN_WIDTH = 220;
-const DEFAULT_MIN_HEIGHT = 140;
-const COLLAPSED_HEIGHT = 42;
-
-const PARENT_IGNORE_SELECTORS = ['[data-no-widget-drag="true"]'];
-// Pressing on these elements keeps their own click/drag behavior instead of
-// starting a widget move, so blank areas stay draggable without breaking
-// interactive controls inside the widget.
-const NON_DRAGGABLE_SELECTOR = [
-    'a',
-    'button',
-    'input',
-    'textarea',
-    'select',
-    'label',
-    '[role="button"]',
-    '[role="textbox"]',
-    '[role="menuitem"]',
-    '[contenteditable="true"]',
-].join(',');
-
-type WidgetRect = {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-};
-
-type InteractionMode = 'move' | 'resize';
-
-type ResizeHandle =
-    | 'top'
-    | 'right'
-    | 'bottom'
-    | 'left'
-    | 'top-left'
-    | 'top-right'
-    | 'bottom-left'
-    | 'bottom-right';
-
-const RESIZE_HANDLES: ResizeHandle[] = [
-    'top',
-    'right',
-    'bottom',
-    'left',
-    'top-left',
-    'top-right',
-    'bottom-left',
-    'bottom-right',
-];
-
-type InteractionState = {
-    mode: InteractionMode;
-    handle: ResizeHandle | null;
-    pointerId: number;
-    startClientX: number;
-    startClientY: number;
-    startRect: WidgetRect;
-};
-
-type FloatingWidgetOptions = NonNullable<MyProps['options']>;
-
-function clampNumber(value: number, min: number, max: number) {
-    return Math.min(Math.max(value, min), Math.max(min, max));
-}
-
-function getViewportSize() {
-    if (globalThis.window === undefined || globalThis.document === undefined) {
-        return {
-            width: DEFAULT_WIDTH + VIEWPORT_PADDING * 2,
-            height: DEFAULT_HEIGHT + VIEWPORT_PADDING * 2,
-        };
-    }
-
-    return {
-        width:
-            globalThis.document.documentElement.clientWidth ||
-            globalThis.window.innerWidth,
-        height:
-            globalThis.document.documentElement.clientHeight ||
-            globalThis.window.innerHeight,
-    };
-}
-
-function getConstrainedSize(
-    width: number,
-    height: number,
-    options?: FloatingWidgetOptions,
-) {
-    const viewportSize = getViewportSize();
-    const viewportMaxWidth = Math.max(
-        VIEWPORT_PADDING,
-        viewportSize.width - VIEWPORT_PADDING * 2,
-    );
-    const viewportMaxHeight = Math.max(
-        VIEWPORT_PADDING,
-        viewportSize.height - VIEWPORT_PADDING * 2,
-    );
-    const maxWidth = Math.min(
-        options?.maxWidth ?? viewportMaxWidth,
-        viewportMaxWidth,
-    );
-    const maxHeight = Math.min(
-        options?.maxHeight ?? viewportMaxHeight,
-        viewportMaxHeight,
-    );
-    const minWidth = Math.min(options?.minWidth ?? DEFAULT_MIN_WIDTH, maxWidth);
-    const minHeight = Math.min(
-        options?.minHeight ?? DEFAULT_MIN_HEIGHT,
-        maxHeight,
-    );
-
-    return {
-        width: clampNumber(width, minWidth, maxWidth),
-        height: clampNumber(height, minHeight, maxHeight),
-    };
-}
-
-function clampWidgetRect(
-    rect: WidgetRect,
-    options?: FloatingWidgetOptions,
-    isCollapsed = false,
-) {
-    const viewportSize = getViewportSize();
-    const size = getConstrainedSize(rect.width, rect.height, options);
-    const renderedHeight = isCollapsed ? COLLAPSED_HEIGHT : size.height;
-
-    return {
-        left: clampNumber(
-            rect.left,
-            VIEWPORT_PADDING,
-            viewportSize.width - size.width - VIEWPORT_PADDING,
-        ),
-        top: clampNumber(
-            rect.top,
-            VIEWPORT_PADDING,
-            viewportSize.height - renderedHeight - VIEWPORT_PADDING,
-        ),
-        ...size,
-    };
-}
-
-function getResizeEdges(handle: ResizeHandle) {
-    return {
-        isLeft: handle.includes('left'),
-        isRight: handle.includes('right'),
-        isTop: handle.includes('top'),
-        isBottom: handle.includes('bottom'),
-    };
-}
-
-function resizeWidgetRect(
-    startRect: WidgetRect,
-    handle: ResizeHandle,
-    deltaX: number,
-    deltaY: number,
-    options?: FloatingWidgetOptions,
-) {
-    const edges = getResizeEdges(handle);
-    const right = startRect.left + startRect.width;
-    const bottom = startRect.top + startRect.height;
-
-    let width = startRect.width;
-    let height = startRect.height;
-    if (edges.isRight) {
-        width = startRect.width + deltaX;
-    } else if (edges.isLeft) {
-        width = startRect.width - deltaX;
-    }
-    if (edges.isBottom) {
-        height = startRect.height + deltaY;
-    } else if (edges.isTop) {
-        height = startRect.height - deltaY;
-    }
-
-    const size = getConstrainedSize(width, height, options);
-    let { left, top } = startRect;
-    if (edges.isLeft) {
-        left = right - size.width;
-    }
-    if (edges.isTop) {
-        top = bottom - size.height;
-    }
-
-    return clampWidgetRect({ left, top, ...size }, options);
-}
-
-function getInitialWidgetRect(options?: FloatingWidgetOptions) {
-    const size = getConstrainedSize(
-        options?.width ?? DEFAULT_WIDTH,
-        options?.height ?? DEFAULT_HEIGHT,
-        options,
-    );
-    const viewportSize = getViewportSize();
-
-    return clampWidgetRect(
-        {
-            left: viewportSize.width - size.width - 24,
-            top: 64,
-            ...size,
-        },
-        options,
-    );
-}
-
-function isIgnored(target: Element | null) {
-    if (target === null || target.classList.contains('floating-widget')) {
-        return false;
-    }
-    if (PARENT_IGNORE_SELECTORS.some((selector) => target.closest(selector))) {
-        return true;
-    }
-    return isIgnored(target.parentElement);
-}
-
-function isBlankDragArea(target: Element) {
-    return target.closest(NON_DRAGGABLE_SELECTOR) === null;
-}
-
-function isOnScrollbar(clientX: number, clientY: number, target: Element) {
-    const rect = target.getBoundingClientRect();
-    const isOnVerticalBar = clientX - rect.left > target.clientWidth;
-    const isOnHorizontalBar = clientY - rect.top > target.clientHeight;
-    return isOnVerticalBar || isOnHorizontalBar;
-}
+import { useAppCurrentRef } from '../helper/appHooks';
+import {
+    COLLAPSED_HEIGHT,
+    RESIZE_HANDLES,
+    clampWidgetRect,
+    getInitialWidgetRect,
+    isBlankDragArea,
+    isIgnored,
+    isOnScrollbar,
+    readPersistedRect,
+    resizeWidgetRect,
+    writePersistedRect,
+} from './floatingWidgetHelpers';
+import type {
+    FloatingWidgetOptions,
+    InteractionMode,
+    InteractionState,
+    ResizeHandle,
+} from './floatingWidgetHelpers';
 
 interface MyProps {
     children?: ReactNode;
     collapsedChildren?: ReactNode | null;
     title?: ReactNode;
     onClose: () => void;
-    options?: {
-        extraStyle?: CSSProperties;
-        extraClassName?: string;
-        width?: number;
-        height?: number;
-        minWidth?: number;
-        minHeight?: number;
-        maxWidth?: number;
-        maxHeight?: number;
-    };
+    // When set, the widget's size and location are saved under this setting key
+    // and restored the next time it opens.
+    persistKey?: string;
+    options?: FloatingWidgetOptions;
 }
 
 export default function FloatingWidgetComp({
@@ -260,15 +43,26 @@ export default function FloatingWidgetComp({
     collapsedChildren = null,
     title,
     options,
+    persistKey,
     onClose,
 }: PropsWithChildren<MyProps>) {
     const widgetRef = useRef<HTMLDivElement>(null);
     const interactionRef = useRef<InteractionState | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [activeMode, setActiveMode] = useState<InteractionMode | null>(null);
-    const [widgetRect, setWidgetRect] = useState(() =>
-        getInitialWidgetRect(options),
-    );
+    const [widgetRect, setWidgetRect] = useState(() => {
+        if (persistKey !== undefined) {
+            const persistedRect = readPersistedRect(persistKey);
+            if (persistedRect !== null) {
+                return clampWidgetRect(persistedRect, options);
+            }
+        }
+        return getInitialWidgetRect(options);
+    });
+    const widgetRectRef = useAppCurrentRef(widgetRect);
+    const persistKeyRef = useAppCurrentRef(persistKey);
+    const optionsRef = useAppCurrentRef(options);
+    const isCollapsedRef = useAppCurrentRef(isCollapsed);
     const optionHeight = options?.height;
     const optionMaxHeight = options?.maxHeight;
     const optionMaxWidth = options?.maxWidth;
@@ -286,12 +80,19 @@ export default function FloatingWidgetComp({
             width: optionWidth,
         };
 
+        // A persisted widget keeps its restored size; only viewport/constraint
+        // clamping applies. Otherwise it tracks the option size as before.
+        const hasPersist = persistKeyRef.current !== undefined;
         setWidgetRect((prev) =>
             clampWidgetRect(
                 {
                     ...prev,
-                    width: optionWidth ?? prev.width,
-                    height: optionHeight ?? prev.height,
+                    width: hasPersist
+                        ? prev.width
+                        : (optionWidth ?? prev.width),
+                    height: hasPersist
+                        ? prev.height
+                        : (optionHeight ?? prev.height),
                 },
                 sizingOptions,
                 isCollapsed,
@@ -305,6 +106,7 @@ export default function FloatingWidgetComp({
         optionMinHeight,
         optionMinWidth,
         optionWidth,
+        persistKeyRef,
     ]);
 
     useEffect(() => {
@@ -339,92 +141,122 @@ export default function FloatingWidgetComp({
         optionWidth,
     ]);
 
-    const startInteraction = (
-        event: ReactPointerEvent<HTMLElement>,
-        mode: InteractionMode,
-        handle: ResizeHandle | null = null,
-    ) => {
-        if (event.button !== 0) {
-            return;
-        }
+    const startInteraction = useCallback(
+        (
+            event: ReactPointerEvent<HTMLElement>,
+            mode: InteractionMode,
+            handle: ResizeHandle | null = null,
+        ) => {
+            if (event.button !== 0) {
+                return;
+            }
 
-        interactionRef.current = {
-            mode,
-            handle,
-            pointerId: event.pointerId,
-            startClientX: event.clientX,
-            startClientY: event.clientY,
-            startRect: widgetRect,
-        };
-        widgetRef.current?.setPointerCapture(event.pointerId);
-        setActiveMode(mode);
-        event.preventDefault();
-        event.stopPropagation();
-    };
+            interactionRef.current = {
+                mode,
+                handle,
+                pointerId: event.pointerId,
+                startClientX: event.clientX,
+                startClientY: event.clientY,
+                startRect: widgetRectRef.current,
+            };
+            widgetRef.current?.setPointerCapture(event.pointerId);
+            setActiveMode(mode);
+            event.preventDefault();
+            event.stopPropagation();
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
 
-    const finishInteraction = (event: ReactPointerEvent<HTMLDivElement>) => {
-        if (interactionRef.current?.pointerId !== event.pointerId) {
-            return;
-        }
+    const finishInteraction = useCallback(
+        (event: ReactPointerEvent<HTMLDivElement>) => {
+            const interactionState = interactionRef.current;
+            if (interactionState?.pointerId !== event.pointerId) {
+                return;
+            }
 
-        if (widgetRef.current?.hasPointerCapture(event.pointerId)) {
-            widgetRef.current.releasePointerCapture(event.pointerId);
-        }
-        interactionRef.current = null;
-        setActiveMode(null);
-    };
+            if (widgetRef.current?.hasPointerCapture(event.pointerId)) {
+                widgetRef.current.releasePointerCapture(event.pointerId);
+            }
+            interactionRef.current = null;
+            setActiveMode(null);
 
-    const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-        const interactionState = interactionRef.current;
-        if (interactionState?.pointerId !== event.pointerId) {
-            return;
-        }
+            // Save the new size/location once, only when the gesture actually
+            // moved or resized the widget (a plain click leaves the rect
+            // untouched).
+            const persistKeyValue = persistKeyRef.current;
+            if (persistKeyValue !== undefined) {
+                const { startRect } = interactionState;
+                const currentRect = widgetRectRef.current;
+                const isChanged =
+                    currentRect.left !== startRect.left ||
+                    currentRect.top !== startRect.top ||
+                    currentRect.width !== startRect.width ||
+                    currentRect.height !== startRect.height;
+                if (isChanged) {
+                    writePersistedRect(persistKeyValue, currentRect);
+                }
+            }
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
 
-        const deltaX = event.clientX - interactionState.startClientX;
-        const deltaY = event.clientY - interactionState.startClientY;
+    const handlePointerMove = useCallback(
+        (event: ReactPointerEvent<HTMLDivElement>) => {
+            const interactionState = interactionRef.current;
+            if (interactionState?.pointerId !== event.pointerId) {
+                return;
+            }
 
-        if (interactionState.mode === 'move') {
-            setWidgetRect(
-                clampWidgetRect(
-                    {
-                        ...interactionState.startRect,
-                        left: interactionState.startRect.left + deltaX,
-                        top: interactionState.startRect.top + deltaY,
-                    },
-                    options,
-                    isCollapsed,
-                ),
-            );
-            return;
-        }
+            const deltaX = event.clientX - interactionState.startClientX;
+            const deltaY = event.clientY - interactionState.startClientY;
 
-        setWidgetRect(
-            resizeWidgetRect(
-                interactionState.startRect,
-                interactionState.handle ?? 'bottom-right',
-                deltaX,
-                deltaY,
-                options,
-            ),
-        );
-    };
+            const nextRect =
+                interactionState.mode === 'move'
+                    ? clampWidgetRect(
+                          {
+                              ...interactionState.startRect,
+                              left: interactionState.startRect.left + deltaX,
+                              top: interactionState.startRect.top + deltaY,
+                          },
+                          optionsRef.current,
+                          isCollapsedRef.current,
+                      )
+                    : resizeWidgetRect(
+                          interactionState.startRect,
+                          interactionState.handle ?? 'bottom-right',
+                          deltaX,
+                          deltaY,
+                          optionsRef.current,
+                      );
+            // Track the latest rect synchronously so finishInteraction persists
+            // the correct value even before React re-renders from setWidgetRect.
+            widgetRectRef.current = nextRect;
+            setWidgetRect(nextRect);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
 
-    const handleWidgetPointerDown = (
-        event: ReactPointerEvent<HTMLDivElement>,
-    ) => {
-        const target = event.target;
-        if (
-            !(target instanceof Element) ||
-            !isBlankDragArea(target) ||
-            isIgnored(target)
-        ) {
-            return;
-        }
-        if (isOnScrollbar(event.clientX, event.clientY, target)) {
-            return;
-        }
-        startInteraction(event, 'move');
-    };
+    const handleWidgetPointerDown = useCallback(
+        (event: ReactPointerEvent<HTMLDivElement>) => {
+            const target = event.target;
+            if (
+                !(target instanceof Element) ||
+                !isBlankDragArea(target) ||
+                isIgnored(target)
+            ) {
+                return;
+            }
+            if (isOnScrollbar(event.clientX, event.clientY, target)) {
+                return;
+            }
+            startInteraction(event, 'move');
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
 
     const { theme } = useThemeSource();
 

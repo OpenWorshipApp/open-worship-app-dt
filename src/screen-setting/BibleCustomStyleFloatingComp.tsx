@@ -29,6 +29,7 @@ export default function BibleCustomStyleFloatingComp() {
     return createPortal(
         <FloatingWidgetComp
             title={label}
+            persistKey="floating-widget-rect-bible-property"
             onClose={() => {
                 setIsBibleCustomStyleFloatingShowing(false);
             }}

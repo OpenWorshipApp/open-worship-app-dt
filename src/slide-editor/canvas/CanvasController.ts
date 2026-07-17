@@ -16,6 +16,8 @@ import {
     type CanvasControllerEventType,
 } from './canvasHelpers';
 import CanvasItemVideo from './CanvasItemVideo';
+import CanvasItemYouTube from './CanvasItemYouTube';
+import CanvasItemWebsite from './CanvasItemWebsite';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { handleError } from '../../helper/errorHelpers';
 import { createContext, use } from 'react';
@@ -210,6 +212,26 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             handleError(error);
         }
         showSimpleToast('Insert Image or Video', 'Fail to insert medias');
+    }
+
+    genNewYouTubeItem(url: string, event: any) {
+        try {
+            const { x, y } = this.getMousePosition(event);
+            return CanvasItemYouTube.genFromUrl(x, y, url);
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast('Insert YouTube', 'Fail to insert YouTube');
+    }
+
+    genNewWebsiteItem(url: string, event: any) {
+        try {
+            const { x, y } = this.getMousePosition(event);
+            return CanvasItemWebsite.genFromUrl(x, y, url);
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast('Insert Website', 'Fail to insert website');
     }
 
     async genNewImageItemFromFile(file: File | Blob, event: any) {

@@ -1,6 +1,6 @@
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import type DirSource from '../helper/DirSource';
-import { openPopupWindow } from '../helper/domHelpers';
+import { openPopupWindow, setParamFileFullName } from '../helper/domHelpers';
 import FileSource from '../helper/FileSource';
 import { tran } from '../lang/langHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
@@ -110,10 +110,12 @@ export function genBackgroundWebContextMenuItems(
 function openPopupWebEditorWindow(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
     const fileFullName = fileSource.fullName;
-    const fileFullNameEncoded = encodeURIComponent(fileFullName);
-    const pathName = `${appProvider.webEditorHomePage}?file=${fileFullNameEncoded}`;
+    const pathname = setParamFileFullName(
+        appProvider.webEditorHomePage,
+        fileFullName,
+    );
     return openPopupWindow(
-        pathName,
+        pathname,
         `${fileFullName}_${Date.now()}`,
         crypto.randomUUID(),
     );

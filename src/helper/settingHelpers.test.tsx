@@ -5,28 +5,60 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { getItemMock, getItemForceMock, setItemMock, appProviderMock } =
-    vi.hoisted(() => ({
+const {
+    getItemMock,
+    getItemForceMock,
+    setItemMock,
+    removeItemCacheMock,
+    watchMock,
+    fsCheckFileExistMock,
+    captured,
+    appProviderMock,
+} = vi.hoisted(() => {
+    const captured = { watchCb: undefined as any };
+    return {
         getItemMock: vi.fn(),
         getItemForceMock: vi.fn(),
         setItemMock: vi.fn(),
+        removeItemCacheMock: vi.fn(),
+        watchMock: vi.fn((_file: string, _opts: any, cb: any) => {
+            captured.watchCb = cb;
+        }),
+        fsCheckFileExistMock: vi.fn(async () => true),
+        captured,
         appProviderMock: {
             isPageReader: false,
             systemUtils: { isDev: false },
             pathUtils: { sep: '/' },
+            envUtils: { isFEUseEffectWarning: false },
+            fileUtils: { watch: undefined as any },
+            // langHelpers registers a menu listener at module load.
+            messageUtils: {
+                listenForData: vi.fn(),
+                sendData: vi.fn(),
+            },
         },
-    }));
+    };
+});
+appProviderMock.fileUtils.watch = watchMock;
 
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
         getItem: getItemMock,
         getItemForce: getItemForceMock,
         setItem: setItemMock,
+        removeItemCache: removeItemCacheMock,
+        localStorageDir: '/settings',
     },
 }));
 
 vi.mock('../server/appProvider', () => ({
     default: appProviderMock,
+}));
+
+vi.mock('../server/fileHelpers', () => ({
+    pathJoin: (...parts: string[]) => parts.join('/'),
+    fsCheckFileExist: fsCheckFileExistMock,
 }));
 
 import {
@@ -37,6 +69,7 @@ import {
     useStateSettingBoolean,
     useStateSettingNumber,
     useStateSettingString,
+    useWatchStateSettingString,
 } from './settingHelpers';
 
 describe('helper settingHelpers', () => {
@@ -49,6 +82,11 @@ describe('helper settingHelpers', () => {
         getItemMock.mockReturnValue(null);
         getItemForceMock.mockReturnValue(null);
         appProviderMock.isPageReader = false;
+        captured.watchCb = undefined;
+        watchMock.mockImplementation((_f: string, _o: any, cb: any) => {
+            captured.watchCb = cb;
+        });
+        fsCheckFileExistMock.mockResolvedValue(true);
 
         container = document.createElement('div');
         document.body.appendChild(container);
@@ -235,5 +273,44 @@ describe('helper settingHelpers', () => {
         appProviderMock.isPageReader = true;
 
         expect(getSettingPrefix()).toBe('reader-');
+    });
+
+    test('useWatchStateSettingString re-reads on file change events', async () => {
+        getItemMock.mockReturnValue('initial');
+        const probe = await renderSettingHook(() => {
+            return useWatchStateSettingString('watched', 'fallback');
+        });
+        // let the async watch effect register
+        await act(async () => {
+            await new Promise((r) => setTimeout(r, 0));
+        });
+        expect(probe.value).toBe('initial');
+        expect(watchMock).toHaveBeenCalled();
+
+        getItemMock.mockReturnValue('updated');
+        await act(async () => {
+            await captured.watchCb('change');
+        });
+        expect(probe.value).toBe('updated');
+        expect(removeItemCacheMock).toHaveBeenCalledWith('watched');
+
+        // non-change events are ignored
+        removeItemCacheMock.mockClear();
+        await act(async () => {
+            await captured.watchCb('rename');
+        });
+        expect(removeItemCacheMock).not.toHaveBeenCalled();
+    });
+
+    test('useWatchStateSettingString seeds an empty setting when the file is missing', async () => {
+        fsCheckFileExistMock.mockResolvedValue(false);
+        getItemMock.mockReturnValue(null);
+        await renderSettingHook(() => {
+            return useWatchStateSettingString('missing', 'fallback');
+        });
+        await act(async () => {
+            await new Promise((r) => setTimeout(r, 0));
+        });
+        expect(setItemMock).toHaveBeenCalledWith('missing', '');
     });
 });

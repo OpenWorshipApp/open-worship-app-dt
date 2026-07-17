@@ -358,8 +358,8 @@ describe('domHelpers', () => {
         expect(checkIsZoomed()).toBe(true);
 
         history.replaceState({}, '', '/preview?id=42&file=test.owa');
-        expect(getParamIdNum()).toBe(42);
-        expect(getParamFileFullName()).toBe('test.owa');
+        expect(getParamIdNum(globalThis.location.href)).toBe(42);
+        expect(getParamFileFullName(globalThis.location.href)).toBe('test.owa');
 
         openPopupWindow('/settings', 'frame-1', 'uuid-1', {
             width: 320,

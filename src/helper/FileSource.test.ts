@@ -410,16 +410,19 @@ describe('FileSource', () => {
         ).toBeNull();
 
         expect(await FileSource.readFileData('/docs/error.txt')).toBeNull();
-        expect(showSimpleToastMock).toHaveBeenCalledWith(
-            'Reader File Data',
-            'Error occurred during reading file: "/docs/error.txt", error: boom',
+        expect(handleErrorMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message:
+                    'Reader File Data, Error occurred during reading ' +
+                    'file: "/docs/error.txt", error: boom',
+            }),
         );
 
-        showSimpleToastMock.mockClear();
+        handleErrorMock.mockClear();
         expect(
             await FileSource.readFileData('/docs/silent.txt', true),
         ).toBeNull();
-        expect(showSimpleToastMock).not.toHaveBeenCalled();
+        expect(handleErrorMock).not.toHaveBeenCalled();
     });
 
     test('writes text and base64 data and reports save failures', async () => {

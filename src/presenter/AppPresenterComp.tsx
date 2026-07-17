@@ -5,7 +5,6 @@ import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import BibleItemsViewController, {
     BibleItemsViewControllerContext,
 } from '../bible-reader/BibleItemsViewController';
-import SlideEditHandlerComp from '../app-document-presenter/SlideEditHandlerComp';
 import BibleCustomStyleFloatingComp from '../screen-setting/BibleCustomStyleFloatingComp';
 import BibleViewComp from '../bible-reader/BibleViewComp';
 import type BibleItem from '../bible-list/BibleItem';
@@ -81,7 +80,6 @@ export default function AppPresenterComp() {
                     },
                 ]}
             />
-            <SlideEditHandlerComp />
             <BibleCustomStyleFloatingComp />
         </BibleItemsViewControllerContext>
     );

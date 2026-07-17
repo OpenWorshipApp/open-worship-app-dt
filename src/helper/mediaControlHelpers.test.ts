@@ -20,7 +20,7 @@ import {
     handleAudioPlaying,
     handleMediaPlaying,
     handleMediaStopped,
-} from './audioControlHelpers';
+} from './mediaControlHelpers';
 
 function mockPaused(mediaElement: HTMLMediaElement, getPaused: () => boolean) {
     Object.defineProperty(mediaElement, 'paused', {

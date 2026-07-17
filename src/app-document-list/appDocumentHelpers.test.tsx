@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+// jsdom: real domHelpers loads at import and needs MutationObserver.
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -8,7 +10,7 @@ const {
     dirSourceGetInstanceMock,
     handleErrorMock,
     showAppContextMenuMock,
-    openSlideQuickEditMock,
+    openAppDocumentEditorExternalMock,
     showSimpleToastMock,
     showProgressBarMock,
     hideProgressBarMock,
@@ -43,7 +45,7 @@ const {
     dirSourceGetInstanceMock: vi.fn(),
     handleErrorMock: vi.fn(),
     showAppContextMenuMock: vi.fn(),
-    openSlideQuickEditMock: vi.fn(),
+    openAppDocumentEditorExternalMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
     showProgressBarMock: vi.fn(),
     hideProgressBarMock: vi.fn(),
@@ -75,6 +77,11 @@ const {
         isPageAppDocumentEditor: false,
         pathUtils: {
             join: (...parts: string[]) => parts.join('/'),
+        },
+        // domHelpers registers an open-about listener at module load.
+        messageUtils: {
+            listenForData: vi.fn(),
+            sendData: vi.fn(),
         },
     },
 }));
@@ -135,10 +142,6 @@ vi.mock('../server/fileHelpers', () => ({
     pathBasename: (filePath: string) => filePath.split('/').at(-1) ?? filePath,
 }));
 
-vi.mock('../app-document-presenter/SlideEditHandlerComp', () => ({
-    openSlideQuickEdit: openSlideQuickEditMock,
-}));
-
 vi.mock('../toast/toastHelpers', () => ({
     showSimpleToast: showSimpleToastMock,
 }));
@@ -169,6 +172,7 @@ vi.mock('./Slide', () => {
 
 vi.mock('./AppDocument', () => {
     return {
+        openAppDocumentEditorExternal: openAppDocumentEditorExternalMock,
         default: class AppDocument {
             public static readonly instances = new Map<string, AppDocument>();
             public static readonly setCopiedSlides =
@@ -503,13 +507,19 @@ describe('appDocumentHelpers', () => {
             slide as any,
             true,
         );
-        expect(menuItems.map((item) => item.menuElement)).toEqual([
+        expect(
+            menuItems.map((item) =>
+                typeof item.menuElement === 'string'
+                    ? item.menuElement
+                    : renderToStaticMarkup(item.menuElement),
+            ),
+        ).toEqual([
             'Copy',
             'Duplicate',
             'Move forward',
             'Move backward',
             'Disable',
-            'Quick Edit',
+            '<span class="m-0">Edit<i class="bi bi-box-arrow-up-right ms-2"></i></span>',
             'Show On Screens',
             'Delete',
         ]);
@@ -552,9 +562,16 @@ describe('appDocumentHelpers', () => {
         appProviderMock.isPageAppDocumentEditor = false;
         appDocumentHelpers
             .genSlideContextMenuItems(doc, slide as any, false)
-            .find((item) => item.menuElement === 'Quick Edit')
+            .find(
+                (item) =>
+                    typeof item.menuElement !== 'string' &&
+                    renderToStaticMarkup(item.menuElement).includes('Edit'),
+            )
             ?.onSelect?.(contextMenuEvent);
-        expect(openSlideQuickEditMock).toHaveBeenCalledWith(slide);
+        expect(openAppDocumentEditorExternalMock).toHaveBeenCalledWith(
+            doc,
+            slide.id,
+        );
 
         const selectedMenuItems =
             appDocumentHelpers.genSelectedSlidesContextMenuItems(doc, [

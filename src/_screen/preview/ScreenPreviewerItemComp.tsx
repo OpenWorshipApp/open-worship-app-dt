@@ -54,7 +54,17 @@ export default function ScreenPreviewerItemComp({
     // reconciles the React state when Escape (handled globally by removing the
     // class from the DOM) exits full view, preventing a later re-render from
     // re-applying the class and jumping back into full view.
-    const cardRef = useRef<HTMLDivElement | null>(null);
+    const divRef = useRef<HTMLDivElement | null>(null);
+    const assignCardRef = useCallback((element: HTMLDivElement | null) => {
+        divRef.current = element;
+        if (element !== null) {
+            // Let the screen manager reach this card's DOM to detect playing
+            // media before firing a refresh (a WeakRef so the manager never
+            // keeps an unmounted card alive).
+            screenManagerRef.current.divRef = new WeakRef(element);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const previewFitRef = useRef<HTMLDivElement | null>(null);
     useAppEffect(() => {
         const fitElement = previewFitRef.current;
@@ -68,7 +78,7 @@ export default function ScreenPreviewerItemComp({
                 lastWidth = nextWidth;
                 screenManagerRef.current.fireRefreshEvent();
             }
-            const cardElement = cardRef.current;
+            const cardElement = divRef.current;
             if (
                 cardElement !== null &&
                 !cardElement.classList.contains(APP_FULL_VIEW_CLASSNAME)
@@ -118,7 +128,7 @@ export default function ScreenPreviewerItemComp({
     return (
         <div
             key={screenManager.key}
-            ref={cardRef}
+            ref={assignCardRef}
             className={
                 `mini-screen card ${selectedCN}` +
                 (isFullView ? ` ${APP_FULL_VIEW_CLASSNAME}` : '')

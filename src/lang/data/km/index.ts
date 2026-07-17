@@ -205,6 +205,12 @@ const dictionary = {
     'Only image and video files are supported':
         'គ្រាន់តែឯកសាររូបភាព និងវីដេអូត្រូវបានគាំទ្រ',
     'Insert Medias': 'បញ្ចូលរូបភាព ឬវីដេអូ',
+    'Insert YouTube': 'បញ្ចូល YouTube',
+    'Insert Website': 'បញ្ចូលគេហទំព័រ',
+    'YouTube URL:': 'តំណ YouTube៖',
+    'Website URL:': 'តំណគេហទំព័រ៖',
+    'Open URL': 'បើកតំណ',
+    'Copy URL': 'ចម្លងតំណ',
     New: 'ថ្មី',
     'Slides are copied': 'ស្លាយត្រូវបានចម្លង',
     Copied: 'បានចម្លង',
@@ -318,7 +324,6 @@ const dictionary = {
     'Edit Parent Path': 'កែសម្រួលផ្លូវមេ',
     'Edit this web file': 'កែសម្រួលឯកសារគេហទំព័រនេះ',
     Edit: 'កែសម្រួល',
-    'Slide Quick Edit': 'កែសម្រួលស្លាយរហ័ស',
     Editor: 'កម្មវិធីកែសម្រួល',
     Empty: 'ទទេ',
     Enable: 'បើកដំណើរការ',
@@ -393,7 +398,6 @@ const dictionary = {
     'Unable to prepare the document for printing':
         'មិនអាចរៀបចំឯកសារសម្រាប់ការបោះពុម្ពបានទេ',
     Properties: 'លក្ខណសម្បត្តិ',
-    'Quick Edit': 'កែសម្រួលរហ័ស',
     'Quick Text': 'អត្ថបទរហ័ស',
     Refresh: 'ផ្ទុកឡើងវិញ',
     Remove: 'លុបចេញ',

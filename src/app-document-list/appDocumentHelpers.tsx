@@ -26,10 +26,9 @@ import {
     pathBasename,
     pathJoin,
 } from '../server/fileHelpers';
-import { openSlideQuickEdit } from '../app-document-presenter/SlideEditHandlerComp';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { WrongDimensionType } from './AppDocument';
-import AppDocument from './AppDocument';
+import AppDocument, { openAppDocumentEditorExternal } from './AppDocument';
 import Slide from './Slide';
 import type { DroppedFileType } from '../others/droppingFileHelpers';
 import {
@@ -74,7 +73,11 @@ import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 import { getSlidesCount } from '../server/pptxHelpers';
 import { type ItemBaseFilePath } from '../helper/ItemBase';
-import { getParamFileFullName } from '../helper/domHelpers';
+import {
+    getParamFileFullName,
+    getParamIdNum,
+    setParamIdNum,
+} from '../helper/domHelpers';
 
 export const BLANK_HTML_SLIDE_SRC = '/assets/slide0.html';
 export const BLANK_IMAGE_SLIDE_SRC = '/assets/blank.png';
@@ -172,12 +175,17 @@ export function genSlideContextMenuItems(
     ];
     if (appProvider.isPagePresenter) {
         menuItems.push({
-            menuElement: tran('Quick Edit'),
+            menuElement: (
+                <span className="m-0">
+                    {tran('Edit')}
+                    <i className="bi bi-box-arrow-up-right ms-2" />
+                </span>
+            ),
             onSelect: () => {
                 if (appProvider.isPageAppDocumentEditor) {
                     AppDocumentListEventListener.selectVarySlide(slide);
                 } else {
-                    openSlideQuickEdit(slide);
+                    openAppDocumentEditorExternal(appDocument, slide.id);
                 }
             },
         });
@@ -595,7 +603,7 @@ export async function toSlideFromKey(key: string) {
 
 function getInjectedAppDocumentFilePath(): string | null {
     try {
-        const fileFullName = getParamFileFullName();
+        const fileFullName = getParamFileFullName(globalThis.location.href);
         if (fileFullName === null) {
             return null;
         }
@@ -616,17 +624,18 @@ function getInjectedAppDocumentFilePath(): string | null {
     return null;
 }
 
-export const isInjectedAppDocument = getInjectedAppDocumentFilePath() !== null;
+const injectedAppDocumentFilePath = getInjectedAppDocumentFilePath();
+export const isInjectedAppDocumentFilePath =
+    injectedAppDocumentFilePath !== null;
 
 const SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME =
     SELECTED_APP_DOCUMENT_SETTING_NAME + '-item';
 
 export async function getSelectedVaryAppDocument() {
-    const injectedFilePath = getInjectedAppDocumentFilePath();
-    if (injectedFilePath !== null) {
-        const fileSource = FileSource.getInstance(injectedFilePath);
+    if (injectedAppDocumentFilePath !== null) {
+        const fileSource = FileSource.getInstance(injectedAppDocumentFilePath);
         document.title = `${appProvider.windowTitle} - ${fileSource.name}`;
-        return AppDocument.getInstance(injectedFilePath);
+        return AppDocument.getInstance(injectedAppDocumentFilePath);
     }
     const selectedAppDocumentFilePath =
         await getSelectedVaryAppDocumentFilePathWithEnsure();
@@ -646,14 +655,24 @@ export async function getSelectedEditingSlideFilePath(): Promise<{
     filePath: string;
     id: number;
 } | null> {
-    const injectedFilePath = getInjectedAppDocumentFilePath();
-    if (injectedFilePath !== null) {
-        const slides =
-            await AppDocument.getInstance(injectedFilePath).getSlides();
-        const firstSlide = slides[0];
+    if (injectedAppDocumentFilePath !== null) {
+        const appDocument = AppDocument.getInstance(
+            injectedAppDocumentFilePath,
+        );
+        const id = getParamIdNum(globalThis.location.href);
+        const slides = await appDocument.getSlides();
+        let selectedSlide = slides[0];
+        if (id !== null) {
+            const foundSlide = slides.find((slide) => {
+                return slide.id === id;
+            });
+            if (foundSlide) {
+                selectedSlide = foundSlide;
+            }
+        }
         return {
-            filePath: injectedFilePath,
-            id: firstSlide?.id ?? -1,
+            filePath: injectedAppDocumentFilePath,
+            id: selectedSlide?.id ?? -1,
         };
     }
 
@@ -684,6 +703,10 @@ export function setSelectedEditingSlideFilePath(
     filePath: string | null,
     id: number,
 ) {
+    if (isInjectedAppDocumentFilePath) {
+        const url = setParamIdNum(globalThis.location.href, id);
+        globalThis.history.replaceState(null, '', url);
+    }
     const keyPath = filePath === null ? '' : toKeyByFilePath(filePath, id);
     setSetting(SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME, keyPath);
 }

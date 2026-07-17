@@ -25,7 +25,12 @@ import {
     createNewSlidesFromDroppedData,
 } from '../app-document-presenter/items/appDocumentHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
-import { notifyElementHighlight, openPopupWindow } from '../helper/domHelpers';
+import {
+    notifyElementHighlight,
+    openPopupWindow,
+    setParamFileFullName,
+    setParamIdNum,
+} from '../helper/domHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import { type VaryAppDocumentType } from './appDocumentTypeHelpers';
 import appProvider from '../server/appProvider';
@@ -515,14 +520,20 @@ export async function checkIsAppDocumentSelected() {
     return true;
 }
 
-export async function openAppDocumentPopup(
+export async function openAppDocumentEditorExternal(
     varyAppDocument: VaryAppDocumentType,
+    quickEditItemId: number | null = null,
 ) {
     const fileFullName = varyAppDocument!.fileSource.fullName;
-    const fileFullNameEncoded = encodeURIComponent(fileFullName);
-    const url = `${appProvider.appDocumentEditorHomePage}?file=${fileFullNameEncoded}`;
+    let pathname = setParamFileFullName(
+        appProvider.appDocumentEditorHomePage,
+        fileFullName,
+    );
+    if (quickEditItemId !== null) {
+        pathname = setParamIdNum(pathname, quickEditItemId);
+    }
     openPopupWindow(
-        url,
+        pathname,
         `app_document_editor_${Date.now()}`,
         'app_document_editor',
     );

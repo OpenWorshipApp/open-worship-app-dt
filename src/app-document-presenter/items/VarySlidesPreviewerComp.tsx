@@ -13,14 +13,21 @@ import {
     useVaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
 import ScrollingHandlerComp from '../../scrolling/ScrollingHandlerComp';
-import { changeDragEventStyle } from '../../helper/helpers';
+import {
+    bringDomToCenterView,
+    changeDragEventStyle,
+} from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
 import { readDroppedFiles } from '../../others/droppingFileHelpers';
 import { checkIsSupportMediaType } from '../../slide-editor/canvas/canvasHelpers';
 import { showSimpleToast } from '../../toast/toastHelpers';
-import { createNewSlidesFromDroppedData } from './appDocumentHelpers';
+import {
+    APP_DOCUMENT_ITEM_CLASS,
+    createNewSlidesFromDroppedData,
+} from './appDocumentHelpers';
 import appProvider from '../../server/appProvider';
-import { useAppCurrentRef } from '../../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
+import { notifyElementHighlight } from '../../helper/domHelpers';
 
 async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
     const files: File[] = [];
@@ -38,6 +45,20 @@ async function handleDataDropping(appDocument: AppDocument, event: DragEvent) {
 }
 
 export default function VarySlidesPreviewerComp() {
+    useAppEffect(() => {
+        notifyElementHighlight(
+            () => {
+                return document.querySelector(
+                    `.${APP_DOCUMENT_ITEM_CLASS}.active`,
+                );
+            },
+            {
+                moveToView: bringDomToCenterView,
+                type: 'warning',
+            },
+        );
+    }, []);
+
     const varyAppDocument = useVaryAppDocumentContext();
     const onSlideItemsKeyboardEvent = useSlideItemsControlEventContext();
     const [thumbSizeScale, setThumbnailSizeScale] =

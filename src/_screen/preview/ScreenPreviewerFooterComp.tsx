@@ -12,6 +12,7 @@ import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
     return import('./MiniScreenAudioHandlersComp');
@@ -65,12 +66,11 @@ function BackgroundAudioSwitchComp({
     );
     const handleToggleAudioHandlers = useCallback(() => {
         if (isAudioHandlersVisibleRef.current) {
-            const isPlaying = Array.from(
-                document.querySelectorAll<HTMLAudioElement>(
-                    'audio[data-video-id]',
-                ),
-            );
-            if (isPlaying.some((audio) => !audio.paused)) {
+            const isPlaying = checkMediaPlaying({
+                query: 'audio[data-video-id]',
+                withMessage: false,
+            });
+            if (isPlaying) {
                 showSimpleToast(
                     tran('Audio is Playing'),
                     tran(

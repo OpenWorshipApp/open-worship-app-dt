@@ -23,6 +23,7 @@ import appProvider from '../../server/appProvider';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import type { ScreenMessageType } from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
+import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 
 export type ScreenManagerEventType =
     | 'instance'
@@ -49,6 +50,7 @@ export default class ScreenManagerBase
     noSyncGroupMap: Map<string, boolean>;
     getElementsByDomSelector: (_domSelector: string) => HTMLElement[] =
         () => [];
+    divRef: WeakRef<HTMLDivElement> | null = null;
 
     constructor(screenId: number) {
         super();
@@ -130,6 +132,20 @@ export default class ScreenManagerBase
                 top: scrollTop,
             });
         }
+    }
+
+    checkIsMediaPlaying() {
+        const element = this.divRef?.deref();
+        if (element === undefined) {
+            return false;
+        }
+        // Refresh is a passive/system action (fired on resize, display change,
+        // etc.), so guard silently — no toast to avoid spamming on repeated
+        // fires.
+        return checkMediaPlaying({
+            targetElement: element,
+            withMessage: false,
+        });
     }
 
     checkIsLockedWithMessage() {
@@ -233,6 +249,10 @@ export default class ScreenManagerBase
     }
 
     fireRefreshEvent() {
+        const isPlaying = this.checkIsMediaPlaying();
+        if (isPlaying) {
+            return;
+        }
         this.addPropEvent('refresh');
         ScreenManagerBase.fireRefreshEvent();
     }

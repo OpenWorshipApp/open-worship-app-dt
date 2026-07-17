@@ -14,6 +14,10 @@ const {
     getUserWritablePathMock,
     handleErrorMock,
     pathJoinMock,
+    appHomeStorageGetItemMock,
+    appHomeStorageSetItemMock,
+    appHomeStorageRemoveItemMock,
+    appHomeStorageClearMock,
 } = vi.hoisted(() => ({
     fsCheckDirExistMock: vi.fn(),
     fsDeleteFileMock: vi.fn(),
@@ -26,10 +30,23 @@ const {
     getUserWritablePathMock: vi.fn(() => '/user'),
     handleErrorMock: vi.fn(),
     pathJoinMock: vi.fn((...parts: string[]) => parts.join('/')),
+    appHomeStorageGetItemMock: vi.fn(),
+    appHomeStorageSetItemMock: vi.fn(),
+    appHomeStorageRemoveItemMock: vi.fn(),
+    appHomeStorageClearMock: vi.fn(),
 }));
 
 vi.mock('../../helper/errorHelpers', () => ({
     handleError: handleErrorMock,
+}));
+
+vi.mock('../../server/appHomeStorage', () => ({
+    appHomeStorage: {
+        getItem: appHomeStorageGetItemMock,
+        setItem: appHomeStorageSetItemMock,
+        removeItem: appHomeStorageRemoveItemMock,
+        clear: appHomeStorageClearMock,
+    },
 }));
 
 vi.mock('../../server/fileHelpers', () => ({
@@ -52,20 +69,26 @@ async function loadModule() {
 
 function stubStorage(initial: Record<string, string> = {}) {
     const storage = new Map<string, string>(Object.entries(initial));
-    const localStorageMock = {
-        getItem: vi.fn((key: string) => storage.get(key) ?? null),
-        setItem: vi.fn((key: string, value: string) => {
+    appHomeStorageGetItemMock.mockImplementation(
+        (key: string) => storage.get(key) ?? null,
+    );
+    appHomeStorageSetItemMock.mockImplementation(
+        (key: string, value: string) => {
             storage.set(key, value);
-        }),
-        removeItem: vi.fn((key: string) => {
-            storage.delete(key);
-        }),
-        clear: vi.fn(() => {
-            storage.clear();
-        }),
+        },
+    );
+    appHomeStorageRemoveItemMock.mockImplementation((key: string) => {
+        storage.delete(key);
+    });
+    appHomeStorageClearMock.mockImplementation(() => {
+        storage.clear();
+    });
+    return {
+        getItem: appHomeStorageGetItemMock,
+        setItem: appHomeStorageSetItemMock,
+        removeItem: appHomeStorageRemoveItemMock,
+        clear: appHomeStorageClearMock,
     };
-    vi.stubGlobal('localStorage', localStorageMock as any);
-    return localStorageMock;
 }
 
 describe('appLocalStorage', () => {

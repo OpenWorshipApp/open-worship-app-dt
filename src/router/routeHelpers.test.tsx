@@ -65,11 +65,7 @@ describe('routeHelpers', () => {
 
         expect(element.type).toBe('span');
         expect(element.props.style).toEqual({ color: 'red' });
-        expect(element.props.children[0]).toBe('translated:Open ');
-        expect(element.props.children[1].type).toBe('i');
-        expect(element.props.children[1].props.className).toContain(
-            'bi-box-arrow-up-right',
-        );
+        expect(element.props.children).toBe('translated:Open ');
     });
 
     test('navigates to the stored path or presenter home when no pathname is supplied', () => {

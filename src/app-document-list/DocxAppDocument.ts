@@ -1,7 +1,10 @@
 import { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import type { MimetypeNameType } from '../server/fileHelpers';
 import type ItemSourceInf from '../others/ItemSourceInf';
-import { BLANK_HTML_SLIDE_SRC, showStaticSlideContextMenu } from './appDocumentHelpers';
+import {
+    BLANK_HTML_SLIDE_SRC,
+    showStaticSlideContextMenu,
+} from './appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';

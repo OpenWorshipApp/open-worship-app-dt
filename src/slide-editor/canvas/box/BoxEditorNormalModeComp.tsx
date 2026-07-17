@@ -11,6 +11,8 @@ import BoxEditorNormalViewTextModeComp from './BoxEditorNormalViewTextModeComp';
 import BoxEditorNormalViewBibleModeComp from './BoxEditorNormalViewBibleModeComp';
 import BoxEditorNormalViewErrorComp from './BoxEditorNormalViewErrorComp';
 import BoxEditorNormalViewVideoModeComp from './BoxEditorNormalViewVideoModeComp';
+import BoxEditorNormalViewYouTubeModeComp from './BoxEditorNormalViewYouTubeModeComp';
+import BoxEditorNormalViewWebsiteModeComp from './BoxEditorNormalViewWebsiteModeComp';
 
 export default function BoxEditorNormalModeComp() {
     const canvasItem = useCanvasItemContext();
@@ -28,6 +30,10 @@ export default function BoxEditorNormalModeComp() {
             return <BoxEditorNormalViewImageModeComp style={style} />;
         case 'video':
             return <BoxEditorNormalViewVideoModeComp style={style} />;
+        case 'youtube':
+            return <BoxEditorNormalViewYouTubeModeComp style={style} />;
+        case 'website':
+            return <BoxEditorNormalViewWebsiteModeComp style={style} />;
         case 'text':
             if (canvasItem === editingCanvasItem) {
                 return <BoxEditorNormalTextEditModeComp style={style} />;

@@ -22,6 +22,11 @@ const {
 
 vi.mock('../helper/domHelpers', () => ({
     openPopupWindow: openPopupWindowMock,
+    setParamFileFullName: (urlOrPathname: string, fileFullName: string) => {
+        const url = new URL(urlOrPathname, globalThis.location?.href);
+        url.searchParams.set('file', fileFullName);
+        return url.toString();
+    },
 }));
 
 vi.mock('../helper/FileSource', () => ({
@@ -197,7 +202,7 @@ describe('backgroundWebHelpers', () => {
         menuItem?.onSelect();
 
         expect(openPopupWindowMock).toHaveBeenCalledWith(
-            'https://editor.openworship.app?file=My%20Page.html',
+            'https://editor.openworship.app/?file=My+Page.html',
             'My Page.html_1234',
             'popup-uuid',
         );

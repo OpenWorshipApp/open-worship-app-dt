@@ -48,6 +48,11 @@ const {
         pathUtils: {
             join: (...parts: string[]) => parts.join('/').replaceAll('//', '/'),
         },
+        // domHelpers registers an open-about listener at module load.
+        messageUtils: {
+            listenForData: vi.fn(),
+            sendData: vi.fn(),
+        },
     },
 }));
 
@@ -118,10 +123,6 @@ vi.mock('../server/fileHelpers', () => ({
     pathJoin: (...parts: string[]) => parts.join('/'),
 }));
 
-vi.mock('../app-document-presenter/SlideEditHandlerComp', () => ({
-    openSlideQuickEdit: vi.fn(),
-}));
-
 vi.mock('../toast/toastHelpers', () => ({
     showSimpleToast: showSimpleToastMock,
 }));
@@ -147,6 +148,7 @@ vi.mock('./Slide', () => ({
 }));
 
 vi.mock('./AppDocument', () => ({
+    openAppDocumentEditorExternal: vi.fn(),
     default: class AppDocument {
         public static readonly instances = new Map<string, AppDocument>();
         public static readonly setCopiedSlides = vi.fn();

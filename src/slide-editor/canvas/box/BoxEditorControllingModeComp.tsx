@@ -12,6 +12,8 @@ import { BoxEditorNormalTextRender } from './BoxEditorNormalViewTextModeComp';
 import { BoxEditorNormalBibleRender } from './BoxEditorNormalViewBibleModeComp';
 import { useCanvasControllerContext } from '../CanvasController';
 import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
+import { BoxEditorNormalYouTubeRender } from './BoxEditorNormalViewYouTubeModeComp';
+import { BoxEditorNormalWebsiteRender } from './BoxEditorNormalViewWebsiteModeComp';
 import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
 import { useBoxEditorControllerContext } from '../../BoxEditorController';
 import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
@@ -26,6 +28,10 @@ function BoxEditorCanvasItemRender() {
             return <BoxEditorNormalImageRender />;
         case 'video':
             return <BoxEditorNormalVideoRender />;
+        case 'youtube':
+            return <BoxEditorNormalYouTubeRender />;
+        case 'website':
+            return <BoxEditorNormalWebsiteRender />;
         case 'text':
             return <BoxEditorNormalTextRender />;
         case 'html':

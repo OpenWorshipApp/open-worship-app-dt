@@ -2,7 +2,7 @@ import { use, useCallback, useState } from 'react';
 
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileSource from '../helper/FileSource';
-import AppDocument, { openAppDocumentPopup } from './AppDocument';
+import AppDocument, { openAppDocumentEditorExternal } from './AppDocument';
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -36,10 +36,11 @@ function genContextMenuItems(
                 menuElement: tran('Preview PDF'),
                 onSelect: () => {
                     const { fileSource } = varyAppDocument;
+                    const fileFullName = fileSource.fullName;
                     openPopupWindow(
                         fileSource.src,
-                        `pdf_preview-${fileSource.fullName}_${Date.now()}`,
-                        fileSource.fullName,
+                        `pdf_preview-${fileFullName}_${Date.now()}`,
+                        fileFullName,
                     );
                 },
             },
@@ -101,7 +102,7 @@ function genContextMenuItems(
                 if (!varyAppDocument) {
                     return;
                 }
-                openAppDocumentPopup(varyAppDocument!);
+                openAppDocumentEditorExternal(varyAppDocument!);
             },
         },
     ];

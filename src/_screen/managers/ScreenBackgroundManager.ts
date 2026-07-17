@@ -395,6 +395,7 @@ class ScreenBackgroundManager
         if (videoElement instanceof HTMLVideoElement === false) {
             return;
         }
+        videoElement.dataset.ignoreMediaGuarding = 'true';
         const fadeOutListener = async () => {
             const videoId = videoElement.id;
             const currentTime = videoElement.currentTime;

@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
     genFromFileVideoMock: vi.fn(),
     genFromInsertionImageMock: vi.fn(),
     genFromInsertionVideoMock: vi.fn(),
+    genFromUrlYouTubeMock: vi.fn(),
+    genFromUrlWebsiteMock: vi.fn(),
     getSettingMock: vi.fn(),
     handleErrorMock: vi.fn(),
     setSettingMock: vi.fn(),
@@ -49,6 +51,18 @@ vi.mock('./CanvasItemVideo', () => ({
     default: {
         genFromFile: mocks.genFromFileVideoMock,
         genFromInsertion: mocks.genFromInsertionVideoMock,
+    },
+}));
+
+vi.mock('./CanvasItemYouTube', () => ({
+    default: {
+        genFromUrl: mocks.genFromUrlYouTubeMock,
+    },
+}));
+
+vi.mock('./CanvasItemWebsite', () => ({
+    default: {
+        genFromUrl: mocks.genFromUrlWebsiteMock,
     },
 }));
 

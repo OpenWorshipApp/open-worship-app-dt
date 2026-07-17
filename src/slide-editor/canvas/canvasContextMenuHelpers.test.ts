@@ -1,27 +1,41 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
+    askForURLMock,
     checkIsImagesInClipboardMock,
+    copyToClipboardMock,
+    downloadImageBase64DataMock,
     getCopiedCanvasItemsMock,
     getMimetypeExtensionsMock,
     lookupBibleItemPropsMock,
+    openExternalURLMock,
     readBibleItemFromClipboardMock,
     readImagesFromClipboardMock,
     selectFilesMock,
     setCopiedItemsMock,
     showAppContextMenuMock,
+    showFileOrDirExplorerMock,
     showSimpleToastMock,
 } = vi.hoisted(() => ({
+    askForURLMock: vi.fn(),
     checkIsImagesInClipboardMock: vi.fn(),
+    copyToClipboardMock: vi.fn(),
+    downloadImageBase64DataMock: vi.fn(),
     getCopiedCanvasItemsMock: vi.fn(),
     getMimetypeExtensionsMock: vi.fn(),
     lookupBibleItemPropsMock: vi.fn(),
+    openExternalURLMock: vi.fn(),
     readBibleItemFromClipboardMock: vi.fn(),
     readImagesFromClipboardMock: vi.fn(),
     selectFilesMock: vi.fn(),
     setCopiedItemsMock: vi.fn(),
     showAppContextMenuMock: vi.fn(),
+    showFileOrDirExplorerMock: vi.fn(),
     showSimpleToastMock: vi.fn(),
+}));
+
+vi.mock('../../background/downloadHelper', () => ({
+    askForURL: askForURLMock,
 }));
 
 vi.mock('../../lang/langHelpers', () => ({
@@ -44,6 +58,21 @@ vi.mock('../../context-menu/appContextMenuHelpers', () => ({
 vi.mock('../../server/appHelpers', () => ({
     checkIsImagesInClipboard: checkIsImagesInClipboardMock,
     readImagesFromClipboard: readImagesFromClipboardMock,
+    showFileOrDirExplorer: showFileOrDirExplorerMock,
+    copyToClipboard: copyToClipboardMock,
+    downloadImageBase64Data: downloadImageBase64DataMock,
+}));
+
+vi.mock('../../server/appProvider', () => ({
+    default: {
+        browserUtils: {
+            openExternalURL: openExternalURLMock,
+        },
+    },
+}));
+
+vi.mock('../../helper/helpers', () => ({
+    getMenuTitleRevealFile: () => 'Reveal in File Explorer',
 }));
 
 vi.mock('./canvasBibleItemHelpers', () => ({
@@ -123,6 +152,8 @@ describe('canvasContextMenuHelpers', () => {
             'New',
             'Paste',
             'Insert Medias',
+            'Insert YouTube',
+            'Insert Website',
             'Paste Image',
         ]);
 
@@ -155,7 +186,7 @@ describe('canvasContextMenuHelpers', () => {
             addedCanvasItem,
         ]);
 
-        await menuItems[3].onSelect();
+        await menuItems[5].onSelect();
         expect(canvasController.genNewImageItemFromFile).toHaveBeenCalledWith(
             blob1,
             event,
@@ -166,6 +197,62 @@ describe('canvasContextMenuHelpers', () => {
         );
         expect(canvasController.addNewItems).toHaveBeenCalledWith([
             pastedImageItem,
+        ]);
+    });
+
+    test('inserts YouTube and website items from a URL prompt', async () => {
+        const youtubeItem = { id: 20, type: 'youtube' };
+        const websiteItem = { id: 21, type: 'website' };
+        const canvasController = {
+            addNewTextItem: vi.fn(),
+            addNewItems: vi.fn(),
+            genNewMediaItemFromFilePath: vi.fn(),
+            genNewImageItemFromFile: vi.fn(),
+            genNewYouTubeItem: vi.fn().mockReturnValue(youtubeItem),
+            genNewWebsiteItem: vi.fn().mockReturnValue(websiteItem),
+        };
+        const event = { clientX: 10, clientY: 20 };
+
+        await showCanvasContextMenu(event, canvasController as any);
+        const menuItems = showAppContextMenuMock.mock.calls[0]?.[1] ?? [];
+        const menuByLabel = new Map(
+            menuItems.map((item: any) => [item.menuElement, item]),
+        );
+
+        // A cancelled prompt inserts nothing.
+        askForURLMock.mockResolvedValueOnce(null);
+        await (menuByLabel.get('Insert YouTube') as any).onSelect();
+        expect(canvasController.genNewYouTubeItem).not.toHaveBeenCalled();
+        expect(canvasController.addNewItems).not.toHaveBeenCalled();
+
+        askForURLMock.mockResolvedValueOnce(
+            'https://www.youtube.com/watch?v=abc123',
+        );
+        await (menuByLabel.get('Insert YouTube') as any).onSelect();
+        expect(askForURLMock).toHaveBeenCalledWith(
+            'Insert YouTube',
+            'YouTube URL:',
+        );
+        expect(canvasController.genNewYouTubeItem).toHaveBeenCalledWith(
+            'https://www.youtube.com/watch?v=abc123',
+            event,
+        );
+        expect(canvasController.addNewItems).toHaveBeenCalledWith([
+            youtubeItem,
+        ]);
+
+        askForURLMock.mockResolvedValueOnce('https://example.com');
+        await (menuByLabel.get('Insert Website') as any).onSelect();
+        expect(askForURLMock).toHaveBeenCalledWith(
+            'Insert Website',
+            'Website URL:',
+        );
+        expect(canvasController.genNewWebsiteItem).toHaveBeenCalledWith(
+            'https://example.com',
+            event,
+        );
+        expect(canvasController.addNewItems).toHaveBeenCalledWith([
+            websiteItem,
         ]);
     });
 
@@ -187,10 +274,12 @@ describe('canvasContextMenuHelpers', () => {
         expect(menuItems.map((item: any) => item.menuElement)).toEqual([
             'New',
             'Insert Medias',
+            'Insert YouTube',
+            'Insert Website',
             'Paste Bible Item',
         ]);
 
-        menuItems[2].onSelect();
+        menuItems[4].onSelect();
         expect(canvasController.addNewBibleItem).toHaveBeenCalledWith(
             bibleItem,
             event,
@@ -314,6 +403,169 @@ describe('canvasContextMenuHelpers', () => {
         });
     });
 
+    test('offers reveal-in-file-manager only for video items with a file path', () => {
+        const handleCanvasItemEditing = vi.fn();
+
+        // A video item exposes the reveal action wired to its file path.
+        const videoCanvasItem = {
+            type: 'video',
+            props: { filePath: '/media/clip.mp4' },
+        };
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            videoCanvasItem as any,
+            handleCanvasItemEditing,
+            false,
+        );
+        const videoMenuItems = showAppContextMenuMock.mock.calls[0]?.[1] ?? [];
+        expect(videoMenuItems.map((item: any) => item.menuElement)).toEqual([
+            'Lock',
+            'Copy',
+            'Duplicate',
+            'Reveal in File Explorer',
+            'Delete',
+        ]);
+
+        const revealItem = videoMenuItems.find(
+            (item: any) => item.menuElement === 'Reveal in File Explorer',
+        );
+        revealItem.onSelect();
+        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/media/clip.mp4',
+        );
+
+        // A locked video still keeps the reveal action available.
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            {
+                type: 'video',
+                props: { filePath: '/media/clip.mp4', locked: true },
+            } as any,
+            handleCanvasItemEditing,
+            false,
+        );
+        expect(
+            (showAppContextMenuMock.mock.calls[1]?.[1] ?? []).map(
+                (item: any) => item.menuElement,
+            ),
+        ).toEqual(['Unlock', 'Copy', 'Duplicate', 'Reveal in File Explorer']);
+
+        // Non-video items never show the reveal action.
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            { type: 'image', props: {} } as any,
+            handleCanvasItemEditing,
+            false,
+        );
+        expect(
+            (showAppContextMenuMock.mock.calls[2]?.[1] ?? []).map(
+                (item: any) => item.menuElement,
+            ),
+        ).not.toContain('Reveal in File Explorer');
+    });
+
+    test('offers open/copy URL for youtube and website items', () => {
+        const handleCanvasItemEditing = vi.fn();
+
+        for (const [index, type] of ['youtube', 'website'].entries()) {
+            const urlCanvasItem = {
+                type,
+                props: { url: `https://example.com/${type}` },
+            };
+            showCanvasItemContextMenu(
+                {},
+                {} as any,
+                urlCanvasItem as any,
+                handleCanvasItemEditing,
+                false,
+            );
+            const menuItems =
+                showAppContextMenuMock.mock.calls[index]?.[1] ?? [];
+            expect(menuItems.map((item: any) => item.menuElement)).toEqual([
+                'Lock',
+                'Copy',
+                'Duplicate',
+                'Open URL',
+                'Copy URL',
+                'Delete',
+            ]);
+
+            const menuByLabel = new Map<string, any>(
+                menuItems.map((item: any) => [item.menuElement, item]),
+            );
+            menuByLabel.get('Open URL').onSelect();
+            expect(openExternalURLMock).toHaveBeenLastCalledWith(
+                `https://example.com/${type}`,
+            );
+            menuByLabel.get('Copy URL').onSelect();
+            expect(copyToClipboardMock).toHaveBeenLastCalledWith(
+                `https://example.com/${type}`,
+            );
+        }
+
+        // Items without a URL never show the URL actions.
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            { type: 'video', props: { filePath: '/media/clip.mp4' } } as any,
+            handleCanvasItemEditing,
+            false,
+        );
+        const videoLabels = (
+            showAppContextMenuMock.mock.calls[2]?.[1] ?? []
+        ).map((item: any) => item.menuElement);
+        expect(videoLabels).not.toContain('Open URL');
+        expect(videoLabels).not.toContain('Copy URL');
+    });
+
+    test('offers download for image items with embedded data', () => {
+        const handleCanvasItemEditing = vi.fn();
+
+        // An image item exposes a download action wired to its embedded data.
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            {
+                type: 'image',
+                props: { srcData: 'data:image/png;base64,AAAA' },
+            } as any,
+            handleCanvasItemEditing,
+            false,
+        );
+        const imageMenuItems = showAppContextMenuMock.mock.calls[0]?.[1] ?? [];
+        expect(imageMenuItems.map((item: any) => item.menuElement)).toEqual([
+            'Lock',
+            'Copy',
+            'Duplicate',
+            'Download',
+            'Delete',
+        ]);
+
+        imageMenuItems
+            .find((item: any) => item.menuElement === 'Download')
+            .onSelect();
+        expect(downloadImageBase64DataMock).toHaveBeenCalledWith(
+            'data:image/png;base64,AAAA',
+        );
+
+        // An image without embedded data offers no download action.
+        showCanvasItemContextMenu(
+            {},
+            {} as any,
+            { type: 'image', props: {} } as any,
+            handleCanvasItemEditing,
+            false,
+        );
+        expect(
+            (showAppContextMenuMock.mock.calls[1]?.[1] ?? []).map(
+                (item: any) => item.menuElement,
+            ),
+        ).not.toContain('Download');
+    });
+
     test('omits unavailable canvas actions and builds item menus with the right handlers', async () => {
         const canvasController = {
             addNewTextItem: vi.fn(),
@@ -333,6 +585,8 @@ describe('canvasContextMenuHelpers', () => {
         expect(baseMenuItems.map((item: any) => item.menuElement)).toEqual([
             'New',
             'Insert Medias',
+            'Insert YouTube',
+            'Insert Website',
         ]);
 
         showCanvasItemContextMenu(

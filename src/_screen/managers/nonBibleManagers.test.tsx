@@ -29,6 +29,11 @@ const appProviderMock = {
     systemUtils: {
         isDev: false,
     },
+    // langHelpers registers a menu listener at module load.
+    messageUtils: {
+        listenForData: vi.fn(),
+        sendData: vi.fn(),
+    },
 };
 
 vi.mock('../../helper/settingHelpers', () => ({
@@ -402,8 +407,9 @@ describe('non-Bible screen managers', () => {
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
         expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
 
+        // Re-selecting the same slide re-applies it (no toggle-off behavior).
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
-        expect(manager.varySlideData).toBeNull();
+        expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
 
         await manager.receiveScreenDropped({
             item: {

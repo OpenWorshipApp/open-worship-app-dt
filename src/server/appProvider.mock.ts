@@ -779,9 +779,9 @@ async function initLyricMock() {
     const { defaultDataDirNames, dirSourceSettingNames } =
         await import('../helper/constants');
     const { default: Lyric } = await import('../lyric-list/Lyric');
-    const { setParamFileFullName } = await import('../helper/domHelpers');
     const { SELECTED_PARENT_DIR_SETTING_NAME } =
         await import('../setting/directory-setting/appLocalStorage');
+    const { setParamFileFullName } = await import('../helper/domHelpers');
 
     if (!location.pathname.includes('lyricEditor.html')) {
         return;
@@ -800,12 +800,15 @@ async function initLyricMock() {
         if (key === 'LYRIC') {
             const data = Lyric.getDefaultContentJsonData();
             const fileFullName = 'test-lyric.owl';
-            setParamFileFullName(fileFullName);
             virtualFs.writeFile(
                 `${filePath}/${fileFullName}`,
                 JSON.stringify(data),
             );
-            console.log(virtualFs);
+            const url = setParamFileFullName(
+                globalThis.location.href,
+                fileFullName,
+            );
+            globalThis.history.replaceState(null, '', url);
         }
         virtualFs.writeFile(localStorageFilePath, filePath);
     }

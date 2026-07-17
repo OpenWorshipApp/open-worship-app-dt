@@ -17,6 +17,14 @@ import {
     readBibleItemFromClipboard,
 } from './canvasBibleItemHelpers';
 import type { CanvasItemBiblePropsType } from './CanvasItemBibleItem';
+import { askForURL } from '../../background/downloadHelper';
+import { getMenuTitleRevealFile } from '../../helper/helpers';
+import {
+    copyToClipboard,
+    downloadImageBase64Data,
+    showFileOrDirExplorer,
+} from '../../server/appHelpers';
+import appProvider from '../../server/appProvider';
 
 export async function showCanvasContextMenu(
     event: any,
@@ -70,6 +78,44 @@ export async function showCanvasContextMenu(
                 }
             },
         },
+        {
+            menuElement: tran('Insert YouTube'),
+            onSelect: async () => {
+                const url = await askForURL(
+                    tran('Insert YouTube'),
+                    tran('YouTube URL:'),
+                );
+                if (url === null) {
+                    return;
+                }
+                const newCanvasItem = canvasController.genNewYouTubeItem(
+                    url,
+                    event,
+                );
+                if (newCanvasItem) {
+                    canvasController.addNewItems([newCanvasItem]);
+                }
+            },
+        },
+        {
+            menuElement: tran('Insert Website'),
+            onSelect: async () => {
+                const url = await askForURL(
+                    tran('Insert Website'),
+                    tran('Website URL:'),
+                );
+                if (url === null) {
+                    return;
+                }
+                const newCanvasItem = canvasController.genNewWebsiteItem(
+                    url,
+                    event,
+                );
+                if (newCanvasItem) {
+                    canvasController.addNewItems([newCanvasItem]);
+                }
+            },
+        },
         ...(isClipboardHasImage
             ? [
                   {
@@ -119,6 +165,24 @@ export function showCanvasItemContextMenu(
     const isEditable = !isLocked && canvasItem.type === 'text';
     const isAbleForLookup =
         canvasItem.type === 'bible' && openBibleLookup !== null;
+    // Only videos reference a resolvable on-disk file (images embed srcData,
+    // YouTube/website items point at URLs), so reveal-in-file-manager applies
+    // to video items alone.
+    const isRevealable =
+        canvasItem.type === 'video' &&
+        typeof canvasItem.props.filePath === 'string';
+    // YouTube and website items are backed by a URL; offer to open it in the
+    // browser or copy it to the clipboard, the URL counterpart of revealing a
+    // video's file.
+    const hasUrl =
+        (canvasItem.type === 'youtube' || canvasItem.type === 'website') &&
+        typeof canvasItem.props.url === 'string';
+    // Image items inline their pixels as base64 srcData rather than referencing
+    // a file, so the file-oriented reveal doesn't apply; offer to save the
+    // embedded image to disk instead.
+    const isDownloadable =
+        canvasItem.type === 'image' &&
+        typeof canvasItem.props.srcData === 'string';
     const menuItems: ContextMenuItemType[] = [
         ...(isAbleForLookup
             ? [
@@ -173,6 +237,44 @@ export function showCanvasItemContextMenu(
                 canvasController.duplicateItems([canvasItem]);
             },
         },
+        ...(isRevealable
+            ? [
+                  {
+                      menuElement: getMenuTitleRevealFile(),
+                      onSelect: () => {
+                          showFileOrDirExplorer(canvasItem.props.filePath);
+                      },
+                  },
+              ]
+            : []),
+        ...(hasUrl
+            ? [
+                  {
+                      menuElement: tran('Open URL'),
+                      onSelect: () => {
+                          appProvider.browserUtils.openExternalURL(
+                              canvasItem.props.url,
+                          );
+                      },
+                  },
+                  {
+                      menuElement: tran('Copy URL'),
+                      onSelect: () => {
+                          copyToClipboard(canvasItem.props.url);
+                      },
+                  },
+              ]
+            : []),
+        ...(isDownloadable
+            ? [
+                  {
+                      menuElement: tran('Download'),
+                      onSelect: () => {
+                          downloadImageBase64Data(canvasItem.props.srcData);
+                      },
+                  },
+              ]
+            : []),
         ...(isEditable
             ? [
                   {

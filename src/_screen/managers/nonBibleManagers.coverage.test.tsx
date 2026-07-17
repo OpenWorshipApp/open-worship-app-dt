@@ -72,6 +72,11 @@ const mocks = vi.hoisted(() => ({
         systemUtils: {
             isDev: false,
         },
+        // langHelpers registers a menu listener at module load.
+        messageUtils: {
+            listenForData: vi.fn(),
+            sendData: vi.fn(),
+        },
     },
 }));
 
@@ -926,8 +931,9 @@ describe('non-Bible manager coverage', () => {
 
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
         expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
+        // Re-selecting the same slide re-applies it (no toggle-off behavior).
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
-        expect(manager.varySlideData).toBeNull();
+        expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
 
         vi.spyOn(
             ScreenVaryAppDocumentManager,

@@ -14,10 +14,16 @@ import {
 } from '../../helper/constants';
 import { playMediaElement } from '../../helper/mediaHelpers';
 import {
+    checkMediaPlaying,
     handleMediaPlaying,
     handleMediaStopped,
-} from '../../helper/audioControlHelpers';
+} from '../../helper/mediaControlHelpers';
 import { genVideoIDFromSrc } from '../screenHelpers';
+import {
+    checkIsYouTubeSyncIframe,
+    genYouTubeSyncId,
+    SlideYouTubePlayer,
+} from './slideYouTubeSyncHelpers';
 import ScreenEventHandler, {
     type GroupMembershipInf,
 } from './ScreenEventHandler';
@@ -101,6 +107,11 @@ type SlideVideoTimeDataType = {
     isPlaying: boolean;
 };
 
+// Seeking a YouTube embed re-buffers, so followers only correct their time when
+// they drift past this (a much looser bound than the 0.15s used for a native
+// `<video>`, whose `.currentTime` seek is instant).
+const YOUTUBE_SYNC_SEEK_THRESHOLD_SECONDS = 0.75;
+
 class ScreenVaryAppDocumentManager
     extends ScreenEventHandler<ScreenVaryAppDocumentManagerEventType>
     implements GroupMembershipInf
@@ -110,6 +121,10 @@ class ScreenVaryAppDocumentManager
     private _div: HTMLDivElement | null = null;
     private readonly syncAdjustedMediaElements =
         new WeakSet<HTMLMediaElement>();
+    // Live YouTube embeds in the currently-rendered slide. Rebuilt on every
+    // render and torn down before the next one so their window `message`
+    // listeners never leak.
+    private youTubePlayers: SlideYouTubePlayer[] = [];
     effectManager: ScreenEffectManager;
 
     constructor(
@@ -157,9 +172,24 @@ class ScreenVaryAppDocumentManager
                 varySlideData.virtualBackgroundColor = null;
             }
         }
+        // Re-selecting the same slide is a no-op; short-circuit before any
+        // guard toast so a redundant click stays silent.
+        if (checkAreObjectsEqual(this._varySlideData, varySlideData)) {
+            return;
+        }
+        if (this.screenManagerBase.checkIsLockedWithMessage()) {
+            return;
+        }
+        // Block only a swap to a *different* slide that would tear down media
+        // currently playing on the presenter's mini screen. Clearing (null) is
+        // an explicit stop and must go through — otherwise ScreenManager.clear()
+        // would partially clear (bible/foreground/background gone, the playing
+        // slide left behind). The projected screen (isPageScreen) must always
+        // follow sync updates, so it is never blocked here.
         if (
-            this.screenManagerBase.checkIsLockedWithMessage() ||
-            checkAreObjectsEqual(this._varySlideData, varySlideData)
+            varySlideData !== null &&
+            !appProvider.isPageScreen &&
+            this.checkIsMediaPlaying()
         ) {
             return;
         }
@@ -266,6 +296,40 @@ class ScreenVaryAppDocumentManager
                 this.syncAdjustedMediaElements.add(mediaElement);
                 mediaElement.currentTime = exactVideoTime;
             }
+        }
+        this.applyYouTubeSync(data);
+    }
+
+    // A YouTube embed follows the same sync data as a slide `<video>`: the
+    // projected screen mirrors the master's play/pause (staying muted), and any
+    // follower seeks only when it has drifted enough to be worth re-buffering.
+    private applyYouTubeSync(data: SlideVideoTimeDataType) {
+        const { videoId, videoTime, timestamp, isPlaying } = data;
+        const player = this.youTubePlayers.find((item) => {
+            return item.id === videoId;
+        });
+        if (player === undefined) {
+            return;
+        }
+        if (appProvider.isPageScreen) {
+            if (isPlaying && !player.isPlaying) {
+                // Only the master (the first-clicked mini) keeps sound; the
+                // projected screen is always silent. Re-mute right before it
+                // starts in case the setup-time mute landed before the player
+                // was ready.
+                player.mute();
+                player.play();
+            } else if (!isPlaying && player.isPlaying) {
+                player.pause();
+            }
+        }
+        const latency = isPlaying ? (Date.now() - timestamp) / 1000 : 0;
+        const exactVideoTime = videoTime + latency;
+        if (
+            Math.abs(player.getCurrentTime() - exactVideoTime) >
+            YOUTUBE_SYNC_SEEK_THRESHOLD_SECONDS
+        ) {
+            player.seekTo(exactVideoTime);
         }
     }
 
@@ -508,21 +572,21 @@ class ScreenVaryAppDocumentManager
         }
     }
 
-    private readonly handleSlideMediaPlaying = async (event: Event) => {
-        const mediaElement = event.currentTarget as HTMLMediaElement;
-        handleMediaPlaying(event);
-        if (mediaElement instanceof HTMLVideoElement) {
-            this.setSlideVideoBadgeVisibility(mediaElement, false);
-        }
-        // Same rule as the background audio handlers: starting one slide's
-        // media stops the media playing on other slides/screens. The
-        // initiating manager is skipped so a slide that embeds both a video
-        // and an audio (a PPTX renders its audio as a muted-less <video>) can
-        // play them together. A group member's copy of this same element keeps
-        // its screen driven by this instance, so its pause must not broadcast
-        // a pause back to the group.
-        const groupManagers = new Set(await this.getMemberInstances());
-        groupManagers.add(this);
+    // Same rule as the background audio handlers: starting one slide's media
+    // stops the media playing on other slides/screens so only one thing makes
+    // sound. The initiating manager is skipped so a slide that embeds both a
+    // video and an audio (a PPTX renders its audio as a muted-less <video>) can
+    // play them together. A group member's copy of the SAME media keeps its
+    // screen driven by this instance, so its pause is flagged and must not
+    // broadcast a pause back to the group. This covers both native `<video>`/
+    // `<audio>` and YouTube embeds so the two never sound at once.
+    private stopOtherPlayingSlideMedia(
+        groupManagers: Set<ScreenVaryAppDocumentManager>,
+        initiator: {
+            mediaElement?: HTMLMediaElement;
+            youTubeId?: string;
+        },
+    ) {
         for (const manager of ScreenVaryAppDocumentManager.getAllInstances()) {
             const div = manager.div;
             if (div === null || manager === this) {
@@ -531,26 +595,130 @@ class ScreenVaryAppDocumentManager
             for (const media of queryAllDeep(div, 'video, audio')) {
                 if (
                     media instanceof HTMLMediaElement === false ||
-                    media === mediaElement ||
+                    media === initiator.mediaElement ||
                     media.paused
                 ) {
                     continue;
                 }
                 if (
                     groupManagers.has(manager) &&
-                    media.id === mediaElement.id
+                    initiator.mediaElement !== undefined &&
+                    media.id === initiator.mediaElement.id
                 ) {
                     media.dataset.pausedByGroupSync = '1';
                 }
                 media.pause();
             }
+            for (const player of manager.youTubePlayers) {
+                if (!player.isPlaying) {
+                    continue;
+                }
+                if (
+                    groupManagers.has(manager) &&
+                    initiator.youTubeId !== undefined &&
+                    player.id === initiator.youTubeId
+                ) {
+                    player.pausedBySync = true;
+                }
+                player.pause();
+            }
         }
+    }
+
+    private readonly handleSlideMediaPlaying = async (event: Event) => {
+        const mediaElement = event.currentTarget as HTMLMediaElement;
+        handleMediaPlaying(event);
+        if (mediaElement instanceof HTMLVideoElement) {
+            this.setSlideVideoBadgeVisibility(mediaElement, false);
+        }
+        const groupManagers = new Set(await this.getMemberInstances());
+        groupManagers.add(this);
+        this.stopOtherPlayingSlideMedia(groupManagers, { mediaElement });
         void this.setSlideVideoCurrentTimeForce(
             mediaElement.id,
             mediaElement.currentTime,
             true,
         );
     };
+
+    // The YouTube equivalents of the slide-media handlers above. The presenter
+    // mini screen is the sound "master": when the operator plays a YouTube
+    // embed there, all other slide media stops and the current time + play
+    // state is broadcast so the projected screens (and grouped screens) follow.
+    private readonly handleSlideYouTubePlaying = async (
+        youTubeId: string,
+        currentTime: number,
+    ) => {
+        const groupManagers = new Set(await this.getMemberInstances());
+        groupManagers.add(this);
+        this.stopOtherPlayingSlideMedia(groupManagers, { youTubeId });
+        void this.setSlideVideoCurrentTimeForce(youTubeId, currentTime, true);
+    };
+
+    private readonly handleSlideYouTubePausing = (
+        youTubeId: string,
+        currentTime: number,
+    ) => {
+        void this.setSlideVideoCurrentTimeForce(youTubeId, currentTime, false);
+    };
+
+    private readonly handleSlideYouTubeTimeUpdate = (
+        youTubeId: string,
+        currentTime: number,
+        isPlaying: boolean,
+    ) => {
+        void this.setSlideVideoCurrentTimeForce(
+            youTubeId,
+            currentTime,
+            isPlaying,
+        );
+    };
+
+    private destroyYouTubePlayers() {
+        for (const player of this.youTubePlayers) {
+            player.destroy();
+        }
+        this.youTubePlayers = [];
+    }
+
+    private setupYouTubePlayer(iframe: HTMLIFrameElement) {
+        const youTubeId = genYouTubeSyncId(iframe);
+        iframe.id = youTubeId;
+        const isScreen = appProvider.isPageScreen;
+        // The projected screen is a muted follower and never broadcasts, so it
+        // passes no callbacks and mutes itself as soon as the player is ready —
+        // sound stays on the presenter mini, exactly like a slide video. The
+        // presenter mini is a potential master and keeps its sound.
+        const player = new SlideYouTubePlayer(
+            iframe,
+            youTubeId,
+            isScreen
+                ? {}
+                : {
+                      onPlay: (currentTime) => {
+                          void this.handleSlideYouTubePlaying(
+                              youTubeId,
+                              currentTime,
+                          );
+                      },
+                      onPause: (currentTime) => {
+                          this.handleSlideYouTubePausing(
+                              youTubeId,
+                              currentTime,
+                          );
+                      },
+                      onTimeUpdate: (currentTime, isPlaying) => {
+                          this.handleSlideYouTubeTimeUpdate(
+                              youTubeId,
+                              currentTime,
+                              isPlaying,
+                          );
+                      },
+                  },
+            { muteOnReady: isScreen },
+        );
+        this.youTubePlayers.push(player);
+    }
 
     private readonly handleSlideMediaPausing = (event: Event) => {
         const mediaElement = event.currentTarget as HTMLMediaElement;
@@ -630,6 +798,25 @@ class ScreenVaryAppDocumentManager
                 );
             }
         }
+        // Embedded YouTube/website items (iframes) render non-interactive so
+        // the slide editor can still drag their box. A YouTube embed is wired
+        // for group-sync (play from the mini screen, follow on the projected
+        // screen); a plain website iframe just becomes interactive on the mini
+        // screen. The big screen holds both non-interactive, the same way a
+        // slide video is controlled from the mini screen and not the output.
+        for (const iframe of queryAllDeep(content, 'iframe')) {
+            if (iframe instanceof HTMLIFrameElement === false) {
+                continue;
+            }
+            if (checkIsYouTubeSyncIframe(iframe)) {
+                if (!appProvider.isPageScreen) {
+                    iframe.style.pointerEvents = 'auto';
+                }
+                this.setupYouTubePlayer(iframe);
+            } else if (!appProvider.isPageScreen) {
+                iframe.style.pointerEvents = 'auto';
+            }
+        }
     }
 
     async getRenderingItemJson(
@@ -704,6 +891,10 @@ class ScreenVaryAppDocumentManager
         if (this.div === null) {
             return;
         }
+        // Tear down the previous slide's YouTube players (and their window
+        // `message` listeners) before rendering the next slide; the new content
+        // registers fresh ones in `cleanupSlideContent`.
+        this.destroyYouTubePlayers();
         const div = this.div;
         if (this.varySlideData === null) {
             this.clearJunk(div);
@@ -808,6 +999,13 @@ class ScreenVaryAppDocumentManager
 
     static getAllInstances() {
         return super.getAllInstancesBase<ScreenVaryAppDocumentManager>();
+    }
+
+    checkIsMediaPlaying() {
+        if (this.div === null) {
+            return false;
+        }
+        return checkMediaPlaying({ targetElement: this.div });
     }
 }
 

@@ -8,7 +8,7 @@ import {
     useSelectedAppDocumentSetterContext,
     toKeyByFilePath,
     useVaryAppDocumentContext,
-    isInjectedAppDocument,
+    isInjectedAppDocumentFilePath,
 } from '../../app-document-list/appDocumentHelpers';
 import AppRangeComp from '../../others/AppRangeComp';
 import { useVarySlideThumbnailSizeScale } from '../../event/VaryAppDocumentEventListener';
@@ -124,7 +124,7 @@ export default function AppDocumentPreviewerFooterComp({
                         setValue={setThumbnailSizeScale}
                         defaultSize={defaultRangeSize}
                     />
-                    {isInjectedAppDocument ? null : (
+                    {isInjectedAppDocumentFilePath ? null : (
                         <PathPreviewerComp
                             dirPath={selectedVaryAppDocument.filePath}
                             isShowingNameOnly

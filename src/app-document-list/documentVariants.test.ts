@@ -57,6 +57,8 @@ vi.mock('../helper/FileSource', () => ({
 
 vi.mock('./appDocumentHelpers', () => ({
     showStaticSlideContextMenu: showStaticSlideContextMenuMock,
+    BLANK_IMAGE_SLIDE_SRC: '/assets/blank.png',
+    BLANK_HTML_SLIDE_SRC: '/assets/slide0.html',
 }));
 
 vi.mock('../helper/pdfHelpers', () => ({
@@ -239,7 +241,9 @@ describe('document variants', () => {
         expect(await documentSource.getAudioFilePaths()).toEqual([
             {
                 slideIndex: 1,
+                slideId: 1,
                 filePaths: ['/deck/audio/track.mp3'],
+                slideFilePath: '/docs/deck.pptx',
             },
         ]);
         expect(PptxAppDocument.getInstance('/docs/deck.pptx')).toBe(

@@ -67,7 +67,39 @@ describe('electronMenu', () => {
             },
         };
 
-        initMenu(appController as any);
+        const clickMenu = vi.fn();
+        const menusData = {
+            tools: [
+                {
+                    label: 'Khmer Tools',
+                    submenu: [
+                        {
+                            label: 'Editor',
+                            clickData: {
+                                url: 'https://editor-km.openworship.app',
+                            },
+                        },
+                        {
+                            label: 'Open Lyric',
+                            clickData: {
+                                url: 'https://lyric-km.openworship.app',
+                            },
+                        },
+                        {
+                            label: 'BibleNote',
+                            clickData: {
+                                url: 'https://biblenote-km.openworship.app',
+                            },
+                        },
+                    ],
+                },
+            ],
+        };
+
+        initMenu(appController as any, {
+            menusData: menusData as any,
+            clickMenu,
+        });
 
         expect(electronMockState.Menu.buildFromTemplate).toHaveBeenCalledTimes(
             1,
@@ -96,7 +128,7 @@ describe('electronMenu', () => {
             (item: any) => item.label === 'Khmer Tools',
         );
         const editorItem = khmerToolsMenu.submenu.find(
-            (item: any) => item.label === 'Eitor',
+            (item: any) => item.label === 'Editor',
         );
         const openLyricItem = khmerToolsMenu.submenu.find(
             (item: any) => item.label === 'Open Lyric',
@@ -120,14 +152,16 @@ describe('electronMenu', () => {
         expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
             'https://fonts.google.com/',
         );
-        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
-            'https://editor-km.openworship.app',
-        );
-        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
-            'https://lyric-km.openworship.app',
-        );
-        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
-            'https://biblenote-km.openworship.app',
-        );
+        // Custom tool items delegate to the clickMenu handler with their
+        // clickData rather than opening links directly.
+        expect(clickMenu).toHaveBeenCalledWith({
+            url: 'https://editor-km.openworship.app',
+        });
+        expect(clickMenu).toHaveBeenCalledWith({
+            url: 'https://lyric-km.openworship.app',
+        });
+        expect(clickMenu).toHaveBeenCalledWith({
+            url: 'https://biblenote-km.openworship.app',
+        });
     });
 });

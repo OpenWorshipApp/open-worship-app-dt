@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { notifyElementHighlight } from '../../helper/domHelpers';
 import { bringDomToCenterView } from '../../helper/helpers';
+import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentConstants';
 
 export default function RenderSlideIndexComp({
     viewIndex,
@@ -24,7 +25,7 @@ export default function RenderSlideIndexComp({
                 return null;
             }
             const targetElement = badgeElement.closest(
-                '.data-vary-app-document-item ',
+                `.${APP_DOCUMENT_ITEM_CLASS}`,
             ) as HTMLElement | null;
             return targetElement;
         };

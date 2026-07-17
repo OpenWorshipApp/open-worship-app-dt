@@ -160,6 +160,7 @@ function ForegroundFloatingComp() {
                             {tran('Foreground')}
                         </span>
                     }
+                    persistKey="floating-widget-rect-foreground"
                     onClose={() => {
                         setIsShowing(false);
                     }}

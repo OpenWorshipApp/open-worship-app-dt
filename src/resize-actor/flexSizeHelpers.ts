@@ -9,7 +9,7 @@ export const disablingTargetTypeList = ['first', 'second'] as const;
 export type DisablingTargetType = (typeof disablingTargetTypeList)[number];
 export type DisabledType = [DisablingTargetType, number];
 
-export type QuickMoveType = 'left' | 'right' | 'up' | 'down';
+export type CloseType = 'left' | 'right' | 'up' | 'down';
 export type FlexSizeType = {
     [key: string]: [string, DisabledType?];
 };

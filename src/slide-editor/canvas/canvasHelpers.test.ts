@@ -33,6 +33,8 @@ describe('canvasHelpers', () => {
             'html',
             'image',
             'video',
+            'youtube',
+            'website',
             'bible',
             'error',
         ]);

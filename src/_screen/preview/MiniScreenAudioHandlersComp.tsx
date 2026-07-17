@@ -5,7 +5,7 @@ import {
     handleAudioPlaying,
     handleAudioPausing,
     handleAudioEnding,
-} from '../../helper/audioControlHelpers';
+} from '../../helper/mediaControlHelpers';
 import { useScreenManagerContext } from '../managers/screenManagerHooks';
 import { useAppCurrentRef } from '../../helper/appHooks';
 

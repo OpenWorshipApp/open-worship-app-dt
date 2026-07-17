@@ -19,20 +19,25 @@ import Note from './Note';
 import { openNoteItemContextMenu } from './noteHelpers';
 import { tran } from '../../lang/langHelpers';
 import appProvider from '../../server/appProvider';
-import { openPopupWindow } from '../../helper/domHelpers';
+import {
+    openPopupWindow,
+    setParamFileFullName,
+    setParamIdNum,
+} from '../../helper/domHelpers';
 import { NoteTitleEditorComp } from './NoteEditorComp';
 import { exportBibleNoteItem } from './bibleNoteItemArchiveHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 
 export function handleOpening(note: Note, noteItem: NoteItem) {
     const fileFullName = note.fileSource.fullName;
-    const fileFullNameEncoded = encodeURIComponent(fileFullName);
-    const pathName =
-        `${appProvider.bibleNoteHomePage}?` + `file=${fileFullNameEncoded}`;
+    let pathname = setParamFileFullName(
+        appProvider.bibleNoteHomePage,
+        fileFullName,
+    );
     const noteId = noteItem.id;
-    const url = `${pathName}&id=${noteId}`;
+    pathname = setParamIdNum(pathname, noteId);
     return openPopupWindow(
-        url,
+        pathname,
         `${fileFullName}-${noteId}_${Date.now()}`,
         crypto.randomUUID(),
         {

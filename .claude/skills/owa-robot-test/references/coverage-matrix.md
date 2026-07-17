@@ -13,7 +13,7 @@ EXCLUDED by the policy table below.
 > Before a full run, spot-check the matrix against `src/` (new `*Comp.tsx` folders =
 > new rows).
 
-**matrixVersion: 2026-07-09**
+**matrixVersion: 2026-07-16**
 
 ## Mandatory core — screen controlling & presenting (every run)
 
@@ -205,7 +205,7 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 | ED-07 | Text edit mode | 🖱️🖱️ text box; ⌨️✎ type; click-away | text persists on the slide |
 | ED-08 | ⌨️ `Ctrl+Enter` | press | canvas focused |
 | ED-09 | `ToolCanvasItemsComp` | 🖱️ add box; ⇕ drag tool → canvas | new item appears on canvas — then delete it |
-| ED-10 | `SlideEditorPopupComp` (quick edit) | open; ⌨️ `Escape` | popup closes |
+| ED-10 | Presenter slide **Edit ↗** (`openAppDocumentEditorExternal`) | 🖱️ slide context menu → **Edit** (`bi-box-arrow-up-right`) | app document editor opens in its own window, focused on that slide (`?file=…&id=…`) |
 | ED-11 | ⌨️ `Ctrl+S` | after an edit | saved (dirty indicator clears / no data-loss on reload) |
 | ED-12 | Bottom `BackgroundComp` | expand + tab switch | same as PM-26/27 in editor context |
 

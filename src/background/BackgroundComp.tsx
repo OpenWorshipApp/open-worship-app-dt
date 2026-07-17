@@ -16,7 +16,7 @@ import {
     AUDIO_PLAYING_CHANGE_EVENT,
     checkAudioPlaying,
     showAudioPlayingToast,
-} from '../helper/audioControlHelpers';
+} from '../helper/mediaControlHelpers';
 import type {
     BackgroundSrcListType,
     BackgroundType,

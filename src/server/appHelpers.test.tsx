@@ -318,34 +318,6 @@ describe('appHelpers', () => {
         );
     });
 
-    test('checks and stores the decided bible reader home page flow', async () => {
-        let module = await loadModule();
-
-        appProviderMock.isMainPage = false;
-        await module.checkDecidedBibleReaderHomePage();
-        expect(showAppConfirmMock).not.toHaveBeenCalled();
-
-        appProviderMock.isMainPage = true;
-        appProviderMock.isPageReader = true;
-        await module.checkDecidedBibleReaderHomePage();
-        expect(
-            globalThis.localStorage.getItem('decided-reader-home-page'),
-        ).toBe('true');
-
-        globalThis.localStorage.clear();
-        appProviderMock.isPageReader = false;
-        showAppConfirmMock.mockResolvedValueOnce(false);
-        await module.checkDecidedBibleReaderHomePage();
-        expect(showAppConfirmMock).toHaveBeenCalledTimes(1);
-        expect(goToPathMock).not.toHaveBeenCalled();
-
-        globalThis.localStorage.clear();
-        showAppConfirmMock.mockResolvedValueOnce(true);
-        module = await loadModule();
-        await module.checkDecidedBibleReaderHomePage();
-        expect(goToPathMock).toHaveBeenCalledWith('/reader.html');
-    });
-
     test('pastes text into inputs and dispatches an input event', async () => {
         const module = await loadModule();
         const input = document.createElement('input');

@@ -17,7 +17,7 @@ import {
 import RenderHiddenWidgetTitleComp from './RenderHiddenWidgetTitleComp';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
-    checkShouldQuickMove,
+    checkCanClose,
     reopenAnotherHiddenWidget,
 } from './dynamicFlexSizeHelpers';
 
@@ -60,11 +60,7 @@ export default function RenderResizeActorItemComp({
     isOnScreen: boolean;
 }>) {
     useAppEffect(() => {
-        checkShouldQuickMove(
-            flexSizeName,
-            defaultFlexSize,
-            anotherDefaultFlexSize,
-        );
+        checkCanClose(flexSizeName, defaultFlexSize, anotherDefaultFlexSize);
     }, [flexSizeName, defaultFlexSize, anotherDefaultFlexSize]);
     const flexSizeNameRef = useAppCurrentRef(flexSizeName);
     const restoreFlexSizeRef = useAppCurrentRef(restoreFlexSize);
@@ -143,7 +139,7 @@ export default function RenderResizeActorItemComp({
                     isDisableQuickResize={isDisableQuickResize}
                     disableWidget={handleDisabling}
                     checkSize={handleSizeChecking}
-                    checkShouldQuickMove={checkShouldQuickMove.bind(
+                    checkCanClose={checkCanClose.bind(
                         null,
                         flexSizeName,
                         defaultFlexSize,

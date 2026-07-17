@@ -67,7 +67,7 @@ export function HelpButtonComp() {
     return (
         <button
             className="btn btn-outline-info"
-            title={url}
+            title={tran('Help')}
             aria-label={tran('Help')}
             onClick={handleClick}
         >

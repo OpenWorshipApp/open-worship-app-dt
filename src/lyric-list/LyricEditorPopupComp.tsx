@@ -21,7 +21,7 @@ const LazyLyricPreviewerComp = lazy(() => {
 });
 
 function getLyric() {
-    const fileFullName = getParamFileFullName();
+    const fileFullName = getParamFileFullName(globalThis.location.href);
     if (fileFullName === null) {
         throw new Error('Lyric file not specified');
     }

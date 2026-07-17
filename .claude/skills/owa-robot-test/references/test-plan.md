@@ -163,7 +163,9 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Slide list: select / duplicate via context menu / delete the duplicate / drag-reorder.
 - Canvas: select a box, drag-move, resize by handle, `Shift`/`Ctrl` multi-select.
 - Double-click a text box → edit mode → type → click away → text persists; `Ctrl+S`
-  saves; `Ctrl+Enter` focuses the canvas; quick-edit popup closes on `Escape`.
+  saves; `Ctrl+Enter` focuses the canvas.
+- From the **presenter** slide list, right-click → **Edit ↗** opens the app document
+  editor in its own window, focused on that slide `[ED-10]`.
 - Tools: add a new box / drag a tool onto the canvas — then delete the added item.
 - Bottom Background panel behaves as in S6.
 

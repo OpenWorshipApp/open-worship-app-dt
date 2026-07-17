@@ -19,6 +19,14 @@ vi.mock('./canvas/box/BoxEditorNormalViewVideoModeComp', () => ({
     BoxEditorNormalVideoRender: () => <div>video-render</div>,
 }));
 
+vi.mock('./canvas/box/BoxEditorNormalViewYouTubeModeComp', () => ({
+    BoxEditorNormalYouTubeRender: () => <div>youtube-render</div>,
+}));
+
+vi.mock('./canvas/box/BoxEditorNormalViewWebsiteModeComp', () => ({
+    BoxEditorNormalWebsiteRender: () => <div>website-render</div>,
+}));
+
 vi.mock('./canvas/box/BoxEditorNormalViewHtmlModeComp', () => ({
     BoxEditorNormalHtmlRender: () => <div>html-render</div>,
 }));
@@ -43,6 +51,8 @@ describe('CanvasItemRendererComp', () => {
         const cases = [
             ['image', 'image-render'],
             ['video', 'video-render'],
+            ['youtube', 'youtube-render'],
+            ['website', 'website-render'],
             ['text', 'text-render'],
             ['html', 'html-render'],
             ['bible', 'bible-render'],

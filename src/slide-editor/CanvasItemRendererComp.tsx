@@ -4,6 +4,8 @@ import { BoxEditorNormalTextRender } from './canvas/box/BoxEditorNormalViewTextM
 import { BoxEditorNormalBibleRender } from './canvas/box/BoxEditorNormalViewBibleModeComp';
 import { useCanvasItemContext } from './canvas/CanvasItem';
 import { BoxEditorNormalVideoRender } from './canvas/box/BoxEditorNormalViewVideoModeComp';
+import { BoxEditorNormalYouTubeRender } from './canvas/box/BoxEditorNormalViewYouTubeModeComp';
+import { BoxEditorNormalWebsiteRender } from './canvas/box/BoxEditorNormalViewWebsiteModeComp';
 
 export default function CanvasItemRendererComp() {
     const canvasItem = useCanvasItemContext();
@@ -12,6 +14,10 @@ export default function CanvasItemRendererComp() {
             return <BoxEditorNormalImageRender />;
         case 'video':
             return <BoxEditorNormalVideoRender />;
+        case 'youtube':
+            return <BoxEditorNormalYouTubeRender />;
+        case 'website':
+            return <BoxEditorNormalWebsiteRender />;
         case 'text':
             return <BoxEditorNormalTextRender />;
         case 'html':

@@ -309,7 +309,7 @@ export async function initBibleNote({
 }
 
 async function getNoteAndNoteItem() {
-    const fileFullName = getParamFileFullName();
+    const fileFullName = getParamFileFullName(globalThis.location.href);
     if (fileFullName === null) {
         throw new Error('Note file not specified');
     }
@@ -328,7 +328,7 @@ async function getNoteAndNoteItem() {
         throw new Error(`Failed to load note from file: ${fileFullName}`);
     }
 
-    const noteItemId = getParamIdNum();
+    const noteItemId = getParamIdNum(globalThis.location.href);
     if (noteItemId === null) {
         throw new Error('Note item ID not specified');
     }

@@ -3,7 +3,7 @@ import './FlexResizeActorComp.scss';
 import type { RefObject } from 'react';
 import { Component, createRef } from 'react';
 
-import type { DisabledType, QuickMoveType } from './flexSizeHelpers';
+import type { DisabledType, CloseType } from './flexSizeHelpers';
 
 export const HIDDEN_WIDGET_CLASS = 'app-hidden-widget';
 export const ACTIVE_HIDDEN_WIDGET_CLASS = `active-${HIDDEN_WIDGET_CLASS}`;
@@ -21,9 +21,10 @@ import {
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
 import { tran } from '../lang/langHelpers';
+import { checkMediaPlaying } from '../helper/mediaControlHelpers';
 
-const QuickMoveTypeListLeft: QuickMoveType[] = ['left', 'up'] as const;
-const ICON_MAP: Record<'h' | 'v', [QuickMoveType, string, string][]> = {
+const CloseTypeListLeft: CloseType[] = ['left', 'up'] as const;
+const ICON_MAP: Record<'h' | 'v', [CloseType, string, string][]> = {
     h: [
         ['left', imageLeft, '0 5px 0 0'],
         ['right', imageRight, '0 0 0 5px'],
@@ -42,7 +43,7 @@ export interface Props {
     isDisableQuickResize: boolean;
     checkSize: () => void;
     disableWidget: (dataFlexSizeKey: string, target: DisabledType) => void;
-    checkShouldQuickMove: () => QuickMoveType | null;
+    checkCanClose: () => CloseType | null;
 }
 export default class FlexResizeActorComp extends Component<Props, object> {
     myRef: RefObject<HTMLDivElement | null>;
@@ -226,7 +227,10 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             this.removeHiddenWidgetClassname(this.preNode);
         }
         if (this.isNextReachMinSize) {
-            this.addHiddenWidgetClassName(this.nextNode);
+            const hiddenAdded = this.addHiddenWidgetClassName(this.nextNode);
+            if (!hiddenAdded) {
+                return;
+            }
         } else {
             this.removeHiddenWidgetClassname(this.nextNode);
         }
@@ -240,10 +244,20 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     }
 
     addHiddenWidgetClassName(divElement: HTMLDivElement) {
+        // Runs on every pointer move while dragging, so guard silently — the
+        // panel visibly resists collapsing; the discrete close() path toasts.
+        const isPlaying = checkMediaPlaying({
+            targetElement: divElement,
+            withMessage: false,
+        });
+        if (isPlaying) {
+            return false;
+        }
         if (this.props.isDisableQuickResize) {
-            return;
+            return false;
         }
         divElement.classList.add(HIDDEN_WIDGET_CLASS);
+        return true;
     }
 
     removeHiddenWidgetClassname(divElement: HTMLDivElement) {
@@ -265,19 +279,25 @@ export default class FlexResizeActorComp extends Component<Props, object> {
 
         this.setInactive();
         if (this.preNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
-            this.quickMove('left');
+            this.close('left');
             return;
         }
         if (this.nextNode.classList.contains(HIDDEN_WIDGET_CLASS)) {
-            this.quickMove('right');
+            this.close('right');
             return;
         }
         this.props.checkSize();
     }
 
-    quickMove(quickMoveType: QuickMoveType) {
+    close(closeType: CloseType) {
+        const isFirst = CloseTypeListLeft.includes(closeType);
+        const isPlaying = checkMediaPlaying({
+            targetElement: isFirst ? this.preNode : this.nextNode,
+        });
+        if (isPlaying) {
+            return;
+        }
         this.init();
-        const isFirst = QuickMoveTypeListLeft.includes(quickMoveType);
         const dataFlexSizeKey = isFirst
             ? this.preNode.dataset['fs']
             : this.nextNode.dataset['fs'];
@@ -316,13 +336,13 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             {
                 menuElement: tran('Close First Widget'),
                 onSelect: () => {
-                    this.quickMove('left');
+                    this.close('left');
                 },
             },
             {
                 menuElement: tran('Close Second Widget'),
                 onSelect: () => {
-                    this.quickMove('right');
+                    this.close('right');
                 },
             },
         ];
@@ -344,9 +364,9 @@ export default class FlexResizeActorComp extends Component<Props, object> {
             },
             { passive: false },
         );
-        const quickMoveType = this.props.checkShouldQuickMove();
-        if (quickMoveType !== null) {
-            this.quickMove(quickMoveType);
+        const closeType = this.props.checkCanClose();
+        if (closeType !== null) {
+            this.close(closeType);
         }
     }
 
@@ -366,7 +386,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
                           style={{ margin }}
                           onClick={(event) => {
                               event.stopPropagation();
-                              this.quickMove(direction);
+                              this.close(direction);
                           }}
                       />
                   );

@@ -68,6 +68,7 @@ vi.mock('./electronHelpers', () => ({
     printHTMLContent,
     tarCreate,
     tarExtract,
+    toShortcutKey: () => 'CmdOrCtrl+F',
 }));
 
 vi.mock('./electronOfficeHelpers', () => ({ officeFileToPdf }));

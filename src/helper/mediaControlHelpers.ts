@@ -4,11 +4,57 @@ import EventHandler from '../event/EventHandler';
 import { playMediaElement } from './mediaHelpers';
 import { genBlockUnload } from './blockUnloadHelpers';
 
+export function showMediaPlayingToast() {
+    showSimpleToast(
+        tran('Media is Playing'),
+        tran(
+            'Please pause all background audios before disabling audio handlers',
+        ),
+    );
+}
+
+// Depth-first search for a non-paused media element, piercing shadow roots
+// (the slide/preview content is rendered inside shadow DOM, which
+// `querySelectorAll` does not traverse on its own).
+function hasPlayingMediaDeep(root: ParentNode, query: string): boolean {
+    for (const media of root.querySelectorAll<HTMLMediaElement>(query)) {
+        if (!media.paused && media.dataset.ignoreMediaGuarding !== 'true') {
+            return true;
+        }
+    }
+    for (const element of root.querySelectorAll('*')) {
+        if (
+            element instanceof HTMLElement &&
+            element.shadowRoot !== null &&
+            hasPlayingMediaDeep(element.shadowRoot, query)
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function checkMediaPlaying({
+    query = 'audio,video',
+    targetElement = document,
+    withMessage = true,
+}: {
+    query?: string;
+    targetElement?: ParentNode;
+    withMessage?: boolean;
+}) {
+    const isPlaying = hasPlayingMediaDeep(targetElement, query);
+    if (isPlaying && withMessage) {
+        showMediaPlayingToast();
+    }
+    return isPlaying;
+}
+
 export const AUDIO_PLAYING_CHANGE_EVENT = 'audio-playing-change';
 export const BLOCK_UNLOAD_WHILE_PLAYING_ATTR =
     'data-block-unload-while-playing';
 
-export function showMediaPlayingToast() {
+export function showMediaPlayingToast3Attempt() {
     showSimpleToast(
         tran('Media playing'),
         tran('Please pause all audio and video before leaving the page.') +
@@ -27,7 +73,7 @@ export function showAudioPlayingToast() {
 }
 
 const blockUnload = genBlockUnload(
-    showMediaPlayingToast,
+    showMediaPlayingToast3Attempt,
     checkBlockingMediaPlaying,
 );
 
@@ -40,25 +86,11 @@ export function checkAudioPlaying() {
 }
 
 function checkGuardedMediaPlaying(root: ParentNode): boolean {
-    const mediaElements = root.querySelectorAll<HTMLMediaElement>(
+    return hasPlayingMediaDeep(
+        root,
         `audio[${BLOCK_UNLOAD_WHILE_PLAYING_ATTR}], ` +
             `video[${BLOCK_UNLOAD_WHILE_PLAYING_ATTR}]`,
     );
-    if (
-        Array.from(mediaElements).some((mediaElement) => !mediaElement.paused)
-    ) {
-        return true;
-    }
-    for (const element of root.querySelectorAll('*')) {
-        if (
-            element instanceof HTMLElement &&
-            element.shadowRoot !== null &&
-            checkGuardedMediaPlaying(element.shadowRoot)
-        ) {
-            return true;
-        }
-    }
-    return false;
 }
 
 export function checkBlockingMediaPlaying() {

@@ -1,7 +1,7 @@
 import {
     getFlexSizeSetting,
     type FlexSizeType,
-    type QuickMoveType,
+    type CloseType,
     type DisabledType,
     setDisablingSetting,
     keyToDataFlexSizeKey,
@@ -60,11 +60,11 @@ function checkIsWidgetDisabled(flexSize: FlexSizeType) {
         return !!disabled;
     });
 }
-export function checkShouldQuickMove(
+export function checkCanClose(
     flexSizeName: string,
     defaultFlexSize: FlexSizeType,
     anotherDefaultFlexSize?: FlexSizeType,
-): QuickMoveType | null {
+): CloseType | null {
     const data = getDynamicFlexSizeData(
         flexSizeName,
         defaultFlexSize,

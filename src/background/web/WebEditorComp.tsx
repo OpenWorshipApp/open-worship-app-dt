@@ -15,7 +15,7 @@ const LazyWebPreviewerComp = lazy(() => {
 });
 
 function getWebFilePath() {
-    const fileFullName = getParamFileFullName();
+    const fileFullName = getParamFileFullName(globalThis.location.href);
     if (fileFullName === null) {
         throw new Error('Web file not specified');
     }

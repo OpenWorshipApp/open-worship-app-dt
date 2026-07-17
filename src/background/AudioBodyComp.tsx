@@ -6,7 +6,7 @@ import {
     handleAudioPlaying,
     handleAudioPausing,
     handleAudioEnding,
-} from '../helper/audioControlHelpers';
+} from '../helper/mediaControlHelpers';
 import { tran } from '../lang/langHelpers';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';

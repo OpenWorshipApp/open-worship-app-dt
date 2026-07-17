@@ -12,7 +12,7 @@ import {
     pathJoin,
     pathResolve,
 } from './fileHelpers';
-import FileSource from '../helper/FileSource';
+import FileSource, { type SrcData } from '../helper/FileSource';
 import { showProgressBarMessage } from '../progress-bar/progressBarHelpers';
 import { appError as logError } from '../helper/loggerHelpers';
 import { useAppEffect } from '../helper/appHooks';
@@ -45,6 +45,28 @@ export function electronSendAsync<T>(
 
 export function showFileOrDirExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);
+}
+
+// Save an embedded base64 image (e.g. an image canvas item, which inlines its
+// data rather than referencing a file) into the Downloads folder and reveal it.
+export function downloadImageBase64Data(srcData: SrcData) {
+    const dotExtension = getDotExtensionFromBase64Data(srcData);
+    if (dotExtension === null) {
+        showSimpleToast('Download', 'Unsupported image data');
+        return null;
+    }
+    const filePath = pathJoin(
+        getDownloadPath(),
+        `owa-image_${Date.now()}${dotExtension}`,
+    );
+    const fileSource = FileSource.getInstance(filePath);
+    if (!fileSource.writeFileBase64DataSync(srcData)) {
+        showSimpleToast('Download', 'Failed to save image');
+        return null;
+    }
+    showSimpleToast('Download', `Image saved at: ${filePath}`);
+    showFileOrDirExplorer(filePath);
+    return filePath;
 }
 
 export function convertToPdf(officeFilePath: string, pdfFilePath: string) {

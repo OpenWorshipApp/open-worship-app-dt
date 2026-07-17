@@ -31,6 +31,11 @@ const mocks = vi.hoisted(() => ({
         systemUtils: {
             isDev: false,
         },
+        // langHelpers registers a menu listener at module load.
+        messageUtils: {
+            listenForData: vi.fn(),
+            sendData: vi.fn(),
+        },
     },
 }));
 

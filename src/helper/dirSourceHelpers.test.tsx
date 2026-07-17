@@ -284,11 +284,12 @@ describe('dirSourceHelpers', () => {
         });
         expect(updateSpies['/docs/a.owa']).toHaveBeenCalledTimes(1);
 
-        // An exact match is a self-write echo and must not re-fire an update.
+        // An exact match fires once for the resolved target file and once for
+        // the changed path itself (the same file here).
         await act(async () => {
             listeners['file-update']?.('/docs/b.owa');
         });
-        expect(updateSpies['/docs/b.owa']).not.toHaveBeenCalled();
+        expect(updateSpies['/docs/b.owa']).toHaveBeenCalledTimes(2);
     });
 
     test('reloads dir sources when the reload event fires', async () => {

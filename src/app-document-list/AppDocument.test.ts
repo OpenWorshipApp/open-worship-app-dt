@@ -1,5 +1,19 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+// appProvider reads document.title and registers mouseenter/leave listeners at
+// import. Stay on the node env (the clipboard test relies on node's
+// Blob.text()) and seed a minimal document via vi.hoisted, which runs before
+// the module imports evaluate.
+vi.hoisted(() => {
+    if (typeof (globalThis as any).document === 'undefined') {
+        (globalThis as any).document = {
+            title: '',
+            hasFocus: () => false,
+            addEventListener: () => {},
+        };
+    }
+});
+
 const {
     deleteMetaDataFileMock,
     createNewFileDetailMock,
@@ -316,15 +330,13 @@ describe('AppDocument', () => {
         );
         const currentDocument = new AppDocument(currentFilePath);
 
+        // A corrupted current history silently falls back to the valid
+        // original data without discarding or toasting.
         await expect(currentDocument.getJsonData()).resolves.toEqual(
             validOriginal,
         );
-        expect(currentHistory.discard).toHaveBeenCalledTimes(1);
-        expect(showSimpleToastMock).toHaveBeenNthCalledWith(
-            1,
-            'Corrupted Document',
-            'Document data will be reset to the last saved state.',
-        );
+        expect(currentHistory.discard).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).not.toHaveBeenCalled();
 
         const brokenFilePath = '/docs/broken.ows';
         const brokenHistory = setHistory(
@@ -344,7 +356,8 @@ describe('AppDocument', () => {
         expect(brokenHistory.save).toHaveBeenCalledTimes(1);
         expect(showSimpleToastMock).toHaveBeenLastCalledWith(
             'Corrupted Document',
-            'Document data will be reset to the last saved state.',
+            'The document data is corrupted and cannot be loaded. ' +
+                'We will reset the document data to a new state.',
         );
     });
 
