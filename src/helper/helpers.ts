@@ -134,7 +134,7 @@ export function getVideoDim(src: string) {
     return unlocking(key, async () => {
         const cachedDim = await globalCacheManager1M.get(key);
         if (cachedDim) {
-            return Promise.resolve(cachedDim);
+            return cachedDim;
         }
         const dim = await new Promise<[number, number]>((resolve, reject) => {
             const video = document.createElement('video');
