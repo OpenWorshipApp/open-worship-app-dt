@@ -16,6 +16,7 @@ import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEven
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import type { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
+import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import { renderMarkdown } from '../lyric-list/markdownHelpers';
 import { dragStore } from '../helper/dragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -219,6 +220,16 @@ export default function ForegroundQuickTextComp() {
                             onChange={handleTimeSecondToLiveChange}
                         />
                         <span className="input-group-text">s</span>
+                    </div>
+                </div>
+                <div className="d-flex">
+                    <div className="ms-auto d-flex gap-2">
+                        <SavedTextSessionButtonsComp
+                            settingName="foreground-quick-text-saved-sessions"
+                            label="Quick Text"
+                            text={markdownText}
+                            onPickText={setMarkdownText}
+                        />
                     </div>
                 </div>
                 <div className="form-floating">

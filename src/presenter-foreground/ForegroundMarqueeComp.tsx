@@ -20,6 +20,7 @@ import {
 import ScreensRendererComp from './ScreensRendererComp';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
+import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import type {
     ForegroundDataType,
     ForegroundMarqueeDataType,
@@ -51,6 +52,7 @@ type MarqueeConfigType = {
     textSettingName: string;
     fontSizeSettingName: string;
     speedSettingName: string;
+    savedSessionListSettingName: string;
     defaultText: string;
     getData: (data: ForegroundDataType) => ForegroundMarqueeDataType | null;
     setData: (
@@ -81,6 +83,7 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
         textSettingName: 'foreground-marquee-top-setting',
         fontSizeSettingName: 'foreground-marquee-top-font-size',
         speedSettingName: 'foreground-marquee-top-speed-percentage',
+        savedSessionListSettingName: 'foreground-marquee-top-saved-sessions',
         defaultText:
             'This is a testing marquee top text. It has to be long enough to ' +
             'test the marquee top scrolling effect properly.',
@@ -112,6 +115,7 @@ const CONFIG_MAP: Record<MarqueePositionType, MarqueeConfigType> = {
         textSettingName: 'foreground-marquee-bottom-setting',
         fontSizeSettingName: 'foreground-marquee-bottom-font-size',
         speedSettingName: 'foreground-marquee-bottom-speed-percentage',
+        savedSessionListSettingName: 'foreground-marquee-bottom-saved-sessions',
         defaultText:
             'This is a testing marquee bottom text. It has to be long enough ' +
             'to test the marquee bottom scrolling effect properly.',
@@ -446,6 +450,14 @@ export default function ForegroundMarqueeComp({
                         <i className="bi bi-calendar-plus" />{' '}
                         {tran("Today's Date")}
                     </button>
+                    <div className="ms-auto d-flex gap-2">
+                        <SavedTextSessionButtonsComp
+                            settingName={config.savedSessionListSettingName}
+                            label={config.label}
+                            text={text}
+                            onPickText={setText}
+                        />
+                    </div>
                 </div>
                 <div className="form-floating">
                     <textarea
