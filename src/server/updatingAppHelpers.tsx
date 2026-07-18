@@ -4,7 +4,13 @@ import { handleError } from '../helper/errorHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { appLog, appError as logError } from '../helper/loggerHelpers';
 import { tran } from '../lang/langHelpers';
-import { fsMove, getDownloadPath, pathJoin } from './fileHelpers';
+import {
+    fsDeleteFile,
+    fsMove,
+    getDownloadPath,
+    getFileChecksum,
+    pathJoin,
+} from './fileHelpers';
 import { initHttpRequest } from '../helper/bible-helpers/downloadHelpers';
 import { showFileOrDirExplorer } from './appHelpers';
 import {
@@ -62,6 +68,7 @@ async function downloadUpdate(updateData: UpdateDataType) {
     const srcUrlSuffix = updateData.installer[0].publicPath;
     const srcUrl = addRootURL(appProvider.appInfo.homepage, srcUrlSuffix);
     const fileFullName = updateData.installer[0].fileFullName;
+    const expectedChecksum = updateData.installer[0].checksum;
     const downloadDirPath = getDownloadPath();
     const downloadDestFilePath = pathJoin(
         downloadDirPath,
@@ -82,6 +89,22 @@ async function downloadUpdate(updateData: UpdateDataType) {
             response,
             messageCallback,
         );
+        // Verify integrity before presenting the file as a valid installer.
+        // A truncated/corrupt download that still reached this point (e.g. a
+        // proxy that closed the stream cleanly) must not be reported as success.
+        if (expectedChecksum) {
+            messageCallback('Verifying download...');
+            const actualChecksum = await getFileChecksum(
+                downloadDestFilePath,
+                'sha512',
+            );
+            if (actualChecksum !== expectedChecksum) {
+                await fsDeleteFile(downloadDestFilePath).catch(handleError);
+                throw new Error(
+                    'Checksum mismatch: the downloaded file is corrupted.',
+                );
+            }
+        }
         const destFilePath = pathJoin(downloadDirPath, fileFullName);
         const fileSource = FileSource.getInstance(destFilePath);
         const nextDestFilePath = await fileSource.genNextFilePath();
@@ -266,9 +289,6 @@ function showNoUpdateAvailableToast() {
 let isSilentlyChecked = false;
 
 export async function checkForAppUpdate(isSilent = true) {
-    if (appProvider.systemUtils.isDev) {
-        return;
-    }
     if (isSilent && isSilentlyChecked) {
         return;
     }

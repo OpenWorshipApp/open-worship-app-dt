@@ -18,6 +18,8 @@ const showProgressBarMock = vi.fn();
 const showProgressBarMessageMock = vi.fn();
 const genNextFilePathMock = vi.fn();
 const getInstanceMock = vi.fn();
+const getFileChecksumMock = vi.fn();
+const fsDeleteFileMock = vi.fn();
 
 vi.mock('./appProvider', () => ({
     default: {
@@ -62,7 +64,9 @@ vi.mock('../lang/langHelpers', () => ({
 
 vi.mock('./fileHelpers', () => ({
     fsMove: fsMoveMock,
+    fsDeleteFile: fsDeleteFileMock,
     getDownloadPath: getDownloadPathMock,
+    getFileChecksum: getFileChecksumMock,
     pathJoin: pathJoinMock,
 }));
 
@@ -125,6 +129,10 @@ describe('updatingAppHelpers', () => {
         });
         genNextFilePathMock.mockResolvedValue('/downloads/update-final.dmg');
         fsMoveMock.mockResolvedValue(undefined);
+        fsDeleteFileMock.mockResolvedValue(undefined);
+        // The download mocks use 'sum' as the installer checksum, so a matching
+        // file checksum represents a healthy (non-corrupt) download.
+        getFileChecksumMock.mockResolvedValue('sum');
         initHttpRequestMock.mockResolvedValue({ statusCode: 200 });
         writeStreamToFileMock.mockImplementation(
             async (
@@ -214,6 +222,26 @@ describe('updatingAppHelpers', () => {
             '/downloads/update-final.dmg',
         );
         expect(hideProgressBarMock).toHaveBeenCalledWith('app-update-download');
+    });
+
+    test('reports failure and does not open explorer on checksum mismatch', async () => {
+        showAppConfirmMock.mockResolvedValueOnce(true); // confirm download
+        getFileChecksumMock.mockResolvedValueOnce('a-different-hash');
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(false);
+
+        // The corrupt file must be deleted, an error surfaced, and the update
+        // must NOT be presented as a successful download.
+        expect(fsDeleteFileMock).toHaveBeenCalledWith(
+            '/downloads/update.dmg.uuid.owa-downloading',
+        );
+        expect(fsMoveMock).not.toHaveBeenCalled();
+        expect(showFileOrDirExplorerMock).not.toHaveBeenCalled();
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Error occurred during download',
+            expect.stringContaining('corrupted'),
+        );
     });
 
     test('shows no-update toast when version is current and check is not silent', async () => {

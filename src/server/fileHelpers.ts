@@ -710,9 +710,9 @@ export async function ensureDirectory(dirPath: string) {
     }
 }
 
-export function getFileMD5(filePath: string) {
+export function getFileChecksum(filePath: string, algorithm: string) {
     return new Promise<string | null>((resolve) => {
-        const hash = appProvider.cryptoUtils.createHash('md5');
+        const hash = appProvider.cryptoUtils.createHash(algorithm);
         const stream = appProvider.fileUtils.createReadStream(filePath);
         stream.on('error', (err) => {
             handleError(err);
@@ -725,6 +725,10 @@ export function getFileMD5(filePath: string) {
             resolve(hash.digest('hex'));
         });
     });
+}
+
+export function getFileMD5(filePath: string) {
+    return getFileChecksum(filePath, 'md5');
 }
 
 export const KEY_SEPARATOR = '<id>';
