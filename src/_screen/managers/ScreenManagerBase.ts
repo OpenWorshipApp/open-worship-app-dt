@@ -164,8 +164,9 @@ export default class ScreenManagerBase
     }
 
     updateDim() {
-        const display = this.display;
-        const dim = appProvider.isPageScreen ? getWindowDim() : display.bounds;
+        const dim = appProvider.isPageScreen
+            ? getWindowDim()
+            : this.display.bounds;
         this.width = dim.width;
         this.height = dim.height;
     }

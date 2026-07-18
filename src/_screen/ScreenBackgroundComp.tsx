@@ -19,30 +19,6 @@ import { playMediaElement } from '../helper/mediaHelpers';
 import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import { tran } from '../lang/langHelpers';
 
-export default function ScreenBackgroundComp() {
-    const screenManager = useScreenManagerContext();
-    const { screenBackgroundManager } = screenManager;
-    const screenBackgroundManagerRef = useAppCurrentRef(
-        screenBackgroundManager,
-    );
-    useScreenManagerEvents(['refresh'], screenManager, () => {
-        screenBackgroundManagerRef.current.render();
-    });
-    const div = useRef<HTMLDivElement>(null);
-    useAppEffect(() => {
-        if (div.current) {
-            screenBackgroundManager.rootContainer = div.current;
-        }
-    }, [screenBackgroundManager, div.current]);
-    return (
-        <div
-            id="background"
-            ref={div}
-            style={screenBackgroundManager.containerStyle}
-        />
-    );
-}
-
 export function genHtmlBackground(
     screenId: number,
     backgroundSrc: BackgroundSrcType,
@@ -154,4 +130,28 @@ function RenderScreenBackground({
         default:
             return null;
     }
+}
+
+export default function ScreenBackgroundComp() {
+    const screenManager = useScreenManagerContext();
+    const { screenBackgroundManager } = screenManager;
+    const screenBackgroundManagerRef = useAppCurrentRef(
+        screenBackgroundManager,
+    );
+    useScreenManagerEvents(['refresh'], screenManager, () => {
+        screenBackgroundManagerRef.current.render();
+    });
+    const div = useRef<HTMLDivElement>(null);
+    useAppEffect(() => {
+        if (div.current) {
+            screenBackgroundManager.rootContainer = div.current;
+        }
+    }, [screenBackgroundManager, div.current]);
+    return (
+        <div
+            id="background"
+            ref={div}
+            style={screenBackgroundManager.containerStyle}
+        />
+    );
 }
