@@ -523,6 +523,12 @@ function PropertiesSettingComp({
     );
 }
 
+function getDropExtraStyle(): CSSProperties {
+    return {
+        boxShadow: `0 10px 30px rgb(0 0 0 / 25%)`,
+    };
+}
+
 export function useForegroundPropsSetting({
     prefix,
     onChange,
@@ -575,6 +581,8 @@ export function useForegroundPropsSetting({
         if (isFontSize) {
             Object.assign(style, getFontSizeStyle(fontSizeSettingName));
         }
+        // For DropShadow and other effects
+        Object.assign(style, getDropExtraStyle());
         return style;
     };
 

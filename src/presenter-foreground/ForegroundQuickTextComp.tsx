@@ -94,8 +94,8 @@ export default function ForegroundQuickTextComp() {
         isFontSize: true,
     });
     const getRenderedHtml = useCallback(async () => {
-        const htmlText = await renderMarkdown(markdownText);
-        return htmlText.html;
+        const { html } = await renderMarkdown(markdownText);
+        return html;
     }, [markdownText]);
     const handleShowing = useCallback(
         async (event: any, isForceChoosing = false) => {

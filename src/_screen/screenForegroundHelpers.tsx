@@ -160,7 +160,7 @@ export function genHtmlForegroundQuickText(
         <div style={extraStyle}>
             <style>{`
             #${uniqueId} * {
-                margin: 0.05em !important;
+                margin: 0.25em !important;
             }
             `}</style>
             <div
@@ -172,6 +172,8 @@ export function genHtmlForegroundQuickText(
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
+    console.log(element);
+
     return {
         handleAdding: async (parentContainer: HTMLElement) => {
             await new Promise<void>((resolve) => {

@@ -538,15 +538,15 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         const divContainer = this.createDivContainer(data, async () => {
             await store.clearCameraTracks();
         });
-        getCameraAndShowMedia(
-            {
-                parentContainer: divContainer!,
-                ...data,
+        const newData = {
+            parentContainer: divContainer!,
+            ...data,
+        };
+        getCameraAndShowMedia(newData, this.styleAnimFade).then(
+            (clearTracks) => {
+                store.clearCameraTracks = clearTracks ?? (() => {});
             },
-            this.styleAnimFade,
-        ).then((clearTracks) => {
-            store.clearCameraTracks = clearTracks ?? (() => {});
-        });
+        );
     }
     setCameraDataList(
         dataList: ForegroundCameraDataType[],
