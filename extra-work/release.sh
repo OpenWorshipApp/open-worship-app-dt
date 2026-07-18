@@ -19,6 +19,7 @@ git pull
 # check tag exists
 if ! git rev-parse "$release_tag" >/dev/null 2>&1; then
     echo "Error: Tag '$release_tag' does not exist."
+    echo "Run \`npm run release:version\` then \`npm run release:tag\` to create the tag first."
     exit 1
 fi
 commit_hash=$(git rev-list -n 1 "$release_tag")
