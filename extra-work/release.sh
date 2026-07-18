@@ -16,6 +16,11 @@ release_tag="release-$package_version"
 
 git pull
 # reset main to release tag
+# check tag exists
+if ! git rev-parse "$release_tag" >/dev/null 2>&1; then
+    echo "Error: Tag '$release_tag' does not exist."
+    exit 1
+fi
 commit_hash=$(git rev-list -n 1 "$release_tag")
 git reset --hard "$commit_hash"
 
