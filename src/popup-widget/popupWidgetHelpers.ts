@@ -1,5 +1,38 @@
 import type { CSSProperties, ReactElement } from 'react';
 
+type LockedPopupType = 'confirm' | 'input' | 'alert';
+
+const lockedPopup: { current: LockedPopupType | null } = {
+    current: null,
+};
+
+async function attemptUnlocking(newType: LockedPopupType) {
+    while (lockedPopup.current !== newType) {
+        if (lockedPopup.current === null) {
+            return;
+        }
+        await new Promise((resolve) => {
+            setTimeout(resolve, 1000);
+        });
+    }
+    lockedPopup.current = null;
+}
+
+export async function attemptLocking(
+    newType: LockedPopupType,
+    isUnlock: boolean,
+) {
+    if (isUnlock) {
+        return await attemptUnlocking(newType);
+    }
+    while (lockedPopup.current !== null) {
+        await new Promise((resolve) => {
+            setTimeout(resolve, 1000);
+        });
+    }
+    lockedPopup.current = newType;
+}
+
 export function closeAlert() {
     popupWidgetManager.openConfirm?.(null);
     popupWidgetManager.openInput?.(null);
@@ -51,7 +84,7 @@ export function showAppConfirm(
         confirmButtonLabel?: string;
     },
 ) {
-    const openConfirm = popupWidgetManager.openConfirm;
+    const { openConfirm } = popupWidgetManager;
     if (openConfirm === null) {
         return Promise.resolve(false);
     }

@@ -1,3 +1,4 @@
+import './popupWidget.scss';
 import './InputPopupComp.scss';
 
 import { useCallback } from 'react';
@@ -9,7 +10,7 @@ import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 
-export default function ConfirmPopupComp({
+export default function InputPopupComp({
     inputData,
 }: Readonly<{
     inputData: InputDataType;
@@ -48,42 +49,35 @@ export default function ConfirmPopupComp({
         <PrimitiveModalComp>
             <div
                 id="app-input-popup"
-                className="shadow card"
+                className="app-popup-widget card"
                 style={inputData.extraStyles}
             >
                 <HeaderAlertPopupComp
+                    title={inputData.title}
                     header={
-                        <div className="app-ellipsis" title={inputData.title}>
-                            <i className="bi bi-exclamation-circle me-1" />
+                        <>
+                            <i className="app-popup-header-icon icon-input bi bi-input-cursor-text" />
                             {inputData.title}
-                        </div>
+                        </>
                     }
                     onClose={handleClosing}
                 />
-                <div className="card-body d-flex flex-column w-100 h-100">
-                    <div
-                        className="w-100"
-                        style={{
-                            maxHeight: '500px',
-                            overflow: 'auto',
-                        }}
-                    >
-                        {inputData.body}
-                    </div>
-                </div>
-                <div className="card-footer btn-group float-end">
+                <div className="app-popup-body">{inputData.body}</div>
+                <div className="app-popup-footer">
                     <button
-                        className="btn btn-sm"
+                        className="btn"
                         type="button"
                         onClick={handleClosing}
                     >
+                        <i className="bi bi-x-lg" />
                         {tran('Cancel')}
                     </button>
                     <button
-                        className="btn btn-sm btn-info"
+                        className="btn btn-info"
                         type="button"
                         onClick={handleOkClicking}
                     >
+                        <i className="bi bi-check-lg" />
                         {tran('Ok')}
                     </button>
                 </div>

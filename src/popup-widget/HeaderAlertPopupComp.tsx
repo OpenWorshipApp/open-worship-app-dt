@@ -5,9 +5,11 @@ import { useAppCurrentRef } from '../helper/appHooks';
 
 export default function HeaderAlertPopupComp({
     header,
+    title,
     onClose,
 }: Readonly<{
     header: ReactNode;
+    title?: string;
     onClose: () => void;
 }>) {
     const onCloseRef = useAppCurrentRef(onClose);
@@ -16,17 +18,16 @@ export default function HeaderAlertPopupComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="card-header text-center w-100">
-            <div>{header}</div>
+        <div className="app-popup-header card-header">
+            <div className="app-popup-header-title app-ellipsis" title={title}>
+                {header}
+            </div>
             <button
-                className="btn-close float-end"
+                className="app-popup-close btn-close"
                 type="button"
                 onClick={handleClose}
                 aria-label={tran('Close')}
                 title={tran('Close')}
-                style={{
-                    transform: 'translate(0, -90%)',
-                }}
             />
         </div>
     );

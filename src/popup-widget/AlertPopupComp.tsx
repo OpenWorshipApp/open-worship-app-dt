@@ -1,3 +1,4 @@
+import './popupWidget.scss';
 import './AlertPopupComp.scss';
 
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
@@ -6,6 +7,7 @@ import HeaderAlertPopupComp from './HeaderAlertPopupComp';
 import type { PopupAlertDataType } from './popupWidgetHelpers';
 import { closeAlert } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
+import { tran } from '../lang/langHelpers';
 
 export default function AlertPopupComp({
     alertData,
@@ -17,7 +19,7 @@ export default function AlertPopupComp({
         closeAlert();
     };
     useKeyboardRegistering(
-        [{ key: 'Escape' }],
+        [{ key: 'Escape' }, { key: 'Enter' }],
         (event) => {
             event.preventDefault();
             handClose();
@@ -26,23 +28,32 @@ export default function AlertPopupComp({
     );
     return (
         <PrimitiveModalComp>
-            <div id="app-alert-popup" className="shadow card">
+            <div id="app-alert-popup" className="app-popup-widget card">
                 <HeaderAlertPopupComp
+                    title={alertData.title}
                     header={
                         <>
-                            <i className="bi bi-exclamation-circle me-1" />
+                            <i className="app-popup-header-icon icon-info bi bi-info-circle-fill" />
                             {alertData.title}
                         </>
                     }
                     onClose={handClose}
                 />
-                <div className="card-body d-flex flex-column">
-                    <div
-                        className="p-2 flex-fill app-selectable-text"
-                        dangerouslySetInnerHTML={{
-                            __html: sanitizeHtml(alertData.message),
-                        }}
-                    />
+                <div
+                    className="app-popup-body app-selectable-text"
+                    dangerouslySetInnerHTML={{
+                        __html: sanitizeHtml(alertData.message),
+                    }}
+                />
+                <div className="app-popup-footer">
+                    <button
+                        className="btn btn-info"
+                        type="button"
+                        onClick={handClose}
+                    >
+                        <i className="bi bi-check-lg" />
+                        {tran('Ok')}
+                    </button>
                 </div>
             </div>
         </PrimitiveModalComp>
