@@ -37,6 +37,10 @@
         "lint:all:error": "tsc --noEmit --skipLibCheck",
         "lint:es": "eslint src/**/*.ts* electron/**/*.ts --ignore-pattern \"src/**/*.test.ts*\" --ignore-pattern \"src/**/*.spec.ts*\" --max-warnings 0 --no-warn-ignored",
         "lint": "npm run test:all && npm run lint:all:error && npm run lint:pre && npm run lint:es && npm run build",
+        "docs:gen": "node docs/scripts/build-manual.mjs",
+        "docs:dev": "npm run docs:gen && vitepress dev docs",
+        "docs:build": "npm run docs:gen && vitepress build docs",
+        "docs:preview": "vitepress preview docs",
         "dc:err": "depcruise src --include-only \"^src\" --output-type err-html > dc-dependency-graph/errors.html",
         "release:version": "node extra-work/setTodayVersion.mjs && npm install",
         "release:tag": "bash extra-work/release-tag.sh",
@@ -166,6 +170,7 @@
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.61.1",
         "vite": "^8.1.5",
+        "vitepress": "^1.6.4",
         "vitest": "^4.1.10"
     },
     "dependencies": {

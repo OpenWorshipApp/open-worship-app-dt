@@ -34,3 +34,7 @@ experiment/bm25.pdb
 coverage-electron/
 playwright-report/
 test-results/
+
+# VitePress manual build artifacts (see docs/README.md)
+docs/.vitepress/dist/
+docs/.vitepress/cache/

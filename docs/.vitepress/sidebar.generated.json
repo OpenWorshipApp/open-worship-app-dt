@@ -1,0 +1,104 @@
+[
+  {
+    "text": "Orientation",
+    "collapsed": false,
+    "items": [
+      {
+        "text": "W-01 — Understand the Presenter window",
+        "link": "/orientation/w-01-understand-the-presenter-window"
+      },
+      {
+        "text": "W-02 — Switch between the main pages",
+        "link": "/orientation/w-02-switch-between-the-main-pages"
+      }
+    ]
+  },
+  {
+    "text": "Presenting content",
+    "collapsed": false,
+    "items": [
+      {
+        "text": "W-03 — Present a slide from a document",
+        "link": "/presenting-content/w-03-present-a-slide-from-a-document"
+      },
+      {
+        "text": "W-04 — Auto-play slides on a timer",
+        "link": "/presenting-content/w-04-auto-play-slides-on-a-timer"
+      },
+      {
+        "text": "W-05 — Present song lyrics",
+        "link": "/presenting-content/w-05-present-song-lyrics"
+      },
+      {
+        "text": "W-06 — Look up and present a Bible verse",
+        "link": "/presenting-content/w-06-look-up-and-present-a-bible-verse"
+      },
+      {
+        "text": "W-07 — Style the on-screen Bible text",
+        "link": "/presenting-content/w-07-style-the-on-screen-bible-text"
+      },
+      {
+        "text": "W-08 — Set the background (color / image / video / web)",
+        "link": "/presenting-content/w-08-set-the-background-color-image-video-web"
+      },
+      {
+        "text": "W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)",
+        "link": "/presenting-content/w-09-play-audio-and-foreground-extras-countdown-clock-marquee-bottom"
+      },
+      {
+        "text": "W-10 — Control what the audience sees (mini screen + clears)",
+        "link": "/presenting-content/w-10-control-what-the-audience-sees-mini-screen-clears"
+      }
+    ]
+  },
+  {
+    "text": "Bible study",
+    "collapsed": false,
+    "items": [
+      {
+        "text": "W-11 — Read the Bible (full references, versions)",
+        "link": "/bible-study/w-11-read-the-bible-full-references-versions"
+      },
+      {
+        "text": "W-12 — Search the whole Bible (Bible Find)",
+        "link": "/bible-study/w-12-search-the-whole-bible-bible-find"
+      },
+      {
+        "text": "W-13 — Cross references",
+        "link": "/bible-study/w-13-cross-references"
+      },
+      {
+        "text": "W-14 — Keep Bible notes",
+        "link": "/bible-study/w-14-keep-bible-notes"
+      }
+    ]
+  },
+  {
+    "text": "Creating & editing content",
+    "collapsed": false,
+    "items": [
+      {
+        "text": "W-15 — Create and edit slides / lyrics / web backgrounds",
+        "link": "/creating-editing-content/w-15-create-and-edit-slides-lyrics-web-backgrounds"
+      }
+    ]
+  },
+  {
+    "text": "Configuration",
+    "collapsed": false,
+    "items": [
+      {
+        "text": "W-16 — Settings: language, theme, fonts, folders",
+        "link": "/configuration/w-16-settings-language-theme-fonts-folders"
+      },
+      {
+        "text": "W-17 — Find text anywhere (Finder) & About",
+        "link": "/configuration/w-17-find-text-anywhere-finder-about"
+      },
+      {
+        "text": "W-18 — Use more than one screen (multi-screen)",
+        "link": "/configuration/w-18-use-more-than-one-screen-multi-screen"
+      }
+    ]
+  }
+]
