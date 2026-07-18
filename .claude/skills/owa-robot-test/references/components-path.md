@@ -23,6 +23,17 @@ Pair it with:
 > `button`, not its wrapping `<li>`/`StaticText`. Slide & lyric previews live inside
 > `<iframe srcdoc>` (not reachable from document-level `querySelectorAll`).
 
+> ⚠️ **Source-verified UI drift (2026-07-18) — confirm live, then reconcile this file.**
+> The `src/` sweep behind the coverage-matrix expansion found the presenter has moved
+> several panels to **floating widgets**: **Foreground** and **Bible Properties** (bible
+> appearance / text-shadow) are now `FloatingWidgetComp` toggles, not inline split-tabs;
+> the presenter main tab bar is `Documents`/`Lyrics`/`Bibles` only. Presenting a slide is
+> a **single-click toggle** (not double-click). Background **Web** `+` opens a menu (not
+> directly the Web Editor). Theme options include **System** (not only light/dark). These
+> are reflected in the coverage-matrix REFINEs (`PM-01`, `PM-06`, `PM-13/14`, `PM-33`,
+> `PM-57`, the `ST` theme rows) — treat the matrix as authoritative and update the tables
+> below as you verify each against the live app.
+
 ---
 
 ## Interaction legend
@@ -61,6 +72,16 @@ live-on-screen = `.app-on-screen` (active background tab also gets a `*` prefix)
 | `Ctrl+Enter` | Slide editor: focus the canvas | [slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx) |
 | `Ctrl+S` | Editors: save | (lyric/web/bible-note editors) |
 | `Ctrl/Alt+ArrowLeft/Right` | Screen output: prev/next bible | [screen.tsx](../../../../src/screen.tsx) |
+
+> This table lists the **common** shortcuts. The **complete, source-verified** set — every
+> `useKeyboardRegistering` call site plus electron application-menu accelerators — is
+> enumerated as unit tests in [coverage-matrix.md](./coverage-matrix.md) §KB (`KB-01..60`):
+> bible-lookup editing (`Ctrl+Enter`, `Ctrl+Shift+Enter`, `Ctrl+Shift+S/V`, `Ctrl+W`),
+> canvas & slide-list (`Ctrl+C/V/A`, `Delete`, `Ctrl+Shift+D`, `Ctrl+Z/Y`, arrows), finder
+> (`Enter`/`Escape`/`Ctrl+Q`), popups (`Enter`/`Escape`), context-menu keyboard nav
+> (`KB-16/17`), the **layer-suppression** rule (root F-keys don't fire while a modal/menu
+> is open, `KB-15`), and the mac `Meta+Q` quit path (`KB-14`). Right-click menu **items**
+> are their own matrix section, §CM (`CM-01..92`).
 
 ---
 

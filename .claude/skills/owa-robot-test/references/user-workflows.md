@@ -23,6 +23,18 @@ still matches the live app.
 
 **workflowsVersion: 2026-07-16** (bump when any workflow changes)
 
+> ⚠️ **Pending live re-verification (2026-07-18).** A `src/` sweep for the coverage-matrix
+> expansion indicates the presenter UI has drifted from some steps below: **Foreground**
+> (W-09) and **Bible text styling** (W-07) are now **floating widgets** (a toggle button)
+> rather than middle-column split-tabs; presenting a slide is a **single-click toggle**
+> (W-03/W-05 say double-click); Background **Web `+`** (W-08) opens a menu first; Settings
+> **Theme** (W-16) offers **System / Light / Dark**. These are source-verified but **not
+> yet confirmed on the live app**, so the tutorial prose is left as-is per this file's
+> "truth follows the live app" contract — the next robot run must confirm each and correct
+> the affected workflow (then bump `workflowsVersion`). The coverage-matrix REFINEs
+> (`PM-01`, `PM-06`, `PM-13/14`, `PM-33`, `PM-57`, `ST` theme rows) already encode the
+> observed behavior as test expectations.
+
 ---
 
 ## Orientation

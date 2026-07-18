@@ -135,6 +135,11 @@ toggle, theme, font family, and the destructive resets (`Reset All Child Directo
 | Arrow keys / Enter | Navigate slide thumbnails (when the slide container is focused) |
 | Ctrl/Alt+ArrowLeft/Right | Prev/next bible verse (on the screen output window) |
 
+> This is the short list. The **complete** shortcut set — every registered in-app shortcut
+> plus electron application-menu accelerators — is enumerated as unit tests in
+> [coverage-matrix.md](./coverage-matrix.md) §KB (`KB-01..60`); right-click menu items are
+> §CM (`CM-01..92`).
+
 ## Stable ids present in production
 
 `#root`, `#app-header`, `#app-body`, `#modal-container`, `#app-custom-style`.

@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against references/coverage-matrix.md (~150 stable-ID rows, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against references/coverage-matrix.md (~535 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -220,8 +220,9 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[references/coverage-matrix.md](./references/coverage-matrix.md) (~150 rows with stable
-IDs like `PM-29`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
+[references/coverage-matrix.md](./references/coverage-matrix.md) (~535 rows with stable
+IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
+the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
 counts as exercised only with evidence (screenshot, asserted `evaluate_script` result, or
 console/network diff) — see the matrix's "Evidence rule".
@@ -383,9 +384,18 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [references/coverage-matrix.md](./references/coverage-matrix.md) — the **coverage
-  contract**: ~150 stable-ID rows over the whole UI surface (screen controlling &
-  presenting rows `SP`/`SC` are mandatory in every run), the policy-exclusion table,
-  statuses, evidence rule, and the coverage formula for full-coverage runs.
+  contract**: ~535 stable-ID rows over the whole UI surface — every interactive path
+  enumerated as a unit test with an observable pass condition and a `(src: file:line)`
+  citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
+  shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and
+  a context-menu-item matrix (`CM-01..92`). Screen controlling & presenting rows
+  (`SP`/`SC`) are mandatory in every run; the file also carries the policy-exclusion
+  table, statuses, evidence rule, and the coverage formula for full-coverage runs.
+- [coverage-expansion/](./coverage-expansion/) — provenance for the 2026-07-18 matrix
+  expansion: the per-subsystem source-sweep inventories (`discover-*.md`) and the
+  finalized per-section row fragments (`final/*.md`) each row was derived from, with
+  `src` line citations. Regenerate/extend these when re-sweeping `src/`; they are
+  research artifacts, not runtime references.
 - [references/user-workflows.md](./references/user-workflows.md) — the **tutorial source
   of truth**: user-facing `W-xx` task recipes in tutorial voice with `📸` screenshot
   checkpoints and EN/KM labels, each traceable to matrix rows; feeds tutorial mode (§9)

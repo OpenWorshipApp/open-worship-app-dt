@@ -194,7 +194,7 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - `resize_page` to a small (~1024×700) and large size: right column flips layout,
   nothing overlaps.
 
-### S14 — Keyboard matrix `[KB-01..12]`
+### S14 — Keyboard matrix `[KB-01..60]`
 - Run every row of the KB table in the matrix explicitly (many will already be PASS from
   earlier scenarios — just fill in the gaps).
 
@@ -209,6 +209,16 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Editor with a non-OWA document → "Return to Presenter" popup (ED-01).
 - Bible key not downloaded → `BibleNotAvailableComp` renders instead of a crash.
 - Empty find query / no find results → sane empty state, no console errors.
+
+### S17 — Context-menu items `[CM-01..92]`
+- For each host that opens a right-click menu (document / lyric / bible / background / note
+  items, slide thumbnails, editor slide list, mini-screen previewer card, display / stage /
+  transition controls, generic file lists), 🖱️R to open it and assert the item set via
+  `[...document.querySelectorAll('#app-context-menu-container .app-context-menu-item')].map(e=>e.textContent)`.
+- Exercise each non-destructive item and assert its observable effect (popup opens, a new
+  CDP target, `.active` / `.app-on-screen` toggle, item-count delta, toast).
+- Destructive items (`Delete` / `Move to Trash` / `Empty` / reset): click → confirm dialog →
+  **Cancel** (EX-05), or create a scratch item and delete THAT.
 
 ## Report template
 
@@ -235,7 +245,7 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 150
+- Matrix version: <date> · rows total: 535
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)
