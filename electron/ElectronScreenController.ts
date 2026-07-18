@@ -61,8 +61,23 @@ export default class ElectronScreenController {
     }
 
     setDisplay(display: Electron.Display) {
-        const bounds = display.bounds;
+        const { bounds } = display;
         this.win.setBounds(bounds);
+        const actualBounds = this.win.getBounds();
+        const actualAspectRatio = Math.min(
+            actualBounds.width / bounds.width,
+            actualBounds.height / bounds.height,
+        );
+        const newWidth = Math.floor(bounds.width * actualAspectRatio);
+        const newHeight = Math.floor(bounds.height * actualAspectRatio);
+        const newX = Math.floor(bounds.x + (bounds.width - newWidth) / 2);
+        const newBounds = {
+            x: newX,
+            y: actualBounds.y,
+            width: newWidth,
+            height: newHeight,
+        };
+        this.win.setBounds(newBounds);
         this.win.webContents.reload();
     }
 
