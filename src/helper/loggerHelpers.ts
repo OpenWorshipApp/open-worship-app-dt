@@ -13,8 +13,7 @@ function callConsole(method: string, ...args: any[]) {
         return;
     }
     const callable = (console as any)[method] as
-        | ((...args: any) => void)
-        | undefined;
+        ((...args: any) => void) | undefined;
     callable?.call(console, ...args);
     if (
         method !== 'warn' &&

@@ -206,8 +206,22 @@ export default class ScreenManager extends ScreenManagerBase {
             this.fireInstanceEvent();
         }
     }
+    async getMemberInstances(): Promise<ScreenManager[]> {
+        const groupScreenManagers =
+            await ScreenManager.getGroupScreenManagers(this);
+        return groupScreenManagers.filter((screenManagerBase) => {
+            return screenManagerBase instanceof ScreenManager;
+        }) as ScreenManager[];
+    }
 
-    sendSyncScreen() {
+    async sendSyncScreen(shouldFromOtherGroupMember = false) {
+        if (shouldFromOtherGroupMember) {
+            const otherGroupMembers = await this.getMemberInstances();
+            if (otherGroupMembers.length > 0) {
+                await otherGroupMembers[0].sendSyncScreen();
+                return;
+            }
+        }
         ScreenBibleManager.sendSynTextStyle();
         this.backgroundEffectManager.sendSyncScreen();
         this.screenBackgroundManager.sendSyncScreen();

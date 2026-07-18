@@ -330,8 +330,7 @@ export default function ForegroundCountDownComp() {
     )
         .map(
             ([screenId, data]):
-                | [number, ForegroundCountdownDataType]
-                | null => {
+                [number, ForegroundCountdownDataType] | null => {
                 if (data.countdownData === null) {
                     return null;
                 }

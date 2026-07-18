@@ -49,8 +49,10 @@ export default function SimpleNoteEditorComp({
     }, []);
     const [isSaved, setIsSaved] = useState(true);
     const [text, setText] = useState(store.defaultText);
+    const storeRef = useAppCurrentRef(store);
     const setCurrentText1 = useCallback(
         (newText: string) => {
+            const store = storeRef.current;
             if (store.save === undefined) {
                 return;
             }
@@ -65,7 +67,8 @@ export default function SimpleNoteEditorComp({
                 setIsSaved(isSaved);
             });
         },
-        [store, attemptTimeout],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     useAppEffect(() => {
         window.removeEventListener('beforeunload', blockUnload);
@@ -82,13 +85,14 @@ export default function SimpleNoteEditorComp({
         };
     }, [isSaved]);
     const forceSaving = useCallback(async () => {
+        const store = storeRef.current;
         if (store.save === undefined) {
             return;
         }
         const isSaved = await store.save();
         setIsSaved(isSaved);
-    }, [store]);
-    const storeRef = useAppCurrentRef(store);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const onEscapeRef = useAppCurrentRef(onEscape);
     const onEnterRef = useAppCurrentRef(onEnter);
     const forceSavingRef = useAppCurrentRef(forceSaving);

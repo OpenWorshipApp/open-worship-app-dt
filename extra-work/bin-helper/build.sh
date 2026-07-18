@@ -53,7 +53,7 @@ if [ $? -ne 0 ]; then
 fi
 echo "Build and copy completed successfully."
 
-yt_version="2026.03.13"
+yt_version="2026.07.04"
 yt_prefix_url="https://github.com/yt-dlp/yt-dlp/releases/download/$yt_version/"
 download_yt_dlp() {
     local url="$yt_prefix_url$1"

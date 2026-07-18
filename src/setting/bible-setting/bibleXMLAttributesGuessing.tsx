@@ -22,17 +22,20 @@ function BibleKeyXMLInputComp({
 }>) {
     const [value, setValue] = useState(defaultVale);
     const [invalidMessage, setInvalidMessage] = useState<string>('');
+    const onChangeRef = useAppCurrentRef(onChange);
+    const takenBibleKeysRef = useAppCurrentRef(takenBibleKeys);
     const setValue1 = useCallback(
         (value: string) => {
             setValue(value);
-            onChange(value);
-            if (takenBibleKeys.includes(value.toLowerCase())) {
+            onChangeRef.current(value);
+            if (takenBibleKeysRef.current.includes(value.toLowerCase())) {
                 setInvalidMessage('Key is already taken');
             } else {
                 setInvalidMessage('');
             }
         },
-        [onChange, takenBibleKeys],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const setValue1Ref = useAppCurrentRef(setValue1);
     const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -126,17 +129,19 @@ function BibleNumbersMapXMLInputComp({
     );
     const [value, setValue] = useState(defaultVale);
     const [invalidMessage, setInvalidMessage] = useState<string>('');
+    const onChangeRef = useAppCurrentRef(onChange);
     const setValue1 = useCallback(
         (value: string) => {
             setValue(value);
-            onChange(value);
+            onChangeRef.current(value);
             if (value.split(' ').length === 10) {
                 setInvalidMessage('');
             } else {
                 setInvalidMessage('Must have 10 numbers');
             }
         },
-        [onChange],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const setValue1Ref = useAppCurrentRef(setValue1);
     const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {

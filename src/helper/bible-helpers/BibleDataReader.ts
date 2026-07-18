@@ -106,8 +106,7 @@ export default class BibleDataReader {
             }
             const rawData = base64Decode(b64Data);
             const parsedData = JSON.parse(rawData) as
-                | BibleInfoType
-                | BibleChapterType;
+                BibleInfoType | BibleChapterType;
             return parsedData;
         } catch (error: any) {
             if (error.code !== 'ENOENT') {

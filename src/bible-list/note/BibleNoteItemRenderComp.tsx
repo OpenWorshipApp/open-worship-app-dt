@@ -58,20 +58,21 @@ export default function BibleNoteItemRenderComp({
     note: Note;
 }>) {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const setIsEditingTitle1 = useCallback(
-        (isOpened: boolean) => {
-            setIsEditingTitle(isOpened);
-            noteItem.isOpened = isOpened;
-            note.updateAndSaveNoteItem(noteItem, true);
-        },
-        [noteItem, note],
-    );
     useFileSourceRefreshEvents(['select'], filePath);
 
     const noteRef = useAppCurrentRef(note);
     const noteItemRef = useAppCurrentRef(noteItem);
     const filePathRef = useAppCurrentRef(filePath);
     const indexRef = useAppCurrentRef(index);
+    const setIsEditingTitle1 = useCallback(
+        (isOpened: boolean) => {
+            setIsEditingTitle(isOpened);
+            noteItemRef.current.isOpened = isOpened;
+            noteRef.current.updateAndSaveNoteItem(noteItemRef.current, true);
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const handleContextMenuOpening = useCallback(
         async (event: MouseEvent<any>) => {
             const menuItems: ContextMenuItemType[] = [

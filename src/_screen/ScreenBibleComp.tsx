@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 
-import { useAppEffect } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { useScreenBibleManagerEvents } from './managers/screenEventHelpers';
 import ScreenBibleManager from './managers/ScreenBibleManager';
 import {
@@ -134,17 +134,18 @@ function getStyleText(textColor?: string) {
 
 export default function ScreenBibleComp() {
     const screenManager = useScreenManagerContext();
+    const { screenBibleManager } = screenManager;
+    const screenBibleManagerRef = useAppCurrentRef(screenBibleManager);
     useScreenManagerEvents(['refresh'], screenManager, () => {
-        screenManager.screenBibleManager.render();
+        screenBibleManagerRef.current.render();
     });
     useScreenBibleManagerEvents(['text-style']);
     const div = useRef<HTMLDivElement>(null);
-    const { screenBibleManager } = screenManager;
     useAppEffect(() => {
         if (div.current) {
             screenBibleManager.div = div.current;
         }
-    }, [div.current]);
+    }, [screenBibleManager, div.current]);
     return (
         <>
             <style>{getStyleText(ScreenBibleManager.textStyleTextColor)}</style>

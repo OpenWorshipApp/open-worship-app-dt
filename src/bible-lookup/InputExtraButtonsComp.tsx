@@ -144,6 +144,8 @@ export default function InputExtraButtonsComp() {
         [],
     );
     const removeInputTextChunk = useCallback(() => {
+        const inputText = inputTextRef.current;
+        const viewController = viewControllerRef.current;
         const arr = inputText.split(' ').filter((str) => str !== '');
         if (arr.length === 1) {
             viewController.inputText = '';
@@ -153,7 +155,8 @@ export default function InputExtraButtonsComp() {
         const newInputText = arr.join(' ') + (arr.length > 0 ? ' ' : '');
         viewController.inputText = newInputText;
         setBibleLookupInputFocus();
-    }, [inputText, viewController]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const removeInputText = () => {
         viewController.inputText = '';
         setBibleLookupInputFocus();

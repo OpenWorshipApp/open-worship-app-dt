@@ -70,8 +70,7 @@ export default function ForegroundQuickTextComp() {
     )
         .map(
             ([screenId, data]):
-                | [number, ForegroundQuickTextDataType]
-                | null => {
+                [number, ForegroundQuickTextDataType] | null => {
                 if (data.quickTextData === null) {
                     return null;
                 }

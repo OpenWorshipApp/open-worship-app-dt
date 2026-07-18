@@ -89,20 +89,24 @@ function RenderDimEditComp() {
     const isScreenDiff =
         width !== screenBounds.width || height !== screenBounds.height;
     const isDiffOther = useIsDiffOtherSlides(slide, width, height);
+    const slideRef = useAppCurrentRef(slide);
     const applyDim = useCallback(
         async (newWidth: number, newHeight: number, isAll = false) => {
             setWidth(newWidth);
             setHeight(newHeight);
-            const appDocument = AppDocument.getInstance(slide.filePath);
+            const appDocument = AppDocument.getInstance(
+                slideRef.current.filePath,
+            );
             await appDocument.changeSlidesDimension(
                 {
                     width: newWidth,
                     height: newHeight,
                 },
-                isAll ? undefined : slide,
+                isAll ? undefined : slideRef.current,
             );
         },
-        [slide],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const applyDimRef = useAppCurrentRef(applyDim);
     const widthRef = useAppCurrentRef(width);
@@ -111,7 +115,6 @@ function RenderDimEditComp() {
         applyDimRef.current(widthRef.current, heightRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const slideRef = useAppCurrentRef(slide);
     const handleReset = useCallback(() => {
         const { bounds } = getDefaultScreenDisplay();
         if (

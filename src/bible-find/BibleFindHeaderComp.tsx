@@ -31,17 +31,6 @@ export default function BibleFindHeaderComp({
         BIBLE_FIND_RECENT_SEARCH_SETTING_NAME,
         '' as string,
     );
-    const setText1 = useCallback(
-        (newText: string) => {
-            setText((preText) => {
-                attemptTimeout(() => {
-                    handleFinding(preText ? newText : '');
-                });
-                return newText;
-            });
-        },
-        [attemptTimeout, handleFinding, setText],
-    );
     const bibleFindController = useBibleFindController();
     const { bibleKey } = bibleFindController;
     const fontFamily = useBibleFontFamily(bibleKey);
@@ -87,6 +76,18 @@ export default function BibleFindHeaderComp({
     useAppEffect(() => {
         handleFinding(text);
     }, []);
+    const setText1 = useCallback(
+        (newText: string) => {
+            setTextRef.current((preText) => {
+                attemptTimeoutRef.current(() => {
+                    handleFindingRef.current(preText ? newText : '');
+                });
+                return newText;
+            });
+        },
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
+    );
     const setText1Ref = useAppCurrentRef(setText1);
     const handleInputChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {

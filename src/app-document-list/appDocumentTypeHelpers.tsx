@@ -18,16 +18,10 @@ export const DEFAULT_THUMBNAIL_SIZE_FACTOR = 1000 / MAX_THUMBNAIL_SCALE;
 export const THUMBNAIL_WIDTH_SETTING_NAME = 'presenter-item-thumbnail-size';
 
 export type VaryAppDocumentType =
-    | AppDocument
-    | PdfAppDocument
-    | PptxAppDocument
-    | DocxAppDocument;
+    AppDocument | PdfAppDocument | PptxAppDocument | DocxAppDocument;
 export type VaryAppDocumentWithNoteType = AppDocument | PptxAppDocument;
 export type VarySlideType = Slide | PdfSlide | PptxSlide | DocxSlide;
 export type VarySlideWithNoteType = Slide | PptxSlide;
 export type VarySlideDataType =
-    | SlideType
-    | PdfSlideType
-    | PptxSlideType
-    | DocxSlideType;
+    SlideType | PdfSlideType | PptxSlideType | DocxSlideType;
 export type VaryAppDocumentDynamicType = VaryAppDocumentType | null | undefined;

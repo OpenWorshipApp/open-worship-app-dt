@@ -20,9 +20,9 @@ type BoxInfoType = {
     rotate: number;
 };
 type ListenedEvent = {
-    eventName: 'mousedown';
+    eventName: 'pointerdown';
     target: HTMLDivElement;
-    listener: (event: MouseEvent) => void;
+    listener: (event: PointerEvent) => void;
 };
 
 type CalcBoxPropsType = {
@@ -399,11 +399,13 @@ export default class BoxEditorController {
         this.onDone = onDone;
         this.editor = editor;
         this.target = this.editor.firstChild as HTMLDivElement;
-        // drag support
+        // drag support. Pointer events (not mouse) so a finger drags the box
+        // just like a cursor; a `PointerEvent` is a `MouseEvent`, so every
+        // handler below reads the same `clientX/clientY/button/ctrlKey` fields.
         this.addEvent({
-            eventName: 'mousedown',
+            eventName: 'pointerdown',
             target: this.target,
-            listener: (event: MouseEvent) => {
+            listener: (event: PointerEvent) => {
                 this.moveHandler(event);
             },
         });
@@ -411,9 +413,9 @@ export default class BoxEditorController {
         for (const [key, value] of Object.entries(this.resizeActorList)) {
             const ele = this.target.querySelector(`.${key}`) as HTMLDivElement;
             this.addEvent({
-                eventName: 'mousedown',
+                eventName: 'pointerdown',
                 target: ele,
-                listener: (event: MouseEvent) => {
+                listener: (event: PointerEvent) => {
                     return this.resizeHandler(event, value);
                 },
             });
@@ -423,12 +425,24 @@ export default class BoxEditorController {
             `.${this.rotatorCN}`,
         ) as HTMLDivElement;
         this.addEvent({
-            eventName: 'mousedown',
+            eventName: 'pointerdown',
             target: rotator,
-            listener: (event: MouseEvent) => {
+            listener: (event: PointerEvent) => {
                 this.rotateHandler(event);
             },
         });
+    }
+    // Redirect all further moves of this pointer to the element the drag
+    // started on, so a touch drag (or a mouse drag that wanders over one of the
+    // box's iframes: youtube/website/video) keeps delivering `pointermove`
+    // instead of being swallowed by whatever ends up under the finger/cursor.
+    private capturePointer(event: PointerEvent) {
+        const target = event.currentTarget as HTMLElement | null;
+        try {
+            target?.setPointerCapture(event.pointerId);
+        } catch {
+            // Pointer already released/invalid — nothing to capture.
+        }
     }
     // Sizes come from the inline style (like the commit in `getInfo`) so a
     // drag in progress reads the same value that will be committed.
@@ -508,7 +522,7 @@ export default class BoxEditorController {
                 };
             });
     }
-    moveHandler(event: MouseEvent) {
+    moveHandler(event: PointerEvent) {
         if (
             event.button === 2 ||
             this.editor === null ||
@@ -517,6 +531,7 @@ export default class BoxEditorController {
             return;
         }
         this.blockMouseEvent(event);
+        this.capturePointer(event);
         let isMoving = false;
         const target = event.currentTarget as HTMLDivElement;
         if (target.className.includes('dot')) {
@@ -534,7 +549,7 @@ export default class BoxEditorController {
         // move on commit), so build them once instead of per mousemove.
         const snapTargets = this.snapshotSnapTargets();
 
-        const eventMouseMoveHandler = (event: MouseEvent) => {
+        const eventMouseMoveHandler = (event: PointerEvent) => {
             this.blockMouseEvent(event);
             isMoving = true;
             const { scaleFactor, initX, initY, mousePressX, mousePressY } =
@@ -568,13 +583,20 @@ export default class BoxEditorController {
             }
             this.showDragInfo(event, infoLines.join('\n'));
         };
-        const eventMouseUpHandler = (event: MouseEvent) => {
+        const eventMouseUpHandler = (event: PointerEvent) => {
             if (this.editor === null || this.target === null) {
                 return;
             }
             this.blockMouseEvent(event);
-            globalThis.removeEventListener('mousemove', eventMouseMoveHandler);
-            globalThis.removeEventListener('mouseup', eventMouseUpHandler);
+            globalThis.removeEventListener(
+                'pointermove',
+                eventMouseMoveHandler,
+            );
+            globalThis.removeEventListener('pointerup', eventMouseUpHandler);
+            globalThis.removeEventListener(
+                'pointercancel',
+                eventMouseUpHandler,
+            );
             this.emitSnapLines([], []);
             this.hideDragInfo();
             if (isMoving) {
@@ -583,8 +605,9 @@ export default class BoxEditorController {
                 this.onClick(event);
             }
         };
-        globalThis.addEventListener('mousemove', eventMouseMoveHandler);
-        globalThis.addEventListener('mouseup', eventMouseUpHandler);
+        globalThis.addEventListener('pointermove', eventMouseMoveHandler);
+        globalThis.addEventListener('pointerup', eventMouseUpHandler);
+        globalThis.addEventListener('pointercancel', eventMouseUpHandler);
     }
     rotationFromStyle(style: CSSStyleDeclaration) {
         const transform = style.getPropertyValue('transform');
@@ -640,16 +663,17 @@ export default class BoxEditorController {
         event.preventDefault();
         event.stopPropagation();
     }
-    rotateHandler(event: MouseEvent) {
+    rotateHandler(event: PointerEvent) {
         if (this.target === null) {
             return;
         }
         this.blockMouseEvent(event);
+        this.capturePointer(event);
         const arrowRects = this.target.getBoundingClientRect();
         const arrowX = arrowRects.left + arrowRects.width / 2;
         const arrowY = arrowRects.top + arrowRects.height / 2;
 
-        const eventMoveHandler = (event: MouseEvent) => {
+        const eventMoveHandler = (event: PointerEvent) => {
             this.blockMouseEvent(event);
             const angle =
                 Math.atan2(event.clientY - arrowY, event.clientX - arrowX) +
@@ -661,21 +685,24 @@ export default class BoxEditorController {
             // that will land in the props panel — including negatives.
             this.showDragInfo(event, `${Math.trunc(rotationDegrees)}°`);
         };
-        const eventEndHandler = (event: MouseEvent) => {
+        const eventEndHandler = (event: PointerEvent) => {
             this.blockMouseEvent(event);
-            globalThis.removeEventListener('mousemove', eventMoveHandler);
-            globalThis.removeEventListener('mouseup', eventEndHandler);
+            globalThis.removeEventListener('pointermove', eventMoveHandler);
+            globalThis.removeEventListener('pointerup', eventEndHandler);
+            globalThis.removeEventListener('pointercancel', eventEndHandler);
             this.hideDragInfo();
             this.onDone([]);
         };
-        globalThis.addEventListener('mousemove', eventMoveHandler);
-        globalThis.addEventListener('mouseup', eventEndHandler);
+        globalThis.addEventListener('pointermove', eventMoveHandler);
+        globalThis.addEventListener('pointerup', eventEndHandler);
+        globalThis.addEventListener('pointercancel', eventEndHandler);
     }
-    resizeHandler(event: MouseEvent, options: ResizeType) {
+    resizeHandler(event: PointerEvent, options: ResizeType) {
         if (this.editor === null || this.target === null) {
             return;
         }
         this.blockMouseEvent(event);
+        this.capturePointer(event);
         const { left, top, xResize, yResize } = options;
         this.initX = this.editor.offsetLeft;
         this.initY = this.editor.offsetTop;
@@ -692,7 +719,7 @@ export default class BoxEditorController {
         // Snap targets are invariant while the drag lasts (other boxes only
         // move on commit), so build them once instead of per mousemove.
         const snapTargets = this.snapshotSnapTargets();
-        const mouseMoveHandler = (event: MouseEvent) => {
+        const mouseMoveHandler = (event: PointerEvent) => {
             this.blockMouseEvent(event);
             const { newW, newH, newX, newY } = calcBoxProps({
                 left,
@@ -737,16 +764,21 @@ export default class BoxEditorController {
             );
         };
 
-        const eventMouseUpHandler = (event: MouseEvent) => {
+        const eventMouseUpHandler = (event: PointerEvent) => {
             this.blockMouseEvent(event);
-            globalThis.removeEventListener('mousemove', mouseMoveHandler);
-            globalThis.removeEventListener('mouseup', eventMouseUpHandler);
+            globalThis.removeEventListener('pointermove', mouseMoveHandler);
+            globalThis.removeEventListener('pointerup', eventMouseUpHandler);
+            globalThis.removeEventListener(
+                'pointercancel',
+                eventMouseUpHandler,
+            );
             this.emitSnapLines([], []);
             this.hideDragInfo();
             this.onDone([]);
         };
-        globalThis.addEventListener('mousemove', mouseMoveHandler);
-        globalThis.addEventListener('mouseup', eventMouseUpHandler);
+        globalThis.addEventListener('pointermove', mouseMoveHandler);
+        globalThis.addEventListener('pointerup', eventMouseUpHandler);
+        globalThis.addEventListener('pointercancel', eventMouseUpHandler);
     }
     private snapAxis(value: number, targets: number[], threshold: number) {
         let best: { line: number; diff: number } | null = null;

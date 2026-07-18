@@ -66,12 +66,13 @@ export default function CanvasContainerComp({
                     });
                 });
             };
-            const handleMove = (event: MouseEvent) => {
+            const handleMove = (event: PointerEvent) => {
                 moveToPoint(event.clientX, event.clientY);
             };
-            const handleUp = (event: MouseEvent) => {
-                globalThis.removeEventListener('mousemove', handleMove);
-                globalThis.removeEventListener('mouseup', handleUp);
+            const handleUp = (event: PointerEvent) => {
+                globalThis.removeEventListener('pointermove', handleMove);
+                globalThis.removeEventListener('pointerup', handleUp);
+                globalThis.removeEventListener('pointercancel', handleUp);
                 const element = containerRef.current;
                 const bcr = element?.getBoundingClientRect();
                 if (bcr) {
@@ -86,8 +87,9 @@ export default function CanvasContainerComp({
                     }
                 }
             };
-            globalThis.addEventListener('mousemove', handleMove);
-            globalThis.addEventListener('mouseup', handleUp);
+            globalThis.addEventListener('pointermove', handleMove);
+            globalThis.addEventListener('pointerup', handleUp);
+            globalThis.addEventListener('pointercancel', handleUp);
             moveToPoint(clientX, clientY);
         },
         [scale, canvas.width, canvas.height, handleGuideRemove],
@@ -100,7 +102,7 @@ export default function CanvasContainerComp({
         },
         [startGuideDrag],
     );
-    const handleGuideMouseDown = useCallback(
+    const handleGuidePointerDown = useCallback(
         (axis: 'v' | 'h', id: number, event: any) => {
             event.stopPropagation();
             event.preventDefault();
@@ -195,7 +197,7 @@ export default function CanvasContainerComp({
                         <BodyRendererComp
                             stopAllModes={stopAllModes}
                             guides={guides}
-                            onGuideMouseDown={handleGuideMouseDown}
+                            onGuidePointerDown={handleGuidePointerDown}
                             onGuideRemove={handleGuideRemove}
                         />
                     </MultiContextRender>

@@ -288,6 +288,9 @@ function BibleBooksMapXMLInputComp({
     useAppEffect(() => {
         editorStore.replaceValue(defaultVale);
     }, [defaultVale, editorStore]);
+    const editorStoreRef = useAppCurrentRef(editorStore);
+    const onChangeRef = useAppCurrentRef(onChange);
+    const bibleKeyRef = useAppCurrentRef(bibleKey);
     const handleMarkupStringParsing = useCallback(
         (markupString: string, lang: LanguageDataType | null) => {
             markupString = markupString.replaceAll('</', '@newline</');
@@ -302,13 +305,13 @@ function BibleBooksMapXMLInputComp({
             if (lang !== null) {
                 innerText = lang.sanitizeText(innerText);
             }
-            onChange(innerText);
-            editorStore.replaceValue(innerText);
+            onChangeRef.current(innerText);
+            editorStoreRef.current.replaceValue(innerText);
         },
-        [onChange, editorStore],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const langCode = getLangCode(locale) ?? 'en';
-    const editorStoreRef = useAppCurrentRef(editorStore);
     const handleResetting = useCallback((event: MouseEvent) => {
         event.stopPropagation();
         editorStoreRef.current.replaceValue(
@@ -334,7 +337,7 @@ function BibleBooksMapXMLInputComp({
     const handleChoosingBibleBooks = useCallback(
         async (event: MouseEvent) => {
             event.stopPropagation();
-            const lang = await getLangDataAsync(locale);
+            const lang = await getLangDataAsync(localeRef.current);
             const bibleBookOptions = lang?.bibleBooks ?? [];
             if (bibleBookOptions.length === 0) {
                 showAppContextMenu(event as any, [
@@ -345,7 +348,7 @@ function BibleBooksMapXMLInputComp({
                 ]);
                 return;
             }
-            const currentBibleKey = bibleKey.trim().toLowerCase();
+            const currentBibleKey = bibleKeyRef.current.trim().toLowerCase();
             const checkIsCurrentBibleKey = (keys: string[]) => {
                 return keys.some(
                     (key) => key.trim().toLowerCase() === currentBibleKey,
@@ -368,7 +371,7 @@ function BibleBooksMapXMLInputComp({
                     );
                     return {
                         menuElement: (
-                            <span data-locale-ff={locale}>
+                            <span data-locale-ff={localeRef.current}>
                                 {bibleBookOption.keys.join(', ')}
                             </span>
                         ),
@@ -377,15 +380,16 @@ function BibleBooksMapXMLInputComp({
                             ? { fontWeight: 'bold' }
                             : undefined,
                         onSelect: () => {
-                            onChange(value);
-                            editorStore.replaceValue(value);
+                            onChangeRef.current(value);
+                            editorStoreRef.current.replaceValue(value);
                         },
                     };
                 }),
                 { maxHeigh: 320 },
             );
         },
-        [bibleKey, editorStore, locale, onChange],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     return (
         <div className="w-100 h-100">

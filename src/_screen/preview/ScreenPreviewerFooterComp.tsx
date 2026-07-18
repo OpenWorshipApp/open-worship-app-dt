@@ -104,12 +104,14 @@ export default function ScreenPreviewerFooterComp() {
     const [stageNumber, setStageNumber] = useState(
         screenManagerBase.stageNumber,
     );
+    const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
     const setStageNumber1 = useCallback(
         (newStageNumber: number) => {
-            screenManagerBase.stageNumber = newStageNumber;
+            screenManagerBaseRef.current.stageNumber = newStageNumber;
             setStageNumber(newStageNumber);
         },
-        [screenManagerBase],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const stageNumberRef = useAppCurrentRef(stageNumber);
     const setStageNumber1Ref = useAppCurrentRef(setStageNumber1);

@@ -318,12 +318,10 @@ export async function checkForAppUpdate(isSilent = true) {
             isWrongCommitHas = updateData.commitID !== systemCommitHash;
         }
 
-        if (
-            !(
-                checkIsVersionOutdated(version, onlineVersion) ||
-                (version === onlineVersion && isWrongCommitHas)
-            )
-        ) {
+        if (!(
+            checkIsVersionOutdated(version, onlineVersion) ||
+            (version === onlineVersion && isWrongCommitHas)
+        )) {
             if (!isSilent) {
                 showNoUpdateAvailableToast();
             }

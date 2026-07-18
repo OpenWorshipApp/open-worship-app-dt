@@ -39,12 +39,12 @@ import { CanvasItemsListComp } from './CanvasItemsListComp';
 export function BodyRendererComp({
     stopAllModes,
     guides,
-    onGuideMouseDown,
+    onGuidePointerDown,
     onGuideRemove,
 }: Readonly<{
     stopAllModes: () => void;
     guides: GuideLineType[];
-    onGuideMouseDown: (axis: 'v' | 'h', id: number, event: any) => void;
+    onGuidePointerDown: (axis: 'v' | 'h', id: number, event: any) => void;
     onGuideRemove: (id: number) => void;
 }>) {
     const parentWidth = useShadowingParentWidth();
@@ -156,7 +156,7 @@ export function BodyRendererComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const toCanvasPointRef = useAppCurrentRef(toCanvasPoint);
-    const handleMouseDown = useCallback((event: any) => {
+    const handlePointerDown = useCallback((event: any) => {
         event.stopPropagation();
         // Start a marquee (rubber-band) selection only when the press
         // begins on the empty canvas background, not on a box.
@@ -183,7 +183,7 @@ export function BodyRendererComp({
         // rect is captured once here instead of on every `mousemove`.
         const element = canvasElementRef.current;
         const bcr = element?.getBoundingClientRect() ?? null;
-        const toPoint = (event: MouseEvent) => {
+        const toPoint = (event: PointerEvent) => {
             return bcr === null || scale === 0
                 ? null
                 : clampToCanvasPoint(
@@ -198,7 +198,7 @@ export function BodyRendererComp({
         // Batch to one state update per frame instead of one per `mousemove`,
         // which can fire far more often than the screen repaints.
         let rafId: number | null = null;
-        const handleMove = (event: MouseEvent) => {
+        const handleMove = (event: PointerEvent) => {
             if (rafId !== null) {
                 return;
             }
@@ -214,10 +214,10 @@ export function BodyRendererComp({
                 });
             });
         };
-        const handleUp = (event: MouseEvent) => {
+        const handleUp = (event: PointerEvent) => {
             // Use the release position directly rather than the (possibly
             // one-frame-stale) throttled `prev.x/y` so the final selection
-            // rect matches exactly where the mouse was released.
+            // rect matches exactly where the pointer was released.
             const releasePoint = toPoint(event);
             setMarquee((prev) => {
                 if (prev !== null) {
@@ -251,17 +251,19 @@ export function BodyRendererComp({
                 return null;
             });
         };
-        document.addEventListener('mousemove', handleMove);
-        document.addEventListener('mouseup', handleUp);
+        document.addEventListener('pointermove', handleMove);
+        document.addEventListener('pointerup', handleUp);
+        document.addEventListener('pointercancel', handleUp);
         return () => {
-            document.removeEventListener('mousemove', handleMove);
-            document.removeEventListener('mouseup', handleUp);
+            document.removeEventListener('pointermove', handleMove);
+            document.removeEventListener('pointerup', handleUp);
+            document.removeEventListener('pointercancel', handleUp);
             if (rafId !== null) {
                 cancelAnimationFrame(rafId);
             }
         };
     }, [marquee !== null, scale, canvas.width, canvas.height]);
-    const handleMouseUp = useCallback((event: any) => {
+    const handlePointerUp = useCallback((event: any) => {
         if (event.target instanceof HTMLTextAreaElement) {
             return;
         }
@@ -311,13 +313,18 @@ export function BodyRendererComp({
                 height: `${canvas.height}px`,
                 transform: `scale(${scale})`,
                 transformOrigin: 'top left',
+                // So a finger drag on the empty canvas rubber-band-selects
+                // instead of scrolling. Scoped to the canvas only — the outer
+                // `overflow: auto` workspace (and its margins) stays pannable
+                // by touch. Boxes/handles set their own `touch-action` too.
+                touchAction: 'none',
             }}
             onDragOver={dragOverHandling}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onContextMenu={handleContextMenuOpening}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
         >
             <CanvasSnapContext value={snapContextValue}>
                 <CanvasItemsListComp canvasItems={canvasItems} />
@@ -326,8 +333,8 @@ export function BodyRendererComp({
                 <CanvasGuideLineComp
                     key={guide.id}
                     guide={guide}
-                    onMouseDown={(event) => {
-                        onGuideMouseDown(guide.axis, guide.id, event);
+                    onPointerDown={(event) => {
+                        onGuidePointerDown(guide.axis, guide.id, event);
                     }}
                     onRemove={() => onGuideRemove(guide.id)}
                 />

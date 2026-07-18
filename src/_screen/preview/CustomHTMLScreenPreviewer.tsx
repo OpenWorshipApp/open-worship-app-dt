@@ -34,12 +34,25 @@ export default class CustomHTMLScreenPreviewer extends HTMLElement {
         if (parentElement === null) {
             return;
         }
-        const scale = parentElement.clientWidth / screenManagerBase.width;
+        // Contain the preview within the parent box. In normal view the
+        // parent's height already tracks the screen's aspect ratio, so width is
+        // the binding dimension; but in full view the parent can be
+        // proportionally wider than the screen, and scaling by width alone
+        // overflows the height and clips the bottom (transform-origin top-left +
+        // the parent's overflow:hidden). Scale by whichever dimension is
+        // smaller and center the result within the leftover space.
+        const { width, height } = screenManagerBase;
+        const scale = Math.min(
+            parentElement.clientWidth / width,
+            parentElement.clientHeight / height,
+        );
+        const offsetX = (parentElement.clientWidth - width * scale) / 2;
+        const offsetY = (parentElement.clientHeight - height * scale) / 2;
         const div = this.mountPoint;
-        div.style.width = `${screenManagerBase.width}px`;
-        div.style.height = `${screenManagerBase.height}px`;
-        div.style.transform = `scale(${scale})`;
+        div.style.width = `${width}px`;
+        div.style.height = `${height}px`;
         div.style.transformOrigin = 'top left';
+        div.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     }
     connectedCallback() {
         if (this.screenId === -1) {
@@ -59,7 +72,7 @@ export default class CustomHTMLScreenPreviewer extends HTMLElement {
         screenManagerBase.getElementsByDomSelector = (domSelector: string) => {
             return Array.from(div.querySelectorAll(domSelector));
         };
-        screenManagerBase.registerEventListener(['refresh'], () => {
+        screenManagerBase.registerEventListener(['scale'], () => {
             this.setMountPointScale(screenManagerBase);
             this.attemptTimeout(() => {
                 this.setMountPointScale(screenManagerBase);

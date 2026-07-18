@@ -20,7 +20,7 @@ export default function MiniScreenComp() {
     const setPreviewScale1 = useCallback((size: number) => {
         setPreviewScaleRef.current(size);
         for (const screenManager of getAllScreenManagers()) {
-            screenManager.fireRefreshEvent();
+            screenManager.fireScaleEvent();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

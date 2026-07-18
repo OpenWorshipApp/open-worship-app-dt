@@ -24,11 +24,14 @@ export default function ScreenPreviewerHeaderComp({
     useScreenManagerEvents(['instance'], screenManagerBase, () => {
         setIsLocked(screenManagerBase.isLocked);
     });
+    const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
     const handleToggleLock = useCallback(() => {
+        const screenManagerBase = screenManagerBaseRef.current;
         const newIsLocked = !screenManagerBase.isLocked;
         setIsLocked(newIsLocked);
         screenManagerBase.setIsLockedWithSyncGroup(newIsLocked);
-    }, [screenManagerBase]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const isFullViewRef = useAppCurrentRef(isFullView);
     const setIsFullViewRef = useAppCurrentRef(setIsFullView);
     const handleToggleFullView = useCallback(() => {

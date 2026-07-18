@@ -1,4 +1,5 @@
 import { genVideoIDFromSrc } from '../screenHelpers';
+import { YOUTUBE_PLAYING_ATTR } from '../../helper/mediaControlHelpers';
 
 // YouTube IFrame API `playerState` values.
 const YT_STATE_ENDED = 0;
@@ -189,8 +190,12 @@ export class SlideYouTubePlayer {
         }
         this.lastState = state;
         if (state === YT_STATE_PLAYING) {
+            // Expose the playing state to the DOM so the media guards
+            // (`checkMediaPlaying`) can detect this otherwise-opaque iframe.
+            this.iframe.setAttribute(YOUTUBE_PLAYING_ATTR, '');
             this.callbacks.onPlay?.(this.currentTime);
         } else if (state === YT_STATE_PAUSED || state === YT_STATE_ENDED) {
+            this.iframe.removeAttribute(YOUTUBE_PLAYING_ATTR);
             if (this.pausedBySync) {
                 this.pausedBySync = false;
             } else {
@@ -231,6 +236,7 @@ export class SlideYouTubePlayer {
     destroy() {
         this.isDisposed = true;
         this.stopHandshake();
+        this.iframe.removeAttribute(YOUTUBE_PLAYING_ATTR);
         window.removeEventListener('message', this.boundOnMessage);
         this.iframe.removeEventListener('load', this.boundSendListening);
     }

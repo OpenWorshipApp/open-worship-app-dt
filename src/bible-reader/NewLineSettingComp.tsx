@@ -9,12 +9,14 @@ export default function NewLineSettingComp() {
     const [shouldNewLine, setShouldNewLine] = useState(
         viewController.shouldNewLine,
     );
+    const viewControllerRef = useAppCurrentRef(viewController);
     const setShouldNewLine1 = useCallback(
         (newValue: boolean) => {
             setShouldNewLine(newValue);
-            viewController.shouldNewLine = newValue;
+            viewControllerRef.current.shouldNewLine = newValue;
         },
-        [viewController],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const [useModelNewLine, setUseModelNewLine] = useState(
         viewController.shouldModelNewLine,
@@ -22,9 +24,10 @@ export default function NewLineSettingComp() {
     const setUseModelNewLine1 = useCallback(
         (newValue: boolean) => {
             setUseModelNewLine(newValue);
-            viewController.shouldModelNewLine = newValue;
+            viewControllerRef.current.shouldModelNewLine = newValue;
         },
-        [viewController],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     const setShouldNewLine1Ref = useAppCurrentRef(setShouldNewLine1);
     const handleNewLineChange = useCallback(

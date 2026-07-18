@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { notifyElementHighlight } from '../../helper/domHelpers';
 import { bringDomToCenterView } from '../../helper/helpers';
 import { APP_DOCUMENT_ITEM_CLASS } from './appDocumentConstants';
+import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function RenderSlideIndexComp({
     viewIndex,
@@ -14,11 +15,15 @@ export default function RenderSlideIndexComp({
     isInSlide?: boolean;
     title?: string;
 }>) {
+    const dataKeyRef = useAppCurrentRef(dataKey);
+    const isInSlideRef = useAppCurrentRef(isInSlide);
     const handleClicking = useCallback(() => {
-        if (isInSlide) {
+        if (isInSlideRef.current) {
             return;
         }
-        const query = `[data-slide-badge-key="${CSS.escape(`slide-${dataKey}`)}"]`;
+        const query = `[data-slide-badge-key="${CSS.escape(
+            `slide-${dataKeyRef.current}`,
+        )}"]`;
         const elementGetter = () => {
             const badgeElement = document.querySelector(query);
             if (badgeElement === null) {
@@ -33,7 +38,8 @@ export default function RenderSlideIndexComp({
             moveToView: bringDomToCenterView,
             type: 'warning',
         });
-    }, [dataKey, isInSlide]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             onClick={handleClicking}

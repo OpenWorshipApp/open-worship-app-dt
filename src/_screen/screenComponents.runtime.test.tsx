@@ -65,6 +65,7 @@ vi.mock('./managers/screenManagerHooks', () => ({
     ScreenManagerBaseContext: ({ children }: any) => {
         return <div data-screen-manager-context="true">{children}</div>;
     },
+    useOptionalScreenManagerBaseContext: () => screenManager,
     useScreenManagerBaseContext: () => screenManager,
     useScreenManagerContext: () => screenManager,
     useScreenManagerEvents: useScreenManagerEventsMock,
@@ -103,6 +104,8 @@ vi.mock('../others/themeHelpers', () => ({
 
 vi.mock('../helper/domHelpers', () => ({
     checkIsZoomed: () => false,
+    getParamKeyValue: (urlOrPathname: string, key: string) =>
+        new URLSearchParams(urlOrPathname).get(key),
 }));
 
 vi.mock('../others/color/colorHelpers', () => ({
@@ -129,6 +132,7 @@ function createScreenManagerStub() {
     const hide = vi.fn();
     const sendScreenMessage = vi.fn();
     return {
+        screenId: 5,
         hide,
         sendScreenMessage,
         getElementsByDomSelector: vi.fn(() => []),
@@ -152,6 +156,7 @@ function createScreenManagerStub() {
         },
         screenVaryAppDocumentManager: {
             render: vi.fn(),
+            checkIsMediaPlaying: vi.fn(),
             div: null,
             containerStyle: {
                 position: 'absolute',
@@ -309,23 +314,29 @@ describe('screen component runtime behavior', () => {
         root = createRoot(container);
     });
 
-    test('returns null for invalid screen ids and missing screen managers', async () => {
+    test('renders an error message for invalid screen ids and missing screen managers', async () => {
         const { default: ScreenAppComp } = await import('./ScreenAppComp');
 
         globalThis.history.replaceState({}, '', '?screenId=');
         await act(async () => {
             root.render(<ScreenAppComp />);
         });
-        expect(container.innerHTML).toBe('');
-        expect(createScreenManagerMock.mock.calls[0]?.[0]).toBeNaN();
+        expect(container.textContent).toContain('Screen ID is not provided');
+        expect(container.querySelector('#background')).toBeNull();
+        expect(createScreenManagerMock).not.toHaveBeenCalled();
 
+        await act(async () => {
+            root.unmount();
+        });
+        root = createRoot(container);
         globalThis.history.replaceState({}, '', '?screenId=7');
         createScreenManagerMock.mockReset();
         createScreenManagerMock.mockReturnValue(null);
         await act(async () => {
             root.render(<ScreenAppComp />);
         });
-        expect(container.innerHTML).toBe('');
+        expect(container.textContent).toContain('Screen ID is not provided');
+        expect(createScreenManagerMock).toHaveBeenCalledWith(7);
     });
 
     test('renders background variants and camera streams', async () => {

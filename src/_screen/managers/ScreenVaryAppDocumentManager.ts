@@ -1001,11 +1001,14 @@ class ScreenVaryAppDocumentManager
         return super.getAllInstancesBase<ScreenVaryAppDocumentManager>();
     }
 
-    checkIsMediaPlaying() {
+    checkIsMediaPlaying(isWithMessage = true) {
         if (this.div === null) {
             return false;
         }
-        return checkMediaPlaying({ targetElement: this.div });
+        return checkMediaPlaying({
+            targetElement: this.div,
+            withMessage: isWithMessage,
+        });
     }
 }
 

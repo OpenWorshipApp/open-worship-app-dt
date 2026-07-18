@@ -65,6 +65,9 @@ const editorStyle = `
 .app-box-editor.controllable {
   outline: 2px dashed green;
   cursor: move;
+  /* Claim touch gestures for dragging the box; without this the browser
+     pans/zooms the canvas instead of moving the box on a touchscreen. */
+  touch-action: none;
 }
 .app-box-editor.controllable.locked {
   outline: 2px dashed orange;
@@ -108,6 +111,9 @@ const editorStyle = `
   border-radius: 100px;
   border: 1px solid white;
   user-select: none;
+  /* Same as the box body: a touch drag on a resize/rotate handle must drive
+     the gesture, not scroll the canvas. */
+  touch-action: none;
   /* The -7px offsets below are half of 14px, so the handle only straddles the
      box edge if its border counts inside that 14px. Without this the shadow
      root's default content-box makes each handle 16px and sits it a pixel
@@ -116,6 +122,16 @@ const editorStyle = `
 }
 .editor-controller-box-wrapper .object:hover {
   background-color: #0d47a1;
+}
+/* A finger is far coarser than the 14px dots, so on touch devices grow an
+   invisible hit area around each handle (events on ::before target the handle).
+   Fine pointers (mouse) keep the exact 14px target. */
+@media (pointer: coarse) {
+  .editor-controller-box-wrapper .object::before {
+    content: '';
+    position: absolute;
+    inset: -9px;
+  }
 }
 .editor-controller-box-wrapper .object.left-top {
   top: -7px;

@@ -50,16 +50,23 @@ export default function RenderVerseTextDetailComp({
     };
     const viewController = useBibleItemsViewControllerContext();
     const isExtraVerses = extraVerseInfoList.length > 0;
+    const viewControllerRef = useAppCurrentRef(viewController);
+    const bibleItemRef = useAppCurrentRef(bibleItem);
+    const verseInfoRef = useAppCurrentRef(verseInfo);
     const loadAudio = useCallback(
         async (isForce?: boolean) => {
-            const isAudioEnabled =
-                await checkIsAIAudioAvailableForBible(bibleItem);
+            const isAudioEnabled = await checkIsAIAudioAvailableForBible(
+                bibleItemRef.current,
+            );
             if (!isAudioEnabled) {
                 return;
             }
-            const { bibleVersesKey } = verseInfo;
+            const { bibleVersesKey } = verseInfoRef.current;
             setAudioSrcMap1(bibleVersesKey, undefined);
-            const speechFile = await bibleTextToSpeech(verseInfo, isForce);
+            const speechFile = await bibleTextToSpeech(
+                verseInfoRef.current,
+                isForce,
+            );
             if (speechFile === null) {
                 setAudioSrcMap1(bibleVersesKey, null);
                 return;
@@ -69,10 +76,9 @@ export default function RenderVerseTextDetailComp({
                 FileSource.getInstance(speechFile).src,
             );
         },
-        [bibleItem, verseInfo],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
-    const viewControllerRef = useAppCurrentRef(viewController);
-    const bibleItemRef = useAppCurrentRef(bibleItem);
     const loadAudioRef = useAppCurrentRef(loadAudio);
     const handleVerseClicking = useCallback((event: any) => {
         if (getSelectedText()) {

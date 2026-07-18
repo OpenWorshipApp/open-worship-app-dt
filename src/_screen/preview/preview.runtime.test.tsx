@@ -80,6 +80,7 @@ function createScreenManager(
         clear: vi.fn(),
         delete: vi.fn(),
         fireRefreshEvent: vi.fn(),
+        fireScaleEvent: vi.fn(),
         receiveScreenDropped: vi.fn(),
         registerEventListener: vi.fn(
             (events: string[], callback: () => void) => {
@@ -633,8 +634,8 @@ describe('preview runtime interactions', () => {
             );
         });
 
-        expect(screenManager.fireRefreshEvent).toHaveBeenCalled();
-        expect(otherScreenManager.fireRefreshEvent).toHaveBeenCalled();
+        expect(screenManager.fireScaleEvent).toHaveBeenCalled();
+        expect(otherScreenManager.fireScaleEvent).toHaveBeenCalled();
         expect(handleAutoHideMock).toHaveBeenCalled();
     });
 

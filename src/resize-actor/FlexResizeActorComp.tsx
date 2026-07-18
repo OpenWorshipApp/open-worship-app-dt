@@ -249,6 +249,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         const isPlaying = checkMediaPlaying({
             targetElement: divElement,
             withMessage: false,
+            includeYouTube: true,
         });
         if (isPlaying) {
             return false;
@@ -293,6 +294,7 @@ export default class FlexResizeActorComp extends Component<Props, object> {
         const isFirst = CloseTypeListLeft.includes(closeType);
         const isPlaying = checkMediaPlaying({
             targetElement: isFirst ? this.preNode : this.nextNode,
+            includeYouTube: true,
         });
         if (isPlaying) {
             return;

@@ -111,6 +111,32 @@ describe('slideYouTubeSyncHelpers', () => {
         expect(player.isPlaying).toBe(false);
     });
 
+    test('marks the iframe playing so the media guards can detect it', () => {
+        const { player, iframe, fakeWin } = makePlayer({});
+        expect(iframe.hasAttribute('data-youtube-playing')).toBe(false);
+
+        sendMessage(fakeWin, {
+            event: 'infoDelivery',
+            info: { currentTime: 0, playerState: 1 },
+        });
+        expect(iframe.hasAttribute('data-youtube-playing')).toBe(true);
+
+        sendMessage(fakeWin, {
+            event: 'infoDelivery',
+            info: { currentTime: 2, playerState: 2 },
+        });
+        expect(iframe.hasAttribute('data-youtube-playing')).toBe(false);
+
+        // Still playing again, then disposed → the marker must not linger.
+        sendMessage(fakeWin, {
+            event: 'infoDelivery',
+            info: { currentTime: 3, playerState: 1 },
+        });
+        expect(iframe.hasAttribute('data-youtube-playing')).toBe(true);
+        player.destroy();
+        expect(iframe.hasAttribute('data-youtube-playing')).toBe(false);
+    });
+
     test('ignores messages from other sources and non-YouTube origins', () => {
         const onPlay = vi.fn();
         const { fakeWin } = makePlayer({ onPlay });

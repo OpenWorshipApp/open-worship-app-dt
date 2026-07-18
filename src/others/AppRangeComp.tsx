@@ -188,13 +188,21 @@ export default function AppRangeComp({
     useAppEffect(() => {
         setLocalValue(roundSize(value, defaultSize, fixedSize));
     }, [value, defaultSize, fixedSize]);
+    const defaultSizeRef = useAppCurrentRef(defaultSize);
+    const fixedSizeRef = useAppCurrentRef(fixedSize);
+    const setValueRef = useAppCurrentRef(setValue);
     const setLocalValue1 = useCallback(
         (newValue: number) => {
-            newValue = roundSize(newValue, defaultSize, fixedSize);
+            newValue = roundSize(
+                newValue,
+                defaultSizeRef.current,
+                fixedSizeRef.current,
+            );
             setLocalValue(newValue);
-            setValue(newValue);
+            setValueRef.current(newValue);
         },
-        [defaultSize, fixedSize, setValue],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
     if (defaultSize.max <= defaultSize.min) {
         throw new Error(
@@ -204,7 +212,6 @@ export default function AppRangeComp({
     }
     const setLocalValue1Ref = useAppCurrentRef(setLocalValue1);
     const localValueRef = useAppCurrentRef(localValue);
-    const defaultSizeRef = useAppCurrentRef(defaultSize);
     const handleZoomOut = useCallback(() => {
         setLocalValue1Ref.current(
             localValueRef.current - defaultSizeRef.current.step,

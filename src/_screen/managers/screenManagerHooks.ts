@@ -16,8 +16,12 @@ export const ScreenManagerBaseContext = createContext<ScreenManagerBase | null>(
     null,
 );
 
+export function useOptionalScreenManagerBaseContext(): ScreenManagerBase | null {
+    return use(ScreenManagerBaseContext);
+}
+
 export function useScreenManagerBaseContext(): ScreenManagerBase {
-    const screenManagerBase = use(ScreenManagerBaseContext);
+    const screenManagerBase = useOptionalScreenManagerBaseContext();
     if (screenManagerBase === null) {
         throw new Error(
             'useScreenManager must be used within a ScreenManagerBase ' +

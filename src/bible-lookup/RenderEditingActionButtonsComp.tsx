@@ -135,9 +135,6 @@ export default function RenderEditingActionButtonsComp({
         });
     }, []);
     const viewController = useLookupBibleItemControllerContext();
-    const onDone = useCallback(() => {
-        viewController.onLookupSaveBibleItem();
-    }, [viewController]);
     useKeyboardRegistering(
         eventMaps,
         (event) => {
@@ -163,6 +160,10 @@ export default function RenderEditingActionButtonsComp({
             bibleItemRef.current,
             bibleItemRef.current,
         );
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const onDone = useCallback(() => {
+        viewControllerRef.current.onLookupSaveBibleItem();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const onDoneRef = useAppCurrentRef(onDone);

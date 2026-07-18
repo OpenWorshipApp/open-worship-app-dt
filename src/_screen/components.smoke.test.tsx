@@ -105,6 +105,8 @@ vi.mock('../helper/settingHelpers', () => ({
 vi.mock('../helper/domHelpers', () => ({
     checkIsZoomed: () => false,
     handleAutoHide: vi.fn(),
+    getParamKeyValue: (urlOrPathname: string, key: string) =>
+        new URLSearchParams(urlOrPathname).get(key),
 }));
 
 vi.mock('../others/AppRangeComp', () => ({
@@ -266,6 +268,7 @@ vi.mock('./managers/screenManagerHooks', async () => {
     const ScreenManagerBaseContext = createContext<any>(screenManagerMock);
     return {
         ScreenManagerBaseContext,
+        useOptionalScreenManagerBaseContext: () => screenManagerMock,
         useScreenManagerBaseContext: () => screenManagerMock,
         useScreenManagerContext: () => screenManagerMock,
         useScreenManagerEvents: vi.fn(),
@@ -543,6 +546,12 @@ describe('screen component smoke tests', () => {
             configurable: true,
             value: 640,
         });
+        // Height matches the 1280x720 screen aspect ratio, so the contain math
+        // in setMountPointScale binds on neither axis (offsets stay 0).
+        Object.defineProperty(wrapper, 'clientHeight', {
+            configurable: true,
+            value: 360,
+        });
         document.body.appendChild(wrapper);
 
         const element = document.createElement(
@@ -556,6 +565,8 @@ describe('screen component smoke tests', () => {
 
         expect(element.shadowRoot).not.toBeNull();
         expect(createRootRenderMock).toHaveBeenCalledOnce();
-        expect((element as any).mountPoint.style.transform).toBe('scale(0.5)');
+        expect((element as any).mountPoint.style.transform).toBe(
+            'translate(0px, 0px) scale(0.5)',
+        );
     });
 });

@@ -405,10 +405,14 @@ function serializeURL(urlObject: URL, urlOrPathname: string) {
         : urlObject.pathname + urlObject.search + urlObject.hash;
 }
 
-function getParamKeyValue(urlOrPathname: string, key: string) {
+export function getParamKeyValue(urlOrPathname: string, key: string) {
     return toURLObject(urlOrPathname).searchParams.get(key);
 }
-function setParamKeyValue(urlOrPathname: string, key: string, value: string) {
+export function setParamKeyValue(
+    urlOrPathname: string,
+    key: string,
+    value: string,
+) {
     const urlObject = toURLObject(urlOrPathname);
     urlObject.searchParams.set(key, value);
     return serializeURL(urlObject, urlOrPathname);

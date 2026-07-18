@@ -5,7 +5,7 @@ import ScreenBackgroundColorComp from './ScreenBackgroundColorComp';
 import ScreenBackgroundImageComp from './ScreenBackgroundImageComp';
 import ScreenBackgroundVideoComp from './ScreenBackgroundVideoComp';
 import type { AppColorType } from '../others/color/colorHelpers';
-import { useAppEffect } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { getScreenManagerBase } from './managers/screenManagerBaseHelpers';
 import {
     useScreenManagerContext,
@@ -22,8 +22,11 @@ import { tran } from '../lang/langHelpers';
 export default function ScreenBackgroundComp() {
     const screenManager = useScreenManagerContext();
     const { screenBackgroundManager } = screenManager;
+    const screenBackgroundManagerRef = useAppCurrentRef(
+        screenBackgroundManager,
+    );
     useScreenManagerEvents(['refresh'], screenManager, () => {
-        screenBackgroundManager.render();
+        screenBackgroundManagerRef.current.render();
     });
     const div = useRef<HTMLDivElement>(null);
     useAppEffect(() => {

@@ -52,8 +52,7 @@ export default function ForegroundStopwatchComp() {
     )
         .map(
             ([screenId, data]):
-                | [number, ForegroundStopwatchDataType]
-                | null => {
+                [number, ForegroundStopwatchDataType] | null => {
                 if (data.stopwatchData === null) {
                     return null;
                 }

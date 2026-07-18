@@ -4,11 +4,7 @@ import EventHandler from './EventHandler';
 import KeyboardEventListener from './KeyboardEventListener';
 
 export type AppWidgetType =
-    | 'root'
-    | 'bible-lookup'
-    | 'slide-edit'
-    | 'setting'
-    | 'context-menu';
+    'root' | 'bible-lookup' | 'slide-edit' | 'setting' | 'context-menu';
 export type OpenCloseType = 'open' | 'close';
 export type WindowEventMapperType = {
     widget: AppWidgetType;

@@ -9,8 +9,7 @@ import type { ListenerType } from './EventHandler';
 import EventHandler from './EventHandler';
 
 export type AppDocumentListEventType =
-    | 'app-document-item-select'
-    | 'app-document-item-sizing';
+    'app-document-item-select' | 'app-document-item-sizing';
 
 export default class AppDocumentListEventListener extends EventHandler<AppDocumentListEventType> {
     static readonly eventNamePrefix: string = 'app-document-list';

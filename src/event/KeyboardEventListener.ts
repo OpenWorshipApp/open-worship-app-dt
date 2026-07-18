@@ -75,8 +75,7 @@ export type RegisteredEventMapperType = EventMapperType & {
     listener: KeyboardListenerType;
 };
 export type KeyboardListenerType =
-    | ((event: KeyboardEvent | ReactKeyboardEvent<any>) => void)
-    | (() => void);
+    ((event: KeyboardEvent | ReactKeyboardEvent<any>) => void) | (() => void);
 
 export function toShortcutKey(eventMapper: EventMapperType) {
     return KeyboardEventListener.toShortcutKey(eventMapper);

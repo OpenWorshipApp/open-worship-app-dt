@@ -31,6 +31,7 @@ export type ScreenManagerEventType =
     | 'visible'
     | 'display-id'
     | 'refresh'
+    | 'scale'
     | 'color-note-update';
 
 export default class ScreenManagerBase
@@ -134,7 +135,7 @@ export default class ScreenManagerBase
         }
     }
 
-    checkIsMediaPlaying() {
+    checkIsMediaPlaying(isWithMessage = true) {
         const element = this.divRef?.deref();
         if (element === undefined) {
             return false;
@@ -144,7 +145,8 @@ export default class ScreenManagerBase
         // fires.
         return checkMediaPlaying({
             targetElement: element,
-            withMessage: false,
+            withMessage: isWithMessage,
+            includeYouTube: true,
         });
     }
 
@@ -178,7 +180,7 @@ export default class ScreenManagerBase
         ScreenVaryAppDocumentManager.enableSyncGroup(this.screenId);
         ScreenBibleManager.enableSyncGroup(this.screenId);
         ScreenForegroundManager.enableSyncGroup(this.screenId);
-        this.sendSyncScreen();
+        this.sendSyncScreen(true);
     }
 
     checkIsSyncGroupEnabled(Class: { eventNamePrefix: string }) {
@@ -249,12 +251,13 @@ export default class ScreenManagerBase
     }
 
     fireRefreshEvent() {
-        const isPlaying = this.checkIsMediaPlaying();
-        if (isPlaying) {
-            return;
-        }
         this.addPropEvent('refresh');
         ScreenManagerBase.fireRefreshEvent();
+    }
+
+    fireScaleEvent() {
+        this.addPropEvent('scale');
+        ScreenManagerBase.fireScaleEvent();
     }
 
     static fireUpdateEvent() {
@@ -277,7 +280,11 @@ export default class ScreenManagerBase
         this.addPropEvent('refresh');
     }
 
-    sendSyncScreen() {
+    static fireScaleEvent() {
+        this.addPropEvent('scale');
+    }
+
+    sendSyncScreen(_shouldFromOtherGroupMember = false) {
         throw new Error('sendSyncScreen is not implemented.');
     }
 

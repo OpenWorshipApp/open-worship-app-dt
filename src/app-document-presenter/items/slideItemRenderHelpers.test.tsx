@@ -272,8 +272,7 @@ describe('slideItemRenderHelpers', () => {
         );
 
         const applyColor = chooseColorNoteMock.mock.calls[0]?.[1] as
-            | ((color: string | null) => void)
-            | undefined;
+            ((color: string | null) => void) | undefined;
         applyColor?.('#654321');
 
         expect(setColorNoteFilePathSettingMock).toHaveBeenCalledWith(

@@ -2,14 +2,23 @@ import './ScreenCloseButtonComp.scss';
 
 import { useCallback } from 'react';
 
-import { useScreenManagerBaseContext } from './managers/screenManagerHooks';
+import { useOptionalScreenManagerBaseContext } from './managers/screenManagerHooks';
 import { useAppCurrentRef } from '../helper/appHooks';
 
-export default function ScreenCloseButtonComp() {
-    const screenManagerBase = useScreenManagerBaseContext();
+export default function ScreenCloseButtonComp({
+    isForceShowing,
+}: {
+    isForceShowing?: boolean;
+}) {
+    const screenManagerBase = useOptionalScreenManagerBaseContext();
     const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
     const handleHiding = useCallback(() => {
-        screenManagerBaseRef.current.hide();
+        const screenManagerBase = screenManagerBaseRef.current;
+        if (screenManagerBase === null) {
+            globalThis.close();
+            return;
+        }
+        screenManagerBase.hide();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
@@ -17,6 +26,7 @@ export default function ScreenCloseButtonComp() {
             id="close"
             style={{
                 borderRadius: '0 0 0 1em',
+                ...(isForceShowing ? { opacity: 1 } : {}),
             }}
             onClick={handleHiding}
         >

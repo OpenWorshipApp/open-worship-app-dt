@@ -126,8 +126,7 @@ describe('varyAppDocumentHelpers', () => {
             },
         );
         const getter = notifyElementHighlightMock.mock.calls[0]?.[0] as
-            | (() => Element | null)
-            | undefined;
+            (() => Element | null) | undefined;
         expect(getter?.()).toBe(noteEditor);
 
         focusNoteEditor(createVarySlide(2, { isSlide: false, isPptx: true }));

@@ -121,6 +121,9 @@ export function CanvasRulerComp({
                 top: isHorizontal ? -RULER_THICKNESS : 0,
                 left: isHorizontal ? 0 : -RULER_THICKNESS,
                 cursor: isHorizontal ? 'row-resize' : 'col-resize',
+                // Let a finger drag off the ruler to create a guide instead
+                // of scrolling the workspace.
+                touchAction: 'none',
                 // `.slide-canvas-editor` gets its own stacking context from
                 // `transform: scale(...)`, so without an explicit z-index
                 // here it paints over the ruler even though the ruler is
@@ -129,7 +132,7 @@ export function CanvasRulerComp({
                 // own the higher values in `others/variables.scss`.
                 zIndex: 2,
             }}
-            onMouseDown={(event) => {
+            onPointerDown={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
                 onCreateGuide(event.clientX, event.clientY);

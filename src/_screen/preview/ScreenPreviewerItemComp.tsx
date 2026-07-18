@@ -47,9 +47,9 @@ export default function ScreenPreviewerItemComp({
         width * (screenManagerDim.height / screenManagerDim.width),
     );
     const screenManagerRef = useAppCurrentRef(screenManager);
-    // The custom-html previewer only rescales on a refresh event, so whenever
-    // its container width changes (full view toggled via the button or exited
-    // with Escape, window resize, zoom) fire a refresh to recompute the scale.
+    // The custom-html previewer rescales on a scale event, so whenever its
+    // container width changes (full view toggled via the button or exited
+    // with Escape, window resize, zoom) fire a scale event to recompute it.
     // Removing `app-full-view` always resizes the card, so this observer also
     // reconciles the React state when Escape (handled globally by removing the
     // class from the DOM) exits full view, preventing a later re-render from
@@ -72,11 +72,17 @@ export default function ScreenPreviewerItemComp({
             return;
         }
         let lastWidth = fitElement.clientWidth;
+        let lastHeight = fitElement.clientHeight;
         const observer = new ResizeObserver(() => {
             const nextWidth = fitElement.clientWidth;
-            if (nextWidth !== lastWidth) {
+            const nextHeight = fitElement.clientHeight;
+            // Rescale on either dimension: full view is height-constrained, so a
+            // pure-height resize must re-run the contain math (see
+            // CustomHTMLScreenPreviewer.setMountPointScale).
+            if (nextWidth !== lastWidth || nextHeight !== lastHeight) {
                 lastWidth = nextWidth;
-                screenManagerRef.current.fireRefreshEvent();
+                lastHeight = nextHeight;
+                screenManagerRef.current.fireScaleEvent();
             }
             const cardElement = divRef.current;
             if (

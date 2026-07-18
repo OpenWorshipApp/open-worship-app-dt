@@ -312,8 +312,7 @@ describe('others basic components', () => {
 
     test('shows suspense fallback until lazy content resolves', async () => {
         let resolveLazy:
-            | ((value: { default: () => ReactElement }) => void)
-            | null = null;
+            ((value: { default: () => ReactElement }) => void) | null = null;
         const LazyChild = lazy(
             () =>
                 new Promise<{ default: () => ReactElement }>((resolve) => {

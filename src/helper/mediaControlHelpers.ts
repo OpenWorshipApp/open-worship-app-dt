@@ -13,6 +13,12 @@ export function showMediaPlayingToast() {
     );
 }
 
+// An embedded YouTube video plays inside a cross-origin `<iframe>` whose
+// paused/playing state is not readable from the DOM. `SlideYouTubePlayer`
+// stamps this attribute on the iframe while the video is playing (and clears it
+// on pause/end) so the same deep-search media guard can notice it.
+export const YOUTUBE_PLAYING_ATTR = 'data-youtube-playing';
+
 // Depth-first search for a non-paused media element, piercing shadow roots
 // (the slide/preview content is rendered inside shadow DOM, which
 // `querySelectorAll` does not traverse on its own).
@@ -34,16 +40,40 @@ function hasPlayingMediaDeep(root: ParentNode, query: string): boolean {
     return false;
 }
 
+// The YouTube counterpart of `hasPlayingMediaDeep`. Kept separate (rather than
+// folded into the media query) so the callers that only care about opted-in
+// `<audio>`/`<video>` — the unload guard and the background-audio toggle — are
+// unaffected; only callers that pass `includeYouTube` pay for it.
+function hasPlayingYouTubeDeep(root: ParentNode): boolean {
+    if (root.querySelector(`iframe[${YOUTUBE_PLAYING_ATTR}]`) !== null) {
+        return true;
+    }
+    for (const element of root.querySelectorAll('*')) {
+        if (
+            element instanceof HTMLElement &&
+            element.shadowRoot !== null &&
+            hasPlayingYouTubeDeep(element.shadowRoot)
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 export function checkMediaPlaying({
     query = 'audio,video',
     targetElement = document,
     withMessage = true,
+    includeYouTube = false,
 }: {
     query?: string;
     targetElement?: ParentNode;
     withMessage?: boolean;
+    includeYouTube?: boolean;
 }) {
-    const isPlaying = hasPlayingMediaDeep(targetElement, query);
+    const isPlaying =
+        hasPlayingMediaDeep(targetElement, query) ||
+        (includeYouTube && hasPlayingYouTubeDeep(targetElement));
     if (isPlaying && withMessage) {
         showMediaPlayingToast();
     }

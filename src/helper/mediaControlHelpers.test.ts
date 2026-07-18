@@ -16,10 +16,12 @@ vi.mock('../toast/toastHelpers', () => ({
 
 import {
     checkBlockingMediaPlaying,
+    checkMediaPlaying,
     handleAudioPausing,
     handleAudioPlaying,
     handleMediaPlaying,
     handleMediaStopped,
+    YOUTUBE_PLAYING_ATTR,
 } from './mediaControlHelpers';
 
 function mockPaused(mediaElement: HTMLMediaElement, getPaused: () => boolean) {
@@ -80,6 +82,28 @@ describe('audio and video unload blocking', () => {
             'Media playing',
             expect.stringContaining('pause all audio and video'),
         );
+    });
+
+    test('detects a playing YouTube iframe only when opted in, piercing shadow roots', () => {
+        const shadowHost = document.createElement('div');
+        const shadowRoot = shadowHost.attachShadow({ mode: 'open' });
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute(YOUTUBE_PLAYING_ATTR, '');
+        shadowRoot.appendChild(iframe);
+        document.body.appendChild(shadowHost);
+
+        // The default (opted-out) guard ignores YouTube — a background-audio
+        // toggle or unload check must not be tripped by a video embed.
+        expect(checkMediaPlaying({ withMessage: false })).toBe(false);
+
+        expect(
+            checkMediaPlaying({ withMessage: false, includeYouTube: true }),
+        ).toBe(true);
+
+        iframe.removeAttribute(YOUTUBE_PLAYING_ATTR);
+        expect(
+            checkMediaPlaying({ withMessage: false, includeYouTube: true }),
+        ).toBe(false);
     });
 
     test('allows unloading after a playing video is removed', () => {

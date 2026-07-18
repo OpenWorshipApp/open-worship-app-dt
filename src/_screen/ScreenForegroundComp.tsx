@@ -1,3 +1,4 @@
+import { useAppCurrentRef } from '../helper/appHooks';
 import './ScreenForegroundComp.scss';
 
 import {
@@ -7,10 +8,13 @@ import {
 
 export default function ScreenForegroundComp() {
     const screenManager = useScreenManagerContext();
-    useScreenManagerEvents(['refresh'], screenManager, () => {
-        screenManager.screenForegroundManager.render();
-    });
     const { screenForegroundManager } = screenManager;
+    const screenForegroundManagerRef = useAppCurrentRef(
+        screenForegroundManager,
+    );
+    useScreenManagerEvents(['refresh'], screenManager, () => {
+        screenForegroundManagerRef.current.render();
+    });
     return (
         <div
             id="foreground"

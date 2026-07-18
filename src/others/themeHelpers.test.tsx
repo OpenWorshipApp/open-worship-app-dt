@@ -123,8 +123,7 @@ describe('initHelpers', () => {
         const EventHandler = (await import('../event/EventHandler')).default;
         const snapshots: Array<{ theme: string; themeSource: string }> = [];
         let setThemeSource:
-            | ((themeSource: 'light' | 'dark' | 'system') => void)
-            | null = null;
+            ((themeSource: 'light' | 'dark' | 'system') => void) | null = null;
 
         function Probe() {
             const current = initHelpers.useThemeSource();

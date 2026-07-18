@@ -2,17 +2,17 @@ import type { GuideLineType, SnapLinesType } from './canvasSnapGuideHelpers';
 
 export function CanvasGuideLineComp({
     guide,
-    onMouseDown,
+    onPointerDown,
     onRemove,
 }: Readonly<{
     guide: GuideLineType;
-    onMouseDown: (event: any) => void;
+    onPointerDown: (event: any) => void;
     onRemove: () => void;
 }>) {
     const isH = guide.axis === 'h';
     return (
         <div
-            onMouseDown={onMouseDown}
+            onPointerDown={onPointerDown}
             onDoubleClick={onRemove}
             title="Drag to move, double-click to remove"
             style={{
@@ -22,6 +22,8 @@ export function CanvasGuideLineComp({
                 width: isH ? '100%' : 6,
                 height: isH ? 6 : '100%',
                 cursor: isH ? 'row-resize' : 'col-resize',
+                // Let a finger drag the guide rather than scroll the canvas.
+                touchAction: 'none',
                 zIndex: 9998,
             }}
         >

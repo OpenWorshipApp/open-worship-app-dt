@@ -31,35 +31,42 @@ export default function BoxEditorNormalTextEditModeComp({
     const handleCanvasItemEditing = useSetEditingCanvasItem();
     const handleSelectCanvasItem = useSetSelectedCanvasItems();
 
+    const canvasControllerRef = useAppCurrentRef(canvasController);
+    const canvasItemRef = useAppCurrentRef(canvasItem);
+    const propsRef = useAppCurrentRef(props);
+    const draftTextRef = useAppCurrentRef(draftText);
+    const handleCanvasItemEditingRef = useAppCurrentRef(
+        handleCanvasItemEditing,
+    );
+    const handleSelectCanvasItemRef = useAppCurrentRef(handleSelectCanvasItem);
     const closeTextEditor = useCallback(
         (shouldCommit: boolean) => {
             if (!shouldCommit) {
                 // Escape cancels the edit without changing the text and exits
                 // edit mode entirely.
-                handleCanvasItemEditing(canvasItem, false);
+                handleCanvasItemEditingRef.current(
+                    canvasItemRef.current,
+                    false,
+                );
                 return;
             }
-            if (draftText !== props.text) {
-                canvasController.editCanvasItemById(
-                    canvasItem.id,
+            if (draftTextRef.current !== propsRef.current.text) {
+                canvasControllerRef.current.editCanvasItemById(
+                    canvasItemRef.current.id,
                     (latestCanvasItem) => {
-                        latestCanvasItem.applyProps({ text: draftText });
+                        latestCanvasItem.applyProps({
+                            text: draftTextRef.current,
+                        });
                     },
                 );
             }
             // Leaving text-edit by committing (blur / Ctrl+Enter) switches the
             // box to the selected state (not editing) so the properties panel
             // stays open for it.
-            handleSelectCanvasItem(canvasItem);
+            handleSelectCanvasItemRef.current(canvasItemRef.current);
         },
-        [
-            canvasController,
-            canvasItem,
-            draftText,
-            handleCanvasItemEditing,
-            handleSelectCanvasItem,
-            props.text,
-        ],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [],
     );
 
     const handleClick = useCallback((event: MouseEvent) => {

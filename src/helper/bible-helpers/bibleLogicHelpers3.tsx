@@ -131,8 +131,7 @@ function genContextMenuItems(
 }
 async function handleCustomTitleVerseClicking(
     bibleItemViewController:
-        | BibleItemsViewController
-        | LookupBibleItemController,
+        BibleItemsViewController | LookupBibleItemController,
     bibleItem: BibleItem,
     event: MouseEvent,
 ) {
