@@ -5,7 +5,7 @@ $resize-corner-size: 16px;
 
 .floating-widget {
   position: fixed;
-  z-index: $z-index-widget-full-view;
+  z-index: $z-index-floating-widget;
   display: flex;
   flex-direction: column;
   overflow: hidden;
