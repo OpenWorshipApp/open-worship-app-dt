@@ -260,3 +260,90 @@ Use as a diff target for regressions:
 - Settings: title `Settings`; `General`/`Bible` tabs; `Apply Settings`; Path/Language/Theme/Font
   sections. (Note: the old `Set Default Data` button is gone — has
   `Reset All Child Directories` / `Reset Widgets Size` / `Clear All Settings` instead.)
+
+---
+
+## 12. Cross-window (multi-renderer) propagation — the regression class a CDP-only run misses ⚠️
+
+**The trap that let an edit→present regression ship:** OWA is **multi-window**, and each
+window is a **separate Electron renderer** — its own JS heap, its own in-renderer event
+bus, and its own **per-renderer data cache**. Windows do **not** share memory; they sync
+only through **files on disk + a file watcher**. So "edit in one window shows up in
+another" is an *emergent, cross-process* behavior — exactly the kind a run that drives one
+window at a time never checks. (This is how the case where **resizing a box in the
+`Document Editor` window did not update the `Presenter`'s slide preview** went unspotted.)
+
+### 12.1 The window/renderer model
+- **Presenter** (`presenter.html`), **Reader** (`reader.html`), **Doc Editor**
+  (`appDocumentEditor.html`), **Screen** (`screen.html?screenId=N`), and the popup
+  **Lyric / Bible-note / Web** editors are each a distinct renderer.
+- The Doc Editor can be open **two different ways**, and only one creates the two-window
+  config where this bug lives:
+  - **Header `Slide Editor` tab** → `goToPath()` → navigates the *same* (main) window
+    in-place (NAV-01-style). No second window → **this bug can't appear** (there's one
+    renderer). *This is the trap: earlier runs opened the editor this way and saw nothing.*
+  - **`Slide Editor` tab's `bi-box-arrow-up-right` external icon (NAV-21)** — or a doc's
+    row/quick-edit **Edit ↗** — → `openAppDocumentEditorExternal` → `openPopupWindow`
+    (uuid `app_document_editor`) → a **separate** `Document Editor - <name>` window
+    (`src/app-document-list/AppDocument.ts:529`). **This** is the config to test.
+
+### 12.2 The propagation chain (know each hop so you know where it can break)
+Editor saves a doc → the change must cross to the Presenter/Screen:
+1. Editor renderer `FileSource.writeFileData()` — deletes **only the editor's** cache and
+   fires `fireUpdateEvent()` in **only the editor's** renderer; writes the file
+   (`src/helper/FileSource.ts:171`). *(This is why the editor itself updates but nothing
+   else automatically does.)*
+2. The file on disk changes → **each other renderer's** per-directory `fs.watch`
+   (`watchDir`→`handleFileEvent`, `src/helper/dirSourceHelpers.ts:184,209`) fires.
+3. `handleFileEvent` → `alertFileChanging()` → DirSource **`file-update`** event
+   (`src/helper/DirSource.ts:225`). ⚠️ note it also only fires a `refresh` when the file
+   **list** changes (add/remove) — a pure **content** edit rides `file-update` alone.
+4. A file-list hook **bridges** DirSource `file-update` → `FileSource.fireUpdateEvent()`
+   in *that* renderer (`src/helper/dirSourceHelpers.ts:79-97`).
+5. `useFileSourceEvents(['update'], …)` consumers reload: Presenter **center preview**
+   `VarySlidesComp` (`src/app-document-presenter/items/VarySlidesComp.tsx:84`), the
+   **list-row** thumbnails (`VaryAppDocumentFileComp`), and the **live screen** if that
+   slide is presented — each re-reads `getSlides()` (debounced **500 ms**) **through a
+   2-second `fileDataCacheManager` cache** (`src/helper/FileSource.ts:42,137`).
+
+**Failure modes this hides (what a good XW test catches):** `fs.watch` not firing for
+content-only edits / on some OSes; the list-hook bridge unmounted or a filePath mismatch;
+the **2 s per-renderer cache** serving stale bytes to the reload; a consumer that doesn't
+subscribe; a regression in the reload wiring (e.g. the `VaryAppDocumentFileComp` /
+`LyricFileComp` / `PlaylistFileComp` `useFileSourceEvents` refactor). **Expected, not a
+bug:** an **unsaved** editor edit not showing in the Presenter — separate renderers sync
+via saved-on-disk state, so the Presenter shows the last **saved** version (confirm the
+change was actually **saved** before filing a FAIL).
+
+### 12.3 Why a CDP-only run can't see it — and how to test it anyway
+Three reasons earlier runs missed it, each with the fix:
+1. **CDP can't do the edit.** Canvas drag-resize and Monaco typing need genuine OS
+   **foreground** focus (CLAUDE.md); synthetic events don't mutate the model. → Use a
+   **CDP-drivable** content edit instead (12.4).
+2. **The two-window config is never set up.** → Open the editor as a **separate window**
+   (12.1) so both `appDocumentEditor.html` and `presenter.html`/`screen.html` targets exist.
+3. **No scenario pairs "edit here" with "assert there."** → Run the XW rows / test-plan S18.
+
+### 12.4 The recipe (self-restoring)
+1. **Prefer a scratch doc.** Create a throwaway document (or use one you'll fully restore),
+   select it in the Presenter so `VarySlidesComp` shows it; optionally **present** slide 1
+   so the change must also reach the live screen (XW-03).
+2. Open that doc's **Doc Editor as a separate window** (NAV-21 external icon). `list_pages`
+   → you now have both targets. *(Opening/closing a popup can trigger chrome-devtools-mcp
+   "browser reconnected" — re-`list_pages` and re-`select_page` after each window
+   open/close; read screen visibility from `.show-hide.showing`, not target enumeration.)*
+3. **Make a CDP-drivable edit in the editor target** (no OS focus needed), pick one:
+   - **Properties-panel numeric inputs** — select a canvas item, then `fill` the Box
+     **Position/Size/Rotate** inputs (ED-19) or slide **Width/Height** (ED-17). These are
+     real `<input>`s and are the closest analog to the user's drag-resize.
+   - **Programmatic controller mutation** — walk React fibers to the live `CanvasController`
+     (CLAUDE.md file-drop note) and call a mutate method.
+   - **Direct `fileSource.writeFileData(json)`** — writes the doc to disk, exercising the
+     whole watcher→bridge→cache chain end-to-end with no UI at all.
+   Then **Save** (green save button / `Ctrl+S` — a button click works over CDP).
+4. **Assert propagation in the OTHER target(s)** within ~3 s (500 ms debounce + 2 s cache +
+   watch latency): Presenter `VarySlidesComp` box geometry/text changed (XW-01); list-row
+   thumbnail changed (XW-02); the **screen.html** output changed if presented (XW-03). If
+   any stays stale → **regression → XW FAIL + Finding** (name the broken hop from 12.2).
+5. **Restore:** in the editor, **Undo** (`Ctrl+Z`, never *Discard*) + re-save, or write back
+   the original bytes; delete the scratch doc. Restore any presented/shown state (KB §10).

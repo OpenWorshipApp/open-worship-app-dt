@@ -253,7 +253,9 @@ restarting from zero. This is how a full-coverage pass can span several sessions
 1. `GL` baseline on presenter → `NAV` → `PL` → `PM` (backgrounds/foregrounds restore as
    you go) → `PR` → **`SP` + `SC` (the mandatory screen block §6a — run it while
    content from `PM` is still live)** → `KB` (F6–F10 double as cleanup).
-2. `RD` (reader) → `ED` (editor — needs a selected doc from `PL`).
+2. `RD` (reader) → `ED` (editor — needs a selected doc from `PL`) → **`XW` (cross-window
+   edit→present propagation, §6c — open the editor as a *separate* window and confirm a
+   saved edit reaches the Presenter/screen; run it whenever editing/lists were touched)**.
 3. Popups `PU` (each opened from its trigger row).
 4. `ST` settings last-but-one — `LT` locale/theme spot-checks ride on `ST-04/05`, restore
    everything, and `ST-08 Apply Settings` goes **very last** because it reloads windows.
@@ -261,6 +263,38 @@ restarting from zero. This is how a full-coverage pass can span several sessions
 **Honesty rules:** never mark a row PASS without its pass condition observed; never drop
 a row silently — if you ran out of budget, mark the remainder `BLOCKED: "not reached,
 resume next run"` and say so in the report. An honest 97% with reasons beats a fake 100%.
+
+### 6c. Cross-window edit→present propagation (run when the focus touches editing / lists / file-reload)
+
+OWA windows are **separate renderers** that sync only via disk + `fs.watch`, so "edit in the
+`Document Editor` window → the `Presenter` preview / list / live screen updates" is emergent
+cross-process behavior a **one-window** pass never checks — and is exactly how a
+"resize-a-box-in-the-editor didn't update the Presenter" regression can ship unspotted. A
+single-window walkthrough that opens the editor **in-place** (the `Slide Editor` tab's
+`goToPath`) has only one renderer and **structurally cannot see this class of bug**.
+
+**Run scenario [test-plan.md §S18], rows `XW-01..07`, whenever the run touches the editor,
+the document/lyric/playlist lists, or the `useFileSourceEvents`/file-reload wiring** (a
+focused "test the editor" run included). In short (full recipe + why-CDP-can't-edit +
+CDP-drivable-edit techniques are in **KB §12** — read it first):
+
+1. Use a **scratch doc** shown in the Presenter (present slide 1 to also cover the screen).
+2. Open its editor as a **separate window** (NAV-21 `bi-box-arrow-up-right` external icon /
+   a doc's **Edit ↗** → `openPopupWindow`), **not** the in-place `Slide Editor` tab — so both
+   `appDocumentEditor.html` and `presenter.html`/`screen.html` targets exist.
+3. Make a **CDP-drivable** edit in the editor target (CDP can't drag/Monaco-type — OS focus):
+   `fill` the Box **Position/Size/Rotate** (ED-19) or slide **W/H** (ED-17) numeric inputs, a
+   programmatic `CanvasController` mutation, or direct `fileSource.writeFileData(json)`; then
+   **Save**.
+4. **Assert propagation** within ~3 s in the OTHER target(s): Presenter `VarySlidesComp`
+   (XW-01), list-row thumbnail (XW-02), `screen.html` output if presented (XW-03). A stale
+   target after a **saved** edit = **regression → FAIL + Finding** naming the broken hop; an
+   **unsaved** edit not showing is **correct** (XW-04).
+5. **Restore** with editor **Undo** (never *Discard*) + re-save; delete the scratch doc.
+
+Caveat: opening/closing the separate editor window can trigger a chrome-devtools-mcp "browser
+reconnected" — re-`list_pages`/`select_page` after each, and read screen visibility from
+`.show-hide.showing`, not target enumeration.
 
 ### 7. Report
 
@@ -343,6 +377,10 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - **Interaction**: a tab/button that doesn't respond or doesn't toggle its state
   (`.active` on nav tabs, `.app-on-screen` when content is sent to the screen); modal
   that won't open/close (`Ctrl+B` opens Bible lookup, `Ctrl+Q` closes modal).
+- **Cross-window propagation** (§6c / XW): a **saved** edit in one window that never
+  reaches another window (editor→Presenter preview / list-row / live `screen.html`) — the
+  regression class a one-window run structurally can't see. Confirm the edit was *saved*
+  (unsaved-not-showing is correct), then name the broken hop (KB §12.2).
 - **Visual**: clipped/overflowing text, overlapping elements, invisible or low-contrast
   text, broken/blank images, layout shift, a `loading.gif` that never disappears.
 - **Accessibility**: icon-only buttons with no accessible name, controls missing roles

@@ -220,6 +220,39 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Destructive items (`Delete` / `Move to Trash` / `Empty` / reset): click → confirm dialog →
   **Cancel** (EX-05), or create a scratch item and delete THAT.
 
+### S18 — Cross-window edit→present propagation `[XW-01..07]` — the regression class one-window runs miss
+
+Separate OWA windows are separate renderers that sync only via disk + `fs.watch`, so an
+edit in one window reaching another is emergent cross-process behavior a single-window pass
+never checks (this is how a "resize a box in the editor → Presenter preview didn't update"
+regression shipped). **Read KB §12 first.** Run this whenever the focus touches the editor,
+document/lyric lists, or the file-reload/`useFileSourceEvents` wiring.
+
+1. **Scratch doc, not the user's.** Create a throwaway document; select it in the Presenter
+   so `VarySlidesComp` shows it; optionally **present** slide 1 (SP/SC) so the change must
+   also reach the live screen.
+2. **Two windows.** Open that doc's Doc Editor as a **separate window** — the `Slide Editor`
+   tab's `bi-box-arrow-up-right` external icon (NAV-21) or a doc row's **Edit ↗**
+   (`openPopupWindow`), **not** the in-place `Slide Editor` tab. `list_pages` should show
+   both `appDocumentEditor.html` and `presenter.html`/`screen.html`. *(Opening/closing the
+   popup may cause a chrome-devtools-mcp "browser reconnected" — re-`list_pages`/`select_page`
+   after each; read screen visibility from `.show-hide.showing`, not target enumeration.)*
+3. **CDP-drivable edit** in the editor target (CDP can't drag-resize / Monaco-type — needs OS
+   focus): select a box → `fill` the **Position/Size/Rotate** numeric inputs (ED-19) or slide
+   **W/H** (ED-17); or programmatic `CanvasController` mutation; or direct
+   `fileSource.writeFileData(json)`. Then **Save** (green button / `Ctrl+S`).
+4. **Assert propagation** within ~3 s: Presenter `VarySlidesComp` reflects it (XW-01),
+   list-row thumbnail reflects it (XW-02), the `screen.html` output reflects it if presented
+   (XW-03). A stale target after a **saved** edit = **regression → FAIL + Finding** (name the
+   broken hop from KB §12.2; e.g. watcher never fired / bridge unmounted / stale 2 s cache /
+   consumer not subscribed). An **unsaved** edit not showing is **correct** (XW-04), not a bug.
+5. **Restore:** editor **Undo** (`Ctrl+Z`, never *Discard*) + re-save (or write back original);
+   delete the scratch doc; restore any presented/shown state.
+
+**Severity guidance:** a saved edit that never reaches the Presenter/screen is **High** (the
+operator presents stale content); if only one surface lags (e.g. list row updates but the
+live screen doesn't), still **High** for the screen, **Medium** for a preview-only lag.
+
 ## Report template
 
 Write to `test-results/robot-test/report-<timestamp>.md`:

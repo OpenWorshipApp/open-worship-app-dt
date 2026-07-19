@@ -13,7 +13,7 @@ EXCLUDED by the policy table below.
 > Before a full run, spot-check the matrix against `src/` (new `*Comp.tsx` folders =
 > new rows).
 
-**matrixVersion: 2026-07-18**
+**matrixVersion: 2026-07-19** (added **XW** — cross-window propagation, §XW-01..07)
 
 ## Mandatory core — screen controlling & presenting (every run)
 
@@ -404,6 +404,30 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 | ED-37 | **Undo / Redo** toolbar buttons (`FileEditingMenuComp`) (src: src/editing-manager/editingHelpers.tsx:158) | 🖱️ Undo (`bi-arrow-90deg-left`); 🖱️ Redo (`bi-arrow-90deg-right`) (src: src/editing-manager/editingHelpers.tsx:158-179) | Undo reverts the last edit and the props panel re-syncs; Redo re-applies it; each button disables at its history end; the toolbar is present only when `canUndo||canRedo||canSave` (src: src/editing-manager/editingHelpers.tsx:158-179) |
 | ED-38 | **Discard changed** toolbar button — Cancel only, EX-05 (src: src/editing-manager/editingHelpers.tsx:87) | 🖱️ Discard (`bi-x-octagon`, btn-danger) → confirm popup → 🖱️ **Cancel** (never "Yes" per CLAUDE.md) (src: src/editing-manager/editingHelpers.tsx:87-117) | the "Discard changed" confirm popup appears; Cancel closes it leaving the document unchanged and the undo/redo stack intact (src: src/editing-manager/editingHelpers.tsx:87-117) |
 | ED-39 | **Fix-dimension** toolbar button (`SlidesMenuComp`) (src: src/app-document-presenter/items/SlidesMenuComp.tsx:36) | 🖱️ the warning button (`bi-hammer`+`bi-aspect-ratio`), shown only when a slide dim ≠ display (src: src/app-document-presenter/items/SlidesMenuComp.tsx:36-49) | `fixSlidesDimensionForDisplay` corrects the slide dimensions to the display and the warning button clears (src: src/app-document-presenter/items/SlidesMenuComp.tsx:36-49) |
+
+## XW — Cross-window propagation (multi-renderer edit→present sync)
+
+The class of regression a one-window run misses: OWA windows are **separate renderers**
+that sync only via **disk + `fs.watch`**, so an edit in the **separate** `Document Editor`
+window must propagate to the Presenter preview / list / live screen. Requires the
+**two-window** config (editor opened via NAV-21 external icon → `openPopupWindow`, NOT the
+in-place `Slide Editor` tab). Recipe + CDP-drivable-edit techniques (properties numeric
+inputs ED-17/ED-19, programmatic `CanvasController`, direct `writeFileData`): KB §12,
+test-plan.md §S18. **Prefer a scratch doc; restore via Undo (never Discard).** The chain to
+cite when a hop breaks: `writeFileData`→`fs.watch`/`handleFileEvent`→`alertFileChanging`
+(`file-update`)→list-hook bridge→`FileSource.fireUpdateEvent`→`useFileSourceEvents(['update'])`
+consumer reload, through the 2 s data cache.
+
+| ID | Target | Interactions | Pass condition |
+|---|---|---|---|
+| XW-01 | Editor(separate window) save → **Presenter center preview** (`VarySlidesComp`) (src: src/app-document-presenter/items/VarySlidesComp.tsx:84) | in a scratch doc shown in the Presenter, edit a box via ED-19 numeric inputs (or `writeFileData`) in the editor window → **Save**; observe the Presenter `VarySlidesComp` | within ~3 s the Presenter's center slide preview re-renders with the new geometry/text (500 ms debounce + 2 s cache); a stale preview = FAIL (src: src/app-document-presenter/items/VarySlidesComp.tsx:77-89) |
+| XW-02 | Editor save → **Presenter list-row thumbnail** (`VaryAppDocumentFileComp`) (src: src/app-document-list/VaryAppDocumentFileComp.tsx:249) | same save; observe the Documents left-list row's preview for that doc | the row's thumbnail reloads to the edited content (the `useFileSourceEvents(['update'])` subscription fires); stale = FAIL — this is exactly the reload path the recent refactor touched (src: src/app-document-list/VaryAppDocumentFileComp.tsx:252-258) |
+| XW-03 | Editor save → **live screen output** (`screen.html`) when that slide is presented | present slide 1 of the scratch doc (SP/SC), then edit+save it in the editor window; screenshot the `screen.html` target | the presented slide on the real output updates to the edited content; if the mini-screen updates but the screen target does not, that is a screen-only propagation bug (KB §6) |
+| XW-04 | **Unsaved**-edit semantics (negative check — expected behavior, not a bug) | make an edit in the editor window but do **NOT** save; observe the Presenter | the Presenter keeps showing the last **saved-on-disk** version (separate renderers don't share memory) — this is CORRECT; only a *saved* change that fails to propagate is a FAIL (KB §12.2) |
+| XW-05 | **Reverse** direction — change made/saved from another surface reflects in the open editor | with the doc open in the editor window, trigger a save/`fireUpdateEvent` from the Presenter side (e.g. a doc/slide op) | the editor window re-reads and reflects it (its own watcher→bridge→reload); no need to reopen the editor |
+| XW-06 | **Lyric** cross-window edit → lyric preview/list (`LyricPreviewerComp` / `LyricFileComp`) (src: src/lyric-list/LyricFileComp.tsx:80) | open a lyric in the Lyric Editor popup, edit + save; observe the Presenter Lyrics preview/list | the lyric preview/list reloads to the edited content (same `useFileSourceEvents(['update'])` path as XW-02; refactor-touched) (src: src/lyric-list/LyricFileComp.tsx:77-85) |
+| XW-07 | **Data-cache staleness** guard (2 s `fileDataCacheManager`) (src: src/helper/FileSource.ts:42) | after XW-01, if the preview looks stale, wait >2 s and re-trigger (or re-select the doc) | a re-read past the 2 s TTL returns fresh bytes — if the preview is *permanently* stale even after cache expiry, the reload/subscribe wiring is broken, not the cache (src: src/helper/FileSource.ts:132-149,171-173) |
+
 ## ST — `setting.html` (Settings **popup**)
 
 | ID | Target | Interactions | Pass condition |
