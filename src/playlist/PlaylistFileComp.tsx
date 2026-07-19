@@ -15,6 +15,7 @@ import {
     useAppCurrentRef,
 } from '../helper/appHooks';
 import FileSource from '../helper/FileSource';
+import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
@@ -30,10 +31,20 @@ export default function PlaylistFileComp({
     const [playlist, setPlaylist] = useState<Playlist | null | undefined>(
         undefined,
     );
+    const playlistRef = useAppCurrentRef(playlist);
     const settingName = `opened-${filePath}`;
     const [isOpened, setIsOpened] = useStateSettingBoolean(settingName);
+    useFileSourceEvents(
+        ['update'],
+        () => {
+            setPlaylist(undefined);
+        },
+        [],
+        filePath,
+    );
     const handleReloading = useCallback(() => {
-        setPlaylist(undefined);
+        playlistRef.current?.fileSource.fireUpdateEvent();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const isOpenedRef = useAppCurrentRef(isOpened);
     const setIsOpenedRef = useAppCurrentRef(setIsOpened);
@@ -41,7 +52,6 @@ export default function PlaylistFileComp({
         setIsOpenedRef.current(!isOpenedRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const playlistRef = useAppCurrentRef(playlist);
     const handleDropping = useCallback(async (event: any) => {
         if (playlistRef.current) {
             const receivedData = event.dataTransfer.getData('text');

@@ -6,6 +6,7 @@ import FileSource from '../helper/FileSource';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
+import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import {
     SelectedLyricContext,
     useSelectedLyricSetterContext,
@@ -68,6 +69,7 @@ export default function LyricFileComp({
         selectedContext.selectedLyric?.filePath === filePath;
     const setSelectedLyric = useSelectedLyricSetterContext();
     const [lyric, setLyric] = useState<Lyric | null | undefined>(undefined);
+    const lyricRef = useAppCurrentRef(lyric);
     useAppEffect(() => {
         if (lyric !== undefined) {
             return;
@@ -75,10 +77,18 @@ export default function LyricFileComp({
         const data = Lyric.getInstance(filePath);
         setLyric(data);
     }, [lyric]);
+    useFileSourceEvents(
+        ['update'],
+        () => {
+            setLyric(undefined);
+        },
+        [],
+        filePath,
+    );
     const handleReloading = useCallback(() => {
-        setLyric(undefined);
+        lyricRef.current?.fileSource.fireUpdateEvent();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const lyricRef = useAppCurrentRef(lyric);
     const setSelectedLyricRef = useAppCurrentRef(setSelectedLyric);
     const handleClicking = useCallback(() => {
         if (!lyricRef.current) {

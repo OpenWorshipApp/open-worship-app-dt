@@ -26,6 +26,7 @@ import { removeDocxHtmlsPreview } from '../server/docxHelpers';
 import appProvider from '../server/appProvider';
 import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 import { printAppDocument } from './appDocumentPrintHelpers';
+import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
@@ -240,6 +241,7 @@ export default function VaryAppDocumentFileComp({
     const setSelectedAppDocument = useSelectedAppDocumentSetterContext();
     const [varyAppDocument, setVaryAppDocument] =
         useState<VaryAppDocumentDynamicType>(undefined);
+    const varyAppDocumentRef = useAppCurrentRef(varyAppDocument);
     useAppEffect(() => {
         if (varyAppDocument !== undefined) {
             return;
@@ -247,10 +249,18 @@ export default function VaryAppDocumentFileComp({
         const newVaryAppDocument = varyAppDocumentFromFilePath(filePath);
         setVaryAppDocument(newVaryAppDocument);
     }, [varyAppDocument]);
+    useFileSourceEvents(
+        ['update'],
+        () => {
+            setVaryAppDocument(undefined);
+        },
+        [],
+        filePath,
+    );
     const handleReloading = useCallback(() => {
-        setVaryAppDocument(undefined);
+        varyAppDocumentRef.current?.fileSource.fireUpdateEvent();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const varyAppDocumentRef = useAppCurrentRef(varyAppDocument);
     const setSelectedAppDocumentRef = useAppCurrentRef(setSelectedAppDocument);
     const handleClicking = useCallback(() => {
         if (!varyAppDocumentRef.current) {

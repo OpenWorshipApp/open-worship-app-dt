@@ -440,6 +440,12 @@ export default class AppDocument
                     this.addNewSlide();
                 },
             },
+            {
+                menuElement: tran('Reload'),
+                onSelect: () => {
+                    this.fileSource.fireUpdateEvent();
+                },
+            },
         ];
         if (copiedSlides.length > 0) {
             contextMenuItems.unshift({
