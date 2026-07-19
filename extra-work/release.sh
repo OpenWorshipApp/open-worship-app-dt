@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 current_script_dir=$(dirname "$0")
 cd "$current_script_dir/.."
