@@ -301,19 +301,34 @@ Editor saves a doc → the change must cross to the Presenter/Screen:
 4. A file-list hook **bridges** DirSource `file-update` → `FileSource.fireUpdateEvent()`
    in *that* renderer (`src/helper/dirSourceHelpers.ts:79-97`).
 5. `useFileSourceEvents(['update'], …)` consumers reload: Presenter **center preview**
-   `VarySlidesComp` (`src/app-document-presenter/items/VarySlidesComp.tsx:84`), the
-   **list-row** thumbnails (`VaryAppDocumentFileComp`), and the **live screen** if that
-   slide is presented — each re-reads `getSlides()` (debounced **500 ms**) **through a
-   2-second `fileDataCacheManager` cache** (`src/helper/FileSource.ts:42,137`).
+   `VarySlidesComp` (`src/app-document-presenter/items/VarySlidesComp.tsx:84`) and the
+   **list-row** thumbnails (`VaryAppDocumentFileComp`) — each re-reads `getSlides()`
+   (debounced **500 ms**) **through a 2-second `fileDataCacheManager` cache**
+   (`src/helper/FileSource.ts:42,137`).
+   - ⚠️ **The live screen / presented slide does NOT auto-reload — this is intentional
+     (verified 2026-07-19).** Presenting takes a `cloneJson` **snapshot** into
+     `ScreenVaryAppDocumentManager._varySlideData`
+     (`src/_screen/managers/ScreenVaryAppDocumentManager.ts`, captured at present-time), and
+     **nothing in `src/_screen/` subscribes to `useFileSourceEvents`** (`ScreenVaryAppDocumentComp`
+     listens only to screen `['refresh']`). So a **saved** edit to a currently-presented
+     slide updates the Presenter's center preview, but the **live projector output stays
+     frozen on purpose** — the operator decides when to push the change by **re-presenting**
+     the slide (clear + present again, or click it). This keeps the congregation's screen
+     stable during mid-service edits. A stale live screen after a saved edit is therefore
+     **expected, not a bug** (see §12.4 / XW-03).
 
 **Failure modes this hides (what a good XW test catches):** `fs.watch` not firing for
-content-only edits / on some OSes; the list-hook bridge unmounted or a filePath mismatch;
-the **2 s per-renderer cache** serving stale bytes to the reload; a consumer that doesn't
-subscribe; a regression in the reload wiring (e.g. the `VaryAppDocumentFileComp` /
-`LyricFileComp` / `PlaylistFileComp` `useFileSourceEvents` refactor). **Expected, not a
-bug:** an **unsaved** editor edit not showing in the Presenter — separate renderers sync
-via saved-on-disk state, so the Presenter shows the last **saved** version (confirm the
-change was actually **saved** before filing a FAIL).
+content-only edits / on some OSes (e.g. macOS needs a **recursive** watch to see
+`<name>.histories/` sub-writes — `watchDir` sets `recursive: isMac`); the list-hook bridge
+unmounted or a filePath mismatch; the **2 s per-renderer cache** serving stale bytes to the
+reload; an **auto-reloading** consumer (center preview / list rows) that stopped subscribing;
+a regression in the reload wiring (e.g. the `VaryAppDocumentFileComp` / `LyricFileComp` /
+`PlaylistFileComp` `useFileSourceEvents` refactor). **Expected, NOT bugs:** (a) an **unsaved**
+editor edit not showing in the Presenter — separate renderers sync via saved-on-disk state,
+so the Presenter shows the last **saved** version (confirm the change was actually **saved**
+before filing a FAIL); (b) a **saved** edit not auto-updating the **live screen** of a
+**presented** slide — the presented copy is an intentional snapshot; the operator applies it
+by **re-presenting** (§12.2 step 5). Only the center preview / list rows must auto-reload.
 
 ### 12.3 Why a CDP-only run can't see it — and how to test it anyway
 Three reasons earlier runs missed it, each with the fix:
@@ -327,7 +342,8 @@ Three reasons earlier runs missed it, each with the fix:
 ### 12.4 The recipe (self-restoring)
 1. **Prefer a scratch doc.** Create a throwaway document (or use one you'll fully restore),
    select it in the Presenter so `VarySlidesComp` shows it; optionally **present** slide 1
-   so the change must also reach the live screen (XW-03).
+   (this also covers the mandatory screen block — but note the live screen is a snapshot and
+   is **not** expected to auto-update on save; see step 4 / XW-03).
 2. Open that doc's **Doc Editor as a separate window** (NAV-21 external icon). `list_pages`
    → you now have both targets. *(Opening/closing a popup can trigger chrome-devtools-mcp
    "browser reconnected" — re-`list_pages` and re-`select_page` after each window
@@ -343,7 +359,13 @@ Three reasons earlier runs missed it, each with the fix:
    Then **Save** (green save button / `Ctrl+S` — a button click works over CDP).
 4. **Assert propagation in the OTHER target(s)** within ~3 s (500 ms debounce + 2 s cache +
    watch latency): Presenter `VarySlidesComp` box geometry/text changed (XW-01); list-row
-   thumbnail changed (XW-02); the **screen.html** output changed if presented (XW-03). If
-   any stays stale → **regression → XW FAIL + Finding** (name the broken hop from 12.2).
+   thumbnail changed (XW-02). If **either** stays stale after a **saved** edit →
+   **regression → XW FAIL + Finding** (name the broken hop from 12.2).
+   - **XW-03 (live `screen.html` output of a *presented* slide):** it is **expected to stay
+     stale** after a saved edit — the presented slide is an intentional snapshot (§12.2
+     step 5). Do **not** file that as a bug. Instead verify the **apply** path: **re-present**
+     the slide (clear + present again, or click it) and confirm the `screen.html` output
+     *then* reflects the edit. Only a broken apply — screen still stale **after re-present**,
+     or the saved bytes wrong on disk — is a FAIL.
 5. **Restore:** in the editor, **Undo** (`Ctrl+Z`, never *Discard*) + re-save, or write back
    the original bytes; delete the scratch doc. Restore any presented/shown state (KB §10).

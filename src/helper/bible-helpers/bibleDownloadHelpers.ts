@@ -163,7 +163,11 @@ export async function getDownloadedBibleInfoList() {
     }
     const directoryNames = await fsListDirectories(writableBiblePath);
     const promises = directoryNames.map(async (fileName) => {
-        if (fileName.endsWith('.cache')) {
+        // A downloaded bible dir is named by its bible key (e.g. `KJV`); skip
+        // the XML-preview `.cache` dirs and any hidden/dot dir (`.git`,
+        // `.DS_Store`, …) — those are never bibles, so probing them is wasted
+        // I/O on the low-spec target.
+        if (fileName.endsWith('.cache') || fileName.startsWith('.')) {
             return null;
         }
         return getBibleInfo(fileName, true);

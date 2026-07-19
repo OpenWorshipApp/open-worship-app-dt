@@ -108,7 +108,11 @@ export async function getVerses(
 }
 
 export async function checkIsBibleXML(bibleKey: string) {
-    const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey);
+    // This is a probe: "no XML file for this key" is a normal answer (the bible
+    // is a downloaded-format one, or the key is not a bible at all — e.g. a
+    // stray directory in the bibles folder), so suppress the error log that
+    // `bibleKeyToXMLFilePath` emits for genuine lookup failures.
+    const xmlFilePath = await bibleKeyToXMLFilePath(bibleKey, false, false);
     if (xmlFilePath === null || !(await fsCheckFileExist(xmlFilePath))) {
         return false;
     }

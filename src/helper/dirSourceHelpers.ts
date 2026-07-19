@@ -182,9 +182,25 @@ export function useFileSourceEvents<T>(
 }
 
 async function handleFileEvent(dirSource: DirSource, ...args: any[]) {
-    if (args[0] === 'change') {
-        if (typeof args[1] === 'string') {
-            dirSource.alertFileChanging(args[1]);
+    const [eventType, fileFullName] = args as [string, string | null];
+    // A document edited in another window persists to a `<name>.histories/`
+    // editing-history subdirectory (only an explicit Save writes the `.ows`
+    // itself). macOS surfaces those subdirectory writes as a 'rename' with a
+    // sub-path filename (and only under a recursive watch — see watchDir),
+    // whereas Linux/Windows report a plain 'change'. Handle both so a slide
+    // edited in a separate editor window still notifies this window's
+    // FileSource listeners; without this the presenter's slide preview never
+    // reflects the edit on macOS.
+    if (
+        (eventType === 'change' || eventType === 'rename') &&
+        typeof fileFullName === 'string'
+    ) {
+        dirSource.alertFileChanging(fileFullName);
+        // A change inside a subdirectory (a history edit) can never alter this
+        // directory's own top-level file list, so skip the readdir diff below —
+        // it would be needless I/O on every history write.
+        if (fileFullName.includes('/') || fileFullName.includes('\\')) {
+            return;
         }
     }
     try {
@@ -216,6 +232,14 @@ async function watchDir(dirSource: DirSource, signal: AbortSignal) {
             dirSource.dirPath,
             {
                 signal,
+                // Editing histories live in per-document `<name>.histories/`
+                // subdirectories of the watched dir. macOS's non-recursive
+                // fs.watch does not report writes inside subdirectories
+                // (Windows/Linux surface them on the parent watch), so
+                // cross-window edit refresh needs a recursive watch on macOS.
+                // Left non-recursive elsewhere to avoid watching large nested
+                // media trees.
+                recursive: appProvider.systemUtils.isMac,
             },
             handleFileEvent.bind(null, dirSource),
         );

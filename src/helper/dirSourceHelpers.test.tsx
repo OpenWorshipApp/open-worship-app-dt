@@ -87,6 +87,9 @@ vi.mock('../server/appProvider', () => ({
         fileUtils: {
             watch: watchMock,
         },
+        systemUtils: {
+            isMac: false,
+        },
     },
 }));
 
@@ -481,17 +484,19 @@ describe('dirSourceHelpers', () => {
 
         expect(watchMock).toHaveBeenCalledWith(
             '/docs',
-            expect.objectContaining({ signal: expect.any(AbortSignal) }),
+            expect.objectContaining({
+                signal: expect.any(AbortSignal),
+                recursive: false,
+            }),
             expect.any(Function),
         );
 
+        // fs.watch reports filenames relative to the watched directory.
         await act(async () => {
-            await watchCallback?.('change', '/docs/new.owa');
+            await watchCallback?.('change', 'new.owa');
         });
 
-        expect(dirSource.alertFileChanging).toHaveBeenCalledWith(
-            '/docs/new.owa',
-        );
+        expect(dirSource.alertFileChanging).toHaveBeenCalledWith('new.owa');
         expect(dirSource.fireRefreshEvent).toHaveBeenCalledTimes(1);
 
         dirSource.filePathsMap = { appDocument: ['/docs/a.owa'] };
@@ -503,15 +508,30 @@ describe('dirSourceHelpers', () => {
 
         expect(dirSource.fireRefreshEvent).toHaveBeenCalledTimes(2);
 
+        // Windows/Linux surface a history edit as a 'change' on the
+        // `.histories` folder entry itself (a top-level name). handleFileEvent
+        // forwards the raw changed path as-is; mapping the `.histories` folder
+        // back to its document happens in useFilePaths.
         await act(async () => {
-            await watchCallback?.('change', '/docs/a1 (Copy).ows.histories');
+            await watchCallback?.('change', 'a1 (Copy).ows.histories');
         });
 
-        // handleFileEvent forwards the raw changed path as-is; mapping the
-        // `.histories` folder back to its document happens in useFilePaths.
         expect(dirSource.alertFileChanging).toHaveBeenLastCalledWith(
-            '/docs/a1 (Copy).ows.histories',
+            'a1 (Copy).ows.histories',
         );
+
+        // macOS's recursive watch reports the write as a sub-path inside the
+        // `.histories` folder. Such a change can never alter the directory's
+        // top-level file list, so the readdir diff is skipped.
+        dirSource.fireRefreshEvent.mockClear();
+        await act(async () => {
+            await watchCallback?.('rename', 'a1.ows.histories/5-head');
+        });
+
+        expect(dirSource.alertFileChanging).toHaveBeenLastCalledWith(
+            'a1.ows.histories/5-head',
+        );
+        expect(dirSource.fireRefreshEvent).not.toHaveBeenCalled();
     });
 
     test('skips or reports directory watch setup errors', async () => {

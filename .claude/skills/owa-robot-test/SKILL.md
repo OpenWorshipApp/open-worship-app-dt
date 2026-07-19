@@ -267,11 +267,17 @@ resume next run"` and say so in the report. An honest 97% with reasons beats a f
 ### 6c. Cross-window edit→present propagation (run when the focus touches editing / lists / file-reload)
 
 OWA windows are **separate renderers** that sync only via disk + `fs.watch`, so "edit in the
-`Document Editor` window → the `Presenter` preview / list / live screen updates" is emergent
+`Document Editor` window → the `Presenter` **preview / list** updates" is emergent
 cross-process behavior a **one-window** pass never checks — and is exactly how a
 "resize-a-box-in-the-editor didn't update the Presenter" regression can ship unspotted. A
 single-window walkthrough that opens the editor **in-place** (the `Slide Editor` tab's
 `goToPath`) has only one renderer and **structurally cannot see this class of bug**.
+
+> ⚠️ **The live screen is deliberately excluded from auto-refresh.** The **presented** slide
+> is an intentional snapshot — a **saved** edit does **not** auto-update the live `screen.html`
+> output (the operator applies it by **re-presenting**). So the auto-reload targets are the
+> Presenter **center preview** and **list rows** only; the live screen is verified via the
+> *re-present* apply-path, not by expecting it to change on save. See KB §12.2 / §12.4.
 
 **Run scenario [test-plan.md §S18], rows `XW-01..07`, whenever the run touches the editor,
 the document/lyric/playlist lists, or the `useFileSourceEvents`/file-reload wiring** (a
@@ -286,10 +292,12 @@ CDP-drivable-edit techniques are in **KB §12** — read it first):
    `fill` the Box **Position/Size/Rotate** (ED-19) or slide **W/H** (ED-17) numeric inputs, a
    programmatic `CanvasController` mutation, or direct `fileSource.writeFileData(json)`; then
    **Save**.
-4. **Assert propagation** within ~3 s in the OTHER target(s): Presenter `VarySlidesComp`
-   (XW-01), list-row thumbnail (XW-02), `screen.html` output if presented (XW-03). A stale
-   target after a **saved** edit = **regression → FAIL + Finding** naming the broken hop; an
-   **unsaved** edit not showing is **correct** (XW-04).
+4. **Assert propagation** within ~3 s in the auto-reload targets: Presenter `VarySlidesComp`
+   (XW-01), list-row thumbnail (XW-02). A stale target after a **saved** edit = **regression
+   → FAIL + Finding** naming the broken hop. An **unsaved** edit not showing is **correct**
+   (XW-04). For the live `screen.html` of a **presented** slide (XW-03): staying stale after
+   a saved edit is **expected** (intentional snapshot) — verify by **re-presenting** and
+   confirming the screen *then* updates; only a broken re-present is a FAIL.
 5. **Restore** with editor **Undo** (never *Discard*) + re-save; delete the scratch doc.
 
 Caveat: opening/closing the separate editor window can trigger a chrome-devtools-mcp "browser

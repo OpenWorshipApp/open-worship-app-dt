@@ -229,8 +229,8 @@ regression shipped). **Read KB §12 first.** Run this whenever the focus touches
 document/lyric lists, or the file-reload/`useFileSourceEvents` wiring.
 
 1. **Scratch doc, not the user's.** Create a throwaway document; select it in the Presenter
-   so `VarySlidesComp` shows it; optionally **present** slide 1 (SP/SC) so the change must
-   also reach the live screen.
+   so `VarySlidesComp` shows it; optionally **present** slide 1 (SP/SC). Note the live screen
+   is an intentional snapshot and is **not** expected to auto-update on save (step 4 / XW-03).
 2. **Two windows.** Open that doc's Doc Editor as a **separate window** — the `Slide Editor`
    tab's `bi-box-arrow-up-right` external icon (NAV-21) or a doc row's **Edit ↗**
    (`openPopupWindow`), **not** the in-place `Slide Editor` tab. `list_pages` should show
@@ -242,16 +242,22 @@ document/lyric lists, or the file-reload/`useFileSourceEvents` wiring.
    **W/H** (ED-17); or programmatic `CanvasController` mutation; or direct
    `fileSource.writeFileData(json)`. Then **Save** (green button / `Ctrl+S`).
 4. **Assert propagation** within ~3 s: Presenter `VarySlidesComp` reflects it (XW-01),
-   list-row thumbnail reflects it (XW-02), the `screen.html` output reflects it if presented
-   (XW-03). A stale target after a **saved** edit = **regression → FAIL + Finding** (name the
-   broken hop from KB §12.2; e.g. watcher never fired / bridge unmounted / stale 2 s cache /
-   consumer not subscribed). An **unsaved** edit not showing is **correct** (XW-04), not a bug.
+   list-row thumbnail reflects it (XW-02). A stale **auto-reload** target after a **saved**
+   edit = **regression → FAIL + Finding** (name the broken hop from KB §12.2; e.g. watcher
+   never fired / bridge unmounted / stale 2 s cache / consumer not subscribed). An **unsaved**
+   edit not showing is **correct** (XW-04), not a bug.
+   - **XW-03 — live `screen.html` of a presented slide:** staying stale after a saved edit is
+     **expected, not a bug** — the presented slide is an intentional snapshot; the operator
+     **applies** the change by **re-presenting**. Verify the apply path: **re-present** (clear
+     + present again, or click the slide) and confirm the `screen.html` output *then* reflects
+     the edit. FAIL only if the screen stays stale **after re-present** (or the saved bytes on
+     disk are wrong).
 5. **Restore:** editor **Undo** (`Ctrl+Z`, never *Discard*) + re-save (or write back original);
    delete the scratch doc; restore any presented/shown state.
 
-**Severity guidance:** a saved edit that never reaches the Presenter/screen is **High** (the
-operator presents stale content); if only one surface lags (e.g. list row updates but the
-live screen doesn't), still **High** for the screen, **Medium** for a preview-only lag.
+**Severity guidance:** a saved edit that never reaches the Presenter **center preview / list
+rows** is **High** (the operator sees stale content). The live screen **not** auto-updating is
+**expected** (snapshot) — score it a FAIL only when **re-presenting** fails to apply the edit.
 
 ## Report template
 

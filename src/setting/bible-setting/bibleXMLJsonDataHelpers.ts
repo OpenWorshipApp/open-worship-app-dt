@@ -741,6 +741,11 @@ export async function xmlTextToJson(
 export async function bibleKeyToXMLFilePath(
     bibleKey: string,
     isFromFileName = false,
+    // Callers that merely probe whether a key is an XML bible (e.g.
+    // `checkIsBibleXML`) pass `false`: for them a missing file is a normal,
+    // expected answer, not an error worth logging. Genuine lookups keep the
+    // default so a real missing file is still surfaced.
+    shouldHandleError = true,
 ) {
     if (isFromFileName) {
         const dirPath = await bibleDataReader.getWritableBiblePath();
@@ -752,9 +757,11 @@ export async function bibleKeyToXMLFilePath(
     if (filePath) {
         return filePath;
     }
-    handleError(
-        'Fail to get Bible file path' +
-            `Unable to find file path for: "${bibleKey}"`,
-    );
+    if (shouldHandleError) {
+        handleError(
+            'Fail to get Bible file path. ' +
+                `Unable to find file path for: "${bibleKey}"`,
+        );
+    }
     return null;
 }
