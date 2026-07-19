@@ -35,6 +35,9 @@ vi.mock('./protocolHelpers', () => ({
         preloadFilePath: '/tmp/preload.js',
         loadURL,
     })),
+    genRouteUrl: (htmlFileFullName: string, query = '') => {
+        return `https://localhost:3000/${htmlFileFullName}${query}`;
+    },
 }));
 
 import ElectronMainController from './ElectronMainController';
@@ -65,6 +68,59 @@ describe('ElectronMainController', () => {
         expect(windowOptions.icon).toContain('icon-dev.png');
         expect(loadURL).toHaveBeenCalledWith(controller.win);
         expect(guardBrowsing).toHaveBeenCalledTimes(1);
+        processExit.mockRestore();
+    });
+
+    function getWillNavigateHandler(controller: ElectronMainController) {
+        const onCalls = (controller.win.webContents.on as any).mock.calls;
+        const call = onCalls.find(([eventName]: [string]) => {
+            return eventName === 'will-navigate';
+        });
+        return call?.[1] as
+            | ((event: { preventDefault: () => void }, url: string) => void)
+            | undefined;
+    }
+
+    test('guards the main window against unsupported navigations', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        const controller = new ElectronMainController({
+            mainHtmlPath: 'presenter.html',
+        } as any);
+        const handleNavigation = getWillNavigateHandler(controller);
+        expect(handleNavigation).toBeTypeOf('function');
+
+        const allow = (url: string) => {
+            const event = { preventDefault: vi.fn() };
+            handleNavigation?.(event, url);
+            return event.preventDefault;
+        };
+
+        // Same-origin, supported main pages are allowed through.
+        for (const url of [
+            'https://localhost:3000/reader.html',
+            'https://localhost:3000/appDocumentEditor.html',
+            'https://localhost:3000/presenter.html?foo=bar',
+        ]) {
+            expect(allow(url)).not.toHaveBeenCalled();
+        }
+
+        // An unsupported same-origin page is blocked without opening a browser.
+        expect(allow('https://localhost:3000/setting.html')).toHaveBeenCalled();
+        // An allowed page name under an unexpected path (not what genRouteUrl
+        // would produce) is still rejected.
+        expect(
+            allow('https://localhost:3000/sub/presenter.html'),
+        ).toHaveBeenCalled();
+        expect(electronMockState.shell.openExternal).not.toHaveBeenCalled();
+
+        // An external http(s) navigation is blocked and handed to the browser.
+        const externalUrl = 'https://example.com/presenter.html';
+        expect(allow(externalUrl)).toHaveBeenCalled();
+        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            externalUrl,
+        );
         processExit.mockRestore();
     });
 

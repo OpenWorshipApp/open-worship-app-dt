@@ -1,8 +1,8 @@
-import { app, BrowserWindow, Menu, MenuItem } from 'electron';
+import { app, BrowserWindow, Menu, MenuItem, shell } from 'electron';
 import path from 'node:path';
 
 import { type ScreenMessageType } from './electronEventListener';
-import { genRoutProps } from './protocolHelpers';
+import { genRoutProps, genRouteUrl } from './protocolHelpers';
 import type ElectronSettingManager from './ElectronSettingManager';
 import { htmlFiles } from './fsServe';
 import {
@@ -14,16 +14,77 @@ import {
     messageChannels,
 } from './electronHelpers';
 
-const allowedMainHtmlFiles: string[] = [
+const allowedMainHtmlFiles = new Set([
     htmlFiles.presenter,
     htmlFiles.reader,
     htmlFiles.appDocumentEditor,
-];
+]);
 
 function toAllowedMainHtmlPath(mainHtmlPath: string) {
-    return allowedMainHtmlFiles.includes(mainHtmlPath)
+    return allowedMainHtmlFiles.has(mainHtmlPath)
         ? mainHtmlPath
         : htmlFiles.reader;
+}
+
+// A custom scheme (`owa://`) yields an opaque origin whose `.origin` is the
+// literal string "null", so it can't distinguish `owa://local` from
+// `file://` or `data:`. Comparing scheme + host directly keeps the check
+// meaningful for both the dev (`https://localhost:3000`) and packaged origins.
+function toOriginKey(url: URL) {
+    return `${url.protocol}//${url.host}`;
+}
+
+// The app's own root URL — `https://localhost:3000` in dev, `owa://local` when
+// packaged — resolved through the very generator the window is loaded with.
+const appRootOriginKey = toOriginKey(new URL(genRouteUrl(htmlFiles.reader)));
+
+// The main window must never leave presenter/reader/editor. A navigation is
+// only supported when it targets the EXACT URL the app itself would generate
+// for an allowed main page: an html path that survives `toAllowedMainHtmlPath`
+// unchanged, served from the same root URL `genRouteUrl` produces. Anything
+// else (external links, `setting.html`, `file://`, redirects, extra path
+// segments) is rejected.
+function isSupportedMainNavigation(targetUrl: string) {
+    if (!URL.canParse(targetUrl)) {
+        return false;
+    }
+    const targetUrlObj = new URL(targetUrl);
+    const htmlFileName = targetUrlObj.pathname.split('/').pop() ?? '';
+    if (toAllowedMainHtmlPath(htmlFileName) !== htmlFileName) {
+        return false;
+    }
+    const expectedUrlObj = new URL(genRouteUrl(htmlFileName));
+    return (
+        toOriginKey(targetUrlObj) === toOriginKey(expectedUrlObj) &&
+        targetUrlObj.pathname === expectedUrlObj.pathname
+    );
+}
+
+function guardMainNavigation(win: BrowserWindow) {
+    const handleNavigation = (event: Electron.Event, targetUrl: string) => {
+        if (isSupportedMainNavigation(targetUrl)) {
+            return;
+        }
+        // Block the main window from replacing itself with an unsupported page.
+        event.preventDefault();
+        // Hand only genuine external links (a different root) to the system
+        // browser; an unsupported same-root page (e.g. `setting.html`) is just
+        // blocked, never popped open in a browser.
+        if (!URL.canParse(targetUrl)) {
+            return;
+        }
+        const targetUrlObj = new URL(targetUrl);
+        const isExternalOrigin = toOriginKey(targetUrlObj) !== appRootOriginKey;
+        if (
+            isExternalOrigin &&
+            (targetUrlObj.protocol === 'http:' ||
+                targetUrlObj.protocol === 'https:')
+        ) {
+            shell.openExternal(targetUrl);
+        }
+    };
+    win.webContents.on('will-navigate', handleNavigation);
+    win.webContents.on('will-redirect', handleNavigation);
 }
 
 let instance: ElectronMainController | null = null;
@@ -54,6 +115,7 @@ export default class ElectronMainController {
                 : {}),
         });
         guardBrowsing(win, webPreferences);
+        guardMainNavigation(win);
         win.on('closed', () => {
             process.exit(0);
         });
