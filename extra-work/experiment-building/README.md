@@ -1,3 +1,6 @@
+Recommended run in Git Bash on Windows or Terminal on MacOS/Linux.
+
+
 ## Build ffmpeg (Windows)
 
 ```bash
@@ -10,14 +13,14 @@ pwsh -ExecutionPolicy Bypass -File ./win-build-ffmpeg.ps1
 cd extra-work/experiment-building
 pwsh -ExecutionPolicy Bypass -File ./win-build-qjs.ps1
 
-```
-
-```powershell
-
 # node build script for Windows
-cd extra-work\experiment-building
+cd extra-work/experiment-building
 pwsh -ExecutionPolicy Bypass -File
-.\win-build-node.ps1
+./win-build-node.ps1
+
+# yt-dlp build script for Windows
+cd extra-work/experiment-building
+pwsh -ExecutionPolicy Bypass -File ./win-build-yt-dlp.ps1
 
 ```
 
