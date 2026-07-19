@@ -16,7 +16,9 @@
 #
 # Environment overrides:
 #   $env:NODE_CONFIGURE_FLAGS  — replace the passthrough configure flags entirely
-#   $env:NODE_TARGET_ARCH      — x64 (default) or arm64
+#   $env:NODE_TARGET_ARCH      — x64 or arm64 (default: host arch). NOTE: 32-bit
+#                                Windows (x86/ia32) is NOT buildable — Node/V8
+#                                dropped it; the script rejects it early.
 #   $env:NODE_BUILD_DIR        — build/output dir (default: .\tmp\node-build)
 #
 # Prerequisites (install yourself):
@@ -40,6 +42,15 @@ if ($env:NODE_TARGET_ARCH) {
 } else {
     $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
 }
+# 32-bit Windows (x86 / ia32 / "win32") is intentionally rejected up front: Node
+# and V8 DROPPED 32-bit Windows support, so vcbuild.bat itself aborts with
+# "32-bit Windows builds are not supported anymore." (vcbuild.bat, the
+# `if "%target_arch%"=="x86"` guard). There is no flag to bypass it — the build
+# would just fail deeper in V8. Fail here with the real reason instead of dying
+# minutes into vcbuild. (Discovered 2026-07-19 trying to add a win32 target.)
+if ($arch -eq 'x86' -or $arch -eq 'ia32' -or $arch -eq 'win32') {
+    Write-Error "32-bit Windows (x86/ia32/win32) is not buildable: Node/V8 dropped 32-bit Windows support and vcbuild.bat aborts on it. Use 'x64' or 'arm64'."
+}
 if ($arch -ne 'x64' -and $arch -ne 'arm64') {
     Write-Error "NODE_TARGET_ARCH must be 'x64' or 'arm64' (got '$arch')."
 }
@@ -51,7 +62,7 @@ $srcName  = "node-v$Version"
 $tarball  = "$srcName.tar.gz"
 $srcUrl   = "https://nodejs.org/dist/v$Version/$tarball"
 $srcDir   = Join-Path $workDir $srcName
-$outBinary = Join-Path $workDir "node-v$Version-minimal.exe"
+$outBinary = Join-Path $workDir "node-v$Version-$arch-minimal.exe"
 
 # --- minimal build knobs -----------------------------------------------------
 # `without-intl` and `no-cctest` are native vcbuild.bat tokens. The remaining
@@ -69,7 +80,9 @@ $vcbuildTokens = @(
 # target_arch == arm64). We DON'T use vcbuild's `openssl-no-asm` token here
 # because it appends `--openssl-no-asm` to configure, which conflicts with our
 # `--without-ssl`. For an arm64 build NASM is never checked; for an x64 build
-# with --without-ssl you must instead have a real nasm.exe on PATH.
+# with --without-ssl you must instead have a real nasm.exe on PATH to satisfy
+# vcbuild's up-front check (the assembler isn't actually invoked once configure
+# drops OpenSSL).
 $defaultPassthroughFlags = @(
     '--without-npm'           # no npm
     '--without-corepack'      # no corepack shim
@@ -132,6 +145,28 @@ if (-not (Test-Path $srcDir)) {
     if ($LASTEXITCODE -ne 0) { Write-Error "extract failed (tar exit $LASTEXITCODE)" }
 } else {
     Log "Source already extracted at $srcDir"
+}
+
+# --- source patches (toolchain-compat) ---------------------------------------
+# Clang 22 (shipped with VS 2026 / VS 18; vcbuild forces ClangCL for Node >= 24)
+# promoted -Wincompatible-pointer-types from a warning to a DEFAULT ERROR. Node
+# 24.18.0's bundled hdr_histogram passes a `uint32_t*` to the `_BitScanReverse64`
+# intrinsic, which wants a `DWORD*` (== `unsigned long*`) — same size, different
+# type. Older compilers let it slide; Clang 22 rejects it, so histogram.lib never
+# builds and node.exe (which links it) fails the whole build with exit 1.
+#
+# Fix: widen the local to `unsigned long` (exactly DWORD) so the intrinsic's
+# signature matches. Idempotent — re-running (or a clean re-extract) re-applies
+# it, and the second Set-Content is skipped once the source already reads right.
+# Discovered 2026-07-19 building v24.18.0 x64 on this ARM64/VS2026 host.
+$histogramC = Join-Path $srcDir 'deps\histogram\src\hdr_histogram.c'
+if (Test-Path $histogramC) {
+    $orig = Get-Content -Raw -LiteralPath $histogramC
+    $patched = $orig -replace '(?m)^(\s*)uint32_t leading_zero = 0;', '$1unsigned long leading_zero = 0;'
+    if ($patched -ne $orig) {
+        Log "Patching hdr_histogram.c for Clang >= 22 (-Wincompatible-pointer-types is now a default error)"
+        Set-Content -LiteralPath $histogramC -Value $patched -NoNewline -Encoding utf8
+    }
 }
 
 # --- configure + build (vcbuild.bat) -----------------------------------------
