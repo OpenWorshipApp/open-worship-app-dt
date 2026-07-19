@@ -39,6 +39,14 @@ fi
 # --- minimal build knobs -----------------------------------------------------
 # Each flag drops a feature that `console.log('hello world')` does not need.
 # Edit here (or export NODE_CONFIGURE_FLAGS) to tune the tradeoff.
+#
+# On "static standalone": a *fully* static binary is impossible on macOS — Apple
+# ships no static libSystem and disallows statically linking the system libs, so
+# we deliberately do NOT pass --fully-static (it just fails to link). Node already
+# compiles V8, libuv, zlib, llhttp, etc. statically INTO this single binary, and
+# --without-ssl/--without-intl drop the OpenSSL/ICU dylibs, so the result depends
+# only on macOS system libraries (libSystem, libc++). That is as standalone as
+# macOS allows; assert_standalone at the end enforces it (fails on any /opt/... dep).
 default_flags=(
     --without-npm          # no npm
     --without-corepack     # no corepack shim
@@ -57,9 +65,26 @@ fi
 
 log() { printf '\n\033[1;36m==>\033[0m %s\n' "$*"; }
 
+# Fail the build unless every dynamic dependency of $1 is a macOS *system*
+# library (under /usr/lib or /System/Library) — those ship on every mac. A dep
+# anywhere else (e.g. /opt/homebrew/...) means the binary is not standalone and
+# won't run on a clean machine, so treat it as a hard error.
+assert_standalone() { # $1 = mach-o binary
+    local bin="$1" bad
+    bad=$(otool -L "$bin" | tail -n +2 | awk '{print $1}' \
+        | grep -vE '^(/usr/lib/|/System/Library/)' || true)
+    if [[ -n "$bad" ]]; then
+        echo "Error: ${bin##*/} is NOT standalone — non-system dependencies:" >&2
+        echo "$bad" | sed 's/^/    /' >&2
+        exit 1
+    fi
+    log "Standalone OK — only system libraries are linked:"
+    otool -L "$bin" | tail -n +2 | sed 's/^/    /'
+}
+
 # --- toolchain sanity check --------------------------------------------------
 missing=()
-for tool in curl tar make python3; do
+for tool in curl tar make python3 otool; do
     command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
 done
 if ! command -v cc >/dev/null 2>&1 && ! command -v gcc >/dev/null 2>&1; then
@@ -114,6 +139,10 @@ if command -v strip >/dev/null 2>&1; then
     log "Stripping symbols"
     strip "$out_binary" || echo "  (strip failed — keeping unstripped binary)"
 fi
+
+# --- standalone check --------------------------------------------------------
+# Prove the binary is portable: only macOS system libraries linked, nothing else.
+assert_standalone "$out_binary"
 
 # --- smoke test --------------------------------------------------------------
 log "Smoke test: console.log('hello world')"

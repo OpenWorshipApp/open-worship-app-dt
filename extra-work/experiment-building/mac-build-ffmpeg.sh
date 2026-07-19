@@ -52,6 +52,13 @@ out_binary="${work_dir}/ffmpeg-${VERSION}-minimal"
 # Apple Silicon (/opt/homebrew) and Intel (/usr/local).
 lame_prefix="${LAME_PREFIX:-$(brew --prefix lame 2>/dev/null || echo /opt/homebrew/opt/lame)}"
 
+# We link libmp3lame *statically* so the shipped ffmpeg has no runtime dependency
+# on a Homebrew dylib (which won't exist on target machines). brew installs both
+# libmp3lame.a and libmp3lame.dylib in the same dir, and a bare `-lmp3lame`
+# prefers the dylib — so we stage a dir holding ONLY the static archive and point
+# ffmpeg's linker at it (see the staging step below).
+lame_static_dir="${work_dir}/lame-static"
+
 # --- minimal build knobs -----------------------------------------------------
 # Each flag either enables the one thing we need (mp3) or drops a subsystem the
 # yt-dlp mp3/merge flow never uses. Edit here (or export FFMPEG_CONFIGURE_FLAGS)
@@ -79,7 +86,9 @@ default_flags=(
 )
 default_flags+=(
     --extra-cflags="-I${lame_prefix}/include"
-    --extra-ldflags="-L${lame_prefix}/lib"
+    # -L points at a dir containing ONLY libmp3lame.a, so -lmp3lame resolves to
+    # the static archive (no dylib to fall back to) -> lame is linked in.
+    --extra-ldflags="-L${lame_static_dir}"
     --extra-libs="-lmp3lame"
 )
 if [[ -n "${FFMPEG_CONFIGURE_FLAGS:-}" ]]; then
@@ -100,9 +109,26 @@ fi
 
 log() { printf '\n\033[1;36m==>\033[0m %s\n' "$*"; }
 
+# Fail the build unless every dynamic dependency of $1 is a macOS *system*
+# library (under /usr/lib or /System/Library) — those ship on every mac. A dep
+# anywhere else (e.g. /opt/homebrew/...) means the binary is not standalone and
+# won't run on a clean machine, so treat it as a hard error.
+assert_standalone() { # $1 = mach-o binary
+    local bin="$1" bad
+    bad=$(otool -L "$bin" | tail -n +2 | awk '{print $1}' \
+        | grep -vE '^(/usr/lib/|/System/Library/)' || true)
+    if [[ -n "$bad" ]]; then
+        echo "Error: ${bin##*/} is NOT standalone — non-system dependencies:" >&2
+        echo "$bad" | sed 's/^/    /' >&2
+        exit 1
+    fi
+    log "Standalone OK — only system libraries are linked:"
+    otool -L "$bin" | tail -n +2 | sed 's/^/    /'
+}
+
 # --- toolchain sanity check --------------------------------------------------
 missing=()
-for tool in curl tar make clang; do
+for tool in curl tar make clang otool; do
     command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
 done
 if ((${#missing[@]})); then
@@ -116,6 +142,13 @@ if [[ ! -f "${lame_prefix}/include/lame/lame.h" ]]; then
     echo "Install it (macOS: 'brew install lame') or set LAME_PREFIX." >&2
     exit 1
 fi
+# A static archive is what makes the standalone (dylib-free) link possible.
+if [[ ! -f "${lame_prefix}/lib/libmp3lame.a" ]]; then
+    echo "Error: static libmp3lame.a not found under ${lame_prefix}/lib." >&2
+    echo "It's required to link ffmpeg without a Homebrew dylib dependency." >&2
+    echo "Reinstall lame (macOS 'brew install lame' ships it) or set LAME_PREFIX." >&2
+    exit 1
+fi
 
 log "Building minimal FFmpeg (${VERSION})  (jobs=${jobs})"
 echo "    work dir : ${work_dir}"
@@ -123,6 +156,13 @@ echo "    lame     : ${lame_prefix}"
 echo "    flags    : ${configure_flags[*]}"
 
 mkdir -p "$work_dir"
+
+# --- stage static libmp3lame -------------------------------------------------
+# Copy ONLY the static archive into its own dir; with no libmp3lame.dylib beside
+# it, the linker has no choice but to link lame statically (see note up top).
+rm -rf "$lame_static_dir"
+mkdir -p "$lame_static_dir"
+cp "${lame_prefix}/lib/libmp3lame.a" "$lame_static_dir/"
 
 # --- fetch (cached) ----------------------------------------------------------
 # The "snapshot" tarball is a moving target; a pinned release is reproducible.
@@ -176,6 +216,10 @@ if command -v strip >/dev/null 2>&1; then
     log "Stripping symbols"
     strip "$out_binary" || echo "  (strip failed — keeping unstripped binary)"
 fi
+
+# --- standalone check --------------------------------------------------------
+# Prove the binary is portable: no non-system (e.g. Homebrew) dynamic deps.
+assert_standalone "$out_binary"
 
 # --- smoke test --------------------------------------------------------------
 # Encode a real mp3 via libmp3lame — the exact capability the app depends on.
