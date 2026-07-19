@@ -9,6 +9,7 @@
 # no snapshot, no OpenSSL/crypto, and V8 in "lite" mode = no JIT).
 #
 # Usage (PowerShell):
+#   Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 #   .\build-node.ps1 [version]
 #   .\build-node.ps1 24.18.0     # explicit
 #   .\build-node.ps1             # defaults to 24.18.0
