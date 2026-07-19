@@ -24,7 +24,7 @@
 #   - Python 3.x on PATH.
 #   - `tar` (built into Windows 10 1803+ / Windows 11).
 #   NOTE: NASM is NOT required here because we build --without-ssl.
-
+`
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
