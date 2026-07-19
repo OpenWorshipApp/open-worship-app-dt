@@ -1,5 +1,7 @@
 Recommended run in Git Bash on Windows or Terminal on MacOS/Linux.
 
+Make sure Powershell 7 installed: https://learn.microsoft.com/en-us/powershell/scripting/install/install-powershell-on-windows?view=powershell-7.6#msi
+
 
 ## Build ffmpeg (Windows)
 
@@ -15,8 +17,7 @@ pwsh -ExecutionPolicy Bypass -File ./win-build-qjs.ps1
 
 # node build script for Windows
 cd extra-work/experiment-building
-pwsh -ExecutionPolicy Bypass -File
-./win-build-node.ps1
+pwsh -ExecutionPolicy Bypass -File ./win-build-node.ps1
 
 # yt-dlp build script for Windows
 cd extra-work/experiment-building
