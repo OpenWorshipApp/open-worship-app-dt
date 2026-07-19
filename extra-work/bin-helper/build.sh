@@ -182,6 +182,7 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; t
         download_dotnet win-x64.zip
         download_dotnet win-x86.zip "-i386"
         download_deno deno-x86_64-pc-windows-msvc.zip
+        download_deno deno-x86_64-pc-windows-msvc.zip "-i386.exe"
         download_ffmpeg ffmpeg-$ffmpeg_build_version-win64-gpl-$ffmpeg_version.zip
     fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
