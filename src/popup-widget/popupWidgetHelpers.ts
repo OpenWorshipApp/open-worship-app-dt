@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactElement } from 'react';
+import appProvider from '../server/appProvider';
 
 type LockedPopupType = 'confirm' | 'input' | 'alert';
 
@@ -31,12 +32,6 @@ export async function attemptLocking(
         });
     }
     lockedPopup.current = newType;
-}
-
-export function closeAlert() {
-    popupWidgetManager.openConfirm?.(null);
-    popupWidgetManager.openInput?.(null);
-    popupWidgetManager.openAlert?.(null);
 }
 
 export type ConfirmDataType = {
@@ -139,4 +134,32 @@ export function showAppAlert(title: string, message: string) {
             },
         });
     });
+}
+
+if (appProvider.systemUtils.isDev) {
+    (globalThis as any).tryPopup = async () => {
+        await showAppConfirm(
+            '1: Confirm Title',
+            'Are you sure you want to proceed?',
+            {
+                escToCancel: true,
+                enterToOk: true,
+                extraStyles: { color: 'blue' },
+                confirmButtonLabel: 'Yes, proceed',
+            },
+        );
+        await showAppAlert('2: Alert Title', 'This is an alert message.');
+        await showAppAlert('3: Alert Title', 'This is an alert message.');
+        await showAppConfirm(
+            '4: Confirm Title',
+            'Are you sure you want to proceed?',
+            {
+                escToCancel: true,
+                enterToOk: true,
+                extraStyles: { color: 'blue' },
+                confirmButtonLabel: 'Yes, proceed',
+            },
+        );
+        await showAppAlert('5: Alert Title', 'This is an alert message.');
+    };
 }

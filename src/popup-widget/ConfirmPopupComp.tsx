@@ -5,8 +5,7 @@ import { useCallback } from 'react';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
-import type { ConfirmDataType } from './popupWidgetHelpers';
-import { closeAlert } from './popupWidgetHelpers';
+import { popupWidgetManager, type ConfirmDataType } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -18,13 +17,15 @@ export default function ConfirmPopupComp({
 }>) {
     const confirmDataRef = useAppCurrentRef(confirmData);
     const handleClosing = useCallback(() => {
+        // Close first, then run the callback (see AlertPopupComp): a callback
+        // that opens the next popup must win the slot over this async close.
+        popupWidgetManager.openConfirm?.(null);
         confirmDataRef.current.onConfirm(false);
-        closeAlert();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleOkClicking = useCallback(() => {
+        popupWidgetManager.openConfirm?.(null);
         confirmDataRef.current.onConfirm(true);
-        closeAlert();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     useKeyboardRegistering(

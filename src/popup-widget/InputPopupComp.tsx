@@ -4,8 +4,7 @@ import './InputPopupComp.scss';
 import { useCallback } from 'react';
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
-import type { InputDataType } from './popupWidgetHelpers';
-import { closeAlert } from './popupWidgetHelpers';
+import { popupWidgetManager, type InputDataType } from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -17,13 +16,15 @@ export default function InputPopupComp({
 }>) {
     const inputDataRef = useAppCurrentRef(inputData);
     const handleClosing = useCallback(() => {
+        // Close first, then run the callback (see AlertPopupComp): a callback
+        // that opens the next popup must win the slot over this async close.
+        popupWidgetManager.openInput?.(null);
         inputDataRef.current.onConfirm(false);
-        closeAlert();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleOkClicking = useCallback(() => {
+        popupWidgetManager.openInput?.(null);
         inputDataRef.current.onConfirm(true);
-        closeAlert();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     useKeyboardRegistering(

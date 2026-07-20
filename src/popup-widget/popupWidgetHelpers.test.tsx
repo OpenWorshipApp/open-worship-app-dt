@@ -1,7 +1,6 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 
 import {
-    closeAlert,
     popupWidgetManager,
     showAppAlert,
     showAppConfirm,
@@ -19,21 +18,6 @@ describe('popupWidgetHelpers', () => {
         popupWidgetManager.openConfirm = null;
         popupWidgetManager.openInput = null;
         popupWidgetManager.openAlert = null;
-    });
-
-    test('closes all open popup types through the manager', () => {
-        const openConfirmMock = vi.fn();
-        const openInputMock = vi.fn();
-        const openAlertMock = vi.fn();
-        popupWidgetManager.openConfirm = openConfirmMock;
-        popupWidgetManager.openInput = openInputMock;
-        popupWidgetManager.openAlert = openAlertMock;
-
-        closeAlert();
-
-        expect(openConfirmMock).toHaveBeenCalledWith(null);
-        expect(openInputMock).toHaveBeenCalledWith(null);
-        expect(openAlertMock).toHaveBeenCalledWith(null);
     });
 
     test('returns false when no confirm or input popup opener is registered', async () => {

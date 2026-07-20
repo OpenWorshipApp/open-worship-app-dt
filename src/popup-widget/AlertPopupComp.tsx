@@ -4,8 +4,10 @@ import './AlertPopupComp.scss';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import PrimitiveModalComp from '../app-modal/PrimitiveModalComp';
 import HeaderAlertPopupComp from './HeaderAlertPopupComp';
-import type { PopupAlertDataType } from './popupWidgetHelpers';
-import { closeAlert } from './popupWidgetHelpers';
+import {
+    popupWidgetManager,
+    type PopupAlertDataType,
+} from './popupWidgetHelpers';
 import { useKeyboardRegistering } from '../event/KeyboardEventListener';
 import { tran } from '../lang/langHelpers';
 
@@ -15,8 +17,11 @@ export default function AlertPopupComp({
     alertData: PopupAlertDataType;
 }>) {
     const handClose = () => {
+        // Close first, then run the callback: the callback may open the next
+        // popup (even of the same type), and it must win the slot rather than
+        // being torn down by this popup's own async close.
+        popupWidgetManager.openAlert?.(null);
         alertData.onClose();
-        closeAlert();
     };
     useKeyboardRegistering(
         [{ key: 'Escape' }, { key: 'Enter' }],
