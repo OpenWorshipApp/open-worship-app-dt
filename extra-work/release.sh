@@ -66,6 +66,8 @@ append_file_info() {
     target_file="$1/$bin_file_info"
     file_name=$(basename "$2")
     version=$(grep 'version:' "$4" | awk '{print $2}' | tr -d "'")
+    # 2026.6.1 => 2026.06.01
+    version=$(echo "$version" | awk -F. '{printf "%02d.%02d.%02d", $1, $2, $3}')
     release_date=$(grep 'releaseDate:' "$4" | awk '{print $2}' | tr -d "'")
     echo "${file_name}${sep}$3${sep}${release_date}${sep}${version}${sep}${latest_commit}" >> "$target_file"
 }
