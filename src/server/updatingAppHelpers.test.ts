@@ -21,19 +21,33 @@ const getInstanceMock = vi.fn();
 const getFileChecksumMock = vi.fn();
 const fsDeleteFileMock = vi.fn();
 
+// A mutable systemUtils so individual tests can drive checkIsItemMatch across
+// every OS/architecture combination. checkIsItemMatch reads
+// `appProvider.systemUtils` at call time, so mutating these fields in place
+// (never reassigning the object) is observed by the module under test.
+const { systemUtilsMock, defaultSystemUtils } = vi.hoisted(() => {
+    const defaultSystemUtils = {
+        isWindows: false,
+        isMac: true,
+        isArm64: true,
+        is64System: true,
+        isLinux: false,
+        isUbuntu: false,
+        isFedora: false,
+    };
+    return {
+        defaultSystemUtils,
+        systemUtilsMock: { ...defaultSystemUtils },
+    };
+});
+
 vi.mock('./appProvider', () => ({
     default: {
         appInfo: {
             homepage: 'https://www.openworship.app',
             version: '2026.2.8',
         },
-        systemUtils: {
-            isWindows: false,
-            isMac: true,
-            isArm64: true,
-            is64System: true,
-            isLinux: false,
-        },
+        systemUtils: systemUtilsMock,
         messageUtils: {
             listenForData: listenForDataMock,
             sendData: sendDataMock,
@@ -101,6 +115,8 @@ describe('updatingAppHelpers', () => {
     beforeEach(() => {
         vi.resetModules();
         vi.clearAllMocks();
+        // Restore the default (mac + arm64) environment before each test.
+        Object.assign(systemUtilsMock, defaultSystemUtils);
         vi.useFakeTimers({ toFake: ['Date'] });
         vi.setSystemTime(new Date('2026-02-09T00:00:00Z'));
 
@@ -293,5 +309,209 @@ describe('updatingAppHelpers', () => {
             'You are using the latest version of the app.',
         );
         expect(showAppConfirmMock).not.toHaveBeenCalled();
+    });
+
+    describe('checkIsItemMatch', () => {
+        type SystemUtilsShape = typeof defaultSystemUtils;
+        type ItemShape = {
+            isArm64?: boolean;
+            is64System?: boolean;
+            isWindows?: boolean;
+            isMac?: boolean;
+            isUniversal?: boolean;
+            isLinux?: boolean;
+            isUbuntu?: boolean;
+            isFedora?: boolean;
+        };
+
+        const allFalse: SystemUtilsShape = {
+            isWindows: false,
+            isMac: false,
+            isLinux: false,
+            isArm64: false,
+            is64System: false,
+            isUbuntu: false,
+            isFedora: false,
+        };
+
+        async function matches(
+            sys: Partial<SystemUtilsShape>,
+            item: ItemShape,
+        ) {
+            Object.assign(systemUtilsMock, allFalse, sys);
+            const { checkIsItemMatch } = await import('./updatingAppHelpers');
+            return checkIsItemMatch(item as any);
+        }
+
+        // name, system, item, expected
+        const cases: [string, Partial<SystemUtilsShape>, ItemShape, boolean][] =
+            [
+                // ---- Architecture gate: arch mismatch is rejected on every OS
+                [
+                    'arm64 machine rejects a non-arm64 windows build',
+                    { isWindows: true, isArm64: true, is64System: true },
+                    { isWindows: true, is64System: true },
+                    false,
+                ],
+                [
+                    'x64 machine rejects an arm64 windows build (reverse guard)',
+                    { isWindows: true, is64System: true },
+                    { isWindows: true, isArm64: true, is64System: true },
+                    false,
+                ],
+                [
+                    'arm64 machine rejects a non-arm64 mac build',
+                    { isMac: true, isArm64: true },
+                    { isMac: true },
+                    false,
+                ],
+                [
+                    'x64 machine rejects an arm64 mac build (reverse guard)',
+                    { isMac: true },
+                    { isMac: true, isArm64: true },
+                    false,
+                ],
+                [
+                    'arm64 machine rejects a non-arm64 linux build',
+                    { isLinux: true, isArm64: true },
+                    { isLinux: true },
+                    false,
+                ],
+                [
+                    'x64 machine rejects an arm64 linux build (reverse guard)',
+                    { isLinux: true },
+                    { isLinux: true, isArm64: true },
+                    false,
+                ],
+
+                // ---- Windows
+                [
+                    'x64 windows machine matches a 64-bit windows build',
+                    { isWindows: true, is64System: true },
+                    { isWindows: true, is64System: true },
+                    true,
+                ],
+                [
+                    'arm64 windows machine matches an arm64 windows build',
+                    { isWindows: true, isArm64: true, is64System: true },
+                    { isWindows: true, isArm64: true, is64System: true },
+                    true,
+                ],
+                [
+                    'windows machine rejects a non-windows build',
+                    { isWindows: true, is64System: true },
+                    { isMac: true },
+                    false,
+                ],
+                [
+                    'x64 windows machine rejects a 32-bit-only build',
+                    { isWindows: true, is64System: true },
+                    { isWindows: true },
+                    false,
+                ],
+                [
+                    '32-bit windows machine matches a 32-bit windows build',
+                    { isWindows: true, is64System: false },
+                    { isWindows: true },
+                    true,
+                ],
+
+                // ---- Mac
+                [
+                    'x64 mac machine matches an x64 mac build',
+                    { isMac: true },
+                    { isMac: true },
+                    true,
+                ],
+                [
+                    'arm64 mac machine matches an arm64 mac build',
+                    { isMac: true, isArm64: true },
+                    { isMac: true, isArm64: true },
+                    true,
+                ],
+                [
+                    'mac machine rejects a windows build',
+                    { isMac: true },
+                    { isWindows: true, is64System: true },
+                    false,
+                ],
+                // Documents a known gap: a universal build (no isArm64 flag) is
+                // rejected on arm64 macs by the top arch gate, yet accepted on
+                // x64 macs. See the isUniversal note in updatingAppHelpers.tsx.
+                [
+                    'arm64 mac machine rejects a universal build lacking isArm64',
+                    { isMac: true, isArm64: true },
+                    { isMac: true, isUniversal: true },
+                    false,
+                ],
+                [
+                    'x64 mac machine accepts a universal build lacking isArm64',
+                    { isMac: true },
+                    { isMac: true, isUniversal: true },
+                    true,
+                ],
+
+                // ---- Linux (generic / ubuntu / fedora)
+                [
+                    'generic linux machine matches a plain linux build',
+                    { isLinux: true },
+                    { isLinux: true },
+                    true,
+                ],
+                [
+                    'linux machine rejects a non-linux build',
+                    { isLinux: true },
+                    { isMac: true },
+                    false,
+                ],
+                [
+                    'ubuntu machine rejects a non-ubuntu linux build',
+                    { isLinux: true, isUbuntu: true },
+                    { isLinux: true },
+                    false,
+                ],
+                [
+                    'ubuntu machine matches an ubuntu build',
+                    { isLinux: true, isUbuntu: true },
+                    { isLinux: true, isUbuntu: true },
+                    true,
+                ],
+                [
+                    'fedora machine rejects a non-fedora linux build',
+                    { isLinux: true, isFedora: true },
+                    { isLinux: true },
+                    false,
+                ],
+                [
+                    'fedora machine matches a fedora build',
+                    { isLinux: true, isFedora: true },
+                    { isLinux: true, isFedora: true },
+                    true,
+                ],
+                [
+                    'arm64 ubuntu machine matches an arm64 ubuntu build',
+                    { isLinux: true, isUbuntu: true, isArm64: true },
+                    { isLinux: true, isUbuntu: true, isArm64: true },
+                    true,
+                ],
+
+                // ---- No/unknown platform falls through to false
+                [
+                    'machine with no OS flag matches nothing',
+                    {},
+                    { isWindows: true, isMac: true, isLinux: true },
+                    false,
+                ],
+                [
+                    'machine with no OS flag rejects an empty item',
+                    {},
+                    {},
+                    false,
+                ],
+            ];
+
+        test.each(cases)('%s', async (_name, sys, item, expected) => {
+            await expect(matches(sys, item)).resolves.toBe(expected);
+        });
     });
 });

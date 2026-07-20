@@ -191,16 +191,21 @@ type DownloadInfoItemType = {
     portable: FileInfoType[];
     installer: FileInfoType[];
 };
-function checkIsItemMatch(item: DownloadInfoItemType) {
+export function checkIsItemMatch(item: DownloadInfoItemType) {
     const { systemUtils } = appProvider;
+    // Architecture must match on every OS: an arm64 machine takes only arm64
+    // builds, and an arm64-only build is never offered to a non-arm64 machine.
+    if (systemUtils.isArm64 && !item.isArm64) {
+        return false;
+    }
+    if (item.isArm64 && !systemUtils.isArm64) {
+        return false;
+    }
     if (systemUtils.isWindows) {
         if (!item.isWindows) {
             return false;
         }
         if (systemUtils.is64System && !item.is64System) {
-            return false;
-        }
-        if (systemUtils.isArm64 && !item.isArm64) {
             return false;
         }
         return true;
@@ -209,16 +214,10 @@ function checkIsItemMatch(item: DownloadInfoItemType) {
         if (!item.isMac) {
             return false;
         }
-        if (systemUtils.isArm64 && !item.isArm64) {
-            return false;
-        }
         return true;
     }
     if (systemUtils.isLinux) {
         if (!item.isLinux) {
-            return false;
-        }
-        if (systemUtils.isArm64 && !item.isArm64) {
             return false;
         }
         if (systemUtils.isUbuntu && !item.isUbuntu) {
