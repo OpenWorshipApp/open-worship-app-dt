@@ -164,6 +164,24 @@ Keep the main window on `presenter.html`.
   unreadable from the parent — inspect the `srcdoc` attribute string instead). A lyric's
   slide 1 is often just the `<h1>` title, which at ~0.2 preview scale looks like a blank
   dark card — not a rendering bug.
+- **In-app modal popups (Alert / Confirm / Input) are single-slot and chained.**
+  `HandleAlertComp` holds one `popupWidgetManager` slot per type and shows them
+  one-at-a-time; a popup's close runs `openX(null)` **asynchronously**. If a popup's
+  close is ordered *after* the callback that opens the **next** popup, the async close
+  lands last and silently tears the next popup down — worst with two of the **same type**
+  back-to-back (`Alert`→`Alert`). The components deliberately close-**then**-run-callback
+  to make the new popup win the slot ([src/popup-widget/AlertPopupComp.tsx](../../../../src/popup-widget/AlertPopupComp.tsx)
+  and its Confirm/Input siblings). **Regression check** (run whenever the focus touches
+  popups/dialogs/settings): the dev build exposes `window.tryPopup()` (guarded by
+  `appProvider.systemUtils.isDev`) which opens a fixed 1→2→3→4→5 chain
+  (Confirm/Alert/Alert/Confirm/Alert). In the running app, `evaluate_script`
+  `() => typeof window.tryPopup` → `"function"`, then call `window.tryPopup()` and step
+  each popup by clicking its **Yes/Ok** primary button (`.app-popup-widget button.btn-info`),
+  reading the header (`.app-popup-widget .app-popup-header-title`) between clicks. All five
+  titles must appear **in order** and the stack must be empty after the 5th — a popup that
+  never appears (torn down by the previous popup's async close, especially `Alert`→`Alert`)
+  is a **High** finding. Jsdom coverage of the same invariant:
+  [src/popup-widget/HandleAlertComp.test.tsx](../../../../src/popup-widget/HandleAlertComp.test.tsx).
 
 ---
 
