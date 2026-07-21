@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { tran } from '../../lang/langHelpers';
 import { useAppEffect } from '../../helper/appHooks';
 import {
@@ -135,11 +137,13 @@ export default function MiniScreenDrawHandlersComp() {
         `draw-paint-dots-${screenId}`,
         DEFAULT_DOTS,
     );
-    // Render fidelity. Key MUST match ScreenDrawManager's DRAW_QUALITY_PREFIX so
-    // the manager (and the output window's) reads the same value on load.
-    const [isHighQuality, setIsHighQuality] = useStateSettingBoolean(
-        `draw-paint-quality-${screenId}`,
-        DEFAULT_HIGH_QUALITY,
+    // Render fidelity. The manager owns persistence of this one — its
+    // loadPersisted already read the shared `draw-paint-quality-<screenId>` key
+    // on construction — so seed the button state from it and let
+    // setRenderQuality be the sole writer, rather than persisting the same key
+    // from here too (which was a redundant second synchronous disk write).
+    const [isHighQuality, setIsHighQuality] = useState(
+        screenDrawManager.isHighQuality,
     );
 
     const handleToggleQuality = () => {
@@ -162,9 +166,11 @@ export default function MiniScreenDrawHandlersComp() {
         screenDrawManager.setRenderQuality(DEFAULT_HIGH_QUALITY);
     };
 
-    // Activating this panel arms the Paint tool on the shared draw manager (the
-    // same instance the mini-screen overlay uses); unmounting disarms it so the
-    // preview stops capturing pointer input.
+    // Arm the Paint tool on mount (the same shared manager instance the
+    // mini-screen overlay uses), disarm on unmount so the preview stops
+    // capturing pointer input. Kept separate from the param-sync effect below so
+    // a slider tick does NOT disarm/re-arm the tool — re-arming flips #draw's
+    // pointerEvents and broadcasts an update to every open draw panel each tick.
     useAppEffect(() => {
         screenDrawManager.setPaintTool({
             color,
@@ -176,7 +182,17 @@ export default function MiniScreenDrawHandlersComp() {
         return () => {
             screenDrawManager.setPaintTool(null);
         };
-    }, [screenDrawManager, color, size, isStraight, is3D, isDots]);
+    }, [screenDrawManager]);
+    // Push brush-param changes onto the already-armed tool in place.
+    useAppEffect(() => {
+        screenDrawManager.updatePaintToolParams({
+            color,
+            size,
+            isStraight,
+            is3D,
+            isDots,
+        });
+    }, [color, size, isStraight, is3D, isDots]);
 
     return (
         <div className="w-100">

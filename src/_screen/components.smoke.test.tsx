@@ -254,6 +254,7 @@ vi.mock('./managers/screenEventHelpers', () => ({
     useScreenBackgroundManagerEvents: vi.fn(),
     useScreenBibleManagerEvents: vi.fn(),
     useScreenForegroundManagerEvents: vi.fn(),
+    useScreenDrawManagerEvents: vi.fn(),
     useScreenEvents: vi.fn(),
     useScreenVaryAppDocumentManagerEvents: vi.fn(),
 }));

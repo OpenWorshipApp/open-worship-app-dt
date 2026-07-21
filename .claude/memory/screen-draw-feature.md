@@ -25,11 +25,19 @@ must scale the whole output content root (background/text), not just an overlay.
   `src/_screen/preview/ScreenPreviewerFooterComp.tsx`, next to the sound-wave
   audio toggle — mirrors that show/hide-panel pattern (local `useState`).
 
-**Persistence:** per-screen setting key `screen-draw-data-<screenId>` holds
-`{drawData, history, historyIndex, isDrawEnabled}` (JSON). Loaded in the manager
-constructor (`loadPersisted`); saved (`saveDrawData`) ONLY on committed events
-(stroke-complete/undo/redo/clear/enable/disable + `receiveSyncScreen`
-sync/commit/clear) — NEVER per pointer-move. Writes gated to
+**Persistence:** per-screen setting key `screen-draw-data-<screenId>` holds a
+JSON **v2 deduped** blob: `{version:2, drawData, strokePool, historyIds,
+historyIndex, isDrawEnabled}` (`serialize()`). History snapshots share stroke
+refs in memory but FLATTEN on `JSON.stringify` — the naive `history: [[stroke,
+...], ...]` form is O(history × strokes), quadratic as a drawing grows — so each
+unique stroke is stored ONCE in `strokePool` (keyed by id) and history as arrays
+of ids (`historyIds`); `parsePersistedHistory` rebuilds it (and still reads the
+legacy inline `history` form). Loaded in the constructor (`loadPersisted`);
+`saveDrawData` fires on committed events only (stroke-complete/undo/redo/clear/
+enable/disable + `receiveSyncScreen` sync/commit/clear) — NEVER per pointer-move
+— and is **trailing-debounced 500ms** (`saveAttempt = genTimeoutAttempt(500)`)
+so a burst collapses into one `fsWriteFileSync` off the pointer-up critical path;
+`delete()` flushes it immediately (`saveAttempt(fn, true)`). Writes gated to
 `appProvider.isPagePresenter` (settings are a shared file — output windows
 restore via the presenter's init re-sync, avoiding write races). The footer's
 `isDrawHandlersVisible` initializes from `screenDrawManager?.isDrawEnabled` (the
@@ -115,6 +123,39 @@ permanently blocks that screen's OWN outgoing draws (`checkIsSyncGroupEnabled`
 returns `!flag`). `ScreenForegroundManager` re-enables the same way. Without
 this, sync is one-directional (the screen you drew on first works; a screen that
 received first can't send back).
+
+**Perf optimizations (review pass, 2026-07-20).** Applied after a multi-agent
+review flagged eager allocation vs the low-spec mandate. All keep behavior;
+`ScreenDrawManager.test.tsx` covers the changed logic:
+- **Lazy canvas backing store.** `setupContainer` (styles + canvas creation, on
+  the div-set/`refresh`/`render()` path) is split from `syncCanvasSize` (the
+  per-frame `renderAllStrokes` path). `syncCanvasSize` keeps the backing store at
+  **0×0 whenever `paintStrokeList` is empty**, sizing to native×`renderScale`
+  only when there's something to draw and releasing on clear. Previously every
+  screen AND every mini-preview held a native×HQ_SCALE(2) = ~33MB canvas for the
+  app's life even if Draw was never used. Do NOT re-merge `setupContainer` into
+  the per-frame path (resize re-applies div dims only via `render()`).
+- **Straight strokes keep 2 points.** `handlePointerMove` rubber-bands
+  `stroke.points = [first, current]` for `isStraight && !isDots` (Dots needs
+  every point — it draws a dot at each, and the `isDots` branch precedes
+  `isStraight` in `drawStroke`). Stops unbounded point accumulation + O(n²) IPC
+  on a slow straight drag.
+- **Cached stroke rect.** `strokeRect` captured at pointer-down, reused by
+  `clientToNative` for the gesture (canvas can't move under pointer capture),
+  cleared on up/detach — no `getBoundingClientRect` reflow per move.
+- **Panel arming split.** `MiniScreenDrawHandlersComp` arms/disarms Paint in a
+  mount-only effect (`[screenDrawManager]`) and pushes brush params via a
+  separate effect calling `updatePaintToolParams` (in-place, no pointerEvents
+  flip / update broadcast) — a slider tick no longer disarm/re-arms.
+- **Quality single-writer.** The panel seeds `isHighQuality` from
+  `screenDrawManager.isHighQuality` via plain `useState` (manager's
+  `loadPersisted` already read the shared key); `setRenderQuality` is the sole
+  persister (was a redundant second `fsWriteFileSync`).
+
+Deferred (noted, not applied): offscreen committed-stroke render cache (F4 —
+trades memory, the #1 concern, for an unmeasured per-frame CPU win) and sizing
+the mini-preview backing store to its CSS display size rather than native×HQ
+(changes the coord mapping — needs live verification).
 
 **To add another mode:** extend `DrawDataType`, add render + a sync action,
 and a tab/panel. The manager mirrors `ScreenForegroundManager`; `'draw'` is

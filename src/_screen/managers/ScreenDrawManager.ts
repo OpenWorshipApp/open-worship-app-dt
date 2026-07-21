@@ -1,6 +1,7 @@
 import { showSimpleToast } from '../../toast/toastHelpers';
 import appProvider from '../../server/appProvider';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import ScreenEventHandler from './ScreenEventHandler';
 import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenManagerBase from './ScreenManagerBase';
@@ -107,8 +108,16 @@ export default class ScreenDrawManager
     isHighQuality = true;
     private currentStroke: DrawPaintStrokeType | null = null;
     private pendingPoints: DrawPaintPointType[] = [];
+    // Canvas rect captured at pointer-down and reused for the whole stroke, so
+    // pointer-move mapping doesn't force a synchronous layout
+    // (getBoundingClientRect) on every sampled point.
+    private strokeRect: DOMRect | null = null;
     private lastSyncAt = 0;
     private renderScheduled = false;
+    // Trailing-debounced persistence: collapses a burst of commits into one
+    // write and keeps the synchronous disk write off the pointer-up critical
+    // path.
+    private readonly saveAttempt = genTimeoutAttempt(500);
     // Undo/redo history of committed stroke lists. Each entry is a shallow copy
     // of the stroke list; finished strokes are never mutated, so snapshots share
     // stroke references and stay cheap. Kept in lockstep across sync-group
@@ -158,10 +167,7 @@ export default class ScreenDrawManager
             this.drawData = cloneDrawData(
                 parsed.drawData ?? { paintStrokeList: [] },
             );
-            this.history =
-                Array.isArray(parsed.history) && parsed.history.length > 0
-                    ? cloneHistory(parsed.history)
-                    : [[...this.drawData.paintStrokeList]];
+            this.history = this.parsePersistedHistory(parsed);
             const lastIndex = this.history.length - 1;
             this.historyIndex =
                 typeof parsed.historyIndex === 'number'
@@ -173,22 +179,75 @@ export default class ScreenDrawManager
         }
     }
 
+    // Rebuild the undo/redo history from either the deduped v2 form (a
+    // stroke pool keyed by id + history as arrays of ids) or the legacy inline
+    // form (history as arrays of full strokes). Falls back to a single snapshot
+    // of the current drawing.
+    private parsePersistedHistory(parsed: any): DrawPaintStrokeType[][] {
+        if (
+            parsed.version === 2 &&
+            parsed.strokePool !== null &&
+            typeof parsed.strokePool === 'object' &&
+            Array.isArray(parsed.historyIds)
+        ) {
+            const pool = parsed.strokePool as {
+                [id: string]: DrawPaintStrokeType;
+            };
+            const history: DrawPaintStrokeType[][] = parsed.historyIds.map(
+                (ids: unknown) => {
+                    return (Array.isArray(ids) ? ids : [])
+                        .map((id: string) => pool[id])
+                        .filter((stroke) => stroke !== undefined)
+                        .map(cloneStroke);
+                },
+            );
+            return history.length > 0
+                ? history
+                : [[...this.drawData.paintStrokeList]];
+        }
+        if (Array.isArray(parsed.history) && parsed.history.length > 0) {
+            return cloneHistory(parsed.history);
+        }
+        return [[...this.drawData.paintStrokeList]];
+    }
+
+    // Serialize with the undo/redo history DEDUPED. History snapshots share
+    // stroke refs in memory but flatten on JSON.stringify, so the naive form is
+    // O(history x strokes) — quadratic as a drawing grows. Persist each unique
+    // stroke once in a pool keyed by id and the history as arrays of ids, so a
+    // write stays O(unique strokes) regardless of history depth.
+    private serialize(): string {
+        const strokePool: { [id: string]: DrawPaintStrokeType } = {};
+        const historyIds = this.history.map((snapshot) => {
+            return snapshot.map((stroke) => {
+                if (strokePool[stroke.id] === undefined) {
+                    strokePool[stroke.id] = stroke;
+                }
+                return stroke.id;
+            });
+        });
+        return JSON.stringify({
+            version: 2,
+            drawData: this.drawData,
+            strokePool,
+            historyIds,
+            historyIndex: this.historyIndex,
+            isDrawEnabled: this.isDrawEnabled,
+        });
+    }
+
     // Only the presenter persists (settings are a shared file; output windows
-    // get restored via the presenter's init re-sync, so this avoids write races).
-    // Called on committed events only — never per pointer-move.
+    // get restored via the presenter's init re-sync, so this avoids write
+    // races). Called on committed events only — never per pointer-move — and
+    // debounced so a burst of commits collapses into one trailing disk write
+    // (flushed synchronously in delete()).
     private saveDrawData() {
         if (!appProvider.isPagePresenter) {
             return;
         }
-        setSetting(
-            this.settingKey,
-            JSON.stringify({
-                drawData: this.drawData,
-                history: this.history,
-                historyIndex: this.historyIndex,
-                isDrawEnabled: this.isDrawEnabled,
-            }),
-        );
+        this.saveAttempt(() => {
+            setSetting(this.settingKey, this.serialize());
+        });
     }
 
     get isShowing() {
@@ -207,10 +266,13 @@ export default class ScreenDrawManager
         this._div = div;
         this._canvas = null;
         this._ctx = null;
-        this.setupContainer();
         this.render();
     }
 
+    // Applies the overlay div's static styles and (once) creates the canvas +
+    // input listeners. Run only on the low-frequency div-set / refresh path
+    // (render()), where a screen resize must re-apply the div dimensions; the
+    // per-frame render path calls only syncCanvasSize().
     private setupContainer() {
         const div = this._div;
         if (div === null) {
@@ -223,9 +285,8 @@ export default class ScreenDrawManager
         div.style.height = `${this.screenManagerBase.height}px`;
         div.style.overflow = 'hidden';
         div.style.pointerEvents = this.paintTool !== null ? 'auto' : 'none';
-        let canvas = this._canvas;
-        if (canvas === null) {
-            canvas = document.createElement('canvas');
+        if (this._canvas === null) {
+            const canvas = document.createElement('canvas');
             canvas.style.position = 'absolute';
             canvas.style.top = '0';
             canvas.style.left = '0';
@@ -246,11 +307,28 @@ export default class ScreenDrawManager
                 canvas.addEventListener('keydown', this.boundKeyDown);
             }
         }
+        this.syncCanvasSize();
+    }
+
+    // Size the backing store LAZILY: keep it at 0x0 whenever there is nothing to
+    // draw, so an unused overlay holds no canvas memory (a native*HQ_SCALE store
+    // is ~33MB at 1080p — per screen AND per preview). Sized up on the first
+    // stroke / synced drawing and released back to 0x0 on clear.
+    private syncCanvasSize() {
+        const canvas = this._canvas;
+        if (canvas === null) {
+            return;
+        }
+        const isNeeded = this.drawData.paintStrokeList.length > 0;
         const scale = this.renderScale;
-        const width = Math.round(this.screenManagerBase.width * scale);
-        const height = Math.round(this.screenManagerBase.height * scale);
-        // Resizing clears the canvas; renderAllStrokes redraws right after, and a
-        // quality toggle routes through render so the resize takes effect.
+        const width = isNeeded
+            ? Math.round(this.screenManagerBase.width * scale)
+            : 0;
+        const height = isNeeded
+            ? Math.round(this.screenManagerBase.height * scale)
+            : 0;
+        // Assigning width/height clears the canvas; renderAllStrokes redraws
+        // right after, and a quality toggle changes scale via render().
         if (canvas.width !== width || canvas.height !== height) {
             canvas.width = width;
             canvas.height = height;
@@ -269,6 +347,7 @@ export default class ScreenDrawManager
         globalThis.removeEventListener('pointerup', this.boundPointerUp);
         this.currentStroke = null;
         this.pendingPoints = [];
+        this.strokeRect = null;
     }
 
     private handleKeyDown(event: KeyboardEvent) {
@@ -306,6 +385,18 @@ export default class ScreenDrawManager
         this.fireUpdateEvent();
     }
 
+    // Update the armed brush's params in place. Called on every
+    // color/size/style change; avoids the disarm/re-arm churn (pointerEvents
+    // flip + update broadcast to every open panel) a full setPaintTool would
+    // cause on each slider tick. Arms normally if not yet armed.
+    updatePaintToolParams(paintTool: PaintToolType) {
+        if (this.paintTool === null) {
+            this.setPaintTool(paintTool);
+            return;
+        }
+        this.paintTool = paintTool;
+    }
+
     // Live quality toggle from the panel. Persists (shared key), re-renders at
     // the new backing-store resolution, and broadcasts a full sync so the output
     // window and group members switch fidelity in lockstep.
@@ -330,7 +421,7 @@ export default class ScreenDrawManager
         if (canvas === null) {
             return null;
         }
-        const rect = canvas.getBoundingClientRect();
+        const rect = this.strokeRect ?? canvas.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) {
             return null;
         }
@@ -351,6 +442,10 @@ export default class ScreenDrawManager
         if (tool === null) {
             return;
         }
+        // Cache the canvas rect for the whole stroke: it can't move while the
+        // pointer is captured, so subsequent moves skip the layout-forcing
+        // getBoundingClientRect.
+        this.strokeRect = this._canvas?.getBoundingClientRect() ?? null;
         const point = this.clientToNative(event.clientX, event.clientY);
         if (point === null) {
             return;
@@ -396,7 +491,15 @@ export default class ScreenDrawManager
         if (point === null) {
             return;
         }
-        stroke.points.push(point);
+        // A plain straight stroke only ever renders its two endpoints, so
+        // rubber-band in place instead of accumulating (and re-syncing) the dead
+        // intermediate samples. Straight+Dots still needs every point (Dots
+        // draws a dot at each), so exclude that combination.
+        if (stroke.isStraight && !stroke.isDots) {
+            stroke.points = [stroke.points[0], point];
+        } else {
+            stroke.points.push(point);
+        }
         this.pendingPoints.push(point);
         this.scheduleRender();
         // Straight strokes rubber-band from the first point, so the receiver
@@ -414,6 +517,7 @@ export default class ScreenDrawManager
         }
         this.flushPendingPoints();
         this.currentStroke = null;
+        this.strokeRect = null;
         globalThis.removeEventListener('pointermove', this.boundPointerMove);
         globalThis.removeEventListener('pointerup', this.boundPointerUp);
         this.recordHistory();
@@ -636,6 +740,10 @@ export default class ScreenDrawManager
             }
         } else if (data.action === 'clear') {
             this.drawData = { paintStrokeList: [] };
+            // Drop any stroke this screen had in flight so a later pointer-up
+            // can't re-commit it over the synced clear.
+            this.currentStroke = null;
+            this.pendingPoints = [];
             // Mirror the sender: push the empty state so undo can restore.
             this.recordHistory();
         }
@@ -748,7 +856,7 @@ export default class ScreenDrawManager
     }
 
     private renderAllStrokes() {
-        this.setupContainer();
+        this.syncCanvasSize();
         const ctx = this._ctx;
         const canvas = this._canvas;
         if (ctx === null || canvas === null) {
@@ -770,10 +878,14 @@ export default class ScreenDrawManager
     }
 
     render() {
+        // Full path (div-set / 'refresh' event): re-apply the container styles
+        // (a screen resize changes the div dimensions) then repaint.
+        this.setupContainer();
         this.renderAllStrokes();
     }
 
-    // Local clear (no rebroadcast) — used when applying a synced clear.
+    // Local clear + in-flight-stroke reset, without rebroadcast. clear() (the
+    // broadcasting entry point) wraps this.
     private clearLocal() {
         this.drawData = { paintStrokeList: [] };
         this.currentStroke = null;
@@ -792,6 +904,14 @@ export default class ScreenDrawManager
 
     delete() {
         this.detachEventListeners();
+        // Flush any pending debounced persist immediately (isImmediate also
+        // clears the timer) so the last change survives a quick screen
+        // close/reload and no stale write fires after teardown.
+        if (appProvider.isPagePresenter) {
+            this.saveAttempt(() => {
+                setSetting(this.settingKey, this.serialize());
+            }, true);
+        }
         super.delete();
     }
 

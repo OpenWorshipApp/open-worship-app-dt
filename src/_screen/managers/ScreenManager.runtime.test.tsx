@@ -294,6 +294,13 @@ describe('ScreenManager runtime orchestration', () => {
 
         ScreenManager.applyScreenManagerSyncScreen({
             screenId: 2,
+            type: 'draw',
+            data: { action: 'clear' },
+        } as any);
+        expect(MockDrawManager.receiveSyncScreen).toHaveBeenCalled();
+
+        ScreenManager.applyScreenManagerSyncScreen({
+            screenId: 2,
             type: 'effect',
             data: { target: 'background', effect: 'fade' },
         } as any);
@@ -549,6 +556,11 @@ describe('ScreenManager runtime orchestration', () => {
                 type: 'foreground',
             } as any),
         ).toBe(MockForegroundManager);
+        expect(
+            ScreenManager.getSyncGroupScreenEventHandler({
+                type: 'draw',
+            } as any),
+        ).toBe(MockDrawManager);
         expect(
             ScreenManager.getSyncGroupScreenEventHandler({
                 type: 'unknown-sync',
