@@ -333,7 +333,7 @@ export async function checkForAppUpdate(isSilent = true) {
         console.log('Data commit id:', updateData.commitID);
         console.log('System commit hash:', systemCommitHash);
         let isWrongCommitHas = false;
-        if (systemCommitHash !== undefined) {
+        if (!appProvider.systemUtils.isDev && systemCommitHash !== undefined) {
             isWrongCommitHas = updateData.commitID !== systemCommitHash;
         }
 
