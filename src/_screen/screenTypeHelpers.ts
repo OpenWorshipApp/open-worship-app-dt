@@ -134,6 +134,26 @@ export type ForegroundSrcListType = {
     [key: string]: ForegroundDataType;
 };
 
+// Drawing coordinates are stored in NATIVE screen pixels (0..width, 0..height)
+// so a stroke drawn on the scaled mini-preview renders identically on the
+// real (unscaled) output window and on every sync-group member.
+export type DrawPaintPointType = {
+    x: number;
+    y: number;
+};
+export type DrawPaintStrokeType = {
+    id: string;
+    color: string;
+    size: number;
+    points: DrawPaintPointType[];
+    isStraight?: boolean;
+    is3D?: boolean;
+    isDots?: boolean;
+};
+export type DrawDataType = {
+    paintStrokeList: DrawPaintStrokeType[];
+};
+
 export type BoundsType = {
     x: number;
     y: number;
@@ -163,6 +183,7 @@ export const screenTypeList = [
     'background-video-time',
     'vary-app-document-video-time',
     'sync-scroll-percentage',
+    'draw',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {

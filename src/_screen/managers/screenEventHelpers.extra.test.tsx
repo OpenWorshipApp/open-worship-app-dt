@@ -12,6 +12,8 @@ const screenBibleRegisterMock = vi.fn();
 const screenBibleUnregisterMock = vi.fn();
 const screenForegroundRegisterMock = vi.fn();
 const screenForegroundUnregisterMock = vi.fn();
+const screenDrawRegisterMock = vi.fn();
+const screenDrawUnregisterMock = vi.fn();
 
 const appProviderMock = {
     getIsMouseOverApp: vi.fn(() => true),
@@ -59,6 +61,13 @@ vi.mock('./ScreenForegroundManager', () => ({
     default: class ScreenForegroundManager {
         static registerEventListener = screenForegroundRegisterMock;
         static unregisterEventListener = screenForegroundUnregisterMock;
+    },
+}));
+
+vi.mock('./ScreenDrawManager', () => ({
+    default: class ScreenDrawManager {
+        static registerEventListener = screenDrawRegisterMock;
+        static unregisterEventListener = screenDrawUnregisterMock;
     },
 }));
 

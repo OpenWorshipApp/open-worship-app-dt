@@ -5,3 +5,4 @@ is loaded every session. Don't duplicate that content here — add a memory file
 only for something NOT captured in CLAUDE.md or the codebase. -->
 
 - [Foreground sync shared refs](foreground-sync-shared-refs.md) — sync-grouped screens share identical foreground-data objects; never key a module-global map by them
+- [Screen draw feature](screen-draw-feature.md) — FreeShow-style Draw overlay; Paint-only shipped (Fill/Pointer/Focus/Particles deferred, Zoom skipped); native-px coords + incremental begin/points sync

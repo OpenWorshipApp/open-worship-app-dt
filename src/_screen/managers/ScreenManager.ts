@@ -18,6 +18,7 @@ import appProvider from '../../server/appProvider';
 import type { ScreenMessageType } from '../screenTypeHelpers';
 import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenEventHandler from './ScreenEventHandler';
+import ScreenDrawManager from './ScreenDrawManager';
 
 function setGroupMembershipInf(
     screenManagerBase: ScreenManagerBase,
@@ -58,6 +59,7 @@ export default class ScreenManager extends ScreenManagerBase {
     readonly screenVaryAppDocumentManager: ScreenVaryAppDocumentManager;
     readonly screenBibleManager: ScreenBibleManager;
     readonly screenForegroundManager: ScreenForegroundManager;
+    readonly screenDrawManager: ScreenDrawManager;
     readonly backgroundEffectManager: ScreenEffectManager;
     readonly varyAppDocumentEffectManager: ScreenEffectManager;
     readonly foregroundEffectManager: ScreenEffectManager;
@@ -109,6 +111,15 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenForegroundManager = new ScreenForegroundManager(
             this,
             this.foregroundEffectManager,
+        );
+        this.screenDrawManager = new ScreenDrawManager(this);
+        setGroupMembershipInf(
+            this,
+            this.screenDrawManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager).screenDrawManager;
+            },
         );
         this.registeredEventListeners = [];
         this.registeredEventListeners.push(
@@ -229,6 +240,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenVaryAppDocumentManager.sendSyncScreen();
         this.varyAppDocumentEffectManager.sendSyncScreen();
         this.screenBibleManager.sendSyncScreen();
+        this.screenDrawManager.sendSyncScreen();
     }
 
     clear() {
@@ -236,6 +248,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenVaryAppDocumentManager.clear();
         this.screenForegroundManager.clear();
         this.screenBackgroundManager.clear();
+        this.screenDrawManager.clear();
         this.fireUpdateEvent();
     }
 
@@ -252,6 +265,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenVaryAppDocumentManager.delete();
         this.screenBibleManager.delete();
         this.screenForegroundManager.delete();
+        this.screenDrawManager.delete();
         deleteScreenManagerBaseCache(this.key);
         await saveScreenManagersSetting(this.screenId);
         this.fireInstanceEvent();
@@ -298,6 +312,8 @@ export default class ScreenManager extends ScreenManagerBase {
             return ScreenBibleManager;
         } else if (type === 'foreground') {
             return ScreenForegroundManager;
+        } else if (type === 'draw') {
+            return ScreenDrawManager;
         }
         return null;
     }

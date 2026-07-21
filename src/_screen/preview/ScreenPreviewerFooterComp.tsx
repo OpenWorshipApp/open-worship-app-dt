@@ -3,6 +3,7 @@ import { lazy, useCallback, useState } from 'react';
 import { tran } from '../../lang/langHelpers';
 import {
     useScreenManagerBaseContext,
+    useScreenManagerContext,
     useScreenVideoSources,
 } from '../managers/screenManagerHooks';
 import DisplayControl from './DisplayControl';
@@ -16,6 +17,10 @@ import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
     return import('./MiniScreenAudioHandlersComp');
+});
+
+const LazyMiniScreenDrawHandlersComp = lazy(() => {
+    return import('./MiniScreenDrawHandlersComp');
 });
 
 function getNewStageNumber(
@@ -97,8 +102,50 @@ function BackgroundAudioSwitchComp({
     );
 }
 
+function DrawSwitchComp({
+    isDrawHandlersVisible,
+    setIsDrawHandlersVisible,
+}: Readonly<{
+    isDrawHandlersVisible: boolean;
+    setIsDrawHandlersVisible: (isVisible: boolean) => void;
+}>) {
+    const { screenDrawManager } = useScreenManagerContext();
+    const screenDrawManagerRef = useAppCurrentRef(screenDrawManager);
+    const isDrawHandlersVisibleRef = useAppCurrentRef(isDrawHandlersVisible);
+    const setIsDrawHandlersVisibleRef = useAppCurrentRef(
+        setIsDrawHandlersVisible,
+    );
+    const handleToggleDrawHandlers = useCallback(() => {
+        const isEnabling = !isDrawHandlersVisibleRef.current;
+        setIsDrawHandlersVisibleRef.current(isEnabling);
+        // Enable requests the group's existing drawing; disable clears only if
+        // no other group member still has draw enabled.
+        if (isEnabling) {
+            screenDrawManagerRef.current.enableDraw();
+        } else {
+            screenDrawManagerRef.current.disableDraw();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return (
+        <button
+            className={`btn btn-sm btn-${isDrawHandlersVisible ? 'primary' : 'outline-secondary'}`}
+            onClick={handleToggleDrawHandlers}
+            title={tran('Enable Drawing')}
+            aria-label={tran('Enable Drawing')}
+        >
+            <i className="bi bi-brush" />
+        </button>
+    );
+}
+
 export default function ScreenPreviewerFooterComp() {
     const [isAudioHandlersVisible, setIsAudioHandlersVisible] = useState(false);
+    const screenManager = useScreenManagerContext();
+    // Restore the draw panel's on/off state persisted for this screen.
+    const [isDrawHandlersVisible, setIsDrawHandlersVisible] = useState(
+        screenManager.screenDrawManager?.isDrawEnabled ?? false,
+    );
     const videoSources = useScreenVideoSources();
     const screenManagerBase = useScreenManagerBaseContext();
     const [stageNumber, setStageNumber] = useState(
@@ -153,6 +200,12 @@ export default function ScreenPreviewerFooterComp() {
                             />
                         </div>
                     ) : null}
+                    <div className="ms-1">
+                        <DrawSwitchComp
+                            isDrawHandlersVisible={isDrawHandlersVisible}
+                            setIsDrawHandlersVisible={setIsDrawHandlersVisible}
+                        />
+                    </div>
                 </div>
                 <div
                     className="flex-grow-1 d-flex justify-content-end"
@@ -179,6 +232,11 @@ export default function ScreenPreviewerFooterComp() {
                             />
                         ))}
                     </div>
+                </AppSuspenseComp>
+            ) : null}
+            {isDrawHandlersVisible ? (
+                <AppSuspenseComp>
+                    <LazyMiniScreenDrawHandlersComp />
                 </AppSuspenseComp>
             ) : null}
         </div>

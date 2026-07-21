@@ -10,6 +10,8 @@ import ScreenVaryAppDocumentManager from './ScreenVaryAppDocumentManager';
 import type EventHandler from '../../event/EventHandler';
 import type { ScreenForegroundEventType } from './ScreenForegroundManager';
 import ScreenForegroundManager from './ScreenForegroundManager';
+import type { ScreenDrawEventType } from './ScreenDrawManager';
+import ScreenDrawManager from './ScreenDrawManager';
 import appProvider from '../../server/appProvider';
 import { type ListenerType } from '../../event/EventHandler';
 
@@ -89,6 +91,19 @@ export function useScreenForegroundManagerEvents(
         events,
         ScreenForegroundManager as any,
         screenForegroundManager,
+        callback,
+    );
+}
+
+export function useScreenDrawManagerEvents(
+    events: ScreenDrawEventType[],
+    screenDrawManager?: ScreenDrawManager,
+    callback?: ListenerType<void>,
+) {
+    useScreenEvents(
+        events,
+        ScreenDrawManager as any,
+        screenDrawManager,
         callback,
     );
 }

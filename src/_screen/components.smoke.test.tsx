@@ -81,6 +81,7 @@ const screenManagerMock: any = {
 vi.mock('../server/appProvider', () => ({
     default: {
         isPageScreen: true,
+        systemUtils: { isDev: false },
     },
 }));
 
