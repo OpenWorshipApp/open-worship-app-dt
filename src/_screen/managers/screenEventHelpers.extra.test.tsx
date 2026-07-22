@@ -12,6 +12,8 @@ const screenBibleRegisterMock = vi.fn();
 const screenBibleUnregisterMock = vi.fn();
 const screenForegroundRegisterMock = vi.fn();
 const screenForegroundUnregisterMock = vi.fn();
+const screenDrawRegisterMock = vi.fn();
+const screenDrawUnregisterMock = vi.fn();
 
 const appProviderMock = {
     getIsMouseOverApp: vi.fn(() => true),
@@ -59,6 +61,20 @@ vi.mock('./ScreenForegroundManager', () => ({
     default: class ScreenForegroundManager {
         static registerEventListener = screenForegroundRegisterMock;
         static unregisterEventListener = screenForegroundUnregisterMock;
+    },
+}));
+
+vi.mock('./ScreenDrawManager', () => ({
+    default: class ScreenDrawManager {
+        static registerEventListener = screenDrawRegisterMock;
+        static unregisterEventListener = screenDrawUnregisterMock;
+    },
+}));
+
+vi.mock('./ScreenFocusManager', () => ({
+    default: class ScreenFocusManager {
+        static registerEventListener = vi.fn(() => []);
+        static unregisterEventListener = vi.fn();
     },
 }));
 
@@ -225,6 +241,7 @@ describe('screenEventHelpers', () => {
             useScreenVaryAppDocumentManagerEvents,
             useScreenBibleManagerEvents,
             useScreenForegroundManagerEvents,
+            useScreenDrawManagerEvents,
         } = await import('./screenEventHelpers');
 
         let staticCallback: (() => void) | undefined;
@@ -240,6 +257,7 @@ describe('screenEventHelpers', () => {
         screenVaryRegisterMock.mockReturnValue(['vary-listener']);
         screenBibleRegisterMock.mockReturnValue(['bible-listener']);
         screenForegroundRegisterMock.mockReturnValue(['foreground-listener']);
+        screenDrawRegisterMock.mockReturnValue(['draw-listener']);
 
         function Host() {
             useScreenEvents(['sync'], staticHandler as any);
@@ -247,6 +265,7 @@ describe('screenEventHelpers', () => {
             useScreenVaryAppDocumentManagerEvents(['update']);
             useScreenBibleManagerEvents(['update']);
             useScreenForegroundManagerEvents(['update']);
+            useScreenDrawManagerEvents(['update']);
             return null;
         }
 
@@ -274,6 +293,10 @@ describe('screenEventHelpers', () => {
             ['update'],
             expect.any(Function),
         );
+        expect(screenDrawRegisterMock).toHaveBeenCalledWith(
+            ['update'],
+            expect.any(Function),
+        );
 
         await act(async () => {
             staticCallback?.();
@@ -297,6 +320,9 @@ describe('screenEventHelpers', () => {
         ]);
         expect(screenForegroundUnregisterMock).toHaveBeenCalledWith([
             'foreground-listener',
+        ]);
+        expect(screenDrawUnregisterMock).toHaveBeenCalledWith([
+            'draw-listener',
         ]);
         root = createRoot(container);
     });

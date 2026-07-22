@@ -81,6 +81,7 @@ const screenManagerMock: any = {
 vi.mock('../server/appProvider', () => ({
     default: {
         isPageScreen: true,
+        systemUtils: { isDev: false },
     },
 }));
 
@@ -100,6 +101,7 @@ vi.mock('../helper/appHooks', async () => {
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     useStateSettingNumber: vi.fn(() => [9, setPreviewScaleMock]),
+    useStateSettingString: vi.fn(() => ['paint', vi.fn()]),
 }));
 
 vi.mock('../helper/domHelpers', () => ({
@@ -253,6 +255,7 @@ vi.mock('./managers/screenEventHelpers', () => ({
     useScreenBackgroundManagerEvents: vi.fn(),
     useScreenBibleManagerEvents: vi.fn(),
     useScreenForegroundManagerEvents: vi.fn(),
+    useScreenDrawManagerEvents: vi.fn(),
     useScreenEvents: vi.fn(),
     useScreenVaryAppDocumentManagerEvents: vi.fn(),
 }));

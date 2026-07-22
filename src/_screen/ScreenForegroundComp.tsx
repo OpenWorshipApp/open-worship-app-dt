@@ -1,5 +1,6 @@
-import { useAppCurrentRef } from '../helper/appHooks';
 import './ScreenForegroundComp.scss';
+
+import { useAppCurrentRef } from '../helper/appHooks';
 
 import {
     useScreenManagerContext,

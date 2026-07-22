@@ -34,6 +34,9 @@ const getSelectedScreenManagerBasesMock = vi.fn();
 const getSettingMock = vi.fn(
     (_key?: string) => undefined as string | undefined,
 );
+// Stands in for what a previous session left on disk, for the hooks that seed
+// state from a setting key (e.g. the previewer's selected overlay mode).
+let persistedSettingMock: { [key: string]: string } = {};
 const handleErrorMock = vi.fn();
 const extractDropDataMock = vi.fn(
     (_event?: Event) => null as { type: string; item: string } | null,
@@ -116,6 +119,15 @@ function createScreenManager(
         screenForegroundManager: {
             isShowing: false,
             clear: vi.fn(),
+        },
+        screenDrawManager: {
+            isDrawEnabled: false,
+            enableDraw: vi.fn(),
+            disableDraw: vi.fn(),
+        },
+        screenFocusManager: {
+            isPanelOpen: false,
+            setIsPanelOpen: vi.fn(),
         },
         setIsLockedWithSyncGroup: vi.fn((isLocked: boolean) => {
             manager.isLocked = isLocked;
@@ -217,6 +229,9 @@ vi.mock('../../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     useStateSettingNumber: (_key: string, initialValue: number) => {
         return useState(initialValue);
+    },
+    useStateSettingString: (key: string, initialValue: string) => {
+        return useState(persistedSettingMock[key] ?? initialValue);
     },
 }));
 
@@ -351,6 +366,17 @@ vi.mock('../../helper/errorHelpers', () => ({
 
 vi.mock('./CustomHTMLScreenPreviewer', () => ({}));
 
+// The two lazily-loaded panels stand in as markers: these tests are about which
+// panel the footer chooses and what the toggle does to the draw layer, not about
+// the panels' own controls (those have their own suites).
+vi.mock('./MiniScreenDrawHandlersComp', () => ({
+    default: () => <div data-panel="draw" />,
+}));
+
+vi.mock('./MiniScreenFocusHandlersComp', () => ({
+    default: () => <div data-panel="focus" />,
+}));
+
 vi.mock('../managers/ScreenManager', () => ({
     default: class ScreenManager {
         static readonly initReceiveScreenMessage = vi.fn();
@@ -368,6 +394,7 @@ describe('preview runtime interactions', () => {
         document.body.appendChild(container);
         root = createRoot(container);
         vi.clearAllMocks();
+        persistedSettingMock = {};
         videoSources = [];
 
         screenManager = createScreenManager(1, {
@@ -568,6 +595,101 @@ describe('preview runtime interactions', () => {
         ).toBeNull();
 
         audio.remove();
+    });
+
+    test('switching to Focusing keeps the on/off state and still disables drawing when turned off', async () => {
+        const { default: ScreenPreviewerFooterComp } =
+            await import('./ScreenPreviewerFooterComp');
+        const { screenDrawManager, screenFocusManager } = screenManager;
+
+        await act(async () => {
+            root.render(<ScreenPreviewerFooterComp />);
+        });
+        const toggle = container.querySelector(
+            'button[title="Enable Drawing"]',
+        ) as HTMLButtonElement | null;
+        const click = async (element: HTMLElement | null) => {
+            await act(async () => {
+                element?.dispatchEvent(
+                    new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                    }),
+                );
+            });
+        };
+
+        await click(toggle);
+        expect(screenDrawManager.enableDraw).toHaveBeenCalledTimes(1);
+        expect(container.querySelector('[data-panel="draw"]')).not.toBeNull();
+
+        // The 3-dots switches the control type ONLY: the panel stays open and
+        // the draw layer stays enabled.
+        showAppContextMenuMock.mockClear();
+        await click(
+            container.querySelector(
+                'button .bi-three-dots-vertical',
+            ) as HTMLElement | null,
+        );
+        const modeItems = (showAppContextMenuMock.mock.calls[0]?.[1] ??
+            []) as Array<{ disabled?: boolean; onSelect: () => void }>;
+        expect(modeItems[0]?.disabled).toBe(true);
+        await act(async () => {
+            modeItems[1]?.onSelect();
+        });
+        expect(container.querySelector('[data-panel="focus"]')).not.toBeNull();
+        expect(screenDrawManager.disableDraw).not.toHaveBeenCalled();
+        // ...but the on/off state must be RE-HOMED onto the focus manager, which
+        // is what persists it for Focusing. Without this the panel was enabled
+        // yet nothing recorded it, so the next launch came back closed.
+        expect(screenFocusManager.setIsPanelOpen).toHaveBeenLastCalledWith(
+            true,
+        );
+
+        // Turning the overlay off while Focusing is showing must STILL disable
+        // the draw layer. It used to early-return, which stranded a drawing made
+        // before the switch on screen with no control left to clear it.
+        await click(
+            container.querySelector(
+                'button[title="Enable Focusing"]',
+            ) as HTMLElement | null,
+        );
+        expect(screenDrawManager.disableDraw).toHaveBeenCalledTimes(1);
+        expect(screenFocusManager.setIsPanelOpen).toHaveBeenLastCalledWith(
+            false,
+        );
+        expect(container.querySelector('[data-panel="focus"]')).toBeNull();
+
+        // ...and turning it back on in Focusing must not arm the draw canvas to
+        // fight the focus overlay for pointer input — it only records that the
+        // focus panel is open.
+        await click(
+            container.querySelector(
+                'button[title="Enable Focusing"]',
+            ) as HTMLElement | null,
+        );
+        expect(screenDrawManager.enableDraw).toHaveBeenCalledTimes(1);
+        expect(screenFocusManager.setIsPanelOpen).toHaveBeenLastCalledWith(
+            true,
+        );
+        expect(container.querySelector('[data-panel="focus"]')).not.toBeNull();
+    });
+
+    test('the footer reopens the panel of the mode that was left enabled', async () => {
+        const { default: ScreenPreviewerFooterComp } =
+            await import('./ScreenPreviewerFooterComp');
+        // A previous session left Focusing selected with its panel on. The draw
+        // layer is off — which used to be the only flag the footer looked at, so
+        // the panel came back closed.
+        persistedSettingMock[`screen-draw-mode-${screenManager.screenId}`] =
+            'focus';
+        screenManager.screenFocusManager.isPanelOpen = true;
+        screenManager.screenDrawManager.isDrawEnabled = false;
+
+        await act(async () => {
+            root.render(<ScreenPreviewerFooterComp />);
+        });
+        expect(container.querySelector('[data-panel="focus"]')).not.toBeNull();
     });
 
     test('runs clear controls and refreshes preview scale changes', async () => {

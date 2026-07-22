@@ -4,6 +4,8 @@ import CloseButton from './ScreenCloseButtonComp';
 import ScreenBackgroundComp from './ScreenBackgroundComp';
 import ScreenVaryAppDocumentComp from './ScreenVaryAppDocumentComp';
 import ScreenForegroundComp from './ScreenForegroundComp';
+import ScreenDrawComp from './ScreenDrawComp';
+import ScreenFocusComp from './ScreenFocusComp';
 import ScreenBibleComp from './ScreenBibleComp';
 import { createScreenManager } from './managers/screenManagerHelpers';
 import ScreenManager from './managers/ScreenManager';
@@ -90,6 +92,8 @@ export default function ScreenAppComp() {
                     <ScreenVaryAppDocumentComp />
                     <ScreenBibleComp />
                     <ScreenForegroundComp />
+                    <ScreenDrawComp />
+                    <ScreenFocusComp />
                 </>
             )}
             <CloseButton isForceShowing={screenManager === null} />

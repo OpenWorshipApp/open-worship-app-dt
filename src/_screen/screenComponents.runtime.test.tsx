@@ -154,6 +154,14 @@ function createScreenManagerStub() {
                 height: '100%',
             },
         },
+        screenDrawManager: {
+            render: vi.fn(),
+            div: null,
+        },
+        screenFocusManager: {
+            render: vi.fn(),
+            div: null,
+        },
         screenVaryAppDocumentManager: {
             render: vi.fn(),
             checkIsMediaPlaying: vi.fn(),
@@ -257,6 +265,7 @@ describe('screen component runtime behavior', () => {
         expect(container.querySelector('#slide')).not.toBeNull();
         expect(container.querySelector('#bible-screen-view')).not.toBeNull();
         expect(container.querySelector('#foreground')).not.toBeNull();
+        expect(container.querySelector('#draw')).not.toBeNull();
         expect(container.querySelector('#close')).not.toBeNull();
 
         expect(
@@ -269,6 +278,7 @@ describe('screen component runtime behavior', () => {
         expect(
             screenManager.screenForegroundManager.render,
         ).toHaveBeenCalledOnce();
+        expect(screenManager.screenDrawManager.render).toHaveBeenCalledOnce();
         expect(screenManager.screenBackgroundManager.rootContainer).toBe(
             container.querySelector('#background'),
         );
@@ -280,6 +290,9 @@ describe('screen component runtime behavior', () => {
         );
         expect(screenManager.screenForegroundManager.div).toBe(
             container.querySelector('#foreground'),
+        );
+        expect(screenManager.screenDrawManager.div).toBe(
+            container.querySelector('#draw'),
         );
         expect(screenManager.sendScreenMessage).toHaveBeenCalledWith(
             {
