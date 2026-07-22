@@ -12,6 +12,8 @@ import type { ScreenForegroundEventType } from './ScreenForegroundManager';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import type { ScreenDrawEventType } from './ScreenDrawManager';
 import ScreenDrawManager from './ScreenDrawManager';
+import type { ScreenFocusEventType } from './ScreenFocusManager';
+import ScreenFocusManager from './ScreenFocusManager';
 import appProvider from '../../server/appProvider';
 import { type ListenerType } from '../../event/EventHandler';
 
@@ -104,6 +106,19 @@ export function useScreenDrawManagerEvents(
         events,
         ScreenDrawManager as any,
         screenDrawManager,
+        callback,
+    );
+}
+
+export function useScreenFocusManagerEvents(
+    events: ScreenFocusEventType[],
+    screenFocusManager?: ScreenFocusManager,
+    callback?: ListenerType<void>,
+) {
+    useScreenEvents(
+        events,
+        ScreenFocusManager as any,
+        screenFocusManager,
         callback,
     );
 }

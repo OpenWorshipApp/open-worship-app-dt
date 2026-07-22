@@ -4,6 +4,16 @@ import { getSetting, setSetting } from '../../helper/settingHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import ScreenEventHandler from './ScreenEventHandler';
 import { type GroupMembershipInf } from './ScreenEventHandler';
+import { checkIsDrawShortcutKey } from './screenDrawShortcutHelpers';
+import {
+    applyKeyboardOutline,
+    applyOverlayBoxStyle,
+    applyOverlayFocusability,
+    checkIsKeyboardTarget,
+    forwardToOwnScreenOutput,
+    genFrameScheduler,
+    toNativePoint,
+} from './screenOverlayHelpers';
 import type ScreenManagerBase from './ScreenManagerBase';
 import type {
     BasicScreenMessageType,
@@ -23,6 +33,10 @@ export type PaintToolType = {
     isStraight: boolean;
     is3D: boolean;
     isDots: boolean;
+    // When true the brush erases instead of paints: strokes are tagged
+    // isEraser and rendered with `destination-out`. Optional so existing
+    // callers/tests that build the tool without it keep compiling (paint mode).
+    isEraser?: boolean;
 };
 
 // Wire messages are kept tiny: a full snapshot is only sent on (re)sync/init;
@@ -113,7 +127,11 @@ export default class ScreenDrawManager
     // (getBoundingClientRect) on every sampled point.
     private strokeRect: DOMRect | null = null;
     private lastSyncAt = 0;
-    private renderScheduled = false;
+    // Repaints are coalesced to one per frame: pointer moves and streamed sync
+    // messages both arrive faster than the display can show them.
+    private readonly scheduleRender = genFrameScheduler(() => {
+        this.renderAllStrokes();
+    });
     // Trailing-debounced persistence: collapses a burst of commits into one
     // write and keeps the synchronous disk write off the pointer-up critical
     // path.
@@ -130,6 +148,8 @@ export default class ScreenDrawManager
     private readonly boundPointerMove = this.handlePointerMove.bind(this);
     private readonly boundPointerUp = this.handlePointerUp.bind(this);
     private readonly boundKeyDown = this.handleKeyDown.bind(this);
+    private readonly boundFocus = this.handleFocus.bind(this);
+    private readonly boundBlur = this.handleBlur.bind(this);
 
     constructor(screenManagerBase: ScreenManagerBase) {
         super(screenManagerBase);
@@ -278,14 +298,11 @@ export default class ScreenDrawManager
         if (div === null) {
             return;
         }
-        div.style.position = 'absolute';
-        div.style.top = '0';
-        div.style.left = '0';
-        div.style.width = `${this.screenManagerBase.width}px`;
-        div.style.height = `${this.screenManagerBase.height}px`;
-        div.style.overflow = 'hidden';
-        div.style.pointerEvents = this.paintTool !== null ? 'auto' : 'none';
-        if (this._canvas === null) {
+        const isArmed = this.paintTool !== null;
+        applyOverlayBoxStyle(div, this.screenManagerBase, isArmed);
+        if (this._canvas !== null) {
+            applyOverlayFocusability(this._canvas, isArmed);
+        } else {
             const canvas = document.createElement('canvas');
             canvas.style.position = 'absolute';
             canvas.style.top = '0';
@@ -294,9 +311,10 @@ export default class ScreenDrawManager
             canvas.style.height = '100%';
             canvas.style.pointerEvents = 'inherit';
             canvas.style.touchAction = 'none';
-            // Focusable so it can own the keyboard (undo/redo) while active,
-            // without a focus ring cluttering the scaled preview.
-            canvas.tabIndex = 0;
+            // Focusable so it can own the keyboard (undo/redo + the panel's
+            // palette shortcuts) while active. Starts ring-less; applyFocusOutline
+            // paints the cyan ring on focus and clears it again on blur.
+            applyOverlayFocusability(canvas, isArmed);
             canvas.style.outline = 'none';
             div.appendChild(canvas);
             this._canvas = canvas;
@@ -305,6 +323,8 @@ export default class ScreenDrawManager
             if (!appProvider.isPageScreen) {
                 canvas.addEventListener('pointerdown', this.boundPointerDown);
                 canvas.addEventListener('keydown', this.boundKeyDown);
+                canvas.addEventListener('focus', this.boundFocus);
+                canvas.addEventListener('blur', this.boundBlur);
             }
         }
         this.syncCanvasSize();
@@ -342,12 +362,43 @@ export default class ScreenDrawManager
                 this.boundPointerDown,
             );
             this._canvas.removeEventListener('keydown', this.boundKeyDown);
+            this._canvas.removeEventListener('focus', this.boundFocus);
+            this._canvas.removeEventListener('blur', this.boundBlur);
         }
+        this.applyFocusOutline(false);
         globalThis.removeEventListener('pointermove', this.boundPointerMove);
         globalThis.removeEventListener('pointerup', this.boundPointerUp);
         this.currentStroke = null;
         this.pendingPoints = [];
         this.strokeRect = null;
+    }
+
+    private handleFocus() {
+        this.applyFocusOutline(true);
+    }
+
+    private handleBlur() {
+        this.applyFocusOutline(false);
+    }
+
+    private applyFocusOutline(isFocused: boolean) {
+        if (this._canvas === null) {
+            return;
+        }
+        applyKeyboardOutline(
+            this._canvas,
+            isFocused,
+            this.screenManagerBase.width,
+        );
+    }
+
+    // Whether this screen's draw overlay currently holds the keyboard, shown by
+    // the cyan ring. It gates EVERYTHING the overlay does: palette shortcuts
+    // only act on the focused screen, and painting/erasing only starts once the
+    // user has clicked the mini-screen to select it. So a stray key or a stray
+    // click on the wrong preview can never mark a screen.
+    get isFocused() {
+        return checkIsKeyboardTarget(this._canvas);
     }
 
     private handleKeyDown(event: KeyboardEvent) {
@@ -371,6 +422,11 @@ export default class ScreenDrawManager
             this.redo();
             return;
         }
+        // Let the draw panel's palette shortcuts (E, [, ], ...) reach the app's
+        // global keyboard listener even while the canvas holds focus.
+        if (checkIsDrawShortcutKey(event)) {
+            return;
+        }
         // Consume every other key too: while the draw canvas is focused the app's
         // global keyboard shortcuts (which listen on document) must not fire.
         event.stopPropagation();
@@ -378,9 +434,23 @@ export default class ScreenDrawManager
 
     setPaintTool(paintTool: PaintToolType | null) {
         this.paintTool = paintTool;
+        const isArmed = paintTool !== null;
         if (this._div !== null) {
-            this._div.style.pointerEvents =
-                paintTool !== null ? 'auto' : 'none';
+            this._div.style.pointerEvents = isArmed ? 'auto' : 'none';
+        }
+        if (this._canvas !== null) {
+            // Out of the tab order whenever the panel is closed, so the overlay
+            // can't be tabbed onto and made to claim the palette keys it will
+            // then ignore.
+            applyOverlayFocusability(this._canvas, isArmed);
+        }
+        if (paintTool === null) {
+            // Disarming (draw panel closed) must drop the focus ring and stop
+            // this screen claiming the palette shortcuts. blur() fires the
+            // listener that clears the ring; clear it directly too for the case
+            // where the canvas never held focus (blur() is then a no-op).
+            this._canvas?.blur?.();
+            this.applyFocusOutline(false);
         }
         this.fireUpdateEvent();
     }
@@ -413,33 +483,30 @@ export default class ScreenDrawManager
         this.fireUpdateEvent();
     }
 
-    private clientToNative(
-        clientX: number,
-        clientY: number,
-    ): DrawPaintPointType | null {
-        const canvas = this._canvas;
-        if (canvas === null) {
-            return null;
-        }
-        const rect = this.strokeRect ?? canvas.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) {
-            return null;
-        }
-        // Map viewport coords to native screen pixels regardless of the
-        // preview's CSS scale (rect is the scaled box; canvas.width is native).
-        return {
-            x:
-                ((clientX - rect.left) * this.screenManagerBase.width) /
-                rect.width,
-            y:
-                ((clientY - rect.top) * this.screenManagerBase.height) /
-                rect.height,
-        };
+    private clientToNative(clientX: number, clientY: number) {
+        const rect =
+            this.strokeRect ?? this._canvas?.getBoundingClientRect() ?? null;
+        return toNativePoint(rect, clientX, clientY, this.screenManagerBase);
     }
 
     private handlePointerDown(event: PointerEvent) {
         const tool = this.paintTool;
         if (tool === null) {
+            return;
+        }
+        // Primary button only. The armed overlay covers the whole mini-screen, so
+        // without this a right-click aimed at the preview's context menu would
+        // both claim the keyboard and (once focused) leave a dot behind.
+        if (event.button !== 0) {
+            return;
+        }
+        // Click-to-select first: a touch on an unfocused mini-screen only claims
+        // the focus ring (and the palette shortcuts) — it does NOT paint or
+        // erase. The user picks the screen, then draws on it. Without this,
+        // reaching for the right preview leaves a mark on the wrong one.
+        if (!this.isFocused) {
+            event.preventDefault();
+            this._canvas?.focus?.({ preventScroll: true });
             return;
         }
         // Cache the canvas rect for the whole stroke: it can't move while the
@@ -451,16 +518,19 @@ export default class ScreenDrawManager
             return;
         }
         event.preventDefault();
-        // Grab keyboard focus so undo/redo shortcuts target this canvas.
-        this._canvas?.focus?.({ preventScroll: true });
+        const isEraser = tool.isEraser === true;
         const stroke: DrawPaintStrokeType = {
             id: genStrokeId(),
             color: tool.color,
             size: tool.size,
             points: [point],
-            isStraight: tool.isStraight,
-            is3D: tool.is3D,
-            isDots: tool.isDots,
+            // The eraser is always a plain round freehand path: the style
+            // toggles (straight/3D/dots) don't apply when erasing, so force
+            // them off for a predictable "rub out any chunk" gesture.
+            isStraight: isEraser ? false : tool.isStraight,
+            is3D: isEraser ? false : tool.is3D,
+            isDots: isEraser ? false : tool.isDots,
+            isEraser,
         };
         this.currentStroke = stroke;
         this.pendingPoints = [];
@@ -749,7 +819,7 @@ export default class ScreenDrawManager
         }
         this.scheduleRender();
         this.fireUpdateEvent();
-        this.forwardToOwnScreenOutput(data);
+        forwardToOwnScreenOutput(this.screenManagerBase, 'draw', data);
         // Persist only on committed actions (never per streamed begin/points).
         if (
             data.action === 'sync' ||
@@ -757,38 +827,6 @@ export default class ScreenDrawManager
             data.action === 'clear'
         ) {
             this.saveDrawData();
-        }
-    }
-
-    private forwardToOwnScreenOutput(data: DrawSyncActionType) {
-        // A group-synced update reached THIS screen's presenter manager, but the
-        // screenMessage IPC is TARGETED (electron routes it only to the origin
-        // screen's output window). So mirror it to this screen's own output
-        // window. Presenter only; and a raw send (no enableSyncGroup) so the
-        // noSyncGroupMap echo guard stays set and it doesn't loop back to the
-        // group. Output windows never reach here (isPagePresenter is false).
-        if (!appProvider.isPagePresenter) {
-            return;
-        }
-        this.screenManagerBase.sendScreenMessage(
-            { screenId: this.screenId, type: 'draw', data },
-            false,
-        );
-    }
-
-    private scheduleRender() {
-        if (this.renderScheduled) {
-            return;
-        }
-        this.renderScheduled = true;
-        const run = () => {
-            this.renderScheduled = false;
-            this.renderAllStrokes();
-        };
-        if (typeof globalThis.requestAnimationFrame === 'function') {
-            globalThis.requestAnimationFrame(run);
-        } else {
-            run();
         }
     }
 
@@ -801,8 +839,18 @@ export default class ScreenDrawManager
             return;
         }
         ctx.save();
-        ctx.strokeStyle = stroke.color;
-        ctx.fillStyle = stroke.color;
+        if (stroke.isEraser) {
+            // Manual eraser: keep the destination only where the source is
+            // transparent, so painting an opaque path here rubs out everything
+            // already drawn beneath it. The stored color is irrelevant — only
+            // the source alpha matters, so paint fully opaque.
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.strokeStyle = '#000';
+            ctx.fillStyle = '#000';
+        } else {
+            ctx.strokeStyle = stroke.color;
+            ctx.fillStyle = stroke.color;
+        }
         ctx.lineWidth = stroke.size;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';

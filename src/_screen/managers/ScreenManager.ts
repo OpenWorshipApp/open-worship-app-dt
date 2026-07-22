@@ -19,6 +19,7 @@ import type { ScreenMessageType } from '../screenTypeHelpers';
 import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenEventHandler from './ScreenEventHandler';
 import ScreenDrawManager from './ScreenDrawManager';
+import ScreenFocusManager from './ScreenFocusManager';
 
 function setGroupMembershipInf(
     screenManagerBase: ScreenManagerBase,
@@ -60,6 +61,7 @@ export default class ScreenManager extends ScreenManagerBase {
     readonly screenBibleManager: ScreenBibleManager;
     readonly screenForegroundManager: ScreenForegroundManager;
     readonly screenDrawManager: ScreenDrawManager;
+    readonly screenFocusManager: ScreenFocusManager;
     readonly backgroundEffectManager: ScreenEffectManager;
     readonly varyAppDocumentEffectManager: ScreenEffectManager;
     readonly foregroundEffectManager: ScreenEffectManager;
@@ -119,6 +121,15 @@ export default class ScreenManager extends ScreenManagerBase {
             this.screenId,
             (screenManagerBase) => {
                 return (screenManagerBase as ScreenManager).screenDrawManager;
+            },
+        );
+        this.screenFocusManager = new ScreenFocusManager(this);
+        setGroupMembershipInf(
+            this,
+            this.screenFocusManager,
+            this.screenId,
+            (screenManagerBase) => {
+                return (screenManagerBase as ScreenManager).screenFocusManager;
             },
         );
         this.registeredEventListeners = [];
@@ -241,6 +252,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.varyAppDocumentEffectManager.sendSyncScreen();
         this.screenBibleManager.sendSyncScreen();
         this.screenDrawManager.sendSyncScreen();
+        this.screenFocusManager.sendSyncScreen();
     }
 
     clear() {
@@ -249,6 +261,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenForegroundManager.clear();
         this.screenBackgroundManager.clear();
         this.screenDrawManager.clear();
+        this.screenFocusManager.clear();
         this.fireUpdateEvent();
     }
 
@@ -266,6 +279,7 @@ export default class ScreenManager extends ScreenManagerBase {
         this.screenBibleManager.delete();
         this.screenForegroundManager.delete();
         this.screenDrawManager.delete();
+        this.screenFocusManager.delete();
         deleteScreenManagerBaseCache(this.key);
         await saveScreenManagersSetting(this.screenId);
         this.fireInstanceEvent();
@@ -314,6 +328,8 @@ export default class ScreenManager extends ScreenManagerBase {
             return ScreenForegroundManager;
         } else if (type === 'draw') {
             return ScreenDrawManager;
+        } else if (type === 'focus') {
+            return ScreenFocusManager;
         }
         return null;
     }

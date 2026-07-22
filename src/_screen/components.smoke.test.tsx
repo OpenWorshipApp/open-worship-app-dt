@@ -101,6 +101,7 @@ vi.mock('../helper/appHooks', async () => {
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     useStateSettingNumber: vi.fn(() => [9, setPreviewScaleMock]),
+    useStateSettingString: vi.fn(() => ['paint', vi.fn()]),
 }));
 
 vi.mock('../helper/domHelpers', () => ({

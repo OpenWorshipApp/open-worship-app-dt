@@ -158,6 +158,10 @@ function createScreenManagerStub() {
             render: vi.fn(),
             div: null,
         },
+        screenFocusManager: {
+            render: vi.fn(),
+            div: null,
+        },
         screenVaryAppDocumentManager: {
             render: vi.fn(),
             checkIsMediaPlaying: vi.fn(),

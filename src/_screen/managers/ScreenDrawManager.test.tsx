@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 // In-memory setting store so persistence can be round-tripped.
 const settingStore = new Map<string, string>();
@@ -69,12 +69,36 @@ function makeStroke(id: string, extra: any = {}) {
 }
 
 describe('ScreenDrawManager', () => {
+    // jsdom has no 2D context, so every test that mounts an overlay needs a stub.
+    // Install a no-op one for all of them and restore the real prototype method
+    // afterwards — tests that assert on drawing calls install a richer stub of
+    // their own, and without the restore that richer stub leaks into whatever
+    // runs next.
+    const originalGetContext = HTMLCanvasElement.prototype.getContext;
+
     beforeEach(() => {
         vi.clearAllMocks();
         settingStore.clear();
         appProviderMock.isPagePresenter = true;
         appProviderMock.isPageScreen = false;
         document.body.innerHTML = '';
+        HTMLCanvasElement.prototype.getContext = vi.fn(() => ({
+            save: vi.fn(),
+            restore: vi.fn(),
+            beginPath: vi.fn(),
+            moveTo: vi.fn(),
+            lineTo: vi.fn(),
+            quadraticCurveTo: vi.fn(),
+            arc: vi.fn(),
+            fill: vi.fn(),
+            stroke: vi.fn(),
+            clearRect: vi.fn(),
+            setTransform: vi.fn(),
+        })) as any;
+    });
+
+    afterEach(() => {
+        HTMLCanvasElement.prototype.getContext = originalGetContext;
     });
 
     test('receiveSyncScreen begin/points/commit builds drawData and history', async () => {
@@ -342,6 +366,12 @@ describe('ScreenDrawManager', () => {
             is3D: false,
             isDots: false,
         });
+        // Click-to-select: the first touch on an unfocused overlay only claims
+        // the screen, it must not paint.
+        down(10, 10);
+        expect(manager.drawData.paintStrokeList).toHaveLength(0);
+        expect(manager.isFocused).toBe(true);
+
         down(10, 10);
         move(50, 50);
         move(80, 20);
@@ -363,5 +393,295 @@ describe('ScreenDrawManager', () => {
         move(15, 15);
         expect(lastStroke().points.length).toBeGreaterThanOrEqual(4);
         up();
+    });
+
+    test('eraser tool tags strokes isEraser and forces style flags off', async () => {
+        const ScreenDrawManager = await importManager();
+        // A save/restore-honouring stub. The point is that it can FAIL: if
+        // drawStroke ever set destination-out without the surrounding
+        // save()/restore(), the composite op would leak onto the next stroke and
+        // paint would silently start erasing. A stub whose save/restore are
+        // no-ops cannot tell those two implementations apart.
+        const paintedWith: string[] = [];
+        HTMLCanvasElement.prototype.getContext = vi.fn(() => {
+            const stack: string[] = [];
+            const ctx: any = {
+                globalCompositeOperation: 'source-over',
+                save: () => {
+                    stack.push(ctx.globalCompositeOperation);
+                },
+                restore: () => {
+                    ctx.globalCompositeOperation = stack.pop() ?? 'source-over';
+                },
+                beginPath: vi.fn(),
+                moveTo: vi.fn(),
+                lineTo: vi.fn(),
+                quadraticCurveTo: vi.fn(),
+                arc: vi.fn(),
+                fill: () => {
+                    paintedWith.push(ctx.globalCompositeOperation);
+                },
+                stroke: () => {
+                    paintedWith.push(ctx.globalCompositeOperation);
+                },
+                clearRect: vi.fn(),
+                setTransform: vi.fn(),
+            };
+            return ctx;
+        }) as any;
+        const manager = new ScreenDrawManager(createBase(36));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+        const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+        canvas.getBoundingClientRect = () =>
+            ({
+                left: 0,
+                top: 0,
+                right: 100,
+                bottom: 100,
+                width: 100,
+                height: 100,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            }) as DOMRect;
+
+        // Enable every style flag; the eraser must still produce a plain stroke.
+        manager.setPaintTool({
+            color: '#f00',
+            size: 8,
+            isStraight: true,
+            is3D: true,
+            isDots: true,
+            isEraser: true,
+        });
+        const down = () => {
+            canvas.dispatchEvent(
+                new MouseEvent('pointerdown', {
+                    clientX: 10,
+                    clientY: 10,
+                    bubbles: true,
+                }),
+            );
+        };
+        // First touch only selects the screen; the second one erases.
+        down();
+        down();
+        globalThis.dispatchEvent(
+            new MouseEvent('pointermove', { clientX: 40, clientY: 40 }),
+        );
+        globalThis.dispatchEvent(new MouseEvent('pointerup', {}));
+
+        const stroke = manager.drawData.paintStrokeList[0];
+        expect(stroke.isEraser).toBe(true);
+        expect(stroke.isStraight).toBe(false);
+        expect(stroke.is3D).toBe(false);
+        expect(stroke.isDots).toBe(false);
+
+        // Paint a normal stroke AFTER the erase, so the repaint below replays
+        // eraser-then-paint and the composite op has somewhere to leak to.
+        manager.setPaintTool({
+            color: '#00f',
+            size: 8,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        });
+        down();
+        globalThis.dispatchEvent(
+            new MouseEvent('pointermove', { clientX: 70, clientY: 70 }),
+        );
+        globalThis.dispatchEvent(new MouseEvent('pointerup', {}));
+
+        // Force a synchronous repaint (scheduleRender defers via rAF).
+        paintedWith.length = 0;
+        (manager as any).render();
+        // The eraser cuts out, and the paint stroke after it composites normally
+        // — i.e. restore() actually put source-over back.
+        expect(paintedWith).toEqual(['destination-out', 'source-over']);
+    });
+
+    test('canvas keydown swallows app shortcuts but lets palette keys bubble', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(37));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+        const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+        manager.setPaintTool({
+            color: '#f00',
+            size: 8,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        });
+
+        const onDocumentKeyDown = vi.fn();
+        document.addEventListener('keydown', onDocumentKeyDown);
+        const press = (key: string, init: KeyboardEventInit = {}) => {
+            canvas.dispatchEvent(
+                new KeyboardEvent('keydown', {
+                    key,
+                    bubbles: true,
+                    cancelable: true,
+                    ...init,
+                }),
+            );
+        };
+
+        // Slide navigation must not fire while the canvas owns the keyboard.
+        press('ArrowRight');
+        expect(onDocumentKeyDown).not.toHaveBeenCalled();
+
+        // The draw panel's quick-select keys have to reach document.onkeydown.
+        press('e');
+        press(']');
+        expect(onDocumentKeyDown).toHaveBeenCalledTimes(2);
+
+        // Ctrl+Z stays handled locally by the canvas.
+        press('z', { ctrlKey: true, code: 'KeyZ' });
+        expect(onDocumentKeyDown).toHaveBeenCalledTimes(2);
+        document.removeEventListener('keydown', onDocumentKeyDown);
+    });
+
+    test('only the focused draw canvas claims the palette shortcuts', async () => {
+        const ScreenDrawManager = await importManager();
+        const attach = (manager: any) => {
+            const div = document.createElement('div');
+            document.body.appendChild(div);
+            manager.div = div;
+            return div.querySelector('canvas') as HTMLCanvasElement;
+        };
+        const managerA = new ScreenDrawManager(createBase(38));
+        const managerB = new ScreenDrawManager(createBase(39));
+        const canvasA = attach(managerA);
+        const canvasB = attach(managerB);
+
+        // Nothing focused: the keys are left alone entirely.
+        expect(managerA.isFocused).toBe(false);
+        expect(managerB.isFocused).toBe(false);
+
+        // Drawing on one mini-screen focuses its canvas, which then owns the
+        // keys so erasing/sizing can be done per screen.
+        canvasA.focus();
+        expect(managerA.isFocused).toBe(true);
+        expect(managerB.isFocused).toBe(false);
+        // ...and it is ringed so the user can see which screen owns the keys.
+        expect(canvasA.style.outline).toContain('solid');
+        expect(canvasB.style.outline).not.toContain('solid');
+
+        // Focusing the other mini-screen hands both over.
+        canvasB.focus();
+        expect(managerA.isFocused).toBe(false);
+        expect(managerB.isFocused).toBe(true);
+        expect(canvasA.style.outline).toBe('none');
+
+        canvasB.blur();
+        expect(managerA.isFocused).toBe(false);
+        expect(managerB.isFocused).toBe(false);
+        expect(canvasB.style.outline).toBe('none');
+    });
+
+    test('disarming the paint tool drops the focus ring and the shortcut claim', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(40));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+        const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+        manager.setPaintTool({
+            color: '#f00',
+            size: 8,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        });
+        canvas.focus();
+        expect(manager.isFocused).toBe(true);
+
+        // Closing the draw panel must not leave the screen holding the keys.
+        manager.setPaintTool(null);
+        expect(manager.isFocused).toBe(false);
+        expect(canvas.style.outline).toBe('none');
+    });
+
+    test('isFocused reads focus off the shadow root the overlay ships in', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(41));
+        // Production mounts the overlay inside the mini-screen's shadow root, so
+        // document.activeElement only ever reports the HOST. Reading focus at
+        // document level would make isFocused permanently false here — and with
+        // it every palette shortcut and every stroke.
+        const host = document.createElement('div');
+        document.body.appendChild(host);
+        const shadowRoot = host.attachShadow({ mode: 'open' });
+        const div = document.createElement('div');
+        shadowRoot.appendChild(div);
+        manager.div = div;
+        const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+
+        expect(manager.isFocused).toBe(false);
+        canvas.focus();
+        expect(shadowRoot.activeElement).toBe(canvas);
+        expect(document.activeElement).toBe(host);
+        expect(manager.isFocused).toBe(true);
+    });
+
+    test('non-primary pointer buttons neither focus nor draw', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(42));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+        const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+        canvas.getBoundingClientRect = () =>
+            ({
+                left: 0,
+                top: 0,
+                right: 100,
+                bottom: 100,
+                width: 100,
+                height: 100,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            }) as DOMRect;
+        manager.setPaintTool({
+            color: '#f00',
+            size: 8,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        });
+        const down = (button: number) => {
+            canvas.dispatchEvent(
+                new MouseEvent('pointerdown', {
+                    clientX: 10,
+                    clientY: 10,
+                    button,
+                    bubbles: true,
+                }),
+            );
+        };
+
+        // Right-click must fall through to the preview's context menu: the armed
+        // overlay covers the whole mini-screen, so swallowing it would both steal
+        // the keyboard and leave a dot behind.
+        down(2);
+        expect(manager.isFocused).toBe(false);
+        expect(manager.drawData.paintStrokeList).toHaveLength(0);
+
+        // Middle-click likewise.
+        down(1);
+        expect(manager.isFocused).toBe(false);
+
+        // The primary button still selects, then draws.
+        down(0);
+        expect(manager.isFocused).toBe(true);
+        expect(manager.drawData.paintStrokeList).toHaveLength(0);
+        down(0);
+        expect(manager.drawData.paintStrokeList).toHaveLength(1);
+        globalThis.dispatchEvent(new MouseEvent('pointerup', {}));
     });
 });

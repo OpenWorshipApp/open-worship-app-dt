@@ -7,6 +7,7 @@ import { ScreenManagerBaseContext } from '../managers/screenManagerHooks';
 import type ScreenEffectManager from '../managers/ScreenEffectManager';
 import { checkIsDarkMode } from '../../others/themeHelpers';
 import ScreenDrawComp from '../ScreenDrawComp';
+import ScreenFocusComp from '../ScreenFocusComp';
 
 const genBGBlank = () => {
     const isDarkMode = checkIsDarkMode();
@@ -65,6 +66,7 @@ export default function MiniScreenAppComp({
             <ScreenBibleComp />
             <ScreenForegroundComp />
             <ScreenDrawComp />
+            <ScreenFocusComp />
         </ScreenManagerBaseContext>
     );
 }

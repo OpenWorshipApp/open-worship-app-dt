@@ -149,9 +149,41 @@ export type DrawPaintStrokeType = {
     isStraight?: boolean;
     is3D?: boolean;
     isDots?: boolean;
+    // A manual-eraser stroke: rendered with `destination-out` so it punches
+    // transparent holes through everything painted before it (see drawStroke).
+    isEraser?: boolean;
 };
 export type DrawDataType = {
     paintStrokeList: DrawPaintStrokeType[];
+};
+
+// Which control the previewer's draw button currently drives. They are two
+// independent overlays (`#draw` paints strokes, `#focus` masks the screen), and
+// the 3-dots menu only picks WHICH one the button and panel act on.
+export const drawModeList = ['paint', 'focus'] as const;
+export type DrawModeType = (typeof drawModeList)[number];
+
+// Spotlight state. No strokes and no history: the mask is a single moving hole,
+// so the whole thing is four numbers on the wire. Coordinates are NATIVE screen
+// pixels, like the draw overlay, so a spotlight aimed on the CSS-scaled
+// mini-preview lands in the same place on the unscaled output.
+export type FocusDataType = {
+    // false = no mask at all (the overlay is fully transparent).
+    isSpotlighting: boolean;
+    point: DrawPaintPointType | null;
+    // Hole diameter in native screen px.
+    size: number;
+    // `#rrggbb` the mask is tinted with. Black is the usual choice, but a dark
+    // brand colour reads better over some backgrounds.
+    dimColor: string;
+    // The mask colour's ALPHA, 0..100 — how much of the screen it hides.
+    dimOpacity: number;
+    // Softness of the hole's rim as a percentage of its radius. 0 is a hard
+    // cut-out; 100 fades all the way from the centre.
+    edgeBlur: number;
+    // Inverts the mask: the circle under the pointer becomes the BLOCKED area
+    // and the rest of the screen stays clear, instead of the other way round.
+    isContrast: boolean;
 };
 
 export type BoundsType = {
@@ -184,6 +216,7 @@ export const screenTypeList = [
     'vary-app-document-video-time',
     'sync-scroll-percentage',
     'draw',
+    'focus',
 ] as const;
 export type ScreenType = (typeof screenTypeList)[number];
 export type BasicScreenMessageType = {

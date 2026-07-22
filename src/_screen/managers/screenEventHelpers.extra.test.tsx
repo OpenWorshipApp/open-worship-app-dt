@@ -71,6 +71,13 @@ vi.mock('./ScreenDrawManager', () => ({
     },
 }));
 
+vi.mock('./ScreenFocusManager', () => ({
+    default: class ScreenFocusManager {
+        static registerEventListener = vi.fn(() => []);
+        static unregisterEventListener = vi.fn();
+    },
+}));
+
 describe('screenEventHelpers', () => {
     let container: HTMLDivElement;
     let root: Root;

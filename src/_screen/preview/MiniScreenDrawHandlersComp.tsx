@@ -9,6 +9,19 @@ import {
 } from '../../helper/settingHelpers';
 import { useScreenManagerContext } from '../managers/screenManagerHooks';
 import { useScreenDrawManagerEvents } from '../managers/screenEventHelpers';
+import {
+    toShortcutTitle,
+    STEP_BIG,
+    STEP_SMALL,
+    type DrawShortcutIdType,
+} from '../managers/screenDrawShortcutHelpers';
+import { toAlphaHex } from '../managers/screenOverlayHelpers';
+import {
+    OverlayColorSwatchComp,
+    OverlayRangeComp,
+    handleKeepOverlayFocus,
+    useOverlayShortcut,
+} from './miniScreenOverlayControlComps';
 
 const DEFAULT_COLOR = '#ff2d2d';
 const DEFAULT_SIZE = 10;
@@ -23,85 +36,51 @@ const SIZE_MAX = 60;
 const ALPHA_MIN = 5;
 const ALPHA_MAX = 100;
 
-// 0..100 opacity -> 2-digit hex alpha, appended to #rrggbb to make #rrggbbaa
-// (canvas + CSS both render the 8-digit form with transparency).
-function alphaToHex(alpha: number) {
-    const clamped = Math.max(0, Math.min(100, alpha));
-    return Math.round((clamped / 100) * 255)
-        .toString(16)
-        .padStart(2, '0');
+// Bind one palette action, scoped to the mini-screen whose draw canvas holds
+// the keyboard (pointer-down focuses it; the cyan ring shows which one). So `E`
+// arms the eraser on the screen you are drawing on, and with NO draw canvas
+// focused the key is left alone entirely. See `useOverlayShortcut` for why it
+// never calls preventDefault and why auto-repeat is opt-in.
+function useDrawShortcut(
+    shortcutId: DrawShortcutIdType,
+    handle: () => void,
+    isRepeatable = false,
+) {
+    const { screenDrawManager } = useScreenManagerContext();
+    useOverlayShortcut(
+        shortcutId,
+        handle,
+        () => {
+            return screenDrawManager.isFocused;
+        },
+        isRepeatable,
+    );
 }
 
 function DrawToggleComp({
     isActive,
     onToggle,
     label,
+    shortcutId,
 }: Readonly<{
     isActive: boolean;
     onToggle: () => void;
     label: string;
+    shortcutId: DrawShortcutIdType;
 }>) {
+    useDrawShortcut(shortcutId, onToggle);
     return (
         <button
             className={
                 'btn btn-sm btn-' + (isActive ? 'primary' : 'outline-secondary')
             }
+            onMouseDown={handleKeepOverlayFocus}
             onClick={onToggle}
-            title={label}
+            title={toShortcutTitle(label, shortcutId)}
+            aria-pressed={isActive}
         >
             {label}
         </button>
-    );
-}
-
-function DrawRangeComp({
-    icon,
-    label,
-    value,
-    setValue,
-    min,
-    max,
-    suffix = '',
-}: Readonly<{
-    icon: string;
-    label: string;
-    value: number;
-    setValue: (value: number) => void;
-    min: number;
-    max: number;
-    suffix?: string;
-}>) {
-    return (
-        <div
-            className="d-flex align-items-center gap-2"
-            title={label}
-            style={{ minWidth: '150px', flex: '1 1 150px', maxWidth: '230px' }}
-        >
-            <i className={`bi ${icon}`} title={label} />
-            <input
-                type="range"
-                className="form-range flex-fill"
-                min={min}
-                max={max}
-                step={1}
-                value={value}
-                aria-label={label}
-                onChange={(event) => {
-                    setValue(Number.parseInt(event.target.value, 10));
-                }}
-            />
-            <small
-                className="text-muted"
-                style={{
-                    fontVariantNumeric: 'tabular-nums',
-                    minWidth: '36px',
-                    textAlign: 'right',
-                }}
-            >
-                {value}
-                {suffix}
-            </small>
-        </div>
     );
 }
 
@@ -120,7 +99,7 @@ export default function MiniScreenDrawHandlersComp() {
         DEFAULT_ALPHA,
     );
     // Effective brush color (with transparency) fed to the canvas.
-    const color = `${baseColor}${alphaToHex(alpha)}`;
+    const color = `${baseColor}${toAlphaHex(alpha)}`;
     const [size, setSize] = useStateSettingNumber(
         `draw-paint-size-${screenId}`,
         DEFAULT_SIZE,
@@ -145,6 +124,14 @@ export default function MiniScreenDrawHandlersComp() {
     const [isHighQuality, setIsHighQuality] = useState(
         screenDrawManager.isHighQuality,
     );
+    // Manual-eraser mode. Kept as transient local state (NOT persisted) so a
+    // reload always reopens in paint mode rather than silently erasing.
+    const [isEraser, setIsEraser] = useState(false);
+    // Read at key time by the shared slider controls: whether THIS screen's
+    // draw canvas owns the keyboard right now.
+    const checkIsShortcutTarget = () => {
+        return screenDrawManager.isFocused;
+    };
 
     const handleToggleQuality = () => {
         const next = !isHighQuality;
@@ -162,9 +149,34 @@ export default function MiniScreenDrawHandlersComp() {
         setIsStraight(DEFAULT_STRAIGHT);
         setIs3D(DEFAULT_IS_3D);
         setIsDots(DEFAULT_DOTS);
+        setIsEraser(false);
         setIsHighQuality(DEFAULT_HIGH_QUALITY);
         screenDrawManager.setRenderQuality(DEFAULT_HIGH_QUALITY);
     };
+
+    // Quick-select palette keys. Straight/3D/Dots and the two sliders bind
+    // theirs inside their own sub-components, next to the control they drive.
+    useDrawShortcut('toggleEraser', () => {
+        setIsEraser(!isEraser);
+    });
+    useDrawShortcut('usePaint', () => {
+        setIsEraser(false);
+    });
+    useDrawShortcut('toggleQuality', handleToggleQuality);
+    useDrawShortcut('resetSettings', handleResetSettings);
+    useDrawShortcut('clearDrawing', () => {
+        if (!screenDrawManager.isShowing) {
+            return;
+        }
+        // Undoable (clear pushes a history snapshot), so a mis-hit mid-service
+        // is recoverable with Ctrl+Z.
+        screenDrawManager.clear();
+    });
+    // NOTE: undo/redo are deliberately NOT bound here. `drawShortcutMap` still
+    // declares them so the buttons can show the keys, but the binding would be
+    // unreachable: the canvas keydown handler consumes Ctrl+Z / Ctrl+Y and calls
+    // undo()/redo() itself, stopPropagation-ing before `document.onkeydown` ever
+    // runs — and this hook only acts while that same canvas holds focus.
 
     // Arm the Paint tool on mount (the same shared manager instance the
     // mini-screen overlay uses), disarm on unmount so the preview stops
@@ -178,6 +190,7 @@ export default function MiniScreenDrawHandlersComp() {
             isStraight,
             is3D,
             isDots,
+            isEraser,
         });
         return () => {
             screenDrawManager.setPaintTool(null);
@@ -191,71 +204,46 @@ export default function MiniScreenDrawHandlersComp() {
             isStraight,
             is3D,
             isDots,
+            isEraser,
         });
-    }, [color, size, isStraight, is3D, isDots]);
+    }, [color, size, isStraight, is3D, isDots, isEraser]);
 
     return (
         <div className="w-100">
             <hr className="w-100 my-1" />
             <div className="d-flex flex-wrap align-items-center gap-2 px-1 pb-1">
-                <label
-                    className="d-flex align-items-center gap-1 m-0"
-                    title={tran('Color')}
-                >
-                    <i className="bi bi-brush" />
-                    <span
-                        style={{
-                            position: 'relative',
-                            display: 'inline-block',
-                            width: '34px',
-                            height: '24px',
-                            borderRadius: '4px',
-                            overflow: 'hidden',
-                            // Checkerboard behind the swatch shows transparency.
-                            background:
-                                'conic-gradient(#bbb 25%, #fff 0 50%,' +
-                                ' #bbb 0 75%, #fff 0) 0 0 / 10px 10px',
-                        }}
-                    >
-                        <input
-                            type="color"
-                            value={baseColor}
-                            onChange={(event) => {
-                                setBaseColor(event.target.value);
-                            }}
-                            style={{
-                                position: 'absolute',
-                                inset: 0,
-                                width: '100%',
-                                height: '100%',
-                                padding: 0,
-                                border: 'none',
-                                background: 'none',
-                                cursor: 'pointer',
-                                // Let the checkerboard show through the alpha.
-                                opacity: alpha / 100,
-                                mixBlendMode: 'normal',
-                            }}
-                        />
-                    </span>
-                </label>
-                <DrawRangeComp
+                <OverlayColorSwatchComp
+                    icon="bi-brush"
+                    label={tran('Color')}
+                    color={baseColor}
+                    setColor={setBaseColor}
+                    opacity={alpha}
+                />
+                <OverlayRangeComp
                     icon="bi-border-width"
                     label={tran('Size')}
                     value={size}
                     setValue={setSize}
                     min={SIZE_MIN}
                     max={SIZE_MAX}
+                    step={STEP_SMALL}
+                    stepBig={STEP_BIG}
                     suffix="px"
+                    shortcutBase="size"
+                    checkIsShortcutTarget={checkIsShortcutTarget}
                 />
-                <DrawRangeComp
+                <OverlayRangeComp
                     icon="bi-droplet-half"
                     label={tran('Opacity')}
                     value={alpha}
                     setValue={setAlpha}
                     min={ALPHA_MIN}
                     max={ALPHA_MAX}
+                    step={STEP_SMALL}
+                    stepBig={STEP_BIG}
                     suffix="%"
+                    shortcutBase="opacity"
+                    checkIsShortcutTarget={checkIsShortcutTarget}
                 />
                 <div
                     className="btn-group btn-group-sm"
@@ -268,6 +256,7 @@ export default function MiniScreenDrawHandlersComp() {
                             setIsStraight(!isStraight);
                         }}
                         label={tran('Straight')}
+                        shortcutId="toggleStraight"
                     />
                     <DrawToggleComp
                         isActive={is3D}
@@ -275,6 +264,7 @@ export default function MiniScreenDrawHandlersComp() {
                             setIs3D(!is3D);
                         }}
                         label={tran('3D')}
+                        shortcutId="toggle3D"
                     />
                     <DrawToggleComp
                         isActive={isDots}
@@ -282,6 +272,7 @@ export default function MiniScreenDrawHandlersComp() {
                             setIsDots(!isDots);
                         }}
                         label={tran('Dots')}
+                        shortcutId="toggleDots"
                     />
                 </div>
                 <button
@@ -289,14 +280,16 @@ export default function MiniScreenDrawHandlersComp() {
                         'btn btn-sm btn-' +
                         (isHighQuality ? 'primary' : 'outline-secondary')
                     }
+                    onMouseDown={handleKeepOverlayFocus}
                     onClick={handleToggleQuality}
-                    title={
+                    title={toShortcutTitle(
                         isHighQuality
                             ? tran(
                                   'High quality drawing (anti-aliased, slower)',
                               )
-                            : tran('Fast drawing (lighter, less smooth)')
-                    }
+                            : tran('Fast drawing (lighter, less smooth)'),
+                        'toggleQuality',
+                    )}
                     aria-label={tran('Toggle drawing quality')}
                 >
                     <i
@@ -310,8 +303,12 @@ export default function MiniScreenDrawHandlersComp() {
                 </button>
                 <button
                     className="btn btn-sm btn-outline-secondary"
+                    onMouseDown={handleKeepOverlayFocus}
                     onClick={handleResetSettings}
-                    title={tran('Reset settings')}
+                    title={toShortcutTitle(
+                        tran('Reset settings'),
+                        'resetSettings',
+                    )}
                     aria-label={tran('Reset settings')}
                 >
                     <i className="bi bi-arrow-repeat" />
@@ -320,10 +317,11 @@ export default function MiniScreenDrawHandlersComp() {
                     <button
                         className="btn btn-sm btn-outline-secondary"
                         disabled={!screenDrawManager.canUndo}
+                        onMouseDown={handleKeepOverlayFocus}
                         onClick={() => {
                             screenDrawManager.undo();
                         }}
-                        title={tran('Undo')}
+                        title={toShortcutTitle(tran('Undo'), 'undo')}
                         aria-label={tran('Undo')}
                     >
                         <i className="bi bi-arrow-counterclockwise" />
@@ -331,21 +329,48 @@ export default function MiniScreenDrawHandlersComp() {
                     <button
                         className="btn btn-sm btn-outline-secondary"
                         disabled={!screenDrawManager.canRedo}
+                        onMouseDown={handleKeepOverlayFocus}
                         onClick={() => {
                             screenDrawManager.redo();
                         }}
-                        title={tran('Redo')}
+                        title={toShortcutTitle(tran('Redo'), 'redo')}
                         aria-label={tran('Redo')}
                     >
                         <i className="bi bi-arrow-clockwise" />
                     </button>
                     <button
-                        className="btn btn-sm btn-danger"
+                        className={
+                            'btn btn-sm btn-' +
+                            (isEraser ? 'warning' : 'outline-warning')
+                        }
+                        onMouseDown={handleKeepOverlayFocus}
+                        onClick={() => {
+                            setIsEraser(!isEraser);
+                        }}
+                        title={toShortcutTitle(
+                            tran(
+                                'Manual eraser: drag over the drawing to rub' +
+                                    ' out parts of it, or back to painting',
+                            ),
+                            'toggleEraser',
+                            'usePaint',
+                        )}
+                        aria-label={tran('Manual eraser')}
+                        aria-pressed={isEraser}
+                    >
+                        <i className="bi bi-eraser" />
+                    </button>
+                    <button
+                        className="btn btn-sm btn-outline-danger"
                         disabled={!screenDrawManager.isShowing}
+                        onMouseDown={handleKeepOverlayFocus}
                         onClick={() => {
                             screenDrawManager.clear();
                         }}
-                        title={tran('Clear drawing')}
+                        title={toShortcutTitle(
+                            tran('Clear drawing'),
+                            'clearDrawing',
+                        )}
                         aria-label={tran('Clear drawing')}
                     >
                         <i className="bi bi-eraser-fill" />

@@ -10,8 +10,14 @@ mini-screen previewer. Added 2026-07-20.
 
 **Scope shipped: Paint mode ONLY.** The user explicitly deferred the other
 FreeShow Draw modes and chose to SKIP Zoom entirely. Not implemented yet:
-Fill, Pointer, Focus (spotlight), Particles, Zoom. Zoom was skipped because it
-must scale the whole output content root (background/text), not just an overlay.
+Fill, Pointer, Particles, Zoom. Zoom was skipped because it must scale the whole
+output content root (background/text), not just an overlay.
+**Focus (spotlight) SHIPPED 2026-07-21 as a separate layer** — see
+[[screen-focus-spotlight]]. It is deliberately NOT a draw mode: no strokes, no
+history, its own `#focus` overlay and `ScreenFocusManager`. The previewer's
+3-dots menu switches which control (Drawing / Focusing) the toggle and panel
+drive. An earlier attempt that made it a stroke `mode` on this manager was
+built, verified working, and then rejected by the user — don't redo it.
 
 **Key files:**
 - `src/_screen/managers/ScreenDrawManager.ts` — the paint engine. Holds
@@ -71,6 +77,73 @@ Its `keydown` handler (presenter side only, while armed) does Ctrl+Z=undo,
 Ctrl+Shift+Z / Ctrl+Y=redo, and `stopPropagation()`s ALL keys so the app's
 `document.onkeydown` global shortcuts don't fire while the canvas is focused.
 
+**Palette shortcuts (added 2026-07-21).** `src/_screen/managers/
+screenDrawShortcutHelpers.ts` is the single source of truth: `drawShortcutMap`
+(id → `EventMapperType[]`), `DrawStepShortcutBaseType` and
+`checkIsDrawShortcutKey`.
+Bindings: `E` toggle eraser (same key on/off — user requirement), `B` back to
+paint, `[`/`]` size ∓1 and `{`/`}` ∓5, `-`/`=` opacity ∓1 and `_`/`+` ∓5,
+`S`/`3`/`D` straight/3D/dots, `Q` quality, `R` reset, `C` clear (undoable),
+Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y undo-redo. Every plain letter/punct key was free
+— the app's own globals are only F5–F10, arrows, PageUp/Down, Space and Ctrl
+combos. Design points that matter:
+- It lives in a **non-React module** on purpose: `ScreenDrawManager` imports
+  `checkIsDrawShortcutKey` to make its canvas `keydown` RETURN (not
+  `stopPropagation`) for these keys, so they reach `document.onkeydown` while
+  the canvas holds focus — i.e. mid-stroke, when they matter most. Importing the
+  lazily-loaded panel from the manager would defeat the lazy chunk.
+- `checkIsDrawShortcutKey` MUST resolve the key with
+  `KeyboardEventListener.toEnUsKey(event)` (physical `code`), not `event.key` —
+  that is what the dispatch side matches on. Keying off `event.key` made every
+  letter/digit shortcut dead on AZERTY/Dvorak/Colemak: the canvas swallowed the
+  key as "not a shortcut" while the panel was still listening for it.
+- The panel binds them with `useKeyboardRegistering` in `useDrawShortcut`, which
+  **drops auto-repeat** unless the binding opts in (only the +/- steps do). A
+  held `C` otherwise pushed ~30 empty snapshots/second and flushed the 50-deep
+  undo history it is supposed to preserve; held `Q` reallocated the backing store
+  and broadcast a full-history sync per repeat; held toggles just flapped.
+- `undo`/`redo` are deliberately NOT bound in the panel — the map still declares
+  them so the buttons can show the keys, but a binding would be unreachable: the
+  canvas keydown handler consumes Ctrl+Z / Ctrl+Y and `stopPropagation`s before
+  `document.onkeydown` runs, and the hook only acts while that canvas is focused.
+- Panel buttons carry `onMouseDown={handleKeepCanvasFocus}` (preventDefault).
+  Without it, clicking ANY palette button moved focus off the canvas, which both
+  killed every shortcut and turned the user's next drag into a silent no-op
+  re-select. The range/color inputs still take focus — they need the default
+  mousedown to drag — so palette keys do go quiet after a slider drag.
+- It deliberately does **not** `preventDefault()`: with N screen previewers open
+  there are N panels, and `EventHandler.checkOnEvent` breaks the listener loop on
+  `defaultPrevented`, which would silently drop the other panels' listeners.
+- **Click-to-select gates EVERYTHING (user requirement, arrived at over three
+  rounds).** `ScreenDrawManager.isFocused` (was `isShortcutTarget`) is true only
+  while that screen's own canvas holds focus, and it gates BOTH the palette
+  shortcuts AND `handlePointerDown`. So a pointer-down on an unfocused overlay
+  only focuses it and returns — no stroke — and the user must click a mini-screen
+  to select it before drawing/erasing there. Rejected along the way: "nobody
+  focused → every panel reacts" (keys firing behind the user's back) and
+  first-click-also-paints (stray marks when reaching for the right preview).
+  Consequences: no typing guard is needed (the key event's target is always the
+  canvas — an earlier `checkIsTypingTarget` helper was deleted as unreachable),
+  and no static focus registry is needed (read the DOM directly). Focus MUST be
+  read off `canvas.getRootNode().activeElement`, NOT `document.activeElement` —
+  the overlay is inside the mini-screen's shadow root, so document-level focus
+  only ever reports the shadow host. Any test that drives a stroke via synthetic
+  pointer events now needs TWO pointer-downs (or a `focus()`) first.
+  `isFocused` also requires `document.hasFocus()`: `activeElement` survives the
+  window being deactivated, so without it the click that merely brings the
+  presenter back to the foreground landed as a stroke.
+- `handlePointerDown` bails on `event.button !== 0`. The armed overlay covers the
+  whole mini-screen, so a right-click aimed at the preview's context menu
+  otherwise claimed the keyboard and (once focused) left a dot behind.
+- **Focus ring.** `applyFocusOutline` puts a translucent cyan
+  (`FOCUS_OUTLINE_COLOR`, user-tuned) `outline` on the focused canvas —
+  `outline`, not `border`, so nothing reflows. Width scales with the screen width
+  (`width/480`, min 2) because the overlay is sized in NATIVE px and then
+  CSS-scaled by the previewer; a fixed 2px ring renders sub-pixel.
+  `setPaintTool(null)` blurs, so closing the panel drops both the ring and the
+  shortcut claim.
+- Bindings must stay in sync with the button `title`s via `toShortcutTitle`.
+
 **Undo/redo (shared across the group):** `ScreenDrawManager` keeps a snapshot
 history (`history`/`historyIndex`, cap 50; shallow copies sharing immutable
 stroke refs). It's kept in LOCKSTEP across sync-group members: a finished stroke
@@ -109,6 +182,43 @@ carrying `isHighQuality` so the output window + group members switch fidelity in
 lockstep (receiveSyncScreen adopts it on `'sync'`). NOT driven from an effect
 (would re-broadcast every panel mount). 2× = 4× overlay-canvas memory, so it's
 strictly opt-in per the low-spec mandate; fast mode is unchanged/free.
+
+**Manual eraser (yellow toggle, added 2026-07-21).** A second eraser sitting
+left of the red `bi-eraser-fill` "Clear drawing" button: an `outline-warning`/
+`warning` toggle (`bi-eraser`, `aria-label="Manual eraser"`) that arms the brush
+to ERASE instead of paint, so a drag rubs out any chunk of the drawn lines.
+Implemented as **just another stroke**, which is why it needed no new plumbing:
+`DrawPaintStrokeType.isEraser?` + `PaintToolType.isEraser?` (both OPTIONAL, so
+old persisted blobs and existing `setPaintTool` callers/tests still typecheck),
+and `drawStroke` sets `ctx.globalCompositeOperation = 'destination-out'` with an
+opaque style (only source ALPHA matters for destination-out; the stored color is
+irrelevant). The existing per-stroke `ctx.save()/restore()` resets the composite
+op, so no leakage into later strokes. It therefore rides the existing
+begin/points/commit sync, undo/redo history, and v2 persistence for free.
+- Eraser strokes force `isStraight/is3D/isDots` to FALSE at creation
+  (`handlePointerDown`) — a 3D-shadowed destination-out stroke would erase a
+  blurry halo, and dotted/straight erasing is unintuitive. So an eraser always
+  falls through to the plain dot / HQ-curve / polyline branches.
+- Ordering matters and is the desired semantic: an eraser only affects strokes
+  EARLIER in `paintStrokeList`; painting after erasing draws on top normally.
+- The panel's `isEraser` is transient `useState(false)` — deliberately NOT
+  persisted (unlike straight/3D/dots), so a reload never reopens mid-erase. It
+  is included in `updatePaintToolParams` deps and reset by "Reset settings".
+- An eraser stroke over empty space still counts for `isShowing`/canvas sizing.
+  Known trade-off of the "eraser is just a stroke" design: erasing is purely
+  ADDITIVE, so rubbing a drawing out completely never shrinks `paintStrokeList`,
+  never releases the (up to 33MB) backing store, and leaves every erased stroke
+  being replayed each frame — erasing raises render cost while lowering visible
+  content. Only `Clear` actually reclaims. A fix means stroke-list compaction
+  (dropping fully-covered strokes), which the current model has no geometry for.
+- The Opacity control is silently INERT while the eraser is armed: `drawStroke`
+  paints eraser paths fully opaque because only source alpha matters for
+  `destination-out`. Honouring the stored alpha would give a soft/partial eraser
+  (the stroke already carries the colour, unused) — deliberately not done, since
+  arming the eraser at 5% opacity would then look broken.
+- Verified live: drag cut a chunk out of the loop on the presenter preview, and
+  it synced to the group member AND the real `screen.html?screenId=0` output
+  window; undo restored it.
 
 **Coords are native px of the SOURCE screen** — fine when group members share a
 resolution (typical). Cross-resolution group members would misplace strokes;
@@ -157,6 +267,16 @@ trades memory, the #1 concern, for an unmeasured per-frame CPU win) and sizing
 the mini-preview backing store to its CSS display size rather than native×HQ
 (changes the coord mapping — needs live verification).
 
+**Shared overlay plumbing (2026-07-21).** After Focus shipped, everything the
+two overlays do identically was pulled into
+`src/_screen/managers/screenOverlayHelpers.ts` (keyboard-target check, focus
+ring, native-px mapping, `forwardToOwnScreenOutput`, `genFrameScheduler`,
+`toAlphaHex`) and `src/_screen/preview/miniScreenOverlayControlComps.tsx`
+(`useOverlayShortcut`, `OverlayRangeComp`, `OverlayColorSwatchComp`,
+`handleKeepOverlayFocus`). This manager and its panel now consume those — see
+[[screen-focus-spotlight]] for the full inventory. Behaviour is unchanged EXCEPT
+the canvas `tabIndex`, which is now 0 only while armed on the presenter.
+
 **To add another mode:** extend `DrawDataType`, add render + a sync action,
 and a tab/panel. The manager mirrors `ScreenForegroundManager`; `'draw'` is
 registered in `ScreenManager.getSyncGroupScreenEventHandler` and
@@ -164,4 +284,6 @@ registered in `ScreenManager.getSyncGroupScreenEventHandler` and
 (preview) and `ScreenAppComp` (real output).
 
 **Docs debt:** owa-robot-test `user-workflows.md` + `coverage-matrix.md` were
-NOT yet updated for this feature (CLAUDE.md asks for it when UI changes).
+NOT yet updated for this feature — not the original Paint panel, not the
+2026-07-21 manual eraser, not the palette shortcuts (CLAUDE.md asks for it when
+UI changes). The shortcuts also belong in the `KB-xx` keyboard matrix.

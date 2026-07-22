@@ -187,6 +187,21 @@ class MockDrawManager {
     }
 }
 
+class MockFocusManager {
+    static readonly eventNamePrefix = 'screen-focus-m';
+    static readonly receiveSyncScreen = vi.fn();
+
+    readonly screenId: number;
+    isShowing = false;
+    clear = vi.fn();
+    delete = vi.fn();
+    sendSyncScreen = vi.fn();
+
+    constructor(screenManagerBase: any) {
+        this.screenId = screenManagerBase.screenId;
+    }
+}
+
 vi.mock('../../helper/loggerHelpers', () => ({
     appLog: appLogMock,
 }));
@@ -217,6 +232,10 @@ vi.mock('./ScreenForegroundManager', () => ({
 
 vi.mock('./ScreenDrawManager', () => ({
     default: MockDrawManager,
+}));
+
+vi.mock('./ScreenFocusManager', () => ({
+    default: MockFocusManager,
 }));
 
 vi.mock('./screenManagerBaseHelpers', () => ({
