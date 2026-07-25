@@ -268,6 +268,12 @@ describe('electronEventListener', () => {
     test('shows a screen on a display and notifies the main window', async () => {
         const focus = vi.fn();
         const sendNotifyInvisibility = vi.fn();
+        // first show: no controller exists yet, so the close listener attaches
+        const { default: ElectronScreenController } =
+            await import('./ElectronScreenController');
+        (
+            ElectronScreenController.getInstance as ReturnType<typeof vi.fn>
+        ).mockReturnValueOnce(null);
         const appController = {
             mainWin: { focus },
             mainController: { sendNotifyInvisibility },
@@ -302,6 +308,13 @@ describe('electronEventListener', () => {
         const closeHandler = screenInstance.win.on.mock.calls[0][1];
         closeHandler();
         expect(sendNotifyInvisibility).toHaveBeenCalledWith(3);
+
+        // a repeat show for the same screen must not stack another listener
+        await showScreenHandler(
+            { sender: { send: vi.fn() } },
+            { replyEventName: 'reply:show2', screenId: 3, displayId: 8 },
+        );
+        expect(screenInstance.win.on).toHaveBeenCalledTimes(1);
     });
 
     test('registers finder and theme-related handlers', () => {

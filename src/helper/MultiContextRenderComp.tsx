@@ -5,7 +5,7 @@ export type ContextPairType<T> = {
     value: T;
 };
 
-export function MultiContextRender({
+export function MultiContextRenderComp({
     contexts,
     children,
 }: Readonly<{

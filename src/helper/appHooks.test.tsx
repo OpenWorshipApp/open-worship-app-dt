@@ -155,7 +155,7 @@ describe('debuggerHelpers', () => {
         ).toBe(true);
     });
 
-    test('replaces async context methods after unmount and cleans up TestInfinite', async () => {
+    test('replaces async context methods after unmount and cleans up TestInfiniteComp', async () => {
         const module = await loadModule(true);
         const cleanupMock = vi.fn();
         let capturedContext: Record<string, unknown> = {};
@@ -170,7 +170,7 @@ describe('debuggerHelpers', () => {
                 { setValue: vi.fn() },
                 'async-key',
             );
-            return <module.TestInfinite />;
+            return <module.TestInfiniteComp />;
         }
 
         await act(async () => {

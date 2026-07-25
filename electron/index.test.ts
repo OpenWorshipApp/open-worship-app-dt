@@ -6,6 +6,7 @@ vi.mock('electron', async () => {
 });
 
 const initCustomSchemeHandler = vi.fn();
+const sweepStalePrintPreviewFiles = vi.fn();
 const initFinderEvent = vi.fn();
 const initEventListenerApp = vi.fn();
 const initEventOther = vi.fn();
@@ -39,6 +40,7 @@ describe('electron index', () => {
     beforeEach(() => {
         vi.resetModules();
         initCustomSchemeHandler.mockClear();
+        sweepStalePrintPreviewFiles.mockClear();
         initFinderEvent.mockClear();
         initEventListenerApp.mockClear();
         initEventOther.mockClear();
@@ -49,7 +51,10 @@ describe('electron index', () => {
     });
 
     test('registers the custom scheme and initializes the Electron app', async () => {
-        vi.doMock('./electronHelpers', () => ({ isDev: true }));
+        vi.doMock('./electronHelpers', () => ({
+            isDev: true,
+            sweepStalePrintPreviewFiles,
+        }));
         const { electronMockState } = await import('./testElectronModule');
         electronMockState.reset();
         electronMockState.app.whenReady.mockResolvedValue(undefined);
@@ -76,6 +81,7 @@ describe('electron index', () => {
             'sessionData',
             '/mock-user-data-dev',
         );
+        expect(sweepStalePrintPreviewFiles).toHaveBeenCalledTimes(1);
         expect(initCustomSchemeHandler).toHaveBeenCalledTimes(1);
         expect(getInstance).toHaveBeenCalledTimes(1);
         expect(initMenu).toHaveBeenCalledWith({ id: 'app-controller' });

@@ -1,4 +1,4 @@
-import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
+import ShowingScreenIconComp from '../_screen/preview/ShowingScreenIcon';
 
 export default function ScreensRendererComp<T>({
     title,
@@ -39,7 +39,7 @@ export default function ScreensRendererComp<T>({
                             </button>
                         )}
                         <div className="input-group-text">
-                            <ShowingScreenIcon screenId={screenId} />
+                            <ShowingScreenIconComp screenId={screenId} />
                         </div>
                     </div>
                 );

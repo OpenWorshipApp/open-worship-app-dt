@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 
-import { ExpandChevron, useExpandToggle } from './useExpandToggle';
+import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
 
 import SlideEditorToolsTextComp from './SlideEditorToolsTextComp';
 import SlideEditorToolsBoxComp from './SlideEditorToolsBoxComp';
@@ -102,7 +102,7 @@ export default function CanvasItemPropsEditorComp({
                     }}
                     {...headerProps}
                 >
-                    <ExpandChevron
+                    <ExpandChevronComp
                         isExpanded={isExpanded}
                         style={{ fontSize: '0.8rem', opacity: 0.7 }}
                     />

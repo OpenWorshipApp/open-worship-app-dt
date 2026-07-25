@@ -12,7 +12,7 @@ vi.mock('./canvas/CanvasItem', () => ({
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewImageModeComp', () => ({
-    BoxEditorNormalImageRender: () => <div>image-render</div>,
+    BoxEditorNormalImageRenderComp: () => <div>image-render</div>,
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewVideoModeComp', () => ({
@@ -28,7 +28,7 @@ vi.mock('./canvas/box/BoxEditorNormalViewWebsiteModeComp', () => ({
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewHtmlModeComp', () => ({
-    BoxEditorNormalHtmlRender: () => <div>html-render</div>,
+    BoxEditorNormalHtmlRenderComp: () => <div>html-render</div>,
 }));
 
 vi.mock('./canvas/box/BoxEditorNormalViewTextModeComp', () => ({

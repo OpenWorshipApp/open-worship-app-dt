@@ -77,11 +77,54 @@ describe('fsServe', () => {
         expect(electronMockState.net.fetch).toHaveBeenCalledWith(expectedPath);
     });
 
-    test('passes through access URLs and injects CORS headers', async () => {
+    test('denies access URLs from non-app referrers', async () => {
         initCustomSchemeHandler();
 
         const handler = electronMockState.protocol.handle.mock.calls[0][1];
-        await handler({ url: `${rootUrlAccess}/tmp/document.pdf` });
+        const foreignResponse = await handler({
+            url: `${rootUrlAccess}/tmp/document.pdf`,
+            referrer: 'https://evil.example.com/page',
+        });
+        expect(foreignResponse.status).toBe(404);
+
+        const noReferrerResponse = await handler({
+            url: `${rootUrlAccess}/tmp/document.pdf`,
+        });
+        expect(noReferrerResponse.status).toBe(404);
+
+        expect(electronMockState.net.fetch).not.toHaveBeenCalled();
+    });
+
+    test.runIf(process.platform === 'win32')(
+        'falls back to presenter when a local path escapes dist',
+        async () => {
+            statSync.mockReturnValue({ isFile: () => true });
+
+            initCustomSchemeHandler();
+
+            const handler = electronMockState.protocol.handle.mock.calls[0][1];
+            // the URL parser normalizes `../` and `%2e%2e` dot segments away;
+            // the vector that survives parsing is percent-encoded backslashes,
+            // which decode after parsing and act as separators on Windows
+            await handler({
+                url: `${rootUrl}/a%5C..%5C..%5C..%5Csecret.txt`,
+            });
+
+            const expectedPath = `file://${path.resolve('/mock-app', 'dist', 'presenter.html')}`;
+            expect(electronMockState.net.fetch).toHaveBeenCalledWith(
+                expectedPath,
+            );
+        },
+    );
+
+    test('passes through app-referred access URLs and injects CORS headers', async () => {
+        initCustomSchemeHandler();
+
+        const handler = electronMockState.protocol.handle.mock.calls[0][1];
+        await handler({
+            url: `${rootUrlAccess}/tmp/document.pdf`,
+            referrer: `${rootUrl}/presenter.html`,
+        });
 
         expect(electronMockState.net.fetch).toHaveBeenCalledWith(
             'file:///tmp/document.pdf',

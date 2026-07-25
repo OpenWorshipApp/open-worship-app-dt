@@ -153,10 +153,10 @@ describe('screen render helpers', () => {
     });
 
     test('renders the Bible table with synced rows', async () => {
-        const { BibleBibleTable } = await import('./bibleScreenComps');
+        const { BibleBibleTableComp } = await import('./bibleScreenComps');
 
         const html = renderToStaticMarkup(
-            <BibleBibleTable
+            <BibleBibleTableComp
                 bibleRenderingList={[
                     {
                         locale: 'en-US' as any,
@@ -549,13 +549,15 @@ describe('screen render helpers', () => {
     });
 
     test('shows deterministic preview icon colors per screen id', async () => {
-        const { default: ShowingScreenIcon, genColorFromScreenId } =
+        const { default: ShowingScreenIconComp, genColorFromScreenId } =
             await import('./preview/ShowingScreenIcon');
 
         const color = genColorFromScreenId(3);
         expect(genColorFromScreenId(3)).toBe(color);
 
-        const html = renderToStaticMarkup(<ShowingScreenIcon screenId={3} />);
+        const html = renderToStaticMarkup(
+            <ShowingScreenIconComp screenId={3} />,
+        );
         expect(html).toContain('Screen: 3');
         expect(html).toContain('data-screen-id="3"');
     });

@@ -53,9 +53,15 @@ function toFileFullPath(filePath: string) {
 
 function genFilePathUrl(dirPath: string, url: string) {
     url = decodeURIComponent(new URL(url).pathname);
-    let filePath = path.join(dirPath, url);
+    let filePath: string | null = path.resolve(path.join(dirPath, url));
+    // Contain resolution within the app's dist dir — `..` segments must not
+    // escape it and get served from the app's trusted origin.
+    if (filePath !== dirPath && !filePath.startsWith(dirPath + path.sep)) {
+        filePath = null;
+    }
     filePath =
-        toFileFullPath(filePath) ?? path.join(dirPath, htmlFiles.presenter);
+        (filePath !== null ? toFileFullPath(filePath) : null) ??
+        path.join(dirPath, htmlFiles.presenter);
     return `file://${filePath}`;
 }
 
@@ -146,6 +152,14 @@ export function initCustomSchemeHandler() {
         if (url.startsWith(rootUrl)) {
             return handlerLocal(dirPath, url);
         }
+        // `owa://access` maps straight to local files. Only requests initiated
+        // by the app's own pages (origin `owa://local`) may use it — without
+        // this gate, any loaded web content (which runs with webSecurity off)
+        // could read arbitrary local files via fetch().
+        const referrer = request.referrer ?? '';
+        if (!url.startsWith(rootUrlAccess) || !referrer.startsWith(rootUrl)) {
+            return new Response('Not Found', { status: 404 });
+        }
         const fileUrl = `file://${url.slice(rootUrlAccess.length)}`;
         return net.fetch(fileUrl);
     });
@@ -154,6 +168,14 @@ export function initCustomSchemeHandler() {
     const requestOriginById = new Map<number, string>();
     const requestHeadersById = new Map<number, string>();
     const externalUrlFilter = { urls: ['http://*/*', 'https://*/*'] };
+    const clearRequestEntries = (details: { id: number }) => {
+        requestOriginById.delete(details.id);
+        requestHeadersById.delete(details.id);
+    };
+    // Requests that never reach onHeadersReceived (aborted/failed) must still
+    // release their map entries, or the maps grow for the app's lifetime.
+    webRequest.onCompleted(externalUrlFilter, clearRequestEntries);
+    webRequest.onErrorOccurred(externalUrlFilter, clearRequestEntries);
     webRequest.onBeforeSendHeaders(externalUrlFilter, (details, callback) => {
         const requestOrigin =
             getRequestHeader(details.requestHeaders, 'origin') ??

@@ -1,7 +1,7 @@
 import './editingHelpers.scss';
 
 import type { ReactNode } from 'react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
@@ -25,16 +25,24 @@ function sanitizeForUpdatingComparison(jsonText: string | null) {
     } catch (_error) {}
     return jsonText;
 }
-const attemptTimeout = genTimeoutAttempt(500);
 export function useEditingHistoryStatus(filePath: string) {
     const [status, setStatus] = useState({
         canUndo: false,
         canRedo: false,
         canSave: false,
     });
+    // per-instance: this hook mounts once per document/lyric list item, and a
+    // shared module-level timer would leave N-1 items with stale status
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const update = async () => {
         const editingHistoryManager =
             EditingHistoryManager.getInstance(filePath);
+        if (!(await editingHistoryManager.checkHasHistories())) {
+            // nothing recorded yet — one cheap stat instead of repeated
+            // readdirs plus two full file reads per list item
+            setStatus({ canUndo: false, canRedo: false, canSave: false });
+            return;
+        }
         const canUndo = await editingHistoryManager.checkCanUndo();
         const canRedo = await editingHistoryManager.checkCanRedo();
         const historyText = await editingHistoryManager.getCurrentHistory();

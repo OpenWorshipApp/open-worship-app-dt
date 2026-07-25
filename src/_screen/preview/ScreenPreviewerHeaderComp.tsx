@@ -6,7 +6,7 @@ import {
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
 import { useCallback, useState } from 'react';
-import ShowingScreenIcon from './ShowingScreenIcon';
+import ShowingScreenIconComp from './ShowingScreenIcon';
 import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 
@@ -57,7 +57,9 @@ export default function ScreenPreviewerHeaderComp({
                     <MiniScreenClearControlComp />
                 </div>
                 <div className="flex-fill d-flex justify-content-end align-items-center ms-2">
-                    <ShowingScreenIcon screenId={screenManagerBase.screenId} />
+                    <ShowingScreenIconComp
+                        screenId={screenManagerBase.screenId}
+                    />
                     <div className="ms-2">
                         <ItemColorNoteComp item={screenManagerBase} />
                     </div>

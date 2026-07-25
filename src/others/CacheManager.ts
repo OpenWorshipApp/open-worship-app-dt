@@ -12,8 +12,16 @@ export default class CacheManager<T> {
         this.uuid = crypto.randomUUID();
         this.cache = new Map();
         this.expirationSecond = expirationSecond;
-        const cleanupSeconds = 5 * 1000; // 5 seconds
-        this.intervalId = setInterval(this.cleanup.bind(this), cleanupSeconds);
+    }
+
+    // Lazy: only runs while there is something that can expire, so the many
+    // module-level instances don't each keep an eternal 5s timer alive.
+    private ensureCleanupScheduled(): void {
+        if (this.expirationSecond === null || this.intervalId !== null) {
+            return;
+        }
+        const cleanupMillis = 5 * 1000; // 5 seconds
+        this.intervalId = setInterval(this.cleanup.bind(this), cleanupMillis);
     }
 
     unlocking<P>(key: string, callback: () => Promise<P>): Promise<P> {
@@ -34,6 +42,9 @@ export default class CacheManager<T> {
             if (this.checkIsExpired(item)) {
                 this.cache.delete(key);
             }
+        }
+        if (this.cache.size === 0) {
+            this.stopCleanup();
         }
     }
 
@@ -58,7 +69,7 @@ export default class CacheManager<T> {
 
     async has(key: string): Promise<boolean> {
         return await this.unlocking(key, async () => {
-            return this.cache.has(key);
+            return this.hasSync(key);
         });
     }
 
@@ -69,7 +80,17 @@ export default class CacheManager<T> {
     }
 
     hasSync(key: string): boolean {
-        return this.cache.has(key);
+        const cacheItem = this.cache.get(key);
+        if (cacheItem === undefined) {
+            return false;
+        }
+        // `get` treats expired entries as absent; `has` must agree, or a
+        // has→get sequence reports a false "cached null".
+        if (this.checkIsExpired(cacheItem)) {
+            this.cache.delete(key);
+            return false;
+        }
+        return true;
     }
 
     setSync(key: string, value: T): void {
@@ -77,6 +98,7 @@ export default class CacheManager<T> {
             return;
         }
         this.cache.set(key, { value, timestamp: Date.now() });
+        this.ensureCleanupScheduled();
     }
 
     async set(key: string, value: T): Promise<void> {
@@ -97,6 +119,7 @@ export default class CacheManager<T> {
 
     clear(): void {
         this.cache.clear();
+        this.stopCleanup();
     }
 
     stopCleanup(): void {

@@ -40,10 +40,12 @@ export function useShadowingParentWidth() {
 
 class ShadowingParentWidthCustomHTMLTag extends HTMLElement {
     myContent: JSX.Element;
-    root: ReturnType<typeof createRoot>;
+    private readonly mountPoint: HTMLDivElement;
+    private root: ReturnType<typeof createRoot> | null;
     constructor() {
         super();
         this.myContent = <></>;
+        this.root = null;
         const div = document.createElement('div');
         Object.assign(div.style, {
             width: '100%',
@@ -55,7 +57,7 @@ class ShadowingParentWidthCustomHTMLTag extends HTMLElement {
         this.attachShadow({
             mode: 'open',
         }).appendChild(div);
-        this.root = createRoot(div);
+        this.mountPoint = div;
     }
 
     setParentWidth(width: number) {
@@ -72,12 +74,25 @@ class ShadowingParentWidthCustomHTMLTag extends HTMLElement {
         if (Number.isNaN(parentWidth)) {
             parentWidth = undefined;
         }
+        this.root ??= createRoot(this.mountPoint);
         this.root.render(
             <ShadowingParentWidthContext value={parentWidth}>
                 <style>{defaultStyle}</style>
                 {this.myContent}
             </ShadowingParentWidthContext>,
         );
+    }
+
+    disconnectedCallback() {
+        // Deferred: a React reparent fires disconnect+reconnect synchronously,
+        // and unmounting synchronously here would run inside React's commit.
+        queueMicrotask(() => {
+            if (this.isConnected || this.root === null) {
+                return;
+            }
+            this.root.unmount();
+            this.root = null;
+        });
     }
 }
 

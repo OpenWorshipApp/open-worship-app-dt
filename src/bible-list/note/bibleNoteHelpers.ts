@@ -196,8 +196,6 @@ function excalidrawClearLibrariesFileList() {
     setSetting('excalidraw-libraries', null);
 }
 
-const attemptTimeout = genTimeoutAttempt(1_000);
-
 export async function initBibleNote({
     note,
     noteItem,
@@ -272,6 +270,9 @@ export async function initBibleNote({
         excalidrawSaveLibrariesFile,
     });
 
+    // per-note: a module-level shared timer would drop note A's reload when
+    // note B changes within the debounce window
+    const attemptTimeout = genTimeoutAttempt(1_000);
     const abortController = new AbortController();
     try {
         appProvider.fileUtils.watch(

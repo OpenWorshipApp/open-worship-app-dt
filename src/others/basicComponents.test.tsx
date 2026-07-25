@@ -149,7 +149,7 @@ import AppRangeComp, {
 } from './AppRangeComp';
 import AppSuspenseComp from './AppSuspenseComp';
 import AskingNewNameComp from './AskingNewNameComp';
-import AttachBackgroundIconComponent from './AttachBackgroundIconComponent';
+import AttachBackgroundIconComp from './AttachBackgroundIconComp';
 import FileReadErrorComp from './FileReadErrorComp';
 import ItemColorNoteComp from './ItemColorNoteComp';
 import LoadingComp from './LoadingComp';
@@ -498,12 +498,12 @@ describe('others basic components', () => {
 
         await render(
             <div>
-                <AttachBackgroundIconComponent filePath="/docs/one" />
-                <AttachBackgroundIconComponent filePath="/docs/two" />
-                <AttachBackgroundIconComponent filePath="/docs/three" />
-                <AttachBackgroundIconComponent filePath="/docs/four" />
-                <AttachBackgroundIconComponent filePath="/docs/five" />
-                <AttachBackgroundIconComponent filePath="/docs/six" />
+                <AttachBackgroundIconComp filePath="/docs/one" />
+                <AttachBackgroundIconComp filePath="/docs/two" />
+                <AttachBackgroundIconComp filePath="/docs/three" />
+                <AttachBackgroundIconComp filePath="/docs/four" />
+                <AttachBackgroundIconComp filePath="/docs/five" />
+                <AttachBackgroundIconComp filePath="/docs/six" />
             </div>,
         );
 

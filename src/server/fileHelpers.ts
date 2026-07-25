@@ -354,9 +354,35 @@ export function fsCloneFile(file: File | Blob | string, dest: string) {
     if (file instanceof File) {
         return new Promise<void>((resolve, reject) => {
             const writeStream = fsCreateWriteStream(dest);
+            // Settle exactly once: a disk error (e.g. disk full) must reject
+            // instead of leaving the promise pending forever.
+            let isSettled = false;
+            const fail = (error: Error) => {
+                if (isSettled) {
+                    return;
+                }
+                isSettled = true;
+                writeStream.destroy();
+                reject(error);
+            };
+            writeStream.on('error', fail);
+            writeStream.once('close', () => {
+                if (isSettled) {
+                    return;
+                }
+                isSettled = true;
+                resolve();
+            });
             const writableStream = new WritableStream({
                 write(chunk) {
-                    writeStream.write(chunk);
+                    // Honor backpressure: on a slow disk the source must
+                    // wait, or the whole file buffers in memory.
+                    if (writeStream.write(chunk)) {
+                        return;
+                    }
+                    return new Promise<void>((resolveDrain) => {
+                        writeStream.once('drain', resolveDrain);
+                    });
                 },
                 close() {
                     writeStream.end();
@@ -365,8 +391,7 @@ export function fsCloneFile(file: File | Blob | string, dest: string) {
                     writeStream.destroy();
                 },
             });
-            writeStream.once('close', resolve);
-            file.stream().pipeTo(writableStream).catch(reject);
+            file.stream().pipeTo(writableStream).catch(fail);
         });
     }
     return fsFilePromise<void>(appProvider.fileUtils.copyFile, file, dest);
@@ -703,7 +728,10 @@ export function getDotExtensionFromBase64Data(base64Data: string) {
 
 export async function ensureDirectory(dirPath: string) {
     if (await fsCheckFileExist(dirPath)) {
-        return;
+        throw new Error(
+            `Cannot ensure directory "${dirPath}", ` +
+                'a file already exists at that path',
+        );
     }
     if (!(await fsCheckDirExist(dirPath))) {
         fsMkDirSync(dirPath, true);

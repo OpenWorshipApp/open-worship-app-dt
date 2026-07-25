@@ -23,7 +23,7 @@ import type {
 } from '../_screen/screenTypeHelpers';
 import { scaleTypeList } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import RenderBackgroundScreenIds from '../background/RenderBackgroundScreenIds';
+import RenderBackgroundScreenIdsComp from '../background/RenderBackgroundScreenIdsComp';
 import { FilePathLoadedContext } from '../helper/dirSourceHelpers';
 
 const DIR_SOURCE_SETTING_NAME = 'images-slide-show';
@@ -98,7 +98,7 @@ function rendChild(
     const fileSource = FileSource.getInstance(filePath);
     return (
         <div className="card-body app-overflow-hidden">
-            <RenderBackgroundScreenIds
+            <RenderBackgroundScreenIdsComp
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return Number.parseInt(key);
                 })}

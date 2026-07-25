@@ -7,7 +7,7 @@ import {
     HelpButtonComp,
     SettingButtonComp,
 } from '../others/commonButtons';
-import { MultiContextRender } from '../helper/MultiContextRender';
+import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import AppPopupBibleLookupComp from '../app-modal/AppPopupBibleLookupComp';
 import AppContextMenuComp from '../context-menu/AppContextMenuComp';
 import HandleAlertComp from '../popup-widget/HandleAlertComp';
@@ -71,8 +71,8 @@ export default function AppLayoutComp({
     );
 
     return (
-        <MultiContextRender contexts={contexts}>
-            {/* <TestInfinite /> */}
+        <MultiContextRenderComp contexts={contexts}>
+            {/* <TestInfiniteComp /> */}
             <div id="app-header" className="d-flex">
                 {isInjectedAppDocumentFilePath ? null : <LayoutTabRenderComp />}
                 <div
@@ -98,6 +98,6 @@ export default function AppLayoutComp({
             <ToastComp />
             <AppContextMenuComp />
             <HandleAlertComp />
-        </MultiContextRender>
+        </MultiContextRenderComp>
     );
 }

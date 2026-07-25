@@ -1,6 +1,6 @@
 import { app, protocol } from 'electron';
 
-import { isDev } from './electronHelpers';
+import { isDev, sweepStalePrintPreviewFiles } from './electronHelpers';
 import {
     customScheme,
     initCustomSchemeHandler,
@@ -48,6 +48,9 @@ async function main() {
         app.quit();
         return;
     }
+    // Fire-and-forget: clear print preview temp files left behind by a
+    // previous run that was killed with a preview open.
+    sweepStalePrintPreviewFiles();
     initCustomSchemeHandler();
     const appController = ElectronAppController.getInstance();
     initEventListenerApp(appController);

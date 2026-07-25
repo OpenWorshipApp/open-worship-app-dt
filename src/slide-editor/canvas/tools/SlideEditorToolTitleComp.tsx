@@ -1,6 +1,6 @@
 import './SlideEditorToolTitleComp.scss';
 
-import { ExpandChevron, useExpandToggle } from './useExpandToggle';
+import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
 
 export default function SlideEditorToolTitleComp({
     title,
@@ -33,7 +33,7 @@ export default function SlideEditorToolTitleComp({
                 className="app-tool-title app-tool-title-collapsible"
                 {...headerProps}
             >
-                <ExpandChevron isExpanded={isExpanded} />
+                <ExpandChevronComp isExpanded={isExpanded} />
                 {title}
             </div>
             {isExpanded ? (

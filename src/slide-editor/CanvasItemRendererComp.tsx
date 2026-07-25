@@ -1,5 +1,5 @@
-import { BoxEditorNormalImageRender } from './canvas/box/BoxEditorNormalViewImageModeComp';
-import { BoxEditorNormalHtmlRender } from './canvas/box/BoxEditorNormalViewHtmlModeComp';
+import { BoxEditorNormalImageRenderComp } from './canvas/box/BoxEditorNormalViewImageModeComp';
+import { BoxEditorNormalHtmlRenderComp } from './canvas/box/BoxEditorNormalViewHtmlModeComp';
 import { BoxEditorNormalTextRender } from './canvas/box/BoxEditorNormalViewTextModeComp';
 import { BoxEditorNormalBibleRender } from './canvas/box/BoxEditorNormalViewBibleModeComp';
 import { useCanvasItemContext } from './canvas/CanvasItem';
@@ -11,7 +11,7 @@ export default function CanvasItemRendererComp() {
     const canvasItem = useCanvasItemContext();
     switch (canvasItem.type) {
         case 'image':
-            return <BoxEditorNormalImageRender />;
+            return <BoxEditorNormalImageRenderComp />;
         case 'video':
             return <BoxEditorNormalVideoRender />;
         case 'youtube':
@@ -21,7 +21,7 @@ export default function CanvasItemRendererComp() {
         case 'text':
             return <BoxEditorNormalTextRender />;
         case 'html':
-            return <BoxEditorNormalHtmlRender />;
+            return <BoxEditorNormalHtmlRenderComp />;
         case 'bible':
             return <BoxEditorNormalBibleRender />;
     }

@@ -126,7 +126,11 @@ export default class FileSourceMetaManager {
                     continue;
                 }
             } catch (error) {
+                // A transient fs error (e.g. an unmounted network drive)
+                // must not discard the color note; only delete when the
+                // file genuinely does not exist.
                 handleError(error);
+                continue;
             }
             delete setting[key];
         }

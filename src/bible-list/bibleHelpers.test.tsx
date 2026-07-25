@@ -124,9 +124,17 @@ vi.mock('../_screen/managers/screenManagerHelpers', () => ({
 vi.mock('./bibleRenderHelpers', () => ({
     bibleRenderHelper: { toTitle: h.bibleRenderToTitleMock },
 }));
-vi.mock('../helper/appHooks', () => ({
-    useAppEffectAsync: h.useAppEffectAsyncMock,
-}));
+vi.mock('../helper/appHooks', async () => {
+    const React = (await vi.importActual('react')) as any;
+    return {
+        useAppEffectAsync: h.useAppEffectAsyncMock,
+        useAppCurrentRef: (target: any) => {
+            const ref = React.useRef(target);
+            ref.current = target;
+            return ref;
+        },
+    };
+});
 vi.mock('../helper/timeoutHelpers', () => ({
     genTimeoutAttempt: h.genTimeoutAttemptMock,
 }));
@@ -389,7 +397,7 @@ describe('bible-list bibleHelpers', () => {
         expect(h.applyTargetOrBibleKeyMock).toHaveBeenCalled();
         expect(openBibleLookup).toHaveBeenCalled();
 
-        byName('Duplicate').onSelect();
+        await byName('Duplicate').onSelect();
         expect(bible.duplicate).toHaveBeenCalledWith(1);
 
         byName('on-screen').onSelect({});
@@ -405,9 +413,9 @@ describe('bible-list bibleHelpers', () => {
         expect(bible.deleteBibleItem).toHaveBeenCalled();
         expect(h.detachBackgroundMock).toHaveBeenCalledWith('/b/x.bible', 7);
 
-        byName('Move up').onSelect();
+        await byName('Move up').onSelect();
         expect(bible.swapItems).toHaveBeenCalledWith(1, 0);
-        byName('Move down').onSelect();
+        await byName('Move down').onSelect();
         expect(bible.swapItems).toHaveBeenCalledWith(1, 2);
     });
 

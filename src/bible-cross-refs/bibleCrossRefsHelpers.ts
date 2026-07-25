@@ -2,7 +2,6 @@ import { useState } from 'react';
 
 import { decrypt, bible_ref } from '../_owa-crypto';
 import { handleError } from '../helper/errorHelpers';
-import { toBibleFileName } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { useAppEffectAsync } from '../helper/appHooks';
 import { appApiFetch } from '../helper/networkHelpers';
 import { globalCacheManager1M } from '../others/CacheManager';
@@ -123,35 +122,6 @@ export async function getBibleCrossRefAI({
     });
 }
 
-// TODO: subject to remove
-export function useGettingBibleCrossRef(
-    bookKey: string,
-    chapter: number,
-    verseNum: number,
-) {
-    const key = `${toBibleFileName(bookKey, chapter)}.${verseNum}`;
-    const [bibleCrossRef, setBibleCrossRef] = useState<
-        BibleCrossRefType[][] | null | undefined
-    >(undefined);
-    useAppEffectAsync(
-        async (methodContext) => {
-            const data = await getBibleCrossRef(key);
-            methodContext.setBibleCrossRef(data);
-        },
-        [bookKey, chapter],
-        { setBibleCrossRef },
-    );
-    return {
-        bibleCrossRef,
-        refresh: () => {
-            setBibleCrossRef(undefined);
-            getBibleCrossRef(key, true).then((data) => {
-                setBibleCrossRef(data);
-            });
-        },
-    };
-}
-
 async function fetchBibleCrossRefAI(
     aiType: string,
     bibleKey: string,
@@ -214,7 +184,7 @@ export function useGettingBibleCrossRefAI(
             );
             methodContext.setBibleCrossRef(data);
         },
-        [bibleKey, bookKey, chapter, verseNum],
+        [aiType, bibleKey, bookKey, chapter, verseNum],
         { setBibleCrossRef },
     );
     return {

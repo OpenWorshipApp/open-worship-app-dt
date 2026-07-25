@@ -49,6 +49,23 @@ describe('msHelpers', () => {
         });
     });
 
+    test('drops stale count entries instead of serving them', async () => {
+        vi.useFakeTimers();
+        try {
+            execute.mockResolvedValueOnce(12).mockResolvedValueOnce(null);
+
+            await expect(countSlides('/slides/stale.pptx')).resolves.toBe(12);
+            vi.advanceTimersByTime(1000 * 3 + 1);
+            // The stale entry is deleted, so a failed re-count returns null
+            // instead of the old cached value.
+            await expect(countSlides('/slides/stale.pptx')).resolves.toBeNull();
+
+            expect(execute).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     test('removes slide background through the worker script', async () => {
         execute.mockResolvedValue(1);
 

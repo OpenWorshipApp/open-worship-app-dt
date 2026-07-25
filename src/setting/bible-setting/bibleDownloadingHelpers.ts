@@ -30,9 +30,11 @@ export function useDownloadBible(
         number | null
     >(null);
     const handleDoneDownloaded = async (error: any, filePath?: string) => {
-        if (error) {
-            handleError(error);
-        } else {
+        try {
+            if (error) {
+                handleError(error);
+                return;
+            }
             const isSuccess = await extractDownloadedBible(filePath as string);
             if (isSuccess) {
                 await syncBibleLanguage(bibleInfo.key);
@@ -40,11 +42,19 @@ export function useDownloadBible(
                 showSimpleToast('Extracting Bible', 'Fail to extract bible');
             }
             onDownloaded();
+        } catch (error1) {
+            handleError(error1);
+            showSimpleToast(
+                BIBLE_DOWNLOAD_TOAST_TITLE,
+                'Error occurred during finishing bible download',
+            );
+            onDownloaded();
+        } finally {
+            setDownloadingProgress(null);
         }
-        setDownloadingProgress(null);
     };
-    const startDownloadBible = () => {
-        bibleDataReader.clearBibleDatabaseData(bibleInfo.key);
+    const startDownloadBible = async () => {
+        await bibleDataReader.clearBibleDatabaseData(bibleInfo.key);
         setDownloadingProgress(0);
         downloadBible({
             bibleInfo,

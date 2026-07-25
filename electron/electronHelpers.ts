@@ -11,7 +11,7 @@ import {
     type WebContents,
 } from 'electron';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { release } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -589,6 +589,35 @@ export function guardBrowsing(
 const printPreviewDirName = 'open-worship-print-preview';
 let printPreviewFileIndex = 0;
 
+function getPrintPreviewDirPath() {
+    return path.join(app.getPath('temp'), printPreviewDirName);
+}
+
+const printPreviewFileNameRegex =
+    /^print-(?:preview|content)-(\d+)-\d+\.(?:pdf|html)$/;
+
+// Print preview `.pdf`/content `.html` files are removed when their windows
+// close, but killing the app with a preview open leaves them behind forever.
+// Sweep old leftovers at startup — best effort, never blocks or crashes
+// startup. Files younger than an hour are kept so another running instance's
+// open preview is never deleted (dev and packaged share the same temp dir).
+export async function sweepStalePrintPreviewFiles() {
+    try {
+        const previewDir = getPrintPreviewDirPath();
+        const fileNames = await readdir(previewDir);
+        const oneHourAgo = Date.now() - 1000 * 60 * 60;
+        await Promise.all(
+            fileNames.map(async (fileName) => {
+                const match = printPreviewFileNameRegex.exec(fileName);
+                if (match === null || Number(match[1]) > oneHourAgo) {
+                    return;
+                }
+                await rm(path.join(previewDir, fileName), { force: true });
+            }),
+        );
+    } catch (_error) {}
+}
+
 function getPrintableWindow(browserWindow?: BrowserWindow | null) {
     const win = browserWindow ?? BrowserWindow.getFocusedWindow();
 
@@ -626,7 +655,7 @@ export async function previewPrintCurrentWindow(
         printBackground: true,
         preferCSSPageSize: true,
     });
-    const previewDir = path.join(app.getPath('temp'), printPreviewDirName);
+    const previewDir = getPrintPreviewDirPath();
     await mkdir(previewDir, { recursive: true });
 
     printPreviewFileIndex += 1;
@@ -660,7 +689,7 @@ export async function printHTMLContent(htmlText: string) {
     // A data: URL cannot carry the content here — Chromium caps URLs at 2MB
     // and slide HTML with embedded images easily exceeds that — so stage the
     // HTML in a temp file instead.
-    const contentDir = path.join(app.getPath('temp'), printPreviewDirName);
+    const contentDir = getPrintPreviewDirPath();
     await mkdir(contentDir, { recursive: true });
     printPreviewFileIndex += 1;
     const contentFilePath = path.join(
@@ -669,7 +698,12 @@ export async function printHTMLContent(htmlText: string) {
     );
     await writeFile(contentFilePath, htmlText);
     const printWin = new BrowserWindow({ show: false });
+    let isCleanedUp = false;
     const cleanup = () => {
+        if (isCleanedUp) {
+            return;
+        }
+        isCleanedUp = true;
         attemptClosing(printWin);
         rm(contentFilePath, { force: true }).catch((error) => {
             console.log('Failed to remove print content file:', error);
@@ -681,11 +715,19 @@ export async function printHTMLContent(htmlText: string) {
         try {
             // Web fonts referenced by the content may still be loading when
             // did-finish-load fires; printing before they finish rasterizes
-            // fallback glyphs into the PDF.
-            await printWin.webContents.executeJavaScript(
-                'document.fonts.ready.then(() => true)',
-                true,
-            );
+            // fallback glyphs into the PDF. `document.fonts.ready` can also
+            // hang forever, so wait for it at most 10 seconds and then print
+            // with whatever fonts are ready instead of leaking the hidden
+            // window and the temp file.
+            await Promise.race([
+                printWin.webContents.executeJavaScript(
+                    'document.fonts.ready.then(() => true)',
+                    true,
+                ),
+                new Promise((resolve) => {
+                    setTimeout(resolve, 10_000);
+                }),
+            ]);
             await previewPrintCurrentWindow(printWin);
         } catch (error) {
             console.log('Print preview failed:', error);

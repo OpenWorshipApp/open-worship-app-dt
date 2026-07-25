@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import type { CanvasItemImagePropsType } from '../CanvasItemImage';
 import CanvasItemImage from '../CanvasItemImage';
 import img404 from '../404.png';
-import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
+import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
@@ -15,18 +15,18 @@ export default function BoxEditorNormalViewImageModeComp({
 }>) {
     return (
         <BoxEditorNormalWrapperComp style={style}>
-            <BoxEditorNormalImageRender />
+            <BoxEditorNormalImageRenderComp />
         </BoxEditorNormalWrapperComp>
     );
 }
 
-export function BoxEditorNormalImageRender() {
+export function BoxEditorNormalImageRenderComp() {
     const props = useCanvasItemPropsContext<CanvasItemImagePropsType>();
     try {
         CanvasItemImage.validate(props);
     } catch (error) {
         handleError(error);
-        return <BENViewErrorRender />;
+        return <BoxEditorNormalViewErrorRenderComp />;
     }
     return (
         <div

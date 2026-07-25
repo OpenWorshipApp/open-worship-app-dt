@@ -1,6 +1,5 @@
-import { clipboard } from 'electron';
+import { clipboard, shell } from 'electron';
 import { createHash } from 'node:crypto';
-import { exec } from 'node:child_process';
 import { createReadStream } from 'node:fs';
 
 import {
@@ -30,17 +29,11 @@ function generateMD5(input: string): string {
 }
 
 function openFile(filePath: string) {
-    let command;
-    if (process.platform === 'win32') {
-        command = `start "" "${filePath}"`;
-    } else if (process.platform === 'darwin') {
-        command = `open "${filePath}"`;
-    } else {
-        command = `xdg-open "${filePath}"`;
-    }
-    exec(command, (err) => {
-        if (err) {
-            console.error(`Error opening file: ${err}`);
+    // `shell.openPath` takes the path as-is — no shell command string to
+    // inject into via quotes/ampersands in file names — and is cross-platform.
+    shell.openPath(filePath).then((errorMessage) => {
+        if (errorMessage) {
+            console.error(`Error opening file: ${errorMessage}`);
             return;
         }
         console.log('File opened with default application.');

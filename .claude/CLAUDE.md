@@ -147,15 +147,17 @@ Use these when working against the running app via chrome-devtools:
   modules imported by that inner root can crash with "TypeError: Invalid
   Instance" / "useScreenManager must be used within a Provider" → "Reload is
   needed"; per-file `.histories/` head files stay on disk and remain recoverable.
-- **Events dispatch via a real 10ms `setTimeout`.**
-  `BasicEventHandler.addPropEvent` (`src/event/EventHandler.ts`) routes every
-  fired event through `genTimeoutAttempt(10)` (see `src/helper/timeoutHelpers.ts`),
-  debounced/deduped by an MD5 of the payload. So `WindowEventListener.fireEvent`,
-  `FileSource.fire*Event`, DirSource events, etc. fire asynchronously on a
-  macrotask. In jsdom/vitest tests that drive these events (e.g. open/close via
-  `openSlideQuickEdit`), flushing microtasks (`await Promise.resolve()`) is NOT
-  enough — wait a real macrotask: `await new Promise((r) => setTimeout(r, 25))`
-  inside `act(...)`.
+- **Event dispatch is microtask-async, NOT debounced/deduped.**
+  `BasicEventHandler.addPropEvent` (`src/event/EventHandler.ts`) dispatches
+  immediately into an async `checkOnEvent`, whose `await checkShouldNext(...)`
+  means listeners run on microtasks. There is no `setTimeout` debounce and no
+  payload dedup — identical consecutive events all fire (rapid draw points are
+  never swallowed). Some flows still hop a real macrotask for other reasons
+  (`sendSyncScrollPercentage`'s `setTimeout(0)`, `genTimeoutAttempt` call
+  sites), so in jsdom/vitest tests that drive UI through events (e.g.
+  open/close via `openSlideQuickEdit`), flushing microtasks may not be enough —
+  when in doubt wait a real macrotask:
+  `await new Promise((r) => setTimeout(r, 25))` inside `act(...)`.
 
 ## Printing
 

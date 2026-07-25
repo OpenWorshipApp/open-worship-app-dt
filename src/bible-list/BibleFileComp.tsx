@@ -26,7 +26,7 @@ import {
 import { DragTypeEnum } from '../helper/DragInf';
 import { stopDraggingState } from '../helper/helpers';
 import type BibleItem from './BibleItem';
-import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
+import AttachBackgroundIconComp from '../others/AttachBackgroundIconComp';
 import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 
 const LazyRenderBibleItemsComp = lazy(() => {
@@ -138,7 +138,7 @@ function BiblePreview({ bible }: Readonly<{ bible: Bible }>) {
                     </span>
                 </div>
                 <div className="float-end">
-                    <AttachBackgroundIconComponent filePath={bible.filePath} />
+                    <AttachBackgroundIconComp filePath={bible.filePath} />
                 </div>
             </div>
             <div

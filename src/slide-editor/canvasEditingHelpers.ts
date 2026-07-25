@@ -1,4 +1,4 @@
-import { use, useState } from 'react';
+import { use, useCallback, useMemo, useState } from 'react';
 import { useSelectedEditingSlideContext } from '../app-document-list/appDocumentHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import CanvasController, {
@@ -99,22 +99,32 @@ function useCanvasItemsData(canvasController: CanvasController) {
         };
     }, [canvasController, selectedCanvasItems]);
 
-    return {
-        canvasItems,
-        selectedCanvasItems,
-        setSelectedCanvasItems: (newSelectedCanvasItems: CanvasItem<any>[]) => {
+    // Stable identities so the context values memoized below only change
+    // when their data changes.
+    const setSelectedCanvasItemsStable = useCallback(
+        (newSelectedCanvasItems: CanvasItem<any>[]) => {
             setSelectedCanvasItems(newSelectedCanvasItems);
             if (newSelectedCanvasItems.length > 0) {
                 setEditingCanvasItem(null);
             }
         },
-        editingCanvasItem,
-        setEditingCanvasItem: (canvasItem: CanvasItem<any> | null) => {
+        [],
+    );
+    const setEditingCanvasItemStable = useCallback(
+        (canvasItem: CanvasItem<any> | null) => {
             setEditingCanvasItem(canvasItem);
             if (canvasItem !== null) {
                 setSelectedCanvasItems([]);
             }
         },
+        [],
+    );
+    return {
+        canvasItems,
+        selectedCanvasItems,
+        setSelectedCanvasItems: setSelectedCanvasItemsStable,
+        editingCanvasItem,
+        setEditingCanvasItem: setEditingCanvasItemStable,
     };
 }
 
@@ -143,9 +153,11 @@ function genNewCanvasController(
 
 export function useEditingCanvasContextValue() {
     const slide = useSelectedEditingSlideContext();
-    const [canvasController, setCanvasController] = useState(
-        genNewCanvasController(slide),
-    );
+    // Lazy initializer: constructing a CanvasController on every render
+    // just to throw it away is expensive.
+    const [canvasController, setCanvasController] = useState(() => {
+        return genNewCanvasController(slide);
+    });
     useAppEffect(() => {
         const newCanvasController = genNewCanvasController(
             slide,
@@ -181,38 +193,50 @@ export function useEditingCanvasContextValue() {
     // The canvas renders into its own React root inside a shadow root, so any
     // app-level context a canvas item needs has to be handed across explicitly.
     const bibleLookupTogglePopup = use(BibleLookupTogglePopupContext);
-    const contextValue = [
-        {
-            context: BibleLookupTogglePopupContext,
-            value: bibleLookupTogglePopup,
-        },
-        {
-            context: CanvasControllerContext,
-            value: canvasController,
-        },
-        {
-            context: CanvasItemsContext,
-            value: canvasItems,
-        },
-        {
-            context: SelectedCanvasItemsAndSetterContext,
-            value: {
-                canvasItems: selectedCanvasItems,
-                setCanvasItems: setSelectedCanvasItems,
+    // Memoized so MultiContextRenderComp consumers don't re-render on every
+    // render of this hook's owner.
+    const contextValue = useMemo(() => {
+        return [
+            {
+                context: BibleLookupTogglePopupContext,
+                value: bibleLookupTogglePopup,
             },
-        },
-        {
-            context: EditingCanvasItemAndSetterContext,
-            value: {
-                canvasItem: editingCanvasItem,
-                setCanvasItem: setEditingCanvasItem,
+            {
+                context: CanvasControllerContext,
+                value: canvasController,
             },
-        },
-    ];
-    const stopAllModes = () => {
+            {
+                context: CanvasItemsContext,
+                value: canvasItems,
+            },
+            {
+                context: SelectedCanvasItemsAndSetterContext,
+                value: {
+                    canvasItems: selectedCanvasItems,
+                    setCanvasItems: setSelectedCanvasItems,
+                },
+            },
+            {
+                context: EditingCanvasItemAndSetterContext,
+                value: {
+                    canvasItem: editingCanvasItem,
+                    setCanvasItem: setEditingCanvasItem,
+                },
+            },
+        ];
+    }, [
+        bibleLookupTogglePopup,
+        canvasController,
+        canvasItems,
+        selectedCanvasItems,
+        setSelectedCanvasItems,
+        editingCanvasItem,
+        setEditingCanvasItem,
+    ]);
+    const stopAllModes = useCallback(() => {
         setEditingCanvasItem(null);
         setSelectedCanvasItems([]);
-    };
+    }, [setEditingCanvasItem, setSelectedCanvasItems]);
     return {
         canvasItems,
         selectedCanvasItems,

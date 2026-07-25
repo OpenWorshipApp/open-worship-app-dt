@@ -2,6 +2,7 @@ import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
+import type { RegisteredEventType } from '../event/EventHandler';
 import { tran } from '../lang/langHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
 import type { MutationType } from './helpers';
@@ -54,23 +55,42 @@ export function removeDomChangeEventListener(
     callBackListeners.delete(callback);
 }
 
+// One Escape listener per full-view element, released when the class goes
+// away — the old per-mutation registration stacked listeners that each
+// swallowed one later Escape press (context menus, modals) before dying.
+const fullViewEscapeRegistry = new WeakMap<
+    HTMLElement,
+    RegisteredEventType<string, KeyboardEvent>[]
+>();
 export function handleFullWidgetView(element: Node, type: MutationType) {
-    if (
-        type !== 'attr-modified' ||
-        element instanceof HTMLElement === false ||
-        !element.classList.contains(APP_FULL_VIEW_CLASSNAME)
-    ) {
+    if (element instanceof HTMLElement === false) {
         return;
     }
-    const registeredEvents = KeyboardEventListener.registerEventListener(
+    const registeredEvents = fullViewEscapeRegistry.get(element);
+    const isFullView =
+        type === 'attr-modified' &&
+        element.classList.contains(APP_FULL_VIEW_CLASSNAME);
+    if (!isFullView) {
+        if (registeredEvents !== undefined) {
+            KeyboardEventListener.unregisterEventListener(registeredEvents);
+            fullViewEscapeRegistry.delete(element);
+        }
+        return;
+    }
+    if (registeredEvents !== undefined) {
+        return;
+    }
+    const newRegisteredEvents = KeyboardEventListener.registerEventListener(
         [KeyboardEventListener.toEventMapperKey({ key: 'Escape' })],
         (event: KeyboardEvent) => {
             event.stopPropagation();
             event.preventDefault();
-            KeyboardEventListener.unregisterEventListener(registeredEvents);
+            KeyboardEventListener.unregisterEventListener(newRegisteredEvents);
+            fullViewEscapeRegistry.delete(element);
             element.classList.remove(APP_FULL_VIEW_CLASSNAME);
         },
     );
+    fullViewEscapeRegistry.set(element, newRegisteredEvents);
 }
 
 export function handleClassNameAction<T extends HTMLElement>(

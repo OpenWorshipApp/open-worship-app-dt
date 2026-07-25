@@ -14,7 +14,7 @@ import { BIBLE_VERSE_TEXT_TITLE } from '../helper/helpers';
 import { tran } from '../lang/langHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 
-export default function RenderBibleEditingHeader() {
+export default function RenderBibleEditingHeaderComp() {
     const viewController = useLookupBibleItemControllerContext();
     const editingResult = use(EditingResultContext);
     const foundBibleItem = editingResult?.result.bibleItem ?? null;

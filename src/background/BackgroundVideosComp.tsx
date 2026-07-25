@@ -1,6 +1,6 @@
 import './BackgroundVideosComp.scss';
 
-import { useCallback, type ReactElement } from 'react';
+import { useCallback, type ReactElement, type RefObject } from 'react';
 import { useRef, useState } from 'react';
 
 import FileSource from '../helper/FileSource';
@@ -32,12 +32,59 @@ import {
     methodMapIsFadingAtTheEnd,
     setIsFadingAtTheEndSetting,
 } from './videoBackgroundHelpers';
-import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
+import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 
-const onToggledFadingAtTheEnd: Record<
-    string,
-    (isFadingAtTheEnd: boolean) => void
-> = {};
+// Mounting every <video> in the folder at once spawns dozens of demuxers,
+// which kills low-spec machines. Render a same-size placeholder and only
+// mount the <video> once the tile first becomes visible.
+function LazyMountVideoComp({
+    videoRef,
+    src,
+}: Readonly<{
+    videoRef: RefObject<HTMLVideoElement | null>;
+    src: string;
+}>) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [isVideoMounted, setIsVideoMounted] = useState(false);
+    useAppEffect(() => {
+        const container = containerRef.current;
+        if (isVideoMounted || container === null) {
+            return;
+        }
+        const observer = new IntersectionObserver((entries) => {
+            if (
+                entries.some((entry) => {
+                    return entry.isIntersecting;
+                })
+            ) {
+                setIsVideoMounted(true);
+            }
+        });
+        observer.observe(container);
+        return () => {
+            observer.disconnect();
+        };
+    }, [isVideoMounted]);
+    return (
+        <div ref={containerRef} className="w-100 h-100">
+            {isVideoMounted ? (
+                <video
+                    className="w-100 h-100"
+                    ref={videoRef}
+                    loop
+                    muted
+                    preload="metadata"
+                    src={src}
+                    style={{
+                        objectFit: 'cover',
+                        objectPosition: 'center center',
+                        pointerEvents: 'none',
+                    }}
+                />
+            ) : null}
+        </div>
+    );
+}
 
 function RendBodyComp({
     filePath,
@@ -55,21 +102,12 @@ function RendBodyComp({
         getIsFadingAtTheEndSetting(fileSource.src),
     );
     useAppEffect(() => {
-        onToggledFadingAtTheEnd[fileSource.src] = (
-            isFadingAtTheEnd: boolean,
-        ) => {
-            setIsFadingAtTheEnd(isFadingAtTheEnd);
-        };
+        // Keyed by `src` to match `setIsFadingAtTheEndSetting` callers.
+        methodMapIsFadingAtTheEnd[fileSource.src] = setIsFadingAtTheEnd;
         return () => {
-            delete onToggledFadingAtTheEnd[fileSource.src];
+            delete methodMapIsFadingAtTheEnd[fileSource.src];
         };
     }, [fileSource]);
-    useAppEffect(() => {
-        methodMapIsFadingAtTheEnd[filePath] = setIsFadingAtTheEnd;
-        return () => {
-            delete methodMapIsFadingAtTheEnd[filePath];
-        };
-    }, [filePath]);
     const vRef = useRef<HTMLVideoElement>(null);
     const fileSourceRef = useAppCurrentRef(fileSource);
     const handleMouseEnter = useCallback((event: any) => {
@@ -99,23 +137,12 @@ function RendBodyComp({
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
         >
-            <RenderBackgroundScreenIds
+            <RenderBackgroundScreenIdsComp
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return Number.parseInt(key);
                 })}
             />
-            <video
-                className="w-100 h-100"
-                ref={vRef}
-                loop
-                muted
-                src={fileSource.src}
-                style={{
-                    objectFit: 'cover',
-                    objectPosition: 'center center',
-                    pointerEvents: 'none',
-                }}
-            />
+            <LazyMountVideoComp videoRef={vRef} src={fileSource.src} />
             <div
                 className="position-absolute mx-1 text-white"
                 style={{
@@ -212,7 +239,6 @@ function genExtraItemContextMenuItems(filePath: string) {
                 );
                 isFadingAtTheEnd = !isFadingAtTheEnd;
                 setIsFadingAtTheEndSetting(fileSource.src, isFadingAtTheEnd);
-                onToggledFadingAtTheEnd[fileSource.src]?.(isFadingAtTheEnd);
             },
         },
     ];

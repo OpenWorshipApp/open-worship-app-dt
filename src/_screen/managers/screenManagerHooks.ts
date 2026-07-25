@@ -9,6 +9,8 @@ import {
     useScreenVaryAppDocumentManagerEvents,
     useScreenBibleManagerEvents,
     useScreenForegroundManagerEvents,
+    useScreenDrawManagerEvents,
+    useScreenFocusManagerEvents,
 } from './screenEventHelpers';
 import { genVideoIDFromSrc } from '../screenHelpers';
 
@@ -55,7 +57,13 @@ export function useScreenManagerEvents(
 export function useScreenUpdateEvents(
     screenManagerBase?: ScreenManagerBase,
     callback?: (
-        eventType: 'background' | 'varyAppDocument' | 'bible' | 'foreground',
+        eventType:
+            | 'background'
+            | 'varyAppDocument'
+            | 'bible'
+            | 'foreground'
+            | 'draw'
+            | 'focus',
     ) => void,
 ) {
     useScreenEvents(
@@ -83,6 +91,16 @@ export function useScreenUpdateEvents(
         ['update'],
         undefined,
         callback?.bind(null, 'foreground'),
+    );
+    useScreenDrawManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'draw'),
+    );
+    useScreenFocusManagerEvents(
+        ['update'],
+        undefined,
+        callback?.bind(null, 'focus'),
     );
 }
 

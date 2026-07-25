@@ -29,7 +29,7 @@ function showContextMenu(event: any, color: AppColorType) {
     ];
     showAppContextMenu(event, menuItems);
 }
-export default function RenderColor({
+export default function RenderColorComp({
     name,
     color,
     isSelected,

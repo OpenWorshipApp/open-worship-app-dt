@@ -98,7 +98,7 @@ export default class FileSource
     }
 
     async setColorNote(color: string | null) {
-        FileSourceMetaManager.setColorNote(this.filePath, color);
+        await FileSourceMetaManager.setColorNote(this.filePath, color);
         this.dirSource?.fireRefreshEvent();
     }
 
@@ -135,7 +135,9 @@ export default class FileSource
 
     static async readFileData(filePath: string, isSilent?: boolean) {
         const key = this.toDataCacheKey(filePath);
-        return await unlocking(key, async () => {
+        // Same lock as writeFileData — with separate locks a read can slip in
+        // mid-write, re-cache the pre-write bytes, and serve stale data.
+        return await unlocking(this.toRWLockingKey(filePath), async () => {
             const cachedData = await fileDataCacheManager.get(key);
             if (cachedData !== null) {
                 return cachedData;
@@ -170,10 +172,12 @@ export default class FileSource
 
     async writeFileData(data: string) {
         const key = FileSource.toDataCacheKey(this.filePath);
-        await fileDataCacheManager.delete(key);
         return await unlocking(
             FileSource.toRWLockingKey(this.filePath),
             async () => {
+                // invalidate inside the lock — doing it before taking the
+                // lock lets a concurrent read re-cache the old content
+                await fileDataCacheManager.delete(key);
                 try {
                     const isFileExist = await fsCheckFileExist(this.filePath);
                     if (isFileExist) {
@@ -383,13 +387,19 @@ export default class FileSource
         const filePath = this.filePath;
         const progressBarKey = 'trash-file-' + filePath;
         showProgressBar(progressBarKey);
-        const isTrashed = await electronSendAsync<boolean>(
-            'main:app:trash-path',
-            {
-                path: filePath,
-            },
-        );
-        hideProgressBar(progressBarKey);
+        let isTrashed = false;
+        try {
+            isTrashed = await electronSendAsync<boolean>(
+                'main:app:trash-path',
+                {
+                    path: filePath,
+                },
+            );
+        } catch (error) {
+            handleError(error);
+        } finally {
+            hideProgressBar(progressBarKey);
+        }
         if (!isTrashed) {
             showSimpleToast(
                 tran('Trashing File'),
@@ -397,7 +407,8 @@ export default class FileSource
             );
             return;
         }
-        FileSource.getInstance(filePath).fireDeleteEvent();
+        this.fireDeleteEvent();
+        instantCache.delete(filePath);
     }
 
     static getSrcDataFromFrom(file: File | Blob) {

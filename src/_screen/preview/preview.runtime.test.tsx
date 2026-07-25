@@ -297,6 +297,13 @@ vi.mock('../../helper/helpers', () => ({
             return false;
         }
     },
+    parseJsonSafely: (value: string) => {
+        try {
+            return JSON.parse(value);
+        } catch {
+            return null;
+        }
+    },
 }));
 
 vi.mock('../../helper/colorNoteHelpers', () => ({
@@ -448,7 +455,8 @@ describe('preview runtime interactions', () => {
     });
 
     test('updates display, visibility, and lock state from preview controls', async () => {
-        const { default: DisplayControl } = await import('./DisplayControl');
+        const { default: DisplayControlComp } =
+            await import('./DisplayControlComp');
         const { default: ShowHideScreen } = await import('./ShowHideScreen');
         const { default: ScreenPreviewerHeaderComp } =
             await import('./ScreenPreviewerHeaderComp');
@@ -456,7 +464,7 @@ describe('preview runtime interactions', () => {
         await act(async () => {
             root.render(
                 <div>
-                    <DisplayControl />
+                    <DisplayControlComp />
                     <ShowHideScreen />
                     <ScreenPreviewerHeaderComp
                         isFullView={false}
@@ -649,9 +657,11 @@ describe('preview runtime interactions', () => {
         // Turning the overlay off while Focusing is showing must STILL disable
         // the draw layer. It used to early-return, which stranded a drawing made
         // before the switch on screen with no control left to clear it.
+        // NOTE the title is "Disable ..." here: the toggle names the action it
+        // will perform, so an enabled panel offers Disable.
         await click(
             container.querySelector(
-                'button[title="Enable Focusing"]',
+                'button[title="Disable Focusing"]',
             ) as HTMLElement | null,
         );
         expect(screenDrawManager.disableDraw).toHaveBeenCalledTimes(1);

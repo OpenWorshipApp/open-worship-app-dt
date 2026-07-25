@@ -30,10 +30,12 @@ export function checkIsHistoryMovementEventType(
 }
 const CURRENT_FILE_SIGN = '-head';
 const MAX_HISTORY_FILES = 100;
-const attemptTimeout = genTimeoutAttempt(5000);
 export class FileLineHandler {
     filePath: string;
     dirPath: string;
+    // per-file: a module-level timer would let edits to one document starve
+    // another document's pending history cleanup
+    private readonly cleanupAttemptTimeout = genTimeoutAttempt(5000);
 
     constructor(filePath: string, dirPath: string) {
         this.filePath = filePath;
@@ -248,7 +250,7 @@ export class FileLineHandler {
                 );
                 if (isSuccess) {
                     await this.changeCurrent(currentFilePath);
-                    attemptTimeout(async () => {
+                    this.cleanupAttemptTimeout(async () => {
                         await this.cleanupHistory();
                     });
                     return true;
@@ -387,12 +389,17 @@ export default class EditingHistoryManager {
         return null;
     }
 
+    async checkHasHistories() {
+        return await fsCheckDirExist(
+            EditingHistoryManager.genFolderPath(this.filePath),
+        );
+    }
+
     async discard() {
         if (!((await this.checkCanRedo()) || (await this.checkCanUndo()))) {
             return true;
         }
         try {
-            this.checkCanRedo();
             await this.fileLineHandler.clearHistories();
             this.fireEvent('discard');
             return true;

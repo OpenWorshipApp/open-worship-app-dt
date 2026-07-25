@@ -5,8 +5,8 @@ import { useCallback, useState } from 'react';
 import colorList from '../color-list.json';
 import type { AppColorType } from './colorHelpers';
 import { transparentColor, colorToTransparent } from './colorHelpers';
-import OpacitySlider from './OpacitySlider';
-import RenderColors from './RenderColors';
+import OpacitySliderComp from './OpacitySliderComp';
+import RenderColorsComp from './RenderColorsComp';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { freezeObject } from '../../helper/helpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
@@ -27,7 +27,7 @@ function setOpacity(color: string, opacity: number) {
     return newColor.join('');
 }
 
-export default function ColorPicker({
+export default function ColorPickerComp({
     defaultColor,
     color,
     onColorChange,
@@ -141,14 +141,14 @@ export default function ColorPicker({
                 />
             ) : null}
             <div className="p-1 app-overflow-hidden">
-                <RenderColors
+                <RenderColorsComp
                     colors={colorList.main}
                     selectedColor={localColor}
                     onColorChange={handleColorChanging}
                     isNoImmediate={isNoImmediate}
                 />
                 {localColor !== null && (
-                    <OpacitySlider
+                    <OpacitySliderComp
                         value={opacity}
                         onOpacityChanged={handleOpacityChanging}
                     />

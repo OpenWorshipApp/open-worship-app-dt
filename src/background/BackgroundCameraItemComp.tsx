@@ -9,7 +9,7 @@ import {
     genBackgroundMediaItemData,
 } from './backgroundHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
-import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
+import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 import { handleDragStart } from '../helper/dragHelpers';
 import RenderCameraVideoComp from './RenderCameraVideoComp';
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -95,7 +95,7 @@ export default function BackgroundCameraItemComp({
                     height: `${height}px`,
                 }}
             >
-                <RenderBackgroundScreenIds
+                <RenderBackgroundScreenIdsComp
                     screenIds={selectedBackgroundSrcList.map(([key]) => {
                         return Number.parseInt(key);
                     })}

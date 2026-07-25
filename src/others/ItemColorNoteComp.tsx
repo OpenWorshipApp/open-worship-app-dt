@@ -25,7 +25,7 @@ export function chooseColorNote(
     // unique colors by key
     const items: ContextMenuItemType[] = [
         {
-            childBefore: <i className="bi bi-x-lg" style={{ color: 'red' }} />,
+            childBefore: <i className="bi bi-x-lg me-1" style={{ color: 'red' }} />,
             menuElement: tran('No Color'),
             title: tran('Clear Color Note'),
             disabled: colorNote === null,

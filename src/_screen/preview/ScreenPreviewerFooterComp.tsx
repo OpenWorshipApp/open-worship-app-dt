@@ -6,7 +6,7 @@ import {
     useScreenManagerContext,
     useScreenVideoSources,
 } from '../managers/screenManagerHooks';
-import DisplayControl from './DisplayControl';
+import DisplayControlComp from './DisplayControlComp';
 import ScreenEffectControlComp from './ScreenEffectControlComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
@@ -215,7 +215,13 @@ function DrawSwitchComp({
         drawModeInfoList.find(({ mode }) => {
             return mode === drawMode;
         }) ?? drawModeInfoList[0];
-    const toggleTitle = `${tran('Enable')} ${tran(drawModeInfo.title)}`;
+    // Name the action this click will PERFORM, not the feature it belongs to:
+    // a fixed "Enable Drawing" read as a lie while drawing was already enabled,
+    // and left the on/off state carried by the button fill alone — invisible to
+    // a screen reader. aria-pressed exposes the same state to assistive tech.
+    const toggleTitle =
+        `${tran(isDrawHandlersVisible ? 'Disable' : 'Enable')}` +
+        ` ${tran(drawModeInfo.title)}`;
     const optionsTitle = tran('Choose Drawing or Focusing');
     return (
         <div className="btn-group">
@@ -227,6 +233,7 @@ function DrawSwitchComp({
                 onClick={handleToggleDrawHandlers}
                 title={toggleTitle}
                 aria-label={toggleTitle}
+                aria-pressed={isDrawHandlersVisible}
             >
                 <i className={`bi ${drawModeInfo.icon}`} />
             </button>
@@ -301,7 +308,7 @@ export default function ScreenPreviewerFooterComp() {
             >
                 <div className="d-flex justify-content-start">
                     <div>
-                        <DisplayControl />
+                        <DisplayControlComp />
                     </div>
                     <ScreenEffectControlComp />
                     {videoSources.length > 0 ? (

@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import type { CanvasItemVideoPropsType } from '../CanvasItemVideo';
 import CanvasItemVideo from '../CanvasItemVideo';
 import img404 from '../404.png';
-import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
+import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
 import { pathToFileURL } from '../../../server/calcHelpers';
@@ -57,7 +57,7 @@ export function BoxEditorNormalVideoRender() {
         CanvasItemVideo.validate(props);
     } catch (error) {
         handleError(error);
-        return <BENViewErrorRender />;
+        return <BoxEditorNormalViewErrorRenderComp />;
     }
     const minSize = Math.min(props.width, props.height) / 4;
     const videoSrc = props.filePath ? pathToFileURL(props.filePath) : img404;

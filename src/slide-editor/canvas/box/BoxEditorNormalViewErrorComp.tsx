@@ -35,7 +35,7 @@ export default function BoxEditorNormalViewErrorComp() {
     );
 }
 
-export function BENViewErrorRender() {
+export function BoxEditorNormalViewErrorRenderComp() {
     return (
         <div
             style={{

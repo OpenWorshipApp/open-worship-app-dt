@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { DragTypeEnum } from '../helper/DragInf';
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
-import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
+import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 import BackgroundMediaItemComp from './BackgroundMediaItemComp';
 import FileSource from '../helper/FileSource';
 import FillingFlexCenterComp from '../others/FillingFlexCenterComp';
@@ -62,7 +62,7 @@ export function RenderWebChildComp({
             onMouseOver={handleMouseOver}
             onMouseOut={handleMouseOut}
         >
-            <RenderBackgroundScreenIds
+            <RenderBackgroundScreenIdsComp
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return Number.parseInt(key);
                 })}

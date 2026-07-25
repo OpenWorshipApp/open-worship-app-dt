@@ -14,7 +14,7 @@ import { getDefaultScreenDisplay } from '../../../_screen/managers/screenHelpers
 import { showAppConfirm } from '../../../popup-widget/popupWidgetHelpers';
 import type Slide from '../../../app-document-list/Slide';
 import { useFileSourceEvents } from '../../../helper/dirSourceHelpers';
-import { ExpandChevron, useExpandToggle } from './useExpandToggle';
+import { ExpandChevronComp, useExpandToggle } from './useExpandToggle';
 
 async function checkIsDiffOtherSlides(
     slide: Slide,
@@ -254,7 +254,7 @@ export default function SlidePropertyEditorComp() {
                 {...headerProps}
             >
                 <div className="d-flex align-items-center gap-2">
-                    <ExpandChevron
+                    <ExpandChevronComp
                         isExpanded={isExpanded}
                         className="spe-toggle-icon"
                     />

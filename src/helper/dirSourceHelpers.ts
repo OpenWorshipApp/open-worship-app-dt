@@ -63,7 +63,10 @@ export function useFilePaths(
             fileSource.colorNote = color;
         });
         await Promise.all(promises);
-        if (checkAreArraysEqual(filePaths, newFilePaths)) {
+        // read through the ref — the listener registered in the effect below
+        // captures a stale `filePaths` (usually undefined), which made this
+        // guard never suppress redundant list re-renders
+        if (checkAreArraysEqual(filePathsRef.current, newFilePaths)) {
             return;
         }
         setFilePaths((oldFilePaths) => {

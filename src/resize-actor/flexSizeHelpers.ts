@@ -1,7 +1,7 @@
 import type { ReactNode, CSSProperties, LazyExoticComponent } from 'react';
 
 import { handleError } from '../helper/errorHelpers';
-import { isValidJson } from '../helper/helpers';
+import { parseJsonSafely } from '../helper/helpers';
 import { setSetting, getSetting } from '../helper/settingHelpers';
 
 export const settingPrefix = 'widget-size';
@@ -156,8 +156,8 @@ export function getFlexSizeSetting(
         throw new Error('defaultSize should have at least one key');
     }
     try {
-        if (isValidJson(str, true)) {
-            const flexSize = JSON.parse(str);
+        const flexSize = parseJsonSafely(str, true);
+        if (flexSize !== null) {
             if (
                 Object.keys(flexSize).length === defaultKeys.length &&
                 defaultKeys.every((k) => {

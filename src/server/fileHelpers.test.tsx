@@ -304,7 +304,9 @@ describe('fileHelpers', () => {
         );
 
         await fileHelpers.fsCreateFile('/browser-data/hash.txt', 'content');
-        await fileHelpers.ensureDirectory('/browser-data/hash.txt');
+        await expect(
+            fileHelpers.ensureDirectory('/browser-data/hash.txt'),
+        ).rejects.toThrow('a file already exists at that path');
         await expect(
             fileHelpers.getFileMD5('/browser-data/hash.txt'),
         ).resolves.toMatch(/^[0-9a-f]{8}$/);

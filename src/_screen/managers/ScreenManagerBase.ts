@@ -53,11 +53,16 @@ export default class ScreenManagerBase
         () => [];
     divRef: WeakRef<HTMLDivElement> | null = null;
 
-    constructor(screenId: number) {
+    constructor(screenId: number, isInert = false) {
         super();
         this.screenId = screenId;
         this.isDeleted = false;
         this.noSyncGroupMap = new Map();
+        if (isInert) {
+            // ghost stand-in for a deleted screen: no IPC, no display lookup
+            this._isShowing = false;
+            return;
+        }
         const ids = getAllShowingScreenIds();
         this._isShowing = ids.includes(screenId);
         this.updateDim();
@@ -311,5 +316,37 @@ export default class ScreenManagerBase
 
     getScreenManagerBaseForce(_screenId: number): ScreenManagerBase {
         throw new Error('getScreenManagerForce is not implemented.');
+    }
+}
+
+// Inert stand-in assigned to sub-managers when their screen is deleted.
+// Deliberately NOT a full ScreenManager: constructing one would re-register a
+// whole family of sub-managers into the module caches under the deleted
+// screenId (a permanent leak) and make deleted screens look alive again.
+export class ScreenManagerBaseGhost extends ScreenManagerBase {
+    constructor(screenId: number) {
+        super(screenId, true);
+        this.isDeleted = true;
+    }
+
+    override sendSyncScreen() {}
+
+    override clear() {}
+
+    override async delete() {}
+
+    override receiveScreenDropped(_droppedData: DroppedDataType) {}
+
+    override sendScreenMessage(
+        _message: ScreenMessageType,
+        _isForce: boolean,
+    ) {}
+
+    override createScreenManagerBaseGhost(screenId: number): ScreenManagerBase {
+        return new ScreenManagerBaseGhost(screenId);
+    }
+
+    override getScreenManagerBaseForce(screenId: number): ScreenManagerBase {
+        return new ScreenManagerBaseGhost(screenId);
     }
 }

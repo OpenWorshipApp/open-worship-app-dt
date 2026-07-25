@@ -64,25 +64,22 @@ function handleWebHiding(screenId: number, data: ForegroundWebDataType) {
     });
 }
 
-const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllWebs(
     showingScreenIdDataList: [number, ForegroundWebDataType][],
     extraStyle: CSSProperties,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, data] of showingScreenIdDataList) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.removeWebData(data);
-                    screenForegroundManager.addWebData({
-                        ...data,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, data] of showingScreenIdDataList) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeWebData(data);
+                screenForegroundManager.addWebData({
+                    ...data,
+                    extraStyle,
+                });
+            },
+        );
+    }
 }
 
 function genDimScale(getWidthScale: () => number) {
@@ -235,6 +232,9 @@ function ForegroundWebItemComp({
         ([, data]) => data.filePath === filePath,
     );
     const fileSource = FileSource.getInstance(filePath);
+    // per-instance: one item per web file — a shared module timer would drop
+    // the earlier item's refresh when two are adjusted within 500ms
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const {
         genStyle,
         getWidthScale,
@@ -242,7 +242,9 @@ function ForegroundWebItemComp({
     } = useForegroundPropsSetting({
         prefix: `web-${fileSource.fullName}`,
         onChange: (extraStyle) => {
-            refreshAllWebs(showingScreenIdDataList, extraStyle);
+            attemptTimeout(() => {
+                refreshAllWebs(showingScreenIdDataList, extraStyle);
+            });
         },
     });
     return (

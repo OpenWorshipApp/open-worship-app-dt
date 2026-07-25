@@ -91,11 +91,35 @@ function cloneDrawData(drawData: DrawDataType): DrawDataType {
     };
 }
 
+// History snapshots are CUMULATIVE ([s1], [s1,s2], [s1,s2,s3], ...) and share
+// stroke object references, so cloning each snapshot on its own copies the same
+// stroke — and its whole points array — once per snapshot it appears in. That is
+// O(snapshots x strokes): quadratic in the size of the drawing, paid by every
+// group member on every sync, and every undo/redo broadcasts a full sync. The
+// persist path already solved the same blow-up with an id-keyed stroke pool.
+//
+// Clone each DISTINCT stroke once and let the snapshots share that clone, which
+// is exactly how the sender's own snapshots share the original. The isolation
+// guarantee is unchanged (nothing here is shared with the sender), but the cost
+// drops to O(unique strokes).
+//
+// Keyed by object identity, not by `stroke.id`: two snapshots can legitimately
+// hold different objects carrying the same id (a stroke that grew points between
+// commits), and collapsing those would silently rewrite history.
 function cloneHistory(
     history: DrawPaintStrokeType[][],
 ): DrawPaintStrokeType[][] {
+    const cloneByStroke = new Map<DrawPaintStrokeType, DrawPaintStrokeType>();
     return (history ?? []).map((snapshot) => {
-        return (snapshot ?? []).map(cloneStroke);
+        return (snapshot ?? []).map((stroke) => {
+            const cloned = cloneByStroke.get(stroke);
+            if (cloned !== undefined) {
+                return cloned;
+            }
+            const newCloned = cloneStroke(stroke);
+            cloneByStroke.set(stroke, newCloned);
+            return newCloned;
+        });
     });
 }
 
@@ -283,6 +307,15 @@ export default class ScreenDrawManager
             return;
         }
         this.detachEventListeners();
+        // Take the canvas out of the OLD div before dropping the reference:
+        // setupContainer() makes a fresh one whenever `_canvas` is null, so a
+        // left-behind canvas stacks under the new one and keeps painting the
+        // strokes it last held — nothing ever repaints or clears it again.
+        // StrictMode re-runs this setter on every mount (ref -> null -> ref),
+        // so the output window would orphan one on each show, stranding a
+        // drawing on the projector that the presenter can no longer clear (and
+        // pinning its supersampled backing store in memory).
+        this._canvas?.remove();
         this._div = div;
         this._canvas = null;
         this._ctx = null;
@@ -368,6 +401,7 @@ export default class ScreenDrawManager
         this.applyFocusOutline(false);
         globalThis.removeEventListener('pointermove', this.boundPointerMove);
         globalThis.removeEventListener('pointerup', this.boundPointerUp);
+        globalThis.removeEventListener('pointercancel', this.boundPointerUp);
         this.currentStroke = null;
         this.pendingPoints = [];
         this.strokeRect = null;
@@ -427,9 +461,20 @@ export default class ScreenDrawManager
         if (checkIsDrawShortcutKey(event)) {
             return;
         }
-        // Consume every other key too: while the draw canvas is focused the app's
-        // global keyboard shortcuts (which listen on document) must not fire.
-        event.stopPropagation();
+        // Consume every other key ONLY while a stroke is actually in progress,
+        // so slide navigation and friends can't fire mid-stroke.
+        //
+        // This deliberately does NOT key off focus. The canvas takes focus from
+        // the click-to-select gesture — a single click that explicitly does not
+        // paint (see handlePointerDown) — so swallowing whenever focused meant
+        // that merely picking a screen silently killed EVERY global shortcut
+        // until the user clicked elsewhere: F5, the F6-F10 clear-layer keys,
+        // slide navigation, Ctrl+B, Escape. Losing the emergency "clear the
+        // screen now" keys by tapping a preview is far worse than the stray
+        // keypress this was guarding against.
+        if (this.currentStroke !== null) {
+            event.stopPropagation();
+        }
     }
 
     setPaintTool(paintTool: PaintToolType | null) {
@@ -546,6 +591,10 @@ export default class ScreenDrawManager
         }
         globalThis.addEventListener('pointermove', this.boundPointerMove);
         globalThis.addEventListener('pointerup', this.boundPointerUp);
+        // A cancelled pointer (pen/touch OS cancel) never fires `pointerup`;
+        // without this the listeners stay attached and `currentStroke` sticks,
+        // which swallows global shortcuts while the canvas is focused.
+        globalThis.addEventListener('pointercancel', this.boundPointerUp);
         this.sendDrawMessage({ action: 'begin', stroke: cloneStroke(stroke) });
         this.lastSyncAt = Date.now();
         this.scheduleRender();
@@ -582,14 +631,18 @@ export default class ScreenDrawManager
     }
 
     private handlePointerUp() {
+        // Always release the global listeners — a synced clear or a mid-stroke
+        // undo can null `currentStroke` before the pointer comes up, and the
+        // early-return below must not leave them attached.
+        globalThis.removeEventListener('pointermove', this.boundPointerMove);
+        globalThis.removeEventListener('pointerup', this.boundPointerUp);
+        globalThis.removeEventListener('pointercancel', this.boundPointerUp);
+        this.strokeRect = null;
         if (this.currentStroke === null) {
             return;
         }
         this.flushPendingPoints();
         this.currentStroke = null;
-        this.strokeRect = null;
-        globalThis.removeEventListener('pointermove', this.boundPointerMove);
-        globalThis.removeEventListener('pointerup', this.boundPointerUp);
         this.recordHistory();
         // Tell the group the stroke is done so their undo stacks stay in step
         // (they already have the strokes from the streamed begin/points).
@@ -809,13 +862,12 @@ export default class ScreenDrawManager
                 stroke.points.push(...data.points);
             }
         } else if (data.action === 'clear') {
-            this.drawData = { paintStrokeList: [] };
-            // Drop any stroke this screen had in flight so a later pointer-up
-            // can't re-commit it over the synced clear.
-            this.currentStroke = null;
-            this.pendingPoints = [];
-            // Mirror the sender: push the empty state so undo can restore.
-            this.recordHistory();
+            // Mirror the sender exactly (collapseHistoryForClear also drops any
+            // stroke this screen had in flight, so a later pointer-up can't
+            // re-commit it over the synced clear). Collapsing on BOTH sides is
+            // what keeps a group member's undo stack from being the one that
+            // still holds — and can resurrect — an older cleared drawing.
+            this.collapseHistoryForClear();
         }
         this.scheduleRender();
         this.fireUpdateEvent();
@@ -943,11 +995,29 @@ export default class ScreenDrawManager
     }
 
     clear() {
-        this.clearLocal();
-        // Keep the empty state on the undo stack so a clear can be undone.
-        this.recordHistory();
+        this.collapseHistoryForClear();
         this.sendDrawMessage({ action: 'clear' });
         this.saveDrawData();
+    }
+
+    // A clear COLLAPSES the undo stack to at most "before the clear" -> "after
+    // the clear", instead of appending to it.
+    //
+    // Appending kept every earlier, already-cleared drawing below the empty
+    // snapshot, so `canUndo` stayed true for up to MAX_HISTORY steps and undoing
+    // past the clear put a drawing from earlier in the service back on the
+    // congregation's screen (the undo stack appeared to oscillate empty/not).
+    // One Undo must still restore what the clear wiped — a mis-click on Clear is
+    // exactly what undo is for — but a second one must be a no-op, which is also
+    // what makes the Undo button finally disable.
+    private collapseHistoryForClear() {
+        const strokeListBeforeClear = this.drawData.paintStrokeList;
+        this.clearLocal();
+        this.history =
+            strokeListBeforeClear.length > 0
+                ? [[...strokeListBeforeClear], []]
+                : [[]];
+        this.historyIndex = this.history.length - 1;
     }
 
     delete() {

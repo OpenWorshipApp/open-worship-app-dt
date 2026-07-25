@@ -1,7 +1,7 @@
 import { useCallback, type MouseEvent } from 'react';
 import { useAppCurrentRef } from '../../helper/appHooks';
 
-export default function RenderNoColor({
+export default function RenderNoColorComp({
     isSelected,
     onClick,
 }: Readonly<{

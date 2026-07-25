@@ -16,7 +16,7 @@ import FileSource from '../../helper/FileSource';
 import { stopDraggingState } from '../../helper/helpers';
 import { tran } from '../../lang/langHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
-import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComponent';
+import AttachBackgroundIconComp from '../../others/AttachBackgroundIconComp';
 import FileItemHandlerComp from '../../others/FileItemHandlerComp';
 import { showAppConfirm } from '../../popup-widget/popupWidgetHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
@@ -153,7 +153,7 @@ function NotePreview({ note }: Readonly<{ note: Note }>) {
                     </div>
                 ) : null}
                 <div className="float-end">
-                    <AttachBackgroundIconComponent filePath={note.filePath} />
+                    <AttachBackgroundIconComp filePath={note.filePath} />
                 </div>
             </div>
             <div

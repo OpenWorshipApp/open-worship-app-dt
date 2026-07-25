@@ -141,10 +141,11 @@ const plainShortcutKeySet = new Set(
         }),
 );
 
-// ScreenDrawManager's canvas keydown handler swallows every key so the app's
-// global shortcuts (slide navigation, clearing, ...) can't fire mid-stroke.
-// These have to keep bubbling to `document.onkeydown` or the palette shortcuts
-// would be dead exactly when they are most useful: while the user is drawing.
+// ScreenDrawManager's canvas keydown handler swallows every key WHILE A STROKE
+// IS IN PROGRESS so the app's global shortcuts (slide navigation, clearing, ...)
+// can't fire mid-stroke. These have to keep bubbling to `document.onkeydown` or
+// the palette shortcuts would be dead exactly when they are most useful: while
+// the user is drawing.
 export function checkIsDrawShortcutKey(event: KeyboardEvent) {
     if (event.ctrlKey || event.metaKey || event.altKey) {
         return false;

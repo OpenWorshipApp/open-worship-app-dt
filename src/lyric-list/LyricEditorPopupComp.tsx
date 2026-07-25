@@ -8,7 +8,7 @@ import { dirSourceSettingNames } from '../helper/constants';
 import LyricEditingManager, {
     LyricEditingManagerContext,
 } from './LyricEditingManager';
-import { MultiContextRender } from '../helper/MultiContextRender';
+import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import { SelectedLyricContext } from './lyricHelpers';
 import appProvider from '../server/appProvider';
 import { getParamFileFullName } from '../helper/domHelpers';
@@ -50,7 +50,7 @@ export default function LyricEditorPopupComp() {
         return lyricEditingManager;
     }, [lyric]);
     return (
-        <MultiContextRender
+        <MultiContextRenderComp
             contexts={[
                 {
                     context: LyricEditingManagerContext,
@@ -85,6 +85,6 @@ export default function LyricEditorPopupComp() {
                     },
                 ]}
             />
-        </MultiContextRender>
+        </MultiContextRenderComp>
     );
 }

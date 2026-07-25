@@ -205,6 +205,8 @@ vi.mock('./managers/screenEventHelpers', () => ({
         useScreenVaryAppDocumentManagerEventsSpy,
     useScreenBibleManagerEvents: useScreenBibleManagerEventsSpy,
     useScreenForegroundManagerEvents: useScreenForegroundManagerEventsSpy,
+    useScreenDrawManagerEvents: vi.fn(),
+    useScreenFocusManagerEvents: vi.fn(),
 }));
 
 // jsdom 23's selector engine hangs on child-combinator queries against a

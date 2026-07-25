@@ -155,7 +155,10 @@ export default class BibleDataReader {
             try {
                 await fsCreateDir(dirPath);
             } catch (error: any) {
-                if (!error.message.includes('file already exists')) {
+                if (
+                    error.code !== 'EEXIST' &&
+                    !error.message?.includes('file already exists')
+                ) {
                     handleError(error);
                 }
             }
@@ -212,7 +215,7 @@ export default class BibleDataReader {
         if (keys === null) {
             return;
         }
-        Promise.all(
+        await Promise.all(
             keys.map(async (key) => {
                 await dbController.deleteItem(key);
             }),

@@ -2,6 +2,7 @@ import type { DependencyList, EffectCallback } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { appWarning } from './loggerHelpers';
+import { handleError } from './errorHelpers';
 import type { OptionalPromise } from './typeHelpers';
 import appProvider from '../server/appProvider';
 
@@ -104,7 +105,11 @@ export function useAppEffectAsync<T extends MethodContextType>(
     useAppEffect(() => {
         const methodContext = { ...methods } as T;
         checkStore(toKey);
-        const unmount = effectMethod(methodContext);
+        // Attach the error handler right away so a rejecting effect method
+        // never becomes an unhandled rejection.
+        const unmount = effectMethod(methodContext).catch((error) => {
+            handleError(error);
+        });
         return () => {
             for (const key in methodContext) {
                 methodContext[key] = warningMethod.bind(null, key) as any;
@@ -118,7 +123,7 @@ export function useAppEffectAsync<T extends MethodContextType>(
     }, totalDeps as DependencyList);
 }
 
-export function TestInfinite() {
+export function TestInfiniteComp() {
     const [count, setCount] = useState(0);
     const [isStopped, setIsStopped] = useState(false);
     useAppEffect(

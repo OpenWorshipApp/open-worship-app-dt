@@ -23,11 +23,19 @@ export default class CustomHTMLScreenPreviewer extends HTMLElement {
     mountPoint: HTMLDivElement;
     attemptTimeout: (func: () => void) => void;
     screenId: number;
+    private root: ReturnType<typeof createRoot> | null;
+    private scaleEventTarget: ScreenManagerBase | null;
+    private registeredScaleEvents: ReturnType<
+        ScreenManagerBase['registerEventListener']
+    > | null;
     constructor() {
         super();
         this.screenId = -1;
         this.mountPoint = document.createElement('div');
         this.attemptTimeout = genTimeoutAttempt(100);
+        this.root = null;
+        this.scaleEventTarget = null;
+        this.registeredScaleEvents = null;
     }
     setMountPointScale(screenManagerBase: ScreenManagerBase) {
         const parentElement = this.parentElement;
@@ -59,11 +67,9 @@ export default class CustomHTMLScreenPreviewer extends HTMLElement {
             return;
         }
         const div = this.mountPoint;
-        this.attachShadow({
-            mode: 'open',
-        }).appendChild(div);
-
-        const root = createRoot(div);
+        (this.shadowRoot ?? this.attachShadow({ mode: 'open' })).appendChild(
+            div,
+        );
 
         const screenManagerBase = getScreenManagerBase(this.screenId);
         if (screenManagerBase === null) {
@@ -72,14 +78,43 @@ export default class CustomHTMLScreenPreviewer extends HTMLElement {
         screenManagerBase.getElementsByDomSelector = (domSelector: string) => {
             return Array.from(div.querySelectorAll(domSelector));
         };
-        screenManagerBase.registerEventListener(['scale'], () => {
-            this.setMountPointScale(screenManagerBase);
-            this.attemptTimeout(() => {
-                this.setMountPointScale(screenManagerBase);
-            });
-        });
+        if (this.registeredScaleEvents === null) {
+            this.scaleEventTarget = screenManagerBase;
+            this.registeredScaleEvents =
+                screenManagerBase.registerEventListener(['scale'], () => {
+                    this.setMountPointScale(screenManagerBase);
+                    this.attemptTimeout(() => {
+                        this.setMountPointScale(screenManagerBase);
+                    });
+                });
+        }
         this.setMountPointScale(screenManagerBase);
-        root.render(<MiniScreenAppComp screenId={this.screenId} />);
+        this.root ??= createRoot(div);
+        this.root.render(<MiniScreenAppComp screenId={this.screenId} />);
+    }
+
+    disconnectedCallback() {
+        // Deferred: a React reparent fires disconnect+reconnect synchronously,
+        // and unmounting synchronously here would run inside React's commit.
+        queueMicrotask(() => {
+            if (this.isConnected) {
+                return;
+            }
+            if (
+                this.registeredScaleEvents !== null &&
+                this.scaleEventTarget !== null
+            ) {
+                this.scaleEventTarget.unregisterEventListener(
+                    this.registeredScaleEvents,
+                );
+            }
+            this.registeredScaleEvents = null;
+            this.scaleEventTarget = null;
+            if (this.root !== null) {
+                this.root.unmount();
+                this.root = null;
+            }
+        });
     }
 }
 

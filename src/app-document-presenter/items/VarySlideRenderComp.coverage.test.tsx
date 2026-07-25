@@ -92,7 +92,7 @@ vi.mock('../../app-document-list/AppDocument', () => ({
     },
 }));
 
-vi.mock('../../others/AttachBackgroundIconComponent', () => ({
+vi.mock('../../others/AttachBackgroundIconComp', () => ({
     default: ({ filePath, id }: any) => (
         <div data-testid="attach-icon">
             {filePath}:{id}

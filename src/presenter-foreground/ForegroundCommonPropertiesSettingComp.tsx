@@ -8,7 +8,7 @@ import {
 import { tran } from '../lang/langHelpers';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import { getSetting } from '../helper/settingHelpers';
-import ColorPicker from '../others/color/ColorPicker';
+import ColorPickerComp from '../others/color/ColorPicker';
 import {
     type AppColorType,
     HEX_COLOR_WHITE,
@@ -167,7 +167,7 @@ export default function CommonStyleControlsComp({
                     label={tran('Text Color:')}
                     color={color}
                 >
-                    <ColorPicker
+                    <ColorPickerComp
                         color={color}
                         defaultColor={DEFAULT_TEXT_COLOR}
                         onNoColor={() => setColor(DEFAULT_TEXT_COLOR)}
@@ -179,7 +179,7 @@ export default function CommonStyleControlsComp({
                     label={tran('Background Color:')}
                     color={backgroundColor}
                 >
-                    <ColorPicker
+                    <ColorPickerComp
                         color={backgroundColor}
                         defaultColor={DEFAULT_BACKGROUND_COLOR}
                         onNoColor={() =>

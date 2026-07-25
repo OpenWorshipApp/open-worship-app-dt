@@ -155,10 +155,24 @@ function onAsync<T1, T2>(
     ipc.on(eventName, async (event, data: T1) => {
         const replyEventName = (data as any)?.replyEventName;
         if (!replyEventName) {
-            throw new Error(`${eventName}: replyEventName is required`);
+            console.error(`${eventName}: replyEventName is required`);
+            return;
         }
-        const result = await callee(data);
-        event.sender.send(replyEventName, result);
+        // Always reply — a missing reply leaves the renderer's awaiting
+        // promise pending forever (stuck progress bars, silent failures).
+        // The renderer rejects when the reply is an Error instance.
+        let result: T2 | Error;
+        try {
+            result = await callee(data);
+        } catch (error) {
+            console.error(`${eventName}:`, error);
+            result = error instanceof Error ? error : new Error(String(error));
+        }
+        try {
+            event.sender.send(replyEventName, result);
+        } catch (error) {
+            console.error(`${eventName}: failed to reply`, error);
+        }
     });
 }
 
@@ -179,6 +193,8 @@ export function initEventScreen(appController: ElectronAppController) {
         ipcMain,
         'main:app:show-screen',
         async (data: ShowScreenDataType) => {
+            const isNewInstance =
+                ElectronScreenController.getInstance(data.screenId) === null;
             const screenController = ElectronScreenController.createInstance(
                 data.screenId,
             );
@@ -190,12 +206,16 @@ export function initEventScreen(appController: ElectronAppController) {
                 screenController.setDisplay(display);
                 appController.mainWin.focus();
             }
-            screenController.win.on('close', () => {
-                screenController.destroyInstance();
-                appController.mainController.sendNotifyInvisibility(
-                    data.screenId,
-                );
-            });
+            // Attach only once — createInstance returns a cached controller,
+            // and stacking a listener per show call duplicates the notify.
+            if (isNewInstance) {
+                screenController.win.on('close', () => {
+                    screenController.destroyInstance();
+                    appController.mainController.sendNotifyInvisibility(
+                        data.screenId,
+                    );
+                });
+            }
         },
     );
 

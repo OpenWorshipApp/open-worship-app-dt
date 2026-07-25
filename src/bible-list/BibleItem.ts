@@ -1,4 +1,4 @@
-import { cloneJson, isValidJson } from '../helper/helpers';
+import { cloneJson, parseJsonSafely } from '../helper/helpers';
 import { ItemBase } from '../helper/ItemBase';
 import { setSetting, getSetting } from '../helper/settingHelpers';
 import type DragInf from '../helper/DragInf';
@@ -239,8 +239,9 @@ export default class BibleItem
     static getBiblePresenterSetting() {
         try {
             const str = getSetting(BIBLE_PRESENT_SETTING_NAME) ?? '';
-            if (isValidJson(str, true)) {
-                return JSON.parse(str).map((item: any) => {
+            const jsonData = parseJsonSafely(str, true);
+            if (jsonData !== null) {
+                return jsonData.map((item: any) => {
                     return this.fromJson(item);
                 }) as BibleItem[];
             }

@@ -6,7 +6,7 @@ import type {
     BibleItemRenderingType,
     BibleRenderVerseType,
 } from './bibleScreenComps';
-import { BibleBibleTable } from './bibleScreenComps';
+import { BibleBibleTableComp } from './bibleScreenComps';
 import { getHTMLChild } from '../helper/helpers';
 import appProvider from '../server/appProvider';
 import { DEFAULT_LOCALE, getLangDataAsync } from '../lang/langHelpers';
@@ -33,7 +33,7 @@ const bibleScreenHelper = {
         );
         const versesCount = bibleRenderingList[0].verses.length;
         const htmlString = renderToStaticMarkup(
-            <BibleBibleTable
+            <BibleBibleTableComp
                 bibleRenderingList={bibleRenderingLangList}
                 isLineSync={isLineSync}
                 versesCount={versesCount}

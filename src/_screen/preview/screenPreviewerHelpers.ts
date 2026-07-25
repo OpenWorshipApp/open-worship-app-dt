@@ -1,6 +1,6 @@
 import { screenManagerSettingNames } from '../../helper/constants';
 import { handleError } from '../../helper/errorHelpers';
-import { isValidJson } from '../../helper/helpers';
+import { parseJsonSafely } from '../../helper/helpers';
 import { getSetting } from '../../helper/settingHelpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
@@ -95,10 +95,10 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
 export function getAppDocumentListOnScreenSetting(): AppDocumentListType {
     const str = getSetting(screenManagerSettingNames.VARY_APP_DOCUMENT) ?? '';
     try {
-        if (!isValidJson(str, true)) {
+        const json = parseJsonSafely(str, true);
+        if (json === null) {
             return {};
         }
-        const json = JSON.parse(str);
         for (const item of Object.values(json)) {
             if (typeof (item as any).filePath !== 'string') {
                 throw new TypeError('Invalid slide path');

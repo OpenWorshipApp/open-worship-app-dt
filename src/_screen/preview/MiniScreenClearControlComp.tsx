@@ -45,17 +45,23 @@ function genBtnMaps(screenManager: ScreenManager) {
         screenVaryAppDocumentManager,
         screenBibleManager,
         screenForegroundManager,
+        screenDrawManager,
+        screenFocusManager,
     } = screenManager;
 
     const isShowingBackground = screenBackgroundManager.isShowing;
     const isShowingSlide = screenVaryAppDocumentManager.isShowing;
     const isShowingBible = screenBibleManager.isShowing;
     const isShowingForeground = screenForegroundManager.isShowing;
+    // draw/focus have no dedicated clear button but Clear All clears them,
+    // so a drawing or spotlight alone must still enable it
     const isShowing =
         isShowingBackground ||
         isShowingSlide ||
         isShowingBible ||
-        isShowingForeground;
+        isShowingForeground ||
+        screenDrawManager.isShowing ||
+        screenFocusManager.isShowing;
     return [
         {
             text: <i className="bi bi-eraser" />,

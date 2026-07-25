@@ -34,7 +34,7 @@ import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import { genBibleItemCopyingContextMenu } from './bibleItemHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import { bibleRenderHelper } from './bibleRenderHelpers';
-import { useAppEffectAsync } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffectAsync } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useScreenUpdateEvents } from '../_screen/managers/screenManagerHooks';
 import { exportBibleMSWord, showFileOrDirExplorer } from '../server/appHelpers';
@@ -184,6 +184,18 @@ export async function openBibleItemContextMenu(
         showSimpleToast('Open Bible Item Context Menu', 'Unable to get bible');
         return;
     }
+    // Mutating actions re-read the file at action time — the menu can stay
+    // open indefinitely, and saving the open-time snapshot would clobber any
+    // item added to the same file in between.
+    const mutateFreshBible = async (callback: (freshBible: Bible) => void) => {
+        const freshBible = await Bible.fromFilePath(bible.filePath);
+        if (freshBible === null) {
+            showSimpleToast('Bible Item', 'Unable to get bible');
+            return;
+        }
+        callback(freshBible);
+        await freshBible.save();
+    };
     const menuItem: ContextMenuItemType[] = [
         ...genBibleItemCopyingContextMenu(bibleItem),
         ...(openBibleLookup === null
@@ -207,9 +219,10 @@ export async function openBibleItemContextMenu(
               ]),
         {
             menuElement: tran('Duplicate'),
-            onSelect: () => {
-                bible.duplicate(index);
-                bible.save();
+            onSelect: async () => {
+                await mutateFreshBible((freshBible) => {
+                    freshBible.duplicate(index);
+                });
             },
         },
         ...genShowOnScreensContextMenu((event) => {
@@ -237,18 +250,20 @@ export async function openBibleItemContextMenu(
     if (index !== 0) {
         menuItem.push({
             menuElement: tran('Move up'),
-            onSelect: () => {
-                bible.swapItems(index, index - 1);
-                bible.save();
+            onSelect: async () => {
+                await mutateFreshBible((freshBible) => {
+                    freshBible.swapItems(index, index - 1);
+                });
             },
         });
     }
     if (index !== bible.itemsLength - 1) {
         menuItem.push({
             menuElement: tran('Move down'),
-            onSelect: () => {
-                bible.swapItems(index, index + 1);
-                bible.save();
+            onSelect: async () => {
+                await mutateFreshBible((freshBible) => {
+                    freshBible.swapItems(index, index + 1);
+                });
             },
         });
     }
@@ -295,12 +310,20 @@ export async function checkIsBibleItemOnScreen(items: BibleItem[]) {
 export function useIsOnScreen(items: BibleItem[]) {
     const [isOnScreen, setIsOnScreen] = useState(false);
     const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
+    const itemsRef = useAppCurrentRef(items);
+    // callers build the array (and its items) fresh each render, so keying
+    // the effect on identity re-ran the async on-screen check every render
+    const itemsKey = items
+        .map((item) => {
+            return `${item.id}-${item.bibleKey}-${JSON.stringify(item.target)}`;
+        })
+        .join(',');
     useAppEffectAsync(async () => {
-        setIsOnScreen(await checkIsBibleItemOnScreen(items));
-    }, [items]);
+        setIsOnScreen(await checkIsBibleItemOnScreen(itemsRef.current));
+    }, [itemsKey]);
     useScreenUpdateEvents(undefined, () => {
         attemptTimeout(async () => {
-            setIsOnScreen(await checkIsBibleItemOnScreen(items));
+            setIsOnScreen(await checkIsBibleItemOnScreen(itemsRef.current));
         });
     });
     return isOnScreen;

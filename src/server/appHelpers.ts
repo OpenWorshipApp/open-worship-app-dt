@@ -297,7 +297,7 @@ export function downloadVideoOrAudio(
                         } else if (eventType === 'Merger') {
                             const regex = /Merging formats into "(.+?)"/;
                             const match = eventData.match(regex);
-                            if (match[1]) {
+                            if (match?.[1]) {
                                 filePath = match[1];
                             }
                         } else if (eventType === 'download') {

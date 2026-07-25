@@ -2,13 +2,13 @@ import { useCallback } from 'react';
 
 import type { AppColorType } from './colorHelpers';
 import { compareColor } from './colorHelpers';
-import SelectCustomColor from './SelectCustomColor';
-import RenderColor from './RenderColor';
-import RenderNoColor from './RenderNoColor';
+import SelectCustomColorComp from './SelectCustomColorComp';
+import RenderColorComp from './RenderColorComp';
+import RenderNoColorComp from './RenderNoColorComp';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 
-export default function RenderColors({
+export default function RenderColorsComp({
     colors,
     selectedColor,
     onColorChange,
@@ -41,14 +41,14 @@ export default function RenderColors({
     return (
         <div>
             <div className="d-flex flex-wrap app-border-white-round">
-                <RenderNoColor
+                <RenderNoColorComp
                     isSelected={!selectedColor}
                     onClick={handleNoColoring}
                 />
                 {Object.entries(colors).map(
                     ([name, color]: [string, AppColorType]) => {
                         return (
-                            <RenderColor
+                            <RenderColorComp
                                 key={color}
                                 name={name}
                                 color={color}
@@ -63,7 +63,7 @@ export default function RenderColors({
                 )}
             </div>
             <div className="m-2">
-                <SelectCustomColor
+                <SelectCustomColorComp
                     color={selectedColor}
                     onColorSelected={handleColorSelecting}
                     isNoImmediate={isNoImmediate}

@@ -12,7 +12,7 @@ import {
 } from './readBibleHelpers';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
-import RenderBibleEditingHeader from '../bible-lookup/RenderBibleEditingHeader';
+import RenderBibleEditingHeaderComp from '../bible-lookup/RenderBibleEditingHeaderComp';
 import RenderBibleLookupBodyComp from '../bible-lookup/RenderBibleLookupBodyComp';
 import type LookupBibleItemController from './LookupBibleItemController';
 import { EditingResultContext } from './LookupBibleItemController';
@@ -212,7 +212,7 @@ export default function BibleViewComp({
             onContextMenu={handleContextMenu}
         >
             {isEditing ? (
-                <RenderBibleEditingHeader />
+                <RenderBibleEditingHeaderComp />
             ) : (
                 <BibleViewRenderHeaderComp bibleItem={bibleItem} />
             )}

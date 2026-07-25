@@ -2,7 +2,7 @@ import { lazy } from 'react';
 
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { MultiContextRender } from '../helper/MultiContextRender';
+import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import { useEditingCanvasContextValue } from './canvasEditingHelpers';
 import SlideEditorCanvasComp from './canvas/SlideEditorCanvasComp';
 
@@ -40,11 +40,11 @@ export default function SlideEditorComp() {
                         children: {
                             render: () => {
                                 return (
-                                    <MultiContextRender
+                                    <MultiContextRenderComp
                                         contexts={contextData.contextValue}
                                     >
                                         <LazySlideEditorToolsComp />
-                                    </MultiContextRender>
+                                    </MultiContextRenderComp>
                                 );
                             },
                         },

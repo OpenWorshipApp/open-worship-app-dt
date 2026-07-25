@@ -70,26 +70,6 @@ vi.mock('../server/unlockingHelpers', () => ({
     unlocking: mocks.unlockingMock,
 }));
 
-vi.mock('../others/GarbageCollectableCacher', () => ({
-    default: class GarbageCollectableCacherMock<T> {
-        private readonly store = new Map<string, T>();
-
-        constructor(_maxSize: number) {}
-
-        get(key: string) {
-            return this.store.has(key) ? (this.store.get(key) ?? null) : null;
-        }
-
-        set(key: string, value: T) {
-            this.store.set(key, value);
-        }
-
-        delete(key: string) {
-            this.store.delete(key);
-        }
-    },
-}));
-
 vi.mock('../server/fileHelpers', () => ({
     fsCheckDirExist: vi.fn(async (dirPath: string) => {
         return mocks.dirs.has(mocks.normalizePath(dirPath));

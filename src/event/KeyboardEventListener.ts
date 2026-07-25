@@ -120,7 +120,12 @@ export default class KeyboardEventListener extends EventHandler<string> {
     }
 
     static removeLayer(layer: AppWidgetType) {
-        this._layers.splice(this._layers.indexOf(layer), 1);
+        const index = this._layers.indexOf(layer);
+        // indexOf(-1) would splice the LAST layer — a double remove must not
+        // corrupt the layer stack app-wide
+        if (index > -1) {
+            this._layers.splice(index, 1);
+        }
     }
 
     // Force key to en-US layout by using the physical key code, to avoid
@@ -287,9 +292,9 @@ export default class KeyboardEventListener extends EventHandler<string> {
         });
     }
 
-    static toEventMapperKey(eventMapper: EventMapperType) {
+    static toEventMapperKey(eventMapper: EventMapperType, layer?: string) {
         const key = toShortcutKey(eventMapper);
-        const lastLayer = this.getLastLayer();
+        const lastLayer = layer ?? this.getLastLayer();
         return `${lastLayer}>${key}`;
     }
 }
@@ -318,11 +323,11 @@ export function checkIsKeyboardEventMatch(
     return false;
 }
 
-function genEventNames(eventMappers: EventMapperType[]) {
+function genEventNames(eventMappers: EventMapperType[], layer?: string) {
     const eventNames = KeyboardEventListener.filterEventMappersByPlatform(
         eventMappers,
     ).map((eventMapper) => {
-        return KeyboardEventListener.toEventMapperKey(eventMapper);
+        return KeyboardEventListener.toEventMapperKey(eventMapper, layer);
     });
     return eventNames;
 }
@@ -330,11 +335,22 @@ export function useKeyboardRegistering(
     eventMappers: EventMapperType[],
     listener: KeyboardListenerType,
     deps: DependencyList,
+    layer?: AppWidgetType,
 ) {
+    // Pin the layer at mount. Callers pass inline mapper arrays, so the memo
+    // recomputes every render — if a background component re-renders while a
+    // modal layer is on top, deriving the layer lazily would re-register its
+    // keys under the modal's layer and hijack keys the modal should own.
+    // A component that manages a layer itself (the context-menu host stays
+    // mounted across open/close) passes its layer explicitly instead.
+    const mountLayer = useMemo(() => {
+        return KeyboardEventListener.getLastLayer() ?? undefined;
+    }, []);
+    const targetLayer = layer ?? mountLayer;
     const eventNames = useMemo(() => {
-        const eventNames = genEventNames(eventMappers);
+        const eventNames = genEventNames(eventMappers, targetLayer);
         return eventNames;
-    }, [eventMappers]);
+    }, [eventMappers, targetLayer]);
     const listenerRef = useAppCurrentRef(listener);
     useAppEffect(() => {
         const registeredEvents = KeyboardEventListener.registerEventListener(

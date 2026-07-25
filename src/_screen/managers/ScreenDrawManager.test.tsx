@@ -217,6 +217,65 @@ describe('ScreenDrawManager', () => {
         expect(manager.isShowing).toBe(true);
     });
 
+    test('undoing past a clear cannot resurrect an earlier cleared drawing', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase());
+        const drawAndCommit = (id: string) => {
+            manager.receiveSyncScreen(
+                drawMessage(30, { action: 'begin', stroke: makeStroke(id) }),
+            );
+            manager.receiveSyncScreen(drawMessage(30, { action: 'commit' }));
+        };
+
+        // A first drawing, wiped. Then a second, unrelated drawing.
+        drawAndCommit('old');
+        manager.clear();
+        drawAndCommit('new');
+        manager.clear();
+
+        // One undo restores what THIS clear wiped -- a mis-click on Clear is
+        // exactly what undo is for.
+        expect(manager.canUndo).toBe(true);
+        manager.undo();
+        expect(
+            manager.drawData.paintStrokeList.map((stroke: any) => stroke.id),
+        ).toEqual(['new']);
+
+        // ...and that is the end of the road. Undoing further used to walk back
+        // into the FIRST, already-cleared drawing and put it back on the
+        // congregation's screen, and canUndo never went false so the button
+        // never disabled.
+        expect(manager.canUndo).toBe(false);
+        manager.undo();
+        expect(
+            manager.drawData.paintStrokeList.map((stroke: any) => stroke.id),
+        ).toEqual(['new']);
+    });
+
+    test('a synced clear collapses the receiver history too', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase());
+        const drawAndCommit = (id: string) => {
+            manager.receiveSyncScreen(
+                drawMessage(30, { action: 'begin', stroke: makeStroke(id) }),
+            );
+            manager.receiveSyncScreen(drawMessage(30, { action: 'commit' }));
+        };
+
+        drawAndCommit('old');
+        manager.receiveSyncScreen(drawMessage(30, { action: 'clear' }));
+        drawAndCommit('new');
+        manager.receiveSyncScreen(drawMessage(30, { action: 'clear' }));
+
+        // Otherwise a group member is the one left holding -- and able to
+        // resurrect -- the older cleared drawing.
+        manager.undo();
+        expect(
+            manager.drawData.paintStrokeList.map((stroke: any) => stroke.id),
+        ).toEqual(['new']);
+        expect(manager.canUndo).toBe(false);
+    });
+
     test('persists in deduped v2 form and reloads round-trip', async () => {
         const ScreenDrawManager = await importManager();
         const manager = new ScreenDrawManager(createBase(31));
@@ -502,7 +561,7 @@ describe('ScreenDrawManager', () => {
         expect(paintedWith).toEqual(['destination-out', 'source-over']);
     });
 
-    test('canvas keydown swallows app shortcuts but lets palette keys bubble', async () => {
+    test('canvas keydown swallows app shortcuts MID-STROKE only, and always lets palette keys bubble', async () => {
         const ScreenDrawManager = await importManager();
         const manager = new ScreenDrawManager(createBase(37));
         const div = document.createElement('div');
@@ -530,18 +589,30 @@ describe('ScreenDrawManager', () => {
             );
         };
 
-        // Slide navigation must not fire while the canvas owns the keyboard.
+        // FOCUSED BUT IDLE: the globals must still work. The canvas takes focus
+        // from the click-to-select gesture (a single click that does not paint),
+        // so swallowing here meant merely picking a screen silently killed every
+        // global shortcut -- including the F6-F10 clear-layer keys -- until the
+        // user clicked elsewhere.
         press('ArrowRight');
-        expect(onDocumentKeyDown).not.toHaveBeenCalled();
+        expect(onDocumentKeyDown).toHaveBeenCalledTimes(1);
+        press('F8');
+        expect(onDocumentKeyDown).toHaveBeenCalledTimes(2);
 
-        // The draw panel's quick-select keys have to reach document.onkeydown.
+        // MID-STROKE: now slide navigation must not fire.
+        (manager as any).currentStroke = { id: 'x', points: [] };
+        press('ArrowRight');
+        expect(onDocumentKeyDown).toHaveBeenCalledTimes(2);
+
+        // The draw panel's quick-select keys reach document.onkeydown even
+        // mid-stroke -- that is exactly when they are most useful.
         press('e');
         press(']');
-        expect(onDocumentKeyDown).toHaveBeenCalledTimes(2);
+        expect(onDocumentKeyDown).toHaveBeenCalledTimes(4);
 
         // Ctrl+Z stays handled locally by the canvas.
         press('z', { ctrlKey: true, code: 'KeyZ' });
-        expect(onDocumentKeyDown).toHaveBeenCalledTimes(2);
+        expect(onDocumentKeyDown).toHaveBeenCalledTimes(4);
         document.removeEventListener('keydown', onDocumentKeyDown);
     });
 
@@ -683,5 +754,27 @@ describe('ScreenDrawManager', () => {
         down(0);
         expect(manager.drawData.paintStrokeList).toHaveLength(1);
         globalThis.dispatchEvent(new MouseEvent('pointerup', {}));
+    });
+
+    test('re-setting the div leaves no orphaned canvas behind', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(43));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+
+        manager.div = div;
+        expect(div.querySelectorAll('canvas')).toHaveLength(1);
+        const firstCanvas = div.querySelector('canvas');
+
+        // StrictMode runs the ref as `div -> null -> div` on every mount. A
+        // canvas left behind here stacks under the new one and keeps painting
+        // the strokes it last held, so a cleared drawing would stay on the
+        // output window with no way to remove it.
+        manager.div = null;
+        expect(div.querySelectorAll('canvas')).toHaveLength(0);
+
+        manager.div = div;
+        expect(div.querySelectorAll('canvas')).toHaveLength(1);
+        expect(div.querySelector('canvas')).not.toBe(firstCanvas);
     });
 });

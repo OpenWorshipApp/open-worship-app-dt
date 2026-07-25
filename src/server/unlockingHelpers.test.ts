@@ -1,20 +1,26 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { appWarningMock, scheduledCallbacks, genTimeoutAttemptMock } =
-    vi.hoisted(() => {
-        const callbacks: Array<() => unknown> = [];
-        return {
-            appWarningMock: vi.fn(),
-            scheduledCallbacks: callbacks,
-            genTimeoutAttemptMock: vi.fn(() => {
-                return (callback: () => unknown) => {
-                    callbacks.push(callback);
-                };
-            }),
-        };
-    });
+const {
+    appErrorMock,
+    appWarningMock,
+    scheduledCallbacks,
+    genTimeoutAttemptMock,
+} = vi.hoisted(() => {
+    const callbacks: Array<() => unknown> = [];
+    return {
+        appErrorMock: vi.fn(),
+        appWarningMock: vi.fn(),
+        scheduledCallbacks: callbacks,
+        genTimeoutAttemptMock: vi.fn(() => {
+            return (callback: () => unknown) => {
+                callbacks.push(callback);
+            };
+        }),
+    };
+});
 
 vi.mock('../helper/loggerHelpers', () => ({
+    appError: appErrorMock,
     appWarning: appWarningMock,
 }));
 
@@ -59,6 +65,33 @@ describe('unlockingHelpers', () => {
         expect(secondCallback).toHaveBeenCalledTimes(1);
     });
 
+    test('logs a loud error when giving up waiting after 600 attempts', async () => {
+        vi.useFakeTimers();
+        const { unlocking } = await import('./unlockingHelpers');
+
+        let releaseFirst: (() => void) | undefined;
+        const firstPromise = unlocking('stuck', async () => {
+            await new Promise<void>((resolve) => {
+                releaseFirst = resolve;
+            });
+            return 'first';
+        });
+        await Promise.resolve();
+
+        const secondPromise = unlocking('stuck', async () => 'second');
+        await vi.advanceTimersByTimeAsync(60_000);
+
+        expect(appErrorMock).toHaveBeenCalledWith(
+            expect.stringContaining(
+                'Unlocking key "stuck" is still locked after 600 attempts',
+            ),
+        );
+        await expect(secondPromise).resolves.toBe('second');
+
+        releaseFirst?.();
+        await expect(firstPromise).resolves.toBe('first');
+    });
+
     test('releases locks when a callback rejects', async () => {
         const { unlocking } = await import('./unlockingHelpers');
         const error = new Error('boom');
@@ -93,6 +126,38 @@ describe('unlockingHelpers', () => {
         await scheduledCallbacks[0]();
         expect(callback).toHaveBeenCalledTimes(1);
         expect(cacheManager.set).toHaveBeenCalledWith('verse', 'fresh');
+    });
+
+    test('keys deferred cache refreshes per cache key and cleans up after firing', async () => {
+        const { unlockingCacher } = await import('./unlockingHelpers');
+        const callbackA = vi.fn(async () => 'fresh-a');
+        const callbackB = vi.fn(async () => 'fresh-b');
+        const cacheManager = {
+            get: vi.fn(async (key: string) => `cached-${key}`),
+            set: vi.fn(async () => undefined),
+        } as any;
+
+        await unlockingCacher('a', callbackA, cacheManager, true);
+        expect(genTimeoutAttemptMock).toHaveBeenCalledTimes(1);
+
+        // a second hit on the same key reuses the same debounce instance
+        await unlockingCacher('a', callbackA, cacheManager, true);
+        expect(genTimeoutAttemptMock).toHaveBeenCalledTimes(1);
+
+        // a different key gets its own debounce instance
+        await unlockingCacher('b', callbackB, cacheManager, true);
+        expect(genTimeoutAttemptMock).toHaveBeenCalledTimes(2);
+
+        for (const scheduledCallback of scheduledCallbacks.splice(0)) {
+            await scheduledCallback();
+        }
+        expect(cacheManager.set).toHaveBeenCalledWith('a', 'fresh-a');
+        expect(cacheManager.set).toHaveBeenCalledWith('b', 'fresh-b');
+
+        // after firing, the per-key entry is dropped and a new hit re-creates
+        // its debounce instance
+        await unlockingCacher('a', callbackA, cacheManager, true);
+        expect(genTimeoutAttemptMock).toHaveBeenCalledTimes(3);
     });
 
     test('computes and stores uncached values, including falsey cache entries', async () => {

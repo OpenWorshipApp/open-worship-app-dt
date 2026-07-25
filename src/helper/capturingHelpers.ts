@@ -7,6 +7,23 @@ import CacheManager from '../others/CacheManager';
 import { unlocking } from '../server/unlockingHelpers';
 
 const webScreenshotCacheManager = new CacheManager<string>(60 /* 1 minute */);
+// Full-resolution base64 screenshots are several MB each; keep only the few
+// most recent ones so the cache stays bounded on low-spec machines.
+const MAX_CACHED_SCREENSHOTS = 3;
+const cachedScreenshotKeys: string[] = [];
+async function capCachedScreenshots(key: string) {
+    const keyIndex = cachedScreenshotKeys.indexOf(key);
+    if (keyIndex !== -1) {
+        cachedScreenshotKeys.splice(keyIndex, 1);
+    }
+    cachedScreenshotKeys.push(key);
+    while (cachedScreenshotKeys.length > MAX_CACHED_SCREENSHOTS) {
+        const oldestKey = cachedScreenshotKeys.shift();
+        if (oldestKey !== undefined) {
+            await webScreenshotCacheManager.delete(oldestKey);
+        }
+    }
+}
 export async function captureWebScreenShot(
     url: string,
     {
@@ -35,6 +52,7 @@ export async function captureWebScreenShot(
             },
         );
         await webScreenshotCacheManager.set(key, imageData);
+        await capCachedScreenshots(key);
         return imageData;
     });
 }

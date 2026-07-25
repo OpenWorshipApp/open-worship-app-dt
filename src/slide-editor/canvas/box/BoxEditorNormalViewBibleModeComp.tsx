@@ -2,7 +2,7 @@ import { use, type CSSProperties } from 'react';
 
 import type { CanvasItemBiblePropsType } from '../CanvasItemBibleItem';
 import CanvasItemBibleItem from '../CanvasItemBibleItem';
-import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
+import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { handleError } from '../../../helper/errorHelpers';
 import { useCanvasItemPropsContext } from '../CanvasItem';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
@@ -81,7 +81,7 @@ export function BoxEditorNormalBibleRender() {
         CanvasItemBibleItem.validate(props);
     } catch (error) {
         handleError(error);
-        return <BENViewErrorRender />;
+        return <BoxEditorNormalViewErrorRenderComp />;
     }
     const canvasController = use(CanvasControllerContext);
     return (

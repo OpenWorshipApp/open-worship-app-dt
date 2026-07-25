@@ -17,7 +17,7 @@ export function genColorFromScreenId(screenId: number) {
     return color;
 }
 
-export default function ShowingScreenIcon({
+export default function ShowingScreenIconComp({
     screenId,
 }: Readonly<{
     screenId: number;
@@ -25,12 +25,37 @@ export default function ShowingScreenIcon({
     const color = genColorFromScreenId(screenId);
     return (
         <span
-            className="d-flex px-1"
+            className="d-flex align-items-center px-1"
             title={`Screen: ${screenId}`}
             data-screen-id={screenId}
         >
-            <i className="bi bi-collection" style={{ color }} />
-            {screenId}
+            <span
+                style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: 1,
+                }}
+            >
+                <i
+                    className="bi bi-collection"
+                    style={{ color, fontSize: '1.8em', opacity: 0.3 }}
+                />
+                <span
+                    style={{
+                        position: 'absolute',
+                        top: '58%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        color,
+                        fontSize: '1.05em',
+                        lineHeight: 1,
+                    }}
+                >
+                    {screenId}
+                </span>
+            </span>
         </span>
     );
 }

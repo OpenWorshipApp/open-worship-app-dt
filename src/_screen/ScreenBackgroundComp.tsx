@@ -74,7 +74,7 @@ export function genHtmlBackground(
         const screenManagerBase = getScreenManagerBase(screenId);
         const htmlStr = renderToStaticMarkup(
             <ScreenManagerBaseContext value={screenManagerBase}>
-                <RenderBackground backgroundSrc={backgroundSrc} />
+                <RenderBackgroundComp backgroundSrc={backgroundSrc} />
             </ScreenManagerBaseContext>,
         );
         div.innerHTML = htmlStr;
@@ -88,7 +88,7 @@ export function genHtmlBackground(
     return { newDiv: child, promise };
 }
 
-export function RenderBackground({
+export function RenderBackgroundComp({
     backgroundSrc,
 }: Readonly<{
     backgroundSrc: BackgroundSrcType;

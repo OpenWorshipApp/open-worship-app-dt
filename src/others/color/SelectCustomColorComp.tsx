@@ -14,7 +14,7 @@ import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { removeOpacityFromHexColor } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 
-export default function SelectCustomColor({
+export default function SelectCustomColorComp({
     color,
     onColorSelected,
     isNoImmediate = false,

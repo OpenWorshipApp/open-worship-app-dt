@@ -45,7 +45,7 @@ export function useExpandToggle(
     return { isExpanded, toggleExpanded, headerProps };
 }
 
-export function ExpandChevron({
+export function ExpandChevronComp({
     isExpanded,
     className,
     style,

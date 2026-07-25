@@ -5,7 +5,7 @@ import { SelectedBibleKeyContext } from '../bible-list/bibleHelpers';
 import { BibleNotAvailableComp } from './RenderLookupSuggestionComp';
 import BibleLookupBodyPreviewerComp from './BibleLookupBodyPreviewerComp';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { MultiContextRender } from '../helper/MultiContextRender';
+import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import RenderBibleLookupHeaderComp from './RenderBibleLookupHeaderComp';
 import RenderExtraButtonsRightComp from './RenderExtraButtonsRightComp';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
@@ -129,7 +129,7 @@ export default function RenderBibleLookupComp() {
         },
     ];
     return (
-        <MultiContextRender
+        <MultiContextRenderComp
             contexts={[
                 {
                     context: SelectedBibleKeyContext,
@@ -174,6 +174,6 @@ export default function RenderBibleLookupComp() {
                     )}
                 </div>
             </div>
-        </MultiContextRender>
+        </MultiContextRenderComp>
     );
 }

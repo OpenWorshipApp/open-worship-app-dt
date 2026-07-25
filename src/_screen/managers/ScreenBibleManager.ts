@@ -10,7 +10,7 @@ import {
     bringDomToTopView,
     checkIsVerticalPartialInvisible,
     cloneJson,
-    isValidJson,
+    parseJsonSafely,
 } from '../../helper/helpers';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import bibleScreenHelper from '../bibleScreenHelpers';
@@ -315,8 +315,8 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         const str =
             getSetting(`${SCREEN_BIBLE_SETTING_PREFIX}-style-text`) ?? '';
         try {
-            if (isValidJson(str, true)) {
-                const style = JSON.parse(str);
+            const style = parseJsonSafely(str, true);
+            if (style !== null) {
                 if (typeof style !== 'object') {
                     loggerHelpers.appError(style);
                     throw new Error('Invalid style data');

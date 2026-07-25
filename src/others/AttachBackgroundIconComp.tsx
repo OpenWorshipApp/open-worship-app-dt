@@ -54,7 +54,7 @@ function RendItemComp({
     );
 }
 
-export default function AttachBackgroundIconComponent({
+export default function AttachBackgroundIconComp({
     filePath,
     id,
 }: Readonly<{

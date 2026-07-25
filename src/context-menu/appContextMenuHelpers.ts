@@ -340,6 +340,9 @@ export function useAppContextMenuData() {
             checkKeyUpDown(event, data);
         },
         [data],
+        // this host stays mounted across open/close and owns the layer, so
+        // its keys are registered under the menu layer explicitly
+        'context-menu',
     );
     return data;
 }

@@ -6,11 +6,7 @@ import {
     BackgroundWebUrlSource,
     isBackgroundWebUrlItemData,
 } from '../background/backgroundWebUrlHelpers';
-import {
-    fsCheckFileExist,
-    fsDeleteFile,
-    fsWriteFile,
-} from '../server/fileHelpers';
+import { fsCheckFileExist, fsDeleteFile } from '../server/fileHelpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
 import CacheManager from './CacheManager';
@@ -98,8 +94,11 @@ export default class AttachBackgroundManager {
         const metaDataFilePath =
             AttachBackgroundManager.genMetaDataFilePath(filePath);
         const fileSource = FileSource.getInstance(metaDataFilePath);
+        // Never create the meta file on the read path — merely listing files
+        // must not write `.bg.json` next to every item. `saveData` creates it
+        // on actual attach.
         if (!(await fsCheckFileExist(metaDataFilePath))) {
-            await fsWriteFile(metaDataFilePath, JSON.stringify({}));
+            return {};
         }
         const data = await fileSource.readFileJsonData();
         if (data === null) {

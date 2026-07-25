@@ -24,7 +24,7 @@ import type LookupBibleItemController from '../bible-reader/LookupBibleItemContr
 import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
 import { useBibleItemsViewControllerContext } from '../bible-reader/BibleItemsViewController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
-import AttachBackgroundIconComponent from '../others/AttachBackgroundIconComponent';
+import AttachBackgroundIconComp from '../others/AttachBackgroundIconComp';
 import {
     improveBibleItemTitleOnHover,
     openBibleItemContextMenu,
@@ -268,7 +268,7 @@ export default function BibleItemRenderComp({
                     )}
                 </div>
                 <div className="float-end">
-                    <AttachBackgroundIconComponent
+                    <AttachBackgroundIconComp
                         filePath={filePath}
                         id={bibleItem.id}
                     />

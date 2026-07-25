@@ -64,6 +64,7 @@ import {
     isColor,
     isValidJson,
     isVisible,
+    parseJsonSafely,
     removePX,
     stopDraggingState,
     toMaxId,
@@ -213,14 +214,20 @@ describe('helpers', () => {
     });
 
     test('validates JSON strings and reports invalid values', () => {
-        expect(isValidJson('{"ok":true}')).toEqual({ ok: true });
+        expect(parseJsonSafely('{"ok":true}')).toEqual({ ok: true });
+        expect(parseJsonSafely('', false)).toBeNull();
+        expect(isValidJson('{"ok":true}')).toBe(true);
         expect(isValidJson('', false)).toBe(false);
         expect(handleErrorMock).not.toHaveBeenCalled();
         expect(appTraceMock).not.toHaveBeenCalled();
 
+        expect(parseJsonSafely('bad-json', true)).toBeNull();
         expect(isValidJson('bad-json', true)).toBe(false);
-        expect(handleErrorMock).toHaveBeenCalledTimes(1);
+        expect(handleErrorMock).toHaveBeenCalledTimes(2);
         expect(appTraceMock).not.toHaveBeenCalled();
+
+        expect(parseJsonSafely('bad-json')).toBeNull();
+        expect(appTraceMock).toHaveBeenCalledWith('Invalid Json:', 'bad-json');
     });
 
     test('checks CSS colors and element visibility', () => {

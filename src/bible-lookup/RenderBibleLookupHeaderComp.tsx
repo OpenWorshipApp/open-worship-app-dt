@@ -6,7 +6,7 @@ import RenderExtraButtonsRightComp, {
 } from './RenderExtraButtonsRightComp';
 import BibleLookupInputHistoryComp from './BibleLookupInputHistoryComp';
 import appProvider from '../server/appProvider';
-import { ModalCloseButton } from '../app-modal/ModalComp';
+import { ModalCloseButtonComp } from '../app-modal/ModalComp';
 import { useToggleBibleLookupPopupContext } from '../others/commonButtons';
 import { useLookupBibleItemControllerContext } from '../bible-reader/LookupBibleItemController';
 import { AIConfigComp } from '../bible-reader/AIConfigComp';
@@ -93,7 +93,7 @@ export default function RenderBibleLookupHeaderComp({
                         </div>
                     </div>
                     {hideBibleLookupPopup === null ? null : (
-                        <ModalCloseButton
+                        <ModalCloseButtonComp
                             close={() => {
                                 hideBibleLookupPopup();
                             }}

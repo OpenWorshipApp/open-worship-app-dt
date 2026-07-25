@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { createContext } from 'react';
+import { act, createContext } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -73,6 +73,18 @@ const screenManagerMock: any = {
         isShowing: true,
         clear: vi.fn(),
     },
+    screenDrawManager: {
+        render: vi.fn(),
+        div: null,
+        isShowing: false,
+        clear: vi.fn(),
+    },
+    screenFocusManager: {
+        render: vi.fn(),
+        div: null,
+        isShowing: false,
+        clear: vi.fn(),
+    },
     backgroundEffectManager: effectManagerStub,
     varyAppDocumentEffectManager: effectManagerStub,
     foregroundEffectManager: effectManagerStub,
@@ -88,7 +100,11 @@ vi.mock('../server/appProvider', () => ({
 vi.mock('../helper/appHooks', async () => {
     const React = (await vi.importActual('react')) as any;
     return {
-        useAppEffect: vi.fn(),
+        // real effect semantics — ScreenAppComp sends its init message from an
+        // effect, and renderToStaticMarkup call sites never reach effects
+        useAppEffect: (method: any, deps: any) => {
+            React.useEffect(method, deps);
+        },
         useAppEffectAsync: vi.fn(),
         useAppCurrentRef: (target: any) => {
             const ref = React.useRef(target);
@@ -413,6 +429,20 @@ describe('screen component smoke tests', () => {
         const appHtml = renderToStaticMarkup(<ScreenAppComp />);
         expect(appHtml).toContain('id="background"');
         expect(appHtml).toContain('id="foreground"');
+        // static render must NOT send init (it happens in a mount effect)
+        expect(sendScreenMessageMock).not.toHaveBeenCalled();
+
+        // the module-level react-dom/client mock stubs createRoot — pull the
+        // real one so the mount effect actually runs
+        const { createRoot } = (await vi.importActual(
+            'react-dom/client',
+        )) as typeof import('react-dom/client');
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        const root = createRoot(container);
+        await act(async () => {
+            root.render(<ScreenAppComp />);
+        });
         expect(sendScreenMessageMock).toHaveBeenCalledWith(
             {
                 screenId: 1,
@@ -421,6 +451,10 @@ describe('screen component smoke tests', () => {
             },
             true,
         );
+        await act(async () => {
+            root.unmount();
+        });
+        container.remove();
     });
 
     test('renders background video sizing and playback attributes', async () => {
@@ -463,11 +497,11 @@ describe('screen component smoke tests', () => {
             await import('./preview/MiniScreenClearControlComp');
         const { default: ShowHideScreen } =
             await import('./preview/ShowHideScreen');
-        const { default: DisplayControl } =
-            await import('./preview/DisplayControl');
+        const { default: DisplayControlComp } =
+            await import('./preview/DisplayControlComp');
         const { default: MiniScreenAudioHandlersComp } =
             await import('./preview/MiniScreenAudioHandlersComp');
-        const { default: ShowingScreenIcon } =
+        const { default: ShowingScreenIconComp } =
             await import('./preview/ShowingScreenIcon');
         const previewHelpers = await import('./preview/screenPreviewerHelpers');
 
@@ -508,7 +542,9 @@ describe('screen component smoke tests', () => {
         expect(renderToStaticMarkup(<ShowHideScreen />)).toContain(
             'Toggle showing screen',
         );
-        expect(renderToStaticMarkup(<DisplayControl />)).toContain('Projector');
+        expect(renderToStaticMarkup(<DisplayControlComp />)).toContain(
+            'Projector',
+        );
         expect(
             renderToStaticMarkup(
                 <MiniScreenAudioHandlersComp
@@ -518,7 +554,7 @@ describe('screen component smoke tests', () => {
             ),
         ).toContain('audio.mp3');
         expect(
-            renderToStaticMarkup(<ShowingScreenIcon screenId={1} />),
+            renderToStaticMarkup(<ShowingScreenIconComp screenId={1} />),
         ).toContain('Screen: 1');
 
         expect(genStyleRendering(effectManagerStub as any)).toHaveLength(2);

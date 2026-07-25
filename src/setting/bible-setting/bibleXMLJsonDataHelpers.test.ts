@@ -44,15 +44,13 @@ const mocks = vi.hoisted(() => {
                 key: string,
                 callback: () => Promise<unknown>,
                 cache: CacheManagerMock<unknown>,
-                shouldCache: boolean,
             ) => {
-                if (shouldCache && (await cache.has(key))) {
-                    return await cache.get(key);
+                const cachedValue = await cache.get(key);
+                if (cachedValue) {
+                    return cachedValue;
                 }
                 const value = await callback();
-                if (shouldCache && value !== null) {
-                    await cache.set(key, value);
-                }
+                await cache.set(key, value);
                 return value;
             },
         ),
@@ -519,5 +517,64 @@ describe('bibleXMLJsonDataHelpers', () => {
         expect(mocks.handleErrorMock).toHaveBeenCalledWith(
             expect.stringContaining('Unable to find file path for: "MISSING"'),
         );
+    });
+
+    test('extracts a bible key from only the head of the file', async () => {
+        const { getBibleKeyFromFile } = await loadModule();
+        const appProvider = (await import('../../server/appProvider')).default;
+
+        const largeVerseText = 'In the beginning '.repeat(2000);
+        appProvider.fileUtils.writeFileSync(
+            '/bibles/head.xml',
+            '<?xml version="1.0"?><bible key="HEAD" title="Head Bible">' +
+                '<book key="GEN"><chapter number="1">' +
+                `<verse number="1">${largeVerseText}</verse>` +
+                '</chapter></book></bible>',
+        );
+
+        expect(await getBibleKeyFromFile('/bibles/head.xml')).toBe('HEAD');
+        expect(mocks.readFileDataMock).not.toHaveBeenCalled();
+    });
+
+    test('falls back to a full read when the root tag exceeds the head chunk', async () => {
+        const { getBibleKeyFromFile } = await loadModule();
+        const appProvider = (await import('../../server/appProvider')).default;
+
+        const hugeAttributeValue = 'x'.repeat(5000);
+        const xmlText =
+            `<bible title="${hugeAttributeValue}" key="TAIL">` +
+            '<book key="GEN"><chapter number="1">' +
+            '<verse number="1">One</verse></chapter></book></bible>';
+        appProvider.fileUtils.writeFileSync('/bibles/tail.xml', xmlText);
+        mocks.fileTexts.set('/bibles/tail.xml', xmlText);
+
+        expect(await getBibleKeyFromFile('/bibles/tail.xml')).toBe('TAIL');
+        expect(mocks.readFileDataMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('parses the XML text only once when converting to JSON', async () => {
+        const { xmlTextToJson } = await loadModule();
+        const { appXMLParser } = await import('../../helper/xmlHelpers');
+        const parseSpy = vi.spyOn(appXMLParser, 'parseFromString');
+
+        try {
+            const result = await xmlTextToJson(
+                '<bible key="KJV" locale="en-US">' +
+                    '<book key="GEN"><chapter number="1">' +
+                    '<verse number="1">In the beginning</verse>' +
+                    '</chapter></book>' +
+                    '<new-lines><item>GEN 1:1</item></new-lines>' +
+                    '</bible>',
+            );
+
+            expect(result?.info.key).toBe('KJV');
+            expect(result?.books).toEqual({
+                GEN: { 1: { 1: 'In the beginning' } },
+            });
+            expect(result?.newLines).toEqual(['GEN 1:1']);
+            expect(parseSpy).toHaveBeenCalledTimes(1);
+        } finally {
+            parseSpy.mockRestore();
+        }
     });
 });

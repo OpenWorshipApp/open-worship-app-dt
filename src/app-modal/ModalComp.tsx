@@ -18,7 +18,9 @@ const quittingEventMap: EventMapperType = {
     key: 'q',
 };
 
-export function ModalCloseButton({ close }: Readonly<{ close: () => void }>) {
+export function ModalCloseButtonComp({
+    close,
+}: Readonly<{ close: () => void }>) {
     useKeyboardRegistering([quittingEventMap], close, []);
     return (
         <div

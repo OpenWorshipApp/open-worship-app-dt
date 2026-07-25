@@ -7,6 +7,7 @@ const saveScreenManagersSettingMock = vi.fn(async () => {});
 const deleteScreenManagerBaseCacheMock = vi.fn();
 const listenForDataMock = vi.fn();
 const sendDataSyncMock = vi.fn(() => true);
+const sendDataMock = vi.fn();
 
 const appProviderMock = {
     isPageScreen: false,
@@ -16,6 +17,7 @@ const appProviderMock = {
         },
         listenForData: listenForDataMock,
         sendDataSync: sendDataSyncMock,
+        sendData: sendDataMock,
     },
 };
 
@@ -208,6 +210,12 @@ vi.mock('../../helper/loggerHelpers', () => ({
 
 vi.mock('./ScreenManagerBase', () => ({
     default: MockScreenManagerBase,
+    ScreenManagerBaseGhost: class extends MockScreenManagerBase {
+        constructor(screenId: number) {
+            super(screenId);
+            this.isDeleted = true;
+        }
+    },
 }));
 
 vi.mock('./ScreenEffectManager', () => ({
@@ -429,15 +437,12 @@ describe('ScreenManager runtime orchestration', () => {
             } as any,
             true,
         );
-        expect(sendDataSyncMock).toHaveBeenCalledWith(
-            'screen-message-channel',
-            {
-                screenId: 3,
-                type: 'foreground',
-                data: { marqueeBottomData: { text: 'hello' } },
-                isScreen: false,
-            },
-        );
+        expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
+            screenId: 3,
+            type: 'foreground',
+            data: { marqueeBottomData: { text: 'hello' } },
+            isScreen: false,
+        });
         expect(syncSpy).toHaveBeenCalled();
 
         ScreenManager.initReceiveScreenMessage();
@@ -606,7 +611,7 @@ describe('ScreenManager runtime orchestration', () => {
             } as any,
             false,
         );
-        expect(sendDataSyncMock).not.toHaveBeenCalled();
+        expect(sendDataMock).not.toHaveBeenCalled();
 
         screenManager.sendScreenMessage(
             {
@@ -616,15 +621,12 @@ describe('ScreenManager runtime orchestration', () => {
             } as any,
             true,
         );
-        expect(sendDataSyncMock).toHaveBeenCalledWith(
-            'screen-message-channel',
-            {
-                screenId: 7,
-                type: 'foreground',
-                data: { quickTextData: { text: 'Forced' } },
-                isScreen: true,
-            },
-        );
+        expect(sendDataMock).toHaveBeenCalledWith('screen-message-channel', {
+            screenId: 7,
+            type: 'foreground',
+            data: { quickTextData: { text: 'Forced' } },
+            isScreen: true,
+        });
     });
 
     test('persists setter state, forwards full syncs, clears sub-managers, and respects sync-group guards', async () => {

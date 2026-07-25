@@ -1,11 +1,10 @@
-import { handleError } from '../helper/errorHelpers';
-import appProvider from '../server/appProvider';
-
 export const DB_NAME = 'bible';
 
 interface DatabaseControllerInterface {
     db: IDBDatabase;
     isDbOpened: boolean;
+    storeName: string;
+    closeDb: () => void;
     createObjectStore: () => void;
     initCallback: <T>(
         target: any,
@@ -65,11 +64,27 @@ class InitDBOpeningQueue {
         if (this.request !== null) {
             return;
         }
-        const request = globalThis.indexedDB.open(
-            DB_NAME,
-            appProvider.appInfo.versionNumber,
-        );
+        this.openDb(dbController);
+    }
+
+    // The schema version is intentionally decoupled from the app version:
+    // opening without a version keeps whatever exists (no downgrade error, no
+    // wipe on app update); the version is bumped only when a store is missing.
+    private openDb(
+        dbController: DatabaseControllerInterface,
+        version?: number,
+    ) {
+        const request =
+            version === undefined
+                ? globalThis.indexedDB.open(DB_NAME)
+                : globalThis.indexedDB.open(DB_NAME, version);
         this.request = request;
+        request.onblocked = () => {
+            this.request = null;
+            this.reject(
+                new Error('Database opening blocked by another connection'),
+            );
+        };
         request.onupgradeneeded = (event: any) => {
             dbController.db = event.target.result;
             dbController.createObjectStore();
@@ -77,7 +92,18 @@ class InitDBOpeningQueue {
         dbController.initCallback<Event>(
             request,
             (event: any) => {
-                dbController.db = event.target.result;
+                const db: IDBDatabase = event.target.result;
+                if (!db.objectStoreNames.contains(dbController.storeName)) {
+                    // existing db predating this store — bump to create it
+                    db.close();
+                    this.request = null;
+                    this.openDb(dbController, db.version + 1);
+                    return;
+                }
+                db.onversionchange = () => {
+                    dbController.closeDb();
+                };
+                dbController.db = db;
                 this.request = null;
                 this.resolve();
             },
@@ -148,10 +174,10 @@ export abstract class IndexedDbController implements DatabaseControllerInterface
     }
 
     createObjectStore() {
-        try {
-            this.db.deleteObjectStore(this.storeName);
-        } catch (error) {
-            handleError(error);
+        // Never delete-recreate — the store holds user data (decrypted bible
+        // cache) that must survive app updates.
+        if (this.db.objectStoreNames.contains(this.storeName)) {
+            return;
         }
         const store = this.db.createObjectStore(this.storeName, {
             keyPath: 'id',
@@ -230,10 +256,15 @@ export abstract class IndexedDbController implements DatabaseControllerInterface
         return request.result as string[];
     }
 
-    updateItem(id: string, data: any) {
-        return this.asyncOperation('readwrite', (store) => {
+    async updateItem(id: string, data: any) {
+        const oldItem = await this.getItem(id);
+        return await this.asyncOperation('readwrite', (store) => {
+            // preserve secondaryId/createdAt — a bare put would drop the
+            // record out of the secondaryId index
             return store.put({
                 id,
+                secondaryId: oldItem?.secondaryId ?? null,
+                createdAt: oldItem?.createdAt ?? new Date(),
                 data,
                 updatedAt: new Date(),
             });

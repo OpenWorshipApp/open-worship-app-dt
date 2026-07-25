@@ -236,11 +236,17 @@ describe('AttachBackgroundManager', () => {
         ).toHaveBeenCalledTimes(1);
     });
 
-    test('reads metadata, initializes missing files, and deserializes entries', async () => {
+    test('reads metadata without creating missing files, and deserializes entries', async () => {
         const manager = new AttachBackgroundManager();
         const filePath = '/docs/read.txt';
         const metaPath = AttachBackgroundManager.genMetaDataFilePath(filePath);
-        fsCheckFileExistMock.mockResolvedValue(false);
+
+        // missing meta file: return empty data, never write on the read path
+        fsCheckFileExistMock.mockResolvedValueOnce(false);
+        expect(await manager.readData(filePath)).toEqual({});
+        expect(fsWriteFileMock).not.toHaveBeenCalled();
+
+        fsCheckFileExistMock.mockResolvedValue(true);
         jsonDataMap[metaPath] = {
             color: {
                 type: DragTypeEnum.BACKGROUND_COLOR,
@@ -272,10 +278,7 @@ describe('AttachBackgroundManager', () => {
 
         const data = await manager.readData(filePath);
 
-        expect(fsWriteFileMock).toHaveBeenCalledWith(
-            metaPath,
-            JSON.stringify({}),
-        );
+        expect(fsWriteFileMock).not.toHaveBeenCalled();
         expect(data.color).toEqual({
             type: DragTypeEnum.BACKGROUND_COLOR,
             item: '#000000',

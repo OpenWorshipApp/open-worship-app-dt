@@ -10,9 +10,16 @@ import {
 
 export const themeOptions = ['light', 'dark', 'system'] as const;
 export type ThemeOptionType = (typeof themeOptions)[number];
+// cached to avoid a blocking sync IPC round-trip per caller (per render)
+let themeSourceSettingCache: ThemeOptionType | null = null;
 export function getThemeSourceSetting(): ThemeOptionType {
-    const themeSource =
-        appProvider.messageUtils.sendDataSync('main:app:get-theme');
+    let themeSource = themeSourceSettingCache;
+    if (themeSource === null) {
+        themeSource = appProvider.messageUtils.sendDataSync(
+            'main:app:get-theme',
+        ) as ThemeOptionType;
+        themeSourceSettingCache = themeSource;
+    }
     return themeSource;
 }
 
@@ -48,10 +55,11 @@ function applyDarkModeToApp() {
     EventHandler.addPropEvent(THEME_CHANGE_EVENT, themeSource);
 }
 export function useThemeSource() {
-    const [themeSource, setThemeSource] = useState<ThemeOptionType>(
+    const [themeSource, setThemeSource] = useState<ThemeOptionType>(() =>
         getThemeSourceSetting(),
     );
     const setThemeSource1 = (newThemeSource: ThemeOptionType) => {
+        themeSourceSettingCache = newThemeSource;
         setThemeSource(newThemeSource);
         EventHandler.addPropEvent(THEME_CHANGE_EVENT, newThemeSource);
         appProvider.messageUtils.sendData('main:app:set-theme', newThemeSource);

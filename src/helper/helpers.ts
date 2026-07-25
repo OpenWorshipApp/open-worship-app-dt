@@ -164,19 +164,26 @@ export function toMaxId(ids: number[]) {
     return Math.max(...ids);
 }
 
-export function isValidJson(json: any, isSilent: boolean = false) {
+export function parseJsonSafely<T = any>(
+    json: any,
+    isSilent: boolean = false,
+): T | null {
     if (!json) {
-        return false;
+        return null;
     }
     try {
         return JSON.parse(json);
     } catch (error) {
         handleError(error);
-        if (!isSilent && json === '') {
+        if (!isSilent) {
             appTrace('Invalid Json:', json);
         }
-        return false;
+        return null;
     }
+}
+
+export function isValidJson(json: any, isSilent: boolean = false) {
+    return parseJsonSafely(json, isSilent) !== null;
 }
 
 export function isColor(strColor: string) {

@@ -40,16 +40,33 @@ export type EditorStoreType = {
         x: number;
         y: number;
     };
+    isDisposeScheduled: boolean;
 };
 
-const modelsMap: Record<string, editor.ITextModel> = {};
+// Keep a few recent models so undo stacks survive editor close/reopen, but
+// bound the cache — models hold full text + undo history.
+const MAX_CACHED_MODELS = 5;
+const modelsMap = new Map<string, editor.ITextModel>();
 function getModel(value: string, uri: Uri, language: string) {
     const key = uri.toString();
-    if (modelsMap[key] !== undefined) {
-        return modelsMap[key];
+    const cachedModel = modelsMap.get(key);
+    if (cachedModel !== undefined) {
+        modelsMap.delete(key);
+        modelsMap.set(key, cachedModel);
+        return cachedModel;
     }
     const model = editor.createModel(value, language, uri);
-    modelsMap[key] = model;
+    modelsMap.set(key, model);
+    for (const [oldKey, oldModel] of modelsMap) {
+        if (modelsMap.size <= MAX_CACHED_MODELS) {
+            break;
+        }
+        if (oldModel.isAttachedToEditor()) {
+            continue;
+        }
+        modelsMap.delete(oldKey);
+        oldModel.dispose();
+    }
     return model;
 }
 let workerInitialized = false;
@@ -118,6 +135,7 @@ function createEditor({
         systemContent: '',
         editorInstance,
         div,
+        isDisposeScheduled: false,
         toggleIsWrapText: () => {},
         lastMouseClickPos: {
             x: 0,
@@ -213,19 +231,6 @@ export function useInitMonacoEditor({
             language,
         });
         const { editorInstance } = newEditorStore;
-        editor.onDidChangeMarkers((uriList) => {
-            const currentUri = editorInstance.getModel()?.uri;
-            if (currentUri === undefined) {
-                return;
-            }
-            if (
-                uriList.some(
-                    (uri) => uri.toString() === currentUri?.toString(),
-                ) === false
-            ) {
-                return;
-            }
-        });
         if (onContentChange !== undefined) {
             editorInstance.onDidChangeModelContent(async () => {
                 const editorContent = editorInstance.getValue();
@@ -235,6 +240,21 @@ export function useInitMonacoEditor({
         return newEditorStore;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    useAppEffect(() => {
+        editorStore.isDisposeScheduled = false;
+        return () => {
+            // Deferred so a StrictMode remount cancels the dispose; on a real
+            // unmount the editor (workers, listeners, view) is released.
+            editorStore.isDisposeScheduled = true;
+            setTimeout(() => {
+                if (!editorStore.isDisposeScheduled) {
+                    return;
+                }
+                editorStore.isDisposeScheduled = false;
+                editorStore.editorInstance.dispose();
+            }, 0);
+        };
+    }, [editorStore]);
     useAppEffect(() => {
         editorStore.toggleIsWrapText = () => {
             setIsWrapText(!isWrapText);

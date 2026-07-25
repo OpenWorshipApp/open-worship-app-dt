@@ -4,6 +4,8 @@ import { app } from 'electron';
 
 import { isDev } from './electronHelpers';
 
+const EXECUTE_TIMEOUT_MILLISECONDS = 1000 * 60 * 10;
+
 export function execute<T>(scriptFullName: string, data: any) {
     return new Promise<T>((resolve, reject) => {
         const scriptPath = fsResolve(
@@ -13,18 +15,36 @@ export function execute<T>(scriptFullName: string, data: any) {
             scriptFullName,
         );
         const forkedProcess = fork(scriptPath);
-        forkedProcess.on('message', (data: any) => {
+        // Settle the promise exactly once, whatever combination of message,
+        // error, exit and timeout events fires.
+        let isSettled = false;
+        const settle = (callback: () => void) => {
+            if (isSettled) {
+                return;
+            }
+            isSettled = true;
+            clearTimeout(timeout);
             forkedProcess.kill();
-            resolve(data);
+            callback();
+        };
+        const timeout = setTimeout(() => {
+            settle(() => {
+                reject(new Error(`Process timed out: ${scriptFullName}`));
+            });
+        }, EXECUTE_TIMEOUT_MILLISECONDS);
+        forkedProcess.on('message', (message: any) => {
+            settle(() => resolve(message));
         });
         forkedProcess.on('error', (error) => {
-            forkedProcess.kill();
-            reject(error);
+            settle(() => reject(error));
         });
         forkedProcess.on('exit', (code) => {
-            if (code !== 0) {
+            // A child that exits without ever sending a message — even with
+            // code 0 — must reject, or the promise (and any `unlocking` lock
+            // held on it) would stay pending forever.
+            settle(() => {
                 reject(new Error(`Process exited with code ${code}`));
-            }
+            });
         });
         forkedProcess.send(data);
     });

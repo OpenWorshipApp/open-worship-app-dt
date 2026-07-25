@@ -1,6 +1,7 @@
 import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
 import { appLog } from '../../helper/loggerHelpers';
+import { handleError } from '../../helper/errorHelpers';
 import ScreenForegroundManager from './ScreenForegroundManager';
 import ScreenBackgroundManager from './ScreenBackgroundManager';
 import ScreenBibleManager from './ScreenBibleManager';
@@ -12,7 +13,7 @@ import {
     getScreenManagerBase,
     saveScreenManagersSetting,
 } from './screenManagerBaseHelpers';
-import ScreenManagerBase from './ScreenManagerBase';
+import ScreenManagerBase, { ScreenManagerBaseGhost } from './ScreenManagerBase';
 import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
 import type { ScreenMessageType } from '../screenTypeHelpers';
@@ -166,9 +167,11 @@ export default class ScreenManager extends ScreenManagerBase {
     }
     set isLocked(isLocked: boolean) {
         super.isLocked = isLocked;
-        saveScreenManagersSetting().then(() => {
-            this.fireInstanceEvent();
-        });
+        saveScreenManagersSetting()
+            .catch(handleError)
+            .finally(() => {
+                this.fireInstanceEvent();
+            });
     }
 
     async setIsLockedWithSyncGroup(isLocked: boolean) {
@@ -189,9 +192,11 @@ export default class ScreenManager extends ScreenManagerBase {
     }
     set stageNumber(stageNumber: number) {
         super.stageNumber = stageNumber;
-        saveScreenManagersSetting().then(() => {
-            this.fireInstanceEvent();
-        });
+        saveScreenManagersSetting()
+            .catch(handleError)
+            .finally(() => {
+                this.fireInstanceEvent();
+            });
     }
 
     get isSelected() {
@@ -199,9 +204,11 @@ export default class ScreenManager extends ScreenManagerBase {
     }
     set isSelected(isSelected: boolean) {
         super.isSelected = isSelected;
-        saveScreenManagersSetting().then(() => {
-            this.fireInstanceEvent();
-        });
+        saveScreenManagersSetting()
+            .catch(handleError)
+            .finally(() => {
+                this.fireInstanceEvent();
+            });
     }
 
     async setColorNote(color: string | null) {
@@ -437,18 +444,17 @@ export default class ScreenManager extends ScreenManagerBase {
         }
         const { messageUtils } = appProvider;
         const channel = messageUtils.messageChannels.screenMessage;
-        const isSent = messageUtils.sendDataSync(channel, {
+        // async send — sendDataSync blocks the renderer on a main-process
+        // round-trip for every message (paid every 60ms mid draw-stroke)
+        messageUtils.sendData(channel, {
             ...message,
             isScreen: appProvider.isPageScreen,
         });
-        console.assert(isSent, JSON.stringify({ channel, message }));
         ScreenManager.syncScreenManagerGroup(message);
     }
 
-    createScreenManagerBaseGhost(screenId: number) {
-        const ghostScreenManager = new ScreenManager(screenId);
-        ghostScreenManager.isDeleted = true;
-        return ghostScreenManager;
+    createScreenManagerBaseGhost(screenId: number): ScreenManagerBase {
+        return new ScreenManagerBaseGhost(screenId);
     }
 
     getScreenManagerBaseForce(screenId: number) {

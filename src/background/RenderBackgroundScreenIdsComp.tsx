@@ -1,6 +1,6 @@
 import ShowingScreenIcon from '../_screen/preview/ShowingScreenIcon';
 
-export default function RenderBackgroundScreenIds({
+export default function RenderBackgroundScreenIdsComp({
     screenIds,
 }: Readonly<{
     screenIds: number[];

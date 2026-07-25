@@ -353,38 +353,38 @@ describe('screen component runtime behavior', () => {
     });
 
     test('renders background variants and camera streams', async () => {
-        const { RenderBackground, genHtmlBackground } =
+        const { RenderBackgroundComp, genHtmlBackground } =
             await import('./ScreenBackgroundComp');
 
         expect(
             renderToStaticMarkup(
-                <RenderBackground backgroundSrc={null as any} />,
+                <RenderBackgroundComp backgroundSrc={null as any} />,
             ),
         ).toContain('position:absolute');
         expect(
             renderToStaticMarkup(
-                <RenderBackground
+                <RenderBackgroundComp
                     backgroundSrc={{ type: 'audio', src: '/audio.mp3' } as any}
                 />,
             ),
         ).not.toContain('data-background=');
         expect(
             renderToStaticMarkup(
-                <RenderBackground
+                <RenderBackgroundComp
                     backgroundSrc={{ type: 'image', src: '/image.png' } as any}
                 />,
             ),
         ).toContain('data-background="image"');
         expect(
             renderToStaticMarkup(
-                <RenderBackground
+                <RenderBackgroundComp
                     backgroundSrc={{ type: 'video', src: '/video.mp4' } as any}
                 />,
             ),
         ).toContain('data-background="video"');
         expect(
             renderToStaticMarkup(
-                <RenderBackground
+                <RenderBackgroundComp
                     backgroundSrc={{ type: 'color', src: '#123456' } as any}
                 />,
             ),

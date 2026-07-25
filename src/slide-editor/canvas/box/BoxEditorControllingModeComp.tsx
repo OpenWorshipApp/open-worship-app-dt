@@ -6,15 +6,15 @@ import CanvasItem, {
     useSetEditingCanvasItem,
     useSetSelectedCanvasItems,
 } from '../CanvasItem';
-import { BoxEditorNormalImageRender } from './BoxEditorNormalViewImageModeComp';
-import { BoxEditorNormalHtmlRender } from './BoxEditorNormalViewHtmlModeComp';
+import { BoxEditorNormalImageRenderComp } from './BoxEditorNormalViewImageModeComp';
+import { BoxEditorNormalHtmlRenderComp } from './BoxEditorNormalViewHtmlModeComp';
 import { BoxEditorNormalTextRender } from './BoxEditorNormalViewTextModeComp';
 import { BoxEditorNormalBibleRender } from './BoxEditorNormalViewBibleModeComp';
 import { useCanvasControllerContext } from '../CanvasController';
 import { BoxEditorNormalVideoRender } from './BoxEditorNormalViewVideoModeComp';
 import { BoxEditorNormalYouTubeRender } from './BoxEditorNormalViewYouTubeModeComp';
 import { BoxEditorNormalWebsiteRender } from './BoxEditorNormalViewWebsiteModeComp';
-import { BENViewErrorRender } from './BoxEditorNormalViewErrorComp';
+import { BoxEditorNormalViewErrorRenderComp } from './BoxEditorNormalViewErrorComp';
 import { useBoxEditorControllerContext } from '../../BoxEditorController';
 import { checkIsAppendSelectionModifier } from '../canvasSelectionHelpers';
 import { useAppCurrentRef } from '../../../helper/appHooks';
@@ -25,7 +25,7 @@ function BoxEditorCanvasItemRender() {
     const canvasItem = useCanvasItemContext();
     switch (canvasItem.type) {
         case 'image':
-            return <BoxEditorNormalImageRender />;
+            return <BoxEditorNormalImageRenderComp />;
         case 'video':
             return <BoxEditorNormalVideoRender />;
         case 'youtube':
@@ -35,11 +35,11 @@ function BoxEditorCanvasItemRender() {
         case 'text':
             return <BoxEditorNormalTextRender />;
         case 'html':
-            return <BoxEditorNormalHtmlRender />;
+            return <BoxEditorNormalHtmlRenderComp />;
         case 'bible':
             return <BoxEditorNormalBibleRender />;
         default:
-            return <BENViewErrorRender />;
+            return <BoxEditorNormalViewErrorRenderComp />;
     }
 }
 

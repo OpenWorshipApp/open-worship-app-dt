@@ -183,13 +183,13 @@ import BoxEditorNormalViewBibleModeComp, {
     BoxEditorNormalBibleRender,
 } from './BoxEditorNormalViewBibleModeComp';
 import BoxEditorNormalViewErrorComp, {
-    BENViewErrorRender,
+    BoxEditorNormalViewErrorRenderComp,
 } from './BoxEditorNormalViewErrorComp';
 import BoxEditorNormalViewHtmlModeComp, {
-    BoxEditorNormalHtmlRender,
+    BoxEditorNormalHtmlRenderComp,
 } from './BoxEditorNormalViewHtmlModeComp';
 import BoxEditorNormalViewImageModeComp, {
-    BoxEditorNormalImageRender,
+    BoxEditorNormalImageRenderComp,
 } from './BoxEditorNormalViewImageModeComp';
 import BoxEditorNormalViewTextModeComp, {
     BoxEditorNormalTextRender,
@@ -384,7 +384,7 @@ describe('BoxEditor normal view components', () => {
     });
 
     test('renders the standalone error placeholder', async () => {
-        await render(<BENViewErrorRender />);
+        await render(<BoxEditorNormalViewErrorRenderComp />);
 
         const placeholder = container?.querySelector<HTMLDivElement>('div');
 
@@ -494,7 +494,7 @@ describe('BoxEditor normal view components', () => {
             throw error;
         });
 
-        await render(<BoxEditorNormalHtmlRender />);
+        await render(<BoxEditorNormalHtmlRenderComp />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');
@@ -523,7 +523,7 @@ describe('BoxEditor normal view components', () => {
             ...canvasItemPropsState.value,
             srcData: '',
         };
-        await render(<BoxEditorNormalImageRender />);
+        await render(<BoxEditorNormalImageRenderComp />);
 
         const fallbackImage = container?.querySelector<HTMLImageElement>('img');
         expect(fallbackImage?.getAttribute('src')).toBe('fallback-404.png');
@@ -535,7 +535,7 @@ describe('BoxEditor normal view components', () => {
             throw error;
         });
 
-        await render(<BoxEditorNormalImageRender />);
+        await render(<BoxEditorNormalImageRenderComp />);
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
         expect(container?.textContent).toContain('Error');

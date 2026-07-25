@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => {
         fromVerseKeyMock: vi.fn(),
         getSettingMock: vi.fn((key: string) => settings.get(key) ?? null),
         handleErrorMock: vi.fn(),
-        isValidJsonMock: vi.fn(),
+        parseJsonSafelyMock: vi.fn(),
         reset() {
             settings.clear();
         },
@@ -48,7 +48,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('../helper/helpers', () => ({
     cloneJson: <T>(value: T) => structuredClone(value),
-    isValidJson: mocks.isValidJsonMock,
+    parseJsonSafely: mocks.parseJsonSafelyMock,
 }));
 
 vi.mock('../helper/FileSource', () => ({
@@ -113,12 +113,11 @@ describe('BibleItem', () => {
         mocks.fileSourceGetInstanceMock.mockImplementation(
             (filePath: string) => ({ filePath }),
         );
-        mocks.isValidJsonMock.mockImplementation((value: string) => {
+        mocks.parseJsonSafelyMock.mockImplementation((value: string) => {
             try {
-                JSON.parse(value);
-                return true;
+                return JSON.parse(value);
             } catch {
-                return false;
+                return null;
             }
         });
         mocks.bibleRenderHelperMock.getJumpingChapter.mockResolvedValue({
@@ -296,7 +295,9 @@ describe('BibleItem', () => {
         expect(BibleItem.getBiblePresenterSetting()).toHaveLength(1);
 
         mocks.settings.set('bible-presenter', '{bad-json');
-        mocks.isValidJsonMock.mockReturnValueOnce(true);
+        // A non-array parsed value makes `.map` throw, exercising the
+        // outer catch path.
+        mocks.parseJsonSafelyMock.mockReturnValueOnce({ not: 'an array' });
         expect(BibleItem.getBiblePresenterSetting()).toEqual([]);
         expect(mocks.handleErrorMock).toHaveBeenCalled();
 

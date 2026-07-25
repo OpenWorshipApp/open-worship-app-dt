@@ -86,6 +86,7 @@ describe('editingHelpers', () => {
         mocks.editingHistoryState.currentHistory = null;
         mocks.editingHistoryState.originalData = null;
         mocks.editingHistoryGetInstanceMock.mockImplementation(() => ({
+            checkHasHistories: vi.fn(async () => true),
             checkCanUndo: vi.fn(async () => mocks.editingHistoryState.canUndo),
             checkCanRedo: vi.fn(async () => mocks.editingHistoryState.canRedo),
             getCurrentHistory: vi.fn(

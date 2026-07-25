@@ -7,7 +7,7 @@ import { useSlideCanvasScale } from './canvasEventHelpers';
 import SlideEditorCanvasScalingComp from './tools/SlideEditorCanvasScalingComp';
 import { useZoomingRegistering } from '../../others/AppRangeComp';
 import { onCanvasKeyboardEvent } from '../slideEditingKeyboardEventHelpers';
-import { MultiContextRender } from '../../helper/MultiContextRender';
+import { MultiContextRenderComp } from '../../helper/MultiContextRenderComp';
 import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { type useEditingCanvasContextValue } from '../canvasEditingHelpers';
 import SlidesMenuComp from '../../app-document-presenter/items/SlidesMenuComp';
@@ -144,9 +144,9 @@ export default function SlideEditorCanvasComp({
                     >
                         <SlidesMenuComp />
                     </VaryAppDocumentContext>
-                    <MultiContextRender contexts={allCanvasContextValue}>
+                    <MultiContextRenderComp contexts={allCanvasContextValue}>
                         <SlideEditorCanvasScalingComp />
-                    </MultiContextRender>
+                    </MultiContextRenderComp>
                 </div>
             </div>
         </div>

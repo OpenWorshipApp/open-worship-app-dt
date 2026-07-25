@@ -1,21 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({
-    handleErrorMock: vi.fn(),
-}));
-
-vi.mock('../helper/errorHelpers', () => ({
-    handleError: mocks.handleErrorMock,
-}));
-
-vi.mock('../server/appProvider', () => ({
-    default: {
-        appInfo: {
-            versionNumber: 7,
-        },
-    },
-}));
-
 import { DB_NAME, IndexedDbController } from './databaseHelpers';
 
 class TestDbController extends IndexedDbController {
@@ -150,7 +134,9 @@ describe('databaseHelpers', () => {
 
         const init1 = controller.init();
         const init2 = controller.init();
-        expect(openMock).toHaveBeenCalledWith(DB_NAME, 7);
+        // opened without a version — schema version is decoupled from the
+        // app version so app updates never wipe the store
+        expect(openMock).toHaveBeenCalledWith(DB_NAME);
         expect(openMock).toHaveBeenCalledTimes(1);
 
         const openRequest = openMock.mock.results[0]?.value;
@@ -178,6 +164,33 @@ describe('databaseHelpers', () => {
         expect(resolved1).toBeInstanceOf(TestDbController);
         expect(resolved2).toBe(resolved1);
         expect(openMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('bumps the version to create a missing store without wiping', async () => {
+        const controller = new TestDbController();
+        const openMock = globalThis.indexedDB.open as any as ReturnType<
+            typeof vi.fn
+        >;
+        const init = controller.init();
+        const openRequest = openMock.mock.results[0]?.value;
+
+        const { db: oldDb } = createStoreHarness();
+        oldDb.objectStoreNames.contains.mockReturnValue(false);
+        (oldDb as any).version = 3;
+        openRequest.onsuccess?.({ target: { result: oldDb } });
+
+        // existing db lacks the store: closed and reopened one version up
+        expect(oldDb.close).toHaveBeenCalledTimes(1);
+        expect(openMock).toHaveBeenCalledTimes(2);
+        expect(openMock).toHaveBeenLastCalledWith(DB_NAME, 4);
+
+        const secondRequest = openMock.mock.results[1]?.value;
+        const { db: newDb } = createStoreHarness();
+        secondRequest.onupgradeneeded?.({ target: { result: newDb } });
+        expect(newDb.deleteObjectStore).not.toHaveBeenCalled();
+        secondRequest.onsuccess?.({ target: { result: newDb } });
+        await init;
+        expect(controller.db).toBe(newDb);
     });
 
     test('rejects queued init requests on open failure and wires init callbacks', async () => {
@@ -210,9 +223,6 @@ describe('databaseHelpers', () => {
         const controller = new TestDbController();
         const first = createStoreHarness().db;
         const secondHarness = createStoreHarness();
-        secondHarness.db.deleteObjectStore.mockImplementation(() => {
-            throw new Error('missing old store');
-        });
 
         controller.db = first as any;
         controller.db = first as any;
@@ -221,8 +231,14 @@ describe('databaseHelpers', () => {
         controller.db = secondHarness.db as any;
         expect(first.close).toHaveBeenCalledTimes(1);
 
+        // store already exists — nothing deleted or recreated
         controller.createObjectStore();
-        expect(mocks.handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
+        expect(secondHarness.db.deleteObjectStore).not.toHaveBeenCalled();
+        expect(secondHarness.db.createObjectStore).not.toHaveBeenCalled();
+
+        secondHarness.db.objectStoreNames.contains.mockReturnValue(false);
+        controller.createObjectStore();
+        expect(secondHarness.db.deleteObjectStore).not.toHaveBeenCalled();
         expect(secondHarness.db.createObjectStore).toHaveBeenCalledWith(
             'songs',
             {

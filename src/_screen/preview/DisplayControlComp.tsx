@@ -33,7 +33,7 @@ function handleDisplayChoosing(
     showAppContextMenu(event, contextMenuItems);
 }
 
-export default function DisplayControl() {
+export default function DisplayControlComp() {
     const screenManagerBase = useScreenManagerBaseContext();
     const { displayId } = screenManagerBase;
     useScreenManagerEvents(['display-id'], screenManagerBase);

@@ -38,6 +38,7 @@ class MockScreenManagerBase {
     noSyncGroupMap = new Map<string, boolean>();
     _isSelected = false;
     _isLocked = false;
+    isLocked = false;
     _stageNumber = 0;
     colorNote: string | null = null;
 
@@ -58,12 +59,14 @@ class MockScreenManagerBase {
         return `${this.screenId}`;
     }
 
+    getColorNote = vi.fn(async () => this.colorNote);
     sendScreenMessage = vi.fn();
     createScreenManagerBaseGhost = vi.fn((screenId: number) => ({ screenId }));
 }
 
 class MockScreenManager extends MockScreenManagerBase {
     fireRefreshEvent = vi.fn();
+    sendSyncScreen = vi.fn(async () => {});
 }
 
 vi.mock('../screenHelpers', () => ({

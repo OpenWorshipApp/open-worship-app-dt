@@ -4,7 +4,7 @@ import * as loggerHelpers from '../helper/loggerHelpers';
 import BibleItem from '../bible-list/BibleItem';
 import { screenManagerSettingNames } from '../helper/constants';
 import { handleError } from '../helper/errorHelpers';
-import { isValidJson } from '../helper/helpers';
+import { parseJsonSafely } from '../helper/helpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { checkIsValidLocale } from '../lang/langHelpers';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
@@ -128,10 +128,10 @@ export function genScreenMouseEvent(event?: any): MouseEvent {
 export function getForegroundDataListOnScreenSetting(): ForegroundSrcListType {
     const string = getSetting(screenManagerSettingNames.FOREGROUND) ?? '';
     try {
-        if (!isValidJson(string, true)) {
+        const json = parseJsonSafely(string, true);
+        if (json === null) {
             return {};
         }
-        const json = JSON.parse(string);
         return getValidOnScreen(json);
     } catch (error) {
         handleError(error);
@@ -141,8 +141,8 @@ export function getForegroundDataListOnScreenSetting(): ForegroundSrcListType {
 
 export function getBackgroundSrcListOnScreenSetting(): BackgroundSrcListType {
     const str = getSetting(screenManagerSettingNames.BACKGROUND) ?? '';
-    if (isValidJson(str, true)) {
-        const json = JSON.parse(str);
+    const json = parseJsonSafely(str, true);
+    if (json !== null) {
         const items = Object.values(json);
         if (
             items.every((item: any) => {
@@ -176,10 +176,10 @@ const validateBible = ({ renderedList, bibleItem }: any) => {
 export function getBibleListOnScreenSetting(): BibleListType {
     const str = getSetting(screenManagerSettingNames.FULL_TEXT) ?? '';
     try {
-        if (!isValidJson(str, true)) {
+        const json = parseJsonSafely(str, true);
+        if (json === null) {
             return {};
         }
-        const json = JSON.parse(str);
         for (const item of Object.values(json)) {
             if (
                 !bibleDataTypeList.includes((item as any).type) ||
@@ -254,6 +254,17 @@ function genCircleUpSVG(width = 16) {
     `;
 }
 
+// Built once at module level as a static data URI; a per-render
+// `URL.createObjectURL` blob would pin memory on every verse change unless
+// revoked.
+let toTheTopImageDataUrl: string | null = null;
+function getToTheTopImageDataUrl() {
+    toTheTopImageDataUrl ??=
+        'data:image/svg+xml;charset=utf-8,' +
+        encodeURIComponent(genCircleUpSVG(70));
+    return toTheTopImageDataUrl;
+}
+
 export function addToTheTop(div: HTMLDivElement) {
     const oldIcon = div.querySelector(`.${TO_THE_TOP_CLASSNAME}`);
     if (oldIcon !== null) {
@@ -269,10 +280,7 @@ export function addToTheTop(div: HTMLDivElement) {
     const target = document.createElement('img');
     target.className = TO_THE_TOP_CLASSNAME;
     target.title = 'Scroll to the top';
-    const svgString = genCircleUpSVG(70);
-    const svgBlob = new Blob([svgString], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(svgBlob);
-    target.src = url;
+    target.src = getToTheTopImageDataUrl();
     target.style.position = 'fixed';
     target.style.bottom = '80px';
     div.appendChild(target);

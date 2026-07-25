@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import AppRangeComp from '../AppRangeComp';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 
-export default function OpacitySlider({
+export default function OpacitySliderComp({
     value,
     onOpacityChanged,
 }: Readonly<{

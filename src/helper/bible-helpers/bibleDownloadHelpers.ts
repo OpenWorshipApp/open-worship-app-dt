@@ -114,11 +114,13 @@ export async function extractDownloadedBible(filePath: string) {
         const fileFullName = pathBasename(filePath);
         const fileName = getFileName(fileFullName);
         isExtracted = await fsCheckDirExist(pathJoin(downloadPath, fileName));
+        if (isExtracted) {
+            showSimpleToast(BIBLE_DOWNLOAD_TOAST_TITLE, 'Bible extracted');
+        }
     } catch (error: any) {
         handleError(error);
         showSimpleToast(BIBLE_DOWNLOAD_TOAST_TITLE, 'Fail to extract bible');
     } finally {
-        showSimpleToast(BIBLE_DOWNLOAD_TOAST_TITLE, 'Bible extracted');
         fsDeleteFile(filePath).catch((error) => {
             handleError(error);
             showSimpleToast(

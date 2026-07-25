@@ -19,6 +19,11 @@ export default function ScreenDrawComp() {
                 if (div !== null) {
                     screenDrawManager.div = div;
                 }
+                return () => {
+                    // release the detached DOM + supersampled canvas on
+                    // unmount — the setter detaches listeners for us
+                    screenDrawManager.div = null;
+                };
             }}
         />
     );

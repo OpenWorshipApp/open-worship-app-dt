@@ -1,4 +1,4 @@
-import { useCallback, type CSSProperties } from 'react';
+import { useCallback, useMemo, type CSSProperties } from 'react';
 import { useRef } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -33,6 +33,9 @@ function RenderCameraInfoComp({
     genStyle: () => CSSProperties;
 }>) {
     const containerRef = useRef<HTMLDivElement>(null);
+    // deps are the stable inputs — `containerRef.current` in the deps array
+    // re-ran the effect on the second render, visibly stopping and
+    // re-acquiring the camera stream
     useAppEffectAsync(async () => {
         if (containerRef.current === null) {
             return;
@@ -42,7 +45,7 @@ function RenderCameraInfoComp({
             parentContainer: containerRef.current,
             width,
         });
-    }, [containerRef.current]);
+    }, [cameraInfo.deviceId, width]);
     const handleShowing = useCallback(
         (event: any, isForceChoosing = false) => {
             ScreenForegroundManager.addCameraData(
@@ -121,25 +124,22 @@ function getAllShowingScreenIdDataList() {
     return showingScreenIdDataList;
 }
 
-const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllCameras(
     showingScreenIdDataList: [number, ForegroundCameraDataType][],
     extraStyle: CSSProperties,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, data] of showingScreenIdDataList) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.removeCameraData(data);
-                    screenForegroundManager.addCameraData({
-                        ...data,
-                        extraStyle,
-                    });
-                },
-            );
-        }
-    });
+    for (const [screenId, data] of showingScreenIdDataList) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeCameraData(data);
+                screenForegroundManager.addCameraData({
+                    ...data,
+                    extraStyle,
+                });
+            },
+        );
+    }
 }
 
 function handleCameraHiding(screenId: number, data: ForegroundCameraDataType) {
@@ -157,10 +157,15 @@ function ForegroundCameraItemComp({
     const showingScreenIdDataList = getAllShowingScreenIdDataList().filter(
         ([, data]) => data.id === cameraInfo.deviceId,
     );
+    // per-instance: one item per camera device — a shared module timer would
+    // drop the earlier camera's refresh when two are adjusted within 500ms
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix: `camera-${cameraInfo.deviceId}`,
         onChange: (extraStyle) => {
-            refreshAllCameras(showingScreenIdDataList, extraStyle);
+            attemptTimeout(() => {
+                refreshAllCameras(showingScreenIdDataList, extraStyle);
+            });
         },
     });
     return (

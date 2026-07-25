@@ -47,7 +47,7 @@ function VerseTextElementComp({
     );
 }
 
-export function BibleBibleTable({
+export function BibleBibleTableComp({
     bibleRenderingList,
     isLineSync,
     versesCount,

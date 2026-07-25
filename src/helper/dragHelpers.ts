@@ -38,7 +38,14 @@ export function extractDropData(event: any) {
     if (!data) {
         return null;
     }
-    const dragData = JSON.parse(data);
+    // Dropping plain text (a URL, a word) carries non-JSON data; that must
+    // not blow up the drop handler.
+    let dragData: any;
+    try {
+        dragData = JSON.parse(data);
+    } catch (_error) {
+        return null;
+    }
     return deserializeDragData(dragData);
 }
 

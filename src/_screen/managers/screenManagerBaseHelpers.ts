@@ -1,7 +1,7 @@
 import { screenManagerSettingNames } from '../../helper/constants';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
 import type ScreenManagerBase from './ScreenManagerBase';
-import { isValidJson } from '../../helper/helpers';
+import { parseJsonSafely } from '../../helper/helpers';
 import { unlocking } from '../../server/unlockingHelpers';
 
 export type TypeScreenManagerSettingType = {
@@ -22,8 +22,8 @@ export function setScreenManagerBaseCache(
 
 export function getScreenManagersInstanceSetting(): TypeScreenManagerSettingType[] {
     const settingString = getSetting(screenManagerSettingNames.MANAGERS) ?? '';
-    if (isValidJson(settingString, true)) {
-        const json = JSON.parse(settingString);
+    const json = parseJsonSafely(settingString, true);
+    if (json !== null) {
         let instanceSettingList = json.filter(({ screenId }: any) => {
             return typeof screenId === 'number';
         });

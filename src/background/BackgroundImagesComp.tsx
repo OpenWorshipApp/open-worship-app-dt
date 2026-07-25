@@ -33,7 +33,7 @@ import {
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { handleError } from '../helper/errorHelpers';
-import RenderBackgroundScreenIds from './RenderBackgroundScreenIds';
+import RenderBackgroundScreenIdsComp from './RenderBackgroundScreenIdsComp';
 
 function rendChild(
     filePath: string,
@@ -52,7 +52,7 @@ function rendChild(
                 borderRadius: '5px 5px 0px 0px',
             }}
         >
-            <RenderBackgroundScreenIds
+            <RenderBackgroundScreenIdsComp
                 screenIds={selectedBackgroundSrcList.map(([key]) => {
                     return Number.parseInt(key);
                 })}

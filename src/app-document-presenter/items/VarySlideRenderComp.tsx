@@ -12,13 +12,13 @@ import {
     useAttachedBackgroundData,
     extractDropData,
 } from '../../helper/dragHelpers';
-import ShowingScreenIcon from '../../_screen/preview/ShowingScreenIcon';
+import ShowingScreenIconComp from '../../_screen/preview/ShowingScreenIcon';
 import appProvider from '../../server/appProvider';
 import { changeDragEventStyle } from '../../helper/helpers';
 import { DragTypeEnum } from '../../helper/DragInf';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import AppDocument from '../../app-document-list/AppDocument';
-import AttachBackgroundIconComponent from '../../others/AttachBackgroundIconComponent';
+import AttachBackgroundIconComp from '../../others/AttachBackgroundIconComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderSlideIndexComp from './RenderSlideIndexComp';
 import { SLIDE_ITEMS_CONTAINER_CLASS_NAME } from './varyAppDocumentHelpers';
@@ -53,7 +53,7 @@ function RenderScreenInfoComp({
         <div className="d-flex app-border-white-round px-1">
             {selectedList.map(([key]) => {
                 const screenId = Number.parseInt(key);
-                return <ShowingScreenIcon key={key} screenId={screenId} />;
+                return <ShowingScreenIconComp key={key} screenId={screenId} />;
             })}
         </div>
     );
@@ -95,7 +95,7 @@ function VarySlideHeaderComp({
                 </div>
                 <div className="d-flex justify-content-end">
                     <RenderScreenInfoComp varySlide={varySlide} />
-                    <AttachBackgroundIconComponent
+                    <AttachBackgroundIconComp
                         filePath={varySlide.filePath}
                         id={varySlide.id}
                     />

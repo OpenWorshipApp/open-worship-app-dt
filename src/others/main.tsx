@@ -102,8 +102,10 @@ function isDomException(error: any) {
 
 async function initMain() {
     globalThis.onunhandledrejection = (promiseError) => {
+        // A promise can reject with anything (or nothing); never assume an
+        // Error-like reason.
         const reason = promiseError.reason;
-        if (reason.name === 'Canceled') {
+        if (reason?.name === 'Canceled') {
             return;
         }
         handleError(reason);

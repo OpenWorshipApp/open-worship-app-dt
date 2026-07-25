@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { mkdir, rm, writeFile } = vi.hoisted(() => ({
+const { mkdir, readdir, rm, writeFile } = vi.hoisted(() => ({
     mkdir: vi.fn(),
+    readdir: vi.fn(),
     rm: vi.fn(),
     writeFile: vi.fn(),
 }));
@@ -13,6 +14,7 @@ vi.mock('electron', async () => {
 
 vi.mock('node:fs/promises', () => ({
     mkdir,
+    readdir,
     rm,
     writeFile,
 }));
@@ -29,6 +31,7 @@ import {
     POPUP_FRAME_NAME_PREFIX,
     previewPrintCurrentWindow,
     printCurrentWindow,
+    sweepStalePrintPreviewFiles,
     toShortcutKey,
     toUnpackedPath,
     unlocking,
@@ -41,6 +44,8 @@ describe('electronHelpers', () => {
         electronMockState.reset();
         mkdir.mockReset();
         mkdir.mockResolvedValue(undefined);
+        readdir.mockReset();
+        readdir.mockResolvedValue([]);
         rm.mockReset();
         rm.mockResolvedValue(undefined);
         writeFile.mockReset();
@@ -223,6 +228,39 @@ describe('electronHelpers', () => {
         closedHandler();
 
         expect(rm).toHaveBeenCalledWith(previewFilePath, { force: true });
+    });
+
+    test('sweeps only old print preview leftovers at startup', async () => {
+        const staleTimestamp = Date.now() - 1000 * 60 * 60 * 2;
+        const freshTimestamp = Date.now();
+        readdir.mockResolvedValue([
+            `print-preview-${staleTimestamp}-1.pdf`,
+            `print-content-${staleTimestamp}-2.html`,
+            `print-preview-${freshTimestamp}-3.pdf`,
+            'unrelated.txt',
+        ]);
+
+        await sweepStalePrintPreviewFiles();
+
+        expect(readdir).toHaveBeenCalledWith(
+            expect.stringContaining('open-worship-print-preview'),
+        );
+        expect(rm).toHaveBeenCalledTimes(2);
+        expect(rm).toHaveBeenCalledWith(
+            expect.stringContaining(`print-preview-${staleTimestamp}-1.pdf`),
+            { force: true },
+        );
+        expect(rm).toHaveBeenCalledWith(
+            expect.stringContaining(`print-content-${staleTimestamp}-2.html`),
+            { force: true },
+        );
+    });
+
+    test('never crashes when the print preview dir is unreadable', async () => {
+        readdir.mockRejectedValue(new Error('ENOENT'));
+
+        await expect(sweepStalePrintPreviewFiles()).resolves.toBeUndefined();
+        expect(rm).not.toHaveBeenCalled();
     });
 
     test('parents popup window to opener only when appTopToMain is enabled', () => {

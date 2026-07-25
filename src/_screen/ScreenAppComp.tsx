@@ -32,16 +32,20 @@ function useScreenManager() {
         const screenManager = createScreenManager(screenId);
         return screenManager;
     }, []);
-    if (screenManager !== null && appProvider.isPageScreen) {
-        screenManager.sendScreenMessage(
-            {
-                screenId: screenManager.screenId,
-                type: 'init',
-                data: null,
-            },
-            true,
-        );
-    }
+    useAppEffect(() => {
+        // effect, not render-phase: sending during render fires on every
+        // re-render (doubled under StrictMode)
+        if (screenManager !== null && appProvider.isPageScreen) {
+            screenManager.sendScreenMessage(
+                {
+                    screenId: screenManager.screenId,
+                    type: 'init',
+                    data: null,
+                },
+                true,
+            );
+        }
+    }, [screenManager]);
     return screenManager;
 }
 

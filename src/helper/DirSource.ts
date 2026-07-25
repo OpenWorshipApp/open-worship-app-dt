@@ -19,8 +19,8 @@ import { type OptionalPromise } from './typeHelpers';
 
 export type DirSourceEventType = 'refresh' | 'reload' | 'file-update';
 
-const fileCacheKeys: string[] = [];
 const cache = new Map<string, DirSource>();
+const initPromises = new Map<string, Promise<void>>();
 export default class DirSource extends EventHandler<DirSourceEventType> {
     settingName: string;
     static readonly eventNamePrefix: string = 'dir-source';
@@ -69,17 +69,7 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     static toCacheKey(settingName: string) {
-        const cacheKey = `${settingName}-${getSetting(settingName) ?? ''}`;
-        fileCacheKeys.push(cacheKey);
-        return cacheKey;
-    }
-
-    static getCacheKeyByDirPath(dirPath: string) {
-        return (
-            fileCacheKeys.find((cacheKey) => {
-                return cacheKey.includes(dirPath);
-            }) ?? null
-        );
+        return `${settingName}-${getSetting(settingName) ?? ''}`;
     }
 
     getFileSourceInstance(fileFullName: string) {
@@ -205,18 +195,32 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
 
     static async getInstance(settingName: string) {
         const cacheKey = this.toCacheKey(settingName);
-        if (!cache.has(cacheKey)) {
-            const dirSource = new DirSource(settingName);
-            await dirSource.init();
+        let dirSource = cache.get(cacheKey);
+        if (dirSource === undefined) {
+            // cache before awaiting init — the old check-then-set spanned the
+            // await, so concurrent callers each built their own instance and
+            // the losers' event listeners never received any events
+            dirSource = new DirSource(settingName);
             cache.set(cacheKey, dirSource);
+            const initPromise = dirSource.init().finally(() => {
+                initPromises.delete(cacheKey);
+            });
+            initPromises.set(cacheKey, initPromise);
         }
-        return cache.get(cacheKey) as DirSource;
+        const pendingInit = initPromises.get(cacheKey);
+        if (pendingInit !== undefined) {
+            await pendingInit;
+        }
+        return dirSource;
     }
 
     static getInstanceByDirPath(dirPath: string) {
-        const cacheKey = this.getCacheKeyByDirPath(dirPath);
-        if (cacheKey !== null && cache.has(cacheKey)) {
-            return cache.get(cacheKey) as DirSource;
+        // resolved-path equality — substring matching returned the wrong
+        // DirSource when one directory path was a substring of another
+        for (const dirSource of cache.values()) {
+            if (dirSource.checkIsSameDirPath(dirPath)) {
+                return dirSource;
+            }
         }
         return null;
     }

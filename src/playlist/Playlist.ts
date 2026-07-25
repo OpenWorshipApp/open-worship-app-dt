@@ -1,4 +1,4 @@
-import { cloneJson, isValidJson } from '../helper/helpers';
+import { cloneJson, parseJsonSafely } from '../helper/helpers';
 import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
 import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
 import type { PlaylistItemType } from './PlaylistItem';
@@ -51,8 +51,8 @@ export default class Playlist extends AppEditableDocumentSourceAbs<PlaylistType>
 
     async addFromData(str: string) {
         try {
-            if (isValidJson(str)) {
-                const json = JSON.parse(str);
+            const json = parseJsonSafely(str);
+            if (json !== null) {
                 const item = PlaylistItem.fromJson(this.filePath, json);
                 const originalJson = await this.getOriginalJson();
                 originalJson.items.push(item.toJson());

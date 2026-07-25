@@ -1,5 +1,5 @@
 import { type ChangeEvent, useCallback, type CSSProperties } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { tz } from 'moment-timezone';
 
 import { tran } from '../lang/langHelpers';
@@ -162,12 +162,17 @@ function TimeInSetComp({
         showingScreenIdDataList,
     );
     const genTimeDataRef = useAppCurrentRef(genTimeData);
+    // per-instance: one settings block per time widget — a shared module
+    // timer would drop the earlier widget's refresh
+    const refreshAttemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const handleTimeFormatChange = useCallback(
         (event: ChangeEvent<HTMLInputElement>) => {
             const newIs24HourFormat = !event.target.checked;
             setIs24HourFormatRef.current(newIs24HourFormat);
-            refreshAllTimes(showingScreenIdDataListRef.current, () => {
-                return genTimeDataRef.current(newIs24HourFormat);
+            refreshAttemptTimeout(() => {
+                refreshAllTimes(showingScreenIdDataListRef.current, () => {
+                    return genTimeDataRef.current(newIs24HourFormat);
+                });
             });
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -266,22 +271,19 @@ function TimeInSetComp({
     );
 }
 
-const attemptTimeout = genTimeoutAttempt(500);
 function refreshAllTimes(
     showingScreenIdDataList: [number, ForegroundTimeDataType][],
     getTimeData: (timeData: ForegroundTimeDataType) => ForegroundTimeDataType,
 ) {
-    attemptTimeout(() => {
-        for (const [screenId, timeData] of showingScreenIdDataList) {
-            getScreenForegroundManagerInstances(
-                screenId,
-                (screenForegroundManager) => {
-                    screenForegroundManager.removeTimeData(timeData);
-                    screenForegroundManager.addTimeData(getTimeData(timeData));
-                },
-            );
-        }
-    });
+    for (const [screenId, timeData] of showingScreenIdDataList) {
+        getScreenForegroundManagerInstances(
+            screenId,
+            (screenForegroundManager) => {
+                screenForegroundManager.removeTimeData(timeData);
+                screenForegroundManager.addTimeData(getTimeData(timeData));
+            },
+        );
+    }
 }
 
 function handleHiding(screenId: number, timeData: ForegroundTimeDataType) {
@@ -316,14 +318,18 @@ function ForegroundTimeItemComp({
     const showingScreenIdDataList = getAllShowingScreenIdDataList().filter(
         ([, data]) => data.id === id,
     );
+    // per-instance: one item per time widget id
+    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     const { genStyle, element: propsSetting } = useForegroundPropsSetting({
         prefix: 'time-' + id,
         onChange: (extraStyle) => {
-            refreshAllTimes(showingScreenIdDataList, (timeData) => {
-                return {
-                    ...timeData,
-                    extraStyle,
-                };
+            attemptTimeout(() => {
+                refreshAllTimes(showingScreenIdDataList, (timeData) => {
+                    return {
+                        ...timeData,
+                        extraStyle,
+                    };
+                });
             });
         },
         isFontSize: true,

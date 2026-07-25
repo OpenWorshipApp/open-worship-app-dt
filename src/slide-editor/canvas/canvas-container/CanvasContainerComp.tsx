@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useSlideCanvasScale } from '../canvasEventHelpers';
-import { MultiContextRender } from '../../../helper/MultiContextRender';
+import { MultiContextRenderComp } from '../../../helper/MultiContextRenderComp';
 import { type useEditingCanvasContextValue } from '../../canvasEditingHelpers';
 import ShadowingFillParentWidthComp from '../../../others/ShadowingFillParentWidthComp';
 import { getSlideItemShadowingStyle } from '../../../app-document-presenter/items/slideItemRenderHelpers';
@@ -191,7 +191,7 @@ export default function CanvasContainerComp({
                     }}
                 />
                 <ShadowingFillParentWidthComp width={actualWidth}>
-                    <MultiContextRender contexts={allCanvasContextValue}>
+                    <MultiContextRenderComp contexts={allCanvasContextValue}>
                         {genBoxEditorStyle()}
                         {getSlideItemShadowingStyle()}
                         <BodyRendererComp
@@ -200,7 +200,7 @@ export default function CanvasContainerComp({
                             onGuidePointerDown={handleGuidePointerDown}
                             onGuideRemove={handleGuideRemove}
                         />
-                    </MultiContextRender>
+                    </MultiContextRenderComp>
                 </ShadowingFillParentWidthComp>
             </div>
         </div>

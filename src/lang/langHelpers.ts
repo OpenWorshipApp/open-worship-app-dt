@@ -784,6 +784,24 @@ export function getLanguageTitle(
     return languageName;
 }
 
+// Constructing a BibleCrossRefBundleReader costs an fd open plus a ~1MB
+// synchronous index read per call, so keep a single-entry cache (most
+// sessions use one bundle) and reuse it while the path matches.
+let cachedCrossRefReader: {
+    bundleFilePath: string;
+    reader: BibleCrossRefBundleReader;
+} | null = null;
+function getBibleCrossRefBundleReader(bundleFilePath: string) {
+    if (cachedCrossRefReader?.bundleFilePath === bundleFilePath) {
+        return cachedCrossRefReader.reader;
+    }
+    cachedCrossRefReader?.reader.close();
+    cachedCrossRefReader = null;
+    const reader = new BibleCrossRefBundleReader(bundleFilePath);
+    cachedCrossRefReader = { bundleFilePath, reader };
+    return reader;
+}
+
 export async function getLocalBibleCrossRef(
     locale: LocaleType,
     targetVerse: {
@@ -797,14 +815,12 @@ export async function getLocalBibleCrossRef(
         return null;
     }
     const bundleFilePath = langData.getBibleCrossRefBundleFilePath();
-    const db = new BibleCrossRefBundleReader(bundleFilePath);
-    const data = db.getVerse(
+    const db = getBibleCrossRefBundleReader(bundleFilePath);
+    return db.getVerse(
         targetVerse.bookKey,
         targetVerse.chapter,
         targetVerse.verse,
     );
-    db.close();
-    return data;
 }
 
 appProvider.messageUtils.listenForData(
