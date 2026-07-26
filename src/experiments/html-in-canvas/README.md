@@ -450,6 +450,12 @@ Everything above is demonstrated live in `./HtmlInCanvasComp.tsx` — 23 demos
 cases). Run the app with the switch from §2 and open
 `https://localhost:3000/experiment.html`.
 
+Each demo prints its own code under the preview: `./demoSourceHelpers.ts` reads
+the demo file's raw text at run time and slices out the symbols named in the
+`sourceList` of `./demoList.ts`, so a listing can never drift from the code that
+actually ran. Add a demo → give it a `sourceList`; rename a symbol → update the
+reference (the block says `"<symbol>" not found` if you forget).
+
 The original probe harness was a standalone Electron app (7 pages, ~1500 lines)
 run against `node_modules/electron/dist/electron.exe`; it lived in a scratch dir
 and is not checked in. Minimal reproduction:

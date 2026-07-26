@@ -51,4 +51,9 @@ export type DemoType = {
     group: string;
     title: string;
     Comp: () => ReactNode;
+    /**
+     * `<fileName>#<symbol>` references, listed under the preview as code. See
+     * ./demoSourceHelpers.ts.
+     */
+    sourceList: string[];
 };

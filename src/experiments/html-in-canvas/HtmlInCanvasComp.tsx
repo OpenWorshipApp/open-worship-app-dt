@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react';
 
 import { COLOR, checkIsSupported } from './htmlInCanvasHelpers';
 import { DEMO_LIST } from './demoList';
+import DemoSourceComp from './DemoSourceComp';
 
 function UnsupportedComp() {
     return (
@@ -161,6 +162,10 @@ export default function HtmlInCanvasComp() {
                     dpr {devicePixelRatio} · see ./README.md
                 </div>
                 <demo.Comp key={demo.id} />
+                <DemoSourceComp
+                    key={`${demo.id}-source`}
+                    sourceList={demo.sourceList}
+                />
             </div>
         </div>
     );
