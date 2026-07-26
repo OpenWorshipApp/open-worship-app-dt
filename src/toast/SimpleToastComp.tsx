@@ -1,5 +1,6 @@
-import { type JSX } from 'react';
+import { type JSX, useCallback, useRef } from 'react';
 
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { sanitizeHtml } from '../helper/sanitizeHelpers';
 import { tran } from '../lang/langHelpers';
 
@@ -9,23 +10,54 @@ export type SimpleToastType = {
     timeout?: number;
 };
 
+export const DEFAULT_TOAST_TIMEOUT = 4e3;
+export const MOUSE_LEAVING_TOAST_TIMEOUT = 2e3;
+
 export default function SimpleToastComp({
     onClose,
     toast,
-    onMouseOver,
-    onMouseOut,
 }: Readonly<{
     onClose: () => void;
     toast: SimpleToastType;
-    onMouseOver: () => void;
-    onMouseOut: () => void;
 }>) {
     const { title, message } = toast;
+    // Each toast owns its own timer, otherwise a newer toast would dismiss
+    // the older ones that are still stacked on screen.
+    const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const onCloseRef = useAppCurrentRef(onClose);
+    const clearTimer = useCallback(() => {
+        if (timeoutIdRef.current !== null) {
+            clearTimeout(timeoutIdRef.current);
+            timeoutIdRef.current = null;
+        }
+    }, []);
+    const initTimeout = useCallback(
+        (timer: number) => {
+            clearTimer();
+            timeoutIdRef.current = setTimeout(() => {
+                timeoutIdRef.current = null;
+                onCloseRef.current();
+            }, timer);
+        },
+        [clearTimer, onCloseRef],
+    );
+    const initTimeoutRef = useAppCurrentRef(initTimeout);
+    useAppEffect(() => {
+        initTimeoutRef.current(toast.timeout ?? DEFAULT_TOAST_TIMEOUT);
+        return clearTimer;
+    }, []);
+    const handleMouseEntering = useCallback(() => {
+        clearTimer();
+    }, [clearTimer]);
+    const handleMouseLeaving = useCallback(() => {
+        initTimeoutRef.current(MOUSE_LEAVING_TOAST_TIMEOUT);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div
             className="toast show fade"
-            onMouseOver={onMouseOver}
-            onMouseOut={onMouseOut}
+            onMouseOver={handleMouseEntering}
+            onMouseOut={handleMouseLeaving}
             role="alert"
             aria-live="assertive"
             aria-atomic="true"

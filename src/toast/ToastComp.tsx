@@ -1,59 +1,48 @@
 import './ToastComp.scss';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { useToastSimpleShowing } from '../event/ToastEventListener';
 import type { SimpleToastType } from './SimpleToastComp';
 import SimpleToastComp from './SimpleToastComp';
-import { useAppCurrentRef } from '../helper/appHooks';
 
-let timeoutId: ReturnType<typeof setTimeout> | null = null;
+// Keep the stack bounded, a burst of toasts must not grow the DOM unbounded.
+export const MAX_STACKED_TOAST_COUNT = 5;
+
+type StackedToastType = SimpleToastType & { id: number };
+
 export default function ToastComp() {
-    const [simpleToast, setSimpleToast] = useState<SimpleToastType | null>(
-        null,
-    );
-    const clearTimer = useCallback(() => {
-        if (timeoutId !== null) {
-            clearTimeout(timeoutId);
-            timeoutId = null;
-        }
-    }, []);
-    const initTimeout = useCallback(
-        (timer: number) => {
-            clearTimer();
-            timeoutId = setTimeout(() => {
-                timeoutId = null;
-                setSimpleToast(null);
-            }, timer);
-        },
-        [clearTimer],
-    );
-    const clearTimerRef = useAppCurrentRef(clearTimer);
-    const handleMouseEntering = useCallback(() => {
-        clearTimerRef.current();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    const initTimeoutRef = useAppCurrentRef(initTimeout);
-    const handleMouseLeaving = useCallback(() => {
-        initTimeoutRef.current(2e3);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    const handleClosing = useCallback(() => {
-        setSimpleToast(null);
+    const [toasts, setToasts] = useState<StackedToastType[]>([]);
+    const lastIdRef = useRef(0);
+    const handleClosing = useCallback((id: number) => {
+        setToasts((oldToasts) => {
+            return oldToasts.filter((toast) => {
+                return toast.id !== id;
+            });
+        });
     }, []);
     useToastSimpleShowing((toast: SimpleToastType) => {
-        setSimpleToast(toast);
-        initTimeout(toast.timeout ?? 4e3);
+        lastIdRef.current += 1;
+        const newToast = { ...toast, id: lastIdRef.current };
+        setToasts((oldToasts) => {
+            // newest at the bottom of the stack, oldest ones are dropped
+            return [...oldToasts, newToast].slice(-MAX_STACKED_TOAST_COUNT);
+        });
     });
-    if (!simpleToast) {
+    if (toasts.length === 0) {
         return null;
     }
     return (
-        <SimpleToastComp
-            onMouseOver={handleMouseEntering}
-            onMouseOut={handleMouseLeaving}
-            onClose={handleClosing}
-            toast={simpleToast}
-        />
+        <div className="app-toast-stack">
+            {toasts.map((toast) => {
+                return (
+                    <SimpleToastComp
+                        key={toast.id}
+                        toast={toast}
+                        onClose={handleClosing.bind(null, toast.id)}
+                    />
+                );
+            })}
+        </div>
     );
 }

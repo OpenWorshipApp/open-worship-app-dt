@@ -317,7 +317,7 @@ check only (`#root` has children, no `img.loading`).
 | `AppContextMenuComp` | [context-menu/AppContextMenuComp.tsx](../../../../src/context-menu/AppContextMenuComp.tsx) | Opened by 🖱️R on many items. 🖱️ an entry runs its action; ⌨️ `Escape` / click-away closes. |
 | `ModalComp` / `AppPopupBibleLookupComp` | [app-modal/ModalComp.tsx](../../../../src/app-modal/ModalComp.tsx) | Close: 🖱️ `button.btn-danger` (`bi bi-x-lg`) or ⌨️ `Ctrl+Q`. |
 | `HandleAlertComp` / `ConfirmPopupComp` / `InputPopupComp` / `AlertPopupComp` | [popup-widget/](../../../../src/popup-widget/) | 🖱️ `Ok` / `Cancel`; ⌨️ `Enter` confirms, `Escape` cancels; ⌨️✎ input popups. |
-| `ToastComp` | [toast/ToastComp.tsx](../../../../src/toast/ToastComp.tsx) | Auto-dismiss notices; 🖱️ to dismiss. |
+| `ToastComp` | [toast/ToastComp.tsx](../../../../src/toast/ToastComp.tsx) | Auto-dismiss notices, **stacked** top-right in `.app-toast-stack` (oldest first, max 5); 🖱️ `.btn-close` dismisses just that one; 🖐️ hover pauses just its timer. |
 | `TopProgressBarComp` | [progress-bar/TopProgressBarComp.tsx](../../../../src/progress-bar/TopProgressBarComp.tsx) | Load indicator (observe, no interaction). |
 | `ResizeActorComp` (dividers) | [resize-actor/ResizeActorComp.tsx](../../../../src/resize-actor/ResizeActorComp.tsx) | ⇕ drag a splitter to resize a column/row; double-click may quick-resize. Every multi-pane layout uses this. |
 
