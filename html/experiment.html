@@ -12,6 +12,16 @@
         <meta name="description" content="Open Worship App" />
         <title>Experiment</title>
         <style>
+            /* The playground shell is a viewport-height flex layout with its
+               own scrolling panes; without this the 100% chain degrades to auto
+               and the whole document scrolls instead. */
+            html,
+            body,
+            #root {
+                height: 100%;
+                margin: 0;
+                overflow: hidden;
+            }
             .back {
                 position: fixed;
                 top: 0;

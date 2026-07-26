@@ -26,6 +26,10 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Open Bible Reader in a new window':
+        'បើកកម្មវិធីអានព្រះគម្ពីរនៅក្នុងវីនដូថ្មី',
+    'Open Slide Editor in a new window':
+        'បើកកម្មវិធីកែសម្រួលស្លាយនៅក្នុងវីនដូថ្មី',
     'Edit Title': 'កែសម្រួលចំណងជើង',
     'Create KJV Bible XML': 'បង្កើតឯកសារ XML ព្រះគម្ពីរ KJV',
     'Remove URL': 'លុប URL',

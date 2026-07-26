@@ -16,6 +16,25 @@ import { useMemo, useState } from 'react';
 import { COLOR, checkIsSupported } from './htmlInCanvasHelpers';
 import { DEMO_LIST } from './demoList';
 import DemoSourceComp from './DemoSourceComp';
+import type { DemoType } from './htmlInCanvasTypes';
+
+function toSearchTermList(searchText: string) {
+    return searchText.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Matches the title, group, id and the `<file>#<symbol>` source references, so
+ * `filter` finds a demo by what it is called, where it lives or which API it
+ * demonstrates. Every term must hit (AND), order free.
+ */
+function checkIsMatch(item: DemoType, termList: string[]) {
+    const haystack = [item.title, item.group, item.id, ...item.sourceList]
+        .join(' ')
+        .toLowerCase();
+    return termList.every((term) => {
+        return haystack.includes(term);
+    });
+}
 
 function UnsupportedComp() {
     return (
@@ -64,6 +83,7 @@ function UnsupportedComp() {
 
 export default function HtmlInCanvasComp() {
     const [selectedId, setSelectedId] = useState(DEMO_LIST[0].id);
+    const [searchText, setSearchText] = useState('');
     const isSupported = useMemo(() => {
         return checkIsSupported();
     }, []);
@@ -76,7 +96,14 @@ export default function HtmlInCanvasComp() {
         DEMO_LIST.find((item) => {
             return item.id === selectedId;
         }) ?? DEMO_LIST[0];
-    const groupList = [...new Set(DEMO_LIST.map((item) => item.group))];
+    const termList = toSearchTermList(searchText);
+    const matchedList =
+        termList.length === 0
+            ? DEMO_LIST
+            : DEMO_LIST.filter((item) => {
+                  return checkIsMatch(item, termList);
+              });
+    const groupList = [...new Set(matchedList.map((item) => item.group))];
 
     return (
         <div
@@ -92,59 +119,113 @@ export default function HtmlInCanvasComp() {
                 style={{
                     width: 168,
                     flexShrink: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
                     borderRight: `1px solid ${COLOR.border}`,
-                    overflowY: 'auto',
                     padding: '8px 0',
                 }}
             >
-                {groupList.map((group) => {
-                    return (
-                        <div key={group} style={{ marginBottom: 6 }}>
-                            <div
-                                style={{
-                                    fontSize: 10,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: 1,
-                                    color: COLOR.muted,
-                                    padding: '4px 10px',
-                                }}
-                            >
-                                {group}
-                            </div>
-                            {DEMO_LIST.filter((item) => {
-                                return item.group === group;
-                            }).map((item) => {
-                                const isActive = item.id === demo.id;
-                                return (
-                                    <div
-                                        key={item.id}
-                                        onClick={() => {
-                                            setSelectedId(item.id);
-                                        }}
-                                        style={{
-                                            padding: '5px 10px',
-                                            fontSize: 12,
-                                            cursor: 'pointer',
-                                            background: isActive
-                                                ? COLOR.panelSoft
-                                                : 'transparent',
-                                            borderLeft: `3px solid ${
-                                                isActive
-                                                    ? COLOR.accent
-                                                    : 'transparent'
-                                            }`,
-                                            color: isActive
-                                                ? COLOR.text
-                                                : COLOR.muted,
-                                        }}
-                                    >
-                                        {item.title}
-                                    </div>
-                                );
-                            })}
+                <div style={{ flexShrink: 0, padding: '0 8px 8px' }}>
+                    <input
+                        type="search"
+                        value={searchText}
+                        placeholder="Filter demos…"
+                        onChange={(event) => {
+                            setSearchText(event.target.value);
+                        }}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Escape') {
+                                setSearchText('');
+                            } else if (
+                                event.key === 'Enter' &&
+                                matchedList.length > 0
+                            ) {
+                                setSelectedId(matchedList[0].id);
+                            }
+                        }}
+                        style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            background: COLOR.panel,
+                            border: `1px solid ${COLOR.border}`,
+                            borderRadius: 4,
+                            color: COLOR.text,
+                            font: 'inherit',
+                            fontSize: 12,
+                            padding: '4px 6px',
+                            outline: 'none',
+                        }}
+                    />
+                    {termList.length > 0 ? (
+                        <div
+                            style={{
+                                fontSize: 10,
+                                color:
+                                    matchedList.length > 0
+                                        ? COLOR.muted
+                                        : COLOR.warn,
+                                padding: '4px 2px 0',
+                            }}
+                        >
+                            {matchedList.length > 0
+                                ? `${matchedList.length} of ${DEMO_LIST.length}` +
+                                  ' · enter opens the first'
+                                : 'no match'}
                         </div>
-                    );
-                })}
+                    ) : null}
+                </div>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                    {groupList.map((group) => {
+                        return (
+                            <div key={group} style={{ marginBottom: 6 }}>
+                                <div
+                                    style={{
+                                        fontSize: 10,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: 1,
+                                        color: COLOR.muted,
+                                        padding: '4px 10px',
+                                    }}
+                                >
+                                    {group}
+                                </div>
+                                {matchedList
+                                    .filter((item) => {
+                                        return item.group === group;
+                                    })
+                                    .map((item) => {
+                                        const isActive = item.id === demo.id;
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                onClick={() => {
+                                                    setSelectedId(item.id);
+                                                }}
+                                                style={{
+                                                    padding: '5px 10px',
+                                                    fontSize: 12,
+                                                    cursor: 'pointer',
+                                                    background: isActive
+                                                        ? COLOR.panelSoft
+                                                        : 'transparent',
+                                                    borderLeft: `3px solid ${
+                                                        isActive
+                                                            ? COLOR.accent
+                                                            : 'transparent'
+                                                    }`,
+                                                    color: isActive
+                                                        ? COLOR.text
+                                                        : COLOR.muted,
+                                                }}
+                                            >
+                                                {item.title}
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
                 <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>

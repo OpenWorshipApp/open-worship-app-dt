@@ -7,8 +7,8 @@ function ExperimentComp() {
     return (
         <div
             style={{
+                height: '100%',
                 overflow: 'hidden',
-                margin: 'auto',
             }}
         >
             <HtmlInCanvasComp />
