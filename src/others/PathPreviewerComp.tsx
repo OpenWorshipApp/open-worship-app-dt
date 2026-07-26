@@ -2,7 +2,11 @@ import { useCallback } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
-import { fsCheckDirExist, pathBasename } from '../server/fileHelpers';
+import {
+    fsCheckDirExist,
+    fsCheckFileExist,
+    pathBasename,
+} from '../server/fileHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
@@ -17,29 +21,31 @@ function cleanPath(path: string) {
 }
 
 export function PathPreviewerComp({
-    dirPath,
+    dirOrFilePath,
     isShowingNameOnly = false,
     onClick,
-    shouldNotValidate = false,
     canOpenFileExplorer = false,
+    isFile = false,
 }: Readonly<{
-    dirPath: string;
+    dirOrFilePath: string;
     isShowingNameOnly?: boolean;
     onClick?: (event: any) => void;
-    shouldNotValidate?: boolean;
     canOpenFileExplorer?: boolean;
+    isFile?: boolean;
 }>) {
     const [isValidPath] = useAppStateAsync(
-        () => {
-            if (shouldNotValidate) {
-                return Promise.resolve(true);
+        async () => {
+            if (isFile) {
+                const isFileExist = await fsCheckFileExist(dirOrFilePath);
+                return isFileExist;
             }
-            return fsCheckDirExist(dirPath);
+            const isDir = await fsCheckDirExist(dirOrFilePath);
+            return isDir;
         },
-        [shouldNotValidate, dirPath],
+        [dirOrFilePath, isFile],
         true,
     );
-    const cleanedDirectoryPath = cleanPath(dirPath);
+    const cleanedDirectoryPath = cleanPath(dirOrFilePath);
     let directoryPath = cleanedDirectoryPath;
     if (isShowingNameOnly) {
         directoryPath = pathBasename(cleanedDirectoryPath);
@@ -49,7 +55,7 @@ export function PathPreviewerComp({
         }
     }
     const canOpenFileExplorerRef = useAppCurrentRef(canOpenFileExplorer);
-    const dirPathRef = useAppCurrentRef(dirPath);
+    const dirPathRef = useAppCurrentRef(dirOrFilePath);
     const handleContextMenuOpening = useCallback((event: any) => {
         if (!canOpenFileExplorerRef.current) {
             return;
@@ -65,16 +71,19 @@ export function PathPreviewerComp({
         ]);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const stateClassName = isValidPath
+        ? 'text-muted'
+        : 'text-danger-emphasis bg-danger-subtle border-danger fw-bold';
     return (
         <div
             className={
-                'app-ellipsis-left app-border-white-round px-1 flex-fill text-muted' +
-                ` ${onClick ? 'pointer' : ''}`
+                'app-ellipsis-left app-border-white-round px-1 flex-fill' +
+                ` ${onClick ? 'pointer' : ''}` +
+                ` ${stateClassName}`
             }
             onClick={onClick}
             title={isValidPath ? cleanedDirectoryPath : tran('Invalid Path')}
             style={{
-                color: isValidPath ? '' : 'red',
                 fontSize: '0.9rem',
             }}
             onContextMenu={handleContextMenuOpening}

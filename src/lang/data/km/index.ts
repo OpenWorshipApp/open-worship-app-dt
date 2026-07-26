@@ -173,6 +173,7 @@ const dictionary = {
     'Choose City': 'ជ្រើសរើសទីក្រុង',
     'New Slide': 'ស្លាយថ្មី',
     'Show on Screens': 'បង្ហាញនៅលើអេក្រង់',
+    'Remove from screen': 'ដកចេញពីអេក្រង់',
     Rename: 'កែឈ្មោះ',
     Reload: 'ផ្ទុកឡើងវិញ',
     'Set Line Sync': 'កំណត់ការសម្របសម្រួលបន្ទាត់',

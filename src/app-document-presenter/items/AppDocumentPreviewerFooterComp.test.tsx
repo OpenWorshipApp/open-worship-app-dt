@@ -68,7 +68,7 @@ vi.mock('../../others/PathPreviewerComp', () => ({
                 disabled={props.onClick === undefined}
                 onClick={props.onClick}
             >
-                {props.dirPath}
+                {props.dirOrFilePath}
             </button>
         );
     },
@@ -175,9 +175,9 @@ describe('AppDocumentPreviewerFooterComp', () => {
         );
         expect(pathPreviewerRenderMock).toHaveBeenCalledWith(
             expect.objectContaining({
-                dirPath: '/docs/main.ows',
+                dirOrFilePath: '/docs/main.ows',
+                isFile: true,
                 isShowingNameOnly: true,
-                shouldNotValidate: true,
                 canOpenFileExplorer: true,
             }),
         );

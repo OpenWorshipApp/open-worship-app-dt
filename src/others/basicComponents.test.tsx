@@ -13,6 +13,7 @@ const {
     moveFilePathMock,
     useAttachedBackgroundDataMock,
     fsCheckDirExistMock,
+    fsCheckFileExistMock,
     pathBasenameMock,
     fileSourceInstances,
     getMockFileSource,
@@ -47,6 +48,7 @@ const {
         moveFilePathMock: vi.fn(async () => {}),
         useAttachedBackgroundDataMock: vi.fn(),
         fsCheckDirExistMock: vi.fn(async () => true),
+        fsCheckFileExistMock: vi.fn(async (_filePath: string) => true),
         pathBasenameMock: vi.fn((filePath: string) => {
             return filePath.split('/').pop() ?? filePath;
         }),
@@ -127,6 +129,7 @@ vi.mock('../server/appHelpers', () => ({
 
 vi.mock('../server/fileHelpers', () => ({
     fsCheckDirExist: fsCheckDirExistMock,
+    fsCheckFileExist: fsCheckFileExistMock,
     pathBasename: pathBasenameMock,
 }));
 
@@ -183,6 +186,7 @@ describe('others basic components', () => {
         resizeObserverInstances.length = 0;
         fileSourceInstances.clear();
         fsCheckDirExistMock.mockResolvedValue(true);
+        fsCheckFileExistMock.mockResolvedValue(true);
         useAttachedBackgroundDataMock.mockReturnValue(null);
         container = document.createElement('div');
         Object.defineProperty(container, 'clientWidth', {
@@ -565,20 +569,23 @@ describe('others basic components', () => {
     });
 
     test('previews paths, validates them, and opens the file explorer menu', async () => {
-        fsCheckDirExistMock.mockResolvedValue(false);
+        fsCheckFileExistMock.mockImplementation(async (filePath: string) => {
+            return filePath !== '/base/song.txt';
+        });
         const onClick = vi.fn();
 
         await render(
             <div>
                 <PathPreviewerComp
-                    dirPath="/base/song.txt"
+                    dirOrFilePath="/base/song.txt"
                     isShowingNameOnly
                     onClick={onClick}
                     canOpenFileExplorer
+                    isFile
                 />
                 <PathPreviewerComp
-                    dirPath="/base/skip-check.txt"
-                    shouldNotValidate
+                    dirOrFilePath="/base/skip-check.txt"
+                    isFile
                 />
             </div>,
         );
@@ -590,7 +597,10 @@ describe('others basic components', () => {
             container?.querySelectorAll('.app-ellipsis-left') ?? [];
         expect(pathItems[0]?.textContent).toBe('song');
         expect(pathItems[0]?.getAttribute('title')).toBe('Invalid Path');
-        expect((pathItems[0] as HTMLElement).style.color).toBe('red');
+        expect(pathItems[0]?.classList.contains('text-danger-emphasis')).toBe(
+            true,
+        );
+        expect(pathItems[1]?.classList.contains('text-muted')).toBe(true);
         expect(pathItems[1]?.getAttribute('title')).toBe('base/skip-check.txt');
 
         await act(async () => {
@@ -605,7 +615,7 @@ describe('others basic components', () => {
             );
         });
         expect(onClick).toHaveBeenCalledTimes(1);
-        expect(fsCheckDirExistMock).toHaveBeenCalledWith('/base/song.txt');
+        expect(fsCheckFileExistMock).toHaveBeenCalledWith('/base/song.txt');
 
         const menuItems = showAppContextMenuMock.mock.calls.at(-1)?.[1] ?? [];
         await act(async () => {

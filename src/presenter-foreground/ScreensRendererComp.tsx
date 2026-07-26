@@ -1,4 +1,5 @@
 import ShowingScreenIconComp from '../_screen/preview/ShowingScreenIcon';
+import { tran } from '../lang/langHelpers';
 
 export default function ScreensRendererComp<T>({
     title,
@@ -19,28 +20,31 @@ export default function ScreensRendererComp<T>({
         return null;
     }
     return (
-        <div className="d-flex mt-2 p-1 app-border-white-round" title={title}>
+        <div className="d-flex p-1 app-border-white-round" title={title}>
             {showingScreenIdDataList.map(([screenId, data], i) => {
                 const itemTitle = genTitle ? genTitle(data) : undefined;
+                const onClick = handleForegroundHiding.bind(
+                    null,
+                    screenId,
+                    data,
+                );
                 return (
                     <div
                         className="d-flex app-caught-hover-pointer"
                         title={itemTitle}
                         key={screenId + '-' + i}
-                        onClick={handleForegroundHiding.bind(
-                            null,
-                            screenId,
-                            data,
-                        )}
+                        onClick={onClick}
                     >
                         {isMini ? null : (
                             <button className="btn btn-secondary">
                                 {buttonText}
                             </button>
                         )}
-                        <div className="input-group-text">
-                            <ShowingScreenIconComp screenId={screenId} />
-                        </div>
+                        <ShowingScreenIconComp
+                            screenId={screenId}
+                            onClick={onClick}
+                            title={tran('Remove from screen ') + screenId}
+                        />
                     </div>
                 );
             })}

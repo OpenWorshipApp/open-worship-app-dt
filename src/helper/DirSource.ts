@@ -162,10 +162,10 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
     }
 
     async getFilePaths(mimetypeName: MimetypeNameType, isForce = false) {
-        if (!this.dirPath) {
+        if (!this.dirPath || (await fsCheckDirExist(this.dirPath)) === false) {
             return [];
         }
-        const getFile = async () => {
+        const getFilePaths = async () => {
             const filePathsInMap = this.filePathsMap[mimetypeName];
             if (filePathsInMap?.length && !isForce) {
                 return filePathsInMap;
@@ -187,8 +187,8 @@ export default class DirSource extends EventHandler<DirSourceEventType> {
             return filePaths;
         };
         const result = await unlocking(
-            `getFilePaths-${mimetypeName}-${this.dirPath}`,
-            getFile,
+            `get-file-paths-${mimetypeName}-${this.dirPath}`,
+            getFilePaths,
         );
         return result;
     }

@@ -126,15 +126,15 @@ export default function AppDocumentPreviewerFooterComp({
                     />
                     {isInjectedAppDocumentFilePath ? null : (
                         <PathPreviewerComp
-                            dirPath={selectedVaryAppDocument.filePath}
+                            dirOrFilePath={selectedVaryAppDocument.filePath}
                             isShowingNameOnly
                             onClick={
                                 isDisableChanging
                                     ? undefined
                                     : handleSlideChoosing
                             }
-                            shouldNotValidate
                             canOpenFileExplorer
+                            isFile
                         />
                     )}
                 </div>

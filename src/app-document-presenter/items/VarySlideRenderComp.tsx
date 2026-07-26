@@ -38,6 +38,7 @@ import { useThemeSource } from '../../others/themeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
+import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
 
 function RenderScreenInfoComp({
     varySlide,
@@ -53,7 +54,20 @@ function RenderScreenInfoComp({
         <div className="d-flex app-border-white-round px-1">
             {selectedList.map(([key]) => {
                 const screenId = Number.parseInt(key);
-                return <ShowingScreenIconComp key={key} screenId={screenId} />;
+                const onClick = (event: any, screenId: number) => {
+                    event.stopPropagation();
+                    const screenManager =
+                        ScreenVaryAppDocumentManager.getInstance(screenId);
+                    screenManager?.clear();
+                };
+                return (
+                    <ShowingScreenIconComp
+                        key={key}
+                        screenId={screenId}
+                        onClick={onClick}
+                        title={tran('Remove from screen ') + screenId}
+                    />
+                );
             })}
         </div>
     );

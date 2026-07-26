@@ -23,6 +23,8 @@ const {
     toClassNameHighlightMock,
     slideCheckIsThisTypeMock,
     useThemeSourceMock,
+    screenVaryAppDocumentManagerGetInstanceMock,
+    screenVaryAppDocumentManagerClearMock,
 } = vi.hoisted(() => ({
     useScreenVaryAppDocumentManagerEventsMock: vi.fn(),
     genRemovingAttachedBackgroundMenuMock: vi.fn(),
@@ -56,6 +58,8 @@ const {
     toClassNameHighlightMock: vi.fn(),
     slideCheckIsThisTypeMock: vi.fn(),
     useThemeSourceMock: vi.fn(),
+    screenVaryAppDocumentManagerGetInstanceMock: vi.fn(),
+    screenVaryAppDocumentManagerClearMock: vi.fn(),
 }));
 
 vi.mock('../../_screen/managers/screenEventHelpers', () => ({
@@ -72,9 +76,27 @@ vi.mock('../../helper/dragHelpers', () => ({
 }));
 
 vi.mock('../../_screen/preview/ShowingScreenIcon', () => ({
-    default: ({ screenId }: any) => (
-        <div data-testid="screen-icon">{screenId}</div>
+    default: ({ screenId, onClick, title }: any) => (
+        <div
+            data-testid="screen-icon"
+            title={title}
+            onClick={
+                onClick
+                    ? (event: any) => {
+                          onClick(event, screenId);
+                      }
+                    : undefined
+            }
+        >
+            {screenId}
+        </div>
     ),
+}));
+
+vi.mock('../../_screen/managers/ScreenVaryAppDocumentManager', () => ({
+    default: {
+        getInstance: screenVaryAppDocumentManagerGetInstanceMock,
+    },
 }));
 
 vi.mock('../../server/appProvider', () => ({
@@ -210,6 +232,9 @@ describe('VarySlideRenderComp', () => {
             { menuElement: 'Remove Background' },
         ]);
         extractDropDataMock.mockReturnValue(null);
+        screenVaryAppDocumentManagerGetInstanceMock.mockReturnValue({
+            clear: screenVaryAppDocumentManagerClearMock,
+        });
     });
 
     afterEach(async () => {
@@ -274,9 +299,24 @@ describe('VarySlideRenderComp', () => {
         expect(container.textContent).toContain('Verse 1');
         expect(container.textContent).toContain('400x200');
         expect(container.textContent).toContain('*');
-        expect(
+        const screenIcons = Array.from(
             container.querySelectorAll('[data-testid="screen-icon"]'),
-        ).toHaveLength(2);
+        );
+        expect(screenIcons).toHaveLength(2);
+        expect(screenIcons[0]?.getAttribute('title')).toBe(
+            'Remove from screen 1',
+        );
+        await act(async () => {
+            screenIcons[0]?.dispatchEvent(
+                new MouseEvent('click', { bubbles: true }),
+            );
+        });
+        expect(
+            screenVaryAppDocumentManagerGetInstanceMock,
+        ).toHaveBeenCalledWith(1);
+        expect(screenVaryAppDocumentManagerClearMock).toHaveBeenCalledTimes(1);
+        // the icon click must not bubble up to the slide selection handler
+        expect(onClick).not.toHaveBeenCalled();
         expect(
             container.querySelector('[data-testid="attach-icon"]')?.textContent,
         ).toContain('/docs/main.ows:5');

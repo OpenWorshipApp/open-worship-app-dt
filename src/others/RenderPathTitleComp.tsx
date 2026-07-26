@@ -29,7 +29,7 @@ export default function RenderPathTitleComp({
     }
     return (
         <>
-            <PathPreviewerComp dirPath={dirSource.dirPath} />
+            <PathPreviewerComp dirOrFilePath={dirSource.dirPath} />
             <div className="ps-2" title={tran('Reload')} onClick={handleReload}>
                 <i className="bi bi-arrow-clockwise" />
             </div>

@@ -19,15 +19,29 @@ export function genColorFromScreenId(screenId: number) {
 
 export default function ShowingScreenIconComp({
     screenId,
+    onClick,
+    title,
 }: Readonly<{
     screenId: number;
+    onClick?: (event: any, screenId: number) => void;
+    title?: string;
 }>) {
     const color = genColorFromScreenId(screenId);
     return (
         <span
-            className="d-flex align-items-center px-1"
-            title={`Screen: ${screenId}`}
+            className={
+                'd-flex align-items-center px-1' +
+                ` ${onClick ? 'app-caught-hover-pointer' : ''}`
+            }
+            title={title ?? `Screen: ${screenId}`}
             data-screen-id={screenId}
+            onClick={
+                onClick
+                    ? (event: any) => {
+                          onClick(event, screenId);
+                      }
+                    : undefined
+            }
         >
             <span
                 style={{
