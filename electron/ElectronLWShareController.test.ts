@@ -77,4 +77,18 @@ describe('ElectronLWShareController', () => {
         expect(controller.win).toBeNull();
         expect(controller.mainWin).toBeNull();
     });
+
+    test('a window closed by the user releases the controller', () => {
+        const controller = new ElectronLWShareController();
+        const mainWin = createMockBrowserWindow();
+        controller.open(mainWin as any);
+
+        const closedHandler = (controller.win?.on as any).mock.calls.find(
+            ([eventName]: [string]) => eventName === 'closed',
+        )?.[1];
+        closedHandler();
+
+        // the controller closes itself, which clears both window references
+        expect(attemptClosing).toHaveBeenCalledWith(controller);
+    });
 });

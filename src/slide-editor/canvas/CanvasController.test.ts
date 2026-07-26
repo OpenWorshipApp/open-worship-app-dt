@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
     genFromInsertionVideoMock: vi.fn(),
     genFromUrlYouTubeMock: vi.fn(),
     genFromUrlWebsiteMock: vi.fn(),
+    genFittedHtmlBoxLayoutMock: vi.fn(),
     getSettingMock: vi.fn(),
     handleErrorMock: vi.fn(),
     setSettingMock: vi.fn(),
@@ -78,6 +79,12 @@ vi.mock('./canvasContextMenuHelpers', () => ({
     showCanvasItemContextMenu: mocks.showCanvasItemContextMenuMock,
 }));
 
+// the real layout helper measures text with the DOM and bails out to `null`
+// in this node-environment test
+vi.mock('./canvasBoxLayoutHelpers', () => ({
+    genFittedHtmlBoxLayout: mocks.genFittedHtmlBoxLayoutMock,
+}));
+
 vi.mock('../../event/KeyboardEventListener', () => ({
     allArrows: ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'],
 }));
@@ -88,7 +95,13 @@ vi.mock('../../server/fileHelpers', () => ({
     isSupportedMimetype: vi.fn(() => true),
 }));
 
-import CanvasController from './CanvasController';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+
+import CanvasController, {
+    CanvasControllerContext,
+    useCanvasControllerContext,
+} from './CanvasController';
 
 function createCanvasItem({
     id,
@@ -192,6 +205,7 @@ describe('CanvasController', () => {
                 },
             },
         });
+        mocks.genFittedHtmlBoxLayoutMock.mockReturnValue(null);
     });
 
     test('initializes scale, emits scale and reload events, and applies edited items', async () => {
@@ -546,5 +560,316 @@ describe('CanvasController', () => {
             null,
         );
         expect(stopPropagation).toHaveBeenCalledTimes(1);
+    });
+
+    test('the editor callbacks default to no-ops', () => {
+        const { controller } = createController();
+
+        expect(() => {
+            controller.toCenterView();
+            controller.focusEditor();
+        }).not.toThrow();
+        // `matchEvent` still reports the arrow as handled with no editor wired
+        expect(controller.matchEvent({ key: 'ArrowUp' } as KeyboardEvent)).toBe(
+            true,
+        );
+    });
+
+    test('editing an empty id list touches nothing', () => {
+        const item = createCanvasItem({ id: 1 });
+        const { appDocument, controller } = createController([item]);
+        const mutator = vi.fn();
+
+        expect(controller.editCanvasItemsByIds([], mutator)).toEqual([]);
+        expect(mutator).not.toHaveBeenCalled();
+        expect(appDocument.updateSlide).not.toHaveBeenCalled();
+        expect(mocks.showSimpleToastMock).not.toHaveBeenCalled();
+    });
+
+    test('adds a default text item with the next id', () => {
+        const existingItem = createCanvasItem({ id: 4 });
+        const newTextItem = createCanvasItem({ id: -1 });
+        const { canvas, controller } = createController([existingItem]);
+        mocks.genDefaultItemMock.mockReturnValue(newTextItem);
+
+        controller.addNewTextItem();
+
+        expect(mocks.genDefaultItemMock).toHaveBeenCalledTimes(1);
+        expect(newTextItem.props.id).toBe(5);
+        expect(canvas.canvasItems).toEqual([existingItem, newTextItem]);
+    });
+
+    test('creates YouTube and website items and reports failures', () => {
+        const { controller } = createController();
+        const youTubeItem = createCanvasItem({ id: 1 });
+        const websiteItem = createCanvasItem({ id: 2 });
+        const event = {
+            clientX: 110,
+            clientY: 220,
+            target: { getBoundingClientRect: () => ({ left: 10, top: 20 }) },
+        };
+        // no `target` to measure against, so the position lookup throws
+        const brokenEvent = { clientX: 0, clientY: 0, target: null };
+        mocks.genFromUrlYouTubeMock.mockReturnValue(youTubeItem);
+        mocks.genFromUrlWebsiteMock.mockReturnValue(websiteItem);
+
+        expect(
+            controller.genNewYouTubeItem('https://youtu.be/x', event as any),
+        ).toBe(youTubeItem);
+        expect(mocks.genFromUrlYouTubeMock).toHaveBeenCalledWith(
+            100,
+            200,
+            'https://youtu.be/x',
+        );
+        expect(
+            controller.genNewWebsiteItem('https://example.com', event as any),
+        ).toBe(websiteItem);
+        expect(mocks.genFromUrlWebsiteMock).toHaveBeenCalledWith(
+            100,
+            200,
+            'https://example.com',
+        );
+
+        expect(
+            controller.genNewYouTubeItem(
+                'https://youtu.be/x',
+                brokenEvent as any,
+            ),
+        ).toBeUndefined();
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Insert YouTube',
+            'Fail to insert YouTube',
+        );
+        expect(
+            controller.genNewWebsiteItem(
+                'https://example.com',
+                brokenEvent as any,
+            ),
+        ).toBeUndefined();
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Insert Website',
+            'Fail to insert website',
+        );
+        expect(mocks.handleErrorMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('reports a failed image paste', async () => {
+        const { controller } = createController();
+
+        await expect(
+            controller.genNewImageItemFromFile(new Blob(['image']), {
+                clientX: 0,
+                clientY: 0,
+                target: null,
+            } as any),
+        ).resolves.toBeUndefined();
+
+        expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Pasting Image',
+            'Fail to insert image',
+        );
+    });
+
+    test('treats a file without metadata as an unsupported media type', async () => {
+        const { controller } = createController();
+        mocks.fileSourceGetInstanceMock.mockReturnValue({ metadata: null });
+
+        await expect(
+            controller.genNewMediaItemFromFilePath('/assets/a.bin', {
+                clientX: 0,
+                clientY: 0,
+                target: { getBoundingClientRect: () => ({ left: 0, top: 0 }) },
+            } as any),
+        ).resolves.toBeUndefined();
+
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Insert Medias',
+            'Only image and video files are supported',
+        );
+    });
+
+    test('places a pasted bible item at the cursor when a layout is produced', async () => {
+        const { controller } = createController();
+        const bibleCanvasItem = createCanvasItem({ id: -1, type: 'bible' });
+        const layout = { left: 11, top: 22, width: 300, height: 150 };
+        mocks.fromBibleItemMock.mockResolvedValue(bibleCanvasItem);
+        mocks.genFittedHtmlBoxLayoutMock.mockReturnValue(layout);
+        const event = {
+            clientX: 110,
+            clientY: 220,
+            target: { getBoundingClientRect: () => ({ left: 10, top: 20 }) },
+        };
+
+        await controller.addNewBibleItem({ key: 'GEN.1.1' } as any, event);
+
+        expect(mocks.genFittedHtmlBoxLayoutMock).toHaveBeenCalledWith(
+            bibleCanvasItem.props,
+            1280,
+            720,
+            { x: 100, y: 200 },
+        );
+        expect(bibleCanvasItem.applyProps).toHaveBeenCalledWith(layout);
+    });
+
+    test('a non-bible canvas item skips the bible layout fitting', async () => {
+        const { canvas, controller } = createController();
+        const textCanvasItem = createCanvasItem({ id: -1, type: 'text' });
+        mocks.fromBibleItemMock.mockResolvedValue(textCanvasItem);
+
+        await controller.addNewBibleItem({ key: 'GEN.1.1' } as any);
+
+        expect(mocks.genFittedHtmlBoxLayoutMock).not.toHaveBeenCalled();
+        expect(canvas.canvasItems).toEqual([textCanvasItem]);
+    });
+
+    test('replaces the bible item of a matching canvas item only', async () => {
+        const bibleCanvasItem = createCanvasItem({ id: 1, type: 'bible' });
+        bibleCanvasItem.setNewBibleItem = vi.fn(async () => {});
+        const textCanvasItem = createCanvasItem({ id: 2, type: 'text' });
+        textCanvasItem.setNewBibleItem = vi.fn(async () => {});
+        const { appDocument, canvas, controller } = createController([
+            bibleCanvasItem,
+            textCanvasItem,
+        ]);
+        const bibleItem = { key: 'GEN.1.2' } as any;
+
+        // a text item with the right id is not a bible item
+        await controller.replaceBibleItem(2, bibleItem);
+        expect(textCanvasItem.setNewBibleItem).not.toHaveBeenCalled();
+        // ...and no bible item carries this id
+        await controller.replaceBibleItem(99, bibleItem);
+        expect(appDocument.updateSlide).not.toHaveBeenCalled();
+
+        await controller.replaceBibleItem(1, bibleItem);
+
+        expect(bibleCanvasItem.setNewBibleItem).toHaveBeenCalledWith(bibleItem);
+        expect(canvas.canvasItems).toEqual([bibleCanvasItem, textCanvasItem]);
+        expect(appDocument.updateSlide).toHaveBeenCalledTimes(1);
+    });
+
+    test('reordering stops at the list edges and ignores unknown items', () => {
+        const firstItem = createCanvasItem({ id: 1 });
+        const secondItem = createCanvasItem({ id: 2 });
+        const thirdItem = createCanvasItem({ id: 3 });
+        const { appDocument, canvas, controller } = createController([
+            firstItem,
+            secondItem,
+            thirdItem,
+        ]);
+        const getIds = () => {
+            return canvas.canvasItems.map((item: any) => item.props.id);
+        };
+
+        controller.applyOrderingData(createCanvasItem({ id: 42 }), true);
+        controller.applyOrderingData(firstItem, true);
+        controller.applyOrderingData(thirdItem, false);
+        expect(getIds()).toEqual([1, 2, 3]);
+        expect(appDocument.updateSlide).not.toHaveBeenCalled();
+
+        controller.applyOrderingData(firstItem, false);
+        expect(getIds()).toEqual([2, 1, 3]);
+
+        controller.applyOrderingData(firstItem, true);
+        expect(getIds()).toEqual([1, 2, 3]);
+    });
+
+    test('arrow moving covers every direction', () => {
+        const { controller } = createController();
+        const item = createCanvasItem({ id: 1, left: 100, top: 100 });
+        const move = (arrowing: any) => {
+            controller.moveCanvasItem(item, 5, 7, {
+                arrowing,
+                isCtrlKey: false,
+                isShiftKey: false,
+            });
+        };
+
+        move('ArrowDown');
+        expect(item.props.top).toBe(107);
+        move('ArrowUp');
+        expect(item.props.top).toBe(100);
+        move('ArrowLeft');
+        expect(item.props.left).toBe(95);
+        move('ArrowRight');
+        expect(item.props.left).toBe(100);
+        // an unrelated key leaves the box where it is
+        move('Enter');
+        expect(item.props).toMatchObject({ left: 100, top: 100 });
+    });
+
+    test('restores an item to its original media size', () => {
+        const { controller } = createController();
+        const mediaItem = createCanvasItem({
+            id: 1,
+            type: 'image',
+            width: 100,
+            height: 100,
+            mediaWidth: 400,
+            mediaHeight: 200,
+        });
+        const textItem = createCanvasItem({
+            id: 2,
+            type: 'text',
+            width: 400,
+            height: 200,
+        });
+
+        controller.applyCanvasItemOriginal(mediaItem);
+        expect(mediaItem.props.width).toBe(400);
+        expect(mediaItem.props.height).toBe(200);
+        expect(mediaItem.applyBoxData).toHaveBeenCalledWith({
+            parentWidth: 400,
+            parentHeight: 400,
+        });
+
+        // a non-media item is measured by its own box instead
+        controller.applyCanvasItemOriginal(textItem);
+        expect(textItem.props.width).toBe(400);
+        expect(textItem.props.height).toBe(200);
+    });
+
+    test('strips a media item to the box it already occupies', () => {
+        const { controller } = createController();
+        const mediaItem = createCanvasItem({
+            id: 1,
+            type: 'video',
+            width: 200,
+            height: 200,
+            mediaWidth: 400,
+            mediaHeight: 100,
+        });
+
+        controller.applyCanvasItemMediaStrip(mediaItem);
+
+        expect(mediaItem.props.width).toBe(200);
+        expect(mediaItem.props.height).toBe(50);
+        expect(mediaItem.applyBoxData).toHaveBeenCalledWith({
+            parentWidth: 200,
+            parentHeight: 200,
+        });
+    });
+
+    test('the context hook requires a provider', () => {
+        const { controller } = createController();
+        let contextValue: unknown = null;
+
+        function Probe() {
+            contextValue = useCanvasControllerContext();
+            return null;
+        }
+
+        renderToStaticMarkup(
+            createElement(
+                CanvasControllerContext.Provider,
+                { value: controller },
+                createElement(Probe),
+            ),
+        );
+        expect(contextValue).toBe(controller);
+
+        expect(() => {
+            renderToStaticMarkup(createElement(Probe));
+        }).toThrow('CanvasControllerContext is null');
     });
 });

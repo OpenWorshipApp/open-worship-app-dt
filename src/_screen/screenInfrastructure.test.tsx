@@ -537,6 +537,37 @@ describe('screen infrastructure', () => {
             type: 'bg-color',
             item: '#fff',
         });
+
+        // the animation pair (and its duration) follows the selected effect
+        expect(effectManager.styleAnim).toBe(effectManager.styleAnimList.move);
+        expect(effectManager.duration).toBe(
+            effectManager.styleAnimList.move.duration,
+        );
+
+        // a deleted screen leaves the manager pointing at an inert ghost
+        effectManager.delete();
+        expect(
+            screenManagerBase.createScreenManagerBaseGhost,
+        ).toHaveBeenCalledWith(5);
+        expect(effectManager.screenManagerBase).not.toBe(screenManagerBase);
+    });
+
+    test('looks screen managers up by key and drops them from the cache', async () => {
+        const baseHelpers = await import('./managers/screenManagerBaseHelpers');
+
+        baseHelpers.cache.clear();
+        const selected = { key: '3', screenId: 3, isSelected: true } as any;
+        const unselected = { key: '4', screenId: 4, isSelected: false } as any;
+        baseHelpers.setScreenManagerBaseCache(selected);
+        baseHelpers.setScreenManagerBaseCache(unselected);
+
+        expect(baseHelpers.getSelectedScreenManagerBases()).toEqual([selected]);
+        expect(baseHelpers.getScreenManagerBaseByKey('4')).toBe(unselected);
+        expect(baseHelpers.getScreenManagerBaseByKey('99')).toBeNull();
+
+        baseHelpers.deleteScreenManagerBaseCache('4');
+        expect(baseHelpers.getScreenManagerBaseByKey('4')).toBeNull();
+        baseHelpers.cache.clear();
     });
 
     test('manages cached screen-manager settings and display helpers', async () => {

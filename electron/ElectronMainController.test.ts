@@ -153,4 +153,96 @@ describe('ElectronMainController', () => {
         );
         processExit.mockRestore();
     });
+
+    test('closing the main window ends the process', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        try {
+            const controller = new ElectronMainController({
+                mainHtmlPath: 'presenter.html',
+            } as any);
+
+            const closedHandler = (controller.win.on as any).mock.calls.find(
+                ([eventName]: [string]) => eventName === 'closed',
+            )?.[1];
+            closedHandler();
+            expect(processExit).toHaveBeenCalledWith(0);
+
+            controller.close();
+            expect(attemptClosing).toHaveBeenCalledWith(controller.win);
+            expect(processExit).toHaveBeenCalledTimes(2);
+        } finally {
+            processExit.mockRestore();
+        }
+    });
+
+    test('spelling suggestions become a context menu that fixes the word', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        try {
+            const controller = new ElectronMainController({
+                mainHtmlPath: 'presenter.html',
+            } as any);
+            const contextMenuHandler = (
+                controller.win.webContents.on as any
+            ).mock.calls.find(
+                ([eventName]: [string]) => eventName === 'context-menu',
+            )?.[1];
+
+            // nothing misspelled: no menu at all
+            contextMenuHandler({}, { dictionarySuggestions: [] });
+            expect(electronMockState.MenuItem).not.toHaveBeenCalled();
+
+            contextMenuHandler(
+                {},
+                { dictionarySuggestions: ['grace', 'grade'] },
+            );
+            expect(electronMockState.MenuItem).toHaveBeenCalledTimes(2);
+
+            const [{ click }] = electronMockState.MenuItem.mock.calls[0];
+            click();
+            expect(
+                controller.win.webContents.replaceMisspelling,
+            ).toHaveBeenCalledWith('grace');
+        } finally {
+            processExit.mockRestore();
+        }
+    });
+
+    test('forwards bible navigation, scrolling, and screen invisibility', () => {
+        const processExit = vi
+            .spyOn(process, 'exit')
+            .mockImplementation((() => undefined) as any);
+        try {
+            const controller = new ElectronMainController({
+                mainHtmlPath: 'presenter.html',
+            } as any);
+
+            controller.changeBible(true);
+            expect(controller.win.webContents.send).toHaveBeenCalledWith(
+                'app:main:change-bible',
+                true,
+            );
+
+            controller.ctrlScrolling(false);
+            expect(controller.win.webContents.send).toHaveBeenCalledWith(
+                'app:main:ctrl-scrolling',
+                false,
+            );
+
+            controller.sendNotifyInvisibility(5);
+            expect(controller.win.webContents.send).toHaveBeenCalledWith(
+                'app:screen:message',
+                {
+                    screenId: 5,
+                    type: 'visible',
+                    data: { isShowing: false },
+                },
+            );
+        } finally {
+            processExit.mockRestore();
+        }
+    });
 });

@@ -12,6 +12,11 @@ const {
     pathBasenameMock,
     pathJoinMock,
     tarExtractMock,
+    tarCreateMock,
+    fsCloneFileMock,
+    fsCreateFileMock,
+    selectFilesMock,
+    showFileOrDirExplorerMock,
 } = vi.hoisted(() => ({
     ensureDirectoryMock: vi.fn(),
     fsCheckFileExistMock: vi.fn(),
@@ -24,6 +29,11 @@ const {
     }),
     pathJoinMock: vi.fn((...parts: string[]) => parts.join('/')),
     tarExtractMock: vi.fn(),
+    tarCreateMock: vi.fn(),
+    fsCloneFileMock: vi.fn(),
+    fsCreateFileMock: vi.fn(),
+    selectFilesMock: vi.fn(),
+    showFileOrDirExplorerMock: vi.fn(),
 }));
 
 vi.mock('../../helper/errorHelpers', () => ({
@@ -32,8 +42,8 @@ vi.mock('../../helper/errorHelpers', () => ({
 
 vi.mock('../../helper/FileSource', () => ({
     default: {
-        getInstance: vi.fn(() => ({
-            genNextFilePath: vi.fn(),
+        getInstance: vi.fn((filePath: string) => ({
+            genNextFilePath: vi.fn(async () => filePath),
         })),
     },
 }));
@@ -45,24 +55,24 @@ vi.mock('../../setting/directory-setting/appLocalStorage', () => ({
 }));
 
 vi.mock('../../server/appHelpers', () => ({
-    showFileOrDirExplorer: vi.fn(),
-    tarCreate: vi.fn(),
+    showFileOrDirExplorer: showFileOrDirExplorerMock,
+    tarCreate: tarCreateMock,
     tarExtract: tarExtractMock,
 }));
 
 vi.mock('../../server/fileHelpers', () => ({
     ensureDirectory: ensureDirectoryMock,
     fsCheckFileExist: fsCheckFileExistMock,
-    fsCloneFile: vi.fn(),
+    fsCloneFile: fsCloneFileMock,
     fsCopyFilePathToPath: fsCopyFilePathToPathMock,
-    fsCreateFile: vi.fn(),
+    fsCreateFile: fsCreateFileMock,
     fsDeleteDir: fsDeleteDirMock,
     fsReadFile: fsReadFileMock,
     getDownloadPath: vi.fn(() => '/downloads'),
     getTempPath: vi.fn(() => '/system-temp'),
     pathBasename: pathBasenameMock,
     pathJoin: pathJoinMock,
-    selectFiles: vi.fn(),
+    selectFiles: selectFilesMock,
 }));
 
 vi.mock('../../toast/toastHelpers', () => ({
@@ -172,5 +182,57 @@ describe('bibleNoteItemArchive import', () => {
             json: noteItemFromJsonMock.mock.calls[0][0],
         });
         expect(fsDeleteDirMock).toHaveBeenCalledWith(extractDir);
+    });
+    test('exporting stages the note item, its files, and a manifest', async () => {
+        const { createBibleNoteItemArchive, exportBibleNoteItem } =
+            await loadModule();
+        const noteItem = {
+            title: 'My Note',
+            content: JSON.stringify({
+                root: { children: [{ appFilePath: '/media/alpha.png' }] },
+            }),
+            toJson: () => ({ title: 'My Note' }),
+        } as any;
+
+        const archiveFilePath = await createBibleNoteItemArchive(noteItem);
+
+        expect(archiveFilePath).toContain('/downloads/');
+        // the note item, the manifest, and the embedded files folder
+        const [, , archiveEntries] = tarCreateMock.mock.calls[0];
+        expect(archiveEntries).toEqual([
+            'manifest.json',
+            'note-item.json',
+            'files',
+        ]);
+        expect(fsCloneFileMock).toHaveBeenCalledWith(
+            '/media/alpha.png',
+            expect.stringContaining('001-alpha.png'),
+        );
+        expect(fsDeleteDirMock).toHaveBeenCalled();
+
+        await expect(exportBibleNoteItem(noteItem)).resolves.toBe(
+            archiveFilePath,
+        );
+        expect(showFileOrDirExplorerMock).toHaveBeenCalledWith(archiveFilePath);
+
+        // a missing embedded file aborts the export instead of shipping a
+        // broken archive
+        fsCheckFileExistMock.mockResolvedValueOnce(false);
+        await expect(exportBibleNoteItem(noteItem)).resolves.toBeNull();
+    });
+
+    test('importing is cancelled when no archive is picked', async () => {
+        const { selectAndImportBibleNoteItemArchive } = await loadModule();
+        const note = { filePath: '/notes/note.owan' } as any;
+
+        selectFilesMock.mockResolvedValue([]);
+        await expect(
+            selectAndImportBibleNoteItemArchive(note),
+        ).resolves.toBeNull();
+
+        selectFilesMock.mockRejectedValue(new Error('dialog failed'));
+        await expect(
+            selectAndImportBibleNoteItemArchive(note),
+        ).resolves.toBeNull();
     });
 });

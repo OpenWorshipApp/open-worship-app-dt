@@ -13,6 +13,8 @@ const {
     getDocxDataMock,
     getDocxToHtmlsVersionMock,
     removeDocxHtmlsPreviewMock,
+    getPptxMissingFontFamilyListMock,
+    getDocxMissingFontFamilyListMock,
     handleErrorMock,
     appLogMock,
     pathJoinMock,
@@ -29,6 +31,8 @@ const {
     getDocxDataMock: vi.fn(),
     getDocxToHtmlsVersionMock: vi.fn(),
     removeDocxHtmlsPreviewMock: vi.fn(),
+    getPptxMissingFontFamilyListMock: vi.fn(),
+    getDocxMissingFontFamilyListMock: vi.fn(),
     handleErrorMock: vi.fn(),
     appLogMock: vi.fn(),
     pathJoinMock: vi.fn(),
@@ -68,12 +72,14 @@ vi.mock('../helper/pdfHelpers', () => ({
 
 vi.mock('../server/pptxHelpers', () => ({
     getPptxData: getPptxDataMock,
+    getPptxMissingFontFamilyList: getPptxMissingFontFamilyListMock,
     getPptxToHtmlsVersion: getPptxToHtmlsVersionMock,
     removePptxHtmlsPreview: removePptxHtmlsPreviewMock,
 }));
 
 vi.mock('../server/docxHelpers', () => ({
     getDocxData: getDocxDataMock,
+    getDocxMissingFontFamilyList: getDocxMissingFontFamilyListMock,
     getDocxToHtmlsVersion: getDocxToHtmlsVersionMock,
     removeDocxHtmlsPreview: removeDocxHtmlsPreviewMock,
 }));
@@ -354,5 +360,61 @@ describe('document variants', () => {
             await new DocxAppDocument('/docs/error.docx').getSlides(),
         ).toEqual([]);
         expect(handleErrorMock).toHaveBeenCalled();
+    });
+    test('read-only documents refuse every mutation', async () => {
+        const documents = [
+            new PdfAppDocument('/docs/read-only.pdf'),
+            new PptxAppDocument('/docs/read-only.pptx'),
+            new DocxAppDocument('/docs/read-only.docx'),
+        ];
+
+        for (const appDocument of documents) {
+            expect(appDocument.isEditable).toBe(false);
+            expect(() => appDocument.setMetadata({})).toThrow(
+                'Method not implemented.',
+            );
+            expect(() => appDocument.setSlides([])).toThrow(
+                'Method not implemented.',
+            );
+            expect(() => appDocument.setItemById(1, {} as any)).toThrow(
+                'Method not implemented.',
+            );
+
+            const event = { stopPropagation: vi.fn() };
+            appDocument.showSlideContextMenu(event, { id: 1 } as any);
+            expect(showStaticSlideContextMenuMock).toHaveBeenCalledWith(
+                event,
+                { id: 1 },
+                [],
+            );
+        }
+    });
+
+    test('office documents expose no metadata and report missing fonts', async () => {
+        appLogMock.mockClear();
+        const pptxAppDocument = new PptxAppDocument('/docs/deck.pptx');
+        const docxAppDocument = new DocxAppDocument('/docs/handout.docx');
+
+        await expect(pptxAppDocument.getMetadata()).resolves.toEqual({});
+        await expect(docxAppDocument.getMetadata()).resolves.toEqual({});
+
+        await pptxAppDocument.showContextMenu({});
+        await docxAppDocument.showContextMenu({});
+        expect(appLogMock).toHaveBeenCalledTimes(2);
+
+        getPptxMissingFontFamilyListMock.mockResolvedValue(['Khmer OS']);
+        getDocxMissingFontFamilyListMock.mockResolvedValue([]);
+        await expect(
+            pptxAppDocument.getMissingFontFamilyList(),
+        ).resolves.toEqual(['Khmer OS']);
+        expect(getPptxMissingFontFamilyListMock).toHaveBeenCalledWith(
+            '/docs/deck.pptx',
+        );
+        await expect(
+            docxAppDocument.getMissingFontFamilyList(),
+        ).resolves.toEqual([]);
+        expect(getDocxMissingFontFamilyListMock).toHaveBeenCalledWith(
+            '/docs/handout.docx',
+        );
     });
 });

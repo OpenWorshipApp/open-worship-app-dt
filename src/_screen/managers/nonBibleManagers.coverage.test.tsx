@@ -1207,4 +1207,105 @@ describe('non-Bible manager coverage', () => {
         manager.clear();
         expect(manager.varySlideData).toBeNull();
     });
+    test('background group membership, sync adoption, and container style', async () => {
+        const base = createScreenManagerBase(24);
+        const manager = new ScreenBackgroundManager(
+            base,
+            createEffectManager(),
+        );
+
+        await expect(manager.getMemberInstances()).resolves.toEqual([]);
+        await expect(manager.getMemberIds()).resolves.toEqual([]);
+        await expect(manager.checkIsMainInstance()).resolves.toBe(false);
+
+        manager.receiveSyncScreen({
+            screenId: 24,
+            type: 'background',
+            data: { type: 'color', src: '#123456' },
+        } as any);
+        expect(manager.backgroundSrc).toEqual({
+            type: 'color',
+            src: '#123456',
+        });
+
+        expect(manager.containerStyle).toEqual({
+            pointerEvents: 'none',
+            position: 'absolute',
+            width: '1280px',
+            height: '720px',
+            overflow: 'hidden',
+        });
+
+        // picking the background that is already showing clears it
+        await manager.applyBackgroundSrc('color', { src: '#123456' } as any);
+        expect(manager.backgroundSrc).toBeNull();
+
+        await manager.applyBackgroundSrc('color', {
+            src: '#654321',
+            scaleType: 'cover',
+        } as any);
+        expect(manager.backgroundSrc).toEqual(
+            expect.objectContaining({ src: '#654321', scaleType: 'cover' }),
+        );
+
+        // an explicit "no background" also clears
+        await manager.applyBackgroundSrc('color', { src: null } as any);
+        expect(manager.backgroundSrc).toBeNull();
+    });
+
+    test('the end-of-video fade waits out the whole fade before swapping', async () => {
+        vi.useFakeTimers();
+        try {
+            const base = createScreenManagerBase(25);
+            const manager = new ScreenBackgroundManager(
+                base,
+                createEffectManager(),
+            );
+            const container = document.createElement('div');
+            const video = document.createElement('video');
+            video.id = 'video-ending';
+            Object.defineProperties(video, {
+                currentTime: { configurable: true, writable: true, value: 8 },
+                duration: { configurable: true, writable: true, value: 10 },
+            });
+            container.appendChild(video);
+            mocks.getIsFadingAtTheEndSetting.mockReturnValue(true);
+            const renderSpy = vi
+                .spyOn(manager, 'render')
+                .mockImplementation(() => {});
+
+            manager._handleBackgroundVideo(container);
+            video.dispatchEvent(new Event('timeupdate'));
+
+            const [animData] = renderSpy.mock.calls.at(-1) as any;
+            const animOutPromise = animData.animOut();
+            let isSettled = false;
+            void animOutPromise.then(() => {
+                isSettled = true;
+            });
+
+            await vi.advanceTimersByTimeAsync(animData.duration);
+            expect(isSettled).toBe(false);
+
+            await vi.advanceTimersByTimeAsync(1000);
+            await animOutPromise;
+            expect(isSettled).toBe(true);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('the fading-at-end preference defaults to on', async () => {
+        const {
+            getIsFadingAtEndSetting,
+            BACKGROUND_VIDEO_FADING_SETTING_NAME,
+        } = await import('./ScreenBackgroundManager');
+
+        mocks.getSetting.mockReturnValue(undefined);
+        expect(getIsFadingAtEndSetting()).toBe(true);
+
+        mocks.getSetting.mockReturnValue('false');
+        expect(getIsFadingAtEndSetting()).toBe(false);
+        expect(BACKGROUND_VIDEO_FADING_SETTING_NAME).toContain('fading-at-end');
+    });
 });

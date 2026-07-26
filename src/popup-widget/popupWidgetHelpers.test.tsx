@@ -3,6 +3,7 @@
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 
 import {
+    attemptLocking,
     popupWidgetManager,
     showAppAlert,
     showAppConfirm,
@@ -104,5 +105,50 @@ describe('popupWidgetHelpers', () => {
         alertPayload.onClose();
 
         await expect(promise).resolves.toBeUndefined();
+    });
+    test('only one locking popup is open at a time', async () => {
+        vi.useFakeTimers();
+        try {
+            await attemptLocking('confirm', false);
+
+            // a second popup waits for the first to release the lock
+            let isSecondLocked = false;
+            const secondLocking = attemptLocking('input', false).then(() => {
+                isSecondLocked = true;
+            });
+            await vi.advanceTimersByTimeAsync(1000);
+            expect(isSecondLocked).toBe(false);
+
+            const unlocking = attemptLocking('confirm', true);
+            await vi.advanceTimersByTimeAsync(1000);
+            await unlocking;
+            await vi.advanceTimersByTimeAsync(1000);
+            await secondLocking;
+            expect(isSecondLocked).toBe(true);
+
+            await attemptLocking('input', true);
+            // unlocking an already-free lock returns straight away
+            await attemptLocking('input', true);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('the dev-only popup probe walks the confirm and input popups', async () => {
+        const tryPopup = (globalThis as any).tryPopup;
+        expect(tryPopup).toBeTypeOf('function');
+
+        popupWidgetManager.openConfirm = vi.fn((data: any) => {
+            data.onConfirm(true);
+        });
+        popupWidgetManager.openInput = vi.fn((data: any) => {
+            data.onConfirm('typed');
+        });
+        popupWidgetManager.openAlert = vi.fn((data: any) => {
+            data.onClose();
+        });
+
+        await expect(tryPopup()).resolves.toBeUndefined();
+        expect(popupWidgetManager.openConfirm).toHaveBeenCalled();
     });
 });

@@ -514,6 +514,79 @@ describe('screen render helpers', () => {
         expect(fileSourceGetInstance).toHaveBeenCalledWith('/tmp/web.html');
         expect(parent.querySelector('iframe')).not.toBeNull();
         expect(parent.textContent).toContain('Tokyo');
+
+        // clearing a layer pauses its ticker before animating the overlay out
+        await countdown.handleRemoving();
+        await stopwatch.handleRemoving();
+        await timing.handleRemoving();
+        await web.handleRemoving();
+        expect(animData.animOut).toHaveBeenCalledTimes(4);
+    });
+
+    test('a marquee only scrolls while its text overflows', async () => {
+        const { genHtmlForegroundMarquee, genHtmlForegroundQuickText } =
+            await import('./screenForegroundHelpers');
+        const observers: Array<{
+            callback: () => void;
+            element: Element | null;
+        }> = [];
+        class ResizeObserverMock {
+            constructor(callback: () => void) {
+                observers.push({ callback, element: null });
+            }
+            observe(element: Element) {
+                observers[observers.length - 1].element = element;
+            }
+            disconnect() {}
+        }
+        vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+        try {
+            const animData = {
+                duration: 0,
+                styleText: '',
+                animIn: vi.fn(async () => {}),
+                animOut: vi.fn(async () => {}),
+            };
+            genHtmlForegroundMarquee(
+                { text: 'a very long announcement', extraStyle: {} } as any,
+                animData as any,
+                'bottom' as any,
+            );
+
+            const observed = observers.at(-1);
+            expect(observed?.element).not.toBeNull();
+            const element = observed!.element as HTMLElement;
+
+            Object.defineProperties(element, {
+                offsetWidth: { configurable: true, value: 100 },
+                scrollWidth: { configurable: true, value: 400 },
+            });
+            observed!.callback();
+            expect(element.classList.contains('moving')).toBe(true);
+
+            Object.defineProperties(element, {
+                offsetWidth: { configurable: true, value: 400 },
+                scrollWidth: { configurable: true, value: 100 },
+            });
+            observed!.callback();
+            expect(element.classList.contains('moving')).toBe(false);
+
+            // a quick-text overlay disappears again once its lifetime is up
+            const quickText = genHtmlForegroundQuickText(
+                {
+                    htmlText: '<b>Welcome</b>',
+                    timeSecondDelay: 0,
+                    timeSecondToLive: 0,
+                    extraStyle: {},
+                },
+                animData,
+                vi.fn(),
+            );
+            await quickText.handleRemoving();
+            expect(animData.animOut).toHaveBeenCalled();
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 
     test('styling helpers expose current Bible style and apply updates', async () => {

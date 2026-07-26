@@ -21,6 +21,8 @@ import {
     docxToHtmls,
     exportBibleMSWord,
     getDocxToHtmlsVersion,
+    getPptxToHtmlsVersion,
+    pptxToHtmls,
     removeSlideBackground,
 } from './msHelpers';
 
@@ -137,6 +139,65 @@ describe('msHelpers', () => {
         });
 
         expect(execute).toHaveBeenCalledWith('get-docx-to-htmls-version.js', {
+            modulePath: path.resolve(
+                '/unpacked-root',
+                'node-api-dotnet',
+                'net8.0',
+            ),
+            binaryPath: path.resolve('/unpacked-root', 'ms-helpers', 'Helper'),
+            dotnetPath: path.resolve('/unpacked-root', 'dotnet-bin'),
+        });
+    });
+    test('converts PPTX decks through the worker script', async () => {
+        execute.mockResolvedValue({ isSuccessful: true });
+
+        await expect(
+            pptxToHtmls({
+                filePath: '/slides/deck.pptx',
+                outDir: '/slides/deck-htmls',
+            }),
+        ).resolves.toEqual({ isSuccessful: true });
+
+        expect(execute).toHaveBeenCalledWith('pptx-to-htmls.js', {
+            filePath: '/slides/deck.pptx',
+            outputDirectory: '/slides/deck-htmls',
+            eot2ttfPath: path.resolve(
+                '/unpacked-root',
+                'ms-helpers',
+                'tools',
+                'eot2ttf',
+                'eot2ttf',
+            ),
+            modulePath: path.resolve(
+                '/unpacked-root',
+                'node-api-dotnet',
+                'net8.0',
+            ),
+            binaryPath: path.resolve('/unpacked-root', 'ms-helpers', 'Helper'),
+            dotnetPath: path.resolve('/unpacked-root', 'dotnet-bin'),
+        });
+        // one conversion at a time per deck
+        expect(unlocking).toHaveBeenCalledWith(
+            '/slides/deck.pptx',
+            expect.any(Function),
+        );
+    });
+
+    test('gets the PPTX converter version through the worker script', async () => {
+        execute.mockResolvedValue({ version: '2.0.0' });
+
+        await expect(getPptxToHtmlsVersion({})).resolves.toEqual({
+            version: '2.0.0',
+        });
+
+        expect(execute).toHaveBeenCalledWith('get-pptx-to-htmls-version.js', {
+            eot2ttfPath: path.resolve(
+                '/unpacked-root',
+                'ms-helpers',
+                'tools',
+                'eot2ttf',
+                'eot2ttf',
+            ),
             modulePath: path.resolve(
                 '/unpacked-root',
                 'node-api-dotnet',

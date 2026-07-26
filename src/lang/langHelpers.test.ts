@@ -372,4 +372,103 @@ describe('langHelpers', () => {
         );
         expect(getLanguageTitle({ langCode: 'zz' })).toBe('Unknown');
     });
+    test('registers and forwards app menu items and their clicks', async () => {
+        const {
+            initLangAppMenu,
+            registerAppMenuClicked,
+            registerLangAppMenuClicked,
+            setAppMenuItems,
+        } = await loadLangHelpers();
+        const { default: appProvider } = await import('../server/appProvider');
+        const listenForData = vi.spyOn(
+            appProvider.messageUtils,
+            'listenForData',
+        );
+        const removeListener = vi.spyOn(
+            appProvider.messageUtils,
+            'removeListener',
+        );
+        const sendData = vi.spyOn(appProvider.messageUtils, 'sendData');
+        // jsdom has no window.open, and the real helper delegates to it
+        const openExternalURL = vi
+            .spyOn(appProvider.browserUtils, 'openExternalURL')
+            .mockImplementation(() => {});
+
+        try {
+            const handler = vi.fn();
+            const unregister = registerAppMenuClicked(handler);
+            expect(listenForData).toHaveBeenCalledWith(
+                'app:main:menu-item-clicked',
+                handler,
+            );
+            unregister();
+            expect(removeListener).toHaveBeenCalledWith(
+                'app:main:menu-item-clicked',
+                handler,
+            );
+
+            setAppMenuItems('lang', { tools: [] });
+            expect(sendData).toHaveBeenCalledWith('main:app:set-menu-items', {
+                key: 'lang',
+                menusData: { tools: [] },
+            });
+
+            // the language pack's own click handler opens its tools links
+            const unregisterLang = registerLangAppMenuClicked();
+            const langHandler = listenForData.mock.calls.at(-1)?.[1] as any;
+            langHandler(null, {});
+            expect(openExternalURL).not.toHaveBeenCalled();
+            langHandler(null, { openExternalUrl: 'https://example.com' });
+            expect(openExternalURL).toHaveBeenCalledWith('https://example.com');
+            unregisterLang();
+
+            sendData.mockClear();
+            await initLangAppMenu();
+            const [channel, payload] = sendData.mock.calls.at(-1) as any;
+            expect(channel).toBe('main:app:set-menu-items');
+            expect(payload.key).toBe('lang');
+            expect(payload.menusData).toBeTypeOf('object');
+        } finally {
+            listenForData.mockRestore();
+            removeListener.mockRestore();
+            sendData.mockRestore();
+            openExternalURL.mockRestore();
+        }
+    });
+
+    test('cross references are read through a single cached bundle reader', async () => {
+        const closeMock = vi.fn();
+        const getVerseMock = vi.fn(() => ({ refs: ['GEN 1:1'] }));
+        const constructorPaths: string[] = [];
+        vi.doMock('./BibleCrossRefBundleReader', () => ({
+            BibleCrossRefBundleReader: class {
+                constructor(bundleFilePath: string) {
+                    constructorPaths.push(bundleFilePath);
+                }
+                close = closeMock;
+                getVerse = getVerseMock;
+            },
+        }));
+        try {
+            const { getLocalBibleCrossRef } = await loadLangHelpers();
+            const targetVerse = { bookKey: 'GEN', chapter: 1, verse: 1 };
+
+            await expect(
+                getLocalBibleCrossRef('missing-locale' as any, targetVerse),
+            ).resolves.toBeNull();
+
+            await expect(
+                getLocalBibleCrossRef('km-KH', targetVerse),
+            ).resolves.toEqual({ refs: ['GEN 1:1'] });
+            expect(getVerseMock).toHaveBeenCalledWith('GEN', 1, 1);
+            expect(constructorPaths).toHaveLength(1);
+
+            // the ~1MB index read is paid once while the bundle path holds
+            await getLocalBibleCrossRef('km-KH', targetVerse);
+            expect(constructorPaths).toHaveLength(1);
+            expect(closeMock).not.toHaveBeenCalled();
+        } finally {
+            vi.doUnmock('./BibleCrossRefBundleReader');
+        }
+    });
 });

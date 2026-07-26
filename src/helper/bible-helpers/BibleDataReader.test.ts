@@ -38,6 +38,10 @@ const mocks = vi.hoisted(() => {
         ),
         readBibleXMLDataMock: vi.fn(),
         readFileDataMock: vi.fn(),
+        jsonToXMLTextMock: vi.fn(),
+        showSimpleToastMock: vi.fn(),
+        fsCheckFileExistMock: vi.fn(),
+        fsWriteFileMock: vi.fn(),
         reset() {
             cacheStores.length = 0;
         },
@@ -69,8 +73,18 @@ vi.mock('../../server/appProvider', () => ({
     },
 }));
 
+vi.mock('../../setting/bible-setting/bibleXMLJsonDataHelpers', () => ({
+    jsonToXMLText: mocks.jsonToXMLTextMock,
+}));
+
+vi.mock('../../toast/toastHelpers', () => ({
+    showSimpleToast: mocks.showSimpleToastMock,
+}));
+
 vi.mock('../../server/fileHelpers', () => ({
+    fsCheckFileExist: mocks.fsCheckFileExistMock,
     fsCreateDir: mocks.fsCreateDirMock,
+    fsWriteFile: mocks.fsWriteFileMock,
     pathJoin: mocks.pathJoinMock,
 }));
 
@@ -269,5 +283,35 @@ describe('BibleDataReader', () => {
         expect(mocks.deleteItemMock).toHaveBeenCalledTimes(2);
         expect(mocks.deleteItemMock).toHaveBeenCalledWith('key-1');
         expect(mocks.deleteItemMock).toHaveBeenCalledWith('key-2');
+    });
+    test('the bundled KJV bible is written once on first run', async () => {
+        const { default: BibleDataReader } = await loadModule();
+        const reader = new BibleDataReader();
+
+        // already on disk: nothing to write
+        mocks.fsCheckFileExistMock.mockResolvedValueOnce(true);
+        await reader.initKJVBible();
+        expect(mocks.fsWriteFileMock).not.toHaveBeenCalled();
+
+        mocks.fsCheckFileExistMock.mockResolvedValue(false);
+        mocks.jsonToXMLTextMock.mockReturnValue('<bible />');
+        await reader.initKJVBible();
+        expect(mocks.fsWriteFileMock).toHaveBeenCalledWith(
+            '/storage/bibles-data/KJV.xml',
+            '<bible />',
+        );
+        const [jsonData] = mocks.jsonToXMLTextMock.mock.calls[0];
+        expect(jsonData.info.key).toBe('KJV');
+        expect(jsonData.newLines).toEqual([]);
+
+        // an unserializable bible is reported instead of writing a broken file
+        mocks.fsWriteFileMock.mockClear();
+        mocks.jsonToXMLTextMock.mockReturnValue(null);
+        await reader.initKJVBible();
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Failed to convert KJV Bible data to XML text.',
+            'error',
+        );
+        expect(mocks.fsWriteFileMock).not.toHaveBeenCalled();
     });
 });

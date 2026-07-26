@@ -644,4 +644,47 @@ describe('bibleXMLHelpers', () => {
             }),
         );
     });
+    test('the XML info and key-list hooks load on mount', async () => {
+        const { act } = await import('react');
+        const { createRoot } = await import('react-dom/client');
+        const { useBibleXMLInfo, useBibleXMLKeys } =
+            await import('./bibleXMLHelpers');
+
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        const root = createRoot(container);
+        const observed: any[] = [];
+
+        function Probe() {
+            const info = useBibleXMLInfo('KJV');
+            const keys = useBibleXMLKeys();
+            observed.push({ info, keys });
+            return null;
+        }
+
+        await act(async () => {
+            root.render(<Probe />);
+        });
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        const latest = observed.at(-1);
+        expect(latest.info).toHaveProperty('bibleInfo');
+        expect(latest.info.setBibleInfo).toBeTypeOf('function');
+        expect(latest.keys).toHaveProperty('bibleKeysMap');
+        expect(latest.keys.loadBibleKeys).toBeTypeOf('function');
+
+        // the key list can be refreshed after an import/delete
+        await act(async () => {
+            latest.keys.loadBibleKeys();
+        });
+
+        await act(async () => {
+            root.unmount();
+        });
+        container.remove();
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
+    });
 });

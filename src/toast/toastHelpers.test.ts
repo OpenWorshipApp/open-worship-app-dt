@@ -27,4 +27,21 @@ describe('toastHelpers', () => {
             message: 'The file was saved',
         });
     });
+    test('the dev-only probe fires three staggered toasts', async () => {
+        vi.useFakeTimers();
+        try {
+            const testSimpleToasts = (globalThis as any).testSimpleToasts;
+            expect(testSimpleToasts).toBeTypeOf('function');
+
+            const pending = testSimpleToasts();
+            expect(showSimpleToastMock).toHaveBeenCalledTimes(1);
+            await vi.advanceTimersByTimeAsync(500);
+            expect(showSimpleToastMock).toHaveBeenCalledTimes(2);
+            await vi.advanceTimersByTimeAsync(500);
+            await pending;
+            expect(showSimpleToastMock).toHaveBeenCalledTimes(3);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
 });

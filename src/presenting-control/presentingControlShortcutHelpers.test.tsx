@@ -2,12 +2,18 @@
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { act } from 'react';
+import { createRoot } from 'react-dom/client';
+
 import KeyboardEventListener from '../event/KeyboardEventListener';
 import {
     PRESENTING_CONTROL_ID,
     checkIsShadowWidgetTarget,
     checkIsTypingTarget,
     swallowPresentingKeyEvent,
+    toPresentingShortcutTitle,
+    usePresentingKeyboardSwallow,
+    usePresentingToolShortcut,
 } from './presentingControlShortcutHelpers';
 
 // The two gates the controller's plain-letter keys pass through before acting.
@@ -154,7 +160,15 @@ describe('swallowPresentingKeyEvent', () => {
         KeyboardEventListener.unregisterEventListener(registeredEvents);
 
         expect(shortcutListener).toHaveBeenCalledTimes(1);
-        expect(shortcutListener.mock.calls[0][0].defaultPrevented).toBe(false);
+        const replayedEvent = shortcutListener.mock.calls[0][0];
+        expect(replayedEvent.defaultPrevented).toBe(false);
+
+        // the stand-in carries the same surface a real event does, so a
+        // listener that stops the chain still stops it
+        replayedEvent.stopPropagation();
+        replayedEvent.stopImmediatePropagation();
+        replayedEvent.preventDefault();
+        expect(replayedEvent.defaultPrevented).toBe(true);
     });
 });
 
@@ -189,5 +203,119 @@ describe('checkIsShadowWidgetTarget', () => {
         );
         expect(checkIsShadowWidgetTarget(undefined)).toBe(false);
         expect(checkIsShadowWidgetTarget({ target: null })).toBe(false);
+    });
+});
+describe('presenting control keyboard hooks', () => {
+    async function renderHook(callback: () => void) {
+        (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+        const container = document.createElement('div');
+        document.body.appendChild(container);
+        const root = createRoot(container);
+        function Probe() {
+            callback();
+            return null;
+        }
+        await act(async () => {
+            root.render(<Probe />);
+        });
+        return async () => {
+            await act(async () => {
+                root.unmount();
+            });
+            container.remove();
+            (globalThis as any).IS_REACT_ACT_ENVIRONMENT = false;
+        };
+    }
+
+    test('the swallow listener is attached and detached with the flag', async () => {
+        const addSpy = vi.spyOn(globalThis, 'addEventListener');
+        const removeSpy = vi.spyOn(globalThis, 'removeEventListener');
+        try {
+            const unmountIdle = await renderHook(() => {
+                usePresentingKeyboardSwallow(false);
+            });
+            expect(
+                addSpy.mock.calls.some(([type]) => type === 'keypress'),
+            ).toBe(false);
+            await unmountIdle();
+
+            const unmount = await renderHook(() => {
+                usePresentingKeyboardSwallow(true);
+            });
+            for (const eventType of ['keydown', 'keypress', 'keyup']) {
+                expect(
+                    addSpy.mock.calls.some(([type]) => type === eventType),
+                ).toBe(true);
+            }
+
+            // an armed overlay takes the key away from the page underneath
+            const appListener = vi.fn();
+            document.addEventListener('keydown', appListener);
+            const target = appendElement(document.createElement('div'));
+            target.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'b', bubbles: true }),
+            );
+            document.removeEventListener('keydown', appListener);
+            expect(appListener).not.toHaveBeenCalled();
+
+            await unmount();
+            for (const eventType of ['keydown', 'keypress', 'keyup']) {
+                expect(
+                    removeSpy.mock.calls.some(([type]) => type === eventType),
+                ).toBe(true);
+            }
+        } finally {
+            addSpy.mockRestore();
+            removeSpy.mockRestore();
+        }
+    });
+
+    test('a tool shortcut fires once per press and defers while typing', async () => {
+        const handle = vi.fn();
+        const unmount = await renderHook(() => {
+            usePresentingToolShortcut('usePaint', handle);
+        });
+
+        const fire = (extra: Record<string, unknown> = {}) => {
+            KeyboardEventListener.fireEvent({
+                key: 'b',
+                code: 'KeyB',
+                type: 'keydown',
+                target: document.body,
+                preventDefault: () => {},
+                stopPropagation: () => {},
+                ...extra,
+            } as any);
+        };
+
+        fire();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        expect(handle).toHaveBeenCalledTimes(1);
+
+        // a held key must not flap the tool ~30 times a second
+        fire({ repeat: true });
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        expect(handle).toHaveBeenCalledTimes(1);
+
+        // whatever holds the keyboard wins while the app underneath is live
+        const inputElement = appendElement(document.createElement('input'));
+        fire({ target: inputElement });
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        expect(handle).toHaveBeenCalledTimes(1);
+
+        await unmount();
+    });
+
+    test('shortcut titles are rendered once and then reused', () => {
+        const title = toPresentingShortcutTitle('Brush', 'usePaint');
+
+        expect(title).toContain('Brush');
+        expect(toPresentingShortcutTitle('Brush', 'usePaint')).toBe(title);
     });
 });

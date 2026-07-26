@@ -93,4 +93,18 @@ describe('screenDrawShortcutHelpers', () => {
             true,
         );
     });
+    test('shortcut labels are rendered once and reused in titles', async () => {
+        const { toShortcutKeys, toShortcutTitle } =
+            await import('./screenDrawShortcutHelpers');
+
+        const keys = toShortcutKeys('sizeUp');
+        expect(keys).toBeTypeOf('string');
+        expect(keys.length).toBeGreaterThan(0);
+        // the labels are constant for the process, so they are cached
+        expect(toShortcutKeys('sizeUp')).toBe(keys);
+
+        expect(toShortcutTitle('Size', 'sizeDown', 'sizeUp')).toBe(
+            `Size [${toShortcutKeys('sizeDown')}, ${keys}]`,
+        );
+    });
 });

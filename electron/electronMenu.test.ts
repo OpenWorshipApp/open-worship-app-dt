@@ -223,4 +223,172 @@ describe('electronMenu', () => {
         ).toBe(false);
         expect(destroyedWin.webContents.send).not.toHaveBeenCalled();
     });
+
+    test('every window, tools, and help action is wired up', async () => {
+        const appController = createAppController();
+        initMenu(appController as any);
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls[0][0];
+
+        clickItem(template, 'File', 'Print');
+        previewPrintCurrentWindow.mockRejectedValueOnce(
+            new Error('no printer'),
+        );
+        const consoleLogSpy = vi
+            .spyOn(console, 'log')
+            .mockImplementation(() => {});
+        try {
+            clickItem(template, 'File', 'Print');
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            expect(consoleLogSpy).toHaveBeenCalledWith(
+                'Print preview failed:',
+                expect.any(Error),
+            );
+        } finally {
+            consoleLogSpy.mockRestore();
+        }
+
+        clickItem(template, 'Tools', 'Copy Full Debug Info');
+        expect(copyDebugInfoToClipboard).toHaveBeenCalledWith(true);
+
+        clickItem(template, 'Tools', 'Local Web Share');
+        expect(appController.lwShareController.open).toHaveBeenCalledWith(
+            appController.mainWin,
+        );
+
+        clickItem(template, 'Window', 'Reset Position and Size');
+        expect(
+            appController.settingManager.restoreMainBounds,
+        ).toHaveBeenCalledWith(appController.mainWin);
+
+        const helpMenu = template.find((item: any) => item.role === 'help');
+        clickSubmenuItem(helpMenu, 'Learn More');
+        expect(electronMockState.shell.openExternal).toHaveBeenCalledWith(
+            expect.stringContaining('openworship'),
+        );
+
+        clickSubmenuItem(helpMenu, 'Check for Updates');
+        expect(appController.mainController.sendMessage).toHaveBeenCalledWith(
+            'main:app:check-update',
+        );
+
+        clickSubmenuItem(helpMenu, 'Check for Updates Online');
+        expect(goDownload).toHaveBeenCalledTimes(1);
+    });
+
+    test('the macOS app menu opens About and Preferences', () => {
+        withPlatform('darwin', () => {
+            const appController = createAppController();
+            initMenu(appController as any);
+            const template =
+                electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+            const appMenu = template[0];
+
+            clickSubmenuItem(appMenu, 'About Open Worship app');
+            expect(appController.openAboutPage).toHaveBeenCalledTimes(1);
+
+            clickSubmenuItem(appMenu, 'Preferences...');
+            expect(
+                appController.mainController.gotoSettingHomePage,
+            ).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    test('non-macOS gets Settings in Edit and About in Help instead', () => {
+        withPlatform('win32', () => {
+            const appController = createAppController();
+            initMenu(appController as any);
+            const template =
+                electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+
+            // no dedicated app menu on Windows/Linux
+            expect(template[0].label).toBe('File');
+
+            clickItem(template, 'Edit', 'Settings...');
+            expect(
+                appController.mainController.gotoSettingHomePage,
+            ).toHaveBeenCalledTimes(1);
+
+            const helpMenu = template.find((item: any) => item.role === 'help');
+            clickSubmenuItem(helpMenu, 'About Open Worship app');
+            expect(appController.openAboutPage).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    test('custom tool items from several renderers are ordered by owner key', () => {
+        const firstClick = vi.fn();
+        const secondClick = vi.fn();
+        setCustomMenusData('zeta', {
+            menusData: { tools: [{ label: 'Zeta Tool' }] } as any,
+            clickMenu: secondClick,
+        });
+        setCustomMenusData('alpha', {
+            menusData: { tools: [{ label: 'Alpha Tool' }] } as any,
+            clickMenu: firstClick,
+        });
+
+        try {
+            initMenu(createAppController() as any);
+            const template =
+                electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+            const toolsMenu = template.find(
+                (item: any) => item.label === 'Tools',
+            );
+            const customLabels = toolsMenu.submenu
+                .slice(-2)
+                .map((item: any) => item.label);
+
+            expect(customLabels).toEqual(['Alpha Tool', 'Zeta Tool']);
+        } finally {
+            setCustomMenusData('zeta', null);
+            setCustomMenusData('alpha', null);
+        }
+    });
 });
+
+function createAppController() {
+    return {
+        openAboutPage: vi.fn(),
+        openFindPage: vi.fn(),
+        mainController: {
+            gotoSettingHomePage: vi.fn(),
+            sendMessage: vi.fn(),
+        },
+        lwShareController: { open: vi.fn() },
+        mainWin: createMockBrowserWindow(),
+        settingManager: { restoreMainBounds: vi.fn() },
+    };
+}
+
+function clickSubmenuItem(menu: any, label: string) {
+    const item = menu.submenu.find((entry: any) => entry.label === label);
+    if (item === undefined) {
+        throw new Error(`No menu item labelled "${label}"`);
+    }
+    item.click();
+}
+
+function clickItem(template: any[], menuLabel: string, itemLabel: string) {
+    const menu = template.find((item: any) => item.label === menuLabel);
+    if (menu === undefined) {
+        throw new Error(`No menu labelled "${menuLabel}"`);
+    }
+    clickSubmenuItem(menu, itemLabel);
+}
+
+// `initMenu` branches on the host platform at call time, so both menu shapes
+// have to be exercised regardless of where the suite runs.
+function withPlatform(platform: string, callback: () => void) {
+    const descriptor = Object.getOwnPropertyDescriptor(process, 'platform');
+    Object.defineProperty(process, 'platform', {
+        configurable: true,
+        value: platform,
+    });
+    try {
+        callback();
+    } finally {
+        if (descriptor !== undefined) {
+            Object.defineProperty(process, 'platform', descriptor);
+        }
+    }
+}

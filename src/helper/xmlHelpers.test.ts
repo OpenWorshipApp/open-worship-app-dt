@@ -54,6 +54,33 @@ describe('appXMLSerializer', () => {
 });
 
 describe('optimizeXMLText', () => {
+    test('serializes doctypes and processing instructions', () => {
+        const parser = new DOMParser();
+        const serialize = (xmlText: string) => {
+            const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+            return appXMLSerializer.serializeToString(xmlDoc);
+        };
+
+        expect(
+            serialize(
+                '<!DOCTYPE bible PUBLIC "-//OWA//DTD Bible//EN" "bible.dtd">' +
+                    '<?xml-stylesheet type="text/xsl" href="b.xsl"?>' +
+                    '<bible/>',
+            ),
+        ).toContain(
+            '<!DOCTYPE bible PUBLIC "-//OWA//DTD Bible//EN" "bible.dtd">' +
+                '<?xml-stylesheet type="text/xsl" href="b.xsl"?><bible/>',
+        );
+
+        expect(
+            serialize('<!DOCTYPE bible SYSTEM "bible.dtd"><bible/>'),
+        ).toContain('<!DOCTYPE bible SYSTEM "bible.dtd"><bible/>');
+
+        expect(serialize('<!DOCTYPE bible><bible/>')).toContain(
+            '<!DOCTYPE bible><bible/>',
+        );
+    });
+
     test('returns the original XML when there are no optimization options', () => {
         const xmlText = '<bible><book key="GEN">Genesis</book></bible>';
 

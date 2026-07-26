@@ -374,4 +374,62 @@ describe('ScreenFocusManager', () => {
         });
         expect(setSettingMock).not.toHaveBeenCalled();
     });
+    test('group membership, sync payloads, and teardown', async () => {
+        const ScreenFocusManager = await importManager();
+        const base = createBase(66);
+        const manager = new ScreenFocusManager(base);
+
+        await expect(manager.getMemberInstances()).resolves.toEqual([]);
+        await expect(manager.getMemberIds()).resolves.toEqual([]);
+        await expect(manager.checkIsMainInstance()).resolves.toBe(false);
+
+        // the getter hands back a detached div until the overlay is mounted
+        expect(manager.div).toBeInstanceOf(HTMLDivElement);
+
+        await manager.sendSyncScreen();
+        expect(base.sendScreenMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ screenId: 66, type: 'focus' }),
+            false,
+        );
+        expect(manager.toSyncMessage()).toEqual({
+            type: 'focus',
+            data: {
+                isSpotlighting: manager.isSpotlighting,
+                point: null,
+                size: manager.size,
+                dimColor: manager.dimColor,
+                dimOpacity: manager.dimOpacity,
+                edgeBlur: manager.edgeBlur,
+                isContrast: manager.isContrast,
+            },
+        });
+
+        const div = mountOverlay(manager);
+        manager.setIsArmed(true);
+        press(div, 50, 25);
+        expect(manager.isSpotlighting).toBe(true);
+
+        manager.clear();
+        expect(manager.isSpotlighting).toBe(false);
+
+        setSettingMock.mockClear();
+        manager.delete();
+        // a slider drag that ended mid-debounce is flushed on teardown
+        expect(setSettingMock).toHaveBeenCalled();
+    });
+
+    test('a sync message for a closed screen is reported', async () => {
+        const ScreenFocusManager = await importManager();
+        const { showSimpleToast } = await import('../../toast/toastHelpers');
+        const manager = new ScreenFocusManager(createBase(67));
+
+        expect(ScreenFocusManager.getInstance(67)).toBe(manager);
+
+        ScreenFocusManager.receiveSyncScreen({
+            screenId: 9999,
+            type: 'focus',
+            data: null,
+        } as any);
+        expect(showSimpleToast).toHaveBeenCalled();
+    });
 });

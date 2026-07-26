@@ -91,4 +91,79 @@ describe('lwShareHelpers', () => {
             message: 'No available port found',
         });
     });
+
+    test('reports server errors and shutdown, and exposes live state', async () => {
+        const consoleLogSpy = vi
+            .spyOn(console, 'log')
+            .mockImplementation(() => {});
+        const consoleErrorSpy = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
+        try {
+            const onStatus = vi.fn();
+            const addresses = [{ address: 'http://localhost:3020', qr: 'qr' }];
+            getAddressesWithQR.mockResolvedValue(addresses);
+
+            const server = await initServer({
+                port: 3020,
+                targetDir: '/tmp/share',
+                onStatus,
+            });
+
+            expect(getRandomPort).not.toHaveBeenCalled();
+            expect(server?.getIsRunning()).toBe(false);
+
+            handlers.error(new Error('EADDRINUSE'));
+            expect(onStatus).toHaveBeenCalledWith({
+                status: 'error',
+                message: 'EADDRINUSE',
+            });
+
+            handlers.close();
+            expect(onStatus).toHaveBeenCalledWith({ status: 'stopped' });
+
+            httpServer.listening = true;
+            expect(server?.getIsRunning()).toBe(true);
+            await expect(server?.getAddressesWithQRList()).resolves.toEqual(
+                addresses,
+            );
+
+            server?.stop();
+            expect(httpServer.close).toHaveBeenCalled();
+            expect(server?.getIsRunning()).toBe(false);
+        } finally {
+            consoleLogSpy.mockRestore();
+            consoleErrorSpy.mockRestore();
+        }
+    });
+
+    test('a restart survives a close that throws', async () => {
+        const consoleLogSpy = vi
+            .spyOn(console, 'log')
+            .mockImplementation(() => {});
+        const consoleErrorSpy = vi
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
+        try {
+            const server = await initServer({
+                port: 3030,
+                targetDir: '/tmp/share',
+                onStatus: vi.fn(),
+            });
+            httpServer.close.mockImplementationOnce(() => {
+                throw new Error('not running');
+            });
+
+            server?.restart();
+
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+                'Error closing server:',
+                expect.any(Error),
+            );
+            expect(httpServer.listen).toHaveBeenCalledWith(3030);
+        } finally {
+            consoleLogSpy.mockRestore();
+            consoleErrorSpy.mockRestore();
+        }
+    });
 });

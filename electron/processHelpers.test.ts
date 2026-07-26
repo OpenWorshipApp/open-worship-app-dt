@@ -130,4 +130,24 @@ describe('processHelpers', () => {
         await expect(promise).resolves.toEqual({ done: true });
         expect(processMock.kill).toHaveBeenCalledTimes(1);
     });
+
+    test('rejects when the child process fails to start', async () => {
+        vi.doMock('./electronHelpers', () => ({ isDev: true }));
+        const handlers: Record<string, (value: any) => void> = {};
+        const processMock = {
+            on: vi.fn((event: string, handler: (value: any) => void) => {
+                handlers[event] = handler;
+            }),
+            kill: vi.fn(),
+            send: vi.fn(),
+        };
+        fork.mockReturnValue(processMock);
+
+        const { execute } = await import('./processHelpers');
+        const promise = execute('worker.js', {});
+        handlers.error(new Error('ENOENT'));
+
+        await expect(promise).rejects.toThrow('ENOENT');
+        expect(processMock.kill).toHaveBeenCalledTimes(1);
+    });
 });

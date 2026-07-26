@@ -58,6 +58,9 @@ vi.mock('./CanvasItem', () => ({
     CanvasItemError: {
         fromJsonError: canvasItemErrorFromJsonErrorMock,
     },
+    checkCanvasItemsIncludes: (canvasItems: any[], canvasItem: any) => {
+        return canvasItems.some((item) => item.id === canvasItem.id);
+    },
 }));
 
 vi.mock('../../helper/errorHelpers', () => ({
@@ -142,6 +145,13 @@ import CanvasItemHtml, { genHtmlDefaultProps } from './CanvasItemHtml';
 import CanvasItemImage from './CanvasItemImage';
 import CanvasItemText, { genTextDefaultProps } from './CanvasItemText';
 import CanvasItemVideo from './CanvasItemVideo';
+import CanvasItemWebsite from './CanvasItemWebsite';
+import CanvasItemYouTube from './CanvasItemYouTube';
+import {
+    checkIsAppendSelectionModifier,
+    getCanvasItemsInRect,
+    mergeCanvasItemSelection,
+} from './canvasSelectionHelpers';
 
 function createBaseBox(type: string) {
     return {
@@ -565,5 +575,88 @@ describe('CanvasItem models', () => {
             type: 'error',
             json: bibleJson,
         });
+    });
+    test('builds website canvas items that keep their embed ratio', () => {
+        const item = CanvasItemWebsite.genFromUrl(
+            400,
+            300,
+            'https://example.com',
+        ) as CanvasItemWebsite;
+
+        expect(item.props.url).toBe('https://example.com');
+        expect(item.props.type).toBe('website');
+        // the box is centered on the cursor
+        expect(item.props.left).toBe(0);
+        expect(item.props.top).toBe(0);
+        // it resizes like a video: ratio locked, no styling of its own
+        expect(item.shouldLockAspectRatio).toBe(true);
+        expect(item.getStyle()).toEqual({});
+        expect(item.toJson().url).toBe('https://example.com');
+
+        expect(CanvasItemWebsite.fromJson({ url: 42 } as any)).toEqual(
+            expect.objectContaining({ type: 'error' }),
+        );
+    });
+
+    test('builds YouTube canvas items with an embeddable url', () => {
+        const item = CanvasItemYouTube.genFromUrl(
+            400,
+            300,
+            'https://youtu.be/abc123',
+        ) as CanvasItemYouTube;
+
+        expect(item.shouldLockAspectRatio).toBe(true);
+        expect(item.getStyle()).toEqual({});
+        expect(item.embedUrl).toBe(
+            'https://www.youtube.com/embed/abc123?rel=0&enablejsapi=1',
+        );
+    });
+
+    test('selection helpers append, merge, and rubber-band select boxes', () => {
+        expect(
+            checkIsAppendSelectionModifier({
+                shiftKey: true,
+                ctrlKey: false,
+                metaKey: false,
+            }),
+        ).toBe(true);
+        expect(
+            checkIsAppendSelectionModifier({
+                shiftKey: false,
+                ctrlKey: false,
+                metaKey: true,
+            }),
+        ).toBe(true);
+        expect(
+            checkIsAppendSelectionModifier({
+                shiftKey: false,
+                ctrlKey: false,
+                metaKey: false,
+            }),
+        ).toBe(false);
+
+        const first = { id: 1, props: { id: 1 } } as any;
+        const second = { id: 2, props: { id: 2 } } as any;
+        expect(mergeCanvasItemSelection([first], [first, second])).toEqual([
+            first,
+            second,
+        ]);
+
+        const inside = {
+            id: 1,
+            props: { id: 1, left: 10, top: 10, width: 50, height: 50 },
+        } as any;
+        const outside = {
+            id: 2,
+            props: { id: 2, left: 500, top: 500, width: 10, height: 10 },
+        } as any;
+        expect(
+            getCanvasItemsInRect([inside, outside], {
+                minX: 0,
+                maxX: 100,
+                minY: 0,
+                maxY: 100,
+            }),
+        ).toEqual([inside]);
     });
 });

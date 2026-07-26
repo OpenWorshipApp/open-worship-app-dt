@@ -105,4 +105,31 @@ describe('ElectronAppController', () => {
         expect(mainWin.reload).toHaveBeenCalledTimes(1);
         expect(lwShareController.win.reload).toHaveBeenCalledTimes(1);
     });
+
+    test('remembers the landing page and re-syncs when the app is reactivated', async () => {
+        const { default: Controller } = await import('./ElectronAppController');
+        // `vi.resetModules()` gives the controller its own copy of the electron
+        // mock, so read it back through the same module registry
+        const { app, BrowserWindow } = (await import('electron')) as any;
+        const controller = new Controller();
+
+        // macOS keeps the app alive with no windows; reactivating rebuilds one
+        const activateHandler = app.on.mock.calls.find(
+            ([eventName]: [string]) => eventName === 'activate',
+        )?.[1] as () => void;
+        BrowserWindow.getAllWindows.mockReturnValue([{}]);
+        activateHandler();
+        expect(syncMainWindow).toHaveBeenCalledTimes(1);
+
+        BrowserWindow.getAllWindows.mockReturnValue([]);
+        activateHandler();
+        expect(syncMainWindow).toHaveBeenCalledTimes(2);
+
+        // the page the user ends up on becomes the next launch's landing page
+        const didFinishLoad = mainWin.webContents.on.mock.calls.find(
+            ([eventName]: [string]) => eventName === 'did-finish-load',
+        )?.[1] as () => void;
+        didFinishLoad();
+        expect(controller.settingManager.mainHtmlPath).toBe('setting.html');
+    });
 });

@@ -79,9 +79,48 @@ describe('ElectronScreenController', () => {
         ElectronScreenController.createInstance(1);
         ElectronScreenController.createInstance(2);
 
+        expect(ElectronScreenController.getAllIds()).toEqual([1, 2]);
+
         ElectronScreenController.closeAll();
 
         expect(attemptClosing).toHaveBeenCalledTimes(2);
         expect(ElectronScreenController.getAllIds()).toEqual([]);
+    });
+
+    test('a screen window closed by the OS drops its cached controller', () => {
+        const controller = ElectronScreenController.createInstance(9);
+
+        const closeHandler = (controller.win.on as any).mock.calls.find(
+            ([eventName]: [string]) => eventName === 'close',
+        )?.[1];
+        closeHandler();
+
+        expect(ElectronScreenController.getInstance(9)).toBeNull();
+    });
+
+    test('waits for the screen page to finish loading before it is used', async () => {
+        const controller = ElectronScreenController.createInstance(10);
+        const pending = controller.listenLoading();
+
+        const [eventName, onceHandler] = (
+            controller.win.webContents.once as any
+        ).mock.calls[0];
+        expect(eventName).toBe('did-finish-load');
+        onceHandler();
+
+        await expect(pending).resolves.toBeUndefined();
+    });
+
+    test('closes a single screen window and sends raw channel data', () => {
+        const controller = ElectronScreenController.createInstance(11);
+
+        controller.close();
+        expect(attemptClosing).toHaveBeenCalledWith(controller.win);
+
+        controller.sendData('app:screen:ping', { at: 1 });
+        expect(controller.win.webContents.send).toHaveBeenCalledWith(
+            'app:screen:ping',
+            { at: 1 },
+        );
     });
 });

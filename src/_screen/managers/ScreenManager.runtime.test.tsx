@@ -730,4 +730,126 @@ describe('ScreenManager runtime orchestration', () => {
             1,
         );
     });
+
+    test('every sub-manager can enumerate its own colour-note group', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+
+        const screenManager = new ScreenManager(11);
+        const sibling = new ScreenManager(12);
+        baseInstances.set(11, screenManager);
+        baseInstances.set(12, sibling);
+        screenManager.colorNote = 'blue';
+        sibling.colorNote = 'blue';
+
+        await expect(screenManager.getMemberInstances()).resolves.toEqual([
+            sibling,
+        ]);
+
+        const subManagerPairs = [
+            [
+                screenManager.screenBackgroundManager,
+                sibling.screenBackgroundManager,
+            ],
+            [
+                screenManager.screenVaryAppDocumentManager,
+                sibling.screenVaryAppDocumentManager,
+            ],
+            [screenManager.screenDrawManager, sibling.screenDrawManager],
+            [screenManager.screenFocusManager, sibling.screenFocusManager],
+        ];
+        for (const [subManager, siblingSubManager] of subManagerPairs) {
+            await expect(subManager.getMemberInstances()).resolves.toEqual([
+                siblingSubManager,
+            ]);
+            await expect(subManager.getMemberIds()).resolves.toEqual([12]);
+            // the lowest screen id in the group drives the shared state
+            await expect(subManager.checkIsMainInstance()).resolves.toBe(true);
+            await expect(siblingSubManager.checkIsMainInstance()).resolves.toBe(
+                false,
+            );
+        }
+    });
+
+    test('showing a slide clears the bible view and the other way round', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(13);
+
+        const varyListener = (
+            screenManager.screenVaryAppDocumentManager
+                .registerEventListener as any
+        ).mock.calls[0][1];
+        const bibleListener = (
+            screenManager.screenBibleManager.registerEventListener as any
+        ).mock.calls[0][1];
+
+        varyListener();
+        expect(screenManager.screenBibleManager.clear).toHaveBeenCalledTimes(1);
+
+        bibleListener();
+        expect(
+            screenManager.screenVaryAppDocumentManager.clear,
+        ).toHaveBeenCalledTimes(1);
+
+        // nothing on screen: no cross-clearing
+        (screenManager.screenVaryAppDocumentManager as any).isShowing = false;
+        (screenManager.screenBibleManager as any).isShowing = false;
+        varyListener();
+        bibleListener();
+        expect(screenManager.screenBibleManager.clear).toHaveBeenCalledTimes(1);
+        expect(
+            screenManager.screenVaryAppDocumentManager.clear,
+        ).toHaveBeenCalledTimes(1);
+    });
+
+    test('reads back the persisted stage number and selection', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(14);
+
+        screenManager.stageNumber = 3;
+        expect(screenManager.stageNumber).toBe(3);
+
+        screenManager.isSelected = true;
+        expect(screenManager.isSelected).toBe(true);
+    });
+
+    test('an init message re-syncs once more after the screen has settled', async () => {
+        vi.useFakeTimers();
+        try {
+            const { default: ScreenManager } = await import('./ScreenManager');
+            const screenManager = new ScreenManager(15);
+            baseInstances.set(15, screenManager);
+            (screenManager as any).sendSyncScreen = vi.fn();
+
+            ScreenManager.applyScreenManagerSyncScreen({
+                screenId: 15,
+                type: 'init',
+                data: {},
+            } as any);
+            expect(screenManager.sendSyncScreen).toHaveBeenCalledTimes(1);
+
+            // bible styling settles late, so the sync is repeated
+            vi.advanceTimersByTime(2000);
+            expect(screenManager.sendSyncScreen).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('the screen message channel is wired to the sync handler', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(16);
+        baseInstances.set(16, screenManager);
+        (screenManager as any).sendSyncScreen = vi.fn();
+
+        ScreenManager.initReceiveScreenMessage();
+
+        const [channel, listener] = listenForDataMock.mock.calls.at(-1) as any;
+        expect(channel).toBe('screen-message-channel');
+        listener(null, {
+            screenId: 16,
+            type: 'visible',
+            data: { isShowing: true },
+        });
+        expect(screenManager.isShowing).toBe(true);
+    });
 });

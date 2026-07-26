@@ -33,6 +33,28 @@ vi.mock('../lang/langHelpers', () => ({
     tran: tranMock,
 }));
 
+// jsdom's `Blob` has no `stream()`, which `fsCloneFile` needs to pipe an
+// uploaded file onto disk
+function createUploadFile(
+    content: string,
+    fileName: string,
+    type = 'text/plain',
+) {
+    const file = new File([content], fileName, { type });
+    Object.defineProperty(file, 'stream', {
+        configurable: true,
+        value: () => {
+            return new ReadableStream({
+                start(controller) {
+                    controller.enqueue(new TextEncoder().encode(content));
+                    controller.close();
+                },
+            });
+        },
+    });
+    return file;
+}
+
 async function loadModules(pathname = '/setting.html') {
     vi.resetModules();
     globalThis.localStorage.clear();
@@ -335,5 +357,304 @@ describe('fileHelpers', () => {
         expect(appProvider.getIsMouseOverApp()).toBe(false);
         vi.spyOn(document, 'hasFocus').mockReturnValue(true);
         expect(appProvider.getIsWindowFocused()).toBe(true);
+    });
+
+    test('normalizes the root path and rejects unknown mimetypes', async () => {
+        const { fileHelpers } = await loadModules();
+
+        // the resolved root ends with the separator and is trimmed away
+        expect(fileHelpers.pathResolve('/')).toBe('');
+        expect(fileHelpers.getFileMetaData('archive.unknownext')).toBeNull();
+    });
+
+    test('exposes read and write streams for a path', async () => {
+        const { fileHelpers } = await loadModules();
+        const filePath = '/browser-data/streams/note.txt';
+
+        await fileHelpers.fsCreateDir('/browser-data/streams');
+
+        const writeStream = fileHelpers.fsCreateWriteStream(filePath);
+        const closePromise = new Promise<void>((resolve) => {
+            writeStream.once('close', resolve);
+        });
+        writeStream.write('streamed');
+        writeStream.end();
+        await closePromise;
+
+        expect(await fileHelpers.fsReadFile(filePath)).toBe('streamed');
+        expect(fileHelpers.fsCreateReadStream(filePath)).toBeDefined();
+    });
+
+    test('existence checks short-circuit and surface unexpected stat errors', async () => {
+        const { fileHelpers, appProvider } = await loadModules();
+
+        expect(await fileHelpers.fsCheckDirExist('')).toBe(false);
+        expect(await fileHelpers.fsCheckFileExist('')).toBe(false);
+
+        // a non-ENOENT failure is a real problem, not a missing file
+        const statError: any = new Error('permission denied');
+        statError.code = 'EACCES';
+        vi.spyOn(appProvider.fileUtils, 'stat').mockImplementation(((
+            _filePath: string,
+            callback: (error: any) => void,
+        ) => {
+            callback(statError);
+        }) as any);
+
+        await expect(
+            fileHelpers.fsCheckFileExist('/browser-data/locked.txt'),
+        ).rejects.toThrow('Error during checking file exist');
+        expect(handleErrorMock).toHaveBeenCalledWith(statError);
+    });
+
+    test('reads a file size and refuses directories', async () => {
+        const { fileHelpers, appProvider } = await loadModules();
+        const dirPath = '/browser-data/sizes';
+
+        await fileHelpers.fsCreateDir(dirPath);
+        await expect(fileHelpers.fsGetFileSize(dirPath)).rejects.toThrow(
+            'Path is not a file',
+        );
+
+        vi.spyOn(appProvider.fileUtils, 'stat').mockImplementation(((
+            _filePath: string,
+            callback: (error: any, stat: any) => void,
+        ) => {
+            callback(null, {
+                isFile: () => true,
+                isDirectory: () => false,
+                size: 42,
+            });
+        }) as any);
+        await expect(
+            fileHelpers.fsGetFileSize(`${dirPath}/note.txt`),
+        ).resolves.toBe(42);
+    });
+
+    test('listing helpers tolerate an empty directory path and listing errors', async () => {
+        const { fileHelpers, appProvider } = await loadModules();
+
+        expect(await fileHelpers.fsList('')).toEqual([]);
+        expect(await fileHelpers.fsListFilesWithMimetype('', 'image')).toEqual(
+            [],
+        );
+
+        vi.spyOn(appProvider.fileUtils, 'readdir').mockImplementation(((
+            _dirPath: string,
+            callback: (error: any) => void,
+        ) => {
+            callback(new Error('cannot read directory'));
+        }) as any);
+        await expect(
+            fileHelpers.fsListFilesWithMimetype(
+                '/browser-data/missing',
+                'image',
+            ),
+        ).resolves.toBeNull();
+        expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Getting File List',
+            'Error occurred during listing file',
+        );
+    });
+
+    test('rename, delete, and unlink guard against the wrong kind of path', async () => {
+        const { fileHelpers } = await loadModules();
+        const baseDir = '/browser-data/guards';
+
+        await fileHelpers.fsCreateDir(baseDir);
+        await fileHelpers.fsCreateFile(`${baseDir}/one.txt`, 'one');
+        await fileHelpers.fsCreateFile(`${baseDir}/two.txt`, 'two');
+        await fileHelpers.fsCreateDir(`${baseDir}/folder`);
+
+        await expect(
+            fileHelpers.fsRenameFile(baseDir, 'missing.txt', 'other.txt'),
+        ).rejects.toThrow('File not exist');
+        await expect(
+            fileHelpers.fsRenameFile(baseDir, 'one.txt', 'two.txt'),
+        ).rejects.toThrow('File exist');
+
+        await expect(
+            fileHelpers.fsDeleteFile(`${baseDir}/folder`),
+        ).rejects.toThrow(`${baseDir}/folder is not a file`);
+        await expect(
+            fileHelpers.fsDeleteDir(`${baseDir}/one.txt`),
+        ).rejects.toThrow(`${baseDir}/one.txt is not a directory`);
+
+        // deleting something already gone is a no-op
+        await expect(
+            fileHelpers.fsDeleteFile(`${baseDir}/missing.txt`),
+        ).resolves.toBeUndefined();
+
+        fileHelpers.fsUnlinkSync(`${baseDir}/two.txt`);
+        expect(fileHelpers.fsExistSync(`${baseDir}/two.txt`)).toBe(false);
+    });
+
+    test('copies an uploaded File using its own name', async () => {
+        const { fileHelpers } = await loadModules();
+        const copyDir = '/browser-data/uploads';
+
+        await fileHelpers.fsCreateDir(copyDir);
+        const uploadedFile = createUploadFile('alpha', 'upload.txt');
+
+        await expect(
+            fileHelpers.fsCopyFilePathToPath(uploadedFile, copyDir),
+        ).resolves.toBe(`${copyDir}/upload.txt`);
+        expect(await fileHelpers.fsReadFile(`${copyDir}/upload.txt`)).toBe(
+            'alpha',
+        );
+    });
+
+    test('clones an uploaded File through the write stream', async () => {
+        const { fileHelpers } = await loadModules();
+        const destDir = '/browser-data/clones';
+
+        await fileHelpers.fsCreateDir(destDir);
+        const file = createUploadFile('cloned content', 'clone.txt');
+
+        await fileHelpers.fsCloneFile(file, `${destDir}/clone.txt`);
+
+        expect(await fileHelpers.fsReadFile(`${destDir}/clone.txt`)).toBe(
+            'cloned content',
+        );
+    });
+
+    test('clone honors backpressure, disk errors, and aborted sources', async () => {
+        const { fileHelpers, appProvider } = await loadModules();
+        const destPath = '/browser-data/clones/stub.txt';
+
+        function createStubWriteStream() {
+            const listeners = new Map<string, ((...args: any[]) => void)[]>();
+            const stream: any = {
+                writtenChunks: [] as unknown[],
+                isEnded: false,
+                isDestroyed: false,
+                // when the next write should report a full buffer
+                pendingWriteResults: [] as boolean[],
+                errorOnWrite: null as Error | null,
+                on(event: string, listener: (...args: any[]) => void) {
+                    listeners.set(event, [
+                        ...(listeners.get(event) ?? []),
+                        listener,
+                    ]);
+                    return stream;
+                },
+                once(event: string, listener: (...args: any[]) => void) {
+                    return stream.on(event, listener);
+                },
+                emit(event: string, ...args: unknown[]) {
+                    for (const listener of [...(listeners.get(event) ?? [])]) {
+                        listener(...args);
+                    }
+                },
+                write(chunk: unknown) {
+                    stream.writtenChunks.push(chunk);
+                    if (stream.errorOnWrite !== null) {
+                        stream.emit('error', stream.errorOnWrite);
+                    }
+                    const result = stream.pendingWriteResults.length
+                        ? stream.pendingWriteResults.shift()
+                        : true;
+                    if (result === false) {
+                        queueMicrotask(() => {
+                            stream.emit('drain');
+                        });
+                    }
+                    return result;
+                },
+                end() {
+                    stream.isEnded = true;
+                    stream.emit('close');
+                },
+                destroy() {
+                    stream.isDestroyed = true;
+                },
+            };
+            return stream;
+        }
+
+        let stubStream = createStubWriteStream();
+        vi.spyOn(appProvider.fileUtils, 'createWriteStream').mockImplementation(
+            (() => {
+                return stubStream;
+            }) as any,
+        );
+
+        // a full write buffer makes the source wait for 'drain'
+        stubStream.pendingWriteResults.push(false);
+        await fileHelpers.fsCloneFile(
+            createUploadFile('backpressure', 'a.txt'),
+            destPath,
+        );
+        expect(stubStream.isEnded).toBe(true);
+        expect(stubStream.isDestroyed).toBe(false);
+
+        // a disk error settles the clone exactly once, even when the stream
+        // keeps emitting afterwards
+        stubStream = createStubWriteStream();
+        const diskError = new Error('disk full');
+        stubStream.errorOnWrite = diskError;
+        await expect(
+            fileHelpers.fsCloneFile(
+                createUploadFile('boom', 'b.txt'),
+                destPath,
+            ),
+        ).rejects.toThrow('disk full');
+        expect(stubStream.isDestroyed).toBe(true);
+        stubStream.emit('error', diskError);
+        stubStream.emit('close');
+
+        // a source that fails mid-read aborts the destination
+        stubStream = createStubWriteStream();
+        const abortedFile = createUploadFile('x', 'c.txt');
+        Object.defineProperty(abortedFile, 'stream', {
+            configurable: true,
+            value: () => {
+                return new ReadableStream({
+                    start(controller) {
+                        controller.error(new Error('source failed'));
+                    },
+                });
+            },
+        });
+        await expect(
+            fileHelpers.fsCloneFile(abortedFile, destPath),
+        ).rejects.toThrow('source failed');
+        expect(stubStream.isDestroyed).toBe(true);
+    });
+
+    test('base64 conversion reports reader and network failures', async () => {
+        const { fileHelpers } = await loadModules();
+
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                blob: async () => new Blob(['hello'], { type: 'text/plain' }),
+            })),
+        );
+        vi.stubGlobal(
+            'FileReader',
+            class {
+                onloadend: (() => void) | null = null;
+                onerror: ((error: unknown) => void) | null = null;
+                result: string | null = null;
+                readAsDataURL() {
+                    this.onerror?.('boom');
+                }
+            },
+        );
+        await expect(fileHelpers.getFileBase64('/remote')).rejects.toThrow(
+            'Error reading blob as base64: boom',
+        );
+
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => {
+                throw new Error('offline');
+            }),
+        );
+        await expect(fileHelpers.getFileBase64('/remote')).rejects.toThrow(
+            'offline',
+        );
     });
 });

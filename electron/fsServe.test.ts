@@ -246,4 +246,64 @@ describe('fsServe', () => {
             },
         });
     });
+
+    test('overwrites an app-origin referrer regardless of its header casing', () => {
+        initCustomSchemeHandler();
+
+        const onBeforeSendHeaders =
+            electronMockState.session.defaultSession.webRequest
+                .onBeforeSendHeaders;
+        const requestCallback = vi.fn();
+        onBeforeSendHeaders.mock.calls[0][1](
+            {
+                id: 10,
+                url: 'https://example.com/resource.json',
+                requestHeaders: {
+                    Referer: `${rootUrl}/${htmlFiles.bibleNote}`,
+                },
+            },
+            requestCallback,
+        );
+
+        expect(requestCallback).toHaveBeenCalledWith({
+            requestHeaders: {
+                Referer: 'https://www.openworship.app/',
+            },
+        });
+    });
+
+    test('an aborted request releases its tracked CORS state', () => {
+        initCustomSchemeHandler();
+
+        const { webRequest } = electronMockState.session.defaultSession;
+        const requestCallback = vi.fn();
+        webRequest.onBeforeSendHeaders.mock.calls[0][1](
+            {
+                id: 11,
+                url: 'https://example.com/resource.json',
+                requestHeaders: {
+                    Origin: 'https://example.org',
+                    'Access-Control-Request-Headers': 'x-api-key',
+                },
+            },
+            requestCallback,
+        );
+
+        // the request never reaches onHeadersReceived
+        webRequest.onErrorOccurred.mock.calls[0][1]({ id: 11 });
+        webRequest.onCompleted.mock.calls[0][1]({ id: 11 });
+
+        const responseCallback = vi.fn();
+        webRequest.onHeadersReceived.mock.calls[0][1](
+            { id: 11, responseHeaders: {} },
+            responseCallback,
+        );
+
+        // nothing was remembered for that id, so the permissive default is used
+        expect(responseCallback).toHaveBeenCalledWith({
+            responseHeaders: expect.objectContaining({
+                'access-control-allow-origin': ['*'],
+            }),
+        });
+    });
 });

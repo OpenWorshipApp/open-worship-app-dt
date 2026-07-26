@@ -54,6 +54,16 @@ async function importManager() {
     return mod.default;
 }
 
+// `history`/`historyIndex` are private implementation state; the tests assert
+// on them through a cast rather than widening the class API.
+function historyOf(manager: any): any[][] {
+    return manager.history;
+}
+
+function historyIndexOf(manager: any): number {
+    return manager.historyIndex;
+}
+
 function drawMessage(screenId: number, data: any) {
     return { screenId, type: 'draw', data } as any;
 }
@@ -809,5 +819,525 @@ describe('ScreenDrawManager', () => {
         manager.div = div;
         expect(div.querySelectorAll('canvas')).toHaveLength(1);
         expect(div.querySelector('canvas')).not.toBe(firstCanvas);
+    });
+
+    test('re-assigning the same div is a no-op', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(44));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+
+        manager.div = div;
+        const canvas = div.querySelector('canvas');
+        manager.div = div;
+
+        expect(div.querySelector('canvas')).toBe(canvas);
+        // the getter falls back to a detached div when nothing is mounted
+        manager.div = null;
+        expect(manager.div).toBeInstanceOf(HTMLDivElement);
+    });
+
+    test('a synced history shares one clone per distinct stroke', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(45));
+        const first = makeStroke('s1');
+        const second = makeStroke('s2');
+
+        manager.receiveSyncScreen(
+            drawMessage(45, {
+                action: 'sync',
+                drawData: { paintStrokeList: [first, second] },
+                // cumulative snapshots share stroke references, exactly as the
+                // sender's own history does
+                history: [[first], [first, second], null as any],
+                historyIndex: 1,
+            }),
+        );
+
+        const [snapshotOne, snapshotTwo, snapshotThree] = historyOf(manager);
+        expect(snapshotOne[0]).toBe(snapshotTwo[0]);
+        expect(snapshotOne[0]).not.toBe(first);
+        expect(snapshotThree).toEqual([]);
+        expect(historyIndexOf(manager)).toBe(1);
+    });
+
+    test('the output window never persists the drawing itself', async () => {
+        const ScreenDrawManager = await importManager();
+        appProviderMock.isPagePresenter = false;
+        appProviderMock.isPageScreen = true;
+        const manager = new ScreenDrawManager(createBase(46));
+
+        manager.receiveSyncScreen(
+            drawMessage(46, { action: 'begin', stroke: makeStroke('s1') }),
+        );
+        manager.receiveSyncScreen(drawMessage(46, { action: 'commit' }));
+
+        expect(setSettingMock).not.toHaveBeenCalled();
+    });
+
+    test('the presenter flushes its debounced persist on delete', async () => {
+        vi.useFakeTimers();
+        try {
+            const ScreenDrawManager = await importManager();
+            const manager = new ScreenDrawManager(createBase(47));
+
+            manager.receiveSyncScreen(
+                drawMessage(47, { action: 'begin', stroke: makeStroke('s1') }),
+            );
+            manager.receiveSyncScreen(drawMessage(47, { action: 'commit' }));
+            expect(setSettingMock).not.toHaveBeenCalledWith(
+                'screen-draw-data-47',
+                expect.any(String),
+            );
+
+            vi.advanceTimersByTime(500);
+            expect(setSettingMock).toHaveBeenCalledWith(
+                'screen-draw-data-47',
+                expect.any(String),
+            );
+
+            setSettingMock.mockClear();
+            manager.delete();
+            expect(setSettingMock).toHaveBeenCalledWith(
+                'screen-draw-data-47',
+                expect.any(String),
+            );
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('persisted history falls back to the current drawing', async () => {
+        const ScreenDrawManager = await importManager();
+        settingStore.set(
+            'screen-draw-data-48',
+            JSON.stringify({
+                drawData: { paintStrokeList: [makeStroke('s1')] },
+                version: 2,
+                strokePool: {},
+                historyIds: [],
+            }),
+        );
+
+        const manager = new ScreenDrawManager(createBase(48));
+
+        expect(historyOf(manager)).toHaveLength(1);
+        expect(historyOf(manager)[0]).toHaveLength(1);
+        expect(manager.canUndo).toBe(false);
+    });
+
+    test('keyboard undo and redo shortcuts drive the history', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(49));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+        const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+        const keyDown = (code: string, extra: KeyboardEventInit = {}) => {
+            canvas.dispatchEvent(
+                new KeyboardEvent('keydown', {
+                    code,
+                    ctrlKey: true,
+                    bubbles: true,
+                    cancelable: true,
+                    ...extra,
+                }),
+            );
+        };
+
+        // an unarmed canvas ignores every key
+        keyDown('KeyZ');
+        expect(historyIndexOf(manager)).toBe(0);
+
+        manager.setPaintTool({
+            color: '#f00',
+            size: 8,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        });
+        manager.receiveSyncScreen(
+            drawMessage(49, { action: 'begin', stroke: makeStroke('s1') }),
+        );
+        manager.receiveSyncScreen(drawMessage(49, { action: 'commit' }));
+        expect(manager.canUndo).toBe(true);
+
+        keyDown('KeyZ');
+        expect(manager.canUndo).toBe(false);
+        expect(manager.canRedo).toBe(true);
+
+        keyDown('KeyZ', { shiftKey: true });
+        expect(manager.canRedo).toBe(false);
+
+        keyDown('KeyZ');
+        keyDown('KeyY');
+        expect(manager.canRedo).toBe(false);
+        expect(manager.canUndo).toBe(true);
+
+        // redo with nothing to redo is a no-op
+        keyDown('KeyY');
+        expect(manager.canRedo).toBe(false);
+    });
+
+    test('updatePaintToolParams arms once and then edits in place', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(50));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+        const tool = {
+            color: '#f00',
+            size: 8,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        };
+
+        manager.updatePaintToolParams(tool);
+        expect(manager.paintTool).toEqual(tool);
+        // arming flips the overlay to receive pointer events
+        expect(div.style.pointerEvents).toBe('auto');
+
+        const updatedTool = { ...tool, color: '#00f', size: 12 };
+        manager.updatePaintToolParams(updatedTool);
+        expect(manager.paintTool).toEqual(updatedTool);
+        expect(div.style.pointerEvents).toBe('auto');
+    });
+
+    test('setRenderQuality persists, re-renders, and broadcasts once', async () => {
+        const ScreenDrawManager = await importManager();
+        const base = createBase(51);
+        const manager = new ScreenDrawManager(base);
+
+        expect(manager.isHighQuality).toBe(true);
+
+        manager.setRenderQuality(true);
+        expect(base.sendScreenMessage).not.toHaveBeenCalled();
+
+        manager.setRenderQuality(false);
+        expect(manager.isHighQuality).toBe(false);
+        expect(setSettingMock).toHaveBeenCalledWith(
+            'draw-paint-quality-51',
+            'false',
+        );
+        expect(base.sendScreenMessage).toHaveBeenCalledTimes(1);
+
+        // the output window follows the toggle but never persists it
+        appProviderMock.isPagePresenter = false;
+        setSettingMock.mockClear();
+        manager.setRenderQuality(true);
+        expect(manager.isHighQuality).toBe(true);
+        expect(setSettingMock).not.toHaveBeenCalled();
+    });
+
+    test('pointer handlers ignore events without an armed tool or a usable point', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(52));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+        const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+        const pointerDown = () => {
+            canvas.dispatchEvent(
+                new MouseEvent('pointerdown', {
+                    clientX: 10,
+                    clientY: 10,
+                    button: 0,
+                    bubbles: true,
+                }),
+            );
+        };
+
+        // no tool armed
+        pointerDown();
+        expect(manager.drawData.paintStrokeList).toHaveLength(0);
+
+        manager.setPaintTool({
+            color: '#f00',
+            size: 8,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        });
+        // a zero-sized canvas cannot map a client point onto the screen
+        canvas.getBoundingClientRect = () =>
+            ({
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+                width: 0,
+                height: 0,
+                x: 0,
+                y: 0,
+                toJSON: () => ({}),
+            }) as DOMRect;
+        pointerDown();
+        pointerDown();
+        expect(manager.drawData.paintStrokeList).toHaveLength(0);
+
+        // a move with no stroke in progress is dropped
+        globalThis.dispatchEvent(
+            new MouseEvent('pointermove', { clientX: 5, clientY: 5 }),
+        );
+        expect(manager.drawData.paintStrokeList).toHaveLength(0);
+
+        // ...and so is a pointer-up
+        globalThis.dispatchEvent(new MouseEvent('pointerup', {}));
+        expect(manager.canUndo).toBe(false);
+    });
+
+    test('a moving pointer stops sampling once the rect stops resolving', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(53));
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+        const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+        let rect = {
+            left: 0,
+            top: 0,
+            right: 100,
+            bottom: 100,
+            width: 100,
+            height: 100,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        } as DOMRect;
+        canvas.getBoundingClientRect = () => rect;
+        manager.setPaintTool({
+            color: '#f00',
+            size: 8,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        });
+
+        canvas.dispatchEvent(
+            new MouseEvent('pointerdown', {
+                clientX: 10,
+                clientY: 10,
+                button: 0,
+                bubbles: true,
+            }),
+        );
+        canvas.dispatchEvent(
+            new MouseEvent('pointerdown', {
+                clientX: 10,
+                clientY: 10,
+                button: 0,
+                bubbles: true,
+            }),
+        );
+        expect(manager.drawData.paintStrokeList).toHaveLength(1);
+
+        // the cached stroke rect collapses: further samples are unusable
+        rect = { ...rect, width: 0, height: 0 } as DOMRect;
+        (manager as any).strokeRect = rect;
+        globalThis.dispatchEvent(
+            new MouseEvent('pointermove', { clientX: 20, clientY: 20 }),
+        );
+        expect(manager.drawData.paintStrokeList[0].points).toHaveLength(1);
+
+        globalThis.dispatchEvent(new MouseEvent('pointerup', {}));
+    });
+
+    test('long drawing sessions cap the undo history', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(54));
+
+        for (let index = 0; index < 55; index++) {
+            manager.receiveSyncScreen(
+                drawMessage(54, {
+                    action: 'begin',
+                    stroke: makeStroke(`s${index}`),
+                }),
+            );
+            manager.receiveSyncScreen(drawMessage(54, { action: 'commit' }));
+        }
+
+        expect(historyOf(manager)).toHaveLength(51);
+        expect(historyIndexOf(manager)).toBe(50);
+    });
+
+    test('group membership defaults to an empty group', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(55));
+
+        await expect(manager.getMemberInstances()).resolves.toEqual([]);
+        await expect(manager.getMemberIds()).resolves.toEqual([]);
+        await expect(manager.checkIsMainInstance()).resolves.toBe(false);
+    });
+
+    test('enabling draw adopts the drawing a group member already has', async () => {
+        const ScreenDrawManager = await importManager();
+        const base = createBase(56);
+        const manager = new ScreenDrawManager(base);
+        const memberBase = createBase(57);
+        const member = new ScreenDrawManager(memberBase);
+        manager.getMemberInstances = vi.fn(async () => [member]);
+
+        manager.enableDraw();
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(manager.isDrawEnabled).toBe(true);
+        // the member broadcasts its own state; this screen adopts it
+        expect(memberBase.sendScreenMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ screenId: 57, type: 'draw' }),
+            false,
+        );
+        expect(base.sendScreenMessage).not.toHaveBeenCalled();
+
+        // with nobody else in the group, this screen broadcasts its own state
+        manager.getMemberInstances = vi.fn(async () => []);
+        await manager.sendSyncScreen(true);
+        expect(base.sendScreenMessage).toHaveBeenCalledWith(
+            expect.objectContaining({ screenId: 56, type: 'draw' }),
+            false,
+        );
+    });
+
+    test('toSyncMessage carries the drawing, history, and quality', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(58));
+        manager.receiveSyncScreen(
+            drawMessage(58, { action: 'begin', stroke: makeStroke('s1') }),
+        );
+        manager.receiveSyncScreen(drawMessage(58, { action: 'commit' }));
+
+        expect(manager.toSyncMessage()).toEqual({
+            type: 'draw',
+            data: {
+                action: 'sync',
+                drawData: manager.drawData,
+                history: historyOf(manager),
+                historyIndex: historyIndexOf(manager),
+                isHighQuality: true,
+            },
+        });
+    });
+
+    test('an empty sync message is ignored', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(59));
+
+        manager.receiveSyncScreen(drawMessage(59, null));
+
+        expect(manager.drawData.paintStrokeList).toHaveLength(0);
+    });
+
+    test('legacy persisted data without a history snapshots the drawing', async () => {
+        const ScreenDrawManager = await importManager();
+        settingStore.set(
+            'screen-draw-data-61',
+            JSON.stringify({
+                drawData: { paintStrokeList: [makeStroke('s1')] },
+            }),
+        );
+
+        const manager = new ScreenDrawManager(createBase(61));
+
+        expect(historyOf(manager)).toEqual([manager.drawData.paintStrokeList]);
+        expect(historyIndexOf(manager)).toBe(0);
+    });
+
+    test('a stroke throttles its point sync and survives being cleared mid-draw', async () => {
+        vi.useFakeTimers();
+        try {
+            const ScreenDrawManager = await importManager();
+            const base = createBase(62);
+            const manager = new ScreenDrawManager(base);
+            const div = document.createElement('div');
+            document.body.appendChild(div);
+            manager.div = div;
+            const canvas = div.querySelector('canvas') as HTMLCanvasElement;
+            canvas.getBoundingClientRect = () =>
+                ({
+                    left: 0,
+                    top: 0,
+                    right: 100,
+                    bottom: 100,
+                    width: 100,
+                    height: 100,
+                    x: 0,
+                    y: 0,
+                    toJSON: () => ({}),
+                }) as DOMRect;
+            manager.setPaintTool({
+                color: '#f00',
+                size: 8,
+                isStraight: false,
+                is3D: false,
+                isDots: false,
+            });
+            const pointerDown = () => {
+                canvas.dispatchEvent(
+                    new MouseEvent('pointerdown', {
+                        clientX: 10,
+                        clientY: 10,
+                        button: 0,
+                        bubbles: true,
+                    }),
+                );
+            };
+            const pointerMove = (clientX: number) => {
+                globalThis.dispatchEvent(
+                    new MouseEvent('pointermove', { clientX, clientY: 20 }),
+                );
+            };
+
+            pointerDown();
+            pointerDown();
+            expect(manager.drawData.paintStrokeList).toHaveLength(1);
+
+            base.sendScreenMessage.mockClear();
+            // inside the throttle window the samples only accumulate locally
+            pointerMove(20);
+            expect(base.sendScreenMessage).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(100);
+            pointerMove(30);
+            expect(base.sendScreenMessage).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    data: expect.objectContaining({ action: 'points' }),
+                }),
+                false,
+            );
+
+            // a synced clear drops the in-flight stroke; the remaining pointer
+            // events must not resurrect or re-commit it
+            manager.receiveSyncScreen(drawMessage(62, { action: 'clear' }));
+            base.sendScreenMessage.mockClear();
+            pointerMove(40);
+            globalThis.dispatchEvent(new MouseEvent('pointerup', {}));
+
+            expect(manager.drawData.paintStrokeList).toHaveLength(0);
+            expect(base.sendScreenMessage).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('a sync message for a closed screen reports the failure', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(60));
+        const { showSimpleToast } = await import('../../toast/toastHelpers');
+
+        expect(ScreenDrawManager.getInstance(60)).toBe(manager);
+
+        ScreenDrawManager.receiveSyncScreen(
+            drawMessage(60, { action: 'begin', stroke: makeStroke('s1') }),
+        );
+        expect(manager.drawData.paintStrokeList).toHaveLength(1);
+
+        ScreenDrawManager.receiveSyncScreen(
+            drawMessage(9999, { action: 'clear' }),
+        );
+        expect(showSimpleToast).toHaveBeenCalledWith(
+            'Failed to apply to screen. Please make sure the screen is open.',
+            'error',
+        );
     });
 });

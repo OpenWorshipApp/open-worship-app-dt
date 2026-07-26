@@ -11,6 +11,7 @@ const showAppContextMenuMock = vi.fn();
 const createRootRenderMock = vi.fn();
 const getSettingMock = vi.fn();
 const setPreviewScaleMock = vi.fn();
+const applyTextStyleMock = vi.fn();
 
 const effectManagerStub = {
     effectType: 'fade',
@@ -143,6 +144,7 @@ vi.mock('../others/themeHelpers', () => ({
 
 vi.mock('../others/color/colorHelpers', () => ({
     HEX_COLOR_BLACK: '#000000',
+    toHexColorString: (color: string | null) => color,
 }));
 
 vi.mock('../helper/cameraHelpers', () => ({
@@ -281,6 +283,7 @@ vi.mock('./managers/ScreenBibleManager', () => ({
     default: class ScreenBibleManager {
         static readonly textStyleTextColor = '#ffffff';
         static readonly textStyleTextFontSize = 64;
+        static readonly applyTextStyle = applyTextStyleMock;
     },
 }));
 
@@ -608,5 +611,42 @@ describe('screen component smoke tests', () => {
         expect((element as any).mountPoint.style.transform).toBe(
             'translate(0px, 0px) scale(0.5)',
         );
+    });
+    test('the bible styling hooks follow text-style broadcasts', async () => {
+        const { useStylingColor, useStylingFontSize } =
+            await import('./preview/stylingHelpers');
+        const screenEventHelpers =
+            await import('./managers/screenEventHelpers');
+        (screenEventHelpers.useScreenBibleManagerEvents as any).mockClear();
+        let latest: any = null;
+
+        function Probe() {
+            const [color, setColorToStyle] = useStylingColor();
+            const [fontSize, setFontSizeToStyle] = useStylingFontSize();
+            latest = { color, fontSize, setColorToStyle, setFontSizeToStyle };
+            return null;
+        }
+
+        renderToStaticMarkup(<Probe />);
+
+        expect(latest.color).toBe('#ffffff');
+        expect(latest.fontSize).toBe(64);
+
+        // a text-style broadcast re-reads the shared style
+        const eventCalls = (
+            screenEventHelpers.useScreenBibleManagerEvents as any
+        ).mock.calls;
+        expect(eventCalls).toHaveLength(2);
+        for (const [, , callback] of eventCalls) {
+            expect(() => {
+                callback?.();
+            }).not.toThrow();
+        }
+
+        // ...and the setters push a new style back out to every screen
+        latest.setColorToStyle('#ff0000');
+        latest.setFontSizeToStyle(72);
+        expect(applyTextStyleMock).toHaveBeenCalledWith({ color: '#ff0000' });
+        expect(applyTextStyleMock).toHaveBeenCalledWith({ fontSize: 72 });
     });
 });

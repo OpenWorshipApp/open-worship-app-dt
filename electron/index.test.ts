@@ -58,7 +58,7 @@ describe('electron index', () => {
         const { electronMockState } = await import('./testElectronModule');
         electronMockState.reset();
         electronMockState.app.whenReady.mockResolvedValue(undefined);
-        electronMockState.app.requestSingleInstanceLock.mockReturnValue(true);
+        // the mock grants the lock by default, as a first launch does
 
         await import('./index');
 

@@ -121,4 +121,39 @@ describe('audio and video unload blocking', () => {
         expect(allowedAfterRemoval.defaultPrevented).toBe(false);
         expect(checkBlockingMediaPlaying()).toBe(false);
     });
+    test('audio ending rewinds and either repeats or reports the stop', async () => {
+        const { handleAudioEnding, handleMediaPlaying, showAudioPlayingToast } =
+            await import('./mediaControlHelpers');
+        const { showMediaPlayingToast } = await import('./mediaControlHelpers');
+
+        // both guard toasts are plain notifications
+        expect(() => {
+            showMediaPlayingToast();
+            showAudioPlayingToast();
+        }).not.toThrow();
+
+        const audioElement = document.createElement('audio');
+        Object.defineProperties(audioElement, {
+            currentTime: { configurable: true, writable: true, value: 12 },
+            paused: { configurable: true, writable: true, value: false },
+            play: { configurable: true, value: vi.fn(async () => {}) },
+        });
+        document.body.appendChild(audioElement);
+        handleMediaPlaying(toMediaEvent(audioElement));
+
+        handleAudioEnding(true, { target: audioElement });
+        expect(audioElement.currentTime).toBe(0);
+        // a repeating track starts over instead of releasing the guard
+        expect(
+            audioElement.hasAttribute('data-block-unload-while-playing'),
+        ).toBe(true);
+
+        audioElement.currentTime = 30;
+        handleAudioEnding(false, { target: audioElement });
+        expect(audioElement.currentTime).toBe(0);
+        expect(
+            audioElement.hasAttribute('data-block-unload-while-playing'),
+        ).toBe(false);
+        audioElement.remove();
+    });
 });

@@ -5,8 +5,10 @@ import { createMockBrowserWindow } from './testUtils';
 type BrowserWindowFactory = () => any;
 
 const browserWindows: any[] = [];
-let browserWindowFactory: BrowserWindowFactory = () =>
-    createMockBrowserWindow();
+const defaultBrowserWindowFactory: BrowserWindowFactory = () => {
+    return createMockBrowserWindow();
+};
+let browserWindowFactory: BrowserWindowFactory = defaultBrowserWindowFactory;
 
 function getLastBrowserWindow() {
     let lastBrowserWindow = null;
@@ -109,10 +111,13 @@ export const electronMockState = {
         })),
     },
     Menu: MenuMock,
-    MenuItem: vi.fn((options: any) => options),
+    // constructed with `new MenuItem(...)`, so it must be a real function
+    MenuItem: vi.fn(function MenuItemMock(options: any) {
+        return options;
+    }),
     reset() {
         browserWindows.splice(0, browserWindows.length);
-        browserWindowFactory = () => createMockBrowserWindow();
+        browserWindowFactory = defaultBrowserWindowFactory;
         BrowserWindowMock.mockClear();
         BrowserWindowMock.getAllWindows.mockClear();
         BrowserWindowMock.getFocusedWindow.mockClear();

@@ -17,6 +17,7 @@ const {
     isColorMock: vi.fn(),
     settingState: {
         value: {} as Record<string, string>,
+        options: null as any,
     },
 }));
 
@@ -52,6 +53,10 @@ vi.mock('./helpers', () => ({
 
 vi.mock('./SettingManager', () => ({
     default: class SettingManagerMock<T> {
+        constructor(options: unknown) {
+            settingState.options = options;
+        }
+
         getSetting() {
             return settingState.value as T;
         }
@@ -194,5 +199,17 @@ describe('FileSourceMetaManager', () => {
         expect(settingState.value).toEqual({
             '/docs/keep.txt': 'red',
         });
+    });
+    test('the persisted meta store only accepts JSON objects', () => {
+        const { validate, serialize, deserialize } = settingState.options;
+
+        expect(validate('{"a":"red"}')).toBe(true);
+        expect(validate('[]')).toBe(true);
+        expect(validate('"red"')).toBe(false);
+        expect(validate('not json')).toBe(false);
+        expect(appHandleErrorMock).toHaveBeenCalled();
+
+        expect(serialize({ a: 'red' })).toBe('{"a":"red"}');
+        expect(deserialize('{"a":"red"}')).toEqual({ a: 'red' });
     });
 });

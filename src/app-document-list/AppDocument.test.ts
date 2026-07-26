@@ -30,6 +30,9 @@ const {
     createNewSlidesFromDroppedDataMock,
     getFontFamiliesMock,
     notifyElementHighlightMock,
+    openPopupWindowMock,
+    getSelectedVaryAppDocumentMock,
+    showAppAlertMock,
     tranMock,
     canvasItemGenDefaultItemMock,
     getDefaultScreenDisplayMock,
@@ -50,6 +53,9 @@ const {
     createNewSlidesFromDroppedDataMock: vi.fn(),
     getFontFamiliesMock: vi.fn(),
     notifyElementHighlightMock: vi.fn(),
+    openPopupWindowMock: vi.fn(),
+    getSelectedVaryAppDocumentMock: vi.fn(),
+    showAppAlertMock: vi.fn(),
     tranMock: vi.fn(),
     canvasItemGenDefaultItemMock: vi.fn(),
     getDefaultScreenDisplayMock: vi.fn(),
@@ -96,6 +102,7 @@ vi.mock('../helper/FileSource', () => ({
 vi.mock('./appDocumentHelpers', () => ({
     genSelectedSlidesContextMenuItems: genSelectedSlidesContextMenuItemsMock,
     genSlideContextMenuItems: genSlideContextMenuItemsMock,
+    getSelectedVaryAppDocument: getSelectedVaryAppDocumentMock,
 }));
 
 vi.mock('../toast/toastHelpers', () => ({
@@ -128,6 +135,17 @@ vi.mock('../slide-editor/canvas/CanvasItemText', () => ({
 
 vi.mock('../helper/domHelpers', () => ({
     notifyElementHighlight: notifyElementHighlightMock,
+    openPopupWindow: openPopupWindowMock,
+    setParamFileFullName: (pathname: string, fileFullName: string) => {
+        return `${pathname}?file=${fileFullName}`;
+    },
+    setParamIdNum: (pathname: string, idNum: number) => {
+        return `${pathname}&id=${idNum}`;
+    },
+}));
+
+vi.mock('../popup-widget/popupWidgetHelpers', () => ({
+    showAppAlert: showAppAlertMock,
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -142,7 +160,11 @@ vi.mock('../helper/bible-helpers/bibleStyleHelpers', () => ({
     getBibleFontFamily: getBibleFontFamilyMock,
 }));
 
-import AppDocument, { type AppDocumentType } from './AppDocument';
+import AppDocument, {
+    checkIsAppDocumentSelected,
+    openAppDocumentEditorExternal,
+    type AppDocumentType,
+} from './AppDocument';
 import Slide from './Slide';
 
 type TestHistoryManager = ReturnType<typeof createHistoryManager>;
@@ -677,6 +699,35 @@ describe('AppDocument', () => {
         AppDocument.setCopiedSlides([slide1, slide2]);
         expect(navigatorClipboard.writeText).toHaveBeenCalledWith(
             `${slide1.clipboardSerialize()}\n${slide2.clipboardSerialize()}`,
+        );
+    });
+    test('editing a document externally requires an Open Worship slide', async () => {
+        getSelectedVaryAppDocumentMock.mockResolvedValue(null);
+        await expect(checkIsAppDocumentSelected()).resolves.toBe(false);
+        expect(showAppAlertMock).toHaveBeenCalledWith(
+            'No slide selected',
+            'Please select an Open Worship slide first',
+        );
+
+        const filePath = '/docs/external.ows';
+        setHistory(filePath, createDocumentJson([1]));
+        const documentSource = new AppDocument(filePath);
+        getSelectedVaryAppDocumentMock.mockResolvedValue(documentSource);
+        await expect(checkIsAppDocumentSelected()).resolves.toBe(true);
+
+        await openAppDocumentEditorExternal(documentSource as any);
+        expect(openPopupWindowMock).toHaveBeenCalledWith(
+            expect.stringContaining('file=external.ows'),
+            expect.stringContaining('app_document_editor_'),
+            'app_document_editor',
+        );
+
+        // a quick-edit request carries the slide id along
+        await openAppDocumentEditorExternal(documentSource as any, 3);
+        expect(openPopupWindowMock).toHaveBeenLastCalledWith(
+            expect.stringContaining('id=3'),
+            expect.any(String),
+            'app_document_editor',
         );
     });
 });

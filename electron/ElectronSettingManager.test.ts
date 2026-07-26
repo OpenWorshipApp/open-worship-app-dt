@@ -62,6 +62,16 @@ describe('ElectronSettingManager', () => {
             throw Object.assign(new Error('missing'), { code: 'ENOENT' });
         });
         const manager = new ElectronSettingManager();
+
+        // the window reports its own current geometry
+        manager.applyMainWindowBounds(createMockBrowserWindow() as any);
+        expect(manager.mainWinBounds).toEqual({
+            x: 10,
+            y: 20,
+            width: 1200,
+            height: 800,
+        });
+
         const win = createMockBrowserWindow({
             getPosition: vi.fn(() => [20, 30]),
             getSize: vi.fn(() => [1000, 700]),
@@ -97,5 +107,148 @@ describe('ElectronSettingManager', () => {
             width: 1920,
             height: 1080,
         });
+    });
+
+    test('tolerates an empty or unreadable setting file', () => {
+        const consoleLogSpy = vi
+            .spyOn(console, 'log')
+            .mockImplementation(() => {});
+        try {
+            readFileSync.mockReturnValue('   ');
+            const emptyManager = new ElectronSettingManager();
+            expect(emptyManager.mainHtmlPath).toBe('reader.html');
+            expect(emptyManager.getAllClientSettingKeys()).toEqual([]);
+
+            readFileSync.mockImplementation(() => {
+                throw Object.assign(new Error('denied'), { code: 'EACCES' });
+            });
+            const brokenManager = new ElectronSettingManager();
+            expect(brokenManager.mainHtmlPath).toBe('reader.html');
+            expect(writeFileSync).not.toHaveBeenCalled();
+        } finally {
+            consoleLogSpy.mockRestore();
+        }
+    });
+
+    test('reports a maximized window and resolves displays by id', () => {
+        readFileSync.mockReturnValue('{}');
+        const manager = new ElectronSettingManager();
+
+        // no persisted bounds yet, so nothing is treated as maximized
+        expect(manager.isWinMaximized).toBe(false);
+        expect(manager.themeSource).toBe('system');
+
+        manager.mainWinBounds = { x: 0, y: 0, width: 1920, height: 1080 };
+        expect(manager.isWinMaximized).toBe(true);
+
+        // the host reports no displays until one is attached
+        expect(manager.allDisplays).toEqual([]);
+
+        electronMockState.screen.getAllDisplays.mockReturnValue([
+            { id: 1 },
+            { id: 8 },
+        ] as any);
+        expect(manager.allDisplays).toHaveLength(2);
+        expect(manager.getDisplayById(8)).toEqual({ id: 8 });
+        expect(manager.getDisplayById(99)).toBeUndefined();
+    });
+
+    test('syncs the main window bounds on resize, maximize, and move', () => {
+        readFileSync.mockReturnValue(
+            JSON.stringify({
+                mainWinBounds: { x: 0, y: 0, width: 1920, height: 1080 },
+            }),
+        );
+        const manager = new ElectronSettingManager();
+        const win = createMockBrowserWindow({
+            getPosition: vi.fn(() => [5, 6]),
+            getSize: vi.fn(() => [640, 480]),
+        });
+
+        manager.syncMainWindow(win as any);
+
+        expect(win.setBounds).toHaveBeenCalledWith({
+            x: 0,
+            y: 0,
+            width: 1920,
+            height: 1080,
+        });
+        expect(win.maximize).toHaveBeenCalledTimes(1);
+
+        const handlerOf = (eventName: string) => {
+            return win.on.mock.calls.find(
+                ([event]) => event === eventName,
+            )?.[1] as () => void;
+        };
+
+        handlerOf('resize')();
+        expect(manager.mainWinBounds).toEqual({
+            x: 5,
+            y: 6,
+            width: 640,
+            height: 480,
+        });
+
+        // maximizing snaps back to the whole primary display
+        handlerOf('maximize')();
+        expect(manager.mainWinBounds).toEqual({
+            x: 5,
+            y: 6,
+            width: 1920,
+            height: 1080,
+        });
+
+        handlerOf('move')();
+        expect(manager.mainWinBounds).toEqual({
+            x: 5,
+            y: 6,
+            width: 640,
+            height: 480,
+        });
+    });
+
+    test('persists the landing page and the renderer client settings', () => {
+        readFileSync.mockReturnValue('{}');
+        const manager = new ElectronSettingManager();
+
+        manager.mainHtmlPath = 'presenter.html';
+        expect(manager.mainHtmlPath).toBe('presenter.html');
+
+        // only strings survive the round trip through the setting file
+        manager.setClientSetting('theme', 'dark');
+        manager.setClientSetting('count', 12);
+        expect(manager.getClientSetting('theme')).toBe('dark');
+        expect(manager.getClientSetting('count')).toBeNull();
+        expect(manager.getClientSetting('missing')).toBeNull();
+        expect(manager.getAllClientSettingKeys()).toEqual(['theme', 'count']);
+
+        manager.deleteClientSetting('count');
+        expect(manager.getAllClientSettingKeys()).toEqual(['theme']);
+
+        manager.clearClientSettings();
+        expect(manager.getAllClientSettingKeys()).toEqual([]);
+    });
+
+    test('a failed write is logged instead of crashing the app', () => {
+        const consoleLogSpy = vi
+            .spyOn(console, 'log')
+            .mockImplementation(() => {});
+        try {
+            readFileSync.mockReturnValue('{}');
+            const manager = new ElectronSettingManager();
+            writeFileSync.mockImplementation(() => {
+                throw new Error('disk full');
+            });
+
+            expect(() => {
+                manager.clearClientSettings();
+            }).not.toThrow();
+            expect(consoleLogSpy).toHaveBeenCalledWith(
+                'Error saving setting',
+                expect.any(Error),
+            );
+        } finally {
+            consoleLogSpy.mockRestore();
+        }
     });
 });

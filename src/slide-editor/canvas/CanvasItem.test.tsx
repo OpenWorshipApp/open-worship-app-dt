@@ -46,6 +46,7 @@ import CanvasItem, {
     useCanvasItemsContext,
     useEditingCanvasItemAndSetterContext,
     useSelectedCanvasItemsAndSetterContext,
+    useIsCanvasItemSelected,
     useSetEditingCanvasItem,
     useSetSelectedCanvasItems,
 } from './CanvasItem';
@@ -99,12 +100,14 @@ function SelectionHarness({
     const canvasItem = useCanvasItemContext();
     const setSelectedCanvasItems = useSetSelectedCanvasItems();
     const setEditingCanvasItem = useSetEditingCanvasItem();
+    const isSelected = useIsCanvasItemSelected();
 
     useEffect(() => {
         onReady({
             canvasItem,
             canvasItems,
             editingContext,
+            isSelected,
             selectedContext,
             setEditingCanvasItem,
             setSelectedCanvasItems,
@@ -268,6 +271,16 @@ describe('CanvasItem', () => {
                 display: 'flex',
             }),
         );
+
+        expect(item.type).toBe('text');
+        // boxes resize freely unless the item opts into a fixed ratio
+        expect(item.shouldLockAspectRatio).toBe(false);
+        expect(item.isLocked).toBe(false);
+        item.applyProps({ locked: true } as any);
+        expect(item.isLocked).toBe(true);
+        expect(boxItem.getBoxStyle()).toEqual(
+            CanvasItem.genBoxStyle(boxItem.props),
+        );
     });
 
     test('reads selection and editing contexts and toggles selected and editing items', async () => {
@@ -313,6 +326,7 @@ describe('CanvasItem', () => {
         expect(latest.selectedContext.canvasItems).toEqual([targetItem]);
         expect(latest.editingContext.canvasItem).toBe(targetItem);
         expect(latest.canvasItem).toBe(targetItem);
+        expect(latest.isSelected).toBe(true);
         expect(checkCanvasItemsIncludes([targetItem], targetItem)).toBe(true);
         expect(checkCanvasItemsIncludes([targetItem], otherItem)).toBe(false);
 

@@ -151,13 +151,13 @@ vi.mock('../server/fileHelpers', () => ({
 
 vi.mock('../helper/FileSource', () => ({
     default: {
-        getInstance: (filePath: string) => {
+        getInstance: vi.fn((filePath: string) => {
             return mocks.getFileSource(filePath);
-        },
-        readFileData: async (filePath: string) => {
+        }),
+        readFileData: vi.fn(async (filePath: string) => {
             return mocks.files.get(mocks.normalizePath(filePath)) ?? null;
-        },
-        writeFilePlainText: async (filePath: string, data: string) => {
+        }),
+        writeFilePlainText: vi.fn(async (filePath: string, data: string) => {
             const normalizedPath = mocks.normalizePath(filePath);
             const dirPath = mocks.getDirName(normalizedPath);
             if (dirPath) {
@@ -165,12 +165,23 @@ vi.mock('../helper/FileSource', () => ({
             }
             mocks.files.set(normalizedPath, data);
             return true;
-        },
+        }),
     },
 }));
 
 async function loadEditingHistoryModule() {
     return await import('./EditingHistoryManager');
+}
+
+// the mocked modules are re-instantiated by the `vi.resetModules()` in
+// `beforeEach`, so a test that overrides one must grab it from the same
+// registry generation as the module under test
+async function loadMockedModules() {
+    const [{ default: FileSource }, fileHelpers] = await Promise.all([
+        import('../helper/FileSource'),
+        import('../server/fileHelpers'),
+    ]);
+    return { FileSource: FileSource as any, fileHelpers: fileHelpers as any };
 }
 
 describe('EditingHistoryManager', () => {
@@ -285,5 +296,366 @@ describe('EditingHistoryManager', () => {
 
         expect(mocks.dirs.has(`${movedFilePath}.histories`)).toBe(true);
         expect(mocks.files.has(`${movedFilePath}.histories/1-head`)).toBe(true);
+    });
+
+    test('recognizes the history movement event types', async () => {
+        const { checkIsHistoryMovementEventType } =
+            await loadEditingHistoryModule();
+
+        expect(checkIsHistoryMovementEventType('undo')).toBe(true);
+        expect(checkIsHistoryMovementEventType('redo')).toBe(true);
+        expect(checkIsHistoryMovementEventType('discard')).toBe(true);
+        expect(checkIsHistoryMovementEventType('save')).toBe(false);
+        expect(checkIsHistoryMovementEventType(undefined)).toBe(false);
+    });
+
+    test('reports a listing failure only while the history folder still exists', async () => {
+        const filePath = '/docs/listing.owa';
+        const historyDirPath = `${filePath}.histories`;
+        mocks.dirs.add('/docs');
+        mocks.dirs.add(historyDirPath);
+        mocks.files.set(filePath, 'version 1');
+
+        const { FileLineHandler } = await loadEditingHistoryModule();
+        const { fileHelpers } = await loadMockedModules();
+        const handler = new FileLineHandler(filePath, historyDirPath);
+
+        fileHelpers.fsListFiles.mockRejectedValueOnce(new Error('io failure'));
+        expect(await handler.getCurrentFileFullPath()).toBeNull();
+        expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
+
+        // a folder deleted mid-listing is an expected race, not an error
+        fileHelpers.fsListFiles.mockImplementationOnce(async () => {
+            mocks.dirs.delete(historyDirPath);
+            throw new Error('io failure');
+        });
+        expect(await handler.getAllFileIndices()).toEqual([]);
+        expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
+
+        // ...and a missing folder is never listed at all
+        expect(await handler.getCurrentFileFullPath()).toBeNull();
+        expect(fileHelpers.fsListFiles).toHaveBeenCalledTimes(2);
+    });
+
+    test('cleanupHistory drops the oldest revisions past the cap', async () => {
+        const filePath = '/docs/big.owa';
+        const historyDirPath = `${filePath}.histories`;
+        mocks.dirs.add('/docs');
+        mocks.dirs.add(historyDirPath);
+        for (let index = 0; index < 100; index++) {
+            mocks.files.set(`${historyDirPath}/${index}`, `v${index}`);
+        }
+        mocks.files.set(`${historyDirPath}/100-head`, 'v100');
+
+        const { FileLineHandler } = await loadEditingHistoryModule();
+        const { fileHelpers } = await loadMockedModules();
+        const handler = new FileLineHandler(filePath, historyDirPath);
+
+        await handler.cleanupHistory();
+
+        // the sweep runs until the count drops back below the cap
+        expect(mocks.files.has(`${historyDirPath}/0`)).toBe(false);
+        expect(mocks.files.has(`${historyDirPath}/1`)).toBe(false);
+        expect(mocks.files.size).toBe(99);
+
+        // once back under the cap nothing else is removed
+        await handler.cleanupHistory();
+        expect(mocks.files.size).toBe(99);
+
+        // a stale entry that no longer exists on disk stops the sweep
+        mocks.files.set(`${historyDirPath}/0`, 'v0');
+        fileHelpers.fsCheckFileExist.mockResolvedValueOnce(false);
+        await handler.cleanupHistory();
+        expect(mocks.files.has(`${historyDirPath}/0`)).toBe(true);
+
+        // a delete failure is reported and stops the sweep
+        fileHelpers.fsDeleteFile.mockRejectedValueOnce(new Error('locked'));
+        await handler.cleanupHistory();
+        expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
+        expect(mocks.files.has(`${historyDirPath}/0`)).toBe(true);
+    });
+
+    test('cleanupHistory stops when the oldest revision is the current one', async () => {
+        const filePath = '/docs/head-first.owa';
+        const historyDirPath = `${filePath}.histories`;
+        mocks.dirs.add('/docs');
+        mocks.dirs.add(historyDirPath);
+        mocks.files.set(`${historyDirPath}/0-head`, 'v0');
+        for (let index = 1; index <= 100; index++) {
+            mocks.files.set(`${historyDirPath}/${index}`, `v${index}`);
+        }
+
+        const { FileLineHandler } = await loadEditingHistoryModule();
+        const handler = new FileLineHandler(filePath, historyDirPath);
+
+        await handler.cleanupHistory();
+
+        expect(mocks.files.size).toBe(101);
+    });
+
+    test('appendHistory schedules a debounced cleanup', async () => {
+        vi.useFakeTimers();
+        try {
+            const filePath = '/docs/debounced.owa';
+            mocks.dirs.add('/docs');
+            mocks.files.set(filePath, 'version 1');
+
+            const { default: EditingHistoryManager } =
+                await loadEditingHistoryModule();
+            const manager = new EditingHistoryManager(filePath);
+            const cleanupSpy = vi.spyOn(
+                manager.fileLineHandler,
+                'cleanupHistory',
+            );
+
+            await manager.addHistory('version 2');
+            expect(cleanupSpy).not.toHaveBeenCalled();
+
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(cleanupSpy).toHaveBeenCalledTimes(1);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('rollback refuses to run on missing or unusable revisions', async () => {
+        const filePath = '/docs/rollback.owa';
+        const historyDirPath = `${filePath}.histories`;
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+
+        const { FileLineHandler, default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const { FileSource } = await loadMockedModules();
+        const emptyHandler = new FileLineHandler(filePath, historyDirPath);
+
+        // no history folder at all
+        expect(await emptyHandler.rollback(`${historyDirPath}/0`)).toBe(false);
+
+        const manager = new EditingHistoryManager(filePath);
+        await manager.addHistory('version 2');
+        const previousFilePath =
+            await manager.fileLineHandler.getPreviousFileFullPath();
+        expect(previousFilePath).not.toBeNull();
+
+        // the current revision cannot be read
+        FileSource.readFileData.mockResolvedValueOnce(null);
+        expect(await manager.fileLineHandler.rollback(previousFilePath!)).toBe(
+            false,
+        );
+
+        // the patch file cannot be read
+        FileSource.readFileData.mockResolvedValueOnce('version 2');
+        FileSource.readFileData.mockResolvedValueOnce(null);
+        expect(await manager.fileLineHandler.rollback(previousFilePath!)).toBe(
+            false,
+        );
+
+        // the patch no longer applies to the current content
+        mocks.files.set(
+            `${historyDirPath}/1-head`,
+            'totally unrelated content',
+        );
+        expect(await manager.fileLineHandler.rollback(previousFilePath!)).toBe(
+            false,
+        );
+    });
+
+    test('changeCurrent reports when no patch can be recorded', async () => {
+        const filePath = '/docs/change.owa';
+        const historyDirPath = `${filePath}.histories`;
+        mocks.dirs.add('/docs');
+        mocks.dirs.add(historyDirPath);
+        mocks.files.set(filePath, 'version 1');
+        mocks.files.set(`${historyDirPath}/5`, 'version 5');
+
+        const { FileLineHandler } = await loadEditingHistoryModule();
+        const { FileSource } = await loadMockedModules();
+        const handler = new FileLineHandler(filePath, historyDirPath);
+
+        // there was no current revision to diff against
+        expect(await handler.changeCurrent(`${historyDirPath}/5`)).toBe(false);
+        expect(mocks.files.has(`${historyDirPath}/5-head`)).toBe(true);
+
+        mocks.files.set(`${historyDirPath}/6`, 'version 6');
+        FileSource.readFileData.mockResolvedValueOnce(null);
+        expect(await handler.changeCurrent(`${historyDirPath}/6`)).toBe(false);
+
+        mocks.files.set(`${historyDirPath}/7`, 'version 7');
+        FileSource.readFileData.mockResolvedValueOnce('version 6');
+        FileSource.readFileData.mockResolvedValueOnce(null);
+        expect(await handler.changeCurrent(`${historyDirPath}/7`)).toBe(false);
+    });
+
+    test('appendHistory reports failures instead of throwing', async () => {
+        const filePath = '/docs/append.owa';
+        const historyDirPath = `${filePath}.histories`;
+        mocks.dirs.add('/docs');
+        mocks.dirs.add(historyDirPath);
+        mocks.files.set(filePath, 'version 1');
+
+        const { FileLineHandler } = await loadEditingHistoryModule();
+        const { FileSource } = await loadMockedModules();
+        const handler = new FileLineHandler(filePath, historyDirPath);
+
+        // no current revision yet
+        expect(await handler.appendHistory('version 2')).toBe(false);
+
+        mocks.files.set(`${historyDirPath}/0-head`, 'version 1');
+        FileSource.writeFilePlainText.mockResolvedValueOnce(false);
+        expect(await handler.appendHistory('version 2')).toBe(false);
+
+        FileSource.writeFilePlainText.mockRejectedValueOnce(
+            new Error('disk full'),
+        );
+        expect(await handler.appendHistory('version 2')).toBe(false);
+        expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
+    });
+
+    test('undo and redo stop at the ends of the history and on a failed rollback', async () => {
+        const filePath = '/docs/edges.owa';
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const manager = new EditingHistoryManager(filePath);
+
+        expect(await manager.undo()).toBe(false);
+        expect(await manager.redo()).toBe(false);
+
+        await manager.addHistory('version 2');
+        const rollbackSpy = vi
+            .spyOn(manager.fileLineHandler, 'rollback')
+            .mockResolvedValue(false);
+        expect(await manager.undo()).toBe(false);
+        rollbackSpy.mockRestore();
+    });
+
+    test('addHistory reports a history folder that cannot be created', async () => {
+        const filePath = '/docs/missing.owa';
+        mocks.dirs.add('/docs');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const manager = new EditingHistoryManager(filePath);
+
+        await manager.addHistory('version 2');
+
+        expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
+        expect(mocks.files.has(`${filePath}.histories/0-head`)).toBe(false);
+    });
+
+    test('getCurrentHistory falls back to the file and gives up on unreadable heads', async () => {
+        const filePath = '/docs/current.owa';
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const { FileSource } = await loadMockedModules();
+        const manager = new EditingHistoryManager(filePath);
+
+        // no history folder: the on-disk file is the current state
+        expect(await manager.getCurrentHistory()).toBe('version 1');
+
+        await manager.addHistory('version 2');
+        FileSource.readFileData.mockResolvedValue(null);
+
+        vi.useFakeTimers();
+        try {
+            const pendingHistory = manager.getCurrentHistory();
+            await vi.advanceTimersByTimeAsync(10 * 305);
+            expect(await pendingHistory).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    test('checkHasHistories tracks the history folder', async () => {
+        const filePath = '/docs/has.owa';
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const manager = new EditingHistoryManager(filePath);
+
+        expect(await manager.checkHasHistories()).toBe(false);
+        await manager.addHistory('version 2');
+        expect(await manager.checkHasHistories()).toBe(true);
+    });
+
+    test('discard succeeds with nothing to undo and reports deletion failures', async () => {
+        const filePath = '/docs/discard.owa';
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const manager = new EditingHistoryManager(filePath);
+
+        expect(await manager.discard()).toBe(true);
+
+        await manager.addHistory('version 2');
+        const clearSpy = vi
+            .spyOn(manager.fileLineHandler, 'clearHistories')
+            .mockRejectedValue(new Error('locked'));
+
+        expect(await manager.discard()).toBe(false);
+        expect(mocks.handleErrorMock).toHaveBeenCalledTimes(1);
+        clearSpy.mockRestore();
+    });
+
+    test('save reports an unreadable history and a failed write', async () => {
+        const filePath = '/docs/save.owa';
+        mocks.dirs.add('/docs');
+        mocks.files.set(filePath, 'version 1');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+        const manager = new EditingHistoryManager(filePath);
+        const historySpy = vi
+            .spyOn(manager, 'getCurrentHistory')
+            .mockResolvedValue(null);
+
+        expect(await manager.save()).toBe(false);
+
+        historySpy.mockResolvedValue('version 2');
+        mocks
+            .getFileSource(filePath)
+            .writeFileData.mockResolvedValueOnce(false);
+        expect(await manager.save()).toBe(false);
+
+        expect(await manager.save()).toBe(true);
+        expect(mocks.files.get(filePath)).toBe('version 2');
+    });
+
+    test('moveFilePath skips missing folders and replaces an existing target', async () => {
+        const filePath = '/docs/move.owa';
+        const movedFilePath = '/moved/move.owa';
+        mocks.dirs.add('/docs');
+        mocks.dirs.add('/moved');
+
+        const { default: EditingHistoryManager } =
+            await loadEditingHistoryModule();
+
+        expect(
+            await EditingHistoryManager.moveFilePath(filePath, movedFilePath),
+        ).toBeUndefined();
+
+        mocks.dirs.add(`${filePath}.histories`);
+        mocks.files.set(`${filePath}.histories/0-head`, 'version 1');
+        mocks.dirs.add(`${movedFilePath}.histories`);
+        mocks.files.set(`${movedFilePath}.histories/9-head`, 'stale');
+
+        await EditingHistoryManager.moveFilePath(filePath, movedFilePath);
+
+        expect(mocks.files.has(`${movedFilePath}.histories/9-head`)).toBe(
+            false,
+        );
+        expect(mocks.files.get(`${movedFilePath}.histories/0-head`)).toBe(
+            'version 1',
+        );
     });
 });

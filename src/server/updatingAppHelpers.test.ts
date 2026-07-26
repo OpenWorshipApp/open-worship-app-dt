@@ -260,6 +260,102 @@ describe('updatingAppHelpers', () => {
         );
     });
 
+    test('an unreachable update feed reports "no compatible update"', async () => {
+        globalThis.fetch = vi.fn().mockRejectedValue(new Error('offline'));
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(false);
+
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'No Compatible Update Found',
+            expect.stringContaining('could not find a compatible update'),
+        );
+    });
+
+    test('a build with no matching platform reports "no compatible update"', async () => {
+        globalThis.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                winIa32: {
+                    isWindows: true,
+                    isMac: false,
+                    isArm64: false,
+                    isLinux: false,
+                },
+            }),
+        });
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(false);
+
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'No Compatible Update Found',
+            expect.any(String),
+        );
+    });
+
+    test('a portable-only update offers the download page', async () => {
+        showAppConfirmMock.mockResolvedValue(false);
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(false);
+
+        const toastCall = showSimpleToastMock.mock.calls.find(
+            ([title]) => title === 'Update Available',
+        );
+        expect(toastCall).toBeDefined();
+
+        // the toast's button hands the user off to the download page
+        const message = toastCall?.[1] as any;
+        const button = message.props.children.find(
+            (child: any) => child?.type === 'button',
+        );
+        button.props.onClick();
+        expect(sendDataMock).toHaveBeenCalledWith('main:app:go-download');
+    });
+
+    test('an unreachable release manifest reports "no compatible update"', async () => {
+        globalThis.fetch = vi
+            .fn()
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    macArm64: {
+                        isWindows: false,
+                        isMac: true,
+                        isArm64: true,
+                        isLinux: false,
+                    },
+                }),
+            })
+            .mockRejectedValueOnce(new Error('offline'));
+
+        const { checkForAppUpdate } = await import('./updatingAppHelpers');
+        await checkForAppUpdate(false);
+
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'No Compatible Update Found',
+            expect.any(String),
+        );
+    });
+
+    test('the main-process update-check message triggers a check', async () => {
+        await import('./updatingAppHelpers');
+        const listener = listenForDataMock.mock.calls.at(-1)?.[1] as () => void;
+
+        globalThis.fetch = vi.fn().mockRejectedValue(new Error('offline'));
+        showSimpleToastMock.mockClear();
+        listener();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'No Compatible Update Found',
+            expect.any(String),
+        );
+    });
+
     test('shows no-update toast when version is current and check is not silent', async () => {
         globalThis.fetch = vi
             .fn()

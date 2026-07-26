@@ -227,11 +227,94 @@ describe('ScreenManagerBase', () => {
             manager.fireInstanceEvent();
             manager.fireVisibleEvent();
             manager.fireRefreshEvent();
+            manager.fireScaleEvent();
             TestScreenManagerBase.fireUpdateEvent();
             TestScreenManagerBase.fireColorNoteUpdateEvent();
             TestScreenManagerBase.fireInstanceEvent();
             TestScreenManagerBase.fireVisibleEvent();
             TestScreenManagerBase.fireRefreshEvent();
+            TestScreenManagerBase.fireScaleEvent();
         }).not.toThrow();
+
+        await expect(manager.getColorNote()).resolves.toBe('amber');
+    });
+
+    test('exposes the screen key, selection, and lock state', async () => {
+        const manager = new TestScreenManagerBase(5);
+
+        expect(manager.key).toBe('5');
+        expect(manager.isSelected).toBe(false);
+        manager.isSelected = true;
+        expect(manager.isSelected).toBe(true);
+
+        await manager.setIsLockedWithSyncGroup(true);
+        expect(manager.isLocked).toBe(true);
+    });
+
+    test('media playback is only checked against a mounted screen div', () => {
+        const manager = new TestScreenManagerBase(6);
+
+        // nothing mounted yet
+        expect(manager.checkIsMediaPlaying()).toBe(false);
+
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.divRef = new WeakRef(div);
+        expect(manager.checkIsMediaPlaying(false)).toBe(false);
+
+        // the default selector lookup finds nothing until a screen wires it up
+        expect(manager.getElementsByDomSelector('.anything')).toEqual([]);
+        div.remove();
+    });
+
+    test('the base class refuses every screen action it does not implement', async () => {
+        const { default: ScreenManagerBase } =
+            await import('./ScreenManagerBase');
+        const manager = new (ScreenManagerBase as any)(7);
+
+        expect(() => manager.sendSyncScreen()).toThrow(
+            'sendSyncScreen is not implemented.',
+        );
+        expect(() => manager.clear()).toThrow('clear is not implemented.');
+        await expect(manager.delete()).rejects.toThrow(
+            'delete is not implemented.',
+        );
+        expect(() => manager.receiveScreenDropped({} as any)).toThrow(
+            'receiveScreenDropped is not implemented.',
+        );
+        expect(() => manager.sendScreenMessage({} as any, false)).toThrow(
+            'sendScreenMessage is not implemented.',
+        );
+        expect(() => manager.createScreenManagerBaseGhost(7)).toThrow(
+            'createScreenManagerGhost is not implemented.',
+        );
+        expect(() => manager.getScreenManagerBaseForce(7)).toThrow(
+            'getScreenManagerForce is not implemented.',
+        );
+    });
+
+    test('the ghost stand-in for a deleted screen is inert', async () => {
+        const { ScreenManagerBaseGhost } = await import('./ScreenManagerBase');
+        const ghost = new ScreenManagerBaseGhost(8);
+
+        expect(ghost.isDeleted).toBe(true);
+        expect(ghost.isShowing).toBe(false);
+        // a ghost never asks the main process anything
+        expect(mocks.getAllShowingScreenIds).not.toHaveBeenCalled();
+
+        expect(() => {
+            ghost.sendSyncScreen();
+            ghost.clear();
+            ghost.receiveScreenDropped({} as any);
+            ghost.sendScreenMessage({} as any, false);
+        }).not.toThrow();
+        await expect(ghost.delete()).resolves.toBeUndefined();
+
+        expect(ghost.createScreenManagerBaseGhost(9)).toBeInstanceOf(
+            ScreenManagerBaseGhost,
+        );
+        expect(ghost.getScreenManagerBaseForce(9)).toBeInstanceOf(
+            ScreenManagerBaseGhost,
+        );
     });
 });

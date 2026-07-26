@@ -483,4 +483,38 @@ describe('domHelpers', () => {
             },
         );
     });
+    test('url params round-trip while keeping the caller url shape', async () => {
+        const {
+            getParamFileFullName,
+            getParamIdNum,
+            getParamKeyValue,
+            setParamFileFullName,
+            setParamIdNum,
+            setParamKeyValue,
+        } = await import('./domHelpers');
+
+        // a relative path stays relative
+        expect(setParamKeyValue('/reader.html', 'tab', 'bible')).toBe(
+            '/reader.html?tab=bible',
+        );
+        expect(getParamKeyValue('/reader.html?tab=bible', 'tab')).toBe('bible');
+        expect(getParamKeyValue('/reader.html', 'tab')).toBeNull();
+
+        // ...and an absolute url stays absolute
+        expect(
+            setParamKeyValue('https://app.test/reader.html', 'tab', 'bible'),
+        ).toBe('https://app.test/reader.html?tab=bible');
+
+        expect(setParamIdNum('/editor.html', 7)).toBe('/editor.html?id=7');
+        expect(getParamIdNum('/editor.html?id=7')).toBe(7);
+        expect(getParamIdNum('/editor.html?id=nope')).toBeNull();
+        expect(getParamIdNum('/editor.html')).toBeNull();
+
+        expect(setParamFileFullName('/editor.html', 'song.owa')).toBe(
+            '/editor.html?file=song.owa',
+        );
+        expect(getParamFileFullName('/editor.html?file=song.owa')).toBe(
+            'song.owa',
+        );
+    });
 });

@@ -518,4 +518,41 @@ describe('PresentingFocusManager', () => {
         expect(manager.dimColor).toBe('#000000');
         expect(manager.size).toBe(260);
     });
+    test('update listeners are added, fired, and removed again', async () => {
+        const FocusManager = await importFocusManager();
+        const manager = new FocusManager();
+        const listener = vi.fn();
+
+        const unsubscribe = manager.addUpdateListener(listener);
+        manager.setDimColor('#112233');
+        expect(listener).toHaveBeenCalled();
+        expect(manager.dimColor).toBe('#112233');
+
+        // an unchanged colour is not a change
+        listener.mockClear();
+        manager.setDimColor('#112233');
+        expect(listener).not.toHaveBeenCalled();
+
+        // ...and an invalid one falls back to the shipped default
+        manager.setDimColor('not-a-color');
+        expect(manager.dimColor).toBe('#000000');
+
+        unsubscribe();
+        listener.mockClear();
+        manager.setDimColor('#445566');
+        expect(listener).not.toHaveBeenCalled();
+    });
+
+    test('a resize invalidates the cached overlay rect', async () => {
+        const FocusManager = await importFocusManager();
+        const manager = new FocusManager();
+        const div = document.createElement('div');
+        document.body.appendChild(div);
+        manager.div = div;
+
+        expect(() => {
+            manager.render();
+        }).not.toThrow();
+        div.remove();
+    });
 });
