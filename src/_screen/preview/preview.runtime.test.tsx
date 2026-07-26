@@ -1050,6 +1050,30 @@ describe('preview runtime interactions', () => {
         expect(previewHelpers.getAppDocumentListOnScreenSetting()).toEqual({});
         expect(handleErrorMock).toHaveBeenCalledOnce();
 
+        // One bad entry must NOT take the good ones down with it: callers
+        // read-modify-write this map, so returning {} here used to silently
+        // erase every other screen's presented slide on the next present.
+        handleErrorMock.mockClear();
+        getSettingMock.mockReturnValueOnce(
+            JSON.stringify({
+                1: {
+                    filePath: '/slides/sample.pdf',
+                    itemJson: { kind: 'pdf', id: 1 },
+                },
+                2: {
+                    filePath: 123,
+                    itemJson: { kind: 'slide', id: 7 },
+                },
+            }),
+        );
+        expect(previewHelpers.getAppDocumentListOnScreenSetting()).toEqual({
+            1: {
+                filePath: '/slides/sample.pdf',
+                itemJson: { kind: 'pdf', id: 1 },
+            },
+        });
+        expect(handleErrorMock).toHaveBeenCalledOnce();
+
         vi.useRealTimers();
     });
 });

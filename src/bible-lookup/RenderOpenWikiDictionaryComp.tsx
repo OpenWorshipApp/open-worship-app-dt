@@ -8,6 +8,7 @@ import {
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleKeyContext } from '../bible-list/bibleHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
 
@@ -22,6 +23,7 @@ function genContextMenuItem(langCode: string): ContextMenuItemType {
     const langData = getLangData(langCode);
     const fontFamily = langData === null ? undefined : langData.fontFamily;
     return {
+        childBefore: genContextMenuItemIcon('translate'),
         menuElement,
         title: url,
         onSelect: () => {
@@ -48,11 +50,13 @@ async function handleWikiDictionaryOpening(bibleKey: string, event: any) {
     });
     showAppContextMenu(event, [
         {
+            childBefore: genContextMenuItemIcon('journal-text'),
             menuElement: 'Open Wiki Dictionary',
             disabled: true,
         },
         { menuElement: elementDivider },
         {
+            childBefore: genContextMenuItemIcon('translate'),
             menuElement: 'English',
             onSelect: () => {
                 const url = `https://en.wiktionary.org`;
@@ -73,6 +77,7 @@ export default function RenderOpenWikiDictionaryComp() {
         <button
             className="btn btn-sm btn-secondary"
             title="Wiki Dictionary"
+            aria-label="Wiki Dictionary"
             onClick={handleWikiDictionaryOpening.bind(null, bibleKey)}
         >
             <i className="bi bi-journal-text" />

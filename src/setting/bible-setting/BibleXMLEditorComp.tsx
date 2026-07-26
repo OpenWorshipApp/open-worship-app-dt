@@ -26,6 +26,7 @@ import {
     createMouseEvent,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { showAppInput } from '../../popup-widget/popupWidgetHelpers';
 import { genBibleNumbersMapXMLInput } from './bibleXMLAttributesGuessing';
 import { setBibleEditorDirty } from './bibleEditorDirtyHelpers';
@@ -342,6 +343,7 @@ function BibleBooksMapXMLInputComp({
             if (bibleBookOptions.length === 0) {
                 showAppContextMenu(event as any, [
                     {
+                        childBefore: genContextMenuItemIcon('info-circle'),
                         menuElement: tran('No book options available'),
                         disabled: true,
                     },
@@ -370,6 +372,7 @@ function BibleBooksMapXMLInputComp({
                         bibleBookOption.keys,
                     );
                     return {
+                        childBefore: genContextMenuItemIcon('journals'),
                         menuElement: (
                             <span data-locale-ff={localeRef.current}>
                                 {bibleBookOption.keys.join(', ')}

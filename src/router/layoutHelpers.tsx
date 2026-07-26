@@ -28,6 +28,7 @@ import { type AllControlType as KeyboardControlType } from '../event/KeyboardEve
 import { onSlideItemsKeyboardEvent } from '../slide-editor/slideEditingKeyboardEventHelpers';
 import { checkIsHistoryMovementEventType } from '../editing-manager/EditingHistoryManager';
 import { tran } from '../lang/langHelpers';
+import { openPopupWindow } from '../helper/domHelpers';
 
 export function genLayoutTabs() {
     const presenterTab: TabOptionType = {
@@ -52,8 +53,25 @@ export function genLayoutTabs() {
     };
 
     const experimentTab: TabOptionType = {
-        title: toTitleExternal('(dev)Experiment'),
-        routePath: appProvider.experimentHomePage,
+        title: (
+            <span
+                onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return openPopupWindow(
+                        appProvider.experimentHomePage,
+                        `experiment_${Date.now()}`,
+                        'experiment',
+                        {
+                            appBlinkFeatures: ['CanvasDrawElement'],
+                        },
+                    );
+                }}
+            >
+                {toTitleExternal('(dev)Experiment')}
+            </span>
+        ),
+        routePath: appProvider.presenterHomePage,
     };
 
     const editorTab: TabOptionType = {

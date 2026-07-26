@@ -14,6 +14,7 @@ import type BibleItemsViewController from '../../bible-reader/BibleItemsViewCont
 import { useBibleItemsViewControllerContext } from '../../bible-reader/BibleItemsViewController';
 import BibleItem from '../../bible-list/BibleItem';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import type { BibleItemDataType } from '../screenTypeHelpers';
 import { tran } from '../../lang/langHelpers';
 import { Fragment, useCallback, useMemo } from 'react';
@@ -26,12 +27,14 @@ import {
 function openContextMenu(event: any) {
     showAppContextMenu(event, [
         {
+            childBefore: genContextMenuItemIcon('window-plus'),
             menuElement: tran('Add New Screen'),
             onSelect() {
                 genNewScreenManagerBase();
             },
         },
         {
+            childBefore: genContextMenuItemIcon('arrow-clockwise'),
             menuElement: tran('Refresh Preview'),
             onSelect() {
                 for (const screenManager of getAllScreenManagers()) {

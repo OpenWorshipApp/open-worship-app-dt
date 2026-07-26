@@ -4,12 +4,15 @@ Work through the scenarios relevant to the requested focus area (or all of them)
 each: take a snapshot, interact, screenshot, then re-check console + network. Record
 anything abnormal using the severity scale and report template below.
 
-> **Two scenarios run in EVERY run, regardless of focus: S0 (baseline) and S7 (screen
-> controlling & presenting).** A run that never presented content and never drove the
-> `screen.html` output target is incomplete — the report must say so.
+> **Three scenarios run in EVERY run, regardless of focus: S0 (baseline), S7 (screen
+> controlling & presenting), and S15 (locale switch).** A run that never presented
+> content and never drove the `screen.html` output target is incomplete; so is a run that
+> never re-walked its screens in the other language — a missing translation key throws in
+> dev and blanks the page, and the default locale can't see it (KB §1.1). The report must
+> say so.
 
 > **Full-coverage runs:** scenarios are the *narrative* grouping; the *accounting* unit
-> is the row IDs in [coverage-matrix.md](./coverage-matrix.md) (each scenario lists the
+> is the row IDs in [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) (each scenario lists the
 > matrix rows it covers). A scenario is only complete when all its rows have a status in
 > the run's `coverage-<runid>.json` (see SKILL.md §6b).
 
@@ -198,11 +201,45 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 - Run every row of the KB table in the matrix explicitly (many will already be PASS from
   earlier scenarios — just fill in the gaps).
 
-### S15 — Locale & theme passes `[LT-01..04]`
-- After everything else: switch locale (Settings → Language), spot-check presenter /
-  reader / settings screenshots — labels translate per the KB §1 map, no raw i18n keys,
-  no clipped Khmer text — then **restore**. Same for dark/light theme.
-- Remember: a locale change you didn't make may be the **user** (KB §1).
+### S15 — Locale switch `[LT-01..02]` — **MANDATORY in every run** — + theme `[LT-03..05]`
+
+**Why it is mandatory.** `tran()` returns early on `en-US` (`DEFAULT_LOCALE`) without
+touching the dictionary; in `km-KH` the same call **throws** on a missing key and, with
+no error boundary, blanks the whole subtree. So an English-only run **structurally
+cannot** see a missing translation, and `npm run lint` stays green while a screen is
+broken in Khmer. Observed 2026-07-26: `tran("X:")` in `PositionSizeFieldComp` blanked the
+entire slide-editor tools panel. Run this block whatever the focus area — see SKILL.md
+§6d.
+
+Recipe (≈3 min, self-restoring):
+
+1. **Read the starting locale** from Settings → Language (which button is active). Do
+   **not** read `localStorage['language-locale']` — stale key (KB §1). You restore this.
+2. **Switch to the other locale** → `Apply Settings`. This calls
+   `forceReloadAppWindows()`: every window reloads, so re-`list_pages` / `select_page`
+   and re-run the readiness check. All previous snapshot `uid`s are dead.
+3. **Re-walk every screen the run touched**, plus the presenter baseline. Per screen:
+   `take_screenshot` + `list_console_messages`.
+4. **Assert:**
+   - No `Translation for text "…" not found in locale km-KH` → **Critical** finding per
+     occurrence; name the key and the component (the React warning right after it names
+     the component).
+   - No blank/empty panel that had content in the other locale (visible symptom of the
+     throw above).
+   - Labels translate (KB §1 map), no raw i18n keys, no clipped/overflowing Khmer text
+     (Khmer glyphs are taller — check buttons, tabs, table cells).
+   - Hardcoded English left in a Khmer screen = **Low/Info** (untranslated UI), a
+     different and much less severe finding than the throw. Name the file.
+5. **Restore** the starting locale → `Apply Settings` again.
+
+Notes:
+- Unsaved editor state survives the reloads (disk-backed `<file>.histories/<n>-head`), so
+  a pending `*` is no reason to skip. Never use **Discard changed** to tidy up.
+- A locale change you didn't make may be the **user** (KB §1) — confirm before filing.
+
+**Theme `[LT-03..05]`** — after the locale block: dark / light / System via ST-05,
+screenshot presenter + settings, check contrast and that no text goes invisible, then
+**restore**.
 
 ### S16 — Edge & empty states (opportunistic)
 - `Slide Editor` with no document → alert, no navigation (NAV-03).

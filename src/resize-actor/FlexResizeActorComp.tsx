@@ -20,6 +20,7 @@ import {
     type ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { tran } from '../lang/langHelpers';
 import { checkMediaPlaying } from '../helper/mediaControlHelpers';
 
@@ -330,18 +331,21 @@ export default class FlexResizeActorComp extends Component<Props, object> {
     handleContextMenuOpening(event: any) {
         const menuItems: ContextMenuItemType[] = [
             {
+                childBefore: genContextMenuItemIcon('aspect-ratio'),
                 menuElement: tran('Reset Size'),
                 onSelect: () => {
                     this.resetSize();
                 },
             },
             {
+                childBefore: genContextMenuItemIcon('x-square'),
                 menuElement: tran('Close First Widget'),
                 onSelect: () => {
                     this.close('left');
                 },
             },
             {
+                childBefore: genContextMenuItemIcon('x-square'),
                 menuElement: tran('Close Second Widget'),
                 onSelect: () => {
                     this.close('right');

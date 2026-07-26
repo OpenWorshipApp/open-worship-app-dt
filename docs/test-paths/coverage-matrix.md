@@ -13,20 +13,34 @@ EXCLUDED by the policy table below.
 > Before a full run, spot-check the matrix against `src/` (new `*Comp.tsx` folders =
 > new rows).
 
-**matrixVersion: 2026-07-19** (added **XW** — cross-window propagation, §XW-01..07)
+**matrixVersion: 2026-07-26** (**LT-01..02** promoted into the mandatory core — a locale
+switch is now required in every run; see §LT for why an English-only run is blind)
 
-## Mandatory core — screen controlling & presenting (every run)
+## Mandatory core — screen controlling, presenting, and locale (every run)
 
-Screen controlling and presenting is the app's reason to exist, so it is **never
-optional**: every run — full-coverage OR focused (e.g. "robot test bible lookup") —
-must exercise the **mandatory core** and record its rows in the run state file:
+Two blocks are **never optional**: every run — full-coverage OR focused (e.g. "robot test
+bible lookup") — must exercise the **mandatory core** and record its rows in the run
+state file.
+
+**1. Screen controlling & presenting** — the app's reason to exist:
 
 > **SP-01, SP-02, SC-01, SC-02, PR-04, KB-05 (or another clear key)** — present at
 > least one real content item, verify it on the mini-screen AND on the `screen.html`
 > CDP target while showing, exercise the clear controls, then hide/restore.
 
-A report that lacks evidence for the mandatory core is **incomplete** — say so
-explicitly rather than shipping it. The full recipe is test-plan.md §S7.
+**2. Locale switch** — the bug class a single-locale run cannot see:
+
+> **LT-01, LT-02** — re-walk the screens the run touched in the OTHER language, assert
+> no `Translation for text "…" not found in locale km-KH` console error and no blank
+> panel, then restore the starting locale.
+
+`tran()` returns early when the locale is `en-US` (`DEFAULT_LOCALE`) — it never looks a
+key up. In Khmer the same call **throws** on a missing key, and with no error boundary
+the subtree renders **blank**. So an English-only pass proves nothing about translation
+coverage, and typecheck/tests/build all stay green while a screen is broken in Khmer.
+
+A report that lacks evidence for either block is **incomplete** — say so explicitly
+rather than shipping it. Full recipes: test-plan.md §S7 (screen) and §S15 (locale).
 
 ## How a run uses this matrix
 
@@ -801,12 +815,26 @@ Dir-path menu (ST-11) = CM-13 (setting-page drops `Edit Parent Path`).
 | KB-59 | `Ctrl+Z/Y`,`Ctrl+X/C/V`,`Ctrl+A` | a native text input focused | standard OS undo/cut/copy/paste/select-all in the input (overlaps in-app canvas/slide keys — verify no double-handling) (src: electron/electronMenu.ts:139) |
 | KB-60 | non-mac `Ctrl+Q` (File▸Quit); mac `Meta+Q`/`Meta+H`/`Meta+W` | any main window | quits/closes/hides — **destructive**; EX-06 presence-only (do NOT actually quit); note `Ctrl+Q` also drives in-app KB-02/KB-14, a collision to document (src: electron/electronMenu.ts:99) |
 
-## LT — Locale & theme passes
+## LT — Locale & theme passes — **MANDATORY core: LT-01..02**
+
+> **Why LT-02 is mandatory, not a spot-check.** `tran()`
+> (src: src/lang/langHelpers.ts:601-625) short-circuits when the locale is `en-US`
+> (`DEFAULT_LOCALE`) and returns the input string — **no dictionary lookup happens**. In
+> `km-KH` the same call **throws** `Translation for text "…" not found in locale km-KH`
+> when the key is absent, and there is no error boundary, so the component's whole
+> subtree renders **blank**. An English-only run therefore cannot detect a missing
+> translation *at all*, and `npm run lint` (tests + typecheck + build) stays green while
+> a screen is broken in Khmer. Observed 2026-07-26: `PositionSizeFieldComp` called
+> `tran(name)` with `name="X:"` and blanked the entire slide-editor tools panel.
+>
+> Two things hide from a source grep for `tran('literal')`, so only a live locale switch
+> finds them: **concatenation** (`tran('a ' + 'b')` is ONE key at runtime) and **dynamic**
+> `tran(prop)` fed by a JSX literal at the call site.
 
 | ID | Target | Interactions | Pass condition |
 |---|---|---|---|
-| LT-01 | Primary pass | full matrix in the CURRENT locale/theme | (this is the main run) |
-| LT-02 | Secondary locale spot-check | switch via ST-04; re-screenshot presenter/reader/settings; check header tabs, lists, buttons | labels translate (KB §1 map); no raw i18n keys; no clipped Khmer text; **restore** |
+| LT-01 | Primary pass | full matrix in the CURRENT locale/theme; record which locale that was (read it from Settings → Language's active button, NOT `localStorage`) | (this is the main run); the starting locale is captured so LT-02 can restore it |
+| LT-02 | **Secondary locale pass (MANDATORY)** | switch via ST-04 → `Apply Settings` (reloads every window: re-`list_pages`/`select_page`, all `uid`s die); re-walk every screen the run touched + the presenter baseline; screenshot + `list_console_messages` each; then switch back and Apply | **no `Translation for text "…" not found in locale km-KH` in any console** (each occurrence = Critical finding: name the key AND the component from the React warning that follows); no blank/empty panel that rendered in the other locale; labels actually translate (KB §1 map), no raw i18n keys, no clipped/overflowing Khmer text; starting locale **restored** |
 | LT-03 | Dark theme spot-check | via ST-05; screenshot presenter + settings | readable contrast; no invisible text; **restore** |
 | LT-04 | Light theme spot-check | via ST-05 | same; **restore** |
 | LT-05 | `SettingGeneralThemeComp` "System" theme option | ⌨️✎ theme `<select>` → "System"; emulate OS `prefers-color-scheme`; **restore** | app follows the OS scheme — `data-bs-theme`/documentElement resolves to OS light/dark and flips when the emulated OS scheme flips (distinct from LT-03 dark / LT-04 light); restore original theme (src: src/setting/SettingGeneralThemeComp.tsx:31-34) |
@@ -819,5 +847,6 @@ GL 22 · NAV 16 · PL 31 · PM 113 · PR 26 · RD 52 · ED 39 · ST 33 · PU 18 
 SC 7 · CM 92 · KB 60 · LT 5 = **535 rows total**. Compute the denominator per run as
 `535 − EXCLUDED` (hardware and policy exclusions vary by machine).
 
-> Reminder: whatever the focus area, the **mandatory core** (SP-01, SP-02, SC-01,
-> SC-02, PR-04, one clear key) must appear in every run's state file.
+> Reminder: whatever the focus area, the **mandatory core** — screen (SP-01, SP-02,
+> SC-01, SC-02, PR-04, one clear key) **and locale (LT-01, LT-02)** — must appear in
+> every run's state file.

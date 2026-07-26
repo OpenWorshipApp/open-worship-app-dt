@@ -26,10 +26,8 @@ import {
     setShouldModelNewLine,
 } from '../helper/bible-helpers/bibleLogicHelpers2';
 import type { BibleTargetType } from '../bible-list/bibleRenderHelpers';
-import {
-    elementDivider,
-    genContextMenuItemIcon,
-} from '../context-menu/AppContextMenuComp';
+import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';
 import {
     checkIsVerseAtBottom,
@@ -697,6 +695,8 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                 id: splitHorizontalId,
             },
             {
+                childBefore: genContextMenuItemIcon('vr'),
+                childAfter: genContextMenuItemIcon('translate'),
                 menuElement: tran('Split Horizontal to'),
                 onSelect: (event1: any) => {
                     showBibleKeyOption(event1, (newBibleKey: string) => {
@@ -717,6 +717,8 @@ class BibleItemsViewController extends EventHandler<UpdateEventType> {
                 id: splitVerticalId,
             },
             {
+                childBefore: genContextMenuItemIcon('hr'),
+                childAfter: genContextMenuItemIcon('translate'),
                 menuElement: tran('Split Vertical to'),
                 onSelect: (event2: any) => {
                     showBibleKeyOption(event2, (newBibleKey: string) => {

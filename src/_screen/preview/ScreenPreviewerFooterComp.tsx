@@ -10,6 +10,7 @@ import DisplayControlComp from './DisplayControlComp';
 import ScreenEffectControlComp from './ScreenEffectControlComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import AppSuspenseComp from '../../others/AppSuspenseComp';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
@@ -39,6 +40,7 @@ function getNewStageNumber(
         (_, i) => i,
     ).map((i) => {
         return {
+            childBefore: genContextMenuItemIcon(`${i}-circle`),
             menuElement: `${i}`,
             disabled: i === currentStageNumber,
             onSelect: () => {
@@ -48,6 +50,7 @@ function getNewStageNumber(
     });
     items.push(
         {
+            childBefore: genContextMenuItemIcon('dash-circle'),
             menuElement: tran('Decrement'),
             disabled: currentStageNumber <= 0,
             onSelect: () => {
@@ -55,6 +58,7 @@ function getNewStageNumber(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('plus-circle'),
             menuElement: tran('Increment'),
             onSelect: () => {
                 onChange(currentStageNumber + 1);
@@ -188,12 +192,10 @@ function DrawSwitchComp({
         const items: ContextMenuItemType[] = drawModeInfoList.map(
             ({ mode, icon, title }) => {
                 return {
-                    menuElement: (
-                        <span>
-                            <i className={`bi ${icon} me-2`} />
-                            {tran(title)}
-                        </span>
+                    childBefore: genContextMenuItemIcon(
+                        icon.replace(/^bi-/, ''),
                     ),
+                    menuElement: tran(title),
                     disabled: mode === drawModeRef.current,
                     onSelect: () => {
                         setDrawModeRef.current(mode);

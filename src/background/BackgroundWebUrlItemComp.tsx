@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { handleDragStart } from '../helper/dragHelpers';
 import { tran } from '../lang/langHelpers';
@@ -60,6 +61,7 @@ export default function BackgroundWebUrlItemComp({
     const handleContextMenuOpening = useCallback((event: any) => {
         const contextMenuItems: ContextMenuItemType[] = [
             {
+                childBefore: genContextMenuItemIcon('clipboard'),
                 menuElement: tran('Copy URL to Clipboard'),
                 onSelect: () => {
                     copyToClipboard(urlSourceRef.current.src);
@@ -72,6 +74,9 @@ export default function BackgroundWebUrlItemComp({
                 ? []
                 : [
                       {
+                          childBefore: genContextMenuItemIcon('x-circle', {
+                              color: 'var(--bs-danger)',
+                          }),
                           menuElement: tran('Remove URL'),
                           onSelect: () => {
                               void onRemoveRef.current(urlSourceRef.current);

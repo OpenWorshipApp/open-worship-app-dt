@@ -59,7 +59,7 @@ vi.mock('../context-menu/appContextMenuHelpers', () => ({
 vi.mock('../bible-list/bibleHelpers', () => ({
     saveBibleItem: saveBibleItemMock,
 }));
-vi.mock('../context-menu/AppContextMenuComp', () => ({
+vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: genContextMenuItemIconMock,
 }));
 vi.mock('../helper/bible-helpers/bibleInfoHelpers', () => ({

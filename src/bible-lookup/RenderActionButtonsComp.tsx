@@ -31,6 +31,7 @@ export function RenderCopyBibleItemActionButtonsComp({
             className="btn btn-sm btn-success"
             type="button"
             title={tran('Copy')}
+            aria-label={tran('Copy')}
             onClick={handleCopying}
         >
             <i className="bi bi-copy" />
@@ -92,6 +93,7 @@ export default function RenderActionButtonsComp({
                 type="button"
                 className="btn btn-sm btn-info"
                 title={tran('Split horizontal')}
+                aria-label={tran('Split horizontal')}
                 onClick={handleSplitHorizontal}
             >
                 <i className="bi bi-vr" />
@@ -100,6 +102,7 @@ export default function RenderActionButtonsComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title={tran('Split vertical')}
+                aria-label={tran('Split vertical')}
                 onClick={handleSplitVertical}
             >
                 <i className="bi bi-hr" />
@@ -110,6 +113,7 @@ export default function RenderActionButtonsComp({
                         className="btn btn-sm btn-primary"
                         type="button"
                         title={tran('Save bible item')}
+                        aria-label={tran('Save bible item')}
                         onClick={handleSaveBibleItem}
                     >
                         <i className="bi bi-floppy" />
@@ -119,6 +123,9 @@ export default function RenderActionButtonsComp({
                             className="btn btn-sm btn-primary"
                             type="button"
                             title={tran('Save bible item and show on screen')}
+                            aria-label={tran(
+                                'Save bible item and show on screen',
+                            )}
                             onClick={handleSaveAndPresent}
                         >
                             <i className="bi bi-cast" />
@@ -131,6 +138,9 @@ export default function RenderActionButtonsComp({
                             title={tran(
                                 'Insert bible item into selected slide',
                             )}
+                            aria-label={tran(
+                                'Insert bible item into selected slide',
+                            )}
                             onClick={handleBibleItemInserting}
                         >
                             <i className="bi bi-file-earmark-slides" />
@@ -140,6 +150,7 @@ export default function RenderActionButtonsComp({
                         className="btn btn-sm btn-secondary"
                         type="button"
                         title={tran('Export to MS Word')}
+                        aria-label={tran('Export to MS Word')}
                         onClick={handleExportToWord}
                     >
                         <i

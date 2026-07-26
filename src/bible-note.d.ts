@@ -67,5 +67,6 @@ declare module 'BibleNote.js' {
         prependFooterActionButton(button: BibleNoteFooterActionButton): void;
         getFooterActionButton(id: string): BibleNoteFooterActionButton | null;
         getIsFocusing(): boolean;
+        searchText(query: string): void;
     }
 }

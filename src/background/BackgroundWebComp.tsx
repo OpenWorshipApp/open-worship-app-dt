@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -84,6 +85,7 @@ export default function BackgroundWebComp() {
     }, []);
     const getAddUrlContextMenuItem = useCallback((): ContextMenuItemType => {
         return {
+            childBefore: genContextMenuItemIcon('link-45deg'),
             menuElement: tran('Add URL'),
             onSelect: () => {
                 void handleUrlAdding();

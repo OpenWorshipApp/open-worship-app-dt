@@ -2,6 +2,7 @@ import { useCallback, type MouseEvent, type DragEvent, useState } from 'react';
 
 import type NoteItem from './NoteItem';
 import { type ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { useFileSourceRefreshEvents } from '../../helper/dirSourceHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
@@ -77,18 +78,23 @@ export default function BibleNoteItemRenderComp({
         async (event: MouseEvent<any>) => {
             const menuItems: ContextMenuItemType[] = [
                 {
+                    childBefore: genContextMenuItemIcon('box-arrow-up-right'),
                     menuElement: tran('Open'),
                     onSelect: () => {
                         handleOpening(noteRef.current, noteItemRef.current);
                     },
                 },
                 {
+                    childBefore: genContextMenuItemIcon('pencil-square'),
                     menuElement: tran('Edit Title'),
                     onSelect: () => {
                         setIsEditingTitle1(true);
                     },
                 },
                 {
+                    childBefore: genContextMenuItemIcon(
+                        'file-earmark-arrow-down',
+                    ),
                     menuElement: tran('Export'),
                     onSelect: () => {
                         exportBibleNoteItem(noteItemRef.current);

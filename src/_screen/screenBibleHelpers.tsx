@@ -11,6 +11,7 @@ import { getDisplayByScreenId } from './managers/screenHelpers';
 import type { BibleItemType } from '../bible-list/bibleItemHelpers';
 import { cloneJson } from '../helper/helpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { genContextMenuBibleKeys } from '../bible-lookup/BibleKeySelectionComp';
 import type { BibleItemDataType } from './screenTypeHelpers';
 import { getBibleLocale } from '../helper/bible-helpers/bibleStyleHelpers';
@@ -80,9 +81,9 @@ async function onBibleSelect(
         ...(bibleRenderingList.length > 1
             ? [
                   {
-                      childBefore: (
-                          <i className="bi bi-x-lg" style={{ color: 'red' }} />
-                      ),
+                      childBefore: genContextMenuItemIcon('x-lg', {
+                          color: 'red',
+                      }),
                       title: tran('Remove'),
                       menuElement: (
                           <span
@@ -109,14 +110,7 @@ async function onBibleSelect(
               ]
             : []),
         {
-            childBefore: (
-                <i
-                    className="bi bi-lightbulb"
-                    style={{
-                        color: 'var(--bs-info-text-emphasis)',
-                    }}
-                />
-            ),
+            childBefore: genContextMenuItemIcon('lightbulb'),
             menuElement: <span>{tran('Shift Click to Add')}</span>,
             disabled: true,
         },

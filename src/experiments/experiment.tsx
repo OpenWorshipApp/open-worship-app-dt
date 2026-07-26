@@ -1,16 +1,19 @@
 import { getReactRoot } from '../others/rootHelpers';
+import HtmlInCanvasComp from './html-in-canvas/HtmlInCanvasComp';
 
 const root = getReactRoot();
 
-root.render(
-    <div
-        style={{
-            width: '700px',
-            height: '650px',
-            overflow: 'hidden',
-            margin: 'auto',
-        }}
-    >
-        No content
-    </div>,
-);
+function ExperimentComp() {
+    return (
+        <div
+            style={{
+                overflow: 'hidden',
+                margin: 'auto',
+            }}
+        >
+            <HtmlInCanvasComp />
+        </div>
+    );
+}
+
+root.render(<ExperimentComp />);

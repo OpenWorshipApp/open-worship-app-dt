@@ -84,6 +84,11 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 - **Presenter tabs** (`.nav.nav-tabs`): `Documents`, `Lyrics`, `Bibles`, `Foreground`.
   Active tab has `.active`; a tab shows `.app-on-screen` when its content is live on the
   presentation screen.
+  - ⚠️ **This group is multi-select** — several tabs can be `.active` simultaneously and they
+    split the middle column (verified 2026-07-26). A per-group
+    `querySelector('.nav-link.active')` returns only the **first** active tab, so it will
+    report "restored" while an extra panel is still open. Read `.active` off **every**
+    `.nav-link`, and diff the baseline screenshot when restoring state.
   - Documents tab: slide thumbnails container; footer has a size range slider
     (`.app-range`) and the current document path.
   - Foreground tab: countdowns, marquee top/bottom, clocks/timers, web overlays, cameras, image
@@ -137,7 +142,7 @@ toggle, theme, font family, and the destructive resets (`Reset All Child Directo
 
 > This is the short list. The **complete** shortcut set — every registered in-app shortcut
 > plus electron application-menu accelerators — is enumerated as unit tests in
-> [coverage-matrix.md](./coverage-matrix.md) §KB (`KB-01..60`); right-click menu items are
+> [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) §KB (`KB-01..60`); right-click menu items are
 > §CM (`CM-01..92`).
 
 ## Stable ids present in production

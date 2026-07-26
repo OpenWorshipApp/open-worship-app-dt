@@ -1,4 +1,10 @@
-import { app, Menu, shell, type BrowserWindow } from 'electron';
+import {
+    app,
+    BrowserWindow,
+    Menu,
+    shell,
+    type MenuItemConstructorOptions,
+} from 'electron';
 
 import type ElectronAppController from './ElectronAppController';
 import {
@@ -32,41 +38,75 @@ function formatMenuItems(
     items: CustomMenuItemType[],
     clickHandler: (clickData: any) => void,
 ) {
-    return items
+    const genItems: MenuItemConstructorOptions[] = items
+        .filter((item) => {
+            return item.label !== undefined && item.label.trim() !== '';
+        })
         .map((item) => {
-            if ('submenu' in item) {
-                return {
-                    label: item.label,
-                    submenu: item.submenu
-                        .map((subItem) => ({
-                            label: subItem.label,
-                            click: () => {
-                                clickHandler(subItem.clickData);
-                            },
-                        }))
-                        .filter((subItem) => subItem.label),
-                };
+            const submenu = item.submenu;
+            let genSubmenu: MenuItemConstructorOptions[] | undefined;
+            if (submenu !== undefined) {
+                genSubmenu = formatMenuItems(submenu, clickHandler);
             }
+            const clickData = item.clickData;
+            delete item.clickData;
             return {
-                label: item.label,
+                ...item,
+                submenu: genSubmenu,
                 click: () => {
-                    clickHandler(item.clickData);
+                    clickHandler(clickData);
                 },
             };
-        })
-        .filter((item) => item.label);
+        });
+    return genItems;
 }
 
-export function initMenu(
-    appController: ElectronAppController,
-    {
-        menusData: { tools = [] } = {},
-        clickMenu = () => {},
-    }: {
-        menusData?: CustomMenusDataType;
-        clickMenu?: (clickData: any) => void;
-    } = {},
+type CustomMenusDataEntryType = {
+    menusData: CustomMenusDataType;
+    clickMenu: (clickData: any) => void;
+};
+const customMenusData: {
+    [key: string]: CustomMenusDataEntryType;
+} = {};
+export function setCustomMenusData(
+    key: string,
+    data: CustomMenusDataEntryType | null,
 ) {
+    if (data === null) {
+        delete customMenusData[key];
+    } else {
+        customMenusData[key] = data;
+    }
+}
+
+export function sendMenuClicked(menuData: any, win?: BrowserWindow | null) {
+    const targetWin = win ?? BrowserWindow.getFocusedWindow();
+    // The owner window may already be gone (a popup that registered its own
+    // menu items and was then closed); touching `webContents` on a destroyed
+    // window throws.
+    if (targetWin === null || targetWin.isDestroyed()) {
+        return false;
+    }
+    targetWin.webContents.send('app:main:menu-item-clicked', menuData);
+    return true;
+}
+
+function getCustomMenuItems(key: string) {
+    const items = Object.entries(customMenusData)
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+        .map(([_, value]) => {
+            return value;
+        });
+    const menuItems = items.flatMap(({ menusData = {}, clickMenu }) => {
+        let data =
+            (menusData as Record<string, CustomMenuItemType[]>)[key] || [];
+        data = JSON.parse(JSON.stringify(data));
+        return formatMenuItems(data, clickMenu);
+    });
+    return menuItems;
+}
+
+export function initMenu(appController: ElectronAppController) {
     const isMac = process.platform === 'darwin';
 
     const template: any[] = [
@@ -144,8 +184,25 @@ export function initMenu(
                 { role: 'paste' },
                 {
                     label: `Find`,
-                    click: () => {
-                        appController.openFindPage();
+                    // The finder is a popup owned by the main window; any other
+                    // window (bible note, screens, ...) has to search in place,
+                    // so it gets an in-window request instead. Use the window
+                    // electron hands the click, not `getFocusedWindow()` — it is
+                    // the window the menu action actually targets.
+                    click: (
+                        _menuItem: unknown,
+                        browserWindow?: BrowserWindow,
+                    ) => {
+                        const targetWin =
+                            browserWindow ?? BrowserWindow.getFocusedWindow();
+                        if (
+                            targetWin === null ||
+                            targetWin === appController.mainWin
+                        ) {
+                            appController.openFindPage();
+                            return;
+                        }
+                        sendMenuClicked({ isOpenSearch: true }, targetWin);
                     },
                     accelerator: findingShortcut,
                 },
@@ -222,7 +279,7 @@ export function initMenu(
                         shell.openExternal('https://fonts.google.com/');
                     },
                 },
-                ...formatMenuItems(tools, clickMenu),
+                ...getCustomMenuItems('tools'),
             ],
         },
         // { role: 'windowMenu' }

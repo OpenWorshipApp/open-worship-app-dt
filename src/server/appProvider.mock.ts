@@ -867,6 +867,10 @@ const appProviderMock = {
             listeners.add(callback);
             messageListeners.set(channel, listeners);
         },
+        removeListener: (channel: string, callback: Listener) => {
+            const listeners = messageListeners.get(channel);
+            listeners?.delete(callback);
+        },
         listenOnceForData: (channel: string, callback: Listener) => {
             const wrapped: Listener = (event, ...args) => {
                 const listeners = messageListeners.get(channel);

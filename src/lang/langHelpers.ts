@@ -1,4 +1,4 @@
-import type { AppProviderType } from '../server/appProvider';
+import type { AppProviderType, MessageEventType } from '../server/appProvider';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
 import { unlocking } from '../server/unlockingHelpers';
@@ -478,24 +478,17 @@ export type LanguageDataType = {
     getBibleCrossRefBundleFilePath: () => string;
 };
 
-type CustomMenuItemType =
-    | {
-          label: string;
-          submenu: {
-              label: string;
-              clickData: any;
-          }[];
-      }
-    | {
-          label: string;
-          clickData: any;
-      };
+type CustomMenuItemType = {
+    label: string;
+    // Optional because a submenu PARENT is not clickable — it only groups the
+    // items under it (see the Khmer Tools entry in `data/km`). Matches the
+    // electron-side `CustomMenuItemType`, which also has it optional.
+    clickData?: AnyObjectType;
+    accelerator?: string;
+    submenu?: CustomMenuItemType[];
+};
 export type CustomMenusDataType = {
     tools?: CustomMenuItemType[];
-};
-
-type ClicDataType = {
-    url: string;
 };
 
 export function checkIsValidLangCode(text: string) {
@@ -823,15 +816,45 @@ export async function getLocalBibleCrossRef(
     );
 }
 
-appProvider.messageUtils.listenForData(
-    'app:main:menu-item-clicked',
-    (_event: any, clickData?: ClicDataType) => {
-        const { url } = clickData ?? {};
-        if (url) {
-            appProvider.browserUtils.openExternalURL(url);
-        }
-    },
-);
+export function registerAppMenuClicked<T>(
+    handler: (event: MessageEventType, data: T) => void,
+) {
+    appProvider.messageUtils.listenForData(
+        'app:main:menu-item-clicked',
+        handler,
+    );
+    return () => {
+        appProvider.messageUtils.removeListener(
+            'app:main:menu-item-clicked',
+            handler,
+        );
+    };
+}
+
+export function setAppMenuItems(key: string, menusData: CustomMenusDataType) {
+    appProvider.messageUtils.sendData('main:app:set-menu-items', {
+        key,
+        menusData,
+    });
+}
+
+function handleLangAppMenusClick(
+    _event: any,
+    clickData: { openExternalUrl?: string },
+) {
+    const { openExternalUrl } = clickData ?? {};
+    if (openExternalUrl) {
+        appProvider.browserUtils.openExternalURL(openExternalUrl);
+    }
+}
+
+// Separate from `initLangAppMenu` so the caller can unregister it: the async
+// menu build cannot be undone from an effect cleanup, but a listener left
+// behind by StrictMode's double mount would open every tools link twice.
+export function registerLangAppMenuClicked() {
+    return registerAppMenuClicked(handleLangAppMenusClick);
+}
+
 export async function initLangAppMenu() {
     const menusData: AnyObjectType = {};
     const langDataList = await getAllLangsAsync();
@@ -842,8 +865,5 @@ export async function initLangAppMenu() {
             menusData[key] = menusData[key].concat(value);
         });
     }
-    appProvider.messageUtils.sendData(
-        'main:app:set-menu-items',
-        menusData as CustomMenusDataType,
-    );
+    setAppMenuItems('lang', menusData as CustomMenusDataType);
 }

@@ -6,9 +6,9 @@ import { closeCurrentEditingBibleItem } from './readBibleHelpers';
 import type { EventMapperType } from '../event/KeyboardEventListener';
 import {
     elementDivider,
-    genContextMenuItemIcon,
     genContextMenuItemShortcutKey,
 } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import BibleItemsViewController, {
     applyBibleItemHistoryPendingText,
     attemptAddingHistory,
@@ -415,6 +415,7 @@ class LookupBibleItemController extends BibleItemsViewController {
             }
         } else {
             menus2.push({
+                childBefore: genContextMenuItemIcon('pencil-square'),
                 menuElement: tran('Edit'),
                 title: tran('Double click on header to edit'),
                 onSelect: () => {

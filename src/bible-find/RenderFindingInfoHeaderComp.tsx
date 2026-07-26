@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { checkIsOldTestament } from '../helper/bible-helpers/bibleInfoHelpers';
 import type { BookMatchDataType } from '../helper/bible-helpers/bibleLogicHelpers1';
 import { genBookMatches } from '../helper/bible-helpers/bibleLogicHelpers1';
@@ -21,6 +22,7 @@ function genMenuItem(
 ) {
     const extraName = book === modelBook ? '' : ` (${modelBook})`;
     return {
+        childBefore: genContextMenuItemIcon('book'),
         menuElement: (
             <span data-bible-key-ff={bibleKey}>{`${book}${extraName}`}</span>
         ),
@@ -56,6 +58,7 @@ async function selectBookKeys(
     });
     const contextMenuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('collection'),
             menuElement: tran('All Books'),
             onSelect: () => {
                 setSelectedBooks([]);
@@ -64,11 +67,15 @@ async function selectBookKeys(
         ...(selectedBooks.length > 0
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('info-circle'),
                       menuElement: tran('Shift + Click to select multiple'),
                   },
               ]
             : []),
         {
+            childBefore: genContextMenuItemIcon('journals', {
+                color: 'maroon',
+            }),
             menuElement: (
                 <span
                     style={{
@@ -87,6 +94,9 @@ async function selectBookKeys(
             return genMenuItem(selectedBooks, setSelectedBooks, book);
         }),
         {
+            childBefore: genContextMenuItemIcon('journals', {
+                color: 'maroon',
+            }),
             menuElement: (
                 <span
                     style={{
@@ -116,6 +126,9 @@ function showExtraActions(
 ) {
     const contextMenuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('arrow-counterclockwise', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: (
                 <span style={{ color: 'var(--bs-danger)' }}>
                     {tran('Reset Search Data')}
@@ -145,6 +158,7 @@ function showExtraActions(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('funnel'),
             menuElement: tran('Reset Selected Books'),
             disabled: isDisabledFilterResetting,
             onSelect: () => {

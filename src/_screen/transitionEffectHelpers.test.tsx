@@ -295,7 +295,7 @@ describe('transitionEffectHelpers', () => {
             Array<{
                 menuElement: string;
                 onSelect: () => void;
-                childAfter: { props: { className: string } };
+                childBefore: { props: { className: string } };
             }>,
         ];
         expect(menuItems.map(({ menuElement }) => menuElement)).toEqual([
@@ -304,7 +304,7 @@ describe('transitionEffectHelpers', () => {
             'move',
             'zoom',
         ]);
-        expect(menuItems[2]?.childAfter.props.className).toContain(
+        expect(menuItems[2]?.childBefore.props.className).toContain(
             'app-highlight-selected',
         );
 

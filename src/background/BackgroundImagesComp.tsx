@@ -12,6 +12,7 @@ import {
 import type { BackgroundSrcType } from '../_screen/screenTypeHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     checkIsImagesInClipboard,
     downloadImage,
@@ -82,6 +83,7 @@ async function genContextMenuItems(dirSource: DirSource) {
     if (isClipboardHasImage) {
         const pastImageTitle = tran('Paste Image');
         contextMenuItems.push({
+            childBefore: genContextMenuItemIcon('card-image'),
             menuElement: pastImageTitle,
             onSelect: async () => {
                 for await (const blob of readImagesFromClipboard()) {
@@ -126,6 +128,7 @@ async function genContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
     contextMenuItems.push(
         {
+            childBefore: genContextMenuItemIcon('download'),
             menuElement: title,
             onSelect: async () => {
                 const imageUrl = await askForURL(title, 'Image URL:');

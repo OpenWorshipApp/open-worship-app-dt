@@ -10,3 +10,11 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [EventHandler sync dispatch](eventhandler-sync-dispatch.md) — addPropEvent dispatches synchronously; CLAUDE.md's 10ms/MD5-debounce claim is stale
 - [Codebase audit 2026-07](codebase-audit-2026-07.md) — audit findings FIXED 2026-07-22 (uncommitted); deferred: webPreferences hardening, trash-path containment, color-note dir-refresh reads
 - [Screen sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky, so color-note groups silently go one-way; reload now repairs the resulting divergence
+- [Lint known-failure note is stale](lint-known-failure-stale.md) — CLAUDE.md's ElectronMainController icon.png failure is fixed; don't assume a lint abort is "pre-existing"
+- [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — an HMR reload kills keyboard layers and unmounts overlays; reload fully before calling it a regression
+- [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in evaluate_script; it re-runs `document.onkeydown = …` and kills every app shortcut
+- [Bible Note floating toolbar width gate](bible-note-floating-toolbar-width.md) — the selection format popup only exists above ~1025px; the default 870px note window never shows it
+- [On-screen slide setting all-or-nothing — FIXED](screen-onscreen-setting-all-or-nothing.md) — refactor21 now drops only invalid entries; stop blaming this path for blank-after-restart screens
+- [Apply Settings skips popups](apply-settings-skips-popups.md) — reloadAll() only knows the main window, so open popups keep the stale language/theme/paths
+- [Injected app-document `?file=` param](injected-app-document-file-param.md) — every renderer treats `?file=` as a document name, so bibleNote/lyric/web popups always log a load error
+- [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — `tran()` throws (blanks the page) on a missing key; concatenated + dynamic `tran(prop)` sites hide from literal grepping

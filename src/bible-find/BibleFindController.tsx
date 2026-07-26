@@ -36,6 +36,7 @@ import type {
 import { calcPerPage, findOnline } from './bibleFindHelpers';
 import type { AppContextMenuControlType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { cumulativeOffset } from '../helper/helpers';
 import { unlocking } from '../server/unlockingHelpers';
 import { pasteTextToInput } from '../server/appHelpers';
@@ -532,6 +533,7 @@ export default class BibleFindController {
             event,
             suggestWords.map((text) => {
                 return {
+                    childBefore: genContextMenuItemIcon('search'),
                     menuElement: (
                         <span data-locale-ff={this.locale}>{text}</span>
                     ),

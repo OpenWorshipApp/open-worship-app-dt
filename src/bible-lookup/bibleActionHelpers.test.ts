@@ -26,6 +26,8 @@ vi.mock('../toast/toastHelpers', () => ({
 vi.mock('../server/appProvider', () => ({ default: h.appProvider }));
 vi.mock('../context-menu/AppContextMenuComp', () => ({
     elementDivider: { __divider: true },
+}));
+vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: vi.fn(() => null),
 }));
 vi.mock('../slide-editor/canvas/canvasBibleItemHelpers', () => ({

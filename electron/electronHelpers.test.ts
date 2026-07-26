@@ -308,6 +308,52 @@ describe('electronHelpers', () => {
         ).not.toHaveProperty('parent');
     });
 
+    test('enables blink features per window only when a popup asks for them', () => {
+        const parentWin = createMockBrowserWindow();
+
+        guardBrowsing(parentWin as any, { preload: '/tmp/preload.js' } as any);
+
+        const windowOpenHandler =
+            parentWin.webContents.setWindowOpenHandler.mock.calls[0][0];
+        const responseWithFeatures = windowOpenHandler({
+            url: 'https://localhost:3000/experiment.html?uuid=experiment',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_experiment`,
+            features:
+                'popup,appBlinkFeatures=CanvasDrawElement+SomethingElse,noopener',
+        } as any);
+
+        expect(responseWithFeatures.action).toBe('allow');
+        expect(
+            responseWithFeatures.overrideBrowserWindowOptions.webPreferences,
+        ).toEqual({
+            preload: '/tmp/preload.js',
+            enableBlinkFeatures: 'CanvasDrawElement,SomethingElse',
+        });
+
+        const popupWin = createMockBrowserWindow();
+        electronMockState.setBrowserWindowFactory(() => popupWin);
+        responseWithFeatures.createWindow(
+            responseWithFeatures.overrideBrowserWindowOptions,
+        );
+        expect(electronMockState.BrowserWindowMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                webPreferences: expect.objectContaining({
+                    enableBlinkFeatures: 'CanvasDrawElement,SomethingElse',
+                }),
+            }),
+        );
+
+        const responseWithout = windowOpenHandler({
+            url: 'https://localhost:3000/find.html?uuid=find',
+            frameName: `${POPUP_FRAME_NAME_PREFIX}_find`,
+            features: 'popup,width=270',
+        } as any);
+
+        expect(
+            responseWithout.overrideBrowserWindowOptions.webPreferences,
+        ).not.toHaveProperty('enableBlinkFeatures');
+    });
+
     test('debounces callback execution', () => {
         vi.useFakeTimers();
         const callback = vi.fn();

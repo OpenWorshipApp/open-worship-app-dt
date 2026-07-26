@@ -7,7 +7,7 @@ import type {
     AppContextMenuControlType,
 } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { getRandomUUID } from '../helper/helpers';

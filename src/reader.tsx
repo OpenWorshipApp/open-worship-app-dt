@@ -8,6 +8,7 @@ import AppContextMenuComp from './context-menu/AppContextMenuComp';
 import HandleAlertComp from './popup-widget/HandleAlertComp';
 import TopProgressBarComp from './progress-bar/TopProgressBarComp';
 import ToastComp from './toast/ToastComp';
+import PresentingControlComp from './presenting-control/PresentingControlComp';
 
 await init();
 run(
@@ -17,6 +18,7 @@ run(
         <ToastComp />
         <AppContextMenuComp />
         <HandleAlertComp />
+        <PresentingControlComp />
     </>,
 );
 

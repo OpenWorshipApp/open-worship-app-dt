@@ -372,4 +372,68 @@ describe('electronEventListener', () => {
             1,
         );
     });
+
+    test('sends custom menu clicks back to the window that registered them', () => {
+        const appController = {
+            mainWin: { webContents: { getZoomFactor: vi.fn(() => 1) } },
+            mainController: {
+                sendScreenMessage: vi.fn(),
+                changeBible: vi.fn(),
+                ctrlScrolling: vi.fn(),
+            },
+            settingManager: {
+                themeSource: 'system',
+                primaryDisplay: { size: { width: 1280 } },
+            },
+            resetThemeBackgroundColor: vi.fn(),
+            reloadAll: vi.fn(),
+        };
+        initEventOther(appController as any);
+
+        const setMenuItemsHandler =
+            electronMockState.ipcMain.on.mock.calls.find(
+                ([eventName]) => eventName === 'main:app:set-menu-items',
+            )?.[1];
+
+        const ownerWin = new electronMockState.BrowserWindowMock();
+        // A second (focused) window: the click must NOT follow focus.
+        const otherWin = new electronMockState.BrowserWindowMock();
+
+        setMenuItemsHandler(
+            { sender: ownerWin.webContents },
+            {
+                key: 'lang',
+                menusData: {
+                    tools: [
+                        {
+                            label: 'Editor',
+                            clickData: {
+                                openExternalUrl:
+                                    'https://editor-km.openworship.app',
+                            },
+                        },
+                    ],
+                },
+            },
+        );
+
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls.at(-1)?.[0];
+        const toolsMenu = template.find((item: any) => item.label === 'Tools');
+        const editorItem = toolsMenu.submenu.find(
+            (item: any) => item.label === 'Editor',
+        );
+        editorItem.click();
+
+        expect(ownerWin.webContents.send).toHaveBeenCalledWith(
+            'app:main:menu-item-clicked',
+            { openExternalUrl: 'https://editor-km.openworship.app' },
+        );
+        expect(otherWin.webContents.send).not.toHaveBeenCalled();
+
+        setMenuItemsHandler(
+            { sender: ownerWin.webContents },
+            { key: 'lang', menusData: null },
+        );
+    });
 });

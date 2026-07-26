@@ -38,7 +38,7 @@ import {
     type PptxToHtmlsParamsType,
     type GetPptxToHtmlsVersionParamsType,
 } from './msHelpers';
-import { initMenu } from './electronMenu';
+import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
 
 const { dialog, ipcMain, app } = electron;
 
@@ -554,17 +554,31 @@ export function initEventOther(appController: ElectronAppController) {
 
     ipcMain.on(
         'main:app:set-menu-items',
-        (_event, menusData: CustomMenusDataType) => {
-            initMenu(appController, {
+        (
+            event,
+            {
+                key,
                 menusData,
-                clickMenu: (menuData: any) => {
-                    console.log('Menu item clicked:', menuData);
-                    appController.mainController.sendMessage(
-                        'app:main:menu-item-clicked',
-                        menuData,
-                    );
-                },
-            });
+            }: { key: string; menusData: CustomMenusDataType | null },
+        ) => {
+            // Route clicks back to the renderer that contributed the items, not
+            // to whichever window happens to be focused: only the owner has a
+            // handler for its own `clickData` (e.g. the presenter opens the lang
+            // tools links), so focus-based routing silently drops the click
+            // whenever a popup or a screen window is in front.
+            const ownerWin = BrowserWindow.fromWebContents(event.sender);
+            setCustomMenusData(
+                key,
+                menusData === null
+                    ? null
+                    : {
+                          menusData,
+                          clickMenu: (menuData: any) => {
+                              sendMenuClicked(menuData, ownerWin);
+                          },
+                      },
+            );
+            initMenu(appController);
         },
     );
 

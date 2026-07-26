@@ -9,6 +9,7 @@ import {
 } from '../helper/bible-helpers/bibleModelHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import appProvider from '../server/appProvider';
 import { useAppCurrentRef } from '../helper/appHooks';
 
@@ -22,6 +23,7 @@ function chooseModel(
     ).map((key) => {
         const title = bibleModelInfoTitleMap[key as BibleModelInfoEnum];
         return {
+            childBefore: genContextMenuItemIcon('cpu'),
             menuElement: `${key} - (${title})`,
             title,
             disabled: key === currentModel,

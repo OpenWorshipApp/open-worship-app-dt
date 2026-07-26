@@ -6,6 +6,7 @@ import AppDocument, { openAppDocumentEditorExternal } from './AppDocument';
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { removePdfImagesPreview } from '../helper/pdfHelpers';
 import {
     varyAppDocumentFromFilePath,
@@ -34,6 +35,7 @@ function genContextMenuItems(
     if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
         const menuItems: ContextMenuItemType[] = [
             {
+                childBefore: genContextMenuItemIcon('file-earmark-pdf'),
                 menuElement: tran('Preview PDF'),
                 onSelect: () => {
                     const { fileSource } = varyAppDocument;
@@ -46,6 +48,7 @@ function genContextMenuItems(
                 },
             },
             {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
                 menuElement: tran('Refresh PDF Images'),
                 onSelect: async () => {
                     await removePdfImagesPreview(varyAppDocument.filePath);
@@ -58,12 +61,14 @@ function genContextMenuItems(
     if (PptxAppDocument.checkIsThisType(varyAppDocument)) {
         const menuItems: ContextMenuItemType[] = [
             {
+                childBefore: genContextMenuItemIcon('file-earmark-ppt'),
                 menuElement: tran('Open PPTX'),
                 onSelect: () => {
                     appProvider.systemUtils.openFile(varyAppDocument.filePath);
                 },
             },
             {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
                 menuElement: tran('Refresh PPTX Slides'),
                 onSelect: async () => {
                     await removePptxHtmlsPreview(varyAppDocument.filePath);
@@ -76,12 +81,14 @@ function genContextMenuItems(
     if (DocxAppDocument.checkIsThisType(varyAppDocument)) {
         const menuItems: ContextMenuItemType[] = [
             {
+                childBefore: genContextMenuItemIcon('file-earmark-word'),
                 menuElement: tran('Open DOCX'),
                 onSelect: () => {
                     appProvider.systemUtils.openFile(varyAppDocument.filePath);
                 },
             },
             {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
                 menuElement: tran('Refresh DOCX Pages'),
                 onSelect: async () => {
                     await removeDocxHtmlsPreview(varyAppDocument.filePath);
@@ -93,6 +100,7 @@ function genContextMenuItems(
     }
     const menuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('pencil-square'),
             menuElement: (
                 <>
                     {tran('Edit')}
@@ -109,6 +117,7 @@ function genContextMenuItems(
     ];
     if (AppDocument.checkIsThisType(varyAppDocument)) {
         menuItems.push({
+            childBefore: genContextMenuItemIcon('printer'),
             menuElement: tran('Print'),
             onSelect: () => {
                 printAppDocument(varyAppDocument);
@@ -252,7 +261,8 @@ export default function VaryAppDocumentFileComp({
     useFileSourceEvents(
         ['update'],
         () => {
-            setVaryAppDocument(undefined);
+            const newVaryAppDocument = varyAppDocumentFromFilePath(filePath);
+            setVaryAppDocument(newVaryAppDocument);
         },
         [],
         filePath,

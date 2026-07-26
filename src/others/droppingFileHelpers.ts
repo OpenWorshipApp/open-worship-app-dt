@@ -11,6 +11,7 @@ import type DirSource from '../helper/DirSource';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { changeDragEventStyle } from '../helper/helpers';
 import type { OptionalPromise } from '../helper/typeHelpers';
 
@@ -173,6 +174,7 @@ export function genItemsAddingContextMenuItems(addItems?: () => void) {
     }
     return [
         {
+            childBefore: genContextMenuItemIcon('plus-lg'),
             menuElement: tran('Add Items'),
             onSelect: addItems,
         },
@@ -208,6 +210,7 @@ export function genDroppingFileOnContextMenu(
         }
         if (onStartNewFile !== undefined) {
             menuItems.push({
+                childBefore: genContextMenuItemIcon('file-earmark-plus'),
                 menuElement: tran('Create New File'),
                 onSelect: onStartNewFile,
             });

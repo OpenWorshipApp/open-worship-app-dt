@@ -571,6 +571,109 @@ const dictionary = {
     'UTC Offset': 'ការបន្ថែម/បញ្ចូល UTC',
     'You will be redirected to the General Settings page to select a parent directory.':
         'អ្នកនឹងត្រូវបានបញ្ជូនទៅទំព័រការកំណត់ទូទៅ ដើម្បីជ្រើសរើសថតមេ។',
+    'Start Controlling': 'ចាប់ផ្តើមគ្រប់គ្រង',
+    'Presenting Control': 'ការគ្រប់គ្រងការបង្ហាញ',
+    'Presenting tool': 'ឧបករណ៍បង្ហាញ',
+    Color: 'ពណ៌',
+    'Stroke style': 'រចនាប័ទ្មខ្សែ',
+    Straight: 'ត្រង់',
+    '3D': '3D',
+    Dots: 'ចំណុច',
+    HQ: 'គុណភាពខ្ពស់',
+    Fast: 'លឿន',
+    Hold: 'សង្កត់',
+    Follow: 'តាមដាន',
+    Contrast: 'បញ្ច្រាស',
+    'High quality drawing (anti-aliased, slower)':
+        'គំនូរគុណភាពខ្ពស់ (រលោង តែយឺតជាង)',
+    'Fast drawing (lighter, less smooth)': 'គំនូរលឿន (ស្រាលជាង តែមិនសូវរលោង)',
+    'Toggle drawing quality': 'ប្តូរគុណភាពគំនូរ',
+    'Reset settings': 'កំណត់ការកំណត់ឡើងវិញ',
+    'Drag over the drawing to rub it out': 'អូសលើគំនូរដើម្បីលុបវាចេញ',
+    'Drag anywhere on the app to draw':
+        'អូសនៅកន្លែងណាក៏បាននៅលើកម្មវិធីដើម្បីគូរ',
+    'Spotlight size': 'ទំហំពន្លឺបញ្ចាំង',
+    'Dim color': 'ពណ៌ស្រអាប់',
+    'Dim the rest of the app': 'ធ្វើឱ្យផ្នែកដទៃនៃកម្មវិធីស្រអាប់',
+    'Spotlight edge blur (0 = hard edge)':
+        'ភាពព្រិលគែមពន្លឺបញ្ចាំង (0 = គែមច្បាស់)',
+    'Contrast: the circle blocks what the pointer is over':
+        'បញ្ច្រាស៖ រង្វង់បាំងអ្វីដែលទ្រនិចកំពុងចង្អុល',
+    'Spotlight: the circle reveals what the pointer is over':
+        'ពន្លឺបញ្ចាំង៖ រង្វង់បង្ហាញអ្វីដែលទ្រនិចកំពុងចង្អុល',
+    'Hold: dim only while the button is down':
+        'សង្កត់៖ ធ្វើឱ្យស្រអាប់តែពេលសង្កត់ប៊ូតុងប៉ុណ្ណោះ',
+    'Follow: the spotlight tracks the pointer': 'តាមដាន៖ ពន្លឺបញ្ចាំងតាមទ្រនិច',
+    'Hold to spotlight': 'សង្កត់ដើម្បីបញ្ចាំងពន្លឺ',
+    'Press and hold on the app to spotlight':
+        'ចុចសង្កត់លើកម្មវិធីដើម្បីបញ្ចាំងពន្លឺ',
+    'Move over the app to spotlight': 'ផ្លាស់ទីលើកម្មវិធីដើម្បីបញ្ចាំងពន្លឺ',
+    'Use the app (drawing stays on top)': 'ប្រើកម្មវិធី (គំនូរនៅតែលើគេ)',
+    'Draw on the app': 'គូរលើកម្មវិធី',
+    'Erase parts of the drawing': 'លុបផ្នែកខ្លះនៃគំនូរ',
+    'Spotlight part of the app': 'បញ្ចាំងពន្លឺលើផ្នែកខ្លះនៃកម្មវិធី',
+    'Keyboard screencast': 'ការបង្ហាញគ្រាប់ចុច',
+    'Available while using the app': 'អាចប្រើបាននៅពេលកំពុងប្រើកម្មវិធី',
+    'Show the keys being pressed': 'បង្ហាញគ្រាប់ចុចដែលកំពុងចុច',
+    'Drawing history': 'ប្រវត្តិគំនូរ',
+    'Clear drawing': 'លុបគំនូរ',
+    'Paste Bible Item': 'បិទភ្ជាប់ធាតុព្រះគម្ពីរ',
+    Unlock: 'ដោះសោ',
+    Lock: 'ចាក់សោ',
+    Left: 'ឆ្វេង',
+    Top: 'លើ',
+    Width: 'ទទឹង',
+    Height: 'កម្ពស់',
+    'Horizontal alignment': 'ការតម្រឹមផ្ដេក',
+    'Text align left': 'តម្រឹមអក្សរឆ្វេង',
+    'Text align center': 'តម្រឹមអក្សរកណ្តាល',
+    'Text align right': 'តម្រឹមអក្សរស្តាំ',
+    'Align left': 'តម្រឹមឆ្វេង',
+    'Align center': 'តម្រឹមកណ្តាល',
+    'Align right': 'តម្រឹមស្តាំ',
+    'Vertical alignment': 'ការតម្រឹមបញ្ឈរ',
+    'Align top': 'តម្រឹមខាងលើ',
+    'Align middle': 'តម្រឹមកណ្តាលបញ្ឈរ',
+    'Align bottom': 'តម្រឹមខាងក្រោម',
+    'Box Layer': 'ស្រទាប់ប្រអប់',
+    'Send backward': 'បញ្ជូនទៅក្រោយ',
+    'Bring forward': 'នាំមកមុខ',
+    Saved: 'បានរក្សាទុក',
+    'Saved current text': 'បានរក្សាទុកអត្ថបទបច្ចុប្បន្ន',
+    'Delete this saved session': 'លុបវគ្គដែលបានរក្សាទុកនេះ',
+    'Save the current text as a session': 'រក្សាទុកអត្ថបទបច្ចុប្បន្នជាវគ្គមួយ',
+    'Pick a previously saved session': 'ជ្រើសរើសវគ្គដែលបានរក្សាទុកពីមុន',
+    'Nothing to save: the text is empty': 'គ្មានអ្វីត្រូវរក្សាទុកទេ៖ អត្ថបទទទេ',
+    'This text is already the latest saved session':
+        'អត្ថបទនេះជាវគ្គដែលបានរក្សាទុកចុងក្រោយរួចហើយ',
+    'Replace the current text with this saved session? Your current unsaved text will be lost.':
+        'ជំនួសអត្ថបទបច្ចុប្បន្នដោយវគ្គដែលបានរក្សាទុកនេះឬ? ' +
+        'អត្ថបទបច្ចុប្បន្នដែលមិនទាន់រក្សាទុកនឹងបាត់បង់។',
+    'Manual eraser': 'ជ័រលុបដោយដៃ',
+    'Manual eraser: drag over the drawing to rub out parts of it, or back to painting':
+        'ជ័រលុបដោយដៃ៖ អូសលើគំនូរដើម្បីលុបផ្នែកខ្លះចេញ ឬត្រឡប់ទៅគូរវិញ',
+    'Dim the rest of the screen': 'ធ្វើឱ្យផ្នែកដទៃនៃអេក្រង់ស្រអាប់',
+    'Release to stop': 'លែងដៃដើម្បីបញ្ឈប់',
+    'Press and hold on the screen to spotlight':
+        'ចុចសង្កត់លើអេក្រង់ដើម្បីបញ្ចាំងពន្លឺ',
+    'Choose Drawing or Focusing': 'ជ្រើសរើសការគូរ ឬការផ្តោត',
+    Drawing: 'ការគូរ',
+    Focusing: 'ការផ្តោត',
+    'Missing fonts': 'ពុម្ពអក្សរដែលបាត់',
+    'these fonts are not installed on your system, slides may not render as intended. Click a font to search for it:':
+        'ពុម្ពអក្សរទាំងនេះមិនបានដំឡើងនៅលើប្រព័ន្ធរបស់អ្នកទេ ' +
+        'ស្លាយអាចនឹងបង្ហាញមិនដូចបំណង។ ចុចលើពុម្ពអក្សរដើម្បីស្វែងរកវា៖',
+    'Search for font': 'ស្វែងរកពុម្ពអក្សរ',
+    'Full view': 'ទិដ្ឋភាពពេញ',
+    'Exit full view': 'ចាកចេញពីទិដ្ឋភាពពេញ',
+    'Media playing': 'កំពុងលេងមេឌា',
+    'Media is Playing': 'មេឌាកំពុងលេង',
+    'Please pause all audio and video before leaving the page.':
+        'សូមផ្អាកសំលេង និងវីដេអូទាំងអស់មុនពេលចាកចេញពីទំព័រ។',
+    Undo: 'ត្រឡប់ក្រោយ',
+    Redo: 'ធ្វើឡើងវិញ',
+    Help: 'ជំនួយ',
+    'Bible Properties': 'លក្ខណសម្បត្តិព្រះគម្ពីរ',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();
@@ -612,19 +715,21 @@ const lang: LanguageDataType = {
                     {
                         label: 'Editor',
                         clickData: {
-                            url: 'https://editor-km.openworship.app',
+                            openExternalUrl:
+                                'https://editor-km.openworship.app',
                         },
                     },
                     {
                         label: 'Open Lyric',
                         clickData: {
-                            url: 'https://lyric-km.openworship.app',
+                            openExternalUrl: 'https://lyric-km.openworship.app',
                         },
                     },
                     {
                         label: 'BibleNote',
                         clickData: {
-                            url: 'https://biblenote-km.openworship.app',
+                            openExternalUrl:
+                                'https://biblenote-km.openworship.app',
                         },
                     },
                 ],

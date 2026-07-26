@@ -1,4 +1,5 @@
 import { showAppContextMenu } from '../../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../../context-menu/contextMenuIconHelpers';
 import appProvider from '../../../server/appProvider';
 import { useCanvasControllerContext } from '../CanvasController';
 import { useCanvasItemContext } from '../CanvasItem';
@@ -14,12 +15,16 @@ export default function BoxEditorNormalViewErrorComp() {
                 event.stopPropagation();
                 showAppContextMenu(event, [
                     {
+                        childBefore: genContextMenuItemIcon('trash3', {
+                            color: 'var(--bs-danger)',
+                        }),
                         menuElement: 'Delete',
                         onSelect: () => {
                             canvasController.deleteItems([canvasItem]);
                         },
                     },
                     {
+                        childBefore: genContextMenuItemIcon('braces'),
                         menuElement: 'Copy Error Json',
                         onSelect: () => {
                             appProvider.systemUtils.copyToClipboard(

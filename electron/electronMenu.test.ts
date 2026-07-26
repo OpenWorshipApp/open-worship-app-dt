@@ -33,7 +33,7 @@ vi.mock('./client/appInfo', () => ({
     },
 }));
 
-import { initMenu } from './electronMenu';
+import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
 import { electronMockState } from './testElectronModule';
 import { createMockBrowserWindow } from './testUtils';
 
@@ -96,10 +96,14 @@ describe('electronMenu', () => {
             ],
         };
 
-        initMenu(appController as any, {
+        // Custom tool items are now registered per owner key and kept across
+        // rebuilds (several renderers contribute their own), so they go in
+        // before the menu is built rather than as an argument to initMenu.
+        setCustomMenusData('test', {
             menusData: menusData as any,
             clickMenu,
         });
+        initMenu(appController as any);
 
         expect(electronMockState.Menu.buildFromTemplate).toHaveBeenCalledTimes(
             1,
@@ -163,5 +167,60 @@ describe('electronMenu', () => {
         expect(clickMenu).toHaveBeenCalledWith({
             url: 'https://biblenote-km.openworship.app',
         });
+
+        setCustomMenusData('test', null);
+    });
+
+    test('routes Find to the finder for the main window only', () => {
+        const mainWin = createMockBrowserWindow();
+        const appController = {
+            openAboutPage: vi.fn(),
+            openFindPage: vi.fn(),
+            mainController: { gotoSettingHomePage: vi.fn() },
+            lwShareController: { open: vi.fn() },
+            mainWin,
+            settingManager: { restoreMainBounds: vi.fn() },
+        };
+        initMenu(appController as any);
+
+        const template =
+            electronMockState.Menu.buildFromTemplate.mock.calls[0][0];
+        const editMenu = template.find((item: any) => item.label === 'Edit');
+        const findItem = editMenu.submenu.find(
+            (item: any) => item.label === 'Find',
+        );
+
+        findItem.click(undefined, mainWin);
+
+        expect(appController.openFindPage).toHaveBeenCalledTimes(1);
+        expect(mainWin.webContents.send).not.toHaveBeenCalled();
+
+        // Any other window searches in place instead of opening the finder
+        // popup, which only the main window owns.
+        const popupWin = createMockBrowserWindow();
+        findItem.click(undefined, popupWin);
+
+        expect(appController.openFindPage).toHaveBeenCalledTimes(1);
+        expect(popupWin.webContents.send).toHaveBeenCalledWith(
+            'app:main:menu-item-clicked',
+            { isOpenSearch: true },
+        );
+
+        // No focused window at all (macOS with every window minimized) still
+        // falls back to the main window rather than dropping the click.
+        findItem.click(undefined, undefined);
+
+        expect(appController.openFindPage).toHaveBeenCalledTimes(2);
+    });
+
+    test('does not send menu clicks to a destroyed window', () => {
+        const destroyedWin = createMockBrowserWindow({
+            isDestroyed: vi.fn(() => true),
+        });
+
+        expect(
+            sendMenuClicked({ isOpenSearch: true }, destroyedWin as any),
+        ).toBe(false);
+        expect(destroyedWin.webContents.send).not.toHaveBeenCalled();
     });
 });

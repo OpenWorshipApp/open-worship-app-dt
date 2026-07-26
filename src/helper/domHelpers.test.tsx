@@ -58,7 +58,7 @@ const {
     listenerRegistry: {} as Record<string, () => void>,
 }));
 
-vi.mock('../context-menu/AppContextMenuComp', () => ({
+vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: genContextMenuItemIconMock,
 }));
 
@@ -372,6 +372,21 @@ describe('domHelpers', () => {
             target: 'owa-frame_frame-1',
             features: 'popup,width=320,appTopToMain=false',
         });
+
+        // Blink features are `+`-joined (the features string already uses
+        // `,`/`=`) and force `noopener`, without which the popup lands in the
+        // opener's renderer process and the features are ignored.
+        openPopupWindow('/experiment', 'frame-2', 'uuid-2', {
+            appBlinkFeatures: ['CanvasDrawElement', 'SomethingElse'],
+        });
+        expect(openCalls[1]?.features).toBe(
+            'popup,appBlinkFeatures=CanvasDrawElement+SomethingElse,noopener',
+        );
+
+        openPopupWindow('/experiment', 'frame-3', 'uuid-3', {
+            appBlinkFeatures: [],
+        });
+        expect(openCalls[2]?.features).toBe('popup');
     });
 
     test('registers about/find page listeners and highlights newly added elements', async () => {

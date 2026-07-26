@@ -36,8 +36,11 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
 - ⚠️ **Do NOT trust `window.localStorage['language-locale']`** — it is a stale leftover key
   (verified 2026-07-08: it read `"km-KH"` while the UI rendered English). Settings now go
   through `appLocalStorage` (`src/helper/settingHelpers.ts` → `getSetting`), which is a
-  separate store. To read the real locale: open Settings → Language and see which button is
-  highlighted, or check `document.documentElement.lang` (follows the active render).
+  separate store.
+- ⚠️ **Nor `document.documentElement.lang`** — verified 2026-07-26: it read `"en"` while the
+  entire presenter rendered Khmer (the attribute is never updated on locale change; filed as
+  a Low a11y finding). **The only reliable read is Settings → Language: whichever of
+  `Khmer`/`English` is the solid (non-`outline`) button is active.**
 - **Consequence:** the same button reads `ស្វែងរកព្រះគម្ពីរ` or `Bible Lookup` depending on
   locale. Snapshot `uid`s and text both shift.
 - **Do:** click by `button.nav-link` + CSS state (`.active`, `.app-on-screen`), by icon class
@@ -46,6 +49,34 @@ Companion docs: [ui-map.md](./ui-map.md) (regions/selectors), [test-plan.md](./t
   locale.
 - If the locale changes during your run and you didn't change it, **assume the user did** and
   confirm before reporting.
+
+### 1.1 A missing Khmer key THROWS in dev — so every run must switch locale
+
+`tran()` (`src/lang/langHelpers.ts`) returns the input string immediately when the locale
+is `en-US` (`DEFAULT_LOCALE`) — **it never looks anything up**. In `km-KH` the same call
+`throw`s `Translation for text "…" not found in locale km-KH` when the key is missing,
+and because nothing wraps these components in an error boundary, **the whole subtree
+renders blank**.
+
+Consequences for a run:
+
+- An **English-only pass cannot detect a missing translation at all** — this is why the
+  locale switch (`LT-01..02`, SKILL.md §6d / test-plan §S15) is part of the mandatory
+  core, not an optional spot-check.
+- `npm run lint` (tests + typecheck + prettier + eslint + build) stays **fully green**
+  while a screen is broken in Khmer. Only running the app in Khmer finds it.
+- **Verified 2026-07-26:** `PositionSizeFieldComp` (`BoxPositionSizeComp.tsx`) called
+  `tran(name)` with `name="X:"`; selecting a canvas item blanked the entire slide-editor
+  tools panel. Fixed by not translating axis abbreviations.
+- Symptom to recognize: a panel that is **blank** in one locale and populated in the
+  other → open the console, find the `Translation for text` error, and read the component
+  name from the React warning logged right after it. File as **Critical**.
+- Distinguish from **hardcoded** English (a string that never calls `tran()` at all — e.g.
+  `title="Drag to resize"`, `SlideEditorToolTitleComp title="…"`). Those merely stay
+  English in Khmer mode: **Low/Info**, not Critical, and not a throw.
+
+In production the same missing key silently falls back to English, so this is a
+dev-visible-only failure — which is exactly why the robot run has to catch it.
 
 ### Khmer ↔ English label map (verified)
 | English | Khmer | Where |
@@ -159,6 +190,26 @@ Keep the main window on `presenter.html`.
   another slide was live, the first click replaces it and the second click clears the layer
   (this exact accident cleared the live slide during a run). Use `click` (no `dblClick`),
   then verify via `.app-on-screen` before proceeding.
+- ⚠️ **Closing a context menu with a synthetic `document.body` click KILLS every keyboard
+  shortcut** (verified 2026-07-26 — cost most of a run and looked exactly like an `F7`
+  regression). The menu renders a **full-viewport overlay** that owns
+  `onClick={handleClose}` (`AppContextMenuComp.tsx`); a click dispatched on `document.body`
+  is *outside* that overlay (body is the root container's parent), so `onClose` never runs
+  and the menu's keyboard **layer** is never popped. `KeyboardEventListener` then routes all
+  keys to the dead menu layer and **every base-layer shortcut silently stops working**
+  (`F5`–`F10`, `Ctrl+B`, …) while `document.onkeydown` still looks correctly installed and
+  the keydown still reaches `document`. **Always dismiss via the overlay itself**
+  (`document.querySelector('.app-context-menu').parentElement` → dispatch the click there)
+  or `Escape`. Verified good: after a proper open/close cycle `Ctrl+B` and `F7` both work.
+  If shortcuts have already gone dead, **reload the page** to reset the layer stack.
+- **Presenting a background/slide with multiple screens and none `Select`ed does NOT apply
+  immediately** — `ScreenEventHandler.chooseScreenIds` opens a **screen-chooser context
+  menu** (`Screen id: 0/1/2`). A click that "does nothing" is usually this menu waiting.
+  With one screen, or with screens explicitly selected, it applies directly.
+- **Screens sharing a colour-note are a sync group.** Applying a background to one screen
+  propagates to every screen with the same colour-note dot and leaves `No Color` screens
+  alone (verified 2026-07-26: `lime` screens 0+1 moved together, screen 2 did not). Don't
+  file that as "applied to the wrong screen".
 - **Slide/lyric previews live in `<iframe srcdoc>`** (lyric ones inside a
   `shadowing-parent-width-tag` shadow root, `sandbox="allow-scripts"` so their DOM is
   unreadable from the parent — inspect the `srcdoc` attribute string instead). A lyric's

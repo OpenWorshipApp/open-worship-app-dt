@@ -35,14 +35,14 @@ interface MyProps {
     // When set, the widget's size and location are saved under this setting key
     // and restored the next time it opens.
     persistKey?: string;
-    options?: FloatingWidgetOptions;
+    options: FloatingWidgetOptions;
 }
 
 export default function FloatingWidgetComp({
     children,
     collapsedChildren = null,
     title,
-    options,
+    options = {},
     persistKey,
     onClose,
 }: PropsWithChildren<MyProps>) {
@@ -63,12 +63,12 @@ export default function FloatingWidgetComp({
     const persistKeyRef = useAppCurrentRef(persistKey);
     const optionsRef = useAppCurrentRef(options);
     const isCollapsedRef = useAppCurrentRef(isCollapsed);
-    const optionHeight = options?.height;
-    const optionMaxHeight = options?.maxHeight;
-    const optionMaxWidth = options?.maxWidth;
-    const optionMinHeight = options?.minHeight;
-    const optionMinWidth = options?.minWidth;
-    const optionWidth = options?.width;
+    const optionHeight = options.height;
+    const optionMaxHeight = options.maxHeight;
+    const optionMaxWidth = options.maxWidth;
+    const optionMinHeight = options.minHeight;
+    const optionMinWidth = options.minWidth;
+    const optionWidth = options.width;
 
     useEffect(() => {
         const sizingOptions = {
@@ -159,7 +159,15 @@ export default function FloatingWidgetComp({
                 startClientY: event.clientY,
                 startRect: widgetRectRef.current,
             };
-            widgetRef.current?.setPointerCapture(event.pointerId);
+            try {
+                widgetRef.current?.setPointerCapture(event.pointerId);
+            } catch {
+                // Throws (NotFoundError) for a pointer id that is not active —
+                // a synthetic/replayed event, or a pointer the OS already
+                // cancelled. The move/resize still tracks through this
+                // component's own pointermove/up handlers, and an uncaught throw
+                // here would escalate to the app's "Reload is needed" dialog.
+            }
             setActiveMode(mode);
             event.preventDefault();
             event.stopPropagation();
@@ -303,12 +311,12 @@ export default function FloatingWidgetComp({
                 isCollapsed ? 'floating-widget--collapsed' : '',
                 activeMode === 'move' ? 'floating-widget--moving' : '',
                 activeMode === 'resize' ? 'floating-widget--resizing' : '',
-                options?.extraClassName ?? '',
+                options.extraClassName ?? '',
             ]
                 .filter(Boolean)
                 .join(' ')}
             style={{
-                ...options?.extraStyle,
+                ...options.extraStyle,
                 left: widgetRect.left,
                 top: widgetRect.top,
                 width: widgetRect.width,
@@ -327,7 +335,10 @@ export default function FloatingWidgetComp({
                     {actionButtons}
                 </div>
             )}
-            <div className="floating-widget__content">
+            <div
+                className="floating-widget__content"
+                data-no-widget-drag={options.isNoBodyDraggable ?? false}
+            >
                 {isCollapsed ? collapsedChildren : children}
             </div>
             {!isCollapsed &&

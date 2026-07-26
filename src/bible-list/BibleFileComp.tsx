@@ -27,7 +27,7 @@ import { DragTypeEnum } from '../helper/DragInf';
 import { stopDraggingState } from '../helper/helpers';
 import type BibleItem from './BibleItem';
 import AttachBackgroundIconComp from '../others/AttachBackgroundIconComp';
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 
 const LazyRenderBibleItemsComp = lazy(() => {
     return import('./RenderBibleItemsComp');
@@ -59,6 +59,9 @@ function genContextMenu(
                       },
                   },
                   {
+                      childBefore: genContextMenuItemIcon('eraser', {
+                          color: 'var(--bs-danger)',
+                      }),
                       menuElement: tran('Empty'),
                       onSelect: () => {
                           showAppConfirm(
@@ -77,6 +80,7 @@ function genContextMenu(
                       },
                   },
                   {
+                      childBefore: genContextMenuItemIcon('copy'),
                       menuElement: tran('Copy All Items'),
                       onSelect: async () => {
                           const promises = bible.items.map((item) => {
@@ -90,6 +94,7 @@ function genContextMenu(
                       },
                   },
                   {
+                      childBefore: genContextMenuItemIcon('folder-symlink'),
                       menuElement: tran('Move All Items To'),
                       onSelect: (event: any) => {
                           moveBibleItemTo(event, bible);

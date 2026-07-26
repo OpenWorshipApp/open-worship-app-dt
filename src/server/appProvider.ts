@@ -18,6 +18,10 @@ export type MessageUtilsType = {
         channel: string,
         callback: (event: MessageEventType, ...args: any[]) => void,
     ) => void;
+    removeListener: (
+        channel: string,
+        callback: (event: MessageEventType, ...args: any[]) => void,
+    ) => void;
     listenOnceForData: (
         channel: string,
         callback: (event: MessageEventType, ...args: any[]) => void,

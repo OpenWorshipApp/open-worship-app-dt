@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import type { CSSProperties, MouseEvent } from 'react';
 
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAttachedBackgroundData } from '../helper/dragHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import { getMenuTitleRevealFile } from '../helper/helpers';
@@ -14,6 +15,7 @@ function showMediaContextMenu(event: any, filePath: string) {
     event.preventDefault();
     showAppContextMenu(event, [
         {
+            childBefore: genContextMenuItemIcon('folder2-open'),
             menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
                 showFileOrDirExplorer(filePath);

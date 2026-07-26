@@ -27,6 +27,7 @@ import {
 import type { BibleVerseList } from '../helper/bible-helpers/BibleDataReader';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ScreenBibleManager from '../_screen/managers/ScreenBibleManager';
 import LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
@@ -142,6 +143,7 @@ export async function moveBibleItemTo(
         event,
         targetNames.map((name) => {
             return {
+                childBefore: genContextMenuItemIcon('book'),
                 menuElement: name,
                 onSelect: async () => {
                     const bibleFileSource = FileSource.getInstance(
@@ -202,6 +204,7 @@ export async function openBibleItemContextMenu(
             ? []
             : [
                   {
+                      childBefore: genContextMenuItemIcon('search'),
                       menuElement: tran('Lookup'),
                       onSelect: async () => {
                           const viewController =
@@ -218,6 +221,7 @@ export async function openBibleItemContextMenu(
                   },
               ]),
         {
+            childBefore: genContextMenuItemIcon('files'),
             menuElement: tran('Duplicate'),
             onSelect: async () => {
                 await mutateFreshBible((freshBible) => {
@@ -229,12 +233,16 @@ export async function openBibleItemContextMenu(
             ScreenBibleManager.handleBibleItemSelecting(event, bibleItem, true);
         }),
         {
+            childBefore: genContextMenuItemIcon('folder-symlink'),
             menuElement: tran('Move To'),
             onSelect: (event1: any) => {
                 moveBibleItemTo(event1, bible, bibleItem);
             },
         },
         {
+            childBefore: genContextMenuItemIcon('trash3', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: tran('Delete'),
             onSelect: async () => {
                 await bible.deleteBibleItem(bibleItem);
@@ -249,6 +257,7 @@ export async function openBibleItemContextMenu(
     ];
     if (index !== 0) {
         menuItem.push({
+            childBefore: genContextMenuItemIcon('arrow-up'),
             menuElement: tran('Move up'),
             onSelect: async () => {
                 await mutateFreshBible((freshBible) => {
@@ -259,6 +268,7 @@ export async function openBibleItemContextMenu(
     }
     if (index !== bible.itemsLength - 1) {
         menuItem.push({
+            childBefore: genContextMenuItemIcon('arrow-down'),
             menuElement: tran('Move down'),
             onSelect: async () => {
                 await mutateFreshBible((freshBible) => {

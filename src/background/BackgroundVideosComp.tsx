@@ -26,6 +26,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
     getIsFadingAtTheEndSetting,
@@ -230,6 +231,7 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
 function genExtraItemContextMenuItems(filePath: string) {
     return [
         {
+            childBefore: genContextMenuItemIcon('magic'),
             menuElement: tran('Toggle Fading at End'),
             title: tran('Toggle is video should fade at the end'),
             onSelect: () => {

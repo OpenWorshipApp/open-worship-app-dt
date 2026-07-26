@@ -18,6 +18,7 @@ export default function RenderExportWordComp() {
         <button
             className="btn btn-sm btn-secondary"
             title={tran('Export to MS Word')}
+            aria-label={tran('Export to MS Word')}
             onClick={handleWordExporting.bind(null, bibleItemsViewController)}
         >
             <i

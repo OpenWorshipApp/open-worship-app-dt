@@ -19,6 +19,7 @@ import {
 } from '../helper/helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';
 import RenderRenamingComp from './RenderRenamingComp';
 import LoadingComp from './LoadingComp';
@@ -27,12 +28,14 @@ import { useAppCurrentRef } from '../helper/appHooks';
 export const genCommonMenu = (filePath: string): ContextMenuItemType[] => {
     return [
         {
+            childBefore: genContextMenuItemIcon('clipboard'),
             menuElement: tran('Copy Path to Clipboard'),
             onSelect: () => {
                 copyToClipboard(filePath);
             },
         },
         {
+            childBefore: genContextMenuItemIcon('folder2-open'),
             menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
                 showFileOrDirExplorer(filePath);
@@ -48,18 +51,21 @@ function genContextMenu(
 ): ContextMenuItemType[] {
     return [
         {
+            childBefore: genContextMenuItemIcon('files'),
             menuElement: tran('Duplicate'),
             onSelect: () => {
                 FileSource.getInstance(filePath).duplicate();
             },
         },
         {
+            childBefore: genContextMenuItemIcon('input-cursor-text'),
             menuElement: tran('Rename'),
             onSelect: () => {
                 setIsRenaming(true);
             },
         },
         {
+            childBefore: genContextMenuItemIcon('arrow-clockwise'),
             menuElement: tran('Reload'),
             onSelect: () => {
                 reload();
@@ -74,6 +80,9 @@ export function genTrashContextMenu(
 ): ContextMenuItemType[] {
     return [
         {
+            childBefore: genContextMenuItemIcon('trash3', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: tran('Move to Trash'),
             onSelect: async () => {
                 const fileSource = FileSource.getInstance(filePath);
@@ -105,6 +114,7 @@ export function genShowOnScreensContextMenu(
     }
     return [
         {
+            childBefore: genContextMenuItemIcon('display'),
             menuElement: tran('Show on Screens'),
             onSelect: onClick,
         },

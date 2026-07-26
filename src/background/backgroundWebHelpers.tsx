@@ -1,4 +1,5 @@
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type DirSource from '../helper/DirSource';
 import { openPopupWindow, setParamFileFullName } from '../helper/domHelpers';
 import FileSource from '../helper/FileSource';
@@ -69,6 +70,7 @@ export function genBackgroundWebContextMenuItems(
 ): ContextMenuItemType[] {
     return [
         {
+            childBefore: genContextMenuItemIcon('file-earmark-plus'),
             menuElement: tran('New File'),
             onSelect: async () => {
                 let fileName = '';
@@ -124,6 +126,7 @@ function openPopupWebEditorWindow(filePath: string) {
 export function genBackgroundWebExtraItemContextMenuItems(filePath: string) {
     return [
         {
+            childBefore: genContextMenuItemIcon('pencil-square'),
             menuElement: tran('Edit'),
             title: tran('Edit this web file'),
             onSelect: () => {

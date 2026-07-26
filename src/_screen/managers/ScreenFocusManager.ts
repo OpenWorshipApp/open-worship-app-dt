@@ -8,11 +8,11 @@ import {
     applyKeyboardOutline,
     applyOverlayBoxStyle,
     applyOverlayFocusability,
+    buildSpotlightBackground,
     checkIsKeyboardTarget,
     clampNumber,
     forwardToOwnScreenOutput,
     genFrameScheduler,
-    toAlphaHex,
     toNativePoint,
 } from './screenOverlayHelpers';
 import type ScreenManagerBase from './ScreenManagerBase';
@@ -594,9 +594,10 @@ export default class ScreenFocusManager
     }
 
     // The one style update on the hot path: a single radial-gradient that is
-    // both the hole and the dim. Sized in native screen px, exactly like the
-    // stroke coordinates, so it lands identically on the scaled mini-preview
-    // and the unscaled output.
+    // both the hole and the dim (built by the shared `buildSpotlightBackground`,
+    // which the app-wide overlay paints with too). Sized in native screen px,
+    // exactly like the stroke coordinates, so it lands identically on the scaled
+    // mini-preview and the unscaled output.
     private applyMask() {
         const div = this._div;
         if (div === null) {
@@ -607,25 +608,14 @@ export default class ScreenFocusManager
             div.style.background = 'none';
             return;
         }
-        const radius = this.size / 2;
-        // The dim is the chosen colour at `dimOpacity` alpha, as `#rrggbbaa`.
-        const dim = `${this.dimColor}${toAlphaHex(this.dimOpacity)}`;
-        // The gradient's stops span 0..radius and its LAST colour continues
-        // outwards forever, which is what covers the rest of the screen.
-        // edgeBlur is where the fade starts as a percentage of the radius, so 0
-        // keeps the circle uniform right up to the rim = a hard edge.
-        const solidStop = 100 - this.edgeBlur;
-        // Contrast just swaps which side of the rim is dark: spotlight clears
-        // the circle and dims the rest, contrast dims the circle and leaves the
-        // rest of the screen alone (blocking what the pointer is over).
-        // The clear side is the SAME colour at zero alpha, not the `transparent`
-        // keyword: a soft edge interpolates between the two stops, and fading a
-        // coloured dim towards transparent-black can tint the rim.
-        const clear = `${this.dimColor}00`;
-        const [inner, outer] = this.isContrast ? [dim, clear] : [clear, dim];
-        div.style.background =
-            `radial-gradient(circle ${radius}px at ${point.x}px ${point.y}px,` +
-            ` ${inner} 0, ${inner} ${solidStop}%, ${outer} 100%)`;
+        div.style.background = buildSpotlightBackground({
+            point,
+            size: this.size,
+            dimColor: this.dimColor,
+            dimOpacity: this.dimOpacity,
+            edgeBlur: this.edgeBlur,
+            isContrast: this.isContrast,
+        });
     }
 
     render() {

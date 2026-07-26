@@ -1,4 +1,4 @@
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import KeyboardEventListener from '../event/KeyboardEventListener';
@@ -322,6 +322,7 @@ export function checkIsZoomed() {
 // TODO: utilize native feature instead of app*
 export type PopupWindowFeaturesType = {
     popup?: boolean;
+    noopener?: boolean;
     x?: number;
     y?: number;
     width?: number;
@@ -333,6 +334,10 @@ export type PopupWindowFeaturesType = {
     appTopToMain?: boolean;
     appShowMenuBar?: boolean;
     appResize?: boolean;
+    // Names of experimental Blink runtime features to enable for this window
+    // only, e.g. `['CanvasDrawElement']`. Joined with `+` because the window
+    // features string is itself `,`/`=` delimited.
+    appBlinkFeatures?: string[];
 };
 const DEFAULT_FEATURES: PopupWindowFeaturesType = {
     popup: true,
@@ -340,12 +345,18 @@ const DEFAULT_FEATURES: PopupWindowFeaturesType = {
 
 function toFeatureString(features: PopupWindowFeaturesType) {
     const featureString = Object.entries(features)
+        .filter(([_key, value]) => {
+            return !Array.isArray(value) || value.length > 0;
+        })
         .map(([key, value]) => {
             if (value === true) {
                 return key;
             }
             if (value === false) {
                 return `${key}=false`;
+            }
+            if (Array.isArray(value)) {
+                return `${key}=${value.join('+')}`;
             }
             return `${key}=${value}`;
         })
@@ -366,13 +377,22 @@ export function openPopupWindow(
     const target = `${appProvider.POPUP_FRAME_NAME_PREFIX}_${frameUUID}`;
     const urlObject = new URL(partialUrl);
     urlObject.searchParams.set('uuid', urlUUID);
+    const allFeatures: PopupWindowFeaturesType = {
+        ...DEFAULT_FEATURES,
+        ...features,
+    };
+    if (allFeatures.appBlinkFeatures?.length) {
+        // Blink runtime features are per renderer *process*, and a popup that
+        // keeps its opener is put in the opener's process — where the feature
+        // is off, so `enableBlinkFeatures` on the new window is ignored.
+        // `noopener` forces a fresh process, at the cost of `window.open`
+        // returning null.
+        allFeatures.noopener = true;
+    }
     return window.open(
         urlObject.toString(),
         target,
-        toFeatureString({
-            ...DEFAULT_FEATURES,
-            ...features,
-        }),
+        toFeatureString(allFeatures),
     );
 }
 

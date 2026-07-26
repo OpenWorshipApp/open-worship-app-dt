@@ -38,6 +38,7 @@ export function ModalCloseButtonComp({
                 }}
                 onClick={close}
                 title={`${tran('Close')} [${toShortcutKey(quittingEventMap)}]`}
+                aria-label={tran('Close')}
             >
                 <i className="bi bi-x-lg" />
             </button>

@@ -11,7 +11,7 @@ Pair it with:
 - [knowledge-base.md](./knowledge-base.md) — traps (popup windows, dynamic locale, benign
   noise) — **read before driving anything**.
 - [test-plan.md](./test-plan.md) — scenario checklist + report format.
-- [coverage-matrix.md](./coverage-matrix.md) — the enumerated coverage contract (stable
+- [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) — the enumerated coverage contract (stable
   row IDs) that full-coverage runs must fill in.
 
 > **Component paths** below read top-down like a breadcrumb: `Page → Parent → Child`.
@@ -69,13 +69,13 @@ live-on-screen = `.app-on-screen` (active background tab also gets a `*` prefix)
 | `Arrows` / `PageUp` / `PageDown` / `Space` | Navigate slides (container focused; `Space` toggles) | [app-document-presenter/items/VarySlidesComp.tsx](../../../../src/app-document-presenter/items/VarySlidesComp.tsx) |
 | `Tab` | Bible Lookup: complete current book/chapter/verse chunk | [bible-lookup/InputExtraButtonsComp.tsx](../../../../src/bible-lookup/InputExtraButtonsComp.tsx) |
 | `Escape` / `Ctrl+Escape` | Bible Lookup: clear input / clear chunk | ⤴ same |
-| `Ctrl+Enter` | Slide editor: focus the canvas | [slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx) |
+| `Ctrl+Enter` | Slide editor: focus the canvas | [slide-editor/canvas/canvas-container/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/canvas-container/CanvasContainerComp.tsx) |
 | `Ctrl+S` | Editors: save | (lyric/web/bible-note editors) |
 | `Ctrl/Alt+ArrowLeft/Right` | Screen output: prev/next bible | [screen.tsx](../../../../src/screen.tsx) |
 
 > This table lists the **common** shortcuts. The **complete, source-verified** set — every
 > `useKeyboardRegistering` call site plus electron application-menu accelerators — is
-> enumerated as unit tests in [coverage-matrix.md](./coverage-matrix.md) §KB (`KB-01..60`):
+> enumerated as unit tests in [coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) §KB (`KB-01..60`):
 > bible-lookup editing (`Ctrl+Enter`, `Ctrl+Shift+Enter`, `Ctrl+Shift+S/V`, `Ctrl+W`),
 > canvas & slide-list (`Ctrl+C/V/A`, `Delete`, `Ctrl+Shift+D`, `Ctrl+Z/Y`, arrows), finder
 > (`Enter`/`Escape`/`Ctrl+Q`), popups (`Enter`/`Escape`), context-menu keyboard nav
@@ -204,7 +204,7 @@ Source: [presenter/AppPresenterRightComp.tsx](../../../../src/presenter/AppPrese
 | ↳↳ `MiniScreenClearControlComp` (header) | [_screen/preview/MiniScreenClearControlComp.tsx](../../../../src/_screen/preview/MiniScreenClearControlComp.tsx) | 🖱️ / ⌨️ clear buttons: eraser=Clear All `F6`, `BG` `F7`, `SL` `F8`, `BB` `F9`, `FG` `F10`. Enabled-state is observable: a button is `btn-outline-*` while its layer is empty, solid `btn-*` while live. |
 | ↳↳ `ShowingScreenIcon` + `ItemColorNoteComp` (header) | [_screen/preview/ShowingScreenIcon.tsx](../../../../src/_screen/preview/ShowingScreenIcon.tsx) | Screen-id badge (`data-screen-id`, per-id color) + 🖱️ color-note dot → color picker (groups previews when multiple screens). |
 | ↳↳ Lock toggle (header, `bi-unlock`/`bi-lock-fill`) | [_screen/preview/ScreenPreviewerHeaderComp.tsx](../../../../src/_screen/preview/ScreenPreviewerHeaderComp.tsx) | 🖱️ → locked (red): app-document changes on this screen are refused with toast "Screen Manager is locked"; unlocked (green) normal. Restore unlocked. |
-| ↳↳ `DisplayControl` (footer) | [_screen/preview/DisplayControl.tsx](../../../../src/_screen/preview/DisplayControl.tsx) | Button `label(screenId):displayId` → 🖱️ context menu of all OS displays (`label(id): WxH (primary)`, `*` = current) → pick to retarget the screen. Re-select current = safe no-op. |
+| ↳↳ `DisplayControl` (footer) | [_screen/preview/DisplayControlComp.tsx](../../../../src/_screen/preview/DisplayControlComp.tsx) | Button `label(screenId):displayId` → 🖱️ context menu of all OS displays (`label(id): WxH (primary)`, `*` = current) → pick to retarget the screen. Re-select current = safe no-op. |
 | ↳↳ `ScreenEffectControlComp` (footer, `Tr:`) | [_screen/preview/ScreenEffectControlComp.tsx](../../../../src/_screen/preview/ScreenEffectControlComp.tsx) | Two `RenderTransitionEffectComp` buttons (`Slide:` / `Background:`) → 🖱️ menu of transition effects `none/fade/move/zoom` (current highlighted); button icon updates. Restore after testing. |
 | ↳↳ `BackgroundAudioSwitchComp` (footer, `bi-soundwave`) | [_screen/preview/ScreenPreviewerFooterComp.tsx](../../../../src/_screen/preview/ScreenPreviewerFooterComp.tsx) | Rendered only while a **video background** is live. 🖱️ toggles the audio-handler rows; toggling off while audio plays → toast refusal. |
 | ↳↳ `MiniScreenAudioHandlersComp` | [_screen/preview/MiniScreenAudioHandlersComp.tsx](../../../../src/_screen/preview/MiniScreenAudioHandlersComp.tsx) | Per-video `<audio controls data-video-id>` player (filename shown): 🖱️ play/pause — playback syncs the background-video time; 🖱️ repeat toggle `bi-repeat-1` (green=on). End paused. |
@@ -246,7 +246,7 @@ Source: [app-document-editor/AppDocumentEditorComp.tsx](../../../../src/app-docu
 | `AppDocumentEditorComp → AppDocumentPreviewerComp` (left slide list) | [app-document-presenter/items/AppDocumentPreviewerComp.tsx](../../../../src/app-document-presenter/items/AppDocumentPreviewerComp.tsx) | 🖱️ a slide → select for editing. 🖱️🖱️ → open. 🖱️R → context menu (add/duplicate/delete). ⇕ reorder slides. |
 | `…Editor → AppDocumentEditorRightComp` | [app-document-editor/AppDocumentEditorRightComp.tsx](../../../../src/app-document-editor/AppDocumentEditorRightComp.tsx) | Splits into Slide Editor Ground (top) + Background (bottom). |
 | ↳ `SlideEditorGroundComp` | [slide-editor/SlideEditorGroundComp.tsx](../../../../src/slide-editor/SlideEditorGroundComp.tsx) | The editing canvas + toolbars. |
-| ↳↳ `CanvasContainerComp` (canvas) | [slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/canvas-cantainer/CanvasContainerComp.tsx) | 🖱️ select a box; ⇕ drag to move; drag handles to resize; `Shift`/`Ctrl` while dragging appends to selection. ⌨️ `Ctrl+Enter` focuses the canvas. |
+| ↳↳ `CanvasContainerComp` (canvas) | [slide-editor/canvas/canvas-container/CanvasContainerComp.tsx](../../../../src/slide-editor/canvas/canvas-container/CanvasContainerComp.tsx) | 🖱️ select a box; ⇕ drag to move; drag handles to resize; `Shift`/`Ctrl` while dragging appends to selection. ⌨️ `Ctrl+Enter` focuses the canvas. |
 | ↳↳ `BoxEditorControllingModeComp` / `BoxEditorNormalTextEditModeComp` | [slide-editor/canvas/box/](../../../../src/slide-editor/canvas/box/) | 🖱️🖱️ a text box → enter text-edit mode; ⌨️✎ type; ⇕ drag box; drop external items onto the box. |
 | ↳↳ `ToolCanvasItemsComp` (tools) | [slide-editor/canvas/tools/ToolCanvasItemsComp.tsx](../../../../src/slide-editor/canvas/tools/ToolCanvasItemsComp.tsx) | 🖱️ add box / image / etc.; ⇕ drag a tool item onto the canvas. |
 | ↳ `BackgroundComp` (bottom) | [background/BackgroundComp.tsx](../../../../src/background/BackgroundComp.tsx) | Same background tabs as presenter (no Audios split off-presenter). |
@@ -264,7 +264,7 @@ Source: [setting/SettingComp.tsx](../../../../src/setting/SettingComp.tsx).
 | `SettingComp` tab bar (`General` / `Bible`) | ⤴ SettingComp.tsx | 🖱️ switch tab. |
 | `SettingComp → SettingApplyComp` (`Apply Settings`, top-right, fixed) | [setting/SettingApplyComp.tsx](../../../../src/setting/SettingApplyComp.tsx) | 🖱️ → applies / reloads app windows. |
 | `SettingGeneralComp → SettingGeneralDirectoryPathComp` | [setting/directory-setting/SettingGeneralDirectoryPathComp.tsx](../../../../src/setting/directory-setting/SettingGeneralDirectoryPathComp.tsx) | ⌨️✎ path inputs; 🖱️ browse/reset directory buttons. |
-| `SettingGeneralComp → SettingGeneralLanguageComp` | [setting/SettingGeneralLanguageComp.tsx](../../../../src/setting/SettingGeneralLanguageComp.tsx) | 🖱️ `Khmer` / `English` → switches locale (`localStorage['language-locale']`). ⚠️ a switch mid-run may be the **user** — confirm before reporting (KB §1, §3). |
+| `SettingGeneralComp → SettingGeneralLanguageComp` | [setting/SettingGeneralLanguageComp.tsx](../../../../src/setting/SettingGeneralLanguageComp.tsx) | 🖱️ `Khmer` / `English` → switches locale, completed by `Apply Settings` (reloads every window). **This is the entry point for the mandatory locale block (LT-01..02, SKILL.md §6d)** — every run switches here and switches back. ⚠️ a switch you did NOT make may be the **user** — confirm before reporting (KB §1, §1.1, §3). |
 | `SettingGeneralComp → SettingGeneralThemeComp` | [setting/SettingGeneralThemeComp.tsx](../../../../src/setting/SettingGeneralThemeComp.tsx) | 🖱️ theme (system/light/dark). |
 | `SettingGeneralComp → SettingGeneralFontFamilyComp` | [setting/SettingGeneralFontFamilyComp.tsx](../../../../src/setting/SettingGeneralFontFamilyComp.tsx) | 🖱️ pick font. A configured-but-missing font shows `"Hanuman (Missing)"` — **informative, not a bug** (KB §9). |
 | `SettingGeneralComp → SettingGeneralOtherOptionsComp` | [setting/SettingGeneralOtherOptionsComp.tsx](../../../../src/setting/SettingGeneralOtherOptionsComp.tsx) | 🖱️ `Reset All Child Directories` / `Reset Widgets Size` / `Clear All Settings` (destructive — confirm dialogs). |

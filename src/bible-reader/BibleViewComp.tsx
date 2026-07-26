@@ -24,7 +24,7 @@ import {
 } from '../helper/helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getSelectedText } from '../helper/textSelectionHelpers';
 import { setBibleFindRecentSearch } from '../bible-find/BibleFindHeaderComp';
 import type { ReadIdOnlyBibleItem } from './ReadIdOnlyBibleItem';

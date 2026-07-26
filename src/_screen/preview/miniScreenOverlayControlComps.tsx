@@ -1,5 +1,6 @@
 import { useKeyboardRegistering } from '../../event/KeyboardEventListener';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import type { AppWidgetType } from '../../event/WindowEventListener';
 import {
     drawShortcutMap,
     toShortcutTitle,
@@ -42,11 +43,19 @@ export function handleKeepOverlayFocus(event: { preventDefault: () => void }) {
 // — `C` would push ~30 empty snapshots a second and flush the 50-deep undo
 // history it claims to preserve, `Q` would reallocate the (up to 33MB) backing
 // store and broadcast a full-history sync per repeat, and toggles would flap.
+//
+// `layer` is for a caller whose keys belong to a keyboard layer that is NOT yet
+// on the stack when this binds. `useKeyboardRegistering` resolves the implicit
+// layer in a RENDER-phase memo, so a panel mounted in the same commit that its
+// parent's effect opens the layer would otherwise pin `root` and go dead the
+// moment that layer went up. The presenting-control panels are exactly that
+// case; the mini-screen ones live on `root` and pass nothing.
 export function useOverlayShortcut(
     shortcutId: DrawShortcutIdType,
     handle: () => void,
     checkIsShortcutTarget: () => boolean,
     isRepeatable = false,
+    layer?: AppWidgetType,
 ) {
     const checkIsShortcutTargetRef = useAppCurrentRef(checkIsShortcutTarget);
     useKeyboardRegistering(
@@ -61,6 +70,7 @@ export function useOverlayShortcut(
             handle();
         },
         [],
+        layer,
     );
 }
 
@@ -104,6 +114,7 @@ export function OverlayRangeComp({
     suffix = '',
     shortcutBase,
     checkIsShortcutTarget,
+    layer,
 }: Readonly<{
     icon: string;
     label: string;
@@ -120,6 +131,8 @@ export function OverlayRangeComp({
     // Read at key time (never at bind time): whether THIS panel's overlay owns
     // the keyboard right now.
     checkIsShortcutTarget: () => boolean;
+    // Keyboard layer for all four step keys — see `useOverlayShortcut`.
+    layer?: AppWidgetType;
 }>) {
     const downShortcutId = `${shortcutBase}Down` as const;
     const upShortcutId = `${shortcutBase}Up` as const;
@@ -131,19 +144,27 @@ export function OverlayRangeComp({
     // Held +/- keys are the one case where auto-repeat is what the user wants,
     // so these four opt in.
     const check = checkIsShortcutTarget;
-    useOverlayShortcut(downShortcutId, genStepHandler(-step), check, true);
-    useOverlayShortcut(upShortcutId, genStepHandler(step), check, true);
+    useOverlayShortcut(
+        downShortcutId,
+        genStepHandler(-step),
+        check,
+        true,
+        layer,
+    );
+    useOverlayShortcut(upShortcutId, genStepHandler(step), check, true, layer);
     useOverlayShortcut(
         `${shortcutBase}DownBig`,
         genStepHandler(-stepBig),
         check,
         true,
+        layer,
     );
     useOverlayShortcut(
         `${shortcutBase}UpBig`,
         genStepHandler(stepBig),
         check,
         true,
+        layer,
     );
     return (
         <div

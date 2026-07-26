@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('../lang/langHelpers', () => ({ tran: (key: string) => key }));
-vi.mock('../context-menu/AppContextMenuComp', () => ({
+vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: vi.fn(() => null),
 }));
 

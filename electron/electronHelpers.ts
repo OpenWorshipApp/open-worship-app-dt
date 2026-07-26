@@ -9,6 +9,7 @@ import {
     type BrowserWindowConstructorOptions,
     type HandlerDetails,
     type WebContents,
+    type MenuItemConstructorOptions,
 } from 'electron';
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readdir, rm, writeFile } from 'node:fs/promises';
@@ -21,18 +22,10 @@ import { htmlFiles } from './fsServe';
 
 export type OptionalPromise<T> = T | Promise<T>;
 
-export type CustomMenuItemType =
-    | {
-          label: string;
-          submenu: {
-              label: string;
-              clickData: any;
-          }[];
-      }
-    | {
-          label: string;
-          clickData: any;
-      };
+export type CustomMenuItemType = {
+    clickData?: any;
+    submenu?: CustomMenuItemType[];
+} & MenuItemConstructorOptions;
 export type CustomMenusDataType = {
     tools?: CustomMenuItemType[];
 };
@@ -364,6 +357,9 @@ export type PopupWindowFeaturesType = {
     appTopToMain?: boolean;
     appShowMenuBar?: boolean;
     appResize?: boolean;
+    // `+`-joined Blink runtime feature names, see `PopupWindowFeaturesType` in
+    // `src/helper/domHelpers.ts`.
+    appBlinkFeatures?: string;
 };
 
 // features: 'popup,width=700,height=435,appCenter,appFollowScale'
@@ -516,6 +512,28 @@ function createPopupWindow(
     return popupWin.webContents;
 }
 
+/**
+ * Blink runtime features (e.g. `CanvasDrawElement`) can be switched on for a
+ * single window through its `webPreferences`. They are per renderer *process*
+ * though, so this only takes effect because `openPopupWindow` marks such
+ * popups `noopener`, which stops the popup from being placed in the opener's
+ * process. Appending to `app.commandLine` here would not work: the browser
+ * process command line is already parsed by the time a window is opened.
+ */
+function genPopupWebPreferences(
+    webPreferences: WebPreferences,
+    featuresRecord: PopupWindowFeaturesType,
+): WebPreferences {
+    const blinkFeatures = featuresRecord.appBlinkFeatures;
+    if (!blinkFeatures) {
+        return webPreferences;
+    }
+    return {
+        ...webPreferences,
+        enableBlinkFeatures: blinkFeatures.split('+').join(','),
+    };
+}
+
 export const POPUP_FRAME_NAME_PREFIX = 'popup_window';
 function handlePopupWindowOpen(
     win: BrowserWindow,
@@ -554,12 +572,17 @@ function handlePopupWindowOpen(
         topToMainOptions.parent = win;
     }
 
+    const popupWebPreferences = genPopupWebPreferences(
+        webPreferences,
+        featuresRecord,
+    );
+
     const content: WindowOpenHandlerResponse = {
         action: 'allow',
         overrideBrowserWindowOptions: {
             ...subDisplay,
             ...topToMainOptions,
-            webPreferences,
+            webPreferences: popupWebPreferences,
             // transparent: true,
             // frame: false,
             backgroundColor: getAppThemeBackgroundColor(),
@@ -569,7 +592,7 @@ function handlePopupWindowOpen(
         ) => {
             return createPopupWindow(
                 options,
-                webPreferences,
+                popupWebPreferences,
                 featuresRecord,
                 constructionOptions,
             );

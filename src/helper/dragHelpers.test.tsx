@@ -432,6 +432,7 @@ describe('dragHelpers', () => {
         const items = genRemovingAttachedBackgroundMenu('/docs/slide.owa', 9);
         expect(items).toEqual([
             {
+                childBefore: expect.anything(),
                 menuElement: 'Remove background',
                 onSelect: expect.any(Function),
             },

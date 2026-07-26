@@ -15,6 +15,7 @@ import type BibleItemsViewController from '../../bible-reader/BibleItemsViewCont
 import { copyToClipboard } from '../../server/appHelpers';
 import { bibleRenderHelper } from '../../bible-list/bibleRenderHelpers';
 import { elementDivider } from '../../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { getBibleLocale, getLangDataFromBibleKey } from './bibleStyleHelpers';
 
 async function getBibleItemsFromTitleVerseKey(
@@ -107,7 +108,7 @@ function genContextMenuItems(
             disabled: true,
         },
         {
-            childBefore: <i className="bi bi-eye" />,
+            childBefore: genContextMenuItemIcon('eye'),
             menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
             title: `Open "${title}"`,
             onSelect:
@@ -120,7 +121,7 @@ function genContextMenuItems(
                 }),
         },
         {
-            childBefore: <i className="bi bi-copy" />,
+            childBefore: genContextMenuItemIcon('copy'),
             menuElement: <span data-bible-key-ff={bibleKey}>{title}</span>,
             title: `Copy "${title}" to clipboard`,
             onSelect: () => {

@@ -23,9 +23,9 @@ import KeyboardEventListener from '../event/KeyboardEventListener';
 import WindowEventListener from '../event/WindowEventListener';
 import AppContextMenuComp, {
     elementDivider,
-    genContextMenuItemIcon,
     genContextMenuItemShortcutKey,
 } from './AppContextMenuComp';
+import { genContextMenuItemIcon } from './contextMenuIconHelpers';
 import {
     APP_CONTEXT_MENU_CLASS,
     APP_CONTEXT_MENU_ID,

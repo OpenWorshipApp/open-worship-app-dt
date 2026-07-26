@@ -3,6 +3,7 @@ import type { MouseEvent } from 'react';
 import EventHandler from '../../event/EventHandler';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import appProvider from '../../server/appProvider';
 import type ScreenManagerBase from './ScreenManagerBase';
 import {
@@ -156,6 +157,7 @@ export default abstract class ScreenEventHandler<
             const menuItems: ContextMenuItemType[] = screenManagerBases.map(
                 (screenManagerBase) => {
                     return {
+                        childBefore: genContextMenuItemIcon('display'),
                         menuElement: `Screen id: ${screenManagerBase.screenId}`,
                         onSelect: () => {
                             resolve([screenManagerBase.screenId]);

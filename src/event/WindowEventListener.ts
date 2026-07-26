@@ -4,7 +4,19 @@ import EventHandler from './EventHandler';
 import KeyboardEventListener from './KeyboardEventListener';
 
 export type AppWidgetType =
-    'root' | 'bible-lookup' | 'slide-edit' | 'setting' | 'context-menu';
+    | 'root'
+    | 'bible-lookup'
+    | 'slide-edit'
+    | 'setting'
+    | 'context-menu'
+    // The app-wide annotation overlay (src/presenting-control). It claims a
+    // layer for as long as the controller is OPEN, not just while a tool is
+    // armed: the tool keys have to be able to reach in and ARM a tool from
+    // `interact`, which is exactly when you want them. Once armed the overlay
+    // covers the whole window anyway, so the app's own shortcuts (Ctrl+Z in
+    // particular, which would undo a slide edit instead of a stroke) must not
+    // fire underneath it.
+    | 'presenting-control';
 export type OpenCloseType = 'open' | 'close';
 export type WindowEventMapperType = {
     widget: AppWidgetType;

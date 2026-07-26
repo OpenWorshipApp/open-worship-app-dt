@@ -2,7 +2,7 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import { tran } from '../lang/langHelpers';
 import type BibleItem from './BibleItem';
 import type { BibleTargetType } from './bibleRenderHelpers';
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 
 export type BibleItemType = {

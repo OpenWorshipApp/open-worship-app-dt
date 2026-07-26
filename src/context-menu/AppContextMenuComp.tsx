@@ -1,7 +1,7 @@
 import './AppContextMenuComp.scss';
 
 import { useCallback } from 'react';
-import type { CSSProperties, MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 
 import type { EventMapperType } from '../event/KeyboardEventListener';
 import { toShortcutKey } from '../event/KeyboardEventListener';
@@ -116,18 +116,5 @@ export function genContextMenuItemShortcutKey(eventMapper: EventMapperType) {
         <div className="context-menu-shortcut-key">
             <span className="">{toShortcutKey(eventMapper)}</span>
         </div>
-    );
-}
-
-export function genContextMenuItemIcon(name: string, style?: CSSProperties) {
-    return (
-        <i
-            className={`bi bi-${name}`}
-            style={{
-                color: 'var(--bs-info-text-emphasis)',
-                marginRight: '2px',
-                ...style,
-            }}
-        />
     );
 }

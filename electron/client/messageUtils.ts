@@ -15,6 +15,12 @@ const messageUtils = {
     ) {
         ipcRenderer.on(channel, callback);
     },
+    removeListener(
+        channel: string,
+        callback: (event: IpcRendererEvent, ...args: any[]) => void,
+    ) {
+        ipcRenderer.off(channel, callback);
+    },
     listenOnceForData(
         channel: string,
         callback: (event: IpcRendererEvent, ...args: any[]) => void,

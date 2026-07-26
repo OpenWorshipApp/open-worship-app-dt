@@ -17,6 +17,7 @@ import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEven
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import ScreenManagerBase from '../_screen/managers/ScreenManagerBase';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type {
     BackgroundSrcType,
     ImageScaleType,
@@ -134,6 +135,7 @@ function HeaderElements({
             event,
             scaleTypeList.map((scaleType) => {
                 return {
+                    childBefore: genContextMenuItemIcon('aspect-ratio'),
                     menuElement: scaleType,
                     onSelect: (event1) => {
                         setScaleTypeRef.current(event1, scaleType);

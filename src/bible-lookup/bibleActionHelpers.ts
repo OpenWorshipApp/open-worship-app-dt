@@ -6,10 +6,8 @@ import type BibleItem from '../bible-list/BibleItem';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import appProvider from '../server/appProvider';
-import {
-    elementDivider,
-    genContextMenuItemIcon,
-} from '../context-menu/AppContextMenuComp';
+import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import { CanvasBibleItemEventListener } from '../slide-editor/canvas/canvasBibleItemHelpers';
 
@@ -77,6 +75,7 @@ export function genFoundBibleItemContextMenu(
             ? []
             : [
                   {
+                      childBefore: genContextMenuItemIcon('link-45deg'),
                       menuElement: tran('Open in Cross Reference'),
                       title: verseKey,
                       onSelect: () => {
@@ -100,6 +99,8 @@ export function genFoundBibleItemContextMenu(
                       },
                   },
                   {
+                      childBefore: genContextMenuItemIcon('floppy'),
+                      childAfter: genContextMenuItemIcon('display'),
                       keyboardShortcut: isKeyboardShortcut
                           ? ctrlShiftEnterEventMapper
                           : undefined,

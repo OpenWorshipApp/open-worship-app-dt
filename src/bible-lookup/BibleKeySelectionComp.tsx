@@ -10,6 +10,7 @@ import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 import type { LocaleType } from '../lang/langHelpers';
 import { getLanguageTitle, tran } from '../lang/langHelpers';
 import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { openBibleSetting } from '../setting/settingHelpers';
@@ -55,6 +56,7 @@ export async function genContextMenuBibleKeys(
                   ]
                 : []),
             {
+                childBefore: genContextMenuItemIcon('translate'),
                 menuElement: <span data-locale-ff={locale}>{langTitle}</span>,
                 title: langTitle,
                 disabled: true,
@@ -62,6 +64,7 @@ export async function genContextMenuBibleKeys(
             ...bibleInfoList.map((bibleInfo) => {
                 const menuText = `(${bibleInfo.key}) ${bibleInfo.title}`;
                 return {
+                    childBefore: genContextMenuItemIcon('book'),
                     menuElement: (
                         <span data-locale-ff={bibleInfo.locale}>
                             {menuText}
@@ -96,14 +99,7 @@ export async function showBibleKeyOption(
     if (title !== undefined) {
         menuItems.unshift(
             {
-                childBefore: (
-                    <i
-                        className="bi bi-lightbulb"
-                        style={{
-                            color: 'var(--bs-info-text-emphasis)',
-                        }}
-                    />
-                ),
+                childBefore: genContextMenuItemIcon('lightbulb'),
                 menuElement: title,
                 disabled: true,
             },
@@ -113,6 +109,7 @@ export async function showBibleKeyOption(
         );
     }
     menuItems.push({
+        childBefore: genContextMenuItemIcon('journal-arrow-down'),
         menuElement: (
             <span
                 style={{
@@ -120,8 +117,7 @@ export async function showBibleKeyOption(
                     color: 'var(--bs-info-text-emphasis)',
                 }}
             >
-                {tran('Add New Bible')}{' '}
-                <i className="bi bi-journal-arrow-down"></i>
+                {tran('Add New Bible')}
             </span>
         ),
         onSelect: () => {

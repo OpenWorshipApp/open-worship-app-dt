@@ -1,7 +1,7 @@
 # coverage-expansion — provenance for the 2026-07-18 matrix expansion
 
 These are **research artifacts**, not runtime skill references. They record how
-[`../references/coverage-matrix.md`](../references/coverage-matrix.md) grew from ~150 to
+[`../references/coverage-matrix.md`](../../../../docs/test-paths/coverage-matrix.md) grew from ~150 to
 **535** stable-ID test rows (every interactive path + every keyboard shortcut + every
 context-menu item enumerated as a deterministic, source-cited unit test).
 

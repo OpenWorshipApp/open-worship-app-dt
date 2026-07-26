@@ -6,6 +6,7 @@ import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpe
 import RenderBackgroundWebIframeComp from '../../background/RenderBackgroundWebIframeComp';
 import RenderCameraVideoComp from '../../background/RenderCameraVideoComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import type { DroppedDataType } from '../../helper/DragInf';
 import { DragTypeEnum } from '../../helper/DragInf';
 import {
@@ -200,12 +201,9 @@ export function genChooseColorNoteOption(
     return [
         {
             menuElement: tran('Choose Color'),
-            childBefore: (
-                <i
-                    className="bi bi-record-circle px-1"
-                    style={{ color: colorCode || undefined }}
-                />
-            ),
+            childBefore: genContextMenuItemIcon('record-circle', {
+                color: colorCode || undefined,
+            }),
             onSelect: (event) => {
                 chooseColorNote(
                     colorCode,

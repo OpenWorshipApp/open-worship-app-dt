@@ -7,6 +7,7 @@ import type DirSource from '../helper/DirSource';
 import AppSuspenseComp from './AppSuspenseComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 import { copyToClipboard, showFileOrDirExplorer } from '../server/appHelpers';
 import appProvider from '../server/appProvider';
@@ -27,12 +28,14 @@ function openContextMenu(dirSource: DirSource, event: any) {
     }
     const menuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('clipboard'),
             menuElement: tran('Copy to Clipboard'),
             onSelect: () => {
                 copyToClipboard(dirPath);
             },
         },
         {
+            childBefore: genContextMenuItemIcon('folder2-open'),
             menuElement: getMenuTitleRevealFile(),
             onSelect: () => {
                 showFileOrDirExplorer(dirPath);
@@ -41,6 +44,7 @@ function openContextMenu(dirSource: DirSource, event: any) {
     ];
     if (!appProvider.isPageSetting) {
         menuItems.push({
+            childBefore: genContextMenuItemIcon('pencil-square'),
             menuElement: tran('Edit Parent Path'),
             onSelect: () => {
                 openGeneralSetting();
@@ -48,6 +52,9 @@ function openContextMenu(dirSource: DirSource, event: any) {
         });
     }
     menuItems.push({
+        childBefore: genContextMenuItemIcon('folder-x', {
+            color: 'var(--bs-danger)',
+        }),
         menuElement: tran('Unset Directory Path'),
         onSelect: () => {
             dirSource.dirPath = '';

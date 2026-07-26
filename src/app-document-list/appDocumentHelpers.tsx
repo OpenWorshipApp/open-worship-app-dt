@@ -10,6 +10,7 @@ import DirSource from '../helper/DirSource';
 import { handleError } from '../helper/errorHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import appProvider from '../server/appProvider';
 import {
     fsCheckFileExist,
@@ -102,6 +103,7 @@ export async function showStaticSlideContextMenu(
             ? []
             : [
                   {
+                      childBefore: genContextMenuItemIcon('folder2-open'),
                       menuElement: getMenuTitleRevealFile(),
                       onSelect: () => {
                           showFileOrDirExplorer(imageFilePath);
@@ -135,6 +137,7 @@ export function genSlideContextMenuItems(
 ) {
     const menuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('copy'),
             menuElement: tran('Copy'),
             keyboardShortcut: isSelectedEditing
                 ? copyShortcutMapper
@@ -145,6 +148,7 @@ export function genSlideContextMenuItems(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('files'),
             menuElement: tran('Duplicate'),
             keyboardShortcut: isSelectedEditing
                 ? duplicateShortcutMapper
@@ -154,18 +158,23 @@ export function genSlideContextMenuItems(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('arrow-right-circle'),
             menuElement: tran('Move forward'),
             onSelect: () => {
                 appDocument.moveSlide(slide, true);
             },
         },
         {
+            childBefore: genContextMenuItemIcon('arrow-left-circle'),
             menuElement: tran('Move backward'),
             onSelect: () => {
                 appDocument.moveSlide(slide, false);
             },
         },
         {
+            childBefore: genContextMenuItemIcon(
+                slide.isDisabled ? 'eye' : 'eye-slash',
+            ),
             menuElement: slide.isDisabled ? tran('Enable') : tran('Disable'),
             onSelect: () => {
                 slide.isDisabled = !slide.isDisabled;
@@ -175,6 +184,7 @@ export function genSlideContextMenuItems(
     ];
     if (appProvider.isPagePresenter) {
         menuItems.push({
+            childBefore: genContextMenuItemIcon('pencil-square'),
             menuElement: (
                 <span className="m-0">
                     {tran('Edit')}
@@ -199,6 +209,9 @@ export function genSlideContextMenuItems(
         );
     });
     menuItems.push(...menuItemOnScreens, {
+        childBefore: genContextMenuItemIcon('trash3', {
+            color: 'var(--bs-danger)',
+        }),
         menuElement: tran('Delete'),
         keyboardShortcut: isSelectedEditing ? deleteShortcutMapper : undefined,
         onSelect: () => {
@@ -214,6 +227,7 @@ export function genSelectedSlidesContextMenuItems(
 ) {
     const menuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('copy'),
             menuElement: tran('Copy'),
             keyboardShortcut: copyShortcutMapper,
             onSelect: async () => {
@@ -222,6 +236,7 @@ export function genSelectedSlidesContextMenuItems(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('files'),
             menuElement: tran('Duplicate'),
             keyboardShortcut: duplicateShortcutMapper,
             onSelect: () => {
@@ -229,6 +244,9 @@ export function genSelectedSlidesContextMenuItems(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('trash3', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: tran('Delete'),
             keyboardShortcut: deleteShortcutMapper,
             onSelect: () => {
@@ -459,6 +477,7 @@ export async function selectSlide(event: any, currentFilePath: string) {
             })
             .map((filePath) => {
                 return {
+                    childBefore: genContextMenuItemIcon('file-earmark-slides'),
                     menuElement: pathBasename(filePath),
                     title: filePath,
                     onSelect: () => {
@@ -603,6 +622,17 @@ export async function toSlideFromKey(key: string) {
 
 function getInjectedAppDocumentFilePath(): string | null {
     try {
+        // Only the app-document editor is opened with an app document injected
+        // through `?file=` (`openAppDocumentEditorExternal`). The bible-note,
+        // lyric-editor and web-editor popups reuse the SAME `?file=` param for
+        // their own files, which live in other directories — without this gate
+        // every one of those windows resolved `<documents>/<their file>`, missed,
+        // and logged "App document file not found" on load. Worse, a documents
+        // file that happened to share the name would have made those popups
+        // believe they host an injected app document.
+        if (!appProvider.isPageAppDocumentEditor) {
+            return null;
+        }
         const fileFullName = getParamFileFullName(globalThis.location.href);
         if (fileFullName === null) {
             return null;

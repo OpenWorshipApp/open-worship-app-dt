@@ -2,6 +2,7 @@ import { useCallback, type ReactNode } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleKeyContext } from '../helper/ai/bibleCrossRefHelpers';
 import { useStateSettingBoolean } from '../helper/settingHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
@@ -29,6 +30,7 @@ export default function BibleCrossRefWrapperComp({
         }
         showAppContextMenu(event, [
             {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
                 menuElement: tran('Refresh'),
                 onSelect: onRefreshRef.current,
             },

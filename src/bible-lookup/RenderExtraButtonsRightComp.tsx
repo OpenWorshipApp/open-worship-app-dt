@@ -33,6 +33,7 @@ export function AdvanceLookupHandlerComp({
                 `-${isAdvanceLookupOpened ? '' : 'outline-'}info`
             }
             title={tran('Advance Bible Lookup')}
+            aria-label={tran('Advance Bible Lookup')}
             onClick={handleToggleLookupOnline}
         >
             <i className="bi bi-search" />

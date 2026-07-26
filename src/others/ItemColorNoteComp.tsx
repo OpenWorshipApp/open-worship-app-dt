@@ -7,6 +7,7 @@ import { useAppEffectAsync } from '../helper/appHooks';
 import { freezeObject } from '../helper/helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 
 freezeObject(colorList);
 
@@ -25,7 +26,7 @@ export function chooseColorNote(
     // unique colors by key
     const items: ContextMenuItemType[] = [
         {
-            childBefore: <i className="bi bi-x-lg me-1" style={{ color: 'red' }} />,
+            childBefore: genContextMenuItemIcon('x-lg', { color: 'red' }),
             menuElement: tran('No Color'),
             title: tran('Clear Color Note'),
             disabled: colorNote === null,
@@ -35,19 +36,16 @@ export function chooseColorNote(
         },
         ...colors.map(([name, colorCode]): ContextMenuItemType => {
             return {
+                // The swatch leads the row so it lines up with the icon column
+                // every other menu uses — and with "No Color" right above it.
+                childBefore: genContextMenuItemIcon('record-circle', {
+                    color: colorCode,
+                }),
                 menuElement: name,
                 disabled: colorNote === colorCode,
                 onSelect: () => {
                     setColorNote(colorCode);
                 },
-                childAfter: (
-                    <div className="flex-fill">
-                        <i
-                            className="bi bi-record-circle float-end"
-                            style={{ color: colorCode }}
-                        />
-                    </div>
-                ),
             };
         }),
     ];

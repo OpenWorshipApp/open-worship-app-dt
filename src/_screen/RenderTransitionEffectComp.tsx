@@ -17,16 +17,26 @@ function openContextMenu(event: any, screenEffectManager: ScreenEffectManager) {
         transitionEffectList.map(([effect, [icon]]) => {
             const isSelected = effect === screenEffectManager.effectType;
             return {
+                // The effect names are untranslated identifiers; the glyph is
+                // what makes each row scannable, so it leads the row instead of
+                // trailing it. It keeps doubling as the selected marker.
+                childBefore: (
+                    <i
+                        className={`${icon} ${isSelected ? HIGHLIGHT_SELECTED_CLASSNAME : ''}`}
+                        style={{
+                            marginRight: '2px',
+                            display: 'inline-block',
+                            flexShrink: 0,
+                            width: '1.25em',
+                            textAlign: 'center',
+                        }}
+                    />
+                ),
                 menuElement: effect,
                 onSelect: () => {
                     screenEffectManager.effectType =
                         effect as TransitionEffectType;
                 },
-                childAfter: (
-                    <i
-                        className={`${icon} ps-1 ${isSelected ? HIGHLIGHT_SELECTED_CLASSNAME : ''}`}
-                    />
-                ),
             };
         }),
     );

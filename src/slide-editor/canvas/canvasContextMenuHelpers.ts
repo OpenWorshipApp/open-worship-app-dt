@@ -8,6 +8,7 @@ import {
     type ContextMenuItemType,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import {
     checkIsImagesInClipboard,
     readImagesFromClipboard,
@@ -39,6 +40,7 @@ export async function showCanvasContextMenu(
         ]);
     showAppContextMenu(event, [
         {
+            childBefore: genContextMenuItemIcon('plus-square'),
             menuElement: tran('New'),
             onSelect: () => {
                 canvasController.addNewTextItem();
@@ -47,6 +49,7 @@ export async function showCanvasContextMenu(
         ...(copiedCanvasItems.length > 0
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('clipboard'),
                       menuElement: tran('Paste'),
                       onSelect: () => {
                           for (const copiedCanvasItem of copiedCanvasItems) {
@@ -57,6 +60,7 @@ export async function showCanvasContextMenu(
               ]
             : []),
         {
+            childBefore: genContextMenuItemIcon('film'),
             menuElement: tran('Insert Medias'),
             onSelect: async () => {
                 const imageExtensions = getMimetypeExtensions('image');
@@ -79,6 +83,7 @@ export async function showCanvasContextMenu(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('youtube'),
             menuElement: tran('Insert YouTube'),
             onSelect: async () => {
                 const url = await askForURL(
@@ -98,6 +103,7 @@ export async function showCanvasContextMenu(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('globe'),
             menuElement: tran('Insert Website'),
             onSelect: async () => {
                 const url = await askForURL(
@@ -119,6 +125,7 @@ export async function showCanvasContextMenu(
         ...(isClipboardHasImage
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('card-image'),
                       menuElement: tran('Paste Image'),
                       onSelect: async () => {
                           for await (const blob of readImagesFromClipboard()) {
@@ -139,6 +146,7 @@ export async function showCanvasContextMenu(
         ...(clipboardBibleItem !== null
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('book'),
                       menuElement: tran('Paste Bible Item'),
                       onSelect: () => {
                           canvasController.addNewBibleItem(
@@ -187,6 +195,7 @@ export function showCanvasItemContextMenu(
         ...(isAbleForLookup
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('search'),
                       menuElement: tran('Lookup'),
                       onSelect: () => {
                           lookupBibleItemProps(
@@ -198,6 +207,7 @@ export function showCanvasItemContextMenu(
               ]
             : []),
         {
+            childBefore: genContextMenuItemIcon(isLocked ? 'unlock' : 'lock'),
             menuElement: tran(isLocked ? 'Unlock' : 'Lock'),
             onSelect: () => {
                 canvasController.editCanvasItemById(
@@ -209,6 +219,7 @@ export function showCanvasItemContextMenu(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('copy'),
             menuElement: tran('Copy'),
             keyboardShortcut: isSelected
                 ? {
@@ -224,6 +235,7 @@ export function showCanvasItemContextMenu(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('files'),
             menuElement: tran('Duplicate'),
             keyboardShortcut: isSelected
                 ? {
@@ -240,6 +252,7 @@ export function showCanvasItemContextMenu(
         ...(isRevealable
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('folder2-open'),
                       menuElement: getMenuTitleRevealFile(),
                       onSelect: () => {
                           showFileOrDirExplorer(canvasItem.props.filePath);
@@ -250,6 +263,7 @@ export function showCanvasItemContextMenu(
         ...(hasUrl
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('box-arrow-up-right'),
                       menuElement: tran('Open URL'),
                       onSelect: () => {
                           appProvider.browserUtils.openExternalURL(
@@ -258,6 +272,7 @@ export function showCanvasItemContextMenu(
                       },
                   },
                   {
+                      childBefore: genContextMenuItemIcon('clipboard'),
                       menuElement: tran('Copy URL'),
                       onSelect: () => {
                           copyToClipboard(canvasItem.props.url);
@@ -268,6 +283,7 @@ export function showCanvasItemContextMenu(
         ...(isDownloadable
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('download'),
                       menuElement: tran('Download'),
                       onSelect: () => {
                           downloadImageBase64Data(canvasItem.props.srcData);
@@ -278,6 +294,7 @@ export function showCanvasItemContextMenu(
         ...(isEditable
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('pencil-square'),
                       menuElement: tran('Edit'),
                       onSelect: () => {
                           handleCanvasItemEditing();
@@ -289,6 +306,9 @@ export function showCanvasItemContextMenu(
             ? []
             : [
                   {
+                      childBefore: genContextMenuItemIcon('trash3', {
+                          color: 'var(--bs-danger)',
+                      }),
                       menuElement: tran('Delete'),
                       keyboardShortcut: isSelected
                           ? {

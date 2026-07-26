@@ -25,7 +25,8 @@ function PositionSizeFieldComp({
     };
     return (
         <div className="d-flex input-group input-group-sm" title={title}>
-            <div className="input-group-text">{tran(name)}</div>
+            {/* Axis/dimension abbreviations are universal — not translated. */}
+            <div className="input-group-text">{name}</div>
             <input
                 className="form-control form-control-sm"
                 type="number"

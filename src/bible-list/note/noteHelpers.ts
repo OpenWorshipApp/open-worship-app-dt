@@ -2,6 +2,7 @@ import {
     type ContextMenuItemType,
     showAppContextMenu,
 } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { defaultDataDirNames } from '../../helper/constants';
 import DirSource from '../../helper/DirSource';
 import FileSource from '../../helper/FileSource';
@@ -35,6 +36,7 @@ export async function moveNoteItemTo(
     }
     const menuItems: ContextMenuItemType[] = targetNames.map((name) => {
         return {
+            childBefore: genContextMenuItemIcon('journal-text'),
             menuElement: name,
             onSelect: async () => {
                 const noteFileSource = FileSource.getInstance(note.filePath);
@@ -70,6 +72,7 @@ export async function openNoteItemContextMenu(
     }
     const menuItem: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('files'),
             menuElement: tran('Duplicate'),
             onSelect: () => {
                 note.duplicate(index);
@@ -77,12 +80,16 @@ export async function openNoteItemContextMenu(
             },
         },
         {
+            childBefore: genContextMenuItemIcon('folder-symlink'),
             menuElement: tran('Move To'),
             onSelect: (event1: any) => {
                 moveNoteItemTo(event1, note, noteItem);
             },
         },
         {
+            childBefore: genContextMenuItemIcon('trash3', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: tran('Delete'),
             onSelect: async () => {
                 const isOk = await showAppConfirm(
@@ -101,6 +108,7 @@ export async function openNoteItemContextMenu(
     ];
     if (index !== 0) {
         menuItem.push({
+            childBefore: genContextMenuItemIcon('arrow-up'),
             menuElement: tran('Move up'),
             onSelect: () => {
                 note.swapItems(index, index - 1);
@@ -110,6 +118,7 @@ export async function openNoteItemContextMenu(
     }
     if (index !== note.itemsLength - 1) {
         menuItem.push({
+            childBefore: genContextMenuItemIcon('arrow-down'),
             menuElement: tran('Move down'),
             onSelect: () => {
                 note.swapItems(index, index + 1);

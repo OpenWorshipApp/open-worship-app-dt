@@ -4,6 +4,7 @@ import { tran } from '../lang/langHelpers';
 import { useAppStateAsync, useAppCurrentRef } from '../helper/appHooks';
 import { fsCheckDirExist, pathBasename } from '../server/fileHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getMenuTitleRevealFile } from '../helper/helpers';
 import { showFileOrDirExplorer } from '../server/appHelpers';
 
@@ -55,6 +56,7 @@ export function PathPreviewerComp({
         }
         showAppContextMenu(event, [
             {
+                childBefore: genContextMenuItemIcon('folder2-open'),
                 menuElement: getMenuTitleRevealFile(),
                 onSelect: () => {
                     showFileOrDirExplorer(dirPathRef.current);

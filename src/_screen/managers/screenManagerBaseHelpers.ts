@@ -99,7 +99,7 @@ export function saveScreenManagersSetting(deletedScreenId?: number) {
 }
 
 export function getSelectedScreenManagerBases() {
-    return Array.from(cache.values()).filter((screenManagerBase) => {
+    return getAllScreenManagerBases().filter((screenManagerBase) => {
         return screenManagerBase.isSelected;
     });
 }
@@ -122,5 +122,11 @@ export function deleteScreenManagerBaseCache(key: string) {
 }
 
 export function getAllScreenManagerBases(): ScreenManagerBase[] {
-    return Array.from(cache.values());
+    // Sorted by screenId, not Map insertion order: this list drives the
+    // "which screen?" picker, which otherwise listed screens as 0, 2, 1 while
+    // the previewer cards render 0, 1, 2 — an easy mis-click under service
+    // pressure.
+    return Array.from(cache.values()).sort((a, b) => {
+        return a.screenId - b.screenId;
+    });
 }

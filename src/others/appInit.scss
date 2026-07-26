@@ -47,6 +47,22 @@ body {
     user-select: text;
   }
 
+  // ...but never the controls inside it. Blink lets a mouse press start a
+  // selection on ANY node whose used `user-select` is `text`, which is what the
+  // rule above hands to every descendant button — so pressing one begins a text
+  // selection in the button itself. The Bible Note editor's floating format
+  // toolbar sits inside `#bible-note-root.app-selectable-text`, and Lexical
+  // unmounts that toolbar the moment the native selection's anchor leaves the
+  // editor root: mouse-down moved the anchor into the toolbar, the toolbar
+  // vanished mid-press, and the mouse-up landed on nothing. The panel looked
+  // alive and no button ever fired.
+  & .app-selectable-text button,
+  & .app-selectable-text button *,
+  & .app-selectable-text [role='button'],
+  & .app-selectable-text [role='button'] * {
+    user-select: none;
+  }
+
   & #app-header {
     width: 100% !important;
     height: $header-height !important;

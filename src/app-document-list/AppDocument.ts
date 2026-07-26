@@ -15,6 +15,7 @@ import type ItemSourceInf from '../others/ItemSourceInf';
 import type { OptionalPromise, AnyObjectType } from '../helper/typeHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { DisplayType } from '../_screen/screenTypeHelpers';
 import {
     checkIsImagesInClipboard,
@@ -435,12 +436,14 @@ export default class AppDocument
         const copiedSlides = await AppDocument.getCopiedSlides();
         const contextMenuItems: ContextMenuItemType[] = [
             {
+                childBefore: genContextMenuItemIcon('plus-square'),
                 menuElement: tran('New Slide'),
                 onSelect: () => {
                     this.addNewSlide();
                 },
             },
             {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
                 menuElement: tran('Reload'),
                 onSelect: () => {
                     this.fileSource.fireUpdateEvent();
@@ -449,6 +452,7 @@ export default class AppDocument
         ];
         if (copiedSlides.length > 0) {
             contextMenuItems.unshift({
+                childBefore: genContextMenuItemIcon('clipboard'),
                 menuElement: tran('Paste'),
                 onSelect: () => {
                     for (const copiedSlide of copiedSlides) {
@@ -459,6 +463,7 @@ export default class AppDocument
         }
         if (isClipboardHasImage) {
             contextMenuItems.push({
+                childBefore: genContextMenuItemIcon('card-image'),
                 menuElement: tran('Paste Image'),
                 onSelect: async () => {
                     const blobs: Blob[] = [];

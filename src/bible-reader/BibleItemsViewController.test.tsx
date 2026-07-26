@@ -110,6 +110,8 @@ vi.mock('../helper/bible-helpers/bibleLogicHelpers2', () => ({
 }));
 vi.mock('../context-menu/AppContextMenuComp', () => ({
     elementDivider: h.elementDivider,
+}));
+vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: h.genContextMenuItemIconMock,
 }));
 vi.mock('./ReadIdOnlyBibleItem', () => ({ ReadIdOnlyBibleItem: h.FakeItem }));

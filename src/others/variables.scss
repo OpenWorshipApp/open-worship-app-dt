@@ -15,10 +15,15 @@ $z-index-floating-widget: $base-z-index + 5;
 $z-index-bible-lookup: $base-z-index + 10;
 $z-index-popup-full-screen: $base-z-index + 20;
 $z-index-resize-actor-top: $base-z-index + 30;
-$z-index-finder: $base-z-index + 40;
 $z-index-widget-full-view: $base-z-index + 45;
 $z-index-toast: $base-z-index + 60;
-$z-index-progress-bar: $base-z-index + 60;
+$z-index-presenting-control: $base-z-index + 70;
+// The keyboard screencast renders INSIDE `#presenting-control`, so this only has
+// to beat its siblings there — the drawing canvas, the spotlight mask and the
+// floating panel. It is a caption on top of everything being presented,
+// including the operator's own annotation.
+$z-index-keyboard-screencast: $base-z-index + 75;
+$z-index-progress-bar: $base-z-index + 80;
 $z-index-context-menu: 99999;
 
 $hight-light-color: #ad0090;

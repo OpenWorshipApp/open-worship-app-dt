@@ -1,6 +1,7 @@
 import { lazy, useCallback, useMemo, useState } from 'react';
 
 import { type ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { type AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
 import { useAppEffectAsync, useAppCurrentRef } from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
@@ -53,6 +54,9 @@ function genContextMenu(
         ...(hasItems
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('eraser', {
+                          color: 'var(--bs-danger)',
+                      }),
                       menuElement: tran('Empty'),
                       onSelect: () => {
                           showAppConfirm(
@@ -71,6 +75,7 @@ function genContextMenu(
                       },
                   },
                   {
+                      childBefore: genContextMenuItemIcon('copy'),
                       menuElement: tran('Copy All Items'),
                       onSelect: async () => {
                           const contentList = note.items.map((item) => {
@@ -80,6 +85,7 @@ function genContextMenu(
                       },
                   },
                   {
+                      childBefore: genContextMenuItemIcon('folder-symlink'),
                       menuElement: tran('Move All Items To'),
                       onSelect: (event: any) => {
                           moveNoteItemTo(event, note);
@@ -88,6 +94,7 @@ function genContextMenu(
               ]
             : []),
         {
+            childBefore: genContextMenuItemIcon('plus-square'),
             menuElement: tran('New Note Item'),
             onSelect: () => {
                 createNewNoteItem(note);
@@ -96,6 +103,7 @@ function genContextMenu(
         ...(note.isDefault
             ? [
                   {
+                      childBefore: genContextMenuItemIcon('box-arrow-in-down'),
                       menuElement: tran('Import'),
                       onSelect: () => {
                           selectAndImportBibleNoteItemArchive(note);

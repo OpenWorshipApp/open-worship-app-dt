@@ -13,7 +13,7 @@ import { handleDragStart } from '../helper/dragHelpers';
 import type BibleItem from '../bible-list/BibleItem';
 import { genBibleItemCopyingContextMenu } from '../bible-list/bibleItemHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 
 const HISTORY_TEXT_LIST_SETTING_NAME = 'history-text-list';
@@ -116,6 +116,7 @@ function openContextMenu(
     if (bibleItem !== null) {
         contextMenuItems = [
             {
+                childBefore: genContextMenuItemIcon('box-arrow-up-right'),
                 menuElement: tran('Open'),
                 onSelect: () => {
                     openInBibleLookup(event, viewController, bibleItem);
@@ -134,6 +135,9 @@ function openContextMenu(
     contextMenuItems = [
         ...contextMenuItems,
         {
+            childBefore: genContextMenuItemIcon('x-circle', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: tran('Remove'),
             onSelect: () => {
                 remove();

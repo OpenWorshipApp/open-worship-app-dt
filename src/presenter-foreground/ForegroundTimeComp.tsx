@@ -21,6 +21,7 @@ import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEven
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import type { ForegroundTimeDataType } from '../_screen/screenTypeHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { handleError } from '../helper/errorHelpers';
@@ -49,6 +50,7 @@ function getMinuteOffsetFromCity(event: any) {
             cityNames.map(([city, name]) => {
                 const title = `${city} (${name})`;
                 return {
+                    childBefore: genContextMenuItemIcon('clock'),
                     menuElement: title,
                     onSelect: () => {
                         const minuteOffset = tz(name).utcOffset() / 60;

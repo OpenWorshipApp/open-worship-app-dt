@@ -1,6 +1,10 @@
 import appProvider from '../../server/appProvider';
 import type ScreenManagerBase from './ScreenManagerBase';
-import type { DrawPaintPointType, ScreenType } from '../screenTypeHelpers';
+import type {
+    DrawPaintPointType,
+    DrawPaintStrokeType,
+    ScreenType,
+} from '../screenTypeHelpers';
 
 // Shared by the screen's two INDEPENDENT overlays — `#draw` (ScreenDrawManager,
 // strokes on a canvas) and `#focus` (ScreenFocusManager, a spotlight mask).
@@ -9,6 +13,14 @@ import type { DrawPaintPointType, ScreenType } from '../screenTypeHelpers';
 // the same way. The fiddly parts of that (shadow-root focus, native-px
 // coordinate mapping, the targeted-IPC forward) are subtle enough that having
 // two copies drift apart is a real risk, so they live here once.
+//
+// The two PAINT primitives at the bottom (`paintStroke`, the canvas painter, and
+// `buildSpotlightBackground`, the mask's one CSS value) are shared further
+// still: the app-wide annotation overlay (`src/presenting-control`) draws over
+// the whole presenter window with exactly the same brush and the same spotlight,
+// just in window px instead of native screen px. Those two functions are pure —
+// they touch no manager state and no IPC — which is what lets the app overlay
+// reuse them without dragging any of the screen/sync machinery in.
 
 export function clampNumber(value: number, min: number, max: number) {
     return Math.max(min, Math.min(max, value));
@@ -132,6 +144,139 @@ export function forwardToOwnScreenOutput(
     screenManagerBase.sendScreenMessage(
         { screenId: screenManagerBase.screenId, type, data },
         false,
+    );
+}
+
+// Paint ONE stroke onto an already-transformed 2D context. Pure: the caller owns
+// the canvas, the transform (native screen px for a screen overlay, window px
+// for the app-wide one) and the clear, so this is only ever "put these points on
+// that context".
+//
+// `isHighQuality` here selects the CURVE SMOOTHING only — the supersampled
+// backing store is the caller's business, since it is the caller that owns the
+// canvas size.
+export function paintStroke(
+    ctx: CanvasRenderingContext2D,
+    stroke: DrawPaintStrokeType,
+    isHighQuality: boolean,
+) {
+    const points = stroke.points;
+    if (points.length === 0) {
+        return;
+    }
+    ctx.save();
+    if (stroke.isEraser) {
+        // Manual eraser: keep the destination only where the source is
+        // transparent, so painting an opaque path here rubs out everything
+        // already drawn beneath it. The stored color is irrelevant — only the
+        // source alpha matters, so paint fully opaque.
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.strokeStyle = '#000';
+        ctx.fillStyle = '#000';
+    } else {
+        ctx.strokeStyle = stroke.color;
+        ctx.fillStyle = stroke.color;
+    }
+    ctx.lineWidth = stroke.size;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (stroke.is3D) {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+        ctx.shadowBlur = Math.max(2, stroke.size * 0.9);
+        ctx.shadowOffsetX = Math.max(1, stroke.size * 0.18);
+        ctx.shadowOffsetY = Math.max(1, stroke.size * 0.18);
+    }
+    if (stroke.isDots) {
+        for (const point of points) {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, stroke.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    } else if (stroke.isStraight) {
+        const first = points[0];
+        const last = points[points.length - 1];
+        ctx.beginPath();
+        ctx.moveTo(first.x, first.y);
+        ctx.lineTo(last.x, last.y);
+        ctx.stroke();
+    } else if (points.length === 1) {
+        // A single click with no drag: render a dot.
+        ctx.beginPath();
+        ctx.arc(points[0].x, points[0].y, stroke.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (isHighQuality && points.length > 2) {
+        // Smooth the freehand polyline into a quadratic curve through the
+        // midpoints of consecutive samples, so corners read as curves rather
+        // than the angular segments fast mode draws.
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length - 1; i++) {
+            const midX = (points[i].x + points[i + 1].x) / 2;
+            const midY = (points[i].y + points[i + 1].y) / 2;
+            ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+        }
+        const last = points[points.length - 1];
+        ctx.lineTo(last.x, last.y);
+        ctx.stroke();
+    } else {
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+export type SpotlightMaskType = {
+    point: DrawPaintPointType;
+    // Hole DIAMETER, in the same px space as `point`.
+    size: number;
+    dimColor: string;
+    // 0..100 alpha of the dim.
+    dimOpacity: number;
+    // Softness of the rim as a percentage of the radius; 0 = hard edge.
+    edgeBlur: number;
+    // Invert: dim the circle instead of everything around it.
+    isContrast: boolean;
+};
+
+// The spotlight's ENTIRE paint: one radial-gradient that is both the hole and
+// the dim, no extra element. Returns a `background` value.
+//
+// A moving `box-shadow` hole was tried first (compositor-only moves, no gradient
+// repaint) and DOES NOT RENDER: the spread has to exceed the screen diagonal to
+// cover the corners, and Chromium silently drops a shadow that large. Verified
+// live — the element was present and styled, and nothing painted. Do not
+// "optimize" back to it.
+export function buildSpotlightBackground({
+    point,
+    size,
+    dimColor,
+    dimOpacity,
+    edgeBlur,
+    isContrast,
+}: SpotlightMaskType) {
+    const radius = size / 2;
+    // The dim is the chosen colour at `dimOpacity` alpha, as `#rrggbbaa`.
+    const dim = `${dimColor}${toAlphaHex(dimOpacity)}`;
+    // The gradient's stops span 0..radius and its LAST colour continues outwards
+    // forever, which is what covers the rest of the screen. edgeBlur is where the
+    // fade starts as a percentage of the radius, so 0 keeps the circle uniform
+    // right up to the rim = a hard edge.
+    const solidStop = 100 - edgeBlur;
+    // Contrast just swaps which side of the rim is dark: spotlight clears the
+    // circle and dims the rest, contrast dims the circle and leaves the rest
+    // alone (blocking what the pointer is over).
+    // The clear side is the SAME colour at zero alpha, not the `transparent`
+    // keyword: a soft edge interpolates between the two stops, and fading a
+    // coloured dim towards transparent-black can tint the rim.
+    const clear = `${dimColor}00`;
+    const [inner, outer] = isContrast ? [dim, clear] : [clear, dim];
+    return (
+        `radial-gradient(circle ${radius}px at ${point.x}px ${point.y}px,` +
+        ` ${inner} 0, ${inner} ${solidStop}%, ${outer} 100%)`
     );
 }
 

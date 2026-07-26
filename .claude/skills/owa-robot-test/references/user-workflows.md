@@ -3,7 +3,7 @@
 Canonical, **user-facing** task recipes for Open Worship App. Each workflow is written
 in tutorial voice ("Click **X**, you should see **Y**") so it can be converted 1:1 into
 a help page, and each is **traceable** (`Verify:` line) to
-[coverage-matrix.md](./coverage-matrix.md) row IDs so a robot run can prove every step
+[coverage-matrix.md](../../../../docs/test-paths/coverage-matrix.md) row IDs so a robot run can prove every step
 still matches the live app.
 
 **Contract for this file:**
@@ -21,7 +21,8 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-07-16** (bump when any workflow changes)
+**workflowsVersion: 2026-07-26** (bump when any workflow changes) — W-16 Language now
+states that `Apply Settings` is required to complete the switch (observed live).
 
 > ⚠️ **Pending live re-verification (2026-07-18).** A `src/` sweep for the coverage-matrix
 > expansion indicates the presenter UI has drifted from some steps below: **Foreground**
@@ -313,7 +314,10 @@ enter the URL and title, save, and the new item appears in the Web tab.
 
 1. Click the **gear** (ការកំណត់) in the header — Settings opens in its own window. 📸
 2. **General** tab:
-   - **Language:** click **Khmer** or **English** — the whole UI switches immediately.
+   - **Language:** click **Khmer** (ភាសាខ្មែរ) or **English** (ភាសាអង់គ្លេស). Some
+     labels change straight away, but the switch is only complete once you click
+     **Apply Settings** (អនុវត្តការកំណត់) at the bottom-left — that reloads every open
+     window. Unsaved edits in the Slide Editor are kept.
    - **Theme:** system / light / dark.
    - **Font family:** the font used for on-screen text. A font marked `(Missing)` is
      configured but not installed on this computer.
@@ -354,6 +358,97 @@ enter the URL and title, save, and the new item appears in the Web tab.
 
 *Verify: SP-04..05, SP-10..12.*
 
+### W-19 — Draw and spotlight on the app itself (Presenting Control)
+
+**Goal:** annotate **the app window** — not the audience screen — while showing the app
+to other people (a training session, a screen share, a projector mirroring your laptop).
+The audience screen has its own Draw and Focus tools on the mini-screen card (W-10);
+this is the same pair of tools pointed at the app.
+
+1. Open the **Tools** menu → **Start Controlling** (**Ctrl+Shift+P**, **⌘+Shift+P** on
+   Mac). A floating **Presenting Control** panel appears — drag it by its title bar,
+   resize it from any edge or corner, and collapse it with the chevron; it reopens where
+   and how you last left it. 📸
+2. The **title bar** carries everything you reach for mid-presentation: the four tools on
+   the left, then the **keyboard screencast** switch (W-20) and **Undo** / **Redo** /
+   **Clear** on the right. Only the settings live in the body, so collapsing the panel
+   with the chevron leaves every group one click away — roll it up to get the sliders out
+   of the way and keep drawing.
+3. The panel opens on the **arrow** tool — the app stays completely usable and
+   anything already drawn stays visible on top of it.
+4. Click the **brush** to draw. A magenta frame around the window shows the app is no
+   longer taking clicks; drag anywhere to draw. Pick **Color**, **Size** (`[` / `]`) and
+   **Opacity** (`-` / `=`), and switch the stroke style with **Straight** (`S`), **3D**
+   (`3`) or **Dots** (`D`). **HQ** (`Q`) trades smoothness for speed on weak machines. 📸
+5. Click the **eraser** to rub parts of the drawing out, and use the title bar's
+   **Undo** / **Redo** (`Ctrl+Z` / `Ctrl+Shift+Z`) to step back or the red **Clear** (`C`)
+   to wipe it — one Undo brings a mis-hit Clear back. All three grey out when there is
+   nothing to undo, redo or clear, and all three keys work from **any** tool and with the
+   panel **collapsed**, matching the buttons they mirror.
+6. Click the **spotlight** to dim the whole app except a circle. In **Follow** (the
+   default) the circle simply tracks your pointer; press **Hold** (`H`) if you would
+   rather dim only while the mouse button is down. **Contrast** (`X`) inverts it — the
+   circle becomes the blocked area instead. Size, **Dim color**, dim amount and **edge
+   blur** (`,` / `.`) all have sliders. 📸
+7. Press **Escape** (or click the arrow) to hand the app back while keeping the
+   drawing on screen. Move the panel if it covers what you are pointing at.
+8. Click **✕** in the panel header to finish. The drawing is discarded; it is not saved
+   between sessions. **Ctrl+Shift+P** and **Tools → Start Controlling** only ever *open*
+   the panel — neither closes it, so a stray press mid-service cannot lose your drawing.
+
+> Note: the panel owns the keyboard only while a tool is **armed** — the same moment it
+> owns the pointer. On the **arrow** tool the app keeps every key it normally has (the
+> Bible Lookup's Enter and Escape, `F5`–`F10`, `Ctrl+B`, `Ctrl+Z`, slide navigation)
+> while `V` `B` `E` `F` `K` still reach in to pick a tool; whatever holds the keyboard
+> still wins, as the tool letters defer while you are typing in a field and while a
+> screen preview's own draw/spotlight overlay is focused. Arm a tool and the picture
+> flips: the overlay covers the **whole** window and the app takes **nothing** — not a
+> click, not a key. Every keystroke is swallowed before the app sees it, down to the
+> plain ones nothing is bound to: typing goes nowhere, `Space` and the arrows stop
+> scrolling, `Tab` stops walking the focus ring, and a dialog behind the overlay stays
+> deaf. Only the panel's own keys stay live (`V` `B` `E` `F`, `Escape`, `Ctrl+Z` /
+> `Ctrl+Shift+Z` / `C`, which now act on the **drawing**), along with anything typed into
+> the panel's own sliders and color box. Escape or the arrow tool hands everything
+> straight back. The Undo / Redo / Clear **buttons** work in every tool regardless.
+
+*Verify: coverage rows pending — the matrix lives at `docs/test-paths/coverage-matrix.md`
+but has no `PC-xx` (presenting-control) block yet; add one for this workflow.*
+
+### W-20 — Show the keys you press (Keyboard Screencast)
+
+**Goal:** let the room see **which keys you are pressing** while you demonstrate the app —
+a training session, a screen share, a recorded tutorial. It is the keyboard counterpart to
+the drawing in W-19, and it lives in the same panel.
+
+1. Open the **Presenting Control** panel (W-19 step 1: **Tools → Start Controlling**,
+   **Ctrl+Shift+P**).
+2. In the panel's title bar, click the **keyboard** button (`K`) — it sits between the
+   four tools and Undo / Redo / Clear, and lights up while it is on. Nothing appears on
+   screen yet; the strip only shows up once you press something.
+3. Press any key. A dark strip of key pills appears **across the bottom** of the window,
+   above everything else — including your own drawing and the spotlight. 📸
+4. The strip keeps the **last six** keys. Pressing the same key over and over collapses
+   into one pill with a **×N** counter (`→ ×2`), so a run of arrow presses does not push
+   the rest of the strip away. Holding a key down counts as one press.
+5. Chords are shown the way the app names them: **Ctrl+Z**, **Esc**, **Space**,
+   **↑ ↓ ← →**. Plain typing shows the character you actually typed; a shortcut is shown
+   on the en-US key the app binds it to, whatever your layout produces.
+6. The strip **clears itself** about a second and a half after your last key, so it is
+   never in the way between one demonstration and the next.
+7. Click the keyboard button again (or press `K`) to turn it off. **Closing the panel
+   turns it off too** — the screencast belongs to the panel, and reopening starts with it
+   off again.
+8. Picking the **brush**, **eraser** or **spotlight** turns it off as well, and greys the
+   keyboard button out until you go back to the **arrow** — an armed tool swallows the
+   keyboard (W-19), so there would be nothing left to echo. Turn it back on with `K` or
+   the button once the arrow tool is back.
+
+> Notes: the screencast belongs to the **arrow** tool — it narrates the app being driven,
+> not a drawing being made. It never takes clicks and never blocks a key: it only
+> **echoes** what you pressed. What you type into a **password** field is masked as `•`.
+
+*Verify: coverage rows pending — same `PC-xx` block as W-19 when the matrix lands.*
+
 ---
 
 ## Keyboard shortcut reference (tutorial appendix)
@@ -370,5 +465,12 @@ enter the URL and title, save, and the new item appears in the Web tab.
 | `Ctrl+Enter` | Focus the editing canvas | Slide Editor |
 | `Ctrl+S` | Save | all editors |
 | `Enter` / `Escape` | Confirm / cancel | confirmation dialogs |
+| `Ctrl+Shift+P` | Open Presenting Control (draw & spotlight on the app); close with its ✕ | Presenter |
+| `V` / `B` / `E` / `F` | Arrow / brush / eraser / spotlight | Presenting Control open (not while typing) |
+| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Undo / redo the drawing | Presenting Control **armed** (buttons work in any tool) |
+| `C` | Clear the drawing (one Undo brings it back) | Presenting Control **armed** (button works in any tool) |
+| `Escape` | Back to the arrow tool | Presenting Control **armed** (the app keeps Escape otherwise) |
+| `K` | Show / hide the Keyboard Screencast | Presenting Control on the **arrow** tool (an armed tool turns it off) |
+| *every other key* | Nothing — swallowed by the overlay | Presenting Control **armed** |
 
 *Verify: KB-01..13, SC-03.*

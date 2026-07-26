@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against references/coverage-matrix.md (~535 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore) and a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~535 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -12,8 +12,9 @@ unit or Playwright tests.
 
 > **Read first:** [references/knowledge-base.md](./references/knowledge-base.md) — verified
 > field notes on **what to observe**, expected-vs-noise (which console/network output to
-> ignore), and the traps that ruin a run (dynamic Khmer/English locale, popup-only windows,
-> the `setting.html` navigation trap, restoring live state). Skim it before you start.
+> ignore), and the traps that ruin a run (dynamic Khmer/English locale **and the missing-key
+> throw that only shows in Khmer — §1.1**, popup-only windows, the `setting.html` navigation
+> trap, restoring live state). Skim it before you start.
 
 ## When to use
 
@@ -160,12 +161,13 @@ You can also test the in-app navigation UX itself: click the header tabs `Presen
 Follow [references/test-plan.md](./references/test-plan.md). If the user named a focus
 area (argument-hint), navigate to that page (step 5) and start there; otherwise iterate
 over the pages — `presenter` → `reader` → `appDocumentEditor` → `setting` — navigating to
-each per step 5. **Whatever the focus, the screen-controlling block (§6a) always runs.**
+each per step 5. **Whatever the focus, two blocks always run: the screen-controlling
+block (§6a) and the locale-switch block (§6d).**
 
 If the user asked for **"full"**, **"everything"**, or a **coverage percentage/target**
 (e.g. "99% coverage"), run in **full-coverage mode** — see "Coverage accounting" below —
-where every row of [references/coverage-matrix.md](./references/coverage-matrix.md) must
-end the run with a status. For every scenario:
+where every row of [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md)
+must end the run with a status. For every scenario:
 
 1. `take_snapshot` to get fresh `uid`s.
 2. Interact: `click` / `fill` / `hover` / `press_key` / `drag` using the labels &
@@ -188,7 +190,7 @@ Presenting content to a screen is the app's core purpose, so this block is **not
 optional and not skippable by focus area**: a run that only tested "bible lookup" must
 still run it. A report without evidence for this block is **incomplete** — say so
 rather than shipping it. Full row definitions: coverage-matrix.md §SP + §SC; recipe:
-test-plan.md §S7.
+test-plan.md §S7. (The other always-on block is the locale switch — §6d.)
 
 Minimum pass (≈5 minutes, self-restoring):
 
@@ -220,7 +222,7 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[references/coverage-matrix.md](./references/coverage-matrix.md) (~535 rows with stable
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~535 rows with stable
 IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
 the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
@@ -257,8 +259,10 @@ restarting from zero. This is how a full-coverage pass can span several sessions
    edit→present propagation, §6c — open the editor as a *separate* window and confirm a
    saved edit reaches the Presenter/screen; run it whenever editing/lists were touched)**.
 3. Popups `PU` (each opened from its trigger row).
-4. `ST` settings last-but-one — `LT` locale/theme spot-checks ride on `ST-04/05`, restore
-   everything, and `ST-08 Apply Settings` goes **very last** because it reloads windows.
+4. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
+   the `LT-03..05` theme spot-checks, which ride on `ST-04/05`. Restore everything. Each
+   `Apply Settings` (`ST-08`) reloads every window, so these go **very last** — and the
+   locale block needs two of them (switch, then switch back).
 
 **Honesty rules:** never mark a row PASS without its pass condition observed; never drop
 a row silently — if you ran out of budget, mark the remainder `BLOCKED: "not reached,
@@ -304,6 +308,50 @@ Caveat: opening/closing the separate editor window can trigger a chrome-devtools
 reconnected" — re-`list_pages`/`select_page` after each, and read screen visibility from
 `.show-hide.showing`, not target enumeration.
 
+### 6d. MANDATORY: locale switch pass (every run, every focus)
+
+**An English-only run structurally cannot find a missing translation.** `tran()`
+([src/lang/langHelpers.ts](../../../src/lang/langHelpers.ts)) returns early when the
+locale is `en-US` (`DEFAULT_LOCALE`) — no dictionary lookup happens at all. Switch to
+Khmer and the same call **throws** `Translation for text "…" not found in locale km-KH`
+in dev, and since there is no error boundary the whole subtree renders **blank**. A real
+example: `PositionSizeFieldComp` called `tran(name)` with `name="X:"`, which blanked the
+entire slide-editor tools panel — invisible in English, fatal in Khmer.
+
+So this block is **not optional and not skippable by focus area**, exactly like §6a. Rows
+`LT-01..02`; recipe: test-plan.md §S15.
+
+Minimum pass (≈3 minutes, self-restoring):
+
+1. **Record the starting locale** — open Settings (gear → popup target) → Language and
+   see which of `Khmer` / `English` is the active button. You MUST restore it at the end.
+   Do **not** read `localStorage['language-locale']`; it is a stale key (KB §1).
+2. **Switch to the other locale** and click `Apply Settings` — this calls
+   `forceReloadAppWindows()`, so **every window reloads**: re-`list_pages`,
+   `select_page`, and re-run the readiness check (step 3). All previous `uid`s are dead.
+3. **Re-walk the screens your focus touched**, plus the presenter baseline. For each:
+   `take_screenshot` and `list_console_messages`.
+4. **Assert, per screen:**
+   - No `Translation for text "…" not found in locale km-KH` in the console →
+     any occurrence is a **Critical** finding: name the missing key AND the component
+     that rendered it (the React warning right after it names the component).
+   - No blank/empty panel where content rendered in the other locale (that is the
+     visible symptom of the throw above).
+   - Labels actually translate — no raw English left in a translated screen, no clipped
+     or overflowing Khmer text (Khmer glyphs are taller; check buttons and table cells).
+5. **Restore** — switch back to the locale from step 1 and `Apply Settings` again.
+
+Notes:
+
+- Unsaved editor state **survives** the reloads (it is disk-backed in
+  `<file>.histories/<n>-head`, `EditingHistoryManager`), so a pending `*` on a document
+  is not a reason to skip this block — but never use **Discard changed** to tidy up.
+- If the locale changes and you did **not** change it, assume the **user** did (KB §1) —
+  confirm before filing anything.
+- Strings that are hardcoded rather than passed through `tran()` stay English in Khmer
+  mode. That is a **Low/Info** finding (untranslated UI), not the Critical throw above —
+  report them separately and name the file.
+
 ### 7. Report
 
 - Write the full report to `test-results/robot-test/report-<timestamp>.md` (this folder
@@ -312,6 +360,11 @@ reconnected" — re-`list_pages`/`select_page` after each, and read screen visib
   results: the SP-01/SP-02/SC-01/SC-02 statuses and the screenshot taken from the
   `screen.html` target. If the block was skipped (EX-02 live-use exception), the report
   must state that and why.
+- **Every report** MUST also contain the **mandatory locale block** (§6d): the
+  `LT-01/LT-02` statuses, which locale was switched to, the screens re-walked in it, and
+  an explicit statement that no `Translation for text "…" not found` error appeared (or
+  the list of the ones that did, each a Critical finding). Confirm the starting locale
+  was restored.
 - In full-coverage mode the report MUST include the **coverage summary** (template in
   [references/test-plan.md](./references/test-plan.md)): the formula result
   (`exercised / (total − EXCLUDED)`), plus every BLOCKED / PARTIAL / EXCLUDED row with
@@ -429,14 +482,16 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   signals, keyboard shortcuts.
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
-- [references/coverage-matrix.md](./references/coverage-matrix.md) — the **coverage
-  contract**: ~535 stable-ID rows over the whole UI surface — every interactive path
-  enumerated as a unit test with an observable pass condition and a `(src: file:line)`
+- [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
+  **coverage contract**: ~535 stable-ID rows over the whole UI surface — every interactive
+  path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
   citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and
   a context-menu-item matrix (`CM-01..92`). Screen controlling & presenting rows
-  (`SP`/`SC`) are mandatory in every run; the file also carries the policy-exclusion
-  table, statuses, evidence rule, and the coverage formula for full-coverage runs.
+  (`SP`/`SC`) and the locale-switch rows (`LT-01..02`) are mandatory in every run; the
+  file also carries the policy-exclusion table, statuses, evidence rule, and the coverage
+  formula for full-coverage runs. **Note:** this file lives under `docs/test-paths/`, not
+  in this skill's `references/`.
 - [coverage-expansion/](./coverage-expansion/) — provenance for the 2026-07-18 matrix
   expansion: the per-subsystem source-sweep inventories (`discover-*.md`) and the
   finalized per-section row fragments (`final/*.md`) each row was derived from, with

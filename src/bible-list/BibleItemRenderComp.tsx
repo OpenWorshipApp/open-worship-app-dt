@@ -19,6 +19,7 @@ import appProvider from '../server/appProvider';
 import { DragTypeEnum } from '../helper/DragInf';
 import { changeDragEventStyle, stopDraggingState } from '../helper/helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import BibleViewTitleEditorComp from '../bible-reader/BibleViewTitleEditorComp';
 import type LookupBibleItemController from '../bible-reader/LookupBibleItemController';
 import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
@@ -110,6 +111,7 @@ export default function BibleItemRenderComp({
         async (event: MouseEvent<any>) => {
             const menuItems: ContextMenuItemType[] = [
                 {
+                    childBefore: genContextMenuItemIcon('box-arrow-up-right'),
                     menuElement: tran('Open'),
                     onSelect: (event) => {
                         handleOpening(

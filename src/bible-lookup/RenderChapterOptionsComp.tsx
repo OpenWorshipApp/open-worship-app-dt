@@ -97,9 +97,6 @@ function genChapterOption({
     onSelect: (chapter: number) => void;
     fontFamily?: string;
 }>) {
-    if (chapter === 0) {
-        return null;
-    }
     const className =
         'app-chapter-select btn btn-outline-success w-100' +
         ` ${OPTION_CLASS}` +
@@ -169,12 +166,17 @@ export default function RenderChapterOptionsComp({
         matchedChapters.find((match) => {
             return match.chapter === 0;
         }) ?? null;
+    // chapter 0 is the synthetic "Introduction" entry, it is rendered by
+    // `RenderChapterZeroComp`, exclude it so `i === 0` is the first option
+    const chapterOptions = matchedChapters.filter((match) => {
+        return match.chapter !== 0;
+    });
     return (
         <>
             {chapterZero?.isIntro ? (
                 <RenderChapterZeroComp bibleKey={bibleKey} bookKey={bookKey} />
             ) : null}
-            {matchedChapters.map(({ chapter, chapterLocaleString }, i) => {
+            {chapterOptions.map(({ chapter, chapterLocaleString }, i) => {
                 return genChapterOption({
                     chapter,
                     chapterLocaleString,

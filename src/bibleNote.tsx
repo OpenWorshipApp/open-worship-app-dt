@@ -6,6 +6,8 @@ import {
     getBibleNoteData,
     initBibleNote,
 } from './bible-list/note/bibleNoteHelpers';
+import { registerAppMenuClicked } from './lang/langHelpers';
+import PresentingControlComp from './presenting-control/PresentingControlComp';
 
 init(async () => {
     const bibleNoteData = await getBibleNoteData();
@@ -15,6 +17,19 @@ init(async () => {
     const bibleNote = await initBibleNote({
         ...bibleNoteData,
     });
+    // Every menu click lands here, including items owned by other features and
+    // parent items that carry no `clickData` at all — hence the optional read.
+    const handleSearchOpening = (
+        _event: any,
+        clickData?: {
+            isOpenSearch?: boolean;
+        },
+    ) => {
+        if (clickData?.isOpenSearch) {
+            bibleNote.searchText('');
+        }
+    };
+    registerAppMenuClicked(handleSearchOpening);
     run(
         <PopupLayoutComp>
             <div
@@ -39,6 +54,7 @@ init(async () => {
                 }}
             />
             <NoteItemEditorPopupComp bibleNote={bibleNote} />
+            <PresentingControlComp />
         </PopupLayoutComp>,
     );
 });

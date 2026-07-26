@@ -22,6 +22,7 @@ import { tran } from '../../lang/langHelpers';
 import { getBibleInfo } from '../../helper/bible-helpers/bibleInfoHelpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { useAppEffect } from '../../helper/appHooks';
 import {
     fromBibleFileName,
@@ -216,6 +217,7 @@ export async function saveXMLText(bibleKey: string, xmlText: string) {
 export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
     const contextMenuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('folder2-open'),
             menuElement: getMenuTitleRevealFile(),
             onSelect: async () => {
                 const filePath = await bibleKeyToXMLFilePath(bibleKey);
@@ -226,6 +228,7 @@ export function handBibleKeyContextMenuOpening(bibleKey: string, event: any) {
             },
         },
         {
+            childBefore: genContextMenuItemIcon('eraser'),
             menuElement: tran('Clear Cache'),
             onSelect: () => {
                 invalidateBibleXMLCachedFolder(bibleKey);

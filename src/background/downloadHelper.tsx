@@ -1,6 +1,7 @@
 import { type ChangeEvent, useCallback, useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
 import { showAppInput } from '../popup-widget/popupWidgetHelpers';
@@ -81,6 +82,7 @@ export function getOpenSharedLinkMenuItem(
 ): ContextMenuItemType {
     const sharedLink = `${appProvider.appInfo.homepage}/shared#${sharedKey}`;
     return {
+        childBefore: genContextMenuItemIcon('share'),
         menuElement: tran('Open Shared Link'),
         title: sharedLink,
         onSelect: async () => {
@@ -100,6 +102,7 @@ export async function genDownloadContextMenuItems(
     }
     const contextMenuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('download'),
             menuElement: tran('Download From URL'),
             onSelect: async () => {
                 const url = await askForURL(title, subTitle);

@@ -50,6 +50,7 @@ function SaveButtonComp({
                 tran('Save bible item') +
                 ` [${toShortcutKey(ctrlEnterEventMapper)}]`
             }
+            aria-label={tran('Save bible item')}
             onClick={handleSaveBibleItem}
         >
             <i className="bi bi-floppy" />
@@ -85,6 +86,7 @@ function SaveAndShowButtonComp({
                 tran('Save bible item and show on screen') +
                 ` [${toShortcutKey(ctrlShiftEnterEventMapper)}]`
             }
+            aria-label={tran('Save bible item and show on screen')}
             onClick={handleSaveAndPresent}
         >
             <i className="bi bi-cast" />
@@ -119,6 +121,7 @@ function InsertBibleItemToSlideButtonComp({
                 tran('Insert bible item into selected slide') +
                 ` [${toShortcutKey(ctrlShiftEnterEventMapper)}]`
             }
+            aria-label={tran('Insert bible item into selected slide')}
             onClick={handleBibleItemInserting}
         >
             <i className="bi bi-file-earmark-slides" />
@@ -194,6 +197,7 @@ export default function RenderEditingActionButtonsComp({
                     tran('Split horizontal') +
                     ` [${toShortcutKey(eventMaps[0])}]`
                 }
+                aria-label={tran('Split horizontal')}
                 onClick={handleSplitHorizontal}
             >
                 <i className="bi bi-vr" />
@@ -202,6 +206,7 @@ export default function RenderEditingActionButtonsComp({
                 className="btn btn-sm btn-info"
                 type="button"
                 title={`Split vertical [${toShortcutKey(eventMaps[1])}]`}
+                aria-label={tran('Split vertical')}
                 onClick={handleSplitVertical}
             >
                 <i className="bi bi-hr" />
@@ -228,6 +233,7 @@ export default function RenderEditingActionButtonsComp({
                         className="btn btn-sm btn-info"
                         type="button"
                         title={tran('Export to MS Word')}
+                        aria-label={tran('Export to MS Word')}
                         onClick={handleExportToWord}
                     >
                         <i

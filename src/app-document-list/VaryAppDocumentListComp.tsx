@@ -35,6 +35,7 @@ import {
     type ContextMenuItemType,
     showAppContextMenu,
 } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     askForURL,
     getOpenSharedLinkMenuItem,
@@ -125,6 +126,7 @@ async function genContextMenuItems(dirSource: DirSource) {
     const title = tran('Download From URL');
     contextMenuItems.push(
         {
+            childBefore: genContextMenuItemIcon('download'),
             menuElement: title,
             onSelect: async () => {
                 const documentUrl = await askForURL(title, 'Documents URL:');

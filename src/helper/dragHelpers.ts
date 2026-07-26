@@ -15,6 +15,7 @@ import { useAppEffectAsync } from './appHooks';
 import { useFileSourceEvents } from './dirSourceHelpers';
 import { stopDraggingState } from './helpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import Slide from '../app-document-list/Slide';
 import { cameraDragDeserialize } from '../background/backgroundHelpers';
 import { deserializeBackgroundWebDragItem } from '../background/backgroundWebUrlHelpers';
@@ -178,6 +179,9 @@ export function genRemovingAttachedBackgroundMenu(
 ): ContextMenuItemType[] {
     return [
         {
+            childBefore: genContextMenuItemIcon('x-circle', {
+                color: 'var(--bs-danger)',
+            }),
             menuElement: tran('Remove background'),
             onSelect: () => {
                 attachBackgroundManager.detachBackground(filePath, id);

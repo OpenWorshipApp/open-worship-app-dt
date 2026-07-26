@@ -11,6 +11,7 @@ import { useAppEffect, useAppCurrentRef } from '../../helper/appHooks';
 import { freezeObject } from '../../helper/helpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { copyToClipboard } from '../../server/appHelpers';
 
 freezeObject(colorList);
@@ -95,6 +96,9 @@ export default function ColorPickerComp({
         const contextMenuItems: ContextMenuItemType[] = [];
         // TODO: paste color
         contextMenuItems.push({
+            childBefore: genContextMenuItemIcon('clipboard', {
+                color: currentLocalColor,
+            }),
             menuElement: 'Copy Color',
             onSelect: () => {
                 copyToClipboard(currentLocalColor);

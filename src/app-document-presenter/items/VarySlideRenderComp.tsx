@@ -318,6 +318,7 @@ export default function VarySlideRenderComp({
             }}
             data-vary-app-document-item-id={varySlide.id}
             data-scroll-container-selector={`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`}
+            data-touch-drag-label={varySlide.name || `#${index + 1}`}
             draggable
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}

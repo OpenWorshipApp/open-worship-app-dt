@@ -74,6 +74,7 @@ export type FloatingWidgetOptions = {
     minHeight?: number;
     maxWidth?: number;
     maxHeight?: number;
+    isNoBodyDraggable?: boolean;
 };
 
 function clampNumber(value: number, min: number, max: number) {
@@ -101,7 +102,7 @@ function getViewportSize() {
 function getConstrainedSize(
     width: number,
     height: number,
-    options?: FloatingWidgetOptions,
+    options: FloatingWidgetOptions,
 ) {
     const viewportSize = getViewportSize();
     const viewportMaxWidth = Math.max(
@@ -113,16 +114,16 @@ function getConstrainedSize(
         viewportSize.height - VIEWPORT_PADDING * 2,
     );
     const maxWidth = Math.min(
-        options?.maxWidth ?? viewportMaxWidth,
+        options.maxWidth ?? viewportMaxWidth,
         viewportMaxWidth,
     );
     const maxHeight = Math.min(
-        options?.maxHeight ?? viewportMaxHeight,
+        options.maxHeight ?? viewportMaxHeight,
         viewportMaxHeight,
     );
-    const minWidth = Math.min(options?.minWidth ?? DEFAULT_MIN_WIDTH, maxWidth);
+    const minWidth = Math.min(options.minWidth ?? DEFAULT_MIN_WIDTH, maxWidth);
     const minHeight = Math.min(
-        options?.minHeight ?? DEFAULT_MIN_HEIGHT,
+        options.minHeight ?? DEFAULT_MIN_HEIGHT,
         maxHeight,
     );
 
@@ -134,7 +135,7 @@ function getConstrainedSize(
 
 export function clampWidgetRect(
     rect: WidgetRect,
-    options?: FloatingWidgetOptions,
+    options: FloatingWidgetOptions,
     isCollapsed = false,
 ) {
     const viewportSize = getViewportSize();
@@ -170,7 +171,7 @@ export function resizeWidgetRect(
     handle: ResizeHandle,
     deltaX: number,
     deltaY: number,
-    options?: FloatingWidgetOptions,
+    options: FloatingWidgetOptions,
 ) {
     const edges = getResizeEdges(handle);
     const right = startRect.left + startRect.width;
@@ -201,10 +202,10 @@ export function resizeWidgetRect(
     return clampWidgetRect({ left, top, ...size }, options);
 }
 
-export function getInitialWidgetRect(options?: FloatingWidgetOptions) {
+export function getInitialWidgetRect(options: FloatingWidgetOptions) {
     const size = getConstrainedSize(
-        options?.width ?? DEFAULT_WIDTH,
-        options?.height ?? DEFAULT_HEIGHT,
+        options.width ?? DEFAULT_WIDTH,
+        options.height ?? DEFAULT_HEIGHT,
         options,
     );
     const viewportSize = getViewportSize();

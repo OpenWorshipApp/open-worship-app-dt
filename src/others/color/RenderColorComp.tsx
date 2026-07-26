@@ -7,12 +7,14 @@ import { genShowOnScreensContextMenu } from '../FileItemHandlerComp';
 import ScreenBackgroundManager from '../../_screen/managers/ScreenBackgroundManager';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { HIGHLIGHT_SELECTED_CLASSNAME } from '../../helper/helpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 
 function showContextMenu(event: any, color: AppColorType) {
     const menuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('clipboard', { color }),
             menuElement: `Copy '${color}' to clipboard`,
             onSelect: () => {
                 copyToClipboard(color);

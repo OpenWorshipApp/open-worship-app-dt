@@ -6,6 +6,7 @@ import { getAISetting } from '../../helper/ai/aiHelpers';
 import { playMediaElement } from '../../helper/mediaHelpers';
 import appProvider from '../../server/appProvider';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 
 export default function AudioPlayerComp({
@@ -23,6 +24,7 @@ export default function AudioPlayerComp({
     const handleContextMenuOpening = useCallback((event: any) => {
         showAppContextMenu(event, [
             {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
                 menuElement: tran('Refresh'),
                 onSelect: refreshAudioRef.current,
             },

@@ -16,7 +16,7 @@ import type LookupBibleItemController from '../bible-reader/LookupBibleItemContr
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import { saveBibleItem } from '../bible-list/bibleHelpers';
-import { genContextMenuItemIcon } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type BibleFindController from './BibleFindController';
 import { toVerseFullKeyFormat } from '../helper/bible-helpers/bibleInfoHelpers';
 import { setSetting } from '../helper/settingHelpers';
@@ -223,6 +223,7 @@ export function openContextMenu(
 ) {
     const contextMenuItems: ContextMenuItemType[] = [
         {
+            childBefore: genContextMenuItemIcon('box-arrow-up-right'),
             menuElement: tran('Open'),
             onSelect: () => {
                 openInBibleLookup(event, viewController, bibleItem, true);

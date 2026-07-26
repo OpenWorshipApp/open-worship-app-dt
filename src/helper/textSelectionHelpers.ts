@@ -1,10 +1,8 @@
 import appProvider from '../server/appProvider';
 import { copyToClipboard } from '../server/appHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import {
-    elementDivider,
-    genContextMenuItemIcon,
-} from '../context-menu/AppContextMenuComp';
+import { elementDivider } from '../context-menu/AppContextMenuComp';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { getLangCode, type LocaleType, tran } from '../lang/langHelpers';
 
 function getSelectedTextElement() {

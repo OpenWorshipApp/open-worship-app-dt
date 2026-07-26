@@ -23,6 +23,8 @@ vi.mock('../server/appHelpers', () => ({
 
 vi.mock('../context-menu/AppContextMenuComp', () => ({
     elementDivider: '__DIVIDER__',
+}));
+vi.mock('../context-menu/contextMenuIconHelpers', () => ({
     genContextMenuItemIcon: (name: string) => `icon:${name}`,
 }));
 

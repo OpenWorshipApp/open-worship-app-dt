@@ -12,6 +12,7 @@ import {
     checkIsKeyboardTarget,
     forwardToOwnScreenOutput,
     genFrameScheduler,
+    paintStroke,
     toNativePoint,
 } from './screenOverlayHelpers';
 import type ScreenManagerBase from './ScreenManagerBase';
@@ -882,79 +883,6 @@ export default class ScreenDrawManager
         }
     }
 
-    private drawStroke(
-        ctx: CanvasRenderingContext2D,
-        stroke: DrawPaintStrokeType,
-    ) {
-        const points = stroke.points;
-        if (points.length === 0) {
-            return;
-        }
-        ctx.save();
-        if (stroke.isEraser) {
-            // Manual eraser: keep the destination only where the source is
-            // transparent, so painting an opaque path here rubs out everything
-            // already drawn beneath it. The stored color is irrelevant — only
-            // the source alpha matters, so paint fully opaque.
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.strokeStyle = '#000';
-            ctx.fillStyle = '#000';
-        } else {
-            ctx.strokeStyle = stroke.color;
-            ctx.fillStyle = stroke.color;
-        }
-        ctx.lineWidth = stroke.size;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        if (stroke.is3D) {
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
-            ctx.shadowBlur = Math.max(2, stroke.size * 0.9);
-            ctx.shadowOffsetX = Math.max(1, stroke.size * 0.18);
-            ctx.shadowOffsetY = Math.max(1, stroke.size * 0.18);
-        }
-        if (stroke.isDots) {
-            for (const point of points) {
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, stroke.size / 2, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        } else if (stroke.isStraight) {
-            const first = points[0];
-            const last = points[points.length - 1];
-            ctx.beginPath();
-            ctx.moveTo(first.x, first.y);
-            ctx.lineTo(last.x, last.y);
-            ctx.stroke();
-        } else if (points.length === 1) {
-            // A single click with no drag: render a dot.
-            ctx.beginPath();
-            ctx.arc(points[0].x, points[0].y, stroke.size / 2, 0, Math.PI * 2);
-            ctx.fill();
-        } else if (this.isHighQuality && points.length > 2) {
-            // Smooth the freehand polyline into a quadratic curve through the
-            // midpoints of consecutive samples, so corners read as curves rather
-            // than the angular segments fast mode draws.
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i < points.length - 1; i++) {
-                const midX = (points[i].x + points[i + 1].x) / 2;
-                const midY = (points[i].y + points[i + 1].y) / 2;
-                ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
-            }
-            const last = points[points.length - 1];
-            ctx.lineTo(last.x, last.y);
-            ctx.stroke();
-        } else {
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i < points.length; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
-            }
-            ctx.stroke();
-        }
-        ctx.restore();
-    }
-
     private renderAllStrokes() {
         this.syncCanvasSize();
         const ctx = this._ctx;
@@ -973,7 +901,7 @@ export default class ScreenDrawManager
             ctx.imageSmoothingQuality = 'high';
         }
         for (const stroke of this.drawData.paintStrokeList) {
-            this.drawStroke(ctx, stroke);
+            paintStroke(ctx, stroke, this.isHighQuality);
         }
     }
 

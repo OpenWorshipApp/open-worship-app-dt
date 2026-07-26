@@ -1,0 +1,95 @@
+@use '../others/variables.scss' as *;
+
+// The controller is a full-window BOX, not a full-window SURFACE: it must never
+// paint or catch anything by itself, or `interact` mode (the app fully usable
+// with the annotation on top) would be impossible. Every child opts back in.
+#presenting-control {
+  position: fixed;
+  inset: 0;
+  z-index: $z-index-presenting-control;
+  pointer-events: none;
+
+  // `inset: 0` alone would leave a canvas at its intrinsic 300x150 — a canvas is
+  // a replaced element and does not stretch to its offsets — and the engine
+  // sizes the backing store off `offsetWidth`, so the explicit 100% is what
+  // makes the drawing surface the window rather than a box in the corner.
+  .presenting-control-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    // Touch drags the brush/spotlight, so the browser must not claim the
+    // gesture for panning/zooming first.
+    touch-action: none;
+  }
+
+  // The panel is a FloatingWidgetComp (drag from any blank area, resize handles,
+  // collapse/close in its header), so all it needs from here is to opt back into
+  // the pointer — the widget's own z-index puts it above both overlay layers
+  // inside this stacking context, so the spotlight can never dim the controls
+  // that turn it off.
+  .presenting-control-widget {
+    pointer-events: auto;
+
+    hr {
+      opacity: 0.25;
+    }
+
+    // The tool switcher and the undo/redo/clear group both sit in the header
+    // (see ControllerToolbarComp), which is a flex row the shared component
+    // styles for a plain text title.
+    .floating-widget__title {
+      display: flex;
+      flex: 1 1 auto;
+      gap: 0.5rem;
+      align-items: center;
+      // Without this a flex item refuses to shrink below its content, so the
+      // heading below could never ellipsize and would push the buttons out.
+      min-width: 0;
+    }
+
+    // The heading is the ONLY thing allowed to give way when the widget is
+    // resized narrow — both groups have to stay clickable at every width. It is
+    // also the only non-button area left in the header, so it doubles as the
+    // drag handle.
+    .presenting-control-heading {
+      flex: 0 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .presenting-control-tool-group,
+    .presenting-control-screencast-group,
+    .presenting-control-history-group {
+      flex: 0 0 auto;
+      // The header is the drag handle and forces `cursor: move`; over an actual
+      // control that reads as "this does nothing".
+      button {
+        cursor: pointer;
+      }
+      // Bootstrap gives a disabled outline button 65% opacity, which against the
+      // header's own background is still bright enough to read as available.
+      button:disabled {
+        opacity: 0.35;
+      }
+    }
+
+    // The widget can be resized narrow; the tool rows already wrap, so this
+    // only has to stop a long hint line from forcing a horizontal scrollbar.
+    .floating-widget__content {
+      overflow-x: hidden;
+    }
+  }
+
+  // While a tool is armed the whole window belongs to the overlay; a hairline
+  // frame is the only cue that the app is not accepting clicks any more.
+  &.is-armed::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border: 2px solid $hight-light-color;
+  }
+}

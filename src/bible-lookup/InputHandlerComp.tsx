@@ -148,6 +148,7 @@ export default function InputHandlerComp({
                 className="btn btn-sm btn-outline-secondary"
                 data-previous-chapter-button="1"
                 title="Previous"
+                aria-label="Previous"
                 onClick={handlePreviousChapter}
             >
                 <i className="bi bi-caret-left" />
@@ -155,6 +156,7 @@ export default function InputHandlerComp({
             <button
                 className="btn btn-sm btn-outline-secondary"
                 title="Next"
+                aria-label="Next"
                 data-next-chapter-button="1"
                 onClick={handleNextChapter}
             >
