@@ -22,6 +22,7 @@ import { TransitionsComp } from './transitionsDemo';
 import { CachedBackgroundComp, PerItemStaggerComp } from './perItemDemos';
 import { InsideItemAnimationComp, NestedCanvasComp } from './insideItemDemos';
 import { IframeComp, RichTextComp, VideoComp } from './contentDemos';
+import { YouTubeComp, YouTubeOverlayComp } from './youtubeDemo';
 import { SnapshotComp } from './snapshotDemo';
 import { HitTestComp } from './interactionDemo';
 import { MiniPreviewComp, StagingComp } from './previewDemos';
@@ -159,6 +160,24 @@ export const DEMO_LIST: DemoType[] = [
         title: 'Video',
         Comp: VideoComp,
         sourceList: ['contentDemos.tsx#VideoComp'],
+    },
+    {
+        id: 'youtube',
+        group: 'Content',
+        title: 'YouTube embed',
+        Comp: YouTubeComp,
+        sourceList: [
+            'youtubeDemo.tsx#toEmbedUrl',
+            'youtubeDemo.tsx#readPixel',
+            'youtubeDemo.tsx#YouTubeComp',
+        ],
+    },
+    {
+        id: 'youtube-overlay',
+        group: 'Content',
+        title: 'YouTube overlay (workaround)',
+        Comp: YouTubeOverlayComp,
+        sourceList: ['youtubeDemo.tsx#YouTubeOverlayComp'],
     },
     {
         id: 'snapshot',

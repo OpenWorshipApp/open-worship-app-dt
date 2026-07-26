@@ -31,7 +31,8 @@ Upstream: <https://html-in-canvas.dev/> · <https://github.com/WICG/html-in-canv
   tried, but the **first** run of an animation pattern hitches. Pre-warm before
   the first transition of a service. ✅
 - Functional gap to plan for: **cross-origin iframes draw blank**, which is our
-  `website` and `youtube` canvas-item types. ✅
+  `website` and `youtube` canvas-item types — recoverable with a DOM overlay
+  layer driven by the draw matrix (§8.3). ✅
 
 Verdict: viable and interesting for slide/canvas-item animation, but it is a
 rewrite of the effect layer, not a swap-in. It is also single-vendor and
@@ -167,23 +168,35 @@ The silent-empty cases are the dangerous ones: no exception, just a blank frame.
   `el.style.transform = canvas.getElementTransform(el, drawnMatrix)` moves the
   hit area onto the drawn position (verified: `elementFromPoint` at the drawn
   spot returns the child). ✅
+- **`getElementTransform` is only correct for an unscaled draw.** Measured on
+  two element sizes (180×60 and 1920×1080) at scale 1, 0.5 and 0.25: it returns
+  exactly **twice** the translation `drawElementImage` returned — it applies the
+  centre-origin correction a second time — so the element lands
+  `(1 − scale) × its own size` away under any `transform-origin`. What is exact
+  is the **matrix `drawElementImage` itself returns, assigned to the element's
+  `style.transform` with the default (centre) `transform-origin`**: the element
+  then covers its drawn pixels to the pixel, at every scale. At scale 1 both
+  agree, which is why the hit-testing result above holds. It also throws
+  `InvalidStateError` for anything that is not an immediate child. ✅
+  (`youtubeDemo.tsx#YouTubeOverlayComp`)
 
 ### 4.4 What renders and what silently doesn't
 
-| Inside the drawn subtree                                                          | Rendered?                                                                                                                                       |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Text, web fonts, complex scripts (Khmer / Arabic / CJK), `text-shadow`, gradients | yes ✅                                                                                                                                          |
-| `backdrop-filter`                                                                 | **yes** — `invert(1)` over red gave exact cyan ✅                                                                                               |
-| Static `opacity` on the drawn root                                                | **yes** (0.3 → alpha 77) ✅                                                                                                                     |
-| Static `transform` on the drawn root                                              | **no — ignored** (spec-mandated) ✅                                                                                                             |
-| `transform`/`opacity` **animation** on the drawn root                             | **no**, and it does **not** fire `paint` (compositor-driven) ✅                                                                                 |
-| Any animation on a **descendant** (background-color, opacity, transform)          | **yes**, and fires `paint` at ~60 fps ✅                                                                                                        |
-| A plain (non-`layoutsubtree`) `<canvas>` being JS-animated inside the subtree     | **yes**, live; 6/6 distinct frames, 39 paint events in ~600 ms ✅                                                                               |
-| `<video>` playing inside the subtree                                              | **yes** — drawn frames matched a `drawImage(video)` control, and paint fired at the video's frame rate (15 events / 1.4 s for a 10 fps clip) ✅ |
-| Same-origin `<iframe>` (`srcdoc`)                                                 | **yes** ✅                                                                                                                                      |
-| **Cross-origin `<iframe>`**                                                       | **blanked to the parent background, no throw** ✅                                                                                               |
-| Animated GIF                                                                      | ❓ not verified — my generated GIF didn't animate even in the plain `drawImage` control, so the test was inconclusive                           |
-| System colors/themes, spellcheck marks, visited links, autofill, subpixel AA      | excluded by spec ("read-back-allowed rendering") 📄                                                                                             |
+| Inside the drawn subtree                                                          | Rendered?                                                                                                                                                     |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Text, web fonts, complex scripts (Khmer / Arabic / CJK), `text-shadow`, gradients | yes ✅                                                                                                                                                        |
+| `backdrop-filter`                                                                 | **yes** — `invert(1)` over red gave exact cyan ✅                                                                                                             |
+| Static `opacity` on the drawn root                                                | **yes** (0.3 → alpha 77) ✅                                                                                                                                   |
+| Static `transform` on the drawn root                                              | **no — ignored** (spec-mandated) ✅                                                                                                                           |
+| `transform`/`opacity` **animation** on the drawn root                             | **no**, and it does **not** fire `paint` (compositor-driven) ✅                                                                                               |
+| Any animation on a **descendant** (background-color, opacity, transform)          | **yes**, and fires `paint` at ~60 fps ✅                                                                                                                      |
+| A plain (non-`layoutsubtree`) `<canvas>` being JS-animated inside the subtree     | **yes**, live; 6/6 distinct frames, 39 paint events in ~600 ms ✅                                                                                             |
+| `<video>` playing inside the subtree                                              | **yes** — drawn frames matched a `drawImage(video)` control, and paint fired at the video's frame rate (15 events / 1.4 s for a 10 fps clip) ✅               |
+| Same-origin `<iframe>` (`srcdoc`)                                                 | **yes** ✅                                                                                                                                                    |
+| **Cross-origin `<iframe>`**                                                       | **blanked to the parent background, no throw** ✅                                                                                                             |
+| A real YouTube embed (`/embed/<id>?rel=0&enablejsapi=1`)                          | **blank** — the centre pixel of the drawn player read back exactly the colour painted behind it; the canvas is _not_ tainted, `getImageData` keeps working ✅ |
+| Animated GIF                                                                      | ❓ not verified — my generated GIF didn't animate even in the plain `drawImage` control, so the test was inconclusive                                         |
+| System colors/themes, spellcheck marks, visited links, autofill, subpixel AA      | excluded by spec ("read-back-allowed rendering") 📄                                                                                                           |
 
 ### 4.5 The `paint` event
 
@@ -401,10 +414,20 @@ must be re-measured there before committing.
    path `backdrop-filter` renders correctly inside the subtree, and effect
    opacity lives in `globalAlpha` instead of on the element. Same for the
    `// TODO: make none effect work without animation to prevent flash`.
-3. **Cross-origin content regresses.** `CanvasItemWebsite` (iframe) and
-   `CanvasItemYouTube` (YouTube embed) are cross-origin iframes → they draw as
-   blank holes, silently. Any adoption must keep a DOM path for slides
-   containing those item types, or accept the gap.
+3. **Cross-origin content regresses, but there is a mitigation.**
+   `CanvasItemWebsite` (iframe) and `CanvasItemYouTube` (YouTube embed) are
+   cross-origin iframes → they draw as blank holes, silently (measured with a
+   real embed, §4.4). The escape hatch is an **overlay layer**: draw the slide
+   with the item's box left empty, and stack one DOM layer over the canvas that
+   is a copy of the slide's coordinate space, holding the live iframes, wearing
+   the matrix the draw returned. Verified live — the player is positioned to the
+   pixel, plays, answers the same `postMessage` protocol `SlideYouTubePlayer`
+   uses, and tracks a canvas-space zoom when re-synced each frame
+   (`youtubeDemo.tsx#YouTubeOverlayComp`). What it costs: those pixels are DOM,
+   so `ctx.filter`, `ctx.clip()` wipes and per-slide `globalAlpha` stop at the
+   player's edge, the layer sits above everything drawn after it, and it must be
+   re-synced on every frame of a transition. Slides mixing those item types with
+   canvas-space effects still need the DOM path.
 4. **Video and local media are fine** — verified live, including paint
    invalidation at the video's own frame rate.
 5. **Previews are bitmap copies, not extra DOM.** A subtree can only be drawn by
