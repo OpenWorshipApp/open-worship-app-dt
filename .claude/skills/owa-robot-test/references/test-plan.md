@@ -154,7 +154,15 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
   dialog → **Cancel** (EX-05); Bible tab search + enable/disable round-trip (EX-07 for
   downloads); `Apply Settings` **last** since it reloads windows.
 
-### S9 — Cross-cutting checks (do throughout) `[GL-02..05, GL-11]`
+### S9 — Cross-cutting checks (do throughout) `[GL-02..05, GL-10, GL-11, GL-15, GL-23]`
+- **Toasts `[GL-10, GL-15, GL-23]`** — run once per session, no need to wait for an
+  organic trigger: `evaluate_script` → `window.testSimpleToasts()` (dev-only helper in
+  `src/toast/toastHelpers.ts`) fires 3 toasts ~500 ms apart. Assert they **stack** in
+  `.app-toast-stack` (`1` on top → `3` at the bottom) instead of replacing each other;
+  `.btn-close` on the middle one removes only that one; synthetic `mouseover` holds a
+  toast open and `mouseout` dismisses it ~2 s later; call the helper twice (6 toasts) →
+  never more than 5, oldest dropped; the container unmounts once the last toast is gone.
+  Screenshot the stack. See ui-map "Toasts".
 - Console stays clean after each interaction (diff against baseline).
 - No new failed network requests.
 - Icon-only buttons have accessible names in the snapshot (flag unnamed ones).

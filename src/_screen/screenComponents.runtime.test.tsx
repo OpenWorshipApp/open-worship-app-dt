@@ -157,6 +157,11 @@ function createScreenManagerStub() {
         screenDrawManager: {
             render: vi.fn(),
             div: null,
+            releaseDiv: vi.fn(function (this: any, div: HTMLDivElement) {
+                if (this.div === div) {
+                    this.div = null;
+                }
+            }),
         },
         screenFocusManager: {
             render: vi.fn(),

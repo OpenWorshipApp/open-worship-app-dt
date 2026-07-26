@@ -176,6 +176,13 @@ must end the run with a status. For every scenario:
 4. Re-read console + network to catch new errors triggered by the action.
 5. Record anything under **"What counts as an issue"** below.
 
+**Always run the toast check once per session** (`[GL-10, GL-15, GL-23]`, test-plan §S9)
+— it costs one `evaluate_script`: `window.testSimpleToasts()` (dev-only helper in
+`src/toast/toastHelpers.ts`) fires 3 toasts, which must **stack** in `.app-toast-stack`
+rather than replace each other. Toasts are how the app reports refusals everywhere
+(locked screen, audio-off-while-playing, drop-with-no-folder), so a broken toast stack
+silently swallows those messages. Selectors + assertions: ui-map §Toasts.
+
 Interact by **visible text / role / icon**, since the app has few `data-testid`s.
 Example: to open the Bible lookup, find the snapshot node labelled `Bible Lookup` (or
 press `Control+b`), then click its `uid`.

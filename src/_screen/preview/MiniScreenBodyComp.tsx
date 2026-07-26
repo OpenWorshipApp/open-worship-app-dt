@@ -126,18 +126,29 @@ function RenderWithColorNoteComp({
         return genColorNoteDataList(screenManagerColorMap);
     }, [screenManagerColorMap]);
 
-    if (Object.keys(screenManagerColorMap).length === 1) {
-        return genScreenManagersRenderer(screenManagers, previewWidth);
-    }
-
-    return colorNotes.map((colorNote) => {
+    // ONE flat keyed list, never a Fragment per group. Nesting each group made a
+    // screen changing its color note move to a different parent, which React can
+    // only do by unmounting and remounting the whole previewer card: the
+    // shadow-root React root is destroyed and rebuilt, taking the draw canvas
+    // (and its supersampled backing store) and any playing background video with
+    // it. Flat, every card is a keyed sibling, so joining/leaving a group is just
+    // a reorder of the existing nodes.
+    const isSingleGroup = Object.keys(screenManagerColorMap).length === 1;
+    return colorNotes.flatMap((colorNote) => {
         const subScreenManagers = screenManagerColorMap[colorNote] ?? [];
-        return (
-            <Fragment key={colorNote}>
-                {genColorBar(colorNote)}
-                {genScreenManagersRenderer(subScreenManagers, previewWidth)}
-            </Fragment>
+        const renderedScreenManagers = genScreenManagersRenderer(
+            subScreenManagers,
+            previewWidth,
         );
+        if (isSingleGroup) {
+            return renderedScreenManagers;
+        }
+        return [
+            <Fragment key={`color-bar-${colorNote}`}>
+                {genColorBar(colorNote)}
+            </Fragment>,
+            ...renderedScreenManagers,
+        ];
     });
 }
 

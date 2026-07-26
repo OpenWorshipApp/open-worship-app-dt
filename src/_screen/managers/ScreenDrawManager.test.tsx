@@ -311,6 +311,39 @@ describe('ScreenDrawManager', () => {
         expect(reloaded.isShowing).toBe(false);
     });
 
+    test('releaseDiv ignores a stale div so a remount keeps the live overlay', async () => {
+        const ScreenDrawManager = await importManager();
+        const manager = new ScreenDrawManager(createBase(34));
+        manager.paintTool = {
+            color: '#fff',
+            size: 4,
+            isStraight: false,
+            is3D: false,
+            isDots: false,
+        };
+
+        const oldDiv = document.createElement('div');
+        document.body.appendChild(oldDiv);
+        manager.div = oldDiv;
+        expect(oldDiv.querySelector('canvas')).not.toBeNull();
+
+        // A previewer remount attaches the REPLACEMENT div before the old
+        // tree's ref cleanup runs (its React root unmounts a microtask later),
+        // so the release must be a no-op by then.
+        const newDiv = document.createElement('div');
+        document.body.appendChild(newDiv);
+        manager.div = newDiv;
+        manager.releaseDiv(oldDiv);
+
+        expect(manager.div).toBe(newDiv);
+        expect(newDiv.querySelector('canvas')).not.toBeNull();
+        expect(oldDiv.querySelector('canvas')).toBeNull();
+
+        // Releasing the div it actually holds still tears the overlay down.
+        manager.releaseDiv(newDiv);
+        expect(newDiv.querySelector('canvas')).toBeNull();
+    });
+
     test('loadPersisted tolerates corrupt, legacy, and out-of-range data', async () => {
         const ScreenDrawManager = await importManager();
 

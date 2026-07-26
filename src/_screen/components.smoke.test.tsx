@@ -76,6 +76,7 @@ const screenManagerMock: any = {
     screenDrawManager: {
         render: vi.fn(),
         div: null,
+        releaseDiv: vi.fn(),
         isShowing: false,
         clear: vi.fn(),
     },

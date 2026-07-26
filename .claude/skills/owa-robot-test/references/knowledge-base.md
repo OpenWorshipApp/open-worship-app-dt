@@ -190,6 +190,14 @@ Keep the main window on `presenter.html`.
   another slide was live, the first click replaces it and the second click clears the layer
   (this exact accident cleared the live slide during a run). Use `click` (no `dblClick`),
   then verify via `.app-on-screen` before proceeding.
+- **Toasts: fire them yourself, and don't measure too early.** `window.testSimpleToasts()`
+  (dev-only, `src/toast/toastHelpers.ts`) is the cheapest way to cover `[GL-10, GL-15,
+  GL-23]` — no organic trigger needed. It deliberately spaces its 3 toasts **~500 ms
+  apart**, so a probe run 200 ms after the call sees only toast `1` and looks exactly like
+  "toasts replace each other". Wait ≥1.2 s before asserting the stack. Toasts live in
+  `.app-toast-stack` (max 5, newest at the bottom, each with its own 4 s timer); hover via
+  synthetic `mouseover`/`mouseout` (bubbling handlers, so this works) to pause/restart a
+  single toast's timer.
 - ⚠️ **Closing a context menu with a synthetic `document.body` click KILLS every keyboard
   shortcut** (verified 2026-07-26 — cost most of a run and looked exactly like an `F7`
   regression). The menu renders a **full-viewport overlay** that owns

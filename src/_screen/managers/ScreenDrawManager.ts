@@ -323,6 +323,21 @@ export default class ScreenDrawManager
         this.render();
     }
 
+    // Release ONLY if this manager still points at `div`. The previewer card is
+    // remounted whenever a screen joins/leaves a color-note group, and the two
+    // React roots involved are independent: the replacement mounts (attaching
+    // the NEW div) before the old tree's ref cleanup runs, because
+    // CustomHTMLScreenPreviewer defers its `root.unmount()` by a microtask. An
+    // unconditional `div = null` in that cleanup therefore lands LAST and
+    // strands the live overlay with no canvas and no pointer input — the panel
+    // still looks armed, but nothing can be drawn and no synced stroke paints.
+    releaseDiv(div: HTMLDivElement) {
+        if (this._div !== div) {
+            return;
+        }
+        this.div = null;
+    }
+
     // Applies the overlay div's static styles and (once) creates the canvas +
     // input listeners. Run only on the low-frequency div-set / refresh path
     // (render()), where a screen resize must re-apply the div dimensions; the

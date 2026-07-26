@@ -122,6 +122,26 @@ pages by setting `location.href` to a different `.html` (see `goToPath()` in
 - Bible Lookup modal: opened by the `Bible Lookup` button or **Ctrl+B**; has a reference
   input, a history dropdown, and a results/verse panel.
 
+## Toasts (`ToastComp`)
+
+- Container: `.app-toast-stack` (fixed top-right, flex column). It only exists while at
+  least one toast is alive — it unmounts when the last one goes.
+- Each toast: `.toast.show.fade` (`role=alert`) with `.toast-header strong` (title),
+  `.toast-body` (message), and `button.btn-close`.
+- Toasts **stack** — newest is appended at the bottom, oldest is on top, capped at
+  `MAX_STACKED_TOAST_COUNT` (5); past 5 the oldest are dropped.
+- Every toast owns its own timer: default 4000 ms (`toast.timeout ?? 4e3`), hover
+  (`mouseover`) clears only that toast's timer, `mouseout` restarts it at 2000 ms, and
+  `.btn-close` removes only that one.
+- **Dev-only trigger** (no UI action needed): `window.testSimpleToasts()` — defined in
+  [toastHelpers.ts](../../../../src/toast/toastHelpers.ts) behind `appProvider.systemUtils.isDev`.
+  It fires 3 toasts (`1:` / `2:` / `3:`) ~500 ms apart, which is exactly the
+  stack-don't-replace case. Call it twice back-to-back (6 toasts) to exercise the 5-cap.
+- Snapshot/`evaluate_script` probe:
+  `() => [...document.querySelectorAll('.app-toast-stack .toast-header strong')].map(e => e.textContent)`
+- Synthetic `mouseover`/`mouseout` (`bubbles: true`) drive hover-pause fine — these are
+  bubbling handlers, not React enter/leave.
+
 ## Settings window (`setting.html`)
 
 Title matches `/Settings/`. Tabs `General` / `Bible`, plus a fixed `Apply Settings`

@@ -1076,4 +1076,42 @@ describe('preview runtime interactions', () => {
 
         vi.useRealTimers();
     });
+
+    test('a color-note change reorders the previewer cards instead of remounting them', async () => {
+        const { default: MiniScreenBodyComp } =
+            await import('./MiniScreenBodyComp');
+        // Mirror the real helper, which hands back a fresh array each call —
+        // the shared-reference mock would keep the color map memoized and the
+        // regrouping below would never actually happen.
+        getScreenManagersFromSettingMock.mockImplementation(() => {
+            return [...allScreenManagers];
+        });
+
+        await act(async () => {
+            root.render(<MiniScreenBodyComp previewScale={2} />);
+        });
+        const getCard = (screenId: number) => {
+            return container.querySelector(
+                `.mini-screen[data-screen-key="${screenId}"]`,
+            );
+        };
+        const cardBefore = getCard(2);
+        expect(cardBefore).not.toBeNull();
+        expect(
+            container.querySelector('[data-color-bar="none"]'),
+        ).not.toBeNull();
+
+        // Screen 2 joins screen 1's group. The card must be MOVED, not rebuilt:
+        // a rebuild destroys the shadow-root React root behind it, taking the
+        // draw overlay's canvas (and its listeners) with it.
+        otherScreenManager.colorNote = 'blue';
+        await act(async () => {
+            root.render(<MiniScreenBodyComp previewScale={2} />);
+        });
+
+        expect(getCard(2)).toBe(cardBefore);
+        expect(getCard(1)).not.toBeNull();
+        // One group left, so the bars are gone but the cards survived.
+        expect(container.querySelector('[data-color-bar="none"]')).toBeNull();
+    });
 });
