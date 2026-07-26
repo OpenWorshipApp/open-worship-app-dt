@@ -43,7 +43,6 @@ import DocxSlide from '../../app-document-list/DocxSlide';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
-import { checkAreObjectsEqual } from '../../server/comparisonHelpers';
 import type {
     VarySlideDataType,
     VarySlideType,
@@ -171,11 +170,6 @@ class ScreenVaryAppDocumentManager
             ) {
                 varySlideData.virtualBackgroundColor = null;
             }
-        }
-        // Re-selecting the same slide is a no-op; short-circuit before any
-        // guard toast so a redundant click stays silent.
-        if (checkAreObjectsEqual(this._varySlideData, varySlideData)) {
-            return;
         }
         if (this.screenManagerBase.checkIsLockedWithMessage()) {
             return;
