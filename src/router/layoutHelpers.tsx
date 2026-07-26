@@ -40,14 +40,28 @@ export function genLayoutTabs() {
 
     const readerTab: TabOptionType = {
         title: (
-            <span
-                style={{
-                    color: 'var(--app-color-reader)',
-                }}
-            >
-                <i className="bi bi-book px-1" />
-                {toTitleExternal('Bible Reader')}
-            </span>
+            <>
+                <span style={{ color: 'var(--app-color-reader)' }}>
+                    <i className="bi bi-book px-1" />
+                    {tran('Bible Reader') + ' '}
+                </span>
+                <span
+                    className="ms-2"
+                    style={{ color: 'var(--app-color-reader)' }}
+                    title={tran('Open Bible Reader in a new window')}
+                    onClick={async (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        openPopupWindow(
+                            appProvider.readerHomePage,
+                            `reader_${Date.now()}`,
+                            'reader',
+                        );
+                    }}
+                >
+                    <i className="bi bi-box-arrow-up-right" />
+                </span>
+            </>
         ),
         routePath: appProvider.readerHomePage,
     };
@@ -80,6 +94,7 @@ export function genLayoutTabs() {
                 <span>{tran('Slide Editor') + ' '}</span>
                 <span
                     className="ms-2"
+                    title={tran('Open Slide Editor in a new window')}
                     onClick={async (event) => {
                         event.preventDefault();
                         event.stopPropagation();
