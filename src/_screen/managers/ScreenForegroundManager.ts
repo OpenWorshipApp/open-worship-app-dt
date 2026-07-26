@@ -723,6 +723,18 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             width: `${this.screenManagerBase.width}px`,
             height: `${this.screenManagerBase.height}px`,
             overflow: 'hidden',
+            // Pinned, not inherited: this same foreground markup is mounted in
+            // two documents with different ambient CSS. The presenter loads
+            // bootstrap (`body { line-height: 1.5 }`, unitless so it inherits
+            // through the mini-screen's shadow root) while screen.html loads
+            // only screen.scss, leaving `line-height: normal`. For fonts with
+            // tall metrics that diverges badly — Battambang's `normal` is ~1.81,
+            // so every widget's line box was ~20% taller on the real screen than
+            // in the preview.
+            // `normal` (the font's own metrics) is the side to standardise on:
+            // 1.5 is too tight for Khmer, whose stacked subscripts overflow the
+            // line box and get cut by the `overflow: hidden` above.
+            lineHeight: 'normal',
         };
     }
 

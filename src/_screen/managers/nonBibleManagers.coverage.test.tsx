@@ -672,6 +672,7 @@ describe('non-Bible manager coverage', () => {
             width: '1280px',
             height: '720px',
             overflow: 'hidden',
+            lineHeight: 'normal',
         });
 
         const timeA = {
