@@ -164,7 +164,6 @@
         "nodemon": "^3.1.14",
         "open-lyric": "https://github.com/raksa/open-lyric-dist",
         "open-lyric-plugin-km-kh": "https://github.com/raksa/open-lyric-plugin-km-kh-dist",
-        "open-lyric-plugin-transcript": "https://github.com/raksa/open-lyric-plugin-transcript-dist",
         "openai": "^6.44.0",
         "prettier": "^3.8.4",
         "react": "^19.2.7",
