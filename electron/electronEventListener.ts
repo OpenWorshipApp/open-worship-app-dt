@@ -7,6 +7,7 @@ import electron, {
     shell,
     systemPreferences,
 } from 'electron';
+import { getSlidesCount } from 'pptx-to-html';
 
 import type ElectronAppController from './ElectronAppController';
 import {
@@ -26,7 +27,6 @@ import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
 import {
-    countSlides,
     docxToHtmls,
     getDocxToHtmlsVersion,
     removeSlideBackground,
@@ -471,8 +471,9 @@ export function initEventOther(appController: ElectronAppController) {
     onAsync(
         ipcMain,
         'main:app:ms-pp-slides-count',
-        (data: { filePath: string; dotNetRoot?: string }) => {
-            return countSlides(data.filePath, data.dotNetRoot);
+        (data: { filePath: string; }) => {
+            const slidesCount = getSlidesCount(data.filePath);
+            return slidesCount;
         },
     );
     onAsync(
@@ -564,11 +565,11 @@ export function initEventOther(appController: ElectronAppController) {
                 menusData === null
                     ? null
                     : {
-                          menusData,
-                          clickMenu: (menuData: any) => {
-                              sendMenuClicked(menuData, ownerWin);
-                          },
-                      },
+                        menusData,
+                        clickMenu: (menuData: any) => {
+                            sendMenuClicked(menuData, ownerWin);
+                        },
+                    },
             );
             initMenu(appController);
         },

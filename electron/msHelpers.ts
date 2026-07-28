@@ -17,46 +17,6 @@ export function getBinaryPath(dotNetRoot?: string) {
     return { modulePath, binaryPath, dotnetPath, eot2ttfPath };
 }
 
-const COUNT_FRESH_MILLISECONDS = 1000 * 3;
-const countMap = new Map<string, { date: number; count: number }>();
-function deleteStaleCounts() {
-    const now = Date.now();
-    for (const [key, value] of countMap) {
-        if (now - value.date > COUNT_FRESH_MILLISECONDS) {
-            countMap.delete(key);
-        }
-    }
-}
-export async function countSlides(filePath: string, dotNetRoot?: string) {
-    return unlocking<number | null>(
-        `count-ms-pp-slides-${filePath}`,
-        async () => {
-            deleteStaleCounts();
-            if (!countMap.has(filePath)) {
-                const { modulePath, binaryPath, dotnetPath } =
-                    getBinaryPath(dotNetRoot);
-                const count = await execute<number | null>(
-                    'count-ms-pp-slides.js',
-                    {
-                        filePath,
-                        modulePath,
-                        binaryPath,
-                        dotnetPath,
-                    },
-                );
-                if (count !== null) {
-                    countMap.set(filePath, { count, date: Date.now() });
-                }
-            }
-            const data = countMap.get(filePath);
-            if (data) {
-                return data.count;
-            }
-            return null;
-        },
-    );
-}
-
 export async function removeSlideBackground(
     filePath: string,
     dotNetRoot?: string,

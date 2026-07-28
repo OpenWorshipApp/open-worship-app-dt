@@ -164,6 +164,8 @@
         "nodemon": "^3.1.14",
         "open-lyric": "https://github.com/raksa/open-lyric-dist",
         "open-lyric-plugin-km-kh": "https://github.com/raksa/open-lyric-plugin-km-kh-dist",
+        "pptx-to-html": "https://github.com/raksa/pptx-to-html-dist",
+        "docx-to-html": "https://github.com/raksa/docx-to-html-dist",
         "openai": "^6.44.0",
         "prettier": "^3.8.4",
         "react": "^19.2.7",

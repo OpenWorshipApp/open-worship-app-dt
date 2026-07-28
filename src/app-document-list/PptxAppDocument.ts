@@ -20,8 +20,7 @@ import { type VarySlideAudioDataType } from '../background/backgroundHelpers';
 
 export default class PptxAppDocument
     extends AppDocumentSourceAbs
-    implements ItemSourceInf<PptxSlide>
-{
+    implements ItemSourceInf<PptxSlide> {
     static readonly mimetypeName: MimetypeNameType = 'pptx';
     isEditable = false;
 
