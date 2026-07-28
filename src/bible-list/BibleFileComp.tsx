@@ -68,6 +68,7 @@ function genContextMenu(
                               tran('Empty Bible List'),
                               tran('Are you sure to empty this bible list?'),
                               {
+                                  cancelButtonLabel: 'No',
                                   confirmButtonLabel: 'Yes',
                               },
                           ).then((isOk) => {

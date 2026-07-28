@@ -151,6 +151,7 @@ export async function run(children?: ReactNode) {
             tran('Quick Exit'),
             tran('Are you sure you want to quit the app?'),
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         ).then((isOk) => {

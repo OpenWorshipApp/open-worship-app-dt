@@ -201,7 +201,7 @@ describe('FileItemHandlerComp', () => {
         expect(showAppConfirmMock).toHaveBeenCalledWith(
             'Moving File to Trash',
             expect.stringContaining('trash.txt'),
-            { confirmButtonLabel: 'Yes' },
+            { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
         );
         expect(fileSource.trash).toHaveBeenCalledTimes(1);
         expect(trashAllMaterialFilesMock).toHaveBeenCalledWith(fileSource);

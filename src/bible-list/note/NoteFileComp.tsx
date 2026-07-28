@@ -63,6 +63,7 @@ function genContextMenu(
                               tran('Empty Note List'),
                               tran('Are you sure to empty this note list?'),
                               {
+                                  cancelButtonLabel: 'No',
                                   confirmButtonLabel: 'Yes',
                               },
                           ).then((isOk) => {

@@ -92,6 +92,7 @@ export function genTrashContextMenu(
                         ` "${fileSource.fullName}" ` +
                         tran('to trash?'),
                     {
+                        cancelButtonLabel: 'No',
                         confirmButtonLabel: 'Yes',
                     },
                 );

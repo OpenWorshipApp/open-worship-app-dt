@@ -29,6 +29,7 @@ export default function DownloadedBibleItemComp({
             'Delete Bible',
             `Are you sure to delete bible "${titleRef.current}"?`,
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         );

@@ -41,6 +41,7 @@ export type ConfirmDataType = {
     escToCancel?: boolean;
     enterToOk?: boolean;
     extraStyles?: CSSProperties;
+    cancelButtonLabel?: string;
     confirmButtonLabel?: string;
 };
 
@@ -76,6 +77,7 @@ export function showAppConfirm(
         escToCancel?: boolean;
         enterToOk?: boolean;
         extraStyles?: CSSProperties;
+        cancelButtonLabel?: string;
         confirmButtonLabel?: string;
     },
 ) {

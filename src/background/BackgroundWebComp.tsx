@@ -64,6 +64,7 @@ export default function BackgroundWebComp() {
                 tran('Remove URL'),
                 `Remove "${urlSource.fullName}"?`,
                 {
+                    cancelButtonLabel: 'No',
                     confirmButtonLabel: 'Yes',
                 },
             );

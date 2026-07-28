@@ -18,5 +18,6 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Apply Settings skips popups](apply-settings-skips-popups.md) — reloadAll() only knows the main window, so open popups keep the stale language/theme/paths
 - [Injected app-document `?file=` param](injected-app-document-file-param.md) — every renderer treats `?file=` as a document name, so bibleNote/lyric/web popups always log a load error
 - [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — `tran()` throws (blanks the page) on a missing key; concatenated + dynamic `tran(prop)` sites hide from literal grepping
+- [Confirm popup labels are auto-tran'd](confirm-popup-labels-auto-tran.md) — ConfirmPopupComp `tran()`s the button labels; pass raw English keys, and pair `'Yes'` with `'No'`
 - [Vitest env-leak flakes](vitest-env-leak-flakes.md) — node-env tests importing `appProvider` pass only when a jsdom file shares the worker; plus the whole-suite "reading 'config'" flake
 - [open-lyric subtree-branch dep](open-lyric-subtree-branch-dep.md) — npm can't install a git subdirectory; the dep is a subtree-split branch that must be re-split + force-pushed on every update
