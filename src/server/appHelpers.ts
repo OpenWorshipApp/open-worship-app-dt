@@ -158,25 +158,6 @@ export async function trashAllMaterialFiles(fileSource: FileSource) {
     );
 }
 
-export async function exportBibleMSWord(
-    data: { title: string; body: string; fontFamily: string | null }[],
-) {
-    const downloadDirPath = getDownloadPath();
-    const date = new Date();
-    let dateStr = date.toISOString().split('.')[0];
-    dateStr = dateStr.replace('T', '_');
-    dateStr = dateStr.replaceAll(':', '-');
-    const filePath = pathJoin(
-        downloadDirPath,
-        `owa-bible-verses_${dateStr}.docx`,
-    );
-    await electronSendAsync('main:app:ms-word-export-bible', {
-        filePath,
-        data,
-    });
-    return filePath;
-}
-
 async function getPageTitle(url: string) {
     const rawHtml = await fetch(url)
         .then((response) => response.text())

@@ -245,6 +245,8 @@ const dictionary = {
         'យើងខ្ញុំសូមអភ័យទោស កំហុសក្នុងដំណើរការ ខ្ញុំសូមអញ្ជើញអ្នកធ្វើការផ្ទុកឡើងវិញនៃកម្មវិធី',
     Exporting: 'កំពុងបំលែង',
     'Export to MS Word': 'បំលែងទៅឯកសារ MS Word',
+    'Exporting Fonts': 'បំលែងពុម្ពអក្សរ',
+    'Would you like to export the fonts?': 'តើអ្នកចង់បំលែងពុម្ពអក្សរដែរឬទេ?',
     'Fail to Get File List': 'បរាជ័យក្នុងការទទួលបានបញ្ជីឯកសារ',
     'No Files Found': 'មិនមានឯកសារទេ',
     General: 'ទូទៅ',
@@ -706,6 +708,7 @@ const sanitizedDictionary = Object.fromEntries(
     ]),
 );
 const fontFamily = 'app-Battambang';
+const globalFontFamily = 'Battambang';
 const stickyNoteFontFamily = 'km-font-Fasthand';
 const lang: LanguageDataType = {
     packageDir: __dirname,
@@ -784,6 +787,7 @@ const lang: LanguageDataType = {
         `;
     },
     fontFamily,
+    globalFontFamily,
     stickyNoteFontFamily,
     numList,
     dictionary: sanitizedDictionary,

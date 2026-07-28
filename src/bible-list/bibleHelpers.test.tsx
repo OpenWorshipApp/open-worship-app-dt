@@ -48,8 +48,13 @@ const h = vi.hoisted(() => {
         useScreenUpdateEventsMock: vi.fn((_a: any, cb: any) => {
             captured.screenCb = cb;
         }),
-        exportBibleMSWordMock: vi.fn(async () => '/out/bible.docx'),
+        exportBibleMSWordMock: vi.fn(
+            async (_data: unknown, dirPath: string) =>
+                dirPath + '/owa-bible-verses.docx',
+        ),
         showFileOrDirExplorerMock: vi.fn(),
+        getDownloadPathMock: vi.fn(() => '/downloads'),
+        showAppConfirmMock: vi.fn(async () => true),
         handleErrorMock: vi.fn(),
         cloneJsonMock: vi.fn((v: any) => structuredClone(v)),
         getBibleLocaleMock: vi.fn(async () => 'en'),
@@ -93,6 +98,7 @@ vi.mock('../helper/FileSource', () => ({
 vi.mock('../server/fileHelpers', () => ({
     addExtension: h.addExtensionMock,
     fsCheckFileExist: h.fsCheckFileExistMock,
+    getDownloadPath: h.getDownloadPathMock,
     getFileBase64: h.getFileBase64Mock,
     pathJoin: h.pathJoinMock,
     writeFileFromBase64Sync: h.writeFileFromBase64SyncMock,
@@ -142,8 +148,13 @@ vi.mock('../_screen/managers/screenManagerHooks', () => ({
     useScreenUpdateEvents: h.useScreenUpdateEventsMock,
 }));
 vi.mock('../server/appHelpers', () => ({
-    exportBibleMSWord: h.exportBibleMSWordMock,
     showFileOrDirExplorer: h.showFileOrDirExplorerMock,
+}));
+vi.mock('../ms-office/docxHelpers', () => ({
+    exportBibleMSWord: h.exportBibleMSWordMock,
+}));
+vi.mock('../popup-widget/popupWidgetHelpers', () => ({
+    showAppConfirm: h.showAppConfirmMock,
 }));
 vi.mock('../helper/errorHelpers', () => ({ handleError: h.handleErrorMock }));
 vi.mock('../helper/helpers', () => ({ cloneJson: h.cloneJsonMock }));
@@ -529,14 +540,17 @@ describe('bible-list bibleHelpers', () => {
         expect(h.exportBibleMSWordMock).not.toHaveBeenCalled();
     });
 
-    test('exportToWordDocument writes fonts and opens the folder', async () => {
+    test('exportToWordDocument writes fonts and reveals the document', async () => {
         h.getLangDataAsyncMock.mockResolvedValue({
             fontFamily: 'FontA',
             getFontFamilyFiles: () => ['/fonts/a.ttf'],
         });
-        h.fileSourceGetInstanceMock.mockReturnValue({ baseDirPath: '/out' });
         h.getFileBase64Mock.mockResolvedValue('base64data');
-        h.fsCheckFileExistMock.mockResolvedValue(false);
+        h.showAppConfirmMock.mockResolvedValue(true);
+        // the font file is missing, the downloaded document is already there
+        h.fsCheckFileExistMock.mockImplementation(async (filePath: string) => {
+            return filePath === '/downloads/owa-bible-verses.docx';
+        });
         const items = [
             {
                 bibleKey: 'kjv',
@@ -545,25 +559,68 @@ describe('bible-list bibleHelpers', () => {
             } as any,
         ];
         await exportToWordDocument(items);
-        expect(h.exportBibleMSWordMock).toHaveBeenCalled();
-        expect(h.showFileOrDirExplorerMock).toHaveBeenCalledWith(
-            '/out/bible.docx',
+        expect(h.exportBibleMSWordMock).toHaveBeenCalledWith(
+            [{ title: 'title', body: 'body', fontFamily: 'FontA' }],
+            '/downloads',
         );
-        // font file written since it does not exist
-        await Promise.resolve();
-        expect(h.writeFileFromBase64SyncMock).toHaveBeenCalled();
+        expect(h.writeFileFromBase64SyncMock).toHaveBeenCalledWith(
+            '/downloads/a.ttf',
+            'base64data',
+        );
+        // the document itself, not the folder: `showItemInFolder` on a
+        // directory would select it inside its parent
+        expect(h.showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/downloads/owa-bible-verses.docx',
+        );
+    });
+
+    test('exportToWordDocument skips the fonts prompt when there are none', async () => {
+        h.getLangDataAsyncMock.mockResolvedValue({ fontFamily: null });
+        h.fsCheckFileExistMock.mockResolvedValue(true);
+        const items = [
+            {
+                bibleKey: 'kjv',
+                toText: async () => 'body',
+                toTitleWithBibleKey: async () => 'title',
+            } as any,
+        ];
+        await exportToWordDocument(items);
+        expect(h.showAppConfirmMock).not.toHaveBeenCalled();
+        expect(h.writeFileFromBase64SyncMock).not.toHaveBeenCalled();
+        expect(h.showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/downloads/owa-bible-verses.docx',
+        );
+    });
+
+    test('exportToWordDocument still reveals the document when fonts are declined', async () => {
+        h.getLangDataAsyncMock.mockResolvedValue({
+            getFontFamilyFiles: () => ['/fonts/a.ttf'],
+        });
+        h.showAppConfirmMock.mockResolvedValue(false);
+        h.fsCheckFileExistMock.mockResolvedValue(true);
+        const items = [
+            {
+                bibleKey: 'kjv',
+                toText: async () => 'body',
+                toTitleWithBibleKey: async () => 'title',
+            } as any,
+        ];
+        await exportToWordDocument(items);
+        expect(h.showAppConfirmMock).toHaveBeenCalled();
+        expect(h.writeFileFromBase64SyncMock).not.toHaveBeenCalled();
+        expect(h.showFileOrDirExplorerMock).toHaveBeenCalledWith(
+            '/downloads/owa-bible-verses.docx',
+        );
     });
 
     test('exportToWordDocument skips existing font files and handles errors', async () => {
         h.getLangDataAsyncMock.mockResolvedValue({
             getFontFamilyFiles: () => ['/fonts/a.ttf', '/fonts/b.ttf'],
         });
-        h.fileSourceGetInstanceMock.mockReturnValue({ baseDirPath: '/out' });
-        // first font already exists (early return), second throws on read
+        h.showAppConfirmMock.mockResolvedValue(true);
+        // every font is already exported, so none of them is read back
         h.fsCheckFileExistMock.mockResolvedValue(true);
-        h.getFileBase64Mock
-            .mockResolvedValueOnce('data')
-            .mockRejectedValueOnce(new Error('read fail'));
+        h.getFileBase64Mock.mockRejectedValue(new Error('read fail'));
         const items = [
             {
                 bibleKey: 'kjv',
@@ -572,8 +629,7 @@ describe('bible-list bibleHelpers', () => {
             } as any,
         ];
         await exportToWordDocument(items);
-        // allow the fire-and-forget font export promises to settle
-        await new Promise((r) => setTimeout(r, 5));
+        expect(h.getFileBase64Mock).not.toHaveBeenCalled();
         expect(h.writeFileFromBase64SyncMock).not.toHaveBeenCalled();
     });
 

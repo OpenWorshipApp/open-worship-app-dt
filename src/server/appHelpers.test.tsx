@@ -371,30 +371,6 @@ describe('appHelpers', () => {
         expect(trashMock).toHaveBeenCalledTimes(1);
     });
 
-    test('exports bible verses into a timestamped docx file', async () => {
-        vi.useFakeTimers();
-        vi.setSystemTime(new Date('2024-01-02T03:04:05.000Z'));
-        const module = await loadModule();
-        appProviderMock.messageUtils.listenOnceForData.mockImplementation(
-            (
-                _replyEventName: string,
-                callback: (event: unknown, value: unknown) => void,
-            ) => {
-                callback({}, null);
-            },
-        );
-
-        await expect(
-            module.exportBibleMSWord([
-                {
-                    title: 'Psalm 1',
-                    body: 'Blessed is the one',
-                    fontFamily: null,
-                },
-            ]),
-        ).resolves.toBe('/downloads/owa-bible-verses_2024-01-02_03-04-05.docx');
-    });
-
     test('downloads images and reports each failure mode', async () => {
         const module = await loadModule();
         vi.spyOn(Date, 'now').mockReturnValue(111);

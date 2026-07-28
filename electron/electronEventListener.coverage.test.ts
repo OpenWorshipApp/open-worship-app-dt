@@ -10,7 +10,6 @@ const {
     captureWebScreenShot,
     countSlides,
     docxToHtmls,
-    exportBibleMSWord,
     getAllNoneFinderWindows,
     getDocxToHtmlsVersion,
     getFonts,
@@ -35,7 +34,6 @@ const {
     captureWebScreenShot: vi.fn(),
     countSlides: vi.fn(),
     docxToHtmls: vi.fn(),
-    exportBibleMSWord: vi.fn(),
     getAllNoneFinderWindows: vi.fn(() => [] as any[]),
     getDocxToHtmlsVersion: vi.fn(),
     getFonts: vi.fn(async () => ['Arial', 'Khmer OS']),
@@ -91,7 +89,6 @@ vi.mock('./pdfToImagesHelpers', () => ({ getPagesCount, pdfToImages }));
 vi.mock('./msHelpers', () => ({
     countSlides,
     docxToHtmls,
-    exportBibleMSWord,
     getDocxToHtmlsVersion,
     getPptxToHtmlsVersion,
     pptxToHtmls,
@@ -458,16 +455,6 @@ describe('electronEventListener handlers', () => {
         });
         expect(removeSlideBackground).toHaveBeenCalledWith(
             '/tmp/a.pptx',
-            undefined,
-        );
-
-        await call('main:app:ms-word-export-bible', {
-            filePath: '/tmp/a.docx',
-            data: [{ verse: 1 }],
-        });
-        expect(exportBibleMSWord).toHaveBeenCalledWith(
-            '/tmp/a.docx',
-            [{ verse: 1 }],
             undefined,
         );
 

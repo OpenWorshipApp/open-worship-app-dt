@@ -80,31 +80,6 @@ export async function removeSlideBackground(
     );
 }
 
-export async function exportBibleMSWord(
-    filePath: string,
-    data: object[],
-    dotNetRoot?: string,
-) {
-    return unlocking<number | null>(
-        `export-bible-ms-word-${filePath}`,
-        async () => {
-            const { modulePath, binaryPath, dotnetPath } =
-                getBinaryPath(dotNetRoot);
-            const isSuccess = await execute<number | null>(
-                'export-bible-ms-word.js',
-                {
-                    filePath,
-                    data,
-                    modulePath,
-                    binaryPath,
-                    dotnetPath,
-                },
-            );
-            return isSuccess;
-        },
-    );
-}
-
 type PptxToHtmlsDataType = {
     isSuccessful: boolean;
     message?: string;

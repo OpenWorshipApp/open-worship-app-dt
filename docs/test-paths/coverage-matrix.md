@@ -13,10 +13,13 @@ EXCLUDED by the policy table below.
 > Before a full run, spot-check the matrix against `src/` (new `*Comp.tsx` folders =
 > new rows).
 
-**matrixVersion: 2026-07-26** (**LT-01..02** promoted into the mandatory core — a locale
-switch is now required in every run; see §LT for why an English-only run is blind.
-**GL-23** added: toasts now stack in `.app-toast-stack` instead of replacing each other,
-so GL-10/GL-15 were refined to per-toast timers)
+**matrixVersion: 2026-07-27** (**RD-23**/**CM-58** rewritten: the MS Word export no
+longer goes through the .NET helper or a save dialog — it writes the `.docx` straight
+into Downloads, reveals it, and asks about exporting fonts only when the looked-up
+bibles' language ships any. **LT-01..02** are in the mandatory core — a locale switch is
+required in every run; see §LT for why an English-only run is blind. **GL-23**: toasts
+stack in `.app-toast-stack` instead of replacing each other, so GL-10/GL-15 use per-toast
+timers)
 
 ## Mandatory core — screen controlling, presenting, and locale (every run)
 
@@ -347,7 +350,7 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 | RD-20 | `RenderOpenWikiDictionaryComp` (`bi-journal-text`) | 🖱️ (title "Wiki Dictionary") | context menu opens — disabled header, English, target-locale lang, divider, then every wiktionary lang; each entry → `openExternalURL(<lang>.wiktionary.org)` (following = EX-04) (src: src/bible-lookup/RenderOpenWikiDictionaryComp.tsx:70) |
 | RD-21 | `AIConfigComp`→`AISettingComp` (`bi-robot`) | 🖱️ the robot icon | "Audio AI Setting" input popup opens with OpenAI + Anthropic key inputs and external "API Key" buttons; the icon turns green once a key is saved (src: src/bible-reader/AIConfigComp.tsx:124) |
 | RD-22 | `AIConfigComp`→`AudioAutoPlayComp` (`bi-megaphone`) | 🖱️ the megaphone (needs an OpenAI key) | `isAutoPlay` toggles (icon green when on); the control is hidden entirely when no OpenAI key is set (src: src/bible-reader/AIConfigComp.tsx:141) |
-| RD-23 | `RenderExportWordComp` (`bi-file-earmark-word`) | 🖱️ (title "Export to MS Word"), ≥1 looked-up item | `getBibleItemsForExportingMSWord`→`exportToWordDocument` runs; the OS save dialog is EX-01 and the app does not crash when it is cancelled (src: src/bible-lookup/RenderExportWordComp.tsx:15) |
+| RD-23 | `RenderExportWordComp` (`bi-file-earmark-word`) | 🖱️ (title "Export to MS Word"), ≥1 looked-up item | `getBibleItemsForExportingMSWord`→`exportToWordDocument`; no save dialog — the `.docx` is written straight into Downloads as `owa-bible-verses_<local-date>_<time>.docx` and revealed in the file manager. A "Exporting Fonts" confirm appears only when a looked-up bible's language ships font files (Khmer does, KJV-only does not); Yes also writes the `.ttf`s next to the document (src: src/bible-lookup/RenderExportWordComp.tsx:15) |
 | RD-24 | `RenderExtraButtonsRightComp` Keep-Open | 🖱️ the checkbox/label (presenter/editor modal only) | toggling flips the `close-on-add-bible-item` setting and the checkbox `checked` state; the control is absent on the reader page (src: src/bible-lookup/RenderExtraButtonsRightComp.tsx:78) |
 | RD-25 | `RenderEditingActionButtonsComp` / `RenderActionButtonsComp` (click paths) | 🖱️ each of Copy · Split-H `bi-vr` · Split-V `bi-hr` · Save `bi-floppy` · Save+Show `bi-cast` · Insert `bi-file-earmark-slides` · Export | each button fires its action — Copy→copy menu, Split-H→`addBibleItemLeft`, Split-V→`addBibleItemBottom`, Save→`saveBibleItem`, Save+Show→present, Insert→canvas insert (editor), Export→Word (keyboard equivalents owned by KB) (src: src/bible-lookup/RenderEditingActionButtonsComp.tsx:28; src/bible-lookup/RenderActionButtonsComp.tsx:29) |
 | RD-26 | `RenderBodyComp`/`RenderBodyEditingComp` edit pencil | 🖱️ green `bi-pencil` (or editing `bi-pencil-fill`) | `editBibleItem` switches which lookup item is in edit mode / focuses the input (Escape-to-input owned by KB) (src: src/bible-lookup/BibleLookupBodyPreviewerComp.tsx:95) |
@@ -693,7 +696,7 @@ Fg Web tile `Copy Path`/`Reveal`/`Show on Screens` = CM-01/02/07; body
 
 | ID | Target | Interactions | Pass condition |
 |---|---|---|---|
-| CM-58 | `Export to MS Word` — bible file (if hasItems) | 🖱️R → 🖱️ | exports a `.docx` (native save dialog, EX-01) (src: src/bible-list/BibleFileComp.tsx:36) |
+| CM-58 | `Export to MS Word` — bible file (if hasItems) | 🖱️R → 🖱️ | writes a `.docx` into Downloads and reveals it — no save dialog; fonts confirm as in RD-23 (src: src/bible-list/BibleFileComp.tsx:36) |
 | CM-59 | `Empty` — bible / note file (if hasItems) [D] | 🖱️R → 🖱️ | confirm "Yes" appears → **Cancel (EX-05)**; Yes clears all items from the file (src: src/bible-list/BibleFileComp.tsx:36) |
 | CM-60 | `Copy All Items` — bible / note file | 🖱️R → 🖱️ | all items are copied to the clipboard (src: src/bible-list/BibleFileComp.tsx:36) |
 | CM-61 | `Move All Items To` (file) / `Move To` (item) submenu (family: bible + note) | 🖱️R → 🖱️ | submenu lists the OTHER bible/note names; picking moves item(s) there; with ≤1 file ⇒ toast "No other bibles/notes found" (src: src/bible-list/bibleHelpers.ts:120) |

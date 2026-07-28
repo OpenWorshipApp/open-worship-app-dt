@@ -19,7 +19,6 @@ vi.mock('./electronHelpers', () => ({
 import {
     countSlides,
     docxToHtmls,
-    exportBibleMSWord,
     getDocxToHtmlsVersion,
     getPptxToHtmlsVersion,
     pptxToHtmls,
@@ -77,27 +76,6 @@ describe('msHelpers', () => {
 
         expect(execute).toHaveBeenCalledWith('remove-ms-pp-slides-bg.js', {
             filePath: '/slides/test.pptx',
-            modulePath: path.resolve(
-                '/unpacked-root',
-                'node-api-dotnet',
-                'net8.0',
-            ),
-            binaryPath: path.resolve('/unpacked-root', 'ms-helpers', 'Helper'),
-            dotnetPath: path.resolve('/unpacked-root', 'dotnet-bin'),
-        });
-    });
-
-    test('exports Bible content through the Word worker script', async () => {
-        execute.mockResolvedValue(1);
-        const rows = [{ verse: 'John 3:16' }];
-
-        await expect(exportBibleMSWord('/tmp/bible.docx', rows)).resolves.toBe(
-            1,
-        );
-
-        expect(execute).toHaveBeenCalledWith('export-bible-ms-word.js', {
-            filePath: '/tmp/bible.docx',
-            data: rows,
             modulePath: path.resolve(
                 '/unpacked-root',
                 'node-api-dotnet',

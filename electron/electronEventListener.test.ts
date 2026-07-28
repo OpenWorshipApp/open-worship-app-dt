@@ -20,7 +20,6 @@ const {
     pdfToImages,
     getPagesCount,
     countSlides,
-    exportBibleMSWord,
     getAllNoneFinderWindows,
     previewPrintCurrentWindow,
     removeSlideBackground,
@@ -40,7 +39,6 @@ const {
     pdfToImages: vi.fn(),
     getPagesCount: vi.fn(),
     countSlides: vi.fn(),
-    exportBibleMSWord: vi.fn(),
     getAllNoneFinderWindows: vi.fn(() => []),
     previewPrintCurrentWindow: vi.fn(async () => undefined),
     removeSlideBackground: vi.fn(),
@@ -79,7 +77,6 @@ vi.mock('./pdfToImagesHelpers', () => ({
 vi.mock('./msHelpers', () => ({
     countSlides,
     docxToHtmls,
-    exportBibleMSWord,
     getDocxToHtmlsVersion,
     getPptxToHtmlsVersion,
     pptxToHtmls,
@@ -116,7 +113,6 @@ describe('electronEventListener', () => {
         docxToHtmls.mockReset();
         getDocxToHtmlsVersion.mockReset();
         countSlides.mockReset();
-        exportBibleMSWord.mockReset();
         removeSlideBackground.mockReset();
         captureWebScreenShot.mockReset();
         printHTMLContent.mockReset();

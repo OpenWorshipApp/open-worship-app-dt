@@ -28,7 +28,6 @@ import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
 import {
     countSlides,
     docxToHtmls,
-    exportBibleMSWord,
     getDocxToHtmlsVersion,
     removeSlideBackground,
     pptxToHtmls,
@@ -481,13 +480,6 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:ms-pp-remove-slides-bg',
         (data: { filePath: string; dotNetRoot?: string }) => {
             return removeSlideBackground(data.filePath, data.dotNetRoot);
-        },
-    );
-    onAsync(
-        ipcMain,
-        'main:app:ms-word-export-bible',
-        (data: { filePath: string; data: object[]; dotNetRoot?: string }) => {
-            return exportBibleMSWord(data.filePath, data.data, data.dotNetRoot);
         },
     );
 

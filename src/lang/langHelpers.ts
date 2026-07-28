@@ -457,6 +457,7 @@ export type LanguageDataType = {
     getFontFamilyFiles?: () => string[];
     genCss: () => string;
     fontFamily?: string;
+    globalFontFamily?: string;
     stickyNoteFontFamily?: string;
     numList: string[];
     dictionary: AnyObjectType;
