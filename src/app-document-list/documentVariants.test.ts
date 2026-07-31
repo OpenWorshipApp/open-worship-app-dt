@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
@@ -18,6 +19,8 @@ const {
     handleErrorMock,
     appLogMock,
     pathJoinMock,
+    showAppContextMenuMock,
+    fireUpdateEventMock,
 } = vi.hoisted(() => ({
     deleteMetaDataFileMock: vi.fn(),
     getMimetypeExtensionsMock: vi.fn(),
@@ -36,6 +39,8 @@ const {
     handleErrorMock: vi.fn(),
     appLogMock: vi.fn(),
     pathJoinMock: vi.fn(),
+    showAppContextMenuMock: vi.fn(),
+    fireUpdateEventMock: vi.fn(),
 }));
 
 vi.mock('../others/AttachBackgroundManager', () => ({
@@ -92,6 +97,18 @@ vi.mock('../helper/loggerHelpers', () => ({
     appLog: appLogMock,
 }));
 
+vi.mock('../context-menu/appContextMenuHelpers', async (importOriginal) => ({
+    ...(await importOriginal<any>()),
+    showAppContextMenu: showAppContextMenuMock,
+}));
+
+// the real `tran` reaches settings -> appLocalStorage -> getUserWritablePath,
+// which the `fileHelpers` mock above deliberately does not provide
+vi.mock('../lang/langHelpers', async (importOriginal) => ({
+    ...(await importOriginal<any>()),
+    tran: (key: string) => key,
+}));
+
 import DocxAppDocument from './DocxAppDocument';
 import PdfAppDocument from './PdfAppDocument';
 import PptxAppDocument from './PptxAppDocument';
@@ -109,6 +126,9 @@ function mockFileSource(filePath: string) {
         fullName,
         baseDirPath,
         extension,
+        // `fileSource` is a getter that re-resolves through
+        // `FileSource.getInstance`, so the spy has to be shared across calls
+        fireUpdateEvent: fireUpdateEventMock,
     };
 }
 
@@ -398,9 +418,17 @@ describe('document variants', () => {
         await expect(pptxAppDocument.getMetadata()).resolves.toEqual({});
         await expect(docxAppDocument.getMetadata()).resolves.toEqual({});
 
+        // pptx offers a real Reload item; docx has no menu of its own yet
         await pptxAppDocument.showContextMenu({});
+        expect(showAppContextMenuMock).toHaveBeenCalledTimes(1);
+        const [, contextMenuItems] = showAppContextMenuMock.mock.calls[0];
+        expect(contextMenuItems).toHaveLength(1);
+        expect(contextMenuItems[0].menuElement).toBe('Reload');
+        contextMenuItems[0].onSelect();
+        expect(fireUpdateEventMock).toHaveBeenCalledTimes(1);
+
         await docxAppDocument.showContextMenu({});
-        expect(appLogMock).toHaveBeenCalledTimes(2);
+        expect(appLogMock).toHaveBeenCalledTimes(1);
 
         getPptxMissingFontFamilyListMock.mockResolvedValue(['Khmer OS']);
         getDocxMissingFontFamilyListMock.mockResolvedValue([]);

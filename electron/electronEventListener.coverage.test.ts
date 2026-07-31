@@ -8,12 +8,12 @@ vi.mock('electron', async () => {
 const {
     attemptClosing,
     captureWebScreenShot,
-    countSlides,
     docxToHtmls,
     getAllNoneFinderWindows,
     getDocxToHtmlsVersion,
     getFonts,
     getPagesCount,
+    getPptxSlidesCount,
     getPptxToHtmlsVersion,
     goDownload,
     initMenu,
@@ -22,7 +22,6 @@ const {
     previewPrintCurrentWindow,
     printHTMLContent,
     pptxToHtmls,
-    removeSlideBackground,
     screenControllerMocks,
     screenInstance,
     sendMenuClicked,
@@ -32,12 +31,12 @@ const {
 } = vi.hoisted(() => ({
     attemptClosing: vi.fn(),
     captureWebScreenShot: vi.fn(),
-    countSlides: vi.fn(),
     docxToHtmls: vi.fn(),
     getAllNoneFinderWindows: vi.fn(() => [] as any[]),
     getDocxToHtmlsVersion: vi.fn(),
     getFonts: vi.fn(async () => ['Arial', 'Khmer OS']),
     getPagesCount: vi.fn(),
+    getPptxSlidesCount: vi.fn(),
     getPptxToHtmlsVersion: vi.fn(),
     goDownload: vi.fn(),
     initMenu: vi.fn(),
@@ -46,7 +45,6 @@ const {
     previewPrintCurrentWindow: vi.fn(async () => undefined),
     printHTMLContent: vi.fn(async () => undefined),
     pptxToHtmls: vi.fn(),
-    removeSlideBackground: vi.fn(),
     screenControllerMocks: {
         closeAll: vi.fn(),
         createInstance: vi.fn(),
@@ -87,12 +85,11 @@ vi.mock('./electronHelpers', () => ({
 vi.mock('./electronOfficeHelpers', () => ({ officeFileToPdf }));
 vi.mock('./pdfToImagesHelpers', () => ({ getPagesCount, pdfToImages }));
 vi.mock('./msHelpers', () => ({
-    countSlides,
     docxToHtmls,
     getDocxToHtmlsVersion,
+    getPptxSlidesCount,
     getPptxToHtmlsVersion,
     pptxToHtmls,
-    removeSlideBackground,
 }));
 vi.mock('./electronMenu', () => ({
     initMenu,
@@ -141,7 +138,6 @@ function createAppController(overrides: Record<string, any> = {}) {
         mainController: {
             sendScreenMessage: vi.fn(),
             changeBible: vi.fn(),
-            ctrlScrolling: vi.fn(),
             sendNotifyInvisibility: vi.fn(),
         },
         settingManager: {
@@ -375,14 +371,17 @@ describe('electronEventListener handlers', () => {
         );
         expect(screenInstance.sendMessage).not.toHaveBeenCalled();
 
-        findOnHandler('screen:app:change-bible')({}, true);
-        expect(appController.mainController.changeBible).toHaveBeenCalledWith(
-            true,
+        findOnHandler('screen:app:change-bible')(
+            {},
+            {
+                screenId: 2,
+                isNext: true,
+            },
         );
-        findOnHandler('screen:app:ctrl-scrolling')({}, false);
-        expect(appController.mainController.ctrlScrolling).toHaveBeenCalledWith(
-            false,
-        );
+        expect(appController.mainController.changeBible).toHaveBeenCalledWith({
+            screenId: 2,
+            isNext: true,
+        });
     });
 
     test('finder handlers fan out to every non-finder window', () => {
@@ -446,17 +445,8 @@ describe('electronEventListener handlers', () => {
 
         await call('main:app:ms-pp-slides-count', {
             filePath: '/tmp/a.pptx',
-            dotNetRoot: '/dotnet',
         });
-        expect(countSlides).toHaveBeenCalledWith('/tmp/a.pptx', '/dotnet');
-
-        await call('main:app:ms-pp-remove-slides-bg', {
-            filePath: '/tmp/a.pptx',
-        });
-        expect(removeSlideBackground).toHaveBeenCalledWith(
-            '/tmp/a.pptx',
-            undefined,
-        );
+        expect(getPptxSlidesCount).toHaveBeenCalledWith('/tmp/a.pptx');
 
         await call('main:app:capture-web-screen-shot', {
             url: 'https://example.com',

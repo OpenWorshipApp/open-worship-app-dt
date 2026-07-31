@@ -21,8 +21,10 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-07-26** (bump when any workflow changes) — W-16 Language now
-states that `Apply Settings` is required to complete the switch (observed live).
+**workflowsVersion: 2026-07-28** (bump when any workflow changes) — new **W-21**
+(download a background video / audio from a link), observed live end-to-end. Previously:
+W-16 Language now states that `Apply Settings` is required to complete the switch
+(observed live).
 
 > ⚠️ **Pending live re-verification (2026-07-18).** A `src/` sweep for the coverage-matrix
 > expansion indicates the presenter UI has drifted from some steps below: **Foreground**
@@ -448,6 +450,32 @@ the drawing in W-19, and it lives in the same panel.
 > **echoes** what you pressed. What you type into a **password** field is masked as `•`.
 
 *Verify: coverage rows pending — same `PC-xx` block as W-19 when the matrix lands.*
+
+### W-21 — Add a background video or song from a link
+
+**Goal:** get a video (or its audio as an MP3) from an online link straight into your
+Videos / Audios folder, without leaving the app or installing anything.
+
+1. Open the **Background** (ផ្ទៃខាងក្រោយ) panel (W-08 step 1) and choose the **Videos**
+   (វីដេអូ) tab — or the **♫Audios♫** (សំលេង) split if you want the sound only.
+2. **Right-click an empty part of the list** (or use the **+** button in the folder-path
+   bar) and choose **Download From URL** (ទាញយកពី URL). 📸
+3. A small box asks for the link — **Video URL:** on the Videos tab, **Audio URL:** on
+   Audios. If you copied the link first, it is **already filled in**; otherwise paste it.
+   The box is outlined red while it is empty.
+4. Click **Ok**. The download runs in the background — a full song or video takes a
+   couple of minutes, and you can keep using the app while it does.
+5. When it finishes, the file **appears in the folder you were in**: the video shows up as
+   a new thumbnail in the Videos tab, the audio as a new row under ♫Audios♫. 📸 From there
+   it behaves like any other background (W-08) or track (W-09).
+
+> Notes: audio is always converted to **MP3**, video keeps the site's best quality
+> (`.webm`/`.mp4`). If a file with that name is already in the folder, the new one is
+> saved as `name (1)`. Pasting something that is not a web link gets you an **Invalid
+> URL** message and nothing is downloaded. Downloads need an internet connection — and
+> a busy site can cut a large download off partway, in which case just try again.
+
+*Verify: MD-01..03, CM-24, PM-102.*
 
 ---
 

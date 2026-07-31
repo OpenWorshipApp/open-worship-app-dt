@@ -5,7 +5,10 @@ import {
     BLANK_HTML_SLIDE_SRC,
     showStaticSlideContextMenu,
 } from './appDocumentHelpers';
-import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import {
+    showAppContextMenu,
+    type ContextMenuItemType,
+} from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { appLog } from '../helper/loggerHelpers';
@@ -17,10 +20,13 @@ import {
     removePptxHtmlsPreview,
 } from '../server/pptxHelpers';
 import { type VarySlideAudioDataType } from '../background/backgroundHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { tran } from '../lang/langHelpers';
 
 export default class PptxAppDocument
     extends AppDocumentSourceAbs
-    implements ItemSourceInf<PptxSlide> {
+    implements ItemSourceInf<PptxSlide>
+{
     static readonly mimetypeName: MimetypeNameType = 'pptx';
     isEditable = false;
 
@@ -46,8 +52,17 @@ export default class PptxAppDocument
         return showStaticSlideContextMenu(event, item, extraMenuItems);
     }
 
-    async showContextMenu(_event: any) {
-        appLog('Method not implemented.');
+    async showContextMenu(event: any) {
+        const contextMenuItems: ContextMenuItemType[] = [
+            {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
+                menuElement: tran('Reload'),
+                onSelect: () => {
+                    this.fileSource.fireUpdateEvent();
+                },
+            },
+        ];
+        showAppContextMenu(event, contextMenuItems);
     }
 
     async getMetadata() {
@@ -63,7 +78,6 @@ export default class PptxAppDocument
             const pptxData = await getPptxData(this.filePath);
             const pptxToHtmlsVersion = await getPptxToHtmlsVersion();
             if (
-                pptxToHtmlsVersion !== null &&
                 pptxData !== null &&
                 pptxToHtmlsVersion !== pptxData.info.toolVersion
             ) {

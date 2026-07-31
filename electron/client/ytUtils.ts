@@ -37,13 +37,15 @@ async function getYTHelper() {
 const ffmpegBinPath = toUnpackedPath(
     resolve(__dirname, binHelperPath, 'ffmpeg/bin'),
 );
-const denoBinPath = toUnpackedPath(
-    resolve(__dirname, binHelperPath, 'deno/deno' + (isWindows ? '.exe' : '')),
+// QuickJS: the JS runtime yt-dlp uses to solve YouTube's nsig challenges. It is
+// built per platform by extra-work/experiment-building/*-build-qjs.* and copied
+// in by extra-work/copy-build.mjs.
+const qjsBinPath = toUnpackedPath(
+    resolve(__dirname, binHelperPath, 'qjs/qjs' + (isWindows ? '.exe' : '')),
 );
 
 export const ytUtils = {
     getYTHelper,
     ffmpegBinPath,
-    denoBinPath,
-    jsRuntimeBinPath: null,
+    qjsBinPath,
 };

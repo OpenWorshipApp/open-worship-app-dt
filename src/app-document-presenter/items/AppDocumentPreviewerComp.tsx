@@ -49,7 +49,7 @@ function EditorComp() {
                         },
                     },
                     key: 'v1',
-                    widgetName: 'Document List',
+                    widgetName: tran('Document List'),
                     className: 'app-flex-item',
                 },
                 {
@@ -63,7 +63,7 @@ function EditorComp() {
                         },
                     },
                     key: 'v2',
-                    widgetName: 'Note',
+                    widgetName: tran('Note'),
                     className: 'app-flex-item',
                 },
             ]}

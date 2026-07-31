@@ -221,3 +221,11 @@ bugs never reproduce in the mini-preview. Each run must present a real item,
 verify clear-button states, show the screen, drive the `screen.html?screenId=N`
 CDP target, then clear/hide/restore. The only exclusion is *leaving* a screen
 taken over or touching a display the user says is in live use.
+
+**Media download (video AND audio) is mandatory in every run too** (matrix rows
+`MD-01..03`, SKILL.md §6e). `downloadVideoOrAudio` is the only code path that
+runs the shipped prebuilt `yt-dlp`/`ffmpeg`/`qjs` binaries, so a missing or
+broken binary passes typecheck, tests, build and every other matrix row. The
+video half proves the ffmpeg merge, the audio half proves its mp3 encoder; both
+use the canonical link recorded in the matrix. (The matrix lives at
+`docs/test-paths/coverage-matrix.md`, not under the skill's `references/`.)

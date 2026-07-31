@@ -89,6 +89,19 @@ const lang: LanguageDataType = {
     getBibleCrossRefBundleFilePath() {
         return resolveGzBundleFilePath(bbCR);
     },
+    async getLookupData() {
+        const namesMap = await fetch('data/namesMap.json').then((res) =>
+            res.json(),
+        );
+        const locationsMap = await fetch('data/locationsMap.json').then((res) =>
+            res.json(),
+        );
+
+        return {
+            namesMap,
+            locationsMap,
+        };
+    },
 };
 
 export default lang;

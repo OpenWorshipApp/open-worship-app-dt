@@ -21,6 +21,7 @@ import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenEventHandler from './ScreenEventHandler';
 import ScreenDrawManager from './ScreenDrawManager';
 import ScreenFocusManager from './ScreenFocusManager';
+import { initScreenBibleStepping } from '../screenBibleSteppingHelpers';
 
 function setGroupMembershipInf(
     screenManagerBase: ScreenManagerBase,
@@ -384,6 +385,7 @@ export default class ScreenManager extends ScreenManagerBase {
         messageUtils.listenForData(channel, (_, message: ScreenMessageType) => {
             this.applyScreenManagerSyncScreen(message);
         });
+        initScreenBibleStepping();
     }
 
     static async getGroupScreenManagers(

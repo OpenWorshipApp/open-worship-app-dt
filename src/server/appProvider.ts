@@ -208,8 +208,7 @@ export type AppProviderType = Readonly<
         ytUtils: {
             getYTHelper: () => Promise<YTHelper>;
             ffmpegBinPath: string;
-            denoBinPath: string;
-            jsRuntimeBinPath: string | null;
+            qjsBinPath: string;
         };
         windowTitle: string;
         POPUP_FRAME_NAME_PREFIX: string;

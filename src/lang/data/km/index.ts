@@ -26,6 +26,12 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Exporting DOCX Pages': 'កំពុងបម្លែងទំព័រ DOCX ទៅជា HTML',
+    'Please wait while the DOCX pages are being exported...':
+        'សូមរង់ចាំ ខណៈពេលទំព័រ DOCX កំពុងត្រូវបានបម្លែង...',
+    'Exporting PPTX Slides': 'កំពុងបម្លែងស្លាយ PPTX ទៅជា HTML',
+    'Please wait while the slides are being exported...':
+        'សូមរង់ចាំ ខណៈពេលស្លាយកំពុងត្រូវបានបម្លែង...',
     'Open Bible Reader in a new window':
         'បើកកម្មវិធីអានព្រះគម្ពីរនៅក្នុងវីនដូថ្មី',
     'Open Slide Editor in a new window':
@@ -153,7 +159,11 @@ const dictionary = {
     'will create if not exist': 'នឹងបង្កើតឡើងប្រសិនបើមិនមាន',
     'No directory selected': 'មិនមានថតដែលបានជ្រើស',
     Notes: 'កំណត់ត្រា',
+    Note: 'កំណត់ត្រា',
     'Bible Notes': 'កំណត់ត្រាព្រះគម្ពីរ',
+    'Document List': 'បញ្ជីឯកសារ',
+    'Lyric List': 'បញ្ជីអក្សរភ្លេង',
+    'Playlist List': 'បញ្ជីតារាងកម្មវិធី',
     'Not Supported Item Type': 'ប្រភេទធាតុដែលមិនគាំទ្រ',
     'Fail to read file data': 'មិនអាចទទួលបានទិន្នន័យពីឯកសារ',
     'No book options available': 'មិនមានជម្រើសសៀវភៅទេ',
@@ -214,6 +224,10 @@ const dictionary = {
     'Insert Website': 'បញ្ចូលគេហទំព័រ',
     'YouTube URL:': 'តំណ YouTube៖',
     'Website URL:': 'តំណគេហទំព័រ៖',
+    'Video URL:': 'តំណវីដេអូ៖',
+    'Audio URL:': 'តំណសំលេង៖',
+    'Image URL:': 'តំណរូបភាព៖',
+    'Web URL:': 'តំណវេបសាយ៖',
     'Open URL': 'បើកតំណ',
     'Copy URL': 'ចម្លងតំណ',
     New: 'ថ្មី',

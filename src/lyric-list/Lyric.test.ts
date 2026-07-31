@@ -103,12 +103,23 @@ describe('Lyric', () => {
         await expect(Lyric.create('/docs', 'song')).resolves.toEqual(
             expect.objectContaining({ filePath: '/docs/new.lyric' }),
         );
+        // compare the parsed payload, not the serialized string: `initDate` is
+        // stamped from `new Date()` on every call, so the two default json
+        // objects differ whenever the millisecond ticks between them
         expect(createNewFileDetailMock).toHaveBeenCalledWith(
             '/docs',
             'song',
-            JSON.stringify(defaultJsonData),
+            expect.any(String),
             'lyric',
         );
+        const [, , dataText] = createNewFileDetailMock.mock.calls[0];
+        expect(JSON.parse(dataText)).toEqual({
+            ...defaultJsonData,
+            metadata: {
+                ...defaultJsonData.metadata,
+                initDate: expect.any(String),
+            },
+        });
     });
 
     test('reads and writes the lyric body through the history', async () => {

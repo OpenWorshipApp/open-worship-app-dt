@@ -83,26 +83,25 @@ function copyFile(basePath, fileFullName, destFileFullName) {
   copyFileSync(join(basePath.source, fileFullName), destFilePath);
 }
 
+// Find a file by name prefix. Used for binaries whose committed file name is
+// version/arch stamped (e.g. qjs-2026-06-04-arm64-minimal.exe) so a version bump
+// does not need an edit here.
+function findFileFullNameByPrefix(dirPath, prefix, hint = '') {
+  const fileFullName = existsSync(dirPath)
+    ? readdirSync(dirPath).find((child) => {
+        return child.startsWith(prefix) && checkIsFile(join(dirPath, child));
+      })
+    : null;
+  if (!fileFullName) {
+    throw new Error(`No "${prefix}*" file found in "${dirPath}"${hint}`);
+  }
+  return fileFullName;
+}
+
 function checkIsFile(filePath) {
   const stats = existsSync(filePath) ? statSync(filePath) : null;
   return stats && stats.isFile();
 }
-function copyAllChildren(source, dest) {
-  if (!existsSync(dest)) {
-    mkdirSync(dest, { recursive: true });
-  }
-  const children = readdirSync(source);
-  for (const child of children) {
-    const sourceChild = join(source, child);
-    const destChild = join(dest, child);
-    if (checkIsFile(sourceChild)) {
-      copyFileSync(sourceChild, destChild);
-    } else {
-      copyAllChildren(sourceChild, destChild);
-    }
-  }
-}
-
 copyFile(
   {
     source: resolve('.'),
@@ -114,7 +113,6 @@ copyFile(
 console.log('"package-lock.json" file is copied');
 
 const binHelperSourceRootDir = resolve('./extra-work/bin-helper');
-const binHelperSourceDistRootDir = resolve(`${binHelperSourceRootDir}/dist`);
 const binHelperDestRootDir = resolve('./electron-build/bin-helper');
 
 const {
@@ -140,68 +138,39 @@ copyFile(
 );
 console.log('"eot2ttf" is copied');
 
-copyAllChildren(
-  resolve(binHelperSourceDistRootDir, 'net8.0'),
-  resolve(binHelperDestRootDir, 'ms-helpers'),
+// The media helpers (yt-dlp, its ffmpeg, and the QuickJS runtime it needs to
+// solve YouTube's nsig challenges) are NOT downloaded at install time. They are
+// built per platform by extra-work/experiment-building/*-build-*.{ps1,sh} and
+// committed there under version/arch-stamped names, so the tree is
+// self-contained and every package ships the exact binaries that were tested.
+const prebuiltSourceDir = resolve(
+  './extra-work/experiment-building',
+  `${getOsName()}${fileSuffix}`,
 );
-console.log('"MSHelpers" files are copied');
-
-copyAllChildren(
-  resolve(binHelperSourceDistRootDir, `bin${fileSuffix}`),
-  resolve(binHelperDestRootDir, 'dotnet-bin'),
-);
-console.log('"dotnet-bin" files are copied');
-
-const { sourceFileName: ytSourceFileName, destFileName: ytDestFileName } =
-  genBinFileName('yt-dlp');
-copyFile(
-  {
-    source: resolve(binHelperSourceDistRootDir, 'yt'),
-    destination: resolve(binHelperDestRootDir, 'yt'),
-  },
-  ytSourceFileName,
-  ytDestFileName,
-);
-console.log('"yt-dlp" files are copied');
-
-// TODO: copy only needed files
-copyAllChildren(
-  resolve('./node_modules/node-api-dotnet'),
-  resolve(binHelperDestRootDir, 'node-api-dotnet'),
-);
-console.log('"node-api-dotnet" files are copied');
-
-if (systemUtils.isMac) {
-  copyAllChildren(
-    resolve(
-      './extra-work/ffmpeg/mac' +
-        (systemUtils.isMacUniversal || !systemUtils.isArm64 ? '-intel' : ''),
-    ),
-    resolve(binHelperDestRootDir, 'ffmpeg', 'bin'),
-  );
-} else {
-  copyAllChildren(
-    resolve(binHelperSourceDistRootDir, 'ffmpeg'),
-    resolve(binHelperDestRootDir, 'ffmpeg'),
-  );
-}
-console.log('"ffmpeg" files are copied');
-
-const { sourceFileName: denoSourceFileName, destFileName: denoDestFileName } =
-  genBinFileName('deno');
-try {
+// Deliberately NOT wrapped in try/catch: a package built without one of these
+// still installs and launches, it just silently loses media downloading, so a
+// missing binary must break the build right here.
+function copyPrebuiltBin(baseName, destination) {
+  const { destFileName } = genBinFileName(baseName);
   copyFile(
-    {
-      source: resolve(binHelperSourceDistRootDir, 'deno'),
-      destination: resolve(binHelperDestRootDir, 'deno'),
-    },
-    denoSourceFileName,
-    denoDestFileName,
+    { source: prebuiltSourceDir, destination },
+    findFileFullNameByPrefix(
+      prebuiltSourceDir,
+      baseName,
+      `. Build it on a ${getOsName()}${fileSuffix} host with ` +
+        `extra-work/experiment-building/${getOsName()}-build-${baseName}.* ` +
+        'and commit the result into that dir',
+    ),
+    destFileName,
   );
-  console.log('"deno" files are copied');
-} catch (error) {
-  console.error('Failed to copy "deno" files:', error);
+  console.log(`"${baseName}" is copied`);
 }
+
+copyPrebuiltBin('yt-dlp', resolve(binHelperDestRootDir, 'yt'));
+// Dest stays a `bin` dir: electron/client/ytUtils.ts hands the DIRECTORY to
+// yt-dlp's --ffmpeg-location.
+copyPrebuiltBin('ffmpeg', resolve(binHelperDestRootDir, 'ffmpeg', 'bin'));
+copyPrebuiltBin('qjs', resolve(binHelperDestRootDir, 'qjs'));
 
 const basePath = {
   source: resolve('./extra-work/db-exts'),

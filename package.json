@@ -44,8 +44,7 @@
         "dc:err": "depcruise src --include-only \"^src\" --output-type err-html > dc-dependency-graph/errors.html",
         "release:version": "node extra-work/setTodayVersion.mjs && npm install",
         "release:tag": "bash extra-work/release-tag.sh",
-        "release": "bash extra-work/release.sh",
-        "install": "bash extra-work/bin-helper/build.sh"
+        "release": "bash extra-work/release.sh"
     },
     "browserslist": {
         "production": [
@@ -160,12 +159,10 @@
         "markdown-it-music": "^2.0.6",
         "moment-timezone": "^0.6.2",
         "monaco-editor": "^0.55.1",
-        "node-api-dotnet": "^0.9.21",
         "nodemon": "^3.1.14",
         "open-lyric": "https://github.com/raksa/open-lyric-dist",
         "open-lyric-plugin-km-kh": "https://github.com/raksa/open-lyric-plugin-km-kh-dist",
-        "pptx-to-html": "https://github.com/raksa/pptx-to-html-dist",
-        "docx-to-html": "https://github.com/raksa/docx-to-html-dist",
+        "bible-note": "https://github.com/raksa/bible-note-dist",
         "openai": "^6.44.0",
         "prettier": "^3.8.4",
         "react": "^19.2.7",
@@ -183,6 +180,8 @@
         "lw-share": "^0.0.7",
         "mupdf": "^1.28.0",
         "tar": "^7.5.16",
-        "yt-dlp-wrap": "^2.3.12"
+        "yt-dlp-wrap": "^2.3.12",
+        "pptx-to-html": "https://github.com/raksa/pptx-to-html-dist",
+        "docx-to-html": "https://github.com/raksa/docx-to-html-dist"
     }
 }

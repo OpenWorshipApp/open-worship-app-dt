@@ -1,9 +1,6 @@
-// Renderer-side `.docx` writer for the bible export. It mirrors
-// `ExportBibleMSWord` in `extra-work/bin-helper/Helper.cs` (which uses
-// `DocumentFormat.OpenXml`) so both paths produce the same document, but
-// without the .NET helper process: the OOXML parts are plain strings and the
-// package is a minimal ZIP built here, so nothing is loaded until an export is
-// actually requested.
+// Renderer-side `.docx` writer for the bible export: the OOXML parts are plain
+// strings and the package is a minimal ZIP built here, so nothing is loaded
+// until an export is actually requested.
 
 import { fsWriteFile, pathJoin } from '../server/fileHelpers';
 

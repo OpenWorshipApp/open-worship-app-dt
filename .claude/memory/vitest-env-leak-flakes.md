@@ -19,6 +19,17 @@ defined` — fix is the jsdom pragma on the test file, not a guard in
 **Why:** looks like a random/unrelated break in an untouched file; the real cause
 is missing-pragma + worker reuse.
 
+A missing pragma also **masks stale assertions**: the suite dies at import, so
+vitest reports it as `(0 test)` / "Failed Suites" and none of its `expect`s ever
+run — the file rots against the code silently. Seen 2026-07-29:
+`src/app-document-list/documentVariants.test.ts` had been asserting
+`appLog` twice from `showContextMenu`, long after `PptxAppDocument` was changed
+to build a real Reload context menu (`44c15c3e`). Adding the pragma surfaced two
+further breaks in one go: an unmocked `showAppContextMenu`, and the real `tran()`
+reaching `appLocalStorage` → `getUserWritablePath`, which the file's
+`fileHelpers` mock does not provide. Expect to fix the test's *content*, not just
+its environment. A "(0 test)" line in the vitest output is a failure, not a skip.
+
 **How to apply:** any new/failing test whose imports reach `appProvider`,
 `FileSource`, or React components needs the `// @vitest-environment jsdom`
 pragma. To find latent cases, run all pragma-less files together — they then get

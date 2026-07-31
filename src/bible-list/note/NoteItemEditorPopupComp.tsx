@@ -1,4 +1,4 @@
-import { type BibleNote } from 'BibleNote.js';
+import { type BibleNote } from 'bible-note';
 import { useCallback, useMemo, useState } from 'react';
 
 import FloatingWidgetComp from '../../app-modal/FloatingWidgetComp';

@@ -843,8 +843,15 @@ describe('ScreenManager runtime orchestration', () => {
 
         ScreenManager.initReceiveScreenMessage();
 
-        const [channel, listener] = listenForDataMock.mock.calls.at(-1) as any;
-        expect(channel).toBe('screen-message-channel');
+        // `initReceiveScreenMessage` also subscribes the screen-output bible
+        // stepping shortcut, so pick the channel out instead of taking the last
+        const [, listener] = listenForDataMock.mock.calls.find(
+            ([channel]) => channel === 'screen-message-channel',
+        ) as any;
+        expect(listenForDataMock).toHaveBeenCalledWith(
+            'app:main:change-bible',
+            expect.any(Function),
+        );
         listener(null, {
             screenId: 16,
             type: 'visible',

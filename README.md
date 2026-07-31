@@ -101,7 +101,6 @@ Special thanks to all frameworks and tools listed in [package.json](./package.js
 ## 📋 Requirements
 
 - [Node.js v22](https://nodejs.org/en/download/) or higher
-- [dotnet 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for MS PowerPoint support
 - For Windows, [Cygwin](https://cygwin.com/) is needed. `Cygwin` through [Git](https://git-scm.com/) is recommended (by installing `Git` with `Git-bash` we will have all required commands installed)
 
 For Fedora:
@@ -183,18 +182,6 @@ npm run dc:err
 ```
 
 ### Common Issues
-
-<details>
-<summary><strong>NuGet Package Source Error</strong></summary>
-
-If you encounter errors during `npm install` related to NuGet packages not being resolved:
-
-```bash
-dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
-npm install
-```
-
-</details>
 
 <details>
 <summary><strong>Fedora Dependencies</strong></summary>

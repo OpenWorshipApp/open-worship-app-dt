@@ -6,6 +6,7 @@ import { globalCacheManager1M } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
+import { type LookupLangData } from 'bible-note';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -463,6 +464,7 @@ export type LanguageDataType = {
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
+    getLookupData?: (packageLocation: string) => Promise<LookupLangData | null>;
     sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;

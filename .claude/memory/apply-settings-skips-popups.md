@@ -1,28 +1,24 @@
 ---
 name: apply-settings-skips-popups
-description: Apply Settings reloads only the main window — every open popup keeps the stale language/theme/paths
+description: Apply Settings used to reload only the main window, leaving popups stale — FIXED on refactor22
 metadata:
   type: project
 ---
 
-`forceReloadAppWindows()` → IPC `all:app:force-reload` → `ElectronAppController.reloadAll()`,
-which iterates `allWindows()` — and that returns only
-`[mainController.win, lwShareController.win]` (`electron/ElectronAppController.ts`). Popup
-windows are created in `createPopupWindow()` (`electron/electronHelpers.ts`) off the
-`setWindowOpenHandler` path and are **never registered anywhere `allWindows()` can see**.
+**FIXED 2026-07-29 on `refactor22`** (uncommitted). `ElectronAppController.reloadAll()` used
+to iterate `allWindows()`, which returns only `[mainController.win, lwShareController.win]`,
+so every popup (Settings, About, Finder, the document/lyric/bible-note/web editors) kept the
+old language, theme, font and directory paths. It now iterates
+`BrowserWindow.getAllWindows()` and skips destroyed windows plus `htmlFiles.screen` outputs
+(reloading a live output would blank the presentation).
 
-So `Apply Settings` reloads the Presenter/Reader/Editor main window only. Settings, About,
-Finder, and the Document/Lyric/Bible-note/Web editor popups keep the **old** language, theme,
-font and directory paths until they are closed and reopened.
+**Why:** popups are created in `createPopupWindow()` (`electron/electronHelpers.ts`) off the
+`setWindowOpenHandler` path and are registered nowhere `allWindows()` can see. `allWindows()`
+is still used by `resetThemeBackgroundColor()` and was deliberately left alone.
 
-**Why:** observed live 2026-07-26 (robot-test run 20260726-1045). Switching to Khmer left the
-Settings window itself in English; switching back to English left an open Document Editor popup
-in Khmer. Both corrected instantly on a manual reload, confirming a missed reload rather than a
-translation gap. Worst case is the Settings window — the user changes the language there and it
-looks like nothing happened.
-
-**How to apply:** don't diagnose this as a `tran()`/dictionary problem. Fix direction: use
-`BrowserWindow.getAllWindows()` in `allWindows()`, register popups as they're created, or
-broadcast the reload to all renderers instead of enumerating windows. When robot-testing a
-locale/theme switch, reload popups manually before judging their labels.
-Related: [[tran-missing-key-throws-in-dev]].
+**How to apply:** this also explains away a whole class of false "missing translation"
+findings. Labels rendered by components that don't re-render on a locale switch (Settings'
+`Path Settings`, `Theme`, `Font Family`, `Other General Options`, the General/Bible tabs)
+stayed English until the window reloaded — they always had their `tran()` call and their km
+dictionary entry. Before filing an untranslated-label bug, reload the window first.
+Related: [[tran-missing-key-throws-in-dev]], [[screen-change-bible-dead-ipc]].

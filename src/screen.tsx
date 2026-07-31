@@ -7,6 +7,7 @@ import appProvider from './server/appProvider';
 import {
     addDomChangeEventListener,
     checkIsZoomed,
+    getParamKeyValue,
     removeDomTitle,
 } from './helper/domHelpers';
 import { appLog } from './helper/loggerHelpers';
@@ -21,17 +22,25 @@ function main() {
         </StrictMode>,
     );
 
+    // The stepping is applied by the main window, which owns the authoritative
+    // screen managers, so the screen has to say which output it is.
+    const screenIdParam = getParamKeyValue(
+        globalThis.location.search,
+        'screenId',
+    );
+    const screenId = Number.parseInt(screenIdParam ?? '');
     document.addEventListener('keyup', function (event) {
         if (
-            (event.ctrlKey || event.altKey) &&
-            ['ArrowLeft', 'ArrowRight'].includes(event.key)
+            Number.isNaN(screenId) ||
+            !(event.ctrlKey || event.altKey) ||
+            !['ArrowLeft', 'ArrowRight'].includes(event.key)
         ) {
-            const isNext = event.key === 'ArrowRight';
-            appProvider.messageUtils.sendData(
-                'screen:app:change-bible',
-                isNext,
-            );
+            return;
         }
+        appProvider.messageUtils.sendData('screen:app:change-bible', {
+            screenId,
+            isNext: event.key === 'ArrowRight',
+        });
     });
 
     document.body.style.backgroundColor = 'transparent';

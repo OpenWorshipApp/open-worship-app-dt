@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore) and a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~535 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~538 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -229,7 +229,7 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~535 rows with stable
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~538 rows with stable
 IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
 the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
@@ -266,7 +266,10 @@ restarting from zero. This is how a full-coverage pass can span several sessions
    edit→present propagation, §6c — open the editor as a *separate* window and confirm a
    saved edit reaches the Presenter/screen; run it whenever editing/lists were touched)**.
 3. Popups `PU` (each opened from its trigger row).
-4. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
+4. **Mandatory media block §6e (`MD-01..02`)** — kick the video download off while `PM`
+   is fresh (the Background panel is already open) and do the audio one right after; both
+   take minutes of wall-clock, so start them before the settings churn rather than after.
+5. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
    the `LT-03..05` theme spot-checks, which ride on `ST-04/05`. Restore everything. Each
    `Apply Settings` (`ST-08`) reloads every window, so these go **very last** — and the
    locale block needs two of them (switch, then switch back).
@@ -359,6 +362,41 @@ Notes:
   mode. That is a **Low/Info** finding (untranslated UI), not the Critical throw above —
   report them separately and name the file.
 
+### 6e. MANDATORY: media download, video AND audio (every run, every focus)
+
+**Nothing else in the app runs the shipped external binaries.** `downloadVideoOrAudio`
+([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only caller of
+`bin-helper/yt/yt-dlp`, and it is what points yt-dlp at `bin-helper/ffmpeg/bin` and
+`bin-helper/qjs/qjs`. All three are committed prebuilt per platform
+(`extra-work/experiment-building/<os><suffix>/`) and copied in by
+`extra-work/copy-build.mjs` — so a wrong/missing/stale binary passes typecheck, tests,
+build and every other matrix row, and only shows up here. Rows `MD-01..03`; recipe:
+test-plan.md §S19.
+
+**Canonical test link** — always use this one so runs are comparable:
+
+```
+https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs
+```
+
+Minimum pass (both halves required — they exercise different ffmpeg paths):
+
+1. **Video (MD-01)** — Background → **Videos** tab → right-click the empty area of the
+   list → **Download From URL** → put the link in → **Ok**. yt-dlp fetches separate video
+   and audio streams and **merges them with ffmpeg**.
+2. **Audio (MD-02)** — Background → **♫Audios♫** split → same menu (the popup label must
+   read **Audio URL:**) → **Ok**. This one runs `-x --audio-format mp3`, i.e. an actual
+   **libmp3lame encode** — a merge-only ffmpeg would pass MD-01 and fail here.
+3. **Assert on disk, not on the toast**: a new file in the videos dir (merged container)
+   and an **`.mp3`** in the audios dir, plus the new thumbnail/row in the panel.
+4. Optional but cheap — prove the JS runtime is really QuickJS by reading the spawned
+   command line (`Get-CimInstance Win32_Process -Filter "Name='yt-dlp.exe'"`): it must
+   carry `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+
+Triage before filing (a 403 is usually NOT an app bug), the known orphaned-`.part` bug,
+and the `(1)` de-duplication suffix are all documented in the matrix §MD — read it before
+reporting a download failure.
+
 ### 7. Report
 
 - Write the full report to `test-results/robot-test/report-<timestamp>.md` (this folder
@@ -372,6 +410,10 @@ Notes:
   an explicit statement that no `Translation for text "…" not found` error appeared (or
   the list of the ones that did, each a Critical finding). Confirm the starting locale
   was restored.
+- **Every report** MUST also contain the **mandatory media block** (§6e): the
+  `MD-01/MD-02` statuses with the on-disk evidence (the video file and the `.mp3`), since
+  no other row touches the shipped yt-dlp/ffmpeg/qjs. BLOCKED is acceptable only with no
+  network, and must say so.
 - In full-coverage mode the report MUST include the **coverage summary** (template in
   [references/test-plan.md](./references/test-plan.md)): the formula result
   (`exercised / (total − EXCLUDED)`), plus every BLOCKED / PARTIAL / EXCLUDED row with
@@ -490,7 +532,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
-  **coverage contract**: ~535 stable-ID rows over the whole UI surface — every interactive
+  **coverage contract**: ~538 stable-ID rows over the whole UI surface — every interactive
   path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
   citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and

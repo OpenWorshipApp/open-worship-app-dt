@@ -245,8 +245,13 @@ export function downloadVideoOrAudio(
                     '--no-playlist',
                     '--ffmpeg-location',
                     `${ytUtils.ffmpegBinPath}`,
+                    // yt-dlp enables deno by default and prefers it over every
+                    // other runtime, so clear the defaults before pointing it at
+                    // the QuickJS we ship - otherwise a deno on the user's PATH
+                    // silently wins.
+                    '--no-js-runtimes',
                     '--js-runtimes',
-                    `deno:${ytUtils.denoBinPath}`,
+                    `quickjs:${ytUtils.qjsBinPath}`,
                 );
                 if (!isVideo) {
                     args.push(

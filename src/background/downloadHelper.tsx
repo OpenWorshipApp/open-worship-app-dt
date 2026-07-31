@@ -36,7 +36,7 @@ function InputUrlComp({
     return (
         <div className="w-100 h-100">
             <div className="input-group" title={invalidMessage}>
-                <div className="input-group-text">{title}</div>
+                <div className="input-group-text">{tran(title)}</div>
                 <input
                     className={
                         'form-control form-control-sm' +

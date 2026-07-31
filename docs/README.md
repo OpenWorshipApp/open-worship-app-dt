@@ -35,9 +35,10 @@ npm run docs:build    # gen + static build into docs/.vitepress/dist/
 npm run docs:preview  # serve the built site
 ```
 
-> VitePress is a dev dependency installed with `--ignore-scripts` so it does not
-> trigger this repo's `install` hook (`extra-work/bin-helper/build.sh`, which
-> runs a .NET build + downloads yt-dlp). If you ever reinstall it, keep that flag.
+> VitePress was installed with `--ignore-scripts` back when this repo had an
+> `install` hook that downloaded yt-dlp/ffmpeg. That hook is gone — the media
+> helpers are now committed prebuilt binaries copied in at build time by
+> `extra-work/copy-build.mjs` — so the flag no longer matters here.
 
 ## Editing content
 

@@ -249,6 +249,31 @@ Notes:
 screenshot presenter + settings, check contrast and that no text goes invisible, then
 **restore**.
 
+### S19 — Media download `[MD-01..03]` — **MANDATORY in every run** (needs network)
+
+The only flow that runs the shipped prebuilt binaries (`bin-helper/yt/yt-dlp` +
+`bin-helper/ffmpeg/bin` + `bin-helper/qjs/qjs`, copied in by
+`extra-work/copy-build.mjs`). Everything else in the matrix passes with them broken.
+
+Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs`
+
+1. **MD-01 video** — Background → **Videos** → 🖱️R the empty list area → **Download From
+   URL** → fill the link → **Ok**. Watch the progress bar; then assert a new file in the
+   videos dir and its thumbnail in the tab. This covers the ffmpeg **merge** path.
+2. **MD-02 audio** — Background → **♫Audios♫** → same menu; confirm the popup says
+   **Audio URL:** → **Ok**. Assert an **`.mp3`** lands in the audios dir. This is the only
+   check of the ffmpeg **mp3 encoder** (`-x --audio-format mp3` → `libmp3lame`).
+3. **MD-03** — reopen the popup, enter a non-`http` string → **Ok** → toast "Invalid URL",
+   no download.
+4. Optional runtime proof: while yt-dlp runs, read its command line — it must carry
+   `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+
+Evidence = the file on disk (or the refreshed panel), never the toast alone. On failure,
+follow the triage list in coverage-matrix §MD before filing: an `HTTP Error 403` mid-
+transfer is usually YouTube throttling (retry once), whereas `No supported JavaScript
+runtime could be found` is a real Critical. Clean up any orphaned `temp-*.part` left by a
+failed attempt (known app bug — the error path does not remove partials).
+
 ### S16 — Edge & empty states (opportunistic)
 - `Slide Editor` with no document → alert, no navigation (NAV-03).
 - Editor with a non-OWA document → "Return to Presenter" popup (ED-01).
@@ -327,9 +352,16 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 - Restored: <screen hidden, layers cleared, state restored — or what was left and why>
 - (If skipped: `BLOCKED→EX-02` + the user's live-use reason — never skip silently)
 
+## Mandatory media block (required in EVERY report)
+
+- MD-01 <status> — video file written: `<path>` (<size>)
+- MD-02 <status> — mp3 written: `<path>` (<size>)
+- Runtime line seen: `--no-js-runtimes --js-runtimes quickjs:<…>` (or: not captured)
+- (If skipped: `BLOCKED` + "no network" — never skip silently; a 403 is a retry, not a skip)
+
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 535
+- Matrix version: <date> · rows total: 538
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)

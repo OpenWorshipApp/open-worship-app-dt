@@ -13,7 +13,11 @@ EXCLUDED by the policy table below.
 > Before a full run, spot-check the matrix against `src/` (new `*Comp.tsx` folders =
 > new rows).
 
-**matrixVersion: 2026-07-27** (**RD-23**/**CM-58** rewritten: the MS Word export no
+**matrixVersion: 2026-07-28** (new **MD-01..03** group — media download from URL
+(video + audio) is now part of the mandatory core, with a canonical test link; the
+media helpers yt-dlp/ffmpeg/qjs are shipped prebuilt from
+`extra-work/experiment-building/<platform>/`, so a download failure can mean a missing
+binary, not just a network problem. Previous: **RD-23**/**CM-58** rewritten: the MS Word export no
 longer goes through the .NET helper or a save dialog — it writes the `.docx` straight
 into Downloads, reveals it, and asks about exporting fonts only when the looked-up
 bibles' language ships any. **LT-01..02** are in the mandatory core — a locale switch is
@@ -21,9 +25,9 @@ required in every run; see §LT for why an English-only run is blind. **GL-23**:
 stack in `.app-toast-stack` instead of replacing each other, so GL-10/GL-15 use per-toast
 timers)
 
-## Mandatory core — screen controlling, presenting, and locale (every run)
+## Mandatory core — screen controlling, presenting, locale, and media download (every run)
 
-Two blocks are **never optional**: every run — full-coverage OR focused (e.g. "robot test
+Three blocks are **never optional**: every run — full-coverage OR focused (e.g. "robot test
 bible lookup") — must exercise the **mandatory core** and record its rows in the run
 state file.
 
@@ -44,8 +48,22 @@ key up. In Khmer the same call **throws** on a missing key, and with no error bo
 the subtree renders **blank**. So an English-only pass proves nothing about translation
 coverage, and typecheck/tests/build all stay green while a screen is broken in Khmer.
 
-A report that lacks evidence for either block is **incomplete** — say so explicitly
-rather than shipping it. Full recipes: test-plan.md §S7 (screen) and §S15 (locale).
+**3. Media download (video + audio)** — the one flow that runs shipped external binaries:
+
+> **MD-01, MD-02** — download a video AND an audio from the canonical test link
+> (below) through the Background panel. Nothing else in the app spawns yt-dlp / ffmpeg /
+> qjs, so a broken or missing prebuilt binary is invisible to every other row and to
+> typecheck/tests/build alike.
+
+**Canonical test link** (use this one so runs are comparable):
+
+```
+https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs
+```
+
+A report that lacks evidence for any of the three blocks is **incomplete** — say so
+explicitly rather than shipping it. Full recipes: test-plan.md §S7 (screen), §S15
+(locale) and §S19 (media download).
 
 ## How a run uses this matrix
 
@@ -847,12 +865,54 @@ Dir-path menu (ST-11) = CM-13 (setting-page drops `Edit Parent Path`).
 
 ---
 
+## MD — Media download from URL (mandatory core, needs network)
+
+The only rows that exercise the shipped external binaries. `downloadVideoOrAudio`
+(`src/server/appHelpers.ts`) spawns `bin-helper/yt/yt-dlp`, pointing it at
+`bin-helper/ffmpeg/bin` (`--ffmpeg-location`) and `bin-helper/qjs/qjs`
+(`--no-js-runtimes --js-runtimes quickjs:<path>`). All three are committed prebuilt
+per platform and copied in by `extra-work/copy-build.mjs` — nothing is downloaded at
+install time.
+
+Use the canonical link from the mandatory-core section above.
+
+| ID | Target | Interactions | Pass condition |
+|---|---|---|---|
+| MD-01 | Video download from URL (`BackgroundVideosComp`) | 🖱️R Videos tab empty area → `Download From URL` → ⌨️✎ link → `Ok` | progress bar runs; the finished file appears in the videos dir AND as a new thumbnail in the tab (dir listing refreshes itself). yt-dlp merges video+audio via ffmpeg, so a merged container proves the shipped ffmpeg works (src: src/background/BackgroundVideosComp.tsx:160-201 · src/server/appHelpers.ts:219-323) |
+| MD-02 | Audio download from URL (`BackgroundAudiosComp`) | 🖱️R ♫Audios♫ split empty area → `Download From URL` → ⌨️✎ same link → `Ok` | popup label reads **Audio URL:** (not Video URL); result is an **`.mp3`** in the audios dir — the app passes `-x --audio-format mp3 --audio-quality 0`, so this is the only row proving the shipped ffmpeg has an mp3 encoder (`libmp3lame`) (src: src/background/BackgroundAudiosComp.tsx:32-76) |
+| MD-03 | Invalid-URL guard (`askForURL`) | ⌨️✎ a non-`http` string → `Ok` | no download starts; toast "Invalid URL". Empty input marks the box `is-invalid` (src: src/background/downloadHelper.tsx:54-78) |
+
+**Reading a failure — do not report it as a code bug without this triage:**
+
+1. `ERROR: unable to download video data: HTTP Error 403: Forbidden` (often mid-transfer,
+   after tens of MB) is **YouTube-side throttling**, not the app. It is likeliest when the
+   same video was pulled minutes earlier. Retry once before filing anything.
+2. Confirm which layer broke by running the binary directly — a 10 KB probe that does not
+   touch the app:
+   `bin-helper\yt\yt-dlp.exe --no-js-runtimes --js-runtimes quickjs:<qjs> --no-playlist --test -o <tmp>\p.%(ext)s <link>`
+   (`--test` truncates to 10 KB; the trailing `Postprocessing: Conversion failed!` is
+   expected from truncated input and is NOT a failure).
+3. `WARNING: No supported JavaScript runtime could be found` = the qjs copy is missing or
+   the flags regressed → real Critical finding. Verify with `-v`: the debug header must
+   read `JS runtimes: quickjs-<version>` and the extractor line `[jsc:quickjs] Solving JS
+   challenges using quickjs`.
+4. **Known app bug (pre-existing, do not re-file as new):** a failed download leaves its
+   `temp-<ts>.f<fmt>.*.part` behind in the data dir — the error path only checks for the
+   final file. Clean it up after the run and note it.
+5. A download that succeeds when the destination name already exists lands as
+   `<name> (1).<ext>` — expected de-duplication, not a bug.
+
+BLOCKED is acceptable **only** with no network; say so in `note`. Never mark MD PASS from
+a toast alone — check the file on disk (or the refreshed thumbnail), per the evidence rule.
+
+---
+
 ## Row counts (for the coverage denominator)
 
 GL 22 · NAV 16 · PL 31 · PM 113 · PR 26 · RD 52 · ED 39 · ST 33 · PU 18 · SP 21 ·
-SC 7 · CM 92 · KB 60 · LT 5 = **535 rows total**. Compute the denominator per run as
-`535 − EXCLUDED` (hardware and policy exclusions vary by machine).
+SC 7 · CM 92 · KB 60 · LT 5 · MD 3 = **538 rows total**. Compute the denominator per run
+as `538 − EXCLUDED` (hardware and policy exclusions vary by machine).
 
 > Reminder: whatever the focus area, the **mandatory core** — screen (SP-01, SP-02,
-> SC-01, SC-02, PR-04, one clear key) **and locale (LT-01, LT-02)** — must appear in
-> every run's state file.
+> SC-01, SC-02, PR-04, one clear key), **locale (LT-01, LT-02)** and **media download
+> (MD-01, MD-02)** — must appear in every run's state file.

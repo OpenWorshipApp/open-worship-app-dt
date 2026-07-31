@@ -1,9 +1,11 @@
 import FileSource from '../helper/FileSource';
 import { type AnyObjectType } from '../helper/typeHelpers';
+import { tran } from '../lang/langHelpers';
 import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
 import { electronSendAsync } from './appHelpers';
 import appProvider from './appProvider';
 import { fsDeleteDir, fsReadFile, pathJoin } from './fileHelpers';
@@ -22,39 +24,26 @@ export async function removeDocxHtmlsPreview(filePath: string) {
     return await fsDeleteDir(outDir);
 }
 
-type DocxToHtmlsDataType = {
-    isSuccessful: boolean;
-    message?: string;
-};
-
 export async function docxToHtmls(filePath: string, outDir: string) {
     const progressBarKey = `Exporting DOCX Pages "${FileSource.getInstance(filePath).name}"`;
+    showSimpleToast(
+        tran('Exporting DOCX Pages'),
+        tran('Please wait while the DOCX pages are being exported...'),
+    );
     showProgressBar(progressBarKey);
-    const result = await electronSendAsync<DocxToHtmlsDataType>(
+    const isSuccess = await electronSendAsync<boolean>(
         'main:app:docx-to-htmls',
         { filePath, outDir },
     );
     hideProgressBar(progressBarKey);
-    return result;
+    return isSuccess;
 }
 
-let version: string | null = null;
-type DocxToHtmlsVersionDataType = {
-    version: string | null;
-    message?: string;
-};
-
-export function getDocxToHtmlsVersion() {
-    return unlocking('get-docx-to-htmls-version', async () => {
-        if (version !== null) {
-            return version;
-        }
-        const result = await electronSendAsync<DocxToHtmlsVersionDataType>(
-            'main:app:get-docx-to-htmls-version',
-        );
-        version = result.version;
-        return result.version;
-    });
+export async function getDocxToHtmlsVersion() {
+    const version = await electronSendAsync<string>(
+        'main:app:get-docx-to-htmls-version',
+    );
+    return version;
 }
 
 export type DocxPageDataType100 = {

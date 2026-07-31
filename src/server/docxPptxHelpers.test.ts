@@ -11,6 +11,7 @@ const {
     resolvePathMock,
     unlockingMock,
     generateFileMD5Mock,
+    showSimpleToastMock,
 } = vi.hoisted(() => ({
     fileSourceGetInstanceMock: vi.fn(),
     showProgressBarMock: vi.fn(),
@@ -24,6 +25,15 @@ const {
         return await callback();
     }),
     generateFileMD5Mock: vi.fn(),
+    showSimpleToastMock: vi.fn(),
+}));
+
+vi.mock('../lang/langHelpers', () => ({
+    tran: (key: string) => key,
+}));
+
+vi.mock('../toast/toastHelpers', () => ({
+    showSimpleToast: showSimpleToastMock,
 }));
 
 vi.mock('../helper/FileSource', () => ({
@@ -83,7 +93,7 @@ describe('docxHelpers and pptxHelpers', () => {
         );
     });
 
-    test('removes docx previews, exports HTML, and caches the tool version', async () => {
+    test('removes docx previews, exports HTML, and reads the tool version', async () => {
         const module = await loadDocxModule();
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
             if (filePath === '/docs/book.docx') {
@@ -97,8 +107,8 @@ describe('docxHelpers and pptxHelpers', () => {
         });
         fsDeleteDirMock.mockResolvedValue(undefined);
         electronSendAsyncMock
-            .mockResolvedValueOnce({ isSuccessful: true })
-            .mockResolvedValueOnce({ version: '1.2.3' });
+            .mockResolvedValueOnce(true)
+            .mockResolvedValueOnce('1.2.3');
 
         await expect(
             module.removeDocxHtmlsPreview('/docs/book.docx'),
@@ -109,7 +119,11 @@ describe('docxHelpers and pptxHelpers', () => {
 
         await expect(
             module.docxToHtmls('/docs/book.docx', '/docs/out'),
-        ).resolves.toEqual({ isSuccessful: true });
+        ).resolves.toBe(true);
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Exporting DOCX Pages',
+            'Please wait while the DOCX pages are being exported...',
+        );
         expect(showProgressBarMock).toHaveBeenCalledWith(
             'Exporting DOCX Pages "book"',
         );
@@ -118,12 +132,7 @@ describe('docxHelpers and pptxHelpers', () => {
         );
 
         await expect(module.getDocxToHtmlsVersion()).resolves.toBe('1.2.3');
-        await expect(module.getDocxToHtmlsVersion()).resolves.toBe('1.2.3');
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(2);
-        expect(unlockingMock).toHaveBeenCalledWith(
-            'get-docx-to-htmls-version',
-            expect.any(Function),
-        );
     });
 
     test('builds docx page data after invalidating stale preview output', async () => {
@@ -158,7 +167,7 @@ describe('docxHelpers and pptxHelpers', () => {
             throw new Error(`Unexpected file source: ${filePath}`);
         });
         generateFileMD5Mock.mockResolvedValue('good-md5');
-        electronSendAsyncMock.mockResolvedValue({ isSuccessful: true });
+        electronSendAsyncMock.mockResolvedValue(true);
         fsReadFileMock.mockResolvedValue('<html>page</html>');
 
         await expect(module.getDocxData('/docs/book.docx')).resolves.toEqual({
@@ -211,7 +220,7 @@ describe('docxHelpers and pptxHelpers', () => {
             throw new Error(`Unexpected file source: ${filePath}`);
         });
         generateFileMD5Mock.mockResolvedValue('md5');
-        electronSendAsyncMock.mockResolvedValue({ isSuccessful: false });
+        electronSendAsyncMock.mockResolvedValue(false);
 
         await expect(
             module.getDocxData('/docs/missing.docx'),
@@ -219,7 +228,7 @@ describe('docxHelpers and pptxHelpers', () => {
         expect(electronSendAsyncMock).toHaveBeenCalledTimes(3);
     });
 
-    test('removes pptx previews, gets slide counts, exports HTML, caches versions, and removes slide backgrounds', async () => {
+    test('removes pptx previews, gets slide counts, exports HTML, and reads the tool version', async () => {
         const module = await loadPptxModule();
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
             if (filePath === '/slides/demo.pptx') {
@@ -234,9 +243,8 @@ describe('docxHelpers and pptxHelpers', () => {
         fsDeleteDirMock.mockResolvedValue(undefined);
         electronSendAsyncMock
             .mockResolvedValueOnce(12)
-            .mockResolvedValueOnce({ isSuccessful: true })
-            .mockResolvedValueOnce({ version: '2.3.4' })
-            .mockResolvedValueOnce(true);
+            .mockResolvedValueOnce(true)
+            .mockResolvedValueOnce('2.3.4');
 
         await expect(
             module.removePptxHtmlsPreview('/slides/demo.pptx'),
@@ -248,23 +256,20 @@ describe('docxHelpers and pptxHelpers', () => {
         );
         await expect(
             module.pptxToHtmls('/slides/demo.pptx', '/slides/out'),
-        ).resolves.toEqual({ isSuccessful: true });
-        await expect(module.getPptxToHtmlsVersion()).resolves.toBe('2.3.4');
-        await expect(module.getPptxToHtmlsVersion()).resolves.toBe('2.3.4');
-        await expect(
-            module.removeSlideBackground('/slides/demo.pptx'),
         ).resolves.toBe(true);
+        await expect(module.getPptxToHtmlsVersion()).resolves.toBe('2.3.4');
 
+        expect(showSimpleToastMock).toHaveBeenCalledWith(
+            'Exporting PPTX Slides',
+            'Please wait while the slides are being exported...',
+        );
         expect(showProgressBarMock).toHaveBeenCalledWith(
             'Exporting PPTX Slides "demo"',
         );
         expect(hideProgressBarMock).toHaveBeenCalledWith(
             'Exporting PPTX Slides "demo"',
         );
-        expect(electronSendAsyncMock).toHaveBeenCalledWith(
-            'main:app:ms-pp-remove-slides-bg',
-            { filePath: '/slides/demo.pptx' },
-        );
+        expect(electronSendAsyncMock).toHaveBeenCalledTimes(3);
     });
 
     test('builds pptx slide data with sub-html content after invalidating stale previews', async () => {
@@ -315,7 +320,7 @@ describe('docxHelpers and pptxHelpers', () => {
             throw new Error(`Unexpected file source: ${filePath}`);
         });
         generateFileMD5Mock.mockResolvedValue('new-md5');
-        electronSendAsyncMock.mockResolvedValue({ isSuccessful: true });
+        electronSendAsyncMock.mockResolvedValue(true);
         fsReadFileMock.mockImplementation(async (filePath: string) => {
             return `<html>${filePath}</html>`;
         });
@@ -377,7 +382,7 @@ describe('docxHelpers and pptxHelpers', () => {
             throw new Error(`Unexpected file source: ${filePath}`);
         });
         generateFileMD5Mock.mockResolvedValue('md5');
-        electronSendAsyncMock.mockResolvedValue({ isSuccessful: false });
+        electronSendAsyncMock.mockResolvedValue(false);
 
         await expect(
             module.getPptxData('/slides/missing.pptx'),

@@ -1169,8 +1169,7 @@ const appProviderMock = {
             return helper;
         },
         ffmpegBinPath: '',
-        denoBinPath: '',
-        jsRuntimeBinPath: null,
+        qjsBinPath: '',
     },
     windowTitle: globalThis.document.title,
     POPUP_FRAME_NAME_PREFIX,

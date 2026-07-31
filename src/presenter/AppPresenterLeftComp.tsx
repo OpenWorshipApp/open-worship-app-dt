@@ -3,6 +3,7 @@ import { lazy } from 'react';
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import appProvider from '../server/appProvider';
+import { tran } from '../lang/langHelpers';
 
 const LazyAppDocumentListComp = lazy(() => {
     return import('../app-document-list/VaryAppDocumentListComp');
@@ -28,13 +29,13 @@ export default function AppPresenterLeftComp() {
                 {
                     children: LazyAppDocumentListComp,
                     key: 'v1',
-                    widgetName: 'Document List',
+                    widgetName: tran('Document List'),
                     className: 'app-flex-item',
                 },
                 {
                     children: LazyLyricListComp,
                     key: 'v2',
-                    widgetName: 'Lyric List',
+                    widgetName: tran('Lyric List'),
                     className: 'app-flex-item',
                 },
                 ...(appProvider.systemUtils.isDev
@@ -42,7 +43,7 @@ export default function AppPresenterLeftComp() {
                           {
                               children: LazyPlaylistListComp,
                               key: 'v3',
-                              widgetName: 'Playlist List',
+                              widgetName: tran('Playlist List'),
                               className: 'app-flex-item',
                           },
                       ]

@@ -541,8 +541,10 @@ describe('bible-list bibleHelpers', () => {
     });
 
     test('exportToWordDocument writes fonts and reveals the document', async () => {
+        // the docx needs the real installed font name (`globalFontFamily`),
+        // not the in-app `@font-face` alias (`fontFamily`)
         h.getLangDataAsyncMock.mockResolvedValue({
-            fontFamily: 'FontA',
+            globalFontFamily: 'FontA',
             getFontFamilyFiles: () => ['/fonts/a.ttf'],
         });
         h.getFileBase64Mock.mockResolvedValue('base64data');
@@ -575,7 +577,7 @@ describe('bible-list bibleHelpers', () => {
     });
 
     test('exportToWordDocument skips the fonts prompt when there are none', async () => {
-        h.getLangDataAsyncMock.mockResolvedValue({ fontFamily: null });
+        h.getLangDataAsyncMock.mockResolvedValue({ globalFontFamily: null });
         h.fsCheckFileExistMock.mockResolvedValue(true);
         const items = [
             {

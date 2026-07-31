@@ -12,13 +12,16 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Screen sync-group echo guard](screen-sync-group-echo-guard.md) — noSyncGroupMap is sticky, so color-note groups silently go one-way; reload now repairs the resulting divergence
 - [Lint known-failure note is stale](lint-known-failure-stale.md) — CLAUDE.md's ElectronMainController icon.png failure is fixed; don't assume a lint abort is "pre-existing"
 - [Dev HMR stale state during QA](dev-hmr-stale-state-qa.md) — an HMR reload kills keyboard layers and unmounts overlays; reload fully before calling it a regression
+- [`build` kills the running dev app](build-kills-running-dev-app.md) — `electron:build` rm -rf's `electron-build/`, the app's own main entry; verify live FIRST, build last
 - [CDP dynamic import hijack](cdp-dynamic-import-hijack.md) — never `import()` app modules in evaluate_script; it re-runs `document.onkeydown = …` and kills every app shortcut
 - [Bible Note floating toolbar width gate](bible-note-floating-toolbar-width.md) — the selection format popup only exists above ~1025px; the default 870px note window never shows it
 - [On-screen slide setting all-or-nothing — FIXED](screen-onscreen-setting-all-or-nothing.md) — refactor21 now drops only invalid entries; stop blaming this path for blank-after-restart screens
-- [Apply Settings skips popups](apply-settings-skips-popups.md) — reloadAll() only knows the main window, so open popups keep the stale language/theme/paths
+- [Apply Settings skips popups — FIXED](apply-settings-skips-popups.md) — refactor22 reloads popups too; a stale-looking label is a missed reload, not a missing `tran()`
 - [Injected app-document `?file=` param](injected-app-document-file-param.md) — every renderer treats `?file=` as a document name, so bibleNote/lyric/web popups always log a load error
 - [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — `tran()` throws (blanks the page) on a missing key; concatenated + dynamic `tran(prop)` sites hide from literal grepping
 - [Confirm popup labels are auto-tran'd](confirm-popup-labels-auto-tran.md) — ConfirmPopupComp `tran()`s the button labels; pass raw English keys, and pair `'Yes'` with `'No'`
 - [Vitest env-leak flakes](vitest-env-leak-flakes.md) — node-env tests importing `appProvider` pass only when a jsdom file shares the worker; plus the whole-suite "reading 'config'" flake
 - [open-lyric subtree-branch dep](open-lyric-subtree-branch-dep.md) — npm can't install a git subdirectory; the dep is a subtree-split branch that must be re-split + force-pushed on every update
 - [Blob downloads pop a Save As dialog](blob-download-pops-save-dialog.md) — no will-download handler, so `<a download>` orphans a .tmp; write files with fsWriteFile instead
+- [Screen change-bible IPC — FIXED](screen-change-bible-dead-ipc.md) — refactor22 added the `src/` receiver; stepping works from the presenter, still not from the reader
+- [QA: intentional, not bugs](qa-intentional-not-bugs.md) — PPTX blank slide0, bible-present swapping the background, and the video-sync log burst are all deliberate

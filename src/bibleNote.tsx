@@ -1,3 +1,6 @@
+import 'bible-note/styles.css';
+
+import './bootstrapCss';
 import { init } from './boot';
 import { run } from './others/main';
 import NoteItemEditorPopupComp from './bible-list/note/NoteItemEditorPopupComp';

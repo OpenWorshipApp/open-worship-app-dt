@@ -44,7 +44,7 @@ const {
             },
             ytUtils: {
                 ffmpegBinPath: '/bin/ffmpeg',
-                denoBinPath: '/bin/deno',
+                qjsBinPath: '/bin/qjs',
                 getYTHelper,
             },
         },

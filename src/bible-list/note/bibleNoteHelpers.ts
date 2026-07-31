@@ -1,4 +1,9 @@
-import type { BibleNote } from 'BibleNote.js';
+import {
+    BibleNote,
+    type LookupDataType,
+    type BibleNoteProps,
+    type FilePathResolver,
+} from 'bible-note';
 
 import type { MouseEvent as ReactMouseEvent } from 'react';
 
@@ -18,6 +23,7 @@ import type NoteItem from './NoteItem';
 import {
     getAllLangsAsync,
     getCurrentLocale,
+    getLangDataAsync,
     initLangCss,
 } from '../../lang/langHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
@@ -59,17 +65,6 @@ async function resolveLocalFilePath(file: LocalFile | null | undefined) {
 
 function revealFile(filePath: string) {
     showFileOrDirExplorer(filePath);
-}
-
-export async function getBibleNoteConstructor() {
-    let AppBibleNote = (globalThis as any).AppBibleNote;
-    while (AppBibleNote === undefined) {
-        await new Promise((resolve) => {
-            setTimeout(resolve, 100);
-        });
-        AppBibleNote = (globalThis as any).AppBibleNote;
-    }
-    return AppBibleNote as typeof BibleNote;
 }
 
 async function shortToVerseData(shortVerse: string) {
@@ -241,8 +236,22 @@ export async function initBibleNote({
         appProvider.messageUtils.sendData('all:app:print');
     };
 
-    const AppBibleNote = await getBibleNoteConstructor();
-    const bibleNote = new AppBibleNote({
+    const enLangData = await getLangDataAsync('en-US');
+    if (enLangData === null) {
+        throw new Error('Failed to load English language data');
+    }
+    const enLookupData = await enLangData.getLookupData?.('');
+    if (!enLookupData) {
+        throw new Error('Failed to load English lookup data');
+    }
+    const lookupData: LookupDataType = {
+        dataMap: {
+            en: enLookupData,
+        },
+        default: 'en',
+    };
+    const bibleNoteProps: BibleNoteProps = {
+        lookupData,
         getLangCode,
         editorExtraFontFamilies,
         loadData: () => {
@@ -257,7 +266,7 @@ export async function initBibleNote({
         },
         storageManager: storageManager as any,
         stickyNoteExtraFontFamilies,
-        resolveFilePath: resolveLocalFilePath,
+        resolveFilePath: resolveLocalFilePath as FilePathResolver,
         revealFile,
         print,
         isOnApp: true,
@@ -268,7 +277,8 @@ export async function initBibleNote({
         excalidrawClearLibrariesFileList,
         excalidrawLoadLibrariesFileList,
         excalidrawSaveLibrariesFile,
-    });
+    };
+    const bibleNote = new BibleNote(bibleNoteProps);
 
     // per-note: a module-level shared timer would drop note A's reload when
     // note B changes within the debounce window
