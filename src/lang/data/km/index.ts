@@ -1,4 +1,13 @@
-import type { LanguageDataType } from '../../langHelpers';
+import {
+    EditorPluginKmKh,
+    OpenLyricMarkdownManagerPluginKmKh,
+    OpenLyricPluginKmKh,
+} from 'open-lyric-plugin-km-kh';
+
+import {
+    genOpenLyricFontFaces,
+    type LanguageDataType,
+} from '../../langHelpers';
 import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
 
 import btbBlack from './fonts/Battambang/Battambang-Black.ttf';
@@ -1026,6 +1035,37 @@ const lang: LanguageDataType = {
     },
     getBibleCrossRefBundleFilePath() {
         return resolveGzBundleFilePath(bbCR);
+    },
+    initOpenLyricPlugins: ({ editor, openLyric, openLyricMarkdownManager }) => {
+        editor?.addPlugin('km-KH', new EditorPluginKmKh());
+        if (openLyric !== undefined) {
+            const plugin = new OpenLyricPluginKmKh();
+            openLyric.addPlugin('km-KH', plugin);
+            const khmerFontFaces = plugin.contributes.language?.fontFaces ?? [];
+            const newFontFaces = genOpenLyricFontFaces(
+                (openLyric.fontFaces as any) ?? [],
+                {
+                    title: 'Khmer',
+                    fontFaces: [fontFamily, ...khmerFontFaces],
+                    indexRange: 2,
+                },
+            );
+            openLyric.fontFaces = newFontFaces;
+        }
+        if (openLyricMarkdownManager !== undefined) {
+            const plugin = new OpenLyricMarkdownManagerPluginKmKh();
+            openLyricMarkdownManager.addPlugin('km-KH', plugin);
+            const khmerFontFaces = plugin.contributes.language?.fontFaces ?? [];
+            const newFontFaces = genOpenLyricFontFaces(
+                (openLyricMarkdownManager.fontFaces as any) ?? [],
+                {
+                    title: 'Khmer',
+                    fontFaces: [fontFamily, ...khmerFontFaces],
+                    indexRange: 2,
+                },
+            );
+            openLyricMarkdownManager.fontFaces = newFontFaces;
+        }
     },
 };
 

@@ -61,7 +61,11 @@ export default function FontFamilyControlComp({
                 >
                     {fontFamilies.map(([key, value]) => {
                         return (
-                            <option key={key} value={key}>
+                            <option
+                                key={key}
+                                value={key}
+                                style={{ fontFamily: key }}
+                            >
                                 {value}
                             </option>
                         );

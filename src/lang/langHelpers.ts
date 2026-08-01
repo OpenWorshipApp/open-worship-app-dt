@@ -7,6 +7,11 @@ import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { type LookupLangData } from 'bible-note';
+import type {
+    Editor,
+    OpenLyric,
+    OpenLyricMarkdownManager,
+} from 'open-lyric';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -479,6 +484,11 @@ export type LanguageDataType = {
     sanitizeTranKey: (key: string) => string;
     transformBibleBookName: (bookName: string) => string[];
     getBibleCrossRefBundleFilePath: () => string;
+    initOpenLyricPlugins?: (data: {
+        editor?: Editor;
+        openLyric?: OpenLyric;
+        openLyricMarkdownManager?: OpenLyricMarkdownManager;
+    }) => void;
 };
 
 type CustomMenuItemType = {
@@ -869,4 +879,29 @@ export async function initLangAppMenu() {
         });
     }
     setAppMenuItems('lang', menusData as CustomMenusDataType);
+}
+
+type OpenLyricFontFace = {
+    title: string;
+    fontFaces: string[];
+    indexRange: number;
+}[];
+export function genOpenLyricFontFaces(
+    fontFacesList: OpenLyricFontFace,
+    fontFaceData: {
+        title: string;
+        fontFaces: string[];
+        indexRange: number;
+    },
+) {
+    const fontFaceMap = Object.fromEntries(
+        fontFacesList.map((item) => {
+            return [item.title, item];
+        }),
+    );
+    fontFaceMap[fontFaceData.title] = fontFaceData;
+    const newFontFacesList = Object.values(fontFaceMap);
+    return newFontFacesList.sort((a, b) => {
+        return a.indexRange - b.indexRange;
+    });
 }

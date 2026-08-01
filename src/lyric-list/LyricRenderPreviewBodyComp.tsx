@@ -81,10 +81,11 @@ export default function LyricRenderPreviewBodyComp() {
 
     return (
         <div
-            className="w-100 h-100 p-1 app-inner-shadow"
+            className="w-100 p-1 app-inner-shadow"
             style={{
                 overflowX: 'hidden',
                 overflowY: 'auto',
+                height: 'fit-content',
             }}
             ref={containerRef}
         />

@@ -11,6 +11,9 @@ export function openPopupLyricEditorWindow(lyric: Lyric) {
     return openPopupWindow(
         pathname,
         `${fileFullName}_${Date.now()}`,
-        crypto.randomUUID(),
+        'lyric-editor',
+        {
+            appTopToMain: true,
+        },
     );
 }

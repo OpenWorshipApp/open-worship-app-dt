@@ -1,15 +1,10 @@
 import {
     Editor,
-    EditorOpenLyricPlugin,
     OpenLyric,
     OpenLyricMarkdownManager,
     OpenLyricDashboard,
+    EditorOpenLyricPlugin,
 } from 'open-lyric';
-import {
-    EditorPluginKmKh,
-    OpenLyricMarkdownManagerPluginKmKh,
-    OpenLyricPluginKmKh,
-} from 'open-lyric-plugin-km-kh';
 
 import { dirSourceSettingNames } from './helper/constants.ts';
 import DirSource from './helper/DirSource.ts';
@@ -17,8 +12,10 @@ import { getParamFileFullName } from './helper/domHelpers.ts';
 import Lyric from './lyric-list/Lyric.ts';
 import { pathJoin, fsExistSync } from './server/fileHelpers.ts';
 import appProvider from './server/appProvider.ts';
+import { checkIsDarkMode } from './others/themeHelpers.tsx';
+import { getAllLangsAsync } from './lang/langHelpers.ts';
 
-export function getDashboardInstance(): OpenLyricDashboard {
+export function getDashboardInstance() {
     OpenLyricDashboard.installShellStyle();
     Editor.installShellStyle();
     OpenLyricMarkdownManager.installShellStyle();
@@ -41,25 +38,31 @@ export function getDashboardInstance(): OpenLyricDashboard {
 
     const openLyric = new OpenLyric();
     dashboard.openLyric = openLyric;
-    openLyric.addPlugin('km-KH', new OpenLyricPluginKmKh());
 
     const openLyricMarkdownManager = new OpenLyricMarkdownManager();
     dashboard.openLyricMarkdownManager = openLyricMarkdownManager;
 
     const editor = new Editor({ selectionState: true });
     dashboard.editor = editor;
-    editor.addPlugin('km-KH', new EditorPluginKmKh());
     editor.addPlugin('open-lyric', new EditorOpenLyricPlugin());
 
-    openLyricMarkdownManager.addPlugin(
-        'km-KH',
-        new OpenLyricMarkdownManagerPluginKmKh(),
-    );
+    const isDark = checkIsDarkMode();
+    dashboard.theme = isDark ? 'dark' : 'light';
+
+    getAllLangsAsync().then((langDataList) => {
+        for (const langData of langDataList) {
+            langData.initOpenLyricPlugins?.({
+                editor: editor,
+                openLyric: openLyric,
+                openLyricMarkdownManager: openLyricMarkdownManager,
+            });
+        }
+    });
 
     return dashboard;
 }
 
-function getLyric() {
+export async function getLyric() {
     const fileFullName = getParamFileFullName(globalThis.location.href);
     if (fileFullName === null) {
         throw new Error('Lyric file not specified');
@@ -77,16 +80,6 @@ function getLyric() {
     const lyric = Lyric.getInstance(filePath);
     const suffix = `(${lyric.fileSource.name})`;
     document.title = `${appProvider.windowTitle} - ${suffix}`;
-    return lyric;
-}
-
-export function initDataLoading(dashboard: OpenLyricDashboard) {
-    const lyric = getLyric();
-    dashboard.loadValue = async () => {
-        const content = await lyric.getContent();
-        return content;
-    };
-    dashboard.saveValue = async (value) => {
-        await lyric.setContent(value);
-    };
+    const content = await lyric.getContent();
+    return { lyric, content };
 }

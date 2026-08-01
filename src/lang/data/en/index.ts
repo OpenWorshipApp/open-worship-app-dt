@@ -1,8 +1,12 @@
-import type { LanguageDataType } from '../../langHelpers';
+import {
+    genOpenLyricFontFaces,
+    type LanguageDataType,
+} from '../../langHelpers';
 import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
 
 import bibleBooks from './bibleBooks.json';
 import bbCR from './bb-cr.gz.bundle';
+import { getFontFamilies } from '../../../server/fontHelpers';
 
 const lang: LanguageDataType = {
     packageDir: __dirname,
@@ -101,6 +105,32 @@ const lang: LanguageDataType = {
             namesMap,
             locationsMap,
         };
+    },
+    initOpenLyricPlugins: ({ openLyric, openLyricMarkdownManager }) => {
+        getFontFamilies().then((fontFamilies) => {
+            if (openLyric !== undefined) {
+                const newFontFaces = genOpenLyricFontFaces(
+                    (openLyric.fontFaces as any) ?? [],
+                    {
+                        title: 'System',
+                        fontFaces: fontFamilies,
+                        indexRange: 2,
+                    },
+                );
+                openLyric.fontFaces = newFontFaces;
+            }
+            if (openLyricMarkdownManager !== undefined) {
+                const newFontFaces = genOpenLyricFontFaces(
+                    (openLyricMarkdownManager.fontFaces as any) ?? [],
+                    {
+                        title: 'System',
+                        fontFaces: fontFamilies,
+                        indexRange: 2,
+                    },
+                );
+                openLyricMarkdownManager.fontFaces = newFontFaces;
+            }
+        });
     },
 };
 

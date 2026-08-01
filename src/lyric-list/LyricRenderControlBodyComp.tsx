@@ -7,8 +7,6 @@ import { useLyricEditingManagerContext } from './LyricEditingManager';
 import FontFamilyControlComp from '../others/FontFamilyControlComp';
 import AppRangeComp from '../others/AppRangeComp';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
-import appProvider from '../server/appProvider';
-import { forceReloadAppWindows } from '../setting/settingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 export default function LyricRenderControlBodyComp() {
@@ -38,16 +36,13 @@ export default function LyricRenderControlBodyComp() {
             lyricEditingManager.scale = scale;
         });
     };
-    const handleApply = useCallback(() => {
-        forceReloadAppWindows();
-    }, []);
     const selectedLyricRef = useAppCurrentRef(selectedLyric);
     const handleEdit = useCallback(() => {
         openPopupLyricEditorWindow(selectedLyricRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div>
+        <div className="d-flex align-items-center justify-content-evenly">
             <div className="d-flex">
                 <strong>Font:</strong>
                 <FontFamilyControlComp
@@ -58,7 +53,7 @@ export default function LyricRenderControlBodyComp() {
                     isShowingLabel={false}
                 />
             </div>
-            <div className="d-flex w-100">
+            <div className="d-flex" style={{ maxWidth: '250px' }}>
                 <strong>Scale:</strong>
                 <div className="flex-grow-1">
                     <AppRangeComp
@@ -74,28 +69,13 @@ export default function LyricRenderControlBodyComp() {
                     />
                 </div>
             </div>
-            {appProvider.isPageLyricEditor ? (
-                <div className="w-100 d-flex justify-content-center py-2">
-                    <button
-                        className="btn btn-sm btn-outline-warning"
-                        title={tran('Editor') + ` "${selectedLyric.filePath}"`}
-                        onClick={handleApply}
-                    >
-                        {tran('Apply')}
-                    </button>
-                </div>
-            ) : (
-                <div className="w-100 d-flex justify-content-center py-2">
-                    <button
-                        className="btn btn-sm btn-outline-info"
-                        title={tran('Editor') + ` "${selectedLyric.filePath}"`}
-                        onClick={handleEdit}
-                    >
-                        {tran('Edit')}{' '}
-                        <i className="bi bi-box-arrow-up-right"></i>
-                    </button>
-                </div>
-            )}
+            <button
+                className="btn btn-sm btn-outline-info"
+                title={tran('Editor') + ` "${selectedLyric.filePath}"`}
+                onClick={handleEdit}
+            >
+                {tran('Edit')} <i className="bi bi-box-arrow-up-right" />
+            </button>
         </div>
     );
 }
