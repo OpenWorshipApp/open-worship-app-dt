@@ -1,12 +1,15 @@
 import BibleItem from '../../bible-list/BibleItem';
-import type { CanvasItemHtmlPropsType } from './CanvasItemHtml';
-import CanvasItemHtml from './CanvasItemHtml';
-import { cloneJson } from '../../helper/helpers';
-import { CanvasItemError } from './CanvasItem';
+import type { HtmlPropsType } from './CanvasItemHtml';
+import CanvasItem, {
+    CanvasItemError,
+    type CanvasItemPropsType,
+} from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
 import type { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
+import { genTextDefaultBoxStyle, genTextStyle } from './canvasHelpers';
+import CanvasItemHtml, { genHtmlDefaultProps } from './CanvasItemHtml';
 
 export type BibleRenderedVerseType = {
     num: string;
@@ -18,11 +21,14 @@ export type BibleRenderedType = {
     // Absent on items saved before verse numbers were rendered.
     verses?: BibleRenderedVerseType[];
 };
-export type CanvasItemBiblePropsType = CanvasItemHtmlPropsType & {
-    bibleKeys: string[];
-    bibleItemTarget: BibleTargetType;
-    bibleRenderingList: BibleRenderedType[];
-};
+export type CanvasItemBiblePropsType = {
+    type: 'bible';
+} & CanvasItemPropsType &
+    HtmlPropsType & {
+        bibleKeys: string[];
+        bibleItemTarget: BibleTargetType;
+        bibleRenderingList: BibleRenderedType[];
+    };
 
 // A verse block is much longer than a title, so it starts smaller than a text
 // item's default.
@@ -80,12 +86,12 @@ function genVersesHtml({ text, verses }: BibleRenderedType) {
         .join(' ');
 }
 
-export default class CanvasItemBibleItem extends CanvasItemHtml {
-    props: CanvasItemBiblePropsType;
-
-    constructor(props: CanvasItemBiblePropsType) {
-        super(props);
-        this.props = cloneJson(props);
+export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBiblePropsType> {
+    static genStyle(props: CanvasItemBiblePropsType) {
+        return genTextStyle(props);
+    }
+    getStyle() {
+        return CanvasItemBibleItem.genStyle(this.props);
     }
 
     toJson(): CanvasItemBiblePropsType {
@@ -170,10 +176,18 @@ export default class CanvasItemBibleItem extends CanvasItemHtml {
         }
     }
 
+    static genDefaultItem() {
+        return CanvasItemHtml.fromJson({
+            ...genHtmlDefaultProps(),
+            ...genTextDefaultBoxStyle(),
+            type: 'html',
+        }) as CanvasItemHtml;
+    }
+
     static async fromBibleItem(id: number, bibleItem: BibleItem) {
         const { bibleRenderingList, fontFamily } =
             await CanvasItemBibleItem.getBibleItemProps(bibleItem);
-        const newHtmlItem = super.genDefaultItem();
+        const newHtmlItem = this.genDefaultItem();
         const props = newHtmlItem.toJson();
         props.id = id;
         // `html` is left as the default's; `fromJson` derives the real one

@@ -1,8 +1,4 @@
-import {
-    EditorPluginKmKh,
-    OpenLyricMarkdownManagerPluginKmKh,
-    OpenLyricPluginKmKh,
-} from 'open-lyric-plugin-km-kh';
+import { EditorPluginKmKh } from 'open-lyric-plugin-km-kh';
 
 import {
     genOpenLyricFontFaces,
@@ -1038,31 +1034,22 @@ const lang: LanguageDataType = {
     },
     initOpenLyricPlugins: ({ editor, openLyric, openLyricMarkdownManager }) => {
         editor?.addPlugin('km-KH', new EditorPluginKmKh());
+        const option = {
+            title: 'Khmer',
+            fontFaces: [fontFamily],
+            indexRange: 2,
+        };
         if (openLyric !== undefined) {
-            const plugin = new OpenLyricPluginKmKh();
-            openLyric.addPlugin('km-KH', plugin);
-            const khmerFontFaces = plugin.contributes.language?.fontFaces ?? [];
             const newFontFaces = genOpenLyricFontFaces(
                 (openLyric.fontFaces as any) ?? [],
-                {
-                    title: 'Khmer',
-                    fontFaces: [fontFamily, ...khmerFontFaces],
-                    indexRange: 2,
-                },
+                { ...option },
             );
             openLyric.fontFaces = newFontFaces;
         }
         if (openLyricMarkdownManager !== undefined) {
-            const plugin = new OpenLyricMarkdownManagerPluginKmKh();
-            openLyricMarkdownManager.addPlugin('km-KH', plugin);
-            const khmerFontFaces = plugin.contributes.language?.fontFaces ?? [];
             const newFontFaces = genOpenLyricFontFaces(
                 (openLyricMarkdownManager.fontFaces as any) ?? [],
-                {
-                    title: 'Khmer',
-                    fontFaces: [fontFamily, ...khmerFontFaces],
-                    indexRange: 2,
-                },
+                { ...option },
             );
             openLyricMarkdownManager.fontFaces = newFontFaces;
         }
