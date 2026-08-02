@@ -1,4 +1,4 @@
-import { lazy, useCallback, useMemo, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import FileItemHandlerComp from '../others/FileItemHandlerComp';
@@ -15,7 +15,6 @@ import {
 } from './bibleHelpers';
 import { copyToClipboard } from '../server/appHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import {
     extractDropData,
@@ -193,14 +192,11 @@ export default function BibleFileComp({
     const handleReloading = useCallback(() => {
         setBible(undefined);
     }, []);
-    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     useFileSourceEvents(
         ['update'],
-        () => {
-            attemptTimeout(async () => {
-                const newBible = await Bible.fromFilePath(filePath);
-                setBible(newBible);
-            });
+        async () => {
+            const newBible = await Bible.fromFilePath(filePath);
+            setBible(newBible);
         },
         [bible],
         filePath,

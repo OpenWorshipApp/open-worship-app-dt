@@ -55,7 +55,7 @@ function LyricFilePreview({ lyric }: Readonly<{ lyric: Lyric }>) {
 
 async function checkIsOnScreen(filePath: string) {
     const lyricAppDocument =
-        LyricAppDocument.getInstanceFromLyricFilePath(filePath);
+        LyricAppDocument.getInstance(filePath);
     if (lyricAppDocument === null) {
         return false;
     }
@@ -81,13 +81,12 @@ export default function LyricFileComp({
         if (lyric !== undefined) {
             return;
         }
-        const data = Lyric.getInstance(filePath);
-        setLyric(data);
+        setLyric(Lyric.getInstance(filePath));
     }, [lyric]);
     useFileSourceEvents(
         ['update'],
         () => {
-            setLyric(undefined);
+            setLyric(Lyric.getInstance(filePath));
         },
         [],
         filePath,

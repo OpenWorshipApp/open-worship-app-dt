@@ -1,11 +1,10 @@
-import { lazy, useCallback, useMemo, useState } from 'react';
+import { lazy, useCallback, useState } from 'react';
 
 import { type ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import { type AppDocumentSourceAbs } from '../../helper/AppEditableDocumentSourceAbs';
 import { useAppEffectAsync, useAppCurrentRef } from '../../helper/appHooks';
 import { useFileSourceEvents } from '../../helper/dirSourceHelpers';
-import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
     useAttachedBackgroundData,
@@ -211,14 +210,11 @@ export default function NoteFileComp({
     const handleReloading = useCallback(() => {
         setNote(undefined);
     }, []);
-    const attemptTimeout = useMemo(() => genTimeoutAttempt(500), []);
     useFileSourceEvents(
         ['update'],
-        () => {
-            attemptTimeout(async () => {
-                const newNote = await Note.fromFilePath(filePath);
-                setNote(newNote);
-            });
+        async () => {
+            const newNote = await Note.fromFilePath(filePath);
+            setNote(newNote);
         },
         [note],
         filePath,

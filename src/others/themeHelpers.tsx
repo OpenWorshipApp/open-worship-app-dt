@@ -48,7 +48,7 @@ export function getColorParts(textColor?: string) {
     return { colorPart, invertColorPart };
 }
 
-const THEME_CHANGE_EVENT = 'app:theme-changed';
+export const THEME_CHANGE_EVENT = 'app:theme-changed';
 function applyDarkModeToApp() {
     const isDarkMode = checkIsDarkMode();
     const themeSource = isDarkMode ? 'dark' : 'light';

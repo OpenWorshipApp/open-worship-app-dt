@@ -40,7 +40,7 @@ export async function checkIsOnScreen<T>(
         if (selectedLyric === null) {
             return false;
         }
-        const lyricAppDocument = LyricAppDocument.getInstanceFromLyricFilePath(
+        const lyricAppDocument = LyricAppDocument.getInstance(
             selectedLyric.filePath,
         );
         if (lyricAppDocument === null) {

@@ -67,11 +67,12 @@ export abstract class AppDocumentSourceAbs {
                     `expected extensions: ${extensions.join(', ')}`,
             );
         }
-        if (!cache.has(filePath)) {
+        const cacheKey = `${this.mimetypeName}:${filePath}`;
+        if (!cache.has(cacheKey)) {
             const instance = createInstance();
-            cache.set(filePath, instance as any);
+            cache.set(cacheKey, instance as any);
         }
-        const instance = cache.get(filePath) as T;
+        const instance = cache.get(cacheKey) as T;
         if (instance instanceof this === false) {
             throw new TypeError('Invalid Instance');
         }

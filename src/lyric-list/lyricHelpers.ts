@@ -55,14 +55,6 @@ function useContext() {
     return context;
 }
 
-export function useSelectedLyricContext() {
-    const context = useContext();
-    if (context.selectedLyric === null) {
-        throw new Error('No selected lyric');
-    }
-    return context.selectedLyric;
-}
-
 export function useSelectedLyricSetterContext() {
     const context = useContext();
     return context.setSelectedLyric;

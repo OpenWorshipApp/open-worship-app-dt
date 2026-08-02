@@ -223,7 +223,14 @@ export default function VarySlidesComp() {
         }
     }, [varySlides]);
     if (varySlides === undefined) {
-        return <LoadingComp />;
+        return (
+            <div
+                className="w-100 d-flex justify-content-center align-items-center"
+                style={{ height: '100px' }}
+            >
+                <LoadingComp />
+            </div>
+        );
     }
     if (varySlides === null) {
         return (
