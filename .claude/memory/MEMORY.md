@@ -24,4 +24,5 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [open-lyric subtree-branch dep](open-lyric-subtree-branch-dep.md) — npm can't install a git subdirectory; the dep is a subtree-split branch that must be re-split + force-pushed on every update
 - [Blob downloads pop a Save As dialog](blob-download-pops-save-dialog.md) — no will-download handler, so `<a download>` orphans a .tmp; write files with fsWriteFile instead
 - [Screen change-bible IPC — FIXED](screen-change-bible-dead-ipc.md) — refactor22 added the `src/` receiver; stepping works from the presenter, still not from the reader
+- [TypeScript 7 side-by-side](typescript-7-side-by-side.md) — `tsc` is TS7 via `@typescript/native`; the `typescript` alias to TS6 is load-bearing for typescript-eslint, don't "fix" it
 - [QA: intentional, not bugs](qa-intentional-not-bugs.md) — PPTX blank slide0, bible-present swapping the background, and the video-sync log burst are all deliberate
