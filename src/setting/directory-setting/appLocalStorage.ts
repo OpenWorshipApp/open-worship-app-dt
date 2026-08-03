@@ -118,7 +118,17 @@ class AppLocalStorage {
 
     removeItem(key: string): void {
         const fullPath = this.toFullPath(key);
+        // Drop the in-memory entry too. getItem answers from this cache before
+        // touching disk, so a removal that left it behind kept handing back the
+        // deleted value for the rest of the session.
+        cache.deleteSync(fullPath);
         try {
+            // Removing a key that was never written is a normal case (a screen
+            // that never had a drawing, a focus panel that was never opened);
+            // unlinking a missing file would just log noise.
+            if (!fsExistSync(fullPath)) {
+                return;
+            }
             fsUnlinkSync(fullPath);
         } catch (error) {
             handleError(error);

@@ -12,7 +12,11 @@ import {
     cloneJson,
     parseJsonSafely,
 } from '../../helper/helpers';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import {
+    getSetting,
+    removeSetting,
+    setSetting,
+} from '../../helper/settingHelpers';
 import bibleScreenHelper from '../bibleScreenHelpers';
 import type { ScreenBibleManagerEventType } from '../screenBibleHelpers';
 import {
@@ -96,19 +100,19 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         }
     }
 
+    private get lineSyncKey() {
+        return `${SCREEN_BIBLE_SETTING_PREFIX}-line-sync-${this.screenId}`;
+    }
+
     get isLineSync() {
-        const settingKey = `${SCREEN_BIBLE_SETTING_PREFIX}-line-sync-${this.screenId}`;
-        return getSetting(settingKey) === 'true';
+        return getSetting(this.lineSyncKey) === 'true';
     }
 
     set isLineSync(isLineSync: boolean) {
         if (this.screenManagerBase.checkIsLockedWithMessage()) {
             return;
         }
-        setSetting(
-            `${SCREEN_BIBLE_SETTING_PREFIX}-line-sync-${this.screenId}`,
-            `${isLineSync}`,
-        );
+        setSetting(this.lineSyncKey, `${isLineSync}`);
         this.screenViewData = cloneJson(this.screenViewData);
     }
 
@@ -518,6 +522,21 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
 
     clear() {
         this.applyFullDataSrcWithSyncGroup(null);
+    }
+
+    delete() {
+        // Local teardown only — no `clear()`. clear() goes through
+        // applyFullDataSrcWithSyncGroup, which broadcasts to every screen
+        // sharing this one's color note (deleting one screen would blank its
+        // group's bible) and which a locked screen rejects outright with a
+        // toast, leaving its data behind. The persisted entry is dropped
+        // centrally by deleteScreenPersistedData.
+        removeSetting(this.lineSyncKey);
+        this._screenViewData = null;
+        this._div = null;
+        this.applyBibleViewData = () => {};
+        this.handleBibleViewVersesHighlighting = () => {};
+        super.delete();
     }
 
     static getInstance(screenId: number) {

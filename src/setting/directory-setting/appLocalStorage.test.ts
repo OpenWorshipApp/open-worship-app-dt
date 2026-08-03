@@ -247,6 +247,35 @@ describe('appLocalStorage', () => {
         expect(fsReadSyncMock).not.toHaveBeenCalled();
     });
 
+    test('removing an item drops its cached value too', async () => {
+        const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
+            await loadModule();
+        stubStorage({
+            [SELECTED_PARENT_DIR_SETTING_NAME]: '/selected',
+        });
+        fsExistSyncMock.mockImplementation((path: string) => {
+            return (
+                path === '/selected' ||
+                path === '/selected/local-storage' ||
+                path === '/selected/local-storage/saved.txt'
+            );
+        });
+
+        appLocalStorage.setItem('saved.txt', 'cached-value');
+        expect(appLocalStorage.getItem('saved.txt')).toBe('cached-value');
+
+        appLocalStorage.removeItem('saved.txt');
+        expect(fsUnlinkSyncMock).toHaveBeenCalledWith(
+            '/selected/local-storage/saved.txt',
+        );
+        // Without dropping the cache entry, getItem would keep answering
+        // 'cached-value' for the rest of the session.
+        fsExistSyncMock.mockImplementation((path: string) => {
+            return path === '/selected' || path === '/selected/local-storage';
+        });
+        expect(appLocalStorage.getItem('saved.txt')).toBeNull();
+    });
+
     test('reports unlink failures when removing stored items', async () => {
         const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
             await loadModule();
@@ -254,6 +283,15 @@ describe('appLocalStorage', () => {
             [SELECTED_PARENT_DIR_SETTING_NAME]: '/selected',
         });
         const error = new Error('unlink failed');
+        // removeItem skips a key that was never written, so the file has to
+        // look present for the unlink to be attempted at all.
+        fsExistSyncMock.mockImplementation((path: string) => {
+            return (
+                path === '/selected' ||
+                path === '/selected/local-storage' ||
+                path === '/selected/local-storage/dead.txt'
+            );
+        });
         fsUnlinkSyncMock.mockImplementation(() => {
             throw error;
         });
@@ -261,6 +299,22 @@ describe('appLocalStorage', () => {
         appLocalStorage.removeItem('dead.txt');
 
         expect(handleErrorMock).toHaveBeenCalledWith(error);
+    });
+
+    test('removing a key that was never written does not touch the disk', async () => {
+        const { appLocalStorage, SELECTED_PARENT_DIR_SETTING_NAME } =
+            await loadModule();
+        stubStorage({
+            [SELECTED_PARENT_DIR_SETTING_NAME]: '/selected',
+        });
+        fsExistSyncMock.mockImplementation((path: string) => {
+            return path === '/selected' || path === '/selected/local-storage';
+        });
+
+        appLocalStorage.removeItem('never-written.txt');
+
+        expect(fsUnlinkSyncMock).not.toHaveBeenCalled();
+        expect(handleErrorMock).not.toHaveBeenCalled();
     });
 
     test('clears stored files and localStorage, or reports clear failures', async () => {

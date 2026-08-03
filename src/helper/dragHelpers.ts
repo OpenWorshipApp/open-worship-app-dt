@@ -20,6 +20,7 @@ import Slide from '../app-document-list/Slide';
 import { cameraDragDeserialize } from '../background/backgroundHelpers';
 import { deserializeBackgroundWebDragItem } from '../background/backgroundWebUrlHelpers';
 import { tran } from '../lang/langHelpers';
+import LyricSlide from '../lyric-list/LyricSlide';
 
 export const dragStore: {
     onDropped?: ((event: any) => void) | ((event: any) => Promise<void>) | null;
@@ -99,6 +100,8 @@ function deserializeDragData({
     let item: any;
     if (type === DragTypeEnum.SLIDE) {
         item = Slide.dragDeserialize(data);
+    } else if (type === DragTypeEnum.LYRIC_SLIDE) {
+        item = LyricSlide.dragDeserialize(data);
     } else if (type === DragTypeEnum.BIBLE_ITEM) {
         item = BibleItem.dragDeserialize(data);
     } else {

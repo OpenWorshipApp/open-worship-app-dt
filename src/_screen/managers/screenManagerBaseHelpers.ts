@@ -65,7 +65,7 @@ export function saveScreenManagersSetting(deletedScreenId?: number) {
                 screenId: screenManagerBase.screenId,
                 isSelected: screenManagerBase.isSelected,
                 isLocked: screenManagerBase.isLocked,
-                stageNumber: screenManagerBase.stageNumber,
+                stageNumber: screenManagerBase.stage,
                 colorNote,
             });
         }

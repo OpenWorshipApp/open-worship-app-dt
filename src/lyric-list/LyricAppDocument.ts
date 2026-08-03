@@ -13,8 +13,12 @@ import {
     genHtmlDefaultProps,
     type CanvasItemHtmlPropsType,
 } from '../slide-editor/canvas/CanvasItemHtml';
-import { initOpenLyric } from './lyricHelpers';
+import { type SrcData } from '../helper/FileSource';
+import { type CanvasItemImagePropsType } from '../slide-editor/canvas/CanvasItemImage';
+import { initOpenLyric, LYRIC_SLIDE_TYPE_KEY } from './lyricHelpers';
 import { type OpenLyric } from 'open-lyric';
+
+export const OPEN_LYRIC_NONE_KEY = 'None';
 
 export default class LyricAppDocument extends AppDocument {
     static readonly mimetypeName: MimetypeNameType = 'lyricAppDocument';
@@ -22,9 +26,8 @@ export default class LyricAppDocument extends AppDocument {
     public isEditable = false;
     public slidePaddingPercentage = 1;
     public slideBackgroundAlpha: number = 0.5;
-    public slideFontSize: number | null = 60;
+    public extraSlideFontSize: number = 45;
     public slideTheme: 'light' | 'dark' = 'light';
-    jumpIndex = 3;
     stage = 0;
 
     get displayDim() {
@@ -47,7 +50,29 @@ export default class LyricAppDocument extends AppDocument {
         };
     }
 
-    genCanvasItemProps(id: number, html: string) {
+    genCanvasItemImageProps(id: number, srcData: SrcData) {
+        const slideBounds = this.slideBounds;
+        const canvasItemProps: CanvasItemImagePropsType = {
+            id,
+            top: slideBounds.y,
+            left: slideBounds.x,
+            rotate: 0,
+            width: slideBounds.width,
+            height: slideBounds.height,
+            backgroundColor: `${HEX_COLOR_BLACK}00`,
+            backdropFilter: 0,
+            roundSizePercentage: 0,
+            roundSizePixel: 0,
+            type: 'image',
+            locked: false,
+            srcData,
+            mediaWidth: slideBounds.width,
+            mediaHeight: slideBounds.height,
+        };
+        return canvasItemProps;
+    }
+
+    genCanvasItemHtmlProps(id: number, html: string) {
         const slideBounds = this.slideBounds;
         const canvasItemProps: CanvasItemHtmlPropsType = {
             id,
@@ -68,10 +93,13 @@ export default class LyricAppDocument extends AppDocument {
         return canvasItemProps;
     }
 
-    genSlide(key: string, i: number, imageDataMap: Record<string, string>) {
+    genSlide(key: string, i: number, dataMap: Record<string, string>) {
         const displayDim = this.displayDim;
-        const srcData = imageDataMap[key] as any;
-        const canvasItemProps = this.genCanvasItemProps(i, srcData);
+        let srcData = dataMap[key];
+        if (typeof srcData !== 'string') {
+            srcData = '';
+        }
+        const canvasItemProps = this.genCanvasItemHtmlProps(i, srcData);
         return new LyricSlide(
             this.filePath,
             {
@@ -82,36 +110,20 @@ export default class LyricAppDocument extends AppDocument {
                     height: displayDim.height,
                     uuid: i.toString(),
                 } as any,
+                type: LYRIC_SLIDE_TYPE_KEY,
+                stage: this.stage,
             },
             key,
-            this.stage,
         );
     }
 
-    prependInfoSlide(
+    extendExtraSlide(
         slides: LyricSlide[],
-        imageDataMap: Record<string, string>,
+        dataMap: Record<string, string>,
         firstCanvasItemProps: CanvasItemHtmlPropsType | null = null,
     ) {
         const displayDim = this.displayDim;
-        slides.unshift(
-            new LyricSlide(
-                this.filePath,
-                {
-                    id: 2,
-                    canvasItems: [],
-                    metadata: {
-                        width: displayDim.width,
-                        height: displayDim.height,
-                        uuid: '0',
-                    } as any,
-                },
-                'None',
-                this.stage,
-            ),
-        );
-        slides.unshift(this.genSlide('Info', 1, imageDataMap));
-        slides.unshift(
+        const extraSlides: LyricSlide[] = [
             new LyricSlide(
                 this.filePath,
                 {
@@ -125,11 +137,32 @@ export default class LyricAppDocument extends AppDocument {
                         height: displayDim.height,
                         uuid: '0',
                     } as any,
+                    type: LYRIC_SLIDE_TYPE_KEY,
+                    stage: this.stage,
                 },
                 'Info',
-                this.stage,
             ),
-        );
+            this.genSlide('Info', 1, dataMap),
+            new LyricSlide(
+                this.filePath,
+                {
+                    id: 2,
+                    canvasItems: [],
+                    metadata: {
+                        width: displayDim.width,
+                        height: displayDim.height,
+                        uuid: '0',
+                    } as any,
+                    type: LYRIC_SLIDE_TYPE_KEY,
+                    stage: this.stage,
+                },
+                OPEN_LYRIC_NONE_KEY,
+            ),
+        ];
+        return [...extraSlides, ...slides].map((slide, i) => {
+            slide.id = i;
+            return slide;
+        });
     }
 
     async getOpenLyricPreviewer() {
@@ -154,12 +187,13 @@ export default class LyricAppDocument extends AppDocument {
                         height: this.displayDim.height,
                         uuid: i.toString(),
                     } as any,
+                    type: LYRIC_SLIDE_TYPE_KEY,
+                    stage: this.stage,
                 },
                 key,
-                this.stage,
             );
         });
-        return slides;
+        return this.extendExtraSlide(slides, {});
     }
     async getSlides() {
         return this.getSlidesQuick();

@@ -1,6 +1,10 @@
 import { showSimpleToast } from '../../toast/toastHelpers';
 import appProvider from '../../server/appProvider';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import {
+    getSetting,
+    removeSetting,
+    setSetting,
+} from '../../helper/settingHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import ScreenEventHandler from './ScreenEventHandler';
 import { type GroupMembershipInf } from './ScreenEventHandler';
@@ -631,11 +635,27 @@ export default class ScreenFocusManager
 
     delete() {
         this.detachEventListeners();
-        // Flush a slider drag that ended less than a debounce ago (isImmediate
-        // also clears the timer, so no stale write fires after teardown).
-        this.settingAttempt(() => {
-            this.persistSettings();
-        }, true);
+        // Cancel a slider drag's pending write WITHOUT running it (a no-op with
+        // isImmediate just clears the timer), then drop what is on disk. The
+        // screen is gone for good and its id gets handed to the next screen
+        // created, so flushing here would give that screen this one's spotlight
+        // size, colour and reopen-the-panel flag.
+        this.settingAttempt(() => {}, true);
+        if (appProvider.isPagePresenter) {
+            for (const key of [
+                this.sizeKey,
+                this.colorKey,
+                this.dimKey,
+                this.blurKey,
+                this.contrastKey,
+                this.openKey,
+            ]) {
+                removeSetting(key);
+            }
+        }
+        this.isSpotlighting = false;
+        this.point = null;
+        this._div = null;
         super.delete();
     }
 

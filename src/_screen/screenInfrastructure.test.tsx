@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const getSettingMock = vi.fn();
 const setSettingMock = vi.fn();
+const removeSettingMock = vi.fn();
 const sendDataMock = vi.fn();
 const sendDataSyncMock = vi.fn();
 const createMouseEventMock = vi.fn((x: number, y: number) => ({
@@ -44,6 +45,7 @@ const appProviderMock = {
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,
+    removeSetting: removeSettingMock,
 }));
 
 vi.mock('../server/unlockingHelpers', () => ({
@@ -544,8 +546,12 @@ describe('screen infrastructure', () => {
             effectManager.styleAnimList.move.duration,
         );
 
-        // a deleted screen leaves the manager pointing at an inert ghost
+        // a deleted screen leaves the manager pointing at an inert ghost, and
+        // takes its per-screen effect setting with it (screen ids are reused)
         effectManager.delete();
+        expect(removeSettingMock).toHaveBeenCalledWith(
+            'pt-effect-5-background',
+        );
         expect(
             screenManagerBase.createScreenManagerBaseGhost,
         ).toHaveBeenCalledWith(5);

@@ -31,6 +31,7 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    Dimensions: 'វិមាត្រ',
     'Exporting DOCX Pages': 'កំពុងបម្លែងទំព័រ DOCX ទៅជា HTML',
     'Please wait while the DOCX pages are being exported...':
         'សូមរង់ចាំ ខណៈពេលទំព័រ DOCX កំពុងត្រូវបានបម្លែង...',

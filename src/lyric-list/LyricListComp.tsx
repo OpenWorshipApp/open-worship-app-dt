@@ -38,8 +38,7 @@ function handleExtraFileChecking(filePath: string) {
 
 async function checkIsOnScreen(filePaths: string[]) {
     for (const filePath of filePaths) {
-        const lyricAppDocument =
-            LyricAppDocument.getInstance(filePath);
+        const lyricAppDocument = LyricAppDocument.getInstance(filePath);
         const isOnScreen =
             lyricAppDocument !== null &&
             (await checkIsVaryAppDocumentOnScreen(lyricAppDocument));

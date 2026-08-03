@@ -12,7 +12,7 @@ import {
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { appLog } from '../helper/loggerHelpers';
-import PptxSlide, { type PptxSlideType } from './PptxSlide';
+import PptxSlide, { type PptxSlidePropsType } from './PptxSlide';
 import {
     getPptxData,
     getPptxMissingFontFamilyList,
@@ -104,6 +104,7 @@ export default class PptxAppDocument
                 images: [],
                 videos: [],
                 audios: [],
+                type: 'pptx-slide',
             });
             const dataList = pptxData.info.slides.map(
                 (
@@ -120,7 +121,7 @@ export default class PptxAppDocument
                     },
                     i,
                 ) => {
-                    const json: PptxSlideType = {
+                    const json: PptxSlidePropsType = {
                         id: i + 1,
                         htmlFilePath,
                         subHtmlFilePaths,
@@ -132,6 +133,7 @@ export default class PptxAppDocument
                         images: images ?? [],
                         videos: videos ?? [],
                         audios: audios ?? [],
+                        type: 'pptx-slide',
                     };
                     return new PptxSlide(this.filePath, json);
                 },

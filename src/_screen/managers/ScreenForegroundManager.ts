@@ -716,6 +716,33 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         );
     }
 
+    delete() {
+        // Local teardown only — deliberately NOT clear(). clear() ends in
+        // saveForegroundData, which both re-writes this screen's entry and
+        // broadcasts to the color-note group, and it bails out entirely on a
+        // locked screen — leaving the countdown's rAF loop, the camera's media
+        // tracks and the web widgets alive for a screen that no longer exists.
+        // Removing the containers directly runs each widget's own remove
+        // handler, which is what actually stops them.
+        for (const [key, data] of Object.entries(this.foregroundData)) {
+            if (!this.rendererMap.has(key)) {
+                continue;
+            }
+            if (Array.isArray(data)) {
+                for (const item of data) {
+                    this.removeDivContainer(item);
+                }
+            } else {
+                this.removeDivContainer(data);
+            }
+        }
+        this.foregroundData = ScreenForegroundManager.parseAllForegroundData(
+            {},
+        );
+        this._div = null;
+        super.delete();
+    }
+
     get containerStyle(): CSSProperties {
         return {
             pointerEvents: 'none',

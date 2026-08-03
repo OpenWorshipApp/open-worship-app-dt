@@ -51,7 +51,7 @@ export function initNewScreenManager(screenId: number) {
     if (instanceSetting) {
         screenManager._isSelected = !!instanceSetting.isSelected;
         screenManager._isLocked = !!instanceSetting.isLocked;
-        screenManager._stageNumber = instanceSetting.stageNumber ?? 0;
+        screenManager._stage = instanceSetting.stageNumber ?? 0;
         screenManager.colorNote = instanceSetting.colorNote ?? null;
     }
     return screenManager;

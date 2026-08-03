@@ -172,7 +172,6 @@ export function genHtmlForegroundQuickText(
     const div = document.createElement('div');
     div.innerHTML = htmlString;
     const element = getHTMLChild<HTMLDivElement>(div, 'div');
-    console.log(element);
 
     return {
         handleAdding: async (parentContainer: HTMLElement) => {

@@ -158,7 +158,7 @@ describe('manager helper coverage', () => {
         const initialManager = screenManagerHelpers.initNewScreenManager(9);
         expect(initialManager._isSelected).toBe(true);
         expect(initialManager._isLocked).toBe(true);
-        expect(initialManager._stageNumber).toBe(4);
+        expect(initialManager._stage).toBe(4);
         expect(initialManager.colorNote).toBe('amber');
 
         cache.clear();

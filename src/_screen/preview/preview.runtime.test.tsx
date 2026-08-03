@@ -81,7 +81,8 @@ function createScreenManager(
         stageNumber: screenId,
         colorNote: screenId === 1 ? 'blue' : null,
         clear: vi.fn(),
-        delete: vi.fn(),
+        // async like the real one — the caller attaches a .catch to it
+        delete: vi.fn(async () => {}),
         fireRefreshEvent: vi.fn(),
         fireScaleEvent: vi.fn(),
         receiveScreenDropped: vi.fn(),

@@ -10,6 +10,9 @@ const getSettingMock = vi.fn((key: string) => {
 const setSettingMock = vi.fn((key: string, value: string | null) => {
     settingStore.set(key, value ?? '');
 });
+const removeSettingMock = vi.fn((key: string) => {
+    settingStore.delete(key);
+});
 
 const appProviderMock = {
     isPagePresenter: true,
@@ -21,6 +24,7 @@ const appProviderMock = {
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,
+    removeSetting: removeSettingMock,
 }));
 vi.mock('../../server/appProvider', () => ({ default: appProviderMock }));
 vi.mock('../../toast/toastHelpers', () => ({ showSimpleToast: vi.fn() }));
@@ -287,6 +291,7 @@ describe('ScreenDrawManager', () => {
     });
 
     test('persists in deduped v2 form and reloads round-trip', async () => {
+        vi.useFakeTimers();
         const ScreenDrawManager = await importManager();
         const manager = new ScreenDrawManager(createBase(31));
         manager.receiveSyncScreen(
@@ -299,8 +304,10 @@ describe('ScreenDrawManager', () => {
         manager.receiveSyncScreen(drawMessage(31, { action: 'commit' }));
         manager.isDrawEnabled = true;
 
-        // delete() flushes the debounced persist synchronously.
-        manager.delete();
+        // Let the debounced persist land (delete() no longer flushes it — a
+        // deleted screen's drawing must not outlive the screen).
+        vi.advanceTimersByTime(500);
+        vi.useRealTimers();
 
         const blob = settingStore.get('screen-draw-data-31');
         expect(blob).toBeTruthy();
@@ -875,7 +882,7 @@ describe('ScreenDrawManager', () => {
         expect(setSettingMock).not.toHaveBeenCalled();
     });
 
-    test('the presenter flushes its debounced persist on delete', async () => {
+    test('deleting the screen drops the drawing instead of flushing it', async () => {
         vi.useFakeTimers();
         try {
             const ScreenDrawManager = await importManager();
@@ -896,12 +903,27 @@ describe('ScreenDrawManager', () => {
                 expect.any(String),
             );
 
+            // A stroke committed less than a debounce before the delete must
+            // NOT be flushed: screen ids are reused, so a flush would hand this
+            // drawing to whichever screen is created next under id 47.
+            manager.receiveSyncScreen(
+                drawMessage(47, { action: 'begin', stroke: makeStroke('s2') }),
+            );
+            manager.receiveSyncScreen(drawMessage(47, { action: 'commit' }));
             setSettingMock.mockClear();
             manager.delete();
-            expect(setSettingMock).toHaveBeenCalledWith(
+            expect(setSettingMock).not.toHaveBeenCalled();
+            expect(removeSettingMock).toHaveBeenCalledWith(
                 'screen-draw-data-47',
-                expect.any(String),
             );
+            expect(removeSettingMock).toHaveBeenCalledWith(
+                'draw-paint-quality-47',
+            );
+            expect(settingStore.has('screen-draw-data-47')).toBe(false);
+
+            // ...and the cancelled timer must not fire afterwards either.
+            vi.advanceTimersByTime(500);
+            expect(setSettingMock).not.toHaveBeenCalled();
         } finally {
             vi.useRealTimers();
         }

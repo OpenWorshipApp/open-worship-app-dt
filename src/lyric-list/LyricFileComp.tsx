@@ -54,8 +54,7 @@ function LyricFilePreview({ lyric }: Readonly<{ lyric: Lyric }>) {
 }
 
 async function checkIsOnScreen(filePath: string) {
-    const lyricAppDocument =
-        LyricAppDocument.getInstance(filePath);
+    const lyricAppDocument = LyricAppDocument.getInstance(filePath);
     if (lyricAppDocument === null) {
         return false;
     }

@@ -41,7 +41,6 @@ export function getDashboardInstance() {
     EventHandler.registerEventListener([THEME_CHANGE_EVENT], () => {
         applyOpenLyricTheme(dashboard);
     });
-    
 
     const openLyric = new OpenLyric();
     dashboard.openLyric = openLyric;

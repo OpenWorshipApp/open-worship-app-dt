@@ -19,6 +19,13 @@ export function getSetting(key: string) {
     // TODO: Change to use SettingManager
     return appLocalStorage.getItem(key);
 }
+// Deletes the key outright. `setSetting(key, null)` only blanks it, which still
+// reads back as an empty string and keeps the file on disk — not enough when
+// the thing the key belonged to (e.g. a screen) is gone for good and its id can
+// be handed to a different screen later.
+export function removeSetting(key: string) {
+    appLocalStorage.removeItem(key);
+}
 export function getSettingForce(key: string) {
     // TODO: Change to use SettingManager
     return appLocalStorage.getItemForce(key);

@@ -7,11 +7,7 @@ import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { type LookupLangData } from 'bible-note';
-import type {
-    Editor,
-    OpenLyric,
-    OpenLyricMarkdownManager,
-} from 'open-lyric';
+import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';

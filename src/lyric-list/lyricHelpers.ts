@@ -17,6 +17,8 @@ import FileSource from '../helper/FileSource';
 import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
 import { checkIsDarkMode } from '../others/themeHelpers';
 
+export const LYRIC_SLIDE_TYPE_KEY = 'lyric-slide';
+
 interface ThemeTargetInf {
     get theme(): OpenLyricTheme;
     set theme(theme: OpenLyricTheme);
@@ -85,6 +87,24 @@ export function useSelectedLyricSetterContext() {
 }
 
 const OPEN_LYRIC_PREVIEWER_SETTING_NAME = 'open-lyric-previewer-setting';
+export const DEFAULT_OPEN_LYRIC_FONT_SIZE = 16;
+function loadOpenLyricSetting() {
+    const settingStr = getSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME);
+    if (settingStr === null) {
+        return null;
+    }
+    try {
+        const setting = JSON.parse(settingStr);
+        return setting;
+    } catch (err) {
+        console.error('Failed to parse OpenLyric previewer setting', err);
+        return null;
+    }
+}
+function saveOpenLyricSetting(setting: OpenLyricPreviewSetting) {
+    const settingStr = JSON.stringify(setting);
+    setSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME, settingStr);
+}
 
 export async function initOpenLyric(filePath: string, isNoLangInit = false) {
     const lyric = Lyric.getInstance(filePath);
@@ -96,24 +116,20 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
     openLyricPreviewer.value = content;
 
     openLyricPreviewer.loadSetting = () => {
-        const settingStr = getSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME);
-        if (settingStr === null) {
-            return null;
-        }
-        try {
-            const setting = JSON.parse(settingStr);
-            return setting;
-        } catch (err) {
-            console.error('Failed to parse OpenLyric previewer setting', err);
-            return null;
-        }
+        const setting = loadOpenLyricSetting();
+        return setting;
     };
     openLyricPreviewer.saveSetting = (setting: OpenLyricPreviewSetting) => {
-        const settingStr = JSON.stringify(setting);
-        setSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME, settingStr);
+        saveOpenLyricSetting(setting);
         const fileSource = FileSource.getInstance(filePath);
         fileSource.fireUpdateEvent();
     };
+    const setting: OpenLyricPreviewSetting = loadOpenLyricSetting() ?? {};
+    const fontSize = setting.fontSize ?? DEFAULT_OPEN_LYRIC_FONT_SIZE;
+    openLyricPreviewer.fontSize = fontSize + 'px';
+    if (setting.fontFamily) {
+        openLyricPreviewer.fontFamily = setting.fontFamily;
+    }
 
     if (!isNoLangInit) {
         for (const langData of langDataList) {
@@ -133,17 +149,4 @@ export function getLyricAppDocumentStageByStage(
         return [stage, LyricAppDocumentStage0.getInstance(filePath)];
     }
     return [stage, LyricAppDocumentStage1.getInstance(filePath)];
-}
-
-export function getTargetLyricSlide(
-    filePath: string,
-    slideID: number,
-    stage: number,
-) {
-    const [_, targetLyricAppDocument] = getLyricAppDocumentStageByStage(
-        filePath,
-        stage,
-    );
-    const targetLyricSlide = targetLyricAppDocument.getSlideById(slideID);
-    return targetLyricSlide;
 }

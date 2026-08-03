@@ -2,7 +2,7 @@ import type { MouseEvent, CSSProperties } from 'react';
 
 import type { DroppedDataType } from '../../helper/DragInf';
 import { getSetting, setSetting } from '../../helper/settingHelpers';
-import type { SlideType } from '../../app-document-list/Slide';
+import type { SlidePropsType } from '../../app-document-list/Slide';
 import type { CanvasItemBiblePropsType } from '../../slide-editor/canvas/CanvasItemBibleItem';
 import { genPdfSlide } from '../../app-document-presenter/items/PdfSlideRenderComp';
 import { genPptxSlide } from '../../app-document-presenter/items/PptxSlideRenderComp';
@@ -34,11 +34,11 @@ import {
     BLANK_HTML_SLIDE_SRC,
     BLANK_IMAGE_SLIDE_SRC,
 } from '../../app-document-list/appDocumentHelpers';
-import type { PdfSlideType } from '../../app-document-list/PdfSlide';
+import type { PdfSlidePropsType } from '../../app-document-list/PdfSlide';
 import PdfSlide from '../../app-document-list/PdfSlide';
-import type { PptxSlideType } from '../../app-document-list/PptxSlide';
+import type { PptxSlidePropsType } from '../../app-document-list/PptxSlide';
 import PptxSlide from '../../app-document-list/PptxSlide';
-import type { DocxSlideType } from '../../app-document-list/DocxSlide';
+import type { DocxSlidePropsType } from '../../app-document-list/DocxSlide';
 import DocxSlide from '../../app-document-list/DocxSlide';
 import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
@@ -59,6 +59,7 @@ import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 import { cloneJson } from '../../helper/helpers';
+import { getTargetLyricSlideItemData } from '../../lyric-list/lyricSlideScreenHelpers';
 
 function queryAllDeep(root: ParentNode, selector: string): Element[] {
     const results = Array.from(root.querySelectorAll(selector));
@@ -155,7 +156,9 @@ class ScreenVaryAppDocumentManager
         return this._varySlideData;
     }
 
-    set varySlideData(targetVarySlideData: VarySlideScreenDataType | null) {
+    async set_varySlideData(
+        targetVarySlideData: VarySlideScreenDataType | null,
+    ) {
         const varySlideData =
             targetVarySlideData !== null
                 ? cloneJson(targetVarySlideData)
@@ -208,6 +211,25 @@ class ScreenVaryAppDocumentManager
         });
         this.render();
         this.sendSyncScreen();
+    }
+
+    set varySlideData(targetVarySlideData: VarySlideScreenDataType | null) {
+        if (
+            targetVarySlideData === null ||
+            targetVarySlideData.filePath === null ||
+            targetVarySlideData.itemJson === null
+        ) {
+            this.set_varySlideData(targetVarySlideData);
+            return;
+        }
+        getTargetLyricSlideItemData(
+            targetVarySlideData.filePath,
+            targetVarySlideData.itemJson as any,
+            this.screenManagerBase.stage,
+        ).then((targetItemJson) => {
+            targetVarySlideData.itemJson = targetItemJson;
+            this.set_varySlideData(targetVarySlideData);
+        });
     }
 
     toSyncMessage(): BasicScreenMessageType {
@@ -405,16 +427,14 @@ class ScreenVaryAppDocumentManager
         this.varySlideData = varySlideScreenData;
     }
 
-    toSlideData(
-        filePath: string,
-        itemJson: VarySlideDataType,
-    ): VarySlideScreenDataType {
-        return {
+    toSlideData(filePath: string, itemJson: VarySlideDataType) {
+        const data: VarySlideScreenDataType = {
             filePath,
             itemJson,
             isRenderFullWidth: checkIsPdfFullWidth(),
             virtualBackgroundColor: getPageBaseVirtualBackgroundColor(),
         };
+        return data;
     }
 
     handleSlideSelecting(filePath: string, itemJson: VarySlideDataType) {
@@ -447,7 +467,7 @@ class ScreenVaryAppDocumentManager
 
     renderPdf(
         divHaftScale: HTMLDivElement,
-        pdfImageData: PdfSlideType,
+        pdfImageData: PdfSlidePropsType,
         isFullWidth: boolean,
         virtualBackgroundColor: string | null,
     ) {
@@ -486,7 +506,7 @@ class ScreenVaryAppDocumentManager
         return { content, scale: 1 };
     }
 
-    renderPptx(divHaftScale: HTMLDivElement, pptxData: PptxSlideType) {
+    renderPptx(divHaftScale: HTMLDivElement, pptxData: PptxSlidePropsType) {
         const content = genPptxSlide(
             pptxData.html,
             pptxData.htmlFilePath,
@@ -512,7 +532,7 @@ class ScreenVaryAppDocumentManager
 
     renderDocx(
         divHaftScale: HTMLDivElement,
-        docxData: DocxSlideType,
+        docxData: DocxSlidePropsType,
         isFullWidth: boolean,
         virtualBackgroundColor: string | null,
     ) {
@@ -831,7 +851,10 @@ class ScreenVaryAppDocumentManager
         return item.toJson() as VarySlideDataType;
     }
 
-    async renderAppDocument(divHaftScale: HTMLDivElement, itemJson: SlideType) {
+    async renderAppDocument(
+        divHaftScale: HTMLDivElement,
+        itemJson: SlidePropsType,
+    ) {
         // A bible key's @font-face is injected per window when its language
         // data loads. This also runs in the screen window, where
         // `AppDocument.getSlides` never did that, so resolve the fonts here
@@ -910,23 +933,26 @@ class ScreenVaryAppDocumentManager
         if (PdfSlide.tryValidate(itemJson)) {
             target = this.renderPdf(
                 divHaftScale,
-                itemJson as PdfSlideType,
+                itemJson as PdfSlidePropsType,
                 isRenderFullWidth,
                 backgroundColor,
             );
         } else if (PptxSlide.tryValidate(itemJson)) {
-            target = this.renderPptx(divHaftScale, itemJson as PptxSlideType);
+            target = this.renderPptx(
+                divHaftScale,
+                itemJson as PptxSlidePropsType,
+            );
         } else if (DocxSlide.tryValidate(itemJson)) {
             target = this.renderDocx(
                 divHaftScale,
-                itemJson as DocxSlideType,
+                itemJson as DocxSlidePropsType,
                 isRenderFullWidth,
                 backgroundColor,
             );
         } else {
             target = await this.renderAppDocument(
                 divHaftScale,
-                itemJson as SlideType,
+                itemJson as SlidePropsType,
             );
         }
         if (target === null) {
@@ -985,6 +1011,22 @@ class ScreenVaryAppDocumentManager
 
     clear() {
         this.applySlideSrcWithSyncGroup(null);
+    }
+
+    delete() {
+        // Local teardown only — deliberately NOT clear(). clear() goes through
+        // the varySlideData setter, which broadcasts to every screen sharing
+        // this one's color note (deleting one screen blanked the group's slide)
+        // and which a locked screen rejects, leaving the YouTube players' window
+        // listeners alive. The persisted entry is dropped centrally by
+        // deleteScreenPersistedData.
+        this.destroyYouTubePlayers();
+        if (this._div !== null) {
+            this._div.replaceChildren();
+            this._div = null;
+        }
+        this._varySlideData = null;
+        super.delete();
     }
 
     static getInstance(screenId: number) {

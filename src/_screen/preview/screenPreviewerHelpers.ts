@@ -84,7 +84,10 @@ export function openContextMenu(event: any, screenManager: ScreenManager) {
                       }),
                       menuElement: tran('Delete'),
                       onSelect: () => {
-                          screenManager.delete();
+                          // delete() awaits the settings sweep; without a
+                          // catch a failed write would surface as an unhandled
+                          // rejection instead of the app's error handler.
+                          screenManager.delete().catch(handleError);
                       },
                   },
               ]),

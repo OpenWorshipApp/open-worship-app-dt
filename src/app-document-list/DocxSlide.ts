@@ -12,23 +12,25 @@ import slideSchemaJson from './DocxSlideSchema.json';
 
 const docxSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
-export type DocxSlideType = {
+export type DocxSlidePropsType = {
     id: number;
     htmlFilePath: string;
     html?: string;
     metadata: { width: number; height: number };
+    type: 'docx-slide';
 };
 
 export default class DocxSlide
     extends ItemBaseFilePath
     implements DragInf<string>, ClipboardInf
 {
-    private _originalJson: DocxSlideType;
+    private _originalJson: DocxSlidePropsType;
     filePath: string;
 
-    constructor(filePath: string, json: DocxSlideType) {
+    constructor(filePath: string, json: DocxSlidePropsType) {
         super();
         this._originalJson = cloneJson(json);
+        this._originalJson.type = 'docx-slide';
         this.filePath = filePath;
     }
 
@@ -66,7 +68,7 @@ export default class DocxSlide
         return this._originalJson;
     }
 
-    set originalJson(json: DocxSlideType) {
+    set originalJson(json: DocxSlidePropsType) {
         this._originalJson = json;
     }
 
@@ -89,17 +91,17 @@ export default class DocxSlide
         return this.metadata.height;
     }
 
-    static fromJson(json: DocxSlideType, filePath: string) {
+    static fromJson(json: DocxSlidePropsType, filePath: string) {
         return new this(filePath, json);
     }
 
-    toJson(): DocxSlideType {
+    toJson(): DocxSlidePropsType {
         return this._originalJson;
     }
 
-    private toDragJson(): DocxSlideType {
+    private toDragJson(): DocxSlidePropsType {
         const json = cloneJson(this.toJson());
-        delete (json as Partial<DocxSlideType>).html;
+        delete (json as Partial<DocxSlidePropsType>).html;
         return json;
     }
 

@@ -17,6 +17,14 @@ import {
 } from '../managers/screenDrawShortcutHelpers';
 import { toAlphaHex } from '../managers/screenOverlayHelpers';
 import {
+    DRAW_PAINT_3D_SETTING_PREFIX,
+    DRAW_PAINT_ALPHA_SETTING_PREFIX,
+    DRAW_PAINT_COLOR_SETTING_PREFIX,
+    DRAW_PAINT_DOTS_SETTING_PREFIX,
+    DRAW_PAINT_SIZE_SETTING_PREFIX,
+    DRAW_PAINT_STRAIGHT_SETTING_PREFIX,
+} from '../managers/screenSettingKeyHelpers';
+import {
     OverlayColorSwatchComp,
     OverlayRangeComp,
     handleKeepOverlayFocus,
@@ -90,30 +98,33 @@ export default function MiniScreenDrawHandlersComp() {
     // Re-render so the Clear button reflects whether anything is drawn.
     useScreenDrawManagerEvents(['update']);
     // Settings are persisted per screen id so each screen keeps its own brush.
+    // The key prefixes are shared with the screen-delete path, which has to drop
+    // them all when the screen goes away — a reused id would otherwise inherit
+    // the previous screen's brush.
     const [baseColor, setBaseColor] = useStateSettingString(
-        `draw-paint-color-${screenId}`,
+        `${DRAW_PAINT_COLOR_SETTING_PREFIX}${screenId}`,
         DEFAULT_COLOR,
     );
     const [alpha, setAlpha] = useStateSettingNumber(
-        `draw-paint-alpha-${screenId}`,
+        `${DRAW_PAINT_ALPHA_SETTING_PREFIX}${screenId}`,
         DEFAULT_ALPHA,
     );
     // Effective brush color (with transparency) fed to the canvas.
     const color = `${baseColor}${toAlphaHex(alpha)}`;
     const [size, setSize] = useStateSettingNumber(
-        `draw-paint-size-${screenId}`,
+        `${DRAW_PAINT_SIZE_SETTING_PREFIX}${screenId}`,
         DEFAULT_SIZE,
     );
     const [isStraight, setIsStraight] = useStateSettingBoolean(
-        `draw-paint-straight-${screenId}`,
+        `${DRAW_PAINT_STRAIGHT_SETTING_PREFIX}${screenId}`,
         DEFAULT_STRAIGHT,
     );
     const [is3D, setIs3D] = useStateSettingBoolean(
-        `draw-paint-3d-${screenId}`,
+        `${DRAW_PAINT_3D_SETTING_PREFIX}${screenId}`,
         DEFAULT_IS_3D,
     );
     const [isDots, setIsDots] = useStateSettingBoolean(
-        `draw-paint-dots-${screenId}`,
+        `${DRAW_PAINT_DOTS_SETTING_PREFIX}${screenId}`,
         DEFAULT_DOTS,
     );
     // Render fidelity. The manager owns persistence of this one — its

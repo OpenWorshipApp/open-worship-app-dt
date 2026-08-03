@@ -1,5 +1,9 @@
 import EventHandler from '../../event/EventHandler';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import {
+    getSetting,
+    removeSetting,
+    setSetting,
+} from '../../helper/settingHelpers';
 import type {
     PTEffectDataType,
     PTFEventType,
@@ -89,6 +93,9 @@ class ScreenEffectManager extends EventHandler<PTFEventType> {
 
     delete() {
         cache.delete(this.toCacheKey());
+        // This instance owns `pt-effect-<screenId>-<target>`, and screen ids are
+        // reused, so the chosen transition has to go with the screen.
+        removeSetting(this.settingName);
         this.screenManagerBase =
             this.screenManagerBase.createScreenManagerBaseGhost(this.screenId);
     }

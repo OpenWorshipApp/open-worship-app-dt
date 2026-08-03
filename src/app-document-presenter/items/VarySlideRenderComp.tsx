@@ -39,6 +39,7 @@ import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
+import { showSimpleToast } from '../../toast/toastHelpers';
 
 function RenderScreenInfoComp({
     varySlide,
@@ -88,6 +89,10 @@ function VarySlideHeaderComp({
         varySlide.filePath,
         varySlide.id,
     );
+    const handleDimInfoClicking = useCallback((event: any) => {
+        event.stopPropagation();
+        showSimpleToast(tran('Dimensions'), event.currentTarget.title);
+    }, []);
     return (
         <div
             className="card-header vary-app-document-item-header d-flex"
@@ -119,9 +124,11 @@ function VarySlideHeaderComp({
                             `height:${varySlide.height}`
                         }
                     >
-                        <small className="pe-2">
-                            {varySlide.width}x{varySlide.height}
-                        </small>
+                        <i
+                            className="bi bi-aspect-ratio-fill app-caught-hover-pointer"
+                            title={`width:${varySlide.width}, height:${varySlide.height}`}
+                            onClick={handleDimInfoClicking}
+                        />
                     </span>
                     {isChanged && <span style={{ color: 'red' }}>*</span>}
                 </div>
