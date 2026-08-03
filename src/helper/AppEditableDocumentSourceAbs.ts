@@ -67,7 +67,7 @@ export abstract class AppDocumentSourceAbs {
                     `expected extensions: ${extensions.join(', ')}`,
             );
         }
-        const cacheKey = `${this.mimetypeName}:${filePath}`;
+        const cacheKey = `${this.name}:${this.mimetypeName}:${filePath}`;
         if (!cache.has(cacheKey)) {
             const instance = createInstance();
             cache.set(cacheKey, instance as any);

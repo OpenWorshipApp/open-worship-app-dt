@@ -12,8 +12,10 @@ import { getParamFileFullName } from './helper/domHelpers.ts';
 import Lyric from './lyric-list/Lyric.ts';
 import { pathJoin, fsExistSync } from './server/fileHelpers.ts';
 import appProvider from './server/appProvider.ts';
-import { checkIsDarkMode } from './others/themeHelpers.tsx';
 import { getAllLangsAsync } from './lang/langHelpers.ts';
+import { applyOpenLyricTheme } from './lyric-list/lyricHelpers.ts';
+import { THEME_CHANGE_EVENT } from './others/themeHelpers.tsx';
+import EventHandler from './event/EventHandler.ts';
 
 export function getDashboardInstance() {
     OpenLyricDashboard.installShellStyle();
@@ -35,6 +37,11 @@ export function getDashboardInstance() {
         isWeb: true,
     });
     dashboard.isWeb = false;
+    applyOpenLyricTheme(dashboard);
+    EventHandler.registerEventListener([THEME_CHANGE_EVENT], () => {
+        applyOpenLyricTheme(dashboard);
+    });
+    
 
     const openLyric = new OpenLyric();
     dashboard.openLyric = openLyric;
@@ -45,9 +52,6 @@ export function getDashboardInstance() {
     const editor = new Editor({ selectionState: true });
     dashboard.editor = editor;
     editor.addPlugin('open-lyric', new EditorOpenLyricPlugin());
-
-    const isDark = checkIsDarkMode();
-    dashboard.theme = isDark ? 'dark' : 'light';
 
     getAllLangsAsync().then((langDataList) => {
         for (const langData of langDataList) {

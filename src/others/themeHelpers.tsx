@@ -83,5 +83,9 @@ export function useThemeSource() {
         setThemeSource: setThemeSource1,
     };
 }
+export function useIsDarkMode() {
+    const { themeSource } = useThemeSource();
+    return checkIsDarkMode(themeSource);
+}
 
 getSystemDarkMatcher()?.addEventListener('change', applyDarkModeToApp);

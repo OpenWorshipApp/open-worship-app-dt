@@ -3,9 +3,9 @@ import './bootstrapCss';
 import { getDashboardInstance, getLyric } from './lyricEditorBoot';
 import { checkIsDarkMode } from './others/themeHelpers';
 
-const isDark = checkIsDarkMode();
-document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-document.body.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+const isDarkMode = checkIsDarkMode();
+document.body.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+document.body.setAttribute('data-bs-theme', isDarkMode ? 'dark' : 'light');
 
 const [dashboard, { lyric, content }] = await Promise.all([
     getDashboardInstance(),

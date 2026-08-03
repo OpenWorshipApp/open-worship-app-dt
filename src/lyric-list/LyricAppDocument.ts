@@ -8,22 +8,24 @@ import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocum
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import LyricSlide from './LyricSlide';
 import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
-import type LyricManager from './LyricManager';
 import { tran } from '../lang/langHelpers';
-import { type CanvasItemImagePropsType } from '../slide-editor/canvas/CanvasItemImage';
-import { OpenLyric, type OpenLyricElementMapOptions } from 'open-lyric';
-import { type SrcData } from '../helper/FileSource';
+import {
+    genHtmlDefaultProps,
+    type CanvasItemHtmlPropsType,
+} from '../slide-editor/canvas/CanvasItemHtml';
+import { initOpenLyric } from './lyricHelpers';
+import { type OpenLyric } from 'open-lyric';
 
 export default class LyricAppDocument extends AppDocument {
     static readonly mimetypeName: MimetypeNameType = 'lyricAppDocument';
-    isEditable = false;
-    lyricManager: LyricManager | null = null;
+    public openLyric: OpenLyric | null = null;
+    public isEditable = false;
     public slidePaddingPercentage = 1;
     public slideBackgroundAlpha: number = 0.5;
-    public slideFontSize: number | null = null;
-    public isSlideImage = false;
+    public slideFontSize: number | null = 60;
     public slideTheme: 'light' | 'dark' = 'light';
-    public stage = 0;
+    jumpIndex = 3;
+    stage = 0;
 
     get displayDim() {
         const display = getDefaultScreenDisplay();
@@ -45,66 +47,11 @@ export default class LyricAppDocument extends AppDocument {
         };
     }
 
-    get stage0OpenLyricImageGenOptions(): OpenLyricElementMapOptions {
-        return {
-            isPngImageData: true,
-            isWithKeyNote: false,
-            width: this.slideBounds.width,
-            height: this.slideBounds.height,
-            backgroundAlpha: this.slideBackgroundAlpha,
-            fontSize: this.slideFontSize ?? undefined,
-            theme: this.slideTheme,
-            css: `
-                .ol-song-view__section-body {
-                    height: 100%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .ol-preview-lines {
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    vertical-align: middle;
-                }
-
-                .ol-preview-lyric-segment__chord {
-                    display: none;
-                }
-
-                .ol-song-view__section-title {
-                    display: none;
-                }
-
-                .ol-song-view__info-card .ol-song-view__title {
-                    font-size: 1.6em !important; 
-                }
-            `,
-        };
-    }
-
-    get stage1OpenLyricImageGenOptions(): OpenLyricElementMapOptions {
-        return {
-            isPngImageData: true,
-            isWithKeyNote: true,
-            width: this.slideBounds.width,
-            height: this.slideBounds.height,
-            backgroundAlpha: this.slideBackgroundAlpha,
-            fontSize: this.slideFontSize ?? undefined,
-            theme: this.slideTheme,
-            css: `
-                .ol-song-view__info-card .ol-song-view__title {
-                    font-size: 1.6em !important; 
-                }
-            `,
-        };
-    }
-
-    private genCanvasItemImageProps(id: number, srcData: SrcData) {
+    genCanvasItemProps(id: number, html: string) {
         const slideBounds = this.slideBounds;
-        const canvasItemProps: CanvasItemImagePropsType = {
+        const canvasItemProps: CanvasItemHtmlPropsType = {
             id,
+            ...genHtmlDefaultProps(),
             top: slideBounds.y,
             left: slideBounds.x,
             rotate: 0,
@@ -114,139 +61,116 @@ export default class LyricAppDocument extends AppDocument {
             backdropFilter: 0,
             roundSizePercentage: 0,
             roundSizePixel: 0,
-            type: 'image',
-            locked: false,
-            srcData,
-            mediaWidth: slideBounds.width,
-            mediaHeight: slideBounds.height,
+            locked: true,
+            html,
+            type: 'html',
         };
         return canvasItemProps;
     }
 
-    private genSlide(
-        key: string,
-        i: number,
-        imageDataMap: Record<string, string>,
-    ) {
+    genSlide(key: string, i: number, imageDataMap: Record<string, string>) {
         const displayDim = this.displayDim;
         const srcData = imageDataMap[key] as any;
-        const canvasItemProps = this.genCanvasItemImageProps(i, srcData);
-        return new LyricSlide(this.filePath, {
-            id: i,
-            canvasItems: [canvasItemProps],
-            metadata: {
-                width: displayDim.width,
-                height: displayDim.height,
-                uuid: i.toString(),
-            } as any,
-        });
-    }
-
-    private prependInfoSlide(
-        slides: LyricSlide[],
-        imageDataMap: Record<string, string>,
-        firstCanvasItemProps: CanvasItemImagePropsType | null = null,
-    ) {
-        const displayDim = this.displayDim;
-        slides.unshift(
-            new LyricSlide(this.filePath, {
-                id: 2,
-                canvasItems: [],
+        const canvasItemProps = this.genCanvasItemProps(i, srcData);
+        return new LyricSlide(
+            this.filePath,
+            {
+                id: i,
+                canvasItems: [canvasItemProps],
                 metadata: {
                     width: displayDim.width,
                     height: displayDim.height,
-                    uuid: '0',
+                    uuid: i.toString(),
                 } as any,
-            }),
+            },
+            key,
+            this.stage,
+        );
+    }
+
+    prependInfoSlide(
+        slides: LyricSlide[],
+        imageDataMap: Record<string, string>,
+        firstCanvasItemProps: CanvasItemHtmlPropsType | null = null,
+    ) {
+        const displayDim = this.displayDim;
+        slides.unshift(
+            new LyricSlide(
+                this.filePath,
+                {
+                    id: 2,
+                    canvasItems: [],
+                    metadata: {
+                        width: displayDim.width,
+                        height: displayDim.height,
+                        uuid: '0',
+                    } as any,
+                },
+                'None',
+                this.stage,
+            ),
         );
         slides.unshift(this.genSlide('Info', 1, imageDataMap));
         slides.unshift(
-            new LyricSlide(this.filePath, {
-                id: 0,
-                canvasItems:
-                    firstCanvasItemProps === null ? [] : [firstCanvasItemProps],
-                metadata: {
-                    width: displayDim.width,
-                    height: displayDim.height,
-                    uuid: '0',
-                } as any,
-            }),
-        );
-    }
-
-    async getStage0SlidesImages(openLyricPreviewer: OpenLyric) {
-        const structure = openLyricPreviewer.getStructure();
-        const imageDataMap = await openLyricPreviewer.getElementMap(
-            this.stage0OpenLyricImageGenOptions,
-        );
-        const slides = structure.map((key, i) => {
-            return this.genSlide(key, i + 3, imageDataMap);
-        });
-        this.prependInfoSlide(slides, imageDataMap);
-        return slides;
-    }
-
-    async getStage1SlidesImages(openLyricPreviewer: OpenLyric) {
-        const { width: displayWidth } = this.displayDim;
-
-        const structure = openLyricPreviewer.getStructure();
-        const [wholeImage, imageDataMap] = await Promise.all([
-            openLyricPreviewer.getValue({
-                isPngImageData: true,
-                isWithKeyNote: true,
-                width: displayWidth,
-                backgroundAlpha: this.slideBackgroundAlpha,
-                theme: this.slideTheme,
-            }),
-            openLyricPreviewer.getElementMap(
-                this.stage1OpenLyricImageGenOptions,
+            new LyricSlide(
+                this.filePath,
+                {
+                    id: 0,
+                    canvasItems:
+                        firstCanvasItemProps === null
+                            ? []
+                            : [firstCanvasItemProps],
+                    metadata: {
+                        width: displayDim.width,
+                        height: displayDim.height,
+                        uuid: '0',
+                    } as any,
+                },
+                'Info',
+                this.stage,
             ),
-        ]);
-        const slides = structure.map((key, i) => {
-            return this.genSlide(key, i + 3, imageDataMap);
-        });
-        const canvasItemProps = this.genCanvasItemImageProps(
-            0,
-            wholeImage as SrcData,
         );
-        this.prependInfoSlide(slides, imageDataMap, canvasItemProps);
-        return slides;
     }
 
-    async getSlides() {
-        const openLyricPreviewer =
-            this.lyricManager?.openLyricPreviewer ?? new OpenLyric();
-        if (this.isSlideImage) {
-            if (this.stage === 0) {
-                return this.getStage0SlidesImages(openLyricPreviewer);
-            }
-            return this.getStage1SlidesImages(openLyricPreviewer);
+    async getOpenLyricPreviewer() {
+        if (this.openLyric !== null) {
+            return this.openLyric;
         }
+        const openLyric = await initOpenLyric(this.filePath, true);
+        return openLyric;
+    }
+
+    async getSlidesQuick() {
+        const openLyricPreviewer = await this.getOpenLyricPreviewer();
         const structure = openLyricPreviewer.getStructure();
-        const slides = structure.map((_, i) => {
-            return new LyricSlide(this.filePath, {
-                id: i,
-                canvasItems: [],
-                metadata: {
-                    width: this.displayDim.width,
-                    height: this.displayDim.height,
-                    uuid: i.toString(),
-                } as any,
-            });
+        const slides = structure.map((key, i) => {
+            return new LyricSlide(
+                this.filePath,
+                {
+                    id: i,
+                    canvasItems: [],
+                    metadata: {
+                        width: this.displayDim.width,
+                        height: this.displayDim.height,
+                        uuid: i.toString(),
+                    } as any,
+                },
+                key,
+                this.stage,
+            );
         });
         return slides;
+    }
+    async getSlides() {
+        return this.getSlidesQuick();
     }
 
     async showContextMenu(event: any) {
-        const lyricManager = this.lyricManager;
-        if (lyricManager === null) {
-            return;
-        }
         const menuItems: ContextMenuItemType[] = [
             {
                 menuElement: tran('Reload'),
                 onSelect: () => {
-                    lyricManager.fileSource.fireUpdateEvent();
+                    this.fileSource.fireUpdateEvent();
                 },
             },
         ];

@@ -1,14 +1,15 @@
 import { lazy, use } from 'react';
 
-import { getAllLangsAsync, tran } from '../lang/langHelpers';
+import { tran } from '../lang/langHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { SelectedLyricContext } from './lyricHelpers';
+import {
+    applyOpenLyricTheme,
+    initOpenLyric,
+    SelectedLyricContext,
+} from './lyricHelpers';
 import LyricManager, { LyricManagerContext } from './LyricManager';
-import { OpenLyric, type OpenLyricPreviewSetting } from 'open-lyric';
 import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
-import EventHandler from '../event/EventHandler';
-import { checkIsDarkMode, THEME_CHANGE_EVENT } from '../others/themeHelpers';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import { useIsDarkMode } from '../others/themeHelpers';
 
 const LazyLyricRenderPreviewBodyComp = lazy(() => {
     return import('./LyricRenderPreviewBodyComp');
@@ -17,12 +18,6 @@ const LazyLyricSlidesPreviewerComp = lazy(() => {
     return import('./LyricSlidesPreviewerComp');
 });
 
-function applyTheme(openLyricPreviewer: OpenLyric) {
-    const isDarkMode = checkIsDarkMode();
-    openLyricPreviewer.theme = isDarkMode ? 'dark' : 'light';
-}
-
-const OPEN_LYRIC_PREVIEWER_SETTING_NAME = 'open-lyric-previewer-setting';
 export default function LyricHandlerComp() {
     const context = use(SelectedLyricContext);
     const selectedLyric = context?.selectedLyric ?? null;
@@ -31,62 +26,13 @@ export default function LyricHandlerComp() {
         if (selectedLyric === null) {
             return null;
         }
-        const [content, langDataList] = await Promise.all([
-            selectedLyric.getContent(),
-            getAllLangsAsync(),
-        ]);
-        const openLyricPreviewer = new OpenLyric();
-        for (const langData of langDataList) {
-            langData.initOpenLyricPlugins?.({
-                openLyric: openLyricPreviewer,
-            });
-        }
-        openLyricPreviewer.value = content;
+        const openLyricPreviewer = await initOpenLyric(selectedLyric.filePath);
         const manager = new LyricManager(selectedLyric, openLyricPreviewer);
         return manager;
     }, [selectedLyric]);
 
-    useAppEffect(() => {
-        if (!lyricManager) {
-            return;
-        }
-        const openLyricPreviewer = lyricManager.openLyricPreviewer;
-        openLyricPreviewer.loadSetting = () => {
-            const settingStr = getSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME);
-            if (settingStr === null) {
-                return null;
-            }
-            try {
-                const setting = JSON.parse(settingStr);
-                return setting;
-            } catch (err) {
-                console.error(
-                    'Failed to parse OpenLyric previewer setting',
-                    err,
-                );
-                return null;
-            }
-        };
-        openLyricPreviewer.saveSetting = (setting: OpenLyricPreviewSetting) => {
-            const settingStr = JSON.stringify(setting);
-            setSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME, settingStr);
-            lyricManager.fileSource.fireUpdateEvent();
-        };
-        applyTheme(openLyricPreviewer);
-        const registeredEvent = EventHandler.registerEventListener(
-            [THEME_CHANGE_EVENT],
-            () => {
-                applyTheme(openLyricPreviewer);
-            },
-        );
-        return () => {
-            EventHandler.unregisterEventListener(registeredEvent);
-            openLyricPreviewer.loadSetting = () => {
-                return null;
-            };
-            openLyricPreviewer.saveSetting = () => {};
-        };
-    }, [lyricManager]);
+    const isDarkMode = useIsDarkMode();
+    applyOpenLyricTheme(lyricManager?.openLyricPreviewer ?? null, isDarkMode);
 
     useAppEffect(() => {
         if (!lyricManager) {
