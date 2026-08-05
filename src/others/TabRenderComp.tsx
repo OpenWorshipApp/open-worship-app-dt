@@ -9,7 +9,9 @@ import type { OptionalPromise } from '../helper/typeHelpers';
 
 export type TabHeaderPropsType<T> = {
     key: T;
-    title: string;
+    // `ReactNode` so a title can carry a leading `bi bi-*` icon; see
+    // `toIconedLabel` in `labelIconHelpers`.
+    title: ReactNode;
     className?: string;
     checkIsOnScreen?: (key: T) => OptionalPromise<boolean>;
 };
@@ -52,7 +54,9 @@ function RendTabComp<T>({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <li key={tab.title} className={'nav-item ' + (tab.className ?? '')}>
+        // No `key` here: this `li` is the root of `RendTabComp`, which is the
+        // mapped element and already carries `key={tab.key}`.
+        <li className={'nav-item ' + (tab.className ?? '')}>
             <button
                 className={
                     `btn btn-sm btn-link nav-link ${activeClass}` +

@@ -1,7 +1,0 @@
-@use '../others/variables.scss' as *;
-
-.app-lyric-list {
-  .card-body {
-    height: calc(100% - $card-header-height);
-  }
-}

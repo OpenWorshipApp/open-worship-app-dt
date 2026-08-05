@@ -3,6 +3,7 @@ import './SlidePreviewer.scss';
 import { type CSSProperties, use } from 'react';
 
 import { tran } from '../../lang/langHelpers';
+import { toWidgetLabel } from '../../others/labelIconHelpers';
 import VarySlidesPreviewerComp from './VarySlidesPreviewerComp';
 import AppDocumentPreviewerFooterComp from './AppDocumentPreviewerFooterComp';
 import {
@@ -49,7 +50,7 @@ function EditorComp() {
                         },
                     },
                     key: 'v1',
-                    widgetName: tran('Document List'),
+                    ...toWidgetLabel('Document List'),
                     className: 'app-flex-item',
                 },
                 {
@@ -63,7 +64,7 @@ function EditorComp() {
                         },
                     },
                     key: 'v2',
-                    widgetName: tran('Note'),
+                    ...toWidgetLabel('Note'),
                     className: 'app-flex-item',
                 },
             ]}

@@ -75,6 +75,18 @@ class MockScreenManagerBase {
         this._stageNumber = value;
     }
 
+    // The real base exposes `stage`, and `ScreenManager`'s override reads
+    // `super.stage` to detect an actual change. Without this accessor that read
+    // resolves on the prototype to `undefined`, so the mock has to mirror the
+    // real API rather than only the persisted `stageNumber` field.
+    get stage() {
+        return this._stageNumber;
+    }
+
+    set stage(value: number) {
+        this._stageNumber = value;
+    }
+
     async getColorNote() {
         return this.colorNote;
     }
@@ -137,6 +149,7 @@ class MockVaryManager {
     delete = vi.fn();
     sendSyncScreen = vi.fn();
     registerEventListener = vi.fn(() => []);
+    reapplyForStage = vi.fn();
 
     constructor(screenManagerBase: any, _effectManager: unknown) {
         this.screenId = screenManagerBase.screenId;
@@ -853,6 +866,25 @@ describe('ScreenManager runtime orchestration', () => {
 
         screenManager.isSelected = true;
         expect(screenManager.isSelected).toBe(true);
+    });
+
+    test('a stage change re-derives the presented slide, an unchanged one does not', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(21);
+        const varyManager = screenManager.screenVaryAppDocumentManager;
+
+        // The presented slide is derived for one specific stage, so moving the
+        // stage has to re-derive it — otherwise the `St:` label changes while
+        // the mini preview and the projected screen keep the old layout.
+        screenManager.stage = 1;
+        expect(varyManager.reapplyForStage).toHaveBeenCalledTimes(1);
+
+        // Re-assigning the same stage is a no-op and must not re-render.
+        screenManager.stage = 1;
+        expect(varyManager.reapplyForStage).toHaveBeenCalledTimes(1);
+
+        screenManager.stage = 0;
+        expect(varyManager.reapplyForStage).toHaveBeenCalledTimes(2);
     });
 
     test('an init message re-syncs once more after the screen has settled', async () => {

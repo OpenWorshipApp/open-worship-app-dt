@@ -24,7 +24,9 @@ import {
     genColorNoteDataList,
 } from '../../helper/colorNoteHelpers';
 
-function openContextMenu(event: any) {
+// Also opened by the floating ⋮ that `MiniScreenComp` parks at the bottom-right
+// of the card, so the menu is reachable without a right-click.
+export function openMiniScreenContextMenu(event: any) {
     showAppContextMenu(event, [
         {
             childBefore: genContextMenuItemIcon('window-plus'),
@@ -166,7 +168,7 @@ export default function MiniScreenBodyComp({
     const previewWidth = DEFAULT_PREVIEW_SIZE * previewScale;
 
     const handleContextMenuOpening = useCallback((event: any) => {
-        openContextMenu(event);
+        openMiniScreenContextMenu(event);
     }, []);
 
     return (

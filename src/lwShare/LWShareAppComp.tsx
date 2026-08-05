@@ -10,7 +10,7 @@ export default function LWShareAppComp() {
         <div
             id="app"
             data-bs-theme={theme}
-            className="lw-share-container w-100 h-100 d-flex overflow-hidden"
+            className="app lw-share-container w-100 h-100 d-flex overflow-hidden"
         >
             <div className="card w-100 h-100">
                 <div className="card-header p-2">

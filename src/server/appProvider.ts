@@ -190,6 +190,7 @@ export type AppProviderType = Readonly<
         messageUtils: MessageUtilsType;
         httpUtils: {
             request: typeof http.request;
+            requestHttp: typeof http.request;
         };
         fileUtils: FileUtilsType;
         pathUtils: PathUtilsType;

@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
     getAllLangsAsyncMock: vi.fn(),
     getCurrentLocaleMock: vi.fn(() => 'en'),
     initLangCssMock: vi.fn(),
+    initAllLangCssMock: vi.fn(),
     showFileOrDirExplorerMock: vi.fn(),
     genTimeoutAttemptMock: vi.fn(() => (fn: any) => fn()),
     bibleItemFromTitleTextMock: vi.fn(),
@@ -96,6 +97,7 @@ vi.mock('../../lang/langHelpers', () => ({
     getCurrentLocale: h.getCurrentLocaleMock,
     getLangDataAsync: h.getLangDataAsyncMock,
     initLangCss: h.initLangCssMock,
+    initAllLangCss: h.initAllLangCssMock,
 }));
 vi.mock('../../server/appHelpers', () => ({
     showFileOrDirExplorer: h.showFileOrDirExplorerMock,
@@ -205,8 +207,8 @@ describe('bible-list/note bibleNoteHelpers', () => {
         test('builds the bible note and initializes non-current langs', async () => {
             await setupInit();
             expect(capturedConfig).toBeDefined();
-            // only the non-current locale gets initLangCss
-            expect(h.initLangCssMock).toHaveBeenCalledTimes(1);
+            // every locale's css is injected in one go, not per non-current one
+            expect(h.initAllLangCssMock).toHaveBeenCalledTimes(1);
             expect(capturedConfig.editorExtraFontFamilies).toEqual([
                 ['KhmerFont', 'km'],
             ]);

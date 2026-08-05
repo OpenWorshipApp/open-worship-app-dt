@@ -5,7 +5,7 @@ import {
     dirSourceSettingNames,
 } from '../../helper/constants';
 import { useGenDirSourceReload } from '../../helper/dirSourceHelpers';
-import { tran } from '../../lang/langHelpers';
+import { toIconedLabel } from '../../others/labelIconHelpers';
 import FileListHandlerComp from '../../others/FileListHandlerComp';
 import Note from './Note';
 import NoteFileComp from './NoteFileComp';
@@ -34,7 +34,7 @@ export default function BibleNoteListComp() {
             onNewFile={async (dirPath: string, name: string) => {
                 return !(await Note.create(dirPath, name));
             }}
-            header={<span>{tran('Bible Notes')}</span>}
+            header={<span>{toIconedLabel('Bible Notes')}</span>}
             bodyHandler={handleBodyRendering}
             userClassName="p-0"
             sortFilePaths={sortNoteFilePaths}

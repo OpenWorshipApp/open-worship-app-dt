@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~538 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~599 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -229,7 +229,7 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~538 rows with stable
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~599 rows with stable
 IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
 the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
@@ -397,6 +397,46 @@ Triage before filing (a 403 is usually NOT an app bug), the known orphaned-`.par
 and the `(1)` de-duplication suffix are all documented in the matrix §MD — read it before
 reporting a download failure.
 
+### 6f. Playlist deep pass (run when the focus touches the run sheet — and in every full-coverage run)
+
+The Playlists panel is the app's **run sheet**, and since `203d35cc` (2026-08-04) it is
+**no longer dev-only** — it took the old Lyric List's slot in the presenter's left column
+and ships in packaged builds. Any note (including older revisions of these references)
+that says "dev builds only" is stale: **no PL row may be marked BLOCKED for being
+dev-only** (PL-49).
+
+Read **knowledge-base §14** first — it is the model behind every PL row. Then drive
+`PL-10`, `PL-29`, `PL-32..PL-74`. The parts a quick pass keeps missing, in the order they
+are cheapest to reach:
+
+1. **The two storage kinds** (§14.2). Slides/documents are references, everything else is
+   a verbatim preset. Prove it once per run: edit a referenced document and confirm the
+   playlist projects the NEW text (PL-29), and confirm a stored countdown/marquee replays
+   its own preset rather than a resolved date (PL-69).
+2. **The failure surfaces** — placeholders, a hand-corrupted `.owp` entry, an unreadable
+   document (PL-50/51). A damaged entry must not take the rest of the list with it, and
+   must not be silently dropped from the file by the next write.
+3. **The drag rules** (§14.4), including the deliberate no-ops: cross-playlist drag adds
+   nothing, a row dropped on itself writes nothing (PL-55), unsupported payloads toast
+   (PL-56).
+4. **The floating preview as a player** — fold memory, the restricted slide menu, the
+   three ways a preset reaches a screen, the widget frame (PL-58..61) — then walk a whole
+   document with the next-key (PL-46/48).
+5. **Export → import round trip on real files** (PL-39/40/45, PL-65..68). The import
+   contract is all-or-nothing: with a required folder unset it must fail **before** writing
+   anything. A CDP-driven drop of a real `.owapl.tar.gz` exercises the whole pipeline —
+   fabricate the `dataTransfer` and stamp `appFilePath` (KB §14.7).
+6. **The performance guards** (§14.3) — no `Maximum update depth exceeded` with a
+   ~90-slide document expanded, the clicked row marks immediately, an idle list opens no
+   `.owp` files, and clicking a row does not repaint every file row in the window
+   (PL-63/70). These are the regressions that only hurt on the target hardware.
+7. **Locale.** The playlist strings are listed in KB §14.8 — a missing Khmer key THROWS in
+   dev and blanks the page, so the §6d pass must cover this panel whenever it was touched.
+
+Restore rule for this pass: it writes to real files. Work in a scratch playlist you
+created, delete it at the end, and remove anything the import created (imported media,
+documents, the Default-list verses) — or say in the report what you left behind.
+
 ### 7. Report
 
 - Write the full report to `test-results/robot-test/report-<timestamp>.md` (this folder
@@ -532,7 +572,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
-  **coverage contract**: ~538 stable-ID rows over the whole UI surface — every interactive
+  **coverage contract**: ~599 stable-ID rows over the whole UI surface — every interactive
   path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
   citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and

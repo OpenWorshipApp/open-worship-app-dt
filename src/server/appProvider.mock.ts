@@ -797,7 +797,7 @@ async function initLyricMock() {
         const folderName =
             defaultDataDirNames[key as keyof typeof defaultDataDirNames];
         const filePath = `${dataDirPath}/${folderName}`;
-        if (key === 'LYRIC') {
+        if (key === 'APP_DOCUMENT') {
             const data = Lyric.getDefaultContentJsonData();
             const fileFullName = 'test-lyric.owl';
             virtualFs.writeFile(
@@ -885,6 +885,11 @@ const appProviderMock = {
     },
     httpUtils: {
         request: (() => {
+            throw new Error(
+                'Browser mock does not implement node:http request',
+            );
+        }) as any,
+        requestHttp: (() => {
             throw new Error(
                 'Browser mock does not implement node:http request',
             );

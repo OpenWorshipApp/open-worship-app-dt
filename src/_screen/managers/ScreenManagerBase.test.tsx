@@ -178,10 +178,10 @@ describe('ScreenManagerBase', () => {
 
     test('validates stage numbers, persists display ids, and checks sync groups', () => {
         const manager = new TestScreenManagerBase(3);
-        manager.stageNumber = 2;
-        expect(manager.stageNumber).toBe(2);
+        manager.stage = 2;
+        expect(manager.stage).toBe(2);
         expect(() => {
-            manager.stageNumber = -1;
+            manager.stage = -1;
         }).toThrow('Stage number cannot be negative');
 
         manager.noSyncGroupMap.set('test-sync', true);

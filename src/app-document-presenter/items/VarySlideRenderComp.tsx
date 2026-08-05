@@ -4,7 +4,8 @@ import type { CSSProperties, ReactNode, MouseEvent } from 'react';
 import { useCallback, useMemo } from 'react';
 
 import Slide from '../../app-document-list/Slide';
-import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
+import type { OnScreenListType } from '../../_screen/managers/varySlideOnScreenHelpers';
+import { useVarySlideOnScreenList } from '../../_screen/managers/varySlideOnScreenHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
     handleDragStart,
@@ -42,18 +43,17 @@ import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDo
 import { showSimpleToast } from '../../toast/toastHelpers';
 
 function RenderScreenInfoComp({
-    varySlide,
-}: Readonly<{ varySlide: VarySlideType }>) {
+    onScreenList,
+}: Readonly<{ onScreenList: OnScreenListType }>) {
     if (!appProvider.isPagePresenter) {
         return null;
     }
-    const { selectedList } = toClassNameHighlight(varySlide, null, []);
-    if (selectedList.length === 0) {
+    if (onScreenList.length === 0) {
         return null;
     }
     return (
         <div className="d-flex app-border-white-round px-1">
-            {selectedList.map(([key]) => {
+            {onScreenList.map(([key]) => {
                 const screenId = Number.parseInt(key);
                 const onClick = (event: any, screenId: number) => {
                     event.stopPropagation();
@@ -78,10 +78,12 @@ function VarySlideHeaderComp({
     varySlide,
     viewIndex,
     name,
+    onScreenList,
 }: Readonly<{
     varySlide: VarySlideType;
     viewIndex: number;
     name?: string;
+    onScreenList: OnScreenListType;
 }>) {
     const isChanged =
         Slide.checkIsThisType(varySlide) && (varySlide as Slide).isChanged;
@@ -113,7 +115,7 @@ function VarySlideHeaderComp({
                     <span className="mx-1 app-ellipsis">{name}</span>
                 </div>
                 <div className="d-flex justify-content-end">
-                    <RenderScreenInfoComp varySlide={varySlide} />
+                    <RenderScreenInfoComp onScreenList={onScreenList} />
                     <AttachBackgroundIconComp
                         filePath={varySlide.filePath}
                         id={varySlide.id}
@@ -237,7 +239,11 @@ export default function VarySlideRenderComp({
     holdingItems?: VarySlideType[];
     children: ReactNode;
 }>) {
-    useScreenVaryAppDocumentManagerEvents(['update']);
+    // The ONLY screen subscription left in a slide preview, and it is scoped to
+    // this one slide. React bails out on an unchanged snapshot, so presenting a
+    // slide now wakes that slide and the one it replaced — not every preview in
+    // the window.
+    const onScreenList = useVarySlideOnScreenList(varySlide);
     const {
         activeCN: activeClassName,
         presenterCN: presenterClassName,
@@ -246,6 +252,7 @@ export default function VarySlideRenderComp({
         varySlide,
         selectedItemEditing ?? null,
         holdingItems ?? [],
+        onScreenList,
     );
     const attachedBackgroundData = useAttachedBackgroundData(
         varySlide.filePath,
@@ -362,6 +369,7 @@ export default function VarySlideRenderComp({
                 varySlide={varySlide}
                 viewIndex={index + 1}
                 name={varySlide.name}
+                onScreenList={onScreenList}
             />
             <div className="card-body app-overflow-hidden w-100 p-0 m-0">
                 <ShadowingFillParentWidthComp width={width}>

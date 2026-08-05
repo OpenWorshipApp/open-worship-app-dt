@@ -145,9 +145,13 @@ export default class PdfSlide
         return this.getImageFilePath();
     }
 
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.PDF_SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.PDF_SLIDE,
+            type: this.dragType,
             data: JSON.stringify({
                 filePath: this.filePath,
                 data: this.toJson(),

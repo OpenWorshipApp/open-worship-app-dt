@@ -100,7 +100,7 @@ export default function FinderAppComp() {
     return (
         <div
             id="app"
-            className="finder-container card w-100 h-100"
+            className="app finder-container card w-100 h-100"
             data-bs-theme={theme}
         >
             <div className="card-body p-0">

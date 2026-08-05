@@ -18,6 +18,7 @@ import type { EditingResultType } from '../helper/bible-helpers/bibleLogicHelper
 import LoadingComp from '../others/LoadingComp';
 import { getBibleInfo } from '../helper/bible-helpers/bibleInfoHelpers';
 import appProvider from '../server/appProvider';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyBibleSearchBodyPreviewerComp = lazy(() => {
     return import('../bible-find/BibleFindPreviewerComp');
@@ -120,12 +121,12 @@ export default function RenderBibleLookupComp() {
                 },
             },
             key: 'h2',
-            widgetName: 'Lookup',
+            ...toWidgetLabel('Lookup'),
         },
         {
             children: LazyBibleSearchBodyPreviewerComp,
             key: 'h1',
-            widgetName: 'Bible Online Lookup',
+            ...toWidgetLabel('Bible Online Lookup'),
         },
     ];
     return (

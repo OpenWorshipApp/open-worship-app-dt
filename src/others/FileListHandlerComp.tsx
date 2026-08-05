@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { lazy, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import PathSelectorComp from './PathSelectorComp';
@@ -17,42 +17,95 @@ import {
     genOnDrop,
     genDroppingFileOnContextMenu,
     handleFilesSelectionMenuItem,
-    genItemsAddingContextMenuItems,
 } from './droppingFileHelpers';
 import NoDirSelectedComp from './NoDirSelectedComp';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ScrollingHandlerComp from '../scrolling/ScrollingHandlerComp';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import {
     DirSourceContext,
     useDirSourceWatching,
+    useFilePaths,
 } from '../helper/dirSourceHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
-
-const LazyAskingNewNameComp = lazy(() => {
-    return import('./AskingNewNameComp');
-});
+import FileListFilterIconsComp, {
+    FileListFilterInputComp,
+} from './FileListFilterComp';
+import { useFileListFilterData } from './fileListFilterHelpers';
+import AskingNewNameComp from './AskingNewNameComp';
+import StickyAutoHideComp from './StickyAutoHideComp';
 
 export type FileListType = FileSource[] | null | undefined;
+
+/**
+ * One kind of file the list can create. A list that holds more than one kind
+ * (the documents list holds slide documents and lyrics) declares them here and
+ * each gets its own entry in the list menu, so `title` reads as an action
+ * ("New Lyric") rather than as a type name. Falls back to a lone "New File".
+ */
+export type NewFileKindType = {
+    key: string | null;
+    title: string;
+    iconName: string;
+};
+const DEFAULT_NEW_FILE_KINDS: NewFileKindType[] = [
+    { key: null, title: 'New File', iconName: 'file-earmark-plus' },
+];
+type NewFileHandlerType = (
+    dirPath: string,
+    newName: string,
+    kindKey: string | null,
+) => Promise<boolean>;
+
+/**
+ * The list's only button: it opens the same menu as right-clicking the empty
+ * card body. Lists with a header put it there; header-less lists (the
+ * background/foreground tabs) put it in the path row, where their old `+` was —
+ * otherwise those tabs would have no button at all.
+ */
+function ListMenuButtonComp({
+    onShowMenu,
+    className,
+}: Readonly<{
+    // `undefined` when the list has no directory to act on.
+    onShowMenu?: (event: any) => void;
+    className: string;
+}>) {
+    const onShowMenuRef = useAppCurrentRef(onShowMenu);
+    const handleClicking = useCallback((event: MouseEvent) => {
+        // the path row itself toggles the path editor on click
+        event.stopPropagation();
+        onShowMenuRef.current?.(event);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    if (onShowMenu === undefined) {
+        return null;
+    }
+    return (
+        <div
+            className={`app-caught-hover-pointer ${className}`}
+            title={tran('More Options')}
+            onClick={handleClicking}
+            style={{
+                color: 'var(--bs-secondary-color)',
+                fontSize: '17px',
+            }}
+        >
+            <i className="bi bi-three-dots-vertical" />
+        </div>
+    );
+}
 
 function RenderHeaderComp({
     isOnScreen,
     header,
-    onNewFile,
-    dirSource,
-    setIsCreatingNew,
+    onShowMenu,
 }: Readonly<{
     isOnScreen: boolean;
     header: any;
-    onNewFile?: (dirPath: string, newName: string) => Promise<boolean>;
-    dirSource: DirSource;
-    setIsCreatingNew: (isCreating: boolean) => void;
+    onShowMenu?: (event: any) => void;
 }>) {
-    const setIsCreatingNewRef = useAppCurrentRef(setIsCreatingNew);
-    const handleSetCreatingNew = useCallback(() => {
-        setIsCreatingNewRef.current(true);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
     return (
         <div
             className="card-header"
@@ -63,19 +116,7 @@ function RenderHeaderComp({
             <strong className={isOnScreen ? 'app-on-screen' : ''}>
                 {header}
             </strong>
-            {onNewFile && dirSource.dirPath ? (
-                <div
-                    className="float-end app-caught-hover-pointer"
-                    title={tran('New File')}
-                    onClick={handleSetCreatingNew}
-                    style={{
-                        color: 'var(--bs-info-text-emphasis)',
-                        fontSize: '17px',
-                    }}
-                >
-                    <i className="bi bi-file-earmark-plus" />
-                </div>
-            ) : null}
+            <ListMenuButtonComp onShowMenu={onShowMenu} className="float-end" />
         </div>
     );
 }
@@ -87,7 +128,8 @@ type PropsType = {
     dirSource: DirSource;
     header?: any;
     bodyHandler: (filePaths: string[], colorNote?: string) => any;
-    onNewFile?: (dirPath: string, newName: string) => Promise<boolean>;
+    onNewFile?: NewFileHandlerType;
+    newFileKinds?: NewFileKindType[];
     onFileDeleted?: (filePath: string) => void;
     contextMenuItems?: ContextMenuItemType[];
     genContextMenuItems?: (
@@ -118,6 +160,7 @@ export default function FileListHandlerComp({
     contextMenuItems,
     genContextMenuItems,
     onNewFile,
+    newFileKinds,
     checkExtraFile,
     takeDroppedFile,
     userClassName,
@@ -131,20 +174,56 @@ export default function FileListHandlerComp({
     const [isOnScreen, setIsOnScreen] = useState(false);
     const onNewFileRef = useAppCurrentRef(onNewFile);
     const dirSourceRef = useAppCurrentRef(dirSource);
+    const [newFileKindKey, setNewFileKindKey] = useState<string | null>(null);
+    const newFileKindKeyRef = useAppCurrentRef(newFileKindKey);
     const handleNameApplying = useCallback(async (name: string | null) => {
         if (name === null) {
             setIsCreatingNew(false);
             return;
         }
         onNewFileRef
-            .current?.(dirSourceRef.current.dirPath, name)
+            .current?.(
+                dirSourceRef.current.dirPath,
+                name,
+                newFileKindKeyRef.current,
+            )
             .then((isSuccess) => {
                 setIsCreatingNew(isSuccess);
             });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const [isCreatingNew, setIsCreatingNew] = useState(false);
+    // Every kind the list can create gets its own top-level menu entry, so a
+    // list holding documents and lyrics advertises both without a nested step.
+    // The items are built when the menu opens, not memoized: `tran` must run
+    // after a locale switch, not once at mount.
+    const genNewFileMenuItems = useMemo(() => {
+        if (onNewFile === undefined) {
+            return undefined;
+        }
+        const kinds = newFileKinds ?? DEFAULT_NEW_FILE_KINDS;
+        return () => {
+            return kinds.map((kind) => {
+                return {
+                    childBefore: genContextMenuItemIcon(kind.iconName),
+                    menuElement: tran(kind.title),
+                    onSelect: () => {
+                        setNewFileKindKey(kind.key);
+                        setIsCreatingNew(true);
+                    },
+                };
+            });
+        };
+    }, [onNewFile, newFileKinds]);
     useDirSourceWatching(dirSource);
+    // The file list is read here rather than inside `RenderListComp` because
+    // the filter/sort icons live up in the path title row and need to know
+    // which document types the directory actually holds.
+    const filePaths = useFilePaths(dirSource, [
+        mimetypeName,
+        ...extraMimetypeNames,
+    ]);
+    const filterData = useFileListFilterData(dirSource);
     const handleItemsAdding = useMemo(() => {
         if (fileSelectionOption === undefined) {
             return undefined;
@@ -154,12 +233,25 @@ export default function FileListHandlerComp({
                 handleFilesSelectionMenuItem(fileSelectionOption);
                 return;
             }
-            const menuItems = genItemsAddingContextMenuItems(() => {
-                handleFilesSelectionMenuItem(fileSelectionOption);
-            });
+            const menuItems: ContextMenuItemType[] = [
+                {
+                    childBefore: genContextMenuItemIcon('plus-lg'),
+                    menuElement: tran('Add Local Files'),
+                    onSelect: () => {
+                        handleFilesSelectionMenuItem(fileSelectionOption);
+                    },
+                },
+            ];
             onItemsAdding(menuItems, event);
         };
     }, [onItemsAdding, fileSelectionOption]);
+    const noDirFolderName = dirSource.dirPath ? undefined : defaultFolderName;
+    const handleMenuShowing = genDroppingFileOnContextMenu(dirSource, {
+        contextMenuItems,
+        genContextMenuItems,
+        addItems: handleItemsAdding,
+        genNewFileMenuItems,
+    });
     return (
         <DirSourceContext value={dirSource}>
             <div
@@ -181,49 +273,54 @@ export default function FileListHandlerComp({
                     <RenderHeaderComp
                         isOnScreen={isOnScreen}
                         header={header}
-                        onNewFile={onNewFile}
-                        dirSource={dirSource}
-                        setIsCreatingNew={setIsCreatingNew}
+                        onShowMenu={handleMenuShowing}
                     />
                 ) : null}
                 <div
                     className="card-body d-flex flex-column pb-5 app-inner-shadow"
-                    onContextMenu={genDroppingFileOnContextMenu(dirSource, {
-                        contextMenuItems,
-                        genContextMenuItems,
-                        addItems: handleItemsAdding,
-                        onStartNewFile:
-                            onNewFile === undefined
-                                ? undefined
-                                : () => {
-                                      setIsCreatingNew(true);
-                                  },
-                    })}
+                    onContextMenu={handleMenuShowing}
                 >
-                    <PathSelectorComp
-                        prefix={`path-${className}`}
-                        dirSource={dirSource}
-                        addItems={handleItemsAdding}
-                    />
-                    {!dirSource.dirPath && defaultFolderName ? (
+                    <StickyAutoHideComp>
+                        <PathSelectorComp
+                            prefix={`path-${className}`}
+                            dirSource={dirSource}
+                            extraElements={
+                                <>
+                                    <FileListFilterIconsComp
+                                        filePaths={filePaths ?? []}
+                                        filterData={filterData}
+                                    />
+                                    {header ? null : (
+                                        <ListMenuButtonComp
+                                            onShowMenu={handleMenuShowing}
+                                            className="px-1"
+                                        />
+                                    )}
+                                </>
+                            }
+                        />
+                        {noDirFolderName === undefined &&
+                        filterData.isSearchShowing ? (
+                            <FileListFilterInputComp filterData={filterData} />
+                        ) : null}
+                    </StickyAutoHideComp>
+                    {noDirFolderName !== undefined ? (
                         <NoDirSelectedComp
                             dirSource={dirSource}
-                            defaultFolderName={defaultFolderName}
+                            defaultFolderName={noDirFolderName}
                         />
                     ) : (
                         <ul className="list-group flex-fill d-flex">
                             {onNewFile !== undefined && isCreatingNew ? (
-                                <LazyAskingNewNameComp
+                                <AskingNewNameComp
                                     applyName={handleNameApplying}
                                 />
                             ) : null}
                             <RenderListComp
                                 dirSource={dirSource}
+                                filePaths={filePaths}
+                                filterData={filterData}
                                 bodyHandler={bodyHandler}
-                                mimetypeNames={[
-                                    mimetypeName,
-                                    ...extraMimetypeNames,
-                                ]}
                                 setIsOnScreen={setIsOnScreen}
                                 checkIsOnScreen={checkIsOnScreen}
                                 sortFilePaths={sortFilePaths}

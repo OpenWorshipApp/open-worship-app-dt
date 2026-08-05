@@ -15,7 +15,8 @@ import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEven
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import type { ForegroundCameraDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
 import type { CameraInfoType } from '../helper/cameraHelpers';
 import {
     getCameraAndShowMedia,
@@ -79,8 +80,19 @@ function RenderCameraInfoComp({
         [cameraInfo, genStyle],
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
-    const handleDragStart = useCallback(() => {
+    const cameraInfoRef = useAppCurrentRef(cameraInfo);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleDraggingStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
+            event,
+            genForegroundDragInf('camera', () => {
+                return {
+                    id: cameraInfoRef.current.deviceId,
+                    extraStyle: genStyleRef.current(),
+                };
+            }),
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
@@ -98,7 +110,7 @@ function RenderCameraInfoComp({
                 onContextMenu={handleContextMenuOpening}
                 ref={containerRef}
                 draggable
-                onDragStart={handleDragStart}
+                onDragStart={handleDraggingStart}
             >
                 <LoadingComp />
             </div>

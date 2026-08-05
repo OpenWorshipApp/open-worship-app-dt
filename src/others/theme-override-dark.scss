@@ -3,7 +3,7 @@
 $dragging-color-full: rgb(0, 174, 162);
 $resizer-color: rgb(73, 103, 123);
 
-#app[data-bs-theme='dark'] {
+.app[data-bs-theme='dark'] {
   --app-color-presenter: #ffd500;
   --app-color-reader: #ff00d4;
   --app-yellow-green: yellowgreen;
@@ -346,7 +346,6 @@ $resizer-color: rgb(73, 103, 123);
   }
 
   .app-caught-hover-pointer {
-    cursor: pointer;
     &:hover {
       text-shadow: 0 0 2px rgba(255, 255, 255, 0.198);
     }
@@ -368,5 +367,9 @@ $resizer-color: rgb(73, 103, 123);
       background: #00000059;
       border-radius: 4px;
     }
+  }
+
+  .mini-screen {
+    box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.2);
   }
 }

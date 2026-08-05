@@ -18,7 +18,8 @@ import type { ForegroundQuickTextDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import SavedTextSessionButtonsComp from './SavedTextSessionButtonsComp';
 import { renderMarkdown } from '../lyric-list/markdownHelpers';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 
@@ -156,8 +157,25 @@ export default function ForegroundQuickTextComp() {
         [],
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
-    const handleQuickTextDragStart = useCallback(() => {
+    const markdownTextRef = useAppCurrentRef(markdownText);
+    const timeSecondDelayRef = useAppCurrentRef(timeSecondDelay);
+    const timeSecondToLiveRef = useAppCurrentRef(timeSecondToLive);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleQuickTextDragStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
+        // The markdown source travels, not the rendered html: rendering is
+        // async and a drag payload has to be built synchronously.
+        handleDragStart(
+            event,
+            genForegroundDragInf('quick-text', () => {
+                return {
+                    markdownText: markdownTextRef.current,
+                    timeSecondDelay: timeSecondDelayRef.current,
+                    timeSecondToLive: timeSecondToLiveRef.current,
+                    extraStyle: genStyleRef.current(),
+                };
+            }),
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const genHidingElement = (isMini: boolean) => (

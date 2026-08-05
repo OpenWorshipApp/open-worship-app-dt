@@ -1,6 +1,7 @@
 import { lazy, use } from 'react';
 
 import { tran } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import {
     applyOpenLyricTheme,
@@ -58,7 +59,7 @@ export default function LyricHandlerComp() {
                     'align-items-center justify-content-center'
                 }
             >
-                <h3 className="text-muted">{tran('Loading...')}</h3>
+                <h3 className="text-muted">{tran('Loading')}...</h3>
             </div>
         );
     }
@@ -91,12 +92,12 @@ export default function LyricHandlerComp() {
                             {
                                 children: LazyLyricRenderPreviewBodyComp,
                                 key: 'v1',
-                                widgetName: 'Previewer',
+                                ...toWidgetLabel('Previewer'),
                             },
                             {
                                 children: LazyLyricSlidesPreviewerComp,
                                 key: 'v2',
-                                widgetName: 'Slides',
+                                ...toWidgetLabel('Slides'),
                             },
                         ]}
                     />

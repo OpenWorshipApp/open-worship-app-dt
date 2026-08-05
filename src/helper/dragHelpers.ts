@@ -21,6 +21,7 @@ import { cameraDragDeserialize } from '../background/backgroundHelpers';
 import { deserializeBackgroundWebDragItem } from '../background/backgroundWebUrlHelpers';
 import { tran } from '../lang/langHelpers';
 import LyricSlide from '../lyric-list/LyricSlide';
+import { foregroundDragDeserialize } from '../presenter-foreground/foregroundDragHelpers';
 
 export const dragStore: {
     onDropped?: ((event: any) => void) | ((event: any) => Promise<void>) | null;
@@ -35,7 +36,22 @@ export function handleDragStart(
     event.dataTransfer.setData('text', JSON.stringify(data));
 }
 
-export function extractDropData(event: any) {
+// A document travels as a plain reference: only the path goes with the drag.
+// Deserialized by the APP_DOCUMENT branch of `deserializeDragData`.
+export function handleAppDocumentDragStart(event: any, filePath: string) {
+    handleDragStart(event, {
+        dragSerialize: () => {
+            return {
+                type: DragTypeEnum.APP_DOCUMENT,
+                data: filePath,
+            };
+        },
+    });
+}
+
+// Split out of `extractDropData` so a caller that also needs the raw payload —
+// a playlist stores it verbatim — does not have to re-implement the parse.
+export function extractDragData(event: any): DragDataType<any> | null {
     const data = event.dataTransfer.getData('text');
     if (!data) {
         return null;
@@ -48,7 +64,15 @@ export function extractDropData(event: any) {
     } catch (_error) {
         return null;
     }
-    return deserializeDragData(dragData);
+    if (dragData === null || typeof dragData !== 'object' || !dragData.type) {
+        return null;
+    }
+    return dragData;
+}
+
+export function extractDropData(event: any) {
+    const dragData = extractDragData(event);
+    return dragData === null ? null : deserializeDragData(dragData);
 }
 
 function deserializeDocumentSlideData(type: DragTypeEnum, data: any) {
@@ -75,9 +99,11 @@ function deserializeDocumentSlideData(type: DragTypeEnum, data: any) {
 
 function deserializeBackgroundData(type: DragTypeEnum, data: any) {
     if (
-        [DragTypeEnum.BACKGROUND_VIDEO, DragTypeEnum.BACKGROUND_IMAGE].includes(
-            type,
-        )
+        [
+            DragTypeEnum.BACKGROUND_VIDEO,
+            DragTypeEnum.BACKGROUND_IMAGE,
+            DragTypeEnum.BACKGROUND_AUDIO,
+        ].includes(type)
     ) {
         return FileSource.dragDeserialize(data);
     }
@@ -93,7 +119,7 @@ function deserializeBackgroundData(type: DragTypeEnum, data: any) {
     return null;
 }
 
-function deserializeDragData({
+export function deserializeDragData({
     type,
     data,
 }: DragDataType<any>): DroppedDataType | null {
@@ -104,6 +130,10 @@ function deserializeDragData({
         item = LyricSlide.dragDeserialize(data);
     } else if (type === DragTypeEnum.BIBLE_ITEM) {
         item = BibleItem.dragDeserialize(data);
+    } else if (type === DragTypeEnum.FOREGROUND) {
+        item = foregroundDragDeserialize(data);
+    } else if (type === DragTypeEnum.APP_DOCUMENT) {
+        item = typeof data === 'string' && data ? { filePath: data } : null;
     } else {
         item =
             deserializeDocumentSlideData(type, data) ??

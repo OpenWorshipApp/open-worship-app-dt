@@ -98,14 +98,26 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     static parseAllForegroundData(foregroundData: any): ForegroundDataType {
-        const countdownData = foregroundData['countdownData'] ?? null;
-        if (countdownData !== null) {
-            countdownData.dateTime = new Date(countdownData.dateTime);
-        }
-        const stopwatchData = foregroundData['stopwatchData'] ?? null;
-        if (stopwatchData !== null) {
-            stopwatchData.dateTime = new Date(stopwatchData.dateTime);
-        }
+        // Rehydrated into NEW objects rather than by writing `dateTime` back
+        // onto the argument. The argument is an entry of the on-screen
+        // foreground map, which is memoized and shared — mutating it in place
+        // turned the stored ISO string into a `Date` for every later reader.
+        const rawCountdownData = foregroundData['countdownData'] ?? null;
+        const countdownData =
+            rawCountdownData === null
+                ? null
+                : {
+                      ...rawCountdownData,
+                      dateTime: new Date(rawCountdownData.dateTime),
+                  };
+        const rawStopwatchData = foregroundData['stopwatchData'] ?? null;
+        const stopwatchData =
+            rawStopwatchData === null
+                ? null
+                : {
+                      ...rawStopwatchData,
+                      dateTime: new Date(rawStopwatchData.dateTime),
+                  };
         const newForegroundData = {
             countdownData,
             stopwatchData,

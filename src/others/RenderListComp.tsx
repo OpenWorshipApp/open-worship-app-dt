@@ -1,23 +1,88 @@
-import { Fragment, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import type DirSource from '../helper/DirSource';
-import type { MimetypeNameType } from '../server/fileHelpers';
 import LoadingComp from './LoadingComp';
 import { GotoSettingDirectoryPathComp } from './NoDirSelectedComp';
 import { useFileSourceIsOnScreen } from '../_screen/screenHelpers';
 import { tran } from '../lang/langHelpers';
-import { useFilePaths } from '../helper/dirSourceHelpers';
+import { useStateSettingBoolean } from '../helper/settingHelpers';
 import {
     genColorBar,
     genColorNoteDataList,
     genFilePathColorMap,
 } from '../helper/colorNoteHelpers';
+import type { FileListFilterDataType } from './fileListFilterHelpers';
+import {
+    filterFilePaths,
+    genCombinedSortFilePaths,
+    MIN_FILTERABLE_FILE_COUNT,
+} from './fileListFilterHelpers';
+
+// Kept module-level so the filtering `useMemo` below does not see a new empty
+// array on every render while the file list is still loading.
+const EMPTY_FILE_PATHS: string[] = [];
+
+function toIsCollapsedSettingName(dirSource: DirSource, colorNote: string) {
+    return `${dirSource.settingName}-color-note-collapsed-${colorNote}`;
+}
+
+// Collapsing does not just hide the items, it stops rendering them at all,
+// which is what makes a long list cheap on a low-spec machine.
+function ColorNoteGroupComp({
+    dirSource,
+    colorNote,
+    filePaths,
+    bodyHandler,
+}: Readonly<{
+    dirSource: DirSource;
+    colorNote: string;
+    filePaths: string[];
+    bodyHandler: (filePaths: string[], colorNote?: string) => any;
+}>) {
+    const [isCollapsed, setIsCollapsed] = useStateSettingBoolean(
+        toIsCollapsedSettingName(dirSource, colorNote),
+        false,
+    );
+    return (
+        <>
+            <div
+                className={
+                    'app-caught-hover-pointer d-flex align-items-center' +
+                    ' w-100 px-1 mt-2'
+                }
+                style={{ gap: '4px' }}
+                onClick={() => {
+                    setIsCollapsed(!isCollapsed);
+                }}
+            >
+                <i
+                    className={`bi bi-chevron-${isCollapsed ? 'right' : 'down'}`}
+                    style={{ fontSize: '0.7rem', opacity: '0.5' }}
+                />
+                <div className="flex-fill">{genColorBar(colorNote)}</div>
+                <span
+                    className="badge rounded-pill p-1"
+                    style={{
+                        fontSize: '0.7rem',
+                        fontWeight: 'normal',
+                        opacity: '0.2',
+                    }}
+                >
+                    {filePaths.length}
+                </span>
+            </div>
+            {isCollapsed ? null : bodyHandler(filePaths, colorNote)}
+        </>
+    );
+}
 
 function RenderFileItemsWithColorNote({
+    dirSource,
     filePaths,
     bodyHandler,
     sortFilePaths,
 }: {
+    dirSource: DirSource;
     filePaths: string[];
     bodyHandler: (filePaths: string[], colorNote?: string) => any;
     sortFilePaths?: (filePaths: string[]) => string[];
@@ -38,16 +103,32 @@ function RenderFileItemsWithColorNote({
     }
     return colorNotes.map((colorNote) => {
         let subFilePaths = filePathColorMap[colorNote];
+        // The "unknown" group is always seeded, and any group can be emptied by
+        // the name/type filter — a header with nothing under it is just noise.
+        if (!subFilePaths?.length) {
+            return null;
+        }
         if (sortFilePaths !== undefined) {
             subFilePaths = sortFilePaths(subFilePaths);
         }
         return (
-            <Fragment key={colorNote}>
-                {genColorBar(colorNote)}
-                {bodyHandler(subFilePaths, colorNote)}
-            </Fragment>
+            <ColorNoteGroupComp
+                key={colorNote}
+                dirSource={dirSource}
+                colorNote={colorNote}
+                filePaths={subFilePaths}
+                bodyHandler={bodyHandler}
+            />
         );
     });
+}
+
+function RenderNoMatchComp() {
+    return (
+        <div className="px-2 py-1" style={{ opacity: '0.5' }}>
+            {tran('No matching files')}
+        </div>
+    );
 }
 
 function RenderFailListComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
@@ -75,7 +156,8 @@ function RenderFailListComp({ dirSource }: Readonly<{ dirSource: DirSource }>) {
 
 export default function RenderListComp({
     dirSource,
-    mimetypeNames,
+    filePaths,
+    filterData,
     bodyHandler,
     setIsOnScreen,
     checkIsOnScreen,
@@ -83,15 +165,17 @@ export default function RenderListComp({
     disableColorNoteGrouping,
 }: Readonly<{
     dirSource: DirSource;
-    mimetypeNames: MimetypeNameType[];
+    filePaths: string[] | null | undefined;
+    filterData: FileListFilterDataType;
     bodyHandler: (filePaths: string[], colorNote?: string) => any;
     setIsOnScreen: (isOnScreen: boolean) => void;
     checkIsOnScreen?: (filePaths: string[]) => Promise<boolean>;
     sortFilePaths?: (filePaths: string[]) => string[];
     disableColorNoteGrouping?: boolean;
 }>) {
-    const filePaths = useFilePaths(dirSource, mimetypeNames);
     useFileSourceIsOnScreen(
+        // The on-screen indicator is about the directory, not about what the
+        // user is currently looking at, so it stays on the unfiltered list.
         filePaths ?? [],
         async (filePaths) => {
             if (checkIsOnScreen === undefined) {
@@ -101,24 +185,41 @@ export default function RenderListComp({
         },
         setIsOnScreen,
     );
+    const { filterText, filterTypeName, sortData } = filterData;
+    const allFilePaths = filePaths ?? EMPTY_FILE_PATHS;
+    const filteredFilePaths = useMemo(() => {
+        if (allFilePaths.length < MIN_FILTERABLE_FILE_COUNT) {
+            return allFilePaths;
+        }
+        return filterFilePaths(allFilePaths, filterText, filterTypeName);
+    }, [allFilePaths, filterText, filterTypeName]);
+    const combinedSortFilePaths = useMemo(() => {
+        return genCombinedSortFilePaths(sortFilePaths, sortData);
+    }, [sortFilePaths, sortData]);
     if (filePaths === undefined) {
         return <LoadingComp />;
     }
     if (filePaths === null) {
         return <RenderFailListComp dirSource={dirSource} />;
     }
+    // An empty directory is not a failed filter; only say so when there were
+    // files to begin with.
+    if (filteredFilePaths.length === 0) {
+        return filePaths.length === 0 ? null : <RenderNoMatchComp />;
+    }
     if (disableColorNoteGrouping) {
-        let newFilePaths = filePaths;
-        if (sortFilePaths !== undefined) {
-            newFilePaths = sortFilePaths(newFilePaths);
+        let newFilePaths = filteredFilePaths;
+        if (combinedSortFilePaths !== undefined) {
+            newFilePaths = combinedSortFilePaths(newFilePaths);
         }
         return bodyHandler(newFilePaths);
     }
     return (
         <RenderFileItemsWithColorNote
-            filePaths={filePaths}
+            dirSource={dirSource}
+            filePaths={filteredFilePaths}
             bodyHandler={bodyHandler}
-            sortFilePaths={sortFilePaths}
+            sortFilePaths={combinedSortFilePaths}
         />
     );
 }

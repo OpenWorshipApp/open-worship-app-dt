@@ -2,7 +2,6 @@ import { createContext, use } from 'react';
 import { OpenLyric } from 'open-lyric';
 import type { OpenLyricTheme, OpenLyricPreviewSetting } from 'open-lyric';
 
-import { getMimetypeExtensions } from '../server/fileHelpers';
 import Lyric from './Lyric';
 import { dirSourceSettingNames } from '../helper/constants';
 import {
@@ -16,8 +15,6 @@ import { getSetting, setSetting } from '../helper/settingHelpers';
 import FileSource from '../helper/FileSource';
 import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
 import { checkIsDarkMode } from '../others/themeHelpers';
-
-export const LYRIC_SLIDE_TYPE_KEY = 'lyric-slide';
 
 interface ThemeTargetInf {
     get theme(): OpenLyricTheme;
@@ -39,14 +36,14 @@ const SELECTED_LYRIC_SETTING_NAME = 'selected-lyric';
 export async function getSelectedLyricFilePath() {
     return await getSelectedFilePathWithEnsure(
         SELECTED_LYRIC_SETTING_NAME,
-        dirSourceSettingNames.LYRIC,
+        dirSourceSettingNames.APP_DOCUMENT,
     );
 }
 
 export function setSelectedLyricFilePath(filePath: string | null) {
     setSelectedFilePath(
         SELECTED_LYRIC_SETTING_NAME,
-        dirSourceSettingNames.LYRIC,
+        dirSourceSettingNames.APP_DOCUMENT,
         filePath,
     );
 }
@@ -61,11 +58,6 @@ export async function getSelectedLyric() {
 
 export async function setSelectedLyric(lyric: Lyric | null) {
     setSelectedLyricFilePath(lyric?.filePath ?? null);
-}
-
-export function checkIsMarkdown(extension: string): boolean {
-    const markdownExtensions = getMimetypeExtensions('markdown');
-    return markdownExtensions.includes(extension.toLowerCase());
 }
 
 export const SelectedLyricContext = createContext<{
@@ -106,6 +98,25 @@ function saveOpenLyricSetting(setting: OpenLyricPreviewSetting) {
     setSetting(OPEN_LYRIC_PREVIEWER_SETTING_NAME, settingStr);
 }
 
+/**
+ * The persisted font settings, readable without an `OpenLyric` instance.
+ *
+ * Slide HTML is generated from renderers where no previewer component has
+ * mounted (the screen window, a stage instance built on demand), so the font
+ * settings must not be reachable only through a live `OpenLyric` object —
+ * otherwise those renderers silently fall back to open-lyric's own default.
+ */
+export function getOpenLyricFontSetting(): {
+    fontSize: number;
+    fontFamily?: string;
+} {
+    const setting: OpenLyricPreviewSetting = loadOpenLyricSetting() ?? {};
+    return {
+        fontSize: setting.fontSize ?? DEFAULT_OPEN_LYRIC_FONT_SIZE,
+        fontFamily: setting.fontFamily,
+    };
+}
+
 export async function initOpenLyric(filePath: string, isNoLangInit = false) {
     const lyric = Lyric.getInstance(filePath);
     const [content, langDataList] = await Promise.all([
@@ -124,11 +135,10 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
         const fileSource = FileSource.getInstance(filePath);
         fileSource.fireUpdateEvent();
     };
-    const setting: OpenLyricPreviewSetting = loadOpenLyricSetting() ?? {};
-    const fontSize = setting.fontSize ?? DEFAULT_OPEN_LYRIC_FONT_SIZE;
+    const { fontSize, fontFamily } = getOpenLyricFontSetting();
     openLyricPreviewer.fontSize = fontSize + 'px';
-    if (setting.fontFamily) {
-        openLyricPreviewer.fontFamily = setting.fontFamily;
+    if (fontFamily) {
+        openLyricPreviewer.fontFamily = fontFamily;
     }
 
     if (!isNoLangInit) {

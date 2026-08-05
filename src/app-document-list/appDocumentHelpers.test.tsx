@@ -336,9 +336,11 @@ vi.mock('../helper/dirSourceHelpers', () => ({
     useFileSourceEvents: useFileSourceEventsMock,
 }));
 
-vi.mock('../_screen/managers/screenEventHelpers', () => ({
-    useScreenVaryAppDocumentManagerEvents:
-        useScreenVaryAppDocumentManagerEventsMock,
+// `useAnyItemSelected` subscribes through here now: the old hook re-rendered
+// its component (the whole slide list) on every screen event whatever the
+// callback found.
+vi.mock('../_screen/managers/varySlideOnScreenHelpers', () => ({
+    useVarySlideOnScreenChangeEffect: useScreenVaryAppDocumentManagerEventsMock,
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -834,8 +836,12 @@ describe('appDocumentHelpers', () => {
         const slide = createSlide('/docs/screen.ows', 2);
         appDocument.items = [slide];
 
-        getDataListMock.mockImplementation((filePath: string, id: number) => {
-            return filePath === '/docs/screen.ows' && id === 2
+        // Mirrors the real `getDataList`: an undefined `id` means "do not
+        // filter by slide id", which is how the document-level check asks
+        // whether any slide of this file is on a screen.
+        getDataListMock.mockImplementation((filePath: string, id?: number) => {
+            return filePath === '/docs/screen.ows' &&
+                (id === undefined || id === 2)
                 ? ['screen-1']
                 : [];
         });
@@ -848,12 +854,8 @@ describe('appDocumentHelpers', () => {
             ),
         ).toBe(false);
 
-        getAppDocumentListOnScreenSettingMock.mockReturnValue({});
-        await expect(
-            appDocumentHelpers.checkIsVaryAppDocumentOnScreen(appDocument),
-        ).resolves.toBe(false);
-
-        getAppDocumentListOnScreenSettingMock.mockReturnValue({ screen: true });
+        // The document-level check is answered by `getDataList` alone: it
+        // already reads the on-screen map, so nothing here reads it twice.
         await expect(
             appDocumentHelpers.checkIsVaryAppDocumentOnScreen(appDocument),
         ).resolves.toBe(true);

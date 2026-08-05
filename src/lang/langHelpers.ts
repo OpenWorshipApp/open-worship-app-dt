@@ -566,11 +566,28 @@ export async function getLangDataAsync(
     initLangCss(langData);
     return langData;
 }
+
 export async function getAllLangsAsync() {
     const allLangData = await Promise.all(
         includedLangCodes.map((langCode) => fetchLangData(langCode)),
     );
     return allLangData.filter((data) => data !== null);
+}
+
+// The renderers that call this render CONTENT in a language other than their
+// own UI locale (lyric slides, bible notes), and that content asks for the
+// language's font by name — e.g. the `app-Battambang` frozen into open-lyric's
+// generated markup. So the `@font-face` rules have to be registered here too,
+// not only for the locale the window's UI happens to use: the screen window
+// loads no locale of its own, and a missing face silently falls back to a
+// system font whose wider metrics reflow and clip the whole slide.
+// The modules are already loaded at this point, so this costs nothing extra.
+export async function initAllLangCss() {
+    const allLangData = await getAllLangsAsync();
+    for (const langData of allLangData) {
+        initLangCss(langData);
+    }
+    return allLangData;
 }
 
 function getDictValue(

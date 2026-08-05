@@ -2,6 +2,7 @@ import { EventEmitter } from 'node:events';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const requestMock = vi.fn();
+const requestHttpMock = vi.fn();
 const fsCheckFileExistMock = vi.fn();
 const fsDeleteFileMock = vi.fn();
 const fsCreateWriteStreamMock = vi.fn();
@@ -17,6 +18,7 @@ vi.mock('../../server/appProvider', () => ({
         },
         httpUtils: {
             request: requestMock,
+            requestHttp: requestHttpMock,
         },
         pathUtils: {
             dirname: (filePath: string) =>
@@ -42,22 +44,80 @@ describe('downloadHelpers', () => {
         vi.resetModules();
         vi.clearAllMocks();
 
-        requestMock.mockImplementation(
-            (_options, callback: (response: any) => void) => {
-                const req = Object.assign(new EventEmitter(), {
-                    end: () => {
-                        callback({ statusCode: 200, headers: {}, on: vi.fn() });
-                    },
-                });
-                return req;
-            },
-        );
+        const genOkRequest = (
+            _options: any,
+            callback: (response: any) => void,
+        ) => {
+            const req = Object.assign(new EventEmitter(), {
+                end: () => {
+                    callback({ statusCode: 200, headers: {}, on: vi.fn() });
+                },
+            });
+            return req;
+        };
+        requestMock.mockImplementation(genOkRequest);
+        requestHttpMock.mockImplementation(genOkRequest);
 
         fsCheckFileExistMock.mockResolvedValue(false);
         fsDeleteFileMock.mockResolvedValue(undefined);
         fsCreateDirMock.mockResolvedValue(undefined);
         fsCheckDirExistMock.mockResolvedValue(true);
         handleErrorMock.mockImplementation(() => {});
+    });
+
+    test('uses the https module on port 443 by default', async () => {
+        const { initHttpRequest } = await import('./downloadHelpers');
+        await initHttpRequest(new URL('https://example.com/file.bin'));
+
+        expect(requestHttpMock).not.toHaveBeenCalled();
+        expect(requestMock.mock.calls[0][0].port).toBe(443);
+    });
+
+    test('uses the plain http module on port 80 for an http URL', async () => {
+        const { initHttpRequest } = await import('./downloadHelpers');
+        await initHttpRequest(new URL('http://example.com/file.bin'));
+
+        expect(requestMock).not.toHaveBeenCalled();
+        expect(requestHttpMock.mock.calls[0][0].port).toBe(80);
+    });
+
+    test('honors an explicit port on either protocol', async () => {
+        const { initHttpRequest } = await import('./downloadHelpers');
+        await initHttpRequest(new URL('http://localhost:8000/pl.owapl.tar.gz'));
+        await initHttpRequest(new URL('https://localhost:8443/file.bin'));
+
+        expect(requestHttpMock.mock.calls[0][0].port).toBe(8000);
+        expect(requestHttpMock.mock.calls[0][0].hostname).toBe('localhost');
+        expect(requestHttpMock.mock.calls[0][0].path).toBe('/pl.owapl.tar.gz');
+        expect(requestMock.mock.calls[0][0].port).toBe(8443);
+    });
+
+    test('follows a redirect from https to plain http', async () => {
+        requestMock.mockImplementationOnce(
+            (_options, callback: (response: any) => void) => {
+                const req = Object.assign(new EventEmitter(), {
+                    end: () => {
+                        callback({
+                            statusCode: 302,
+                            headers: {
+                                location:
+                                    'http://mirror.example:8000/final.bin',
+                            },
+                        });
+                    },
+                });
+                return req;
+            },
+        );
+
+        const { initHttpRequest } = await import('./downloadHelpers');
+        const response = await initHttpRequest(
+            new URL('https://example.com/redirect'),
+        );
+
+        expect(requestHttpMock).toHaveBeenCalledTimes(1);
+        expect(requestHttpMock.mock.calls[0][0].port).toBe(8000);
+        expect(response.statusCode).toBe(200);
     });
 
     test('follows 302 redirect and resolves final response', async () => {

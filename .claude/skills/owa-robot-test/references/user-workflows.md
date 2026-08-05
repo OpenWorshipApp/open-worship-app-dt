@@ -21,10 +21,75 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-07-28** (bump when any workflow changes) — new **W-21**
-(download a background video / audio from a link), observed live end-to-end. Previously:
-W-16 Language now states that `Apply Settings` is required to complete the switch
-(observed live).
+**workflowsVersion: 2026-08-04l** (bump when any workflow changes) — **W-22**'s sharing
+notes now say what happens when the other machine already has a file of the same NAME
+that is a DIFFERENT file: yours is kept and the bundled one arrives as `a (1).mp4`
+(matching contents are still reused, so a repeat import adds nothing). They also say
+that a video placed inside a slide now travels with the bundle and is re-pointed at the
+local copy — it used to arrive as an empty box. **Driven live end to end** (round-tripped
+a fixture bundle: differing `1.jpg` landed as `1 (1).jpg` with the original untouched,
+the slide's video was bundled and re-pointed, and re-exporting carried it again) — see
+PL-67 / PL-76. Previously: **W-22** gained
+step 11: the Playlists list menu now also offers **Import From URL** (នាំចូលពី URL), so a
+bundle published on a web server — or shared off another laptop over the local network —
+is imported by pasting its link instead of copying the file across. The download lands in
+a temporary folder, is imported exactly like a picked or dropped bundle, and is deleted
+afterwards; plain `http://host:port/…` works as well as `https://`. **Driven live end to
+end** (real 80 MB bundle over a local `http://localhost:8000` server, both locales, plus
+the 404 and Cancel paths) — see PL-75. Previously: **W-22** step 2 now
+also lists the **per-widget foreground clears** the **Add Action** menu offers under the
+five broad ones (`M↑` `M↓` `QT` `CD` `SW` `TM` `CM` `WB`), each doing what that widget's
+own hide button in the Foreground panel does, and says why the panel's **Background Images
+Slide Show** has no action of its own (it is a background — **Clear Background** stops it).
+Driven live: the 13-item menu in both locales, and `Clear FG Marquee Top` then
+`Clear FG Stopwatch` on a real `screen.html` output, each taking only its own widget while
+the bible verse stayed up. Previously: **W-22** gained
+**screen actions**: a playlist can now hold something to _do_ as well as things to show.
+Its step 2 covers **Add Action** (បន្ថែមសកម្មភាព) and the five clears it offers, step 4
+that an action is _run_ on a screen (click / drag onto one mini screen / **Apply on
+Screens**) rather than shown on one — and so never lights up as live — and step 8 that the
+floating preview's next-key stops on an action and fires it, so a **Clear All** dropped
+between the last song and the sermon blanks the screen at exactly that point.
+**Driven live end to end** (both locales, real `screen.html` output, playlist restored
+afterwards) — see PL-71..73. Previously: **W-22 is no longer
+a development-only workflow**: commit `203d35cc` removed the `isDev` gate, so the
+**Playlists** panel ships in packaged builds too (it took the slot the separate **Lyrics**
+list used to hold — lyrics are rows of the **Documents** list now). The warning at the top
+of W-22 is gone, its step 1 says where the panel actually sits, and steps 5/8 gained the
+colour stripe, the per-element fold memory and the "no save button" note. **Source-verified
+from `src/presenter/AppPresenterLeftComp.tsx`, not yet re-driven live** — the next robot
+run must confirm the panel really is there on a packaged build before this claim is
+treated as observed. Previously: **W-22** step 8
+now says arriving at a document always shows its FIRST slide, and that folding is the
+chevron rather than the whole title line (PL-46 / PL-48). Previously: **W-22** step 8
+said the next-key walks a **document element's own slides** and only moves to the
+next element once its last slide is on screen (PL-48). Previously: **W-22** step 8
+named the floating preview's **Collapse All / Expand All** icons at its
+bottom-right, which fold or unfold the whole running order in one click (PL-47). Previously: **W-22** step 8
+covered running the service from the floating preview with the keyboard: click
+anywhere on an element to mark where you are (its preview, or the title line of a
+folded one), then **Space / ↓ / → / PageDown** moves to and shows the next element
+(PL-46). Previously: the playlist
+sharing workflow's import step now also accepts the `.owapl.tar.gz` **dropped straight
+onto the Playlists list** (PL-45), not only the list menu's **Import** entry.
+Previously: **every file list
+now has one button, a gray ⋮ (More Options)**, opening the same menu as right-clicking
+the empty list body; the old **↻ Reload** and **+ Add items** icons next to the folder
+path are gone (Reload is the menu's first entry). Lists with a title bar put the ⋮
+there; the background / foreground-web tabs put it in the path row. **W-15** gains the
+lyric/document *creation* step — the Documents list offers **New App Document** and
+**New Lyric** as two direct entries (all observed live, English and Khmer); W-08's Web
+tab step now points at the ⋮ instead of the `+`. Previously: new **W-22** (build a
+service playlist and export/import it as a `.owapl.tar.gz` bundle); its step 7 now says
+**right-click → Reveal Original** (the 3-second hover-to-locate it described was replaced
+by that context-menu item, PL-37 / PL-34) — source-verified, not yet driven live;
+dev-builds only, and
+its steps are **source-verified + partly driven live**, so the next full robot run must
+confirm every step by hand and correct anything that drifted. Previously: **W-08** gains the
+Background thumbnail/list view toggle (Images / Videos / Web), observed live end-to-end.
+Previously: new **W-21** (download a background video / audio from a link), observed live
+end-to-end; W-16 Language now states that `Apply Settings` is required to complete the
+switch (observed live).
 
 > ⚠️ **Pending live re-verification (2026-07-18).** A `src/` sweep for the coverage-matrix
 > expansion indicates the presenter UI has drifted from some steps below: **Foreground**
@@ -61,7 +126,7 @@ The Presenter has a header and three resizable columns:
 
 Drag any divider between panels to resize them; the size is remembered. 📸
 
-*Verify: GL-12, NAV-01..02, PL-01, PR-04.*
+_Verify: GL-12, NAV-01..02, PL-01, PR-04._
 
 ### W-02 — Switch between the main pages
 
@@ -72,7 +137,7 @@ Drag any divider between panels to resize them; the size is remembered. 📸
    shows an alert ("No slide selected") and stays put. Select a document in the left
    list first (W-03).
 
-*Verify: NAV-01..04.*
+_Verify: NAV-01..04._
 
 ---
 
@@ -93,11 +158,12 @@ Drag any divider between panels to resize them; the size is remembered. 📸
    the matching clear button under the mini screen.
 
 Tips:
+
 - The slider in the Documents-tab footer resizes the thumbnails.
 - The stopwatch icon in the same footer opens **auto-play**: set seconds, press play,
   and slides advance automatically; the red ✕ closes it (W-04).
 
-*Verify: PL-01, PM-05..09, KB-05, KB-08.*
+_Verify: PL-01, PM-05..09, KB-05, KB-08._
 
 ### W-04 — Auto-play slides on a timer
 
@@ -109,7 +175,7 @@ Tips:
 3. Type the interval in seconds, then click **play**. Slides advance on the timer.
 4. Click **pause** to stop, or the red **✕** to close the widget.
 
-*Verify: PM-10.*
+_Verify: PM-10._
 
 ### W-05 — Present song lyrics
 
@@ -120,7 +186,7 @@ Tips:
 2. **Double-click** a verse to send it to the screen.
 3. Press **F8** / the clear button to take it down.
 
-*Verify: PL-07..08, PM-11.*
+_Verify: PL-07..08, PM-11._
 
 ### W-06 — Look up and present a Bible verse
 
@@ -139,7 +205,7 @@ Tips:
 6. The presented verse also appears in the **Bibles** tab (middle column) and the
    **Bibles** list (right column) for re-presenting later.
 
-*Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09.*
+_Verify: NAV-06..07, RD-02, PM-12, PR-02, KB-01..02, KB-06, KB-09._
 
 ### W-07 — Style the on-screen Bible text
 
@@ -149,7 +215,7 @@ Tips:
 2. Open its settings split — the **Appearance** and **Text Shadow** cards. 📸
 3. Adjust a control (size, color, shadow); the mini screen updates live.
 
-*Verify: PM-13..14.*
+_Verify: PM-13..14._
 
 ### W-08 — Set the background (color / image / video / web)
 
@@ -163,11 +229,22 @@ Tips:
      whether to adjust the text color too — choose **Ok** or **Cancel**.
    - **Images / Videos:** **double-click** an item to make it the live background. 📸
    - **Cameras:** pick a connected camera device.
-   - **Web:** click a saved page, or **+** to add one (opens the Web Editor, W-15).
+   - **Web:** click a saved page, or use the **⋮** next to the folder path (or
+     right-click the empty list) → **Add URL** to add one (opens the Web Editor, W-15).
 3. The live background's tab shows a `*` prefix (e.g. `*Videos`).
 4. Press **F7** (Clear Background) to remove it.
 
-*Verify: PM-26..33, KB-04.*
+**Thumbnail view vs list view (Images / Videos / Web).** By default each tab shows
+picture previews. If you have a lot of files — or the app feels slow on an older
+machine — switch to a plain name list: hover the bottom edge of the Background panel
+(or click the small **⋯** button at its bottom-left) to bring up the footer bar, then
+click the **list** icon (`☰`) at the far left; the **grid** icon next to it switches
+back. 📸 The list shows each file's full name (with its extension), which screens it is
+showing on, and its colour dot — clicking a row still puts it on screen exactly like a
+thumbnail. Each tab remembers its own choice, and it survives restarting the app. The
+thumbnail-size slider only appears in thumbnail view.
+
+_Verify: PM-26..33, PM-101, PM-114, KB-04._
 
 ### W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -182,12 +259,12 @@ has its own controls and a Show/Start button:
 - **Marquee Top:** type the scrolling text, click Show — it scrolls along the top edge.
 - **Marquee Bottom:** type the scrolling text, click Show — it scrolls along the bottom
   edge. Top and bottom can be shown at the same time.
-- Both marquees expose a **scroll speed** (%) under *Properties*: `100%` is the default
+- Both marquees expose a **scroll speed** (%) under _Properties_: `100%` is the default
   pace, higher is faster, lower is slower. Changing it while a marquee is showing
   re-paces it without having to click Show again.
 - **Quick Text:** type a short message, click Show.
-- **Countdown:** two modes — *to a date/time* (set date + time, press Start) or *for a
-  duration* (set hours/minutes, press Start). Hide with its Hide button. 📸
+- **Countdown:** two modes — _to a date/time_ (set date + time, press Start) or _for a
+  duration_ (set hours/minutes, press Start). Hide with its Hide button. 📸
 - **Stopwatch**, **Clock**, **Images slideshow**, **Camera overlay**, **Web overlay**:
   same pattern — configure, Show, Hide.
 - The shared properties row (font size / color / position) restyles the live widget.
@@ -197,7 +274,7 @@ has its own controls and a Show/Start button:
 Press **F10** (Clear Foreground) to clear all foreground widgets, or **F6** to clear
 everything at once.
 
-*Verify: PM-15..25, PM-28, PM-34, KB-03, KB-07.*
+_Verify: PM-15..25, PM-28, PM-34, KB-03, KB-07._
 
 ### W-10 — Control what the audience sees (mini screen + clears)
 
@@ -225,7 +302,7 @@ everything at once.
 - **Stage number** (footer, `St:`): click to assign this screen a stage number
   (0–4, or increment/decrement) for stage-view setups.
 
-*Verify: PR-04..07, SP-01..09, KB-03..07, KB-13.*
+_Verify: PR-04..07, SP-01..09, KB-03..07, KB-13._
 
 ---
 
@@ -244,7 +321,7 @@ everything at once.
 4. Recent lookups appear as **history** entries; click one to jump back.
 5. Double-click a verse to present it.
 
-*Verify: RD-01..07, RD-11.*
+_Verify: RD-01..07, RD-11._
 
 ### W-12 — Search the whole Bible (Bible Find)
 
@@ -256,7 +333,7 @@ everything at once.
    numbers** to browse. 📸
 3. Click a result to open that verse.
 
-*Verify: RD-08..09.*
+_Verify: RD-08..09._
 
 ### W-13 — Cross references
 
@@ -267,7 +344,7 @@ everything at once.
 2. AI-generated cross references require an API key configured in Settings; without
    one, only the built-in references appear.
 
-*Verify: RD-10.*
+_Verify: RD-10._
 
 ### W-14 — Keep Bible notes
 
@@ -278,13 +355,19 @@ everything at once.
 2. Open a note for editing — the **Bible Note** editor opens in its own window. 📸
 3. Type your note and save (**Ctrl+S**).
 
-*Verify: PR-03, PU-03, KB-11.*
+_Verify: PR-03, PU-03, KB-11._
 
 ---
 
 ## Creating & editing content
 
 ### W-15 — Create and edit slides / lyrics / web backgrounds
+
+**Making a new file:** in the **Documents** list, click the **⋮** in the list header
+(or right-click the empty area of the list) and pick **New App Document**
+(ឯកសារកម្មវិធីថ្មី — a slide document) or **New Lyric** (អក្សរភ្លេងថ្មី — a song). Type
+a name into the row that appears and press **Enter** (or click the ✓). Both kinds live
+in the same documents folder. 📸
 
 **Slides** (Slide Editor — កែសម្រួលស្លាយ):
 
@@ -304,7 +387,7 @@ in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 **Web backgrounds:** Background panel → **Web** tab → **+** — the Web Editor opens;
 enter the URL and title, save, and the new item appears in the Web tab.
 
-*Verify: ED-01..11, PU-02, PU-04, PL-09, PM-33.*
+_Verify: ED-01..11, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, PM-33._
 
 ---
 
@@ -331,7 +414,7 @@ enter the URL and title, save, and the new item appears in the Web tab.
    downloaded ones. 📸
 4. Click **Apply Settings** (top-right) to apply — the app windows reload.
 
-*Verify: ST-01..09, LT-02..04.*
+_Verify: ST-01..09, LT-02..04._
 
 ### W-17 — Find text anywhere (Finder) & About
 
@@ -339,7 +422,7 @@ enter the URL and title, save, and the new item appears in the Web tab.
   the prev/next arrows or **Enter**; toggle case-sensitivity with its checkbox. 📸
 - **About:** shows the app version and project links.
 
-*Verify: PU-01, PU-05.*
+_Verify: PU-01, PU-05._
 
 ### W-18 — Use more than one screen (multi-screen)
 
@@ -358,7 +441,7 @@ enter the URL and title, save, and the new item appears in the Web tab.
 6. Right-click a card → **Delete** removes a screen you no longer need (the first
    screen can't be deleted while it is the only one).
 
-*Verify: SP-04..05, SP-10..12.*
+_Verify: SP-04..05, SP-10..12._
 
 ### W-19 — Draw and spotlight on the app itself (Presenting Control)
 
@@ -395,7 +478,7 @@ this is the same pair of tools pointed at the app.
 7. Press **Escape** (or click the arrow) to hand the app back while keeping the
    drawing on screen. Move the panel if it covers what you are pointing at.
 8. Click **✕** in the panel header to finish. The drawing is discarded; it is not saved
-   between sessions. **Ctrl+Shift+P** and **Tools → Start Controlling** only ever *open*
+   between sessions. **Ctrl+Shift+P** and **Tools → Start Controlling** only ever _open_
    the panel — neither closes it, so a stray press mid-service cannot lose your drawing.
 
 > Note: the panel owns the keyboard only while a tool is **armed** — the same moment it
@@ -413,8 +496,8 @@ this is the same pair of tools pointed at the app.
 > the panel's own sliders and color box. Escape or the arrow tool hands everything
 > straight back. The Undo / Redo / Clear **buttons** work in every tool regardless.
 
-*Verify: coverage rows pending — the matrix lives at `docs/test-paths/coverage-matrix.md`
-but has no `PC-xx` (presenting-control) block yet; add one for this workflow.*
+_Verify: coverage rows pending — the matrix lives at `docs/test-paths/coverage-matrix.md`
+but has no `PC-xx` (presenting-control) block yet; add one for this workflow._
 
 ### W-20 — Show the keys you press (Keyboard Screencast)
 
@@ -449,7 +532,7 @@ the drawing in W-19, and it lives in the same panel.
 > not a drawing being made. It never takes clicks and never blocks a key: it only
 > **echoes** what you pressed. What you type into a **password** field is masked as `•`.
 
-*Verify: coverage rows pending — same `PC-xx` block as W-19 when the matrix lands.*
+_Verify: coverage rows pending — same `PC-xx` block as W-19 when the matrix lands._
 
 ### W-21 — Add a background video or song from a link
 
@@ -475,30 +558,170 @@ Videos / Audios folder, without leaving the app or installing anything.
 > URL** message and nothing is downloaded. Downloads need an internet connection — and
 > a busy site can cut a large download off partway, in which case just try again.
 
-*Verify: MD-01..03, CM-24, PM-102.*
+_Verify: MD-01..03, CM-24, PM-102._
+
+---
+
+### W-22 — Build a service playlist (and share it)
+
+**Goal:** collect everything one service needs — songs, slides, verses, backgrounds and
+foreground presets — into one running order you can work down live, and hand the whole
+thing to another machine.
+
+1. Find the **Playlists** (តារាងកម្មវិធី) panel — it is the lower of the two lists on the
+   left, under **Documents** (ឯកសារ). If the list is empty, right-click its empty area (or
+   use the **⋮ More Options** button in its title bar) → **New File** to create one. 📸
+2. **Drag things onto a playlist row to add them.** Anything you can present can go in:
+   - a **background** — a colour, image, video, camera or website;
+   - a **document** — drag its row out of the Documents list;
+   - a **single slide** — from the previewer, or from a document already in the playlist;
+   - a **Bible verse** — from the Bible list;
+   - a **foreground preset** — drag the blue **Show Marquee Top** / **Start Countdown** /
+     **Show Time** button itself. Whatever you typed and styled travels with it, so the
+     playlist remembers _that_ announcement, not just "a marquee". 📸
+   - an **audio track** — drag it out of the **♫Audios♫** (សំលេង) split.
+
+   **Add a screen action.** A running order can also hold something to _do_ rather than
+   something to show. Right-click the playlist → **Add Action** (បន្ថែមសកម្មភាព) and pick
+   one of **Clear All** (លុបទាំងអស់), **Clear Background** (លុបផ្ទៃខាងក្រោយ), **Clear
+   Slide** (លុបស្លាយ), **Clear Bible** (លុបព្រះគម្ពីរ) or **Clear Foreground**
+   (លុបផ្ទៃខាងមុខ) — the same five clears as the buttons on each mini screen, and the line
+   carries the same `ALL` / `BG` / `SL` / `BB` / `FG` badge so you can tell them apart at a
+   glance. It lands at the end of the list; drag it up to where it belongs — say between
+   the last song and the sermon. 📸
+
+   Under those five the same menu offers a **finer clear for one foreground widget at a
+   time**, so you can take the countdown down and leave the marquee running: **Clear FG
+   Marquee Top** (`M↑`), **Marquee Bottom** (`M↓`), **Quick Text** (`QT`), **Countdown**
+   (`CD`), **Stopwatch** (`SW`), **Time** (`TM`), **Camera Show** (`CM`) and **Web Show**
+   (`WB`). Each does exactly what that widget's own hide button in the **Foreground** panel
+   does; the `Time`, `Camera Show` and `Web Show` ones clear all of their items at once.
+   The panel's **Background Images Slide Show** has no action of its own — it is a
+   _background_ despite sitting in that panel, so **Clear Background** is what stops it.
+3. Click the playlist name to **open it**. Each element is one short line: an icon for
+   what it is, its id, and its name. A **document** line has its own arrow — open it to
+   see that document's slides underneath. 📸
+4. **Click an element to put it on the screen** (a document opens its previewer instead;
+   an **audio track** opens the **♫Audios♫** split and flashes the track there — the
+   playlist never plays audio itself, so that you keep the panel's safeguards like
+   "one track at a time").
+   You can also **drag an element onto a mini screen**, or **right-click → Show on
+   Screens** (បង្ហាញលើអេក្រង់) to pick the screen.
+   A **screen action** works the same way, except it is _run_ rather than shown: click it
+   to clear, drag it onto one mini screen to clear only that one, or right-click →
+   **Apply on Screens** (អនុវត្តនៅលើអេក្រង់) to choose. It never lights up as "live",
+   because there is nothing of it on the screen to be live.
+5. Right-click an element for **Move up** / **Move down**, **Choose Color** (ជ្រើសរើសពណ៌)
+   to group your running order by colour, or **Remove from Playlist**. You can also drag a
+   line up or down **inside the same playlist** (dragging a line into a _different_
+   playlist does nothing — add it there from its own list instead). A colour shows as a
+   stripe down the left edge of the line and a dot at its right end; the lines stay in
+   your running order — they are never re-sorted into colour groups, because the order
+   _is_ the meaning here. The colour belongs to that playlist alone, so the same song can
+   be marked differently in two services. Changes are saved as you make them — there is
+   **no save button** anywhere in this panel.
+6. Whatever is **live on the screen right now** is marked with a green `*` — on the
+   element itself, on the document it belongs to, on the playlist, and on the
+   **Playlists** heading — so you can see at a glance where you are in the running order.
+7. Not sure which "5.jpg" a line means? Right-click it → **Reveal Original**
+   (បង្ហាញកន្លែងដើម) — the app scrolls to the real item elsewhere in the window and
+   flashes it. This works on the slides inside an opened document too. A colour or a
+   camera has no original to point at, and the panel holding the original has to be
+   open already.
+8. To see the whole service at a glance, click the **window** icon on the playlist row (or
+   right-click → **Open Preview**). A floating panel shows every element with its real
+   preview — slides look exactly as they will project, and a document shows all of its
+   slides. Collapse the ones you are not working on — or fold the whole running order
+   away at once with the **Collapse All** (បង្រួមទាំងអស់) icon at the bottom-right of the
+   panel, and open it all again with **Expand All** (ពង្រីកទាំងអស់) beside it. Whichever
+   of the two has nothing left to do fades out. Whatever you folded away is remembered for
+   that playlist, so a running order trimmed down to the few things you are working on
+   comes back that way next time — and it follows the element, not its position, so
+   reordering the list does not shuffle what is folded. 📸
+   To make the thumbnails bigger or smaller, use the zoom slider in the panel's footer
+   (it tucks itself away into a **⋯** button at the bottom-left), **Ctrl + scroll**, or a
+   two-finger **pinch**. This zoom is remembered separately from the one in the middle
+   Documents tab.
+   **Run the service from this panel.** Click an element — the panel outlines it and
+   remembers it as where you are. Clicking its preview also shows it, and clicking the
+   title line of a folded element marks it just the same — folding is the chevron on its
+   left, so pointing the run at an element never folds it away.
+   Then **Space**, **↓**, **→** or **Page Down** moves to the next
+   element and shows it, so you can walk the whole running order without going back to
+   the mouse. **A document is walked slide by slide:** arriving at it always shows its
+   **first** slide, each further press shows the next one, and the keys only move on to
+   the next element once its **last** slide is the one on screen — so a whole song or sermon deck plays from here without touching
+   the mouse. (A folded-away document is passed over instead; unfold it to walk it.) An
+   audio track is skipped, and the last element is the end — it does not start over. The
+   keys work while you are in this panel; click into the slides list and they drive that
+   list again, as before. 📸
+   **A screen action is stopped on and fired** like anything else — so putting a
+   **Clear All** between the last song and the sermon means one more press of the same
+   key blanks the screen at exactly that point in the running order.
+
+**Sharing it with another machine**
+
+9. Right-click the playlist → **Export** (នាំចេញ). You get one
+   `<name>.owapl.tar.gz` file in your **Downloads** folder, and the folder opens. It
+   contains the playlist _and every file it needs_ — the full documents behind your
+   slides, the images and videos, and any background attached to those documents.
+10. On the other machine, right-click an empty part of the **Playlists** list → **Import**
+    (នាំចូល) and pick that file — or just **drag the `.owapl.tar.gz` file from your file
+    manager onto the Playlists list**, which imports it the same way. The songs, documents
+    and media are re-created in that machine's own folders, Bible verses are added to the
+    **Default** list, and every link inside the playlist is re-pointed at the local
+    copies. 📸
+11. If the bundle is on a web server or a machine sharing it over the local network,
+    you can skip copying the file about: right-click the **Playlists** list →
+    **Import From URL** (នាំចូលពី URL), paste the link and press **Ok**. (If the link is
+    already on your clipboard it is filled in for you.) The app downloads the bundle to a
+    temporary folder, imports it exactly as above and then deletes the download — you end
+    up with the playlist and nothing else left over. A plain `http://…` address with a
+    port, such as one served off another laptop, works as well as `https://`. 📸
+
+> Notes: a file that is already there **with the same contents** is reused rather than
+> duplicated, so importing the same bundle twice is safe. If a file of the same NAME is
+> already there but is actually a different file — your own `a.mp4` is not the `a.mp4`
+> in the bundle — yours is left untouched and the bundled one is added beside it as
+> `a (1).mp4`, with the playlist pointed at that copy. Slides and documents are
+> stored as _references_, so editing a song later means the playlist projects the new
+> words. Colours and cameras carry no file, so there is nothing to bundle for them.
+>
+> A video placed **inside a slide** travels too: the bundle carries the video file and
+> the imported slide is re-pointed at the local copy, so it plays on the other machine.
+> (Images placed in a slide are stored inside the slide itself, so they always travelled.)
+>
+> Importing needs the folders it will write into to be **chosen already** — if, say, no
+> Videos folder has been picked yet and the bundle carries a video, the import stops
+> before it copies anything and tells you which folder to choose first. Nothing is
+> half-imported. And if a line in a playlist ever shows a warning triangle reading
+> **Invalid item**, that one entry is damaged (usually a hand-edited file) — the rest of
+> the running order still works; remove that line and re-add it.
+
+_Verify: PL-10, PL-29, PL-32..PL-76._
 
 ---
 
 ## Keyboard shortcut reference (tutorial appendix)
 
-| Keys | Does | Where |
-|---|---|---|
-| `Ctrl+B` | Open Bible Lookup | Presenter / Editor |
-| `Ctrl+Q` | Close the open dialog | any dialog |
-| `F5` | Show / hide the presentation screen | Presenter |
-| `F6` / `F7` / `F8` / `F9` / `F10` | Clear All / Background / Slide / Bible / Foreground | Presenter |
-| `Ctrl/Alt+ArrowLeft/Right` | Previous / next Bible verse | the output screen |
-| Arrows, `PageUp`/`PageDown`, `Space` | Move through slides / toggle | slide thumbnails focused |
-| `Tab` / `Escape` / `Ctrl+Escape` | Complete / clear / clear-part in bible input | lookup & reader |
-| `Ctrl+Enter` | Focus the editing canvas | Slide Editor |
-| `Ctrl+S` | Save | all editors |
-| `Enter` / `Escape` | Confirm / cancel | confirmation dialogs |
-| `Ctrl+Shift+P` | Open Presenting Control (draw & spotlight on the app); close with its ✕ | Presenter |
-| `V` / `B` / `E` / `F` | Arrow / brush / eraser / spotlight | Presenting Control open (not while typing) |
-| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Undo / redo the drawing | Presenting Control **armed** (buttons work in any tool) |
-| `C` | Clear the drawing (one Undo brings it back) | Presenting Control **armed** (button works in any tool) |
-| `Escape` | Back to the arrow tool | Presenting Control **armed** (the app keeps Escape otherwise) |
-| `K` | Show / hide the Keyboard Screencast | Presenting Control on the **arrow** tool (an armed tool turns it off) |
-| *every other key* | Nothing — swallowed by the overlay | Presenting Control **armed** |
+| Keys                                 | Does                                                                    | Where                                                                 |
+| ------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `Ctrl+B`                             | Open Bible Lookup                                                       | Presenter / Editor                                                    |
+| `Ctrl+Q`                             | Close the open dialog                                                   | any dialog                                                            |
+| `F5`                                 | Show / hide the presentation screen                                     | Presenter                                                             |
+| `F6` / `F7` / `F8` / `F9` / `F10`    | Clear All / Background / Slide / Bible / Foreground                     | Presenter                                                             |
+| `Ctrl/Alt+ArrowLeft/Right`           | Previous / next Bible verse                                             | the output screen                                                     |
+| Arrows, `PageUp`/`PageDown`, `Space` | Move through slides / toggle                                            | slide thumbnails focused                                              |
+| `Tab` / `Escape` / `Ctrl+Escape`     | Complete / clear / clear-part in bible input                            | lookup & reader                                                       |
+| `Ctrl+Enter`                         | Focus the editing canvas                                                | Slide Editor                                                          |
+| `Ctrl+S`                             | Save                                                                    | all editors                                                           |
+| `Enter` / `Escape`                   | Confirm / cancel                                                        | confirmation dialogs                                                  |
+| `Ctrl+Shift+P`                       | Open Presenting Control (draw & spotlight on the app); close with its ✕ | Presenter                                                             |
+| `V` / `B` / `E` / `F`                | Arrow / brush / eraser / spotlight                                      | Presenting Control open (not while typing)                            |
+| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Undo / redo the drawing                                                 | Presenting Control **armed** (buttons work in any tool)               |
+| `C`                                  | Clear the drawing (one Undo brings it back)                             | Presenting Control **armed** (button works in any tool)               |
+| `Escape`                             | Back to the arrow tool                                                  | Presenting Control **armed** (the app keeps Escape otherwise)         |
+| `K`                                  | Show / hide the Keyboard Screencast                                     | Presenting Control on the **arrow** tool (an armed tool turns it off) |
+| _every other key_                    | Nothing — swallowed by the overlay                                      | Presenting Control **armed**                                          |
 
-*Verify: KB-01..13, SC-03.*
+_Verify: KB-01..13, SC-03._

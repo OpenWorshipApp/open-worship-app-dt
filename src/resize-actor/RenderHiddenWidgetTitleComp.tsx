@@ -6,11 +6,13 @@ import { tran } from '../lang/langHelpers';
 
 export default function RenderHiddenWidgetTitleComp({
     widgetName,
+    widgetIconName,
     type,
     onClick,
     isOnScreen,
 }: Readonly<{
     widgetName: string;
+    widgetIconName?: string;
     type: string;
     onClick?: (event: { currentTarget: HTMLDivElement }) => void;
     isOnScreen: boolean;
@@ -36,6 +38,9 @@ export default function RenderHiddenWidgetTitleComp({
                     'hidden-context' + (isOnScreen ? ` app-on-screen` : '')
                 }
             >
+                {widgetIconName ? (
+                    <i className={`bi bi-${widgetIconName} px-1`} />
+                ) : null}
                 {widgetName}
             </div>
         </div>

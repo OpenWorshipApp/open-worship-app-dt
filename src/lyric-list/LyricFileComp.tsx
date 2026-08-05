@@ -12,13 +12,13 @@ import {
     useSelectedLyricSetterContext,
 } from './lyricHelpers';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
-import { checkIsVaryAppDocumentOnScreen } from '../app-document-list/appDocumentHelpers';
-import LyricAppDocument from './LyricAppDocument';
+import { checkIsVaryAppDocumentFilePathOnScreen } from '../app-document-list/appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
 import { getIsShowingLyricPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 import { tran } from '../lang/langHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { handleAppDocumentDragStart } from '../helper/dragHelpers';
 
 function genContextMenuItems(
     lyric: Lyric | null | undefined,
@@ -41,25 +41,24 @@ function genContextMenuItems(
     ];
 }
 
-function LyricFilePreview({ lyric }: Readonly<{ lyric: Lyric }>) {
+function LyricFilePreviewComp({ lyric }: Readonly<{ lyric: Lyric }>) {
     const fileSource = FileSource.getInstance(lyric.filePath);
     const { canSave } = useEditingHistoryStatus(lyric.filePath);
     return (
-        <>
-            <i className="bi bi-music-note" />
+        <div className="w-100 h-100 app-ellipsis">
+            <i
+                className="bi bi-music-note"
+                title="Lyric"
+                style={{ color: 'var(--bs-info)' }}
+            />
             {fileSource.name}
             {canSave && <span style={{ color: 'red' }}>*</span>}
-        </>
+        </div>
     );
 }
 
 async function checkIsOnScreen(filePath: string) {
-    const lyricAppDocument = LyricAppDocument.getInstance(filePath);
-    if (lyricAppDocument === null) {
-        return false;
-    }
-    const isOnScreen = await checkIsVaryAppDocumentOnScreen(lyricAppDocument);
-    return isOnScreen;
+    return await checkIsVaryAppDocumentFilePathOnScreen(filePath);
 }
 
 export default function LyricFileComp({
@@ -106,7 +105,13 @@ export default function LyricFileComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleChildRendering = useCallback((lyric: AppDocumentSourceAbs) => {
-        return <LyricFilePreview lyric={lyric as Lyric} />;
+        return <LyricFilePreviewComp lyric={lyric as Lyric} />;
+    }, []);
+    // Same reference-only payload as any other document, so a lyric can be
+    // dropped into a playlist too.
+    const handleDraggingStart = useCallback((event: any) => {
+        handleAppDocumentDragStart(event, filePath);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const isSelectedRef = useAppCurrentRef(isSelected);
     const handleRenaming = useCallback(async (newFileSource: FileSource) => {
@@ -128,6 +133,7 @@ export default function LyricFileComp({
             isSelected={isSelected}
             checkIsOnScreen={checkIsOnScreen}
             renamedCallback={handleRenaming}
+            onDragStart={handleDraggingStart}
         />
     );
 }

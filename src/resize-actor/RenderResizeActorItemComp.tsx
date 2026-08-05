@@ -87,7 +87,14 @@ export default function RenderResizeActorItemComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const { children, key, className = '', extraStyle = {}, widgetName } = data;
+    const {
+        children,
+        key,
+        className = '',
+        extraStyle = {},
+        widgetName,
+        widgetIconName,
+    } = data;
     const flexSizeValue = flexSize[key] ?? restoreFlexSize[key] ?? [];
     const flexSizeDisabledFlag = flexSizeValue[1];
     const handleReopening = useMemo(() => {
@@ -165,6 +172,7 @@ export default function RenderResizeActorItemComp({
             {isWidgetHidden ? (
                 <RenderHiddenWidgetTitleComp
                     widgetName={widgetName}
+                    widgetIconName={widgetIconName}
                     type={type}
                     onClick={handleReopening ?? (() => {})}
                     isOnScreen={isOnScreen}

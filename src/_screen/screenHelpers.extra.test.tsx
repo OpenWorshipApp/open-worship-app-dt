@@ -241,6 +241,43 @@ describe('screenHelpers extra coverage', () => {
         expect(screenHelpers.getBackgroundSrcListOnScreenSetting()).toEqual({});
     });
 
+    test('hands every caller its own copy of the on-screen maps', async () => {
+        // The parse is memoized, but the persist paths read a map, add or
+        // delete their own screen's key and write the whole thing back — so a
+        // caller must never be able to reach the memoized object.
+        const { screenManagerSettingNames } =
+            await import('../helper/constants');
+        const screenHelpers = await import('./screenHelpers');
+
+        getSettingMock.mockImplementation((key: string) => {
+            if (key === screenManagerSettingNames.BACKGROUND) {
+                return JSON.stringify({
+                    1: { type: 'color', src: '#fff' },
+                });
+            }
+            if (key === screenManagerSettingNames.FOREGROUND) {
+                return JSON.stringify({ 1: { marqueeTopData: null } });
+            }
+            return undefined;
+        });
+
+        const backgroundList =
+            screenHelpers.getBackgroundSrcListOnScreenSetting();
+        expect(Object.keys(backgroundList)).toEqual(['1']);
+        delete backgroundList['1'];
+        (backgroundList as any)['9'] = { type: 'color', src: '#000' };
+        expect(
+            Object.keys(screenHelpers.getBackgroundSrcListOnScreenSetting()),
+        ).toEqual(['1']);
+
+        const foregroundList =
+            screenHelpers.getForegroundDataListOnScreenSetting();
+        delete foregroundList['1'];
+        expect(
+            Object.keys(screenHelpers.getForegroundDataListOnScreenSetting()),
+        ).toEqual(['1']);
+    });
+
     test('tracks file-source visibility and refreshes it on update events', async () => {
         const screenHelpers = await import('./screenHelpers');
 

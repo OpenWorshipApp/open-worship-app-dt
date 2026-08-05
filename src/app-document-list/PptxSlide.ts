@@ -172,9 +172,13 @@ export default class PptxSlide
         return Promise.resolve(this.htmlFilePath);
     }
 
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.PPTX_SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.PPTX_SLIDE,
+            type: this.dragType,
             data: JSON.stringify({
                 filePath: this.filePath,
                 data: this.toDragJson(),

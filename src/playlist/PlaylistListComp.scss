@@ -15,7 +15,248 @@
         text-align: right;
         width: 12px;
         font-size: 12px;
+        top: -6px;
+        left: 6.5px;
       }
+    }
+  }
+}
+
+.app-playlist {
+  font-size: 13px;
+
+  .app-playlist-header {
+    cursor: pointer;
+    font-weight: 600;
+    // `.color-note-container` is absolutely pinned to the row's top-right, so
+    // the header has to stop short of it or the preview icon covers the dot.
+    padding-right: 18px;
+  }
+
+  .app-playlist-preview-showing {
+    color: var(--bs-info);
+  }
+}
+
+.app-playlist-row {
+  gap: 3px;
+  padding: 1px 2px;
+  border-radius: 3px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(127, 127, 127, 0.25);
+  }
+
+  // Acknowledge the press itself. The hover background is already painted
+  // before the click (the pointer is on the row), so without this the row's
+  // only reaction to being clicked is the on-screen mark that appears once the
+  // slide has actually reached a screen — and a click that never presents
+  // (a document row, or one the drag gesture swallowed) looks identical to one
+  // the app simply has not got to yet.
+  &:active {
+    background-color: rgba(127, 127, 127, 0.45);
+  }
+
+  .app-playlist-row-chevron {
+    display: inline-block;
+    width: 12px;
+    flex: 0 0 12px;
+    font-size: 10px;
+    opacity: 0.7;
+  }
+
+  .app-playlist-row-index {
+    opacity: 0.5;
+    font-size: 11px;
+    min-width: 12px;
+    text-align: right;
+  }
+
+  .app-playlist-row-icon {
+    flex: 0 0 auto;
+  }
+
+  .app-playlist-row-id {
+    opacity: 0.6;
+    font-size: 11px;
+    flex: 0 0 auto;
+  }
+
+  .app-playlist-row-color-note {
+    flex: 0 0 auto;
+    font-size: 11px;
+  }
+}
+
+.app-playlist-row-empty {
+  opacity: 0.5;
+  font-style: italic;
+  cursor: default;
+}
+
+.app-playlist-row-error {
+  color: var(--bs-danger);
+}
+
+// Drop indicator while reordering rows inside one playlist.
+.app-playlist-row-dragging-over {
+  border-top: 2px solid var(--bs-info);
+}
+
+.app-playlist-preview {
+  padding: 4px;
+  // Room for the footer, which overlays the widget's bottom edge.
+  padding-bottom: 30px;
+
+  // The floating preview is portaled to <body>, OUTSIDE `#app` — and the shared
+  // `.app-auto-hide` rules in appInit.scss are scoped under `#app`, so none of
+  // them reach here: without this the footer never faded out and, being
+  // unpositioned, scrolled away with the list. Same behaviour, re-declared for
+  // this widget.
+  .app-auto-hide {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+    pointer-events: none;
+
+    & > div {
+      visibility: hidden;
+    }
+
+    &.auto-hide-show {
+      pointer-events: all;
+      opacity: 1;
+
+      & > div {
+        visibility: visible;
+      }
+    }
+
+    // Pins to `.floating-widget` (the nearest positioned ancestor), so it stays
+    // on the widget's bottom edge instead of riding the scrolling list.
+    &.app-auto-hide-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+    }
+  }
+
+  // Sits on the widget's bottom edge, on the same baseline as the footer's
+  // `...` handle (`handleAutoHide` pins that at `left: 7px`) but at the far
+  // end. Absolute like it, so both stay put while the list scrolls underneath.
+  .app-playlist-preview-collapsing-buttons {
+    position: absolute;
+    right: 7px;
+    bottom: 7px;
+    display: flex;
+    gap: 2px;
+    // Over the footer bar, which reserves the matching width with
+    // `.app-playlist-preview-collapsing-spacer` so nothing ends up underneath.
+    z-index: 3;
+
+    > button {
+      width: 25px;
+      padding: 0;
+      border: none;
+      border-radius: 3px;
+      background-color: transparent;
+      color: inherit;
+      // Faded like the `...` handle it sits beside, so a folded run sheet is
+      // never read through these.
+      opacity: 0.3;
+      transition: opacity 0.5s ease-out;
+
+      &:hover:not(:disabled) {
+        opacity: 1;
+      }
+
+      // Already all folded (or all open): left visible, so the pair does not
+      // jump about, but plainly inert.
+      &:disabled {
+        opacity: 0.12;
+        cursor: default;
+      }
+    }
+  }
+
+  // 7px offset + two 25px buttons + their 2px gap: what the pair above covers.
+  .app-playlist-preview-collapsing-spacer {
+    flex: 0 0 59px;
+  }
+
+  .app-playlist-preview-item {
+    display: flex;
+    flex-direction: column;
+
+    // Pins to the top of `.floating-widget__content` (the widget's only
+    // scroller, and it has no padding, so `top: 0` sits flush) while its own
+    // item scrolls by, so a long body never leaves the reader wondering which
+    // element these slides belong to. The item box is the containing block, so
+    // the next item's header displaces this one on its own.
+    .app-playlist-preview-item-label {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      gap: 2px;
+      font-size: 12px;
+      // Dimmed via `color` rather than `opacity`: element opacity would
+      // composite the background too and let the slides scroll through it.
+      color: rgba(var(--bs-body-color-rgb), 0.85);
+      // Must be opaque for the same reason. The widget is portaled outside
+      // `#app`, but it carries `data-bs-theme`, so this still follows the theme.
+      background-color: var(--bs-body-bg);
+      padding: 2px 4px;
+      border-radius: 3px;
+
+      // Layered as an image so it tints the opaque base instead of replacing it.
+      &:hover {
+        background-image: linear-gradient(
+          rgba(127, 127, 127, 0.25),
+          rgba(127, 127, 127, 0.25)
+        );
+      }
+    }
+
+    // The only part of the header that folds the element — the rest of it
+    // selects. Padded out to a clickable target: the glyph alone is ~10px wide
+    // in a 12px-font header, which is a miss waiting to happen.
+    .app-playlist-preview-item-chevron {
+      flex: 0 0 auto;
+      padding: 0 3px;
+      opacity: 0.7;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+
+    // Where the next-key steps from. Marked on the LABEL, not the whole box:
+    // the label is the part that stays pinned while a long element scrolls, so
+    // the mark cannot scroll out of sight during a run. Drawn as an outline so
+    // it neither shifts the layout nor covers the colour-note border, which is
+    // an inline `border-left` on this very element.
+    &.app-playlist-preview-item-selected > .app-playlist-preview-item-label {
+      outline: 1px solid var(--bs-info);
+      color: var(--bs-body-color);
+      background-image: linear-gradient(
+        rgba(var(--bs-info-rgb), 0.2),
+        rgba(var(--bs-info-rgb), 0.2)
+      );
+    }
+
+    .app-playlist-preview-item-body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 4px 0 0 14px;
+    }
+
+    .app-playlist-preview-divider {
+      margin: 4px 0;
+      opacity: 0.35;
     }
   }
 }

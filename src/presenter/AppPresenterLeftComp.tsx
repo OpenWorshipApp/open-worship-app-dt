@@ -2,14 +2,10 @@ import { lazy } from 'react';
 
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import appProvider from '../server/appProvider';
-import { tran } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyAppDocumentListComp = lazy(() => {
     return import('../app-document-list/VaryAppDocumentListComp');
-});
-const LazyLyricListComp = lazy(() => {
-    return import('../lyric-list/LyricListComp');
 });
 const LazyPlaylistListComp = lazy(() => {
     return import('../playlist/PlaylistListComp');
@@ -23,31 +19,20 @@ export default function AppPresenterLeftComp() {
             flexSizeDefault={{
                 v1: ['3'],
                 v2: ['2'],
-                ...(appProvider.systemUtils.isDev ? { v3: ['1'] } : {}),
             }}
             dataInput={[
                 {
                     children: LazyAppDocumentListComp,
                     key: 'v1',
-                    widgetName: tran('Document List'),
+                    ...toWidgetLabel('Document List'),
                     className: 'app-flex-item',
                 },
                 {
-                    children: LazyLyricListComp,
+                    children: LazyPlaylistListComp,
                     key: 'v2',
-                    widgetName: tran('Lyric List'),
+                    ...toWidgetLabel('Playlist List'),
                     className: 'app-flex-item',
                 },
-                ...(appProvider.systemUtils.isDev
-                    ? [
-                          {
-                              children: LazyPlaylistListComp,
-                              key: 'v3',
-                              widgetName: tran('Playlist List'),
-                              className: 'app-flex-item',
-                          },
-                      ]
-                    : []),
             ]}
         />
     );

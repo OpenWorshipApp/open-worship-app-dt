@@ -39,6 +39,7 @@ import appProvider from '../../server/appProvider';
 import { applyAttachBackground } from './screenBackgroundHelpers';
 import type { BibleItemType } from '../../bible-list/bibleItemHelpers';
 import { unlocking } from '../../server/unlockingHelpers';
+import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import Bible from '../../bible-list/Bible';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import type {
@@ -65,6 +66,10 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
         _kjvVerseKey: string,
         _isToTop: boolean,
     ) => {};
+
+    // Per screen, not module-level: a shared timer would collapse every
+    // screen's metadata write into one and leave the others unpersisted.
+    private readonly saveMetadataAttempt = genTimeoutAttempt(500);
 
     constructor(screenManagerBase: ScreenManagerBase) {
         super(screenManagerBase);
@@ -182,21 +187,35 @@ class ScreenBibleManager extends ScreenEventHandler<ScreenBibleManagerEventType>
     }
 
     private _setMetadata(key: string, value: any) {
-        if (this._screenViewData !== null) {
-            (this._screenViewData as any)[key] = value;
-            if (!appProvider.isPageScreen) {
-                unlocking(
-                    `set-meta-${screenManagerSettingNames.FULL_TEXT}`,
-                    () => {
-                        const allBibleDataList = getBibleListOnScreenSetting();
-                        allBibleDataList[this.key] = this
-                            ._screenViewData as any;
-                        const string = JSON.stringify(allBibleDataList);
-                        setSetting(screenManagerSettingNames.FULL_TEXT, string);
-                    },
-                );
-            }
+        if (this._screenViewData === null) {
+            return;
         }
+        // Replaced, never written through. `_screenViewData` is seeded from
+        // `getBibleListOnScreenSetting()` (see the constructor), and that map's
+        // nested values are shared with the memoized parse of the setting — so
+        // writing `scroll` in place put this screen's scroll position into
+        // every other reader's view of the setting.
+        this._screenViewData = { ...this._screenViewData, [key]: value };
+        if (appProvider.isPageScreen) {
+            return;
+        }
+        // `scroll` is driven by the bible view's scroll listener, so this used
+        // to stringify the whole on-screen map and do a synchronous whole-file
+        // write on every scroll frame. Only the final position matters, and the
+        // trailing run re-reads `_screenViewData`, so it always persists the
+        // latest one.
+        this.saveMetadataAttempt(() => {
+            const screenViewData = this._screenViewData;
+            if (screenViewData === null) {
+                return;
+            }
+            unlocking(`set-meta-${screenManagerSettingNames.FULL_TEXT}`, () => {
+                const allBibleDataList = getBibleListOnScreenSetting();
+                allBibleDataList[this.key] = screenViewData as any;
+                const string = JSON.stringify(allBibleDataList);
+                setSetting(screenManagerSettingNames.FULL_TEXT, string);
+            });
+        });
     }
 
     get containerStyle(): CSSProperties {

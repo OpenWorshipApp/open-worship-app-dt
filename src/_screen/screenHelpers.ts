@@ -5,7 +5,8 @@ import BibleItem from '../bible-list/BibleItem';
 import { screenManagerSettingNames } from '../helper/constants';
 import { handleError } from '../helper/errorHelpers';
 import { parseJsonSafely } from '../helper/helpers';
-import { getSetting, setSetting } from '../helper/settingHelpers';
+import { setSetting } from '../helper/settingHelpers';
+import { genDerivedSettingReader } from '../helper/derivedSettingHelpers';
 import { checkIsValidLocale } from '../lang/langHelpers';
 import { createMouseEvent } from '../context-menu/appContextMenuHelpers';
 import { electronSendAsync } from '../server/appHelpers';
@@ -23,7 +24,6 @@ import { useAppStateAsync } from '../helper/appHooks';
 import { useScreenUpdateEvents } from './managers/screenManagerHooks';
 import type {
     ImageScaleType,
-    AllDisplayType,
     ForegroundSrcListType,
     BackgroundSrcListType,
     BibleListType,
@@ -94,9 +94,6 @@ export function setDisplay({ screenId, displayId }: SetDisplayType) {
 export function getAllShowingScreenIds(): number[] {
     return messageUtils.sendDataSync('main:app:get-screens');
 }
-export function getAllDisplays(): AllDisplayType {
-    return messageUtils.sendDataSync('main:app:get-displays');
-}
 
 export function showScreen({ screenId, displayId }: SetDisplayType) {
     return electronSendAsync<void>('main:app:show-screen', {
@@ -125,34 +122,61 @@ export function genScreenMouseEvent(event?: any): MouseEvent {
     return createMouseEvent(0, 0);
 }
 
-export function getForegroundDataListOnScreenSetting(): ForegroundSrcListType {
-    const string = getSetting(screenManagerSettingNames.FOREGROUND) ?? '';
-    try {
-        const json = parseJsonSafely(string, true);
-        if (json === null) {
+// All three on-screen readers below are memoized on their raw setting strings
+// (plus the screen-list setting, which `getValidOnScreen` filters against).
+// They are read from React render bodies and from `checkIsAnythingOnScreen`,
+// which asks all four at once — un-memoized that was eight full `JSON.parse`
+// passes per playlist row per screen event. Each getter still returns a COPY,
+// because the persist paths read the map, add or delete their own screen's key
+// and write the whole thing back.
+const readForegroundDataListOnScreen =
+    genDerivedSettingReader<ForegroundSrcListType>(
+        [
+            screenManagerSettingNames.FOREGROUND,
+            screenManagerSettingNames.MANAGERS,
+        ],
+        ([string]) => {
+            try {
+                const json = parseJsonSafely(string, true);
+                if (json === null) {
+                    return {};
+                }
+                return getValidOnScreen(json);
+            } catch (error) {
+                handleError(error);
+            }
             return {};
-        }
-        return getValidOnScreen(json);
-    } catch (error) {
-        handleError(error);
-    }
-    return {};
+        },
+    );
+
+export function getForegroundDataListOnScreenSetting(): ForegroundSrcListType {
+    return { ...readForegroundDataListOnScreen() };
 }
 
+const readBackgroundSrcListOnScreen =
+    genDerivedSettingReader<BackgroundSrcListType>(
+        [
+            screenManagerSettingNames.BACKGROUND,
+            screenManagerSettingNames.MANAGERS,
+        ],
+        ([str]) => {
+            const json = parseJsonSafely(str, true);
+            if (json !== null) {
+                const items = Object.values(json);
+                if (
+                    items.every((item: any) => {
+                        return item.type && item.src;
+                    })
+                ) {
+                    return getValidOnScreen(json);
+                }
+            }
+            return {};
+        },
+    );
+
 export function getBackgroundSrcListOnScreenSetting(): BackgroundSrcListType {
-    const str = getSetting(screenManagerSettingNames.BACKGROUND) ?? '';
-    const json = parseJsonSafely(str, true);
-    if (json !== null) {
-        const items = Object.values(json);
-        if (
-            items.every((item: any) => {
-                return item.type && item.src;
-            })
-        ) {
-            return getValidOnScreen(json);
-        }
-    }
-    return {};
+    return { ...readBackgroundSrcListOnScreen() };
 }
 
 const validateBible = ({ renderedList, bibleItem }: any) => {
@@ -173,31 +197,37 @@ const validateBible = ({ renderedList, bibleItem }: any) => {
     );
 };
 
-export function getBibleListOnScreenSetting(): BibleListType {
-    const str = getSetting(screenManagerSettingNames.FULL_TEXT) ?? '';
-    try {
-        const json = parseJsonSafely(str, true);
-        if (json === null) {
-            return {};
-        }
-        for (const item of Object.values(json)) {
-            if (
-                !bibleDataTypeList.includes((item as any).type) ||
-                ((item as any).type === 'bible-item' &&
-                    validateBible((item as any).bibleItemData))
-            ) {
-                loggerHelpers.appError(item);
-                throw new Error('Invalid bible-screen-view data');
+const readBibleListOnScreen = genDerivedSettingReader<BibleListType>(
+    [screenManagerSettingNames.FULL_TEXT, screenManagerSettingNames.MANAGERS],
+    ([str]) => {
+        try {
+            const json = parseJsonSafely(str, true);
+            if (json === null) {
+                return {};
             }
+            for (const item of Object.values(json)) {
+                if (
+                    !bibleDataTypeList.includes((item as any).type) ||
+                    ((item as any).type === 'bible-item' &&
+                        validateBible((item as any).bibleItemData))
+                ) {
+                    loggerHelpers.appError(item);
+                    throw new Error('Invalid bible-screen-view data');
+                }
+            }
+            return getValidOnScreen(json);
+        } catch (error) {
+            unlocking(screenManagerSettingNames.FULL_TEXT, () => {
+                setSetting(screenManagerSettingNames.FULL_TEXT, '');
+            });
+            handleError(error);
         }
-        return getValidOnScreen(json);
-    } catch (error) {
-        unlocking(screenManagerSettingNames.FULL_TEXT, () => {
-            setSetting(screenManagerSettingNames.FULL_TEXT, '');
-        });
-        handleError(error);
-    }
-    return {};
+        return {};
+    },
+);
+
+export function getBibleListOnScreenSetting(): BibleListType {
+    return { ...readBibleListOnScreen() };
 }
 
 function genCircleUpSVG(width = 16) {

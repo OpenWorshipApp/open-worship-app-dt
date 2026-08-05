@@ -12,7 +12,7 @@ import {
     varyAppDocumentFromFilePath,
     useSelectedAppDocumentSetterContext,
     SelectedVaryAppDocumentContext,
-    checkIsVaryAppDocumentOnScreen,
+    checkIsVaryAppDocumentFilePathOnScreen,
 } from './appDocumentHelpers';
 import PdfAppDocument from './PdfAppDocument';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
@@ -28,6 +28,7 @@ import appProvider from '../server/appProvider';
 import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 import { printAppDocument } from './appDocumentPrintHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
+import { handleAppDocumentDragStart } from '../helper/dragHelpers';
 
 function genContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
@@ -195,9 +196,7 @@ function FilePreviewDocxAppDocumentComp({
 }
 
 async function checkIsOnScreen(filePath: string) {
-    const varyAppDocument = varyAppDocumentFromFilePath(filePath);
-    const isOnScreen = await checkIsVaryAppDocumentOnScreen(varyAppDocument);
-    return isOnScreen;
+    return await checkIsVaryAppDocumentFilePathOnScreen(filePath);
 }
 
 function handleChildRendering(varyAppDocument: AppDocumentSourceAbs) {
@@ -285,6 +284,13 @@ export default function VaryAppDocumentFileComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // A document travels as a plain reference so a playlist can hold "open this
+    // document" without copying any of its slides.
+    const handleDraggingStart = useCallback((event: any) => {
+        handleAppDocumentDragStart(event, filePath);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const isSelectedRef = useAppCurrentRef(isSelected);
     const handleRenaming = useCallback(async (newFileSource: FileSource) => {
         if (isSelectedRef.current) {
@@ -308,6 +314,7 @@ export default function VaryAppDocumentFileComp({
             renamedCallback={handleRenaming}
             isSelected={isSelected}
             checkIsOnScreen={checkIsOnScreen}
+            onDragStart={handleDraggingStart}
         />
     );
 }

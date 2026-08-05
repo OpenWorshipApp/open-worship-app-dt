@@ -199,7 +199,7 @@ export default class Slide
         return { width, height };
     }
 
-    static defaultSlideData(id: number) {
+    static defaultSlideData(id: number): SlidePropsType {
         const { width, height } = this.getDefaultDim();
         const canvasItems: CanvasItemPropsType[] = [];
         return {
@@ -209,6 +209,7 @@ export default class Slide
                 height,
             },
             canvasItems,
+            type: 'slide',
         };
     }
 
@@ -260,9 +261,16 @@ export default class Slide
         return null;
     }
 
+    // The drag TYPE alone, without building the payload. Lists ask for it on
+    // every render just to pick an icon, and the payload is a full
+    // `JSON.stringify` of the slide.
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.SLIDE,
+            type: this.dragType,
             data: this.clipboardSerialize(),
         };
     }

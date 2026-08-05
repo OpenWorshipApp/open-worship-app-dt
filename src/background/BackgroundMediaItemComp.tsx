@@ -14,6 +14,8 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import type { RenderChildType } from './backgroundHelpers';
 import { genBackgroundMediaItemData } from './backgroundHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import BackgroundListItemComp from './BackgroundListItemComp';
+import type { BackgroundViewModeType } from './BackgroundViewModeComp';
 
 function genFileNameElement(fileName: string) {
     return (
@@ -40,6 +42,7 @@ export default function BackgroundMediaItemComp({
     thumbnailWidth,
     thumbnailHeight,
     filePath,
+    viewMode = 'thumbnail',
 }: Readonly<{
     rendChild: RenderChildType;
     genExtraItemContextMenuItems: (filePath: string) => ContextMenuItemType[];
@@ -50,6 +53,7 @@ export default function BackgroundMediaItemComp({
     thumbnailWidth: number;
     thumbnailHeight: number;
     filePath: string;
+    viewMode?: BackgroundViewModeType;
 }>) {
     const fileSource = FileSource.getInstance(filePath);
     const {
@@ -67,6 +71,12 @@ export default function BackgroundMediaItemComp({
     const fileSourceRef = useAppCurrentRef(fileSource);
     const dragTypeRef = useAppCurrentRef(dragType);
     const handleMediaDragStart = useCallback((event: any) => {
+        // An audio row holds a real <audio controls>; dragging its scrubber or
+        // volume slider must stay a scrub, not start a file drag.
+        if (event.target?.closest?.('audio') !== null) {
+            event.preventDefault();
+            return;
+        }
         handleDragStart(event, fileSourceRef.current, dragTypeRef.current);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -98,6 +108,23 @@ export default function BackgroundMediaItemComp({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    if (viewMode === 'list') {
+        return (
+            <BackgroundListItemComp
+                backgroundType={backgroundType}
+                name={fileSource.fullName}
+                title={title}
+                selectedCN={selectedCN}
+                src={fileSource.src}
+                isDraggable={!noDraggable}
+                selectedBackgroundSrcList={selectedBackgroundSrcList}
+                onDragStart={handleMediaDragStart}
+                onContextMenu={handleContextMenuOpening}
+                onClick={handleClicking}
+                colorNoteChild={<ItemColorNoteComp item={fileSource} />}
+            />
+        );
+    }
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}

@@ -12,6 +12,7 @@ import type {
     DataInputType,
 } from '../resize-actor/flexSizeHelpers';
 import { checkIsDarkMode, useThemeSource } from '../others/themeHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 export default function BibleViewRendererComp({
     isHorizontal = true,
@@ -74,7 +75,7 @@ export default function BibleViewRendererComp({
                         },
                     },
                     key: `${typeText}${i + 1}`,
-                    widgetName: 'Bible View',
+                    ...toWidgetLabel('Bible View'),
                 };
             })}
             containerStyle={{

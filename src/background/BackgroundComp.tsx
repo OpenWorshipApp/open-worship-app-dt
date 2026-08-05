@@ -10,7 +10,7 @@ import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { useScreenBackgroundManagerEvents } from '../_screen/managers/screenEventHelpers';
 import { getBackgroundSrcListOnScreenSetting } from '../_screen/screenHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { tran } from '../lang/langHelpers';
+import { toIconedLabel, toWidgetLabel } from '../others/labelIconHelpers';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import {
     AUDIO_PLAYING_CHANGE_EVENT,
@@ -23,6 +23,7 @@ import type {
 } from '../_screen/screenTypeHelpers';
 import appProvider from '../server/appProvider';
 import EventHandler from '../event/EventHandler';
+import { OPEN_BACKGROUND_AUDIO_TAB_EVENT } from './backgroundAudioTabHelpers';
 
 const LazyBackgroundColorsComp = lazy(() => {
     return import('./BackgroundColorsComp');
@@ -87,7 +88,7 @@ function RenderAudiosTabComp({
                     }
                     onClick={handleToggleActive}
                 >
-                    ♫{tran('Audios')}♫
+                    {toIconedLabel('Audios')}
                 </button>
             </li>
         </ul>
@@ -105,11 +106,11 @@ const genIsSelected = (
 };
 
 const tabTypeList = [
-    ['color', tran('Colors'), LazyBackgroundColorsComp],
-    ['image', tran('Images'), LazyBackgroundImagesComp],
-    ['video', tran('Videos'), LazyBackgroundVideosComp],
-    ['camera', tran('Cameras'), LazyBackgroundCamerasComp],
-    ['web', tran('Webs'), LazyBackgroundWebComp],
+    ['color', toIconedLabel('Colors'), LazyBackgroundColorsComp],
+    ['image', toIconedLabel('Images'), LazyBackgroundImagesComp],
+    ['video', toIconedLabel('Videos'), LazyBackgroundVideosComp],
+    ['camera', toIconedLabel('Cameras'), LazyBackgroundCamerasComp],
+    ['web', toIconedLabel('Webs'), LazyBackgroundWebComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0] | 'audio';
 export default function BackgroundComp() {
@@ -126,6 +127,19 @@ export default function BackgroundComp() {
         }
         setIsAudioTabActiveRef.current(newValue);
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    // Somewhere else in the app is pointing at a track (a playlist entry), so
+    // the split has to be open before it can be scrolled to and flashed.
+    useAppEffect(() => {
+        const registeredEvent = EventHandler.registerEventListener(
+            [OPEN_BACKGROUND_AUDIO_TAB_EVENT],
+            () => {
+                setIsAudioTabActiveRef.current(true);
+            },
+        );
+        return () => {
+            EventHandler.unregisterEventListener(registeredEvent);
+        };
     }, []);
     const [tabKey, setTabKey] = useStateSettingString<TabKeyType>(
         'background-tab',
@@ -184,12 +198,12 @@ export default function BackgroundComp() {
                                     },
                                 },
                                 key: 'h1',
-                                widgetName: 'Background',
+                                ...toWidgetLabel('Background'),
                             },
                             {
                                 children: LazyBackgroundAudiosComp,
                                 key: 'h2',
-                                widgetName: 'Background Audio',
+                                ...toWidgetLabel('Background Audio'),
                             },
                         ]}
                     />

@@ -1,7 +1,7 @@
 import { screenManagerSettingNames } from '../../helper/constants';
 import { handleError } from '../../helper/errorHelpers';
 import { parseJsonSafely } from '../../helper/helpers';
-import { getSetting } from '../../helper/settingHelpers';
+import { genDerivedSettingReader } from '../../helper/derivedSettingHelpers';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
@@ -123,8 +123,33 @@ function checkIsValidOnScreenEntry(item: any) {
     }
 }
 
+// Memoized on the raw setting string. This is the hottest settings read in the
+// app: `toClassNameHighlight` reaches it for EVERY slide preview on screen, and
+// the string it parses is 835 bytes for a plain slide but ~185 KB once a lyric
+// slide is presented (open-lyric writes a full computed-style dump into the
+// slide HTML). Un-memoized that was 264 MB of `JSON.parse` for a single click.
+const readAppDocumentListOnScreen =
+    genDerivedSettingReader<AppDocumentListType>(
+        [
+            screenManagerSettingNames.VARY_APP_DOCUMENT,
+            screenManagerSettingNames.MANAGERS,
+        ],
+        ([str]) => {
+            return deriveAppDocumentListOnScreen(str);
+        },
+    );
+
+/**
+ * A COPY every time on purpose: the persist paths (`set varySlideData` and its
+ * siblings) read this map, add or delete their own screen's key and write the
+ * whole thing back, so handing out the memoized object would let one present
+ * corrupt what every later reader sees.
+ */
 export function getAppDocumentListOnScreenSetting(): AppDocumentListType {
-    const str = getSetting(screenManagerSettingNames.VARY_APP_DOCUMENT) ?? '';
+    return { ...readAppDocumentListOnScreen() };
+}
+
+function deriveAppDocumentListOnScreen(str: string): AppDocumentListType {
     try {
         const json = parseJsonSafely(str, true);
         if (json === null) {

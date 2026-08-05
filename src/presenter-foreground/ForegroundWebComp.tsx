@@ -26,7 +26,8 @@ import ScreenForegroundManager from '../_screen/managers/ScreenForegroundManager
 import RenderBackgroundWebIframeComp, {
     BackgroundWebPlaceHolderComp,
 } from '../background/RenderBackgroundWebIframeComp';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
 import {
     genBackgroundWebContextMenuItems,
     genBackgroundWebExtraItemContextMenuItems,
@@ -172,8 +173,24 @@ function RenderWebInfoComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
-    const handleDragStart = useCallback(() => {
+    const getWidthScaleRef = useAppCurrentRef(getWidthScale);
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleDraggingStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
+            event,
+            genForegroundDragInf('web', () => {
+                const { widthScale, heightScale } = genDimScale(
+                    getWidthScaleRef.current,
+                );
+                return {
+                    filePath: filePathRef.current,
+                    widthScale,
+                    heightScale,
+                    extraStyle: genStyleRef.current(),
+                };
+            }),
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleMouseOver = useCallback(() => {
@@ -200,7 +217,7 @@ function RenderWebInfoComp({
                 onContextMenu={handleContextMenuOpening}
                 ref={containerRef}
                 draggable
-                onDragStart={handleDragStart}
+                onDragStart={handleDraggingStart}
                 onMouseOver={handleMouseOver}
                 onMouseOut={handleMouseOut}
             >

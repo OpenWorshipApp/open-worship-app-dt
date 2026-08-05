@@ -178,11 +178,6 @@ const titleSettingNames = {
         defaultDataDirNames.APP_DOCUMENT,
         'bi-file-earmark-text',
     ],
-    Lyrics: [
-        dirSourceSettingNames.LYRIC,
-        defaultDataDirNames.LYRIC,
-        'bi-music-note-list',
-    ],
     Playlists: [
         dirSourceSettingNames.PLAYLIST,
         defaultDataDirNames.PLAYLIST,

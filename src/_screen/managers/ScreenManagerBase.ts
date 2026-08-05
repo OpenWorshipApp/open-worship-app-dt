@@ -302,7 +302,7 @@ export default class ScreenManagerBase
         throw new Error('delete is not implemented.');
     }
 
-    receiveScreenDropped(_droppedData: DroppedDataType) {
+    receiveScreenDropped(_droppedData: DroppedDataType): Promise<void> {
         throw new Error('receiveScreenDropped is not implemented.');
     }
 
@@ -335,7 +335,7 @@ export class ScreenManagerBaseGhost extends ScreenManagerBase {
 
     override async delete() {}
 
-    override receiveScreenDropped(_droppedData: DroppedDataType) {}
+    override async receiveScreenDropped(_droppedData: DroppedDataType) {}
 
     override sendScreenMessage(
         _message: ScreenMessageType,

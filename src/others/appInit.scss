@@ -13,13 +13,20 @@ body {
   overflow: hidden;
 }
 
-#app {
+.app {
   width: 100vw !important;
   height: 100vh !important;
   padding: 0 !important;
   margin: 0 !important;
   overflow: hidden;
   box-sizing: border-box;
+
+  .app-caught-hover-pointer {
+    cursor: pointer !important;
+    &:hover {
+      text-shadow: 0 0 2px rgba(255, 255, 255, 0.198);
+    }
+  }
 
   hr {
     margin: 3px 0;
@@ -189,13 +196,13 @@ body {
   }
 
   .highlight-color {
-    color: $hight-light-color;
+    color: $app-highlight-color;
   }
 
   .app-highlight-selected {
     border-width: 2px;
     border-style: solid;
-    border-color: $hight-light-color;
+    border-color: $app-highlight-color;
     animation: app-highlight-selected-in-anim 0.5s ease-in-out alternate;
 
     &.animation {
@@ -354,9 +361,12 @@ body {
     }
   }
 
-  .app-on-screen::before {
-    content: '*';
-    color: var(--app-yellow-green);
+  .app-on-screen {
+    animation: app-notify-on-screen-highlight 2s ease-out;
+    &::before {
+      content: '*';
+      color: var(--app-yellow-green);
+    }
   }
 
   .app-inner-shadow {
@@ -393,6 +403,17 @@ body {
   }
 }
 
+@keyframes app-notify-on-screen-highlight {
+  0% {
+    background-color: rgba($app-highlight-color, 0.1);
+    border-color: rgba($app-highlight-color, 0.2);
+  }
+  100% {
+    background-color: transparent;
+    border-color: transparent;
+  }
+}
+
 @each $type, $color in $app-notify-element-highlight-colors {
   @keyframes app-notify-element-highlight-#{$type} {
     0% {
@@ -419,10 +440,10 @@ body {
 }
 @keyframes app-highlight-selected {
   0% {
-    border-color: $hight-light-color;
+    border-color: $app-highlight-color;
   }
   80% {
-    border-color: $hight-light-color;
+    border-color: $app-highlight-color;
   }
   100% {
     border-color: transparent;

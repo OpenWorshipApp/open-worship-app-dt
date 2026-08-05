@@ -1,6 +1,5 @@
 import { useMemo, type CSSProperties, type ReactNode } from 'react';
 
-import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import { useShadowingParentWidth } from '../../others/ShadowingFillParentWidthComp';
 
@@ -22,7 +21,9 @@ export default function VaryAppDocumentScaleContainerComp({
         const actualHeight = varySlide.height * scale;
         return { scale, actualParentWidth, actualHeight };
     }, [parentWidth, width, varySlide.width, varySlide.height]);
-    useScreenVaryAppDocumentManagerEvents(['update']);
+    // Pure geometry: nothing here reads screen state, and there are TWO of
+    // these per slide preview, so the subscription that used to sit here cost
+    // two extra re-renders per slide on every screen change for nothing.
     return (
         <div
             style={{

@@ -115,7 +115,7 @@ sudo dnf install libxcrypt-compat
 ### 1. Install Dependencies
 
 ```bash
-npm install
+npm install --allow-git=all
 ```
 
 ### 2. Run Development Server
@@ -225,7 +225,7 @@ This project is open-source and actively growing. Whether you're a developer, de
 
 3. **📦 Install** dependencies:
    ```bash
-   npm install
+   npm install --allow-git=all
    ```
 
 4. **🌿 Create a branch** for your feature:

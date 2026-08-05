@@ -5,6 +5,7 @@ import CanvasItem, {
     type CanvasItemPropsType,
 } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
+import { cloneJson } from '../../helper/helpers';
 import type { BibleTargetType } from '../../bible-list/bibleRenderHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
@@ -87,6 +88,15 @@ function genVersesHtml({ text, verses }: BibleRenderedType) {
 }
 
 export default class CanvasItemBibleItem extends CanvasItem<CanvasItemBiblePropsType> {
+    // `CanvasItem`'s constructor only spreads the props shallowly, which would
+    // leave `bibleKeys` and `bibleRenderingList` aliased to the caller's JSON —
+    // editing the item would then silently mutate the slide data it was built
+    // from. This type is the only one with nested arrays, so the deep copy is
+    // paid here rather than in the base constructor every canvas item runs.
+    constructor(props: CanvasItemBiblePropsType) {
+        super(cloneJson(props));
+    }
+
     static genStyle(props: CanvasItemBiblePropsType) {
         return genTextStyle(props);
     }

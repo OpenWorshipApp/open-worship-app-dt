@@ -17,6 +17,7 @@ import type { TabHeaderPropsType } from '../others/TabRenderComp';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import FloatingWidgetComp from '../app-modal/FloatingWidgetComp';
 import { tran } from '../lang/langHelpers';
+import { toIconedLabel, toWidgetLabel } from '../others/labelIconHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import {
     useBibleItemsViewControllerContext,
@@ -94,21 +95,21 @@ function genReElements(tabKeys: string) {
         dataInput.push({
             children: LazyAppDocumentPreviewerComp,
             key: 'h1',
-            widgetName: tran('Documents'),
+            ...toWidgetLabel('Documents'),
         });
     }
     if (arr.includes('l')) {
         dataInput.push({
             children: LazyLyricHandlerComp,
             key: 'h2',
-            widgetName: tran('Lyrics'),
+            ...toWidgetLabel('Lyrics'),
         });
     }
     if (arr.includes('b')) {
         dataInput.push({
             children: LazyPresenterBiblePreviewerRenderComp,
             key: 'h3',
-            widgetName: tran('Bible'),
+            ...toWidgetLabel('Bible'),
         });
     }
     return {
@@ -118,9 +119,9 @@ function genReElements(tabKeys: string) {
 }
 
 const tabTypeList = [
-    ['d', tran('Documents'), LazyAppDocumentPreviewerComp],
-    ['l', tran('Lyrics'), LazyLyricHandlerComp],
-    ['b', tran('Bibles'), LazyPresenterBiblePreviewerRenderComp],
+    ['d', toIconedLabel('Documents'), LazyAppDocumentPreviewerComp],
+    ['l', toIconedLabel('Lyrics'), LazyLyricHandlerComp],
+    ['b', toIconedLabel('Bibles'), LazyPresenterBiblePreviewerRenderComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 
@@ -136,7 +137,7 @@ function ForegroundFloatingComp() {
         () => [
             {
                 key: 'f',
-                title: tran('Foreground'),
+                title: toIconedLabel('Foreground'),
                 checkIsOnScreen: async () => {
                     return checkIsOnScreen('f', viewController);
                 },
@@ -157,7 +158,7 @@ function ForegroundFloatingComp() {
                 <FloatingWidgetComp
                     title={
                         <span className={isOnScreen ? 'app-on-screen' : ''}>
-                            {tran('Foreground')}
+                            {toIconedLabel('Foreground')}
                         </span>
                     }
                     persistKey="floating-widget-rect-foreground"

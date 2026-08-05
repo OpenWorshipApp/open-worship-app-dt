@@ -25,7 +25,8 @@ import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { handleError } from '../helper/errorHelpers';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 
 function getSystemTimezoneMinuteOffset() {
@@ -181,8 +182,14 @@ function TimeInSetComp({
         [],
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
-    const handleTimeDragStart = useCallback(() => {
+    const handleTimeDragStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
+            event,
+            genForegroundDragInf('time', () => {
+                return genTimeDataRef.current();
+            }),
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (

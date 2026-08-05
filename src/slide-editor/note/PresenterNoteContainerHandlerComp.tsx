@@ -9,6 +9,7 @@ import {
 import PptxAppDocument from '../../app-document-list/PptxAppDocument';
 import PptxSlidesNoteEditorComp from './PptxSlidesNoteEditorComp';
 import type PptxSlide from '../../app-document-list/PptxSlide';
+import { toWidgetLabel } from '../../others/labelIconHelpers';
 
 export default function PresenterNoteContainerHandlerComp({
     varyAppDocumentWithNote,
@@ -59,7 +60,7 @@ export default function PresenterNoteContainerHandlerComp({
                         },
                     },
                     key: 'h2',
-                    widgetName: 'Slides',
+                    ...toWidgetLabel('Slides'),
                     className: 'app-flex-item',
                 },
             ]}

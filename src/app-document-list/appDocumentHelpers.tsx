@@ -19,6 +19,7 @@ import {
     getFileDotExtension,
     getFileFullName,
     getFileName,
+    getMimetypeExtensions,
     getTempPath,
     KEY_SEPARATOR,
     mimetypeDocx,
@@ -46,7 +47,7 @@ import DocxAppDocument from './DocxAppDocument';
 import { createContext, use, useCallback, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
+import { useVarySlideOnScreenChangeEffect } from '../_screen/managers/varySlideOnScreenHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import { checkSelectedFilePathExist } from '../others/selectedHelpers';
 import type { DisplayType } from '../_screen/screenTypeHelpers';
@@ -54,7 +55,6 @@ import type {
     VaryAppDocumentType,
     VarySlideType,
 } from './appDocumentTypeHelpers';
-import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
 import {
     type EventMapperType,
     type AllControlType as KeyboardControlType,
@@ -267,6 +267,12 @@ export function checkIsPptx(ext: string) {
 
 export function checkIsDocx(ext: string) {
     return mimetypeDocx.extensions.includes(ext.toLocaleLowerCase());
+}
+
+export function checkIsLyric(ext: string) {
+    return getMimetypeExtensions('lyric').includes(
+        ext.replace('.', '').toLocaleLowerCase(),
+    );
 }
 
 const docFileInfo = {
@@ -768,6 +774,12 @@ export function varyAppDocumentFromFilePath(filePath: string) {
     if (checkIsDocx(getFileDotExtension(filePath))) {
         return DocxAppDocument.getInstance(filePath);
     }
+    // NOTE: lyrics are deliberately NOT resolved here. `LyricAppDocument`
+    // extends `AppDocument`, and `AppDocument` imports this module — importing
+    // it back would close the cycle and evaluate `class ... extends undefined`
+    // whenever `AppDocument` happens to be the first module loaded. Lyric rows
+    // build their own `LyricAppDocument` (see `LyricFileComp`); everything this
+    // module does with a lyric needs only its file path.
     return AppDocument.getInstance(filePath);
 }
 
@@ -786,7 +798,12 @@ export function useAnyItemSelected(varySlides?: VarySlideType[] | null) {
         });
         setIsAnyItemSelected(isSelected);
     };
-    useScreenVaryAppDocumentManagerEvents(['update'], undefined, refresh);
+    // Deliberately NOT `useScreenVaryAppDocumentManagerEvents`: that hook
+    // re-renders its component on every screen event regardless of what the
+    // callback finds, and this one sits on `VarySlidesComp`, the parent of
+    // every slide preview. Here the boolean is the only thing that can move the
+    // list, so a present that does not change it costs nothing.
+    useVarySlideOnScreenChangeEffect(refresh);
     useAppEffect(refresh, [varySlides?.map((item) => item.id).join('|')]);
     return isAnyItemSelected;
 }
@@ -799,24 +816,25 @@ export function checkIsVarySlideOnScreen(varySlide: VarySlideType) {
     return data.length > 0;
 }
 
+// Deliberately does NOT call `getSlides()`. This runs for every row of every
+// document/lyric list on every screen update, and `getSlides()` is a full
+// document parse — for a lyric that means re-reading the file and every language
+// module, for a PDF/PPTX re-reading the rendered slides. The on-screen entries
+// already carry `filePath`, so matching on that answers "is this document on a
+// screen" without materialising a single slide.
+// `getDataList` already reads (and copies) the on-screen map, so an emptiness
+// pre-check here would only read it a second time — this runs once per row per
+// screen update.
+export async function checkIsVaryAppDocumentFilePathOnScreen(filePath: string) {
+    return ScreenVaryAppDocumentManager.getDataList(filePath).length > 0;
+}
+
 export async function checkIsVaryAppDocumentOnScreen(
     varyAppDocument: VaryAppDocumentType,
 ) {
-    const dataList = getAppDocumentListOnScreenSetting();
-    if (Object.keys(dataList).length === 0) {
-        return false;
-    }
-    const varySlides = await varyAppDocument.getSlides();
-    for (const varySlide of varySlides) {
-        const data = ScreenVaryAppDocumentManager.getDataList(
-            varySlide.filePath,
-            varySlide.id,
-        );
-        if (data !== null && data.length > 0) {
-            return true;
-        }
-    }
-    return false;
+    return await checkIsVaryAppDocumentFilePathOnScreen(
+        varyAppDocument.filePath,
+    );
 }
 
 export async function preloadAttachedBackground(

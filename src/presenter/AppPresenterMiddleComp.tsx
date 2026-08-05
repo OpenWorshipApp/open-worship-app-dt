@@ -2,7 +2,7 @@ import { lazy } from 'react';
 
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import { tran } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyPresenterComp = lazy(() => {
     return import('../app-document-presenter/PresenterComp');
@@ -24,13 +24,13 @@ export default function AppPresenterMiddleComp() {
                 {
                     children: LazyPresenterComp,
                     key: 'v1',
-                    widgetName: tran('Presenter'),
+                    ...toWidgetLabel('Presenter'),
                     className: 'app-flex-item',
                 },
                 {
                     children: LazyBackgroundComp,
                     key: 'v2',
-                    widgetName: tran('Background'),
+                    ...toWidgetLabel('Background'),
                     className: 'app-flex-item',
                 },
             ]}

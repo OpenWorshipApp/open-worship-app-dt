@@ -54,7 +54,7 @@ export default function AudioBodyComp({
                 >
                     <source src={fileSource.src} />
                     <track kind="captions" />
-                    Browser does not support audio.
+                    {tran('Browser does not support audio.')}
                 </audio>
                 <div>
                     <i

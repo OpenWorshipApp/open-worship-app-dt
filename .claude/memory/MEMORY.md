@@ -21,8 +21,28 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Missing km key throws in dev](tran-missing-key-throws-in-dev.md) — `tran()` throws (blanks the page) on a missing key; concatenated + dynamic `tran(prop)` sites hide from literal grepping
 - [Confirm popup labels are auto-tran'd](confirm-popup-labels-auto-tran.md) — ConfirmPopupComp `tran()`s the button labels; pass raw English keys, and pair `'Yes'` with `'No'`
 - [Vitest env-leak flakes](vitest-env-leak-flakes.md) — node-env tests importing `appProvider` pass only when a jsdom file shares the worker; plus the whole-suite "reading 'config'" flake
+- [npm 12 install gotchas](npm-12-install-gotchas.md) — plain `npm i` fails on git deps and leaves electron with no `dist/`; use `--allow-git=all` + run electron's install.js
 - [open-lyric subtree-branch dep](open-lyric-subtree-branch-dep.md) — npm can't install a git subdirectory; the dep is a subtree-split branch that must be re-split + force-pushed on every update
 - [Blob downloads pop a Save As dialog](blob-download-pops-save-dialog.md) — no will-download handler, so `<a download>` orphans a .tmp; write files with fsWriteFile instead
 - [Screen change-bible IPC — FIXED](screen-change-bible-dead-ipc.md) — refactor22 added the `src/` receiver; stepping works from the presenter, still not from the reader
 - [TypeScript 7 side-by-side](typescript-7-side-by-side.md) — `tsc` is TS7 via `@typescript/native`; the `typescript` alias to TS6 is load-bearing for typescript-eslint, don't "fix" it
+- [Dev data dir is separate](dev-data-dir-is-separate.md) — dev writes user files to `Desktop\open-worship-data-dev`; checking the non-dev dir makes working downloads look broken
+- [Lyric subsystem architecture](lyric-subsystem-architecture.md) — lyric slides are HTML from the `open-lyric` dep; `openLyric` is set by ONE component, so screen renderers see null
+- [On-screen check must not parse](onscreen-check-must-not-parse.md) — `checkIsVaryAppDocumentOnScreen` runs per row per screen event; match on `filePath`, never call `getSlides()`
 - [QA: intentional, not bugs](qa-intentional-not-bugs.md) — PPTX blank slide0, bible-present swapping the background, and the video-sync log burst are all deliberate
+- [`app-ellipsis-left` reverses names](app-ellipsis-left-reverses-names.md) — `direction:rtl` makes `12_cv.mp4` display as `cv_12`; the label is not the filename
+- [Vite dep-optimizer 504 → touch config](vite-dep-optimizer-504-restart.md) — a 504 on a `.vite/deps` chunk is a stale optimizer cache; touch vite.config.ts instead of restarting dev
+- [Full view toggle collapses a widget](full-view-toggle-collapses-widget.md) — it persists a zero-height Background panel; several elements share the title "Full view"
+- [Lyrics live in the Documents list](lyric-in-documents-list.md) — refactor23 merged `.owl` into the documents folder/list; the LYRIC dir setting is gone and old lyrics must be moved
+- [appDocumentHelpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) — importing it closes a cycle through `AppDocument` and throws `class extends undefined`
+- [Playlist: references vs presets](playlist-references-vs-presets.md) — slides/documents are file references, backgrounds/bible/foregrounds are verbatim presets; foreground buttons now serialize themselves
+- [Screen window had no app fonts — FIXED](screen-window-has-no-app-fonts.md) — `screen.tsx` skipped `init()` + `getAllLangsAsync` never registered CSS; stage-CSS fixes are inert against open-lyric's inline dump
+- [On-screen setting parse amplification — FIXED](onscreen-setting-parse-amplification.md) — readers memoized on the raw setting string; the getters MUST keep returning a copy or a present wipes the other screen
+- [Reveal Original is a context item](reveal-original-context-menu.md) — the 3-second hover-to-locate is gone; use `genRevealOriginal`, and note it can't open a closed panel yet
+- [Playlists panel is no longer dev-only](playlist-panel-no-longer-dev-only.md) — `203d35cc` dropped the `isDev` gate and took the Lyric List's slot; every "dev builds only" note is stale
+- [Playlist on-screen marking design](playlist-onscreen-marking-design.md) — ONE shared subscription + shared debounce for the whole tree; per-row screen hooks hit "Maximum update depth exceeded"
+- [Playlist preview is a run player](playlist-preview-run-player.md) — forward-only focus-gated keys; a document element is walked slide by slide before the run leaves it
+- [Playlist screen actions](playlist-screen-actions.md) — a run sheet can hold things to DO; extend `playlistActionList`, never `acceptedDragTypeList`
+- [Downloads are protocol-aware now](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http; `httpUtils.request` is still https/443-only
+- [`.owapl.tar.gz` playlist archive](playlist-archive-owapl.md) — bundles the whole documents behind slide references; import resolves every destination folder before writing anything
+- [Playlist drag & setting rules](playlist-drag-and-settings-rules.md) — `playlistDraggingStore` makes cross-playlist drag a silent no-op; setting names must be sanitized paths

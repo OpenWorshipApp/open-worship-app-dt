@@ -15,6 +15,7 @@ import {
     initLangAppMenu,
     registerLangAppMenuClicked,
 } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyAppPresenterLeftComp = lazy(() => {
     return import('./AppPresenterLeftComp');
@@ -71,17 +72,17 @@ export default function AppPresenterComp() {
                     {
                         children: LazyAppPresenterLeftComp,
                         key: 'h1',
-                        widgetName: 'App Presenter Left',
+                        ...toWidgetLabel('App Presenter Left'),
                     },
                     {
                         children: LazyAppPresenterMiddleComp,
                         key: 'h2',
-                        widgetName: 'App Presenter Middle',
+                        ...toWidgetLabel('App Presenter Middle'),
                     },
                     {
                         children: LazyAppPresenterRightComp,
                         key: 'h3',
-                        widgetName: 'App Presenter Right',
+                        ...toWidgetLabel('App Presenter Right'),
                     },
                 ]}
             />

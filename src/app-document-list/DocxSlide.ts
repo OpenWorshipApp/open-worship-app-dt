@@ -127,9 +127,13 @@ export default class DocxSlide
         return Promise.resolve(this.htmlFilePath);
     }
 
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.DOCX_SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.DOCX_SLIDE,
+            type: this.dragType,
             data: JSON.stringify({
                 filePath: this.filePath,
                 data: this.toDragJson(),

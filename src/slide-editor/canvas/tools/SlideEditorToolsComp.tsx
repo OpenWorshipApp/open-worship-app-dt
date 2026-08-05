@@ -9,15 +9,15 @@ import {
     useEditingCanvasItemAndSetterContext,
     useSelectedCanvasItemsAndSetterContext,
 } from '../CanvasItem';
-import { tran } from '../../../lang/langHelpers';
+import { toIconedLabel } from '../../../others/labelIconHelpers';
 
 const LazyToolCanvasItemsComp = lazy(() => {
     return import('./ToolCanvasItemsComp');
 });
 
 const tabTypeList = [
-    ['p', tran('Properties')],
-    ['c', tran('Canvas Items')],
+    ['p', toIconedLabel('Properties')],
+    ['c', toIconedLabel('Canvas Items')],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function SlideEditorToolsComp() {

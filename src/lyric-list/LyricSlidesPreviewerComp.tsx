@@ -12,6 +12,8 @@ import { type DataInputType } from '../resize-actor/flexSizeHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 import type LyricAppDocument from './LyricAppDocument';
 import { getLyricAppDocumentStageByStage } from './lyricHelpers';
+import { tran } from '../lang/langHelpers';
+import { getLabelIconName, toIconedLabel } from '../others/labelIconHelpers';
 
 function getLyricAppDocuments(
     stageSetting: string,
@@ -67,7 +69,7 @@ export default function LyricSlidesPreviewerComp() {
     return (
         <div className="w-100 h-100 app-overflow-hidden card">
             <div className="w-100 p-1 card-header">
-                Stage Previewer (stages:{' '}
+                {toIconedLabel('Stage Previewer')} ({tran('stages')}:{' '}
                 {stages.map((stage) => {
                     if (stage === 0) {
                         return <span key={stage}>0</span>;
@@ -105,7 +107,9 @@ export default function LyricSlidesPreviewerComp() {
                         ([stage, lyricAppDocument]) => {
                             const inputData: DataInputType = {
                                 key: `h${stage}`,
-                                widgetName: `Stage ${stage}`,
+                                widgetName: `${tran('Stage')} ${stage}`,
+                                widgetIconName:
+                                    getLabelIconName('Stage') ?? undefined,
                                 children: {
                                     render: () => {
                                         return (

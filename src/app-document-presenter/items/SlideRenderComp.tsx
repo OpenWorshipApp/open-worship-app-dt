@@ -2,7 +2,6 @@ import type { MouseEvent } from 'react';
 import { use, useCallback } from 'react';
 
 import type Slide from '../../app-document-list/Slide';
-import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import {
     SelectedEditingSlideContext,
     useVaryAppDocumentContext,
@@ -43,7 +42,9 @@ export default function SlideRenderComp({
 }>) {
     const appDocument = useVaryAppDocumentContext() as AppDocument;
     const { selectedEditingSlide, holdingEditingSlides } = useData();
-    useScreenVaryAppDocumentManagerEvents(['update']);
+    // No screen subscription here on purpose: nothing this component renders
+    // depends on what is on a screen. `VarySlideRenderComp` owns that question
+    // for its own slide.
     const indexRef = useAppCurrentRef(index);
     const holdingEditingSlidesRef = useAppCurrentRef(holdingEditingSlides);
     const slideRef = useAppCurrentRef(slide);

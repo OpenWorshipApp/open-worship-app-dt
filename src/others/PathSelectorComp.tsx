@@ -1,5 +1,6 @@
 import './PathSelectorComp.scss';
 
+import type { ReactNode } from 'react';
 import { lazy, useCallback, useState } from 'react';
 
 import { tran } from '../lang/langHelpers';
@@ -65,15 +66,15 @@ function openContextMenu(dirSource: DirSource, event: any) {
 
 export default function PathSelectorComp({
     dirSource,
-    addItems,
     isForceShowEditor = false,
     placeholder = '',
+    extraElements,
 }: Readonly<{
     dirSource: DirSource;
     prefix: string;
-    addItems?: (event: any) => void;
     isForceShowEditor?: boolean;
     placeholder?: string;
+    extraElements?: ReactNode;
 }>) {
     const [isShowingEditor, setIsShowingEditor] = useState(false);
     const dirPath = dirSource.dirPath;
@@ -104,7 +105,7 @@ export default function PathSelectorComp({
                 {!shouldShowingEditor && (
                     <RenderPathTitleComp
                         dirSource={dirSource}
-                        addItems={addItems}
+                        extraElements={extraElements}
                     />
                 )}
             </div>

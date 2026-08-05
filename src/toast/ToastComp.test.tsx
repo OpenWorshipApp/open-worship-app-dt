@@ -2,7 +2,7 @@
 
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import ToastEventListener from '../event/ToastEventListener';
 import ToastComp, { MAX_STACKED_TOAST_COUNT } from './ToastComp';
@@ -10,12 +10,22 @@ import ToastComp, { MAX_STACKED_TOAST_COUNT } from './ToastComp';
 let container: HTMLDivElement | null = null;
 let root: Root | null = null;
 
-async function flush() {
+// hops a real macrotask, or an equivalent fake-timer tick when the test drives
+// the toast timers with fake timers
+async function wait(time: number) {
     await act(async () => {
+        if (vi.isFakeTimers()) {
+            await vi.advanceTimersByTimeAsync(time);
+            return;
+        }
         await new Promise((resolve) => {
-            setTimeout(resolve, 0);
+            setTimeout(resolve, time);
         });
     });
+}
+
+async function flush() {
+    await wait(0);
 }
 
 async function showToast(title: string, timeout?: number) {
@@ -27,14 +37,6 @@ async function showToast(title: string, timeout?: number) {
         });
     });
     await flush();
-}
-
-async function wait(time: number) {
-    await act(async () => {
-        await new Promise((resolve) => {
-            setTimeout(resolve, time);
-        });
-    });
 }
 
 function getToastTitles() {
@@ -107,14 +109,21 @@ describe('ToastComp', () => {
     });
 
     test('auto-dismisses each toast on its own timer', async () => {
-        await showToast('1', 100);
-        await showToast('2', 400);
-        expect(getToastTitles()).toEqual(['1', '2']);
+        // fake timers, otherwise a loaded whole-suite run can burn through the
+        // 100ms lifetime before the first assertion and flake
+        vi.useFakeTimers();
+        try {
+            await showToast('1', 100);
+            await showToast('2', 400);
+            expect(getToastTitles()).toEqual(['1', '2']);
 
-        await wait(200);
-        expect(getToastTitles()).toEqual(['2']);
+            await wait(200);
+            expect(getToastTitles()).toEqual(['2']);
 
-        await wait(300);
-        expect(container?.querySelector('.app-toast-stack')).toBeNull();
+            await wait(300);
+            expect(container?.querySelector('.app-toast-stack')).toBeNull();
+        } finally {
+            vi.useRealTimers();
+        }
     });
 });

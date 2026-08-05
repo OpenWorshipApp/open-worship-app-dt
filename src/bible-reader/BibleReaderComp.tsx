@@ -7,6 +7,7 @@ import type {
     FlexSizeType,
 } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 import LookupBibleItemController from './LookupBibleItemController';
 import { BibleItemsViewControllerContext } from './BibleItemsViewController';
 
@@ -21,18 +22,23 @@ const flexSizeDefault: FlexSizeType = {
     h1: ['1'],
     h2: ['4'],
 };
-const dataInput: DataInputType[] = [
-    {
-        children: LazyBibleReadingLeftCom,
-        key: 'h1',
-        widgetName: 'Bible and Notes',
-    },
-    {
-        children: LazyRenderBibleLookupComp,
-        key: 'h2',
-        widgetName: 'Bible Lookup',
-    },
-];
+// Built per render, not once at module scope: `tran()` throws in dev when the
+// locale's language data has not been loaded into the cache yet, and module
+// evaluation happens well before that — which blanks the whole page in km.
+function genDataInput(): DataInputType[] {
+    return [
+        {
+            children: LazyBibleReadingLeftCom,
+            key: 'h1',
+            ...toWidgetLabel('Bible and Notes'),
+        },
+        {
+            children: LazyRenderBibleLookupComp,
+            key: 'h2',
+            ...toWidgetLabel('Bible Lookup'),
+        },
+    ];
+}
 export default function BibleReaderComp({
     flexSizeName,
     onLookupSaveBibleItem,
@@ -48,6 +54,9 @@ export default function BibleReaderComp({
         }
         return newLookupBibleItemController;
     }, [onLookupSaveBibleItem]);
+    const dataInput = useMemo(() => {
+        return genDataInput();
+    }, []);
     return (
         <BibleItemsViewControllerContext value={lookupBibleItemController}>
             <ResizeActorComp

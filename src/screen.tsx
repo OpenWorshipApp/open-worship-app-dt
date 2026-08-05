@@ -12,6 +12,7 @@ import {
 } from './helper/domHelpers';
 import { appLog } from './helper/loggerHelpers';
 import { getReactRoot } from './others/rootHelpers';
+import { initAllLangCss } from './lang/langHelpers';
 
 function main() {
     const root = getReactRoot();
@@ -52,3 +53,4 @@ function main() {
 }
 
 main();
+void initAllLangCss();

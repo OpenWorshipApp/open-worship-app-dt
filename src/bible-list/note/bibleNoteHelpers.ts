@@ -22,9 +22,8 @@ import Note from './Note';
 import type NoteItem from './NoteItem';
 import {
     getAllLangsAsync,
-    getCurrentLocale,
     getLangDataAsync,
-    initLangCss,
+    initAllLangCss,
 } from '../../lang/langHelpers';
 import { showFileOrDirExplorer } from '../../server/appHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
@@ -198,14 +197,8 @@ export async function initBibleNote({
     note: Note;
     noteItem: NoteItem;
 }>) {
+    void initAllLangCss();
     const langDataList = await getAllLangsAsync();
-    const currentLocale = getCurrentLocale();
-    for (const langData of langDataList) {
-        if (langData.locale === currentLocale) {
-            continue;
-        }
-        initLangCss(langData);
-    }
     const stickyNoteExtraFontFamilies = langDataList
         .filter((langData) => {
             return langData.stickyNoteFontFamily !== undefined;

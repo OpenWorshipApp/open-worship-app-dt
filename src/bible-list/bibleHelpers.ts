@@ -181,17 +181,20 @@ export async function openBibleItemContextMenu(
     openBibleLookup: (() => void) | null,
     extraMenuItems: ContextMenuItemType[],
 ) {
+    // A bible item does not have to belong to a file — one dragged out of the
+    // lookup window into a playlist has no `filePath`. Only the file-editing
+    // entries need the bible; bailing out here took the whole menu away from
+    // such an item, "Show on Screens" included, leaving a dead-end toast.
     const bible = bibleItem.filePath
         ? await Bible.fromFilePath(bibleItem.filePath)
         : null;
-    if (bible === null) {
-        showSimpleToast('Open Bible Item Context Menu', 'Unable to get bible');
-        return;
-    }
     // Mutating actions re-read the file at action time — the menu can stay
     // open indefinitely, and saving the open-time snapshot would clobber any
     // item added to the same file in between.
     const mutateFreshBible = async (callback: (freshBible: Bible) => void) => {
+        if (bible === null) {
+            return;
+        }
         const freshBible = await Bible.fromFilePath(bible.filePath);
         if (freshBible === null) {
             showSimpleToast('Bible Item', 'Unable to get bible');
@@ -222,42 +225,50 @@ export async function openBibleItemContextMenu(
                       },
                   },
               ]),
-        {
-            childBefore: genContextMenuItemIcon('files'),
-            menuElement: tran('Duplicate'),
-            onSelect: async () => {
-                await mutateFreshBible((freshBible) => {
-                    freshBible.duplicate(index);
-                });
-            },
-        },
+        ...(bible === null
+            ? []
+            : [
+                  {
+                      childBefore: genContextMenuItemIcon('files'),
+                      menuElement: tran('Duplicate'),
+                      onSelect: async () => {
+                          await mutateFreshBible((freshBible) => {
+                              freshBible.duplicate(index);
+                          });
+                      },
+                  },
+              ]),
         ...genShowOnScreensContextMenu((event) => {
             ScreenBibleManager.handleBibleItemSelecting(event, bibleItem, true);
         }),
-        {
-            childBefore: genContextMenuItemIcon('folder-symlink'),
-            menuElement: tran('Move To'),
-            onSelect: (event1: any) => {
-                moveBibleItemTo(event1, bible, bibleItem);
-            },
-        },
-        {
-            childBefore: genContextMenuItemIcon('trash3', {
-                color: 'var(--bs-danger)',
-            }),
-            menuElement: tran('Delete'),
-            onSelect: async () => {
-                await bible.deleteBibleItem(bibleItem);
-                if (bibleItem.filePath !== undefined) {
-                    attachBackgroundManager.detachBackground(
-                        bibleItem.filePath,
-                        bibleItem.id,
-                    );
-                }
-            },
-        },
+        ...(bible === null
+            ? []
+            : [
+                  {
+                      childBefore: genContextMenuItemIcon('folder-symlink'),
+                      menuElement: tran('Move To'),
+                      onSelect: (event1: any) => {
+                          moveBibleItemTo(event1, bible, bibleItem);
+                      },
+                  },
+                  {
+                      childBefore: genContextMenuItemIcon('trash3', {
+                          color: 'var(--bs-danger)',
+                      }),
+                      menuElement: tran('Delete'),
+                      onSelect: async () => {
+                          await bible.deleteBibleItem(bibleItem);
+                          if (bibleItem.filePath !== undefined) {
+                              attachBackgroundManager.detachBackground(
+                                  bibleItem.filePath,
+                                  bibleItem.id,
+                              );
+                          }
+                      },
+                  },
+              ]),
     ];
-    if (index !== 0) {
+    if (bible !== null && index !== 0) {
         menuItem.push({
             childBefore: genContextMenuItemIcon('arrow-up'),
             menuElement: tran('Move up'),
@@ -268,7 +279,7 @@ export async function openBibleItemContextMenu(
             },
         });
     }
-    if (index !== bible.itemsLength - 1) {
+    if (bible !== null && index !== bible.itemsLength - 1) {
         menuItem.push({
             childBefore: genContextMenuItemIcon('arrow-down'),
             menuElement: tran('Move down'),

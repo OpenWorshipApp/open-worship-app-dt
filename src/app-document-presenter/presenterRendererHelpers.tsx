@@ -1,9 +1,9 @@
 import { getSetting } from '../helper/settingHelpers';
 import {
+    checkIsVaryAppDocumentFilePathOnScreen,
     checkIsVaryAppDocumentOnScreen,
     getSelectedVaryAppDocument,
 } from '../app-document-list/appDocumentHelpers';
-import LyricAppDocument from '../lyric-list/LyricAppDocument';
 import { getSelectedLyric } from '../lyric-list/lyricHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
@@ -40,14 +40,9 @@ export async function checkIsOnScreen<T>(
         if (selectedLyric === null) {
             return false;
         }
-        const lyricAppDocument = LyricAppDocument.getInstance(
+        const isOnScreen = await checkIsVaryAppDocumentFilePathOnScreen(
             selectedLyric.filePath,
         );
-        if (lyricAppDocument === null) {
-            return false;
-        }
-        const isOnScreen =
-            await checkIsVaryAppDocumentOnScreen(lyricAppDocument);
         return isOnScreen;
     } else if (targeKey === 'f') {
         const allScreenManager = getAllScreenManagers();

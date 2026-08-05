@@ -127,7 +127,13 @@ Use these when working against the running app via chrome-devtools:
   `memoizedProps.value` has `.addNewItems` + `.canvas`, then call the controller
   method directly. A real `video/webm` `File` can be synthesized in-page via
   canvas `captureStream()` + `MediaRecorder`. Restore with the Undo toolbar
-  button only (see below).
+  button only (see below). What DOES drive the whole real pipeline: dispatch a
+  plain bubbling `Event('drop')` and `Object.defineProperty` a fabricated
+  `dataTransfer` onto it — `{items: [{kind: 'file', webkitGetAsEntry: () => ({
+  isFile: true }), getAsFile: () => file}]}` — since React only forwards the
+  property. Stamp `appFilePath` on the `File` (the electron preload does this
+  for real drops) and handlers that resolve a real path, e.g. the playlist
+  archive import, run end to end against a real file on disk.
 - **Never "Discard changed" during automated QA.** Only ever use Undo/Redo
   (non-destructive, reversible) to probe or restore editor state. The toolbar's
   "Discard changed" → "Yes" resets the document to its last-saved-on-disk state

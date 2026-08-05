@@ -13,6 +13,8 @@ import ItemColorNoteComp from '../others/ItemColorNoteComp';
 import { copyToClipboard } from '../server/appHelpers';
 import { RenderWebChildComp } from './BackgroundWebChildComp';
 import { useAppCurrentRef } from '../helper/appHooks';
+import BackgroundListItemComp from './BackgroundListItemComp';
+import type { BackgroundViewModeType } from './BackgroundViewModeComp';
 
 function genFileNameElement(fileName: string) {
     return (
@@ -35,12 +37,14 @@ export default function BackgroundWebUrlItemComp({
     thumbnailHeight,
     onRemove,
     onColorNoteChange,
+    viewMode = 'thumbnail',
 }: Readonly<{
     urlSource: BackgroundWebUrlSource;
     thumbnailWidth: number;
     thumbnailHeight: number;
     onRemove: (urlSource: BackgroundWebUrlSource) => Promise<void>;
     onColorNoteChange: () => void;
+    viewMode?: BackgroundViewModeType;
 }>) {
     const {
         selectedCN,
@@ -99,6 +103,28 @@ export default function BackgroundWebUrlItemComp({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    if (viewMode === 'list') {
+        return (
+            <BackgroundListItemComp
+                backgroundType={backgroundType}
+                name={urlSource.fullName}
+                title={title}
+                selectedCN={selectedCN}
+                src={urlSource.src}
+                isDraggable
+                selectedBackgroundSrcList={selectedBackgroundSrcList}
+                onDragStart={handleMediaDragStart}
+                onContextMenu={handleContextMenuOpening}
+                onClick={handleClicking}
+                colorNoteChild={
+                    <ItemColorNoteComp
+                        item={urlSource}
+                        onChange={onColorNoteChange}
+                    />
+                }
+            />
+        );
+    }
     return (
         <div
             className={`${backgroundType}-thumbnail card ${selectedCN}`}

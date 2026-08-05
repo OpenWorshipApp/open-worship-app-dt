@@ -15,6 +15,13 @@ export enum DragTypeEnum {
     BACKGROUND_AUDIO = 'bg-audio',
     BACKGROUND_IMAGE = 'bg-image',
     BACKGROUND_COLOR = 'bg-color',
+    // A whole document (pdf/pptx/docx/lyric/app-document) by file path. It is a
+    // reference, not a snapshot: nothing but the path travels with the drag.
+    APP_DOCUMENT = 'appDocument',
+    // Any foreground widget (countdown/stopwatch/time/marquee/quick-text/
+    // camera/web). The payload carries the widget target plus its own settings,
+    // so a foreground can be stored in a playlist and replayed later.
+    FOREGROUND = 'foreground',
 }
 
 export type DragDataType<T> = {

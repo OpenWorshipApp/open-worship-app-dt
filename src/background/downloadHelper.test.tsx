@@ -328,6 +328,24 @@ describe('downloadHelper', () => {
         vi.runAllTimers();
     });
 
+    test('suppresses the completion toast when the success is silent', async () => {
+        writeStreamToFileMock.mockImplementation(
+            async (filePath: string, options: any) => {
+                await options.onStart(1);
+                await options.onDone(null, filePath);
+            },
+        );
+
+        await expect(
+            streamDownloadFile('/tmp/work/file.zip', {}, vi.fn(), true),
+        ).resolves.toBeUndefined();
+
+        expect(showSimpleToastMock).not.toHaveBeenCalledWith(
+            'Download Completed',
+            expect.anything(),
+        );
+    });
+
     test('rejects downloads when the stream callback reports an error', async () => {
         writeStreamToFileMock.mockImplementation(
             async (_filePath: string, options: any) => {

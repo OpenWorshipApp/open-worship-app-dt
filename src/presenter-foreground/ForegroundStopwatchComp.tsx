@@ -12,7 +12,8 @@ import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEven
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import type { ForegroundStopwatchDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 
@@ -108,8 +109,15 @@ export default function ForegroundStopwatchComp() {
         [genStyle],
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
-    const handleDragStart = useCallback(() => {
+    const genStyleRef = useAppCurrentRef(genStyle);
+    const handleDraggingStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
+            event,
+            genForegroundDragInf('stopwatch', () => {
+                return { extraStyle: genStyleRef.current() };
+            }),
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
@@ -133,7 +141,7 @@ export default function ForegroundStopwatchComp() {
                         onClick={handleShowing}
                         onContextMenu={handleContextMenuOpening}
                         draggable
-                        onDragStart={handleDragStart}
+                        onDragStart={handleDraggingStart}
                     >
                         <i className="bi bi-play-fill" />{' '}
                         {tran('Start Stopwatch')}

@@ -6,137 +6,7 @@ import {
     setAISetting,
     useAISetting,
 } from '../helper/ai/aiHelpers';
-import { showAppInput } from '../popup-widget/popupWidgetHelpers';
-import appProvider from '../server/appProvider';
 import { useAppCurrentRef } from '../helper/appHooks';
-
-async function handleAISetting() {
-    if (!appProvider.isPageReader) {
-        return;
-    }
-    const openAISetting = getAISetting();
-    let openAIAPIKey = openAISetting.openAIAPIKey;
-    let anthropicAPIKey = openAISetting.anthropicAPIKey;
-    const isConfirmInput = await showAppInput(
-        'Audio AI Setting',
-        <>
-            <div className="d-flex flex-column w-100 h-100">
-                <div>
-                    OpenAI API Key{' '}
-                    <i
-                        className="bi bi-lightbulb"
-                        title={tran(
-                            'This key will be used in custom Bible Cross Ref and Bible Audio',
-                        )}
-                        style={{
-                            color: 'var(--bs-info-text-emphasis)',
-                        }}
-                    />
-                    :
-                </div>
-                <div className="flex-grow-1 d-flex align-items-center">
-                    <input
-                        ref={(input) => {
-                            if (input) {
-                                input.value = openAIAPIKey;
-                                setTimeout(() => {
-                                    input.focus();
-                                    input.select();
-                                }, 100);
-                            }
-                        }}
-                        className="form-control form-control-sm flex-fill mx-2"
-                        type="text"
-                        onChange={(e) => {
-                            openAIAPIKey = e.target.value;
-                        }}
-                    />
-                    <button
-                        className="btn btn-sm btn-secondary"
-                        title={tran('Create OpenAI api key')}
-                        onClick={async () => {
-                            appProvider.browserUtils.openExternalURL(
-                                'https://platform.openai.com/api-keys',
-                            );
-                        }}
-                    >
-                        API Key <i className="bi bi-box-arrow-up-right ms-1" />
-                    </button>
-                </div>
-            </div>
-            <hr />
-            <div className="d-flex flex-column w-100 h-100 mb-2">
-                <div>
-                    Anthropic API Key{' '}
-                    <i
-                        className="bi bi-lightbulb"
-                        title={tran(
-                            'This key will be used in custom Bible Cross Ref',
-                        )}
-                        style={{
-                            color: 'var(--bs-info-text-emphasis)',
-                        }}
-                    />
-                    :
-                </div>
-                <div className="flex-grow-1 d-flex align-items-center">
-                    <input
-                        ref={(input) => {
-                            if (input) {
-                                input.value = anthropicAPIKey;
-                                setTimeout(() => {
-                                    input.focus();
-                                    input.select();
-                                }, 100);
-                            }
-                        }}
-                        className="form-control form-control-sm flex-fill mx-2"
-                        type="text"
-                        onChange={(e) => {
-                            anthropicAPIKey = e.target.value;
-                        }}
-                    />
-                    <button
-                        className="btn btn-sm btn-secondary"
-                        title={tran('Create Anthropic api key')}
-                        onClick={async () => {
-                            appProvider.browserUtils.openExternalURL(
-                                'https://console.anthropic.com/settings/keys',
-                            );
-                        }}
-                    >
-                        API Key <i className="bi bi-box-arrow-up-right ms-1" />
-                    </button>
-                </div>
-            </div>
-        </>,
-    );
-    if (!isConfirmInput) {
-        return;
-    }
-    setAISetting({
-        ...openAISetting,
-        openAIAPIKey,
-        anthropicAPIKey,
-    });
-}
-
-function AISettingComp() {
-    const aiSetting = useAISetting();
-    return (
-        <div className="ms-2">
-            <i
-                className="bi bi-robot app-caught-hover-pointer"
-                title={tran('Set AI API Key')}
-                style={{
-                    color: aiSetting.openAIAPIKey ? 'green' : '',
-                    fontSize: '25px',
-                }}
-                onClick={handleAISetting}
-            />
-        </div>
-    );
-}
 
 function AudioAutoPlayComp() {
     const aiSetting = useAISetting();
@@ -162,10 +32,11 @@ function AudioAutoPlayComp() {
     );
 }
 
+// The API keys themselves live in Settings > Others; only the per-reader
+// auto-play toggle stays in the lookup header.
 export function AIConfigComp() {
     return (
         <div className="d-flex">
-            <AISettingComp />
             <AudioAutoPlayComp />
         </div>
     );

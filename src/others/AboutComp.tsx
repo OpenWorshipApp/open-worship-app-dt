@@ -54,7 +54,7 @@ export default function AboutComp() {
         <div
             id="app"
             data-bs-theme={theme}
-            className="app-about d-flex flex-wrap justify-content-center p-1 app-selectable-text"
+            className="app app-about d-flex flex-wrap justify-content-center p-1 app-selectable-text"
         >
             <RenderVerseComp />
             <div className="card w-100 m-1">

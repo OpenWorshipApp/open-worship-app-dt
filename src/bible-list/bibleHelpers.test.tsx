@@ -360,7 +360,10 @@ describe('bible-list bibleHelpers', () => {
         );
     });
 
-    test('openBibleItemContextMenu warns when bible cannot be loaded', async () => {
+    // A bible item without a readable file (one dragged out of the lookup
+    // window, say) still has to be presentable — only the entries that edit the
+    // file drop out.
+    test('openBibleItemContextMenu keeps the file-free items without a bible', async () => {
         h.bibleFromFilePathMock.mockResolvedValue(null);
         await openBibleItemContextMenu(
             {},
@@ -369,10 +372,22 @@ describe('bible-list bibleHelpers', () => {
             null,
             [],
         );
-        expect(h.showSimpleToastMock).toHaveBeenCalledWith(
+        expect(h.showSimpleToastMock).not.toHaveBeenCalledWith(
             'Open Bible Item Context Menu',
             'Unable to get bible',
         );
+        const items = h.showAppContextMenuMock.mock.calls[0][1];
+        const names = items.map((it: any) => it.menuElement);
+        expect(names).toContain('on-screen');
+        for (const fileOnly of [
+            'Duplicate',
+            'Move To',
+            'Delete',
+            'Move up',
+            'Move down',
+        ]) {
+            expect(names).not.toContain(fileOnly);
+        }
     });
 
     test('openBibleItemContextMenu builds a full menu and runs handlers', async () => {

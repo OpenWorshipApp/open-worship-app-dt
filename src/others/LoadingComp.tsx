@@ -16,7 +16,7 @@ export default function LoadingComp({
             style={style}
         >
             <img
-                width={'80%'}
+                height={20}
                 src={loading}
                 alt={`${tran('Loading')}...`}
                 style={{

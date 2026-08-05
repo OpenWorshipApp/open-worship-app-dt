@@ -138,7 +138,7 @@ export function RenderApp({
     useCheckSetting();
     const { theme } = useThemeSource();
     return (
-        <div id="app" data-bs-theme={theme}>
+        <div id="app" className="app" data-bs-theme={theme}>
             <StrictMode>{children}</StrictMode>
         </div>
     );

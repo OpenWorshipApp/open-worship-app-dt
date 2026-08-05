@@ -59,6 +59,7 @@ import DocxAppDocument from '../../app-document-list/DocxAppDocument';
 import { showSimpleToast } from '../../toast/toastHelpers';
 import { getBibleFontFamily } from '../../helper/bible-helpers/bibleStyleHelpers';
 import { cloneJson } from '../../helper/helpers';
+import { handleError } from '../../helper/errorHelpers';
 import { getTargetLyricSlideItemData } from '../../lyric-list/lyricSlideScreenHelpers';
 
 function queryAllDeep(root: ParentNode, selector: string): Element[] {
@@ -213,23 +214,59 @@ class ScreenVaryAppDocumentManager
         this.sendSyncScreen();
     }
 
-    set varySlideData(targetVarySlideData: VarySlideScreenDataType | null) {
+    /**
+     * The awaitable form of the `varySlideData` setter. A setter cannot be
+     * awaited, so anything that needs to know when the slide has actually
+     * reached the screen — and only then do its follow-up work — calls this
+     * instead of assigning.
+     */
+    async applyVarySlideData(
+        targetVarySlideData: VarySlideScreenDataType | null,
+    ) {
         if (
             targetVarySlideData === null ||
             targetVarySlideData.filePath === null ||
             targetVarySlideData.itemJson === null
         ) {
-            this.set_varySlideData(targetVarySlideData);
+            await this.set_varySlideData(targetVarySlideData);
             return;
         }
-        getTargetLyricSlideItemData(
+        const targetItemJson = await getTargetLyricSlideItemData(
             targetVarySlideData.filePath,
             targetVarySlideData.itemJson as any,
             this.screenManagerBase.stage,
-        ).then((targetItemJson) => {
-            targetVarySlideData.itemJson = targetItemJson;
-            this.set_varySlideData(targetVarySlideData);
+        );
+        // A new object rather than writing `itemJson` back onto the argument:
+        // the argument can be an entry of the memoized on-screen map (the
+        // constructor seeds `_varySlideData` from it), and mutating it would
+        // change what every later reader of that map sees.
+        await this.set_varySlideData({
+            ...targetVarySlideData,
+            itemJson: targetItemJson,
         });
+    }
+
+    set varySlideData(targetVarySlideData: VarySlideScreenDataType | null) {
+        this.applyVarySlideData(targetVarySlideData).catch(handleError);
+    }
+
+    /**
+     * Re-run the currently presented slide through the stage-aware setter so it
+     * is re-derived for `screenManagerBase.stage`, then re-rendered, persisted
+     * and synced to the projected screen.
+     *
+     * Called when the screen's stage changes: the presented slide is a snapshot
+     * derived for one specific stage (a lyric renders chords and section titles
+     * only from stage 1 up), so without this the `St:` label moves while both
+     * the mini preview and the projected output keep the previous stage's
+     * layout. No-op when nothing is presented.
+     */
+    reapplyForStage() {
+        const varySlideData = this._varySlideData;
+        if (varySlideData === null) {
+            return;
+        }
+        this.varySlideData = cloneJson(varySlideData);
     }
 
     toSyncMessage(): BasicScreenMessageType {
@@ -424,7 +461,10 @@ class ScreenVaryAppDocumentManager
         varySlideScreenData: VarySlideScreenDataType | null,
     ) {
         ScreenVaryAppDocumentManager.enableSyncGroup(this.screenId);
-        this.varySlideData = varySlideScreenData;
+        // Returns the apply promise so a caller that must not act until the
+        // slide is actually on the screen can await it; assigning the setter
+        // would hide that behind a fire-and-forget chain.
+        return this.applyVarySlideData(varySlideScreenData);
     }
 
     toSlideData(filePath: string, itemJson: VarySlideDataType) {
@@ -993,7 +1033,7 @@ class ScreenVaryAppDocumentManager
             isRenderFullWidth: checkIsPdfFullWidth(),
             virtualBackgroundColor: getPageBaseVirtualBackgroundColor(),
         };
-        this.applySlideSrcWithSyncGroup(varySlideData);
+        await this.applySlideSrcWithSyncGroup(varySlideData);
     }
 
     static receiveSyncScreen(message: ScreenMessageType) {

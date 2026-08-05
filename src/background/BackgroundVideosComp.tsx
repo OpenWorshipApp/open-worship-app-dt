@@ -20,8 +20,7 @@ import {
     hideProgressBar,
 } from '../progress-bar/progressBarHelpers';
 import { downloadVideoOrAudio, timeToTimeString } from '../server/appHelpers';
-import { fsMove } from '../server/fileHelpers';
-import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
+import { fsMove, getTempPath } from '../server/fileHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -194,10 +193,13 @@ async function genVideoDownloadContextMenuItems(dirSource: DirSource) {
                 `Downloading video from "${videoUrl}", please wait...`,
             );
             showProgressBar(videoUrl);
-            const defaultPath = getDefaultDataDir();
+            // Stage in the OS temp dir, not `getDefaultDataDir()`: that one is
+            // hardcoded to Desktop/open-worship-data, so it ignored both the
+            // dev data-dir override and any relocated media dir — spuriously
+            // creating/filling a directory the user may not even use.
             const { filePath, fileFullName } = await downloadVideoOrAudio(
                 videoUrl,
-                defaultPath,
+                getTempPath(),
                 true,
             );
             const destFileSource = FileSource.getInstance(

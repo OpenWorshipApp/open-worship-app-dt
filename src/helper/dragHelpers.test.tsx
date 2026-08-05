@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
     slideDragDeserializeMock,
+    lyricSlideDragDeserializeMock,
     bibleDragDeserializeMock,
     fileDragDeserializeMock,
     deserializeBackgroundWebDragItemMock,
@@ -23,6 +24,7 @@ const {
     translateMock,
 } = vi.hoisted(() => ({
     slideDragDeserializeMock: vi.fn(),
+    lyricSlideDragDeserializeMock: vi.fn(),
     bibleDragDeserializeMock: vi.fn(),
     fileDragDeserializeMock: vi.fn(),
     deserializeBackgroundWebDragItemMock: vi.fn(),
@@ -43,6 +45,14 @@ const {
 vi.mock('../app-document-list/Slide', () => ({
     default: {
         dragDeserialize: slideDragDeserializeMock,
+    },
+}));
+
+// `Slide` is mocked as a plain object, so the real `LyricSlide extends Slide`
+// would throw at module evaluation.
+vi.mock('../lyric-list/LyricSlide', () => ({
+    default: {
+        dragDeserialize: lyricSlideDragDeserializeMock,
     },
 }));
 

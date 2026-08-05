@@ -6,7 +6,7 @@ import { useStateSettingString } from '../helper/settingHelpers';
 import TabRenderComp, { genTabBody } from '../others/TabRenderComp';
 import { SETTING_SETTING_NAME } from './settingHelpers';
 import SettingApplyComp from './SettingApplyComp';
-import { tran } from '../lang/langHelpers';
+import { toIconedLabel } from '../others/labelIconHelpers';
 import { warnIfAnyBibleEditorDirty } from './bible-setting/bibleEditorDirtyHelpers';
 
 const LazySettingGeneralComp = lazy(() => {
@@ -15,10 +15,14 @@ const LazySettingGeneralComp = lazy(() => {
 const LazySettingBibleComp = lazy(() => {
     return import('./bible-setting/SettingBibleComp');
 });
+const LazySettingOthersComp = lazy(() => {
+    return import('./SettingOthersComp');
+});
 
 const tabTypeList = [
-    ['g', tran('General'), LazySettingGeneralComp],
-    ['b', tran('Bible'), LazySettingBibleComp],
+    ['g', toIconedLabel('General'), LazySettingGeneralComp],
+    ['b', toIconedLabel('Bible'), LazySettingBibleComp],
+    ['o', toIconedLabel('Others'), LazySettingOthersComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
 export default function SettingComp() {

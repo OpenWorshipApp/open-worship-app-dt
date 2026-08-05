@@ -23,6 +23,7 @@ import type ScreenEventHandler from './ScreenEventHandler';
 import ScreenDrawManager from './ScreenDrawManager';
 import ScreenFocusManager from './ScreenFocusManager';
 import { initScreenBibleStepping } from '../screenBibleSteppingHelpers';
+import { applyForegroundDragData } from '../../presenter-foreground/foregroundDragHelpers';
 
 function setGroupMembershipInf(
     screenManagerBase: ScreenManagerBase,
@@ -193,7 +194,11 @@ export default class ScreenManager extends ScreenManagerBase {
         return super.stage;
     }
     set stage(stageNumber: number) {
+        const isChanged = super.stage !== stageNumber;
         super.stage = stageNumber;
+        if (isChanged) {
+            this.screenVaryAppDocumentManager.reapplyForStage();
+        }
         saveScreenManagersSetting()
             .catch(handleError)
             .finally(() => {
@@ -333,7 +338,10 @@ export default class ScreenManager extends ScreenManagerBase {
         this.destroy();
     }
 
-    receiveScreenDropped(droppedData: DroppedDataType) {
+    // Returns the promise of the layer that took the drop, so a caller can wait
+    // for the content to actually be on the screen before doing anything else.
+    // Callers that only want to fire it off may keep ignoring the result.
+    receiveScreenDropped(droppedData: DroppedDataType): Promise<void> {
         if (
             [
                 DragTypeEnum.BACKGROUND_COLOR,
@@ -343,7 +351,9 @@ export default class ScreenManager extends ScreenManagerBase {
                 DragTypeEnum.BACKGROUND_CAMERA,
             ].includes(droppedData.type)
         ) {
-            this.screenBackgroundManager.receiveScreenDropped(droppedData);
+            return this.screenBackgroundManager.receiveScreenDropped(
+                droppedData,
+            );
         } else if (
             [
                 DragTypeEnum.SLIDE,
@@ -353,16 +363,23 @@ export default class ScreenManager extends ScreenManagerBase {
                 DragTypeEnum.DOCX_SLIDE,
             ].includes(droppedData.type)
         ) {
-            this.screenVaryAppDocumentManager.receiveScreenDropped(droppedData);
+            return this.screenVaryAppDocumentManager.receiveScreenDropped(
+                droppedData,
+            );
         } else if (
             [DragTypeEnum.BIBLE_ITEM, DragTypeEnum.LYRIC_ITEM].includes(
                 droppedData.type,
             )
         ) {
-            this.screenBibleManager.receiveScreenDropped(droppedData);
-        } else {
-            appLog(droppedData);
+            return this.screenBibleManager.receiveScreenDropped(droppedData);
+        } else if (droppedData.type === DragTypeEnum.FOREGROUND) {
+            return applyForegroundDragData(
+                this.screenForegroundManager,
+                droppedData.item,
+            );
         }
+        appLog(droppedData);
+        return Promise.resolve();
     }
 
     static getSyncGroupScreenEventHandler(message: ScreenMessageType) {

@@ -71,10 +71,10 @@ export async function getLyric() {
         throw new Error('Lyric file not specified');
     }
     const dirPath = DirSource.getDirPathBySettingName(
-        dirSourceSettingNames.LYRIC,
+        dirSourceSettingNames.APP_DOCUMENT,
     );
     if (dirPath === null) {
-        throw new Error('Lyric directory not set');
+        throw new Error('Documents directory not set');
     }
     const filePath = pathJoin(dirPath, fileFullName);
     if (fsExistSync(filePath) === false) {

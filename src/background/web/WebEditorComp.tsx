@@ -6,6 +6,7 @@ import { getParamFileFullName } from '../../helper/domHelpers';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
 import { pathJoin, fsExistSync } from '../../server/fileHelpers';
 import { SelectedWebContext } from './webEditorHelpers';
+import { toWidgetLabel } from '../../others/labelIconHelpers';
 
 const LazyWebEditorIDEComp = lazy(() => {
     return import('./WebEditorIDEComp');
@@ -49,12 +50,12 @@ export default function WebEditorComp() {
                     {
                         children: LazyWebEditorIDEComp,
                         key: 'h1',
-                        widgetName: 'Editor',
+                        ...toWidgetLabel('Editor'),
                     },
                     {
                         children: LazyWebPreviewerComp,
                         key: 'h2',
-                        widgetName: 'Previewer',
+                        ...toWidgetLabel('Previewer'),
                     },
                 ]}
             />

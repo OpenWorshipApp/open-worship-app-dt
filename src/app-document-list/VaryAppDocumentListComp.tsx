@@ -22,15 +22,17 @@ import {
 import type { DroppedFileType } from '../others/droppingFileHelpers';
 import {
     checkIsDocx,
+    checkIsLyric,
     checkIsPdf,
     checkIsPptx,
-    checkIsVaryAppDocumentOnScreen,
+    checkIsVaryAppDocumentFilePathOnScreen,
     convertOfficeFile,
     supportOfficeFileExtensions,
-    varyAppDocumentFromFilePath,
 } from './appDocumentHelpers';
+import LyricFileComp from '../lyric-list/LyricFileComp';
 import type DirSource from '../helper/DirSource';
 import { tran } from '../lang/langHelpers';
+import { toIconedLabel } from '../others/labelIconHelpers';
 import {
     type ContextMenuItemType,
     showAppContextMenu,
@@ -65,6 +67,9 @@ function handleExtraFileChecking(filePath: string) {
     ) {
         return true;
     }
+    if (checkIsLyric(fileSource.dotExtension)) {
+        return true;
+    }
     return false;
 }
 
@@ -92,6 +97,14 @@ function handleFileTaking(
 
 function handleBodyRendering(filePaths: string[]) {
     return filePaths.map((filePath, i) => {
+        // Lyrics live in this directory alongside slide documents, but they
+        // keep their own row component: selecting one drives the "Lyrics"
+        // previewer tab rather than the documents previewer.
+        if (checkIsLyric(getFileDotExtension(filePath))) {
+            return (
+                <LyricFileComp key={filePath} index={i} filePath={filePath} />
+            );
+        }
         return (
             <VaryAppDocumentFileComp
                 key={filePath}
@@ -102,15 +115,35 @@ function handleBodyRendering(filePaths: string[]) {
     });
 }
 
-async function newFileHandling(dirPath: string, name: string) {
+const NEW_FILE_KIND_LYRIC = 'lyric';
+const newFileKinds = [
+    {
+        key: 'app-document',
+        title: 'New App Document',
+        iconName: 'file-earmark-slides',
+    },
+    { key: NEW_FILE_KIND_LYRIC, title: 'New Lyric', iconName: 'music-note' },
+];
+
+async function newFileHandling(
+    dirPath: string,
+    name: string,
+    kindKey: string | null,
+) {
+    if (kindKey === NEW_FILE_KIND_LYRIC) {
+        const { default: Lyric } = await import('../lyric-list/Lyric');
+        return !(await Lyric.create(dirPath, name));
+    }
     return !(await AppDocument.create(dirPath, name));
 }
 
 async function checkIsOnScreen(filePaths: string[]) {
     for (const filePath of filePaths) {
-        const varyAppDocument = varyAppDocumentFromFilePath(filePath);
+        // Matched by file path only: this runs for every row on every screen
+        // update, and building a document per row just to read `filePath` back
+        // off it was pure waste (and cannot resolve lyric rows at all).
         const isOnScreen =
-            await checkIsVaryAppDocumentOnScreen(varyAppDocument);
+            await checkIsVaryAppDocumentFilePathOnScreen(filePath);
         if (isOnScreen) {
             return true;
         }
@@ -231,6 +264,7 @@ export default function VaryAppDocumentListComp() {
         extensions: Array.from(
             new Set([
                 ...getMimetypeExtensions('appDocument'),
+                ...getMimetypeExtensions('lyric'),
                 ...getMimetypeExtensions('pdf'),
                 ...getMimetypeExtensions('pptx'),
                 ...getMimetypeExtensions('docx'),
@@ -246,12 +280,14 @@ export default function VaryAppDocumentListComp() {
         <FileListHandlerComp
             className="app-document-list"
             mimetypeName="appDocument"
+            extraMimetypeNames={['lyric']}
             defaultFolderName={defaultDataDirNames.APP_DOCUMENT}
             dirSource={dirSource}
             checkExtraFile={handleExtraFileChecking}
             takeDroppedFile={handleFileTaking.bind(null, dirSource)}
             onNewFile={newFileHandling}
-            header={<span>{tran('Documents')}</span>}
+            newFileKinds={newFileKinds}
+            header={<span>{toIconedLabel('Documents')}</span>}
             bodyHandler={handleBodyRendering}
             checkIsOnScreen={checkIsOnScreen}
             fileSelectionOption={fileSelectionOption}

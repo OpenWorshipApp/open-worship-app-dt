@@ -65,7 +65,20 @@ describe('routeHelpers', () => {
 
         expect(element.type).toBe('span');
         expect(element.props.style).toEqual({ color: 'red' });
-        expect(element.props.children).toBe('translated:Open ');
+        // No icon is mapped for `Open`, so the icon slot renders nothing.
+        expect(element.props.children).toEqual([null, 'translated:Open ']);
+    });
+
+    test('puts the mapped bootstrap icon in front of the title', () => {
+        const element = toTitleExternal('Presenter') as ReactElement<any>;
+        const [icon, title] = element.props.children as [
+            ReactElement<any>,
+            string,
+        ];
+
+        expect(icon.type).toBe('i');
+        expect(icon.props.className).toContain('bi bi-display');
+        expect(title).toBe('translated:Presenter ');
     });
 
     test('navigates to the stored path or presenter home when no pathname is supplied', () => {

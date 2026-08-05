@@ -3,7 +3,12 @@ import { DragTypeEnum } from '../helper/DragInf';
 import { cloneJson } from '../helper/helpers';
 import { type AnyObjectType } from '../helper/typeHelpers';
 import { type CanvasItemHtmlPropsType } from '../slide-editor/canvas/CanvasItemHtml';
-import { LYRIC_SLIDE_TYPE_KEY } from './lyricHelpers';
+
+// Kept here, not in `./lyricHelpers`, so this leaf data class stays free of the
+// lyric helper graph (`OpenLyric`, `Lyric`, the stage classes). Importing the
+// helpers pulled `LyricAppDocument` in while `Slide`/`AppDocument` were still
+// initializing, which threw "Cannot access 'Slide' before initialization".
+export const LYRIC_SLIDE_TYPE_KEY = 'lyric-slide';
 
 export type LyricPropsType = {
     id: number;
@@ -44,12 +49,12 @@ export default class LyricSlide extends Slide {
         }
         json = cloneJson(json);
         json.type = 'slide';
-        Slide.validate(json);
+        super.validate(json);
     }
 
-    dragSerialize() {
-        const data = super.dragSerialize();
-        data.type = DragTypeEnum.LYRIC_SLIDE;
-        return data;
+    // `Slide.dragSerialize` reads `this.dragType`, so overriding the getter is
+    // enough — the payload builder no longer needs a subclass of its own.
+    override get dragType(): DragTypeEnum {
+        return DragTypeEnum.LYRIC_SLIDE;
     }
 }
