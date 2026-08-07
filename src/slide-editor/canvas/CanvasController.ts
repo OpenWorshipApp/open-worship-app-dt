@@ -12,10 +12,12 @@ import { genFittedHtmlBoxLayout } from './canvasBoxLayoutHelpers';
 import type BibleItem from '../../bible-list/BibleItem';
 import {
     checkIsMediaCanvasItemType,
+    getRemoteMediaMimetypeName,
     type CanvasItemMediaDimPropsType,
     type CanvasControllerEventType,
 } from './canvasHelpers';
 import CanvasItemVideo from './CanvasItemVideo';
+import CanvasItemAudio from './CanvasItemAudio';
 import CanvasItemYouTube from './CanvasItemYouTube';
 import CanvasItemWebsite from './CanvasItemWebsite';
 import { showSimpleToast } from '../../toast/toastHelpers';
@@ -196,22 +198,56 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
             const fileSource = FileSource.getInstance(filePath);
             const mediaType =
                 fileSource.metadata?.appMimetype.mimetypeName ?? '';
-            if (!checkIsMediaCanvasItemType(mediaType)) {
+            if (
+                !checkIsMediaCanvasItemType(mediaType) &&
+                mediaType !== 'audio'
+            ) {
                 showSimpleToast(
                     'Insert Medias',
-                    'Only image and video files are supported',
+                    'Only image, video and audio files are supported',
                 );
                 return;
             }
             const { x, y } = this.getMousePosition(event);
             const newItem = await (mediaType === 'image'
                 ? CanvasItemImage.genFromInsertion(x, y, filePath)
-                : CanvasItemVideo.genFromInsertion(x, y, filePath));
+                : mediaType === 'audio'
+                  ? CanvasItemAudio.genFromInsertion(x, y, filePath)
+                  : CanvasItemVideo.genFromInsertion(x, y, filePath));
             return newItem;
         } catch (error) {
             handleError(error);
         }
-        showSimpleToast('Insert Image or Video', 'Fail to insert medias');
+        showSimpleToast(
+            'Insert Image, Video or Audio',
+            'Fail to insert medias',
+        );
+    }
+
+    // Insert a media item that points at a remote link instead of a local
+    // file. The link is stored as the item's source, so the document stays
+    // small and the media is only fetched when it is actually rendered.
+    async genNewMediaItemFromLink(url: string, event: any) {
+        try {
+            const mediaType = getRemoteMediaMimetypeName(url);
+            if (mediaType === null) {
+                showSimpleToast(
+                    'Insert Media Link',
+                    'Only image, video and audio links are supported',
+                );
+                return;
+            }
+            const { x, y } = this.getMousePosition(event);
+            const newItem = await (mediaType === 'image'
+                ? CanvasItemImage.genCanvasItemFromLink(x, y, url)
+                : mediaType === 'audio'
+                  ? CanvasItemAudio.genCanvasItemFromLink(x, y, url)
+                  : CanvasItemVideo.genCanvasItemFromLink(x, y, url));
+            return newItem;
+        } catch (error) {
+            handleError(error);
+        }
+        showSimpleToast('Insert Media Link', 'Fail to insert media link');
     }
 
     genNewYouTubeItem(url: string, event: any) {
@@ -245,10 +281,14 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         showSimpleToast('Pasting Image', 'Fail to insert image');
     }
 
-    static genMediaItemFromFile(x: number, y: number, file: File | Blob) {
-        return file.type.startsWith('video/')
-            ? CanvasItemVideo.genFromFile(x, y, file)
-            : CanvasItemImage.genFromFile(x, y, file);
+    static async genMediaItemFromFile(x: number, y: number, file: File | Blob) {
+        if (file.type.startsWith('video/')) {
+            return CanvasItemVideo.genFromFile(x, y, file);
+        }
+        if (file.type.startsWith('audio/')) {
+            return CanvasItemAudio.genFromFile(x, y, file);
+        }
+        return CanvasItemImage.genFromFile(x, y, file);
     }
 
     async genNewMediaItemFromFile(file: File | Blob, event: any) {
@@ -263,7 +303,10 @@ class CanvasController extends EventHandler<CanvasControllerEventType> {
         } catch (error) {
             handleError(error);
         }
-        showSimpleToast('Insert Image or Video', 'Fail to insert medias');
+        showSimpleToast(
+            'Insert Image, Video or Audio',
+            'Fail to insert medias',
+        );
     }
 
     // `event` comes from the canvas context menu; without it the box is

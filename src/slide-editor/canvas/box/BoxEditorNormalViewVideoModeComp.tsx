@@ -9,6 +9,7 @@ import { useCanvasItemPropsContext } from '../CanvasItem';
 import { pathToFileURL } from '../../../server/calcHelpers';
 import BoxEditorNormalWrapperComp from './BoxEditorNormalWrapperComp';
 import { PREVIEW_ONLY_ATTR } from '../../../helper/constants';
+import { checkIsUrlMediaSource } from '../../../helper/mediaSourceHelpers';
 
 export default function BoxEditorNormalViewVideoModeComp({
     style,
@@ -60,7 +61,11 @@ export function BoxEditorNormalVideoRender() {
         return <BoxEditorNormalViewErrorRenderComp />;
     }
     const minSize = Math.min(props.width, props.height) / 4;
-    const videoSrc = props.filePath ? pathToFileURL(props.filePath) : img404;
+    const videoSrc = props.filePath
+        ? checkIsUrlMediaSource(props.filePath)
+            ? props.filePath
+            : pathToFileURL(props.filePath)
+        : img404;
     return (
         <div
             title={props.id.toString()}

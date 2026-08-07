@@ -35,6 +35,12 @@ export type CanvasItemPropsType = {
     locked?: boolean;
 };
 
+// Everything about an item except what KIND it is: the box alone. Handed to a
+// `genCanvasItemProps*` factory by a caller that has already decided where the
+// item goes — a lyric slide gives every item the slide's own content bounds —
+// so the factory fills in only what its kind adds.
+export type CanvasItemBoxPropsType = Omit<CanvasItemPropsType, 'type'>;
+
 export type CanvasItemEventType = 'edit';
 
 export default abstract class CanvasItem<T extends CanvasItemPropsType>

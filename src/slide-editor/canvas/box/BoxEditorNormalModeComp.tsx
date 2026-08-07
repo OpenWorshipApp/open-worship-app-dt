@@ -11,6 +11,7 @@ import BoxEditorNormalViewTextModeComp from './BoxEditorNormalViewTextModeComp';
 import BoxEditorNormalViewBibleModeComp from './BoxEditorNormalViewBibleModeComp';
 import BoxEditorNormalViewErrorComp from './BoxEditorNormalViewErrorComp';
 import BoxEditorNormalViewVideoModeComp from './BoxEditorNormalViewVideoModeComp';
+import BoxEditorNormalViewAudioModeComp from './BoxEditorNormalViewAudioModeComp';
 import BoxEditorNormalViewYouTubeModeComp from './BoxEditorNormalViewYouTubeModeComp';
 import BoxEditorNormalViewWebsiteModeComp from './BoxEditorNormalViewWebsiteModeComp';
 
@@ -30,6 +31,8 @@ export default function BoxEditorNormalModeComp() {
             return <BoxEditorNormalViewImageModeComp style={style} />;
         case 'video':
             return <BoxEditorNormalViewVideoModeComp style={style} />;
+        case 'audio':
+            return <BoxEditorNormalViewAudioModeComp style={style} />;
         case 'youtube':
             return <BoxEditorNormalViewYouTubeModeComp style={style} />;
         case 'website':

@@ -3,7 +3,8 @@ import type { CSSProperties } from 'react';
 import type { SrcData } from '../../helper/FileSource';
 import type { AppColorType } from '../../others/color/colorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
-import { isSupportedMimetype } from '../../server/fileHelpers';
+import type { UrlMediaSourceType } from '../../helper/mediaSourceHelpers';
+import { isSupportedExt, isSupportedMimetype } from '../../server/fileHelpers';
 
 export type CanvasControllerEventType = 'update' | 'scale' | 'reload';
 
@@ -12,13 +13,22 @@ export type CanvasItemMediaDimPropsType = {
     mediaHeight: number;
 };
 
-// Images embed their data inline (`srcData`). Videos would balloon the slide
-// document if inlined, so they reference their source file by path instead.
+// Images embed their data inline (`srcData`) unless they came from a link, in
+// which case that link is the source verbatim — `<img>` loads a data URI, a
+// remote link and a `file://` attachment link alike. Videos would balloon the
+// slide document if inlined, so they reference their source file by path
+// instead.
 export type CanvasItemMediaPropsType = CanvasItemMediaDimPropsType & {
-    srcData: SrcData;
+    srcData: SrcData | UrlMediaSourceType;
 };
 
 export type CanvasItemVideoMediaPropsType = CanvasItemMediaDimPropsType & {
+    filePath: string;
+};
+
+// Audio has no natural dimensions, so unlike a video it carries only its
+// source file path — the box sizes the player control itself.
+export type CanvasItemFilePathPropsType = {
     filePath: string;
 };
 
@@ -37,6 +47,11 @@ export const YOUTUBE_EMBED_HEIGHT = 315;
 export const WEBSITE_EMBED_WIDTH = 800;
 export const WEBSITE_EMBED_HEIGHT = 600;
 
+// An audio item is just a player control; default to roughly the native
+// `<audio controls>` proportions so it looks right before being resized.
+export const AUDIO_EMBED_WIDTH = 560;
+export const AUDIO_EMBED_HEIGHT = 60;
+
 export function validateMediaProps(
     props: AnyObjectType,
     srcKey: 'srcData' | 'filePath' = 'srcData',
@@ -47,6 +62,12 @@ export function validateMediaProps(
         typeof props.mediaHeight !== 'number'
     ) {
         throw new TypeError('Invalid canvas item media data');
+    }
+}
+
+export function validateFilePathProps(props: AnyObjectType) {
+    if (typeof props.filePath !== 'string' || props.filePath === '') {
+        throw new TypeError('Invalid canvas item file path data');
     }
 }
 
@@ -109,6 +130,7 @@ export const canvasItemList = [
     'html',
     'image',
     'video',
+    'audio',
     'youtube',
     'website',
     'bible',
@@ -116,8 +138,32 @@ export const canvasItemList = [
 ] as const;
 export type CanvasItemKindType = (typeof canvasItemList)[number];
 
+// Only the items that carry their own `mediaWidth`/`mediaHeight`; audio is
+// deliberately excluded because it has no intrinsic size to scale a box to.
 export function checkIsMediaCanvasItemType(type: string) {
     return type === 'image' || type === 'video';
+}
+
+// The canvas items backed by a media source: a file on disk or a remote link.
+export function checkIsFilePathCanvasItemType(type: string) {
+    return type === 'video' || type === 'audio';
+}
+
+// Which media a link points at, taken from its path extension alone — a link
+// is never fetched just to find out what kind of file it is.
+export function getRemoteMediaMimetypeName(url: string) {
+    let fileFullName: string;
+    try {
+        fileFullName = decodeURIComponent(new URL(url).pathname);
+    } catch (_error) {
+        return null;
+    }
+    for (const mimetypeName of ['image', 'video', 'audio'] as const) {
+        if (isSupportedExt(fileFullName, mimetypeName)) {
+            return mimetypeName;
+        }
+    }
+    return null;
 }
 
 export function genTextDefaultBoxStyle(
@@ -192,5 +238,16 @@ export function checkIsSupportMediaType(fileType: string) {
     return (
         isSupportedMimetype(fileType, 'image') ||
         isSupportedMimetype(fileType, 'video')
+    );
+}
+
+// The slide editor canvas additionally accepts audio files, which become an
+// audio player item. Kept apart from `checkIsSupportMediaType` so the callers
+// that build a whole slide out of a dropped file (which needs the media's own
+// dimensions) keep taking images and videos only.
+export function checkIsSupportCanvasMediaType(fileType: string) {
+    return (
+        checkIsSupportMediaType(fileType) ||
+        isSupportedMimetype(fileType, 'audio')
     );
 }

@@ -6,8 +6,13 @@ const mocks = vi.hoisted(() => ({
     genDefaultItemMock: vi.fn(),
     genFromFileImageMock: vi.fn(),
     genFromFileVideoMock: vi.fn(),
+    genFromFileAudioMock: vi.fn(),
+    genFromInsertionAudioMock: vi.fn(),
     genFromInsertionImageMock: vi.fn(),
     genFromInsertionVideoMock: vi.fn(),
+    genFromLinkAudioMock: vi.fn(),
+    genFromLinkImageMock: vi.fn(),
+    genFromLinkVideoMock: vi.fn(),
     genFromUrlYouTubeMock: vi.fn(),
     genFromUrlWebsiteMock: vi.fn(),
     genFittedHtmlBoxLayoutMock: vi.fn(),
@@ -39,6 +44,7 @@ vi.mock('./CanvasItemImage', () => ({
     default: {
         genFromFile: mocks.genFromFileImageMock,
         genFromInsertion: mocks.genFromInsertionImageMock,
+        genCanvasItemFromLink: mocks.genFromLinkImageMock,
     },
 }));
 
@@ -52,6 +58,15 @@ vi.mock('./CanvasItemVideo', () => ({
     default: {
         genFromFile: mocks.genFromFileVideoMock,
         genFromInsertion: mocks.genFromInsertionVideoMock,
+        genCanvasItemFromLink: mocks.genFromLinkVideoMock,
+    },
+}));
+
+vi.mock('./CanvasItemAudio', () => ({
+    default: {
+        genFromFile: mocks.genFromFileAudioMock,
+        genFromInsertion: mocks.genFromInsertionAudioMock,
+        genCanvasItemFromLink: mocks.genFromLinkAudioMock,
     },
 }));
 
@@ -90,9 +105,22 @@ vi.mock('../../event/KeyboardEventListener', () => ({
 }));
 
 // `canvasHelpers` pulls in `server/fileHelpers`, whose `appProvider` mock
-// needs a DOM this node-environment test doesn't have.
+// needs a DOM this node-environment test doesn't have. `isSupportedExt` backs
+// the real `getRemoteMediaMimetypeName`, so it dispatches on the extension the
+// way the shipped mimetype tables do. The table is inlined in the factory
+// because `vi.mock` is hoisted above any module-level `const`.
 vi.mock('../../server/fileHelpers', () => ({
     isSupportedMimetype: vi.fn(() => true),
+    isSupportedExt: vi.fn((fileFullName: string, mimetypeName: string) => {
+        const extensions: Record<string, string[]> = {
+            image: ['png', 'jpg'],
+            video: ['mp4', 'webm'],
+            audio: ['mp3', 'wav'],
+        };
+        return (extensions[mimetypeName] ?? []).some((extension) => {
+            return fileFullName.toLowerCase().endsWith(`.${extension}`);
+        });
+    }),
 }));
 
 import { createElement } from 'react';
@@ -357,6 +385,7 @@ describe('CanvasController', () => {
         const { controller } = createController();
         const imageItem = createCanvasItem({ id: 3, type: 'image' });
         const videoItem = createCanvasItem({ id: 4, type: 'video' });
+        const audioItem = createCanvasItem({ id: 5, type: 'audio' });
         const event = {
             clientX: 110,
             clientY: 220,
@@ -369,6 +398,8 @@ describe('CanvasController', () => {
         mocks.genFromInsertionVideoMock.mockResolvedValue(videoItem);
         mocks.genFromFileImageMock.mockResolvedValue(imageItem);
         mocks.genFromFileVideoMock.mockResolvedValue(videoItem);
+        mocks.genFromInsertionAudioMock.mockReturnValue(audioItem);
+        mocks.genFromFileAudioMock.mockReturnValue(audioItem);
 
         await expect(
             controller.genNewMediaItemFromFilePath(
@@ -397,6 +428,23 @@ describe('CanvasController', () => {
             '/assets/a.mp4',
         );
 
+        // Audio has no intrinsic dimensions, so its item is built straight
+        // from the path without the file ever being opened.
+        mocks.fileSourceGetInstanceMock.mockReturnValueOnce({
+            metadata: { appMimetype: { mimetypeName: 'audio' } },
+        });
+        await expect(
+            controller.genNewMediaItemFromFilePath(
+                '/assets/a.mp3',
+                event as any,
+            ),
+        ).resolves.toBe(audioItem);
+        expect(mocks.genFromInsertionAudioMock).toHaveBeenCalledWith(
+            100,
+            200,
+            '/assets/a.mp3',
+        );
+
         mocks.fileSourceGetInstanceMock.mockReturnValueOnce({
             metadata: { appMimetype: { mimetypeName: 'application/pdf' } },
         });
@@ -408,7 +456,7 @@ describe('CanvasController', () => {
         ).resolves.toBeUndefined();
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
             'Insert Medias',
-            'Only image and video files are supported',
+            'Only image, video and audio files are supported',
         );
 
         mocks.fileSourceGetInstanceMock.mockImplementationOnce(() => {
@@ -422,7 +470,7 @@ describe('CanvasController', () => {
         ).resolves.toBeUndefined();
         expect(mocks.handleErrorMock).toHaveBeenCalled();
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
-            'Insert Image or Video',
+            'Insert Image, Video or Audio',
             'Fail to insert medias',
         );
 
@@ -477,8 +525,99 @@ describe('CanvasController', () => {
         ).resolves.toBeUndefined();
         expect(mocks.handleErrorMock).toHaveBeenCalled();
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
-            'Insert Image or Video',
+            'Insert Image, Video or Audio',
             'Fail to insert medias',
+        );
+    });
+
+    test('creates media items from a link, dispatching on the link extension', async () => {
+        const { controller } = createController();
+        const imageItem = createCanvasItem({ id: 6, type: 'image' });
+        const videoItem = createCanvasItem({ id: 7, type: 'video' });
+        const audioItem = createCanvasItem({ id: 8, type: 'audio' });
+        const event = {
+            clientX: 110,
+            clientY: 220,
+            target: {
+                getBoundingClientRect: () => ({ left: 10, top: 20 }),
+            },
+        };
+
+        mocks.genFromLinkImageMock.mockResolvedValue(imageItem);
+        mocks.genFromLinkVideoMock.mockResolvedValue(videoItem);
+        mocks.genFromLinkAudioMock.mockReturnValue(audioItem);
+
+        // The kind comes from the link's path extension alone — the link is
+        // never fetched to find out what it is.
+        const imageUrl = 'https://www.openworship.app/shared/images/Blue.png';
+        await expect(
+            controller.genNewMediaItemFromLink(imageUrl, event as any),
+        ).resolves.toBe(imageItem);
+        expect(mocks.genFromLinkImageMock).toHaveBeenCalledWith(
+            100,
+            200,
+            imageUrl,
+        );
+
+        // A url-encoded name still resolves, and a query string is not part of
+        // the path the extension is read from.
+        const videoUrl =
+            'https://www.openworship.app/shared/videos/Pink%20motion.mp4?v=2';
+        await expect(
+            controller.genNewMediaItemFromLink(videoUrl, event as any),
+        ).resolves.toBe(videoItem);
+        expect(mocks.genFromLinkVideoMock).toHaveBeenCalledWith(
+            100,
+            200,
+            videoUrl,
+        );
+
+        const audioUrl =
+            'https://www.openworship.app/shared/audios/Doxology 21&22.mp3';
+        await expect(
+            controller.genNewMediaItemFromLink(audioUrl, event as any),
+        ).resolves.toBe(audioItem);
+        expect(mocks.genFromLinkAudioMock).toHaveBeenCalledWith(
+            100,
+            200,
+            audioUrl,
+        );
+
+        // A link to something the canvas cannot play, and a string that is not
+        // a url at all, are both refused before any item class is reached.
+        mocks.showSimpleToastMock.mockClear();
+        mocks.genFromLinkImageMock.mockClear();
+        mocks.genFromLinkVideoMock.mockClear();
+        mocks.genFromLinkAudioMock.mockClear();
+        for (const badUrl of ['https://a.com/handout.pdf', 'not a url']) {
+            await expect(
+                controller.genNewMediaItemFromLink(badUrl, event as any),
+            ).resolves.toBeUndefined();
+            expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+                'Insert Media Link',
+                'Only image, video and audio links are supported',
+            );
+        }
+        expect(mocks.genFromLinkImageMock).not.toHaveBeenCalled();
+        expect(mocks.genFromLinkVideoMock).not.toHaveBeenCalled();
+        expect(mocks.genFromLinkAudioMock).not.toHaveBeenCalled();
+
+        // A link whose extension says video but which the item class rejects
+        // (e.g. a `file://` source) reports the failure instead of throwing.
+        mocks.showSimpleToastMock.mockClear();
+        mocks.genFromLinkVideoMock.mockRejectedValueOnce(
+            new Error('Invalid video link'),
+        );
+        await expect(
+            controller.genNewMediaItemFromLink(
+                'file:///C:/medias/a.mp4',
+                event as any,
+            ),
+        ).resolves.toBeUndefined();
+        expect(mocks.handleErrorMock).toHaveBeenCalled();
+        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+            'Insert Media Link',
+            'Fail to insert media link',
         );
     });
 
@@ -685,7 +824,7 @@ describe('CanvasController', () => {
 
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
             'Insert Medias',
-            'Only image and video files are supported',
+            'Only image, video and audio files are supported',
         );
     });
 

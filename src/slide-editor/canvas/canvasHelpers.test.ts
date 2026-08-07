@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { isSupportedMimetypeMock } = vi.hoisted(() => ({
+const { isSupportedMimetypeMock, isSupportedExtMock } = vi.hoisted(() => ({
     isSupportedMimetypeMock: vi.fn(),
+    isSupportedExtMock: vi.fn(),
 }));
 
 vi.mock('../../server/fileHelpers', () => ({
     isSupportedMimetype: isSupportedMimetypeMock,
+    isSupportedExt: isSupportedExtMock,
 }));
 
 import {
     canvasItemList,
+    checkIsSupportCanvasMediaType,
     checkIsSupportMediaType,
     cleanupProps,
+    getRemoteMediaMimetypeName,
     genTextDefaultBoxStyle,
     hAlignmentList,
     tooling2BoxProps,
@@ -33,6 +37,7 @@ describe('canvasHelpers', () => {
             'html',
             'image',
             'video',
+            'audio',
             'youtube',
             'website',
             'bible',
@@ -176,5 +181,36 @@ describe('canvasHelpers', () => {
 
         isSupportedMimetypeMock.mockReturnValue(false);
         expect(checkIsSupportMediaType('application/pdf')).toBe(false);
+    });
+
+    test('accepts audio only for the canvas-specific media check', () => {
+        isSupportedMimetypeMock.mockImplementation(
+            (_fileType: string, mimetypeName: string) => {
+                return mimetypeName === 'audio';
+            },
+        );
+        expect(checkIsSupportMediaType('audio/mpeg')).toBe(false);
+        expect(checkIsSupportCanvasMediaType('audio/mpeg')).toBe(true);
+    });
+
+    test('resolves a link kind from its path extension alone', () => {
+        isSupportedExtMock.mockImplementation(
+            (fileFullName: string, mimetypeName: string) => {
+                return fileFullName.endsWith(`.${mimetypeName}-ext`);
+            },
+        );
+        expect(
+            getRemoteMediaMimetypeName('https://a.com/x/song.audio-ext'),
+        ).toBe('audio');
+        // The name is url-decoded first, so a spaced file name still matches.
+        expect(
+            getRemoteMediaMimetypeName(
+                'https://www.openworship.app/shared/videos/Pink%20motion.video-ext',
+            ),
+        ).toBe('video');
+        expect(getRemoteMediaMimetypeName('https://a.com/x/doc.pdf')).toBe(
+            null,
+        );
+        expect(getRemoteMediaMimetypeName('not a url')).toBe(null);
     });
 });

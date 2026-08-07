@@ -5,7 +5,7 @@ import {
     WEBSITE_EMBED_HEIGHT,
     WEBSITE_EMBED_WIDTH,
 } from './canvasHelpers';
-import type { CanvasItemPropsType } from './CanvasItem';
+import type { CanvasItemBoxPropsType, CanvasItemPropsType } from './CanvasItem';
 import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
@@ -44,6 +44,19 @@ class CanvasItemWebsite extends CanvasItem<CanvasItemWebsitePropsType> {
     }
     static genFromUrl(x: number, y: number, url: string) {
         return this.genCanvasItem(url, x, y);
+    }
+    // The props for a website item that fills a box chosen by the caller —
+    // `genCanvasItem` without the placement, for a caller that already knows
+    // the box.
+    static genCanvasItemPropsFromLink(
+        url: string,
+        boxProps: CanvasItemBoxPropsType,
+    ): CanvasItemWebsitePropsType {
+        return {
+            ...boxProps,
+            type: 'website',
+            url,
+        };
     }
     toJson(): CanvasItemWebsitePropsType {
         return {

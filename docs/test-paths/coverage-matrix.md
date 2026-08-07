@@ -13,7 +13,13 @@ EXCLUDED by the policy table below.
 > Before a full run, spot-check the matrix against `src/` (new `*Comp.tsx` folders =
 > new rows).
 
-**matrixVersion: 2026-08-07b** (**PL-59/PL-66/PL-67** corrected against the live app on
+**matrixVersion: 2026-08-07c** (new **PM-115** — a lyric's `ol:Config` `- Attachments:`
+block now produces real slides at the tail of the Stage Previewer instead of blank ones:
+one item per link, built from the link verbatim with nothing fetched to measure it, and a
+`file:///…` attachment is used as the src rather than run through `pathToFileURL`.
+Row counts re-derived: PL was already stale at 99 (PL-100 exists), so the denominator goes
+634 → **636**.
+Earlier: **2026-08-07b** — **PL-59/PL-66/PL-67** corrected against the live app on
 2026-08-06 — all three were doc drift, not app bugs: PL-67 now states the per-destination
 collision policy (media `reuse-if-same`, documents/playlists/bible-notes `always-new` on
 purpose, `collisionPolicyBySettingName`), PL-59 now names the actual restricted menu (the
@@ -303,7 +309,7 @@ with coverage accounting ON and this exact scope set:
 > them.
 
 The mode's coverage denominator is therefore `67 − EXCLUDED`, reported separately from a
-full run's 634. The rows most easily claimed without evidence are called out in the report
+full run's 636. The rows most easily claimed without evidence are called out in the report
 template: the **13 screen actions fired against a showing screen** (PL-72/74), the
 **folded-sheet walk** (PL-99) and the **performance measurements** (PL-63/70).
 
@@ -633,6 +639,7 @@ row's control to exercisable while excluding only the un-drivable/destructive ta
 | PM-112 | Audio repeat-1 toggle (`bi-repeat-1`)                                                                                                                        | 🖱️                                                                                                                                     | clicking the repeat icon toggles the per-file `…-repeat-<md5>` setting (icon flips green/opacity-1 vs dim); with repeat ON, on `ended` `handleAudioEnding` restarts the track instead of stopping (src: src/background/AudioBodyComp.tsx:33-70 · src/helper/mediaControlHelpers.ts:174-183)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | PM-113 | Document Audios split (`VaryAppDocumentAudiosComp`)                                                                                                          | 🖱️                                                                                                                                     | with the presenter Audios split active + a pptx doc carrying embedded audio, a bottom `Document Audios` split lists each slide's audio (`RenderSlideIndexComp` + its own `AudioBodyComp`); absent when `useAppDocumentAudioData` returns null (BLOCKED without such a doc) (src: src/background/BackgroundAudiosComp.tsx:135-176 · src/background/VaryAppDocumentAudiosComp.tsx:32-88)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | PM-114 | `BackgroundViewModeComp` thumbnail/list toggle (footer, left of PM-101)                                                                                      | 🖱️                                                                                                                                     | the footer's `bi-grid-3x3-gap-fill` / `bi-list-ul` pair switches the tab between the thumbnail grid and a name-only list (`app-background-list-item` rows: type icon + full file name + `ShowingScreenIcon` badges + color-note dot). Persisted per tab in `bg-view-mode-<dirSourceSettingName>` — Images/Videos/Webs are INDEPENDENT and survive a reload. In list mode NO `<img>`/`<video>`/iframe is mounted at all (the point of the mode on low-spec machines) and PM-101's slider is hidden; click-to-present, drag, and the full item context menu (PM-95..97 equivalents) all still work. Available on Images/Videos/Webs (not Colors/Cameras; Audios passes `shouldHideFooter`) (src: src/background/BackgroundViewModeComp.tsx · src/background/BackgroundListItemComp.tsx · src/background/BackgroundMediaItemComp.tsx:101-119 · src/background/BackgroundWebUrlItemComp.tsx:114-136) |
+| PM-115 | Lyric attachment slides (Stage Previewer tail)                                                                                                              | select a `.owl` whose `ol:Config` has an `- Attachments:` block; observe the slides AFTER the song's structure; 🖱️R one → Show on Screens              | one extra slide per attachment line, titled by the attachment, appended after the structure slides. Each carries ONE canvas item filling the whole slide, built from the link verbatim — nothing is fetched to measure it: youtube→`<iframe>` embed URL, image→`<img>`, video→`<video>`, audio→`<audio data-preview-only>` (preview-only, PM-110 family), any other URL→website `<iframe>`. A `file:///…` link is used AS the src and must NOT be `pathToFileURL`d (that is the regression to watch). `pdf` links and lines that are not URLs still get their titled slide but with NO item (blank). Attachment slides also present to a real screen — verify on the `screen.html?screenId=N` target, then clear/restore (src: src/lyric-list/LyricAppDocumentStageAbstract.ts:112-180 · src/helper/mediaSourceHelpers.ts) |
 
 ## PR — Presenter, right column
 
@@ -1242,9 +1249,9 @@ a toast alone — check the file on disk (or the refreshed thumbnail), per the e
 
 ## Row counts (for the coverage denominator)
 
-GL 23 · NAV 19 · PL 99 · PM 114 · PR 29 · RD 52 · ED 39 · ST 33 · PU 18 · SP 22 ·
-SC 8 · XW 7 · EX 7 · CM 96 · KB 60 · LT 5 · MD 3 = **634 rows total**. Compute the
-denominator per run as `634 − EXCLUDED` (hardware and policy exclusions vary by machine).
+GL 23 · NAV 19 · PL 100 · PM 115 · PR 29 · RD 52 · ED 39 · ST 33 · PU 18 · SP 22 ·
+SC 8 · XW 7 · EX 7 · CM 96 · KB 60 · LT 5 · MD 3 = **636 rows total**. Compute the
+denominator per run as `636 − EXCLUDED` (hardware and policy exclusions vary by machine).
 
 > These counts are re-derived from the table itself
 > (`grep -oE "^\| ([A-Z]{2,3})-[0-9]+ "` → sort → uniq -c), not maintained by hand — they

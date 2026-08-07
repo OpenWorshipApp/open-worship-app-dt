@@ -61,3 +61,4 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [A playlist reads its editing-history HEAD](playlist-reads-editing-history-head.md) — not the `.owp`; hand-editing the `.owp` changes nothing the app reads, which once cost a wrong High finding
 - [Playlist lyric attachment slide — FIXED](playlist-lyric-slide-dead-row.md) — `getSlideById` only searched `getSlidesQuick()`, which never lists the appended attachment slides
 - [`/owa-robot-test playlist` is a MODE](owa-robot-test-playlist-mode.md) — tracked 11 phases over 66 run-sheet rows with coverage accounting on, not a focus area that trims the run
+- [Canvas audio & media links](canvas-audio-and-media-links.md) — the `audio` item is preview-only; a media source may be a link, and "is it remote?" (archive/menu) is NOT "is it already a URL?" (renderers); lyric attachments become such items

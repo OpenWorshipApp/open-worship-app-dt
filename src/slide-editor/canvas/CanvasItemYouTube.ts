@@ -5,7 +5,7 @@ import {
     YOUTUBE_EMBED_HEIGHT,
     YOUTUBE_EMBED_WIDTH,
 } from './canvasHelpers';
-import type { CanvasItemPropsType } from './CanvasItem';
+import type { CanvasItemBoxPropsType, CanvasItemPropsType } from './CanvasItem';
 import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
@@ -86,6 +86,19 @@ class CanvasItemYouTube extends CanvasItem<CanvasItemYouTubePropsType> {
     }
     static genFromUrl(x: number, y: number, url: string) {
         return this.genCanvasItem(url, x, y);
+    }
+    // The props for a YouTube item that fills a box chosen by the caller —
+    // `genCanvasItem` without the placement, for a caller that already knows
+    // the box. The watch URL is kept verbatim; `embedUrl` converts at render.
+    static genCanvasItemPropsFromLink(
+        url: string,
+        boxProps: CanvasItemBoxPropsType,
+    ): CanvasItemYouTubePropsType {
+        return {
+            ...boxProps,
+            type: 'youtube',
+            url,
+        };
     }
     toJson(): CanvasItemYouTubePropsType {
         return {

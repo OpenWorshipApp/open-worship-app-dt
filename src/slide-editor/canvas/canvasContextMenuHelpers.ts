@@ -26,6 +26,8 @@ import {
     showFileOrDirExplorer,
 } from '../../server/appHelpers';
 import appProvider from '../../server/appProvider';
+import { checkIsFilePathCanvasItemType } from './canvasHelpers';
+import { checkIsRemoteMediaSource } from '../../helper/mediaSourceHelpers';
 
 export async function showCanvasContextMenu(
     event: any,
@@ -65,10 +67,15 @@ export async function showCanvasContextMenu(
             onSelect: async () => {
                 const imageExtensions = getMimetypeExtensions('image');
                 const videoExtension = getMimetypeExtensions('video');
+                const audioExtensions = getMimetypeExtensions('audio');
                 const filePaths = await selectFiles([
                     {
                         name: tran('All Files'),
-                        extensions: [...imageExtensions, ...videoExtension],
+                        extensions: [
+                            ...imageExtensions,
+                            ...videoExtension,
+                            ...audioExtensions,
+                        ],
                     },
                 ]);
                 for (const filePath of filePaths) {
@@ -79,6 +86,24 @@ export async function showCanvasContextMenu(
                                 canvasController.addNewItems([newCanvasItem]);
                             }
                         });
+                }
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('link-45deg'),
+            menuElement: tran('Insert Media Link'),
+            onSelect: async () => {
+                const url = await askForURL(
+                    tran('Insert Media Link'),
+                    tran('Media URL:'),
+                );
+                if (url === null) {
+                    return;
+                }
+                const newCanvasItem =
+                    await canvasController.genNewMediaItemFromLink(url, event);
+                if (newCanvasItem) {
+                    canvasController.addNewItems([newCanvasItem]);
                 }
             },
         },
@@ -173,24 +198,40 @@ export function showCanvasItemContextMenu(
     const isEditable = !isLocked && canvasItem.type === 'text';
     const isAbleForLookup =
         canvasItem.type === 'bible' && openBibleLookup !== null;
-    // Only videos reference a resolvable on-disk file (images embed srcData,
-    // YouTube/website items point at URLs), so reveal-in-file-manager applies
-    // to video items alone.
+    // Video and audio items name their source: a path to a local file or a
+    // remote link. Image items instead hold their source in `srcData`, which is
+    // either inlined base64 pixels or — when the image was inserted from a link
+    // — that link.
+    const mediaSource =
+        canvasItem.type === 'image'
+            ? canvasItem.props.srcData
+            : checkIsFilePathCanvasItemType(canvasItem.type)
+              ? canvasItem.props.filePath
+              : null;
+    const isLocalFileSource =
+        typeof mediaSource === 'string' &&
+        mediaSource !== '' &&
+        !checkIsRemoteMediaSource(mediaSource);
+    // Reveal-in-file-manager needs a resolvable path on disk, so it applies to
+    // local video/audio sources alone.
     const isRevealable =
-        canvasItem.type === 'video' &&
-        typeof canvasItem.props.filePath === 'string';
-    // YouTube and website items are backed by a URL; offer to open it in the
-    // browser or copy it to the clipboard, the URL counterpart of revealing a
-    // video's file.
-    const hasUrl =
+        isLocalFileSource && checkIsFilePathCanvasItemType(canvasItem.type);
+    // YouTube and website items are backed by a URL, and so is any media item
+    // inserted from a link; offer to open it in the browser or copy it to the
+    // clipboard, the URL counterpart of revealing a video's file.
+    const itemUrl =
         (canvasItem.type === 'youtube' || canvasItem.type === 'website') &&
-        typeof canvasItem.props.url === 'string';
-    // Image items inline their pixels as base64 srcData rather than referencing
-    // a file, so the file-oriented reveal doesn't apply; offer to save the
-    // embedded image to disk instead.
-    const isDownloadable =
-        canvasItem.type === 'image' &&
-        typeof canvasItem.props.srcData === 'string';
+        typeof canvasItem.props.url === 'string'
+            ? canvasItem.props.url
+            : typeof mediaSource === 'string' &&
+                checkIsRemoteMediaSource(mediaSource)
+              ? mediaSource
+              : null;
+    const hasUrl = itemUrl !== null;
+    // An inlined image carries its pixels rather than referencing a file, so
+    // the file-oriented reveal doesn't apply; offer to save it to disk instead.
+    // A linked image has nothing to write out — it is offered its URL above.
+    const isDownloadable = canvasItem.type === 'image' && isLocalFileSource;
     const menuItems: ContextMenuItemType[] = [
         ...(isAbleForLookup
             ? [
@@ -255,7 +296,7 @@ export function showCanvasItemContextMenu(
                       childBefore: genContextMenuItemIcon('folder2-open'),
                       menuElement: getMenuTitleRevealFile(),
                       onSelect: () => {
-                          showFileOrDirExplorer(canvasItem.props.filePath);
+                          showFileOrDirExplorer(mediaSource as string);
                       },
                   },
               ]
@@ -266,16 +307,14 @@ export function showCanvasItemContextMenu(
                       childBefore: genContextMenuItemIcon('box-arrow-up-right'),
                       menuElement: tran('Open URL'),
                       onSelect: () => {
-                          appProvider.browserUtils.openExternalURL(
-                              canvasItem.props.url,
-                          );
+                          appProvider.browserUtils.openExternalURL(itemUrl);
                       },
                   },
                   {
                       childBefore: genContextMenuItemIcon('clipboard'),
                       menuElement: tran('Copy URL'),
                       onSelect: () => {
-                          copyToClipboard(canvasItem.props.url);
+                          copyToClipboard(itemUrl);
                       },
                   },
               ]

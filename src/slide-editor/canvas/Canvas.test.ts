@@ -10,6 +10,7 @@ const {
     navigatorClipboard,
     textFromJsonMock,
     videoFromJsonMock,
+    audioFromJsonMock,
     youtubeFromJsonMock,
     websiteFromJsonMock,
 } = vi.hoisted(() => ({
@@ -23,6 +24,7 @@ const {
     },
     textFromJsonMock: vi.fn(),
     videoFromJsonMock: vi.fn(),
+    audioFromJsonMock: vi.fn(),
     youtubeFromJsonMock: vi.fn(),
     websiteFromJsonMock: vi.fn(),
 }));
@@ -69,6 +71,12 @@ vi.mock('./CanvasItemVideo', () => ({
     },
 }));
 
+vi.mock('./CanvasItemAudio', () => ({
+    default: {
+        fromJson: audioFromJsonMock,
+    },
+}));
+
 vi.mock('./CanvasItemYouTube', () => ({
     default: {
         fromJson: youtubeFromJsonMock,
@@ -106,6 +114,10 @@ describe('Canvas', () => {
         videoFromJsonMock.mockImplementation((json: any) => ({
             ...json,
             type: 'video',
+        }));
+        audioFromJsonMock.mockImplementation((json: any) => ({
+            ...json,
+            type: 'audio',
         }));
         youtubeFromJsonMock.mockImplementation((json: any) => ({
             ...json,
@@ -184,6 +196,10 @@ describe('Canvas', () => {
         expect(Canvas.canvasItemFromJson({ type: 'video', id: 2 })).toEqual({
             type: 'video',
             id: 2,
+        });
+        expect(Canvas.canvasItemFromJson({ type: 'audio', id: 9 })).toEqual({
+            type: 'audio',
+            id: 9,
         });
         expect(Canvas.canvasItemFromJson({ type: 'youtube', id: 7 })).toEqual({
             type: 'youtube',

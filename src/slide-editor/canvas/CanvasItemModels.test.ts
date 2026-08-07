@@ -87,6 +87,7 @@ vi.mock('../../helper/FileSource', () => ({
 
 vi.mock('../../server/fileHelpers', () => ({
     isSupportedMimetype: vi.fn(() => true),
+    isSupportedExt: vi.fn(() => true),
 }));
 
 vi.mock('../../helper/bible-helpers/bibleStyleHelpers', () => ({
@@ -145,6 +146,7 @@ import CanvasItemHtml, { genHtmlDefaultProps } from './CanvasItemHtml';
 import CanvasItemImage from './CanvasItemImage';
 import CanvasItemText, { genTextDefaultProps } from './CanvasItemText';
 import CanvasItemVideo from './CanvasItemVideo';
+import CanvasItemAudio from './CanvasItemAudio';
 import CanvasItemWebsite from './CanvasItemWebsite';
 import CanvasItemYouTube from './CanvasItemYouTube';
 import {
@@ -463,6 +465,177 @@ describe('CanvasItem models', () => {
                 filePath: 123,
             }),
         });
+    });
+
+    test('builds media canvas items that point at a remote link', async () => {
+        getImageDimMock.mockResolvedValue([640, 480]);
+        getVideoDimMock.mockResolvedValue([1920, 1080]);
+        const imageUrl = 'https://www.openworship.app/shared/images/Blue.png';
+        const videoUrl =
+            'https://www.openworship.app/shared/videos/Pink motion.mp4';
+        const audioUrl =
+            'https://www.openworship.app/shared/audios/Doxology 21&22.mp3';
+
+        // The link is stored as the source verbatim — nothing is inlined or
+        // copied into the document.
+        const imageItem = await CanvasItemImage.genCanvasItemFromLink(
+            500,
+            400,
+            imageUrl,
+        );
+        expect(getImageDimMock).toHaveBeenCalledWith(imageUrl);
+        expect(imageItem.toJson()).toEqual(
+            expect.objectContaining({
+                type: 'image',
+                srcData: imageUrl,
+                mediaWidth: 640,
+                mediaHeight: 480,
+            }),
+        );
+
+        const videoItem = await CanvasItemVideo.genCanvasItemFromLink(
+            500,
+            400,
+            videoUrl,
+        );
+        expect(getVideoDimMock).toHaveBeenCalledWith(videoUrl);
+        expect(videoItem.toJson()).toEqual(
+            expect.objectContaining({
+                type: 'video',
+                filePath: videoUrl,
+                mediaWidth: 1920,
+                mediaHeight: 1080,
+            }),
+        );
+
+        // Audio has nothing to measure, so the link is never opened at all.
+        const audioItem = CanvasItemAudio.genCanvasItemFromLink(
+            500,
+            400,
+            audioUrl,
+        );
+        expect(audioItem.toJson()).toEqual(
+            expect.objectContaining({
+                type: 'audio',
+                filePath: audioUrl,
+            }),
+        );
+    });
+
+    test('builds audio canvas items without reading the media', () => {
+        const audioJson = {
+            ...createBaseBox('audio'),
+            filePath: '/slides/song.mp3',
+        };
+        const item = CanvasItemAudio.fromJson(audioJson as any);
+
+        expect(item).toBeInstanceOf(CanvasItemAudio);
+        expect(CanvasItemAudio.gegStyle(audioJson as any)).toEqual({});
+        expect(item.getStyle()).toEqual({});
+        expect(item.toJson()).toEqual(audioJson);
+
+        const insertedItem = CanvasItemAudio.genFromInsertion(
+            400,
+            300,
+            '/slides/song.mp3',
+        );
+        expect(insertedItem.toJson()).toEqual(
+            expect.objectContaining({
+                type: 'audio',
+                filePath: '/slides/song.mp3',
+                // Centered on the insertion point at the default player size.
+                left: 120,
+                top: 270,
+                width: 560,
+                height: 60,
+            }),
+        );
+
+        const fileItem = CanvasItemAudio.genFromFile(250, 220, {
+            appFilePath: '/slides/dropped.mp3',
+        } as any);
+        expect(fileItem.toJson()).toEqual(
+            expect.objectContaining({
+                type: 'audio',
+                filePath: '/slides/dropped.mp3',
+            }),
+        );
+
+        // A blob without a resolvable on-disk path cannot become an audio item.
+        expect(() => {
+            return CanvasItemAudio.genFromFile(100, 100, new Blob(['audio']));
+        }).toThrow('Error occurred during resolving audio file path from blob');
+
+        expect(
+            CanvasItemAudio.fromJson({
+                ...audioJson,
+                filePath: '',
+            } as any),
+        ).toEqual({
+            type: 'error',
+            json: expect.objectContaining({
+                filePath: '',
+            }),
+        });
+    });
+
+    test('builds media props for a box the caller already chose, without measuring', () => {
+        // The lyric-attachment factories: the box is decided by the caller, so
+        // the media's own ratio would be measured only to be thrown away.
+        const boxProps = {
+            id: -1,
+            top: 19,
+            left: 19,
+            rotate: 0,
+            width: 1882,
+            height: 1042,
+            backgroundColor: '#00000000',
+            backdropFilter: 0,
+            roundSizePercentage: 0,
+            roundSizePixel: 0,
+            locked: true,
+        } as any;
+        const fileUrl = 'file:///C:/songs/backing.mp3';
+        const remoteUrl = 'https://www.openworship.app/shared/images/Blue.png';
+
+        expect(
+            CanvasItemImage.genCanvasItemPropsFromLink(remoteUrl, boxProps),
+        ).toEqual({
+            ...boxProps,
+            type: 'image',
+            srcData: remoteUrl,
+            // The box's own size, NOT the image's — nothing was loaded.
+            mediaWidth: 1882,
+            mediaHeight: 1042,
+        });
+        expect(
+            CanvasItemVideo.genCanvasItemPropsFromLink(remoteUrl, boxProps),
+        ).toEqual({
+            ...boxProps,
+            type: 'video',
+            filePath: remoteUrl,
+            mediaWidth: 1882,
+            mediaHeight: 1042,
+        });
+        // A `file://` source is kept verbatim: it is already a URL and must
+        // never be run through `pathToFileURL` again.
+        expect(
+            CanvasItemAudio.genCanvasItemPropsFromLink(fileUrl, boxProps),
+        ).toEqual({
+            ...boxProps,
+            type: 'audio',
+            filePath: fileUrl,
+        });
+        expect(
+            CanvasItemYouTube.genCanvasItemPropsFromLink(remoteUrl, boxProps),
+        ).toEqual({ ...boxProps, type: 'youtube', url: remoteUrl });
+        expect(
+            CanvasItemWebsite.genCanvasItemPropsFromLink(remoteUrl, boxProps),
+        ).toEqual({ ...boxProps, type: 'website', url: remoteUrl });
+
+        // The whole point of this family: no media is opened to build them.
+        expect(getImageDimMock).not.toHaveBeenCalled();
+        expect(getVideoDimMock).not.toHaveBeenCalled();
     });
 
     test('builds Bible canvas items from JSON and BibleItem instances', async () => {

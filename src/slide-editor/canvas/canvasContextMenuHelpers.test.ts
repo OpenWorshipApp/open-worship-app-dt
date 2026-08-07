@@ -104,7 +104,10 @@ describe('canvasContextMenuHelpers', () => {
         checkIsImagesInClipboardMock.mockResolvedValue(false);
         readBibleItemFromClipboardMock.mockResolvedValue(null);
         getMimetypeExtensionsMock.mockImplementation((type: string) => {
-            return type === 'image' ? ['png', 'jpg'] : ['mp4'];
+            if (type === 'image') {
+                return ['png', 'jpg'];
+            }
+            return type === 'audio' ? ['mp3'] : ['mp4'];
         });
         selectFilesMock.mockResolvedValue([]);
     });
@@ -152,6 +155,7 @@ describe('canvasContextMenuHelpers', () => {
             'New',
             'Paste',
             'Insert Medias',
+            'Insert Media Link',
             'Insert YouTube',
             'Insert Website',
             'Paste Image',
@@ -173,7 +177,7 @@ describe('canvasContextMenuHelpers', () => {
         expect(selectFilesMock).toHaveBeenCalledWith([
             {
                 name: 'All Files',
-                extensions: ['png', 'jpg', 'mp4'],
+                extensions: ['png', 'jpg', 'mp4', 'mp3'],
             },
         ]);
         expect(
@@ -186,7 +190,7 @@ describe('canvasContextMenuHelpers', () => {
             addedCanvasItem,
         ]);
 
-        await menuItems[5].onSelect();
+        await menuItems[6].onSelect();
         expect(canvasController.genNewImageItemFromFile).toHaveBeenCalledWith(
             blob1,
             event,
@@ -200,9 +204,10 @@ describe('canvasContextMenuHelpers', () => {
         ]);
     });
 
-    test('inserts YouTube and website items from a URL prompt', async () => {
+    test('inserts YouTube, website and media-link items from a URL prompt', async () => {
         const youtubeItem = { id: 20, type: 'youtube' };
         const websiteItem = { id: 21, type: 'website' };
+        const mediaLinkItem = { id: 22, type: 'audio' };
         const canvasController = {
             addNewTextItem: vi.fn(),
             addNewItems: vi.fn(),
@@ -210,6 +215,7 @@ describe('canvasContextMenuHelpers', () => {
             genNewImageItemFromFile: vi.fn(),
             genNewYouTubeItem: vi.fn().mockReturnValue(youtubeItem),
             genNewWebsiteItem: vi.fn().mockReturnValue(websiteItem),
+            genNewMediaItemFromLink: vi.fn().mockResolvedValue(mediaLinkItem),
         };
         const event = { clientX: 10, clientY: 20 };
 
@@ -254,6 +260,39 @@ describe('canvasContextMenuHelpers', () => {
         expect(canvasController.addNewItems).toHaveBeenCalledWith([
             websiteItem,
         ]);
+
+        // A media link takes the same prompt-then-insert shape; a cancelled
+        // prompt must not reach the controller.
+        canvasController.addNewItems.mockClear();
+        askForURLMock.mockResolvedValueOnce(null);
+        await (menuByLabel.get('Insert Media Link') as any).onSelect();
+        expect(canvasController.genNewMediaItemFromLink).not.toHaveBeenCalled();
+        expect(canvasController.addNewItems).not.toHaveBeenCalled();
+
+        const audioUrl =
+            'https://www.openworship.app/shared/audios/Doxology 21&22.mp3';
+        askForURLMock.mockResolvedValueOnce(audioUrl);
+        await (menuByLabel.get('Insert Media Link') as any).onSelect();
+        expect(askForURLMock).toHaveBeenCalledWith(
+            'Insert Media Link',
+            'Media URL:',
+        );
+        expect(canvasController.genNewMediaItemFromLink).toHaveBeenCalledWith(
+            audioUrl,
+            event,
+        );
+        expect(canvasController.addNewItems).toHaveBeenCalledWith([
+            mediaLinkItem,
+        ]);
+
+        // A link the controller refuses (it toasts on its own) adds nothing.
+        canvasController.addNewItems.mockClear();
+        canvasController.genNewMediaItemFromLink.mockResolvedValueOnce(
+            undefined,
+        );
+        askForURLMock.mockResolvedValueOnce('https://a.com/handout.pdf');
+        await (menuByLabel.get('Insert Media Link') as any).onSelect();
+        expect(canvasController.addNewItems).not.toHaveBeenCalled();
     });
 
     test('adds a bible item at the cursor when the clipboard holds a bible item text', async () => {
@@ -274,12 +313,13 @@ describe('canvasContextMenuHelpers', () => {
         expect(menuItems.map((item: any) => item.menuElement)).toEqual([
             'New',
             'Insert Medias',
+            'Insert Media Link',
             'Insert YouTube',
             'Insert Website',
             'Paste Bible Item',
         ]);
 
-        menuItems[4].onSelect();
+        menuItems[5].onSelect();
         expect(canvasController.addNewBibleItem).toHaveBeenCalledWith(
             bibleItem,
             event,
@@ -585,6 +625,7 @@ describe('canvasContextMenuHelpers', () => {
         expect(baseMenuItems.map((item: any) => item.menuElement)).toEqual([
             'New',
             'Insert Medias',
+            'Insert Media Link',
             'Insert YouTube',
             'Insert Website',
         ]);

@@ -19,6 +19,7 @@ import {
     pathJoin,
 } from '../server/fileHelpers';
 import { BaseDirFileSource } from '../setting/directory-setting/directoryHelpers';
+import { checkIsRemoteMediaSource } from './mediaSourceHelpers';
 
 /**
  * The machinery shared by every "bundle this thing with everything it needs"
@@ -219,10 +220,12 @@ function checkIsCanvasDocumentPath(filePath: string) {
 
 /**
  * The canvas boxes inside a document that point at a file on disk. An IMAGE box
- * inlines its pixels as base64 and so travels inside the document itself, but a
- * VIDEO box only stores `filePath` (inlining a video would balloon the
+ * inlines its pixels as base64 and so travels inside the document itself, but
+ * VIDEO and AUDIO boxes only store `filePath` (inlining them would balloon the
  * document) — so those files have to be bundled separately, or the slide
- * arrives on the other machine with a dead video box.
+ * arrives on the other machine with a dead video/audio box. A box whose source
+ * is a remote link is skipped: the link travels inside the document and already
+ * resolves anywhere.
  *
  * The document JSON is walked rather than loaded through `AppDocument`: reading
  * a path list must not pay for building the whole model, and importing
@@ -240,11 +243,16 @@ function* iterateCanvasFileItems(jsonData: unknown) {
         }
         for (const canvasItem of canvasItems) {
             if (
-                canvasItem?.type === 'video' &&
+                (canvasItem?.type === 'video' ||
+                    canvasItem?.type === 'audio') &&
                 typeof canvasItem.filePath === 'string' &&
-                canvasItem.filePath.length > 0
+                canvasItem.filePath.length > 0 &&
+                !checkIsRemoteMediaSource(canvasItem.filePath)
             ) {
-                yield canvasItem as { filePath: string };
+                yield canvasItem as {
+                    filePath: string;
+                    type: 'video' | 'audio';
+                };
             }
         }
     }
@@ -368,7 +376,7 @@ export class ArchiveFileCollector {
             return;
         }
         for (const canvasItem of iterateCanvasFileItems(jsonData)) {
-            await this.addFile(canvasItem.filePath, 'video');
+            await this.addFile(canvasItem.filePath, canvasItem.type);
         }
     }
 

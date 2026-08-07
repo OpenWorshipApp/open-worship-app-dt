@@ -8,6 +8,7 @@ import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
 import ScreenVaryAppDocumentManager from '../_screen/managers/ScreenVaryAppDocumentManager';
 import { genShowOnScreensContextMenu } from '../others/FileItemHandlerComp';
 import LyricSlide, { LYRIC_SLIDE_TYPE_KEY } from './LyricSlide';
+import type { AppColorType } from '../others/color/colorHelpers';
 import { HEX_COLOR_BLACK } from '../others/color/colorHelpers';
 import { tran } from '../lang/langHelpers';
 import {
@@ -17,7 +18,10 @@ import {
 import { type SrcData } from '../helper/FileSource';
 import { type CanvasItemImagePropsType } from '../slide-editor/canvas/CanvasItemImage';
 import { type OpenLyric } from 'open-lyric';
-import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
+import {
+    type CanvasItemBoxPropsType,
+    type CanvasItemPropsType,
+} from '../slide-editor/canvas/CanvasItem';
 
 export const OPEN_LYRIC_NONE_KEY = 'None';
 
@@ -51,21 +55,36 @@ export default class LyricAppDocument extends AppDocument {
         };
     }
 
-    genCanvasItemImageProps(id: number, srcData: SrcData) {
-        const canvasItemBounds = this.canvasItemBounds;
-        const canvasItemProps: CanvasItemImagePropsType = {
+    // The box every lyric canvas item gets: it fills the slide's content
+    // bounds, so nothing is ever measured or positioned per item. `canvasItemBounds`
+    // reads `displayDim` twice and each read hits `getDefaultScreenDisplay()`,
+    // so callers building several items in a row pass it in once (same reason
+    // as `genLyricSlide`'s `displayDim` parameter).
+    genCanvasItemBoundsProps(
+        id: number,
+        locked: boolean,
+        canvasItemBounds = this.canvasItemBounds,
+    ): CanvasItemBoxPropsType {
+        return {
             id,
             top: canvasItemBounds.y,
             left: canvasItemBounds.x,
             rotate: 0,
             width: canvasItemBounds.width,
             height: canvasItemBounds.height,
-            backgroundColor: `${HEX_COLOR_BLACK}00`,
+            backgroundColor: `${HEX_COLOR_BLACK}00` as AppColorType,
             backdropFilter: 0,
             roundSizePercentage: 0,
             roundSizePixel: 0,
+            locked,
+        };
+    }
+
+    genCanvasItemImageProps(id: number, srcData: SrcData) {
+        const canvasItemBounds = this.canvasItemBounds;
+        const canvasItemProps: CanvasItemImagePropsType = {
+            ...this.genCanvasItemBoundsProps(id, false, canvasItemBounds),
             type: 'image',
-            locked: false,
             srcData,
             mediaWidth: canvasItemBounds.width,
             mediaHeight: canvasItemBounds.height,
@@ -74,20 +93,9 @@ export default class LyricAppDocument extends AppDocument {
     }
 
     genCanvasItemHtmlProps(id: number, html: string) {
-        const canvasItemBounds = this.canvasItemBounds;
         const canvasItemProps: CanvasItemHtmlPropsType = {
-            id,
             ...genHtmlDefaultProps(),
-            top: canvasItemBounds.y,
-            left: canvasItemBounds.x,
-            rotate: 0,
-            width: canvasItemBounds.width,
-            height: canvasItemBounds.height,
-            backgroundColor: `${HEX_COLOR_BLACK}00`,
-            backdropFilter: 0,
-            roundSizePercentage: 0,
-            roundSizePixel: 0,
-            locked: true,
+            ...this.genCanvasItemBoundsProps(id, true),
             html,
             type: 'html',
         };

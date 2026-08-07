@@ -21,7 +21,26 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-05q** (**W-22** step 2: a **Next: Timeout** can now wait until a
+**workflowsVersion: 2026-08-07a** (**W-05** steps 4-5: a song's `- Attachments:` links
+now each become a real slide at the end of the Stage Previewer — a YouTube video, an
+image/video/audio, or the web page itself, full-bleed and presentable like a verse; a
+`file:///…` link lets a chart or a backing track travel with the song, and a PDF or a
+non-address line still gets its named but empty slide. **Driven live.**
+Earlier: **2026-08-07** — **W-05** + the layout tour: songs are selected from
+the Documents list like any other file — one highlighted row, no separate Lyrics tab —
+and the Documents preview switches to the song view. Earlier: **W-22** step 2: a running order can now put the SCREEN
+ITSELF up and down — **Screen: Show** / **Screen: Hide**, for a sheet that has to work with
+nobody at the machine. They are the only actions that ask **which screen** when you add
+them, and they go to those screens and only those: no falling back to whatever is selected
+and no stopping to ask, because there is nobody there to answer. Firing one twice is
+harmless. **Driven live.** Previous: **2026-08-06a** — **W-22** step 2: a fourth run action, **Keyboard Event**
+— a **shortcut you set by pressing it** (Ctrl/Shift only, at least one, unique per playlist)
+that sends the run to that line and puts **all** of its CC elements on the screens at once.
+**W-22** step 8: the run no longer steps over a **folded-away** element — it **opens** what
+it lands on, and **parked is now the only reason a line is passed by**; the preview panel
+also takes the keyboard the moment it opens. **Add Action** folds its eight per-widget
+foreground clears behind one **Other Clear FG Items** row. **Driven live**. Previous:
+**W-22** step 2: a **Next: Timeout** can now wait until a
 TIME ON THE CLOCK instead of counting seconds — its question has a **Seconds** / **At Time**
 chooser, the line reads `⏱ Next: Timeout (7:05 AM)`, and a time already gone by is refused
 out loud rather than waiting until tomorrow. Its menu entry is **Change Timing**.
@@ -225,10 +244,12 @@ The Presenter has a header and three resizable columns:
 - **Header:** page tabs — **Presenter** / **Bible Reader** (អានព្រះគម្ពីរ) /
   **Slide Editor** (កែសម្រួលស្លាយ) — the **Bible Lookup** (ស្វែងរកព្រះគម្ពីរ) button
   (center, `Ctrl+B`), and the **Settings** gear (ការកំណត់) + Help buttons (right). 📸
-- **Left column:** your content libraries — **Documents** (ឯកសារ) and **Lyrics**
-  (អក្សរភ្លេង) lists.
-- **Middle column:** the working area — **Documents / Lyrics / Bibles / Foreground**
-  preview tabs on top, and the collapsible **Background** panel at the bottom.
+- **Left column:** your content libraries — the **Documents** (ឯកសារ) list (songs live
+  here too, marked with a music note) and **Playlists**.
+- **Middle column:** the working area — **Documents / Bibles** preview tabs plus the
+  **Foreground** button on top, and the collapsible **Background** panel at the bottom.
+  The Documents tab shows whatever kind of file you picked: slides for a slide document,
+  pages for a PDF, and the song view for a lyric.
 - **Right column:** **Bibles / Notes** lists and the **mini screen** — a live preview
   of exactly what the audience sees, with clear buttons and a zoom slider under it.
 
@@ -289,12 +310,23 @@ _Verify: PM-10._
 
 **Goal:** put a song's lyrics on the screen.
 
-1. In the left column, click a song in the **Lyrics** (អក្សរភ្លេង) list — the middle
-   area switches to the **Lyrics** tab and shows its verses. 📸
+1. In the left column, click a song in the **Documents** (ឯកសារ) list — songs carry a
+   music-note icon. The middle **Documents** tab switches to the song view: the lyric
+   **Previewer** on top and the **Stage Previewer** verses under it. Only one file in the
+   list is ever highlighted, so picking a song releases whatever was selected before. 📸
 2. **Double-click** a verse to send it to the screen.
 3. Press **F8** / the clear button to take it down.
+4. If the song's `ol:Config` block lists an **`- Attachments:`** field — one link per
+   line — each link also becomes its **own slide at the end** of the Stage Previewer,
+   named after the link. A YouTube link becomes a playable video, an image / video /
+   audio link becomes that media, and any other web address becomes the page itself;
+   each fills the whole slide. Present one the same way you present a verse. A link to
+   a file on this computer works too (written `file:///C:/…`), which is how a chart or
+   a backing track travels with the song. 📸
+5. Links the app cannot show — a PDF, or a line that is not a web address — still get
+   their named slide, just an empty one.
 
-_Verify: PL-07..08, PM-11._
+_Verify: PL-07..08, PM-11, PM-115._
 
 ### W-06 — Look up and present a Bible verse
 
@@ -492,7 +524,7 @@ in the same documents folder. 📸
 4. Add new boxes/images from the tools panel (click, or drag onto the canvas).
 5. Save with **Ctrl+S**.
 
-**Lyrics:** right-click a song in the Lyrics list → **edit** — the Lyric Editor opens
+**Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 
 **Web backgrounds:** Background panel → **Web** tab → **+** — the Web Editor opens;
@@ -783,6 +815,49 @@ thing to another machine.
    or the line it named has since been deleted, it says so instead of quietly doing
    nothing.
 
+   **Reach a line with a key of your own.** The fourth one, **Keyboard Event**
+   (ព្រឹត្តិការណ៍ក្តារចុច), is a shortcut you set yourself. Adding it asks for the
+   shortcut, and you answer by **pressing it** — the box is not typed into. Hold **Ctrl**
+   or **Shift** (those two only, and at least one of them, so the shortcut means the same
+   thing on any machine and cannot take a key the running order already uses) and press
+   the key. The line then reads `⌨ Keyboard Event (Shift+A)`. Re-set it later from
+   **Change Shortcut**. Two lines may not share a shortcut — the second one is refused
+   out loud — and duplicating a line leaves the copy without one. 📸
+
+   Now attach what it should put up, with **Add CC Elements** — as many as you like, which
+   is what makes one key worth more than one click: a slide _and_ its marquee together,
+   say. Then, with the preview panel open (step 6), pressing **Shift+A** sends the run to
+   that line and puts all of it on the screens at once, wherever the run had got to.
+   Pin the line to a screen with **Set Specific Screen** if it should always go to the
+   same one. The shortcut only answers while the preview panel has the keyboard, exactly
+   as its arrow keys do — the panel takes it the moment you open it, so there is nothing
+   to click first. With nothing attached yet it says so rather than doing nothing. 📸
+
+   **Put the screen itself up and down.** Two more actions are not about what is _on_ a
+   screen but about whether there is one: **Screen: Show** (អេក្រង់៖ បង្ហាញ) and
+   **Screen: Hide** (អេក្រង់៖ លាក់), the same thing the slides button on each mini screen
+   does by hand. Use them when the running order has to work with nobody at the machine —
+   a **Screen: Show** at the top of a pre-service loop, a **Screen: Hide** at the end of
+   it, and the screen goes dark on its own instead of holding the last announcement until
+   someone notices.
+
+   **These two ask which screen** when you add them, and that is the whole point: a
+   checklist of the screens you have open appears (**Screen id: 0**, **Screen id: 1**, …,
+   each in that screen's own colour), and the line remembers your answer as its pin — the
+   line shows the pin badge, and **Set Specific Screen** re-aims it later. Unlike every
+   other line, it goes to those screens and _only_ those: it will not fall back to
+   whichever screen you happened to have selected, and it will never stop to ask, because
+   at 7:05 on an unattended sheet there is nobody there to answer. Tick nothing and the
+   app says **Please choose at least one screen** rather than adding a line that would do
+   nothing. Firing one twice is harmless — a **Screen: Show** on a screen that is already
+   up does nothing at all, so it is safe inside a loop. Nothing can be attached to them
+   either, though they can themselves be attached to another line — "put this last slide
+   up **and** light the screen" in one click. 📸
+
+   **Where the actions live in the menu.** **Add Action** lists the five clears, then
+   **Other Clear FG Items** — one row that opens the eight per-widget foreground clears —
+   then **Screen: Show** / **Screen: Hide**, then the four that drive the run.
+
 3. Click the playlist name to **open it**. Each element is one short line: an icon for
    what it is, its id, and its name. A **document** line has its own arrow — open it to
    see that document's slides underneath. 📸
@@ -795,7 +870,11 @@ thing to another machine.
    A **screen action** works the same way, except it is _run_ rather than shown: click it
    to clear, drag it onto one mini screen to clear only that one, or right-click →
    **Apply on Screens** (អនុវត្តនៅលើអេក្រង់) to choose. It never lights up as "live",
-   because there is nothing of it on the screen to be live.
+   because there is nothing of it on the screen to be live. **Screen: Show** /
+   **Screen: Hide** are the exception to the first of those: clicking one goes to the
+   screens it names and nowhere else. **Apply on Screens** still asks, since that entry
+   is you saying "send this one somewhere else" — but it does not change what the line
+   is pinned to.
    The two **`Next:`** actions are the exception: they drive the RUN, not a screen, so
    they have none of that — clicking one starts its countdown in the preview panel
    (step 8), and with that panel closed the app simply tells you to open it.
@@ -952,10 +1031,15 @@ thing to another machine.
    the mouse. **A document is walked slide by slide:** arriving at it always shows its
    **first** slide, each further press shows the next one, and the keys only move on to
    the next element once its **last** slide is the one on screen — so a whole song or sermon deck plays from here without touching
-   the mouse. (A folded-away document is passed over instead; unfold it to walk it.) An
-   audio track is skipped, and the last element is the end — it does not start over. The
-   keys work while you are in this panel; click into the slides list and they drive that
-   list again, as before. 📸
+   the mouse. A **folded-away** element is not passed over: the run **opens it** when it
+   gets there, and a song folded away is unfolded and walked from its first slide like any
+   other. Folding is how you _read_ a long running order; it never decides what is in the
+   service. **The only line the keys step over is one you have parked** (step 9) — an audio
+   track and a damaged line still take the marker, so you can see where the run has got to,
+   they simply have nothing to show. The last element is the end — it does not start over.
+   The keys work while you are in this panel, and it takes them the moment you open it, so
+   there is nothing to click first; click into the slides list and they drive that list
+   again, as before. 📸
    **A screen action is stopped on and fired** like anything else — so putting a
    **Clear All** between the last song and the sermon means one more press of the same
    key blanks the screen at exactly that point in the running order.

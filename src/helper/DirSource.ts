@@ -24,7 +24,7 @@ export type DirSourceEventType = 'refresh' | 'reload' | 'file-update';
  * The suffixes that make a path a SIDECAR of another file rather than a file of
  * its own — a change inside one is a change to the file it belongs to.
  */
-const fileExtraSuffixes = [HISTORY_DIR_NAME_SUFFIX];
+const fileExtraSuffixes = [HISTORY_DIR_NAME_SUFFIX, '-htmls', '-images'];
 
 const cache = new Map<string, DirSource>();
 const initPromises = new Map<string, Promise<void>>();

@@ -5,7 +5,7 @@ import type CanvasController from '../CanvasController';
 import { showSimpleToast } from '../../../toast/toastHelpers';
 import { changeDragEventStyle } from '../../../helper/helpers';
 import { readDroppedFiles } from '../../../others/droppingFileHelpers';
-import { checkIsSupportMediaType } from '../canvasHelpers';
+import { checkIsSupportCanvasMediaType } from '../canvasHelpers';
 import { tran } from '../../../lang/langHelpers';
 
 export function dragOverHandling(event: any) {
@@ -13,7 +13,7 @@ export function dragOverHandling(event: any) {
     const items: DataTransferItemList = event.dataTransfer.items;
     if (
         Array.from(items).every((item) => {
-            return checkIsSupportMediaType(item.type);
+            return checkIsSupportCanvasMediaType(item.type);
         })
     ) {
         event.currentTarget.style.opacity = '0.5';
@@ -26,7 +26,7 @@ export async function handleDropping(
 ) {
     changeDragEventStyle(event, 'opacity', '1');
     for await (const file of readDroppedFiles(event)) {
-        if (checkIsSupportMediaType(file.type)) {
+        if (checkIsSupportCanvasMediaType(file.type)) {
             const newCanvasItem =
                 await canvasController.genNewMediaItemFromFile(file, event);
             if (newCanvasItem) {
@@ -34,7 +34,7 @@ export async function handleDropping(
             }
         } else {
             showSimpleToast(
-                tran('Insert Image or Video'),
+                tran('Insert Image, Video or Audio'),
                 tran('Unsupported file type!'),
             );
         }

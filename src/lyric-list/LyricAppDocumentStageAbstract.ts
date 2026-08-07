@@ -15,6 +15,11 @@ import {
 import type LyricSlide from './LyricSlide';
 import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
 import CanvasItemYouTube from '../slide-editor/canvas/CanvasItemYouTube';
+import CanvasItemImage from '../slide-editor/canvas/CanvasItemImage';
+import CanvasItemVideo from '../slide-editor/canvas/CanvasItemVideo';
+import CanvasItemAudio from '../slide-editor/canvas/CanvasItemAudio';
+import CanvasItemWebsite from '../slide-editor/canvas/CanvasItemWebsite';
+import { checkIsUrlMediaSource } from '../helper/mediaSourceHelpers';
 
 // Entries hold a whole song's rendered HTML, so keep the window short.
 const cacheManager = new CacheManager<any>(3 * 60); // 3 minutes
@@ -104,36 +109,70 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
 
     abstract getFirstCanvasItemProps(): Promise<CanvasItemPropsType | null>;
 
-    setCanvasItemBounds(canvasItemProps: CanvasItemPropsType) {
-        const canvasItemBounds = this.canvasItemBounds;
-        Object.assign(canvasItemProps, {
-            top: canvasItemBounds.y,
-            left: canvasItemBounds.x,
-            width: canvasItemBounds.width,
-            height: canvasItemBounds.height,
-        });
+    // An attachment becomes ONE canvas item filling the whole slide. Each kind
+    // builds its own props through its class's `genCanvasItemPropsFromLink`,
+    // which takes the box rather than choosing one — deliberately NOT the
+    // `genCanvasItemFromLink` factories, which is the obvious first instinct:
+    // the image/video ones download the media just to measure it, and a song's
+    // slides are rebuilt often enough that a fetch per attachment is not
+    // acceptable — the box is the slide's bounds regardless of the media's own
+    // ratio, so the measurement would be discarded anyway. Validation is not
+    // lost: the props go through `CanvasItemX.fromJson` when the slide is
+    // turned into a canvas.
+    genCanvasItemPropsFromAttachment(
+        attachment: OpenLyricAttachment,
+        canvasItemBounds = this.canvasItemBounds,
+    ): CanvasItemPropsType | null {
+        const { type, link } = attachment;
+        const boxProps = this.genCanvasItemBoundsProps(
+            -1,
+            true,
+            canvasItemBounds,
+        );
+        if (type === 'youtube') {
+            return CanvasItemYouTube.genCanvasItemPropsFromLink(link, boxProps);
+        }
+        if (type === 'pdf') {
+            // will handle pdf in the future
+            return null;
+        }
+        // open-lyric falls back to `other` with the RAW TEXT as `link` when the
+        // line does not parse as a URL, and a media type is guessed from the
+        // path extension of a link that may still be neither remote nor local
+        // (`ftp://`, `data:`), so nothing below may assume `link` is usable.
+        if (!checkIsUrlMediaSource(link)) {
+            return null;
+        }
+        if (type === 'image') {
+            return CanvasItemImage.genCanvasItemPropsFromLink(link, boxProps);
+        }
+        if (type === 'video') {
+            return CanvasItemVideo.genCanvasItemPropsFromLink(link, boxProps);
+        }
+        if (type === 'audio') {
+            return CanvasItemAudio.genCanvasItemPropsFromLink(link, boxProps);
+        }
+        // `other` — a link that points at no media the canvas can play is shown
+        // as the page it is.
+        return CanvasItemWebsite.genCanvasItemPropsFromLink(link, boxProps);
     }
 
     genSlidesFromAttachments(attachments: OpenLyricAttachment[]) {
+        // Both getters walk the screen display list on every read, so they are
+        // read once for the whole batch rather than once per attachment.
         const displayDim = this.displayDim;
+        const canvasItemBounds = this.canvasItemBounds;
         const slides: LyricSlide[] = attachments.map((attachment) => {
-            const canvasItemPropsList: CanvasItemPropsType[] = [];
-            const { title, type, link } = attachment;
-            // 'youtube' | 'audio' | 'video' | 'pdf' | 'image' | 'other'
-            if (type === 'youtube') {
-                const canvasItem = CanvasItemYouTube.genCanvasItem(link, 0, 0);
-                const canvasItemJson = canvasItem.toJson();
-                canvasItemPropsList.push(canvasItemJson);
-            } else {
-                console.log(type, link);
-            }
-            canvasItemPropsList.forEach((canvasItemJson) => {
-                this.setCanvasItemBounds(canvasItemJson);
-            });
+            const canvasItemProps = this.genCanvasItemPropsFromAttachment(
+                attachment,
+                canvasItemBounds,
+            );
+            // An attachment the canvas cannot show still gets its slide, so the
+            // song's slide list keeps naming everything the song attaches.
             return this.genLyricSlide(
                 -1,
-                title,
-                canvasItemPropsList,
+                attachment.title,
+                canvasItemProps === null ? [] : [canvasItemProps],
                 displayDim,
             );
         });

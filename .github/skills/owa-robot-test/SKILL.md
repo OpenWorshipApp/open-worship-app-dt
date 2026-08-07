@@ -1,7 +1,7 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~617 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
-argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~636 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). The argument "playlist" (or "run sheet") selects PLAYLIST DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 67 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..100) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch playlist and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "playlist" for the tracked deep run-sheet pass — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
 # OWA Robot Test — QA e2e via chrome-devtools-mcp
@@ -19,6 +19,8 @@ unit or Playwright tests.
 ## When to use
 
 - "Robot test the app", "QA the UI", "smoke test the running app", "find UI issues".
+- **"playlist" / "run sheet"** → **playlist deep mode** (§6f): the tracked, phase-by-phase
+  pass over the whole run-sheet subsystem, with coverage accounting on.
 - After a feature/refactor, to verify nothing is visually or interactively broken.
 - To collect console errors, failed network requests, and accessibility gaps from the
   real renderer.
@@ -164,6 +166,10 @@ over the pages — `presenter` → `reader` → `appDocumentEditor` → `setting
 each per step 5. **Whatever the focus, two blocks always run: the screen-controlling
 block (§6a) and the locale-switch block (§6d).**
 
+If the user named **"playlist"** / **"run sheet"**, run **playlist deep mode (§6f)** — a
+tracked mode, not a trimmed focus: coverage accounting is on, the phases run in order, and
+the mandatory blocks ride inside them.
+
 If the user asked for **"full"**, **"everything"**, or a **coverage percentage/target**
 (e.g. "99% coverage"), run in **full-coverage mode** — see "Coverage accounting" below —
 where every row of [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md)
@@ -229,7 +235,7 @@ when hunting screen-only bugs while hidden (`SC-05`).
 ### 6b. Coverage accounting (full-coverage mode)
 
 The definition of "coverage" is the row inventory in
-[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~617 rows with stable
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~636 rows with stable
 IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
 the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
 or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
@@ -397,45 +403,173 @@ Triage before filing (a 403 is usually NOT an app bug), the known orphaned-`.par
 and the `(1)` de-duplication suffix are all documented in the matrix §MD — read it before
 reporting a download failure.
 
-### 6f. Playlist deep pass (run when the focus touches the run sheet — and in every full-coverage run)
+### 6f. PLAYLIST DEEP MODE — the run sheet, exhaustively (argument `playlist`)
 
-The Playlists panel is the app's **run sheet**, and since `203d35cc` (2026-08-04) it is
-**no longer dev-only** — it took the old Lyric List's slot in the presenter's left column
-and ships in packaged builds. Any note (including older revisions of these references)
-that says "dev builds only" is stale: **no PL row may be marked BLOCKED for being
-dev-only** (PL-49).
+The Playlists panel is the app's **run sheet**: the one panel an operator looks at for the
+whole service. It is also the subsystem that grew fastest (actions, CC elements, the two
+clocks, pinning, hotkeys, archives — all since 2026-08-04), so it carries the most rules
+per square centimetre in the app and the most ways to ship a silent regression.
 
-Read **knowledge-base §14** first — it is the model behind every PL row. Then drive
-`PL-10`, `PL-29`, `PL-32..PL-74`. The parts a quick pass keeps missing, in the order they
-are cheapest to reach:
+**Trigger.** The argument names the run sheet — `playlist`, `playlists`, `run sheet`,
+`.owp`. That is **not a focus area that trims the run**; it selects a MODE:
 
-1. **The two storage kinds** (§14.2). Slides/documents are references, everything else is
-   a verbatim preset. Prove it once per run: edit a referenced document and confirm the
-   playlist projects the NEW text (PL-29), and confirm a stored countdown/marquee replays
-   its own preset rather than a resolved date (PL-69).
-2. **The failure surfaces** — placeholders, a hand-corrupted `.owp` entry, an unreadable
-   document (PL-50/51). A damaged entry must not take the rest of the list with it, and
-   must not be silently dropped from the file by the next write.
-3. **The drag rules** (§14.4), including the deliberate no-ops: cross-playlist drag adds
-   nothing, a row dropped on itself writes nothing (PL-55), unsupported payloads toast
-   (PL-56).
-4. **The floating preview as a player** — fold memory, the restricted slide menu, the
-   three ways a preset reaches a screen, the widget frame (PL-58..61) — then walk a whole
-   document with the next-key (PL-46/48).
-5. **Export → import round trip on real files** (PL-39/40/45, PL-65..68). The import
-   contract is all-or-nothing: with a required folder unset it must fail **before** writing
-   anything. A CDP-driven drop of a real `.owapl.tar.gz` exercises the whole pipeline —
-   fabricate the `dataTransfer` and stamp `appFilePath` (KB §14.7).
-6. **The performance guards** (§14.3) — no `Maximum update depth exceeded` with a
-   ~90-slide document expanded, the clicked row marks immediately, an idle list opens no
-   `.owp` files, and clicking a row does not repaint every file row in the window
-   (PL-63/70). These are the regressions that only hurt on the target hardware.
-7. **Locale.** The playlist strings are listed in KB §14.8 — a missing Khmer key THROWS in
-   dev and blanks the page, so the §6d pass must cover this panel whenever it was touched.
+- **Coverage accounting (§6b) is ON**, exactly as in full-coverage mode, with
+  `"focus": "playlist"` in `coverage-<runid>.json`. Every row in the scope set below ends
+  the run with a status. Resume the newest matching state file rather than restarting.
+- **The three mandatory blocks still run** (§6a screen, §6d locale, §6e media) — and §6a
+  is ridden *from the playlist* (present a row, drive the `screen.html` target), so it
+  costs almost nothing extra here.
+- **The phases below are run in order**, each with its own evidence. A phase that is
+  skipped is reported as skipped, with its rows BLOCKED and the reason.
 
-Restore rule for this pass: it writes to real files. Work in a scratch playlist you
-created, delete it at the end, and remove anything the import created (imported media,
-documents, the Default-list verses) — or say in the report what you left behind.
+Since `203d35cc` (2026-08-04) the panel is **no longer dev-only**; it took the old Lyric
+List's slot and ships in packaged builds. **No PL row may be marked BLOCKED for being
+dev-only** (PL-49) — any note that still says so is stale.
+
+**Read before driving anything:** knowledge-base **§14** (all of it — it is the model
+behind every PL row and says which "odd" behaviours are deliberate), the matrix's **§PL**
+rows themselves (their `Expected` column is the assertion — do not re-invent it), and
+test-plan **§S20** for the recipe order.
+
+#### Scope set (66 playlist rows + adjacencies)
+
+> **PL-10, PL-29, PL-32..PL-76, PL-81..PL-100** — the run sheet itself.
+>
+> **Adjacent, required when the run touches them:** `PL-77..PL-80` + `NAV-17/18` (the
+> single-document `.owadoc` and whole-data `.owadata` archives — the same three-layer
+> archive code the playlist bundle rides on), `XW-01..07` (§6c: a document edited in
+> another window must reach the sheet's rows), `SP`/`SC`/`LT`/`MD` (mandatory core).
+>
+> `PL-01..PL-09`, `PL-11..PL-28`, `PL-30/31` are the **Documents/Lyrics lists and the
+> generic file-list chrome** — out of scope in this mode except where the fixture uses
+> them (creating the scratch playlist, dropping files in).
+
+#### P0 — Fixture: build the sheet you are going to drive
+
+**Never test in the user's own playlists.** Create `zz-robot-<runid>` (list ⋮ → new) and
+build it up by drop until it holds, at minimum, one of each thing the rest of the mode
+needs: a **document**, a **single slide** of a document, a **lyric slide** (proves the
+`stage` is carried — PL-64), a **background** image or colour, a **bible verse**, a
+**foreground** marquee or countdown, and an **audio** track. Rows on the way in: PL-10,
+PL-29, PL-43, PL-44, PL-57 (drop onto a collapsed card auto-opens it), PL-25/26 if you
+drop from the OS.
+
+Everything below writes to that file the moment you touch it — **there is no save button
+in this panel** (KB §14.8), so "nothing happened" means the write failed.
+
+#### P1 — What a row actually holds (PL-29, PL-37, PL-44, PL-52, PL-64, PL-69)
+
+The reference/preset split (§14.2) is the panel's central design decision, and each half
+must be proved once per run, in the direction that can regress:
+
+1. **Reference** — edit a referenced document (a word in slide 1) and confirm the sheet
+   projects the **new** text. A snapshot here would silently project last week's words.
+2. **Preset** — a countdown/marquee row must replay its **own stored preset** (duration,
+   text, styling), never a resolved date, however long ago it was added (PL-69).
+3. **The row's title is a label captured on add** — renaming the underlying file does not
+   change it. That is deliberate (resolving names would mean reading every referenced
+   file just to draw the list); do not file it.
+4. **Reveal Original** (PL-37) and the colour note (PL-52) round out the row's identity.
+
+#### P2 — The tree: order, per-row state, marking (PL-32..PL-36, PL-41, PL-53, PL-62, PL-86..PL-88)
+
+Expansion, reorder, **Move up/down/to Top/to Bottom** with their edge gating, **Duplicate**
+(a copy that re-keys its uuid and drops an armed shortcut — PL-97), **Disable** (parked)
+including a parked document's slides, the on-screen indicator at **all three levels**
+(playlist card → element → slide), and expansion memory that follows the DOCUMENT rather
+than the position (PL-53).
+
+#### P3 — Actions, both families (PL-71..PL-74, PL-95, PL-96, PL-97)
+
+The **Add Action** menu is three levels now: the eight per-widget foreground clears fold
+behind **Other Clear FG Items** (PL-71). Two families, and the difference is the whole
+point:
+
+- **Screen actions** (13) — `apply(screenManager)`. **Fire every one of them at least
+  once against a real, showing screen** (PL-72, PL-74). They are the only playlist rows
+  that write to a screen while carrying no content; a mis-wired clear is invisible in the
+  tree.
+- **Run actions** (4) — they drive the RUN, not a screen: `Next: Interval`,
+  `Next: Timeout` (also armable with a **time of day**), `Jump to`, `Keyboard Event`.
+  Each has a menu that must NOT offer the screen family. PL-95 and PL-96 are the two
+  longest rows in the matrix — read them in full, they enumerate every toast by title.
+
+#### P4 — CC elements (PL-89..PL-93)
+
+Followers that ride a host's present: attach by **drop** and from the **menu**, verify
+propagation onto the screens in ONE gesture with no second "which screen?" question,
+clicking a CC row reveals its original, and the round trip survives export/import. The two
+refusals must not be confused: a clock says **This element does not accept CC element**, a
+second one on a `Jump to` says **This element takes only one CC element**.
+
+#### P5 — How a row reaches a screen (PL-33, PL-35, PL-81..PL-85) — carries the mandatory §6a block
+
+Click, drag onto a mini screen, and the **Set Specific Screen** pin: it persists, it beats
+the selected screens, and it is deliberately outranked by a force-choose and by a drag
+(PL-83). A pinned screen that no longer exists must degrade, not throw (PL-84). Documents
+carry both an element pin and per-slide pins (PL-85). **Present from this panel and drive
+the real `screen.html?screenId=N` target here** — that discharges §6a inside the mode.
+
+#### P6 — The floating preview is a PLAYER (PL-38, PL-42, PL-46..PL-48, PL-58..PL-61, PL-94, PL-98, PL-99)
+
+The densest phase, and the one a quick pass always under-tests. §14.6 lists the rules; the
+ones that regressed most recently:
+
+- **The widget takes the keyboard the moment it opens** — the first press must work with
+  nothing clicked first (PL-98).
+- **Parked is the ONLY reason a line is stepped over**, and the landing **unfolds** what it
+  reaches, entering a document at its FIRST slide once its slides arrive (PL-99). Walk the
+  whole sheet **folded down** — that is the shape an operator reads it in.
+- Fold memory, the restricted slide-card menu, the widget frame, and **every right-click
+  menu mirroring the tree's** (PL-94).
+- The clocks' pill, and that **only the run MOVING** touches them (PL-95).
+
+#### P7 — Failure surfaces (PL-50, PL-51, PL-55, PL-56)
+
+Empty/unreadable placeholders; a hand-corrupted `.owp` entry that must become ONE error
+row without taking the list with it **and must survive the next write of the file**; the
+deliberate no-ops (cross-playlist drag adds nothing — PL-55) and the unsupported-payload
+toast (PL-56).
+
+#### P8 — Archives, on real files (PL-39, PL-40, PL-45, PL-65..PL-68, PL-76)
+
+Export → import round trip. The import contract is **all-or-nothing**: with a required
+folder unset it must fail **before writing anything** (PL-66). Re-importing the same
+bundle reuses same-named files and de-duplicates the playlist as `<name> (1).owp`
+(PL-67); a bible entry is re-created in the **Default** list (PL-68). A CDP-driven drop of
+a real `.owapl.tar.gz` exercises the whole pipeline — fabricate the `dataTransfer` and
+stamp `appFilePath` (KB §14.7).
+
+#### P9 — Performance guards (PL-63, PL-70) — the rows that only hurt on the target hardware
+
+Measure, do not eyeball: no `Maximum update depth exceeded` with a ~90-slide document
+expanded, the clicked row marks **immediately** (it bypasses the 500 ms debounce), an
+**idle** list opens no `.owp` files at all, a collapsed document's slides are **released**,
+and clicking a playlist row does not repaint every file row in the window (PL-63).
+
+#### P10 — Locale, then restore
+
+Run §6d over **this panel and its widget** — the playlist strings are listed in KB §14.8
+and a missing Khmer key **throws** and blanks the page. Then restore: delete the scratch
+playlist, remove what the import created (imported media, documents, the Default-list
+verses), unpark anything you parked, unpin anything you pinned, stop any interval you
+armed, and hide the screen you showed. Anything you cannot remove goes in the report by
+name.
+
+#### Techniques this mode depends on
+
+- **Read the `.owp` on disk** to prove what was written (dev data lives in
+  `Desktop\open-worship-data-dev`, **not** the packaged dir) — the tree can be a stale HMR
+  render while the file is already correct.
+- **Never `import()` an app module inside `evaluate_script`** — it re-runs
+  `document.onkeydown = …` and kills every shortcut in the window for the rest of the
+  session.
+- **A "dead key" is usually your own driving.** Closing nested context menus
+  programmatically can leave the `KeyboardEventListener` layer stack polluted, after which
+  the preview's keys stop firing (the tell: `ArrowDown` reports `defaultPrevented: true`
+  while the run does not move). **Reload the page and retry before filing it** (KB §14.9).
+- Synthetic `press_key` DOES drive the run keys and the `Keyboard Event` hotkey (they are
+  ordinary `keydown` listeners); only Monaco needs real OS focus.
 
 ### 7. Report
 
@@ -454,6 +588,12 @@ documents, the Default-list verses) — or say in the report what you left behin
   `MD-01/MD-02` statuses with the on-disk evidence (the video file and the `.mp3`), since
   no other row touches the shipped yt-dlp/ffmpeg/qjs. BLOCKED is acceptable only with no
   network, and must say so.
+- In **playlist deep mode** (§6f) the report MUST additionally carry: the per-phase table
+  (P0..P10 → status), the coverage summary over the 67-row scope set, the fixture's name
+  and **what was torn down vs. left behind**, and — because they are the rows most easily
+  faked — an explicit line each for the **13 screen actions fired against a showing
+  screen** (PL-72/74), the **folded-sheet walk** (PL-99) and the **performance
+  measurements** (PL-63/70) with their numbers.
 - In full-coverage mode the report MUST include the **coverage summary** (template in
   [references/test-plan.md](./references/test-plan.md)): the formula result
   (`exercised / (total − EXCLUDED)`), plus every BLOCKED / PARTIAL / EXCLUDED row with
@@ -572,7 +712,7 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
 - [references/components-path.md](./references/components-path.md) — every page → its
   component tree → the interactive tests each component supports (click/drag/drop/keyboard).
 - [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
-  **coverage contract**: ~617 stable-ID rows over the whole UI surface — every interactive
+  **coverage contract**: ~636 stable-ID rows over the whole UI surface — every interactive
   path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
   citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
   shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and
@@ -591,4 +731,5 @@ When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
   checkpoints and EN/KM labels, each traceable to matrix rows; feeds tutorial mode (§9)
   and doc-verify mode (§10).
 - [references/test-plan.md](./references/test-plan.md) — scenario checklist, severity
-  scale, and the report template.
+  scale, and the report template. **§S20** is the playlist deep mode's step-by-step
+  recipe; **KB §14** is its model.

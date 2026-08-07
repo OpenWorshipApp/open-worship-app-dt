@@ -3,7 +3,9 @@ import FileSource from '../../helper/FileSource';
 import { getAppFilePathFromFile } from '../../helper/localFileHelpers';
 import type { CanvasItemVideoMediaPropsType } from './canvasHelpers';
 import { genMediaDefaultBoxStyle, validateMediaProps } from './canvasHelpers';
-import type { CanvasItemPropsType } from './CanvasItem';
+import type { UrlMediaSourceType } from '../../helper/mediaSourceHelpers';
+import { checkIsRemoteMediaSource } from '../../helper/mediaSourceHelpers';
+import type { CanvasItemBoxPropsType, CanvasItemPropsType } from './CanvasItem';
 import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
@@ -44,6 +46,31 @@ class CanvasItemVideo extends CanvasItem<CanvasItemVideoPropsType> {
         const fileSource = FileSource.getInstance(filePath);
         const [mediaWidth, mediaHeight] = await getVideoDim(fileSource.src);
         return this.genCanvasItem(filePath, mediaWidth, mediaHeight, x, y);
+    }
+    // A remote link is kept as the source verbatim; only the metadata is read
+    // (`getVideoDim` caches it) so the box gets the video's own ratio.
+    static async genCanvasItemFromLink(x: number, y: number, url: string) {
+        if (!checkIsRemoteMediaSource(url)) {
+            throw new Error(`Invalid video link: ${url}`);
+        }
+        const [mediaWidth, mediaHeight] = await getVideoDim(url);
+        return this.genCanvasItem(url, mediaWidth, mediaHeight, x, y);
+    }
+    // The props for a video item that fills a box chosen by the caller. Unlike
+    // `genCanvasItemFromLink` the metadata is NOT read: the box is already
+    // decided, so the media's own ratio would be measured only to be thrown
+    // away — `mediaWidth`/`mediaHeight` therefore describe the box itself.
+    static genCanvasItemPropsFromLink(
+        url: UrlMediaSourceType,
+        boxProps: CanvasItemBoxPropsType,
+    ): CanvasItemVideoPropsType {
+        return {
+            ...boxProps,
+            type: 'video',
+            filePath: url,
+            mediaWidth: boxProps.width,
+            mediaHeight: boxProps.height,
+        };
     }
     static async genFromFile(x: number, y: number, file: File | Blob) {
         // Videos are referenced by their on-disk path rather than inlined, so

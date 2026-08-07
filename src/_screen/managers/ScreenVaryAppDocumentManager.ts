@@ -836,6 +836,23 @@ class ScreenVaryAppDocumentManager
                 continue;
             }
             media.loop = false;
+            // A canvas audio item is preview-only: it is hidden on the
+            // projected screen (loop above), so mirroring it there would only
+            // download the file and broadcast a time message per `timeupdate`
+            // for something nobody can see or hear. It takes no sync id and no
+            // sync wiring — the operator clicks it on the mini screen and it
+            // plays there, like a background audio. PPTX/DOCX embedded media
+            // carries no such mark and keeps the full sync behaviour.
+            if (media.hasAttribute(PREVIEW_ONLY_ATTR)) {
+                if (!appProvider.isPageScreen) {
+                    media.muted = false;
+                    media.style.pointerEvents = 'auto';
+                    media.addEventListener('play', handleMediaPlaying);
+                    media.addEventListener('pause', handleMediaStopped);
+                    media.addEventListener('ended', handleMediaStopped);
+                }
+                continue;
+            }
             media.id = genVideoIDFromSrc(getMediaSyncSrc(media));
             if (appProvider.isPageScreen) {
                 // No auto-play: hold the first frame, muted. Playback is

@@ -21,7 +21,12 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-07** (**W-05** + the layout tour: songs are selected from
+**workflowsVersion: 2026-08-07a** (**W-05** steps 4-5: a song's `- Attachments:` links
+now each become a real slide at the end of the Stage Previewer — a YouTube video, an
+image/video/audio, or the web page itself, full-bleed and presentable like a verse; a
+`file:///…` link lets a chart or a backing track travel with the song, and a PDF or a
+non-address line still gets its named but empty slide. **Driven live.**
+Earlier: **2026-08-07** — **W-05** + the layout tour: songs are selected from
 the Documents list like any other file — one highlighted row, no separate Lyrics tab —
 and the Documents preview switches to the song view. Earlier: **W-22** step 2: a running order can now put the SCREEN
 ITSELF up and down — **Screen: Show** / **Screen: Hide**, for a sheet that has to work with
@@ -311,8 +316,17 @@ _Verify: PM-10._
    list is ever highlighted, so picking a song releases whatever was selected before. 📸
 2. **Double-click** a verse to send it to the screen.
 3. Press **F8** / the clear button to take it down.
+4. If the song's `ol:Config` block lists an **`- Attachments:`** field — one link per
+   line — each link also becomes its **own slide at the end** of the Stage Previewer,
+   named after the link. A YouTube link becomes a playable video, an image / video /
+   audio link becomes that media, and any other web address becomes the page itself;
+   each fills the whole slide. Present one the same way you present a verse. A link to
+   a file on this computer works too (written `file:///C:/…`), which is how a chart or
+   a backing track travels with the song. 📸
+5. Links the app cannot show — a PDF, or a line that is not a web address — still get
+   their named slide, just an empty one.
 
-_Verify: PL-07..08, PM-11._
+_Verify: PL-07..08, PM-11, PM-115._
 
 ### W-06 — Look up and present a Bible verse
 
