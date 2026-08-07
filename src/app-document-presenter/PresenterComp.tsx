@@ -4,7 +4,6 @@ import { lazy, useState, useCallback, useMemo, type MouseEvent } from 'react';
 
 import {
     useBibleItemShowing,
-    useLyricSelecting,
     useVaryAppDocumentSelecting,
 } from '../event/PreviewingEventListener';
 import { useVarySlideSelecting } from '../event/VaryAppDocumentEventListener';
@@ -35,16 +34,13 @@ import type {
     DataInputType,
     FlexSizeType,
 } from '../resize-actor/flexSizeHelpers';
-import { useAppCurrentRef } from '../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('./items/AppDocumentPreviewerComp');
 });
 const LazyPresenterBiblePreviewerRenderComp = lazy(() => {
     return import('./PresenterBiblePreviewerRenderComp');
-});
-const LazyLyricHandlerComp = lazy(() => {
-    return import('../lyric-list/LyricHandlerComp');
 });
 const LazyPresenterForegroundComp = lazy(() => {
     return import('../presenter-foreground/PresenterForegroundComp');
@@ -85,9 +81,10 @@ function RenderToggleFullViewComp({
 
 function genReElements(tabKeys: string) {
     const arr = tabKeys.split('') as TabKeyType[];
+    // `h2` was the Lyrics tab. Lyrics are previewed by the Documents previewer
+    // now, but the remaining keys keep their slots so saved flex sizes survive.
     const flexSizeDefault: FlexSizeType = {
         h1: ['1'],
-        h2: ['1'],
         h3: ['1'],
     };
     const dataInput: DataInputType[] = [];
@@ -96,13 +93,6 @@ function genReElements(tabKeys: string) {
             children: LazyAppDocumentPreviewerComp,
             key: 'h1',
             ...toWidgetLabel('Documents'),
-        });
-    }
-    if (arr.includes('l')) {
-        dataInput.push({
-            children: LazyLyricHandlerComp,
-            key: 'h2',
-            ...toWidgetLabel('Lyrics'),
         });
     }
     if (arr.includes('b')) {
@@ -120,7 +110,6 @@ function genReElements(tabKeys: string) {
 
 const tabTypeList = [
     ['d', toIconedLabel('Documents'), LazyAppDocumentPreviewerComp],
-    ['l', toIconedLabel('Lyrics'), LazyLyricHandlerComp],
     ['b', toIconedLabel('Bibles'), LazyPresenterBiblePreviewerRenderComp],
 ] as const;
 type TabKeyType = (typeof tabTypeList)[number][0];
@@ -234,9 +223,6 @@ export default function PresenterComp() {
 
     const [isFullWidget, setIsFullWidget] = useState(false);
 
-    const handleLyricSelect = useCallback(() => {
-        setTabKey1('l', { isForce: true });
-    }, [setTabKey1]);
     const handleBibleShow = useCallback(() => {
         setTabKey1('b', { isForce: true });
     }, [setTabKey1]);
@@ -246,7 +232,6 @@ export default function PresenterComp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useLyricSelecting(handleLyricSelect, [handleLyricSelect]);
     useBibleItemShowing(handleBibleShow, [handleBibleShow]);
     useVaryAppDocumentSelecting(handleDocumentSelect);
     useVarySlideSelecting(handleDocumentSelect);
@@ -282,6 +267,14 @@ export default function PresenterComp() {
             .filter((key) => tabTypeList.some(([tabKey]) => tabKey === key));
         return filtered.length > 0 ? filtered.join('') : 'd';
     }, [tabKeys]);
+    // A setting saved while the removed Lyrics tab existed still holds its `l`.
+    // Rendering already ignores it, but `setTabKeys1` toggles the RAW string, so
+    // without this write-back the dead key comes back on the next toggle.
+    useAppEffect(() => {
+        if (mainTabKeys !== tabKeys) {
+            setTabKeys(mainTabKeys);
+        }
+    }, [mainTabKeys, tabKeys]);
     const { flexSizeDefault, dataInput } = useMemo(() => {
         return genReElements(mainTabKeys);
     }, [mainTabKeys]);

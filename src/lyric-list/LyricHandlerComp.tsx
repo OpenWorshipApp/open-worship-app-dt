@@ -1,13 +1,10 @@
-import { lazy, use } from 'react';
+import { lazy, useMemo } from 'react';
 
 import { tran } from '../lang/langHelpers';
 import { toWidgetLabel } from '../others/labelIconHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
-import {
-    applyOpenLyricTheme,
-    initOpenLyric,
-    SelectedLyricContext,
-} from './lyricHelpers';
+import Lyric from './Lyric';
+import { applyOpenLyricTheme, initOpenLyric } from './lyricHelpers';
 import LyricManager, { LyricManagerContext } from './LyricManager';
 import { useAppEffect, useAppStateAsync } from '../helper/appHooks';
 import { useIsDarkMode } from '../others/themeHelpers';
@@ -19,14 +16,22 @@ const LazyLyricSlidesPreviewerComp = lazy(() => {
     return import('./LyricSlidesPreviewerComp');
 });
 
-export default function LyricHandlerComp() {
-    const context = use(SelectedLyricContext);
-    const selectedLyric = context?.selectedLyric ?? null;
+/**
+ * The lyric previewer BODY. It is one of the bodies the app-document previewer
+ * swaps in (a `.owl` selection gets this instead of the slide list + note pane),
+ * so it renders no card chrome of its own — the previewer keeps its header and
+ * footer around whichever body is showing.
+ */
+export default function LyricHandlerComp({
+    filePath,
+}: Readonly<{
+    filePath: string;
+}>) {
+    const selectedLyric = useMemo(() => {
+        return Lyric.getInstance(filePath);
+    }, [filePath]);
 
     const [lyricManager] = useAppStateAsync(async () => {
-        if (selectedLyric === null) {
-            return null;
-        }
         const openLyricPreviewer = await initOpenLyric(selectedLyric.filePath);
         const manager = new LyricManager(selectedLyric, openLyricPreviewer);
         return manager;
@@ -51,11 +56,11 @@ export default function LyricHandlerComp() {
         };
     }, [lyricManager]);
 
-    if (lyricManager === undefined) {
+    if (lyricManager === undefined || lyricManager === null) {
         return (
             <div
                 className={
-                    'card w-100 h-100 app-zero-border-radius d-flex ' +
+                    'w-100 h-100 d-flex ' +
                     'align-items-center justify-content-center'
                 }
             >
@@ -64,45 +69,30 @@ export default function LyricHandlerComp() {
         );
     }
 
-    if (selectedLyric === null) {
-        return (
-            <div
-                className={
-                    'card w-100 h-100 app-zero-border-radius d-flex ' +
-                    'align-items-center justify-content-center'
-                }
-            >
-                <h3 className="text-muted">{tran('No Lyric Selected')}</h3>
-            </div>
-        );
-    }
-
     return (
-        <div className="card w-100 h-100 app-zero-border-radius app-overflow-hidden">
-            <div className="card-body w-100 h-100 app-overflow-hidden">
-                <LyricManagerContext value={lyricManager}>
-                    <ResizeActorComp
-                        flexSizeName={'lyric-previewer'}
-                        isHorizontal={false}
-                        flexSizeDefault={{
-                            v1: ['1'],
-                            v2: ['1'],
-                        }}
-                        dataInput={[
-                            {
-                                children: LazyLyricRenderPreviewBodyComp,
-                                key: 'v1',
-                                ...toWidgetLabel('Previewer'),
-                            },
-                            {
-                                children: LazyLyricSlidesPreviewerComp,
-                                key: 'v2',
-                                ...toWidgetLabel('Slides'),
-                            },
-                        ]}
-                    />
-                </LyricManagerContext>
-            </div>
+        <div className="w-100 h-100 app-overflow-hidden">
+            <LyricManagerContext value={lyricManager}>
+                <ResizeActorComp
+                    flexSizeName={'lyric-previewer'}
+                    isHorizontal={false}
+                    flexSizeDefault={{
+                        v1: ['1'],
+                        v2: ['1'],
+                    }}
+                    dataInput={[
+                        {
+                            children: LazyLyricRenderPreviewBodyComp,
+                            key: 'v1',
+                            ...toWidgetLabel('Previewer'),
+                        },
+                        {
+                            children: LazyLyricSlidesPreviewerComp,
+                            key: 'v2',
+                            ...toWidgetLabel('Slides'),
+                        },
+                    ]}
+                />
+            </LyricManagerContext>
         </div>
     );
 }

@@ -487,8 +487,13 @@ class ScreenVaryAppDocumentManager
         filePath: string,
         itemJson: VarySlideDataType,
         isForceChoosing = false,
+        presetScreenIds: number[] = [],
     ) {
-        const screenIds = await this.chooseScreenIds(event, isForceChoosing);
+        const screenIds = await this.chooseScreenIds(
+            event,
+            isForceChoosing,
+            presetScreenIds,
+        );
         for (const screenId of screenIds) {
             const screenVaryAppDocumentManager = this.getInstance(screenId);
             if (screenVaryAppDocumentManager === null) {

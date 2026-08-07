@@ -89,25 +89,6 @@ export function useFilePaths(
     const filePathsRef = useAppCurrentRef(filePaths);
     const colorNotesKeyRef = useRef<string | null>(null);
     useAppEffect(() => {
-        const registeredEvent = dirSource.registerEventListener(
-            ['file-update'],
-            (changedFilePath: string) => {
-                const targetFile = filePathsRef.current?.find(
-                    (targetFilePath1) => {
-                        return changedFilePath.startsWith(targetFilePath1);
-                    },
-                );
-                if (targetFile !== undefined) {
-                    FileSource.getInstance(targetFile).fireUpdateEvent();
-                }
-                FileSource.getInstance(changedFilePath).fireUpdateEvent();
-            },
-        );
-        return () => {
-            dirSource.unregisterEventListener(registeredEvent);
-        };
-    }, [dirSource]);
-    useAppEffect(() => {
         setFilePaths(undefined);
         const registeredEvent = dirSource.registerEventListener(
             ['refresh'],
@@ -161,6 +142,16 @@ export function useFileSourceRefreshEvents(
         const update = (_data: any, time: number) => {
             setN(time);
         };
+        if (filePath !== undefined) {
+            const fileSource = FileSource.getInstance(filePath);
+            const registeredEvent = fileSource.registerEventListener(
+                events,
+                update,
+            );
+            return () => {
+                fileSource.unregisterEventListener(registeredEvent);
+            };
+        }
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,
             update,
@@ -180,11 +171,22 @@ export function useFileSourceEvents<T>(
 ) {
     const callbackRef = useAppCurrentRef(callback);
     useAppEffect(() => {
+        const update = (data: T, time: number) => {
+            callbackRef.current(data, time);
+        };
+        if (filePath !== undefined) {
+            const fileSource = FileSource.getInstance(filePath);
+            const registeredEvent = fileSource.registerEventListener(
+                events,
+                update,
+            );
+            return () => {
+                fileSource.unregisterEventListener(registeredEvent);
+            };
+        }
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,
-            (data: T, time: number) => {
-                callbackRef.current(data, time);
-            },
+            update,
             filePath,
         );
         return () => {

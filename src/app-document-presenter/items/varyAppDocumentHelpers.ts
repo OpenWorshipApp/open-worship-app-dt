@@ -37,6 +37,10 @@ export function handleVarySlideSelecting(
     viewIndex: number,
     varySlide: VarySlideType,
     selectSelectedSlide: (varySlide: VarySlideType) => void,
+    // The screens this slide must go to whatever is selected — set when the
+    // card is being shown on behalf of something pinned to a screen, empty
+    // (the default) everywhere else.
+    presetScreenIds: number[] = [],
 ) {
     if (appProvider.isPageAppDocumentEditor) {
         selectSelectedSlide(varySlide);
@@ -46,6 +50,8 @@ export function handleVarySlideSelecting(
             event,
             varySlide.filePath,
             varySlide.toJson(),
+            false,
+            presetScreenIds,
         );
         focusNoteEditor(varySlide);
     }

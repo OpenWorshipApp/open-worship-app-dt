@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import {
-    checkIsLyric,
+    checkIsLyricFilePath,
     useSelectedAppDocumentSetterContext,
     varyAppDocumentFromFilePath,
 } from '../app-document-list/appDocumentHelpers';
@@ -9,38 +9,29 @@ import type {
     VaryAppDocumentType,
     VarySlideType,
 } from '../app-document-list/appDocumentTypeHelpers';
-import { getIsShowingLyricPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { handleError } from '../helper/errorHelpers';
-import { useSelectedLyricSetterContext } from '../lyric-list/lyricHelpers';
-import { getFileDotExtension } from '../server/fileHelpers';
 
-export function checkIsLyricFilePath(filePath: string) {
-    return checkIsLyric(getFileDotExtension(filePath));
-}
+export { checkIsLyricFilePath };
 
 /**
  * Clicking a document in a playlist does what clicking it in the Documents list
  * does — select it and make sure its previewer is showing. The selection has to
  * go through the layout context setters (not the plain setting writer), or the
  * lists and previewer keep showing the previous document.
+ *
+ * A lyric needs no branch of its own: it is selected and previewed as a
+ * document like any other, so it only has to be resolvable — hence the import
+ * that registers the `.owl` getter.
  */
 export function useVaryAppDocumentOpener() {
     const setSelectedVaryAppDocument = useSelectedAppDocumentSetterContext();
-    const setSelectedLyric = useSelectedLyricSetterContext();
     return useCallback(
         async (filePath: string) => {
             try {
                 if (checkIsLyricFilePath(filePath)) {
-                    const { default: Lyric } =
-                        await import('../lyric-list/Lyric');
-                    const lyric = Lyric.getInstance(filePath);
-                    setSelectedLyric(lyric);
-                    if (!getIsShowingLyricPreviewer()) {
-                        previewingEventListener.showLyric(lyric);
-                    }
-                    return;
+                    await import('../lyric-list/LyricAppDocument');
                 }
                 const varyAppDocument = varyAppDocumentFromFilePath(filePath);
                 setSelectedVaryAppDocument(varyAppDocument);
@@ -53,7 +44,7 @@ export function useVaryAppDocumentOpener() {
                 handleError(error);
             }
         },
-        [setSelectedVaryAppDocument, setSelectedLyric],
+        [setSelectedVaryAppDocument],
     );
 }
 

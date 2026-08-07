@@ -18,8 +18,6 @@ import {
     type SelectedAppDocumentContextType,
     type SelectedSlideContextType,
 } from '../app-document-list/appDocumentHelpers';
-import { getSelectedLyric, setSelectedLyric } from '../lyric-list/lyricHelpers';
-import type Lyric from '../lyric-list/Lyric';
 import type { VaryAppDocumentType } from '../app-document-list/appDocumentTypeHelpers';
 import type { TabOptionType } from './routeHelpers';
 import { toTitleExternal } from './routeHelpers';
@@ -223,12 +221,22 @@ export function useAppDocumentContextValues() {
                 setVaryAppDocument1(newVaryAppDocument);
                 let selectedSlideEditing: Slide | null = null;
                 if (newVaryAppDocument !== null) {
-                    if (AppDocument.checkIsThisType(newVaryAppDocument)) {
+                    preloadAttachedBackground(newVaryAppDocument);
+                    if (
+                        AppDocument.checkIsThisType(newVaryAppDocument) &&
+                        newVaryAppDocument.isEditable
+                    ) {
+                        // `getSlides()` here feeds `selectedSlideEditing`, not
+                        // the preload. Do not extend it to the other document
+                        // types: for PDF it decodes every page image, for
+                        // PPTX/DOCX it MD5s the whole file and can trigger a
+                        // synchronous main-process re-export. `isEditable`
+                        // excludes `LyricAppDocument`, which passes the
+                        // `checkIsThisType` test (it extends `AppDocument`) but
+                        // would render the whole song to HTML for an editing
+                        // slide it can never use.
                         const slides = await newVaryAppDocument.getSlides();
-                        preloadAttachedBackground(newVaryAppDocument, slides);
                         selectedSlideEditing = slides[0] ?? null;
-                    } else {
-                        preloadAttachedBackground(newVaryAppDocument);
                     }
                 }
                 setSlide1(selectedSlideEditing);
@@ -384,44 +392,4 @@ export function useAppDocumentContextValues() {
         varyAppDocumentContextValue,
         editingSlideContextValue,
     };
-}
-
-export function useLyricContextValues() {
-    const [lyric, setLyric] = useState<Lyric | null>(null);
-
-    const setLyric1 = useCallback((newLyric: Lyric | null) => {
-        setLyric(newLyric);
-        setSelectedLyric(newLyric);
-    }, []);
-
-    useAppEffectAsync(
-        async (methodContext) => {
-            const lyric = await getSelectedLyric();
-            methodContext.setLyric(lyric);
-        },
-        [],
-        { setLyric },
-    );
-
-    const lyricContextValue = useMemo(() => {
-        return {
-            selectedLyric: lyric,
-            setSelectedLyric: async (newLyric: Lyric | null) => {
-                setLyric1(newLyric);
-            },
-        };
-    }, [lyric, setLyric1]);
-
-    const handleFileDelete = useCallback(
-        (filePath: string) => {
-            if (lyric?.filePath === filePath) {
-                setLyric1(null);
-            }
-        },
-        [lyric, setLyric1],
-    );
-
-    useFileSourceEvents(['delete'], handleFileDelete, [handleFileDelete]);
-
-    return { lyricContextValue };
 }

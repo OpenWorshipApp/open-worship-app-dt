@@ -14,12 +14,10 @@ body {
 }
 
 .app {
-  width: 100vw !important;
-  height: 100vh !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  overflow: hidden;
-  box-sizing: border-box;
+  &:not(.app-floating-widget-portal) {
+    width: 100vw !important;
+    height: 100vh !important;
+  }
 
   .app-caught-hover-pointer {
     cursor: pointer !important;

@@ -20,11 +20,53 @@ export async function applyOnChosenScreens(
     event: any,
     isForceChoosing: boolean,
     apply: (screenManager: ScreenManager) => void | Promise<void>,
+    presetScreenIds: number[] = [],
 ) {
     const screenIds = await ScreenEventHandler.chooseScreenIds(
         event,
         isForceChoosing,
+        presetScreenIds,
     );
+    await applyOnScreenIds(screenIds, apply);
+}
+
+/**
+ * The CHOOSING half on its own — which screens the operator meant, with nothing
+ * done to them.
+ *
+ * For the one caller that has followers but no content: a playlist's
+ * `Keyboard Event` shows nothing itself, so unless it runs the resolution, the
+ * CC elements riding on it are never told where to land (they read the answer off
+ * `captureChosenScreenIds`, and only a resolution publishes one). Going through
+ * `applyOnChosenScreens` with an empty `apply` would do the same thing and then
+ * toast once per closed screen for work it was never going to do.
+ */
+export async function chooseScreenIdsOnEvent(
+    event: any,
+    isForceChoosing = false,
+    presetScreenIds: number[] = [],
+) {
+    return await ScreenEventHandler.chooseScreenIds(
+        event,
+        isForceChoosing,
+        presetScreenIds,
+    );
+}
+
+/**
+ * The doing half above, with the screens already decided.
+ *
+ * What a FOLLOWER uses — a playlist element's CC elements, which must land on
+ * the screens their host resolved to and may not raise a question of their own.
+ * Going back through `applyOnChosenScreens` with those ids would only be safe
+ * while the list is non-empty: an empty one falls straight through to the
+ * selected screens and then to the "which screen?" menu, which is precisely the
+ * second question one click may not ask.
+ */
+export async function applyOnScreenIds(
+    screenIds: number[],
+    apply: (screenManager: ScreenManager) => void | Promise<void>,
+) {
     const applyingList: (void | Promise<void>)[] = [];
     for (const screenId of screenIds) {
         const screenManager = getScreenManagerByScreenId(screenId);
@@ -50,8 +92,23 @@ export async function showDroppedDataOnScreens(
     event: any,
     droppedData: DroppedDataType,
     isForceChoosing = false,
+    presetScreenIds: number[] = [],
 ) {
-    await applyOnChosenScreens(event, isForceChoosing, (screenManager) => {
+    await applyOnChosenScreens(
+        event,
+        isForceChoosing,
+        (screenManager) => {
+            return screenManager.receiveScreenDropped(droppedData);
+        },
+        presetScreenIds,
+    );
+}
+
+export async function showDroppedDataOnScreenIds(
+    screenIds: number[],
+    droppedData: DroppedDataType,
+) {
+    await applyOnScreenIds(screenIds, (screenManager) => {
         return screenManager.receiveScreenDropped(droppedData);
     });
 }

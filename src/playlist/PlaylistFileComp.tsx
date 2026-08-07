@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
-import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import {
+    createMouseEvent,
+    showAppContextMenu,
+} from '../context-menu/appContextMenuHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
@@ -12,7 +15,18 @@ import FileItemHandlerComp from '../others/FileItemHandlerComp';
 import FileReadErrorComp from '../others/FileReadErrorComp';
 import LoadingComp from '../others/LoadingComp';
 import Playlist from './Playlist';
-import { playlistActionList } from './playlistActionHelpers';
+import type {
+    PlaylistActionArmingType,
+    PlaylistActionType,
+} from './playlistActionHelpers';
+import {
+    checkIsPlaylistActionGroup,
+    playlistActionMenuList,
+} from './playlistActionHelpers';
+import {
+    askForPlaylistActionArming,
+    askForPlaylistActionScreenIds,
+} from './playlistActionArmingHelpers';
 import { exportPlaylist } from './playlistArchiveHelpers';
 import { usePlaylistItems } from './playlistItemsHelpers';
 import { checkIsPlaylistFilePathOnScreen } from './playlistOnScreenHelpers';
@@ -21,7 +35,9 @@ import {
     extractDropPayload,
     playlistDraggingStore,
     toPlaylistSettingName,
+    UNSUPPORTED_DROP_PAYLOAD,
 } from './playlistHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
 import {
     setPlaylistPreviewFilePath,
     togglePlaylistPreviewFilePath,
@@ -35,7 +51,14 @@ function PlaylistItemsComp({
 }>) {
     const playlistItems = usePlaylistItems(playlist.filePath);
     if (playlistItems === undefined) {
-        return <LoadingComp />;
+        return (
+            <div
+                style={{ minHeight: '1.5rem' }}
+                className="d-flex align-items-center justify-content-center"
+            >
+                <LoadingComp />
+            </div>
+        );
     }
     if (playlistItems === null) {
         return <FileReadErrorComp />;
@@ -137,6 +160,59 @@ export default function PlaylistFileComp({
     }, []);
     const setIsOpenedRef = useAppCurrentRef(setIsOpened);
     const contextMenuItems = useMemo((): ContextMenuItemType[] => {
+        const genActionMenuItem = (
+            action: PlaylistActionType,
+        ): ContextMenuItemType => {
+            return {
+                childBefore: genContextMenuItemIcon(action.iconName, {
+                    color: action.color,
+                }),
+                menuElement: tran(action.label),
+                onSelect: async () => {
+                    // A run action armed with a NUMBER — or with a time of day,
+                    // or with a SHORTCUT — is asked for it BEFORE the entry
+                    // exists: a clock without one is not a valid entry
+                    // (`PlaylistItem.validate`) and a shortcut must be free
+                    // before the line is written, so a cancelled question must
+                    // add nothing. One armed with something else — a `Jump to`
+                    // takes the CC attached to it afterwards — asks nothing and
+                    // is added straight away.
+                    let arming: PlaylistActionArmingType | undefined;
+                    let screenIds: number[] | undefined;
+                    if (
+                        action.target === 'run' &&
+                        (action.number !== null || action.canBeKeyArmed)
+                    ) {
+                        const answer = await askForPlaylistActionArming(action);
+                        if (answer === null) {
+                            return;
+                        }
+                        arming = answer;
+                    } else if (
+                        action.target === 'screen' &&
+                        action.requiresScreenIds
+                    ) {
+                        // The screen family's half of the same question: a
+                        // `Screen: Show` that named no screen would fall back to
+                        // whatever is selected, which is the one thing it may
+                        // never do. Asked here, so a cancelled answer adds
+                        // nothing.
+                        const answer =
+                            await askForPlaylistActionScreenIds(action);
+                        if (answer === null) {
+                            return;
+                        }
+                        screenIds = answer;
+                    }
+                    const isAdded = await Playlist.getInstance(
+                        filePath,
+                    ).addActionItem(action.id, arming, undefined, screenIds);
+                    if (isAdded) {
+                        setIsOpenedRef.current(true);
+                    }
+                },
+            };
+        };
         return [
             {
                 childBefore: genContextMenuItemIcon('window-stack'),
@@ -157,20 +233,35 @@ export default function PlaylistFileComp({
                     event.stopPropagation();
                     showAppContextMenu(
                         event as MouseEvent,
-                        playlistActionList.map((action) => {
+                        playlistActionMenuList.map((entry) => {
+                            if (!checkIsPlaylistActionGroup(entry)) {
+                                return genActionMenuItem(entry);
+                            }
+                            // A FAMILY, not an action: it adds nothing and opens
+                            // a menu of its own. A chevron says so before it is
+                            // clicked — every other row here writes a line into
+                            // the run sheet.
                             return {
                                 childBefore: genContextMenuItemIcon(
-                                    action.iconName,
-                                    { color: action.color },
+                                    entry.iconName,
+                                    { color: entry.color },
                                 ),
-                                menuElement: tran(action.label),
-                                onSelect: async () => {
-                                    const isAdded = await Playlist.getInstance(
-                                        filePath,
-                                    ).addActionItem(action.id);
-                                    if (isAdded) {
-                                        setIsOpenedRef.current(true);
-                                    }
+                                childAfter:
+                                    genContextMenuItemIcon('chevron-right'),
+                                menuElement: tran(entry.label),
+                                onSelect: (subEvent: any) => {
+                                    subEvent.stopPropagation();
+                                    // The host closes this menu around
+                                    // `onSelect`, so the event is spent by the
+                                    // time the third level opens — its
+                                    // coordinates are kept and a fresh event
+                                    // synthesized at them, exactly as the
+                                    // screen-pin checklist reopens itself.
+                                    const { clientX, clientY } = subEvent;
+                                    showAppContextMenu(
+                                        createMouseEvent(clientX, clientY),
+                                        entry.actionList.map(genActionMenuItem),
+                                    );
                                 },
                             };
                         }),
@@ -197,6 +288,13 @@ export default function PlaylistFileComp({
         }
         const payload = extractDropPayload(event);
         if (payload === null) {
+            return;
+        }
+        if (payload === UNSUPPORTED_DROP_PAYLOAD) {
+            showSimpleToast(
+                tran('Adding Playlist Item'),
+                tran('This item type cannot be added to a playlist'),
+            );
             return;
         }
         const isAdded = await playlistRef.current.addItem(

@@ -27,6 +27,7 @@ import { stopDraggingState } from '../helper/helpers';
 import type BibleItem from './BibleItem';
 import AttachBackgroundIconComp from '../others/AttachBackgroundIconComp';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
+import { exportBible } from './bibleArchiveHelpers';
 
 const LazyRenderBibleItemsComp = lazy(() => {
     return import('./RenderBibleItemsComp');
@@ -102,6 +103,13 @@ function genContextMenu(
                   },
               ]
             : []),
+        {
+            childBefore: genContextMenuItemIcon('file-earmark-arrow-down'),
+            menuElement: tran('Export'),
+            onSelect: () => {
+                exportBible(bible.filePath);
+            },
+        },
         ...(isAttachedBackgroundElement
             ? genRemovingAttachedBackgroundMenu(bible.filePath)
             : []),

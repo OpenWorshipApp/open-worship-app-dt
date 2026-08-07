@@ -6,6 +6,7 @@ import { bringDomToTopView } from '../helper/helpers';
 import { openBackgroundAudioTab } from '../background/backgroundAudioTabHelpers';
 import { backgroundDragTypeList } from './PlaylistItem';
 import type PlaylistItem from './PlaylistItem';
+import { PLAYLIST_ITEM_UUID_ATTR } from './playlistCcHelpers';
 
 function toElementGetter(selector: string) {
     return () => {
@@ -13,7 +14,7 @@ function toElementGetter(selector: string) {
     };
 }
 
-function escapeSelectorValue(value: string) {
+export function escapeSelectorValue(value: string) {
     return (globalThis.CSS?.escape ?? ((raw: string) => raw))(value);
 }
 
@@ -122,4 +123,47 @@ export function notifyPlaylistItemOrigin(playlistItem: PlaylistItem) {
     }
     notifyElementHighlight(elementGetter, { moveToView: bringDomToTopView });
     return true;
+}
+
+// The two surfaces a run sheet is read on. Scoped rather than searched globally
+// so each is answered on its own: the widget may be closed, or open on another
+// sheet, while the tree lists every playlist at once.
+const PLAYLIST_TREE_ROOT_SELECTOR = '.playlist-list';
+const PLAYLIST_PREVIEW_ROOT_SELECTOR = '.app-playlist-preview';
+
+/**
+ * Reveal the element a CC points at, on BOTH surfaces at once.
+ *
+ * What clicking a CC row does — a CC is never presented on its own, so the one
+ * useful thing a click on it can do is take the operator to the line it belongs
+ * to. Both the tree and the floating preview are pointed at, because a run sheet
+ * is read in whichever of the two happens to be open.
+ *
+ * By UUID, so there is nothing to disambiguate: a CC names one line of one sheet,
+ * and the two identical-looking lines that used to make this a guess are two
+ * different uuids. Each surface is asked SYNCHRONOUSLY and only handed to
+ * `notifyElementHighlight` once it has answered — that helper polls for three
+ * seconds when its getter returns null, which is right for
+ * `notifyPlaylistItemOrigin` (it may have to open a panel first) and wrong here:
+ * a closed widget is an answer, not something to wait for.
+ */
+export function notifyPlaylistCcOrigin(ccItem: PlaylistItem) {
+    const { uuid } = ccItem;
+    if (uuid === null) {
+        return;
+    }
+    const selector = `[${PLAYLIST_ITEM_UUID_ATTR}="${escapeSelectorValue(uuid)}"]`;
+    for (const rootSelector of [
+        PLAYLIST_TREE_ROOT_SELECTOR,
+        PLAYLIST_PREVIEW_ROOT_SELECTOR,
+    ]) {
+        const element =
+            document.querySelector(rootSelector)?.querySelector(selector) ??
+            null;
+        if (element !== null) {
+            notifyElementHighlight(() => {
+                return element;
+            });
+        }
+    }
 }

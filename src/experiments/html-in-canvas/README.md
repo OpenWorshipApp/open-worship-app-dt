@@ -31,8 +31,11 @@ Upstream: <https://html-in-canvas.dev/> · <https://github.com/WICG/html-in-canv
   tried, but the **first** run of an animation pattern hitches. Pre-warm before
   the first transition of a service. ✅
 - Functional gap to plan for: **cross-origin iframes draw blank**, which is our
-  `website` and `youtube` canvas-item types — recoverable with a DOM overlay
-  layer driven by the draw matrix (§8.3). ✅
+  `website` and `youtube` canvas-item types — recoverable three ways: drop the
+  frame (resolve the YouTube URL to its direct stream with the `yt-dlp` we
+  already ship and play it in a `<video>`, which the draw _does_ capture),
+  mirror the real player's pixels out of the frame with Element/Region Capture,
+  or keep it in a DOM overlay layer driven by the draw matrix (§8.3). ✅
 
 Verdict: viable and interesting for slide/canvas-item animation, but it is a
 rewrite of the effect layer, not a swap-in. It is also single-vendor and
@@ -105,16 +108,17 @@ Notes:
 
 ### 4.1 Draw constraints
 
-| Situation                                                           | Result                                                                                                     |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Element is a direct child of the canvas                             | draws ✅                                                                                                   |
-| Element is a _grandchild_                                           | `InvalidStateError: Only immediate children of the <canvas> element can be passed to DrawElementImage.` ✅ |
-| `<canvas layoutsubtree>` inside a canvas child                      | `NotSupportedError: Nested canvases are not supported.` ✅                                                 |
-| `display: none` child                                               | `InvalidStateError: No cached paint record for element.` ✅                                                |
-| Drawing before the first rendering update                           | same "No cached paint record" error — **draw from `onpaint` or after a rAF** ✅                            |
-| Child much bigger than the canvas (1920×1080 into a 192×108 canvas) | draws **in full**, all four corners present — no viewport culling of the subtree ✅                        |
-| Drawing after `elementImage.close()`                                | `InvalidStateError: The ElementImage has been closed.` ✅                                                  |
-| Drawing an `ElementImage` into a _different_ canvas                 | `…The source was captured from a different canvas.` — snapshots are bound to their capturing canvas ✅     |
+| Situation                                                           | Result                                                                                                                                                          |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Element is a direct child of the canvas                             | draws ✅                                                                                                                                                        |
+| Element is a _grandchild_                                           | `InvalidStateError: Only immediate children of the <canvas> element can be passed to DrawElementImage.` ✅                                                      |
+| `<canvas layoutsubtree>` inside a canvas child                      | `NotSupportedError: Nested canvases are not supported.` ✅                                                                                                      |
+| `display: none` child                                               | `InvalidStateError: No cached paint record for element.` ✅                                                                                                     |
+| Drawing before the first rendering update                           | same "No cached paint record" error — **draw from `onpaint` or after a rAF** ✅                                                                                 |
+| Child much bigger than the canvas (1920×1080 into a 192×108 canvas) | draws **in full**, all four corners present — no viewport culling of the subtree ✅                                                                             |
+| Drawing after `elementImage.close()`                                | `InvalidStateError: The ElementImage has been closed.` ✅                                                                                                       |
+| Drawing an `ElementImage` into a _different_ canvas                 | `…The source was captured from a different canvas.` — snapshots are bound to their capturing canvas ✅                                                          |
+| Backing store bigger than the CSS box (a hi-dpi canvas)             | the element rasterizes at the **backing/CSS density on its own** — scale slide space from `clientWidth`, not `canvas.width`, or the density is applied twice ✅ |
 
 ### 4.2 The source subtree must be _painted_, not necessarily _visible_
 
@@ -195,6 +199,8 @@ The silent-empty cases are the dangerous ones: no exception, just a blank frame.
 | Same-origin `<iframe>` (`srcdoc`)                                                 | **yes** ✅                                                                                                                                                    |
 | **Cross-origin `<iframe>`**                                                       | **blanked to the parent background, no throw** ✅                                                                                                             |
 | A real YouTube embed (`/embed/<id>?rel=0&enablejsapi=1`)                          | **blank** — the centre pixel of the drawn player read back exactly the colour painted behind it; the canvas is _not_ tainted, `getImageData` keeps working ✅ |
+| The same YouTube video as a **direct stream** in a `<video>` (`yt-dlp -g`)        | **yes** — same slide, same box, real frames in the canvas at the video's own paint rate, and the readback still works with `crossOrigin="anonymous"` ✅       |
+| The YouTube **player itself, mirrored** into a `<video>` (Element/Region Capture) | **yes** — the cross-origin frame's own pixels, drawn in the canvas; needs a `getDisplayMedia` handler in main and a stacking-context target (§8.3) ✅         |
 | Animated GIF                                                                      | ❓ not verified — my generated GIF didn't animate even in the plain `drawImage` control, so the test was inconclusive                                         |
 | System colors/themes, spellcheck marks, visited links, autofill, subpixel AA      | excluded by spec ("read-back-allowed rendering") 📄                                                                                                           |
 
@@ -414,10 +420,110 @@ must be re-measured there before committing.
    path `backdrop-filter` renders correctly inside the subtree, and effect
    opacity lives in `globalAlpha` instead of on the element. Same for the
    `// TODO: make none effect work without animation to prevent flash`.
-3. **Cross-origin content regresses, but there is a mitigation.**
+3. **Cross-origin content regresses, but there are three mitigations.**
    `CanvasItemWebsite` (iframe) and `CanvasItemYouTube` (YouTube embed) are
    cross-origin iframes → they draw as blank holes, silently (measured with a
-   real embed, §4.4). The escape hatch is an **overlay layer**: draw the slide
+   real embed, §4.4).
+
+   For `CanvasItemYouTube` specifically the cheaper fix is to **stop using a
+   frame**: what the draw refuses is the cross-origin _iframe_, not the video.
+   `resolveMediaStreamUrl` (`src/server/appHelpers.ts`) runs the `yt-dlp` we
+   already ship — the media downloader's own binary — with `-g -f b[ext=mp4]/b`
+   to turn a watch URL into its direct muxed stream, and a plain
+   `<video crossOrigin="anonymous">` on that URL draws into the canvas like any
+   local clip, live, readable, at the video's own paint rate. Verified end to
+   end against the real binary (`youtubeDemo.tsx#YouTubeComp`, the
+   "draw for real (yt-dlp)" button). What it does _not_ get you: player chrome,
+   captions, the `SlideYouTubePlayer` `postMessage` protocol, or a URL you can
+   store — the resolved URL expires and is bound to the requesting IP, so it
+   has to be re-resolved per session, which costs a process spawn and a few
+   seconds.
+
+   When the real player must stay but its pixels have to reach the canvas (a
+   live broadcast, captions, chrome), **mirror it out**. A self tab-capture
+   narrowed to the iframe by Element Capture (`RestrictionTarget` +
+   `track.restrictTo`) or Region Capture (`CropTarget` + `track.cropTo`) comes
+   back as an ordinary `MediaStreamTrack`, and that track in a `<video>` draws
+   like any clip. All of it verified live (`youtubeMirrorDemo.tsx`):
+
+   - `getDisplayMedia` is dead in Electron until a handler answers it —
+     `NotSupportedError: Not supported`. `initDisplayMediaHandler`
+     (`electron/displayMediaHelpers.ts`) hands back the requesting frame, which
+     is a **tab** capture (`displaySurface: "browser"`) and the only surface
+     the two narrowing APIs accept. It can hand back that frame's audio too.
+   - **Element Capture fails open.** Its target must form a stacking context;
+     on a bare `<iframe>` `restrictTo` resolves and then quietly keeps mirroring
+     the whole page — same iframe, back to back: bare **2241×1401** (the
+     viewport) vs `isolation: isolate` **1440×810** (the element). Check the
+     track size, don't trust the resolve. ✅
+   - Both APIs narrow **asynchronously**: `getSettings()` on the line after the
+     await still reports the full viewport. Poll for it. ✅
+   - Resolution is capped by the source's on-screen size — the track is the
+     element's CSS box × a pixel ratio the capture picks. At `devicePixelRatio`
+     3 an exactly 480×270 source mirrors at **1440×810** under _both_ APIs, and
+     the track reports its own `screenPixelRatio`. Put the border outside the
+     box and the source is 481.33×271.33, which mirrors at 1446×816 — the ceiling
+     tracks the layout box to the sub-pixel, so `box-sizing: border-box` on the
+     source is worth having. ✅
+   - **That pixel ratio is not a constant, and Region Capture is where it
+     moves.** The same source in the same window has come back at both 3.0x
+     (`1446×816`) and 1.5x (`722×406`) under Region Capture across runs, and a
+     plain non-isolated `<div>` measured 1.5x while an `isolation: isolate`
+     iframe alongside it measured 3.0x. Element Capture has measured full device
+     pixel ratio every time. An earlier revision of this file read the 1.5x
+     sample as a rule and claimed Element Capture is sharper by a fixed factor of
+     2 — it is not a fixed factor. Treat Element Capture as the one that does not
+     surprise you, and read `getSettings()` rather than predicting it. ✅
+   - **The mouse pointer IS captured — while it moves — and there is no knob to
+     turn it off.** The track reports `cursor: "motion"` and means it literally:
+     the pointer is composited into the frames only while in motion, and is
+     absent from them once it stops. Seen directly in the mirror, under **Region
+     Capture**, in a screenshot of the running demo. ✅
+     Beware the measurement trap that sets. A pixel scan taken while the pointer
+     merely _rests_ over the page comes back perfectly clean — 0 non-sheet
+     pixels across 6 frames, ~14.5M pixels, with `body:hover` true throughout —
+     and reads as proof of exclusion. It is not. Only frames sampled _during_
+     `mousemove` say anything, and **CDP cannot generate that motion**: driving
+     `Input.dispatchMouseEvent` (Puppeteer `hover`) across a static, isolated
+     capture target moved the renderer's hit-test but composited nothing — the
+     largest frame-to-frame delta over 410 frames sat at a fixed encoder-noise
+     pixel, nowhere near either hover point. The cursor overlay follows the real
+     OS pointer only, so this question cannot be answered from an agent at all;
+     it needs a hand on the mouse. ✅
+     The `cursor` constraint that used to control this is gone from Chromium
+     150: absent from both `getSupportedConstraints()` and a live track's
+     `getCapabilities()` (`["aspectRatio", "deviceId", "displaySurface",
+"facingMode", "frameRate", "height", "resizeMode", "width"]`),
+     `getDisplayMedia({video: {cursor: 'never'}})` still yields a track
+     reporting `"motion"`, and `applyConstraints({cursor: 'never'})` resolves
+     and leaves `getSettings().cursor` at `"motion"`. The API route is closed. ✅
+   - **Whether Element Capture excludes the pointer where Region Capture
+     includes it is still open.** The spec is silent on the cursor — it says only
+     that frames "consist of information from the target-element and its
+     descendants", and the cursor is not a descendant of anything. Chromium
+     composites it as a capturer-level overlay rather than as page content, which
+     argues it survives the restriction, but that is a reading of the mechanism,
+     not a measurement. ❓ needs a real pointer over the source in each mode
+   - Suppressing the pointer therefore has to be structural, and there is one
+     move that works from inside the page: the capture composites **whatever
+     cursor bitmap the hovered element asks for**, so a hit-testable layer
+     wearing `cursor: none` in front of the player leaves the capturer with
+     nothing to draw. The parent cannot set that inside a cross-origin
+     `<iframe>` — the framed document owns its own cursor — but it does not have
+     to reach inside; it only has to be the thing under the pointer. The layer
+     swallows clicks to the player, which is the price, and it is not a
+     descendant of the target, so Element Capture drops it from the mirror
+     outright. Wired up as the demo's _hide pointer_ toggle. ❓ mechanism sound,
+     unverified for the same reason as above
+     Failing that, keeping the capture source in a window nobody points at (the
+     operator's pointer lives on the presenter) does not depend on any of this. 📄
+   - The source must be genuinely painted — an iframe inside a `layoutsubtree`
+     canvas is laid out but never painted, so it cannot be its own capture
+     source. 📄
+   - DRM titles capture as black frames. 📄
+
+   When the player itself is the requirement and its pixels are not, the escape
+   hatch is an **overlay layer**: draw the slide
    with the item's box left empty, and stack one DOM layer over the canvas that
    is a copy of the slide's coordinate space, holding the live iframes, wearing
    the matrix the draw returned. Verified live — the player is positioned to the
@@ -428,6 +534,7 @@ must be re-measured there before committing.
    player's edge, the layer sits above everything drawn after it, and it must be
    re-synced on every frame of a transition. Slides mixing those item types with
    canvas-space effects still need the DOM path.
+
 4. **Video and local media are fine** — verified live, including paint
    invalidation at the video's own frame rate.
 5. **Previews are bitmap copies, not extra DOM.** A subtree can only be drawn by

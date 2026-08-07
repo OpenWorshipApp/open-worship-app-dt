@@ -16,6 +16,9 @@ import {
 import FileSource from '../helper/FileSource';
 import { unlocking } from '../server/unlockingHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+// From the LEAF, not from `DirSource`: this module is reachable from node-env
+// tests, and `DirSource` drags the browser-only `appProvider` in behind it.
+import { toEditingHistoryFolderPath } from './editingHistoryPathHelpers';
 
 type HistoryMovementType = 'undo' | 'redo' | 'discard';
 const HISTORY_MOVEMENT_TYPES: HistoryMovementType[] = [
@@ -449,6 +452,6 @@ export default class EditingHistoryManager {
     }
 
     static genFolderPath(filePath: string) {
-        return `${filePath}.histories`;
+        return toEditingHistoryFolderPath(filePath);
     }
 }

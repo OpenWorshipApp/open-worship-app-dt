@@ -1,9 +1,9 @@
 import type {
+    OpenLyricAttachment,
     OpenLyricElementMapOptions,
     OpenLyricValueOptions,
 } from 'open-lyric';
 
-import { type SrcData } from '../helper/FileSource';
 import LyricAppDocument, { OPEN_LYRIC_NONE_KEY } from './LyricAppDocument';
 import { type AnyObjectType } from '../helper/typeHelpers';
 import { unlockingCacher } from '../server/unlockingHelpers';
@@ -12,18 +12,23 @@ import {
     DEFAULT_OPEN_LYRIC_FONT_SIZE,
     getOpenLyricFontSetting,
 } from './lyricHelpers';
+import type LyricSlide from './LyricSlide';
+import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
+import CanvasItemYouTube from '../slide-editor/canvas/CanvasItemYouTube';
 
 // Entries hold a whole song's rendered HTML, so keep the window short.
 const cacheManager = new CacheManager<any>(3 * 60); // 3 minutes
 export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocument {
     get basicOpenLyricOptions() {
+        const canvasItemBounds = this.canvasItemBounds;
         const options: OpenLyricElementMapOptions = {
             type: 'html',
             isWithKeyNote: false,
             backgroundAlpha: this.slideBackgroundAlpha,
             theme: this.slideTheme,
-            width: this.slideBounds.width,
-            height: this.slideBounds.height,
+            width: canvasItemBounds.width,
+            height: canvasItemBounds.height,
+            isShowingAttachments: false,
         };
         // `this.openLyric` is only ever assigned by `LyricSlidesPreviewerComp`,
         // so it is null in every renderer where that component has not mounted
@@ -67,6 +72,8 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         return `${prefix}|${keyParts.join('|')}`;
     }
 
+    abstract cleanDataMap(dataMap: AnyObjectType): void;
+
     // `getOpenLyricPreviewer()` re-reads the lyric file and every language
     // module, so it must stay INSIDE the callback: `unlockingCacher` only runs
     // the callback on a cache miss, whereas awaiting the previewer up front made
@@ -76,7 +83,9 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             this.genCacheKey('get-element-map', options),
             async () => {
                 const openLyricPreviewer = await this.getOpenLyricPreviewer();
-                return await openLyricPreviewer.getElementMap(options);
+                const dataMap = await openLyricPreviewer.getElementMap(options);
+                this.cleanDataMap(dataMap);
+                return dataMap;
             },
             cacheManager,
         );
@@ -91,6 +100,44 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             },
             cacheManager,
         );
+    }
+
+    abstract getFirstCanvasItemProps(): Promise<CanvasItemPropsType | null>;
+
+    setCanvasItemBounds(canvasItemProps: CanvasItemPropsType) {
+        const canvasItemBounds = this.canvasItemBounds;
+        Object.assign(canvasItemProps, {
+            top: canvasItemBounds.y,
+            left: canvasItemBounds.x,
+            width: canvasItemBounds.width,
+            height: canvasItemBounds.height,
+        });
+    }
+
+    genSlidesFromAttachments(attachments: OpenLyricAttachment[]) {
+        const displayDim = this.displayDim;
+        const slides: LyricSlide[] = attachments.map((attachment) => {
+            const canvasItemPropsList: CanvasItemPropsType[] = [];
+            const { title, type, link } = attachment;
+            // 'youtube' | 'audio' | 'video' | 'pdf' | 'image' | 'other'
+            if (type === 'youtube') {
+                const canvasItem = CanvasItemYouTube.genCanvasItem(link, 0, 0);
+                const canvasItemJson = canvasItem.toJson();
+                canvasItemPropsList.push(canvasItemJson);
+            } else {
+                console.log(type, link);
+            }
+            canvasItemPropsList.forEach((canvasItemJson) => {
+                this.setCanvasItemBounds(canvasItemJson);
+            });
+            return this.genLyricSlide(
+                -1,
+                title,
+                canvasItemPropsList,
+                displayDim,
+            );
+        });
+        return slides;
     }
 
     async getStageSlides(key?: string) {
@@ -113,19 +160,27 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         const openLyricPreviewer = await this.getOpenLyricPreviewer();
         const structure = openLyricPreviewer.getStructure();
 
-        const [wholeImage, dataMap] = await Promise.all([
-            this.getValue(this.basicOpenLyricOptions),
+        const [canvasItemProps, dataMap] = await Promise.all([
+            this.getFirstCanvasItemProps(),
             this.getElementMap(this.allOpenLyricOptions),
         ]);
         const displayDim = this.displayDim;
         const slides = structure.map((key, i) => {
             return this.genSlide(key, i, dataMap, displayDim);
         });
-        const canvasItemProps = this.genCanvasItemHtmlProps(
-            0,
-            wholeImage as SrcData,
+        const newSlides = this.extendExtraSlide(
+            slides,
+            dataMap,
+            canvasItemProps,
         );
-        return this.extendExtraSlide(slides, dataMap, canvasItemProps);
+        const attachments = openLyricPreviewer.getAttachments();
+        const attachmentSlides = this.genSlidesFromAttachments(attachments);
+        const lastSlideId = newSlides.length - 1;
+        attachmentSlides.forEach((slide, i) => {
+            slide.id = lastSlideId + 1 + i;
+        });
+        newSlides.push(...attachmentSlides);
+        return newSlides;
     }
 
     async getSlides(key?: string) {
@@ -136,16 +191,29 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
         const slidesQuick = await this.getSlidesQuick();
         const slideQuick = slidesQuick.find((slide) => slide.id === id) ?? null;
         if (slideQuick === null) {
-            return null;
+            // The quick list is `structure` alone, so it cannot see the slides
+            // this stage APPENDS — the attachment slides (`genSlidesFromAttachments`)
+            // and whatever `extendExtraSlide` adds, which are numbered after the
+            // structure's own. A playlist stores a lyric slide by id, and an id
+            // from up there missed here and left the entry unreadable: the row
+            // previewed "Fail to read file data" and presented nothing at all.
+            // Falling back to the full list is the slow path on purpose — it
+            // renders the whole song — but it only runs for those few ids.
+            return await this.getSlideByIdSlow(id);
         }
         const key = slideQuick.openLyricKey;
         const slides = await this.getSlides(key);
         const slide =
             slides.find((slide) => slide.openLyricKey === key) ?? null;
         if (slide === null) {
-            return null;
+            return await this.getSlideByIdSlow(id);
         }
         slide.id = slideQuick.id;
         return slide;
+    }
+
+    private async getSlideByIdSlow(id: number) {
+        const slides = await this.getSlides();
+        return slides.find((slide) => slide.id === id) ?? null;
     }
 }

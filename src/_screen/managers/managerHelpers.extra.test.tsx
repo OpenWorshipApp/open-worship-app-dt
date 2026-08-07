@@ -270,8 +270,45 @@ describe('manager helper coverage', () => {
             ),
         ).resolves.toEqual([7, 8]);
 
-        selectedScreenManagerBases = [];
+        // A pinned item beats the selected screens: that is the whole point of
+        // the preset, and it must not open a menu either.
+        showAppContextMenuMock.mockClear();
+        await expect(
+            TestHandler.chooseScreenIds(
+                new MouseEvent('contextmenu') as any,
+                false,
+                [2],
+            ),
+        ).resolves.toEqual([2]);
+        expect(showAppContextMenuMock).not.toHaveBeenCalled();
+
+        // ...but "Show on Screens" (isForceChoosing) still overrides the pin,
+        // so a pinned item can be sent elsewhere once without unpinning.
         allScreenManagerBases = [{ screenId: 3 }, { screenId: 4 }];
+        showAppContextMenuMock.mockImplementationOnce((_event, items) => {
+            queueMicrotask(() => {
+                items?.[0]?.onSelect?.();
+            });
+            return { promiseDone: Promise.resolve() };
+        });
+        await expect(
+            TestHandler.chooseScreenIds(
+                new MouseEvent('contextmenu') as any,
+                true,
+                [2],
+            ),
+        ).resolves.toEqual([3]);
+
+        // An empty preset changes nothing — every existing caller passes none.
+        await expect(
+            TestHandler.chooseScreenIds(
+                new MouseEvent('contextmenu') as any,
+                false,
+                [],
+            ),
+        ).resolves.toEqual([7, 8]);
+
+        selectedScreenManagerBases = [];
         showAppContextMenuMock.mockImplementationOnce((_event, items) => {
             queueMicrotask(() => {
                 items?.[1]?.onSelect?.();

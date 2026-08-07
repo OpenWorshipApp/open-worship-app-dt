@@ -20,16 +20,19 @@ import type { PlaylistActionIdType } from './playlistActionHelpers';
 import { DragTypeEnum } from '../helper/DragInf';
 import {
     checkIsPlaylistPreviewItemExpanded,
-    checkPlaylistPreviewHasChildren,
+    checkIsPlaylistPreviewItemSelected,
+    requestPlaylistPreviewChildEntry,
     clearPlaylistPreviewSelectedItem,
     findNextPlaylistPreviewChildIndex,
     findNextPlaylistPreviewIndex,
     registerPlaylistPreviewChildStepping,
     stepPlaylistPreviewChild,
+    resolvePlaylistPreviewSelectedChildIndex,
     resolvePlaylistPreviewSelectedIndex,
     setAllPlaylistPreviewItemsCollapsed,
     setPlaylistPreviewFilePath,
     setPlaylistPreviewItemCollapsed,
+    setPlaylistPreviewSelectedChild,
     setPlaylistPreviewSelectedItem,
     toPlaylistPreviewItemKey,
 } from './playlistPreviewFloatingHelpers';
@@ -230,6 +233,26 @@ function genDocumentItem() {
     });
 }
 
+function genDisabledSlideItem() {
+    return PlaylistItem.fromJson(PLAYLIST_FILE_PATH, {
+        type: DragTypeEnum.SLIDE,
+        filePath: '/data/documents/aa.owj',
+        id: 5,
+        title: 'aa #5',
+        isDisabled: true,
+    });
+}
+
+function genDisabledDocumentItem() {
+    return PlaylistItem.fromJson(PLAYLIST_FILE_PATH, {
+        type: DragTypeEnum.APP_DOCUMENT,
+        filePath: '/data/documents/cc.owj',
+        data: '/data/documents/cc.owj',
+        title: 'cc',
+        isDisabled: true,
+    });
+}
+
 function genAudioItem() {
     return PlaylistItem.fromJson(PLAYLIST_FILE_PATH, {
         type: DragTypeEnum.BACKGROUND_AUDIO,
@@ -310,6 +333,33 @@ describe('playlist preview next-element stepping', () => {
         ).toBe(0);
     });
 
+    test('only ONE of two identical entries is marked', () => {
+        const playlistItems = [genSlideItem(), genSlideItem()];
+        const itemKey = toPlaylistPreviewItemKey(playlistItems[1]);
+        select(playlistItems, 1);
+        // They share a key, so the position is the only thing telling them
+        // apart — marking both would show two cursors for one run.
+        expect(
+            checkIsPlaylistPreviewItemSelected(PLAYLIST_FILE_PATH, itemKey, 1),
+        ).toBe(true);
+        expect(
+            checkIsPlaylistPreviewItemSelected(PLAYLIST_FILE_PATH, itemKey, 0),
+        ).toBe(false);
+    });
+
+    test('a reorder repairs the stored position, so the mark comes back', () => {
+        const playlistItems = [genSlideItem(), genSlideItem(undefined, 4)];
+        const itemKey = toPlaylistPreviewItemKey(playlistItems[1]);
+        select(playlistItems, 1);
+        resolvePlaylistPreviewSelectedIndex(PLAYLIST_FILE_PATH, [
+            playlistItems[1],
+            playlistItems[0],
+        ]);
+        expect(
+            checkIsPlaylistPreviewItemSelected(PLAYLIST_FILE_PATH, itemKey, 0),
+        ).toBe(true);
+    });
+
     test('a removed element reads as nothing selected', () => {
         const playlistItems = [genSlideItem(), genSlideItem(undefined, 4)];
         select(playlistItems, 1);
@@ -320,7 +370,11 @@ describe('playlist preview next-element stepping', () => {
         ).toBe(-1);
     });
 
-    test('the kinds a screen cannot take are stepped over', () => {
+    test('nothing is stepped over for being unshowable', () => {
+        // PARKED is the only reason to pass a line by. Everything else takes the
+        // cursor — including the two that do nothing when reached (an audio
+        // track, which is played from its own panel, and a damaged entry), so
+        // the operator can see where the run has got to.
         const playlistItems = [
             genSlideItem(),
             genDocumentItem(),
@@ -328,35 +382,28 @@ describe('playlist preview next-element stepping', () => {
             PlaylistItem.fromJsonError(PLAYLIST_FILE_PATH, {}),
             genSlideItem(undefined, 4),
         ];
-        expect(findNextPlaylistPreviewIndex(playlistItems, 0)).toBe(4);
+        expect(findNextPlaylistPreviewIndex(playlistItems, 0)).toBe(1);
+        expect(findNextPlaylistPreviewIndex(playlistItems, 1)).toBe(2);
+        expect(findNextPlaylistPreviewIndex(playlistItems, 2)).toBe(3);
+        expect(findNextPlaylistPreviewIndex(playlistItems, 3)).toBe(4);
     });
 
-    test('a document whose slides are loaded is stopped on, not stepped over', () => {
+    test('a document is stopped on whether or not it is unfolded', () => {
         const playlistItems = [
             genSlideItem(),
             genDocumentItem(),
             genSlideItem(undefined, 4),
         ];
-        const checkIsEnterable = (index: number) => {
-            return index === 1;
-        };
-        expect(
-            findNextPlaylistPreviewIndex(playlistItems, 0, checkIsEnterable),
-        ).toBe(1);
-        // Folded away (nothing registered), it is passed over as before.
-        expect(
-            findNextPlaylistPreviewIndex(playlistItems, 0, () => {
-                return false;
-            }),
-        ).toBe(2);
+        // Being folded is how the operator READS the sheet — it says nothing
+        // about what is in the run, and the landing unfolds it.
+        expect(findNextPlaylistPreviewIndex(playlistItems, 0)).toBe(1);
     });
 
     test('the last element is the end — it does not wrap', () => {
         const playlistItems = [genSlideItem(), genSlideItem(undefined, 4)];
         expect(findNextPlaylistPreviewIndex(playlistItems, 1)).toBe(-1);
-        // ...and neither does a trailing element no screen can take.
         expect(
-            findNextPlaylistPreviewIndex([...playlistItems, genAudioItem()], 1),
+            findNextPlaylistPreviewIndex([...playlistItems, genAudioItem()], 2),
         ).toBe(-1);
     });
 
@@ -383,17 +430,63 @@ describe('playlist preview next-element stepping', () => {
         ).toBe(-1);
     });
 
+    test('a slide the RUN SHEET parked is skipped like a document-disabled one', () => {
+        const varySlides = [
+            { isDisabled: false },
+            { isDisabled: false },
+            { isDisabled: false },
+        ];
+        // The slide itself says nothing — only the playlist knows it is parked.
+        const checkIsDisabled = (index: number) => {
+            return index === 1;
+        };
+        expect(
+            findNextPlaylistPreviewChildIndex(varySlides, 0, checkIsDisabled),
+        ).toBe(2);
+        expect(
+            findNextPlaylistPreviewChildIndex(varySlides, 2, checkIsDisabled),
+        ).toBe(-1);
+    });
+
+    test('a parked element is stepped over', () => {
+        const playlistItems = [
+            genSlideItem(),
+            genDisabledSlideItem(),
+            genSlideItem(undefined, 4),
+        ];
+        expect(findNextPlaylistPreviewIndex(playlistItems, 0)).toBe(2);
+    });
+
+    test('a parked document is stepped over, slides or no slides', () => {
+        const playlistItems = [
+            genSlideItem(),
+            genDisabledDocumentItem(),
+            genSlideItem(undefined, 4),
+        ];
+        // A document is otherwise always stopped on now, so parked is the one
+        // thing still keeping the run off it.
+        expect(findNextPlaylistPreviewIndex(playlistItems, 0)).toBe(2);
+    });
+
+    test('a run sheet parked to its end does not wrap', () => {
+        expect(
+            findNextPlaylistPreviewIndex(
+                [genSlideItem(), genDisabledSlideItem()],
+                0,
+            ),
+        ).toBe(-1);
+    });
+
     test('a registered stepping is reachable and drops on cleanup', () => {
         const stepping = vi.fn().mockReturnValue(true);
         const unregister = registerPlaylistPreviewChildStepping(2, stepping);
-        expect(checkPlaylistPreviewHasChildren(2)).toBe(true);
         const mouseEvent = new MouseEvent('click');
         expect(stepPlaylistPreviewChild(2, mouseEvent, false)).toBe(true);
         expect(stepping).toHaveBeenCalledWith(mouseEvent, false);
         // An element with nothing registered simply has nothing to walk.
         expect(stepPlaylistPreviewChild(3, mouseEvent, false)).toBe(false);
         unregister();
-        expect(checkPlaylistPreviewHasChildren(2)).toBe(false);
+        expect(stepPlaylistPreviewChild(2, mouseEvent, false)).toBe(false);
     });
 
     test('crossing into an element is told apart from walking it', () => {
@@ -413,10 +506,49 @@ describe('playlist preview next-element stepping', () => {
         );
         registerPlaylistPreviewChildStepping(1, newStepping);
         unregisterOld();
-        expect(checkPlaylistPreviewHasChildren(1)).toBe(true);
-        stepPlaylistPreviewChild(1, new MouseEvent('click'), false);
+        expect(
+            stepPlaylistPreviewChild(1, new MouseEvent('click'), false),
+        ).toBe(true);
         expect(oldStepping).not.toHaveBeenCalled();
         expect(newStepping).toHaveBeenCalled();
+    });
+
+    test('an element landed on while still loading is entered when it can be', async () => {
+        const mouseEvent = new MouseEvent('click');
+        requestPlaylistPreviewChildEntry(7, mouseEvent);
+        const stepping = vi.fn().mockReturnValue(true);
+
+        // Nothing happens until the slides actually arrive...
+        expect(stepping).not.toHaveBeenCalled();
+        registerPlaylistPreviewChildStepping(7, stepping);
+        // ...and then a macrotask later, not inside the mount that registered it.
+        expect(stepping).not.toHaveBeenCalled();
+        await new Promise((resolve) => {
+            setTimeout(resolve, 5);
+        });
+        expect(stepping).toHaveBeenCalledWith(mouseEvent, true);
+
+        // Spent: a later re-register must not enter it all over again.
+        const laterStepping = vi.fn().mockReturnValue(true);
+        registerPlaylistPreviewChildStepping(7, laterStepping);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 5);
+        });
+        expect(laterStepping).not.toHaveBeenCalled();
+    });
+
+    test('the run moving on drops an entry that had not happened yet', async () => {
+        const playlistItems = [genSlideItem(), genDocumentItem()];
+        requestPlaylistPreviewChildEntry(8, new MouseEvent('click'));
+        // The operator stepped somewhere else while the document was loading.
+        select(playlistItems, 0);
+
+        const stepping = vi.fn().mockReturnValue(true);
+        registerPlaylistPreviewChildStepping(8, stepping);
+        await new Promise((resolve) => {
+            setTimeout(resolve, 5);
+        });
+        expect(stepping).not.toHaveBeenCalled();
     });
 
     test('closing the widget forgets where the run had got to', () => {
@@ -430,5 +562,150 @@ describe('playlist preview next-element stepping', () => {
                 playlistItems,
             ),
         ).toBe(-1);
+    });
+});
+
+describe('playlist preview slide cursor', () => {
+    const VARY_SLIDES = [
+        { id: 1, isDisabled: false },
+        { id: 5, isDisabled: false },
+        { id: 9, isDisabled: false },
+    ];
+
+    beforeEach(() => {
+        getSettingMock.mockReturnValue(null);
+        clearPlaylistPreviewSelectedItem();
+    });
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    function selectChild(
+        playlistItems: PlaylistItem[],
+        index: number,
+        childId: number,
+    ) {
+        select(playlistItems, index);
+        setPlaylistPreviewSelectedChild(
+            PLAYLIST_FILE_PATH,
+            toPlaylistPreviewItemKey(playlistItems[index]),
+            index,
+            childId,
+        );
+    }
+
+    function resolveChild(
+        playlistItems: PlaylistItem[],
+        index: number,
+        varySlides = VARY_SLIDES,
+    ) {
+        return resolvePlaylistPreviewSelectedChildIndex(
+            PLAYLIST_FILE_PATH,
+            toPlaylistPreviewItemKey(playlistItems[index]),
+            index,
+            varySlides,
+        );
+    }
+
+    test('nothing on the cursor reads as "before the first slide"', () => {
+        const playlistItems = [genDocumentItem()];
+        select(playlistItems, 0);
+        expect(resolveChild(playlistItems, 0)).toBe(-1);
+        expect(findNextPlaylistPreviewChildIndex(VARY_SLIDES, -1)).toBe(0);
+    });
+
+    test('the remembered slide is found again by its id', () => {
+        const playlistItems = [genDocumentItem()];
+        selectChild(playlistItems, 0, 5);
+        expect(resolveChild(playlistItems, 0)).toBe(1);
+    });
+
+    test('a slide inserted ahead of it does not shift the cursor', () => {
+        const playlistItems = [genDocumentItem()];
+        selectChild(playlistItems, 0, 5);
+        expect(
+            resolveChild(playlistItems, 0, [
+                { id: 2, isDisabled: false },
+                ...VARY_SLIDES,
+            ]),
+        ).toBe(2);
+    });
+
+    test('a slide edited away reads as nothing on the cursor', () => {
+        const playlistItems = [genDocumentItem()];
+        selectChild(playlistItems, 0, 5);
+        expect(
+            resolveChild(playlistItems, 0, [
+                { id: 1, isDisabled: false },
+                { id: 9, isDisabled: false },
+            ]),
+        ).toBe(-1);
+    });
+
+    test('moving the run to another element forgets the slide', () => {
+        const playlistItems = [genDocumentItem(), genSlideItem()];
+        selectChild(playlistItems, 0, 9);
+        select(playlistItems, 1);
+        select(playlistItems, 0);
+        expect(resolveChild(playlistItems, 0)).toBe(-1);
+    });
+
+    test('an element the run is not on cannot move the cursor', () => {
+        const playlistItems = [genDocumentItem(), genSlideItem()];
+        selectChild(playlistItems, 0, 5);
+        // A re-render of the other element, while the run sits on the first:
+        // refused, or the cursor would move out from under the operator.
+        setPlaylistPreviewSelectedChild(
+            PLAYLIST_FILE_PATH,
+            toPlaylistPreviewItemKey(playlistItems[1]),
+            1,
+            9,
+        );
+        expect(resolveChild(playlistItems, 0)).toBe(1);
+    });
+
+    test('the second copy of a twice-listed document is not the first', () => {
+        const playlistItems = [genDocumentItem(), genDocumentItem()];
+        selectChild(playlistItems, 0, 5);
+        // Same key, different position — the cursor belongs to the copy that
+        // was clicked, and only that one may answer for it or write to it.
+        expect(resolveChild(playlistItems, 1)).toBe(-1);
+        setPlaylistPreviewSelectedChild(
+            PLAYLIST_FILE_PATH,
+            toPlaylistPreviewItemKey(playlistItems[1]),
+            1,
+            9,
+        );
+        expect(resolveChild(playlistItems, 0)).toBe(1);
+    });
+
+    test('another playlist does not inherit the slide cursor', () => {
+        const playlistItems = [genDocumentItem()];
+        selectChild(playlistItems, 0, 5);
+        expect(
+            resolvePlaylistPreviewSelectedChildIndex(
+                '/data/playlists/pl1.owp',
+                toPlaylistPreviewItemKey(playlistItems[0]),
+                0,
+                VARY_SLIDES,
+            ),
+        ).toBe(-1);
+    });
+
+    test('closing the widget forgets the slide too', () => {
+        const playlistItems = [genDocumentItem()];
+        setPlaylistPreviewFilePath(PLAYLIST_FILE_PATH);
+        selectChild(playlistItems, 0, 5);
+        setPlaylistPreviewFilePath(null);
+        expect(resolveChild(playlistItems, 0)).toBe(-1);
+    });
+
+    test('the cursor is what the next slide is found from', () => {
+        const playlistItems = [genDocumentItem()];
+        selectChild(playlistItems, 0, 5);
+        const fromIndex = resolveChild(playlistItems, 0);
+        expect(findNextPlaylistPreviewChildIndex(VARY_SLIDES, fromIndex)).toBe(
+            2,
+        );
     });
 });

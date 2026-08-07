@@ -33,7 +33,7 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [`app-ellipsis-left` reverses names](app-ellipsis-left-reverses-names.md) — `direction:rtl` makes `12_cv.mp4` display as `cv_12`; the label is not the filename
 - [Vite dep-optimizer 504 → touch config](vite-dep-optimizer-504-restart.md) — a 504 on a `.vite/deps` chunk is a stale optimizer cache; touch vite.config.ts instead of restarting dev
 - [Full view toggle collapses a widget](full-view-toggle-collapses-widget.md) — it persists a zero-height Background panel; several elements share the title "Full view"
-- [Lyrics live in the Documents list](lyric-in-documents-list.md) — refactor23 merged `.owl` into the documents folder/list; the LYRIC dir setting is gone and old lyrics must be moved
+- [Lyrics live in the Documents list](lyric-in-documents-list.md) — merge finished on refactor24: ONE selection, ONE previewer whose body swaps; no `selected-lyric`, no Lyrics tab
 - [appDocumentHelpers ↛ LyricAppDocument](app-document-helpers-lyric-cycle.md) — importing it closes a cycle through `AppDocument` and throws `class extends undefined`
 - [Playlist: references vs presets](playlist-references-vs-presets.md) — slides/documents are file references, backgrounds/bible/foregrounds are verbatim presets; foreground buttons now serialize themselves
 - [Screen window had no app fonts — FIXED](screen-window-has-no-app-fonts.md) — `screen.tsx` skipped `init()` + `getAllLangsAsync` never registered CSS; stage-CSS fixes are inert against open-lyric's inline dump
@@ -42,7 +42,22 @@ only for something NOT captured in CLAUDE.md or the codebase. -->
 - [Playlists panel is no longer dev-only](playlist-panel-no-longer-dev-only.md) — `203d35cc` dropped the `isDev` gate and took the Lyric List's slot; every "dev builds only" note is stale
 - [Playlist on-screen marking design](playlist-onscreen-marking-design.md) — ONE shared subscription + shared debounce for the whole tree; per-row screen hooks hit "Maximum update depth exceeded"
 - [Playlist preview is a run player](playlist-preview-run-player.md) — forward-only focus-gated keys; a document element is walked slide by slide before the run leaves it
-- [Playlist screen actions](playlist-screen-actions.md) — a run sheet can hold things to DO; extend `playlistActionList`, never `acceptedDragTypeList`
+- [Playlist screen pinning](playlist-screen-pinning.md) — `Set Specific Screen` rides `chooseScreenIds`; `isForceChoosing` and a drag deliberately outrank a pin
+- [Playlist screen actions](playlist-screen-actions.md) — a run sheet can hold things to DO; two families now (screen vs run), extend `playlistActionList`, never `acceptedDragTypeList`
+- [Playlist `Screen: Show` / `Screen: Hide`](playlist-screen-show-hide.md) — the only actions that NAME their screens; asked at add time, stored in the ordinary pin, and no ambient fallback ever
+- [Playlist auto next](playlist-auto-next.md) — the run walks itself and jumps; the CURSOR MOVING cancels a timeout and restarts an interval, raw clicks/keys mean nothing; a timeout may also be armed with a time of day
+- [Playlist CC elements](playlist-cc-elements.md) — followers that ride a host's present; copies not links, and they may never raise a second "which screen?" menu
 - [Downloads are protocol-aware now](http-downloads-protocol-aware.md) — only `initHttpRequest` speaks plain http; `httpUtils.request` is still https/443-only
 - [`.owapl.tar.gz` playlist archive](playlist-archive-owapl.md) — bundles the whole documents behind slide references; import resolves every destination folder before writing anything
+- [Single-item archives (`.owadoc` / `.owbible`)](document-archive-owadoc.md) — one document, lyric or bible list + everything attached to it; three layers, add a config not a copy
+- [Whole-data archive (`.owadata.tar`)](data-archive-owadata.md) — File → Export/Import Data; uncompressed + no staging copy on purpose, and the File menu now takes renderer items
 - [Playlist drag & setting rules](playlist-drag-and-settings-rules.md) — `playlistDraggingStore` makes cross-playlist drag a silent no-op; setting names must be sanitized paths
+- [Reader full ref not resolved](reader-full-ref-not-resolved.md) — typing `John 3:16` in the Bible Reader drops the chapter:verse; the five docs that claimed otherwise are now corrected
+- [PDF preload decodes all pages — FIXED](pdf-preload-decodes-all-pages.md) — presenter load turned a selected 88-page PDF into 162MB of bitmap; preload is now file-scoped and sizes come from the PNG header
+- [Dev Electron hardcodes port 3000](dev-electron-hardcodes-port-3000.md) — a stale Vite there gets silently attached while your own dev server sits on :3001
+- [Playlist Keyboard Event](playlist-keyboard-event.md) — the hotkey line: Ctrl/Shift only, unique per sheet, and the ONE run action that resolves screens because its CC elements are its whole payload
+- [`document` at module scope breaks node tests](appprovider-mock-node-env.md) — `appProvider` touches `document` on load, so ANY node-env test that reaches `langHelpers` dies while importing
+- [CacheManager expiry was sliding — FIXED](filesource-cache-sliding-ttl.md) — every read pushed the timestamp forward, so a frequently-read entry never expired; now absolute
+- [A playlist reads its editing-history HEAD](playlist-reads-editing-history-head.md) — not the `.owp`; hand-editing the `.owp` changes nothing the app reads, which once cost a wrong High finding
+- [Playlist lyric attachment slide — FIXED](playlist-lyric-slide-dead-row.md) — `getSlideById` only searched `getSlidesQuick()`, which never lists the appended attachment slides
+- [`/owa-robot-test playlist` is a MODE](owa-robot-test-playlist-mode.md) — tracked 11 phases over 66 run-sheet rows with coverage accounting on, not a focus area that trims the run

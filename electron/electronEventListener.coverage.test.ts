@@ -417,7 +417,12 @@ describe('electronEventListener handlers', () => {
             filePath: '/tmp/a.tar.gz',
             outputDir: '/tmp/out',
         });
-        expect(tarExtract).toHaveBeenCalledWith('/tmp/a.tar.gz', '/tmp/out');
+        expect(tarExtract).toHaveBeenCalledWith(
+            '/tmp/a.tar.gz',
+            '/tmp/out',
+            // Only the whole-data archive asks for specific entries.
+            undefined,
+        );
 
         await call('main:app:convert-to-pdf', {
             officeFilePath: '/tmp/a.docx',

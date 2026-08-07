@@ -134,6 +134,9 @@ vi.mock('../server/fileHelpers', () => ({
     getFileName: (fileFullName: string) => {
         return fileFullName.substring(0, fileFullName.lastIndexOf('.'));
     },
+    getMimetypeExtensions: (mimetypeName: string) => {
+        return mimetypeName === 'lyric' ? ['owl'] : [];
+    },
     getTempPath: () => '/tmp',
     KEY_SEPARATOR: '<id>',
     mimetypeDocx: { extensions: ['.docx'] },
@@ -179,6 +182,7 @@ vi.mock('./AppDocument', () => {
                 appDocumentSetCopiedSlidesMock;
             filePath: string;
             items: any[] = [];
+            isEditable = true;
             duplicateSlides = vi.fn();
             moveSlide = vi.fn();
             updateSlide = vi.fn();
@@ -829,6 +833,18 @@ describe('appDocumentHelpers', () => {
         expect(
             appDocumentHelpers.varyAppDocumentFromFilePath('/docs/file.docx'),
         ).toBe(docxDocument);
+
+        // A lyric resolves only once `LyricAppDocument` has registered itself
+        // — this module cannot import it (the `extends AppDocument` cycle).
+        const lyricAppDocument = { filePath: '/docs/song.owl' } as any;
+        appDocumentHelpers.setLyricAppDocumentGetter(() => lyricAppDocument);
+        expect(
+            appDocumentHelpers.varyAppDocumentFromFilePath('/docs/song.owl'),
+        ).toBe(lyricAppDocument);
+        appDocumentHelpers.setLyricAppDocumentGetter(null);
+        expect(
+            appDocumentHelpers.varyAppDocumentFromFilePath('/docs/song.owl'),
+        ).not.toBe(lyricAppDocument);
     });
 
     test('checks screen state and preloads attached backgrounds', async () => {
@@ -865,30 +881,20 @@ describe('appDocumentHelpers', () => {
             appDocumentHelpers.checkIsVaryAppDocumentOnScreen(appDocument),
         ).resolves.toBe(false);
 
+        // One warm per FILE, never one per slide: the attached-background
+        // cache is keyed by `filePath` alone, so warming it must never force
+        // `getSlides()` — that is a full document parse (for a PDF, a decode
+        // of every page image) whose ids would only be discarded.
         vi.useFakeTimers();
-        await appDocumentHelpers.preloadAttachedBackground(appDocument, [
-            { filePath: '/docs/screen.ows', id: 2 },
-            { filePath: '/docs/screen.ows', id: 3 },
-        ]);
-        vi.runAllTimers();
-        expect(getAttachedBackgroundMock).toHaveBeenNthCalledWith(
-            1,
-            '/docs/screen.ows',
-            2,
-        );
-        expect(getAttachedBackgroundMock).toHaveBeenNthCalledWith(
-            2,
-            '/docs/screen.ows',
-            3,
-        );
-
+        const getSlidesSpy = vi.spyOn(appDocument, 'getSlides');
         getAttachedBackgroundMock.mockClear();
         await appDocumentHelpers.preloadAttachedBackground(appDocument);
         vi.runAllTimers();
+        expect(getAttachedBackgroundMock).toHaveBeenCalledTimes(1);
         expect(getAttachedBackgroundMock).toHaveBeenCalledWith(
             '/docs/screen.ows',
-            2,
         );
+        expect(getSlidesSpy).not.toHaveBeenCalled();
         vi.useRealTimers();
     });
 });

@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { mkdir, readdir, rm, writeFile, tarC, tarX } = vi.hoisted(() => ({
+const { mkdir, readdir, rm, writeFile, tarC, tarX, tarR } = vi.hoisted(() => ({
     mkdir: vi.fn(),
     readdir: vi.fn(),
     rm: vi.fn(),
     writeFile: vi.fn(),
     tarC: vi.fn(async () => undefined),
     tarX: vi.fn(async () => undefined),
+    tarR: vi.fn(async () => undefined),
 }));
 
 vi.mock('electron', async () => {
@@ -16,7 +17,7 @@ vi.mock('electron', async () => {
 
 vi.mock('node:fs/promises', () => ({ mkdir, readdir, rm, writeFile }));
 
-vi.mock('tar', () => ({ c: tarC, x: tarX }));
+vi.mock('tar', () => ({ c: tarC, x: tarX, r: tarR }));
 
 import {
     captureWebScreenShot,
@@ -27,6 +28,7 @@ import {
     previewPrintCurrentWindow,
     printCurrentWindow,
     printHTMLContent,
+    tarAppend,
     tarCreate,
     tarExtract,
 } from './electronHelpers';
@@ -62,6 +64,7 @@ describe('electronHelpers coverage', () => {
         writeFile.mockResolvedValue(undefined);
         tarC.mockResolvedValue(undefined);
         tarX.mockResolvedValue(undefined);
+        tarR.mockResolvedValue(undefined);
         consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         consoleErrorSpy = vi
             .spyOn(console, 'error')
@@ -76,10 +79,20 @@ describe('electronHelpers coverage', () => {
 
     test('extracts and creates tar archives', async () => {
         await tarExtract('/tmp/a.tar.gz', '/tmp/out');
-        expect(tarX).toHaveBeenCalledWith({
-            file: '/tmp/a.tar.gz',
-            cwd: '/tmp/out',
-        });
+        expect(tarX).toHaveBeenCalledWith(
+            {
+                file: '/tmp/a.tar.gz',
+                cwd: '/tmp/out',
+            },
+            undefined,
+        );
+
+        // A whole-data archive names the entries it wants so the rest of a
+        // multi-gigabyte bundle is never unpacked.
+        await tarExtract('/tmp/a.tar', '/tmp/out', ['manifest.json']);
+        expect(tarX).toHaveBeenLastCalledWith(expect.any(Object), [
+            'manifest.json',
+        ]);
 
         await tarCreate('/tmp/in', '/tmp/a.tar.gz', ['one.json'], true);
         expect(tarC).toHaveBeenCalledWith(
@@ -88,6 +101,7 @@ describe('electronHelpers coverage', () => {
                 file: '/tmp/a.tar.gz',
                 gzip: true,
                 portable: true,
+                filter: undefined,
             },
             ['one.json'],
         );
@@ -97,6 +111,30 @@ describe('electronHelpers coverage', () => {
         expect(tarC).toHaveBeenLastCalledWith(
             expect.objectContaining({ gzip: false }),
             ['one.json'],
+        );
+    });
+
+    test('tar-create filters out matching path segments', async () => {
+        await tarCreate('/tmp/in', '/tmp/a.tar', ['documents'], false, [
+            '\\.[^.]+-htmls$',
+        ]);
+        const { filter } = tarC.mock.calls.at(-1)?.[0] as {
+            filter: (entryPath: string) => boolean;
+        };
+
+        // The cache folder and everything under it go; a folder that merely
+        // ends in the same word stays.
+        expect(filter('documents/a.pptx-htmls')).toBe(false);
+        expect(filter('documents/a.pptx-htmls/1.html')).toBe(false);
+        expect(filter('documents/wedding-htmls')).toBe(true);
+        expect(filter('documents/a.ows')).toBe(true);
+    });
+
+    test('appends to an existing tar', async () => {
+        await tarAppend('/tmp/a.tar', '/tmp/staging', ['manifest.json']);
+        expect(tarR).toHaveBeenCalledWith(
+            { file: '/tmp/a.tar', cwd: '/tmp/staging', portable: true },
+            ['manifest.json'],
         );
     });
 

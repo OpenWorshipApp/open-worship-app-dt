@@ -8,11 +8,8 @@ import {
     useAppStateAsync,
     useAppCurrentRef,
 } from '../../helper/appHooks';
-import {
-    defaultDataDirNames,
-    dirSourceSettingNames,
-} from '../../helper/constants';
 import DirSource from '../../helper/DirSource';
+import { dataDirectories } from './dataDirectories';
 import {
     checkShouldSelectChildDir,
     getDefaultDataDir,
@@ -172,49 +169,6 @@ function RenderParentDirectoryComp({
     );
 }
 
-const titleSettingNames = {
-    Documents: [
-        dirSourceSettingNames.APP_DOCUMENT,
-        defaultDataDirNames.APP_DOCUMENT,
-        'bi-file-earmark-text',
-    ],
-    Playlists: [
-        dirSourceSettingNames.PLAYLIST,
-        defaultDataDirNames.PLAYLIST,
-        'bi-collection-play',
-    ],
-    'Background Images': [
-        dirSourceSettingNames.BACKGROUND_IMAGE,
-        defaultDataDirNames.BACKGROUND_IMAGE,
-        'bi-image',
-    ],
-    'Background Videos': [
-        dirSourceSettingNames.BACKGROUND_VIDEO,
-        defaultDataDirNames.BACKGROUND_VIDEO,
-        'bi-film',
-    ],
-    'Background Audios': [
-        dirSourceSettingNames.BACKGROUND_AUDIO,
-        defaultDataDirNames.BACKGROUND_AUDIO,
-        'bi-volume-up',
-    ],
-    'Bible Present': [
-        dirSourceSettingNames.BIBLE_PRESENT,
-        defaultDataDirNames.BIBLE_PRESENT,
-        'bi-book',
-    ],
-    'Bible Reader': [
-        dirSourceSettingNames.BIBLE_READ,
-        defaultDataDirNames.BIBLE_READ,
-        'bi-book-half',
-    ],
-    Notes: [
-        dirSourceSettingNames.BIBLE_NOTES,
-        defaultDataDirNames.BIBLE_NOTES,
-        'bi-journal-text',
-    ],
-};
-
 function RenderChildDirectoriesComp({
     parentDirPath,
 }: Readonly<{ parentDirPath: string }>) {
@@ -239,18 +193,15 @@ function RenderChildDirectoriesComp({
                 </button>
             </SettingCardHeaderComp>
             <div className="card-body">
-                {Object.entries(titleSettingNames).map(
-                    ([
-                        title,
-                        [settingName, defaultFolderName, iconClassName],
-                    ]) => {
+                {dataDirectories.map(
+                    ({ title, settingName, defaultDirName, iconClassName }) => {
                         return (
                             <RenderPathElementComp
                                 key={title}
                                 title={tran(title)}
                                 iconClassName={iconClassName}
                                 settingName={settingName}
-                                defaultFolderName={defaultFolderName}
+                                defaultFolderName={defaultDirName}
                             />
                         );
                     },

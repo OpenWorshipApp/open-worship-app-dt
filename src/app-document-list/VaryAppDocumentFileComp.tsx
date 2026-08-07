@@ -29,8 +29,9 @@ import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/
 import { printAppDocument } from './appDocumentPrintHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
 import { handleAppDocumentDragStart } from '../helper/dragHelpers';
+import { exportAppDocument } from './appDocumentArchiveHelpers';
 
-function genContextMenuItems(
+function genKindContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
 ): ContextMenuItemType[] {
     if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
@@ -125,6 +126,27 @@ function genContextMenuItems(
             },
         });
     }
+    return menuItems;
+}
+
+function genContextMenuItems(
+    varyAppDocument: VaryAppDocumentDynamicType,
+): ContextMenuItemType[] {
+    const menuItems = genKindContextMenuItems(varyAppDocument);
+    if (!varyAppDocument) {
+        return menuItems;
+    }
+    // Every kind can be exported: the bundle copies the document verbatim and
+    // only walks the JSON kinds, so a PDF travels with its attached backgrounds
+    // and color notes exactly as a slide document does.
+    const { filePath } = varyAppDocument;
+    menuItems.push({
+        childBefore: genContextMenuItemIcon('file-earmark-arrow-down'),
+        menuElement: tran('Export'),
+        onSelect: () => {
+            exportAppDocument(filePath);
+        },
+    });
     return menuItems;
 }
 

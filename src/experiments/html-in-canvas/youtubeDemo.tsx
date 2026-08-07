@@ -6,14 +6,18 @@
  * real functional regression if slides are ever rendered through this API.
  *
  * The first demo measures the hole instead of asserting it — it samples the
- * pixel where the player was drawn and reports what actually landed there. The
- * second demo shows the only way to keep a live player on a canvas-rendered
- * slide: leave the player in the DOM, on top of the canvas, and drive its
- * position from the matrix the draw returns.
+ * pixel where the player was drawn and reports what actually landed there — and
+ * then fixes it: the shipped `yt-dlp` resolves the same watch URL to its direct
+ * stream, a plain `<video>` plays that, and a `<video>` is content the draw
+ * *does* capture. Same video, same slide, real pixels in the canvas.
+ *
+ * The second demo is the mitigation for when the player itself has to stay
+ * (chrome, captions, the JS API): leave it in the DOM, on top of the canvas,
+ * and drive its position from the matrix the draw returns.
  */
-import { useRef, useState, type RefObject } from 'react';
+import { useMemo, useRef, useState, type RefObject } from 'react';
 
-import { useAppEffect } from '../../helper/appHooks';
+import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 
 import {
     PREVIEW_WIDTH,
@@ -23,6 +27,7 @@ import {
     COLOR,
     centeredScale,
     getHicContext,
+    runDrawGuarded,
     toErrorMessage,
     withSlideSpace,
 } from './htmlInCanvasHelpers';
@@ -79,6 +84,18 @@ const HOLE_COLOR = { red: 39, green: 174, blue: 96 };
 const HOLE_COLOR_CSS = `rgb(${HOLE_COLOR.red}, ${HOLE_COLOR.green}, ${HOLE_COLOR.blue})`;
 
 /**
+ * `embed` is the player YouTube gives you — and the blank hole. `stream` is the
+ * same video as a direct URL in a plain `<video>`, which the draw captures.
+ */
+type SourceType = 'embed' | 'stream';
+
+/**
+ * A playing video invalidates the subtree at its own frame rate, so the probe
+ * has to be rate-limited on its own or it would `setState` per decoded frame.
+ */
+const PROBE_INTERVAL_MILLISECOND = 500;
+
+/**
  * Mirrors `CanvasItemYouTube.toEmbedUrl`. Kept local on purpose: importing the
  * slide-editor class would drag its whole module graph into an experiment page
  * for one string transform.
@@ -112,6 +129,19 @@ export function toEmbedUrl(url: string) {
 }
 
 type ProbeType = { text: string; isHole: boolean };
+
+/**
+ * A failed `yt-dlp` run reports the whole command line and both copies of
+ * stderr. The status badge wants the reason out of that, not the transcript.
+ */
+function toShortStatus(error: unknown) {
+    const lineList = toErrorMessage(error).split('\n');
+    const line =
+        lineList.find((each) => {
+            return each.startsWith('ERROR:');
+        }) ?? lineList[0];
+    return line.length > 90 ? `${line.slice(0, 90)}…` : line;
+}
 
 /**
  * What colour is at the middle of the drawn player. `getImageData` also answers
@@ -167,6 +197,45 @@ function YouTubeEmbedComp({
     );
 }
 
+/**
+ * The same video, minus the player: a direct stream URL from `yt-dlp` in a
+ * plain `<video>`, which is content the draw captures.
+ *
+ * `crossOrigin` is what keeps `readPixel` answering: it is the only way to be
+ * sure the frames are readable rather than tainting the canvas they land in.
+ * Google serves the stream with `access-control-allow-origin` echoing our own
+ * origin, so asking costs nothing. (A no-CORS element read back fine here too,
+ * but that was a warm media cache, not a guarantee — don't lean on it.)
+ * `muted` is what buys unattended autoplay; the video half of a slide is the
+ * part being measured here, not the audio.
+ */
+function StreamVideoComp({
+    streamUrl,
+    onLoad,
+}: {
+    streamUrl: string;
+    onLoad?: () => void;
+}) {
+    return (
+        <video
+            key={streamUrl}
+            src={streamUrl}
+            crossOrigin="anonymous"
+            autoPlay
+            muted
+            loop
+            playsInline
+            onLoadedData={onLoad}
+            style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block',
+            }}
+        />
+    );
+}
+
 /** Applied on Enter or blur — retyping a URL must not reload on every key. */
 function UrlInputComp({
     defaultUrl,
@@ -211,15 +280,20 @@ function UrlInputComp({
 export function YouTubeComp() {
     const [canvasRef, setCanvasRef] = useHicCanvas();
     const slideRef = useRef<HTMLDivElement | null>(null);
-    const [embedUrl, setEmbedUrl] = useState(() => {
-        return toEmbedUrl(DEFAULT_URL);
-    });
+    const lastProbeRef = useRef(0);
+    const [pageUrl, setPageUrl] = useState(DEFAULT_URL);
+    const [sourceType, setSourceType] = useState<SourceType>('embed');
+    const [streamUrl, setStreamUrl] = useState<string | null>(null);
+    const [status, setStatus] = useState('source: embed');
     const [loadCount, setLoadCount] = useState(0);
     const [isControlShown, setIsControlShown] = useState(false);
     const [probe, setProbe] = useState<ProbeType | null>(null);
     const [paintCount, paintCountRef] = useThrottledCounter();
+    const embedUrl = useMemo(() => {
+        return toEmbedUrl(pageUrl);
+    }, [pageUrl]);
 
-    const draw = () => {
+    const draw = (isProbing: boolean) => {
         const canvas = canvasRef.current;
         const context = getHicContext(canvas);
         if (canvas === null || context === null || slideRef.current === null) {
@@ -230,6 +304,9 @@ export function YouTubeComp() {
         withSlideSpace(context, canvas, () => {
             context.drawElementImage(slide, 0, 0);
         });
+        if (!isProbing) {
+            return;
+        }
         const scale = canvas.width / SLIDE_WIDTH;
         setProbe(
             readPixel(
@@ -239,10 +316,14 @@ export function YouTubeComp() {
             ),
         );
     };
+    const drawRef = useAppCurrentRef(draw);
+    const sourceTypeRef = useAppCurrentRef(sourceType);
 
     // The player loads asynchronously, so the mount-time draw says nothing.
     // Redrawing on the frame's `load` is what makes the reading honest.
-    useAfterRenderingUpdate(draw, [embedUrl, loadCount]);
+    useAfterRenderingUpdate(() => {
+        draw(true);
+    }, [embedUrl, streamUrl, sourceType, loadCount]);
 
     useAppEffect(() => {
         const canvas = canvasRef.current;
@@ -251,12 +332,69 @@ export function YouTubeComp() {
         }
         canvas.onpaint = () => {
             paintCountRef.current += 1;
+            // An embed never paints — the frame is excluded from the draw, so
+            // nothing about it can invalidate it. A playing `<video>` does, at
+            // its own frame rate, and that event is the only clock the drawn
+            // copy of the slide gets.
+            if (sourceTypeRef.current !== 'stream') {
+                return;
+            }
+            const now = performance.now();
+            const isProbing =
+                now - lastProbeRef.current > PROBE_INTERVAL_MILLISECOND;
+            if (isProbing) {
+                lastProbeRef.current = now;
+            }
+            runDrawGuarded(() => {
+                drawRef.current(isProbing);
+            });
         };
         canvas.requestPaint();
         return () => {
             canvas.onpaint = null;
         };
     }, []);
+
+    const applyUrl = (url: string) => {
+        if (url === pageUrl) {
+            return;
+        }
+        // The resolved stream belongs to the old URL, so it goes with it.
+        setPageUrl(url);
+        setStreamUrl(null);
+        setSourceType('embed');
+        setStatus('source: embed');
+    };
+
+    const resolveStream = async () => {
+        setStatus('yt-dlp: resolving…');
+        try {
+            // Imported here rather than at the top so opening the playground
+            // does not pull the app's server helpers in behind it.
+            const { resolveMediaStreamUrl } =
+                await import('../../server/appHelpers');
+            const resolvedUrl = await resolveMediaStreamUrl(pageUrl);
+            setStreamUrl(resolvedUrl);
+            setSourceType('stream');
+            setStatus('source: yt-dlp stream');
+        } catch (error) {
+            setStatus(toShortStatus(error));
+        }
+    };
+
+    const toggleSource = () => {
+        if (sourceType === 'stream') {
+            setSourceType('embed');
+            setStatus('source: embed');
+            return;
+        }
+        if (streamUrl !== null) {
+            setSourceType('stream');
+            setStatus('source: yt-dlp stream');
+            return;
+        }
+        void resolveStream();
+    };
 
     return (
         <DemoFrameComp
@@ -265,17 +403,28 @@ export function YouTubeComp() {
                 'cross-origin, so the draw leaves the parent background where ' +
                 'the video should be — no error, no warning. The probe reads ' +
                 'the pixel at the middle of the player instead of taking my ' +
-                'word for it.'
+                'word for it. Then switch the source: the shipped yt-dlp ' +
+                'resolves the same URL to its direct stream, a plain <video> ' +
+                'plays it, and the same draw now lands real video pixels.'
             }
             controls={
                 <>
-                    <UrlInputComp
-                        defaultUrl={DEFAULT_URL}
-                        onApply={(url) => {
-                            setEmbedUrl(toEmbedUrl(url));
+                    <UrlInputComp defaultUrl={DEFAULT_URL} onApply={applyUrl} />
+                    <ButtonComp
+                        label="Redraw + probe"
+                        onClick={() => {
+                            draw(true);
                         }}
                     />
-                    <ButtonComp label="Redraw + probe" onClick={draw} />
+                    <ButtonComp
+                        label={
+                            sourceType === 'stream'
+                                ? 'back to the embed'
+                                : 'draw for real (yt-dlp)'
+                        }
+                        onClick={toggleSource}
+                        isActive={sourceType === 'stream'}
+                    />
                     <ButtonComp
                         label={
                             isControlShown
@@ -288,6 +437,7 @@ export function YouTubeComp() {
                         isActive={isControlShown}
                     />
                     <BadgeComp label={`paints: ${paintCount}`} />
+                    <BadgeComp label={status} />
                     {probe === null ? null : (
                         <BadgeComp
                             label={probe.isHole ? 'blank hole' : 'video pixels'}
@@ -307,6 +457,25 @@ export function YouTubeComp() {
                     attempt:
                     <code> getImageData</code> keeps working, which is the whole
                     point of excluding the content in the first place.
+                    <br />
+                    <br />
+                    <strong>Drawing it for real:</strong> what the draw refuses
+                    is the cross-origin <em>frame</em>, not the video. The
+                    button runs the <code>yt-dlp</code> we already ship (
+                    <code>resolveMediaStreamUrl</code>, the same binary as the
+                    media downloader) to turn the watch URL into its direct
+                    stream and hands that to an ordinary{' '}
+                    <code>&lt;video&gt;</code> in the same box — content the
+                    draw captures at the video's own frame rate. The element
+                    asks for CORS (
+                    <code>crossOrigin=&quot;anonymous&quot;</code>) and Google
+                    echoes our origin back on the stream, so the canvas the
+                    frames land in stays readable and the probe can still
+                    answer. Costs: the URL is short-lived and IP-bound,
+                    resolving it spawns a process and takes seconds, and you get
+                    the video only — no player chrome, no captions, no{' '}
+                    <code>SlideYouTubePlayer</code> protocol. When those matter,
+                    the overlay below is the answer instead.
                 </>
             }
         >
@@ -342,14 +511,26 @@ export function YouTubeComp() {
                                     background: HOLE_COLOR_CSS,
                                 }}
                             >
-                                <YouTubeEmbedComp
-                                    embedUrl={embedUrl}
-                                    onLoad={() => {
-                                        setLoadCount((count) => {
-                                            return count + 1;
-                                        });
-                                    }}
-                                />
+                                {sourceType === 'stream' &&
+                                streamUrl !== null ? (
+                                    <StreamVideoComp
+                                        streamUrl={streamUrl}
+                                        onLoad={() => {
+                                            setLoadCount((count) => {
+                                                return count + 1;
+                                            });
+                                        }}
+                                    />
+                                ) : (
+                                    <YouTubeEmbedComp
+                                        embedUrl={embedUrl}
+                                        onLoad={() => {
+                                            setLoadCount((count) => {
+                                                return count + 1;
+                                            });
+                                        }}
+                                    />
+                                )}
                             </div>
                         </SlideComp>
                     </canvas>

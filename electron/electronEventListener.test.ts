@@ -215,6 +215,8 @@ describe('electronEventListener', () => {
             '/archives/item.owabn.tar.gz',
             ['manifest.json', 'note-item.json'],
             true,
+            // Only the whole-data archive filters entries out.
+            undefined,
         );
         expect(sender.send).toHaveBeenCalledWith('reply:tar-create', undefined);
     });

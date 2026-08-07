@@ -28,6 +28,7 @@ export type CustomMenuItemType = {
 } & MenuItemConstructorOptions;
 export type CustomMenusDataType = {
     tools?: CustomMenuItemType[];
+    file?: CustomMenuItemType[];
 };
 
 function parseEnvContent(content: string) {
@@ -97,25 +98,77 @@ export const messageChannels = {
     openAboutPage: 'main:app:open-about-page',
 };
 
-export async function tarExtract(filePath: string, outputDir: string) {
+/**
+ * `entries` unpacks only those paths. A data archive can hold gigabytes of
+ * media across several folders, and its manifest has to be read BEFORE the user
+ * picks which of them to restore — so unpacking the whole thing to answer that
+ * question would be minutes of I/O thrown away.
+ */
+export async function tarExtract(
+    filePath: string,
+    outputDir: string,
+    entries?: string[],
+) {
     const { x: tarX } = await import('tar');
-    return await (tarX as any)({ file: filePath, cwd: outputDir });
+    return await (tarX as any)({ file: filePath, cwd: outputDir }, entries);
 }
 
+/**
+ * `excludeNamePatterns` are regex sources tested against each path SEGMENT, so
+ * a matching folder takes everything under it out of the archive too. Used to
+ * keep the regenerable per-document caches (`<doc>.histories`,
+ * `<doc>.pdf-images`, `<doc>.pptx-htmls`, …) out of a data archive: they are
+ * rebuilt on demand and together can dwarf the documents themselves.
+ */
 export async function tarCreate(
     inputDir: string,
     outputFilePath: string,
     files: string[],
     isGzip = false,
+    excludeNamePatterns?: string[],
 ) {
     const { c: tarC } = await import('tar');
+    const excludeRegexes = (excludeNamePatterns ?? []).map((pattern) => {
+        return new RegExp(pattern);
+    });
+    const filter =
+        excludeRegexes.length === 0
+            ? undefined
+            : (entryPath: string) => {
+                  // tar hands over `/`-separated paths on every platform.
+                  return !entryPath.split('/').some((segment) => {
+                      return excludeRegexes.some((regex) => {
+                          return regex.test(segment);
+                      });
+                  });
+              };
     return await (tarC as any)(
         {
             cwd: inputDir,
             file: outputFilePath,
             gzip: isGzip,
             portable: true,
+            filter,
         },
+        files,
+    );
+}
+
+/**
+ * Append to an EXISTING uncompressed tar. A data archive is written straight
+ * from the user's folders (no staging copy of gigabytes), which means its `cwd`
+ * is their data directory and the manifest cannot be one of those entries — so
+ * the manifest is appended afterwards from a temp dir. Only works on a plain
+ * `.tar`; that is why a data archive is not gzipped (its media already is).
+ */
+export async function tarAppend(
+    archiveFilePath: string,
+    inputDir: string,
+    files: string[],
+) {
+    const { r: tarR } = await import('tar');
+    return await (tarR as any)(
+        { file: archiveFilePath, cwd: inputDir, portable: true },
         files,
     );
 }

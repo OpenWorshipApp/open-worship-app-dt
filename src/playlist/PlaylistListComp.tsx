@@ -5,7 +5,10 @@ import { useCallback } from 'react';
 import PlaylistFileComp from './PlaylistFileComp';
 import FileListHandlerComp from '../others/FileListHandlerComp';
 import Playlist from './Playlist';
-import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
+import {
+    useFileSourceEvents,
+    useGenDirSourceReload,
+} from '../helper/dirSourceHelpers';
 import {
     defaultDataDirNames,
     dirSourceSettingNames,
@@ -22,6 +25,7 @@ import {
     importDroppedPlaylistArchive,
     selectAndImportPlaylistArchive,
 } from './playlistArchiveHelpers';
+import { removePlaylistSettings } from './playlistHelpers';
 import { checkIsAnyPlaylistOnScreen } from './playlistOnScreenHelpers';
 import PlaylistPreviewFloatingComp from './PlaylistPreviewFloatingComp';
 
@@ -66,6 +70,16 @@ function handleDroppedFileTaking(file: DroppedFileType) {
 
 export default function PlaylistListComp() {
     const dirSource = useGenDirSourceReload(dirSourceSettingNames.PLAYLIST);
+    // Subscribed once for the whole panel rather than per row: the row that owns
+    // the deleted file is unmounting at exactly the moment the event fires, so a
+    // per-row listener is the one listener that cannot be relied on to run.
+    const handleFileDeleting = useCallback((filePath: string) => {
+        if (typeof filePath !== 'string' || !filePath.endsWith('.owp')) {
+            return;
+        }
+        removePlaylistSettings(filePath);
+    }, []);
+    useFileSourceEvents(['delete'], handleFileDeleting, [handleFileDeleting]);
     const handleBodyRendering = useCallback((filePaths: string[]) => {
         return (
             <>

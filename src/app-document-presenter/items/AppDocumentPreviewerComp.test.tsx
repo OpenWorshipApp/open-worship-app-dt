@@ -19,6 +19,7 @@ function setNativeInputValue(input: HTMLInputElement, value: string) {
 }
 
 vi.mock('../../app-document-list/appDocumentHelpers', () => ({
+    checkIsLyricFilePath: (filePath: string) => filePath.endsWith('.owl'),
     SelectedVaryAppDocumentContext,
     VaryAppDocumentContext,
     useVaryAppDocumentContext: () => {
@@ -214,5 +215,38 @@ describe('AppDocumentPreviewerComp', () => {
         expect(container.querySelector('.bi-record-circle')).not.toBeNull();
         expect(container.querySelector('input[type="color"]')).not.toBeNull();
         expect(container.textContent).toContain('On Screen Width:');
+    });
+
+    test('swaps in the lyric body for a lyric, keeping the footer', async () => {
+        const { default: AppDocumentPreviewerComp } =
+            await import('./AppDocumentPreviewerComp');
+
+        await act(async () => {
+            root.render(
+                <SelectedVaryAppDocumentContext.Provider
+                    value={{
+                        selectedVaryAppDocument: {
+                            filePath: '/slides/song.owl',
+                            fileSource: { fullName: 'song.owl' },
+                            isEditable: false,
+                        },
+                        setSelectedVaryAppDocument: vi.fn(),
+                    }}
+                >
+                    <AppDocumentPreviewerComp />
+                </SelectedVaryAppDocumentContext.Provider>,
+            );
+        });
+
+        // The slide list is what a non-lyric document renders here; a lyric
+        // must not get it, but it keeps the previewer's shared footer.
+        expect(
+            container.querySelector('[data-testid="vary-slides-previewer"]'),
+        ).toBeNull();
+        expect(
+            container.querySelector('[data-testid="app-document-footer"]'),
+        ).not.toBeNull();
+        // The lyric body is lazy, so only its suspense fallback is up yet.
+        expect(container.querySelector('.card-body')).not.toBeNull();
     });
 });

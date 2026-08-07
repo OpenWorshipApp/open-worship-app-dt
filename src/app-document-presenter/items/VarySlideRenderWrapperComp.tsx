@@ -5,6 +5,7 @@ import PdfSlideRenderComp from './PdfSlideRenderComp';
 import PptxSlideRenderComp from './PptxSlideRenderComp';
 import DocxSlideRenderComp from './DocxSlideRenderComp';
 import { handleVarySlideSelecting } from './varyAppDocumentHelpers';
+import { usePresetScreenIds } from '../../_screen/managers/screenChoosingHelpers';
 import { useSelectedEditingSlideSetterContext } from '../../app-document-list/appDocumentHelpers';
 import PdfSlide from '../../app-document-list/PdfSlide';
 import PptxSlide from '../../app-document-list/PptxSlide';
@@ -20,6 +21,7 @@ function selectVarySlide(
         index,
         varySlide,
         setVarySlides,
+        presetScreenIds,
     }: {
         index: number;
         varySlide: VarySlideType;
@@ -27,6 +29,7 @@ function selectVarySlide(
             newSlide: Slide | null,
             controlType?: KeyboardControlType,
         ) => OptionalPromise<void>;
+        presetScreenIds: number[];
     },
     event: MouseEvent,
 ) {
@@ -48,6 +51,7 @@ function selectVarySlide(
                 }
                 setVarySlides(selectedVarySlide, controlType);
             },
+            presetScreenIds,
         );
     }, 0);
 }
@@ -63,6 +67,10 @@ export default function VarySlideRenderWrapperComp({
 }>) {
     const setSelectedVarySlide = useSelectedEditingSlideSetterContext();
     const setSelectedVarySlideRef = useAppCurrentRef(setSelectedVarySlide);
+    // Empty everywhere but inside something that has already decided which
+    // screens its content belongs on (a playlist entry pinned to a screen).
+    const presetScreenIds = usePresetScreenIds();
+    const presetScreenIdsRef = useAppCurrentRef(presetScreenIds);
     const handleClicking = useCallback(
         (
             event: MouseEvent<HTMLDivElement>,
@@ -74,6 +82,7 @@ export default function VarySlideRenderWrapperComp({
                     index,
                     varySlide,
                     setVarySlides: setSelectedVarySlideRef.current,
+                    presetScreenIds: presetScreenIdsRef.current,
                 },
                 event,
             );

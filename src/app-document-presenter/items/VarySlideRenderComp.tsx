@@ -321,9 +321,12 @@ export default function VarySlideRenderComp({
     return (
         <div
             className={
-                `${APP_DOCUMENT_ITEM_CLASS} card app-caught-hover-pointer` +
+                `${APP_DOCUMENT_ITEM_CLASS} card ` +
                 ' app-overflow-hidden' +
-                ` ${presenterClassName} ${activeClassName} ${holdingClassName}`
+                ` ${presenterClassName} ${activeClassName} ${holdingClassName}` +
+                (varySlide.isDisabled
+                    ? ' disabled'
+                    : ' app-caught-hover-pointer')
             }
             title={
                 varySlide.isDisabled
@@ -334,7 +337,6 @@ export default function VarySlideRenderComp({
                 width: `${width}px`,
                 ...(varySlide.isDisabled
                     ? {
-                          opacity: 0.5,
                           // Editable slides must keep pointer events so the
                           // context menu can re-enable them; file-based
                           // slides (e.g. pptx) cannot be re-enabled in-app.
@@ -347,7 +349,7 @@ export default function VarySlideRenderComp({
             data-vary-app-document-item-id={varySlide.id}
             data-scroll-container-selector={`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`}
             data-touch-drag-label={varySlide.name || `#${index + 1}`}
-            draggable
+            draggable={!varySlide.isDisabled}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDataDropping}

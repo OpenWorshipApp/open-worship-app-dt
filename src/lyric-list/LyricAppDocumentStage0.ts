@@ -1,5 +1,6 @@
 import { type OpenLyricElementMapOptions } from 'open-lyric';
 import LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
+import { type AnyObjectType } from '../helper/typeHelpers';
 
 export default class LyricAppDocumentStage0 extends LyricAppDocumentStageAbstract {
     get stageOpenLyricOptions() {
@@ -38,5 +39,18 @@ export default class LyricAppDocumentStage0 extends LyricAppDocumentStageAbstrac
         return this._getInstance(filePath, () => {
             return new this(filePath);
         });
+    }
+
+    async getFirstCanvasItemProps() {
+        return null;
+    }
+
+    cleanDataMap(dataMap: AnyObjectType) {
+        const keys = Object.keys(dataMap);
+        for (const key of keys) {
+            if (key.toLocaleLowerCase().startsWith('note')) {
+                delete dataMap[key];
+            }
+        }
     }
 }

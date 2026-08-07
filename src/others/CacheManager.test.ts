@@ -48,6 +48,24 @@ describe('CacheManager', () => {
         cache.stopCleanup();
     });
 
+    test('expiry is absolute: reading does not extend an entry lifetime', () => {
+        const cache = new CacheManager<number>(2);
+
+        cache.setSync('alpha', 1);
+        // Read it more often than the TTL. A sliding expiry would keep this
+        // entry alive for ever, which is what let the playlist tree serve a
+        // stale `.owp` through fs.watch, Reload and a full window reload.
+        for (let index = 0; index < 5; index++) {
+            vi.advanceTimersByTime(1000);
+            cache.getSync('alpha');
+        }
+
+        expect(cache.getSync('alpha')).toBeNull();
+        expect(cache.hasSync('alpha')).toBe(false);
+
+        cache.stopCleanup();
+    });
+
     test('uses unlocking for async operations and clears values', async () => {
         const cache = new CacheManager<string>(10);
 

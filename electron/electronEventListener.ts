@@ -18,6 +18,7 @@ import {
     messageChannels,
     previewPrintCurrentWindow,
     printHTMLContent,
+    tarAppend,
     tarCreate,
     tarExtract,
 } from './electronHelpers';
@@ -319,8 +320,8 @@ export function initEventOther(appController: ElectronAppController) {
     onAsync(
         ipcMain,
         'main:app:tar-extract',
-        (data: { filePath: string; outputDir: string }) => {
-            return tarExtract(data.filePath, data.outputDir);
+        (data: { filePath: string; outputDir: string; entries?: string[] }) => {
+            return tarExtract(data.filePath, data.outputDir, data.entries);
         },
     );
 
@@ -332,13 +333,27 @@ export function initEventOther(appController: ElectronAppController) {
             outputFilePath: string;
             files: string[];
             isGzip?: boolean;
+            excludeNamePatterns?: string[];
         }) => {
             return tarCreate(
                 data.inputDir,
                 data.outputFilePath,
                 data.files,
                 data.isGzip,
+                data.excludeNamePatterns,
             );
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:tar-append',
+        (data: {
+            archiveFilePath: string;
+            inputDir: string;
+            files: string[];
+        }) => {
+            return tarAppend(data.archiveFilePath, data.inputDir, data.files);
         },
     );
 

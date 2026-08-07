@@ -515,7 +515,14 @@ describe('VarySlideRenderComp', () => {
         ) as HTMLDivElement | null;
 
         expect(item?.getAttribute('title')).toBe('This slide is disabled');
-        expect(item?.style.opacity).toBe('0.5');
+        // The dimming is the `disabled` CLASS now, not an inline opacity —
+        // asserted as the class because jsdom applies no stylesheet.
+        expect(item?.classList.contains('disabled')).toBe(true);
+        // And a parked card wears neither the pointer cursor nor a drag handle.
+        expect(item?.classList.contains('app-caught-hover-pointer')).toBe(
+            false,
+        );
+        expect(item?.getAttribute('draggable')).toBe('false');
         expect(item?.style.pointerEvents).toBe('none');
         expect(
             container.querySelector('[data-testid="screen-icon"]'),

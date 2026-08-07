@@ -13,6 +13,7 @@ const initEventOther = vi.fn();
 const initEventScreen = vi.fn();
 const initMenu = vi.fn();
 const initDevtools = vi.fn();
+const initDisplayMediaHandler = vi.fn();
 const getInstance = vi.fn(() => ({ id: 'app-controller' }));
 
 vi.mock('./fsServe', () => ({
@@ -30,6 +31,7 @@ vi.mock('./electronEventListener', () => ({
 
 vi.mock('./electronMenu', () => ({ initMenu }));
 vi.mock('./devtools', () => ({ initDevtools }));
+vi.mock('./displayMediaHelpers', () => ({ initDisplayMediaHandler }));
 vi.mock('./ElectronAppController', () => ({
     default: {
         getInstance,
@@ -47,6 +49,7 @@ describe('electron index', () => {
         initEventScreen.mockClear();
         initMenu.mockClear();
         initDevtools.mockClear();
+        initDisplayMediaHandler.mockClear();
         getInstance.mockClear();
     });
 
@@ -83,6 +86,7 @@ describe('electron index', () => {
         );
         expect(sweepStalePrintPreviewFiles).toHaveBeenCalledTimes(1);
         expect(initCustomSchemeHandler).toHaveBeenCalledTimes(1);
+        expect(initDisplayMediaHandler).toHaveBeenCalledTimes(1);
         expect(getInstance).toHaveBeenCalledTimes(1);
         expect(initMenu).toHaveBeenCalledWith({ id: 'app-controller' });
         expect(initDevtools).toHaveBeenCalledWith({ id: 'app-controller' });

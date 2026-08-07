@@ -6,11 +6,9 @@ import ScreenAppComp from './_screen/ScreenAppComp';
 import appProvider from './server/appProvider';
 import {
     addDomChangeEventListener,
-    checkIsZoomed,
     getParamKeyValue,
     removeDomTitle,
 } from './helper/domHelpers';
-import { appLog } from './helper/loggerHelpers';
 import { getReactRoot } from './others/rootHelpers';
 import { initAllLangCss } from './lang/langHelpers';
 
@@ -46,7 +44,6 @@ function main() {
 
     document.body.style.backgroundColor = 'transparent';
 
-    appLog('Is zoom', checkIsZoomed());
     window.addEventListener('resize', () => {
         appProvider.reload();
     });

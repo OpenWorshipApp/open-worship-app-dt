@@ -1,4 +1,5 @@
 import AppDocument from '../app-document-list/AppDocument';
+import { setLyricAppDocumentGetter } from '../app-document-list/appDocumentHelpers';
 import type Slide from '../app-document-list/Slide';
 import { getDefaultScreenDisplay } from '../_screen/managers/screenHelpers';
 import type { MimetypeNameType } from '../server/fileHelpers';
@@ -15,8 +16,8 @@ import {
 } from '../slide-editor/canvas/CanvasItemHtml';
 import { type SrcData } from '../helper/FileSource';
 import { type CanvasItemImagePropsType } from '../slide-editor/canvas/CanvasItemImage';
-import { initOpenLyric } from './lyricHelpers';
 import { type OpenLyric } from 'open-lyric';
+import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
 
 export const OPEN_LYRIC_NONE_KEY = 'None';
 
@@ -35,11 +36,11 @@ export default class LyricAppDocument extends AppDocument {
         return { width: display.bounds.width, height: display.bounds.height };
     }
 
-    get slideBounds() {
+    get canvasItemBounds() {
         const { width: displayWidth, height: displayHeight } = this.displayDim;
         const padding = (displayWidth * this.slidePaddingPercentage) / 100;
-        const x = padding;
-        const y = (displayHeight * this.slidePaddingPercentage) / 100;
+        const x = Math.round(padding);
+        const y = Math.round(padding);
         const width = Math.round(displayWidth - padding * 2);
         const height = Math.round(displayHeight - padding * 2);
         return {
@@ -51,14 +52,14 @@ export default class LyricAppDocument extends AppDocument {
     }
 
     genCanvasItemImageProps(id: number, srcData: SrcData) {
-        const slideBounds = this.slideBounds;
+        const canvasItemBounds = this.canvasItemBounds;
         const canvasItemProps: CanvasItemImagePropsType = {
             id,
-            top: slideBounds.y,
-            left: slideBounds.x,
+            top: canvasItemBounds.y,
+            left: canvasItemBounds.x,
             rotate: 0,
-            width: slideBounds.width,
-            height: slideBounds.height,
+            width: canvasItemBounds.width,
+            height: canvasItemBounds.height,
             backgroundColor: `${HEX_COLOR_BLACK}00`,
             backdropFilter: 0,
             roundSizePercentage: 0,
@@ -66,22 +67,22 @@ export default class LyricAppDocument extends AppDocument {
             type: 'image',
             locked: false,
             srcData,
-            mediaWidth: slideBounds.width,
-            mediaHeight: slideBounds.height,
+            mediaWidth: canvasItemBounds.width,
+            mediaHeight: canvasItemBounds.height,
         };
         return canvasItemProps;
     }
 
     genCanvasItemHtmlProps(id: number, html: string) {
-        const slideBounds = this.slideBounds;
+        const canvasItemBounds = this.canvasItemBounds;
         const canvasItemProps: CanvasItemHtmlPropsType = {
             id,
             ...genHtmlDefaultProps(),
-            top: slideBounds.y,
-            left: slideBounds.x,
+            top: canvasItemBounds.y,
+            left: canvasItemBounds.x,
             rotate: 0,
-            width: slideBounds.width,
-            height: slideBounds.height,
+            width: canvasItemBounds.width,
+            height: canvasItemBounds.height,
             backgroundColor: `${HEX_COLOR_BLACK}00`,
             backdropFilter: 0,
             roundSizePercentage: 0,
@@ -99,7 +100,7 @@ export default class LyricAppDocument extends AppDocument {
     genLyricSlide(
         id: number,
         openLyricKey: string,
-        canvasItems: CanvasItemHtmlPropsType[],
+        canvasItems: CanvasItemPropsType[],
         displayDim = this.displayDim,
     ) {
         return new LyricSlide(
@@ -135,7 +136,7 @@ export default class LyricAppDocument extends AppDocument {
     extendExtraSlide(
         slides: LyricSlide[],
         dataMap: Record<string, string>,
-        firstCanvasItemProps: CanvasItemHtmlPropsType | null = null,
+        firstCanvasItemProps: CanvasItemPropsType | null = null,
     ) {
         const displayDim = this.displayDim;
         const extraSlides: LyricSlide[] = [
@@ -148,16 +149,24 @@ export default class LyricAppDocument extends AppDocument {
             this.genSlide('Info', 1, dataMap, displayDim),
             this.genLyricSlide(2, OPEN_LYRIC_NONE_KEY, [], displayDim),
         ];
-        return [...extraSlides, ...slides].map((slide, i) => {
+        const newSlides = [...extraSlides, ...slides].map((slide, i) => {
             slide.id = i;
             return slide;
         });
+        return newSlides;
     }
 
     async getOpenLyricPreviewer() {
         if (this.openLyric !== null) {
             return this.openLyric;
         }
+        // Imported dynamically to keep this module out of the
+        // `lyricHelpers → LyricAppDocumentStage0 → LyricAppDocumentStageAbstract
+        // → LyricAppDocument` cycle. With a static import, any load order that
+        // starts at `LyricAppDocument` re-enters the cycle and the stage class
+        // dies on `class ... extends <TDZ>` ("Cannot access 'LyricAppDocument'
+        // before initialization"). This is the only thing it needed from there.
+        const { initOpenLyric } = await import('./lyricHelpers');
         const openLyric = await initOpenLyric(this.filePath, true);
         return openLyric;
     }
@@ -213,3 +222,10 @@ export default class LyricAppDocument extends AppDocument {
         });
     }
 }
+
+// `appDocumentHelpers` cannot import this module (the `extends AppDocument`
+// cycle), so the dependency is inverted: importing this module is what teaches
+// `varyAppDocumentFromFilePath` how to resolve a `.owl` path.
+setLyricAppDocumentGetter((filePath: string) => {
+    return LyricAppDocument.getInstance(filePath);
+});

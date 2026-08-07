@@ -11,6 +11,10 @@ const {
     appErrorMock,
     pathResolveMock,
     fileSourceGetInstanceMock,
+    openSyncMock,
+    readSyncMock,
+    closeSyncMock,
+    cacheStoreMock,
 } = vi.hoisted(() => ({
     electronSendAsyncMock: vi.fn(),
     fsCheckDirExistMock: vi.fn(),
@@ -20,18 +24,23 @@ const {
     appErrorMock: vi.fn(),
     pathResolveMock: vi.fn((...parts: string[]) => parts.join('/')),
     fileSourceGetInstanceMock: vi.fn(),
+    openSyncMock: vi.fn(),
+    readSyncMock: vi.fn(),
+    closeSyncMock: vi.fn(),
+    // Shared so `beforeEach` can clear it: the real cache manager lives at
+    // module scope in `pdfHelpers.ts`, so without this a size cached by one
+    // test silently answers the next one.
+    cacheStoreMock: new Map<string, unknown>(),
 }));
 
 vi.mock('../others/CacheManager', () => ({
     default: class CacheManagerMock<T> {
-        private readonly store = new Map<string, T>();
-
         async get(key: string) {
-            return this.store.get(key) ?? null;
+            return (cacheStoreMock.get(key) as T | undefined) ?? null;
         }
 
         async set(key: string, value: T) {
-            this.store.set(key, value);
+            cacheStoreMock.set(key, value);
         }
     },
 }));
@@ -44,6 +53,11 @@ vi.mock('../server/appProvider', () => ({
     default: {
         pathUtils: {
             resolve: pathResolveMock,
+        },
+        fileUtils: {
+            openSync: openSyncMock,
+            readSync: readSyncMock,
+            closeSync: closeSyncMock,
         },
         isPageScreen: false,
     },
@@ -81,6 +95,24 @@ function getFileSource(filePath: string) {
     };
 }
 
+// A PNG's first 24 bytes: signature, IHDR chunk length + type, then width and
+// height as big-endian uint32s. `readPngSize` reads exactly this instead of
+// decoding the image.
+function genPngHeader(width: number, height: number) {
+    const buffer = Buffer.alloc(24);
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]).copy(
+        buffer,
+        0,
+    );
+    buffer.writeUInt32BE(13, 8);
+    buffer.write('IHDR', 12, 'latin1');
+    buffer.writeUInt32BE(width, 16);
+    buffer.writeUInt32BE(height, 20);
+    return buffer;
+}
+
+let imageConstructedCount = 0;
+
 describe('pdfHelpers', () => {
     beforeAll(() => {
         class MockImage {
@@ -88,6 +120,10 @@ describe('pdfHelpers', () => {
             height = 0;
             onload: null | (() => void) = null;
             onerror: null | (() => void) = null;
+
+            constructor() {
+                imageConstructedCount += 1;
+            }
 
             set src(value: string) {
                 if (value.includes('bad')) {
@@ -105,6 +141,8 @@ describe('pdfHelpers', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        imageConstructedCount = 0;
+        cacheStoreMock.clear();
 
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
             return getFileSource(filePath);
@@ -113,12 +151,99 @@ describe('pdfHelpers', () => {
         fsCreateDirMock.mockResolvedValue(undefined);
         fsDeleteDirMock.mockResolvedValue(undefined);
         fsListFilesMock.mockResolvedValue([]);
+        // Default: no readable file, so the header read bails and the existing
+        // tests exercise the `Image` decode fallback exactly as before.
+        openSyncMock.mockImplementation(() => {
+            throw new Error('ENOENT');
+        });
     });
 
     test('removes the preview directory for a PDF file', () => {
         removePdfImagesPreview('/docs/sermon.pdf');
 
         expect(fsDeleteDirMock).toHaveBeenCalledWith('/docs/sermon.pdf-images');
+    });
+
+    test('reads page dimensions from the PNG header without decoding', async () => {
+        // Decoding every page cost ~163MB of bitmap for an 88-page PDF; the
+        // header read must produce the same numbers for ~24 bytes per page.
+        const headers: { [filePath: string]: Buffer } = {
+            '/docs/sermon.pdf-images/page-1.png': genPngHeader(612, 792),
+            '/docs/sermon.pdf-images/page-2.png': genPngHeader(1224, 1584),
+        };
+        openSyncMock.mockImplementation((filePath: string) => {
+            if (headers[filePath] === undefined) {
+                throw new Error('ENOENT');
+            }
+            return filePath === '/docs/sermon.pdf-images/page-1.png' ? 11 : 22;
+        });
+        readSyncMock.mockImplementation(
+            (
+                fileDescriptor: number,
+                buffer: Buffer,
+                offset: number,
+                length: number,
+            ) => {
+                const header =
+                    fileDescriptor === 11
+                        ? headers['/docs/sermon.pdf-images/page-1.png']
+                        : headers['/docs/sermon.pdf-images/page-2.png'];
+                header.copy(buffer, offset, 0, length);
+                return length;
+            },
+        );
+        fsListFilesMock.mockResolvedValue(['page-2.png', 'page-1.png']);
+        electronSendAsyncMock.mockResolvedValue(2);
+
+        const result = await genPdfImagesPreview('/docs/sermon.pdf');
+
+        expect(result).toEqual([
+            {
+                src: 'asset://page-1.png',
+                pageNumber: 1,
+                width: 612,
+                height: 792,
+            },
+            {
+                src: 'asset://page-2.png',
+                pageNumber: 2,
+                width: 1224,
+                height: 1584,
+            },
+        ]);
+        // The whole point: no image was decoded, and every descriptor closed.
+        expect(imageConstructedCount).toBe(0);
+        expect(closeSyncMock).toHaveBeenCalledTimes(2);
+    });
+
+    test('falls back to decoding when the file is not a valid PNG', async () => {
+        openSyncMock.mockReturnValue(7);
+        readSyncMock.mockImplementation(
+            (
+                _fileDescriptor: number,
+                buffer: Buffer,
+                offset: number,
+                length: number,
+            ) => {
+                Buffer.alloc(length, 0).copy(buffer, offset);
+                return length;
+            },
+        );
+        fsListFilesMock.mockResolvedValue(['page-1.png']);
+        electronSendAsyncMock.mockResolvedValue(1);
+
+        const result = await genPdfImagesPreview('/docs/sermon.pdf');
+
+        expect(result).toEqual([
+            {
+                src: 'asset://page-1.png',
+                pageNumber: 1,
+                width: 100,
+                height: 300,
+            },
+        ]);
+        expect(imageConstructedCount).toBe(1);
+        expect(closeSyncMock).toHaveBeenCalledTimes(1);
     });
 
     test('reuses existing preview images when all pages are present', async () => {

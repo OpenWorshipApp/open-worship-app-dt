@@ -1,4 +1,3 @@
-import { showSimpleToast } from '../toast/toastHelpers';
 import { LYRIC_SLIDE_TYPE_KEY, type LyricPropsType } from './LyricSlide';
 
 export async function getTargetLyricSlideItemData(
@@ -35,11 +34,6 @@ export async function getTargetLyricSlideItemData(
     const slideId = lyricSlideItemData.id;
     const targetLyricSlide = await targetLyricAppDocument.getSlideById(slideId);
     if (targetLyricSlide === null) {
-        showSimpleToast(
-            'Fail',
-            `Fail to get target lyric slide data for filePath: ${filePath},` +
-                ` slideID: ${slideId}, stage: ${stage}`,
-        );
         return lyricSlideItemData;
     }
     return targetLyricSlide.toJson();

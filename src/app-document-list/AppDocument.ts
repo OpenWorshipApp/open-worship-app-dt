@@ -522,7 +522,12 @@ export default class AppDocument
 
 export async function checkIsAppDocumentSelected() {
     const varyAppDocument = await getSelectedVaryAppDocument();
-    if (!AppDocument.checkIsThisType(varyAppDocument)) {
+    // `isEditable` and not just the type test: `LyricAppDocument` extends this
+    // class but cannot be edited or saved.
+    if (
+        !AppDocument.checkIsThisType(varyAppDocument) ||
+        !varyAppDocument.isEditable
+    ) {
         showAppAlert(
             'No slide selected',
             'Please select an Open Worship slide first',

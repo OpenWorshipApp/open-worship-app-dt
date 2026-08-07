@@ -87,6 +87,33 @@ Two widgets only, top to bottom: **Documents**, then **Playlists**. The separate
   `.app-on-screen` on the label while live). Header icon `bi-window-stack` opens the
   floating preview (`.app-playlist-preview`, portaled to `body`). See knowledge-base §14.
 
+#### Playlist deep-mode selectors (the assertions PL-32..PL-99 are read from)
+
+Prefer these over text — the labels are translated, these are not. Component elements can
+also be found by `[data-react-comp-name="PlaylistRowComp"]` etc.
+
+| selector | means |
+|---|---|
+| `.app-playlist-row` | one element row in the tree |
+| `.app-playlist-row-index` / `.app-playlist-row-id` | its position number / its badge (`#3`, or an action's glyph — **tinted with the icon's colour for an action**) |
+| `.app-playlist-row-icon` | the kind icon; its inline `color` is the action's colour |
+| `.app-playlist-row-chevron` | the expand/collapse affordance (absent = nothing to expand) |
+| `.app-playlist-row-disabled` + `.app-playlist-row-disabled-icon` | **parked**; `…-icon-playlist` + `…-label-parked` + `bi-slash-circle` = parked by the RUN SHEET, plain `bi-eye-slash` = hidden by the document |
+| `.app-playlist-row-disabled-playlist` | the whole playlist card is parked |
+| `.app-playlist-row-screen-pin` | a **Set Specific Screen** pin is on this row (PL-81..85) |
+| `.app-playlist-row-color-note` | the colour dot (PL-52) |
+| `.app-playlist-cc-row` | a **CC element** row (PL-89..93) |
+| `.app-playlist-row-dragging-over` / `…-over-cc` | the drop target is a REORDER / an ATTACH-AS-CC — the two drops differ only by this class |
+| `.app-playlist-row-error` | a damaged entry (PL-51) |
+| `.app-playlist-preview` | the floating widget, portaled to `body` |
+| `.bi-window-stack.app-playlist-preview-showing` | on a playlist card's header icon: **this** is the playlist the one widget is showing (only ever one) |
+| `.app-playlist-preview-item` (`…-body`, `…-chevron`, `…-label`) | one element inside the widget; **the chevron's state is the fold memory** (PL-58) |
+| `.app-playlist-preview-item-selected` | **the run's cursor** — cyan `--bs-info` outline, on the label AND the slide card. Distinct from the magenta blinking `.app-highlight-selected`, which means "live on a screen" and can be on several cards at once |
+| `.app-playlist-preview-item-disabled` / `.app-playlist-preview-slide-disabled` (+ `…-icon`) | parked element / parked slide inside the widget |
+| `.app-playlist-preview-auto-next` (`…-interval`, `…-paused`, `…-button`) | the clock pill at the widget's top-right (PL-95) |
+| `.app-playlist-preview-cc-rows` | the CC rows under a slide card |
+| `.app-playlist-preview-collapsing-buttons` | **Collapse All** / **Expand All** (PL-47) |
+
 ### Middle column — presenter + background
 - **Presenter tabs** (`.nav.nav-tabs`): `Documents`, `Lyrics`, `Bibles`, `Foreground`.
   Active tab has `.active`; a tab shows `.app-on-screen` when its content is live on the

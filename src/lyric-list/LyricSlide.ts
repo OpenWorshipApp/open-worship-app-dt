@@ -2,7 +2,7 @@ import Slide from '../app-document-list/Slide';
 import { DragTypeEnum } from '../helper/DragInf';
 import { cloneJson } from '../helper/helpers';
 import { type AnyObjectType } from '../helper/typeHelpers';
-import { type CanvasItemHtmlPropsType } from '../slide-editor/canvas/CanvasItemHtml';
+import { type CanvasItemPropsType } from '../slide-editor/canvas/CanvasItem';
 
 // Kept here, not in `./lyricHelpers`, so this leaf data class stays free of the
 // lyric helper graph (`OpenLyric`, `Lyric`, the stage classes). Importing the
@@ -13,7 +13,7 @@ export const LYRIC_SLIDE_TYPE_KEY = 'lyric-slide';
 export type LyricPropsType = {
     id: number;
     name?: string;
-    canvasItems: CanvasItemHtmlPropsType[];
+    canvasItems: CanvasItemPropsType[];
     metadata: {
         width: number;
         height: number;

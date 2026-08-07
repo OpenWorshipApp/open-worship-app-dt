@@ -21,7 +21,129 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-08-04l** (bump when any workflow changes) — **W-22**'s sharing
+**workflowsVersion: 2026-08-07** (**W-05** + the layout tour: songs are selected from
+the Documents list like any other file — one highlighted row, no separate Lyrics tab —
+and the Documents preview switches to the song view. Earlier: **W-22** step 2: a running order can now put the SCREEN
+ITSELF up and down — **Screen: Show** / **Screen: Hide**, for a sheet that has to work with
+nobody at the machine. They are the only actions that ask **which screen** when you add
+them, and they go to those screens and only those: no falling back to whatever is selected
+and no stopping to ask, because there is nobody there to answer. Firing one twice is
+harmless. **Driven live.** Previous: **2026-08-06a** — **W-22** step 2: a fourth run action, **Keyboard Event**
+— a **shortcut you set by pressing it** (Ctrl/Shift only, at least one, unique per playlist)
+that sends the run to that line and puts **all** of its CC elements on the screens at once.
+**W-22** step 8: the run no longer steps over a **folded-away** element — it **opens** what
+it lands on, and **parked is now the only reason a line is passed by**; the preview panel
+also takes the keyboard the moment it opens. **Add Action** folds its eight per-widget
+foreground clears behind one **Other Clear FG Items** row. **Driven live**. Previous:
+**W-22** step 2: a **Next: Timeout** can now wait until a
+TIME ON THE CLOCK instead of counting seconds — its question has a **Seconds** / **At Time**
+chooser, the line reads `⏱ Next: Timeout (7:05 AM)`, and a time already gone by is refused
+out loud rather than waiting until tomorrow. Its menu entry is **Change Timing**.
+**Driven live**. Previous: **W-22** step 2: a **Jump to** that lands on a
+**Next: Interval** now STARTS it — it was being withheld, which broke the looping set (an
+interval over a set of slides, a jump at the end of them pointing back at it). A jump is
+the next key aimed at a line of your choosing, and does there whatever stepping onto that
+line would have done. **Driven live**. Previous: **W-22** step 2: the two clocks now answer only to the
+run MOVING — a **Next: Timeout** is called off by you going to another line (not by any
+stray click, which used to kill it), and a **Next: Interval** starts its count again from
+the line you step to. **Driven live**. Previous: **W-22** step 5: holding **Ctrl** while dropping
+something from ANOTHER panel onto a line now inserts it as a new line THERE rather than
+attaching it — previously the only way in was the end of the list. And the three `Next:` /
+`Jump to` actions now wear three different colours (amber, teal, purple) instead of one.
+Previous: **W-22** step 5: dragging a line onto another no longer
+depends on hitting a 7px band — hold **Ctrl** (⌘) to force the MOVE or **Alt** to force the
+ATTACH, anywhere on the line, with the mark following the key while you drag. Without
+either, aiming works exactly as before. **Driven live** (all four combinations read off the
+row's own mark, plus a real Ctrl-drop in the middle of a line that moved it instead of
+attaching). Previous: **W-22** step 2: a third run action, **Jump to**
+(លោតទៅ) — the one way a running order goes anywhere but forward. You point it at another
+line by attaching that line to it as its single CC element (a whole song included, which
+nothing else can be a CC of), and when the run reaches it — or you click it — the run goes
+there and shows it. Put one at the end of a set of announcement slides with an interval
+above them and the set loops by itself. **Driven live** (aimed one at a song, jumped
+backwards to it from the last line of the sheet and watched the song open at its first
+slide; the attach list, the one-CC cap and the three "nothing to jump to" messages
+checked too). Previous: **W-22** step 2/5: a **Next: Timeout** can now be
+attached to a line as a **CC element**, which is how you say "show this slide, and go on
+by yourself ten seconds later" without putting a waiting line in the running order. A
+**Next: Interval** deliberately cannot be attached to anything — nothing you do stops an
+interval, so one riding a slide would keep walking the sheet on its own. **Driven live**
+(attached one to a slide, stepped onto that slide with the next key and watched the
+countdown carry the run on; the interval is absent from the attach list). Previous:
+**W-22** step 2 and step 8: a running order can now
+**walk itself**. The **Add Action** menu gained **Next: Interval** (⟳) and **Next:
+Timeout** (⏱) under the clears; each asks for a number of **seconds** when it is added
+(shown in the line, changeable later from the line's own **Change Seconds**). A
+**timeout** counts that many seconds down and then moves the run on once — and any click
+or key you make cancels it, so taking over is simply taking over; an **interval** keeps
+moving it on every so many seconds and is stopped only by the pill it puts at the top of
+the preview panel. Both work only while that playlist's **preview panel** is open — it is
+the panel that walks the run — and elsewhere they say so rather than pretend. **Driven
+live end to end** (armed, cancelled, handed an interval over to a timeout, stopped by the
+pill, and the toast with the panel closed; playlist restored afterwards) — see PL-95.
+Previous: **W-22** step 9: the **preview panel's right-click menus
+are now the same as the list's**. Right-clicking a line in the floating preview used to
+offer only **Show on Screens** and **Disable** (and nothing at all on an audio line), so a
+running order could not be reordered, recoloured, duplicated or tidied from the panel you
+actually watch during a service — you had to go back to the list. It now carries the whole
+menu, and a slide thumbnail in the panel gained **Reveal Original**. **Driven live
+2026-08-05**: opened the preview for `pl1`, read the full menu off an element's title line
+and off a **Clear All** action line, off a song's slide thumbnail and off a CC line, then
+moved a line down and back up from the panel and watched the list behind it follow.
+Previous: **W-22** gained **CC elements** (new step 5): anything in a
+run sheet — a background, a verse, a foreground preset, a whole song or one of its slides —
+can now be attached to another line, and that line then brings it onto the screen with it.
+One click puts verse 1 and the welcome marquee up together; a CC on a song's line rides with
+every slide of it. Attach by dropping onto the line, or from **Add CC Elements**; clicking a
+CC never projects it, it takes you to the element it is a copy of. **Dropping onto a LINE no
+longer adds an element to the playlist** — step 2 now says to drop onto the playlist's NAME
+row. **Driven live 2026-08-05**: attached a marquee to slide 1 of a song from the menu,
+clicked the slide and read BOTH the slide and the marquee off the real `screen.html?screenId=0`
+output, confirmed the preview's run cursor ignores a CC click, then removed it again.
+Previous: **W-22**: a line YOU parked and a slide the DOCUMENT hides
+no longer look alike — yours is crossed out with an amber 🚫, the document's keeps a plain grey
+👁‍🗨, and the tooltips say which; the preview panel's dimmed thumbnails carry the same two marks
+bottom-left. It matters because only one of the two comes back from the run sheet's own menu.
+**Driven live 2026-08-05**: parked a slide of a document beside two the document hides and read
+all three in the tree and in the floating preview, then released it again. Previous: **W-22**
+gained **Move to Top** / **Move to Bottom** and
+**Duplicate** — a line can now jump straight to either end of the run sheet instead of being
+clicked up one step at a time (the entry is simply absent on a line already at that end), and
+a line can be copied directly below itself with its colour, its pinned screens and its parked
+slides already on the copy; the two are independent from then on. **Driven live 2026-08-05**:
+moved a middle element to the bottom and back to the top, compared the first/last row menus,
+duplicated a document line with parked slides, released the copy and confirmed the original
+stayed parked, then removed the copy. Previous: **W-22** gained **Disable** / **Enable** — any line of a
+run sheet, or one slide of a document line, can be PARKED out of the running order without
+being deleted: it dims, its click and its drag stop projecting anything, and the
+arrow/Space keys step past it. Parking is stored per playlist, so the same song stays live
+in another service. **Driven live 2026-08-05**: parked and released an element, a document
+(its slides parked with it) and a single slide, in the tree and in the floating preview.
+Previous: **W-22** gained **Set Specific Screen** — a playlist
+line, a document line, or one slide of a document can be PINNED to particular screens, and
+every present from the panel then ignores which mini screens are selected. Drag-onto-a-mini-screen
+and **Show on Screens** still override a pin on purpose; a pinned screen that is gone
+toasts rather than projecting elsewhere. **Driven live end to end** on 2026-08-05 across
+three screens: pin persisted into the `.owp`, beat the selected screen from the tree row,
+the preview thumbnail and the Space key, and a per-slide pin overrode its document's while
+its neighbours kept following it. Previous: new **W-24** — a **bible list** now exports/imports as
+a `.owbible.tar.gz` bundle, and W-23 gained a note that a **lyric** rides the document
+bundle unchanged (its attached slide backgrounds travel with it). **Driven live end to
+end** on 2026-08-05: a Khmer-named lyric exported with both of its attached slide images
+and re-imported with its `.bg.json` re-pointed at the reused local copies; a bible list
+exported with its attached bg-colour sidecar and re-imported into the bibles folder.
+Previous: new **W-23** — one document (slides, lyric, PDF, PPTX
+or DOCX) can now be exported and imported on its own as a `.owadoc.tar.gz` bundle,
+carrying its attached background and that background's media, any video inside its
+slides, and its colour note. It behaves exactly like the playlist bundle in W-22 because
+it runs the same code. **Driven live end to end** on 2026-08-05: exported an `.ows` and a
+PDF (the PDF's attached background video and its green colour note both landed in the
+manifest), then dropped a bundle back onto the Documents list — the document was written,
+its `.bg.json` re-created pointing at the reused local video, and its colour note
+restored. Previous: bump when any workflow changes) — **W-11** (Bible Reader)
+and **W-09**'s lookup note corrected: typing a full reference like `John 3:16` does **not**
+jump to the verse on the Reader page either — it book-filters and drops the `3:16` when the
+book is picked, exactly like the lookup dialog. Verified live 2026-08-05. Previous: **W-22**'s sharing
 notes now say what happens when the other machine already has a file of the same NAME
 that is a DIFFERENT file: yours is kept and the bundled one arrives as `a (1).mp4`
 (matching contents are still reused, so a repeat import adds nothing). They also say
@@ -77,7 +199,7 @@ now has one button, a gray ⋮ (More Options)**, opening the same menu as right-
 the empty list body; the old **↻ Reload** and **+ Add items** icons next to the folder
 path are gone (Reload is the menu's first entry). Lists with a title bar put the ⋮
 there; the background / foreground-web tabs put it in the path row. **W-15** gains the
-lyric/document *creation* step — the Documents list offers **New App Document** and
+lyric/document _creation_ step — the Documents list offers **New App Document** and
 **New Lyric** as two direct entries (all observed live, English and Khmer); W-08's Web
 tab step now points at the ⋮ instead of the `+`. Previously: new **W-22** (build a
 service playlist and export/import it as a `.owapl.tar.gz` bundle); its step 7 now says
@@ -117,10 +239,12 @@ The Presenter has a header and three resizable columns:
 - **Header:** page tabs — **Presenter** / **Bible Reader** (អានព្រះគម្ពីរ) /
   **Slide Editor** (កែសម្រួលស្លាយ) — the **Bible Lookup** (ស្វែងរកព្រះគម្ពីរ) button
   (center, `Ctrl+B`), and the **Settings** gear (ការកំណត់) + Help buttons (right). 📸
-- **Left column:** your content libraries — **Documents** (ឯកសារ) and **Lyrics**
-  (អក្សរភ្លេង) lists.
-- **Middle column:** the working area — **Documents / Lyrics / Bibles / Foreground**
-  preview tabs on top, and the collapsible **Background** panel at the bottom.
+- **Left column:** your content libraries — the **Documents** (ឯកសារ) list (songs live
+  here too, marked with a music note) and **Playlists**.
+- **Middle column:** the working area — **Documents / Bibles** preview tabs plus the
+  **Foreground** button on top, and the collapsible **Background** panel at the bottom.
+  The Documents tab shows whatever kind of file you picked: slides for a slide document,
+  pages for a PDF, and the song view for a lyric.
 - **Right column:** **Bibles / Notes** lists and the **mini screen** — a live preview
   of exactly what the audience sees, with clear buttons and a zoom slider under it.
 
@@ -181,8 +305,10 @@ _Verify: PM-10._
 
 **Goal:** put a song's lyrics on the screen.
 
-1. In the left column, click a song in the **Lyrics** (អក្សរភ្លេង) list — the middle
-   area switches to the **Lyrics** tab and shows its verses. 📸
+1. In the left column, click a song in the **Documents** (ឯកសារ) list — songs carry a
+   music-note icon. The middle **Documents** tab switches to the song view: the lyric
+   **Previewer** on top and the **Stage Previewer** verses under it. Only one file in the
+   list is ever highlighted, so picking a song releases whatever was selected before. 📸
 2. **Double-click** a verse to send it to the screen.
 3. Press **F8** / the clear button to take it down.
 
@@ -197,8 +323,9 @@ _Verify: PL-07..08, PM-11._
 2. The input is a **step-by-step picker**: type the first letters of the book (e.g.
    `Joh`) and click the book, then pick the chapter, then the verse. Press **Tab** to
    auto-complete the current part; **Escape** clears the input.
-   > Note: typing a full reference like `John 3:16` in THIS dialog only filters the
-   > book list — for full-reference typing use the **Bible Reader** page (W-10).
+   > Note: typing a full reference like `John 3:16` only filters the book list — the
+   > chapter and verse you typed are dropped when you pick the book. This is true of the
+   > **Bible Reader** page too (W-10), so always pick book → chapter → verse in steps.
 3. The verse renders in the preview panel. **Double-click** it to present. 📸
 4. Close the dialog with the red ✕ button or **Ctrl+Q**.
 5. Press **F9** (Clear Bible — លុបព្រះគម្ពីរ) to take the verse off screen.
@@ -314,9 +441,11 @@ _Verify: PR-04..07, SP-01..09, KB-03..07, KB-13._
 **Where:** header tab **Bible Reader** (អានព្រះគម្ពីរ).
 
 1. Click the **Bible Reader** tab. 📸
-2. Type a reference — here a **full reference** like `John 3:16` resolves straight to
-   the verse. The picker keys still work (**Tab** complete, **Escape** clear,
+2. Type a reference using the same step-by-step picker as the lookup dialog: book →
+   chapter → verse. The picker keys work here too (**Tab** complete, **Escape** clear,
    **Ctrl+Escape** clear one part).
+   > Note: typing a full `John 3:16` does **not** jump to the verse on this page either —
+   > it only filters the book list, and the `3:16` is dropped when you pick the book.
 3. Switch the Bible **version** from the header dropdown — the text re-renders. 📸
 4. Recent lookups appear as **history** entries; click one to jump back.
 5. Double-click a verse to present it.
@@ -381,7 +510,7 @@ in the same documents folder. 📸
 4. Add new boxes/images from the tools panel (click, or drag onto the canvas).
 5. Save with **Ctrl+S**.
 
-**Lyrics:** right-click a song in the Lyrics list → **edit** — the Lyric Editor opens
+**Lyrics:** right-click a song in the Documents list → **edit** — the Lyric Editor opens
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 
 **Web backgrounds:** Background panel → **Web** tab → **+** — the Web Editor opens;
@@ -571,7 +700,8 @@ thing to another machine.
 1. Find the **Playlists** (តារាងកម្មវិធី) panel — it is the lower of the two lists on the
    left, under **Documents** (ឯកសារ). If the list is empty, right-click its empty area (or
    use the **⋮ More Options** button in its title bar) → **New File** to create one. 📸
-2. **Drag things onto a playlist row to add them.** Anything you can present can go in:
+2. **Drag things onto the playlist's NAME row to add them.** (Dropping onto a _line_ of an
+   open playlist does something else — see step 5.) Anything you can present can go in:
    - a **background** — a colour, image, video, camera or website;
    - a **document** — drag its row out of the Documents list;
    - a **single slide** — from the previewer, or from a document already in the playlist;
@@ -598,6 +728,122 @@ thing to another machine.
    does; the `Time`, `Camera Show` and `Web Show` ones clear all of their items at once.
    The panel's **Background Images Slide Show** has no action of its own — it is a
    _background_ despite sitting in that panel, so **Clear Background** is what stops it.
+
+   **Let the running order walk itself.** The same menu ends with two actions that move
+   the RUN on instead of touching a screen: **Next: Interval** (បន្ទាប់៖ រៀងរាល់ចន្លោះពេល)
+   and **Next: Timeout** (បន្ទាប់៖ អស់ពេលកំណត់). Each asks how many **seconds**
+   (វិនាទី) when you add it, and the answer is part of the line — `⏱ Next: Timeout (5)` —
+   so a glance at the sheet tells you how long it waits. Got it wrong? Right-click the
+   line → **Change Seconds** (ផ្លាស់ប្តូរវិនាទី); it opens on the number it is holding
+   now. 📸
+
+   - **Next: Timeout** waits once. When the run reaches it, it counts down and then moves
+     the run on by itself — a slide that should linger ten seconds and then go on without
+     you. **Going somewhere yourself calls it off**: click another line, or press the next
+     key, and the wait is over and you are driving again. Anything else — clicking a
+     background, a foreground button, a stray click on the panel — leaves it counting, so
+     a mis-aimed click cannot silently cost you the wait.
+
+     **Or wait until a time on the clock.** A timeout is the one that does not have to be
+     counted in seconds: the left-hand side of its question is a chooser, and switching it
+     from **Seconds** to **At Time** (នៅម៉ោង) lets you type the time you want the run to
+     move on — `7:05 AM`, `8:30 PM`. The line then reads `⏱ Next: Timeout (7:05 AM)`, and
+     the pill counts down in minutes and hours (`4:58`, `1:12:30`) instead of a long number
+     of seconds. Use it for the notice board before a service: put it on the last
+     announcement and the run leaves it exactly when the service starts, whether you armed
+     it an hour or five minutes before. Its menu entry is **Change Timing**
+     (ផ្លាស់ប្តូរការកំណត់ពេល) rather than **Change Seconds**, and it opens on whichever half
+     you armed it with — the two are alternatives, so choosing one clears the other. If the
+     time you set has **already gone by**, the app says so (**The set time is already due**)
+     and starts nothing: it will not quietly wait until tomorrow. Set a new time, or arm it
+     in seconds. 📸
+   - **Next: Interval** keeps going. It moves the run on every so many seconds — a loop of
+     announcement slides before the service. Going somewhere yourself does not stop it, it
+     **starts the count again from there**, so a line you step to by hand gets the whole
+     interval rather than the second that was left of the last one. To stop it, click the
+     ⊗ pill it puts at the top-right of the preview panel (it shows the seconds left, in
+     the same colour as the line that started it). Closing the panel stops it too, as does
+     reaching the end of the sheet.
+
+   Both only mean something while that playlist's **preview panel** is open (step 8) —
+   that panel is what walks the running order. Click one with the panel closed and the app
+   says so (**Open the playlist preview to use this action**) rather than looking as
+   though it did something. They never go to a screen, so they have no **Apply on
+   Screens** and no **Set Specific Screen**, and nothing can be attached to them.
+
+   **A timeout does not have to be a line of its own.** Attach it to a line instead — a
+   slide, a song, a verse — as a **CC element** (step 5), and that line means "show this,
+   and go on by yourself N seconds later". Add the **Next: Timeout** once, right-click the
+   line you want it on → **Add CC Elements** and pick it, and then you can delete the
+   `Next: Timeout` line itself if you only wanted the follower: a CC is a copy. Attached to
+   a whole SONG it rides every slide of it, which is how a song advances by itself. Change
+   the wait from the CC's own **Change Timing** — seconds or a time of day, exactly as on a
+   line of its own. 📸
+   **A Next: Interval cannot be attached to anything** and is simply not in that list —
+   an interval is not stopped by anything you do, so one riding a slide would keep moving
+   the running order on with nothing to call it off but the panel's own pill.
+
+   **Go back, not just forward.** The third one, **Jump to** (លោតទៅ), is how a running
+   order reaches a line that is not the next one. Add it, then right-click it →
+   **Add CC Elements** and pick the line it should go to — its list is everything in the
+   playlist, **a whole song included**, because here the attached line is not something
+   that rides along, it is the destination. It takes exactly one, so once you have picked
+   the **Add CC Elements** entry is gone; to re-aim it, remove the CC and pick another. 📸
+
+   **It is the next key aimed at a line of your choosing**: when the run reaches it — or
+   you click it — the panel goes to that line and does there exactly what stepping onto it
+   would have done. A song opens at its first slide; a **Next: Interval** or **Next:
+   Timeout** it lands on is STARTED. That last one is how a set loops: put the slides
+   under a **Next: Interval**, and a **Jump to** at the end of them pointing back at that
+   interval — the set then plays round and round on its own until you stop it with the
+   pill. (A jump that lands on another jump stops there rather than jumping again, so a
+   pair of them cannot send the run back and forth for ever.) If it has nothing attached,
+   or the line it named has since been deleted, it says so instead of quietly doing
+   nothing.
+
+   **Reach a line with a key of your own.** The fourth one, **Keyboard Event**
+   (ព្រឹត្តិការណ៍ក្តារចុច), is a shortcut you set yourself. Adding it asks for the
+   shortcut, and you answer by **pressing it** — the box is not typed into. Hold **Ctrl**
+   or **Shift** (those two only, and at least one of them, so the shortcut means the same
+   thing on any machine and cannot take a key the running order already uses) and press
+   the key. The line then reads `⌨ Keyboard Event (Shift+A)`. Re-set it later from
+   **Change Shortcut**. Two lines may not share a shortcut — the second one is refused
+   out loud — and duplicating a line leaves the copy without one. 📸
+
+   Now attach what it should put up, with **Add CC Elements** — as many as you like, which
+   is what makes one key worth more than one click: a slide _and_ its marquee together,
+   say. Then, with the preview panel open (step 6), pressing **Shift+A** sends the run to
+   that line and puts all of it on the screens at once, wherever the run had got to.
+   Pin the line to a screen with **Set Specific Screen** if it should always go to the
+   same one. The shortcut only answers while the preview panel has the keyboard, exactly
+   as its arrow keys do — the panel takes it the moment you open it, so there is nothing
+   to click first. With nothing attached yet it says so rather than doing nothing. 📸
+
+   **Put the screen itself up and down.** Two more actions are not about what is _on_ a
+   screen but about whether there is one: **Screen: Show** (អេក្រង់៖ បង្ហាញ) and
+   **Screen: Hide** (អេក្រង់៖ លាក់), the same thing the slides button on each mini screen
+   does by hand. Use them when the running order has to work with nobody at the machine —
+   a **Screen: Show** at the top of a pre-service loop, a **Screen: Hide** at the end of
+   it, and the screen goes dark on its own instead of holding the last announcement until
+   someone notices.
+
+   **These two ask which screen** when you add them, and that is the whole point: a
+   checklist of the screens you have open appears (**Screen id: 0**, **Screen id: 1**, …,
+   each in that screen's own colour), and the line remembers your answer as its pin — the
+   line shows the pin badge, and **Set Specific Screen** re-aims it later. Unlike every
+   other line, it goes to those screens and _only_ those: it will not fall back to
+   whichever screen you happened to have selected, and it will never stop to ask, because
+   at 7:05 on an unattended sheet there is nobody there to answer. Tick nothing and the
+   app says **Please choose at least one screen** rather than adding a line that would do
+   nothing. Firing one twice is harmless — a **Screen: Show** on a screen that is already
+   up does nothing at all, so it is safe inside a loop. Nothing can be attached to them
+   either, though they can themselves be attached to another line — "put this last slide
+   up **and** light the screen" in one click. 📸
+
+   **Where the actions live in the menu.** **Add Action** lists the five clears, then
+   **Other Clear FG Items** — one row that opens the eight per-widget foreground clears —
+   then **Screen: Show** / **Screen: Hide**, then the four that drive the run.
+
 3. Click the playlist name to **open it**. Each element is one short line: an icon for
    what it is, its id, and its name. A **document** line has its own arrow — open it to
    see that document's slides underneath. 📸
@@ -610,9 +856,129 @@ thing to another machine.
    A **screen action** works the same way, except it is _run_ rather than shown: click it
    to clear, drag it onto one mini screen to clear only that one, or right-click →
    **Apply on Screens** (អនុវត្តនៅលើអេក្រង់) to choose. It never lights up as "live",
-   because there is nothing of it on the screen to be live.
-5. Right-click an element for **Move up** / **Move down**, **Choose Color** (ជ្រើសរើសពណ៌)
-   to group your running order by colour, or **Remove from Playlist**. You can also drag a
+   because there is nothing of it on the screen to be live. **Screen: Show** /
+   **Screen: Hide** are the exception to the first of those: clicking one goes to the
+   screens it names and nowhere else. **Apply on Screens** still asks, since that entry
+   is you saying "send this one somewhere else" — but it does not change what the line
+   is pinned to.
+   The two **`Next:`** actions are the exception: they drive the RUN, not a screen, so
+   they have none of that — clicking one starts its countdown in the preview panel
+   (step 8), and with that panel closed the app simply tells you to open it.
+
+   **Send a line to one particular screen, every time.** If a lyric always belongs on the
+   stage screen and the sermon slides on the main one, you do not have to drag them there
+   over and over. Right-click the line → **Set Specific Screen** (កំណត់អេក្រង់ជាក់លាក់) and
+   tick the screens it should go to — `Screen id: 0`, `Screen id: 1`, … The menu stays open
+   so you can tick more than one, and the line then shows a small 📌 with those numbers —
+   **each number in its own screen's colour**, the very colour that screen's mini-screen
+   badge wears, so you can tell at a glance where a line goes without reading the digit.
+   (The tick boxes in the menu are tinted the same way.) 📸
+   From then on **clicking that line ignores which mini screens are selected**
+   and goes straight to its own; so do the arrow/Space keys in the preview panel. Untick
+   them, or choose **No Specific Screen** (គ្មានអេក្រង់ជាក់លាក់), to hand it back to the
+   normal behaviour.
+
+   Two things deliberately still override a pin, so you are never stuck: **dragging** the
+   line onto a mini screen puts it on _that_ screen just this once, and right-click →
+   **Show on Screens** still asks which screen you mean. If the pinned screen has been
+   closed, nothing is projected anywhere and the app tells you so ("Please make sure the
+   screen is open") rather than quietly using a different screen.
+
+5. **Make one line bring others with it — CC elements.** Some things belong _together_: the
+   moment verse 1 goes up, the welcome marquee has to be up too. Attach the marquee to that
+   line as a **CC element** and one click does both.
+
+   Attach one in either of two ways:
+   - **drop it onto the line** — drag the marquee button, a background, a verse or a slide
+     out of its own panel and drop it _on the line it belongs to_ (the line outlines in
+     dashed amber as you hover it). Dropping onto a **document's slide** attaches it to
+     that one slide; dropping onto the document's own line attaches it to the whole song.
+     You can also drag a line **already in the playlist** — a clear action included — onto
+     another line.
+
+     **Aim at the middle of a line to attach, at its top or bottom edge to move.** A line
+     of the running order does both jobs, and it tells you which one it is about to do:
+     lines along the top and bottom edges mean "this line moves here", a dashed box round
+     the whole line means "this goes _onto_ that line". Slides and CC lines have no order
+     of their own, so anywhere on them attaches.
+
+     **Or say which you mean and stop aiming**: hold **Ctrl** (⌘ on a Mac) while you drag
+     and the drop takes that PLACE, hold **Alt** and it always ATTACHES, anywhere on the
+     line. Press or release the key mid-drag and the mark under the pointer changes with
+     it, so you can see what the drop will do before you let go. (Holding both, the place
+     wins.) For a line of this running order "takes that place" means it MOVES there; for
+     something dragged in from another panel it means it is INSERTED there — which is the
+     only way to put it anywhere but the end of the list, since dropping on the playlist's
+     name adds to the end.
+   - **right-click the line → Add CC Elements** (បន្ថែមធាតុ CC) and pick from the other
+     lines already in this playlist. 📸
+
+   A CC element shows as a `↳` line just under the one it rides with. From then on,
+   **clicking that line — or reaching it with the arrow/Space keys in the preview — puts
+   the line AND its CC elements on the screen together**, on the same screens the line
+   itself went to. You are never asked "which screen?" twice for one click.
+
+   - A CC on a **document line** rides with _every_ slide of that song (a document line has
+     nothing of its own to show, so this is what "keep this marquee up for this song"
+     means); a CC on **one slide** rides with that slide only.
+   - A CC can have a screen of its own: right-click it → **Set Specific Screen** to send it
+     somewhere else while its line goes to the usual place. **No Specific Screen** hands it
+     back to following the line.
+   - **Clicking a CC line never projects it.** It scrolls the element it is a copy of into
+     view and flashes it — in the playlist and in the preview window at once — so you can
+     always find what a short label refers to.
+   - Right-click a CC line for **Remove CC Element** (ដកធាតុ CC ចេញ). There is no
+     **Disable** on a CC: parking takes a _line_ out of the running order, and a CC is not
+     a line of the running order — one you do not want is simply removed. (So attaching a
+     line you have parked gives you a CC that _does_ fire, while the parked line itself
+     stays parked.) A whole document and an audio track cannot be CC elements — neither
+     reaches a screen — and the app says so if you try.
+
+   An element can hold as many CC elements as you like; a CC element cannot have CC
+   elements of its own.
+
+   A **document** line can be pinned too — its slides then all follow it — and you can pin
+   **one slide on its own**: open the document's arrow, right-click the slide and set its
+   screen. That slide overrides the document; its neighbours keep following the document.
+   A slide pinned in its own right shows the 📌 on its own line **and in the bottom-right
+   corner of its thumbnail in the preview panel**, so a run sheet you are reading as
+   pictures still tells you which slide breaks away from its document. Clearing it hands
+   that slide back to the document rather than pinning it to nothing. The same right-click
+   is on the slide thumbnails inside the preview panel.
+   **Park a line you do not want touched.** A line you might click by accident — an
+   alternate verse, last week's notice, a song you may or may not reach — can be taken out
+   of the running order without deleting it: right-click it → **Disable**
+   (បិទដំណើរការ). The line dims, is written in italics, is **crossed out** and gains a small
+   amber 🚫 at its right end, and from then on **clicking it does nothing at all** — nothing
+   is projected, and a document line does not even open. Dragging it onto a mini screen puts nothing there,
+   and the arrow/Space keys in the preview panel step straight past it. Right-click →
+   **Enable** (បើកដំណើរការ) puts it back. (While a line is parked its menu drops
+   **Show on Screens** — an entry that could no longer do anything — but everything else
+   stays, so you can still recolour it, move it, or turn it back on.) 📸
+   You can park **one slide of a document** the same way: open the document's arrow and
+   right-click the slide. Park the **document itself** and every slide under it is parked
+   with it. A parked line can still be dragged up and down to tidy your running order, and
+   parking is remembered in that playlist only — the same song stays live in your other
+   services.
+   **Two kinds of greyed-out line, and they now look different.** A line YOU parked here is
+   crossed out and carries the amber 🚫 ("This item is disabled in this playlist"). A slide
+   that is greyed out because the **document itself** hides it is *not* crossed out and
+   carries a plain grey 👁‍🗨 ("This item is disabled in its document") — right-clicking that
+   one will not bring it back, because a running order cannot re-enable what the document
+   turned off; open the document and enable the slide there. In the preview panel the same
+   two marks sit in the **bottom-left corner** of each dimmed thumbnail. 📸
+
+6. Right-click an element for **Move up** / **Move down**, **Choose Color** (ជ្រើសរើសពណ៌)
+   to group your running order by colour, or **Remove from Playlist**. To move a line a long
+   way, use **Move to Top** (ផ្លាស់ទីទៅលើគេ) or **Move to Bottom** (ផ្លាស់ទីទៅក្រោមគេ) instead of
+   clicking **Move up** over and over — the line jumps straight to that end and everything
+   else keeps its order. (A line that is already at the top is not offered **Move up** or
+   **Move to Top**, and one already at the bottom is not offered **Move down** or
+   **Move to Bottom**.) **Duplicate** (ស្ទួន) puts a copy of the line **directly below** it,
+   with its colour, its pinned screens and its parked slides already on the copy — the quick
+   way to sing a song twice in one service, then change only the second one. The two copies
+   are separate from then on: parking or recolouring one leaves the other alone. 📸
+   You can also drag a
    line up or down **inside the same playlist** (dragging a line into a _different_
    playlist does nothing — add it there from its own list instead). A colour shows as a
    stripe down the left edge of the line and a dot at its right end; the lines stay in
@@ -620,15 +986,15 @@ thing to another machine.
    _is_ the meaning here. The colour belongs to that playlist alone, so the same song can
    be marked differently in two services. Changes are saved as you make them — there is
    **no save button** anywhere in this panel.
-6. Whatever is **live on the screen right now** is marked with a green `*` — on the
+7. Whatever is **live on the screen right now** is marked with a green `*` — on the
    element itself, on the document it belongs to, on the playlist, and on the
    **Playlists** heading — so you can see at a glance where you are in the running order.
-7. Not sure which "5.jpg" a line means? Right-click it → **Reveal Original**
+8. Not sure which "5.jpg" a line means? Right-click it → **Reveal Original**
    (បង្ហាញកន្លែងដើម) — the app scrolls to the real item elsewhere in the window and
    flashes it. This works on the slides inside an opened document too. A colour or a
    camera has no original to point at, and the panel holding the original has to be
    open already.
-8. To see the whole service at a glance, click the **window** icon on the playlist row (or
+9. To see the whole service at a glance, click the **window** icon on the playlist row (or
    right-click → **Open Preview**). A floating panel shows every element with its real
    preview — slides look exactly as they will project, and a document shows all of its
    slides. Collapse the ones you are not working on — or fold the whole running order
@@ -651,27 +1017,53 @@ thing to another machine.
    the mouse. **A document is walked slide by slide:** arriving at it always shows its
    **first** slide, each further press shows the next one, and the keys only move on to
    the next element once its **last** slide is the one on screen — so a whole song or sermon deck plays from here without touching
-   the mouse. (A folded-away document is passed over instead; unfold it to walk it.) An
-   audio track is skipped, and the last element is the end — it does not start over. The
-   keys work while you are in this panel; click into the slides list and they drive that
-   list again, as before. 📸
+   the mouse. A **folded-away** element is not passed over: the run **opens it** when it
+   gets there, and a song folded away is unfolded and walked from its first slide like any
+   other. Folding is how you _read_ a long running order; it never decides what is in the
+   service. **The only line the keys step over is one you have parked** (step 9) — an audio
+   track and a damaged line still take the marker, so you can see where the run has got to,
+   they simply have nothing to show. The last element is the end — it does not start over.
+   The keys work while you are in this panel, and it takes them the moment you open it, so
+   there is nothing to click first; click into the slides list and they drive that list
+   again, as before. 📸
    **A screen action is stopped on and fired** like anything else — so putting a
    **Clear All** between the last song and the sermon means one more press of the same
    key blanks the screen at exactly that point in the running order.
 
+   **And the run can walk itself.** The two `Next:` actions of step 2 are stopped on and
+   fired the same way, but what they fire is this panel: a **Next: Timeout** waits its
+   seconds and then makes the very same move the next key would have made, and a
+   **Next: Interval** keeps making it. While either is counting, a small pill at the
+   panel's top-right shows the seconds left — click it to stop. Remember the difference:
+   a timeout gets out of your way the moment you click or press anything, an interval
+   keeps going until you stop it there. 📸
+
+   **Everything you can right-click in the list, you can right-click here.** The menus in
+   this panel are the very same menus — right-click an element's **title line** (or any
+   empty part of its box) and you get its full menu: **Reveal Original**, **Show on
+   Screens** / **Apply on Screens**, **Set Specific Screen**, **Add CC Elements**, the four
+   moves, **Duplicate**, **Choose Color**, **Disable** / **Enable** and **Remove from
+   Playlist**, gated exactly as they are in the list. So you can tidy and re-order the
+   running order from the panel you are actually watching during the service, without
+   going back to the list — and the list behind it follows immediately. 📸
+   Two things inside a box keep menus of their own, because they are not the element:
+   a **slide thumbnail** gets the slide's menu (**Reveal Original**, **Show on Screens**,
+   **Set Specific Screen**, **Disable**, **Add CC Elements**), and a **CC line** gets its
+   short one (**Reveal Original**, **Set Specific Screen**, **Remove CC Element**).
+
 **Sharing it with another machine**
 
-9. Right-click the playlist → **Export** (នាំចេញ). You get one
+10. Right-click the playlist → **Export** (នាំចេញ). You get one
    `<name>.owapl.tar.gz` file in your **Downloads** folder, and the folder opens. It
    contains the playlist _and every file it needs_ — the full documents behind your
    slides, the images and videos, and any background attached to those documents.
-10. On the other machine, right-click an empty part of the **Playlists** list → **Import**
+11. On the other machine, right-click an empty part of the **Playlists** list → **Import**
     (នាំចូល) and pick that file — or just **drag the `.owapl.tar.gz` file from your file
     manager onto the Playlists list**, which imports it the same way. The songs, documents
     and media are re-created in that machine's own folders, Bible verses are added to the
     **Default** list, and every link inside the playlist is re-pointed at the local
     copies. 📸
-11. If the bundle is on a web server or a machine sharing it over the local network,
+12. If the bundle is on a web server or a machine sharing it over the local network,
     you can skip copying the file about: right-click the **Playlists** list →
     **Import From URL** (នាំចូលពី URL), paste the link and press **Ok**. (If the link is
     already on your clipboard it is filled in for you.) The app downloads the bundle to a
@@ -698,7 +1090,121 @@ thing to another machine.
 > **Invalid item**, that one entry is damaged (usually a hand-edited file) — the rest of
 > the running order still works; remove that line and re-add it.
 
-_Verify: PL-10, PL-29, PL-32..PL-76._
+_Verify: PL-10, PL-29, PL-32..PL-76, PL-81..PL-96._
+
+---
+
+### W-23 — Share one document (song, sermon slides, PDF) with another machine
+
+Sometimes you only want to hand over **one** item, not a whole service. A document
+travels as its own bundle, with everything attached to it.
+
+1. In the **Documents** list, right-click the item you want — an Open Worship slide
+   document, a lyric, a PDF, a PowerPoint or a Word file all work — and choose
+   **Export** (នាំចេញ). 📸
+2. You get one `<name>.owadoc.tar.gz` file in your **Downloads** folder, and the folder
+   opens. It contains the document itself plus everything hanging off it: the background
+   you attached to it (and that background's image or video file), any video placed
+   inside its slides, and its colour note.
+3. On the other machine, right-click an empty part of the **Documents** list →
+   **Add Items** → **Import** (នាំចូល) and pick that file — or just **drag the
+   `.owadoc.tar.gz` file from your file manager onto the Documents list**, which imports
+   it the same way. 📸
+4. The document appears in that machine's documents folder under its original name, with
+   its background re-attached and its colour note restored, so it is ready to present
+   straight away.
+5. If the bundle is on a web server or a machine sharing it over the local network, use
+   **Add Items** → **Import From URL** (នាំចូលពី URL) instead and paste the link. The
+   download goes to a temporary folder, is imported exactly as above, and is then
+   deleted.
+
+> Notes: the same rules as a playlist bundle apply. A file already there **with the same
+> contents** is reused rather than duplicated, so importing twice is safe; a file of the
+> same NAME that is actually a different file is left untouched and the bundled one lands
+> beside it as `a (1).pdf`. A document that already has a background attached keeps its
+> own — an import never overwrites it, and it does not overwrite that document's colour
+> note either. Importing needs the folders it writes into to be **chosen already** (for a
+> document with a video background, the Videos folder too), and if one is missing the
+> import stops before copying anything and tells you which to choose.
+>
+> If you export the same document twice, the second file is named
+> `<name>.owadoc.tar (1).gz`. That name no longer ends in `.owadoc.tar.gz`, so dragging
+> _that_ copy onto the list will not import it — use **Add Items → Import** and pick it
+> instead (or rename it first).
+
+_Verify: PL-77..PL-80, CM-36, CM-37._
+
+> This works for a **lyric** too — a lyric is a row in the same Documents list. Its
+> bundle carries the lyric plus every background you attached to its slides, so the song
+> arrives on the other machine already looking the way you set it up.
+
+---
+
+### W-24 — Share a bible list with another machine
+
+A bible list (the verses you lined up for a service) travels the same way.
+
+1. In the **Bibles** panel, right-click the list you want and choose **Export**
+   (នាំចេញ). You get one `<name>.owbible.tar.gz` file in your **Downloads** folder. 📸
+2. The bundle is small: a bible list stores verse _references_, not the Bible text, so
+   only the list and any background you attached to it (or to one of its verses) are
+   inside.
+3. On the other machine, right-click an empty part of the **Bibles** panel → **Import**
+   (នាំចូល) and pick the file — or **drag the `.owbible.tar.gz` onto the Bibles panel**.
+   **Import From URL** (នាំចូលពី URL) works here too. 📸
+4. The list appears in that machine's bibles folder with its verses, their colours and
+   its background, ready to present.
+
+> Notes: the Bible **versions** the verses name are not part of the bundle — they are
+> large, separately downloaded files. If the other machine does not have a version yet,
+> download it there (Settings → Bible) and the verses show up. The **Bible Reader** page
+> keeps its own bibles folder, so importing there adds the list to the reader's folder,
+> not the presenter's.
+>
+> A bundle can only be imported by the list it came from: picking a document bundle in
+> the Bibles panel (or a bible bundle in the Documents list) is refused with a message
+> naming what the file actually holds, and nothing is written.
+
+_Verify: PR-27..PR-29, CM-38, CM-39._
+
+---
+
+### W-25 — Back up everything, or move to a new computer
+
+W-22 to W-24 each carry one thing. To take **all** your material at once — for a backup,
+or to set up a second machine — use the app's **File** menu.
+
+1. Open the **File** menu at the top of the window and choose **Export Data**
+   (នាំចេញទិន្នន័យ). 📸
+2. A panel lists every data folder you have set up — Documents, Playlists, Background
+   Images, Videos and Audios, Bible Present, Bible Reader and Notes — with the folder each
+   one points at. **They all start ticked.** Untick anything you do not want (the videos
+   folder is usually the big one), or use **Select All** / **Deselect All**. 📸
+3. Press **Ok**. You get one `open-worship-data.owadata.tar` file in your **Downloads**
+   folder, and the folder opens. Copy it to a USB stick or the other machine.
+4. On the other machine, choose **File → Import Data** (នាំចូលទិន្នន័យ) and pick that
+   file. The panel now lists only the folders the file actually contains — again all
+   ticked — so you can restore just the songs, or just the backgrounds. 📸
+5. Press **Ok**. When it finishes you are told how many files were brought in and how
+   many were already up to date.
+
+> Notes: this is a **copy, not a replacement**. A file already on the machine with the
+> same contents is left alone, so importing the same backup twice changes nothing and is
+> safe to repeat. If a file has the same NAME but different contents — you edited the song
+> on this machine — **your version is kept** and the one from the backup is added beside
+> it as `song (1).ows`, for you to compare and delete whichever you do not want. Nothing
+> is ever overwritten.
+>
+> Importing writes into the folders **this** machine has set up, so choose them first
+> (Settings → Path Settings). If one of them has no folder yet, the import stops before
+> copying anything and tells you which to set.
+>
+> The backup leaves out the working files the app can rebuild by itself — a document's
+> undo history and the page images made for PDF/PowerPoint/Word previews — so it stays
+> much smaller than the folders themselves, and those are regenerated on the other
+> machine the first time you open the document.
+
+_Verify: NAV-17..NAV-19._
 
 ---
 

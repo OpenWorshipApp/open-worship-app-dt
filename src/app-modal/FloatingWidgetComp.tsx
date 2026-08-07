@@ -8,6 +8,7 @@ import type {
 } from 'react';
 import { useThemeSource } from '../others/themeHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
+import { tran } from '../lang/langHelpers';
 import {
     COLLAPSED_HEIGHT,
     RESIZE_HANDLES,
@@ -268,6 +269,9 @@ export default function FloatingWidgetComp({
 
     const { theme } = useThemeSource();
 
+    const collapseLabel = isCollapsed
+        ? tran('Expand floating widget')
+        : tran('Collapse floating widget');
     const actionButtons = (
         <div
             className="floating-widget__actions"
@@ -277,16 +281,8 @@ export default function FloatingWidgetComp({
                 type="button"
                 className="floating-widget__button"
                 onClick={() => setIsCollapsed((prev) => !prev)}
-                aria-label={
-                    isCollapsed
-                        ? 'Expand floating widget'
-                        : 'Collapse floating widget'
-                }
-                title={
-                    isCollapsed
-                        ? 'Expand floating widget'
-                        : 'Collapse floating widget'
-                }
+                aria-label={collapseLabel}
+                title={collapseLabel}
             >
                 <i className={`bi bi-chevron-${isCollapsed ? 'up' : 'down'}`} />
             </button>
@@ -294,8 +290,8 @@ export default function FloatingWidgetComp({
                 type="button"
                 className="floating-widget__button"
                 onClick={onClose}
-                aria-label="Close floating widget"
-                title="Close floating widget"
+                aria-label={tran('Close floating widget')}
+                title={tran('Close floating widget')}
             >
                 <i className="bi bi-x-lg" />
             </button>

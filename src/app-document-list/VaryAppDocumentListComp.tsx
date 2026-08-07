@@ -52,6 +52,12 @@ import {
 import { handleError } from '../helper/errorHelpers';
 import { initHttpRequest } from '../helper/bible-helpers/downloadHelpers';
 import { useGenDirSourceReload } from '../helper/dirSourceHelpers';
+import {
+    askAndImportAppDocumentArchiveFromUrl,
+    checkIsAppDocumentArchiveFileFullName,
+    importDroppedAppDocumentArchive,
+    selectAndImportAppDocumentArchive,
+} from './appDocumentArchiveHelpers';
 
 function handleExtraFileChecking(filePath: string) {
     const fileSource = FileSource.getInstance(filePath);
@@ -83,6 +89,13 @@ function handleFileTaking(
     const fileFullName = getFileFullName(file);
     if (!fileFullName) {
         return false;
+    }
+    // An exported bundle is imported rather than dropped into the documents
+    // folder as-is: the archive itself is not a document the app can open, so
+    // copying it there would only leave an unreadable file behind.
+    if (checkIsAppDocumentArchiveFileFullName(fileFullName)) {
+        importDroppedAppDocumentArchive(file);
+        return true;
     }
     const dotExtension = getFileDotExtension(fileFullName).toLocaleLowerCase();
     if (dotExtension === '.docx') {
@@ -155,7 +168,22 @@ async function genContextMenuItems(dirSource: DirSource) {
     if (dirSource.dirPath === '') {
         return [];
     }
-    const contextMenuItems: ContextMenuItemType[] = [];
+    const contextMenuItems: ContextMenuItemType[] = [
+        {
+            childBefore: genContextMenuItemIcon('box-arrow-in-down'),
+            menuElement: tran('Import'),
+            onSelect: () => {
+                selectAndImportAppDocumentArchive();
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('cloud-download'),
+            menuElement: tran('Import From URL'),
+            onSelect: () => {
+                askAndImportAppDocumentArchiveFromUrl();
+            },
+        },
+    ];
     const title = tran('Download From URL');
     contextMenuItems.push(
         {

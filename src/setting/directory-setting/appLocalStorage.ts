@@ -152,6 +152,20 @@ class AppLocalStorage {
         }
     }
 
+    /**
+     * Every key currently on disk. A directory listing, so it is for the rare
+     * housekeeping pass (purging the settings of a file that has been deleted),
+     * never for a read path — `getItem` is called from render bodies.
+     */
+    async listKeys(): Promise<string[]> {
+        try {
+            return await fsListFiles(this.localStorageDir);
+        } catch (error) {
+            handleError(error);
+            return [];
+        }
+    }
+
     removeItemCache(key: string): void {
         const fullPath = this.toFullPath(key);
         cache.deleteSync(fullPath);

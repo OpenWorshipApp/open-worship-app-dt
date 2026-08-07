@@ -44,6 +44,12 @@
   border-radius: 3px;
   cursor: pointer;
 
+  // Painted on the GROUP rather than on the row: an element and the CCs riding
+  // with it go to a screen together, so pointing at any of them has to light all
+  // of them — hovering a follower while its host stayed dark read as though the
+  // two were unrelated lines. A row outside a group (a placeholder, an error
+  // line) still answers on its own.
+  .app-playlist-row-group:hover &,
   &:hover {
     background-color: rgba(127, 127, 127, 0.25);
   }
@@ -89,6 +95,68 @@
   }
 }
 
+// Parked out of the run: still fully readable — an operator has to be able to
+// find it again to put it back — but plainly not something the next click will
+// send anywhere. The pointer says so before the click does.
+.app-playlist-row-disabled {
+  opacity: 0.45;
+  cursor: default;
+  font-style: italic;
+
+  // The row is still the way BACK (right-click → Enable), so the hover feedback
+  // stays; only the pressed state goes, since nothing happens on press.
+  &:active {
+    background-color: rgba(127, 127, 127, 0.25);
+  }
+}
+
+// Parked by THIS run sheet, as against a slide its own document hides. Both are
+// dimmed the same, so the difference has to be carried by something dimming
+// cannot touch: the label is struck through — crossed out of the run, which is
+// exactly what happened — and the mark at the end of the row is a different
+// glyph in a different colour. An operator can undo this park and only this one
+// from here, so telling the two apart at a glance is what says whether
+// right-clicking the row is going to help.
+//
+// On the label rather than the row: a line-through set on the row propagates to
+// every inline descendant, striking the id badge and drawing through the icon
+// glyphs as well.
+.app-playlist-row-label-parked {
+  text-decoration: line-through;
+}
+
+// Also worn by the floating preview's element header, hence outside the block.
+.app-playlist-row-disabled-icon {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--bs-secondary-color);
+}
+
+// Tinted — the row is already at 0.45 opacity, so the colour lands muted rather
+// than shouting, while still reading as deliberate against the plain grey the
+// document's own hidden slides wear.
+.app-playlist-row-disabled-icon-playlist {
+  color: var(--bs-warning);
+}
+
+// Also used by the floating preview's element header, which is why this sits
+// outside the row block.
+.app-playlist-row-screen-pin {
+  flex: 0 0 auto;
+  font-size: 11px;
+  white-space: nowrap;
+  padding: 0 2px;
+  // Only the pin glyph and the separators are tinted here — each id carries
+  // its OWN screen's colour inline, and a colour on this element would lose
+  // that contrast against a dark or light row alike.
+  color: var(--bs-secondary-color);
+  font-weight: bold;
+
+  i {
+    margin-right: 1px;
+  }
+}
+
 .app-playlist-row-empty {
   opacity: 0.5;
   font-style: italic;
@@ -99,9 +167,45 @@
   color: var(--bs-danger);
 }
 
-// Drop indicator while reordering rows inside one playlist.
+// The two things a drag can do to an element row, and they must not look alike:
+// the EDGES of a row reorder the run sheet, its MIDDLE attaches what is being
+// dragged as a CC element. A line BETWEEN rows says "this line moves here"; an
+// outline round the whole row says "this goes ONTO that line".
 .app-playlist-row-dragging-over {
-  border-top: 2px solid var(--bs-info);
+  box-shadow:
+    inset 0 2px 0 var(--bs-info),
+    inset 0 -2px 0 var(--bs-info);
+}
+
+.app-playlist-row-dragging-over-cc {
+  outline: 2px dashed var(--bs-warning);
+  outline-offset: -2px;
+}
+
+// A CC row. Reads as belonging to the row above it rather than as a line of the
+// run sheet in its own right: the run never stops on one, so it is held back
+// from the lines the operator actually walks. Held back CONSTANTLY — including
+// under the hover its group shares — because it is not a line that becomes
+// walkable when pointed at.
+.app-playlist-cc-row {
+  opacity: 0.7;
+
+  .app-playlist-row-chevron::before {
+    content: '\21B3';
+    opacity: 0.6;
+    font-size: 0.8em;
+  }
+}
+
+// The CC rows drawn inside the floating preview — under an element's own
+// preview, and under a slide's card. Boxed off so they do not read as part of
+// the thing they are attached to.
+.app-playlist-preview-cc-rows {
+  width: 100%;
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  margin-top: 2px;
+  padding-top: 2px;
+  font-size: 0.9em;
 }
 
 .app-playlist-preview {
@@ -144,17 +248,19 @@
     }
   }
 
-  // Sits on the widget's bottom edge, on the same baseline as the footer's
-  // `...` handle (`handleAutoHide` pins that at `left: 7px`) but at the far
-  // end. Absolute like it, so both stay put while the list scrolls underneath.
+  // Sits on the widget's bottom edge, immediately right of the footer's `...`
+  // handle (`handleAutoHide` pins that at `left: 7px`, 25px wide) — the reading
+  // controls grouped in one corner, leaving the far end to the to-the-top
+  // button. Absolute like the handle, so both stay put while the list scrolls
+  // underneath.
   .app-playlist-preview-collapsing-buttons {
     position: absolute;
-    right: 7px;
+    left: 36px;
     bottom: 7px;
     display: flex;
     gap: 2px;
-    // Over the footer bar, which reserves the matching width with
-    // `.app-playlist-preview-collapsing-spacer` so nothing ends up underneath.
+    // Over the footer bar, whose left end is empty flex space (the zoom range
+    // is pushed to the far end), so nothing of it lands underneath.
     z-index: 3;
 
     > button {
@@ -182,9 +288,82 @@
     }
   }
 
-  // 7px offset + two 25px buttons + their 2px gap: what the pair above covers.
+  // 7px offset + the 45px to-the-top button below: what the far end of the
+  // footer is covered by.
   .app-playlist-preview-collapsing-spacer {
-    flex: 0 0 59px;
+    flex: 0 0 52px;
+  }
+
+  // The shared to-the-top affordance, moved onto the widget's bottom-right
+  // corner — its own rule pins it to `right: 5px; bottom: 5px`, which is where
+  // the widget's resize handle lives. Over the footer bar like the buttons
+  // opposite it, which keeps its matching width clear.
+  .app-to-the-top {
+    right: 7px;
+    bottom: 7px;
+    z-index: 3;
+  }
+
+  // The run's own clock, pinned at the top-right of the widget. Absolute rather
+  // than in the flow: it appears and disappears while the operator is reading
+  // the sheet, and nothing under it may shift when it does. Fully opaque —
+  // unlike the faded corner buttons below, this is the one thing here that is
+  // about to change what is on the screen.
+  // The clock's own colour, matching the element that armed it (amber waits
+  // once, teal keeps going) — set as a variable so the border, the text and the
+  // hover fill all follow the one declaration.
+  .app-playlist-preview-auto-next {
+    --app-auto-next-color: var(--bs-warning);
+    position: absolute;
+    // Pins to `.floating-widget` like the corner buttons below (nothing in this
+    // list is positioned), so it stays put while the sheet scrolls under it —
+    // clear of the widget's own 40px header, which paints above it.
+    top: 45px;
+    right: 7px;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    border: 1px solid var(--app-auto-next-color);
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.55);
+    color: var(--app-auto-next-color);
+    font-size: 0.8rem;
+    line-height: 1.4rem;
+  }
+
+  // Two controls now (hold it, end it), so the hover fill belongs to whichever
+  // one is under the pointer — filling the whole pill would no longer say which
+  // of them is about to be pressed. Bare buttons: the pill IS the chrome.
+  .app-playlist-preview-auto-next-button {
+    display: flex;
+    align-items: center;
+    padding: 0 2px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: inherit;
+    line-height: 1;
+
+    &:hover {
+      background-color: var(--app-auto-next-color);
+      color: #000;
+    }
+  }
+
+  .app-playlist-preview-auto-next-interval {
+    --app-auto-next-color: var(--bs-teal);
+    background-color: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(5px);
+  }
+
+  // Held: the count is frozen, and a frozen number that looked exactly like a
+  // running one is the one thing an operator must not have to guess at
+  // mid-service. Dashed rather than dimmed — the pill still has to be readable
+  // from a distance.
+  .app-playlist-preview-auto-next-paused {
+    border-style: dashed;
+    opacity: 0.85;
   }
 
   .app-playlist-preview-item {
@@ -247,6 +426,20 @@
       );
     }
 
+    // Parked. Dimmed on the LABEL and the body separately rather than on the
+    // item box: the label is opaque on purpose (the slides scroll under it), and
+    // fading the box would composite that background away with it.
+    &.app-playlist-preview-item-disabled {
+      > .app-playlist-preview-item-label {
+        opacity: 0.5;
+        font-style: italic;
+      }
+
+      > .app-playlist-preview-item-body {
+        opacity: 0.4;
+      }
+    }
+
     .app-playlist-preview-item-body {
       display: flex;
       flex-wrap: wrap;
@@ -257,6 +450,75 @@
     .app-playlist-preview-divider {
       margin: 4px 0;
       opacity: 0.35;
+    }
+  }
+
+  // A slide thumbnail that is pinned in its OWN right. The badge is overlaid
+  // rather than added beside the card: the card is the presenter's own
+  // component at a zoom-driven size, so anything in the flow would reshuffle
+  // the grid.
+  //
+  // BOTTOM-right, not top: the card's own header already holds its index badge
+  // and its expand button up there, and this would sit on top of them.
+  .app-playlist-preview-slide {
+    position: relative;
+
+    // One slide of a document parked on its own. The card keeps its pointer
+    // events — its right-click menu is the way back — and only the click that
+    // would present it is caught, on the way down.
+    &.app-playlist-preview-slide-disabled {
+      opacity: 0.4;
+    }
+
+    // Says WHICH park, in the same two glyphs the tree rows use. Bottom-LEFT:
+    // the pin owns the opposite corner and the card's own header holds its index
+    // and expand button along the top. Plated like the pin for the same reason —
+    // a slide projects anything at all behind it.
+    .app-playlist-preview-slide-disabled-icon {
+      position: absolute;
+      bottom: 2px;
+      left: 2px;
+      z-index: 1;
+      font-size: 11px;
+      color: var(--bs-secondary-color);
+      background-color: rgb(0 0 0 / 65%);
+      border-radius: 3px;
+      padding: 0 3px;
+
+      // Re-stated here: the shared single-class rule loses to this nested one,
+      // and the tint is the whole point of the badge.
+      &.app-playlist-row-disabled-icon-playlist {
+        color: var(--bs-warning);
+      }
+    }
+
+    // Where the run is, in the same cyan the element label carries one level
+    // up — the panel's own cursor, and only ever on ONE card.
+    //
+    // Drawn as an OUTLINE so it shifts no layout, and offset inwards so it
+    // lands in the card's own 2px margin rather than on top of the magenta
+    // "live on a screen" border. The two answer different questions — where the
+    // run is, versus what the audience is looking at — and a slide is regularly
+    // both, so both have to stay readable at once. No background wash either:
+    // the label can afford one over a flat bar, a slide thumbnail cannot.
+    &.app-playlist-preview-item-selected {
+      outline: 2px solid var(--bs-info);
+      outline-offset: -1px;
+      border-radius: 3px;
+    }
+
+    .app-playlist-row-screen-pin {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      z-index: 1;
+      // Slides project anything at all behind this corner, so the chip carries
+      // its own dark plate instead of trusting the artwork underneath.
+      background-color: rgb(0 0 0 / 65%);
+      border-radius: 3px;
+      padding: 0 3px;
+      // Never in the way of the click that presents the slide.
+      pointer-events: none;
     }
   }
 }

@@ -29,7 +29,7 @@ export default function BibleCustomStyleFloatingComp() {
     }
     const label = tran('Bible Properties');
     return createPortal(
-        <div className="app" data-bs-theme={theme}>
+        <div className="app app-floating-widget-portal" data-bs-theme={theme}>
             <FloatingWidgetComp
                 title={label}
                 persistKey="floating-widget-rect-bible-property"

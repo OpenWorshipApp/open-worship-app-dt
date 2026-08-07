@@ -1,6 +1,7 @@
 import '../app-document-presenter/items/SlidePreviewer.scss';
+import './LyricSlidesPreviewerComp.scss';
 
-import { useCallback, useMemo } from 'react';
+import { type CSSProperties, useCallback, useMemo } from 'react';
 
 import { VaryAppDocumentContext } from '../app-document-list/appDocumentHelpers';
 import VarySlidesPreviewerComp from '../app-document-presenter/items/VarySlidesPreviewerComp';
@@ -36,6 +37,85 @@ function getLyricAppDocuments(
     return [stages, entries] as const;
 }
 
+const BASE_STAGE = 0;
+
+// Each stage gets its own accent, worn by BOTH its chip and the border around
+// its preview pane — with several stages side by side that is the only quick
+// way to tell which pane belongs to which chip. Fixed hexes rather than theme
+// variables: these have to stay distinguishable from each other in light and
+// dark alike, which the semantic bootstrap colours do not guarantee.
+const STAGE_ACCENT_COLOR_LIST = [
+    '#4dabf7',
+    '#51cf66',
+    '#ffa94d',
+    '#cc5de8',
+    '#ff6b6b',
+    '#22b8cf',
+    '#fcc419',
+    '#f783ac',
+];
+
+function getStageAccentColor(stage: number) {
+    const index = Math.abs(stage) % STAGE_ACCENT_COLOR_LIST.length;
+    return STAGE_ACCENT_COLOR_LIST[index];
+}
+
+const STAGE_ACCENT_VAR_NAME = '--stage-accent';
+
+function genStageAccentStyle(stage: number) {
+    return {
+        [STAGE_ACCENT_VAR_NAME]: getStageAccentColor(stage),
+    } as CSSProperties;
+}
+
+/**
+ * One stage, shown as a chip. The point is that the control tells you what it
+ * does without being tried: a removable stage carries its own visible `×`, and
+ * the base stage says why it has none. Before, the stage numbers were bare text
+ * whose only clue was a `title` on hover.
+ */
+function RenderStageChipComp({
+    stage,
+    onRemove,
+}: Readonly<{
+    stage: number;
+    onRemove: (stage: number) => void;
+}>) {
+    const label = `${tran('Stage')} ${stage}`;
+    const accentStyle = genStageAccentStyle(stage);
+    if (stage === BASE_STAGE) {
+        return (
+            <span
+                className="stage-previewer-chip is-base"
+                style={accentStyle}
+                title={`${tran('Base Stage')} · ${tran(
+                    'Base stage is always shown',
+                )}`}
+            >
+                <i className="bi bi-lock-fill" />
+                {label}
+            </span>
+        );
+    }
+    const removeLabel = `${tran('Remove Stage')} ${stage}`;
+    return (
+        <span className="stage-previewer-chip" style={accentStyle}>
+            {label}
+            <button
+                type="button"
+                className="stage-previewer-chip-remove"
+                title={removeLabel}
+                aria-label={removeLabel}
+                onClick={() => {
+                    onRemove(stage);
+                }}
+            >
+                <i className="bi bi-x-lg" />
+            </button>
+        </span>
+    );
+}
+
 export default function LyricSlidesPreviewerComp() {
     const lyricManager = useLyricManagerContext();
     const [stageSetting, setStageSetting] = useStateSettingString(
@@ -67,30 +147,47 @@ export default function LyricSlidesPreviewerComp() {
     }, []);
 
     return (
-        <div className="w-100 h-100 app-overflow-hidden card">
-            <div className="w-100 p-1 card-header">
-                {toIconedLabel('Stage Previewer')} ({tran('stages')}:{' '}
-                {stages.map((stage) => {
-                    if (stage === 0) {
-                        return <span key={stage}>0</span>;
-                    }
-                    return (
-                        <span
-                            key={stage}
-                            className="mx-1 app-caught-hover-pointer"
-                            title={`Remove stage ${stage}`}
-                            onClick={handleStageRemoving.bind(null, stage)}
-                        >
-                            {stage}
-                        </span>
-                    );
-                })}
-                ){/* a plus icon to add new stage */}
-                <i
-                    className="bi bi-plus-circle ms-2 app-caught-hover-pointer"
-                    style={{ color: 'var(--bs-info)' }}
+        <div className="w-100 h-100 app-overflow-hidden card lyric-slides-previewer">
+            {/*
+                This header is a flex item of the card column and was being
+                shrunk below its own content box, so a label that wrapped to a
+                second line got clipped mid-glyph - which is what the Khmer
+                translation does, being about twice the width of the English one.
+                The scss keeps it on a single unshrinkable line: the label
+                truncates with an ellipsis, the stage controls always stay
+                visible.
+            */}
+            <div className="w-100 p-1 card-header px-1 py-0">
+                <span className="stage-previewer-label">
+                    {toIconedLabel('Stage Previewer')}
+                </span>
+                <div className="stage-previewer-stages">
+                    {stages.map((stage) => {
+                        return (
+                            <RenderStageChipComp
+                                key={stage}
+                                stage={stage}
+                                onRemove={handleStageRemoving}
+                            />
+                        );
+                    })}
+                </div>
+                {/*
+                    Spelled out rather than a bare `+` glyph: this is the only
+                    way to get a second stage, so it has to read as an action
+                    even to someone who has never seen the panel before.
+                */}
+                <button
+                    type="button"
+                    className="btn btn-sm btn-outline-info stage-previewer-add"
+                    title={tran('Add another stage layout')}
                     onClick={handleStageAdding}
-                />
+                >
+                    <i className="bi bi-plus-lg" />
+                    <span className="stage-previewer-add-label">
+                        {tran('Add Stage')}
+                    </span>
+                </button>
             </div>
             <div className="w-100 card-body app-overflow-hidden">
                 <ResizeActorComp
@@ -113,11 +210,18 @@ export default function LyricSlidesPreviewerComp() {
                                 children: {
                                     render: () => {
                                         return (
-                                            <VaryAppDocumentContext
-                                                value={lyricAppDocument}
+                                            <div
+                                                className="stage-previewer-pane"
+                                                style={genStageAccentStyle(
+                                                    stage,
+                                                )}
                                             >
-                                                <VarySlidesPreviewerComp />
-                                            </VaryAppDocumentContext>
+                                                <VaryAppDocumentContext
+                                                    value={lyricAppDocument}
+                                                >
+                                                    <VarySlidesPreviewerComp />
+                                                </VaryAppDocumentContext>
+                                            </div>
                                         );
                                     },
                                 },

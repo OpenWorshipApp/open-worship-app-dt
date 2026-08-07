@@ -48,6 +48,13 @@ describe('Khmer language data', () => {
             'Background',
             'Presenter',
             'Enable',
+            'Disable',
+            'This item is disabled',
+            'This item is disabled in this playlist',
+            'This item is disabled in its document',
+            'Duplicate',
+            'Move to Top',
+            'Move to Bottom',
         ]) {
             expect(lang.dictionary[lang.sanitizeTranKey(key)]).toBeDefined();
         }

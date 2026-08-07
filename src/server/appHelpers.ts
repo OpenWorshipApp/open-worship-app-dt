@@ -76,24 +76,49 @@ export function convertToPdf(officeFilePath: string, pdfFilePath: string) {
     });
 }
 
-export function tarExtract(filePath: string, outputDir: string) {
+// `entries` unpacks only those paths — a whole-data archive is read for its
+// manifest long before the user has said which folders to restore.
+export function tarExtract(
+    filePath: string,
+    outputDir: string,
+    entries?: string[],
+) {
     return electronSendAsync<void>('main:app:tar-extract', {
         filePath,
         outputDir,
+        entries,
     });
 }
 
+// `excludeNamePatterns` are regex sources matched against each path segment;
+// a matching folder (the regenerable per-document caches) is left out.
 export function tarCreate(
     inputDir: string,
     outputFilePath: string,
     files: string[],
     isGzip = false,
+    excludeNamePatterns?: string[],
 ) {
     return electronSendAsync<void>('main:app:tar-create', {
         inputDir,
         outputFilePath,
         files,
         isGzip,
+        excludeNamePatterns,
+    });
+}
+
+// Append to an existing UNCOMPRESSED tar; see the electron side for why the
+// data archive is built this way.
+export function tarAppend(
+    archiveFilePath: string,
+    inputDir: string,
+    files: string[],
+) {
+    return electronSendAsync<void>('main:app:tar-append', {
+        archiveFilePath,
+        inputDir,
+        files,
     });
 }
 
@@ -216,6 +241,60 @@ export function downloadImage(targetUrl: string, outputDir: string) {
     );
 }
 
+/**
+ * The flags that make yt-dlp use the binaries we ship instead of whatever the
+ * user happens to have installed. Shared by every yt-dlp call so a fix to one
+ * of them cannot miss the other.
+ */
+function toYtDlpRuntimeArgs() {
+    const { ytUtils } = appProvider;
+    return [
+        '--no-playlist',
+        '--ffmpeg-location',
+        `${ytUtils.ffmpegBinPath}`,
+        // yt-dlp enables deno by default and prefers it over every other
+        // runtime, so clear the defaults before pointing it at the QuickJS we
+        // ship - otherwise a deno on the user's PATH silently wins.
+        '--no-js-runtimes',
+        '--js-runtimes',
+        `quickjs:${ytUtils.qjsBinPath}`,
+    ];
+}
+
+/**
+ * The direct media URL behind a page URL, without downloading anything: `-g`
+ * makes yt-dlp print the stream it would have fetched. `b` selects a *muxed*
+ * format, so the one URL that comes back carries both tracks and a single
+ * `<video>` element can play it.
+ *
+ * What comes back is short-lived and tied to the requesting IP (the URL carries
+ * an `expire` stamp), so it is for playing now — never for storing. Google
+ * serves it with `access-control-allow-origin` echoing our own origin, so a
+ * `crossOrigin="anonymous"` video stays canvas-readable.
+ */
+export async function resolveMediaStreamUrl(targetUrl: string) {
+    const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
+    const output = await ytDlpWrap.execPromise([
+        targetUrl.trim(),
+        '-g',
+        '-f',
+        'b[ext=mp4]/b',
+        ...toYtDlpRuntimeArgs(),
+    ]);
+    const streamUrl = output
+        .split('\n')
+        .map((line) => {
+            return line.trim();
+        })
+        .find((line) => {
+            return line.startsWith('http');
+        });
+    if (streamUrl === undefined) {
+        throw new Error('yt-dlp returned no playable stream URL');
+    }
+    return streamUrl;
+}
+
 export function downloadVideoOrAudio(
     targetUrl: string,
     outputDir: string,
@@ -237,22 +316,10 @@ export function downloadVideoOrAudio(
                 const outputFormat = pathResolve(
                     `${outputDir}/${temptName}.%(ext)s`,
                 );
-                const { ytUtils } = appProvider;
-                const ytDlpWrap = await ytUtils.getYTHelper();
+                const ytDlpWrap = await appProvider.ytUtils.getYTHelper();
                 let filePath: string | null = null;
                 const args = [videoOrAudioUrl, '-o', outputFormat];
-                args.push(
-                    '--no-playlist',
-                    '--ffmpeg-location',
-                    `${ytUtils.ffmpegBinPath}`,
-                    // yt-dlp enables deno by default and prefers it over every
-                    // other runtime, so clear the defaults before pointing it at
-                    // the QuickJS we ship - otherwise a deno on the user's PATH
-                    // silently wins.
-                    '--no-js-runtimes',
-                    '--js-runtimes',
-                    `quickjs:${ytUtils.qjsBinPath}`,
-                );
+                args.push(...toYtDlpRuntimeArgs());
                 if (!isVideo) {
                     args.push(
                         '-x',

@@ -498,6 +498,9 @@ type CustomMenuItemType = {
 };
 export type CustomMenusDataType = {
     tools?: CustomMenuItemType[];
+    // Renderer-contributed **File** menu entries (Export/Import Data). Same
+    // mechanism as `tools`, so the label is translated where `tran` works.
+    file?: CustomMenuItemType[];
 };
 
 export function checkIsValidLangCode(text: string) {

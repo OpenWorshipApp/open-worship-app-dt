@@ -1169,6 +1169,7 @@ const appProviderMock = {
                 on: () => helper,
                 off: () => helper,
                 exec: () => helper,
+                execPromise: async () => '',
                 ytDlpProcess: { pid: 0 },
             };
             return helper;
@@ -1176,13 +1177,20 @@ const appProviderMock = {
         ffmpegBinPath: '',
         qjsBinPath: '',
     },
-    windowTitle: globalThis.document.title,
+    // Read defensively: this object is built at MODULE LOAD, and the module is
+    // reached from NODE-environment tests too — anything under `helper/` that
+    // ends up importing `langHelpers` pulls the whole of `appProvider` in with
+    // it. A bare `document.title` there is not a failing assertion but a
+    // TypeError while the test file is still being imported, which takes every
+    // test in that file down at once and points at this line rather than at
+    // whatever import chain reached it.
+    windowTitle: globalThis.document?.title ?? '',
     POPUP_FRAME_NAME_PREFIX,
     envUtils: {
         isFEUseEffectWarning: false,
     },
     getIsMouseOverApp: () => false,
-    getIsWindowFocused: () => globalThis.document.hasFocus(),
+    getIsWindowFocused: () => globalThis.document?.hasFocus() ?? false,
     init: async () => {
         await initLyricMock();
     },

@@ -31,6 +31,29 @@ export function getSettingForce(key: string) {
     return appLocalStorage.getItemForce(key);
 }
 
+/**
+ * Drop every setting whose key is `prefix` itself or starts with `prefix-`.
+ *
+ * For cleaning up after a file that is gone: settings are named after the thing
+ * they belong to, so deleting a playlist otherwise leaves its
+ * `playlist-opened-…`, `playlist-item-expanded-…-<doc>` and
+ * `playlist-preview-collapsed-…` files behind forever, one per playlist per
+ * setting, on machines that are usually tight on disk.
+ *
+ * The `-` is required so a prefix cannot swallow a longer, unrelated key that
+ * merely starts with the same characters.
+ */
+export async function removeSettingsByPrefix(prefix: string) {
+    const keys = await appLocalStorage.listKeys();
+    const removedKeys = keys.filter((key) => {
+        return key === prefix || key.startsWith(`${prefix}-`);
+    });
+    for (const key of removedKeys) {
+        appLocalStorage.removeItem(key);
+    }
+    return removedKeys;
+}
+
 function useWatchSetting(settingName: string, callback: () => void) {
     useAppEffectAsync(async () => {
         const settingFile = pathJoin(

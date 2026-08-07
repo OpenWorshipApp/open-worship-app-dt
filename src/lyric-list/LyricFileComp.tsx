@@ -7,18 +7,20 @@ import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAb
 import { previewingEventListener } from '../event/PreviewingEventListener';
 import { useAppEffect, useAppCurrentRef } from '../helper/appHooks';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import {
-    SelectedLyricContext,
-    useSelectedLyricSetterContext,
-} from './lyricHelpers';
+import LyricAppDocument from './LyricAppDocument';
 import { useEditingHistoryStatus } from '../editing-manager/editingHelpers';
-import { checkIsVaryAppDocumentFilePathOnScreen } from '../app-document-list/appDocumentHelpers';
+import {
+    checkIsVaryAppDocumentFilePathOnScreen,
+    SelectedVaryAppDocumentContext,
+    useSelectedAppDocumentSetterContext,
+} from '../app-document-list/appDocumentHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
 import { openPopupLyricEditorWindow } from './lyricEditorHelpers';
-import { getIsShowingLyricPreviewer } from '../app-document-presenter/presenterRendererHelpers';
+import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 import { tran } from '../lang/langHelpers';
 import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import { handleAppDocumentDragStart } from '../helper/dragHelpers';
+import { exportAppDocument } from '../app-document-list/appDocumentArchiveHelpers';
 
 function genContextMenuItems(
     lyric: Lyric | null | undefined,
@@ -36,6 +38,13 @@ function genContextMenuItems(
             ),
             onSelect: () => {
                 openPopupLyricEditorWindow(lyric);
+            },
+        },
+        {
+            childBefore: genContextMenuItemIcon('file-earmark-arrow-down'),
+            menuElement: tran('Export'),
+            onSelect: () => {
+                exportAppDocument(lyric.filePath);
             },
         },
     ];
@@ -68,11 +77,11 @@ export default function LyricFileComp({
     index: number;
     filePath: string;
 }>) {
-    const selectedContext = use(SelectedLyricContext);
+    const selectedContext = use(SelectedVaryAppDocumentContext);
     const isSelected =
         selectedContext !== null &&
-        selectedContext.selectedLyric?.filePath === filePath;
-    const setSelectedLyric = useSelectedLyricSetterContext();
+        selectedContext.selectedVaryAppDocument?.filePath === filePath;
+    const setSelectedVaryAppDocument = useSelectedAppDocumentSetterContext();
     const [lyric, setLyric] = useState<Lyric | null | undefined>(undefined);
     const lyricRef = useAppCurrentRef(lyric);
     useAppEffect(() => {
@@ -93,14 +102,19 @@ export default function LyricFileComp({
         lyricRef.current?.fileSource.fireUpdateEvent();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const setSelectedLyricRef = useAppCurrentRef(setSelectedLyric);
+    const setSelectedVaryAppDocumentRef = useAppCurrentRef(
+        setSelectedVaryAppDocument,
+    );
     const handleClicking = useCallback(() => {
         if (!lyricRef.current) {
             return;
         }
-        setSelectedLyricRef.current(lyricRef.current);
-        if (!getIsShowingLyricPreviewer()) {
-            previewingEventListener.showLyric(lyricRef.current);
+        // A lyric is selected as a document, exactly like a PPTX or a PDF: one
+        // selection, one previewer. The previewer swaps its body for a lyric.
+        const lyricAppDocument = LyricAppDocument.getInstance(filePath);
+        setSelectedVaryAppDocumentRef.current(lyricAppDocument);
+        if (!getIsShowingVaryAppDocumentPreviewer()) {
+            previewingEventListener.showVaryAppDocument(lyricAppDocument);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -116,8 +130,9 @@ export default function LyricFileComp({
     const isSelectedRef = useAppCurrentRef(isSelected);
     const handleRenaming = useCallback(async (newFileSource: FileSource) => {
         if (isSelectedRef.current) {
-            const newLyric = Lyric.getInstance(newFileSource.filePath);
-            setSelectedLyricRef.current(newLyric);
+            setSelectedVaryAppDocumentRef.current(
+                LyricAppDocument.getInstance(newFileSource.filePath),
+            );
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
