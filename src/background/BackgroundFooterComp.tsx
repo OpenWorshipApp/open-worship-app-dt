@@ -1,5 +1,7 @@
 import { handleAutoHide } from '../helper/domHelpers';
 import AppRangeComp from '../others/AppRangeComp';
+import type { BackgroundViewModeType } from './BackgroundViewModeComp';
+import BackgroundViewModeComp from './BackgroundViewModeComp';
 
 export const defaultRangeSize = {
     size: 100,
@@ -11,9 +13,13 @@ export const defaultRangeSize = {
 export default function BackgroundFooterComp({
     thumbnailWidth,
     setThumbnailWidth,
+    viewMode,
+    setViewMode,
 }: Readonly<{
     thumbnailWidth: number;
     setThumbnailWidth: (value: number) => void;
+    viewMode?: BackgroundViewModeType;
+    setViewMode?: (viewMode: BackgroundViewModeType) => void;
 }>) {
     return (
         <div
@@ -24,15 +30,23 @@ export default function BackgroundFooterComp({
                 }
             }}
         >
-            <div className="flex-fill" />
-            <div>
-                <AppRangeComp
-                    value={thumbnailWidth}
-                    title="Thumbnail Size"
-                    setValue={setThumbnailWidth}
-                    defaultSize={defaultRangeSize}
+            {viewMode === undefined || setViewMode === undefined ? null : (
+                <BackgroundViewModeComp
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
                 />
-            </div>
+            )}
+            <div className="flex-fill" />
+            {viewMode === 'list' ? null : (
+                <div>
+                    <AppRangeComp
+                        value={thumbnailWidth}
+                        title="Thumbnail Size"
+                        setValue={setThumbnailWidth}
+                        defaultSize={defaultRangeSize}
+                    />
+                </div>
+            )}
         </div>
     );
 }

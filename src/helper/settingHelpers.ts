@@ -19,9 +19,39 @@ export function getSetting(key: string) {
     // TODO: Change to use SettingManager
     return appLocalStorage.getItem(key);
 }
+// Deletes the key outright. `setSetting(key, null)` only blanks it, which still
+// reads back as an empty string and keeps the file on disk — not enough when
+// the thing the key belonged to (e.g. a screen) is gone for good and its id can
+// be handed to a different screen later.
+export function removeSetting(key: string) {
+    appLocalStorage.removeItem(key);
+}
 export function getSettingForce(key: string) {
     // TODO: Change to use SettingManager
     return appLocalStorage.getItemForce(key);
+}
+
+/**
+ * Drop every setting whose key is `prefix` itself or starts with `prefix-`.
+ *
+ * For cleaning up after a file that is gone: settings are named after the thing
+ * they belong to, so deleting a playlist otherwise leaves its
+ * `playlist-opened-…`, `playlist-item-expanded-…-<doc>` and
+ * `playlist-preview-collapsed-…` files behind forever, one per playlist per
+ * setting, on machines that are usually tight on disk.
+ *
+ * The `-` is required so a prefix cannot swallow a longer, unrelated key that
+ * merely starts with the same characters.
+ */
+export async function removeSettingsByPrefix(prefix: string) {
+    const keys = await appLocalStorage.listKeys();
+    const removedKeys = keys.filter((key) => {
+        return key === prefix || key.startsWith(`${prefix}-`);
+    });
+    for (const key of removedKeys) {
+        appLocalStorage.removeItem(key);
+    }
+    return removedKeys;
 }
 
 function useWatchSetting(settingName: string, callback: () => void) {

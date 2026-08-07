@@ -8,7 +8,7 @@
 # yt-dlp does all the downloading itself and only hands ffmpeg LOCAL files, so
 # the binary needs no network stack, no ffplay, and no ffprobe.
 #
-# This mirrors extra-work/ffmpeg/README.md (ffmpeg snapshot source + `brew lame`
+# This mirrors the old hand-built mac ffmpeg (ffmpeg snapshot source + `brew lame`
 # + --enable-libmp3lame) but strips everything the mp3 flow does not touch, so
 # the result is much smaller than the stock ~21-26MB build the README produces.
 # It keeps the full decoder/demuxer set on purpose — YouTube et al. serve audio
@@ -241,6 +241,7 @@ echo "    binary : ${out_binary}"
 echo "    version: $("$out_binary" -hide_banner -version 2>/dev/null | head -1)"
 echo "    size   : ${size}"
 echo
-echo "Ship it by copying to the platform dir the app loads (ffmpeg/bin), e.g.:"
-echo "    cp '${out_binary}' '${script_dir}/../ffmpeg/mac/ffmpeg'        # arm64"
-echo "    cp '${out_binary}' '${script_dir}/../ffmpeg/mac-intel/ffmpeg'  # x86_64"
+echo "Ship it by copying into this platform dir (copy-build.mjs picks it up by the"
+echo "'ffmpeg' name prefix and installs it as bin-helper/ffmpeg/bin/ffmpeg):"
+echo "    cp '${out_binary}' '${script_dir}/mac/'        # arm64"
+echo "    cp '${out_binary}' '${script_dir}/mac-int/'    # x86_64 / universal"

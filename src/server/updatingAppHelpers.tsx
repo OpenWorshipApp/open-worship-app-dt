@@ -352,6 +352,7 @@ export async function checkForAppUpdate(isSilent = true) {
                 `and commit ID:"${updateData.commitID.substring(0, 7)}". ` +
                 `${tran('Would you like to download it?')}`,
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         );
@@ -370,6 +371,7 @@ export async function checkForAppUpdate(isSilent = true) {
                     'Do you want to open the file location?',
             )}`,
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         );

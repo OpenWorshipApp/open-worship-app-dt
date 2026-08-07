@@ -21,6 +21,10 @@ export type DataInputType = {
           };
     key: string;
     widgetName: string;
+    // Bootstrap-icon name (without the `bi bi-` prefix) shown next to
+    // `widgetName` when the widget is collapsed. Use `toWidgetLabel` in
+    // `others/labelIconHelpers` to fill both fields consistently.
+    widgetIconName?: string;
     className?: string;
     extraStyle?: CSSProperties;
     isOnScreen?: boolean;

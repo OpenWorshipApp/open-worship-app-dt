@@ -97,6 +97,7 @@ function MenuIsModifying({
             tran('Discard changed'),
             tran('Are you sure to discard all change histories?'),
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         );

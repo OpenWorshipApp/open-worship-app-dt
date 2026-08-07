@@ -1,11 +1,11 @@
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
+import { getAllDisplays } from '../managers/screenHelpers';
 import type ScreenManagerBase from '../managers/ScreenManagerBase';
 import {
     useScreenManagerBaseContext,
     useScreenManagerEvents,
 } from '../managers/screenManagerHooks';
-import { getAllDisplays } from '../screenHelpers';
 
 function handleDisplayChoosing(
     screenManagerBase: ScreenManagerBase,

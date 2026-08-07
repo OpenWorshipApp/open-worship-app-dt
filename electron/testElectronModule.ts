@@ -90,6 +90,7 @@ export const electronMockState = {
                 onCompleted: vi.fn(),
                 onErrorOccurred: vi.fn(),
             },
+            setDisplayMediaRequestHandler: vi.fn(),
         },
     },
     dialog: {
@@ -142,6 +143,7 @@ export const electronMockState = {
         this.session.defaultSession.webRequest.onHeadersReceived.mockClear();
         this.session.defaultSession.webRequest.onCompleted.mockClear();
         this.session.defaultSession.webRequest.onErrorOccurred.mockClear();
+        this.session.defaultSession.setDisplayMediaRequestHandler.mockClear();
         this.dialog.showOpenDialog.mockClear();
         this.ipcMain.handle.mockClear();
         this.ipcMain.on.mockClear();

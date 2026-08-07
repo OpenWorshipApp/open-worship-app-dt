@@ -92,6 +92,7 @@ export function genTrashContextMenu(
                         ` "${fileSource.fullName}" ` +
                         tran('to trash?'),
                     {
+                        cancelButtonLabel: 'No',
                         confirmButtonLabel: 'Yes',
                     },
                 );
@@ -106,8 +107,29 @@ export function genTrashContextMenu(
     ];
 }
 
+/**
+ * "Reveal Original" — point at wherever this element actually lives in the app.
+ *
+ * Takes the whole reveal action rather than an element getter: some origins need
+ * their panel opened before they have an element at all (see
+ * `notifyPlaylistItemOrigin`), and a getter-only signature had no way to say so.
+ */
+export function genRevealOriginal(reveal: () => void): ContextMenuItemType {
+    return {
+        childBefore: genContextMenuItemIcon('eye'),
+        menuElement: tran('Reveal Original'),
+        onSelect: reveal,
+    };
+}
+
+/**
+ * `label` is for the things that reach a screen without being SHOWN there — a
+ * playlist's clear actions are run on it — so the menu says what will actually
+ * happen while keeping one screen-choosing entry point.
+ */
 export function genShowOnScreensContextMenu(
     onClick: (event: any) => void,
+    label = 'Show on Screens',
 ): ContextMenuItemType[] {
     if (!appProvider.isPagePresenter) {
         return [];
@@ -115,7 +137,7 @@ export function genShowOnScreensContextMenu(
     return [
         {
             childBefore: genContextMenuItemIcon('display'),
-            menuElement: tran('Show on Screens'),
+            menuElement: tran(label),
             onSelect: onClick,
         },
     ];
@@ -137,6 +159,7 @@ export default function FileItemHandlerComp({
     isSelected,
     renamedCallback,
     checkIsOnScreen,
+    onDragStart,
 }: Readonly<{
     fileData: AppDocumentSourceAbs | null | undefined;
     reload: () => void;
@@ -153,6 +176,8 @@ export default function FileItemHandlerComp({
     isSelected: boolean;
     renamedCallback?: (newFileSource: FileSource) => void;
     checkIsOnScreen?: (filePath: string) => Promise<boolean>;
+    // Set to make the row draggable (a document dragged into a playlist).
+    onDragStart?: (event: any) => void;
 }>) {
     const isOnScreen = useFileSourceIsOnScreen(
         [filePath],
@@ -242,6 +267,8 @@ export default function FileItemHandlerComp({
             data-file-item-file-src={fileSource.src}
             title={fileSource.fullName}
             onContextMenu={handleContextMenuOpening}
+            draggable={onDragStart !== undefined}
+            onDragStart={onDragStart}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDropEvent}

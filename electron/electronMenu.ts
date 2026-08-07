@@ -108,6 +108,7 @@ function getCustomMenuItems(key: string) {
 
 export function initMenu(appController: ElectronAppController) {
     const isMac = process.platform === 'darwin';
+    const fileMenuItems = getCustomMenuItems('file');
 
     const template: any[] = [
         // { role: 'appMenu' }
@@ -168,6 +169,12 @@ export function initMenu(appController: ElectronAppController) {
                         printCurrentWindow(browserWindow);
                     },
                 },
+                // Renderer-owned entries (Export/Import Data). Same mechanism
+                // the Tools menu uses for the language packs' own items, so the
+                // labels are translated where `tran` actually works.
+                ...(fileMenuItems.length === 0
+                    ? []
+                    : [{ type: 'separator' }, ...fileMenuItems]),
                 { type: 'separator' },
                 isMac ? { role: 'close' } : { role: 'quit' },
             ],

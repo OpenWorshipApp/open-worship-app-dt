@@ -158,8 +158,22 @@ describe('varyAppDocumentHelpers', () => {
             event,
             '/docs/main.ows',
             { id: 4, filePath: '/docs/main.ows' },
+            false,
+            [],
         );
         expect(notifyElementHighlightMock).toHaveBeenCalled();
+
+        // A caller that has already decided which screens this slide belongs on
+        // (a playlist entry pinned to one) hands them straight down.
+        handleSlideSelectingMock.mockClear();
+        handleVarySlideSelecting(event, 2, varySlide, selectSelectedSlide, [3]);
+        expect(handleSlideSelectingMock).toHaveBeenCalledWith(
+            event,
+            '/docs/main.ows',
+            { id: 4, filePath: '/docs/main.ows' },
+            false,
+            [3],
+        );
     });
 
     test('returns slide ids, finds the container, and scrolls a selected item into view', async () => {

@@ -17,6 +17,7 @@ import BackgroundWebUrlItemComp from './BackgroundWebUrlItemComp';
 import { genColorBar } from '../helper/colorNoteHelpers';
 import { genBackgroundWebColorSections } from './backgroundWebCompHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
+import type { BackgroundViewModeType } from './BackgroundViewModeComp';
 
 export function RenderWebChildComp({
     fileOrUrlSource,
@@ -109,8 +110,10 @@ export function basicRenderBody(
     thumbnailWidth: number,
     handleUrlRemoving: (urlSource: BackgroundWebUrlSource) => Promise<void>,
     onColorNoteChange: () => void,
+    viewMode: BackgroundViewModeType,
     filePaths: string[],
 ) {
+    const isListView = viewMode === 'list';
     const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
     const sections = genBackgroundWebColorSections(filePaths, urlSources);
 
@@ -122,7 +125,13 @@ export function basicRenderBody(
                         {section.colorNote === undefined
                             ? null
                             : genColorBar(section.colorNote)}
-                        <div className="d-flex justify-content-center flex-wrap">
+                        <div
+                            className={
+                                isListView
+                                    ? 'd-flex flex-column'
+                                    : 'd-flex justify-content-center flex-wrap'
+                            }
+                        >
                             {section.filePaths.map((filePath) => {
                                 return (
                                     <BackgroundMediaItemComp
@@ -138,6 +147,7 @@ export function basicRenderBody(
                                         thumbnailWidth={thumbnailWidth}
                                         thumbnailHeight={thumbnailHeight}
                                         filePath={filePath}
+                                        viewMode={viewMode}
                                     />
                                 );
                             })}
@@ -150,13 +160,16 @@ export function basicRenderBody(
                                         thumbnailHeight={thumbnailHeight}
                                         onRemove={handleUrlRemoving}
                                         onColorNoteChange={onColorNoteChange}
+                                        viewMode={viewMode}
                                     />
                                 );
                             })}
-                            <FillingFlexCenterComp
-                                width={thumbnailWidth}
-                                className="web-thumbnail"
-                            />
+                            {isListView ? null : (
+                                <FillingFlexCenterComp
+                                    width={thumbnailWidth}
+                                    className="web-thumbnail"
+                                />
+                            )}
                         </div>
                     </Fragment>
                 );

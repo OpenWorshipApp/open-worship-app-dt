@@ -10,6 +10,30 @@ const sendScreenMessageMock = vi.fn();
 const showAppContextMenuMock = vi.fn();
 const createRootRenderMock = vi.fn();
 const getSettingMock = vi.fn();
+const sendDataSyncMock = vi.fn((channel: string) => {
+    if (channel === 'main:app:get-displays') {
+        return {
+            primaryDisplay: {
+                id: 1,
+                bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+                label: 'Main',
+            },
+            displays: [
+                {
+                    id: 1,
+                    bounds: { x: 0, y: 0, width: 1920, height: 1080 },
+                    label: 'Main',
+                },
+                {
+                    id: 2,
+                    bounds: { x: 0, y: 0, width: 1280, height: 720 },
+                    label: 'Projector',
+                },
+            ],
+        };
+    }
+    return undefined;
+});
 const setPreviewScaleMock = vi.fn();
 const applyTextStyleMock = vi.fn();
 
@@ -96,6 +120,9 @@ vi.mock('../server/appProvider', () => ({
     default: {
         isPageScreen: true,
         systemUtils: { isDev: false },
+        // `getAllDisplays` (in `./managers/screenHelpers`) reads displays
+        // straight off the sync message channel
+        messageUtils: { sendDataSync: sendDataSyncMock },
     },
 }));
 
@@ -228,25 +255,6 @@ vi.mock('./screenHelpers', () => ({
         offsetV: 2,
     })),
     genVideoIDFromSrc: vi.fn(() => 'video-md5'),
-    getAllDisplays: vi.fn(() => ({
-        primaryDisplay: {
-            id: 1,
-            bounds: { x: 0, y: 0, width: 1920, height: 1080 },
-            label: 'Main',
-        },
-        displays: [
-            {
-                id: 1,
-                bounds: { x: 0, y: 0, width: 1920, height: 1080 },
-                label: 'Main',
-            },
-            {
-                id: 2,
-                bounds: { x: 0, y: 0, width: 1280, height: 720 },
-                label: 'Projector',
-            },
-        ],
-    })),
     hideScreen: hideMock,
 }));
 

@@ -1,15 +1,18 @@
 import './SlidePreviewer.scss';
 
-import { type CSSProperties, use } from 'react';
+import { type CSSProperties, lazy, use } from 'react';
 
 import { tran } from '../../lang/langHelpers';
+import { toWidgetLabel } from '../../others/labelIconHelpers';
 import VarySlidesPreviewerComp from './VarySlidesPreviewerComp';
 import AppDocumentPreviewerFooterComp from './AppDocumentPreviewerFooterComp';
 import {
+    checkIsLyricFilePath,
     SelectedVaryAppDocumentContext,
     useVaryAppDocumentContext,
     VaryAppDocumentContext,
 } from '../../app-document-list/appDocumentHelpers';
+import AppSuspenseComp from '../../others/AppSuspenseComp';
 import PageBaseAppearanceSettingComp from '../../screen-setting/PageBaseAppearanceSettingComp';
 import PdfAppDocument from '../../app-document-list/PdfAppDocument';
 import DocxAppDocument from '../../app-document-list/DocxAppDocument';
@@ -23,6 +26,13 @@ import { PAGE_BASE_VIRTUAL_BG_COLOR_SETTING_NAME } from '../../_screen/screenApp
 type PreviewerBodyStyle = CSSProperties & {
     '--app-docx-preview-background'?: string;
 };
+
+// A lyric renders open-lyric's own previewer instead of the slide list, so the
+// whole `open-lyric` chain must stay out of this chunk (the slide editor window
+// loads this module too).
+const LazyLyricHandlerComp = lazy(() => {
+    return import('../../lyric-list/LyricHandlerComp');
+});
 
 function EditorComp() {
     const varyAppDocument = useVaryAppDocumentContext();
@@ -49,7 +59,7 @@ function EditorComp() {
                         },
                     },
                     key: 'v1',
-                    widgetName: 'Document List',
+                    ...toWidgetLabel('Document List'),
                     className: 'app-flex-item',
                 },
                 {
@@ -63,12 +73,31 @@ function EditorComp() {
                         },
                     },
                     key: 'v2',
-                    widgetName: 'Note',
+                    ...toWidgetLabel('Note'),
                     className: 'app-flex-item',
                 },
             ]}
         />
     );
+}
+
+/**
+ * Only the BODY differs per document kind — a lyric gets the open-lyric
+ * previewer, everything else gets the slide list. The previewer's card chrome
+ * (footer with the thumbnail scale + file name) is shared by all of them.
+ */
+function PreviewerBodyComp({ filePath }: Readonly<{ filePath: string }>) {
+    if (checkIsLyricFilePath(filePath)) {
+        return (
+            <AppSuspenseComp>
+                <LazyLyricHandlerComp filePath={filePath} />
+            </AppSuspenseComp>
+        );
+    }
+    if (appProvider.isPagePresenter) {
+        return <EditorComp />;
+    }
+    return <VarySlidesPreviewerComp />;
 }
 
 export default function AppDocumentPreviewerComp() {
@@ -120,11 +149,12 @@ export default function AppDocumentPreviewerComp() {
                     className="card-body w-100 h-100 app-overflow-hidden"
                     style={previewerBodyStyle}
                 >
-                    {appProvider.isPagePresenter ? (
-                        <EditorComp />
-                    ) : (
-                        <VarySlidesPreviewerComp />
-                    )}
+                    <PreviewerBodyComp
+                        filePath={
+                            selectedAppDocumentContext.selectedVaryAppDocument
+                                .filePath
+                        }
+                    />
                 </div>
                 <AppDocumentPreviewerFooterComp />
                 {isPageBase ? (

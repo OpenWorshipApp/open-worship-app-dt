@@ -50,6 +50,10 @@ export default function AskingNewNameComp({
         applyNameRef.current(creatingNewNameRef.current || null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    const handleCanceling = useCallback(() => {
+        applyNameRef.current(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     return (
         <div className="input-group" onClick={handleDivClick}>
             <input
@@ -62,6 +66,7 @@ export default function AskingNewNameComp({
                 autoFocus
                 onKeyDown={handleKeyDown}
                 onChange={handleInputChange}
+                onBlur={handleCanceling}
             />
             <button
                 id="button-addon2"

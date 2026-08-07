@@ -6,6 +6,7 @@ import { handleError } from '../helper/errorHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import { tran } from '../lang/langHelpers';
 import { attachBackgroundManager } from '../others/AttachBackgroundManager';
+import { collectFontFaceCss } from '../helper/printCssHelpers';
 import type { DroppedDataType } from '../helper/DragInf';
 import { DragTypeEnum } from '../helper/DragInf';
 
@@ -35,46 +36,6 @@ function escapeHtmlText(text: string) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-function resolveCssUrls(cssText: string) {
-    return cssText.replaceAll(
-        /url\(\s*(["']?)([^"')]+)\1\s*\)/gi,
-        (_match, quote: string, url: string) => {
-            const resolved = new URL(url, document.baseURI).href;
-            return `url(${quote}${resolved}${quote})`;
-        },
-    );
-}
-
-// App-provided fonts (e.g. bible language fonts like `app-Battambang`) exist
-// only as @font-face rules injected into this window, so the print window
-// needs a copy of every rule the slides reference, with the font URLs
-// absolutized for it. System fonts resolve there by name and need nothing.
-function collectFontFaceCss(pagesHtml: string) {
-    const cssTexts: string[] = [];
-    for (const styleSheet of Array.from(document.styleSheets)) {
-        let rules: CSSRuleList;
-        try {
-            rules = styleSheet.cssRules;
-        } catch (_error) {
-            continue;
-        }
-        for (const rule of Array.from(rules)) {
-            if (!(rule instanceof CSSFontFaceRule)) {
-                continue;
-            }
-            const family = rule.style
-                .getPropertyValue('font-family')
-                .replaceAll(/["']/g, '')
-                .trim();
-            if (family === '' || !pagesHtml.includes(family)) {
-                continue;
-            }
-            cssTexts.push(resolveCssUrls(rule.cssText));
-        }
-    }
-    return cssTexts.join('\n');
 }
 
 // A <video> element never paints a frame into a printed PDF, so grab the

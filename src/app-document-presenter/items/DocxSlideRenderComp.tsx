@@ -1,6 +1,5 @@
 import { type MouseEvent, useCallback } from 'react';
 
-import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import type DocxSlide from '../../app-document-list/DocxSlide';
 import VarySlideRenderComp from './VarySlideRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
@@ -195,7 +194,7 @@ export default function DocxSlideRenderComp({
     ) => void;
 }>) {
     const docxAppDocument = useVaryAppDocumentContext() as DocxAppDocument;
-    useScreenVaryAppDocumentManagerEvents(['update']);
+    // No screen subscription here on purpose — see SlideRenderComp.
     const docxAppDocumentRef = useAppCurrentRef(docxAppDocument);
     const docxSlideRef = useAppCurrentRef(docxSlide);
     const handleContextMenuOpening = useCallback(

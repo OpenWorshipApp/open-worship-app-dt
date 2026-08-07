@@ -15,6 +15,11 @@ import {
     initLangAppMenu,
     registerLangAppMenuClicked,
 } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
+import {
+    initDataArchiveAppMenu,
+    registerDataArchiveAppMenuClicked,
+} from '../setting/data-archive/dataArchiveMenuHelpers';
 
 const LazyAppPresenterLeftComp = lazy(() => {
     return import('./AppPresenterLeftComp');
@@ -30,6 +35,14 @@ export default function AppPresenterComp() {
     useAppEffect(() => {
         const unregister = registerLangAppMenuClicked();
         initLangAppMenu();
+        return unregister;
+    }, []);
+    // File → Export/Import Data. Registered from the presenter only: the
+    // entries are keyed, so a second window would replace rather than duplicate
+    // them, but its clicks would then be routed to that window instead.
+    useAppEffect(() => {
+        const unregister = registerDataArchiveAppMenuClicked();
+        initDataArchiveAppMenu();
         return unregister;
     }, []);
     const viewController = useMemo(() => {
@@ -71,17 +84,17 @@ export default function AppPresenterComp() {
                     {
                         children: LazyAppPresenterLeftComp,
                         key: 'h1',
-                        widgetName: 'App Presenter Left',
+                        ...toWidgetLabel('App Presenter Left'),
                     },
                     {
                         children: LazyAppPresenterMiddleComp,
                         key: 'h2',
-                        widgetName: 'App Presenter Middle',
+                        ...toWidgetLabel('App Presenter Middle'),
                     },
                     {
                         children: LazyAppPresenterRightComp,
                         key: 'h3',
-                        widgetName: 'App Presenter Right',
+                        ...toWidgetLabel('App Presenter Right'),
                     },
                 ]}
             />

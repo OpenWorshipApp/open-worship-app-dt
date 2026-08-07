@@ -14,10 +14,14 @@ export default function ScrollingHandlerComp({
     style,
     shouldShowPlayToBottom = false,
     movedCheck,
+    scrollingContainerSelector,
 }: Readonly<{
     style?: CSSProperties;
     shouldShowPlayToBottom?: boolean;
     movedCheck?: MoveCheckType;
+    // For hosts where the scroller is not this handler's own parent — see
+    // `applyToTheTop`.
+    scrollingContainerSelector?: string;
 }>) {
     return (
         <>
@@ -53,7 +57,7 @@ export default function ScrollingHandlerComp({
                 }}
                 ref={(element) => {
                     if (element) {
-                        applyToTheTop(element);
+                        applyToTheTop(element, scrollingContainerSelector);
                     }
                 }}
             />

@@ -18,6 +18,7 @@ import {
     messageChannels,
     previewPrintCurrentWindow,
     printHTMLContent,
+    tarAppend,
     tarCreate,
     tarExtract,
 } from './electronHelpers';
@@ -26,17 +27,13 @@ import ElectronScreenController from './ElectronScreenController';
 import { officeFileToPdf } from './electronOfficeHelpers';
 import { getPagesCount, pdfToImages } from './pdfToImagesHelpers';
 import {
-    countSlides,
     docxToHtmls,
-    exportBibleMSWord,
     getDocxToHtmlsVersion,
-    removeSlideBackground,
     pptxToHtmls,
     getPptxToHtmlsVersion,
+    getPptxSlidesCount,
     type DocxToHtmlsParamsType,
-    type GetDocxToHtmlsVersionParamsType,
     type PptxToHtmlsParamsType,
-    type GetPptxToHtmlsVersionParamsType,
 } from './msHelpers';
 import { initMenu, sendMenuClicked, setCustomMenusData } from './electronMenu';
 
@@ -281,12 +278,12 @@ export function initEventScreen(appController: ElectronAppController) {
         },
     );
 
-    ipcMain.on('screen:app:change-bible', (_, isNext) => {
-        appController.mainController.changeBible(isNext);
-    });
-    ipcMain.on('screen:app:ctrl-scrolling', (_, isUp) => {
-        appController.mainController.ctrlScrolling(isUp);
-    });
+    ipcMain.on(
+        'screen:app:change-bible',
+        (_, data: { screenId: number; isNext: boolean }) => {
+            appController.mainController.changeBible(data);
+        },
+    );
 }
 
 export function initFinderEvent() {
@@ -323,8 +320,8 @@ export function initEventOther(appController: ElectronAppController) {
     onAsync(
         ipcMain,
         'main:app:tar-extract',
-        (data: { filePath: string; outputDir: string }) => {
-            return tarExtract(data.filePath, data.outputDir);
+        (data: { filePath: string; outputDir: string; entries?: string[] }) => {
+            return tarExtract(data.filePath, data.outputDir, data.entries);
         },
     );
 
@@ -336,13 +333,27 @@ export function initEventOther(appController: ElectronAppController) {
             outputFilePath: string;
             files: string[];
             isGzip?: boolean;
+            excludeNamePatterns?: string[];
         }) => {
             return tarCreate(
                 data.inputDir,
                 data.outputFilePath,
                 data.files,
                 data.isGzip,
+                data.excludeNamePatterns,
             );
+        },
+    );
+
+    onAsync(
+        ipcMain,
+        'main:app:tar-append',
+        (data: {
+            archiveFilePath: string;
+            inputDir: string;
+            files: string[];
+        }) => {
+            return tarAppend(data.archiveFilePath, data.inputDir, data.files);
         },
     );
 
@@ -472,22 +483,9 @@ export function initEventOther(appController: ElectronAppController) {
     onAsync(
         ipcMain,
         'main:app:ms-pp-slides-count',
-        (data: { filePath: string; dotNetRoot?: string }) => {
-            return countSlides(data.filePath, data.dotNetRoot);
-        },
-    );
-    onAsync(
-        ipcMain,
-        'main:app:ms-pp-remove-slides-bg',
-        (data: { filePath: string; dotNetRoot?: string }) => {
-            return removeSlideBackground(data.filePath, data.dotNetRoot);
-        },
-    );
-    onAsync(
-        ipcMain,
-        'main:app:ms-word-export-bible',
-        (data: { filePath: string; data: object[]; dotNetRoot?: string }) => {
-            return exportBibleMSWord(data.filePath, data.data, data.dotNetRoot);
+        (data: { filePath: string }) => {
+            const slidesCount = getPptxSlidesCount(data.filePath);
+            return slidesCount;
         },
     );
 
@@ -527,30 +525,26 @@ export function initEventOther(appController: ElectronAppController) {
         ipcMain,
         'main:app:pptx-to-htmls',
         (data: PptxToHtmlsParamsType) => {
-            return pptxToHtmls(data);
+            const isSuccess = pptxToHtmls(data);
+            return isSuccess;
         },
     );
-    onAsync(
-        ipcMain,
-        'main:app:get-pptx-to-htmls-version',
-        (data: GetPptxToHtmlsVersionParamsType) => {
-            return getPptxToHtmlsVersion(data);
-        },
-    );
+    onAsync(ipcMain, 'main:app:get-pptx-to-htmls-version', () => {
+        const version = getPptxToHtmlsVersion();
+        return version;
+    });
     onAsync(
         ipcMain,
         'main:app:docx-to-htmls',
         (data: DocxToHtmlsParamsType) => {
-            return docxToHtmls(data);
+            const isSuccess = docxToHtmls(data);
+            return isSuccess;
         },
     );
-    onAsync(
-        ipcMain,
-        'main:app:get-docx-to-htmls-version',
-        (data: GetDocxToHtmlsVersionParamsType) => {
-            return getDocxToHtmlsVersion(data);
-        },
-    );
+    onAsync(ipcMain, 'main:app:get-docx-to-htmls-version', () => {
+        const version = getDocxToHtmlsVersion();
+        return version;
+    });
 
     ipcMain.on(
         'main:app:set-menu-items',

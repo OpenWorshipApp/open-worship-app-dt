@@ -48,7 +48,7 @@ export function getColorParts(textColor?: string) {
     return { colorPart, invertColorPart };
 }
 
-const THEME_CHANGE_EVENT = 'app:theme-changed';
+export const THEME_CHANGE_EVENT = 'app:theme-changed';
 function applyDarkModeToApp() {
     const isDarkMode = checkIsDarkMode();
     const themeSource = isDarkMode ? 'dark' : 'light';
@@ -82,6 +82,10 @@ export function useThemeSource() {
         themeSource: appProvider.isPageScreen ? 'dark' : themeSource,
         setThemeSource: setThemeSource1,
     };
+}
+export function useIsDarkMode() {
+    const { themeSource } = useThemeSource();
+    return checkIsDarkMode(themeSource);
 }
 
 getSystemDarkMatcher()?.addEventListener('change', applyDarkModeToApp);

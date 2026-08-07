@@ -352,14 +352,17 @@ export default class FileSource
     }
 
     fireSelectEvent(data?: any) {
+        this.addPropEvent('select', data);
         FileSource.addFileSourcePropEvent('select', this.filePath, data);
     }
 
     fireUpdateEvent(data?: any) {
+        this.addPropEvent('update', data);
         FileSource.addFileSourcePropEvent('update', this.filePath, data);
     }
 
     fireDeleteEvent() {
+        this.addPropEvent('delete', this.filePath);
         FileSource.addFileSourcePropEvent(
             'delete',
             this.filePath,

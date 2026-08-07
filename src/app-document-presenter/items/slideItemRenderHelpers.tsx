@@ -1,7 +1,7 @@
 import { useCallback, type CSSProperties } from 'react';
 
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
-import { checkIsVarySlideOnScreen } from '../../app-document-list/appDocumentHelpers';
+import type { OnScreenListType } from '../../_screen/managers/varySlideOnScreenHelpers';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import RenderBackgroundWebIframeComp from '../../background/RenderBackgroundWebIframeComp';
 import RenderCameraVideoComp from '../../background/RenderCameraVideoComp';
@@ -158,6 +158,7 @@ export function toClassNameHighlight(
     varySlide: VarySlideType,
     selectedVarySlide: VarySlideType | null,
     holdingVarySlides: VarySlideType[],
+    onScreenList: OnScreenListType,
 ) {
     const activeClassname =
         appProvider.isPageAppDocumentEditor &&
@@ -165,7 +166,12 @@ export function toClassNameHighlight(
         varySlide.checkIsSame(selectedVarySlide)
             ? 'active'
             : '';
-    const isOnScreen = checkIsVarySlideOnScreen(varySlide);
+    // Handed in rather than read here. This runs for every slide preview on
+    // screen, and reading the on-screen map from a render body is what made a
+    // single present re-render (and re-parse for) every preview in the window;
+    // `useVarySlideOnScreenList` answers it once per slide and only wakes the
+    // slides whose answer actually changed.
+    const isOnScreen = onScreenList.length > 0;
     const presenterClassname =
         appProvider.isPageAppDocumentEditor || !isOnScreen
             ? ''
@@ -183,10 +189,6 @@ export function toClassNameHighlight(
         holdingClassname = 'holding';
     }
     return {
-        selectedList: ScreenVaryAppDocumentManager.getDataList(
-            varySlide.filePath,
-            varySlide.id,
-        ),
         activeCN: activeClassname,
         presenterCN: presenterClassname,
         holdingCN: holdingClassname,

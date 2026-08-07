@@ -8,6 +8,7 @@ import {
     setIsBibleCustomStyleFloatingShowing,
     useBibleCustomStyleFloatingShowing,
 } from './bibleCustomStyleFloatingHelpers';
+import { useThemeSource } from '../others/themeHelpers';
 
 // The heavy style panel (renderToStaticMarkup shadow demos) stays lazy so it is
 // only loaded when the user actually opens the floating widget.
@@ -22,28 +23,31 @@ const LazyBibleCustomStyleComp = lazy(() => {
 // cannot fade/hide the floating panel.
 export default function BibleCustomStyleFloatingComp() {
     const isShowing = useBibleCustomStyleFloatingShowing();
+    const { theme } = useThemeSource();
     if (!isShowing) {
         return null;
     }
     const label = tran('Bible Properties');
     return createPortal(
-        <FloatingWidgetComp
-            title={label}
-            persistKey="floating-widget-rect-bible-property"
-            onClose={() => {
-                setIsBibleCustomStyleFloatingShowing(false);
-            }}
-            options={{
-                width: 420,
-                height: 560,
-                minWidth: 300,
-                minHeight: 220,
-            }}
-        >
-            <AppSuspenseComp>
-                <LazyBibleCustomStyleComp />
-            </AppSuspenseComp>
-        </FloatingWidgetComp>,
+        <div className="app app-floating-widget-portal" data-bs-theme={theme}>
+            <FloatingWidgetComp
+                title={label}
+                persistKey="floating-widget-rect-bible-property"
+                onClose={() => {
+                    setIsBibleCustomStyleFloatingShowing(false);
+                }}
+                options={{
+                    width: 420,
+                    height: 560,
+                    minWidth: 300,
+                    minHeight: 220,
+                }}
+            >
+                <AppSuspenseComp>
+                    <LazyBibleCustomStyleComp />
+                </AppSuspenseComp>
+            </FloatingWidgetComp>
+        </div>,
         document.body,
     );
 }

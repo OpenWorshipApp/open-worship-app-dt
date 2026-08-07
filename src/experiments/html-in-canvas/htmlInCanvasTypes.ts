@@ -42,6 +42,32 @@ export type HicCanvasType = HTMLCanvasElement & {
     onpaint: ((event: PaintEventType) => void) | null;
 };
 
+/**
+ * Region Capture and Element Capture — the two ways to narrow a self
+ * tab-capture down to one element, which is the only way to get the pixels of a
+ * cross-origin `<iframe>`. Present in Chromium 150 but absent from TS's DOM lib
+ * (`BrowserCaptureMediaStreamTrack` is not typed either), so they are declared
+ * here alongside the other not-yet-standard surface this playground uses.
+ */
+declare global {
+    const CropTarget: {
+        fromElement(element: Element): Promise<CropTargetType>;
+    };
+    const RestrictionTarget: {
+        fromElement(element: Element): Promise<RestrictionTargetType>;
+    };
+}
+
+export type CropTargetType = { readonly __cropTarget: unique symbol };
+export type RestrictionTargetType = {
+    readonly __restrictionTarget: unique symbol;
+};
+
+export type CaptureTrackType = MediaStreamTrack & {
+    cropTo(target: CropTargetType | null): Promise<void>;
+    restrictTo(target: RestrictionTargetType | null): Promise<void>;
+};
+
 // -------------------------------------------------------------------------
 // Constants & tiny helpers
 // -------------------------------------------------------------------------

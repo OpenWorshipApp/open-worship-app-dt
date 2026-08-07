@@ -1,4 +1,9 @@
-import type { LanguageDataType } from '../../langHelpers';
+import { EditorPluginKmKh } from 'open-lyric-plugin-km-kh';
+
+import {
+    genOpenLyricFontFaces,
+    type LanguageDataType,
+} from '../../langHelpers';
 import { resolveGzBundleFilePath } from '../../gzBundleFilePath';
 
 import btbBlack from './fonts/Battambang/Battambang-Black.ttf';
@@ -26,6 +31,21 @@ const numMap = {
 const numList = Object.keys(numMap);
 
 const dictionary = {
+    'Reveal Original': 'បង្ហាញកន្លែងដើម',
+    Sort: 'តម្រៀប',
+    Type: 'ប្រភេទ',
+    Default: 'លំនាំដើម',
+    'All Types': 'គ្រប់ប្រភេទ',
+    'Filter by name': 'ត្រងតាមឈ្មោះ',
+    'Filter by Type': 'ត្រងតាមប្រភេទ',
+    'No matching files': 'រកមិនឃើញឯកសារដែលត្រូវគ្នា',
+    Dimensions: 'វិមាត្រ',
+    'Exporting DOCX Pages': 'កំពុងបម្លែងទំព័រ DOCX ទៅជា HTML',
+    'Please wait while the DOCX pages are being exported...':
+        'សូមរង់ចាំ ខណៈពេលទំព័រ DOCX កំពុងត្រូវបានបម្លែង...',
+    'Exporting PPTX Slides': 'កំពុងបម្លែងស្លាយ PPTX ទៅជា HTML',
+    'Please wait while the slides are being exported...':
+        'សូមរង់ចាំ ខណៈពេលស្លាយកំពុងត្រូវបានបម្លែង...',
     'Open Bible Reader in a new window':
         'បើកកម្មវិធីអានព្រះគម្ពីរនៅក្នុងវីនដូថ្មី',
     'Open Slide Editor in a new window':
@@ -56,6 +76,11 @@ const dictionary = {
     'Are you sure to reset search data? This will take a moment to restore':
         'តើអ្នកពិតជាចង់កំណត់ទិន្នន័យស្វែងរកឡើងវិញឬ? នេះនឹងចំណាយពេលមួយដើម្បីស្ដារឡើងវិញ',
     'This slide is disabled': 'ស្លាយនេះត្រូវបានបិទ',
+    'This item is disabled': 'ធាតុនេះត្រូវបានបិទ',
+    'This item is disabled in this playlist':
+        'ធាតុនេះត្រូវបានបិទនៅក្នុងបញ្ជីចាក់នេះ',
+    'This item is disabled in its document':
+        'ធាតុនេះត្រូវបានបិទនៅក្នុងឯកសាររបស់វា',
     'Double click to jump to top': 'ចុចពីរដងដើម្បីទៅកាន់ខាងលើ',
     'Refresh PPTX Slides': 'ផ្ទុកស្លាយ PPTX ជាថ្មី',
     'Open PPTX': 'បើក PPTX',
@@ -153,7 +178,34 @@ const dictionary = {
     'will create if not exist': 'នឹងបង្កើតឡើងប្រសិនបើមិនមាន',
     'No directory selected': 'មិនមានថតដែលបានជ្រើស',
     Notes: 'កំណត់ត្រា',
+    Note: 'កំណត់ត្រា',
     'Bible Notes': 'កំណត់ត្រាព្រះគម្ពីរ',
+    'Bible and Notes': 'ព្រះគម្ពីរ និងកំណត់ត្រា',
+    'Document List': 'បញ្ជីឯកសារ',
+    'Lyric List': 'បញ្ជីអក្សរភ្លេង',
+    'Playlist List': 'បញ្ជីតារាងកម្មវិធី',
+    Previewer: 'កម្មវិធីមើលជាមុន',
+    Slides: 'ស្លាយ',
+    'Slide Editor Ground': 'តំបន់កែសម្រួលស្លាយ',
+    'Slide Editor Canvas': 'ផ្ទាំងកែសម្រួលស្លាយ',
+    Tools: 'ឧបករណ៍',
+    'App Editor Left': 'កម្មវិធីកែសម្រួល ខាងឆ្វេង',
+    'App Editor Right': 'កម្មវិធីកែសម្រួល ខាងស្តាំ',
+    'App Presenter Left': 'ធ្វើបទបង្ហាញ ខាងឆ្វេង',
+    'App Presenter Middle': 'ធ្វើបទបង្ហាញ កណ្តាល',
+    'App Presenter Right': 'ធ្វើបទបង្ហាញ ខាងស្តាំ',
+    'Mini Screen': 'អេក្រង់តូច',
+    'Bible View': 'ទិដ្ឋភាពព្រះគម្ពីរ',
+    'Bible Online Lookup': 'ស្វែងរកព្រះគម្ពីរតាមអ៊ីនធឺណិត',
+    'Background Audio': 'សំលេងផ្ទៃខាងក្រោយ',
+    'Stage Previewer': 'អ្នកមើលជាមុនដំណាក់កាល',
+    stages: 'ដំណាក់កាល',
+    'Add Stage': 'បន្ថែមស្ទែជ',
+    'Remove Stage': 'លុបស្ទែជចេញ',
+    'Base Stage': 'ស្ទែជគោល',
+    'Base stage is always shown': 'ស្ទែជគោលតែងតែបង្ហាញ',
+    'Add another stage layout': 'បន្ថែមប្លង់ស្ទែជមួយទៀត',
+    'Browser does not support audio.': 'កម្មវិធីរុករកមិនគាំទ្រសំលេងទេ។',
     'Not Supported Item Type': 'ប្រភេទធាតុដែលមិនគាំទ្រ',
     'Fail to read file data': 'មិនអាចទទួលបានទិន្នន័យពីឯកសារ',
     'No book options available': 'មិនមានជម្រើសសៀវភៅទេ',
@@ -177,6 +229,7 @@ const dictionary = {
     'Choose City': 'ជ្រើសរើសទីក្រុង',
     'New Slide': 'ស្លាយថ្មី',
     'Show on Screens': 'បង្ហាញនៅលើអេក្រង់',
+    'Set Specific Screen': 'កំណត់អេក្រង់ជាក់លាក់',
     'Remove from screen': 'ដកចេញពីអេក្រង់',
     Rename: 'កែឈ្មោះ',
     Reload: 'ផ្ទុកឡើងវិញ',
@@ -214,6 +267,12 @@ const dictionary = {
     'Insert Website': 'បញ្ចូលគេហទំព័រ',
     'YouTube URL:': 'តំណ YouTube៖',
     'Website URL:': 'តំណគេហទំព័រ៖',
+    'Video URL:': 'តំណវីដេអូ៖',
+    'Audio URL:': 'តំណសំលេង៖',
+    'Image URL:': 'តំណរូបភាព៖',
+    'Web URL:': 'តំណវេបសាយ៖',
+    'Documents URL:': 'តំណឯកសារ៖',
+    'Playlist Archive URL:': 'តំណប័ណ្ណសារបញ្ជីចាក់៖',
     'Open URL': 'បើកតំណ',
     'Copy URL': 'ចម្លងតំណ',
     New: 'ថ្មី',
@@ -245,10 +304,13 @@ const dictionary = {
         'យើងខ្ញុំសូមអភ័យទោស កំហុសក្នុងដំណើរការ ខ្ញុំសូមអញ្ជើញអ្នកធ្វើការផ្ទុកឡើងវិញនៃកម្មវិធី',
     Exporting: 'កំពុងបំលែង',
     'Export to MS Word': 'បំលែងទៅឯកសារ MS Word',
+    'Exporting Fonts': 'បំលែងពុម្ពអក្សរ',
+    'Would you like to export the fonts?': 'តើអ្នកចង់បំលែងពុម្ពអក្សរដែរឬទេ?',
     'Fail to Get File List': 'បរាជ័យក្នុងការទទួលបានបញ្ជីឯកសារ',
     'No Files Found': 'មិនមានឯកសារទេ',
     General: 'ទូទៅ',
     Bible: 'ព្រះគម្ពីរ',
+    Others: 'ផ្សេងទៀត',
     About: 'អារម្មណ៏កថា',
     Presenter: 'ធ្វើបទបង្ហាញ',
     Colors: 'ពណ៌',
@@ -266,6 +328,82 @@ const dictionary = {
     'Document Audios': 'សំលេងឯកសារ',
     Lyrics: 'អក្សរភ្លេង',
     Playlists: 'តារាងកម្មវិធី',
+    Playlist: 'តារាងកម្មវិធី',
+    'Preview Playlist': 'មើលតារាងកម្មវិធីជាមុន',
+    'Open Preview': 'បើកការមើលជាមុន',
+    'Add Action': 'បន្ថែមសកម្មភាព',
+    'Apply on Screens': 'អនុវត្តនៅលើអេក្រង់',
+    'Clear FG Marquee Top': 'លុប FG អក្សររត់ខាងលើ',
+    'Clear FG Marquee Bottom': 'លុប FG អក្សររត់ខាងក្រោម',
+    'Clear FG Quick Text': 'លុប FG អត្ថបទរហ័ស',
+    'Clear FG Countdown': 'លុប FG រាប់ថយក្រោយ',
+    'Clear FG Stopwatch': 'លុប FG នាឡិកាបញ្ឈប់',
+    'Clear FG Time': 'លុប FG ម៉ោង',
+    'Clear FG Camera Show': 'លុប FG បង្ហាញកាមេរ៉ា',
+    'Clear FG Web Show': 'លុប FG ការបង្ហាញគេហទំព័រ',
+    'Other Clear FG Items': 'ការលុប FG ផ្សេងទៀត',
+    'Screen: Show': 'អេក្រង់៖ បង្ហាញ',
+    'Screen: Hide': 'អេក្រង់៖ លាក់',
+    'Please choose at least one screen': 'សូមជ្រើសរើសអេក្រង់យ៉ាងតិចមួយ',
+    'No screen is open': 'គ្មានអេក្រង់បើកទេ',
+    'Next: Interval': 'បន្ទាប់៖ រៀងរាល់ចន្លោះពេល',
+    'Next: Timeout': 'បន្ទាប់៖ អស់ពេលកំណត់',
+    Seconds: 'វិនាទី',
+    'Start Auto Next': 'ចាប់ផ្តើមបន្តដោយស្វ័យប្រវត្តិ',
+    'Stop Auto Next': 'បញ្ឈប់ការបន្តដោយស្វ័យប្រវត្តិ',
+    'Pause Auto Next': 'ផ្អាកការបន្តដោយស្វ័យប្រវត្តិ',
+    'Resume Auto Next': 'បន្តការបន្តដោយស្វ័យប្រវត្តិ',
+    'Change Seconds': 'ផ្លាស់ប្តូរវិនាទី',
+    'At Time': 'នៅម៉ោង',
+    Timing: 'ការកំណត់ពេល',
+    'Change Timing': 'ផ្លាស់ប្តូរការកំណត់ពេល',
+    'Please enter a valid time': 'សូមបញ្ចូលម៉ោងឲ្យបានត្រឹមត្រូវ',
+    'The set time is already due': 'ម៉ោងដែលបានកំណត់ បានផុតកំណត់ហើយ',
+    'Jump to': 'លោតទៅ',
+    'Attach the element to jump to as a CC element':
+        'សូមភ្ជាប់ធាតុដែលត្រូវលោតទៅ ជាធាតុ CC',
+    'The element to jump to is not in this playlist':
+        'ធាតុដែលត្រូវលោតទៅ មិនមាននៅក្នុងតារាងកម្មវិធីនេះទេ',
+    'Keyboard Event': 'ព្រឹត្តិការណ៍ក្តារចុច',
+    Shortcut: 'ផ្លូវកាត់',
+    'Change Shortcut': 'ផ្លាស់ប្តូរផ្លូវកាត់',
+    'Press a shortcut': 'សូមចុចផ្លូវកាត់',
+    'Please press a shortcut': 'សូមចុចផ្លូវកាត់មួយ',
+    'Hold Ctrl or Shift with the key': 'សូមចុច Ctrl ឬ Shift ជាមួយគ្រាប់ចុច',
+    'Only Ctrl and Shift may be used': 'អាចប្រើបានតែ Ctrl និង Shift ប៉ុណ្ណោះ',
+    'This key cannot be used': 'គ្រាប់ចុចនេះមិនអាចប្រើបានទេ',
+    'This shortcut is already used in this playlist':
+        'ផ្លូវកាត់នេះត្រូវបានប្រើរួចហើយនៅក្នុងតារាងកម្មវិធីនេះ',
+    'Attach the elements to show as CC elements':
+        'សូមភ្ជាប់ធាតុដែលត្រូវបង្ហាញ ជាធាតុ CC',
+    'This element takes only one CC element':
+        'ធាតុនេះទទួលបានតែធាតុ CC មួយប៉ុណ្ណោះ',
+    'This element does not accept CC element': 'ធាតុនេះមិនទទួលយកធាតុ CC ទេ',
+    'Open the playlist preview to use this action':
+        'សូមបើកការមើលតារាងកម្មវិធីជាមុន ដើម្បីប្រើសកម្មភាពនេះ',
+    'Please enter a number greater than 0': 'សូមបញ្ចូលលេខធំជាង 0',
+    'Remove from Playlist': 'ដកចេញពីតារាងកម្មវិធី',
+    'Add CC Elements': 'បន្ថែមធាតុ CC',
+    'Remove CC Element': 'ដកធាតុ CC ចេញ',
+    'No other elements': 'គ្មានធាតុផ្សេងទៀតទេ',
+    'Adding CC Element': 'កំពុងបន្ថែមធាតុ CC',
+    'This item type cannot be a CC element':
+        'ប្រភេទធាតុនេះមិនអាចធ្វើជាធាតុ CC បានទេ',
+    'Collapse floating widget': 'បង្រួមផ្ទាំងអណ្តែត',
+    'Expand floating widget': 'ពង្រីកផ្ទាំងអណ្តែត',
+    'Close floating widget': 'បិទផ្ទាំងអណ្តែត',
+    'Adding Playlist Item': 'កំពុងបន្ថែមធាតុតារាងកម្មវិធី',
+    'This item type cannot be added to a playlist':
+        'ប្រភេទធាតុនេះមិនអាចបញ្ចូលទៅក្នុងតារាងកម្មវិធីបានទេ',
+    'Showing Playlist Item': 'កំពុងបង្ហាញធាតុតារាងកម្មវិធី',
+    'CC element': 'ធាតុ CC',
+    'Drop items here': 'ទម្លាក់ធាតុនៅទីនេះ',
+    'No items in this playlist': 'មិនមានធាតុក្នុងតារាងកម្មវិធីនេះទេ',
+    'No slides': 'មិនមានស្លាយទេ',
+    'Add Local Files': 'បន្ថែមឯកសារក្នុងម៉ាស៊ីន',
+    'Slide Thumbnail Size Scale': 'មាឌរូបភាពតូចនៃស្លាយ',
+    'Collapse All': 'បង្រួមទាំងអស់',
+    'Expand All': 'ពង្រីកទាំងអស់',
     Bibles: 'ព្រះគម្ពីរ',
     'Full Text': 'បង្ហាញពេញ',
     'Add Extra Bible': 'បន្ថែមព្រះគម្ពីរ',
@@ -313,7 +451,6 @@ const dictionary = {
     Copy: 'ចម្លង',
     Countdown: 'រាប់ថយក្រោយ',
     'Create Anthropic api key': 'បង្កើត Anthropic api key',
-    'Create New File': 'បង្កើតឯកសារថ្មី',
     'Create OpenAI api key': 'បង្កើត OpenAI api key',
     'Creating Default Folder': 'កំពុងបង្កើតថតលំនាំដើម',
     Dark: 'ងងឹត',
@@ -324,6 +461,7 @@ const dictionary = {
     Disable: 'បិទដំណើរការ',
     'Discard changed': 'បោះបង់ការផ្លាស់ប្តូរ',
     'Download From URL': 'ទាញយកពី URL',
+    'Import From URL': 'នាំចូលពី URL',
     Download: 'ទាញយក',
     Duplicate: 'ស្ទួន',
     'Edit Parent Path': 'កែសម្រួលផ្លូវមេ',
@@ -370,15 +508,21 @@ const dictionary = {
     'Move backward': 'ផ្លាស់ទីទៅក្រោយ',
     'Move down': 'ផ្លាស់ទីចុះក្រោម',
     'Move forward': 'ផ្លាស់ទីទៅមុខ',
+    'Move to Bottom': 'ផ្លាស់ទីទៅក្រោមគេ',
+    'Move to Top': 'ផ្លាស់ទីទៅលើគេ',
     'Move to Trash': 'ផ្លាស់ទីទៅធុងសំរាម',
     'Move To': 'ផ្លាស់ទីទៅ',
     'Move up': 'ផ្លាស់ទីឡើងលើ',
+    'More Options': 'ជម្រើសបន្ថែម',
     'New File Name': 'ឈ្មោះឯកសារថ្មី',
     'New File': 'ឯកសារថ្មី',
+    'New App Document': 'ឯកសារកម្មវិធីថ្មី',
+    'New Lyric': 'អក្សរភ្លេងថ្មី',
     'No App Document Selected': 'មិនមានឯកសារកម្មវិធីត្រូវបានជ្រើសរើសទេ',
     'No Bible Available': 'មិនមានព្រះគម្ពីរទេ',
     'No canvas item selected': 'មិនមានធាតុផ្ទាំងក្រណាត់ត្រូវបានជ្រើសរើសទេ',
     'No Color': 'គ្មានពណ៌',
+    'No Specific Screen': 'គ្មានអេក្រង់ជាក់លាក់',
     'No Lyric Selected': 'មិនមានបទចម្រៀងត្រូវបានជ្រើសរើសទេ',
     'No Parent Directory Selected': 'មិនមានថតមេត្រូវបានជ្រើសរើសទេ',
     'Not Full Width': 'មិនពេញទទឹង',
@@ -524,6 +668,13 @@ const dictionary = {
     'Double click on header to edit': 'ចុចពីរដងលើក្បាលដើម្បីកែសម្រួល',
     Expand: 'ពង្រីក',
     Export: 'នាំចេញ',
+    'Export Data': 'នាំចេញទិន្នន័យ',
+    'Import Data': 'នាំចូលទិន្នន័យ',
+    'Choose the folders to export': 'ជ្រើសរើសថតដែលត្រូវនាំចេញ',
+    'Choose the folders to import': 'ជ្រើសរើសថតដែលត្រូវនាំចូល',
+    'Select All': 'ជ្រើសរើសទាំងអស់',
+    'Deselect All': 'ដកការជ្រើសរើសទាំងអស់',
+    'Nothing is selected': 'មិនបានជ្រើសរើសអ្វីទេ',
     'Fail to get data for': 'បរាជ័យក្នុងការទទួលបានទិន្នន័យសម្រាប់',
     'Font size in pixels': 'ទំហំតួអក្សរគិតជាភីកសែល',
     'Glass Effect': 'បែបផែនកញ្ចក់',
@@ -556,6 +707,9 @@ const dictionary = {
     'Quick font size': 'ទំហំតួអក្សររហ័ស',
     'Quick scroll speed': 'ល្បឿនរំកិលរហ័ស',
     'Return to Presenter': 'ត្រឡប់ទៅកម្មវិធីបង្ហាញ',
+    'Open Worship slide required': 'ត្រូវការស្លាយ Open Worship',
+    'The selected document is not an Open Worship slide. Return to Presenter?':
+        'ឯកសារដែលបានជ្រើសរើសមិនមែនជាស្លាយ Open Worship ទេ។ ត្រឡប់ទៅកម្មវិធីបង្ហាញ?',
     'Seconds the text stays on screen': 'ចំនួនវិនាទីដែលអត្ថបទនៅលើអេក្រង់',
     'Seconds to wait before showing the text':
         'ចំនួនវិនាទីត្រូវរង់ចាំមុនពេលបង្ហាញអត្ថបទ',
@@ -679,6 +833,8 @@ const dictionary = {
     Redo: 'ធ្វើឡើងវិញ',
     Help: 'ជំនួយ',
     'Bible Properties': 'លក្ខណសម្បត្តិព្រះគម្ពីរ',
+    'Thumbnail View': 'ទិដ្ឋភាពរូបតូច',
+    'List View': 'ទិដ្ឋភាពបញ្ជី',
 };
 function sanitizeTranKey(key: string) {
     return key.trim().toLowerCase();
@@ -706,6 +862,7 @@ const sanitizedDictionary = Object.fromEntries(
     ]),
 );
 const fontFamily = 'app-Battambang';
+const globalFontFamily = 'Battambang';
 const stickyNoteFontFamily = 'km-font-Fasthand';
 const lang: LanguageDataType = {
     packageDir: __dirname,
@@ -784,6 +941,7 @@ const lang: LanguageDataType = {
         `;
     },
     fontFamily,
+    globalFontFamily,
     stickyNoteFontFamily,
     numList,
     dictionary: sanitizedDictionary,
@@ -1008,6 +1166,28 @@ const lang: LanguageDataType = {
     },
     getBibleCrossRefBundleFilePath() {
         return resolveGzBundleFilePath(bbCR);
+    },
+    initOpenLyricPlugins: ({ editor, openLyric, openLyricMarkdownManager }) => {
+        editor?.addPlugin('km-KH', new EditorPluginKmKh());
+        const option = {
+            title: 'Khmer',
+            fontFaces: [fontFamily],
+            indexRange: 2,
+        };
+        if (openLyric !== undefined) {
+            const newFontFaces = genOpenLyricFontFaces(
+                (openLyric.fontFaces as any) ?? [],
+                { ...option },
+            );
+            openLyric.fontFaces = newFontFaces;
+        }
+        if (openLyricMarkdownManager !== undefined) {
+            const newFontFaces = genOpenLyricFontFaces(
+                (openLyricMarkdownManager.fontFaces as any) ?? [],
+                { ...option },
+            );
+            openLyricMarkdownManager.fontFaces = newFontFaces;
+        }
     },
 };
 

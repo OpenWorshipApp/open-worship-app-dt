@@ -81,8 +81,6 @@ import WindowEventListener, { useWindowEvent } from './WindowEventListener';
 import {
     previewingEventListener,
     useBibleItemShowing,
-    useLyricSelecting,
-    useLyricUpdating,
     useVaryAppDocumentSelecting,
     useVaryAppDocumentUpdating,
 } from './PreviewingEventListener';
@@ -286,17 +284,9 @@ describe('event listeners', () => {
         const events: string[] = [];
 
         function Probe() {
-            useLyricSelecting((lyric) => {
-                events.push(
-                    `select-lyric:${lyric === null ? 'null' : 'value'}`,
-                );
-            }, []);
             useBibleItemShowing(() => {
                 events.push('show-bible');
             }, []);
-            useLyricUpdating(() => {
-                events.push('update-lyric');
-            });
             useVaryAppDocumentSelecting(() => {
                 events.push('select-doc');
             });
@@ -314,20 +304,12 @@ describe('event listeners', () => {
             root.render(<Probe />);
         });
 
-        previewingEventListener.showLyric(null as any);
         previewingEventListener.showBibleItem({ id: 'bible' } as any);
-        previewingEventListener.updateLyric({ id: 'lyric' } as any);
         previewingEventListener.showVaryAppDocument({ id: 'doc' } as any);
         previewingEventListener.updateVaryAppDocument({ id: 'doc' } as any);
         await flushAsyncEvents();
 
-        expect(events).toEqual([
-            'select-lyric:null',
-            'show-bible',
-            'update-lyric',
-            'select-doc',
-            'update-doc',
-        ]);
+        expect(events).toEqual(['show-bible', 'select-doc', 'update-doc']);
     });
 
     test('keeps registrations stable while dispatching to the latest listener', async () => {
@@ -369,9 +351,6 @@ describe('event listeners', () => {
             useVarySlideSelecting(() => {
                 events.push(`${tag}-select-slide`);
             });
-            useLyricUpdating(() => {
-                events.push(`${tag}-update-lyric`);
-            });
             useVaryAppDocumentSelecting(() => {
                 events.push(`${tag}-select-doc`);
             });
@@ -412,7 +391,6 @@ describe('event listeners', () => {
             { id: 7 },
         );
         AppDocumentListEventListener.selectVarySlide({ id: 1 } as any);
-        previewingEventListener.updateLyric({ id: 'lyric' } as any);
         previewingEventListener.showVaryAppDocument({ id: 'doc' } as any);
         previewingEventListener.updateVaryAppDocument({ id: 'doc' } as any);
         await flushAsyncEvents();
@@ -422,7 +400,6 @@ describe('event listeners', () => {
             'second-toast:Saved',
             'second-open:7',
             'second-select-slide',
-            'second-update-lyric',
             'second-select-doc',
             'second-update-doc',
         ]);

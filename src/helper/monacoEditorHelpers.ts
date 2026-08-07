@@ -3,11 +3,13 @@ import type { Uri } from 'monaco-editor';
 import { editor, KeyMod, KeyCode } from 'monaco-editor';
 
 import { tran } from '../lang/langHelpers';
-import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
-import jsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
-import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
-import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
-import tsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+// monaco-editor 0.56 reorganized its ESM entry points behind an `exports` map,
+// so the old `monaco-editor/esm/vs/...` specifiers no longer resolve.
+import editorWorker from 'monaco-editor/editor/editor.worker?worker';
+import jsonWorker from 'monaco-editor/languages/features/json/json.worker?worker';
+import cssWorker from 'monaco-editor/languages/features/css/css.worker?worker';
+import htmlWorker from 'monaco-editor/languages/features/html/html.worker?worker';
+import tsWorker from 'monaco-editor/languages/features/typescript/ts.worker?worker';
 
 import { useStateSettingBoolean } from './settingHelpers';
 import { useAppEffect } from './appHooks';

@@ -7,6 +7,8 @@ import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { goToPath } from '../router/routeHelpers';
+import { tran } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyAppDocumentPreviewerComp = lazy(() => {
     return import('../app-document-presenter/items/AppDocumentPreviewerComp');
@@ -38,8 +40,11 @@ export default function AppDocumentEditorComp() {
         let isActive = true;
         void (async () => {
             const isOk = await showAppConfirm(
-                'Open Worship slide required',
-                'The selected document is not an Open Worship slide. Return to Presenter?',
+                tran('Open Worship slide required'),
+                tran(
+                    'The selected document is not an Open Worship slide.' +
+                        ' Return to Presenter?',
+                ),
                 {
                     confirmButtonLabel: 'Return to Presenter',
                 },
@@ -66,12 +71,12 @@ export default function AppDocumentEditorComp() {
                 {
                     children: LazyAppDocumentPreviewerComp,
                     key: 'h1',
-                    widgetName: 'App Editor Left',
+                    ...toWidgetLabel('App Editor Left'),
                 },
                 {
                     children: LazyAppDocumentEditorRightComp,
                     key: 'h2',
-                    widgetName: 'App Editor Right',
+                    ...toWidgetLabel('App Editor Right'),
                 },
             ]}
         />

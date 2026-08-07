@@ -2,7 +2,10 @@
   display: inline-block;
   margin: 2px;
   border: 1px solid transparent;
-  cursor: pointer;
+
+  &.disabled {
+    opacity: 0.5;
+  }
 
   &:not(.app-highlight-selected):not(.active):hover {
     border: 1px dotted var(--bs-gray-500);

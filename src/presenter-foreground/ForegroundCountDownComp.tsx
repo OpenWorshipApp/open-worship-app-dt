@@ -14,7 +14,8 @@ import { useScreenForegroundManagerEvents } from '../_screen/managers/screenEven
 import { useForegroundPropsSetting } from './propertiesSettingHelpers';
 import type { ForegroundCountdownDataType } from '../_screen/screenTypeHelpers';
 import ForegroundLayoutComp from './ForegroundLayoutComp';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 
@@ -110,11 +111,22 @@ function CountDownOnDatetimeComp({
     );
     const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
     const genStyleRef = useAppCurrentRef(genStyle);
-    const handleDragStart = useCallback(() => {
+    const handleDraggingStart = useCallback((event: any) => {
+        const targetDateTime = getTargetDateTimeRef.current();
+        const extraStyle = genStyleRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,
-            getTargetDateTimeRef.current(),
-            genStyleRef.current(),
+            targetDateTime,
+            extraStyle,
+        );
+        handleDragStart(
+            event,
+            genForegroundDragInf('countdown', () => {
+                return {
+                    dateTime: targetDateTime.toJSON(),
+                    extraStyle,
+                };
+            }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -163,7 +175,7 @@ function CountDownOnDatetimeComp({
                     onClick={handleDateTimeShowing}
                     onContextMenu={handleContextMenuOpening}
                     draggable
-                    onDragStart={handleDragStart}
+                    onDragStart={handleDraggingStart}
                 >
                     <i className="bi bi-play-fill" />{' '}
                     {tran('Start Countdown to DateTime')}
@@ -186,16 +198,18 @@ function CountDownInSetComp({
         'foreground-minutes-setting',
         '5',
     );
+    const getDurationSecond = useCallback(() => {
+        return (
+            60 * Number.parseInt(minutes) + 3600 * Number.parseInt(hours) + 1
+        );
+    }, [minutes, hours]);
     const getTargetDateTime = useCallback(() => {
         const targetDatetime = new Date();
         targetDatetime.setSeconds(
-            targetDatetime.getSeconds() +
-                60 * Number.parseInt(minutes) +
-                3600 * Number.parseInt(hours) +
-                1,
+            targetDatetime.getSeconds() + getDurationSecond(),
         );
         return targetDatetime;
-    }, [minutes, hours]);
+    }, [getDurationSecond]);
     const handleShowing = useCallback(
         (event: any, isForceChoosing = false) => {
             const targetDateTime = getTargetDateTime();
@@ -231,12 +245,25 @@ function CountDownInSetComp({
         [],
     );
     const getTargetDateTimeRef = useAppCurrentRef(getTargetDateTime);
+    const getDurationSecondRef = useAppCurrentRef(getDurationSecond);
     const genStyleRef = useAppCurrentRef(genStyle);
-    const handleInSetDragStart = useCallback(() => {
+    const handleInSetDragStart = useCallback((event: any) => {
+        const extraStyle = genStyleRef.current();
         dragStore.onDropped = handleByDropped.bind(
             null,
             getTargetDateTimeRef.current(),
-            genStyleRef.current(),
+            extraStyle,
+        );
+        // A duration countdown must restart from the moment it lands on a
+        // screen, so the duration travels rather than the resolved date.
+        handleDragStart(
+            event,
+            genForegroundDragInf('countdown', () => {
+                return {
+                    durationSecond: getDurationSecondRef.current(),
+                    extraStyle,
+                };
+            }),
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

@@ -6,6 +6,8 @@ import { globalCacheManager1M } from '../others/CacheManager';
 import { useAppStateAsync } from '../helper/appHooks';
 import { BibleCrossRefBundleReader } from './BibleCrossRefBundleReader';
 import { getSetting, setSetting } from '../helper/settingHelpers';
+import { type LookupLangData } from 'bible-note';
+import type { Editor, OpenLyric, OpenLyricMarkdownManager } from 'open-lyric';
 
 const LANGUAGE_LOCALE_SETTING_NAME = 'language-locale';
 export const DEFAULT_LOCALE: LocaleType = 'en-US';
@@ -457,11 +459,13 @@ export type LanguageDataType = {
     getFontFamilyFiles?: () => string[];
     genCss: () => string;
     fontFamily?: string;
+    globalFontFamily?: string;
     stickyNoteFontFamily?: string;
     numList: string[];
     dictionary: AnyObjectType;
     name: string;
     flagSVG: string;
+    getLookupData?: (packageLocation: string) => Promise<LookupLangData | null>;
     sanitizeText: (text: string) => string;
     sanitizePreviewText: (text: string) => string;
     sanitizeFindingText: (text: string) => string;
@@ -476,6 +480,11 @@ export type LanguageDataType = {
     sanitizeTranKey: (key: string) => string;
     transformBibleBookName: (bookName: string) => string[];
     getBibleCrossRefBundleFilePath: () => string;
+    initOpenLyricPlugins?: (data: {
+        editor?: Editor;
+        openLyric?: OpenLyric;
+        openLyricMarkdownManager?: OpenLyricMarkdownManager;
+    }) => void;
 };
 
 type CustomMenuItemType = {
@@ -489,6 +498,9 @@ type CustomMenuItemType = {
 };
 export type CustomMenusDataType = {
     tools?: CustomMenuItemType[];
+    // Renderer-contributed **File** menu entries (Export/Import Data). Same
+    // mechanism as `tools`, so the label is translated where `tran` works.
+    file?: CustomMenuItemType[];
 };
 
 export function checkIsValidLangCode(text: string) {
@@ -557,11 +569,28 @@ export async function getLangDataAsync(
     initLangCss(langData);
     return langData;
 }
+
 export async function getAllLangsAsync() {
     const allLangData = await Promise.all(
         includedLangCodes.map((langCode) => fetchLangData(langCode)),
     );
     return allLangData.filter((data) => data !== null);
+}
+
+// The renderers that call this render CONTENT in a language other than their
+// own UI locale (lyric slides, bible notes), and that content asks for the
+// language's font by name — e.g. the `app-Battambang` frozen into open-lyric's
+// generated markup. So the `@font-face` rules have to be registered here too,
+// not only for the locale the window's UI happens to use: the screen window
+// loads no locale of its own, and a missing face silently falls back to a
+// system font whose wider metrics reflow and clip the whole slide.
+// The modules are already loaded at this point, so this costs nothing extra.
+export async function initAllLangCss() {
+    const allLangData = await getAllLangsAsync();
+    for (const langData of allLangData) {
+        initLangCss(langData);
+    }
+    return allLangData;
 }
 
 function getDictValue(
@@ -866,4 +895,29 @@ export async function initLangAppMenu() {
         });
     }
     setAppMenuItems('lang', menusData as CustomMenusDataType);
+}
+
+type OpenLyricFontFace = {
+    title: string;
+    fontFaces: string[];
+    indexRange: number;
+}[];
+export function genOpenLyricFontFaces(
+    fontFacesList: OpenLyricFontFace,
+    fontFaceData: {
+        title: string;
+        fontFaces: string[];
+        indexRange: number;
+    },
+) {
+    const fontFaceMap = Object.fromEntries(
+        fontFacesList.map((item) => {
+            return [item.title, item];
+        }),
+    );
+    fontFaceMap[fontFaceData.title] = fontFaceData;
+    const newFontFacesList = Object.values(fontFaceMap);
+    return newFontFacesList.sort((a, b) => {
+        return a.indexRange - b.indexRange;
+    });
 }

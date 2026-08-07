@@ -20,6 +20,8 @@ import type { RenderChildType } from './backgroundHelpers';
 import { backgroundTypeMapper } from './backgroundHelpers';
 import FillingFlexCenterComp from '../others/FillingFlexCenterComp';
 import BackgroundFooterComp, { defaultRangeSize } from './BackgroundFooterComp';
+import type { BackgroundViewModeType } from './BackgroundViewModeComp';
+import { useBackgroundViewModeSetting } from './BackgroundViewModeComp';
 
 export function useThumbnailWidthSetting() {
     const [thumbnailWidth, setThumbnailWidth] = useStateSettingNumber(
@@ -59,6 +61,7 @@ type PropsType = {
 const handleBodyRendering = (
     props: PropsType,
     thumbnailWidth: number,
+    viewMode: BackgroundViewModeType,
     filePaths: string[],
 ) => {
     const {
@@ -73,12 +76,19 @@ const handleBodyRendering = (
         },
         genExtraItemContextMenuItems = (_filePath: string) => [],
     } = props;
+    const isListView = viewMode === 'list';
     const thumbnailHeight = Math.round((thumbnailWidth * 9) / 16);
     const newFilePaths = sortFilePaths(filePaths);
     return (
         <div className="w-100">
             {extraHeaderChild ? <>{extraHeaderChild}</> : null}
-            <div className="d-flex justify-content-center flex-wrap">
+            <div
+                className={
+                    isListView
+                        ? 'd-flex flex-column'
+                        : 'd-flex justify-content-center flex-wrap'
+                }
+            >
                 {newFilePaths.map((filePath) => {
                     return (
                         <BackgroundMediaItemComp
@@ -94,13 +104,16 @@ const handleBodyRendering = (
                             thumbnailWidth={thumbnailWidth}
                             thumbnailHeight={thumbnailHeight}
                             filePath={filePath}
+                            viewMode={viewMode}
                         />
                     );
                 })}
-                <FillingFlexCenterComp
-                    width={thumbnailWidth}
-                    className={props.itemFillingClassname}
-                />
+                {isListView ? null : (
+                    <FillingFlexCenterComp
+                        width={thumbnailWidth}
+                        className={props.itemFillingClassname}
+                    />
+                )}
             </div>
         </div>
     );
@@ -108,6 +121,9 @@ const handleBodyRendering = (
 
 export default function BackgroundMediaComp(props: Readonly<PropsType>) {
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
+    const [viewMode, setViewMode] = useBackgroundViewModeSetting(
+        props.dirSourceSettingName,
+    );
     const backgroundType = backgroundTypeMapper[props.dragType];
     const dirSource = useGenDirSourceReload(props.dirSourceSettingName);
 
@@ -137,6 +153,7 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
                             null,
                             props,
                             thumbnailWidth,
+                            viewMode,
                         )}
                         contextMenuItems={props.contextMenuItems}
                         genContextMenuItems={props.genContextMenuItems}
@@ -163,6 +180,8 @@ export default function BackgroundMediaComp(props: Readonly<PropsType>) {
                 <BackgroundFooterComp
                     thumbnailWidth={thumbnailWidth}
                     setThumbnailWidth={setThumbnailWidth}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
                 />
             )}
         </div>

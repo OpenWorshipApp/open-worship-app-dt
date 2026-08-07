@@ -25,7 +25,8 @@ export function genTextDefaultProps(): TextPropsType {
 export type TextPropsType = TextStylePropsType & {
     text: string;
 };
-export type CanvasItemTextPropsType = CanvasItemPropsType & TextPropsType;
+export type CanvasItemTextPropsType = { type: 'text' } & CanvasItemPropsType &
+    TextPropsType;
 export type ToolingTextType = Partial<TextStylePropsType>;
 
 class CanvasItemText extends CanvasItem<CanvasItemTextPropsType> {

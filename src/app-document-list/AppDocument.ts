@@ -1,4 +1,4 @@
-import type { SlideType } from './Slide';
+import type { SlidePropsType } from './Slide';
 import Slide from './Slide';
 import type { AppDocumentMetadataType } from '../helper/AppEditableDocumentSourceAbs';
 import AppEditableDocumentSourceAbs from '../helper/AppEditableDocumentSourceAbs';
@@ -39,7 +39,7 @@ import { showAppAlert } from '../popup-widget/popupWidgetHelpers';
 
 export type AppDocumentType = {
     metadata: AppDocumentMetadataType;
-    items: SlideType[];
+    items: SlidePropsType[];
 };
 
 export type WrongDimensionType = {
@@ -187,7 +187,7 @@ export default class AppDocument
     async checkSlideIsChanged(
         index: number,
         slide: Slide,
-        jsonItems: SlideType[],
+        jsonItems: SlidePropsType[],
     ) {
         const originalSlide = jsonItems[index];
         slide.isChanged =
@@ -306,13 +306,14 @@ export default class AppDocument
         const maxSlideId = await this.getMaxSlideId();
         const defaultSlideData = Slide.defaultSlideData(maxSlideId + 1);
         const { width, height } = Slide.getDefaultDim();
-        const json = {
+        const json: SlidePropsType = {
             id: defaultSlideData.id,
             metadata: {
                 width,
                 height,
             },
             canvasItems: [], // TODO: add default canvas item
+            type: 'slide',
         };
         const newSlide = new Slide(this.filePath, json);
         return newSlide;
@@ -521,7 +522,12 @@ export default class AppDocument
 
 export async function checkIsAppDocumentSelected() {
     const varyAppDocument = await getSelectedVaryAppDocument();
-    if (!AppDocument.checkIsThisType(varyAppDocument)) {
+    // `isEditable` and not just the type test: `LyricAppDocument` extends this
+    // class but cannot be edited or saved.
+    if (
+        !AppDocument.checkIsThisType(varyAppDocument) ||
+        !varyAppDocument.isEditable
+    ) {
         showAppAlert(
             'No slide selected',
             'Please select an Open Worship slide first',

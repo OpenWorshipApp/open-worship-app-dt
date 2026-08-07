@@ -96,6 +96,7 @@ export async function openNoteItemContextMenu(
                     tran('Delete Note Item'),
                     tran('Are you sure to delete this note item?'),
                     {
+                        cancelButtonLabel: 'No',
                         confirmButtonLabel: 'Yes',
                     },
                 );

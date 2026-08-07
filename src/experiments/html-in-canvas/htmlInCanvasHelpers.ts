@@ -61,16 +61,29 @@ export function runDrawGuarded(callback: () => void) {
     }
 }
 
-/** Run `callback` inside 1920x1080 slide coordinates on any canvas size. */
+/**
+ * Run `callback` inside 1920x1080 slide coordinates on any canvas size.
+ *
+ * The scale comes from the canvas's **CSS** box, not its `width`/`height`
+ * attributes, because `drawElementImage` rasterizes the element at the canvas's
+ * backing-store-to-CSS density all by itself. Give a canvas a hi-dpi backing
+ * store — 3840 attribute pixels shown in a 1494px CSS box — and a 1920px
+ * element drawn at `scale(0.5)` covers 2464 backing pixels, i.e. 1920 x 0.5 x
+ * 2.57, not 960. Scaling by the attribute size on top of that multiplies the
+ * density in twice and the slide runs off the canvas.
+ *
+ * Where the two agree (every demo that leaves the canvas at its intrinsic size)
+ * this changes nothing; `canvas.width` is the fallback for a canvas that is not
+ * laid out yet and so has no CSS box to measure.
+ */
 export function withSlideSpace(
     context: HicContextType,
     canvas: HTMLCanvasElement,
     callback: () => void,
 ) {
-    const scale = Math.min(
-        canvas.width / SLIDE_WIDTH,
-        canvas.height / SLIDE_HEIGHT,
-    );
+    const cssWidth = canvas.clientWidth || canvas.width;
+    const cssHeight = canvas.clientHeight || canvas.height;
+    const scale = Math.min(cssWidth / SLIDE_WIDTH, cssHeight / SLIDE_HEIGHT);
     context.save();
     context.scale(scale, scale);
     callback();

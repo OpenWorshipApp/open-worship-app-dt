@@ -1,12 +1,18 @@
 import { resolve } from 'node:path';
-import { isWindows, toUnpackedPath, unlocking } from './electronHelpers';
-import { execute } from './processHelpers';
+import {
+    getSlidesCount as pptxGetSlidesCount,
+    getVersion as pptxGetVersion,
+    exportPptx as pptxExportHtmls,
+} from 'pptx-to-html';
+import {
+    getVersion as docxGetVersion,
+    exportDocx as docxExportHtmls,
+} from 'docx-to-html';
 
-export function getBinaryPath(dotNetRoot?: string) {
+import { isWindows, toUnpackedPath } from './electronHelpers';
+
+export function getBinaryPath() {
     const basePath = toUnpackedPath(resolve(__dirname, '../bin-helper'));
-    const dotnetPath = dotNetRoot ?? resolve(basePath, 'dotnet-bin');
-    const modulePath = resolve(basePath, 'node-api-dotnet', 'net8.0');
-    const binaryPath = resolve(basePath, 'ms-helpers', 'Helper');
     const eot2ttfPath = resolve(
         basePath,
         'ms-helpers',
@@ -14,193 +20,44 @@ export function getBinaryPath(dotNetRoot?: string) {
         'eot2ttf',
         `eot2ttf${isWindows ? '.exe' : ''}`,
     );
-    return { modulePath, binaryPath, dotnetPath, eot2ttfPath };
-}
-
-const COUNT_FRESH_MILLISECONDS = 1000 * 3;
-const countMap = new Map<string, { date: number; count: number }>();
-function deleteStaleCounts() {
-    const now = Date.now();
-    for (const [key, value] of countMap) {
-        if (now - value.date > COUNT_FRESH_MILLISECONDS) {
-            countMap.delete(key);
-        }
-    }
-}
-export async function countSlides(filePath: string, dotNetRoot?: string) {
-    return unlocking<number | null>(
-        `count-ms-pp-slides-${filePath}`,
-        async () => {
-            deleteStaleCounts();
-            if (!countMap.has(filePath)) {
-                const { modulePath, binaryPath, dotnetPath } =
-                    getBinaryPath(dotNetRoot);
-                const count = await execute<number | null>(
-                    'count-ms-pp-slides.js',
-                    {
-                        filePath,
-                        modulePath,
-                        binaryPath,
-                        dotnetPath,
-                    },
-                );
-                if (count !== null) {
-                    countMap.set(filePath, { count, date: Date.now() });
-                }
-            }
-            const data = countMap.get(filePath);
-            if (data) {
-                return data.count;
-            }
-            return null;
-        },
-    );
-}
-
-export async function removeSlideBackground(
-    filePath: string,
-    dotNetRoot?: string,
-) {
-    return unlocking<number | null>(
-        `remove-ms-pp-slides-bg-${filePath}`,
-        async () => {
-            const { modulePath, binaryPath, dotnetPath } =
-                getBinaryPath(dotNetRoot);
-            const isSuccess = await execute<number | null>(
-                'remove-ms-pp-slides-bg.js',
-                {
-                    filePath,
-                    modulePath,
-                    binaryPath,
-                    dotnetPath,
-                },
-            );
-            return isSuccess;
-        },
-    );
-}
-
-export async function exportBibleMSWord(
-    filePath: string,
-    data: object[],
-    dotNetRoot?: string,
-) {
-    return unlocking<number | null>(
-        `export-bible-ms-word-${filePath}`,
-        async () => {
-            const { modulePath, binaryPath, dotnetPath } =
-                getBinaryPath(dotNetRoot);
-            const isSuccess = await execute<number | null>(
-                'export-bible-ms-word.js',
-                {
-                    filePath,
-                    data,
-                    modulePath,
-                    binaryPath,
-                    dotnetPath,
-                },
-            );
-            return isSuccess;
-        },
-    );
-}
-
-type PptxToHtmlsDataType = {
-    isSuccessful: boolean;
-    message?: string;
-};
-
-type DocxToHtmlsDataType = {
-    isSuccessful: boolean;
-    message?: string;
-};
-
-export type PptxToHtmlsParamsType = {
-    filePath: string;
-    outDir: string;
-    dotNetRoot?: string;
-};
-
-function genHTMLs({ filePath, outDir, dotNetRoot }: PptxToHtmlsParamsType) {
-    const { modulePath, binaryPath, dotnetPath, eot2ttfPath } =
-        getBinaryPath(dotNetRoot);
-    return execute<PptxToHtmlsDataType>('pptx-to-htmls.js', {
-        filePath,
-        outputDirectory: outDir,
-        eot2ttfPath,
-        modulePath,
-        binaryPath,
-        dotnetPath,
-    });
-}
-
-export function pptxToHtmls(data: PptxToHtmlsParamsType) {
-    return unlocking<PptxToHtmlsDataType>(data.filePath, async () => {
-        return genHTMLs(data);
-    });
-}
-
-export type GetPptxToHtmlsVersionParamsType = {
-    dotNetRoot?: string;
-};
-export function getPptxToHtmlsVersion({
-    dotNetRoot,
-}: GetPptxToHtmlsVersionParamsType) {
-    const { modulePath, binaryPath, dotnetPath, eot2ttfPath } =
-        getBinaryPath(dotNetRoot);
-    return execute<PptxToHtmlsDataType>('get-pptx-to-htmls-version.js', {
-        eot2ttfPath,
-        modulePath,
-        binaryPath,
-        dotnetPath,
-    });
+    return { eot2ttfPath };
 }
 
 export type DocxToHtmlsParamsType = {
     filePath: string;
     outDir: string;
-    dotNetRoot?: string;
 };
 
-function genDocxHTMLs({ filePath, outDir, dotNetRoot }: DocxToHtmlsParamsType) {
-    const { modulePath, binaryPath, dotnetPath } = getBinaryPath(dotNetRoot);
-    return execute<DocxToHtmlsDataType>('docx-to-htmls.js', {
-        filePath,
-        outputDirectory: outDir,
-        modulePath,
-        binaryPath,
-        dotnetPath,
-    });
+export function docxToHtmls({ filePath, outDir }: DocxToHtmlsParamsType) {
+    try {
+        docxExportHtmls(filePath, outDir);
+        return true;
+    } catch (error) {
+        console.error(error);
+    }
+    return false;
+}
+export function getDocxToHtmlsVersion() {
+    return docxGetVersion();
 }
 
-export function docxToHtmls(data: DocxToHtmlsParamsType) {
-    return unlocking<DocxToHtmlsDataType>(
-        `docx-to-htmls-${data.filePath}`,
-        async () => {
-            return genDocxHTMLs(data);
-        },
-    );
+export type PptxToHtmlsParamsType = {
+    filePath: string;
+    outDir: string;
+};
+export function pptxToHtmls({ filePath, outDir }: PptxToHtmlsParamsType) {
+    try {
+        const { eot2ttfPath } = getBinaryPath();
+        pptxExportHtmls(filePath, outDir, eot2ttfPath);
+        return true;
+    } catch (error) {
+        console.error(error);
+    }
+    return false;
 }
-
-type GetDocxToHtmlsVersionDataType = {
-    version: string | null;
-    message?: string;
-};
-
-export type GetDocxToHtmlsVersionParamsType = {
-    dotNetRoot?: string;
-};
-
-export function getDocxToHtmlsVersion({
-    dotNetRoot,
-}: GetDocxToHtmlsVersionParamsType) {
-    const { modulePath, binaryPath, dotnetPath } = getBinaryPath(dotNetRoot);
-    return execute<GetDocxToHtmlsVersionDataType>(
-        'get-docx-to-htmls-version.js',
-        {
-            modulePath,
-            binaryPath,
-            dotnetPath,
-        },
-    );
+export function getPptxToHtmlsVersion() {
+    return pptxGetVersion();
+}
+export function getPptxSlidesCount(filePath: string) {
+    return pptxGetSlidesCount(filePath);
 }

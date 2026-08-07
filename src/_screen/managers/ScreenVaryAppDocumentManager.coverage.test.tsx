@@ -263,6 +263,15 @@ function detachAllManagerDivs() {
     }
 }
 
+// Assigning `varySlideData` re-derives the slide for the screen's stage through
+// `getTargetLyricSlideItemData`, so the assignment only lands a microtask later
+// even for ordinary (non-lyric) slides.
+function flushVarySlideData() {
+    return new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+}
+
 describe('ScreenVaryAppDocumentManager coverage', () => {
     beforeAll(async () => {
         varyModule = await import('./ScreenVaryAppDocumentManager');
@@ -339,7 +348,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         expect(other.isShowing).toBe(false);
     });
 
-    test('drops the virtual background color for blank slides', () => {
+    test('drops the virtual background color for blank slides', async () => {
         const manager = new ScreenVaryAppDocumentManager(
             createScreenManagerBase(63),
             createEffectManager(),
@@ -351,6 +360,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             isRenderFullWidth: false,
             virtualBackgroundColor: '#123456',
         };
+        await flushVarySlideData();
         expect(manager.varySlideData?.virtualBackgroundColor).toBeNull();
 
         manager.varySlideData = {
@@ -359,6 +369,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             isRenderFullWidth: false,
             virtualBackgroundColor: '#123456',
         };
+        await flushVarySlideData();
         expect(manager.varySlideData?.virtualBackgroundColor).toBeNull();
 
         // a real slide keeps its color
@@ -368,6 +379,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             isRenderFullWidth: false,
             virtualBackgroundColor: '#123456',
         };
+        await flushVarySlideData();
         expect(manager.varySlideData?.virtualBackgroundColor).toBe('#123456');
         expect(mocks.applyAttachBackground).toHaveBeenCalledWith(
             63,
@@ -376,7 +388,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         );
     });
 
-    test('a locked screen never swaps its slide', () => {
+    test('a locked screen never swaps its slide', async () => {
         const base = createScreenManagerBase(64);
         base.checkIsLockedWithMessage.mockReturnValue(true);
         const manager = new ScreenVaryAppDocumentManager(
@@ -389,12 +401,13 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             itemJson: { id: 1 },
             isRenderFullWidth: false,
         };
+        await flushVarySlideData();
 
         expect(manager.varySlideData).toBeNull();
         expect(mocks.setSetting).not.toHaveBeenCalled();
     });
 
-    test('playing media blocks a slide swap on the presenter but not a clear', () => {
+    test('playing media blocks a slide swap on the presenter but not a clear', async () => {
         const manager = new ScreenVaryAppDocumentManager(
             createScreenManagerBase(65),
             createEffectManager(),
@@ -407,6 +420,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             itemJson: { id: 1, canvasItems: [], metadata },
             isRenderFullWidth: false,
         };
+        await flushVarySlideData();
         mocks.checkMediaPlaying.mockReturnValue(true);
 
         manager.varySlideData = {
@@ -414,10 +428,12 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             itemJson: { id: 2, canvasItems: [], metadata },
             isRenderFullWidth: false,
         };
+        await flushVarySlideData();
         expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
 
         // an explicit stop must still go through
         manager.varySlideData = null;
+        await flushVarySlideData();
         expect(manager.varySlideData).toBeNull();
 
         // the projected screen always follows a sync update
@@ -427,6 +443,7 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
             itemJson: { id: 3, canvasItems: [], metadata },
             isRenderFullWidth: false,
         };
+        await flushVarySlideData();
         expect(manager.varySlideData?.filePath).toBe('/slides/c.slide');
 
         manager.div = null;

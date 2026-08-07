@@ -127,7 +127,13 @@ Use these when working against the running app via chrome-devtools:
   `memoizedProps.value` has `.addNewItems` + `.canvas`, then call the controller
   method directly. A real `video/webm` `File` can be synthesized in-page via
   canvas `captureStream()` + `MediaRecorder`. Restore with the Undo toolbar
-  button only (see below).
+  button only (see below). What DOES drive the whole real pipeline: dispatch a
+  plain bubbling `Event('drop')` and `Object.defineProperty` a fabricated
+  `dataTransfer` onto it — `{items: [{kind: 'file', webkitGetAsEntry: () => ({
+  isFile: true }), getAsFile: () => file}]}` — since React only forwards the
+  property. Stamp `appFilePath` on the `File` (the electron preload does this
+  for real drops) and handlers that resolve a real path, e.g. the playlist
+  archive import, run end to end against a real file on disk.
 - **Never "Discard changed" during automated QA.** Only ever use Undo/Redo
   (non-destructive, reversible) to probe or restore editor state. The toolbar's
   "Discard changed" → "Yes" resets the document to its last-saved-on-disk state
@@ -207,13 +213,19 @@ Use these when working against the running app via chrome-devtools:
 ## owa-robot-test skill
 
 `.claude/skills/owa-robot-test` serves two roles: (1) QA robot testing with
-honest coverage accounting (`references/coverage-matrix.md`, resumable via
+honest coverage accounting (`docs/test-paths/coverage-matrix.md`, resumable via
 `test-results/robot-test/coverage-<runid>.json`), and (2) the **source of truth
 for user-facing documentation** (`references/user-workflows.md`, stable `W-xx`
 recipes). When app UI behavior changes, update `user-workflows.md` +
 `coverage-matrix.md` in the same change and bump their version dates; never
-publish a tutorial step not observed working live. (A stale copy exists under
-`.github/skills/owa-robot-test` — don't extend it by accident.)
+publish a tutorial step not observed working live.
+
+`.github/skills/owa-robot-test` and `.github/memory/` are the Copilot MIRROR of
+this skill and of `.claude/memory/`. `.claude/` is the source of truth: edit
+here first, then copy across in the SAME change. They have already diverged once
+(the mirror was several revisions and seven memory files behind), so a mirror
+file that disagrees with its `.claude/` twin is stale by definition — re-copy it
+rather than reconciling the two by hand.
 
 **Screen controlling & presenting testing is mandatory in every run**, whatever
 the focus area — presenting to a screen is the app's core purpose and screen-only
@@ -221,3 +233,18 @@ bugs never reproduce in the mini-preview. Each run must present a real item,
 verify clear-button states, show the screen, drive the `screen.html?screenId=N`
 CDP target, then clear/hide/restore. The only exclusion is *leaving* a screen
 taken over or touching a display the user says is in live use.
+
+**`playlist` is a tracked MODE, not a focus area.** `/owa-robot-test playlist` runs the
+11-phase deep pass (SKILL.md §6f, recipe test-plan §S20, model knowledge-base §14) over
+the 67 run-sheet rows `PL-10, PL-29, PL-32..76, PL-81..100` with coverage accounting on
+(`coverage-<runid>.json`, `"focus": "playlist"`), a scratch `zz-robot-<runid>` fixture that
+is torn down at the end, and the mandatory blocks ridden from the playlist itself. The
+other PL rows are the Documents/Lyrics lists — same prefix, different subsystem.
+
+**Media download (video AND audio) is mandatory in every run too** (matrix rows
+`MD-01..03`, SKILL.md §6e). `downloadVideoOrAudio` is the only code path that
+runs the shipped prebuilt `yt-dlp`/`ffmpeg`/`qjs` binaries, so a missing or
+broken binary passes typecheck, tests, build and every other matrix row. The
+video half proves the ffmpeg merge, the audio half proves its mp3 encoder; both
+use the canonical link recorded in the matrix. (The matrix lives at
+`docs/test-paths/coverage-matrix.md`, not under the skill's `references/`.)

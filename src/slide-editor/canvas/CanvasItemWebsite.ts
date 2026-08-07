@@ -10,7 +10,9 @@ import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 
-export type CanvasItemWebsitePropsType = CanvasItemPropsType &
+export type CanvasItemWebsitePropsType = {
+    type: 'website';
+} & CanvasItemPropsType &
     CanvasItemUrlPropsType;
 
 class CanvasItemWebsite extends CanvasItem<CanvasItemWebsitePropsType> {
@@ -47,6 +49,7 @@ class CanvasItemWebsite extends CanvasItem<CanvasItemWebsitePropsType> {
         return {
             url: this.props.url,
             ...super.toJson(),
+            type: 'website',
         };
     }
     static fromJson(json: CanvasItemWebsitePropsType) {

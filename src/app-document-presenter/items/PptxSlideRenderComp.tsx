@@ -1,6 +1,5 @@
 import { type MouseEvent, useCallback } from 'react';
 
-import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
 import PptxSlide from '../../app-document-list/PptxSlide';
 import VarySlideRenderComp from './VarySlideRenderComp';
 import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
@@ -132,7 +131,6 @@ export default function PptxSlideRenderComp({
     ) => void;
 }>) {
     const pptxAppDocument = useVaryAppDocumentContext() as PptxAppDocument;
-    useScreenVaryAppDocumentManagerEvents(['update']);
     const pptxAppDocumentRef = useAppCurrentRef(pptxAppDocument);
     const pptxSlideRef = useAppCurrentRef(pptxSlide);
     const handleContextMenuOpening = useCallback(

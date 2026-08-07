@@ -33,6 +33,33 @@ describe('Khmer language data', () => {
         ).toEqual([]);
     });
 
+    // `tran()` throws in dev on a key the dictionary does not have, so every
+    // string newly routed through it needs an entry or it blanks the page.
+    test('carries the download sub-titles and hidden-widget names', () => {
+        for (const key of [
+            'Video URL:',
+            'Audio URL:',
+            'Image URL:',
+            'Web URL:',
+            'Note',
+            'Document List',
+            'Lyric List',
+            'Playlist List',
+            'Background',
+            'Presenter',
+            'Enable',
+            'Disable',
+            'This item is disabled',
+            'This item is disabled in this playlist',
+            'This item is disabled in its document',
+            'Duplicate',
+            'Move to Top',
+            'Move to Bottom',
+        ]) {
+            expect(lang.dictionary[lang.sanitizeTranKey(key)]).toBeDefined();
+        }
+    });
+
     test('sanitizes search text, trims zero-width characters, and transforms bible names', () => {
         expect(lang.sanitizeText('ក\u200Bខ\u200Cគ')).toBe('កខគ');
         expect(lang.sanitizePreviewText(' ក ខ \u200Bគ ')).toBe('កខគ');

@@ -34,6 +34,7 @@ class DocxAppDocumentMock {
 }
 
 vi.mock('../../app-document-list/appDocumentHelpers', () => ({
+    checkIsLyricFilePath: (filePath: string) => filePath.endsWith('.owl'),
     SelectedVaryAppDocumentContext,
     VaryAppDocumentContext,
     useVaryAppDocumentContext: () => useContext(VaryAppDocumentContext),

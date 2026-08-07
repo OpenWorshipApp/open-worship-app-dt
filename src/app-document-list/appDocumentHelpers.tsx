@@ -19,6 +19,7 @@ import {
     getFileDotExtension,
     getFileFullName,
     getFileName,
+    getMimetypeExtensions,
     getTempPath,
     KEY_SEPARATOR,
     mimetypeDocx,
@@ -46,7 +47,7 @@ import DocxAppDocument from './DocxAppDocument';
 import { createContext, use, useCallback, useState } from 'react';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
-import { useScreenVaryAppDocumentManagerEvents } from '../_screen/managers/screenEventHelpers';
+import { useVarySlideOnScreenChangeEffect } from '../_screen/managers/varySlideOnScreenHelpers';
 import { useAppEffect } from '../helper/appHooks';
 import { checkSelectedFilePathExist } from '../others/selectedHelpers';
 import type { DisplayType } from '../_screen/screenTypeHelpers';
@@ -54,7 +55,6 @@ import type {
     VaryAppDocumentType,
     VarySlideType,
 } from './appDocumentTypeHelpers';
-import { getAppDocumentListOnScreenSetting } from '../_screen/preview/screenPreviewerHelpers';
 import {
     type EventMapperType,
     type AllControlType as KeyboardControlType,
@@ -267,6 +267,16 @@ export function checkIsPptx(ext: string) {
 
 export function checkIsDocx(ext: string) {
     return mimetypeDocx.extensions.includes(ext.toLocaleLowerCase());
+}
+
+export function checkIsLyric(ext: string) {
+    return getMimetypeExtensions('lyric').includes(
+        ext.replace('.', '').toLocaleLowerCase(),
+    );
+}
+
+export function checkIsLyricFilePath(filePath: string) {
+    return checkIsLyric(getFileDotExtension(filePath));
 }
 
 const docFileInfo = {
@@ -672,6 +682,12 @@ export async function getSelectedVaryAppDocument() {
     if (selectedAppDocumentFilePath === null) {
         return null;
     }
+    if (checkIsLyricFilePath(selectedAppDocumentFilePath)) {
+        // Restoring a lyric from the setting can run before any lyric module
+        // has been evaluated, so its getter may not be registered yet. A
+        // dynamic import keeps the static cycle broken.
+        await import('../lyric-list/LyricAppDocument');
+    }
     return varyAppDocumentFromFilePath(selectedAppDocumentFilePath);
 }
 
@@ -712,6 +728,9 @@ export async function getSelectedEditingSlideFilePath(): Promise<{
     const selectedAppDocument = await getSelectedVaryAppDocument();
     const isValid =
         AppDocument.checkIsThisType(selectedAppDocument) &&
+        // A lyric passes the type test but has no editable slide, and resolving
+        // one would render the whole song on boot.
+        selectedAppDocument.isEditable &&
         (await checkSelectedFilePathExist(
             SELECTED_APP_DOCUMENT_ITEM_SETTING_NAME,
             dirSourceSettingNames.APP_DOCUMENT,
@@ -748,7 +767,10 @@ export async function getSelectedEditingSlide() {
     }
     const { filePath, id } = selected;
     const varyAppDocument = varyAppDocumentFromFilePath(filePath);
-    if (!AppDocument.checkIsThisType(varyAppDocument)) {
+    if (
+        !AppDocument.checkIsThisType(varyAppDocument) ||
+        !varyAppDocument.isEditable
+    ) {
         return null;
     }
     return await varyAppDocument.getItemById(id);
@@ -756,6 +778,19 @@ export async function getSelectedEditingSlide() {
 
 export function setSelectedEditingSlide(slide: Slide | null) {
     setSelectedEditingSlideFilePath(slide?.filePath ?? null, slide?.id ?? -1);
+}
+
+// NOTE: `LyricAppDocument` cannot be imported here. It extends `AppDocument`,
+// and `AppDocument` imports this module — a static import would close the cycle
+// and evaluate `class ... extends undefined` whenever `AppDocument` happens to
+// be the first module loaded. The dependency is inverted instead: importing
+// `LyricAppDocument` is what registers its getter, which adds no new edge.
+type LyricAppDocumentGetterType = (filePath: string) => VaryAppDocumentType;
+let lyricAppDocumentGetter: LyricAppDocumentGetterType | null = null;
+export function setLyricAppDocumentGetter(
+    getter: LyricAppDocumentGetterType | null,
+) {
+    lyricAppDocumentGetter = getter;
 }
 
 export function varyAppDocumentFromFilePath(filePath: string) {
@@ -767,6 +802,9 @@ export function varyAppDocumentFromFilePath(filePath: string) {
     }
     if (checkIsDocx(getFileDotExtension(filePath))) {
         return DocxAppDocument.getInstance(filePath);
+    }
+    if (lyricAppDocumentGetter !== null && checkIsLyricFilePath(filePath)) {
+        return lyricAppDocumentGetter(filePath);
     }
     return AppDocument.getInstance(filePath);
 }
@@ -786,7 +824,12 @@ export function useAnyItemSelected(varySlides?: VarySlideType[] | null) {
         });
         setIsAnyItemSelected(isSelected);
     };
-    useScreenVaryAppDocumentManagerEvents(['update'], undefined, refresh);
+    // Deliberately NOT `useScreenVaryAppDocumentManagerEvents`: that hook
+    // re-renders its component on every screen event regardless of what the
+    // callback finds, and this one sits on `VarySlidesComp`, the parent of
+    // every slide preview. Here the boolean is the only thing that can move the
+    // list, so a present that does not change it costs nothing.
+    useVarySlideOnScreenChangeEffect(refresh);
     useAppEffect(refresh, [varySlides?.map((item) => item.id).join('|')]);
     return isAnyItemSelected;
 }
@@ -799,37 +842,47 @@ export function checkIsVarySlideOnScreen(varySlide: VarySlideType) {
     return data.length > 0;
 }
 
+// Deliberately does NOT call `getSlides()`. This runs for every row of every
+// document/lyric list on every screen update, and `getSlides()` is a full
+// document parse — for a lyric that means re-reading the file and every language
+// module, for a PDF/PPTX re-reading the rendered slides. The on-screen entries
+// already carry `filePath`, so matching on that answers "is this document on a
+// screen" without materialising a single slide.
+// `getDataList` already reads (and copies) the on-screen map, so an emptiness
+// pre-check here would only read it a second time — this runs once per row per
+// screen update.
+export async function checkIsVaryAppDocumentFilePathOnScreen(filePath: string) {
+    return ScreenVaryAppDocumentManager.getDataList(filePath).length > 0;
+}
+
 export async function checkIsVaryAppDocumentOnScreen(
     varyAppDocument: VaryAppDocumentType,
 ) {
-    const dataList = getAppDocumentListOnScreenSetting();
-    if (Object.keys(dataList).length === 0) {
-        return false;
-    }
-    const varySlides = await varyAppDocument.getSlides();
-    for (const varySlide of varySlides) {
-        const data = ScreenVaryAppDocumentManager.getDataList(
-            varySlide.filePath,
-            varySlide.id,
-        );
-        if (data !== null && data.length > 0) {
-            return true;
-        }
-    }
-    return false;
+    return await checkIsVaryAppDocumentFilePathOnScreen(
+        varyAppDocument.filePath,
+    );
 }
 
+// The attached-background cache is keyed by `filePath` ALONE:
+// `getAttachedBackground` stores the whole `<filePath>.bg.json` map with
+// `cached.set(filePath, data)` and the `id` argument only indexes into that
+// already-loaded object (`../others/AttachBackgroundManager.ts`). Every slide
+// of a document carries that same document `filePath`, so ONE call warms the
+// entry for every id.
+// Do NOT reintroduce a per-slide loop. It forced `getSlides()` — a full
+// document parse — purely for ids it then discarded: for an 88-page PDF that
+// decoded every page PNG in parallel (162MB of bitmap) and forked a
+// `main:app:pdf-pages-count` child that read the whole PDF, all to warm a
+// 5-second cache entry; for PPTX/DOCX it MD5s the entire file. The redundant
+// calls also queued behind the same per-file mutex, delaying the very preview
+// reads this preload exists to accelerate.
 export async function preloadAttachedBackground(
     varyAppDocument: VaryAppDocumentType,
-    items?: { id: number; filePath: string }[],
 ) {
-    items ??= await varyAppDocument.getSlides();
-    for (const item of items) {
-        setTimeout(() => {
-            attachBackgroundManager.getAttachedBackground(
-                item.filePath,
-                item.id,
-            );
-        }, 0);
-    }
+    // Destructure outside the timer so the closure retains a string rather
+    // than the whole document instance.
+    const { filePath } = varyAppDocument;
+    setTimeout(() => {
+        attachBackgroundManager.getAttachedBackground(filePath);
+    }, 0);
 }

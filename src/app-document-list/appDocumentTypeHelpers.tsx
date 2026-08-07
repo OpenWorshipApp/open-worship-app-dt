@@ -1,15 +1,16 @@
 import type AppDocument from './AppDocument';
-import type { SlideType } from './Slide';
+import type { SlidePropsType } from './Slide';
 import type Slide from './Slide';
 import type PdfAppDocument from './PdfAppDocument';
-import type { PdfSlideType } from './PdfSlide';
+import type { PdfSlidePropsType } from './PdfSlide';
 import type PdfSlide from './PdfSlide';
 import type PptxAppDocument from './PptxAppDocument';
 import type PptxSlide from './PptxSlide';
-import { type PptxSlideType } from './PptxSlide';
+import { type PptxSlidePropsType } from './PptxSlide';
 import type DocxAppDocument from './DocxAppDocument';
-import type { DocxSlideType } from './DocxSlide';
+import type { DocxSlidePropsType } from './DocxSlide';
 import type DocxSlide from './DocxSlide';
+import { type LyricPropsType } from '../lyric-list/LyricSlide';
 
 export const MIN_THUMBNAIL_SCALE = 20;
 export const THUMBNAIL_SCALE_STEP = 1;
@@ -23,5 +24,9 @@ export type VaryAppDocumentWithNoteType = AppDocument | PptxAppDocument;
 export type VarySlideType = Slide | PdfSlide | PptxSlide | DocxSlide;
 export type VarySlideWithNoteType = Slide | PptxSlide;
 export type VarySlideDataType =
-    SlideType | PdfSlideType | PptxSlideType | DocxSlideType;
+    | SlidePropsType
+    | LyricPropsType
+    | PdfSlidePropsType
+    | PptxSlidePropsType
+    | DocxSlidePropsType;
 export type VaryAppDocumentDynamicType = VaryAppDocumentType | null | undefined;

@@ -368,6 +368,7 @@ async function guessingBibleKey(xmlElementOrText: Element | string) {
                 ? `${tran('Do you want to continue with')} key="${bibleKey}"?`
                 : tran('Are you sure you want to quit?'),
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         );

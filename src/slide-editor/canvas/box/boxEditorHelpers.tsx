@@ -189,12 +189,7 @@ const editorStyle = `
 }`;
 
 const editorStyleDark = `
-.app-caught-hover-pointer {
-  cursor: pointer;
-}
-.app-caught-hover-pointer:hover {
-  text-shadow: 0 0 2px rgba(255, 255, 255, 0.198);
-}
+
 `;
 const editorStyleLight = `
 .shadow-caught-hover-pointer {

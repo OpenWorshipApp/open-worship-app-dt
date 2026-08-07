@@ -25,7 +25,8 @@ export function genHtmlDefaultProps(): HtmlPropsType {
 export type HtmlPropsType = TextStylePropsType & {
     html: string;
 };
-export type CanvasItemHtmlPropsType = CanvasItemPropsType & HtmlPropsType;
+export type CanvasItemHtmlPropsType = { type: 'html' } & CanvasItemPropsType &
+    HtmlPropsType;
 
 // Markup rendered as-is; unlike a text item it is never edited in place.
 class CanvasItemHtml extends CanvasItem<CanvasItemHtmlPropsType> {

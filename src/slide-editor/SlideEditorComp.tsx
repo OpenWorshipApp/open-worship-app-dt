@@ -5,6 +5,7 @@ import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import { MultiContextRenderComp } from '../helper/MultiContextRenderComp';
 import { useEditingCanvasContextValue } from './canvasEditingHelpers';
 import SlideEditorCanvasComp from './canvas/SlideEditorCanvasComp';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazySlideEditorToolsComp = lazy(() => {
     return import('./canvas/tools/SlideEditorToolsComp');
@@ -33,7 +34,7 @@ export default function SlideEditorComp() {
                             },
                         },
                         key: 'h1',
-                        widgetName: 'Slide Editor Canvas',
+                        ...toWidgetLabel('Slide Editor Canvas'),
                         className: 'app-flex-item',
                     },
                     {
@@ -49,7 +50,7 @@ export default function SlideEditorComp() {
                             },
                         },
                         key: 'h2',
-                        widgetName: 'Tools',
+                        ...toWidgetLabel('Tools'),
                         className: 'app-flex-item',
                     },
                 ]}

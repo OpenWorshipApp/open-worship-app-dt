@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 const getSettingMock = vi.fn();
 const setSettingMock = vi.fn();
+const removeSettingMock = vi.fn();
 const sendDataMock = vi.fn();
 const sendDataSyncMock = vi.fn();
 const createMouseEventMock = vi.fn((x: number, y: number) => ({
@@ -44,6 +45,7 @@ const appProviderMock = {
 vi.mock('../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,
+    removeSetting: removeSettingMock,
 }));
 
 vi.mock('../server/unlockingHelpers', () => ({
@@ -312,6 +314,7 @@ describe('screen infrastructure', () => {
         const { screenManagerSettingNames } =
             await import('../helper/constants');
         const screenHelpers = await import('./screenHelpers');
+        const managerScreenHelpers = await import('./managers/screenHelpers');
 
         getSettingMock.mockImplementation((key: string) => {
             if (key === screenManagerSettingNames.MANAGERS) {
@@ -382,7 +385,7 @@ describe('screen infrastructure', () => {
         );
 
         expect(screenHelpers.getAllShowingScreenIds()).toEqual([0, 1]);
-        expect(screenHelpers.getAllDisplays().displays).toHaveLength(2);
+        expect(managerScreenHelpers.getAllDisplays().displays).toHaveLength(2);
 
         await screenHelpers.showScreen({ screenId: 1, displayId: 2 });
         expect(electronSendAsyncMock).toHaveBeenCalledWith(
@@ -544,8 +547,12 @@ describe('screen infrastructure', () => {
             effectManager.styleAnimList.move.duration,
         );
 
-        // a deleted screen leaves the manager pointing at an inert ghost
+        // a deleted screen leaves the manager pointing at an inert ghost, and
+        // takes its per-screen effect setting with it (screen ids are reused)
         effectManager.delete();
+        expect(removeSettingMock).toHaveBeenCalledWith(
+            'pt-effect-5-background',
+        );
         expect(
             screenManagerBase.createScreenManagerBaseGhost,
         ).toHaveBeenCalledWith(5);
@@ -596,6 +603,12 @@ describe('screen infrastructure', () => {
             { screenId: 1, isSelected: true },
             { screenId: 2, isSelected: false },
         ]);
+        // The parse is memoized, so the array MUST be copied on the way out:
+        // `saveScreenManagersSetting` maps it and then pushes into the result,
+        // which would otherwise grow the memoized array on every save.
+        expect(baseHelpers.getScreenManagersInstanceSetting()).not.toBe(
+            baseHelpers.getScreenManagersInstanceSetting(),
+        );
         expect(baseHelpers.getValidOnScreen({ 1: 'ok', 7: 'skip' })).toEqual({
             1: 'ok',
         });
@@ -605,7 +618,7 @@ describe('screen infrastructure', () => {
             screenId: 1,
             isSelected: true,
             isLocked: false,
-            stageNumber: 2,
+            stage: 2,
             getColorNote: vi.fn(async () => 'blue'),
         } as any);
         baseHelpers.setScreenManagerBaseCache({
@@ -613,7 +626,7 @@ describe('screen infrastructure', () => {
             screenId: 2,
             isSelected: false,
             isLocked: true,
-            stageNumber: 4,
+            stage: 4,
             getColorNote: vi.fn(async () => 'red'),
         } as any);
 

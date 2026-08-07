@@ -8,7 +8,7 @@ import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 
-export type CanvasItemImagePropsType = CanvasItemPropsType &
+export type CanvasItemImagePropsType = { type: 'image' } & CanvasItemPropsType &
     CanvasItemMediaPropsType;
 class CanvasItemImage extends CanvasItem<CanvasItemImagePropsType> {
     static gegStyle(_props: CanvasItemImagePropsType) {
@@ -62,6 +62,7 @@ class CanvasItemImage extends CanvasItem<CanvasItemImagePropsType> {
             mediaWidth: this.props.mediaWidth,
             mediaHeight: this.props.mediaHeight,
             ...super.toJson(),
+            type: 'image',
         };
     }
     static fromJson(json: CanvasItemImagePropsType) {

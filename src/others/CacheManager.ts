@@ -61,7 +61,14 @@ export default class CacheManager<T> {
                 this.cache.delete(key);
                 return null;
             }
-            cacheItem.timestamp = Date.now();
+            // The timestamp is the moment the value was READ FROM SOURCE, and a
+            // read must never move it: refreshing it here made the expiry
+            // SLIDING, so anything asked for more often than `expirationSecond`
+            // never expired at all. `FileSource`'s 2s file-data cache is re-read
+            // constantly by the playlist's on-screen pass, and the result was a
+            // playlist tree serving bytes from disk that the file had long since
+            // moved past — through `fs.watch`, through Reload, through a whole
+            // window reload. An expiry has to be measured from the write.
             return cacheItem.value;
         }
         return null;

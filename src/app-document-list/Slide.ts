@@ -12,9 +12,9 @@ import type { ClipboardInf } from '../server/appHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType } from '../helper/typeHelpers';
 import { getFontFamilies } from '../server/fontHelpers';
+import FileSource from '../helper/FileSource';
 
 import slideSchemaJson from './SlideSchema.json';
-import FileSource from '../helper/FileSource';
 const slideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
 type MetadataType = {
@@ -22,25 +22,27 @@ type MetadataType = {
     height: number;
     note?: string;
 };
-export type SlideType = {
+export type SlidePropsType = {
     id: number;
     name?: string;
     isDisabled?: boolean;
     canvasItems: CanvasItemPropsType[];
     metadata: MetadataType;
+    type: 'slide';
 };
 
 export default class Slide
     extends ItemBaseFilePath
     implements DragInf<string>, ClipboardInf
 {
-    private _originalJson: SlideType;
+    _originalJson: SlidePropsType;
     filePath: string;
     isChanged = false;
 
-    constructor(filePath: string, json: SlideType) {
+    constructor(filePath: string, json: SlidePropsType) {
         super();
         this._originalJson = cloneJson(json);
+        this._originalJson.type = 'slide';
         this.filePath = filePath;
     }
 
@@ -86,7 +88,7 @@ export default class Slide
         return this._originalJson;
     }
 
-    set originalJson(json: SlideType) {
+    set originalJson(json: SlidePropsType) {
         this.isChanged = true;
         this._originalJson = json;
     }
@@ -197,7 +199,7 @@ export default class Slide
         return { width, height };
     }
 
-    static defaultSlideData(id: number) {
+    static defaultSlideData(id: number): SlidePropsType {
         const { width, height } = this.getDefaultDim();
         const canvasItems: CanvasItemPropsType[] = [];
         return {
@@ -207,10 +209,11 @@ export default class Slide
                 height,
             },
             canvasItems,
+            type: 'slide',
         };
     }
 
-    toJson(): SlideType {
+    toJson(): SlidePropsType {
         if (this.isError) {
             return this.jsonError;
         }
@@ -258,9 +261,16 @@ export default class Slide
         return null;
     }
 
+    // The drag TYPE alone, without building the payload. Lists ask for it on
+    // every render just to pick an icon, and the payload is a full
+    // `JSON.stringify` of the slide.
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.SLIDE,
+            type: this.dragType,
             data: this.clipboardSerialize(),
         };
     }
@@ -274,7 +284,7 @@ export default class Slide
         return null;
     }
 
-    static fromJson(json: SlideType, filePath: string) {
+    static fromJson(json: SlidePropsType, filePath: string) {
         return new this(filePath, json);
     }
 
@@ -286,6 +296,7 @@ export default class Slide
                 height: 0,
             },
             canvasItems: [],
+            type: 'slide' as const,
         };
         const slide = new Slide(filePath, newJson);
         slide.jsonError = json;
@@ -293,6 +304,9 @@ export default class Slide
     }
 
     static checkIsThisType(anyVarySlide: any): boolean {
+        if (anyVarySlide._originalJson?.type !== 'slide') {
+            return false;
+        }
         return anyVarySlide instanceof Slide;
     }
 

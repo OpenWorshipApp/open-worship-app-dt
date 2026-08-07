@@ -71,12 +71,46 @@ Consequences for a run:
 - Symptom to recognize: a panel that is **blank** in one locale and populated in the
   other → open the console, find the `Translation for text` error, and read the component
   name from the React warning logged right after it. File as **Critical**.
+- **Verified 2026-08-03:** `LyricHandlerComp` called `tran('Loading...')` — the **ellipsis
+  inside the key**. Every other site in the repo writes `{tran('Loading')}...`, and the km
+  dictionary defines `Loading` only. Because that branch renders on every cold load of the
+  Lyrics tab, the **entire Presenter came up blank** (`#root` 0 children, body 80 chars).
+  Fixed by moving the ellipsis outside `tran()`.
 - Distinguish from **hardcoded** English (a string that never calls `tran()` at all — e.g.
   `title="Drag to resize"`, `SlideEditorToolTitleComp title="…"`). Those merely stay
   English in Khmer mode: **Low/Info**, not Critical, and not a throw.
 
 In production the same missing key silently falls back to English, so this is a
 dev-visible-only failure — which is exactly why the robot run has to catch it.
+
+#### Keys are sanitized — `trim().toLowerCase()` — before lookup ⚠️
+
+`sanitizeTranKey` (`src/lang/data/km/index.ts`) is `key.trim().toLowerCase()`, and the
+dictionary is re-keyed through it at module load (which also **throws on duplicates after
+sanitization** — that guard is how a bad "fix" gets caught).
+
+So `tran('Remove from screen ')`, `tran('Add items')` and `tran('auto')` all resolve fine
+against `'Remove from screen'`, `'Add Items'` and `'Auto'`. **Do not report padded or
+differently-cased keys as missing** — a naive grep of `tran('…')` against the dictionary
+produces a pile of false positives (11 of them on 2026-08-03, all bogus). Only a
+difference that survives trim+lowercase is real, e.g. `'loading...'` vs `'loading'`.
+
+To audit properly, sanitize both sides:
+
+```js
+const sanitize = (k) => k.trim().toLowerCase();
+// collect every literal tran('…') key, sanitize, compare against the
+// sanitized dictionary keys taken from BEFORE `function sanitizeTranKey`
+```
+
+This only covers **literal** keys; dynamic `tran(someVariable)` sites (e.g.
+`SettingCardHeaderComp` doing `tran(title)`) stay invisible to any static sweep and remain
+the residual risk.
+
+Also beware: clicking the `Khmer`/`English` button re-renders **some** components
+immediately, before `Apply Settings` reloads the windows. A screenshot taken in that gap
+shows a believable mix of both languages — that is a **partial re-render, not an
+untranslated-string bug**. Always judge translation coverage *after* `Apply Settings`.
 
 ### Khmer ↔ English label map (verified)
 | English | Khmer | Where |
@@ -180,7 +214,13 @@ Keep the main window on `presenter.html`.
 - **Bible Lookup input is an incremental picker** (book → chapter → verse). Typing a full
   `John 3:16` only **book-filters** by the alpha prefix (`Joh`) and will **not** jump to the
   verse (it *does* add a `John 3:16` history entry — inconsistent, logged as a Low finding).
-  Pick step-by-step, or use the **Bible Reader** page which resolves full refs correctly.
+  ⚠️ **The Bible Reader page behaves identically — it does NOT resolve full refs**
+  (verified 2026-08-05: typing `John 3:16` shows only the John book tile; clicking it
+  rewrites the input to `យ៉ូហាន ` and drops `3:16`). Both surfaces render the *same*
+  `InputHandlerComp` writing the same `BIBLE_LOOKUP_INPUT_ID`, so a reader-only
+  full-ref path never existed. Earlier revisions of this file, `components-path.md`,
+  `test-plan.md` and `user-workflows.md` claimed otherwise — that was doc drift, not a
+  regression. **Pick step-by-step on both surfaces.**
   Also: a single `fill()` = one change event (test artifact); use char-by-char `type_text` to
   mimic a real user.
 - **Presenting is a SINGLE-CLICK TOGGLE, not double-click** (verified 2026-07-08 against
@@ -333,7 +373,8 @@ Use as a diff target for regressions:
 - Lyrics: selected lyric renders (with chords) in `<iframe>` previews.
 - Background: panel expands; all six tabs switch; a color selection updates the mini-screen.
 - Mini-screen: reflects active content; zoom slider rescales the preview.
-- Bible Reader: resolves a full reference (`John 3:16`) to the exact verse.
+- Bible Reader: renders a verse via the step-by-step picker. (It does **not** resolve a
+  typed full reference — see §5; the older claim here was wrong.)
 - Settings: title `Settings`; `General`/`Bible` tabs; `Apply Settings`; Path/Language/Theme/Font
   sections. (Note: the old `Set Default Data` button is gone — has
   `Reset All Child Directories` / `Reset Widgets Size` / `Clear All Settings` instead.)
@@ -446,3 +487,441 @@ Three reasons earlier runs missed it, each with the fix:
      or the saved bytes wrong on disk — is a FAIL.
 5. **Restore:** in the editor, **Undo** (`Ctrl+Z`, never *Discard*) + re-save, or write back
    the original bytes; delete the scratch doc. Restore any presented/shown state (KB §10).
+
+---
+
+## 13. Lyric slides — measure the SCREEN, not the previewer ⚠️
+
+Lyric documents (`src/lyric-list/`) are not ordinary slides: each slide's body is one
+`type: 'html'` canvas item whose markup is generated by the **`open-lyric`** dependency.
+That makes them the easiest place in the app for the operator's preview and the projector
+to disagree — which is precisely what the mandatory screen block (SKILL §6a) exists for.
+
+**Verified 2026-08-03:** with a lyric presented, the Presenter's own previewer rendered the
+chorus at `font-size: 61px` while **both** `screen.html` outputs rendered the identical
+slide at `16px` in near-black — about 6% of a 1494×934 output. Root cause:
+`LyricAppDocument.openLyric` is a public field assigned by exactly one React component
+(`LyricSlidesPreviewerComp`), and `basicOpenLyricOptions` silently omitted `fontSize`
+whenever it was null — which is always true in the screen renderer. Fixed by reading the
+persisted setting instead.
+
+How to check it in a run (cheap, one `evaluate_script` per side):
+
+```js
+// on the screen.html target
+const s = document.getElementById('slide')
+    .querySelector('.ol-preview-line, .ol-preview-lyric-segment__text');
+({ fontSize: getComputedStyle(s).fontSize, color: getComputedStyle(s).color })
+// on the presenter: same probe inside each ShadowingFillParentWidthComp shadowRoot
+```
+
+The two must agree. A previewer/screen mismatch is a **High** finding, and the
+mini-screen preview does **not** reliably expose it.
+
+Notes that save time on this subsystem:
+
+- **A cold start is the interesting case.** The presented slide is restored from settings
+  before the previewer component mounts, so init-order bugs show up on the first present
+  after launch and then "heal" once you re-present. Do the screen measurement **before**
+  reloading or re-presenting anything, or you will measure the healed state and miss it.
+- **Stages are separate document instances** (`getLyricAppDocumentStageByStage`), each with
+  its own cache. Screens on different stages (`St: 0` / `St: 1`) can legitimately render
+  different layouts — stage 1 shows chord/section labels. That is not a bug.
+- **Khmer glyph overhang at segment boundaries** (the tail of one segment drawing into the
+  next) is font shaping in the open-lyric output, not a layout bug — check
+  `getBoundingClientRect()` on adjacent `.ol-preview-lyric-segment__text` nodes; they are
+  strictly adjacent, never overlapping.
+- **Slide 1 of a lyric is the whole-song info card** and slide 3 is deliberately blank
+  (`OPEN_LYRIC_NONE_KEY`). An empty-looking card there is intentional.
+- Lyric slide markup carries a **full computed-style dump per node** (~464 KB for one
+  chorus). It comes from `open-lyric`, not this repo — worth flagging as a performance
+  Info finding, not fixable in `src/`.
+
+---
+
+## 14. Playlists — the model behind every PL row ⚠️
+
+The Playlists panel (`src/playlist/`) is the app's **run sheet**: one file per service,
+holding everything that service will present, in order. It is small in code and dense in
+rules, and almost every one of those rules is a testable claim. Read **all of this**
+before driving PL-10 / PL-29 / PL-32..PL-76 / PL-81..PL-100 — it explains *why* each row's
+pass condition is what it is, and which "odd" behaviours are deliberate. It is also the
+required reading for **playlist deep mode** (SKILL.md §6f, recipe in test-plan §S20).
+
+A run sheet holds three kinds of thing now, and confusing them is the fastest way to
+mis-file a finding:
+
+| kind | what it is | §|
+| --- | --- | --- |
+| **content** | something to SHOW — a slide, a document, a background, a verse, a widget, audio | §14.2 |
+| **action** | something to DO — 13 that clear a screen, 4 that drive the run itself | §14.9 |
+| **CC element** | a FOLLOWER of the line above it — rides its host's present | §14.10 |
+
+### 14.1 It is NOT dev-only any more (corrected 2026-08-04)
+
+Commit `203d35cc` removed the `isDev` gate in `AppPresenterLeftComp` and handed the panel
+the slot the **Lyric List** used to occupy (lyrics moved into the Documents list). Older
+notes — including earlier revisions of this file, `ui-map.md`, `components-path.md` and
+the matrix itself — say "dev builds only". They are stale. **No PL row may be marked
+BLOCKED with the reason "dev-only".** (PL-49.)
+
+### 14.2 Two kinds of entry, and why they differ
+
+| stored as | kinds | why |
+| --- | --- | --- |
+| **reference** (`filePath` + `id`, `stage` for lyrics) | slide, lyric slide, PDF/PPTX/DOCX slide, app document | a playlist is built days before the service; a song edited in between must project its NEW words. A snapshot would silently project stale text. |
+| **preset** (drag payload stored verbatim in `data`) | background colour/image/video/camera/web, bible verse, foreground widget, audio | small, self-describing, and for a foreground the preset (the marquee text, the countdown duration, the styling) *is* the point. |
+
+Consequences to test against, not to "fix":
+
+- Editing a referenced document changes what the playlist projects. Editing the source of
+  a preset does **not**.
+- A countdown entry stores `durationSecond`, never a resolved date; quick text stores
+  markdown, never rendered html. A stored preset replayed a week later must not show an
+  expired countdown.
+- `title` on an entry is a **label captured when it was added** — purely cosmetic.
+  Renaming the underlying file does not change the row's text. That is deliberate:
+  resolving real names would mean reading every referenced file just to draw the list.
+- Audio is accepted but is deliberately **not** in `backgroundDragTypeList`: it plays
+  locally and must never reach the screen pipeline.
+
+### 14.3 Performance is the whole design — the things that must not regress
+
+This panel is where a careless change becomes a visible stall on the target hardware:
+
+- **Rows are text-only.** No thumbnail per row — that would decode every referenced
+  image/video just to draw a list. Rich previews live in the floating widget, on demand.
+- **Document slides load on expand and are released on collapse** (the component
+  unmounts). A long playlist must never hold every document's slides at once.
+- **On-screen marking uses ONE shared subscription** for the whole tree
+  (`useIsOnScreenChecking` + `onScreenSubscribers`), not `useScreenUpdateEvents` per row —
+  that hook fans out into seven subscriptions each with its own `useState`, so a document
+  expanded to ~90 rows produced ~650 state updates per screen event and React answered
+  with `Maximum update depth exceeded`. A single **shared** 500 ms debounce is correct
+  here (contrast CLAUDE.md's per-instance rule) because one pass refreshes every
+  subscriber. PL-70.
+- **The row you just clicked bypasses the debounce** (`refreshOnScreenAfterPresenting` →
+  `isImmediate`, yielded one macrotask so it lands after the present, and cancelling the
+  pass the same event already scheduled). Half a second of "did that work?" reads as a
+  slow app.
+- **Idle costs four setting reads.** `checkIsAnythingOnScreen` short-circuits everything;
+  with nothing presenting, listing playlists opens no playlist files at all. If you ever
+  see the idle list reading `.owp` files, that gate is broken.
+- **Icons come from the file extension**, never from instantiating the document
+  (`toDocumentIcon`), and the on-screen check for a document matches on `filePath` only —
+  never `getSlides()`.
+- **Clicks stop propagating** so they never reach the enclosing `FileItemHandlerComp`
+  `<li>`, whose click fires the one UNSCOPED FileSource `select` in the app and re-renders
+  every file row in the window. PL-63.
+
+### 14.4 Drag rules (the source of most "it did nothing" reports)
+
+- A drag out of a playlist row sets `playlistDraggingStore`. While it is set, the playlist
+  CARD's add handler bails — that is what makes a drop back into the same list a
+  **reorder** rather than a duplicate add. The side effect: **dragging a row from playlist
+  A onto playlist B adds nothing at all** (PL-55). Known limitation; do not re-file.
+- Rows go to a screen through `dragStore.onDropped`, NOT the synchronous `dataTransfer`
+  payload: a stored slide must be re-read from its document first and `dragstart` cannot
+  await. A slide CHILD row (under an expanded document) is already resolved, so it rides
+  the ordinary synchronous path.
+- The accepted-type gate is `acceptedDragTypeList`; anything else toasts
+  *"This item type cannot be added to a playlist"*.
+
+### 14.5 Settings hygiene
+
+Settings are files named after their key, so a raw file path in a setting name would
+create directory separators and log an `ENOENT` on every read. Everything the playlist
+persists goes through `toPlaylistSettingName` (`/ \ : * ? " < > |` and dots → `_`):
+`playlist-opened-…`, `playlist-item-expanded-…`, `playlist-preview-collapsed-…`. The
+preview's collapse setting stores **only the collapsed keys** and is **deleted** when
+everything is expanded — one file per playlist, and the common case writes nothing.
+PL-54 / PL-58.
+
+### 14.6 The floating preview is a run-sheet player
+
+- Exactly ONE widget at a time (a shared store, not per-row state); opening another
+  playlist's preview replaces it and clears the remembered position.
+- **Space / ↓ / → / PageDown** step the run FORWARD only — no wrap, because wrapping
+  round to element 1 mid-service would put the wrong thing on a live screen. The keys are
+  gated on focus being inside the widget, since the presenter's slide list answers the very
+  same keys — and **the widget focuses itself when it opens** (2026-08-06), because the
+  gesture that opened it left focus on the tree's button and the operator's FIRST press
+  did nothing with nothing on screen to say why. PL-98.
+- **PARKED (disabled) is the ONLY reason a line is stepped over** (changed 2026-08-06;
+  earlier revisions of this file said audio, damaged and FOLDED entries were skipped —
+  that is stale and was a bug: folding is how an operator READS a long sheet, so a folded
+  song was silently jumped over). The landing now **unfolds** what it reaches, and an
+  audio track or an error row takes the cursor and fires nothing — which is the honest
+  reading of where the run is. PL-99.
+- A **document** element is walked slide by slide (disabled slides skipped) and the run
+  only leaves it once the slide on screen is its last. Crossing INTO one always starts at
+  its FIRST slide. Because unfolding is async — the slides are only read off disk once the
+  preview mounts — entering them is **deferred one macrotask** and answered when the
+  stepper registers; the ask is dropped the moment the cursor moves, or an unfold by hand
+  later would present a slide out of nowhere. PL-46 / PL-48 / PL-99.
+- **The cursor is the panel's OWN**, not derived from the screens. Reading it off the
+  screen managers was a bug: the match is on the document's file path, so a twice-listed
+  document (or one also live from the presenter's own list) made a press in one element
+  jump to what another had shown.
+- Selection is remembered as **key + position**: the key survives a reorder, the position
+  tells two identical entries apart. The key includes the arming value, so re-arming a
+  clock or a shortcut re-keys the line.
+- Slide cards inside the widget get a **restricted** right-click menu — the RUN-SHEET
+  family only (**Reveal Original / Set Specific Screen / Disable / Add CC Elements**,
+  `genPlaylistVarySlideContextMenuItems`), caught on the way DOWN via
+  `onContextMenuCapture` + `stopPropagation`. The previewer's colour-note/background/edit
+  family acts on the document, not the run sheet, so none of it appears; note there is no
+  **Show on Screens** either (a left-click presents the card). Verified live 2026-08-06 —
+  earlier revisions of this line said "Show on Screens only", which predates the
+  pin/CC/disable work of 2026-08-04..06. PL-59.
+- Bible entries render read-only: a verse in a run sheet is a stored preset, not a row of
+  a bible file, so no retarget, no copy family, no colour note. PL-60.
+
+### 14.7 Export / import (`.owapl.tar.gz`)
+
+A tar.gz (`tarCreate`/`tarExtract`) — **not** a zip; the app has no zip dependency. Layout:
+`manifest.json` + `playlist.json` + `files/`. The bundle carries the **whole document**
+behind every slide reference (so the reference resolves after import), the media behind
+every background, and each document's `.bg.json` attached-background sidecar with its
+paths absolutised.
+
+Import contract worth testing explicitly:
+
+1. **Every destination folder is resolved up front** — a list whose folder has not been
+   chosen yet fails the import BEFORE a single file is written (PL-66). Discovering it
+   halfway would leave media imported and no playlist to show for it.
+2. Archive paths are validated (`..` / backslash refused) — a traversal entry landing
+   outside the extract dir is a security-relevant FAIL.
+3. What happens on a name clash is decided **per destination folder**, by
+   `collisionPolicyBySettingName` (`src/helper/appArchiveHelpers.ts`). **Media** is
+   `reuse-if-same`: an identical file (by MD5) is reused, so re-importing the same bundle
+   does not grow images/videos/audios/webs at all, and a same-name file with different
+   bytes lands beside it as `1 (1).jpg`. **Documents, playlists and bible notes are
+   `always-new`** — the operator's own authored work, where a namesake is not the same
+   work and silently dropping an import is the one outcome that loses it — so a re-import
+   DOES produce `a1 (Copy) (1).ows` even when the bytes match. An existing `.bg.json` is
+   never clobbered; the playlist file itself is de-duplicated as `<name> (1).owp` (PL-67).
+4. Bible entries are re-created in the **Default** bible list (identical verse reused) and
+   the entry re-pointed at it, which is what makes Reveal Original work afterwards
+   (PL-68).
+5. A dropped `.owapl.tar.gz` is unpacked from **where it already sits** (`appFilePath`
+   stamped by the electron preload), never copied into the app folders first — bundles are
+   big. Only if a drop carries no path is it staged in temp (PL-45).
+
+Driving a real drop through CDP works here: dispatch a plain bubbling `Event('drop')` with
+a fabricated `dataTransfer` and stamp `appFilePath` on the `File` — see CLAUDE.md's
+file-drop note. That exercises the whole import pipeline against a real file on disk.
+
+**The de-duplicated export name — FIXED 2026-08-06.** A second export used to be named
+`<name>.owapl.tar (1).gz` (`FileSource.genNextFilePath` splits on the LAST dot), which
+failed `checkIsPlaylistArchiveFileFullName` and made a dropped bundle do **nothing at all**
+— no import, no toast. Exports now go through `genNextArchiveFilePath`, which knows the
+whole extension and writes `<name> (1).owapl.tar.gz`; `checkIsArchiveFileFullName` and
+`toArchiveBaseName` share one regex that still accepts the old shape, so bundles already in
+people's Downloads import (and are NAMED) correctly. The same fix covers `.owadoc.tar.gz`,
+`.owbible.tar.gz` and `.owadata.tar`. If you meet a `<name>.owapl.tar (n).gz` on disk it is
+an old file, not a new bug.
+
+### 14.8 Failure surfaces that are easy to miss
+
+- A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the
+  playlist must still render, and the bad entry must survive a later write of the file
+  (PL-51).
+- `tran()` throws in dev on a missing Khmer key and blanks the page, so the locale pass
+  (§6d / LT-01) MUST cover the playlist strings: `Drop items here`,
+  `No items in this playlist`, `No slides`, `Not Supported Item Type`, `Preview Playlist`,
+  `Open Preview`, `Remove from Playlist`, `Choose Color`, `Move up`, `Move down`,
+  `Collapse All`, `Expand All`, `Slide Thumbnail Size Scale`, `Import`, `Export`,
+  `Fail to read file data` — plus everything the action families added since:
+  `Add Action`, `Other Clear FG Items`, every action label, `Set Specific Screen`,
+  `Add CC Elements`, `Disable`/`Enable`, `Duplicate`, `Move to Top`/`Move to Bottom`,
+  `Apply on Screens`, `Start Auto Next`, `Change Seconds`/`Change Timing`,
+  `Change Shortcut`, `Keyboard Event`, `Shortcut`, `Press a shortcut`,
+  and each refusal toast (`This element takes only one CC element`,
+  `This element does not accept CC element`, `The set time is already due`,
+  `This shortcut is already used in this playlist`,
+  `Attach the elements to show as CC elements`,
+  `Open the playlist preview to use this action`). A menu that renders BLANK in Khmer is
+  this throw, not a styling bug — read the console for the key name.
+- **The action rows are the ones to re-check after any new label**: their text is built as
+  `tran(label)` + the arming value appended AFTER translation, so a new action ships a new
+  key every time.
+- There is **no save button** anywhere in this panel: every mutation writes the `.owp`
+  through immediately. "Nothing happened" therefore means the write failed, not that a
+  save is pending.
+
+### 14.9 Actions — a run sheet holds things to DO (PL-71..PL-74, PL-95..PL-97)
+
+Added 2026-08-04. An action is stored as `{type:'action', data:<id>}` (+ its arming
+value) and resolved live against the registry in `playlistActionHelpers.ts`, so the row's
+label follows the locale and nothing is baked into the file. `PLAYLIST_ACTION_TYPE` is
+deliberately **not** a `DragTypeEnum`: nothing but the **Add Action** menu can produce one,
+and `acceptedDragTypeList` must keep refusing it.
+
+Two families, split by a `target` discriminant — the difference decides the whole menu:
+
+- **`target: 'screen'` (15)** — `apply(screenManager)`. Five mirror the mini screen's
+  clear bar; eight are per-foreground-widget clears derived from `foregroundClearMap`
+  (keyed by the widget type, so a new widget without a clear is a compile error). They
+  behave like content for every purpose except being shown: clickable, draggable onto a
+  mini screen, pinnable. The Foreground panel's **Background Images Slide Show** has no
+  clear on purpose — it drives the background manager, so `Clear Background` covers it.
+  The last two are **`Screen: Show` / `Screen: Hide`** (below), which are about the
+  WINDOW rather than about what is on it.
+- **`target: 'run'` (4)** — `start(playlistItem)`; drives the RUN, reaches no screen of its
+  own. `Next: Interval`, `Next: Timeout` (§14.11), `Jump to` (§14.11), `Keyboard Event`
+  (§14.12). Their menus must never offer **Show on Screens** / **Reveal Original**, and
+  they must never appear in another row's **Add CC Elements** list — except the two that
+  deliberately do (§14.10).
+
+**The menu is three levels** since 2026-08-06: the eight per-widget FG clears fold behind
+one **Other Clear FG Items** row with a chevron. `playlistActionMenuList` is the menu's
+SHAPE, `playlistActionList` the flat registry an id resolves against — only
+`PlaylistFileComp` reads the former, so a family added later folds itself away. Its
+second level reads **clear something → clear one FG widget → put the screen up or down →
+move the run on**, twelve rows in that order.
+
+**Three things are asked BEFORE a line is written**, and Cancel must add nothing in every
+case: how a clock is armed, what shortcut a `Keyboard Event` answers to, and — new
+2026-08-06 — which screens a `Screen: Show`/`Screen: Hide` runs on (below).
+
+Two traps when driving this by CDP:
+
+- **Colours are load-bearing, not decoration.** The two `secondary` clears use
+  `--bs-gray-500` because the context menu's own background IS `--bs-secondary` and they
+  were invisible; the run family wears three different colours on purpose (timeout
+  warning, interval teal, jump purple, keyboard pink) so they are told apart at a glance
+  mid-service. A "wrong colour" here is a real finding.
+- **Closing nested menus programmatically pollutes the keyboard layer stack.** After a lot
+  of synthetic menu driving, the preview's keys stop firing — the tell is `ArrowDown`
+  reporting `defaultPrevented: true` while the run does not move. **Reload the window and
+  retry before filing it**; it is a driving artefact, not a product bug.
+
+**`Screen: Show` / `Screen: Hide` — the screen ITSELF (PL-100).** Everything else in the
+menu changes what is on a screen; these two put the screen up and take it down, which is
+the one thing an unattended sheet could not do before (light the screen for the
+pre-service loop, darken it at the end). They wear the mini screen toggle's own
+`file-slides-fill` / `file-slides` glyph in green / red, badges `ON` / `OFF`.
+
+- **They NAME their screens, and nothing else does.** `requiresScreenIds` on the registry
+  entry, so a checklist (**Screen: Show - Set Specific Screen**, one row per open screen
+  in that screen's identity colour) is asked before the line is written and the answer is
+  stored in the ordinary `screenIds` pin — the row draws the usual pin badge and
+  **Set Specific Screen** re-aims it. Firing one runs on those screens ONLY: no fall
+  through to the selected screens, no "which screen?" menu, since both mean the operator
+  is standing there. An empty answer, and an empty pin at fire time, both refuse with
+  **Please choose at least one screen** titled with the action's own label.
+- **Idempotent on purpose.** `apply` reads `isShowing` first and writes only on a change,
+  so an interval walking past a `Screen: Show` every cycle does not re-run the real
+  window work or re-fire the `visible` event.
+- **Hosts no CC, may BE one.** `ccItemCount: 0` (its menu has no **Add CC Elements**; a
+  drop says **This element does not accept CC element**) — a follower riding a hide would
+  be content pushed onto a screen in the same gesture that darkens it. The other
+  direction is open, and as a CC it still goes to the screens IT names.
+
+### 14.10 CC elements — followers that ride a host's present (PL-89..PL-93)
+
+A CC row is a **uuid reference to a sibling line** of the same sheet, resolved on read.
+Attaching one is a COPY of the reference, not a link to a second file: the host's present
+puts the host AND every CC on the screens in ONE gesture.
+
+- The screen question is asked **once, by the host**. A CC must never reach
+  `chooseScreenIds` itself — it rides a latch keyed by the native event. A second
+  "which screen?" menu appearing during one gesture is a FAIL.
+- Whether a row may BE a CC is per-action (`canBeCcItem`), and whether a row's CCs are
+  **followers** or **targets** is a different flag (`ccItemsAreTargets`). `Jump to` uses
+  its single CC to NAME a line (so its list is wider — documents and an interval are
+  listed too); everything else's CCs are followers.
+- The two refusals read differently on purpose: a clock, which accepts none, says
+  **This element does not accept CC element**; a second one on a `Jump to` says
+  **This element takes only one CC element**.
+- A CC row's menu is short — never **Show on Screens**, never **Disable** — and clicking
+  it reveals its original in the tree.
+
+### 14.11 The two clocks and the GOTO — the sheet walking itself (PL-95, PL-96)
+
+`Next: Interval (n)` / `Next: Timeout (n)` move the run on by themselves; `Jump to` aims
+it at a line another line names (backwards up the sheet is the point — that plus an
+interval is the looping set of slides).
+
+The rules that get "fixed" by mistake:
+
+- **Only the run MOVING touches a clock** — the preview's cursor changing to another
+  element or another slide. A click on the background, on the widget chrome, or any
+  keypress that does not move the run leaves both alone. (Answering raw input was the
+  first design; an unintended click killing a countdown is the bug it caused.)
+  Moving cancels a timeout and restarts an interval from full.
+- A **timeout** may be armed with a **time of day** instead of a count of seconds; a time
+  already gone by is refused (**The set time is already due**), never rolled to tomorrow.
+  The remainder is re-read from the wall clock each tick, so a sleeping laptop still fires
+  on time.
+- A **timeout may be a CC element and an interval may not** — a slide can carry "go on by
+  yourself in N seconds"; nothing may carry a loop no input can stop.
+- With the preview closed, or open on ANOTHER playlist, firing any run action toasts
+  **Open the playlist preview to use this action** and does nothing else. That is why
+  these rows can only be tested with the widget open.
+
+### 14.12 `Keyboard Event` — the hotkey line (PL-97, PL-98)
+
+The one thing the operator aims themselves, mid-service, without looking: arm a line with
+`Shift+A` and pressing it in the floating preview sends the run there and puts everything
+attached to it on the screens.
+
+- **Set by PRESSING, not typing** — the field is read-only. **Ctrl and Shift only, at
+  least one**: the mapper uses `allControlKey`, so Alt (`Option` on a Mac) and Meta would
+  silently stop matching when the sheet is carried to another machine. A bare key is
+  refused because `ArrowDown`/`Space` already step the run.
+- The stored form is the canonical `Ctrl+Shift+A`, **not** the platform-formatted
+  `⌃⇧ A` — and that string IS the row's label, so there is no prettier second form to
+  drift.
+- **Unique per playlist**, enforced at the write funnel: a second line answering the same
+  key is refused out loud, and a **Duplicate** keeps the CCs but comes back UNARMED rather
+  than claiming the key.
+- It is **the only run action that resolves screens**, because its CCs are its whole
+  payload — with nothing attached it toasts **Attach the elements to show as CC
+  elements** rather than reading as a dead key. That is also why **Set Specific Screen**
+  works on it.
+- Each shortcut registers through the app's keyboard LAYER (so a modal can take it back),
+  one registrar component per shortcut.
+
+### 14.13 Which screen a row lands on — pinning, choosing, parking (PL-81..PL-88)
+
+- **Set Specific Screen** pins a line (and a document's slides individually). The pin
+  persists in the file and BEATS the currently selected screens — that is its point.
+- Two things deliberately outrank a pin: a **force-choose** (the menu's own "show on
+  screens" question) and a **drag onto a mini screen**. Both are the operator saying
+  "this one, now".
+- A pinned screen that no longer exists must degrade quietly, not throw.
+- **Disable** parks a line: it keeps its place in the sheet, is skipped by the run, and
+  fires nothing. A parked DOCUMENT parks its slides with it. Parked is the only thing the
+  run steps over (§14.6).
+
+### 14.14 The archive family (PL-39/40/45/65..68/76..80, NAV-17/18)
+
+Three layers, one code path, all tar/tar.gz (no zip dependency anywhere):
+
+| file | holds |
+| --- | --- |
+| `.owapl.tar.gz` | a playlist + the whole document behind every slide reference + media + `.bg.json` sidecars |
+| `.owadoc.tar.gz` / `.owbible.tar.gz` | ONE document (or bible list) + everything attached to it |
+| `.owadata.tar` | the whole data folder — File → Export/Import Data; uncompressed and with no staging copy, on purpose |
+
+The import contract is the thing to test: **every destination folder is resolved up front**,
+so an import with a folder unset fails BEFORE writing anything (§14.7). Adding a new
+archive kind means adding a CONFIG, not copying the layer.
+
+### 14.15 Driving this panel through CDP
+
+- **Read the `.owp` on disk to settle "did it save?"** — dev writes to
+  `Desktop\open-worship-data-dev`, NOT the packaged data folder. A tree that looks wrong
+  while the file is right is a stale HMR render: reload before filing.
+- **Never `import()` an app module inside `evaluate_script`.** It re-runs
+  `document.onkeydown = …` at module scope and kills every shortcut in the window for the
+  rest of the session — which then looks exactly like a broken hotkey feature.
+- Synthetic `press_key` DOES drive the run keys and the hotkeys (ordinary `keydown`
+  listeners); only Monaco needs genuine OS foreground focus.
+- A real `.owapl.tar.gz` drop is drivable: dispatch a plain bubbling `Event('drop')` with a
+  fabricated `dataTransfer` and stamp `appFilePath` on the `File` (CLAUDE.md's file-drop
+  note). That runs the whole import pipeline against a file on disk.
+- The floating preview's keys are focus-gated — if a press does nothing, check
+  `document.activeElement` is inside the widget before concluding anything.

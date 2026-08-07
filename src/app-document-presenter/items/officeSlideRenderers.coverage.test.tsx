@@ -172,9 +172,11 @@ describe('office slide renderer coverage', () => {
             await flushAsyncEvents();
         });
 
-        expect(useScreenVaryAppDocumentManagerEventsMock).toHaveBeenCalledWith([
-            'update',
-        ]);
+        // Nothing here reads screen state — `VarySlideRenderComp` owns the
+        // "is this slide on a screen" question, scoped to its own slide.
+        expect(
+            useScreenVaryAppDocumentManagerEventsMock,
+        ).not.toHaveBeenCalled();
         expect(container.querySelector('img[alt="pdf-image"]')).not.toBeNull();
 
         await act(async () => {

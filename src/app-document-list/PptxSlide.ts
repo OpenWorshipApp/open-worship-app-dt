@@ -13,7 +13,7 @@ import FileSource from '../helper/FileSource';
 import { pathJoin } from '../server/fileHelpers';
 const pptxSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
-export type PptxSlideType = {
+export type PptxSlidePropsType = {
     id: number;
     htmlFilePath: string;
     subHtmlFilePaths: string[];
@@ -25,25 +25,27 @@ export type PptxSlideType = {
     images: string[];
     videos: string[];
     audios: string[];
+    type: 'pptx-slide';
 };
 
 export default class PptxSlide
     extends ItemBaseFilePath
     implements DragInf<string>, ClipboardInf
 {
-    private _originalJson: PptxSlideType;
+    private _originalJson: PptxSlidePropsType;
     filePath: string;
 
-    constructor(filePath: string, json: PptxSlideType) {
+    constructor(filePath: string, json: PptxSlidePropsType) {
         super();
         this._originalJson = cloneJson(json);
+        this._originalJson.type = 'pptx-slide';
         this.filePath = filePath;
     }
 
     get subSlides() {
         const subHtmls = this.originalJson.subHtmls ?? [];
         return this.originalJson.subHtmlFilePaths.map((htmlFilePath, index) => {
-            const json: PptxSlideType = {
+            const json: PptxSlidePropsType = {
                 id: this.id + 999 + index,
                 htmlFilePath,
                 subHtmlFilePaths: [],
@@ -55,6 +57,7 @@ export default class PptxSlide
                 images: [],
                 videos: [],
                 audios: [],
+                type: 'pptx-slide',
             };
             return new PptxSlide(this.filePath, json);
         });
@@ -101,7 +104,7 @@ export default class PptxSlide
     get originalJson() {
         return this._originalJson;
     }
-    set originalJson(json: PptxSlideType) {
+    set originalJson(json: PptxSlidePropsType) {
         this._originalJson = json;
     }
 
@@ -132,18 +135,18 @@ export default class PptxSlide
         });
     }
 
-    static fromJson(json: PptxSlideType, filePath: string) {
+    static fromJson(json: PptxSlidePropsType, filePath: string) {
         return new this(filePath, json);
     }
 
-    toJson(): PptxSlideType {
+    toJson(): PptxSlidePropsType {
         return this._originalJson;
     }
 
-    private toDragJson(): PptxSlideType {
+    private toDragJson(): PptxSlidePropsType {
         const json = cloneJson(this.toJson());
-        delete (json as Partial<PptxSlideType>).html;
-        delete (json as Partial<PptxSlideType>).subHtmls;
+        delete (json as Partial<PptxSlidePropsType>).html;
+        delete (json as Partial<PptxSlidePropsType>).subHtmls;
         return json;
     }
 
@@ -169,9 +172,13 @@ export default class PptxSlide
         return Promise.resolve(this.htmlFilePath);
     }
 
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.PPTX_SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.PPTX_SLIDE,
+            type: this.dragType,
             data: JSON.stringify({
                 filePath: this.filePath,
                 data: this.toDragJson(),

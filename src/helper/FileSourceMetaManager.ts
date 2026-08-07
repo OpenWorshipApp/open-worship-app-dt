@@ -76,6 +76,54 @@ export function setColorNoteFilePathSetting(
     settingManager.setSetting(setting);
 }
 
+/**
+ * The color notes a file owns, keyed the way an archive carries them: the
+ * file's own note under `self` and each item's note under its id. Non-app files
+ * (PDF/PPTX/DOCX) keep their own note here rather than inside the document, and
+ * EVERY document keeps its per-slide notes here — none of it travels with the
+ * file, so an export has to pick it up explicitly.
+ */
+export const COLOR_NOTE_SELF_KEY = 'self';
+
+export function getColorNoteFilePathSettings(filePath: string) {
+    const setting = settingManager.getSetting();
+    const prefix = filePath + KEY_SEPARATOR;
+    const colorNotes: { [key: string]: string } = {};
+    for (const [key, color] of Object.entries(setting)) {
+        if (!isColor(color)) {
+            continue;
+        }
+        if (key === filePath) {
+            colorNotes[COLOR_NOTE_SELF_KEY] = color;
+        } else if (key.startsWith(prefix)) {
+            colorNotes[key.slice(prefix.length)] = color;
+        }
+    }
+    return colorNotes;
+}
+
+// Written in one pass rather than by calling `setColorNoteFilePathSetting` per
+// entry: that re-serializes the whole settings blob every time, and a document
+// can carry a note for every slide it holds.
+export function setColorNoteFilePathSettings(
+    filePath: string,
+    colorNotes: { [key: string]: unknown },
+) {
+    const setting = settingManager.getSetting();
+    let isChanged = false;
+    for (const [key, color] of Object.entries(colorNotes)) {
+        if (typeof color !== 'string' || !isColor(color)) {
+            continue;
+        }
+        setting[toKey(filePath, key === COLOR_NOTE_SELF_KEY ? null : key)] =
+            color;
+        isChanged = true;
+    }
+    if (isChanged) {
+        settingManager.setSetting(setting);
+    }
+}
+
 export default class FileSourceMetaManager {
     static async getColorNote(filePath: string) {
         if ((await fsCheckFileExist(filePath)) === false) {

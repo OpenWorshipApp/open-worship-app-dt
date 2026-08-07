@@ -153,12 +153,8 @@ export default class ElectronMainController {
         this.sendMessage(messageChannels.screenMessage, message);
     }
 
-    changeBible(isNext: boolean) {
-        this.sendMessage('app:main:change-bible', isNext);
-    }
-
-    ctrlScrolling(isUp: boolean) {
-        this.sendMessage('app:main:ctrl-scrolling', isUp);
+    changeBible(data: { screenId: number; isNext: boolean }) {
+        this.sendMessage('app:main:change-bible', data);
     }
 
     sendNotifyInvisibility(screenId: number) {

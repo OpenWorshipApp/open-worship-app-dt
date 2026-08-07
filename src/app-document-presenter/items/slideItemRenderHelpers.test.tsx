@@ -229,27 +229,54 @@ describe('slideItemRenderHelpers', () => {
             },
         } as any;
 
+        const onScreenList = [['1'], ['2']] as any;
+
         appProviderMock.isPageAppDocumentEditor = true;
-        let result = toClassNameHighlight(varySlide, { id: 7 } as any, []);
+        let result = toClassNameHighlight(
+            varySlide,
+            { id: 7 } as any,
+            [],
+            onScreenList,
+        );
         expect(result.activeCN).toBe('active');
         expect(result.presenterCN).toBe('');
         expect(result.holdingCN).toBe('');
-        expect(result.selectedList).toEqual([['1'], ['2']]);
 
+        // "Is it on a screen" is now HANDED IN by `useVarySlideOnScreenList`
+        // rather than read here: a render body that reaches the on-screen map
+        // re-renders on every screen change, which is the whole cascade this
+        // replaced. So the list the caller passes is what drives the mark.
         appProviderMock.isPageAppDocumentEditor = false;
-        checkIsVarySlideOnScreenMock.mockReturnValue(true);
         result = toClassNameHighlight(
             varySlide,
             { id: 99 } as any,
             [{ id: 7 }] as any,
+            onScreenList,
         );
         expect(result.activeCN).toBe('');
         expect(result.presenterCN).toBe('app-highlight-selected animation');
         expect(result.holdingCN).toBe('holding');
 
-        checkIsVarySlideOnScreenMock.mockReturnValue(false);
-        result = toClassNameHighlight(varySlide, null, []);
+        result = toClassNameHighlight(varySlide, null, [], []);
         expect(result.presenterCN).toBe('');
+    });
+
+    test('does not read the on-screen map itself', async () => {
+        const { toClassNameHighlight } =
+            await import('./slideItemRenderHelpers');
+        const varySlide = {
+            filePath: '/docs/main.ows',
+            id: 7,
+            checkIsSame() {
+                return false;
+            },
+        } as any;
+
+        getDataListMock.mockClear();
+        toClassNameHighlight(varySlide, null, [], [['1']] as any);
+        // Reading it here is what made ONE present re-render (and re-parse the
+        // on-screen setting for) every slide preview in the window.
+        expect(getDataListMock).not.toHaveBeenCalled();
     });
 
     test('builds color-note menu items and emits updates after a color change', async () => {

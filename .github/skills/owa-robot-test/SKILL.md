@@ -1,7 +1,7 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp. Use when asked to robot test, QA test, smoke test, or e2e test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings UI like a QA engineer, captures screenshots + console + network, and reports findings by severity.'
-argument-hint: '[optional focus area, e.g. "presenter", "bible lookup", "settings", "background", "lyrics"]'
+description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through chrome-devtools-mcp — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint on port 9223 is attached, connects the Chrome DevTools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in the other language — a missing Khmer key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only flow that runs the shipped prebuilt yt-dlp/ffmpeg/qjs binaries) are MANDATORY in every run, whatever the focus area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~617 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..60 and a context-menu-item matrix CM-01..92, resumable across sessions via a coverage-<runid>.json state file). Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows).'
+argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "full" for a tracked full-coverage run — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
 # OWA Robot Test — QA e2e via chrome-devtools-mcp
@@ -12,8 +12,9 @@ unit or Playwright tests.
 
 > **Read first:** [references/knowledge-base.md](./references/knowledge-base.md) — verified
 > field notes on **what to observe**, expected-vs-noise (which console/network output to
-> ignore), and the traps that ruin a run (dynamic Khmer/English locale, popup-only windows,
-> the `setting.html` navigation trap, restoring live state). Skim it before you start.
+> ignore), and the traps that ruin a run (dynamic Khmer/English locale **and the missing-key
+> throw that only shows in Khmer — §1.1**, popup-only windows, the `setting.html` navigation
+> trap, restoring live state). Skim it before you start.
 
 ## When to use
 
@@ -21,6 +22,11 @@ unit or Playwright tests.
 - After a feature/refactor, to verify nothing is visually or interactively broken.
 - To collect console errors, failed network requests, and accessibility gaps from the
   real renderer.
+- "Write a tutorial / help page / user guide for the app" → **tutorial mode** (§9).
+- "Check this manual / tutorial / learning doc against the app" → **doc-verify mode**
+  (§10). Both are grounded in
+  [references/user-workflows.md](./references/user-workflows.md) — the user-facing
+  task recipes that this skill keeps in sync with the live app.
 
 ## How it works (architecture)
 
@@ -67,7 +73,7 @@ Confirm at least these are available: `mcp_chrome_devtoo_list_pages`,
 Quick-probe the debugger (short timeout). Run from the workspace root:
 
 ```bash
-node .github/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=3000 --interval=500
+node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --timeout=3000 --interval=500
 ```
 
 - Exit code `0` → the app + debugger are already up. **Skip step 2.**
@@ -86,7 +92,7 @@ Then block until the Electron CDP endpoint exposes the presenter page. The first
 also compiles `electron-build`, so allow a generous timeout:
 
 ```bash
-node .github/skills/owa-robot-test/scripts/wait-for-debugger.mjs --match=presenter.html --timeout=180000
+node .claude/skills/owa-robot-test/scripts/wait-for-debugger.mjs --match=presenter.html --timeout=180000
 ```
 
 When it prints `{ "ready": true, ... }` the debugger is attached and the window has
@@ -155,7 +161,13 @@ You can also test the in-app navigation UX itself: click the header tabs `Presen
 Follow [references/test-plan.md](./references/test-plan.md). If the user named a focus
 area (argument-hint), navigate to that page (step 5) and start there; otherwise iterate
 over the pages — `presenter` → `reader` → `appDocumentEditor` → `setting` — navigating to
-each per step 5. For every scenario:
+each per step 5. **Whatever the focus, two blocks always run: the screen-controlling
+block (§6a) and the locale-switch block (§6d).**
+
+If the user asked for **"full"**, **"everything"**, or a **coverage percentage/target**
+(e.g. "99% coverage"), run in **full-coverage mode** — see "Coverage accounting" below —
+where every row of [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md)
+must end the run with a status. For every scenario:
 
 1. `take_snapshot` to get fresh `uid`s.
 2. Interact: `click` / `fill` / `hover` / `press_key` / `drag` using the labels &
@@ -164,17 +176,292 @@ each per step 5. For every scenario:
 4. Re-read console + network to catch new errors triggered by the action.
 5. Record anything under **"What counts as an issue"** below.
 
+**Always run the toast check once per session** (`[GL-10, GL-15, GL-23]`, test-plan §S9)
+— it costs one `evaluate_script`: `window.testSimpleToasts()` (dev-only helper in
+`src/toast/toastHelpers.ts`) fires 3 toasts, which must **stack** in `.app-toast-stack`
+rather than replace each other. Toasts are how the app reports refusals everywhere
+(locked screen, audio-off-while-playing, drop-with-no-folder), so a broken toast stack
+silently swallows those messages. Selectors + assertions: ui-map §Toasts.
+
 Interact by **visible text / role / icon**, since the app has few `data-testid`s.
 Example: to open the Bible lookup, find the snapshot node labelled `Bible Lookup` (or
 press `Control+b`), then click its `uid`.
+
+For a page-by-page **component tree with the exact interactions each component supports**
+(click / double-click / right-click / drag-drop / keyboard-shortcut / slider / input),
+use [references/components-path.md](./references/components-path.md) as the targeting index.
+
+### 6a. MANDATORY: screen controlling & presenting (every run, every focus)
+
+Presenting content to a screen is the app's core purpose, so this block is **not
+optional and not skippable by focus area**: a run that only tested "bible lookup" must
+still run it. A report without evidence for this block is **incomplete** — say so
+rather than shipping it. Full row definitions: coverage-matrix.md §SP + §SC; recipe:
+test-plan.md §S7. (The other always-on block is the locale switch — §6d.)
+
+Minimum pass (≈5 minutes, self-restoring):
+
+1. **Present something real** — single-click a slide thumbnail (present is a
+   single-click TOGGLE — KB §5) or double-click a bible verse. Verify `.app-on-screen`
+   appears and the mini-screen preview renders it (`PR-04`).
+2. **Check the clear-control states** — the matching `BG`/`SL`/`BB`/`FG` button in the
+   previewer header flips from outline (disabled-look) to solid (`SP-02`).
+3. **Show the screen** — click `ShowHideScreen` (or ⌨️ `F5`). A
+   `screen.html?screenId=N` target MUST appear in `list_pages`; `select_page` it,
+   run the readiness check, and `take_screenshot` **of the screen target itself**
+   (`SP-01`, `SC-01`). The mini preview is NOT sufficient — screen-only bugs (e.g.
+   full-width PDF) never reproduce there.
+4. **Verify layer composition on the real output** and compare against the
+   mini-screen (`SC-02`).
+5. **Clear + hide + restore** — clear the layer with its key (`F8` slide / `F9`
+   bible) or button, hide the screen (toggle / ❌ close button on the output), confirm
+   the CDP target disappears, and restore anything you changed (background, selected
+   doc, lock, transitions).
+
+Exception: only if the user explicitly says the display is in **live use** (e.g. an
+actual service is running), skip steps 3–4, assert via the mini-screen, and mark
+`SC-01/02 BLOCKED→EX-02` with that reason.
+
+While the screen is hidden its window has **no CDP target**; its console forwards via
+`all:app:log` to the `npm run dev` terminal (electron main stdout) — read that channel
+when hunting screen-only bugs while hidden (`SC-05`).
+
+### 6b. Coverage accounting (full-coverage mode)
+
+The definition of "coverage" is the row inventory in
+[docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) (~617 rows with stable
+IDs like `PM-29`), including the exhaustive keyboard-shortcut matrix (`KB-01..60`) and
+the context-menu-item matrix (`CM-01..92`). The contract: **every in-scope row ends the run PASS, FAIL, PARTIAL,
+or BLOCKED-with-reason; policy exclusions (EX-01…EX-07) are counted separately.** A row
+counts as exercised only with evidence (screenshot, asserted `evaluate_script` result, or
+console/network diff) — see the matrix's "Evidence rule".
+
+**Run state file** — create `test-results/robot-test/coverage-<runid>.json` at start
+(`<runid>` = `yyyyMMdd-HHmm`), and update it after **every 5–10 rows** (not only at the
+end), so an interrupted or context-compacted session loses nothing:
+
+```json
+{
+    "matrixVersion": "2026-07-08",
+    "runId": "20260708-1430",
+    "startedAt": "2026-07-08T14:30:00+07:00",
+    "focus": "full",
+    "rows": {
+        "PM-29": { "status": "PASS", "evidence": "shot-014-bg-color.png" },
+        "PM-32": { "status": "BLOCKED", "note": "EX-03: no camera device" }
+    }
+}
+```
+
+**Resume:** before starting, look for the newest `coverage-*.json` less than a day old
+with unfinished rows — if found, continue that run (same file, same runid) instead of
+restarting from zero. This is how a full-coverage pass can span several sessions.
+
+**Recommended order** (dependencies first, disruption last):
+
+1. `GL` baseline on presenter → `NAV` → `PL` → `PM` (backgrounds/foregrounds restore as
+   you go) → `PR` → **`SP` + `SC` (the mandatory screen block §6a — run it while
+   content from `PM` is still live)** → `KB` (F6–F10 double as cleanup).
+2. `RD` (reader) → `ED` (editor — needs a selected doc from `PL`) → **`XW` (cross-window
+   edit→present propagation, §6c — open the editor as a *separate* window and confirm a
+   saved edit reaches the Presenter/screen; run it whenever editing/lists were touched)**.
+3. Popups `PU` (each opened from its trigger row).
+4. **Mandatory media block §6e (`MD-01..02`)** — kick the video download off while `PM`
+   is fresh (the Background panel is already open) and do the audio one right after; both
+   take minutes of wall-clock, so start them before the settings churn rather than after.
+5. `ST` settings last-but-one, then the **mandatory locale block §6d (`LT-01..02`)** plus
+   the `LT-03..05` theme spot-checks, which ride on `ST-04/05`. Restore everything. Each
+   `Apply Settings` (`ST-08`) reloads every window, so these go **very last** — and the
+   locale block needs two of them (switch, then switch back).
+
+**Honesty rules:** never mark a row PASS without its pass condition observed; never drop
+a row silently — if you ran out of budget, mark the remainder `BLOCKED: "not reached,
+resume next run"` and say so in the report. An honest 97% with reasons beats a fake 100%.
+
+### 6c. Cross-window edit→present propagation (run when the focus touches editing / lists / file-reload)
+
+OWA windows are **separate renderers** that sync only via disk + `fs.watch`, so "edit in the
+`Document Editor` window → the `Presenter` **preview / list** updates" is emergent
+cross-process behavior a **one-window** pass never checks — and is exactly how a
+"resize-a-box-in-the-editor didn't update the Presenter" regression can ship unspotted. A
+single-window walkthrough that opens the editor **in-place** (the `Slide Editor` tab's
+`goToPath`) has only one renderer and **structurally cannot see this class of bug**.
+
+> ⚠️ **The live screen is deliberately excluded from auto-refresh.** The **presented** slide
+> is an intentional snapshot — a **saved** edit does **not** auto-update the live `screen.html`
+> output (the operator applies it by **re-presenting**). So the auto-reload targets are the
+> Presenter **center preview** and **list rows** only; the live screen is verified via the
+> *re-present* apply-path, not by expecting it to change on save. See KB §12.2 / §12.4.
+
+**Run scenario [test-plan.md §S18], rows `XW-01..07`, whenever the run touches the editor,
+the document/lyric/playlist lists, or the `useFileSourceEvents`/file-reload wiring** (a
+focused "test the editor" run included). In short (full recipe + why-CDP-can't-edit +
+CDP-drivable-edit techniques are in **KB §12** — read it first):
+
+1. Use a **scratch doc** shown in the Presenter (present slide 1 to also cover the screen).
+2. Open its editor as a **separate window** (NAV-21 `bi-box-arrow-up-right` external icon /
+   a doc's **Edit ↗** → `openPopupWindow`), **not** the in-place `Slide Editor` tab — so both
+   `appDocumentEditor.html` and `presenter.html`/`screen.html` targets exist.
+3. Make a **CDP-drivable** edit in the editor target (CDP can't drag/Monaco-type — OS focus):
+   `fill` the Box **Position/Size/Rotate** (ED-19) or slide **W/H** (ED-17) numeric inputs, a
+   programmatic `CanvasController` mutation, or direct `fileSource.writeFileData(json)`; then
+   **Save**.
+4. **Assert propagation** within ~3 s in the auto-reload targets: Presenter `VarySlidesComp`
+   (XW-01), list-row thumbnail (XW-02). A stale target after a **saved** edit = **regression
+   → FAIL + Finding** naming the broken hop. An **unsaved** edit not showing is **correct**
+   (XW-04). For the live `screen.html` of a **presented** slide (XW-03): staying stale after
+   a saved edit is **expected** (intentional snapshot) — verify by **re-presenting** and
+   confirming the screen *then* updates; only a broken re-present is a FAIL.
+5. **Restore** with editor **Undo** (never *Discard*) + re-save; delete the scratch doc.
+
+Caveat: opening/closing the separate editor window can trigger a chrome-devtools-mcp "browser
+reconnected" — re-`list_pages`/`select_page` after each, and read screen visibility from
+`.show-hide.showing`, not target enumeration.
+
+### 6d. MANDATORY: locale switch pass (every run, every focus)
+
+**An English-only run structurally cannot find a missing translation.** `tran()`
+([src/lang/langHelpers.ts](../../../src/lang/langHelpers.ts)) returns early when the
+locale is `en-US` (`DEFAULT_LOCALE`) — no dictionary lookup happens at all. Switch to
+Khmer and the same call **throws** `Translation for text "…" not found in locale km-KH`
+in dev, and since there is no error boundary the whole subtree renders **blank**. A real
+example: `PositionSizeFieldComp` called `tran(name)` with `name="X:"`, which blanked the
+entire slide-editor tools panel — invisible in English, fatal in Khmer.
+
+So this block is **not optional and not skippable by focus area**, exactly like §6a. Rows
+`LT-01..02`; recipe: test-plan.md §S15.
+
+Minimum pass (≈3 minutes, self-restoring):
+
+1. **Record the starting locale** — open Settings (gear → popup target) → Language and
+   see which of `Khmer` / `English` is the active button. You MUST restore it at the end.
+   Do **not** read `localStorage['language-locale']`; it is a stale key (KB §1).
+2. **Switch to the other locale** and click `Apply Settings` — this calls
+   `forceReloadAppWindows()`, so **every window reloads**: re-`list_pages`,
+   `select_page`, and re-run the readiness check (step 3). All previous `uid`s are dead.
+3. **Re-walk the screens your focus touched**, plus the presenter baseline. For each:
+   `take_screenshot` and `list_console_messages`.
+4. **Assert, per screen:**
+   - No `Translation for text "…" not found in locale km-KH` in the console →
+     any occurrence is a **Critical** finding: name the missing key AND the component
+     that rendered it (the React warning right after it names the component).
+   - No blank/empty panel where content rendered in the other locale (that is the
+     visible symptom of the throw above).
+   - Labels actually translate — no raw English left in a translated screen, no clipped
+     or overflowing Khmer text (Khmer glyphs are taller; check buttons and table cells).
+5. **Restore** — switch back to the locale from step 1 and `Apply Settings` again.
+
+Notes:
+
+- Unsaved editor state **survives** the reloads (it is disk-backed in
+  `<file>.histories/<n>-head`, `EditingHistoryManager`), so a pending `*` on a document
+  is not a reason to skip this block — but never use **Discard changed** to tidy up.
+- If the locale changes and you did **not** change it, assume the **user** did (KB §1) —
+  confirm before filing anything.
+- Strings that are hardcoded rather than passed through `tran()` stay English in Khmer
+  mode. That is a **Low/Info** finding (untranslated UI), not the Critical throw above —
+  report them separately and name the file.
+
+### 6e. MANDATORY: media download, video AND audio (every run, every focus)
+
+**Nothing else in the app runs the shipped external binaries.** `downloadVideoOrAudio`
+([src/server/appHelpers.ts](../../../src/server/appHelpers.ts)) is the only caller of
+`bin-helper/yt/yt-dlp`, and it is what points yt-dlp at `bin-helper/ffmpeg/bin` and
+`bin-helper/qjs/qjs`. All three are committed prebuilt per platform
+(`extra-work/experiment-building/<os><suffix>/`) and copied in by
+`extra-work/copy-build.mjs` — so a wrong/missing/stale binary passes typecheck, tests,
+build and every other matrix row, and only shows up here. Rows `MD-01..03`; recipe:
+test-plan.md §S19.
+
+**Canonical test link** — always use this one so runs are comparable:
+
+```
+https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs
+```
+
+Minimum pass (both halves required — they exercise different ffmpeg paths):
+
+1. **Video (MD-01)** — Background → **Videos** tab → right-click the empty area of the
+   list → **Download From URL** → put the link in → **Ok**. yt-dlp fetches separate video
+   and audio streams and **merges them with ffmpeg**.
+2. **Audio (MD-02)** — Background → **♫Audios♫** split → same menu (the popup label must
+   read **Audio URL:**) → **Ok**. This one runs `-x --audio-format mp3`, i.e. an actual
+   **libmp3lame encode** — a merge-only ffmpeg would pass MD-01 and fail here.
+3. **Assert on disk, not on the toast**: a new file in the videos dir (merged container)
+   and an **`.mp3`** in the audios dir, plus the new thumbnail/row in the panel.
+4. Optional but cheap — prove the JS runtime is really QuickJS by reading the spawned
+   command line (`Get-CimInstance Win32_Process -Filter "Name='yt-dlp.exe'"`): it must
+   carry `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+
+Triage before filing (a 403 is usually NOT an app bug), the known orphaned-`.part` bug,
+and the `(1)` de-duplication suffix are all documented in the matrix §MD — read it before
+reporting a download failure.
+
+### 6f. Playlist deep pass (run when the focus touches the run sheet — and in every full-coverage run)
+
+The Playlists panel is the app's **run sheet**, and since `203d35cc` (2026-08-04) it is
+**no longer dev-only** — it took the old Lyric List's slot in the presenter's left column
+and ships in packaged builds. Any note (including older revisions of these references)
+that says "dev builds only" is stale: **no PL row may be marked BLOCKED for being
+dev-only** (PL-49).
+
+Read **knowledge-base §14** first — it is the model behind every PL row. Then drive
+`PL-10`, `PL-29`, `PL-32..PL-74`. The parts a quick pass keeps missing, in the order they
+are cheapest to reach:
+
+1. **The two storage kinds** (§14.2). Slides/documents are references, everything else is
+   a verbatim preset. Prove it once per run: edit a referenced document and confirm the
+   playlist projects the NEW text (PL-29), and confirm a stored countdown/marquee replays
+   its own preset rather than a resolved date (PL-69).
+2. **The failure surfaces** — placeholders, a hand-corrupted `.owp` entry, an unreadable
+   document (PL-50/51). A damaged entry must not take the rest of the list with it, and
+   must not be silently dropped from the file by the next write.
+3. **The drag rules** (§14.4), including the deliberate no-ops: cross-playlist drag adds
+   nothing, a row dropped on itself writes nothing (PL-55), unsupported payloads toast
+   (PL-56).
+4. **The floating preview as a player** — fold memory, the restricted slide menu, the
+   three ways a preset reaches a screen, the widget frame (PL-58..61) — then walk a whole
+   document with the next-key (PL-46/48).
+5. **Export → import round trip on real files** (PL-39/40/45, PL-65..68). The import
+   contract is all-or-nothing: with a required folder unset it must fail **before** writing
+   anything. A CDP-driven drop of a real `.owapl.tar.gz` exercises the whole pipeline —
+   fabricate the `dataTransfer` and stamp `appFilePath` (KB §14.7).
+6. **The performance guards** (§14.3) — no `Maximum update depth exceeded` with a
+   ~90-slide document expanded, the clicked row marks immediately, an idle list opens no
+   `.owp` files, and clicking a row does not repaint every file row in the window
+   (PL-63/70). These are the regressions that only hurt on the target hardware.
+7. **Locale.** The playlist strings are listed in KB §14.8 — a missing Khmer key THROWS in
+   dev and blanks the page, so the §6d pass must cover this panel whenever it was touched.
+
+Restore rule for this pass: it writes to real files. Work in a scratch playlist you
+created, delete it at the end, and remove anything the import created (imported media,
+documents, the Default-list verses) — or say in the report what you left behind.
 
 ### 7. Report
 
 - Write the full report to `test-results/robot-test/report-<timestamp>.md` (this folder
   is git-ignored) and keep screenshots beside it.
+- **Every report** (focused or full) MUST contain the **mandatory screen block** (§6a)
+  results: the SP-01/SP-02/SC-01/SC-02 statuses and the screenshot taken from the
+  `screen.html` target. If the block was skipped (EX-02 live-use exception), the report
+  must state that and why.
+- **Every report** MUST also contain the **mandatory locale block** (§6d): the
+  `LT-01/LT-02` statuses, which locale was switched to, the screens re-walked in it, and
+  an explicit statement that no `Translation for text "…" not found` error appeared (or
+  the list of the ones that did, each a Critical finding). Confirm the starting locale
+  was restored.
+- **Every report** MUST also contain the **mandatory media block** (§6e): the
+  `MD-01/MD-02` statuses with the on-disk evidence (the video file and the `.mp3`), since
+  no other row touches the shipped yt-dlp/ffmpeg/qjs. BLOCKED is acceptable only with no
+  network, and must say so.
+- In full-coverage mode the report MUST include the **coverage summary** (template in
+  [references/test-plan.md](./references/test-plan.md)): the formula result
+  (`exercised / (total − EXCLUDED)`), plus every BLOCKED / PARTIAL / EXCLUDED row with
+  its reason. The coverage claim must be reproducible from the `coverage-<runid>.json`.
 - In chat, summarize the top issues with **severity** (Critical/High/Medium/Low/Info),
   each with: what was tested, expected vs actual, evidence (screenshot path / console
-  line / failed request), and a suggested fix or file to look at.
+  line / failed request), and a suggested fix or file to look at — plus the coverage %
+  when in full-coverage mode.
 
 ### 8. Cleanup
 
@@ -182,6 +469,55 @@ press `Control+b`), then click its `uid`.
   (`concurrently -k` tears down both children).
 - If the app was already running (step 1), leave it alone.
 - Do not delete `test-results/robot-test/` — those are the deliverables.
+
+### 9. Tutorial mode — generate a help page from the live app
+
+When asked for a tutorial, help page, or user guide (argument `tutorial`, optionally
+naming workflows/pages):
+
+1. Connect to the live app (steps 0–3).
+2. Walk the requested workflows from
+   [references/user-workflows.md](./references/user-workflows.md) (all of them if
+   unspecified) **performing every step for real**. At each `📸` checkpoint, put the
+   app in exactly that state and `take_screenshot` into
+   `test-results/robot-test/tutorial-<runid>/` with a name like `w03-2-slide-live.png`.
+3. Write the tutorial using the workflow text as the base — same step order, same
+   labels (use the labels of the **current locale**, and mention the other locale's
+   label once, as the workflows do). Keep the `W-xx` IDs as anchors/headings so future
+   verification can map back. Output: a markdown page next to the screenshots, or an
+   HTML Artifact if the user wants a shareable page.
+4. **Divergence rule:** if the live app does not match a workflow step, STOP treating
+   the workflow as truth for that step: decide bug vs. drift (check `src/` and
+   [references/knowledge-base.md](./references/knowledge-base.md)). App bug → file a
+   Finding and write the tutorial to the *intended* behavior with a note. Doc drift →
+   **fix `user-workflows.md` in the same run** (bump `workflowsVersion`) and generate
+   from the corrected text. Never publish a tutorial step you did not see work.
+5. Restore any state you changed (KB §10) and clean up per step 8.
+
+### 10. Doc-verify mode — check a learning document against the app
+
+When given a manual/tutorial/learning doc (argument `verify-doc <path-or-url>`):
+
+1. Read the document and split it into **discrete, checkable claims** — each numbered
+   step, named control, label, shortcut, or described outcome is a claim.
+2. Map each claim to a `W-xx` workflow and/or coverage-matrix rows; claims with no
+   mapping get an ad-hoc replay (and are candidates for a new workflow entry).
+3. Connect to the live app (steps 0–3) and **replay every claim**, capturing evidence
+   like a normal run. Statuses per claim:
+   - **MATCH** — the app does what the doc says (evidence attached).
+   - **DRIFT** — doc says X, app does Y: quote the doc line, state the observed
+     behavior, attach a screenshot. Decide (via `src/` + git history) whether the doc
+     is stale or the app regressed — say which.
+   - **UNTESTABLE** — policy exclusion (EX-xx) or blocked; give the reason.
+   - **NOT-IN-APP** — the doc describes a feature that does not exist.
+4. Also report **gaps**: workflows in `user-workflows.md` that the document never
+   covers (a completeness signal for the doc's author).
+5. Write `test-results/robot-test/doc-verify-<runid>.md`: per-claim table
+   (claim → status → evidence), the drift list with suggested doc wording, and a
+   verdict. **Every claim gets a status — no silent skips**, same honesty rules as
+   coverage accounting (§6b).
+6. If the run reveals that `user-workflows.md` itself is wrong, fix it too — it is the
+   source of truth and must never knowingly lag the app.
 
 ## What counts as a UI/UX issue
 
@@ -191,6 +527,10 @@ press `Control+b`), then click its `uid`.
 - **Interaction**: a tab/button that doesn't respond or doesn't toggle its state
   (`.active` on nav tabs, `.app-on-screen` when content is sent to the screen); modal
   that won't open/close (`Ctrl+B` opens Bible lookup, `Ctrl+Q` closes modal).
+- **Cross-window propagation** (§6c / XW): a **saved** edit in one window that never
+  reaches another window (editor→Presenter preview / list-row / live `screen.html`) — the
+  regression class a one-window run structurally can't see. Confirm the edit was *saved*
+  (unsaved-not-showing is correct), then name the broken hop (KB §12.2).
 - **Visual**: clipped/overflowing text, overlapping elements, invisible or low-contrast
   text, broken/blank images, layout shift, a `loading.gif` that never disappears.
 - **Accessibility**: icon-only buttons with no accessible name, controls missing roles
@@ -207,8 +547,9 @@ press `Control+b`), then click its `uid`.
   `.mcp.json` uses `--browserUrl=http://127.0.0.1:9223`.
 - **Wrong target selected**: there is normally ONE main window target — keep using it and
   switch pages with `navigate_page` (step 5), not by opening new tabs. A separate
-  `screen.html` target appears only when presenting to a screen; ignore it unless you are
-  testing the presentation output.
+  `screen.html?screenId=N` target exists **only while that screen is showing** — select
+  it for the mandatory screen block (§6a), and select the presenter target back
+  afterward. Never `navigate_page` the main window to `screen.html`.
 - **Stuck on Settings / can't navigate away (`ERR_ABORTED`)**: you loaded a **popup-only**
   page (`setting.html`, `about.html`, …) in the main window (see step 5 warning). That state
   can't navigate out and persists `mainHtmlPath`. Recover: stop the app, set `mainHtmlPath`
@@ -228,5 +569,26 @@ press `Control+b`), then click its `uid`.
   endpoint and exits when the target page is attached.
 - [references/ui-map.md](./references/ui-map.md) — windows, regions, selectors, readiness
   signals, keyboard shortcuts.
+- [references/components-path.md](./references/components-path.md) — every page → its
+  component tree → the interactive tests each component supports (click/drag/drop/keyboard).
+- [docs/test-paths/coverage-matrix.md](../../../docs/test-paths/coverage-matrix.md) — the
+  **coverage contract**: ~617 stable-ID rows over the whole UI surface — every interactive
+  path enumerated as a unit test with an observable pass condition and a `(src: file:line)`
+  citation, including a complete keyboard-shortcut matrix (`KB-01..60`, every registered
+  shortcut incl. bible-editing, canvas/slide, finder, and electron-menu accelerators) and
+  a context-menu-item matrix (`CM-01..92`). Screen controlling & presenting rows
+  (`SP`/`SC`) and the locale-switch rows (`LT-01..02`) are mandatory in every run; the
+  file also carries the policy-exclusion table, statuses, evidence rule, and the coverage
+  formula for full-coverage runs. **Note:** this file lives under `docs/test-paths/`, not
+  in this skill's `references/`.
+- [coverage-expansion/](./coverage-expansion/) — provenance for the 2026-07-18 matrix
+  expansion: the per-subsystem source-sweep inventories (`discover-*.md`) and the
+  finalized per-section row fragments (`final/*.md`) each row was derived from, with
+  `src` line citations. Regenerate/extend these when re-sweeping `src/`; they are
+  research artifacts, not runtime references.
+- [references/user-workflows.md](./references/user-workflows.md) — the **tutorial source
+  of truth**: user-facing `W-xx` task recipes in tutorial voice with `📸` screenshot
+  checkpoints and EN/KM labels, each traceable to matrix rows; feeds tutorial mode (§9)
+  and doc-verify mode (§10).
 - [references/test-plan.md](./references/test-plan.md) — scenario checklist, severity
   scale, and the report template.

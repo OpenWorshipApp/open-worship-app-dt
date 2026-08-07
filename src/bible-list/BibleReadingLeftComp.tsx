@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazy, useMemo } from 'react';
 
 import {
     resizeSettingNames,
@@ -6,6 +6,7 @@ import {
     type FlexSizeType,
 } from '../resize-actor/flexSizeHelpers';
 import ResizeActorDynamicComp from '../resize-actor/ResizeActorDynamicComp';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyBibleListComp = lazy(() => {
     return import('./BibleListComp');
@@ -18,35 +19,34 @@ const hFlexSizeDefault: FlexSizeType = {
     h1: ['1'],
     h2: ['1'],
 };
-const hDataInput: DataInputType[] = [
-    {
-        children: LazyBibleListComp,
-        key: 'h1',
-        widgetName: 'Bibles',
-    },
-    {
-        children: LazyNoteComp,
-        key: 'h2',
-        widgetName: 'Notes',
-    },
-];
 const vFlexSizeDefault: FlexSizeType = {
     v1: ['1'],
     v2: ['1'],
 };
-const vDataInput: DataInputType[] = [
-    {
-        children: LazyBibleListComp,
-        key: 'v1',
-        widgetName: 'Bibles',
-    },
-    {
-        children: LazyNoteComp,
-        key: 'v2',
-        widgetName: 'Notes',
-    },
-];
+// Built per render, not once at module scope: `tran()` throws in dev when the
+// locale's language data has not been loaded into the cache yet, and module
+// evaluation happens well before that — which blanks the whole page in km.
+function genDataInput(keyPrefix: string): DataInputType[] {
+    return [
+        {
+            children: LazyBibleListComp,
+            key: `${keyPrefix}1`,
+            ...toWidgetLabel('Bibles'),
+        },
+        {
+            children: LazyNoteComp,
+            key: `${keyPrefix}2`,
+            ...toWidgetLabel('Notes'),
+        },
+    ];
+}
 export default function BibleReadingLeftComp() {
+    const hDataInput = useMemo(() => {
+        return genDataInput('h');
+    }, []);
+    const vDataInput = useMemo(() => {
+        return genDataInput('v');
+    }, []);
     return (
         <ResizeActorDynamicComp
             flexSizeName={resizeSettingNames.bibleReadingLeft}

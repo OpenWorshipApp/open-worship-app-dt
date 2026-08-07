@@ -19,6 +19,9 @@ export const SELECTED_PARENT_DIR_SETTING_NAME = 'selected-parent-dir';
 export const LOCAL_STORAGE_FOLDER_NAME = 'local-storage';
 export const TMP_FILES_FOLDER_NAME = 'tmp-files';
 const cache = new CacheManager<string>(10);
+// Separate from `cache` because `CacheManager.getSync` uses null for "miss",
+// so a cached "this key has no file" cannot live in the value cache.
+const absentCache = new CacheManager<boolean>(10);
 class AppLocalStorage {
     get defaultStorage() {
         const cachedDefaultStorage = cache.getSync(
@@ -91,8 +94,17 @@ class AppLocalStorage {
         if (cachedValue !== null) {
             return cachedValue;
         }
+        // The ABSENCE of a setting is cached too, on the same short window.
+        // Settings are read from React render bodies (`useStateSettingBoolean`
+        // and friends), and a key that has never been written — a row never
+        // expanded, a panel never opened — hit `fsExistSync` on every render
+        // forever, because only a successful read was ever cached.
+        if (absentCache.getSync(fullPath) !== null) {
+            return null;
+        }
         try {
             if (!fsExistSync(fullPath)) {
+                absentCache.setSync(fullPath, true);
                 return null;
             }
             const value = fsReadSync(fullPath);
@@ -107,6 +119,7 @@ class AppLocalStorage {
     getItemForce(key: string): string | null {
         const fullPath = this.toFullPath(key);
         cache.deleteSync(fullPath);
+        absentCache.deleteSync(fullPath);
         return this.getItem(key);
     }
 
@@ -114,20 +127,49 @@ class AppLocalStorage {
         const fullPath = this.toFullPath(key);
         fsWriteFileSync(fullPath, value);
         cache.setSync(fullPath, value);
+        // The file exists now; a stale "absent" entry would keep `getItem`
+        // answering null for up to the cache window.
+        absentCache.deleteSync(fullPath);
     }
 
     removeItem(key: string): void {
         const fullPath = this.toFullPath(key);
+        // Drop the in-memory entry too. getItem answers from this cache before
+        // touching disk, so a removal that left it behind kept handing back the
+        // deleted value for the rest of the session.
+        cache.deleteSync(fullPath);
+        absentCache.deleteSync(fullPath);
         try {
+            // Removing a key that was never written is a normal case (a screen
+            // that never had a drawing, a focus panel that was never opened);
+            // unlinking a missing file would just log noise.
+            if (!fsExistSync(fullPath)) {
+                return;
+            }
             fsUnlinkSync(fullPath);
         } catch (error) {
             handleError(error);
         }
     }
 
+    /**
+     * Every key currently on disk. A directory listing, so it is for the rare
+     * housekeeping pass (purging the settings of a file that has been deleted),
+     * never for a read path — `getItem` is called from render bodies.
+     */
+    async listKeys(): Promise<string[]> {
+        try {
+            return await fsListFiles(this.localStorageDir);
+        } catch (error) {
+            handleError(error);
+            return [];
+        }
+    }
+
     removeItemCache(key: string): void {
         const fullPath = this.toFullPath(key);
         cache.deleteSync(fullPath);
+        absentCache.deleteSync(fullPath);
     }
 
     async clear() {

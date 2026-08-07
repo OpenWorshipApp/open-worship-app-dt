@@ -78,10 +78,11 @@ function createScreenManager(
         isShowing: true,
         isLocked: false,
         displayId: screenId === 1 ? 2 : 1,
-        stageNumber: screenId,
+        stage: screenId,
         colorNote: screenId === 1 ? 'blue' : null,
         clear: vi.fn(),
-        delete: vi.fn(),
+        // async like the real one — the caller attaches a .catch to it
+        delete: vi.fn(async () => {}),
         fireRefreshEvent: vi.fn(),
         fireScaleEvent: vi.fn(),
         receiveScreenDropped: vi.fn(),
@@ -246,7 +247,8 @@ vi.mock('../managers/screenManagerBaseHelpers', () => ({
     getValidOnScreen,
 }));
 
-vi.mock('../screenHelpers', () => ({
+vi.mock('../managers/screenHelpers', () => ({
+    SCREEN_MANAGER_SETTING_NAME: 'screen-display-',
     getAllDisplays: () => ({
         primaryDisplay: {
             id: 1,
@@ -408,7 +410,7 @@ describe('preview runtime interactions', () => {
             isSelected: false,
             displayId: 2,
             isLocked: true,
-            stageNumber: 2,
+            stage: 2,
         });
         screenManager.screenBibleManager.isShowing = true;
         screenManager.screenBibleManager.screenViewData = {
@@ -553,7 +555,7 @@ describe('preview runtime interactions', () => {
         await act(async () => {
             stageItems.at(-1)?.onSelect();
         });
-        expect(screenManager.stageNumber).toBe(3);
+        expect(screenManager.stage).toBe(3);
         expect(container.textContent).toContain('St:3');
 
         await act(async () => {

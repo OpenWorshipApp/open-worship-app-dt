@@ -138,7 +138,7 @@ export function RenderApp({
     useCheckSetting();
     const { theme } = useThemeSource();
     return (
-        <div id="app" data-bs-theme={theme}>
+        <div id="app" className="app" data-bs-theme={theme}>
             <StrictMode>{children}</StrictMode>
         </div>
     );
@@ -151,6 +151,7 @@ export async function run(children?: ReactNode) {
             tran('Quick Exit'),
             tran('Are you sure you want to quit the app?'),
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         ).then((isOk) => {

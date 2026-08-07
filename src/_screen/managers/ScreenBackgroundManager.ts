@@ -518,6 +518,23 @@ class ScreenBackgroundManager
         this.applyBackgroundSrcWithSyncGroup(null);
     }
 
+    delete() {
+        // Local teardown only — deliberately NOT clear(). clear() routes through
+        // the backgroundSrc setter, which broadcasts to every screen sharing
+        // this one's color note (so deleting one screen blanked the whole
+        // group's background) and which a locked screen rejects outright,
+        // leaving its camera tracks running and its entry on disk. The persisted
+        // entry is dropped centrally by deleteScreenPersistedData.
+        this.clearTracks();
+        this.clearTracks = () => {};
+        if (this._rootContainer !== null) {
+            this._rootContainer.replaceChildren();
+            this._rootContainer = null;
+        }
+        this._backgroundSrc = null;
+        super.delete();
+    }
+
     static getInstance(screenId: number) {
         return super.getInstanceBase<ScreenBackgroundManager>(screenId);
     }

@@ -1,9 +1,11 @@
 import FileSource from '../helper/FileSource';
 import { type AnyObjectType } from '../helper/typeHelpers';
+import { tran } from '../lang/langHelpers';
 import {
     hideProgressBar,
     showProgressBar,
 } from '../progress-bar/progressBarHelpers';
+import { showSimpleToast } from '../toast/toastHelpers';
 import { electronSendAsync } from './appHelpers';
 import appProvider from './appProvider';
 import { fsDeleteDir, fsReadFile, pathJoin } from './fileHelpers';
@@ -30,37 +32,26 @@ export async function getSlidesCount(filePath: string) {
     return count;
 }
 
-type PptxToHtmlsDataType = {
-    isSuccessful: boolean;
-    message?: string;
-};
 export async function pptxToHtmls(filePath: string, outDir: string) {
     const progressBarKey = `Exporting PPTX Slides "${FileSource.getInstance(filePath).name}"`;
+    showSimpleToast(
+        tran('Exporting PPTX Slides'),
+        tran('Please wait while the slides are being exported...'),
+    );
     showProgressBar(progressBarKey);
-    const result = await electronSendAsync<PptxToHtmlsDataType>(
+    const isSuccess = await electronSendAsync<boolean>(
         'main:app:pptx-to-htmls',
         { filePath, outDir },
     );
     hideProgressBar(progressBarKey);
-    return result;
+    return isSuccess;
 }
 
-let version: string | null = null;
-type PptxToHtmlsVersionDataType = {
-    version: string | null;
-    message?: string;
-};
-export function getPptxToHtmlsVersion() {
-    return unlocking('get-pptx-to-htmls-version', async () => {
-        if (version !== null) {
-            return version;
-        }
-        const result = await electronSendAsync<PptxToHtmlsVersionDataType>(
-            'main:app:get-pptx-to-htmls-version',
-        );
-        version = result.version;
-        return result.version;
-    });
+export async function getPptxToHtmlsVersion() {
+    const version = await electronSendAsync<string>(
+        'main:app:get-pptx-to-htmls-version',
+    );
+    return version;
 }
 
 export type PptxSlideDataType100 = {
@@ -164,13 +155,4 @@ export async function getPptxMissingFontFamilyList(
     const infoFileSource = FileSource.getInstance(infoFilePath);
     const infoData = await infoFileSource.readFileJsonData();
     return (infoData?.missingFontFamily as string[] | undefined) ?? [];
-}
-
-export async function removeSlideBackground(filePath: string) {
-    // This API is retained for future work and is not production-ready yet.
-    const isSuccess = await electronSendAsync<boolean>(
-        'main:app:ms-pp-remove-slides-bg',
-        { filePath },
-    );
-    return isSuccess;
 }

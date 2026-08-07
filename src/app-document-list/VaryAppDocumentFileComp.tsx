@@ -12,7 +12,7 @@ import {
     varyAppDocumentFromFilePath,
     useSelectedAppDocumentSetterContext,
     SelectedVaryAppDocumentContext,
-    checkIsVaryAppDocumentOnScreen,
+    checkIsVaryAppDocumentFilePathOnScreen,
 } from './appDocumentHelpers';
 import PdfAppDocument from './PdfAppDocument';
 import type { AppDocumentSourceAbs } from '../helper/AppEditableDocumentSourceAbs';
@@ -28,8 +28,10 @@ import appProvider from '../server/appProvider';
 import { getIsShowingVaryAppDocumentPreviewer } from '../app-document-presenter/presenterRendererHelpers';
 import { printAppDocument } from './appDocumentPrintHelpers';
 import { useFileSourceEvents } from '../helper/dirSourceHelpers';
+import { handleAppDocumentDragStart } from '../helper/dragHelpers';
+import { exportAppDocument } from './appDocumentArchiveHelpers';
 
-function genContextMenuItems(
+function genKindContextMenuItems(
     varyAppDocument: VaryAppDocumentDynamicType,
 ): ContextMenuItemType[] {
     if (PdfAppDocument.checkIsThisType(varyAppDocument)) {
@@ -127,6 +129,27 @@ function genContextMenuItems(
     return menuItems;
 }
 
+function genContextMenuItems(
+    varyAppDocument: VaryAppDocumentDynamicType,
+): ContextMenuItemType[] {
+    const menuItems = genKindContextMenuItems(varyAppDocument);
+    if (!varyAppDocument) {
+        return menuItems;
+    }
+    // Every kind can be exported: the bundle copies the document verbatim and
+    // only walks the JSON kinds, so a PDF travels with its attached backgrounds
+    // and color notes exactly as a slide document does.
+    const { filePath } = varyAppDocument;
+    menuItems.push({
+        childBefore: genContextMenuItemIcon('file-earmark-arrow-down'),
+        menuElement: tran('Export'),
+        onSelect: () => {
+            exportAppDocument(filePath);
+        },
+    });
+    return menuItems;
+}
+
 function FilePreviewAppDocumentNormalComp({
     varyAppDocument,
 }: Readonly<{ varyAppDocument: AppDocumentSourceAbs }>) {
@@ -195,9 +218,7 @@ function FilePreviewDocxAppDocumentComp({
 }
 
 async function checkIsOnScreen(filePath: string) {
-    const varyAppDocument = varyAppDocumentFromFilePath(filePath);
-    const isOnScreen = await checkIsVaryAppDocumentOnScreen(varyAppDocument);
-    return isOnScreen;
+    return await checkIsVaryAppDocumentFilePathOnScreen(filePath);
 }
 
 function handleChildRendering(varyAppDocument: AppDocumentSourceAbs) {
@@ -285,6 +306,13 @@ export default function VaryAppDocumentFileComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // A document travels as a plain reference so a playlist can hold "open this
+    // document" without copying any of its slides.
+    const handleDraggingStart = useCallback((event: any) => {
+        handleAppDocumentDragStart(event, filePath);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const isSelectedRef = useAppCurrentRef(isSelected);
     const handleRenaming = useCallback(async (newFileSource: FileSource) => {
         if (isSelectedRef.current) {
@@ -308,6 +336,7 @@ export default function VaryAppDocumentFileComp({
             renamedCallback={handleRenaming}
             isSelected={isSelected}
             checkIsOnScreen={checkIsOnScreen}
+            onDragStart={handleDraggingStart}
         />
     );
 }

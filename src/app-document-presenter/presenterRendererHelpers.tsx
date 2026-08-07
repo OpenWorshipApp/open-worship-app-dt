@@ -1,10 +1,8 @@
 import { getSetting } from '../helper/settingHelpers';
 import {
-    checkIsVaryAppDocumentOnScreen,
+    checkIsVaryAppDocumentFilePathOnScreen,
     getSelectedVaryAppDocument,
 } from '../app-document-list/appDocumentHelpers';
-import LyricAppDocument from '../lyric-list/LyricAppDocument';
-import { getSelectedLyric } from '../lyric-list/lyricHelpers';
 import { getAllScreenManagers } from '../_screen/managers/screenManagerHelpers';
 import type BibleItemsViewController from '../bible-reader/BibleItemsViewController';
 import { getOnScreenBibleItems } from '../bible-list/bibleHelpers';
@@ -13,14 +11,10 @@ export const PRESENT_TAB_SETTING_NAME = 'presenter-tab';
 export const PRESENT_FOREGROUND_FLOATING_SETTING_NAME =
     'presenter-foreground-floating';
 
+// The setting holds every open tab's key concatenated (e.g. `db`), so this must
+// test for membership, not equality.
 export function getIsShowingVaryAppDocumentPreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'd';
-}
-export function getIsShowingLyricPreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'l';
-}
-export function getIsShowingBiblePreviewer() {
-    return getSetting(PRESENT_TAB_SETTING_NAME) === 'f';
+    return getSetting(PRESENT_TAB_SETTING_NAME)?.includes('d') ?? false;
 }
 
 export async function checkIsOnScreen<T>(
@@ -32,22 +26,11 @@ export async function checkIsOnScreen<T>(
         if (varyAppDocument === null) {
             return false;
         }
-        const isOnScreen =
-            await checkIsVaryAppDocumentOnScreen(varyAppDocument);
-        return isOnScreen;
-    } else if (targeKey === 'l') {
-        const selectedLyric = await getSelectedLyric();
-        if (selectedLyric === null) {
-            return false;
-        }
-        const lyricAppDocument = LyricAppDocument.getInstanceFromLyricFilePath(
-            selectedLyric.filePath,
+        // Matched by file path so it also resolves a lyric, which is previewed
+        // by this tab now.
+        const isOnScreen = await checkIsVaryAppDocumentFilePathOnScreen(
+            varyAppDocument.filePath,
         );
-        if (lyricAppDocument === null) {
-            return false;
-        }
-        const isOnScreen =
-            await checkIsVaryAppDocumentOnScreen(lyricAppDocument);
         return isOnScreen;
     } else if (targeKey === 'f') {
         const allScreenManager = getAllScreenManagers();

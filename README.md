@@ -101,7 +101,6 @@ Special thanks to all frameworks and tools listed in [package.json](./package.js
 ## 📋 Requirements
 
 - [Node.js v22](https://nodejs.org/en/download/) or higher
-- [dotnet 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for MS PowerPoint support
 - For Windows, [Cygwin](https://cygwin.com/) is needed. `Cygwin` through [Git](https://git-scm.com/) is recommended (by installing `Git` with `Git-bash` we will have all required commands installed)
 
 For Fedora:
@@ -116,7 +115,7 @@ sudo dnf install libxcrypt-compat
 ### 1. Install Dependencies
 
 ```bash
-npm install
+npm install --allow-git=all
 ```
 
 ### 2. Run Development Server
@@ -185,18 +184,6 @@ npm run dc:err
 ### Common Issues
 
 <details>
-<summary><strong>NuGet Package Source Error</strong></summary>
-
-If you encounter errors during `npm install` related to NuGet packages not being resolved:
-
-```bash
-dotnet nuget add source https://api.nuget.org/v3/index.json --name nuget.org
-npm install
-```
-
-</details>
-
-<details>
 <summary><strong>Fedora Dependencies</strong></summary>
 
 ```bash
@@ -238,7 +225,7 @@ This project is open-source and actively growing. Whether you're a developer, de
 
 3. **📦 Install** dependencies:
    ```bash
-   npm install
+   npm install --allow-git=all
    ```
 
 4. **🌿 Create a branch** for your feature:

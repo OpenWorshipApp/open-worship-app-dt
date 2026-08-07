@@ -81,7 +81,7 @@ export default function ConfirmPopupComp({
                         onClick={handleClosing}
                     >
                         <i className="bi bi-x-lg" />
-                        {tran('Cancel')}
+                        {tran(confirmData.cancelButtonLabel ?? 'Cancel')}
                     </button>
                     <button
                         className="btn btn-info"

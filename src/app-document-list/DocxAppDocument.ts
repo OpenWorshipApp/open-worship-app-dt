@@ -9,7 +9,7 @@ import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers'
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
 import { appLog } from '../helper/loggerHelpers';
-import DocxSlide, { type DocxSlideType } from './DocxSlide';
+import DocxSlide, { type DocxSlidePropsType } from './DocxSlide';
 import {
     getDocxData,
     getDocxMissingFontFamilyList,
@@ -82,11 +82,12 @@ export default class DocxAppDocument
             }
             const dataList = docxData.info.pages.map(
                 ({ htmlFilePath, html, width, height }, index) => {
-                    const json: DocxSlideType = {
+                    const json: DocxSlidePropsType = {
                         id: index + 1,
                         htmlFilePath,
                         html,
                         metadata: { width, height },
+                        type: 'docx-slide',
                     };
                     return new DocxSlide(this.filePath, json);
                 },
@@ -100,6 +101,7 @@ export default class DocxAppDocument
                 htmlFilePath: BLANK_HTML_SLIDE_SRC,
                 html: '',
                 metadata: { width: slide1.width, height: slide1.height },
+                type: 'docx-slide',
             });
             return [slide0, ...dataList];
         } catch (error) {

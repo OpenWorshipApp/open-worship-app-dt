@@ -303,9 +303,12 @@ describe('presenter item basic coverage', () => {
             container,
         );
 
-        expect(useScreenVaryAppDocumentManagerEventsMock).toHaveBeenCalledWith([
-            'update',
-        ]);
+        // This container is pure geometry, and there are TWO per slide preview.
+        // Subscribing to screen updates here re-rendered every preview in the
+        // window on every present for a value it never reads.
+        expect(
+            useScreenVaryAppDocumentManagerEventsMock,
+        ).not.toHaveBeenCalled();
         expect(element?.style.width).toBe('400px');
         expect(element?.style.height).toBe('200px');
         expect(element?.style.transform).toBe('scale(2,2) translate(50%, 50%)');

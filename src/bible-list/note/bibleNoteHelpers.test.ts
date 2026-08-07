@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
     getAllLangsAsyncMock: vi.fn(),
     getCurrentLocaleMock: vi.fn(() => 'en'),
     initLangCssMock: vi.fn(),
+    initAllLangCssMock: vi.fn(),
     showFileOrDirExplorerMock: vi.fn(),
     genTimeoutAttemptMock: vi.fn(() => (fn: any) => fn()),
     bibleItemFromTitleTextMock: vi.fn(),
@@ -27,6 +28,33 @@ const h = vi.hoisted(() => ({
     getSettingMock: vi.fn(),
     setSettingMock: vi.fn(),
     getBibleFontFamilyMock: vi.fn(async () => 'FontFam'),
+    getLangDataAsyncMock: vi.fn(),
+}));
+
+// the real package drags lexical/excalidraw into jsdom (canvas getContext is
+// not implemented there), so the constructor is faked at the module boundary
+const bn = vi.hoisted(() => {
+    const state: { capturedConfig: any } = { capturedConfig: undefined };
+    class FakeBibleNote {
+        _content = 'stored';
+        isFocusing = false;
+        constructor(config: any) {
+            state.capturedConfig = config;
+        }
+        getIsFocusing() {
+            return this.isFocusing;
+        }
+        get content() {
+            return this._content;
+        }
+        set content(v: string) {
+            this._content = v;
+        }
+    }
+    return { state, FakeBibleNote };
+});
+vi.mock('bible-note', () => ({
+    BibleNote: bn.FakeBibleNote,
 }));
 
 vi.mock('../../helper/DirSource', () => ({
@@ -67,7 +95,9 @@ vi.mock('./Note', () => ({
 vi.mock('../../lang/langHelpers', () => ({
     getAllLangsAsync: h.getAllLangsAsyncMock,
     getCurrentLocale: h.getCurrentLocaleMock,
+    getLangDataAsync: h.getLangDataAsyncMock,
     initLangCss: h.initLangCssMock,
+    initAllLangCss: h.initAllLangCssMock,
 }));
 vi.mock('../../server/appHelpers', () => ({
     showFileOrDirExplorer: h.showFileOrDirExplorerMock,
@@ -94,7 +124,6 @@ vi.mock('../../helper/bible-helpers/bibleStyleHelpers', () => ({
 
 import {
     BIBLE_KEY_SETTING_NAME,
-    getBibleNoteConstructor,
     getBibleNoteData,
     getBibleNoteSelectedBibleKey,
     initBibleNote,
@@ -112,10 +141,13 @@ describe('bible-list/note bibleNoteHelpers', () => {
         h.pathJoinMock.mockImplementation((...p: string[]) => p.join('/'));
         h.pathResolveMock.mockImplementation((p: string) => `/abs/${p}`);
         h.getBibleFontFamilyMock.mockResolvedValue('FontFam');
+        h.getLangDataAsyncMock.mockResolvedValue({
+            getLookupData: async () => ({ namesMap: {}, locationsMap: {} }),
+        });
     });
 
     afterEach(() => {
-        delete (globalThis as any).AppBibleNote;
+        bn.state.capturedConfig = undefined;
     });
 
     test('getBibleNoteSelectedBibleKey falls back to KJV', () => {
@@ -126,40 +158,9 @@ describe('bible-list/note bibleNoteHelpers', () => {
         expect(getBibleNoteSelectedBibleKey()).toBe('ESV');
     });
 
-    test('getBibleNoteConstructor waits for the global constructor', async () => {
-        class Fake {}
-        (globalThis as any).AppBibleNote = Fake;
-        expect(await getBibleNoteConstructor()).toBe(Fake);
-    });
-
-    test('getBibleNoteConstructor polls until the constructor appears', async () => {
-        class Fake {}
-        setTimeout(() => {
-            (globalThis as any).AppBibleNote = Fake;
-        }, 120);
-        expect(await getBibleNoteConstructor()).toBe(Fake);
-    });
-
     describe('initBibleNote', () => {
         let capturedConfig: any;
         let capturedWatchCb: any;
-
-        class FakeBibleNote {
-            _content = 'stored';
-            isFocusing = false;
-            constructor(config: any) {
-                capturedConfig = config;
-            }
-            getIsFocusing() {
-                return this.isFocusing;
-            }
-            get content() {
-                return this._content;
-            }
-            set content(v: string) {
-                this._content = v;
-            }
-        }
 
         function genNoteItem(overrides: any = {}) {
             return {
@@ -171,7 +172,6 @@ describe('bible-list/note bibleNoteHelpers', () => {
         }
 
         async function setupInit(noteItem = genNoteItem()) {
-            (globalThis as any).AppBibleNote = FakeBibleNote;
             h.getAllLangsAsyncMock.mockResolvedValue([
                 {
                     locale: 'en',
@@ -200,14 +200,15 @@ describe('bible-list/note bibleNoteHelpers', () => {
                 note: note as any,
                 noteItem: noteItem as any,
             });
+            capturedConfig = bn.state.capturedConfig;
             return { note, bibleNote, noteItem };
         }
 
         test('builds the bible note and initializes non-current langs', async () => {
             await setupInit();
             expect(capturedConfig).toBeDefined();
-            // only the non-current locale gets initLangCss
-            expect(h.initLangCssMock).toHaveBeenCalledTimes(1);
+            // every locale's css is injected in one go, not per non-current one
+            expect(h.initAllLangCssMock).toHaveBeenCalledTimes(1);
             expect(capturedConfig.editorExtraFontFamilies).toEqual([
                 ['KhmerFont', 'km'],
             ]);
@@ -408,7 +409,6 @@ describe('bible-list/note bibleNoteHelpers', () => {
         });
 
         test('file watch skips when the item is unchanged or missing', async () => {
-            (globalThis as any).AppBibleNote = FakeBibleNote;
             h.getAllLangsAsyncMock.mockResolvedValue([]);
             h.getCurrentLocaleMock.mockReturnValue('en');
             h.watchMock.mockImplementation((_p: any, _o: any, cb: any) => {
@@ -453,7 +453,6 @@ describe('bible-list/note bibleNoteHelpers', () => {
         });
 
         test('handles a watch registration error', async () => {
-            (globalThis as any).AppBibleNote = FakeBibleNote;
             h.getAllLangsAsyncMock.mockResolvedValue([]);
             h.watchMock.mockImplementation(() => {
                 throw new Error('watch failed');

@@ -13,6 +13,7 @@ import {
     getScreenManagerBase,
     saveScreenManagersSetting,
 } from './screenManagerBaseHelpers';
+import { deleteScreenPersistedData } from './screenManagerDeleteHelpers';
 import ScreenManagerBase, { ScreenManagerBaseGhost } from './ScreenManagerBase';
 import type { RegisteredEventType } from '../../event/EventHandler';
 import appProvider from '../../server/appProvider';
@@ -21,6 +22,8 @@ import { type GroupMembershipInf } from './ScreenEventHandler';
 import type ScreenEventHandler from './ScreenEventHandler';
 import ScreenDrawManager from './ScreenDrawManager';
 import ScreenFocusManager from './ScreenFocusManager';
+import { initScreenBibleStepping } from '../screenBibleSteppingHelpers';
+import { applyForegroundDragData } from '../../presenter-foreground/foregroundDragHelpers';
 
 function setGroupMembershipInf(
     screenManagerBase: ScreenManagerBase,
@@ -187,11 +190,15 @@ export default class ScreenManager extends ScreenManagerBase {
         }
     }
 
-    get stageNumber() {
-        return super.stageNumber;
+    get stage() {
+        return super.stage;
     }
-    set stageNumber(stageNumber: number) {
-        super.stageNumber = stageNumber;
+    set stage(stageNumber: number) {
+        const isChanged = super.stage !== stageNumber;
+        super.stage = stageNumber;
+        if (isChanged) {
+            this.screenVaryAppDocumentManager.reapplyForStage();
+        }
         saveScreenManagersSetting()
             .catch(handleError)
             .finally(() => {
@@ -272,27 +279,69 @@ export default class ScreenManager extends ScreenManagerBase {
         this.fireUpdateEvent();
     }
 
+    // Deleting a screen is permanent, and the id is handed straight back out:
+    // `genNewScreenManagerBase` picks the lowest free id, so the next screen the
+    // user adds inherits everything still stored under this one's id. Every
+    // layer therefore drops its own live state and its own persisted keys here,
+    // and `deleteScreenPersistedData` sweeps the keys no layer owns.
+    //
+    // Note what is NOT called: `clear()`. Each layer's clear() routes through
+    // its `*WithSyncGroup` setter, which (a) broadcasts to every screen sharing
+    // this screen's color note — so deleting one member blanked the whole
+    // group's background/slide/bible — and (b) is refused outright on a locked
+    // screen, which left the deleted screen's data on disk and its timers,
+    // camera tracks and YouTube listeners running. The per-layer delete() does
+    // the same teardown locally instead.
     async delete() {
+        if (this.isDeleted) {
+            return;
+        }
         this.isDeleted = true;
         this.hide();
         for (const { eventName, listener } of this.registeredEventListeners) {
             this.removeOnEventListener(eventName, listener);
         }
-        this.clear();
+        this.registeredEventListeners.length = 0;
         this.varyAppDocumentEffectManager.delete();
         this.backgroundEffectManager.delete();
+        this.foregroundEffectManager.delete();
         this.screenBackgroundManager.delete();
         this.screenVaryAppDocumentManager.delete();
         this.screenBibleManager.delete();
         this.screenForegroundManager.delete();
         this.screenDrawManager.delete();
         this.screenFocusManager.delete();
+        this.divRef = null;
+        this.getElementsByDomSelector = () => [];
+        this.noSyncGroupMap.clear();
+        this.colorNote = null;
         deleteScreenManagerBaseCache(this.key);
+        // Drop the id from the manager list FIRST: `getValidOnScreen` treats
+        // that list as the set of live screens, so any later read of the
+        // content settings already ignores this screen even if the sweep below
+        // is interrupted.
         await saveScreenManagersSetting(this.screenId);
+        await deleteScreenPersistedData(this.screenId);
+        // The "on screen" badges in the document / background / foreground
+        // lists are driven by each LAYER's static update event, not by the
+        // screen manager's. Nothing here goes through a layer setter (that is
+        // the whole point — see above), so without firing them by hand the
+        // badges keep advertising a screen that no longer exists.
+        ScreenBackgroundManager.fireUpdateEvent();
+        ScreenVaryAppDocumentManager.fireUpdateEvent();
+        ScreenBibleManager.fireUpdateEvent();
+        ScreenForegroundManager.fireUpdateEvent();
+        // Instance for the previewer list, update for anything showing
+        // "is this on screen?" state for the content this screen was holding.
         this.fireInstanceEvent();
+        this.fireUpdateEvent();
+        this.destroy();
     }
 
-    receiveScreenDropped(droppedData: DroppedDataType) {
+    // Returns the promise of the layer that took the drop, so a caller can wait
+    // for the content to actually be on the screen before doing anything else.
+    // Callers that only want to fire it off may keep ignoring the result.
+    receiveScreenDropped(droppedData: DroppedDataType): Promise<void> {
         if (
             [
                 DragTypeEnum.BACKGROUND_COLOR,
@@ -302,25 +351,35 @@ export default class ScreenManager extends ScreenManagerBase {
                 DragTypeEnum.BACKGROUND_CAMERA,
             ].includes(droppedData.type)
         ) {
-            this.screenBackgroundManager.receiveScreenDropped(droppedData);
+            return this.screenBackgroundManager.receiveScreenDropped(
+                droppedData,
+            );
         } else if (
             [
                 DragTypeEnum.SLIDE,
+                DragTypeEnum.LYRIC_SLIDE,
                 DragTypeEnum.PDF_SLIDE,
                 DragTypeEnum.PPTX_SLIDE,
                 DragTypeEnum.DOCX_SLIDE,
             ].includes(droppedData.type)
         ) {
-            this.screenVaryAppDocumentManager.receiveScreenDropped(droppedData);
+            return this.screenVaryAppDocumentManager.receiveScreenDropped(
+                droppedData,
+            );
         } else if (
             [DragTypeEnum.BIBLE_ITEM, DragTypeEnum.LYRIC_ITEM].includes(
                 droppedData.type,
             )
         ) {
-            this.screenBibleManager.receiveScreenDropped(droppedData);
-        } else {
-            appLog(droppedData);
+            return this.screenBibleManager.receiveScreenDropped(droppedData);
+        } else if (droppedData.type === DragTypeEnum.FOREGROUND) {
+            return applyForegroundDragData(
+                this.screenForegroundManager,
+                droppedData.item,
+            );
         }
+        appLog(droppedData);
+        return Promise.resolve();
     }
 
     static getSyncGroupScreenEventHandler(message: ScreenMessageType) {
@@ -384,6 +443,7 @@ export default class ScreenManager extends ScreenManagerBase {
         messageUtils.listenForData(channel, (_, message: ScreenMessageType) => {
             this.applyScreenManagerSyncScreen(message);
         });
+        initScreenBibleStepping();
     }
 
     static async getGroupScreenManagers(

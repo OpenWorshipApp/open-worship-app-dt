@@ -1,14 +1,15 @@
 import type { MouseEvent } from 'react';
 
 import EventHandler from '../../event/EventHandler';
-import type { ContextMenuItemType } from '../../context-menu/appContextMenuHelpers';
 import { showAppContextMenu } from '../../context-menu/appContextMenuHelpers';
-import { genContextMenuItemIcon } from '../../context-menu/contextMenuIconHelpers';
 import appProvider from '../../server/appProvider';
+import {
+    genScreenIdMenuItems,
+    notifyChosenScreenIds,
+} from './screenChoosingHelpers';
 import type ScreenManagerBase from './ScreenManagerBase';
 import {
     getSelectedScreenManagerBases,
-    getAllScreenManagerBases,
     getScreenManagerBase,
 } from './screenManagerBaseHelpers';
 import type {
@@ -140,9 +141,44 @@ export default abstract class ScreenEventHandler<
         throw new Error('getInstance is not implemented.');
     }
 
-    static async chooseScreenIds(event: MouseEvent, isForceChoosing: boolean) {
+    /**
+     * Which screens the operator meant, answered here and nowhere else.
+     *
+     * `isForceChoosing` is "ignore the default, ASK"; `presetScreenIds` is its
+     * mirror image — "ignore the default, use THESE" — and is how an item
+     * pinned to a screen reaches it whatever happens to be selected. Force
+     * wins over a preset on purpose: the menu entry that passes it is the
+     * operator explicitly overriding the pin for one present.
+     */
+    static async chooseScreenIds(
+        event: MouseEvent,
+        isForceChoosing: boolean,
+        presetScreenIds: number[] = [],
+    ) {
+        const screenIds = await this.resolveScreenIds(
+            event,
+            isForceChoosing,
+            presetScreenIds,
+        );
+        // Published so a FOLLOWER of this same gesture — a playlist element's CC
+        // elements — can land on exactly these screens without asking a second
+        // question. Every exit above goes through here, the empty ones included:
+        // a follower has to be told "nowhere" as plainly as it is told "screen 2",
+        // or it sits armed holding its closure.
+        notifyChosenScreenIds(event, screenIds);
+        return screenIds;
+    }
+
+    private static async resolveScreenIds(
+        event: MouseEvent,
+        isForceChoosing: boolean,
+        presetScreenIds: number[] = [],
+    ) {
         if (!appProvider.isPagePresenter) {
             return [];
+        }
+        if (!isForceChoosing && presetScreenIds.length > 0) {
+            return presetScreenIds;
         }
         const selectedScreenManagerBases = isForceChoosing
             ? []
@@ -153,18 +189,9 @@ export default abstract class ScreenEventHandler<
             });
         }
         return new Promise<number[]>((resolve) => {
-            const screenManagerBases = getAllScreenManagerBases();
-            const menuItems: ContextMenuItemType[] = screenManagerBases.map(
-                (screenManagerBase) => {
-                    return {
-                        childBefore: genContextMenuItemIcon('display'),
-                        menuElement: `Screen id: ${screenManagerBase.screenId}`,
-                        onSelect: () => {
-                            resolve([screenManagerBase.screenId]);
-                        },
-                    };
-                },
-            );
+            const menuItems = genScreenIdMenuItems((screenId) => {
+                resolve([screenId]);
+            });
             showAppContextMenu(event as any, menuItems).promiseDone.then(() => {
                 resolve([]);
             });

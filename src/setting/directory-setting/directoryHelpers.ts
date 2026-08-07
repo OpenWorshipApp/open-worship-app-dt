@@ -39,6 +39,7 @@ export async function selectPathForChildDir(parentDirPath: string) {
         'Set according paths',
         `All child directories will be set under "${parentDirPath}"?`,
         {
+            cancelButtonLabel: 'No',
             confirmButtonLabel: 'Yes',
         },
     );

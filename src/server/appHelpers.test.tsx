@@ -44,7 +44,7 @@ const {
             },
             ytUtils: {
                 ffmpegBinPath: '/bin/ffmpeg',
-                denoBinPath: '/bin/deno',
+                qjsBinPath: '/bin/qjs',
                 getYTHelper,
             },
         },
@@ -371,30 +371,6 @@ describe('appHelpers', () => {
         expect(trashMock).toHaveBeenCalledTimes(1);
     });
 
-    test('exports bible verses into a timestamped docx file', async () => {
-        vi.useFakeTimers();
-        vi.setSystemTime(new Date('2024-01-02T03:04:05.000Z'));
-        const module = await loadModule();
-        appProviderMock.messageUtils.listenOnceForData.mockImplementation(
-            (
-                _replyEventName: string,
-                callback: (event: unknown, value: unknown) => void,
-            ) => {
-                callback({}, null);
-            },
-        );
-
-        await expect(
-            module.exportBibleMSWord([
-                {
-                    title: 'Psalm 1',
-                    body: 'Blessed is the one',
-                    fontFamily: null,
-                },
-            ]),
-        ).resolves.toBe('/downloads/owa-bible-verses_2024-01-02_03-04-05.docx');
-    });
-
     test('downloads images and reports each failure mode', async () => {
         const module = await loadModule();
         vi.spyOn(Date, 'now').mockReturnValue(111);
@@ -548,6 +524,46 @@ describe('appHelpers', () => {
             77,
         );
         expect(showProgressBarMessageMock).toHaveBeenCalledWith('all done');
+    });
+
+    test('resolves a direct stream URL and points yt-dlp at the shipped binaries', async () => {
+        const module = await loadModule();
+        const execPromiseMock = vi
+            .fn()
+            .mockResolvedValue(
+                '\nWARNING: something chatty\nhttps://stream/video.mp4\n',
+            );
+        appProviderMock.ytUtils.getYTHelper.mockResolvedValue({
+            execPromise: execPromiseMock,
+        });
+
+        await expect(
+            module.resolveMediaStreamUrl(' https://watch '),
+        ).resolves.toBe('https://stream/video.mp4');
+
+        expect(execPromiseMock).toHaveBeenCalledWith([
+            'https://watch',
+            '-g',
+            '-f',
+            'b[ext=mp4]/b',
+            '--no-playlist',
+            '--ffmpeg-location',
+            '/bin/ffmpeg',
+            '--no-js-runtimes',
+            '--js-runtimes',
+            'quickjs:/bin/qjs',
+        ]);
+    });
+
+    test('rejects when yt-dlp prints no stream URL', async () => {
+        const module = await loadModule();
+        appProviderMock.ytUtils.getYTHelper.mockResolvedValue({
+            execPromise: vi.fn().mockResolvedValue('ERROR: unsupported URL\n'),
+        });
+
+        await expect(
+            module.resolveMediaStreamUrl('https://watch'),
+        ).rejects.toThrow('yt-dlp returned no playable stream URL');
     });
 
     test('reuses existing downloads on error and rejects when no file path is available', async () => {

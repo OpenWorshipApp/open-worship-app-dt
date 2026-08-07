@@ -45,7 +45,7 @@ export default class ScreenManagerBase
     height = 1;
     _isSelected: boolean = false;
     _isLocked: boolean = false;
-    _stageNumber: number = 0;
+    _stage: number = 0;
     colorNote: string | null = null;
     private _isShowing: boolean;
     noSyncGroupMap: Map<string, boolean>;
@@ -107,15 +107,15 @@ export default class ScreenManagerBase
         this.isLocked = isLocked;
     }
 
-    get stageNumber() {
-        return this._stageNumber;
+    get stage() {
+        return this._stage;
     }
 
-    set stageNumber(stageNumber: number) {
-        if (stageNumber < 0) {
+    set stage(stage: number) {
+        if (stage < 0) {
             throw new Error('Stage number cannot be negative');
         }
-        this._stageNumber = stageNumber;
+        this._stage = stage;
     }
 
     get isShowing() {
@@ -302,7 +302,7 @@ export default class ScreenManagerBase
         throw new Error('delete is not implemented.');
     }
 
-    receiveScreenDropped(_droppedData: DroppedDataType) {
+    receiveScreenDropped(_droppedData: DroppedDataType): Promise<void> {
         throw new Error('receiveScreenDropped is not implemented.');
     }
 
@@ -335,7 +335,7 @@ export class ScreenManagerBaseGhost extends ScreenManagerBase {
 
     override async delete() {}
 
-    override receiveScreenDropped(_droppedData: DroppedDataType) {}
+    override async receiveScreenDropped(_droppedData: DroppedDataType) {}
 
     override sendScreenMessage(
         _message: ScreenMessageType,

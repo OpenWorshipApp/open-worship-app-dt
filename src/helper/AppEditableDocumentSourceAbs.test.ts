@@ -159,8 +159,14 @@ describe('AppEditableDocumentSourceAbs', () => {
         expect(() => TestDocument.getInstance('/docs/wrong.txt')).toThrow(
             'File extension txt does not match expected extensions: owa',
         );
-        expect(() => OtherTestDocument.getInstance('/docs/shared.owa')).toThrow(
-            'Invalid Instance',
+        // The instance cache is keyed by class name as well as mimetype+path,
+        // so a second document class over the same file gets its own entry
+        // rather than colliding with (and rejecting) the first one's instance.
+        const otherInstance = OtherTestDocument.getInstance('/docs/shared.owa');
+        expect(otherInstance).toBeInstanceOf(OtherTestDocument);
+        expect(otherInstance).not.toBe(instance);
+        expect(OtherTestDocument.getInstance('/docs/shared.owa')).toBe(
+            otherInstance,
         );
         expect(() => AppDocumentSourceAbs.getInstance('/docs/any.owa')).toThrow(
             'getInstance must be implemented in derived class',

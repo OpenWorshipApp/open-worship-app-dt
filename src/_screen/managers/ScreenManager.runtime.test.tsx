@@ -5,6 +5,7 @@ import { DragTypeEnum } from '../../helper/DragInf';
 const appLogMock = vi.fn();
 const saveScreenManagersSettingMock = vi.fn(async () => {});
 const deleteScreenManagerBaseCacheMock = vi.fn();
+const deleteScreenPersistedDataMock = vi.fn(async () => {});
 const listenForDataMock = vi.fn();
 const sendDataSyncMock = vi.fn(() => true);
 const sendDataMock = vi.fn();
@@ -74,11 +75,26 @@ class MockScreenManagerBase {
         this._stageNumber = value;
     }
 
+    // The real base exposes `stage`, and `ScreenManager`'s override reads
+    // `super.stage` to detect an actual change. Without this accessor that read
+    // resolves on the prototype to `undefined`, so the mock has to mirror the
+    // real API rather than only the persisted `stageNumber` field.
+    get stage() {
+        return this._stageNumber;
+    }
+
+    set stage(value: number) {
+        this._stageNumber = value;
+    }
+
     async getColorNote() {
         return this.colorNote;
     }
 
     hide = vi.fn();
+    destroy = vi.fn();
+    divRef: unknown = null;
+    getElementsByDomSelector = () => [] as HTMLElement[];
     fireUpdateEvent = vi.fn();
     fireInstanceEvent = vi.fn();
     fireColorNoteUpdateEvent = vi.fn();
@@ -104,6 +120,7 @@ class MockEffectManager {
 
 class MockBackgroundManager {
     static readonly eventNamePrefix = 'screen-bg-m';
+    static readonly fireUpdateEvent = vi.fn();
     static readonly receiveSyncScreen = vi.fn();
     static readonly receiveSyncVideoTime = vi.fn();
 
@@ -122,6 +139,7 @@ class MockBackgroundManager {
 
 class MockVaryManager {
     static readonly eventNamePrefix = 'screen-vary-app-document-m';
+    static readonly fireUpdateEvent = vi.fn();
     static readonly receiveSyncScreen = vi.fn();
 
     readonly screenId: number;
@@ -131,6 +149,7 @@ class MockVaryManager {
     delete = vi.fn();
     sendSyncScreen = vi.fn();
     registerEventListener = vi.fn(() => []);
+    reapplyForStage = vi.fn();
 
     constructor(screenManagerBase: any, _effectManager: unknown) {
         this.screenId = screenManagerBase.screenId;
@@ -139,6 +158,7 @@ class MockVaryManager {
 
 class MockBibleManager {
     static readonly eventNamePrefix = 'screen-ft-m';
+    static readonly fireUpdateEvent = vi.fn();
     static readonly sendSynTextStyle = vi.fn();
     static readonly receiveSyncScreen = vi.fn();
     static readonly receiveSyncSelectedIndex = vi.fn();
@@ -160,6 +180,7 @@ class MockBibleManager {
 
 class MockForegroundManager {
     static readonly eventNamePrefix = 'screen-foreground-m';
+    static readonly fireUpdateEvent = vi.fn();
     static readonly receiveSyncScreen = vi.fn();
 
     readonly screenId: number;
@@ -253,6 +274,10 @@ vi.mock('./screenManagerBaseHelpers', () => ({
         return baseInstances.get(screenId) ?? null;
     }),
     saveScreenManagersSetting: saveScreenManagersSettingMock,
+}));
+
+vi.mock('./screenManagerDeleteHelpers', () => ({
+    deleteScreenPersistedData: deleteScreenPersistedDataMock,
 }));
 
 vi.mock('../../server/appProvider', () => ({
@@ -459,8 +484,39 @@ describe('ScreenManager runtime orchestration', () => {
         ).toHaveBeenCalled();
         expect(screenManager.screenBibleManager.delete).toHaveBeenCalled();
         expect(screenManager.screenForegroundManager.delete).toHaveBeenCalled();
+        expect(screenManager.screenDrawManager.delete).toHaveBeenCalled();
+        expect(screenManager.screenFocusManager.delete).toHaveBeenCalled();
+        // all three effect managers, not just the two that used to be torn down
+        expect(
+            screenManager.backgroundEffectManager.delete,
+        ).toHaveBeenCalledOnce();
+        expect(
+            screenManager.varyAppDocumentEffectManager.delete,
+        ).toHaveBeenCalledOnce();
+        expect(
+            screenManager.foregroundEffectManager.delete,
+        ).toHaveBeenCalledOnce();
+        // clear() is deliberately NOT used: it routes through the sync-group
+        // setters, which would blank the sibling sharing this screen's colour
+        // note, and a locked screen refuses it outright.
+        expect(
+            screenManager.screenBackgroundManager.clear,
+        ).not.toHaveBeenCalled();
+        expect(screenManager.screenBibleManager.clear).not.toHaveBeenCalled();
         expect(deleteScreenManagerBaseCacheMock).toHaveBeenCalledWith('3');
         expect(saveScreenManagersSettingMock).toHaveBeenCalledWith(3);
+        expect(deleteScreenPersistedDataMock).toHaveBeenCalledWith(3);
+        // the "on screen" badges elsewhere in the app listen to the LAYER
+        // statics, and nothing in the delete path goes through a layer setter
+        expect(MockBackgroundManager.fireUpdateEvent).toHaveBeenCalled();
+        expect(MockVaryManager.fireUpdateEvent).toHaveBeenCalled();
+        expect(MockBibleManager.fireUpdateEvent).toHaveBeenCalled();
+        expect(MockForegroundManager.fireUpdateEvent).toHaveBeenCalled();
+
+        // a second delete is a no-op rather than a second round of teardown
+        await screenManager.delete();
+        expect(saveScreenManagersSettingMock).toHaveBeenCalledTimes(1);
+        expect(deleteScreenPersistedDataMock).toHaveBeenCalledTimes(1);
     });
 
     test('propagates lock state to same-group members only', async () => {
@@ -641,7 +697,7 @@ describe('ScreenManager runtime orchestration', () => {
         sibling.colorNote = 'green';
 
         screenManager.isLocked = true;
-        screenManager.stageNumber = 4;
+        screenManager.stage = 4;
         screenManager.isSelected = true;
         await screenManager.setColorNote('green');
         await Promise.resolve();
@@ -805,11 +861,30 @@ describe('ScreenManager runtime orchestration', () => {
         const { default: ScreenManager } = await import('./ScreenManager');
         const screenManager = new ScreenManager(14);
 
-        screenManager.stageNumber = 3;
-        expect(screenManager.stageNumber).toBe(3);
+        screenManager.stage = 3;
+        expect(screenManager.stage).toBe(3);
 
         screenManager.isSelected = true;
         expect(screenManager.isSelected).toBe(true);
+    });
+
+    test('a stage change re-derives the presented slide, an unchanged one does not', async () => {
+        const { default: ScreenManager } = await import('./ScreenManager');
+        const screenManager = new ScreenManager(21);
+        const varyManager = screenManager.screenVaryAppDocumentManager;
+
+        // The presented slide is derived for one specific stage, so moving the
+        // stage has to re-derive it — otherwise the `St:` label changes while
+        // the mini preview and the projected screen keep the old layout.
+        screenManager.stage = 1;
+        expect(varyManager.reapplyForStage).toHaveBeenCalledTimes(1);
+
+        // Re-assigning the same stage is a no-op and must not re-render.
+        screenManager.stage = 1;
+        expect(varyManager.reapplyForStage).toHaveBeenCalledTimes(1);
+
+        screenManager.stage = 0;
+        expect(varyManager.reapplyForStage).toHaveBeenCalledTimes(2);
     });
 
     test('an init message re-syncs once more after the screen has settled', async () => {
@@ -843,8 +918,15 @@ describe('ScreenManager runtime orchestration', () => {
 
         ScreenManager.initReceiveScreenMessage();
 
-        const [channel, listener] = listenForDataMock.mock.calls.at(-1) as any;
-        expect(channel).toBe('screen-message-channel');
+        // `initReceiveScreenMessage` also subscribes the screen-output bible
+        // stepping shortcut, so pick the channel out instead of taking the last
+        const [, listener] = listenForDataMock.mock.calls.find(
+            ([channel]) => channel === 'screen-message-channel',
+        ) as any;
+        expect(listenForDataMock).toHaveBeenCalledWith(
+            'app:main:change-bible',
+            expect.any(Function),
+        );
         listener(null, {
             screenId: 16,
             type: 'visible',

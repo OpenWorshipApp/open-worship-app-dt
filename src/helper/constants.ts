@@ -1,7 +1,6 @@
 const SELECT_DIR = 'select-dir';
 export const dirSourceSettingNames = {
     APP_DOCUMENT: `${SELECT_DIR}-app-document`,
-    LYRIC: `${SELECT_DIR}-lyric`,
     PLAYLIST: `${SELECT_DIR}-playlist`,
     BACKGROUND_IMAGE: `${SELECT_DIR}-image-bg`,
     BACKGROUND_VIDEO: `${SELECT_DIR}-video-bg`,
@@ -14,7 +13,6 @@ export const dirSourceSettingNames = {
 export const defaultDataDirNames = {
     APP_DOCUMENT: 'documents',
     PLAYLIST: 'playlists',
-    LYRIC: 'lyrics',
     BACKGROUND_IMAGE: 'images',
     BACKGROUND_VIDEO: 'videos',
     BACKGROUND_WEB: 'webs',

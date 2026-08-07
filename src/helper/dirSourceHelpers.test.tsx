@@ -237,30 +237,30 @@ describe('dirSourceHelpers', () => {
         ]);
     });
 
-    test('maps file-update events back to the owning managed file', async () => {
-        const listeners: Record<string, (data: unknown) => void> = {};
+    // Mapping a change inside `<doc>.histories` back to the document is no
+    // longer done here: `useFilePaths` used to subscribe to `file-update` and
+    // walk its own list to find the owner, which meant every listing of every
+    // directory paid for it. `DirSource.alertFileChanging` does it once, at the
+    // one place that knows a change happened at all — covered by
+    // `DirSource.test.ts`.
+    test('takes no file-update subscription of its own', async () => {
+        const registeredEvents: string[][] = [];
         const dirSource = {
-            registerEventListener: vi.fn(
-                (events: string[], callback: (data: unknown) => void) => {
-                    for (const event of events) {
-                        listeners[event] = callback;
-                    }
-                    return events;
-                },
-            ),
+            registerEventListener: vi.fn((events: string[]) => {
+                registeredEvents.push(events);
+                return events;
+            }),
             unregisterEventListener: vi.fn(),
             getFilePaths: vi
                 .fn()
                 .mockResolvedValue(['/docs/a.owa', '/docs/b.owa']),
         };
-        const updateSpies: Record<string, ReturnType<typeof vi.fn>> = {};
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
-            updateSpies[filePath] ??= vi.fn();
             return {
                 src: `src:${filePath}`,
                 colorNote: null,
                 getColorNote: vi.fn(async () => null),
-                fireUpdateEvent: updateSpies[filePath],
+                fireUpdateEvent: vi.fn(),
             };
         });
 
@@ -281,18 +281,7 @@ describe('dirSourceHelpers', () => {
             await Promise.resolve();
         });
 
-        // A change inside `<doc>.histories` maps back to the document itself.
-        await act(async () => {
-            listeners['file-update']?.('/docs/a.owa.histories');
-        });
-        expect(updateSpies['/docs/a.owa']).toHaveBeenCalledTimes(1);
-
-        // An exact match fires once for the resolved target file and once for
-        // the changed path itself (the same file here).
-        await act(async () => {
-            listeners['file-update']?.('/docs/b.owa');
-        });
-        expect(updateSpies['/docs/b.owa']).toHaveBeenCalledTimes(2);
+        expect(registeredEvents.flat()).not.toContain('file-update');
     });
 
     test('reloads dir sources when the reload event fires', async () => {
@@ -346,15 +335,32 @@ describe('dirSourceHelpers', () => {
         expect(observedValues).toContain(secondDirSource);
     });
 
-    test('registers file source refresh and event listeners and cleans them up', async () => {
+    /**
+     * A file source instance as the two hooks use it when they are NAMED a file:
+     * they subscribe to that one file rather than to every file source in the
+     * app, so the registration lives on the instance.
+     */
+    function genFileSourceStub(registeredCallbacks: Array<(p?: any) => void>) {
+        const unregisterEventListener = vi.fn();
+        fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
+            return {
+                filePath,
+                registerEventListener: vi.fn(
+                    (_events: string[], callback: (p?: any) => void) => {
+                        registeredCallbacks.push(callback);
+                        return `listener-${registeredCallbacks.length}`;
+                    },
+                ),
+                unregisterEventListener,
+            };
+        });
+        return unregisterEventListener;
+    }
+
+    test('subscribes to the NAMED file source and cleans up', async () => {
         const observedPayloads: string[] = [];
         const registeredCallbacks: Array<(payload?: string) => void> = [];
-        registerFileSourceEventListenerMock.mockImplementation(
-            (_events: string[], callback: (payload?: string) => void) => {
-                registeredCallbacks.push(callback);
-                return `listener-${registeredCallbacks.length}`;
-            },
-        );
+        const unregisterEventListener = genFileSourceStub(registeredCallbacks);
 
         function Probe() {
             useFileSourceRefreshEvents(['update'], '/docs/slide.owa');
@@ -377,7 +383,63 @@ describe('dirSourceHelpers', () => {
             root.render(<Probe />);
         });
 
+        // Both hooks went to the instance, and NOT to the app-wide listener —
+        // a named file must not be told about every other file's events.
+        expect(fileSourceGetInstanceMock).toHaveBeenCalledWith(
+            '/docs/slide.owa',
+        );
+        expect(registeredCallbacks).toHaveLength(2);
+        expect(registerFileSourceEventListenerMock).not.toHaveBeenCalled();
+
+        await act(async () => {
+            registeredCallbacks[0]?.();
+            registeredCallbacks[1]?.('payload');
+            await Promise.resolve();
+        });
+
+        expect(observedPayloads).toEqual(['payload']);
+
+        await act(async () => {
+            root?.unmount();
+        });
+        root = null;
+
+        expect(unregisterEventListener).toHaveBeenCalledWith('listener-1');
+        expect(unregisterEventListener).toHaveBeenCalledWith('listener-2');
+    });
+
+    test('falls back to the app-wide listener with no file named', async () => {
+        const observedPayloads: string[] = [];
+        const registeredCallbacks: Array<(payload?: string) => void> = [];
+        registerFileSourceEventListenerMock.mockImplementation(
+            (_events: string[], callback: (payload?: string) => void) => {
+                registeredCallbacks.push(callback);
+                return `listener-${registeredCallbacks.length}`;
+            },
+        );
+
+        function Probe() {
+            useFileSourceRefreshEvents(['update']);
+            useFileSourceEvents<string>(
+                ['update'],
+                (payload) => {
+                    observedPayloads.push(payload);
+                },
+                ['dep'],
+            );
+            return null;
+        }
+
+        await act(async () => {
+            if (!container) {
+                throw new Error('Missing test container');
+            }
+            root = createRoot(container);
+            root.render(<Probe />);
+        });
+
         expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
+        expect(fileSourceGetInstanceMock).not.toHaveBeenCalled();
 
         await act(async () => {
             registeredCallbacks[0]?.();
@@ -403,12 +465,7 @@ describe('dirSourceHelpers', () => {
     test('keeps file source listeners registered while using the latest callback', async () => {
         const observedPayloads: string[] = [];
         const registeredCallbacks: Array<(payload?: string) => void> = [];
-        registerFileSourceEventListenerMock.mockImplementation(
-            (_events: string[], callback: (payload?: string) => void) => {
-                registeredCallbacks.push(callback);
-                return `listener-${registeredCallbacks.length}`;
-            },
-        );
+        const unregisterEventListener = genFileSourceStub(registeredCallbacks);
 
         function Probe({ tag }: Readonly<{ tag: string }>) {
             useFileSourceRefreshEvents(['update'], '/docs/slide.owa');
@@ -430,13 +487,13 @@ describe('dirSourceHelpers', () => {
             root = createRoot(container);
             root.render(<Probe tag="first" />);
         });
-        expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
+        expect(registeredCallbacks).toHaveLength(2);
 
         await act(async () => {
             root?.render(<Probe tag="second" />);
         });
-        expect(registerFileSourceEventListenerMock).toHaveBeenCalledTimes(2);
-        expect(unregisterFileSourceEventListenerMock).not.toHaveBeenCalled();
+        expect(registeredCallbacks).toHaveLength(2);
+        expect(unregisterEventListener).not.toHaveBeenCalled();
 
         await act(async () => {
             registeredCallbacks[0]?.();

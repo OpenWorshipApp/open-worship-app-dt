@@ -4,10 +4,11 @@
 # binary* (yt-dlp.exe) from source on Windows — the same artifact the app ships
 # and runs. The app invokes yt-dlp through yt-dlp-wrap
 # (electron/client/ytUtils.ts -> bin-helper/yt/yt-dlp) to download audio/video
-# and hand it to ffmpeg. This is the Windows counterpart of mac-build-yt-dlp.sh:
-# instead of DOWNLOADING the prebuilt yt-dlp.exe release, it builds that binary
-# yourself from a pinned source tag — reproducible, and no trusting a prebuilt
-# download.
+# and hand it to ffmpeg. This is the Windows counterpart of mac-build-yt-dlp.sh,
+# and it IS how that binary is produced: nothing is downloaded at install time
+# any more, so what it builds from a pinned source tag — committed into the
+# platform dir below and copied in by extra-work/copy-build.mjs — is what every
+# package ships.
 #
 # yt-dlp is pure Python, so unlike the sibling ffmpeg/node/qjs scripts there is
 # no meaningful "feature-minimal" knob: PyInstaller bundles a whole Python
@@ -234,6 +235,7 @@ Write-Host "    binary : $outBinary"
 Write-Host "    arch   : $arch (single-arch; see the arch note in the header)"
 Write-Host "    size   : ${sizeMB} MB"
 Write-Host ''
-Write-Host 'Ship it by copying to where the app loads yt-dlp, e.g.:'
-Write-Host "    Copy-Item '$outBinary' '$scriptDir\..\bin-helper\yt-dlp_win_$Version.exe'"
-Write-Host '    # or into a running dist tree: bin-helper\dist\yt\yt-dlp.exe'
+$shipDir = if ($arch -eq 'arm64') { 'win-arm64' } else { 'win' }
+Write-Host "Ship it by copying into the $arch platform dir (copy-build.mjs picks it up by" -ForegroundColor Yellow
+Write-Host "the 'yt-dlp' name prefix and installs it as bin-helper\yt\yt-dlp.exe):" -ForegroundColor Yellow
+Write-Host "    Copy-Item '$outBinary' '$scriptDir\$shipDir\'"

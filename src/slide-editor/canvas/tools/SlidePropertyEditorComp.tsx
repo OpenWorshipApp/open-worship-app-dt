@@ -130,6 +130,7 @@ function RenderDimEditComp() {
             tran('This will change all Slides'),
             tran('Are you sure to apply this dimension to all slides?'),
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         );

@@ -1,35 +1,40 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <!-- TODO: change favicon.ico -->
-        <link rel="icon" href="/favicon.ico" />
-        <!-- TODO: change logo192.png -->
-        <link rel="apple-touch-icon" href="/logo192.png" />
-        <link rel="manifest" href="/manifest.json" />
-        <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:">prod -->
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="Open Worship App" />
-        <title>Lyric Editor</title>
-    </head>
 
-    <body style="background-color: transparent !important">
-        <noscript>You need to enable JavaScript to run this app.</noscript>
-        <div id="root">
-            <!-- TODO: change loading.gif -->
-            <img
-                style="
-                    position: absolute;
-                    width: 70px;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-35px);
-                "
-                class="loading"
-                src="/loading.gif"
-                alt="loading"
-            />
+<head>
+    <meta charset="utf-8" />
+    <!-- TODO: change favicon.ico -->
+    <link rel="icon" href="/favicon.ico" />
+    <!-- TODO: change logo192.png -->
+    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <!-- prod<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; worker-src 'self' blob:">prod -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Open Worship App" />
+    <title>Lyric Editor</title>
+    <style>
+        #editorPanel,
+        #previewPanel,
+        #openLyricPanel {
+            display: none;
+        }
+    </style>
+</head>
+
+<body style="background-color: transparent !important">
+    <div id="appLoading" class="app-loading" data-state="loading" role="status" aria-live="polite"
+        aria-label="Initializing editor">
+        <div class="app-loading__panel">
+            <div id="appLoadingSpinner" class="app-loading__spinner" aria-hidden="true"></div>
+            <p class="app-loading__eyebrow">Lyric Editor</p>
+            <h1 class="app-loading__title">Initializing editor</h1>
+            <p id="appLoadingMessage" class="app-loading__message">
+                Loading editor...
+            </p>
         </div>
-        <script type="module" src="/src/lyricEditor.tsx"></script>
-    </body>
+    </div>
+    <template data-ol-mount="dashboardShell"></template>
+    <script type="module" src="/src/lyricEditor.tsx"></script>
+</body>
+
 </html>

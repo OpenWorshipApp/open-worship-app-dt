@@ -1,4 +1,4 @@
-import type { BibleNote } from 'BibleNote.js';
+import type { BibleNote } from 'bible-note';
 
 import appProvider from '../../server/appProvider';
 import { getAllLangsAsync } from '../../lang/langHelpers';

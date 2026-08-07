@@ -98,14 +98,26 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
     }
 
     static parseAllForegroundData(foregroundData: any): ForegroundDataType {
-        const countdownData = foregroundData['countdownData'] ?? null;
-        if (countdownData !== null) {
-            countdownData.dateTime = new Date(countdownData.dateTime);
-        }
-        const stopwatchData = foregroundData['stopwatchData'] ?? null;
-        if (stopwatchData !== null) {
-            stopwatchData.dateTime = new Date(stopwatchData.dateTime);
-        }
+        // Rehydrated into NEW objects rather than by writing `dateTime` back
+        // onto the argument. The argument is an entry of the on-screen
+        // foreground map, which is memoized and shared — mutating it in place
+        // turned the stored ISO string into a `Date` for every later reader.
+        const rawCountdownData = foregroundData['countdownData'] ?? null;
+        const countdownData =
+            rawCountdownData === null
+                ? null
+                : {
+                      ...rawCountdownData,
+                      dateTime: new Date(rawCountdownData.dateTime),
+                  };
+        const rawStopwatchData = foregroundData['stopwatchData'] ?? null;
+        const stopwatchData =
+            rawStopwatchData === null
+                ? null
+                : {
+                      ...rawStopwatchData,
+                      dateTime: new Date(rawStopwatchData.dateTime),
+                  };
         const newForegroundData = {
             countdownData,
             stopwatchData,
@@ -714,6 +726,33 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             ScreenForegroundManager.parseAllForegroundData({}),
             true,
         );
+    }
+
+    delete() {
+        // Local teardown only — deliberately NOT clear(). clear() ends in
+        // saveForegroundData, which both re-writes this screen's entry and
+        // broadcasts to the color-note group, and it bails out entirely on a
+        // locked screen — leaving the countdown's rAF loop, the camera's media
+        // tracks and the web widgets alive for a screen that no longer exists.
+        // Removing the containers directly runs each widget's own remove
+        // handler, which is what actually stops them.
+        for (const [key, data] of Object.entries(this.foregroundData)) {
+            if (!this.rendererMap.has(key)) {
+                continue;
+            }
+            if (Array.isArray(data)) {
+                for (const item of data) {
+                    this.removeDivContainer(item);
+                }
+            } else {
+                this.removeDivContainer(data);
+            }
+        }
+        this.foregroundData = ScreenForegroundManager.parseAllForegroundData(
+            {},
+        );
+        this._div = null;
+        super.delete();
     }
 
     get containerStyle(): CSSProperties {

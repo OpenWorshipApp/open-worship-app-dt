@@ -183,8 +183,9 @@ assert via mini-screen, and mark SC-01/02 `BLOCKED→EX-02` with the reason.
 ### S11 — Bible Reader deep-dive `[RD-01..12]`
 - Incremental picker: char-by-char book → chapter → verse; `Tab` completes, `Escape`
   clears, `Ctrl+Escape` clears a chunk; extra buttons mirror the keys.
-- Full ref `John 3:16` resolves to the exact verse (reader page only — the modal picker
-  book-filters, a known Low).
+- Full ref `John 3:16` does **not** resolve here either — the reader book-filters exactly
+  like the modal (both share `InputHandlerComp`). Known Low; assert the book-filter
+  behaviour, not a resolved verse (KB §5).
 - History entry re-runs a lookup; bible-version switch re-renders the verse.
 - **Advance lookup toggle** opens the **Bible Find** split: type a find query, results
   paginate via the page-number buttons.
@@ -248,6 +249,91 @@ Notes:
 **Theme `[LT-03..05]`** — after the locale block: dark / light / System via ST-05,
 screenshot presenter + settings, check contrast and that no text goes invisible, then
 **restore**.
+
+### S19 — Media download `[MD-01..03]` — **MANDATORY in every run** (needs network)
+
+The only flow that runs the shipped prebuilt binaries (`bin-helper/yt/yt-dlp` +
+`bin-helper/ffmpeg/bin` + `bin-helper/qjs/qjs`, copied in by
+`extra-work/copy-build.mjs`). Everything else in the matrix passes with them broken.
+
+Canonical link (always this one): `https://youtu.be/ZSsOrph7rJs?list=RDZSsOrph7rJs`
+
+1. **MD-01 video** — Background → **Videos** → 🖱️R the empty list area → **Download From
+   URL** → fill the link → **Ok**. Watch the progress bar; then assert a new file in the
+   videos dir and its thumbnail in the tab. This covers the ffmpeg **merge** path.
+2. **MD-02 audio** — Background → **♫Audios♫** → same menu; confirm the popup says
+   **Audio URL:** → **Ok**. Assert an **`.mp3`** lands in the audios dir. This is the only
+   check of the ffmpeg **mp3 encoder** (`-x --audio-format mp3` → `libmp3lame`).
+3. **MD-03** — reopen the popup, enter a non-`http` string → **Ok** → toast "Invalid URL",
+   no download.
+4. Optional runtime proof: while yt-dlp runs, read its command line — it must carry
+   `--no-js-runtimes --js-runtimes quickjs:<…>\bin-helper\qjs\qjs.exe`.
+
+Evidence = the file on disk (or the refreshed panel), never the toast alone. On failure,
+follow the triage list in coverage-matrix §MD before filing: an `HTTP Error 403` mid-
+transfer is usually YouTube throttling (retry once), whereas `No supported JavaScript
+runtime could be found` is a real Critical. Clean up any orphaned `temp-*.part` left by a
+failed attempt (known app bug — the error path does not remove partials).
+
+### S20 — Playlist deep pass `[PL-10, PL-29, PL-32..76, PL-81..100]` — the whole run sheet
+
+The recipe for **playlist deep mode** (SKILL.md §6f), run whenever the argument is
+`playlist` / `run sheet`, and in its short form inside every full-coverage run. **Read
+KB §14 in full first** — it is the model behind every row, and several of these rows exist
+because the behaviour they assert was once "fixed" the wrong way.
+
+Coverage accounting is ON in this mode: `coverage-<runid>.json` with `"focus":"playlist"`,
+every scope row ending with a status.
+
+1. **P0 fixture** — create `zz-robot-<runid>` (never the user's own sheets) and drop in one
+   of each kind: document, single slide, lyric slide (carries its `stage` — PL-64),
+   background, bible verse, foreground widget, audio. `[PL-10, PL-29, PL-43, PL-44, PL-57]`
+2. **P1 storage kinds** — edit a referenced document → the sheet projects the NEW text; a
+   stored countdown replays its own preset, never a resolved date; the row's title is a
+   captured label and does not follow a rename. `[PL-29, PL-37, PL-44, PL-52, PL-69]`
+3. **P2 the tree** — expand/reorder/move-to-edges with their gating, Duplicate, Disable
+   (incl. a parked document's slides), the on-screen indicator at all three levels,
+   expansion memory following the DOCUMENT not the position. `[PL-32..36, PL-41, PL-53,
+   PL-62, PL-86..88]`
+4. **P3 actions** — the three-level **Add Action** menu (**Other Clear FG Items**);
+   **fire all 13 clear actions against a showing screen**; the two `Screen: Show` /
+   `Screen: Hide` lines, which ask WHICH SCREENS before they are added and then run on
+   those and no others; then the 4 run actions and their menus, which must offer no screen
+   family. `[PL-71..74, PL-95, PL-96, PL-97, PL-100]`
+5. **P4 CC elements** — attach by drop and by menu, propagate onto the screens in ONE
+   gesture with **no second "which screen?" question**, reveal-original, export/import
+   round trip, and the two distinct refusal toasts. `[PL-89..93]`
+6. **P5 screen resolution** — click / drag-to-mini-screen / **Set Specific Screen**; the
+   pin persists and beats the selected screens but loses to a force-choose and to a drag;
+   a missing pinned screen degrades. **Discharge the mandatory §6a block here** by
+   presenting from the sheet and driving the `screen.html` target. `[PL-33, PL-35,
+   PL-81..85, SP-01/02, SC-01/02]`
+7. **P6 the preview as a player** — first press works with nothing clicked (the widget
+   focuses itself); walk the sheet **folded down** and confirm nothing but a PARKED line is
+   stepped over, that the landing UNFOLDS, and that a document is entered at its first
+   slide; fold memory, restricted slide menu, widget frame, every menu mirroring the
+   tree's, the clocks' pill. `[PL-38, PL-42, PL-46..48, PL-58..61, PL-94, PL-98, PL-99]`
+8. **P7 failure surfaces** — empty/unreadable placeholders; a hand-corrupted `.owp` entry
+   becomes ONE error row, the rest still renders, and the bad entry **survives the next
+   write**; the deliberate no-ops. `[PL-50, PL-51, PL-55, PL-56]`
+9. **P8 archives** — export → import round trip on real files; all-or-nothing failure with
+   a folder unset; same-bundle re-import reuse + `(1)` de-duplication; a bible entry
+   re-created in the **Default** list; a CDP-driven drop of a real `.owapl.tar.gz`.
+   `[PL-39, PL-40, PL-45, PL-65..68, PL-76]` (+ `PL-77..80`, `NAV-17/18` when the run
+   covers the document/whole-data archives too)
+10. **P9 performance** — measured, not eyeballed: no `Maximum update depth exceeded` with a
+    ~90-slide document expanded, the clicked row marks immediately, an IDLE list opens no
+    `.owp` files, a collapsed document releases its slides, and a row click does not
+    repaint every file row in the window. `[PL-63, PL-70]`
+11. **P10 locale + restore** — §S15 over this panel and its widget (KB §14.8 lists the
+    strings; a missing Khmer key blanks the menu). Then delete the fixture, remove what the
+    import created, unpark/unpin, stop any interval, hide the screen — and name in the
+    report anything you could not remove.
+
+**Severity guidance:** a row that reaches the wrong screen, a present that raises a second
+screen question, or a run that steps over a line it should stop on are **High** — they put
+the wrong thing in front of a congregation. A stale label or an untranslated string is
+**Low**, a blank Khmer menu is **Critical** (it is the `tran()` throw).
 
 ### S16 — Edge & empty states (opportunistic)
 - `Slide Editor` with no document → alert, no navigation (NAV-03).
@@ -327,9 +413,25 @@ Write to `test-results/robot-test/report-<timestamp>.md`:
 - Restored: <screen hidden, layers cleared, state restored — or what was left and why>
 - (If skipped: `BLOCKED→EX-02` + the user's live-use reason — never skip silently)
 
+## Mandatory media block (required in EVERY report)
+
+- MD-01 <status> — video file written: `<path>` (<size>)
+- MD-02 <status> — mp3 written: `<path>` (<size>)
+- Runtime line seen: `--no-js-runtimes --js-runtimes quickjs:<…>` (or: not captured)
+- (If skipped: `BLOCKED` + "no network" — never skip silently; a 403 is a retry, not a skip)
+
+## Playlist deep mode (required when the focus was `playlist` — S20)
+
+- Fixture: `zz-robot-<runid>` · torn down: <yes / what was left behind and why>
+- Phases: P0 <status> · P1 <status> · P2 <status> · P3 <status> · P4 <status> ·
+  P5 <status> · P6 <status> · P7 <status> · P8 <status> · P9 <status> · P10 <status>
+- Screen actions fired against a SHOWING screen: <n>/13 (PL-72/74)
+- Folded-sheet walk (PL-99): <lines visited> / <lines in sheet>, stepped over: <the parked ones>
+- Performance (PL-63/70): <the numbers — update-depth errors, idle `.owp` reads, row-click repaints>
+
 ## Coverage (full-coverage runs — from coverage-<runid>.json)
 
-- Matrix version: <date> · rows total: 535
+- Matrix version: <date> · rows total: 634 (or 66 in playlist deep mode — see its scope set)
 - PASS <n> · FAIL <n> · PARTIAL <n> · BLOCKED <n> · EXCLUDED <n>
 - **Coverage: <exercised> / <in-scope> = <xx.x>%**  (exercised = PASS+FAIL;
   in-scope = total − EXCLUDED)

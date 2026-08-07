@@ -1,3 +1,17 @@
+import { beforeEach } from 'vitest';
+
+import { releaseAllDerivedSettings } from '../helper/derivedSettingRegistry';
+
+// Settings whose parsed form is memoized are keyed on the raw setting string,
+// which is exact in the app but not across tests: a test that mocks `getSetting`
+// to return the same string as the previous one while expecting a different
+// parse would be served the stale entry. Dropping them per test costs nothing
+// and removes the trap. The registry is import-free on purpose so this does not
+// pull the app graph into node-environment tests.
+beforeEach(() => {
+    releaseAllDerivedSettings();
+});
+
 // Provides an in-memory `localStorage` for node-environment tests.
 // jsdom-environment tests already supply their own `localStorage`, so this
 // polyfill only installs when the global is missing.

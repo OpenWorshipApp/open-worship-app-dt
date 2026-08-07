@@ -162,6 +162,12 @@ type YTHelper = {
         args: string[],
         options?: { cwd?: string; env?: NodeJS.ProcessEnv },
     ) => YTHelper;
+    // For the calls that only want yt-dlp's stdout (`-g`, `-J`, ...) rather
+    // than a download to follow along with.
+    execPromise: (
+        args: string[],
+        options?: { cwd?: string; env?: NodeJS.ProcessEnv },
+    ) => Promise<string>;
     ytDlpProcess: {
         pid: number;
     };
@@ -190,6 +196,7 @@ export type AppProviderType = Readonly<
         messageUtils: MessageUtilsType;
         httpUtils: {
             request: typeof http.request;
+            requestHttp: typeof http.request;
         };
         fileUtils: FileUtilsType;
         pathUtils: PathUtilsType;
@@ -208,8 +215,7 @@ export type AppProviderType = Readonly<
         ytUtils: {
             getYTHelper: () => Promise<YTHelper>;
             ffmpegBinPath: string;
-            denoBinPath: string;
-            jsRuntimeBinPath: string | null;
+            qjsBinPath: string;
         };
         windowTitle: string;
         POPUP_FRAME_NAME_PREFIX: string;

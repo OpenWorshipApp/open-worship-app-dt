@@ -109,8 +109,36 @@ export function handleClassNameAction<T extends HTMLElement>(
     handle(element as T);
 }
 
+/**
+ * The box that actually SCROLLS this element, or null when nothing does.
+ *
+ * Needed wherever "is it off the bottom?" is asked, because the element's own
+ * container is often the full height of its content — a floating widget's body
+ * scrolls it, not the list inside. `touchDragHelpers` has a sibling of this that
+ * also answers for the horizontal axis and honours
+ * `data-scroll-container-selector`; this one is the plain vertical question.
+ */
+export function findVerticalScrollingParent(element: HTMLElement) {
+    let parentElement = element.parentElement;
+    while (parentElement !== null) {
+        if (
+            parentElement.scrollHeight > parentElement.clientHeight &&
+            /auto|scroll|overlay/.test(
+                getComputedStyle(parentElement).overflowY,
+            )
+        ) {
+            return parentElement;
+        }
+        parentElement = parentElement.parentElement;
+    }
+    return null;
+}
+
 export function handleActiveSelectedElementScrolling(target: Node) {
     if (target instanceof HTMLElement === false) {
+        return;
+    }
+    if (checkIsDisabled(target)) {
         return;
     }
     const scrollContainerSelector = target.dataset.scrollContainerSelector;
@@ -153,6 +181,7 @@ export function handleAutoHide(targetDom: HTMLDivElement) {
         width: '25px',
         textAlign: 'center',
         padding: '0px',
+        boxShadow: '0px 0px 2px 1px rgba(0,0,0,0.3)',
     });
     clearButton.title = tran('Show');
     let timeoutId: any = null;
@@ -476,6 +505,19 @@ export function setParamFileFullName(
     fileFullName: string,
 ) {
     return setParamKeyValue(urlOrPathname, 'file', fileFullName);
+}
+
+export function checkIsDisabled(element: Element) {
+    const isDisabled = Array.from(element.classList).some((className) =>
+        className.includes('disabled'),
+    );
+    if (isDisabled) {
+        return true;
+    }
+    if (element.parentElement === null) {
+        return false;
+    }
+    return checkIsDisabled(element.parentElement);
 }
 
 const APP_NOTIFY_ELEMENT_HIGHLIGHT_CLASSNAME = 'app-notify-element-highlight';

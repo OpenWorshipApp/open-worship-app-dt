@@ -23,6 +23,7 @@ import { CachedBackgroundComp, PerItemStaggerComp } from './perItemDemos';
 import { InsideItemAnimationComp, NestedCanvasComp } from './insideItemDemos';
 import { IframeComp, RichTextComp, VideoComp } from './contentDemos';
 import { YouTubeComp, YouTubeOverlayComp } from './youtubeDemo';
+import { YouTubeMirrorComp } from './youtubeMirrorDemo';
 import { SnapshotComp } from './snapshotDemo';
 import { HitTestComp } from './interactionDemo';
 import { MiniPreviewComp, StagingComp } from './previewDemos';
@@ -164,11 +165,12 @@ export const DEMO_LIST: DemoType[] = [
     {
         id: 'youtube',
         group: 'Content',
-        title: 'YouTube embed',
+        title: 'YouTube embed vs stream',
         Comp: YouTubeComp,
         sourceList: [
             'youtubeDemo.tsx#toEmbedUrl',
             'youtubeDemo.tsx#readPixel',
+            'youtubeDemo.tsx#StreamVideoComp',
             'youtubeDemo.tsx#YouTubeComp',
         ],
     },
@@ -178,6 +180,16 @@ export const DEMO_LIST: DemoType[] = [
         title: 'YouTube overlay (workaround)',
         Comp: YouTubeOverlayComp,
         sourceList: ['youtubeDemo.tsx#YouTubeOverlayComp'],
+    },
+    {
+        id: 'youtube-mirror',
+        group: 'Content',
+        title: 'YouTube mirrored out',
+        Comp: YouTubeMirrorComp,
+        sourceList: [
+            'youtubeMirrorDemo.tsx#startMirror',
+            'youtubeMirrorDemo.tsx#YouTubeMirrorComp',
+        ],
     },
     {
         id: 'snapshot',

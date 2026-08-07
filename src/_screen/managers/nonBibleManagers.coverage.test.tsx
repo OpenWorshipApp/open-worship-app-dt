@@ -256,6 +256,14 @@ function createEffectManager() {
     } as any;
 }
 
+// `varySlideData`'s setter resolves through `getTargetLyricSlideItemData`, so
+// an assignment only lands a microtask later even for ordinary slides.
+function flushVarySlideData() {
+    return new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+}
+
 describe('non-Bible manager coverage', () => {
     beforeAll(async () => {
         ({ default: ScreenBackgroundManager } =
@@ -930,10 +938,14 @@ describe('non-Bible manager coverage', () => {
             virtualBackgroundColor: null,
         });
 
+        // Selecting a slide re-derives it for the screen's stage through
+        // `getTargetLyricSlideItemData`, so it only lands a microtask later.
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
+        await flushVarySlideData();
         expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
         // Re-selecting the same slide re-applies it (no toggle-off behavior).
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
+        await flushVarySlideData();
         expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
 
         vi.spyOn(
@@ -945,6 +957,7 @@ describe('non-Bible manager coverage', () => {
             '/slides/b.slide',
             slideJson as any,
         );
+        await flushVarySlideData();
         expect(manager.varySlideData?.filePath).toBe('/slides/b.slide');
 
         const playIconSvg = document.createElementNS(
@@ -1078,6 +1091,7 @@ describe('non-Bible manager coverage', () => {
             },
             isRenderFullWidth: true,
         } as any;
+        await flushVarySlideData();
         manager.render();
         expect(mocks.genPdfSlide).toHaveBeenCalledWith('/preview.png', true);
 
@@ -1092,6 +1106,7 @@ describe('non-Bible manager coverage', () => {
             },
             isRenderFullWidth: false,
         } as any;
+        await flushVarySlideData();
         manager.render();
         expect(mocks.genPptxSlide).toHaveBeenCalledWith(
             '<section>PPTX</section>',
@@ -1111,6 +1126,7 @@ describe('non-Bible manager coverage', () => {
             },
             isRenderFullWidth: false,
         } as any;
+        await flushVarySlideData();
         manager.render();
         expect(mocks.genDocxSlide).toHaveBeenCalledWith(
             '<article>DOCX</article>',
@@ -1126,6 +1142,7 @@ describe('non-Bible manager coverage', () => {
             itemJson: slideJson,
             isRenderFullWidth: false,
         } as any;
+        await flushVarySlideData();
         manager.render();
         expect(mocks.genSlideHtml).toHaveBeenCalledWith([]);
         expect(effect.styleAnim.animIn).toHaveBeenCalled();

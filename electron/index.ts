@@ -22,6 +22,7 @@ import {
 } from './electronEventListener';
 import { initMenu } from './electronMenu';
 import { initDevtools } from './devtools';
+import { initDisplayMediaHandler } from './displayMediaHelpers';
 
 function applyLaunchOverrides() {
     // The single-instance lock lives in `userData`, so dev must use its own
@@ -52,6 +53,7 @@ async function main() {
     // previous run that was killed with a preview open.
     sweepStalePrintPreviewFiles();
     initCustomSchemeHandler();
+    initDisplayMediaHandler();
     const appController = ElectronAppController.getInstance();
     initEventListenerApp(appController);
     initEventScreen(appController);

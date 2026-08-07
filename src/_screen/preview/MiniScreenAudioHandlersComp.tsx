@@ -54,7 +54,7 @@ export default function MiniScreenAudioHandlersComp({
                 >
                     <source src={src} />
                     <track kind="captions" />
-                    Browser does not support audio.
+                    {tran('Browser does not support audio.')}
                 </audio>
                 <div>
                     <i

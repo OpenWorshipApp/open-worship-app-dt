@@ -50,6 +50,7 @@ vi.mock('./ElectronLWShareController', () => ({
 
 vi.mock('./fsServe', () => ({
     getCurrent: vi.fn(() => 'setting.html'),
+    htmlFiles: { screen: 'screen.html' },
 }));
 
 vi.mock('./electronHelpers', () => ({
@@ -87,7 +88,7 @@ describe('ElectronAppController', () => {
         );
     });
 
-    test('updates background colors and reloads all known windows', async () => {
+    test('updates background colors on the known windows', async () => {
         const { default: Controller } = await import('./ElectronAppController');
         const controller = new Controller();
         lwShareController.win = {
@@ -96,14 +97,43 @@ describe('ElectronAppController', () => {
         };
 
         controller.resetThemeBackgroundColor();
-        controller.reloadAll();
 
         expect(mainWin.setBackgroundColor).toHaveBeenCalledWith('#fefefe');
         expect(lwShareController.win.setBackgroundColor).toHaveBeenCalledWith(
             '#fefefe',
         );
-        expect(mainWin.reload).toHaveBeenCalledTimes(1);
-        expect(lwShareController.win.reload).toHaveBeenCalledTimes(1);
+    });
+
+    test('reloads every live window except the screen outputs', async () => {
+        const { default: Controller } = await import('./ElectronAppController');
+        const { BrowserWindow } = (await import('electron')) as any;
+        const controller = new Controller();
+        const genWin = (url: string, isDestroyed = false) => ({
+            isDestroyed: vi.fn(() => isDestroyed),
+            reload: vi.fn(),
+            webContents: { getURL: vi.fn(() => url) },
+        });
+        // a popup (Settings) must reload too — it is not in `allWindows()`
+        const presenterWin = genWin('https://localhost:3000/presenter.html');
+        const settingWin = genWin('https://localhost:3000/setting.html');
+        const screenWin = genWin(
+            'https://localhost:3000/screen.html?screenId=2',
+        );
+        const closedWin = genWin('https://localhost:3000/about.html', true);
+        BrowserWindow.getAllWindows.mockReturnValueOnce([
+            presenterWin,
+            settingWin,
+            screenWin,
+            closedWin,
+        ]);
+
+        controller.reloadAll();
+
+        expect(presenterWin.reload).toHaveBeenCalledTimes(1);
+        expect(settingWin.reload).toHaveBeenCalledTimes(1);
+        // reloading a live output would blank the presentation
+        expect(screenWin.reload).not.toHaveBeenCalled();
+        expect(closedWin.reload).not.toHaveBeenCalled();
     });
 
     test('remembers the landing page and re-syncs when the app is reactivated', async () => {

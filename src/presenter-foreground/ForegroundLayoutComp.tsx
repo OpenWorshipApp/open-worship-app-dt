@@ -36,7 +36,9 @@ export default function ForegroundLayoutComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <div className="card m-2">
+        // The target is exposed so anything referencing this foreground (a
+        // playlist row) can find and highlight the panel it came from.
+        <div className="card m-2" data-foreground-target={target}>
             <div
                 className={'card-header d-flex' + (extraHeaderClassName ?? '')}
                 style={extraHeaderStyle}

@@ -56,6 +56,7 @@ export default function BibleXMLInfoComp({
             'Delete Bible XML',
             `Are you sure to delete bible XML "${bibleKeyRef.current}"?`,
             {
+                cancelButtonLabel: 'No',
                 confirmButtonLabel: 'Yes',
             },
         );

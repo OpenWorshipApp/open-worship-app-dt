@@ -255,7 +255,7 @@ describe('editingHelpers', () => {
         expect(mocks.showAppConfirmMock).toHaveBeenCalledWith(
             'Discard changed',
             'Are you sure to discard all change histories?',
-            { confirmButtonLabel: 'Yes' },
+            { cancelButtonLabel: 'No', confirmButtonLabel: 'Yes' },
         );
         expect(editableDocument.historyDiscard).toHaveBeenCalledTimes(1);
         expect(editableDocument.save).toHaveBeenCalledTimes(1);

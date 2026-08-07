@@ -15,6 +15,7 @@ import { VaryAppDocumentContext } from '../../app-document-list/appDocumentHelpe
 import CanvasNoteContainerHandlerComp from '../note/CanvasNoteContainerHandlerComp';
 import ResizeActorComp from '../../resize-actor/ResizeActorComp';
 import CanvasContainerComp from './canvas-container/CanvasContainerComp';
+import { toWidgetLabel } from '../../others/labelIconHelpers';
 
 function EditorComp({
     contextData,
@@ -45,7 +46,7 @@ function EditorComp({
                         },
                     },
                     key: 'v1',
-                    widgetName: 'Document List',
+                    ...toWidgetLabel('Document List'),
                     className: 'app-flex-item',
                 },
                 {
@@ -60,7 +61,7 @@ function EditorComp({
                         },
                     },
                     key: 'v2',
-                    widgetName: 'Note',
+                    ...toWidgetLabel('Note'),
                     className: 'app-flex-item',
                 },
             ]}

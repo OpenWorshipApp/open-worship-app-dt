@@ -211,7 +211,7 @@ describe('ElectronMainController', () => {
         }
     });
 
-    test('forwards bible navigation, scrolling, and screen invisibility', () => {
+    test('forwards bible navigation and screen invisibility', () => {
         const processExit = vi
             .spyOn(process, 'exit')
             .mockImplementation((() => undefined) as any);
@@ -220,16 +220,10 @@ describe('ElectronMainController', () => {
                 mainHtmlPath: 'presenter.html',
             } as any);
 
-            controller.changeBible(true);
+            controller.changeBible({ screenId: 2, isNext: true });
             expect(controller.win.webContents.send).toHaveBeenCalledWith(
                 'app:main:change-bible',
-                true,
-            );
-
-            controller.ctrlScrolling(false);
-            expect(controller.win.webContents.send).toHaveBeenCalledWith(
-                'app:main:ctrl-scrolling',
-                false,
+                { screenId: 2, isNext: true },
             );
 
             controller.sendNotifyInvisibility(5);

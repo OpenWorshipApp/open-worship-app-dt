@@ -51,11 +51,27 @@ function checkElement(parent: HTMLElement, element: HTMLElement) {
         element.classList.remove('show');
     }
 }
-export function applyToTheTop(element: HTMLElement) {
+export function applyToTheTop(
+    element: HTMLElement,
+    // The box that really scrolls is not always the button's own parent: in a
+    // floating widget the list is the full height of its content and the
+    // widget's body is what scrolls it. Named by selector rather than resolved
+    // by measuring, so it is found even while the list is still empty.
+    scrollingContainerSelector?: string,
+) {
     element.title = 'Click or Double Click to scroll to the top';
-    const parent = element.parentElement;
+    const parent = scrollingContainerSelector
+        ? element.closest<HTMLElement>(scrollingContainerSelector)
+        : element.parentElement;
     if (parent === null) {
         return;
+    }
+    // This is applied from an inline ref callback, which React runs again on
+    // every re-render — drop the listener the previous run left behind instead
+    // of stacking another one on the scroller for the life of the list.
+    const previousScrollCallback = (element as any)._scrollCallback;
+    if (previousScrollCallback !== undefined) {
+        parent.removeEventListener('scroll', previousScrollCallback);
     }
     const scrollCallback = ((element as any)._scrollCallback = () => {
         checkElement(parent, element);

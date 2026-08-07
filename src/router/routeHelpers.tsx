@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { OptionalPromise } from '../helper/typeHelpers';
 import appProvider from '../server/appProvider';
 import { tran } from '../lang/langHelpers';
+import { genLabelIcon } from '../others/labelIconHelpers';
 import { getSetting, setSetting } from '../helper/settingHelpers';
 
 export type TabOptionType = {
@@ -18,7 +19,12 @@ export enum WindowModEnum {
 }
 
 export function toTitleExternal(title: string, style?: CSSProperties) {
-    return <span style={style}>{tran(title) + ' '}</span>;
+    return (
+        <span style={style}>
+            {genLabelIcon(title)}
+            {tran(title) + ' '}
+        </span>
+    );
 }
 
 const PATH_NAME_SETTING_NAME = 'last-page-location';

@@ -2,7 +2,7 @@ import { app, BrowserWindow } from 'electron';
 
 import ElectronMainController from './ElectronMainController';
 import ElectronSettingManager from './ElectronSettingManager';
-import { getCurrent } from './fsServe';
+import { getCurrent, htmlFiles } from './fsServe';
 import { getAppThemeBackgroundColor } from './electronHelpers';
 import ElectronLWShareController from './ElectronLWShareController';
 
@@ -69,9 +69,22 @@ export default class ElectronAppController {
         });
     }
 
+    // `allWindows()` only knows the main and LW-share windows. Popups (Settings,
+    // About, Finder, the document/lyric/bible-note/web editors) are created off
+    // `setWindowOpenHandler` in `createPopupWindow` and are registered nowhere,
+    // so enumerate the live windows instead — otherwise `Apply Settings` leaves
+    // every open popup on the old language, theme and directory paths.
+    // Screen output windows are skipped on purpose: reloading one blanks a live
+    // presentation, and the presenter re-pushes their content on its own reload.
     reloadAll() {
-        this.allWindows().forEach((win) => {
+        for (const win of BrowserWindow.getAllWindows()) {
+            if (
+                win.isDestroyed() ||
+                win.webContents.getURL().includes(htmlFiles.screen)
+            ) {
+                continue;
+            }
             win.reload();
-        });
+        }
     }
 }

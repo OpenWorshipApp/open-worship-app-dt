@@ -58,6 +58,7 @@ function createSlideJson(id: number) {
             height: 180,
         },
         canvasItems: [],
+        type: 'slide' as const,
     };
 }
 
@@ -150,6 +151,7 @@ describe('slide models', () => {
             id: 10,
             metadata: { width: 1280, height: 720 },
             canvasItems: [],
+            type: 'slide',
         });
 
         expect(() => Slide.validate(slide.toJson())).not.toThrow();
@@ -233,6 +235,7 @@ describe('slide models', () => {
             imagePreviewSrc: 'file:///preview/page-2.png',
             pdfPageNumber: 1,
             metadata: { width: 640, height: 480 },
+            type: 'pdf-slide',
         });
 
         expect(pdfSlide.isDisabled).toBe(false);
@@ -303,6 +306,7 @@ describe('slide models', () => {
             images: [],
             videos: [],
             audios: ['audio/a.mp3', 'audio/b.mp3'],
+            type: 'pptx-slide',
         });
 
         expect(pptxSlide.isDisabled).toBe(true);
@@ -358,6 +362,7 @@ describe('slide models', () => {
                 images: [],
                 videos: [],
                 audios: ['audio/a.mp3', 'audio/b.mp3'],
+                type: 'pptx-slide',
             },
         });
     });
@@ -368,6 +373,7 @@ describe('slide models', () => {
             htmlFilePath: '/doc/page-7.html',
             html: '<article>Page</article>',
             metadata: { width: 800, height: 1100 },
+            type: 'docx-slide',
         });
 
         expect(docxSlide.isDisabled).toBe(false);
@@ -404,6 +410,7 @@ describe('slide models', () => {
                 id: 9,
                 htmlFilePath: '/doc/page-7.html',
                 metadata: { width: 800, height: 1100 },
+                type: 'docx-slide',
             },
         });
     });

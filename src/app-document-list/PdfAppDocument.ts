@@ -65,6 +65,7 @@ export default class PdfAppDocument
                         imagePreviewSrc: src,
                         pdfPageNumber: pageNumber,
                         metadata: { width, height },
+                        type: 'pdf-slide',
                     });
                 },
             );
@@ -77,6 +78,7 @@ export default class PdfAppDocument
                 imagePreviewSrc: BLANK_IMAGE_SLIDE_SRC,
                 pdfPageNumber: 0,
                 metadata: { width: slide1.width, height: slide1.height },
+                type: 'pdf-slide',
             });
             return [slide0, ...dataList];
         } catch (error) {

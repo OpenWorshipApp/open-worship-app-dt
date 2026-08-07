@@ -1,0 +1,107 @@
+.lyric-slides-previewer {
+  & > .card-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    // Never let the card column squeeze the header below its own line box -
+    // Khmer glyphs are taller than the Latin ones, so a shrunk header clips
+    // them even on a single line.
+    flex-shrink: 0;
+    // Keep everything on one line and let the label - not the stage controls -
+    // give way when space runs out.
+    white-space: nowrap;
+    overflow: hidden;
+
+    .stage-previewer-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    // The chips may outgrow the header once a few stages exist. Scroll them
+    // instead of pushing the Add button out of reach - the button is the only
+    // way to get a stage back, so it must never be the thing that disappears.
+    .stage-previewer-stages {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 0 1 auto;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+
+    .stage-previewer-add {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 8px;
+      line-height: 1.4;
+    }
+  }
+
+  // `--stage-accent` is set inline per stage and is what ties a chip to its
+  // preview pane. Both read the same variable, so they can never drift apart.
+  .stage-previewer-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 4px 1px 8px;
+    border: 1px solid var(--stage-accent);
+    border-radius: 999px;
+    line-height: 1.4;
+    color: var(--stage-accent);
+    // A tint of the same accent, so the chip reads as a colour swatch rather
+    // than as an outline that happens to be coloured.
+    background-color: color-mix(in srgb, var(--stage-accent) 18%, transparent);
+    height: 20px;
+
+    // The base stage keeps its own accent but cannot be removed: the padlock
+    // and the missing remove button are what say so.
+    &.is-base {
+      padding-right: 8px;
+
+      & > .bi-lock-fill {
+        font-size: 0.75em;
+        opacity: 0.8;
+      }
+    }
+  }
+
+  // The border the stage's preview area wears, in its chip's colour.
+  .stage-previewer-pane {
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--stage-accent);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .stage-previewer-chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.7em;
+    opacity: 0.75;
+
+    &:hover,
+    &:focus-visible {
+      background-color: var(--bs-danger);
+      color: var(--bs-white);
+      opacity: 1;
+    }
+  }
+}

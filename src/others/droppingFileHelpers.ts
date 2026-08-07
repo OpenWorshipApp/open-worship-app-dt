@@ -187,7 +187,7 @@ export function genDroppingFileOnContextMenu(
         contextMenuItems,
         genContextMenuItems,
         addItems,
-        onStartNewFile,
+        genNewFileMenuItems,
     }: {
         contextMenuItems?: ContextMenuItemType[];
         genContextMenuItems?: (
@@ -195,25 +195,35 @@ export function genDroppingFileOnContextMenu(
             event: MouseEvent<HTMLElement>,
         ) => OptionalPromise<ContextMenuItemType[]>;
         addItems?: (event: any) => void;
-        onStartNewFile?: () => void;
+        // One entry per kind of file the list can create. The list owns the
+        // labels because a list holding more than one kind (documents + lyrics)
+        // names each one instead of a generic "New File". Generated per menu
+        // opening so the labels follow a locale switch, like every other item
+        // here does.
+        genNewFileMenuItems?: () => ContextMenuItemType[];
     },
 ) {
     if (!dirSource.dirPath) {
         return;
     }
     return async (event: MouseEvent<any>) => {
-        const menuItems: ContextMenuItemType[] = [...(contextMenuItems ?? [])];
+        const menuItems: ContextMenuItemType[] = [
+            {
+                childBefore: genContextMenuItemIcon('arrow-clockwise'),
+                menuElement: tran('Reload'),
+                onSelect: () => {
+                    dirSource.fireReloadEvent();
+                },
+            },
+            ...(contextMenuItems ?? []),
+        ];
         if (addItems !== undefined) {
             menuItems.push(
                 ...genItemsAddingContextMenuItems(addItems.bind(null, event)),
             );
         }
-        if (onStartNewFile !== undefined) {
-            menuItems.push({
-                childBefore: genContextMenuItemIcon('file-earmark-plus'),
-                menuElement: tran('Create New File'),
-                onSelect: onStartNewFile,
-            });
+        if (genNewFileMenuItems !== undefined) {
+            menuItems.push(...genNewFileMenuItems());
         }
         if (genContextMenuItems !== undefined) {
             const subContextMenuItems = await genContextMenuItems(
@@ -221,9 +231,6 @@ export function genDroppingFileOnContextMenu(
                 event,
             );
             menuItems.push(...subContextMenuItems);
-        }
-        if (menuItems.length === 0) {
-            return;
         }
         showAppContextMenu(event as any, menuItems);
     };

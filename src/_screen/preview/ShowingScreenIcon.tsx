@@ -1,21 +1,8 @@
-import { freezeObject } from '../../helper/helpers';
-import colorList from '../../others/color-list.json';
+import { genColorFromScreenId } from './screenIdColorHelpers';
 
-freezeObject(colorList);
-
-const screenIdColorMap: Record<string, string> = {};
-export function genColorFromScreenId(screenId: number) {
-    if (screenIdColorMap[screenId]) {
-        return screenIdColorMap[screenId];
-    }
-    const allColors = Object.values(colorList.main).concat(
-        Object.values(colorList.extension),
-    );
-    const colorIndex = screenId % allColors.length;
-    const color = allColors[colorIndex];
-    screenIdColorMap[screenId] = color;
-    return color;
-}
+// Re-exported from where it has always been imported: the colour itself had to
+// move to a leaf module so the screen managers could reach it (see there).
+export { genColorFromScreenId };
 
 export default function ShowingScreenIconComp({
     screenId,

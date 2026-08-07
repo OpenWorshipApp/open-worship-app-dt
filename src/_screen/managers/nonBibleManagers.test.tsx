@@ -183,6 +183,14 @@ vi.mock('../../app-document-list/DocxAppDocument', () => ({
     },
 }));
 
+// `varySlideData`'s setter resolves through `getTargetLyricSlideItemData`, so
+// an assignment only lands a microtask later even for ordinary slides.
+function flushVarySlideData() {
+    return new Promise((resolve) => {
+        setTimeout(resolve, 0);
+    });
+}
+
 describe('non-Bible screen managers', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -404,11 +412,15 @@ describe('non-Bible screen managers', () => {
             canvasItems: [],
             kind: 'slide',
         };
+        // Selecting a slide re-derives it for the screen's stage through
+        // `getTargetLyricSlideItemData`, so it only lands a microtask later.
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
+        await flushVarySlideData();
         expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
 
         // Re-selecting the same slide re-applies it (no toggle-off behavior).
         manager.handleSlideSelecting('/slides/a.slide', slideJson as any);
+        await flushVarySlideData();
         expect(manager.varySlideData?.filePath).toBe('/slides/a.slide');
 
         await manager.receiveScreenDropped({
@@ -418,6 +430,7 @@ describe('non-Bible screen managers', () => {
                 toJson: () => slideJson,
             },
         } as any);
+        await flushVarySlideData();
         expect(manager.varySlideData).toEqual({
             filePath: '/slides/b.slide',
             itemJson: slideJson,

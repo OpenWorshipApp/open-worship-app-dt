@@ -12,24 +12,26 @@ import slideSchemaJson from './PdfSlideSchema.json';
 import FileSource from '../helper/FileSource';
 const pdfSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
 
-export type PdfSlideType = {
+export type PdfSlidePropsType = {
     id: number;
     name?: string;
     imagePreviewSrc: string;
     pdfPageNumber: number;
     metadata: { width: number; height: number };
+    type: 'pdf-slide';
 };
 
 export default class PdfSlide
     extends ItemBaseFilePath
     implements DragInf<string>, ClipboardInf
 {
-    private _originalJson: PdfSlideType;
+    private _originalJson: PdfSlidePropsType;
     filePath: string;
 
-    constructor(filePath: string, json: PdfSlideType) {
+    constructor(filePath: string, json: PdfSlidePropsType) {
         super();
         this._originalJson = cloneJson(json);
+        this._originalJson.type = 'pdf-slide';
         this.filePath = filePath;
     }
 
@@ -71,7 +73,7 @@ export default class PdfSlide
     get originalJson() {
         return this._originalJson;
     }
-    set originalJson(json: PdfSlideType) {
+    set originalJson(json: PdfSlidePropsType) {
         this._originalJson = json;
     }
 
@@ -94,11 +96,11 @@ export default class PdfSlide
         return this.metadata.height;
     }
 
-    static fromJson(json: PdfSlideType, filePath: string) {
+    static fromJson(json: PdfSlidePropsType, filePath: string) {
         return new this(filePath, json);
     }
 
-    toJson(): PdfSlideType {
+    toJson(): PdfSlidePropsType {
         return this._originalJson;
     }
 
@@ -143,9 +145,13 @@ export default class PdfSlide
         return this.getImageFilePath();
     }
 
+    get dragType(): DragTypeEnum {
+        return DragTypeEnum.PDF_SLIDE;
+    }
+
     dragSerialize() {
         return {
-            type: DragTypeEnum.PDF_SLIDE,
+            type: this.dragType,
             data: JSON.stringify({
                 filePath: this.filePath,
                 data: this.toJson(),

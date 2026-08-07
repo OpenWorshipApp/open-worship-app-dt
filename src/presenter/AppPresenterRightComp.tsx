@@ -2,6 +2,7 @@ import { lazy } from 'react';
 
 import { resizeSettingNames } from '../resize-actor/flexSizeHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 
 const LazyBibleReadingLeftComp = lazy(() => {
     return import('../bible-list/BibleReadingLeftComp');
@@ -23,13 +24,13 @@ export default function AppPresenterRightComp() {
                 {
                     children: LazyBibleReadingLeftComp,
                     key: 'v1',
-                    widgetName: 'Bible and Notes',
+                    ...toWidgetLabel('Bible and Notes'),
                     className: 'app-flex-item',
                 },
                 {
                     children: LazyMiniScreenComp,
                     key: 'v2',
-                    widgetName: 'Mini Screen',
+                    ...toWidgetLabel('Mini Screen'),
                     className: 'app-flex-item',
                 },
             ]}

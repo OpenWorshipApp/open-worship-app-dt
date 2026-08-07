@@ -10,6 +10,9 @@ const getSettingMock = vi.fn((key: string) => {
 const setSettingMock = vi.fn((key: string, value: string | null) => {
     settingStore.set(key, value ?? '');
 });
+const removeSettingMock = vi.fn((key: string) => {
+    settingStore.delete(key);
+});
 
 const appProviderMock = {
     isPagePresenter: true,
@@ -21,6 +24,7 @@ const appProviderMock = {
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: getSettingMock,
     setSetting: setSettingMock,
+    removeSetting: removeSettingMock,
 }));
 vi.mock('../../server/appProvider', () => ({ default: appProviderMock }));
 vi.mock('../../toast/toastHelpers', () => ({ showSimpleToast: vi.fn() }));
@@ -412,10 +416,25 @@ describe('ScreenFocusManager', () => {
         manager.clear();
         expect(manager.isSpotlighting).toBe(false);
 
+        // A slider drag that ended mid-debounce must NOT be flushed on
+        // teardown: screen ids are reused, so the next screen created under id
+        // 66 would inherit this screen's spotlight settings.
+        manager.setSize(500);
         setSettingMock.mockClear();
+        removeSettingMock.mockClear();
         manager.delete();
-        // a slider drag that ended mid-debounce is flushed on teardown
-        expect(setSettingMock).toHaveBeenCalled();
+        expect(setSettingMock).not.toHaveBeenCalled();
+        for (const key of [
+            'screen-focus-size-66',
+            'screen-focus-color-66',
+            'screen-focus-dim-66',
+            'screen-focus-blur-66',
+            'screen-focus-contrast-66',
+            'screen-focus-open-66',
+        ]) {
+            expect(removeSettingMock).toHaveBeenCalledWith(key);
+            expect(settingStore.has(key)).toBe(false);
+        }
     });
 
     test('a sync message for a closed screen is reported', async () => {

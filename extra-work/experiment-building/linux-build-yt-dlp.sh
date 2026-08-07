@@ -3,10 +3,10 @@
 # Build yt-dlp (https://github.com/yt-dlp/yt-dlp) as a *self-contained standalone
 # binary* from source, the same artifact the app ships and runs. The app invokes
 # yt-dlp through yt-dlp-wrap (electron/client/ytUtils.ts -> bin-helper/yt/yt-dlp)
-# to download audio/video and hand it to ffmpeg. Today extra-work/bin-helper/
-# build.sh just DOWNLOADS the prebuilt release binary (yt-dlp_linux, a PyInstaller
-# bundle); this script builds that binary yourself from a pinned source tag
-# instead — reproducible, and no trusting a prebuilt download.
+# to download audio/video and hand it to ffmpeg. This script IS how that binary
+# is produced: nothing is downloaded at install time any more, so the binary it
+# builds from a pinned source tag — committed into the platform dir below and
+# copied in by extra-work/copy-build.mjs — is what every package ships.
 #
 # yt-dlp is pure Python, so unlike the sibling build-node/qjs/ffmpeg scripts
 # there is no meaningful "feature-minimal" knob here: PyInstaller bundles a whole
@@ -196,6 +196,7 @@ echo "    binary : ${out_binary}"
 echo "    arch   : $(uname -m) (single-arch; see the glibc note in the header)"
 echo "    size   : ${size}"
 echo
-echo "Ship it by copying to where the app loads yt-dlp, e.g.:"
-echo "    cp '${out_binary}' '${script_dir}/../bin-helper/yt-dlp_linux_${VERSION}'"
-echo "    # or into a running dist tree: bin-helper/dist/yt/yt-dlp"
+echo "Ship it by copying into this platform dir (copy-build.mjs picks it up by the"
+echo "'yt-dlp' name prefix and installs it as bin-helper/yt/yt-dlp):"
+echo "    cp '${out_binary}' '${script_dir}/linux/'          # x86_64"
+echo "    cp '${out_binary}' '${script_dir}/linux-arm64/'    # aarch64"

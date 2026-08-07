@@ -1,6 +1,10 @@
 import { showSimpleToast } from '../../toast/toastHelpers';
 import appProvider from '../../server/appProvider';
-import { getSetting, setSetting } from '../../helper/settingHelpers';
+import {
+    getSetting,
+    removeSetting,
+    setSetting,
+} from '../../helper/settingHelpers';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import ScreenEventHandler from './ScreenEventHandler';
 import { type GroupMembershipInf } from './ScreenEventHandler';
@@ -965,14 +969,27 @@ export default class ScreenDrawManager
 
     delete() {
         this.detachEventListeners();
-        // Flush any pending debounced persist immediately (isImmediate also
-        // clears the timer) so the last change survives a quick screen
-        // close/reload and no stale write fires after teardown.
+        // Cancel any pending debounced persist WITHOUT running it (passing a
+        // no-op with isImmediate clears the timer), then drop what is already on
+        // disk. delete() means the screen is gone for good — it is not a
+        // close/reload — and screen ids are reused, so flushing here would hand
+        // this screen's drawing and render-quality flag to whichever screen is
+        // created next under the same id.
+        this.saveAttempt(() => {}, true);
         if (appProvider.isPagePresenter) {
-            this.saveAttempt(() => {
-                setSetting(this.settingKey, this.serialize());
-            }, true);
+            removeSetting(this.settingKey);
+            removeSetting(this.qualityKey);
         }
+        // Release the strokes and the undo history rather than letting them ride
+        // along until the instance is collected.
+        this.drawData = { paintStrokeList: [] };
+        this.history = [[]];
+        this.historyIndex = 0;
+        this.currentStroke = null;
+        this.pendingPoints = [];
+        this._canvas = null;
+        this._ctx = null;
+        this._div = null;
         super.delete();
     }
 

@@ -31,7 +31,8 @@ import {
     MAX_MARQUEE_SPEED_PERCENTAGE,
     MIN_MARQUEE_SPEED_PERCENTAGE,
 } from '../_screen/screenTypeHelpers';
-import { dragStore } from '../helper/dragHelpers';
+import { dragStore, handleDragStart } from '../helper/dragHelpers';
+import { genForegroundDragInf } from './foregroundDragHelpers';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
 import { useAppCurrentRef } from '../helper/appHooks';
 
@@ -424,8 +425,25 @@ export default function ForegroundMarqueeComp({
         [],
     );
     const handleByDroppedRef = useAppCurrentRef(handleByDropped);
-    const handleMarqueeDragStart = useCallback(() => {
+    const textRef = useAppCurrentRef(text);
+    const speedPercentageRef = useAppCurrentRef(speedPercentage);
+    const genExtraStyleRef = useAppCurrentRef(genExtraStyle);
+    const configRef = useAppCurrentRef(config);
+    const handleMarqueeDragStart = useCallback((event: any) => {
         dragStore.onDropped = handleByDroppedRef.current;
+        handleDragStart(
+            event,
+            genForegroundDragInf(
+                configRef.current.target as 'marquee-top' | 'marquee-bottom',
+                () => {
+                    return {
+                        text: textRef.current,
+                        speedPercentage: speedPercentageRef.current,
+                        extraStyle: genExtraStyleRef.current(),
+                    };
+                },
+            ),
+        );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleMarqueeDragEnd = useCallback(() => {

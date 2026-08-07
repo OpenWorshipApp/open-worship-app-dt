@@ -18,12 +18,8 @@ import {
     SelectedEditingSlideContext,
     SelectedVaryAppDocumentContext,
 } from '../app-document-list/appDocumentHelpers';
-import { SelectedLyricContext } from '../lyric-list/lyricHelpers';
 import LayoutTabRenderComp from './LayoutTabRenderComp';
-import {
-    useAppDocumentContextValues,
-    useLyricContextValues,
-} from './layoutHelpers';
+import { useAppDocumentContextValues } from './layoutHelpers';
 
 export default function AppLayoutComp({
     children,
@@ -33,7 +29,6 @@ export default function AppLayoutComp({
     const [isBibleLookupShowing, setIsBibleLookupShowing] = useState(false);
     const { varyAppDocumentContextValue, editingSlideContextValue } =
         useAppDocumentContextValues();
-    const { lyricContextValue } = useLyricContextValues();
 
     const bibleLookupContextValue = useMemo(
         () => ({
@@ -54,10 +49,6 @@ export default function AppLayoutComp({
                 value: varyAppDocumentContextValue,
             },
             {
-                context: SelectedLyricContext,
-                value: lyricContextValue,
-            },
-            {
                 context: SelectedEditingSlideContext,
                 value: editingSlideContextValue,
             },
@@ -65,7 +56,6 @@ export default function AppLayoutComp({
         [
             bibleLookupContextValue,
             varyAppDocumentContextValue,
-            lyricContextValue,
             editingSlideContextValue,
         ],
     );

@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 const {
-    useScreenVaryAppDocumentManagerEventsMock,
+    useVarySlideOnScreenListMock,
     genRemovingAttachedBackgroundMenuMock,
     handleDragStartMock,
     handleAttachBackgroundDropMock,
@@ -26,7 +26,7 @@ const {
     screenVaryAppDocumentManagerGetInstanceMock,
     screenVaryAppDocumentManagerClearMock,
 } = vi.hoisted(() => ({
-    useScreenVaryAppDocumentManagerEventsMock: vi.fn(),
+    useVarySlideOnScreenListMock: vi.fn(),
     genRemovingAttachedBackgroundMenuMock: vi.fn(),
     handleDragStartMock: vi.fn(),
     handleAttachBackgroundDropMock: vi.fn(),
@@ -62,9 +62,11 @@ const {
     screenVaryAppDocumentManagerClearMock: vi.fn(),
 }));
 
-vi.mock('../../_screen/managers/screenEventHelpers', () => ({
-    useScreenVaryAppDocumentManagerEvents:
-        useScreenVaryAppDocumentManagerEventsMock,
+// The slide's ONE screen subscription. It replaces the old blanket
+// `useScreenVaryAppDocumentManagerEvents(['update'])`, and it is also where the
+// screen badges come from now — `toClassNameHighlight` no longer returns them.
+vi.mock('../../_screen/managers/varySlideOnScreenHelpers', () => ({
+    useVarySlideOnScreenList: useVarySlideOnScreenListMock,
 }));
 
 vi.mock('../../helper/dragHelpers', () => ({
@@ -218,11 +220,11 @@ describe('VarySlideRenderComp', () => {
             <style data-testid="shadow-style">.shadow {}</style>,
         );
         toClassNameHighlightMock.mockReturnValue({
-            selectedList: [['1'], ['2']],
             activeCN: 'active',
             presenterCN: 'presenter',
             holdingCN: 'holding',
         });
+        useVarySlideOnScreenListMock.mockReturnValue([['1'], ['2']]);
         slideCheckIsThisTypeMock.mockImplementation(
             (value: any) => value?.isSlide === true,
         );
@@ -285,9 +287,14 @@ describe('VarySlideRenderComp', () => {
             '.data-vary-app-document-item',
         ) as HTMLDivElement | null;
 
-        expect(useScreenVaryAppDocumentManagerEventsMock).toHaveBeenCalledWith([
-            'update',
-        ]);
+        // Scoped to THIS slide, not the manager's global update event.
+        expect(useVarySlideOnScreenListMock).toHaveBeenCalledWith(varySlide);
+        expect(toClassNameHighlightMock).toHaveBeenCalledWith(
+            varySlide,
+            null,
+            [],
+            [['1'], ['2']],
+        );
         expect(item?.className).toContain('active');
         expect(item?.className).toContain('presenter');
         expect(item?.className).toContain('holding');
@@ -297,7 +304,13 @@ describe('VarySlideRenderComp', () => {
         );
         expect(item?.style.width).toBe('320px');
         expect(container.textContent).toContain('Verse 1');
-        expect(container.textContent).toContain('400x200');
+        // Dimensions are no longer inline text — they hang off the aspect-ratio
+        // icon's tooltip.
+        expect(
+            container
+                .querySelector('.bi-aspect-ratio-fill')
+                ?.getAttribute('title'),
+        ).toBe('width:400, height:200');
         expect(container.textContent).toContain('*');
         const screenIcons = Array.from(
             container.querySelectorAll('[data-testid="screen-icon"]'),
@@ -475,11 +488,11 @@ describe('VarySlideRenderComp', () => {
         } as any;
 
         toClassNameHighlightMock.mockReturnValue({
-            selectedList: [],
             activeCN: '',
             presenterCN: '',
             holdingCN: '',
         });
+        useVarySlideOnScreenListMock.mockReturnValue([]);
         useAttachedBackgroundDataMock.mockReturnValue(null);
         appProviderMock.isPagePresenter = true;
 
@@ -502,7 +515,14 @@ describe('VarySlideRenderComp', () => {
         ) as HTMLDivElement | null;
 
         expect(item?.getAttribute('title')).toBe('This slide is disabled');
-        expect(item?.style.opacity).toBe('0.5');
+        // The dimming is the `disabled` CLASS now, not an inline opacity —
+        // asserted as the class because jsdom applies no stylesheet.
+        expect(item?.classList.contains('disabled')).toBe(true);
+        // And a parked card wears neither the pointer cursor nor a drag handle.
+        expect(item?.classList.contains('app-caught-hover-pointer')).toBe(
+            false,
+        );
+        expect(item?.getAttribute('draggable')).toBe('false');
         expect(item?.style.pointerEvents).toBe('none');
         expect(
             container.querySelector('[data-testid="screen-icon"]'),
@@ -538,11 +558,11 @@ describe('VarySlideRenderComp', () => {
 
         appProviderMock.isPagePresenter = false;
         toClassNameHighlightMock.mockReturnValue({
-            selectedList: [['1']],
             activeCN: '',
             presenterCN: '',
             holdingCN: '',
         });
+        useVarySlideOnScreenListMock.mockReturnValue([['1']]);
 
         await act(async () => {
             root.render(

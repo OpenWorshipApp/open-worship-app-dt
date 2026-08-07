@@ -16,6 +16,7 @@ import { showSimpleToast } from '../../toast/toastHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { checkMediaPlaying } from '../../helper/mediaControlHelpers';
 import { useStateSettingString } from '../../helper/settingHelpers';
+import { DRAW_MODE_SETTING_PREFIX } from '../managers/screenSettingKeyHelpers';
 import type { DrawModeType } from '../screenTypeHelpers';
 
 const LazyMiniScreenAudioHandlersComp = lazy(() => {
@@ -259,7 +260,7 @@ export default function ScreenPreviewerFooterComp() {
     // previewer reopens on the one that was last used; independent of the on/off
     // state below, which switching must never touch.
     const [drawMode, setDrawMode] = useStateSettingString<DrawModeType>(
-        `screen-draw-mode-${screenManager.screenId}`,
+        `${DRAW_MODE_SETTING_PREFIX}${screenManager.screenId}`,
         'paint',
     );
     // Seeded from whichever manager persists the on/off state for the restored
@@ -271,13 +272,11 @@ export default function ScreenPreviewerFooterComp() {
     });
     const videoSources = useScreenVideoSources();
     const screenManagerBase = useScreenManagerBaseContext();
-    const [stageNumber, setStageNumber] = useState(
-        screenManagerBase.stageNumber,
-    );
+    const [stageNumber, setStageNumber] = useState(screenManagerBase.stage);
     const screenManagerBaseRef = useAppCurrentRef(screenManagerBase);
     const setStageNumber1 = useCallback(
         (newStageNumber: number) => {
-            screenManagerBaseRef.current.stageNumber = newStageNumber;
+            screenManagerBaseRef.current.stage = newStageNumber;
             setStageNumber(newStageNumber);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -235,9 +235,10 @@ vi.mock('../helper/dirSourceHelpers', () => ({
     useFileSourceEvents: useFileSourceEventsMock,
 }));
 
-vi.mock('../_screen/managers/screenEventHelpers', () => ({
-    useScreenVaryAppDocumentManagerEvents:
-        useScreenVaryAppDocumentManagerEventsMock,
+// See appDocumentHelpers.test.tsx — `useAnyItemSelected` no longer re-renders
+// the slide list on every screen event.
+vi.mock('../_screen/managers/varySlideOnScreenHelpers', () => ({
+    useVarySlideOnScreenChangeEffect: useScreenVaryAppDocumentManagerEventsMock,
 }));
 
 vi.mock('../helper/appHooks', async () => {
@@ -321,11 +322,7 @@ describe('appDocumentHelpers coverage', () => {
             },
         );
         useScreenVaryAppDocumentManagerEventsMock.mockImplementation(
-            (
-                _events: string[],
-                _handler: unknown,
-                refresh: () => Promise<void> | void,
-            ) => {
+            (refresh: () => Promise<void> | void) => {
                 hookState.screenRefreshCallback = refresh;
             },
         );
@@ -549,9 +546,9 @@ describe('appDocumentHelpers coverage', () => {
         });
 
         expect(container?.textContent).toBe('false');
+        // A bare change callback: this hook must NOT re-render its component,
+        // because its component is the parent of every slide preview.
         expect(useScreenVaryAppDocumentManagerEventsMock).toHaveBeenCalledWith(
-            ['update'],
-            undefined,
             expect.any(Function),
         );
 

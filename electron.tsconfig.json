@@ -1,9 +1,8 @@
 {
     "compilerOptions": {
-        "ignoreDeprecations": "6.0",
         "target": "es2015",
         "module": "commonjs",
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "skipLibCheck": true,
@@ -16,10 +15,6 @@
         "strictPropertyInitialization": true,
         "strictBindCallApply": true,
         "sourceMap": false,
-        "baseUrl": ".",
-        "paths": {
-            "*": ["node_modules/*"]
-        },
         "outDir": "electron-build/"
     },
     "include": ["electron/**/*.ts", "electron/**/*.json"],

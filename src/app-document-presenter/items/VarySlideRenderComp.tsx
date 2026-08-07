@@ -4,7 +4,8 @@ import type { CSSProperties, ReactNode, MouseEvent } from 'react';
 import { useCallback, useMemo } from 'react';
 
 import Slide from '../../app-document-list/Slide';
-import { useScreenVaryAppDocumentManagerEvents } from '../../_screen/managers/screenEventHelpers';
+import type { OnScreenListType } from '../../_screen/managers/varySlideOnScreenHelpers';
+import { useVarySlideOnScreenList } from '../../_screen/managers/varySlideOnScreenHelpers';
 import {
     genRemovingAttachedBackgroundMenu,
     handleDragStart,
@@ -39,20 +40,20 @@ import { tran } from '../../lang/langHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
 import ScreenVaryAppDocumentManager from '../../_screen/managers/ScreenVaryAppDocumentManager';
+import { showSimpleToast } from '../../toast/toastHelpers';
 
 function RenderScreenInfoComp({
-    varySlide,
-}: Readonly<{ varySlide: VarySlideType }>) {
+    onScreenList,
+}: Readonly<{ onScreenList: OnScreenListType }>) {
     if (!appProvider.isPagePresenter) {
         return null;
     }
-    const { selectedList } = toClassNameHighlight(varySlide, null, []);
-    if (selectedList.length === 0) {
+    if (onScreenList.length === 0) {
         return null;
     }
     return (
         <div className="d-flex app-border-white-round px-1">
-            {selectedList.map(([key]) => {
+            {onScreenList.map(([key]) => {
                 const screenId = Number.parseInt(key);
                 const onClick = (event: any, screenId: number) => {
                     event.stopPropagation();
@@ -77,10 +78,12 @@ function VarySlideHeaderComp({
     varySlide,
     viewIndex,
     name,
+    onScreenList,
 }: Readonly<{
     varySlide: VarySlideType;
     viewIndex: number;
     name?: string;
+    onScreenList: OnScreenListType;
 }>) {
     const isChanged =
         Slide.checkIsThisType(varySlide) && (varySlide as Slide).isChanged;
@@ -88,6 +91,10 @@ function VarySlideHeaderComp({
         varySlide.filePath,
         varySlide.id,
     );
+    const handleDimInfoClicking = useCallback((event: any) => {
+        event.stopPropagation();
+        showSimpleToast(tran('Dimensions'), event.currentTarget.title);
+    }, []);
     return (
         <div
             className="card-header vary-app-document-item-header d-flex"
@@ -108,7 +115,7 @@ function VarySlideHeaderComp({
                     <span className="mx-1 app-ellipsis">{name}</span>
                 </div>
                 <div className="d-flex justify-content-end">
-                    <RenderScreenInfoComp varySlide={varySlide} />
+                    <RenderScreenInfoComp onScreenList={onScreenList} />
                     <AttachBackgroundIconComp
                         filePath={varySlide.filePath}
                         id={varySlide.id}
@@ -119,9 +126,11 @@ function VarySlideHeaderComp({
                             `height:${varySlide.height}`
                         }
                     >
-                        <small className="pe-2">
-                            {varySlide.width}x{varySlide.height}
-                        </small>
+                        <i
+                            className="bi bi-aspect-ratio-fill app-caught-hover-pointer"
+                            title={`width:${varySlide.width}, height:${varySlide.height}`}
+                            onClick={handleDimInfoClicking}
+                        />
                     </span>
                     {isChanged && <span style={{ color: 'red' }}>*</span>}
                 </div>
@@ -230,7 +239,11 @@ export default function VarySlideRenderComp({
     holdingItems?: VarySlideType[];
     children: ReactNode;
 }>) {
-    useScreenVaryAppDocumentManagerEvents(['update']);
+    // The ONLY screen subscription left in a slide preview, and it is scoped to
+    // this one slide. React bails out on an unchanged snapshot, so presenting a
+    // slide now wakes that slide and the one it replaced — not every preview in
+    // the window.
+    const onScreenList = useVarySlideOnScreenList(varySlide);
     const {
         activeCN: activeClassName,
         presenterCN: presenterClassName,
@@ -239,6 +252,7 @@ export default function VarySlideRenderComp({
         varySlide,
         selectedItemEditing ?? null,
         holdingItems ?? [],
+        onScreenList,
     );
     const attachedBackgroundData = useAttachedBackgroundData(
         varySlide.filePath,
@@ -307,9 +321,12 @@ export default function VarySlideRenderComp({
     return (
         <div
             className={
-                `${APP_DOCUMENT_ITEM_CLASS} card app-caught-hover-pointer` +
+                `${APP_DOCUMENT_ITEM_CLASS} card ` +
                 ' app-overflow-hidden' +
-                ` ${presenterClassName} ${activeClassName} ${holdingClassName}`
+                ` ${presenterClassName} ${activeClassName} ${holdingClassName}` +
+                (varySlide.isDisabled
+                    ? ' disabled'
+                    : ' app-caught-hover-pointer')
             }
             title={
                 varySlide.isDisabled
@@ -320,7 +337,6 @@ export default function VarySlideRenderComp({
                 width: `${width}px`,
                 ...(varySlide.isDisabled
                     ? {
-                          opacity: 0.5,
                           // Editable slides must keep pointer events so the
                           // context menu can re-enable them; file-based
                           // slides (e.g. pptx) cannot be re-enabled in-app.
@@ -333,7 +349,7 @@ export default function VarySlideRenderComp({
             data-vary-app-document-item-id={varySlide.id}
             data-scroll-container-selector={`.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`}
             data-touch-drag-label={varySlide.name || `#${index + 1}`}
-            draggable
+            draggable={!varySlide.isDisabled}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDataDropping}
@@ -355,6 +371,7 @@ export default function VarySlideRenderComp({
                 varySlide={varySlide}
                 viewIndex={index + 1}
                 name={varySlide.name}
+                onScreenList={onScreenList}
             />
             <div className="card-body app-overflow-hidden w-100 p-0 m-0">
                 <ShadowingFillParentWidthComp width={width}>

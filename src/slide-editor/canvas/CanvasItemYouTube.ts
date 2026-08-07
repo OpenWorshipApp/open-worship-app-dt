@@ -10,7 +10,9 @@ import CanvasItem, { CanvasItemError } from './CanvasItem';
 import { handleError } from '../../helper/errorHelpers';
 import type { AnyObjectType } from '../../helper/typeHelpers';
 
-export type CanvasItemYouTubePropsType = CanvasItemPropsType &
+export type CanvasItemYouTubePropsType = {
+    type: 'youtube';
+} & CanvasItemPropsType &
     CanvasItemUrlPropsType;
 
 class CanvasItemYouTube extends CanvasItem<CanvasItemYouTubePropsType> {
@@ -89,6 +91,7 @@ class CanvasItemYouTube extends CanvasItem<CanvasItemYouTubePropsType> {
         return {
             url: this.props.url,
             ...super.toJson(),
+            type: 'youtube',
         };
     }
     static fromJson(json: CanvasItemYouTubePropsType) {

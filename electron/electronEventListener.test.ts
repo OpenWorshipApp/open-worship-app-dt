@@ -19,11 +19,9 @@ const {
     officeFileToPdf,
     pdfToImages,
     getPagesCount,
-    countSlides,
-    exportBibleMSWord,
+    getPptxSlidesCount,
     getAllNoneFinderWindows,
     previewPrintCurrentWindow,
-    removeSlideBackground,
     screenInstance,
 } = vi.hoisted(() => ({
     attemptClosing: vi.fn(),
@@ -39,11 +37,9 @@ const {
     officeFileToPdf: vi.fn(),
     pdfToImages: vi.fn(),
     getPagesCount: vi.fn(),
-    countSlides: vi.fn(),
-    exportBibleMSWord: vi.fn(),
+    getPptxSlidesCount: vi.fn(),
     getAllNoneFinderWindows: vi.fn(() => []),
     previewPrintCurrentWindow: vi.fn(async () => undefined),
-    removeSlideBackground: vi.fn(),
     screenInstance: {
         win: {
             on: vi.fn(),
@@ -77,13 +73,11 @@ vi.mock('./pdfToImagesHelpers', () => ({
     pdfToImages,
 }));
 vi.mock('./msHelpers', () => ({
-    countSlides,
     docxToHtmls,
-    exportBibleMSWord,
     getDocxToHtmlsVersion,
+    getPptxSlidesCount,
     getPptxToHtmlsVersion,
     pptxToHtmls,
-    removeSlideBackground,
 }));
 vi.mock('./ElectronScreenController', () => ({
     default: {
@@ -115,9 +109,7 @@ describe('electronEventListener', () => {
         getPptxToHtmlsVersion.mockReset();
         docxToHtmls.mockReset();
         getDocxToHtmlsVersion.mockReset();
-        countSlides.mockReset();
-        exportBibleMSWord.mockReset();
-        removeSlideBackground.mockReset();
+        getPptxSlidesCount.mockReset();
         captureWebScreenShot.mockReset();
         printHTMLContent.mockReset();
         previewPrintCurrentWindow.mockReset();
@@ -171,8 +163,8 @@ describe('electronEventListener', () => {
             resetThemeBackgroundColor: vi.fn(),
             reloadAll: vi.fn(),
         };
-        docxToHtmls.mockResolvedValue({ isSuccessful: true });
-        getDocxToHtmlsVersion.mockResolvedValue({ version: '1.0.0' });
+        docxToHtmls.mockReturnValue(true);
+        getDocxToHtmlsVersion.mockReturnValue('1.0.0');
 
         initEventOther(appController as any);
 
@@ -215,20 +207,16 @@ describe('electronEventListener', () => {
             filePath: '/tmp/notes.docx',
             outDir: '/tmp/notes-docx-htmls',
         });
-        expect(getDocxToHtmlsVersion).toHaveBeenCalledWith({
-            replyEventName: 'reply:docx-version',
-        });
-        expect(sender.send).toHaveBeenCalledWith('reply:docx-to-htmls', {
-            isSuccessful: true,
-        });
-        expect(sender.send).toHaveBeenCalledWith('reply:docx-version', {
-            version: '1.0.0',
-        });
+        expect(getDocxToHtmlsVersion).toHaveBeenCalledWith();
+        expect(sender.send).toHaveBeenCalledWith('reply:docx-to-htmls', true);
+        expect(sender.send).toHaveBeenCalledWith('reply:docx-version', '1.0.0');
         expect(tarCreate).toHaveBeenCalledWith(
             '/archives/owabn-export',
             '/archives/item.owabn.tar.gz',
             ['manifest.json', 'note-item.json'],
             true,
+            // Only the whole-data archive filters entries out.
+            undefined,
         );
         expect(sender.send).toHaveBeenCalledWith('reply:tar-create', undefined);
     });

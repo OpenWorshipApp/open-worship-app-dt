@@ -5,7 +5,6 @@ import { getDocxToHtmlsVersion } from '../server/docxHelpers';
 import { getPptxToHtmlsVersion } from '../server/pptxHelpers';
 import { useAppStateAsync } from '../helper/appHooks';
 import { useThemeSource } from './themeHelpers';
-import { getBibleNoteConstructor } from '../bible-list/note/bibleNoteHelpers';
 
 const { appInfo } = appProvider;
 const GITHUB_URL = appInfo.gitRepository;
@@ -34,8 +33,10 @@ function renderVersion(version: string | null | undefined) {
 }
 
 async function getBibleNoteVersion() {
-    const AppBibleNote = await getBibleNoteConstructor();
-    return AppBibleNote.VERSION;
+    // imported on demand: a static import would pull the whole note editor
+    // (lexical, excalidraw, katex) into the About window just for a version
+    const { BibleNote } = await import('bible-note');
+    return BibleNote.VERSION;
 }
 
 // need width: '700px', height: '410px'
@@ -53,7 +54,7 @@ export default function AboutComp() {
         <div
             id="app"
             data-bs-theme={theme}
-            className="app-about d-flex flex-wrap justify-content-center p-1 app-selectable-text"
+            className="app app-about d-flex flex-wrap justify-content-center p-1 app-selectable-text"
         >
             <RenderVerseComp />
             <div className="card w-100 m-1">

@@ -91,7 +91,7 @@ export default function AudioPlayerComp({
         >
             <source src={src} />
             <track kind="captions" />
-            Browser does not support audio.
+            {tran('Browser does not support audio.')}
         </audio>
     );
 }

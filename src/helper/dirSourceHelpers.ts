@@ -1,5 +1,5 @@
 import type { DependencyList } from 'react';
-import { createContext, use, useState } from 'react';
+import { createContext, use, useRef, useState } from 'react';
 
 import { useAppEffect, useAppEffectAsync, useAppCurrentRef } from './appHooks';
 import DirSource from './DirSource';
@@ -61,14 +61,22 @@ export function useFilePaths(
             const fileSource = FileSource.getInstance(filePath);
             const color = await fileSource.getColorNote();
             fileSource.colorNote = color;
+            return color ?? '';
         });
-        await Promise.all(promises);
+        const newColorNotesKey = (await Promise.all(promises)).join(',');
         // read through the ref — the listener registered in the effect below
         // captures a stale `filePaths` (usually undefined), which made this
-        // guard never suppress redundant list re-renders
-        if (checkAreArraysEqual(filePathsRef.current, newFilePaths)) {
+        // guard never suppress redundant list re-renders.
+        // Color notes join the comparison because setting one leaves the path
+        // list identical: comparing paths alone swallowed the refresh, so the
+        // item never moved into its color group until the list was reloaded.
+        if (
+            checkAreArraysEqual(filePathsRef.current, newFilePaths) &&
+            colorNotesKeyRef.current === newColorNotesKey
+        ) {
             return;
         }
+        colorNotesKeyRef.current = newColorNotesKey;
         setFilePaths((oldFilePaths) => {
             if (!oldFilePaths) {
                 return newFilePaths;
@@ -79,25 +87,7 @@ export function useFilePaths(
         filePathLoadedCtx?.onLoaded?.(newFilePaths);
     };
     const filePathsRef = useAppCurrentRef(filePaths);
-    useAppEffect(() => {
-        const registeredEvent = dirSource.registerEventListener(
-            ['file-update'],
-            (changedFilePath: string) => {
-                const targetFile = filePathsRef.current?.find(
-                    (targetFilePath1) => {
-                        return changedFilePath.startsWith(targetFilePath1);
-                    },
-                );
-                if (targetFile !== undefined) {
-                    FileSource.getInstance(targetFile).fireUpdateEvent();
-                }
-                FileSource.getInstance(changedFilePath).fireUpdateEvent();
-            },
-        );
-        return () => {
-            dirSource.unregisterEventListener(registeredEvent);
-        };
-    }, [dirSource]);
+    const colorNotesKeyRef = useRef<string | null>(null);
     useAppEffect(() => {
         setFilePaths(undefined);
         const registeredEvent = dirSource.registerEventListener(
@@ -152,6 +142,16 @@ export function useFileSourceRefreshEvents(
         const update = (_data: any, time: number) => {
             setN(time);
         };
+        if (filePath !== undefined) {
+            const fileSource = FileSource.getInstance(filePath);
+            const registeredEvent = fileSource.registerEventListener(
+                events,
+                update,
+            );
+            return () => {
+                fileSource.unregisterEventListener(registeredEvent);
+            };
+        }
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,
             update,
@@ -171,11 +171,22 @@ export function useFileSourceEvents<T>(
 ) {
     const callbackRef = useAppCurrentRef(callback);
     useAppEffect(() => {
+        const update = (data: T, time: number) => {
+            callbackRef.current(data, time);
+        };
+        if (filePath !== undefined) {
+            const fileSource = FileSource.getInstance(filePath);
+            const registeredEvent = fileSource.registerEventListener(
+                events,
+                update,
+            );
+            return () => {
+                fileSource.unregisterEventListener(registeredEvent);
+            };
+        }
         const staticEvents = FileSource.registerFileSourceEventListener(
             events,
-            (data: T, time: number) => {
-                callbackRef.current(data, time);
-            },
+            update,
             filePath,
         );
         return () => {

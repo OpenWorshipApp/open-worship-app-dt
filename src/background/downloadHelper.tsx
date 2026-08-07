@@ -36,7 +36,7 @@ function InputUrlComp({
     return (
         <div className="w-100 h-100">
             <div className="input-group" title={invalidMessage}>
-                <div className="input-group-text">{title}</div>
+                <div className="input-group-text">{tran(title)}</div>
                 <input
                     className={
                         'form-control form-control-sm' +
@@ -128,10 +128,17 @@ const blockUnload = genBlockUnload(() => {
     );
 });
 
+/**
+ * `isSilentSuccess` is for callers that download into a temp location as one
+ * step of a bigger flow: the completion toast would name a path the user never
+ * sees, and the flow's own outcome toast is the meaningful one. Failures still
+ * toast either way.
+ */
 export function streamDownloadFile(
     filePath: string,
     response: any,
     messageCallback: MessageCallbackType,
+    isSilentSuccess = false,
 ) {
     return new Promise<void>((resolve, reject) => {
         writeStreamToFile(
@@ -154,10 +161,12 @@ export function streamDownloadFile(
                         reject(error);
                         return;
                     }
-                    showSimpleToast(
-                        'Download Completed',
-                        `File saved at: ${filePath}`,
-                    );
+                    if (!isSilentSuccess) {
+                        showSimpleToast(
+                            'Download Completed',
+                            `File saved at: ${filePath}`,
+                        );
+                    }
                     resolve();
                 },
             },

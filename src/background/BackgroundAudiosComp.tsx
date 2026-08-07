@@ -11,6 +11,7 @@ import {
 } from '../helper/constants';
 import { showAudioPlayingToast } from '../helper/mediaControlHelpers';
 import { tran } from '../lang/langHelpers';
+import { toWidgetLabel } from '../others/labelIconHelpers';
 import { showSimpleToast } from '../toast/toastHelpers';
 import type DirSource from '../helper/DirSource';
 import { handleError } from '../helper/errorHelpers';
@@ -18,8 +19,7 @@ import {
     showProgressBar,
     hideProgressBar,
 } from '../progress-bar/progressBarHelpers';
-import { fsCheckFileExist, fsDeleteFile, fsMove } from '../server/fileHelpers';
-import { getDefaultDataDir } from '../setting/directory-setting/directoryHelpers';
+import { fsMove, getTempPath } from '../server/fileHelpers';
 import { genDownloadContextMenuItems } from './downloadHelper';
 import { downloadVideoOrAudio } from '../server/appHelpers';
 import type { ContextMenuItemType } from '../context-menu/appContextMenuHelpers';
@@ -38,20 +38,22 @@ async function genAudioDownloadContextMenuItems(dirSource: DirSource) {
                 `Downloading audio from "${audioUrl}", please wait...`,
             );
             showProgressBar(audioUrl);
-            const defaultPath = getDefaultDataDir();
+            // See BackgroundVideosComp: stage in the OS temp dir rather than the
+            // hardcoded getDefaultDataDir().
             const { filePath, fileFullName } = await downloadVideoOrAudio(
                 audioUrl,
-                defaultPath,
+                getTempPath(),
                 false,
             );
             const destFileSource = FileSource.getInstance(
                 dirSource.dirPath,
                 fileFullName,
             );
-            const downloadedFilePath = destFileSource.filePath;
-            if (await fsCheckFileExist(downloadedFilePath)) {
-                await fsDeleteFile(downloadedFilePath);
-            }
+            // Never overwrite: the file name comes from the remote page title,
+            // so a collision with an existing audio is not something the user
+            // can predict. Deleting it here silently destroyed the original —
+            // `genNextFilePath` suffixes instead, matching the video flow.
+            const downloadedFilePath = await destFileSource.genNextFilePath();
             await fsMove(filePath, downloadedFilePath);
             showSimpleToast(
                 title,
@@ -124,7 +126,6 @@ export default function BackgroundAudiosComp() {
             extraMimetypeNames={['video']}
             onClick={handleItemClicking}
             dirSourceSettingName={dirSourceSettingNames.BACKGROUND_AUDIO}
-            noDraggable={true}
             isNameOnTop={true}
             genContextMenuItems={genAudioDownloadContextMenuItems}
             onItemsAdding={handleItemsAdding}
@@ -155,7 +156,7 @@ export default function BackgroundAudiosComp() {
                         },
                     },
                     key: 'v1',
-                    widgetName: 'Background',
+                    ...toWidgetLabel('Background'),
                 },
                 {
                     children: {
@@ -168,7 +169,7 @@ export default function BackgroundAudiosComp() {
                         },
                     },
                     key: 'v2',
-                    widgetName: 'Background Audio',
+                    ...toWidgetLabel('Background Audio'),
                 },
             ]}
         />

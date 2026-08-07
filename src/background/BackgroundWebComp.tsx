@@ -31,9 +31,13 @@ import FileListHandlerComp from '../others/FileListHandlerComp';
 import { showAppConfirm } from '../popup-widget/popupWidgetHelpers';
 import { getMimetypeExtensions } from '../server/fileHelpers';
 import { basicRenderBody } from './BackgroundWebChildComp';
+import { useBackgroundViewModeSetting } from './BackgroundViewModeComp';
 
 export default function BackgroundWebComp() {
     const [thumbnailWidth, setThumbnailWidth] = useThumbnailWidthSetting();
+    const [viewMode, setViewMode] = useBackgroundViewModeSetting(
+        dirSourceSettingNames.BACKGROUND_WEB,
+    );
     const [urlItems, setUrlItems] = useState<BackgroundWebUrlItemData[]>(() => {
         return getBackgroundWebUrlItemList();
     });
@@ -64,6 +68,7 @@ export default function BackgroundWebComp() {
                 tran('Remove URL'),
                 `Remove "${urlSource.fullName}"?`,
                 {
+                    cancelButtonLabel: 'No',
                     confirmButtonLabel: 'Yes',
                 },
             );
@@ -128,6 +133,7 @@ export default function BackgroundWebComp() {
         thumbnailWidth,
         handleUrlRemoving,
         handleUrlColorNoteChange,
+        viewMode,
     );
 
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -164,6 +170,8 @@ export default function BackgroundWebComp() {
             <BackgroundFooterComp
                 thumbnailWidth={thumbnailWidth}
                 setThumbnailWidth={setThumbnailWidth}
+                viewMode={viewMode}
+                setViewMode={setViewMode}
             />
         </div>
     );
